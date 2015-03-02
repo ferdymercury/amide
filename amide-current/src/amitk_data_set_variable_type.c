@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -176,18 +176,18 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
 
-  AmitkDataSet * slice;
+  AmitkDataSet * slice = NULL;
   AmitkVoxel i_voxel;
   amide_intpoint_t z;
   amide_real_t max_diff, voxel_length, z_steps;
   AmitkPoint alt;
   AmitkPoint stride[AMITK_AXIS_NUM], last[AMITK_AXIS_NUM];
   AmitkAxis i_axis;
-  guint l;
+  guint k, l;
   amide_data_t weight;
   amide_data_t time_weight;
-  amide_intpoint_t start_frame, end_frame, i_frame;
-  amide_intpoint_t i_gate, use_gate;
+  amide_intpoint_t start_frame, end_frame;
+  amide_intpoint_t i_gate;
   amide_time_t end_time;
   AmitkPoint box_point[8];
   AmitkVoxel box_voxel[8];
@@ -202,7 +202,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 #endif
   AmitkVoxel ds_voxel;
   amide_data_t weight1, weight2;
-  amide_data_t empty;
+  amide_data_t * weights=NULL;
+  amide_data_t * intermediate_data=NULL;
   AmitkCorners intersection_corners;
   AmitkVoxel dim;
   gint num_gates;
@@ -225,6 +226,19 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(slice_volume))/pixel_size.y);
   dim.z = dim.g = dim.t = 1;
 
+  /* if we need it, get the weighting matrix */
+  if (data_set->rendering == AMITK_RENDERING_MPR) {
+    if ((weights = g_try_malloc0(sizeof(amide_data_t)*dim.x*dim.y)) == NULL) {
+      g_warning(_("couldn't allocate memory space for the weights, wanted %dx%d elements"), dim.x, dim.y);
+      goto error;
+    }
+  }
+
+  /* get an intermediate data matrix to speed things up */
+  if ((intermediate_data = g_try_malloc0(sizeof(amide_data_t)*dim.x*dim.y)) == NULL) {
+    g_warning(_("couldn't allocate memory space for the intermediate_data, wanted %dx%d elements"), dim.x, dim.y);
+    goto error;
+  }
 
   /* get the return slice */
   slice = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set), 
@@ -232,7 +246,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   if (slice == NULL) {
     g_warning(_("couldn't allocate memory space for the slice, wanted %dx%dx%d elements"), 
 	      dim.x, dim.y, dim.z);
-    return NULL;
+    goto error;
   }
 
   slice->slice_parent = data_set;
@@ -245,6 +259,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   slice->scan_start = start_time;
   slice->thresholding = data_set->thresholding;
   slice->interpolation = AMITK_DATA_SET_INTERPOLATION(data_set);
+  slice->rendering = AMITK_DATA_SET_RENDERING(data_set);
   if (gate < 0) {
     slice->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
     slice->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(data_set);
@@ -314,60 +329,55 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   if (end.x >= dim.x) end.x = dim.x-1;
   if (end.y >= dim.y) end.y = dim.y-1;
 
-  /* empty is what we fill voxels with that aren't in the data set*/
-  // commented out for 0.8.12
-  //  if (amitk_data_set_get_global_max(data_set) < 0)
-  //    empty = amitk_data_set_get_global_min(data_set);
-  //  else
-  empty = NAN; /* note, if you change this from NAN, need to switch out isnan's below */
-
-  /* iterate over those voxels that we didn't cover, and mark them as NAN */
+  /* iterate over those voxels that we won't be covering, and mark them as NAN */
   i_voxel.t = i_voxel.g = i_voxel.z = 0;
   for (i_voxel.y = 0; i_voxel.y < start.y; i_voxel.y++) 
     for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
-      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = NAN;
   for (i_voxel.y = end.y+1; i_voxel.y < dim.y; i_voxel.y++) 
     for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
-      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = NAN;
   for (i_voxel.x = 0; i_voxel.x < start.x; i_voxel.x++) 
     for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++) 
-      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = NAN;
   for (i_voxel.x = end.x+1; i_voxel.x < dim.x; i_voxel.x++) 
     for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++) 
-      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
-
-  /* and initialize the rest of the voxels */
-  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++)
-    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++)
-      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = 0;
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = NAN;
 
 
   switch(data_set->interpolation) {
     
   case AMITK_INTERPOLATION_TRILINEAR:
+
     /* iterate over the frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
+    for (ds_voxel.t = start_frame; ds_voxel.t <= end_frame; ds_voxel.t++) {
       
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
-	if (i_frame == start_frame)
+	if (ds_voxel.t == start_frame)
 	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(duration*num_gates);
-	else if (i_frame == end_frame)
+	else if (ds_voxel.t == end_frame)
 	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(duration*num_gates);
 	else
-	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/(duration*num_gates);
+	  time_weight = amitk_data_set_get_frame_duration(data_set, ds_voxel.t)/(duration*num_gates);
       } else
 	time_weight = 1.0/((gdouble) num_gates);
       
       for (i_gate=0; i_gate < num_gates; i_gate++) {
 	if (gate < 0)
-	  use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	  ds_voxel.g = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
 	else
-	  use_gate = i_gate+gate;
+	  ds_voxel.g = i_gate+gate;
 	
-	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
-	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
-	
+	if (ds_voxel.g >= AMITK_DATA_SET_NUM_GATES(data_set))
+	  ds_voxel.g -= AMITK_DATA_SET_NUM_GATES(data_set);
+
+	/* initialize the .t/.g components of box_voxel */
+	for (l=0; l<8; l=l+1) {
+	  box_voxel[l].t = ds_voxel.t;
+	  box_voxel[l].g = ds_voxel.g;
+	}
+
 	/* iterate over the number of planes we'll be compressing into this slice */
 	for (z = 0; z < ceil(z_steps); z++) {
 	  
@@ -377,14 +387,14 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 	  else
 	    slice_point.z = (0.5)*slice->voxel_size.z; /* only one iteration in z */
 	  
-	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
+	  /* weight is between 0 and 1, this is used to weight the last voxel in the slice's z direction */
 	  if (floor(z_steps) > z)
 	    weight = time_weight/z_steps;
 	  else
 	    weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 	  
 	  /* iterate over the y dimension */
-	  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
+	  for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) {
 	    
 	    /* the slice y_coordinate of the center of this iteration's slice voxel */
 	    slice_point.y = (((amide_real_t) i_voxel.y)+0.5)*slice->voxel_size.y;
@@ -393,13 +403,13 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 	    slice_point.x = (((amide_real_t) start.x)+0.5)*slice->voxel_size.x;
 	    
 	    /* iterate over the x dimension */
-	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
+	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) {
 	      
 	      /* translate the current point in slice space into the data set's coordinate frame */
 	      ds_point = amitk_space_s2s(slice_space, data_set_space, slice_point);
 	      
 	      /* get the nearest neighbor in the data set to this slice voxel */
-	      POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, use_gate, ds_voxel);
+	      POINT_TO_VOXEL_COORDS_ONLY(ds_point, data_set->voxel_size, ds_voxel);
 	      VOXEL_TO_POINT(ds_voxel, data_set->voxel_size, nearest_point);
 	      
 	      /* figure out which way to go to get the nearest voxels to our slice voxel*/
@@ -419,8 +429,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		  box_voxel[l].z = (l & 0x4) ? ds_voxel.z-1 : ds_voxel.z;
 		else /* diff.z >= 0 */
 		  box_voxel[l].z = (l & 0x4) ? ds_voxel.z : ds_voxel.z+1;
-		box_voxel[l].t = ds_voxel.t;
-		box_voxel[l].g = ds_voxel.g;
 		
 		VOXEL_TO_POINT(box_voxel[l], data_set->voxel_size, box_point[l]);
 		
@@ -428,7 +436,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
 		  box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, box_voxel[l]);
 		else {
-		  box_value[l] = empty;
+		  box_value[l] = NAN;
 		  empties = TRUE;
 		}
 	      }
@@ -445,10 +453,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		  if (isnan(box_value[l])) {
 		    if (weight2 >= weight1)
 		      box_value[l] = box_value[l+1];
-		    /* else box_value[l] left as is (empty) */
+		    /* else box_value[l] left as is (NAN/empty) */
 		  } else if (isnan(box_value[l+1])) {
 		    if (weight1 < weight2)
-		      box_value[l] = empty;
+		      box_value[l] = NAN;
 		    /* else box_value[l] left as is */
 		  } else
 		    box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
@@ -462,10 +470,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		  if (isnan(box_value[l])) {
 		    if (weight2 >= weight1)
 		      box_value[l] = box_value[l+2];
-		    /* else box_value[l] left as is (empty) */
+		    /* else box_value[l] left as is (NAN/empty) */
 		  } else if (isnan(box_value[l+2])) {
 		    if (weight1 < weight2)
-		      box_value[l] = empty;
+		      box_value[l] = NAN;
 		    /* else box_value[l] left as is */
 		  } else
 		    box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
@@ -479,13 +487,28 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		  if (isnan(box_value[l])) {
 		    if (weight2 >= weight1)
 		      box_value[l] = box_value[l+4];
-		    /* else box_value[l] left as is (empty) */
+		    /* else box_value[l] left as is (NAN/empty) */
 		  } else if (isnan(box_value[l+4])) {
 		    if (weight1 < weight2)
-		      box_value[l] = empty;
+		      box_value[l] = NAN;
 		    /* else box_value[l] left as is */
 		  } else
 		    box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
+		}
+
+		/* separate into MPR/MIP/minIP algorithms */
+		if (data_set->rendering == AMITK_RENDERING_MPR) { /* MPR */
+		  if (!isnan(box_value[0])) {
+		    intermediate_data[k] += weight*box_value[0];
+		    weights[k] += weight;
+		  }
+		} else { /* MIP or MINIP */
+		  if ((z == 0) && (ds_voxel.t == start_frame) && (i_gate == 0)) 
+		    intermediate_data[k]=box_value[0];
+		  else if (data_set->rendering == AMITK_RENDERING_MIP)  /* MIP */
+		    intermediate_data[k] = MAX(box_value[0], intermediate_data[k]);
+		  else  /* MINIP */
+		    intermediate_data[k] = MIN(box_value[0], intermediate_data[k]);
 		}
 
 	      } else { /* faster */
@@ -512,9 +535,20 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		  weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
 		  box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
 		}
-	      }
-	      
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel)+=weight*box_value[0];
+
+		/* separate into MPR/MIP/minIP algorithms */
+		if (data_set->rendering == AMITK_RENDERING_MPR) { /* MPR */
+		  intermediate_data[k] += weight*box_value[0];
+		  weights[k] += weight;
+		} else { /* MIP or MINIP */
+		  if ((z == 0) && (ds_voxel.t == start_frame) && (i_gate == 0)) 
+		    intermediate_data[k]=box_value[0];
+		  else if (data_set->rendering == AMITK_RENDERING_MIP)  /* MIP */
+		    intermediate_data[k] = MAX(intermediate_data[k], box_value[0]);
+		  else  /* MINIP */
+		    intermediate_data[k] = MIN(intermediate_data[k], box_value[0]);
+		}
+	      } /* slow (empties) vs fast algorithm */
 	      
 	      slice_point.x += slice->voxel_size.x; 
 	    }
@@ -523,6 +557,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
       }
     }
     break;
+
   case AMITK_INTERPOLATION_NEAREST_NEIGHBOR:
   default:  
     /* figure out what point in the data set we're going to start at */
@@ -546,62 +581,158 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
     }
 
     /* iterate over the number of frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
+    for (ds_voxel.t = start_frame; ds_voxel.t <= end_frame; ds_voxel.t++) {
 
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
-	if (i_frame == start_frame)
+	if (ds_voxel.t == start_frame)
 	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(duration*num_gates);
-	else if (i_frame == end_frame)
+	else if (ds_voxel.t == end_frame)
 	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(duration*num_gates);
 	else
-	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/(duration*num_gates);
+	  time_weight = amitk_data_set_get_frame_duration(data_set, ds_voxel.t)/(duration*num_gates);
       } else
 	time_weight = 1.0/((gdouble) num_gates);
 
       /* iterate over gates */
       for (i_gate=0; i_gate < num_gates; i_gate++) {
 	if (gate < 0)
-	  use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	  ds_voxel.g = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
 	else
-	  use_gate = i_gate+gate;
+	  ds_voxel.g = i_gate+gate;
 
-	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
-	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
+	if (ds_voxel.g >= AMITK_DATA_SET_NUM_GATES(data_set))
+	  ds_voxel.g -= AMITK_DATA_SET_NUM_GATES(data_set);
 
 	ds_point = start_point;
-	/* iterate over the number of planes we'll be compressing into this slice */
-	for (z = 0; z < ceil(z_steps); z++) { 
-	  last[AMITK_AXIS_Z] = ds_point;
+
+	/* separate into MPR and MIP/MINIP algorithms. A fair amount
+	   of code is duplicated within the algorithms. The reason
+	   they aren't combined is to keep the MPR vs MIP/MINIP branch
+	   point out of the loop and speed things up slightly for the
+	   most commonly used selection (MPR) */
+
+	switch(data_set->rendering) {
+
+	case AMITK_RENDERING_MPR:
+	  /* iterate over the number of planes we'll be compressing into this slice */
+	  for (z = 0; z < ceil(z_steps); z++) { 
+	    last[AMITK_AXIS_Z] = ds_point;
 	  
-	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
-	  if (floor(z_steps) > z)
-	    weight = time_weight/z_steps;
-	  else
-	    weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
+	    /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
+	    if (floor(z_steps) > z)
+	      weight = time_weight/z_steps;
+	    else
+	      weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 	  
-	  /* iterate over the y dimension */
-	  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
-	    last[AMITK_AXIS_Y] = ds_point;
+	    /* iterate over x and y */
+	    for (i_voxel.y = start.y, k=0; i_voxel.y <= end.y; i_voxel.y++) { 
+	      last[AMITK_AXIS_Y] = ds_point;
+	      for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++, k++) { 
+		POINT_TO_VOXEL_COORDS_ONLY(ds_point, data_set->voxel_size, ds_voxel);
+		if (amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) {
+		  intermediate_data[k] +=
+		    weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel);
+		  weights[k] += weight;
+		}
+		POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+	      } /* x */
+	      POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
+	    } /* y */
 	    
-	    /* and iterate over x */
-	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
-	      POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, use_gate, ds_voxel);
-	      if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) 
-		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
-	      else
-		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
-		  weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel);
-	      POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
-	    }
-	    POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
-	  }
-	  POINT_ADD(last[AMITK_AXIS_Z], stride[AMITK_AXIS_Z], ds_point); 
-	}
-      }
-    }
+	    POINT_ADD(last[AMITK_AXIS_Z], stride[AMITK_AXIS_Z], ds_point); 
+	  } /* z */
+	  break;
+
+	case AMITK_RENDERING_MIP:
+	case AMITK_RENDERING_MINIP:
+
+	  /* iterate over the number of planes we'll be compressing into this slice */
+	  for (z = 0; z < ceil(z_steps); z++) { 
+	    last[AMITK_AXIS_Z] = ds_point;
+
+	    /* need to initialize based on the first plane we encounter */
+	    if ((z == 0) && (ds_voxel.t == start_frame) && (i_gate == 0)) {
+	      /* iterate over x and y */
+	      for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) {
+		last[AMITK_AXIS_Y] = ds_point;
+		for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) {
+		  POINT_TO_VOXEL_COORDS_ONLY(ds_point, data_set->voxel_size, ds_voxel);
+		  if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) 
+		    intermediate_data[k] = NAN;
+		  else
+		    intermediate_data[k] =
+		      AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel);
+		  POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+		} /* x */
+		POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
+	      } /* y */
+
+	    } else { /* iterate over everything that's not the first plane */
+
+	      if (data_set->rendering == AMITK_RENDERING_MIP) {
+		/* iterate over x and y */
+		for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) { 
+		  last[AMITK_AXIS_Y] = ds_point;
+		  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) { 
+		    POINT_TO_VOXEL_COORDS_ONLY(ds_point, data_set->voxel_size, ds_voxel);
+		    if (amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) 
+		      intermediate_data[k] = 
+			MAX(intermediate_data[k],
+			    AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel));
+		    POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+		  } /* x */
+		  POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
+		} /* y */ 
+	      } else { /* AMITK_RENDERING_MINIP */
+		/* iterate over x and y */
+		for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) { 
+		  last[AMITK_AXIS_Y] = ds_point;
+		  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) { 
+		    POINT_TO_VOXEL_COORDS_ONLY(ds_point, data_set->voxel_size, ds_voxel);
+		    if (amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) 
+		      intermediate_data[k] = 
+			MIN(intermediate_data[k],
+			    AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel));
+		    POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+		  } /* x */
+		  POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
+		} /* y */ 
+	      } /* end else, MIP vs MINIP */
+	    } /* end else */
+	      
+	    POINT_ADD(last[AMITK_AXIS_Z], stride[AMITK_AXIS_Z], ds_point); 
+	  } /* z */
+	  break;
+
+	default:
+	  break;
+	} /* MIP vs NON-MIP */
+
+      } /* iterating over gates */
+    } /* iterating over frames */
     break;
   }
+
+  /* fill in data/normalize if needed */
+  i_voxel.t = i_voxel.g = i_voxel.z = 0;
+  if (data_set->rendering == AMITK_RENDERING_MPR) {
+    for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) 
+      for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) 
+	if (weights[k] > 0)
+	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = intermediate_data[k]/weights[k];
+	else
+	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = NAN;
+  } else { /* MIP or MINIP */
+    for (i_voxel.y = start.y,k=0; i_voxel.y <= end.y; i_voxel.y++) 
+      for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++,k++) 
+	AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = intermediate_data[k];
+  }
+    
+ error:
+
+  if (weights != NULL) g_free(weights);
+  if (intermediate_data != NULL) g_free(intermediate_data);
 
   return slice;
 }

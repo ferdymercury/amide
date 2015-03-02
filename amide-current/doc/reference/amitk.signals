@@ -1,0 +1,511 @@
+<SIGNAL>
+<NAME>AmitkCanvas::erase-volume</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkCanvas *amitkcanvas
+AmitkRoi *arg1
+gboolean  arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkCanvas::help-event</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkCanvas *amitkcanvas
+AmitkHelpInfo  arg1
+AmitkPoint *arg2
+gdouble  arg3
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkCanvas::new-object</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkCanvas *amitkcanvas
+AmitkObject *arg1
+AmitkObjectType  arg2
+AmitkPoint *arg3
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkCanvas::view-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkCanvas *amitkcanvas
+AmitkPoint *arg1
+gdouble  arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkCanvas::view-changing</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkCanvas *amitkcanvas
+AmitkPoint *arg1
+gdouble  arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::color-table-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+AmitkViewMode  arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::color-table-independent-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+AmitkViewMode  arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::conversion-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::data-set-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::interpolation-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::invalidate-slice-cache</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::modality-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::scale-factor-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::subject-orientation-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::subject-sex-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::threshold-style-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::thresholding-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::thresholds-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::time-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::view-gates-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::voxel-size-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkDataSet::windows-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkDataSet *amitkdataset
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkLineProfile::line-profile-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkLineProfile *amitklineprofile
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-add-child</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>f</FLAGS>
+AmitkObject *amitkobject
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-child-selection-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-copy</NAME>
+<RETURNS>AmitkObject*</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-copy-in-place</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-name-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-read-xml</NAME>
+<RETURNS>gpointer</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+gpointer  arg1
+gpointer  arg2
+gpointer  arg3
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-remove-child</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>f</FLAGS>
+AmitkObject *amitkobject
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-selection-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkObject::object-write-xml</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkObject *amitkobject
+gpointer  arg1
+gpointer  arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkPreferences::data-set-preferences-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkPreferences *amitkpreferences
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkPreferences::misc-preferences-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkPreferences *amitkpreferences
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkPreferences::study-preferences-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkPreferences *amitkpreferences
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkRoi::roi-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkRoi *amitkroi
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkRoi::roi-type-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkRoi *amitkroi
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-invert</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkAxis  arg1
+AmitkPoint *arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-rotate</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkPoint *arg1
+gdouble  arg2
+AmitkPoint *arg3
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-scale</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkPoint *arg1
+AmitkPoint *arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-shift</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkPoint *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-transform</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkSpace *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkSpace::space-transform-axes</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkSpace *amitkspace
+AmitkAxes *arg1
+AmitkPoint *arg2
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-general-preference-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-layout-preference-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-roi-preference-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-target-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-target-preference-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::canvas-visible-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::filename-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::fov-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::fuse-type-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::panel-layout-preference-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::thickness-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::time-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::view-center-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::view-mode-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkStudy::voxel-dim-or-zoom-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkStudy *amitkstudy
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkTreeView::activate-object</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkTreeView *amitktreeview
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkTreeView::add-object</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkTreeView *amitktreeview
+AmitkObject *arg1
+AmitkObjectType  arg2
+AmitkRoiType  arg3
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkTreeView::delete-object</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkTreeView *amitktreeview
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkTreeView::help-event</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkTreeView *amitktreeview
+AmitkHelpInfo  arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkTreeView::popup-object</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkTreeView *amitktreeview
+AmitkObject *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkVolume::volume-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkVolume *amitkvolume
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkVolume::volume-corner-changed</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkVolume *amitkvolume
+AmitkPoint *arg1
+</SIGNAL>
+
+<SIGNAL>
+<NAME>AmitkVolume::volume-get-center</NAME>
+<RETURNS>void</RETURNS>
+<FLAGS>l</FLAGS>
+AmitkVolume *amitkvolume
+gpointer  arg1
+</SIGNAL>
+

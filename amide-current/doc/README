@@ -1,0 +1,13 @@
+
+In the doc/reference directory is a Makefile and supporting files to
+generate basic API documentation for the "toolkit" portion of
+AMIDE. 
+
+Currently, this toolkit is not distributed as an independent library,
+so this documentation is of limited utility and is only regenerated
+intermittently.
+
+The API documentation generation is based on that used for gtk. It can be
+enabled with the --enable-gtk-doc configuration switch. As of
+2012.01.10, it does not build correctly if libdcmdata support is also
+configured in.

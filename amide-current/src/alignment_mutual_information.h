@@ -1,7 +1,7 @@
-/* alignment.h
+/* alignment_mutual_information.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2011 Ian Miller
+ * Copyright (C) 2011-2012 Ian Miller
  *
  */
 

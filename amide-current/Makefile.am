@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = \
-	-I /usr/local/share/aclocal \
 	-I m4
+##	-I /usr/local/share/aclocal \
 
 if DISABLE_DOC
 HELPDIR = 
@@ -26,7 +26,8 @@ EXTRA_DIST = \
 	intltool-extract.in \
 	intltool-merge.in    \
 	intltool-update.in \
-	gnome-doc-utils.make    
+	gnome-doc-utils.make \
+	m4   
 
 CLEANFILES = \
 	intltool-extract \

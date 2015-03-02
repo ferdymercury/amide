@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>AMIDE</string>
     <key>CFBundleGetInfoString</key>
-    <string>@VERSION@, Copyright 2000-2011 Andreas Loening http://amide.sf.net</string>
+    <string>@VERSION@, Copyright 2000-2012 Andreas Loening http://amide.sf.net</string>
     <key>CFBundleIconFile</key>
     <string>amide.icns</string>
     <key>CFBundleIdentifier</key>
@@ -23,7 +23,7 @@
     <key>CFBundleVersion</key>
     <string>@VERSION@</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright 2000-2011 Andreas Loening, GNU General Public License.</string>
+    <string>Copyright 2000-2012 Andreas Loening, GNU General Public License.</string>
     <key>LSMinimumSystemVersion</key>
     <string>10.4</string>
 </dict>

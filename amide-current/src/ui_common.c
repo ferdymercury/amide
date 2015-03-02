@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -108,7 +108,8 @@ static void about_cb(GtkAction *action, gpointer * caller) {
 
   const gchar *translators = {
     "Spanish Manual Translation: Pablo Sau <psau@cadpet.es>\n"
-    "Chinese (Simplified) Interface Translation: wormwang@holdfastgroup.com"
+    "Chinese (Simplified) Interface Translation: wormwang@holdfastgroup.com\n"
+    "Chinese (Traditional) Interface Translation: William Chao <william.chao@ossii.com.tw>"
   };
 
   gchar * comments;
@@ -146,7 +147,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2011 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2012 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,
@@ -750,7 +751,7 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 }
 
 
-/* function to setup a dialog to allow us to choice options for rendering */
+/* a simple request dialog */
 GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr) {
   
   GtkWidget * dialog;
@@ -831,19 +832,23 @@ GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog) {
 }
 
 
-void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip) {
+void ui_common_toolbar_insert_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip, gint position) {
 
   GtkToolItem * toolbar_item;
 
   toolbar_item = gtk_tool_item_new();
   gtk_container_add(GTK_CONTAINER(toolbar_item), widget);
-#if (GTK_MINOR_VERSION >= 12)
   if (tooltip != NULL)
     gtk_tool_item_set_tooltip_text(toolbar_item,tooltip);
-#endif
   gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, -1);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, position);
 
+  return;
+}
+
+void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip) {
+
+  ui_common_toolbar_insert_widget(toolbar, widget, tooltip, -1);
   return;
 }
 

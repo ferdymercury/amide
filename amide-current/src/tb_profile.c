@@ -1,7 +1,7 @@
 /* tb_profile.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2011 Andy Loening
+ * Copyright (C) 2003-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1289,7 +1289,7 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   
   /* the fit results */
 #ifdef AMIDE_LIBGSL_SUPPORT
-  check_button = gtk_check_button_new_with_label ("calculate gaussian fit");
+  check_button = gtk_check_button_new_with_label (_("calculate gaussian fit"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->calc_gaussian_fit);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(calc_gaussian_fit_cb), tb_profile);
   gtk_table_attach(GTK_TABLE(table), check_button,0,3,
@@ -1297,7 +1297,7 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   gtk_widget_show(check_button);
   table_row++;
 
-  check_button = gtk_check_button_new_with_label ("fix x location (c)");
+  check_button = gtk_check_button_new_with_label (_("fix x location (c)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_x);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_x_cb), tb_profile);
   gtk_table_attach(GTK_TABLE(table), check_button,0,3,
@@ -1305,7 +1305,7 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
   gtk_widget_show(check_button);
   table_row++;
 
-  check_button = gtk_check_button_new_with_label ("fix dc value to zero (b)");
+  check_button = gtk_check_button_new_with_label (_("fix dc value to zero (b)"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_dc_zero);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_dc_zero_cb), tb_profile);
   gtk_table_attach(GTK_TABLE(table), check_button,0,3,

@@ -1,7 +1,7 @@
 /* raw_data_import.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -248,7 +248,8 @@ static void update_offset_label(raw_data_info_t * raw_data_info) {
 /* calculate the total amount of the file that will be read through */
 static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 
-  guint num_bytes, num_entries;
+  gsize num_bytes;
+  guint num_entries;
   gchar * temp_string;
   
   /* how many bytes we're currently reading from the file */
@@ -272,7 +273,7 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 				      raw_data_info->raw_format);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
 		       _("total bytes to read through:"));
-    temp_string = g_strdup_printf("%d",num_bytes);
+    temp_string = g_strdup_printf("%lu",num_bytes);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label2), temp_string);
     g_free(temp_string);
   }

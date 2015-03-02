@@ -1,7 +1,7 @@
 /* tb_crop.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1064,7 +1064,7 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
   gtk_assistant_append_page(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[CONVERSION_PAGE]);
 
   /* setup the conclusion page */
-  tb_crop->page[FINISH_PAGE] = gtk_label_new(finish_page_text);
+  tb_crop->page[FINISH_PAGE] = gtk_label_new(_(finish_page_text));
   gtk_assistant_append_page(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[FINISH_PAGE]);
   gtk_assistant_set_page_type(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[FINISH_PAGE],
 			      GTK_ASSISTANT_PAGE_CONFIRM);

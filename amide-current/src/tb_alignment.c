@@ -1,8 +1,8 @@
 /* tb_alignment.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
- * except mutual information addition Copyright (C) 2011 Ian Miller
+ * Copyright (C) 2001-2012 Andy Loening
+ * except mutual information addition Copyright (C) 2011-2012 Ian Miller
  *
 */
 
@@ -700,7 +700,7 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 
   /* --------------- initial page ------------------ */
   count = amitk_data_sets_count(tb_alignment->data_sets, TRUE);
-  tb_alignment->page[INTRO_PAGE] = gtk_label_new((count >= 2) ? start_page_text : data_set_error_page_text);
+  tb_alignment->page[INTRO_PAGE] = gtk_label_new((count >= 2) ? _(start_page_text) : _(data_set_error_page_text));
   gtk_widget_set_size_request(tb_alignment->page[INTRO_PAGE],LABEL_WIDTH, -1);
   gtk_label_set_line_wrap(GTK_LABEL(tb_alignment->page[INTRO_PAGE]), TRUE);
   gtk_assistant_append_page(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[INTRO_PAGE]);
@@ -731,7 +731,7 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 			       _("Fiducial Marks Selection"));
 
   /* --------------- page shown if no fiducial marks ------------------ */
-  tb_alignment->page[NO_FIDUCIAL_MARKS_PAGE] = gtk_label_new(fiducial_marks_error_page_text);
+  tb_alignment->page[NO_FIDUCIAL_MARKS_PAGE] = gtk_label_new(_(fiducial_marks_error_page_text));
   gtk_widget_set_size_request(tb_alignment->page[NO_FIDUCIAL_MARKS_PAGE],LABEL_WIDTH, -1);
   gtk_label_set_line_wrap(GTK_LABEL(tb_alignment->page[NO_FIDUCIAL_MARKS_PAGE]), TRUE);
   gtk_assistant_append_page(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[NO_FIDUCIAL_MARKS_PAGE]);

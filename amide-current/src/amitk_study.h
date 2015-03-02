@@ -1,7 +1,7 @@
 /* amitk_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -146,6 +146,8 @@ GType	        amitk_study_get_type	             (void);
 AmitkStudy *    amitk_study_new                     (AmitkPreferences * preferences);
 void            amitk_study_set_filename            (AmitkStudy * study, 
 						     const gchar * new_filename);
+void            amitk_study_suggest_name            (AmitkStudy * study,
+						     const gchar * suggested_name);
 void            amitk_study_set_creation_date       (AmitkStudy * study, 
 						     const gchar * new_date); 
 void            amitk_study_set_view_thickness      (AmitkStudy * study, 

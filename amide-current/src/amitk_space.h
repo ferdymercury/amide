@@ -1,7 +1,7 @@
 /* amitk_space.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -125,6 +125,8 @@ AmitkSpace *    amitk_space_copy                    (const AmitkSpace * space);
 void            amitk_space_copy_in_place           (AmitkSpace * dest_space,
 						     const AmitkSpace * src_space);
 gboolean        amitk_space_axes_equal              (const AmitkSpace * space1,
+						     const AmitkSpace * space2);
+gboolean        amitk_space_axes_close              (const AmitkSpace * space1,
 						     const AmitkSpace * space2);
 gboolean        amitk_space_equal                   (const AmitkSpace * space1,
 						     const AmitkSpace * space2);

@@ -26,21 +26,29 @@ AC_ARG_ENABLE([scrollkeeper],
 	enable_scrollkeeper=yes)
 AM_CONDITIONAL([ENABLE_SK],[test "$gdu_cv_have_gdu" = "yes" -a "$enable_scrollkeeper" = "yes"])
 
+dnl disable scrollkeeper automatically for distcheck
+DISTCHECK_CONFIGURE_FLAGS="--disable-scrollkeeper $DISTCHECK_CONFIGURE_FLAGS"
+AC_SUBST(DISTCHECK_CONFIGURE_FLAGS)
+
 AM_CONDITIONAL([HAVE_GNOME_DOC_UTILS],[test "$gdu_cv_have_gdu" = "yes"])
 ])
 
 # GNOME_DOC_INIT ([MINIMUM-VERSION],[ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])
 #
 AC_DEFUN([GNOME_DOC_INIT],
-[
+[AC_REQUIRE([AC_PROG_LN_S])dnl
+
 ifelse([$1],,[gdu_cv_version_required=0.3.2],[gdu_cv_version_required=$1])
 
+AC_MSG_CHECKING([gnome-doc-utils >= $gdu_cv_version_required])
 PKG_CHECK_EXISTS([gnome-doc-utils >= $gdu_cv_version_required],
 	[gdu_cv_have_gdu=yes],[gdu_cv_have_gdu=no])
 
 if test "$gdu_cv_have_gdu" = "yes"; then
+	AC_MSG_RESULT([yes])
 	ifelse([$2],,[:],[$2])
 else
+	AC_MSG_RESULT([no])
 	ifelse([$3],,[AC_MSG_ERROR([gnome-doc-utils >= $gdu_cv_version_required not found])],[$3])
 fi
 

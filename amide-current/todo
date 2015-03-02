@@ -2,8 +2,6 @@ misc list of things todo:
 
 for next release?
 -----------------
-* Mac OS X - clicking on a .xif study loads up AMIDE, but without the file.
-[x] noticed by Eric Wolsztynski
 * exporting gated studies via DICOM and reloading doesn't work. May be an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
 * help works in cygwin setup, but not in installed package. Seems to know the
@@ -14,29 +12,21 @@ for next release?
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
  [x] noticed by Mark Huisman
 
-* view_thickness isn't read in from .xif file - gets overridden at some point
 * Gate picker -> multiple selection still screwed up
 
 
-to test on win32
+Mac OS X 
+--------
+* clicking on a .xif study loads up AMIDE, but without the file.
+[x] noticed by Eric Wolsztynski
+
+
+Win32
 ----------------
+* Copy to clipboard function in roi analysis widget doesn't work on win32
+  likely a win32 bug in gtk_clipboard on win32... (noticed by Joel Lazewatsky)
 * export pixel size text boxes get ignored - likely using wrong "update" event
   (noticed by Priti Madhav and Ian Miller)
-
-remaining things to do now that we're using gtk >= 2.10
-----------------------------------------------------
-1. combine open and import menu items onto same file dialog.
-	There's no reason this can't currently be done on the AMIDE side.  There's a function
-	for detecting if a file/directory is a XIF, and if it's not, we just hand it off to
-	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4) that allows
-	specifying our own filters for figuring out what goes in the lists... XIF 
-	directories need to go on the "files" side.  And also would need a drop down for 
-	switching from "guess" to "import particular", like in gimp.
-	- similarly, the export data set functions should work similarly, with an additional
-	option on whether or not we want the data resliced.
-
-windows todo
-------------
 * zdial on rendering doesn't work
 
 big things:
@@ -117,7 +107,6 @@ small things:
 small short range things
 --------------
 * try to change all dialog box buttons to verbs
-* start commenting the widgets, can run gtk-doc to generate documentation
 * add tooltips to everything....
 * add more help buttons to the dialogs 
 

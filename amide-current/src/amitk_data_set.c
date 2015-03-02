@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -73,6 +73,8 @@
 #include "libmdc_interface.h"
 
 
+//#define SLICE_TIMING
+#undef SLICE_TIMING
 
 /* external variables */
 AmitkColorTable amitk_modality_default_color_table[AMITK_MODALITY_NUM] = {
@@ -85,8 +87,11 @@ AmitkColorTable amitk_modality_default_color_table[AMITK_MODALITY_NUM] = {
 
 const gchar * amitk_interpolation_explanations[AMITK_INTERPOLATION_NUM] = {
   N_("interpolate using nearest neighbor (fast)"), 
-  N_("interpolate using trilinear interpolation (slow)")
+  N_("interpolate using trilinear interpolation (slow)"),
 };
+
+const gchar * amitk_rendering_explanation = 
+  N_("How data is aggregated, most important for thick slices. MPR (multiplanar reformation) combines by averaging. MIP (maximum intensity projection) combines by taking the maximum. MINIP (minimum intensity projection) combines by taking the minimum");
 
 
 const gchar * amitk_import_menu_names[] = {
@@ -203,6 +208,7 @@ enum {
   COLOR_TABLE_CHANGED,
   COLOR_TABLE_INDEPENDENT_CHANGED,
   INTERPOLATION_CHANGED,
+  RENDERING_CHANGED,
   SUBJECT_ORIENTATION_CHANGED,
   SUBJECT_SEX_CHANGED,
   CONVERSION_CHANGED,
@@ -223,6 +229,7 @@ static void          data_set_scale                  (AmitkSpace        *space,
 						      AmitkPoint        *ref_point,
 						      AmitkPoint        *scaling);
 static void          data_set_space_changed          (AmitkSpace        *space);
+static void          data_set_selection_changed      (AmitkObject       *object);
 static AmitkObject * data_set_copy                   (const AmitkObject *object);
 static void          data_set_copy_in_place          (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          data_set_write_xml              (const AmitkObject *object, 
@@ -242,6 +249,7 @@ static guint         data_set_signals[LAST_SIGNAL];
 
 
 static amide_data_t calculate_scale_factor(AmitkDataSet * ds);
+GList * slice_cache_trim(GList * slice_cache, gint max_size);
 
 GType amitk_data_set_get_type(void) {
 
@@ -281,6 +289,7 @@ static void data_set_class_init (AmitkDataSetClass * class) {
   space_class->space_scale = data_set_scale;
   space_class->space_changed = data_set_space_changed;
 
+  object_class->object_selection_changed = data_set_selection_changed;
   object_class->object_copy = data_set_copy;
   object_class->object_copy_in_place = data_set_copy_in_place;
   object_class->object_write_xml = data_set_write_xml;
@@ -340,6 +349,13 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, interpolation_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[RENDERING_CHANGED] =
+    g_signal_new ("rendering_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, rendering_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[SUBJECT_ORIENTATION_CHANGED] =
@@ -454,6 +470,8 @@ static void data_set_init (AmitkDataSet * data_set) {
 
   data_set->inversion_time = NAN; /* unknown */
   data_set->echo_time = NAN; /* unknown */
+  data_set->diffusion_b_value = NAN; /* unknown */
+  data_set->diffusion_direction = zero_point;
 
   data_set->view_start_gate = 0;
   data_set->view_end_gate = 0;
@@ -466,10 +484,10 @@ static void data_set_init (AmitkDataSet * data_set) {
     data_set->color_table_independent[i_view_mode] = FALSE;
   }
   data_set->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  data_set->rendering = AMITK_RENDERING_MPR;
   data_set->subject_orientation = AMITK_SUBJECT_ORIENTATION_UNKNOWN;
   data_set->subject_sex = AMITK_SUBJECT_SEX_UNKNOWN;
   data_set->slice_cache = NULL;
-  data_set->max_slice_cache_size = 6;
   data_set->slice_parent = NULL;
 
   for (i_window=0; i_window < AMITK_WINDOW_NUM; i_window++)
@@ -489,6 +507,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->subject_dob = NULL;
   amitk_data_set_set_subject_dob(data_set, NULL);
 
+  data_set->series_number = 1;
   data_set->dicom_image_type = NULL;
 
   data_set->instance_number=0;
@@ -618,6 +637,23 @@ static void data_set_space_changed(AmitkSpace * space) {
     AMITK_SPACE_CLASS(parent_class)->space_changed (space);
 }
 
+static void data_set_selection_changed(AmitkObject * object) {
+
+  AmitkDataSet * data_set;
+
+  g_return_if_fail(AMITK_IS_DATA_SET(object));
+  data_set = AMITK_DATA_SET(object);
+
+
+  if (!amitk_object_get_selected(object, AMITK_SELECTION_ANY)) {
+    data_set->slice_cache = 
+      slice_cache_trim(data_set->slice_cache, AMITK_DATA_SET_MIN_LOCAL_CACHE_SIZE);
+  }
+
+  return;
+}
+
+
 static AmitkObject * data_set_copy (const AmitkObject * object) {
 
   AmitkDataSet * copy;
@@ -654,6 +690,7 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   amitk_data_set_set_subject_name(dest_ds, AMITK_DATA_SET_SUBJECT_NAME(src_object));
   amitk_data_set_set_subject_id(dest_ds, AMITK_DATA_SET_SUBJECT_ID(src_object));
   amitk_data_set_set_subject_dob(dest_ds, AMITK_DATA_SET_SUBJECT_DOB(src_object));
+  amitk_data_set_set_series_number(dest_ds, AMITK_DATA_SET_SERIES_NUMBER(src_object));
   amitk_data_set_set_dicom_image_type(dest_ds, AMITK_DATA_SET_DICOM_IMAGE_TYPE(src_object));
   amitk_data_set_set_modality(dest_ds, AMITK_DATA_SET_MODALITY(src_object));
   dest_ds->voxel_size = AMITK_DATA_SET_VOXEL_SIZE(src_object);
@@ -693,12 +730,15 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   dest_ds->displayed_cylinder_unit = AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(src_object);
   dest_ds->inversion_time = AMITK_DATA_SET_INVERSION_TIME(src_object);
   dest_ds->echo_time = AMITK_DATA_SET_ECHO_TIME(src_object);
+  dest_ds->diffusion_b_value = AMITK_DATA_SET_DIFFUSION_B_VALUE(src_object);
+  dest_ds->diffusion_direction = AMITK_DATA_SET_DIFFUSION_DIRECTION(src_object);
 
   for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
     amitk_data_set_set_color_table(dest_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(src_object, i_view_mode));
   for (i_view_mode=AMITK_VIEW_MODE_LINKED_2WAY; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
     amitk_data_set_set_color_table_independent(dest_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(src_object, i_view_mode));
   amitk_data_set_set_interpolation(dest_ds, AMITK_DATA_SET_INTERPOLATION(src_object));
+  amitk_data_set_set_rendering(dest_ds, AMITK_DATA_SET_RENDERING(src_object));
   amitk_data_set_set_subject_orientation(dest_ds, AMITK_DATA_SET_SUBJECT_ORIENTATION(src_object));
   amitk_data_set_set_subject_sex(dest_ds, AMITK_DATA_SET_SUBJECT_SEX(src_object));
   amitk_data_set_set_thresholding(dest_ds,AMITK_DATA_SET_THRESHOLDING(src_object));
@@ -774,6 +814,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   xml_save_string(nodes, "subject_name", AMITK_DATA_SET_SUBJECT_NAME(ds));
   xml_save_string(nodes, "subject_id", AMITK_DATA_SET_SUBJECT_ID(ds));
   xml_save_string(nodes, "subject_dob", AMITK_DATA_SET_SUBJECT_DOB(ds));
+  xml_save_int(nodes, "series_number", AMITK_DATA_SET_SERIES_NUMBER(ds));
   xml_save_string(nodes, "subject_dicom_image_type", AMITK_DATA_SET_DICOM_IMAGE_TYPE(ds));
   xml_save_string(nodes, "modality", amitk_modality_get_name(AMITK_DATA_SET_MODALITY(ds)));
   amitk_point_write_xml(nodes,"voxel_size", AMITK_DATA_SET_VOXEL_SIZE(ds));
@@ -834,6 +875,8 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
 
   xml_save_data(nodes, "inversion_time", AMITK_DATA_SET_INVERSION_TIME(ds));
   xml_save_data(nodes, "echo_time", AMITK_DATA_SET_ECHO_TIME(ds));
+  xml_save_data(nodes, "diffusion_b_value", AMITK_DATA_SET_DIFFUSION_B_VALUE(ds));
+  amitk_point_write_xml(nodes, "diffusion_direction", AMITK_DATA_SET_DIFFUSION_DIRECTION(ds));
 		  
   xml_save_time(nodes, "scan_start", AMITK_DATA_SET_SCAN_START(ds));
   xml_save_times(nodes, "frame_duration", ds->frame_duration, AMITK_DATA_SET_NUM_FRAMES(ds));
@@ -849,6 +892,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   }
 
   xml_save_string(nodes, "interpolation", amitk_interpolation_get_name(AMITK_DATA_SET_INTERPOLATION(ds)));
+  xml_save_string(nodes, "rendering", amitk_rendering_get_name(AMITK_DATA_SET_RENDERING(ds)));
   xml_save_string(nodes, "subject_orientation", amitk_subject_orientation_get_name(AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)));
   xml_save_string(nodes, "subject_sex", amitk_subject_sex_get_name(AMITK_DATA_SET_SUBJECT_SEX(ds)));
   xml_save_string(nodes, "thresholding", amitk_thresholding_get_name(AMITK_DATA_SET_THRESHOLDING(ds)));
@@ -884,6 +928,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   AmitkThresholding i_thresholding;
   AmitkThresholdStyle i_threshold_style;
   AmitkInterpolation i_interpolation;
+  AmitkRendering i_rendering;
   AmitkSubjectOrientation i_subject_orientation;
   AmitkSubjectSex i_subject_sex;
   AmitkScalingType i_scaling_type;
@@ -924,6 +969,8 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
     amitk_data_set_set_subject_dob(ds, temp_string);
     g_free(temp_string);
   }
+
+  ds->series_number = xml_get_int(nodes,"series_number", &error_buf);
 
   if (xml_node_exists(nodes, "dicom_image_type")) {
     temp_string = xml_get_string(nodes, "dicom_image_type");
@@ -1083,6 +1130,8 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 
   ds->inversion_time = xml_get_data(nodes, "inversion_time", &error_buf);
   ds->echo_time = xml_get_data(nodes, "echo_time", &error_buf);
+  ds->diffusion_b_value = xml_get_data(nodes, "diffusion_b_value", &error_buf);
+  ds->diffusion_direction = amitk_point_read_xml(nodes, "diffusion_direction", &error_buf);
 
   temp_string = xml_get_string(nodes, "conversion");
   if (temp_string != NULL) {
@@ -1144,6 +1193,13 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
     for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
       if (g_ascii_strcasecmp(temp_string, amitk_interpolation_get_name(i_interpolation)) == 0)
 	amitk_data_set_set_interpolation(ds, i_interpolation);
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "rendering");
+  if (temp_string != NULL)
+    for (i_rendering=0; i_rendering < AMITK_RENDERING_NUM; i_rendering++) 
+      if (g_ascii_strcasecmp(temp_string, amitk_rendering_get_name(i_rendering)) == 0)
+	amitk_data_set_set_rendering(ds, i_rendering);
   g_free(temp_string);
 
   temp_string = xml_get_string(nodes, "subject_orientation");
@@ -1209,6 +1265,7 @@ static void data_set_invalidate_slice_cache(AmitkDataSet * data_set) {
     amitk_objects_unref(data_set->slice_cache);
     data_set->slice_cache = NULL;
   }
+
 
   return;
 }
@@ -1407,6 +1464,7 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
 GList * amitk_data_set_import_file(AmitkImportMethod method, 
 				   int submethod,
 				   const gchar * filename,
+				   gchar ** pstudyname,
 				   AmitkPreferences * preferences,
 				   AmitkUpdateFunc update_func,
 				   gpointer update_data) {
@@ -1432,7 +1490,7 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
   g_return_val_if_fail(filename != NULL, NULL);
 
 #ifdef AMIDE_LIBMDC_SUPPORT
-  /* figure out if this is a Concorde Header file */
+  /* figure out if this is a Siemens/Concorde Header file */
   if (strstr(filename, ".hdr") != NULL) {
 
     /* try to see if a corresponding raw file exists */
@@ -1567,7 +1625,7 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
   switch (method) {
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   case AMITK_IMPORT_METHOD_DCMTK:
-    import_data_sets = dcmtk_import(filename, preferences, update_func, update_data);
+    import_data_sets = dcmtk_import(filename, pstudyname, preferences, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBECAT_SUPPORT      
@@ -2421,6 +2479,18 @@ void amitk_data_set_set_interpolation(AmitkDataSet * ds, const AmitkInterpolatio
   return;
 }
 
+void amitk_data_set_set_rendering(AmitkDataSet * ds, const AmitkRendering new_rendering) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->rendering != new_rendering) {
+    ds->rendering = new_rendering;
+    g_signal_emit(G_OBJECT (ds), data_set_signals[RENDERING_CHANGED], 0);
+  }
+
+  return;
+}
+
 void amitk_data_set_set_subject_orientation(AmitkDataSet * ds, const AmitkSubjectOrientation subject_orientation) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
@@ -2527,6 +2597,18 @@ void amitk_data_set_set_subject_dob(AmitkDataSet * ds, const gchar * new_dob) {
     g_strstrip(ds->subject_dob); /* removes trailing and leading white space */
   } else {
     ds->subject_dob = g_strdup(_("unknown"));
+  }
+
+  return;
+}
+
+/* sets the series number - parameter used by dicom */
+void amitk_data_set_set_series_number(AmitkDataSet * ds, const gint new_series_number) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->series_number != new_series_number) {
+    ds->series_number = new_series_number;
   }
 
   return;
@@ -2741,6 +2823,16 @@ void amitk_data_set_set_inversion_time(AmitkDataSet * ds, amide_time_t new_inver
 void amitk_data_set_set_echo_time(AmitkDataSet * ds, amide_time_t new_echo_time) {
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   ds->echo_time = new_echo_time;
+}
+
+void amitk_data_set_set_diffusion_b_value(AmitkDataSet * ds, gdouble b_value) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  ds->diffusion_b_value = b_value;
+}
+
+void amitk_data_set_set_diffusion_direction(AmitkDataSet * ds, AmitkPoint direction) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  ds->diffusion_direction = direction;
 }
 
 void amitk_data_set_set_threshold_window(AmitkDataSet * ds, 
@@ -5355,6 +5447,19 @@ GList * amitk_data_sets_remove_with_slice_parent(GList * slices,const AmitkDataS
   return slices;
 }
 
+/* trim cache slice size down to max_size, removes from end */
+GList * slice_cache_trim(GList * slice_cache, gint max_size) {
+
+  GList * last;
+
+  while (g_list_length(slice_cache) > max_size) {
+    last = g_list_last(slice_cache);
+    slice_cache = g_list_remove_link(slice_cache, last);
+    amitk_objects_unref(last);
+  }
+
+  return slice_cache;
+}
 
 /* several things cause slice caches to get invalidated, so they don't need to be
    explicitly checked here
@@ -5365,7 +5470,6 @@ GList * amitk_data_sets_remove_with_slice_parent(GList * slices,const AmitkDataS
    4. Any change to the raw data
 
 */
-
 static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * parent_ds, 
 					const amide_time_t start, const amide_time_t duration,
 					const amide_intpoint_t gate,
@@ -5398,7 +5502,8 @@ static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * pare
 		  dim.z = dim.t = dim.g = 1;
 		  if (VOXEL_EQUAL(dim, AMITK_DATA_SET_DIM(slice))) 
 		    if (AMITK_DATA_SET_INTERPOLATION(slice) == AMITK_DATA_SET_INTERPOLATION(parent_ds)) 
-		      return slice;
+		      if (AMITK_DATA_SET_RENDERING(slice) == AMITK_DATA_SET_RENDERING(parent_ds)) 
+			return slice;
 		}
 	  }
   }
@@ -5430,16 +5535,13 @@ GList * amitk_data_sets_get_slices(GList * objects,
 
 
   GList * slices=NULL;
-  GList * last;
-  GList * remove;
   AmitkDataSet * local_slice;
   AmitkDataSet * canvas_slice=NULL;
   AmitkDataSet * slice;
   AmitkDataSet * parent_ds;
   gint num_data_sets=0;
-  gint cache_size;
 
-#ifdef AMIDE_COMMENT_OUT
+#ifdef SLICE_TIMING
   struct timeval tv1;
   struct timeval tv2;
   gdouble time1;
@@ -5464,7 +5566,7 @@ GList * amitk_data_sets_get_slices(GList * objects,
 
       local_slice = slice_cache_find(parent_ds->slice_cache, parent_ds, start, duration, 
 				     gate, pixel_size, view_volume);
-      
+
       if (canvas_slice != NULL) {
 	slice = amitk_object_ref(canvas_slice);
       } else if (local_slice != NULL) {
@@ -5482,32 +5584,19 @@ GList * amitk_data_sets_get_slices(GList * objects,
       if (local_slice == NULL) {
 	parent_ds->slice_cache = g_list_prepend(parent_ds->slice_cache, amitk_object_ref(slice));
 
-	cache_size = g_list_length(parent_ds->slice_cache);
-	if (cache_size > parent_ds->max_slice_cache_size) {
-	  last = g_list_nth(parent_ds->slice_cache, parent_ds->max_slice_cache_size-1);
-	  remove = last->next;
-	  last->next = NULL;
-	  remove->prev = NULL;
-	  amitk_objects_unref(remove);
-	}
+	/* regulate the size of the local per dataset cache */
+	parent_ds->slice_cache = 
+	  slice_cache_trim(parent_ds->slice_cache, AMITK_DATA_SET_MAX_LOCAL_CACHE_SIZE);
       }
     }
     objects = objects->next;
   }
 
-  /* regulate the size of the caches */
-  if (pslice_cache != NULL) {
-    cache_size = g_list_length(*pslice_cache);
-    if (cache_size > max_slice_cache_size) {
-      last = g_list_nth(*pslice_cache, max_slice_cache_size-1);
-      remove = last->next;
-      last->next = NULL;
-      remove->prev = NULL;
-      amitk_objects_unref(remove);
-    }
-  }
+  /* regulate the size of the global cache */
+  if (pslice_cache != NULL) 
+    *pslice_cache = slice_cache_trim(*pslice_cache, max_slice_cache_size);
 
-#ifdef AMIDE_COMMENT_OUT
+#ifdef SLICE_TIMING
   /* and wrapup our timing */
   gettimeofday(&tv2, NULL);
   time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
@@ -5754,6 +5843,18 @@ const gchar * amitk_interpolation_get_name(const AmitkInterpolation interpolatio
 
   enum_class = g_type_class_ref(AMITK_TYPE_INTERPOLATION);
   enum_value = g_enum_get_value(enum_class, interpolation);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_rendering_get_name(const AmitkRendering rendering) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_RENDERING);
+  enum_value = g_enum_get_value(enum_class, rendering);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

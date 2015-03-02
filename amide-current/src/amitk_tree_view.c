@@ -1,7 +1,7 @@
 /* amitk_tree_view.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -393,7 +393,7 @@ static void tree_view_popup_roi_menu(AmitkTreeView * tree_view, AmitkObject * pa
   menu = gtk_menu_new();
 
   for (i_roi_type=0; i_roi_type<AMITK_ROI_TYPE_NUM; i_roi_type++) {
-    menuitem = gtk_menu_item_new_with_label(amitk_roi_menu_explanation[i_roi_type]);
+    menuitem = gtk_menu_item_new_with_label(_(amitk_roi_menu_explanation[i_roi_type]));
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     g_object_set_data(G_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
     g_object_set_data(G_OBJECT(menuitem), "parent", parent_object);
@@ -1080,7 +1080,7 @@ static void tree_view_drag_data_received (GtkWidget        *widget,
       if ((import_filename = g_filename_from_uri(uris[uris_index], NULL, NULL)) == NULL)
 	g_warning("Could not generate filename for URI: %s", uris[uris_index]);
       else {
-	dropped_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, import_filename,
+	dropped_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, import_filename, NULL,
 						tree_view->preferences, amitk_progress_dialog_update, tree_view->progress_dialog);
 	g_free(import_filename);
 	if (dropped_ds != NULL) {

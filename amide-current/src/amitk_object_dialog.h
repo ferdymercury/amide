@@ -1,7 +1,7 @@
 /* amitk_object_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -75,6 +75,7 @@ struct _AmitkObjectDialog
   GtkWidget * cylinder_unit_menu;
   GtkWidget * creation_date_entry;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
+  GtkWidget * rendering_menu;
   GtkWidget * conversion_button[AMITK_CONVERSION_NUM];
 
   GtkWidget * center_spin[AMITK_AXIS_NUM];

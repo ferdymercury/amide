@@ -1,7 +1,7 @@
 /* tb_math.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2011 Andy Loening
+ * Copyright (C) 2006-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -525,7 +525,7 @@ void tb_math(AmitkStudy * study, GtkWindow * parent) {
   count = amitk_data_sets_count(data_sets, TRUE);
   if (data_sets != NULL) data_sets = amitk_objects_unref(data_sets);
 
-  tb_math->page[INTRO_PAGE]= gtk_label_new((count >= 2) ? start_page_text : data_set_error_page_text);
+  tb_math->page[INTRO_PAGE]= gtk_label_new((count >= 2) ? _(start_page_text) : _(data_set_error_page_text));
   gtk_widget_set_size_request(tb_math->page[INTRO_PAGE],LABEL_WIDTH, -1);
   gtk_label_set_line_wrap(GTK_LABEL(tb_math->page[INTRO_PAGE]), TRUE);
   gtk_assistant_append_page(GTK_ASSISTANT(tb_math->dialog), tb_math->page[INTRO_PAGE]);

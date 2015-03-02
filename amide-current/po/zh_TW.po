@@ -1,0 +1,4935 @@
+# Traditional Chinese translation for Amide.
+# Copyright (C) Andreas Loening (msgids)
+# This file is distributed under the same license as the amide package.
+# Wales Wang <wormwang@yahoo.com>, 2003.
+# Wei-Lun Chao <william.chao@ossii.com.tw>, 2011.
+#
+#: ../src/amitk_study.c:967 ../src/amitk_study.c:1036
+msgid ""
+msgstr ""
+"Project-Id-Version: amide 1.0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-11-12 15:17+0800\n"
+"PO-Revision-Date: 2011-11-12 15:20+0800\n"
+"Last-Translator: Wei-Lun Chao <william.chao@ossii.com.tw>\n"
+"Language-Team: Chinese (traditional) <zh-l10n@linux.org.tw>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../etc/amide.desktop.in.h:1
+msgid "A Medical Image Data Examiner"
+msgstr "醫學影像資料審視器"
+
+#: ../etc/amide.desktop.in.h:2
+msgid "Amide"
+msgstr "Amide"
+
+#: ../etc/amide.desktop.in.h:3
+msgid "Medical Image Examiner"
+msgstr "醫學影像審視器"
+
+#: ../src/alignment_mutual_information.c:308
+#, c-format
+msgid "Maximizing the mutual information"
+msgstr "將交互資訊放到最大"
+
+#: ../src/alignment_procrustes.c:165
+#, c-format
+msgid "Cannot perform an alignment with %d points, need at least 3"
+msgstr "無法以 %d 點像素施行對齊，需要至少 3 點"
+
+#: ../src/alignment_procrustes.c:210
+#, c-format
+msgid "points lists not completely used in %s at %d"
+msgstr "%s 像素清單中 %d 未完全用完"
+
+#: ../src/alignment_procrustes.c:226 ../src/fads.c:148 ../src/fads.c:292
+#, c-format
+msgid "SV decomp returned error: %s"
+msgstr "SV 解碼發生錯誤: %s"
+
+#: ../src/alignment_procrustes.c:232
+#, c-format
+msgid "transpose returned error: %s"
+msgstr "轉換發生錯誤: %s"
+
+#: ../src/alignment_procrustes.c:238
+#, c-format
+msgid "LU decomp returned error: %s"
+msgstr "LU 解碼發生錯誤: %s"
+
+#: ../src/amide.c:47
+msgid "_Study"
+msgstr "檢驗(_S)"
+
+#: ../src/amide.c:48
+msgid "Selected _Data Sets"
+msgstr "所選資料集(_D)"
+
+#: ../src/amide.c:49
+msgid "Selected _ROIs"
+msgstr "所選 _ROIs"
+
+#: ../src/amide.c:50
+msgid "Selected _Alignment Points"
+msgstr "所選對齊點(_A)"
+
+#: ../src/amide.c:115
+msgid "This version of AMIDE has been compiled without the following functionality:"
+msgstr "這個版本的 AMIDE 已被編譯而排除下列功能："
+
+#: ../src/amide.c:118
+msgid "Line profiles, factor analysis, some filtering, and some alignment (missing libgsl)."
+msgstr "曲線輪廓、因素分析、某些篩選器，以及某些對齊性 (缺少 libgsl)。"
+
+#: ../src/amide.c:121
+msgid "Reading of most medical imaging formats except raw and DICOM (missing libmdc)."
+msgstr "讀取大多數醫學成像格式，除了 raw 和 DICOM (缺少 libmdc)。"
+
+#: ../src/amide.c:124
+msgid "Reading of most DICOM files (missing libdcmdata/dcmtk)."
+msgstr "讀取大多數 DICOM 檔案 (缺少 libdcmdata/dcmtk)。"
+
+#: ../src/amide.c:127
+msgid "Volume rendering (missing libvolpack)."
+msgstr "體積潤算 (缺少 libvolpack)。"
+
+#: ../src/amide.c:130
+msgid "Saving MPEG output (missing ffmpeg and missing libfame)."
+msgstr "儲存 MPEG 輸出 (缺少 ffmpeg 和缺少 libfame)。"
+
+#: ../src/amide.c:182
+msgid "[FILE1] [FILE2] ..."
+msgstr "[檔案一] [檔案二]…"
+
+#: ../src/amide.c:242
+#, c-format
+msgid "%s does not exist"
+msgstr "%s 不存在"
+
+#: ../src/amide.c:246
+#, c-format
+msgid "Failed to load in as XIF file: %s"
+msgstr "載入為 XIF 檔案時失敗：%s"
+
+#: ../src/amide.c:270
+#, c-format
+msgid "%s is not an AMIDE study or importable file type"
+msgstr "%s 不是一個 AMIDE 檢驗或是可匯入的檔案類型"
+
+#: ../src/amide.c:272
+#, c-format
+msgid "%s is not an AMIDE XIF Directory"
+msgstr "%s 不是一個 AMIDE XIF 目錄"
+
+#: ../src/amide_gnome.c:85
+#, c-format
+msgid "Unknown internal error while displaying this location."
+msgstr "顯示這個位置時發生不明內部錯誤。"
+
+#: ../src/amide_gnome.c:92
+#, c-format
+msgid "The specified location is invalid."
+msgstr "指定的位置無效。"
+
+#: ../src/amide_gnome.c:99
+#, c-format
+msgid "There was an error parsing the default action command associated with this location."
+msgstr "剖析與這個位置相關聯的預設動作命令時出現了錯誤。"
+
+#: ../src/amide_gnome.c:107
+#, c-format
+msgid "There was an error launching the default action command associated with this location."
+msgstr "啟動與這個位置相關聯的預設動作命令時出現了錯誤。"
+
+#: ../src/amide_gnome.c:115
+#, c-format
+msgid "There is no default action associated with this location."
+msgstr "沒有任何與這個位置相關聯的預設動作命令。"
+
+#: ../src/amide_gnome.c:122
+#, c-format
+msgid "The default action does not support this protocol."
+msgstr "預設的動作不支援這個協定。"
+
+#: ../src/amide_gnome.c:129
+#, c-format
+msgid "The request was cancelled."
+msgstr "要求被取消了。"
+
+#: ../src/amide_gnome.c:139
+#, c-format
+msgid "The host \"%s\" could not be found."
+msgstr "找不到主機「%s」。"
+
+#: ../src/amide_gnome.c:145
+#, c-format
+msgid "The host could not be found."
+msgstr "找不到主機。"
+
+#: ../src/amide_gnome.c:156
+#, c-format
+msgid "The location or file could not be found."
+msgstr "找不到位置或檔案。"
+
+#: ../src/amide_gnome.c:163
+#, c-format
+msgid "The login has failed."
+msgstr "登入已失敗。"
+
+#: ../src/amide_gnome.c:354
+#, c-format
+msgid "Unable to find the app or global HELP domain"
+msgstr "無法找到應用軟體或全域說明功能"
+
+#: ../src/amide_gnome.c:391
+#, c-format
+msgid "Unable to find the help files in any of the following directories,  or these are not valid directories: %s :  Please check your installation"
+msgstr "在下列任何目錄中無法找到說明檔案，或者是這些無效目錄：%s： 請檢查您的安裝"
+
+#: ../src/amitk_canvas.c:72
+msgid "A"
+msgstr "A"
+
+#: ../src/amitk_canvas.c:72
+msgid "P"
+msgstr "P"
+
+#: ../src/amitk_canvas.c:72
+msgid "L"
+msgstr "L"
+
+#: ../src/amitk_canvas.c:72
+msgid "R"
+msgstr "R"
+
+#: ../src/amitk_canvas.c:72
+msgid "S"
+msgstr "S"
+
+#: ../src/amitk_canvas.c:72
+msgid "I"
+msgstr "I"
+
+#: ../src/amitk_canvas.c:727
+msgid "ROI Depth Selection"
+msgstr "ROI 深度選擇"
+
+#: ../src/amitk_canvas.c:741
+msgid "Please pick depth of ROI (mm):"
+msgstr "請揀取 ROI 的深度 (公釐)："
+
+#: ../src/amitk_canvas.c:843
+msgid "Parent of isocontour not currently displayed, can't draw isocontour"
+msgstr "目前並未顯示輪廓面的上層，無法繪製輪廓面"
+
+#: ../src/amitk_canvas.c:860
+msgid "No data set found to draw isocontour on"
+msgstr "找不到任何資料集用以繪製輪廓面"
+
+#: ../src/amitk_canvas.c:877
+#, c-format
+msgid "designated voxel not in data set %s"
+msgstr "指定的體素不存在於資料集 %s"
+
+#. pop up dialog to let user pick isocontour values, etc. and for any warning messages
+#: ../src/amitk_canvas.c:891
+msgid "Isocontour Value Selection"
+msgstr "輪廓面數值選擇"
+
+#: ../src/amitk_canvas.c:913
+#, c-format
+msgid ""
+"Multiple data frames are currently being shown from: %s\n"
+"The isocontour will only be drawn over frame %d"
+msgstr ""
+"多重資料影格目前顯示自：%s\n"
+"輪廓面將只被繪製於影格 %d"
+
+#: ../src/amitk_canvas.c:925
+#, c-format
+msgid ""
+"Multiple gates are currently being shown from: %s\n"
+"The isocontour will only be drawn over gate %d"
+msgstr ""
+"多重閘口目前顯示自：%s\n"
+"輪廓面將只被繪製於閘口 %d"
+
+#. the spin buttons
+#: ../src/amitk_canvas.c:945
+msgid "Min:"
+msgstr "最小："
+
+#: ../src/amitk_canvas.c:961
+msgid "Max:"
+msgstr "最大："
+
+#. radio buttons to choose the isocontour type
+#: ../src/amitk_canvas.c:980
+msgid "Above Min"
+msgstr "最小以上"
+
+#: ../src/amitk_canvas.c:981
+msgid "Below Max"
+msgstr "最大以下"
+
+#: ../src/amitk_canvas.c:982
+msgid "Between Min/Max"
+msgstr "在最小/最大之間"
+
+#: ../src/amitk_canvas.c:1048
+msgid "Parent of roi not currently displayed, can't draw freehand roi"
+msgstr "目前並未顯示 roi 的上層，無法手繪 roi"
+
+#: ../src/amitk_canvas.c:1065
+msgid "No data set found to draw freehand roi on"
+msgstr "找不到任何資料集用以手繪 roi"
+
+#. pop up dialog to let user pick isocontour values, etc. and for any warning messages
+#: ../src/amitk_canvas.c:1077
+msgid "Freehand ROI Parameters"
+msgstr "手繪 ROI 參數"
+
+#: ../src/amitk_canvas.c:1096
+#, c-format
+msgid "Voxel Size %s"
+msgstr "體素大小 %s"
+
+#: ../src/amitk_canvas.c:1658 ../src/amitk_canvas.c:2219
+#: ../src/amitk_canvas.c:2269 ../src/amitk_canvas.c:2277
+msgid "The active data set is not visible"
+msgstr "作用中資料集是不可見的"
+
+#: ../src/amitk_canvas.c:3225
+msgid "Canvas has no style?\n"
+msgstr "畫布沒有任何樣式？\n"
+
+#: ../src/amitk_color_table.c:37
+msgid "black/white linear"
+msgstr "黑/白線性"
+
+#: ../src/amitk_color_table.c:38
+msgid "white/black linear"
+msgstr "白/黑線性"
+
+#: ../src/amitk_color_table.c:39
+msgid "black/white/black"
+msgstr "黑/白/黑"
+
+#: ../src/amitk_color_table.c:40
+msgid "white/black/white"
+msgstr "白/黑/白"
+
+#: ../src/amitk_color_table.c:41
+msgid "red temperature"
+msgstr "紅色溫度"
+
+#: ../src/amitk_color_table.c:42
+msgid "inverse red temp."
+msgstr "紅色逆溫度"
+
+#: ../src/amitk_color_table.c:43
+msgid "blue temperature"
+msgstr "藍色溫度"
+
+#: ../src/amitk_color_table.c:44
+msgid "inv. blue temp."
+msgstr "藍色逆溫度"
+
+#: ../src/amitk_color_table.c:45
+msgid "green temperature"
+msgstr "綠色溫度"
+
+#: ../src/amitk_color_table.c:46
+msgid "inv. green temp."
+msgstr "綠色逆溫度"
+
+#: ../src/amitk_color_table.c:47
+msgid "hot metal"
+msgstr "熱金屬色"
+
+#: ../src/amitk_color_table.c:48
+msgid "inv. hot metal"
+msgstr "熱逆金屬色"
+
+#: ../src/amitk_color_table.c:49
+msgid "hot metal contour"
+msgstr "熱金屬輪廓"
+
+#: ../src/amitk_color_table.c:50
+msgid "inv. hot metal c."
+msgstr "熱逆金屬輪廓"
+
+#: ../src/amitk_color_table.c:51
+msgid "hot blue"
+msgstr "熱藍色"
+
+#: ../src/amitk_color_table.c:52
+msgid "inverse hot blue"
+msgstr "熱逆藍色"
+
+#: ../src/amitk_color_table.c:53
+msgid "hot green"
+msgstr "熱綠色"
+
+#: ../src/amitk_color_table.c:54
+msgid "inverse hot green"
+msgstr "熱逆綠色"
+
+#: ../src/amitk_color_table.c:55
+msgid "spectrum"
+msgstr "光譜"
+
+#: ../src/amitk_color_table.c:56
+msgid "inverse spectrum"
+msgstr "逆光譜"
+
+#: ../src/amitk_color_table.c:57
+msgid "NIH + white"
+msgstr "NIH + 白色"
+
+#: ../src/amitk_color_table.c:58
+msgid "inv. NIH + white"
+msgstr "NIH + 逆白色"
+
+#: ../src/amitk_color_table.c:59
+msgid "NIH"
+msgstr "NIH"
+
+#: ../src/amitk_color_table.c:60
+msgid "inverse NIH"
+msgstr "逆 NIH"
+
+#: ../src/amitk_common.c:41 ../src/tb_roi_analysis.c:94
+msgid "Min"
+msgstr "最小"
+
+#: ../src/amitk_common.c:42 ../src/tb_roi_analysis.c:95
+msgid "Max"
+msgstr "最大"
+
+#: ../src/amitk_common.c:45 ../src/amitk_object_dialog.c:705
+#: ../src/amitk_threshold.c:1288
+msgid "Center"
+msgstr "中心"
+
+#: ../src/amitk_common.c:46 ../src/amitk_threshold.c:1289
+msgid "Width"
+msgstr "寬度"
+
+#. N_("Bone"),
+#. N_("Soft Tissue")
+#: ../src/amitk_common.c:53
+msgid "Abdomen"
+msgstr "腹部"
+
+#: ../src/amitk_common.c:54
+msgid "Brain"
+msgstr "腦部"
+
+#: ../src/amitk_common.c:55
+msgid "Extremities"
+msgstr "四肢"
+
+#: ../src/amitk_common.c:56
+msgid "Liver"
+msgstr "肝臟"
+
+#: ../src/amitk_common.c:57
+msgid "Lung"
+msgstr "肺臟"
+
+#: ../src/amitk_common.c:58
+msgid "Pelvis, soft tissue"
+msgstr "骨盆，軟組織"
+
+#: ../src/amitk_common.c:59
+msgid "Skull Base"
+msgstr "顱底"
+
+#: ../src/amitk_common.c:60
+msgid "Spine A"
+msgstr "脊柱 A"
+
+#: ../src/amitk_common.c:61
+msgid "Spine B"
+msgstr "脊柱 B"
+
+#: ../src/amitk_common.c:62
+msgid "Thorax, soft tissue"
+msgstr "胸腔，軟組織"
+
+#: ../src/amitk_data_set.c:87 ../src/ui_study.c:402
+msgid "interpolate using nearest neighbor (fast)"
+msgstr "使用最近的鄰點添寫 (快速)"
+
+#: ../src/amitk_data_set.c:88 ../src/ui_study.c:403
+msgid "interpolate using trilinear interpolation (slow)"
+msgstr "使用三線內插法添寫 (緩慢)"
+
+#. place holder for AMITK_IMPORT_METHOD_GUESS
+#: ../src/amitk_data_set.c:94
+msgid "_Raw Data"
+msgstr "原始資料(_R)"
+
+#: ../src/amitk_data_set.c:96
+msgid "_DICOM via dcmtk"
+msgstr "_DICOM 透過 dcmtk"
+
+#: ../src/amitk_data_set.c:99
+msgid "_ECAT 6/7 via libecat"
+msgstr "_ECAT 6/7 透過 libecat"
+
+#: ../src/amitk_data_set.c:109
+msgid "Import file as raw data"
+msgstr "匯入原始資料檔案"
+
+#: ../src/amitk_data_set.c:111
+msgid "Import a DICOM file or directory file using the DCMTK library"
+msgstr "使用 DCMTK 函式庫匯入 DICOM 資料檔案"
+
+#: ../src/amitk_data_set.c:114
+msgid "Import a CTI 6.4 or 7.0 file using the libecat library"
+msgstr "使用 libecat 函式庫匯入 CTI 6.4 或 7.0 資料檔案"
+
+#: ../src/amitk_data_set.c:117
+msgid "Import via the (X)medcon library (libmdc)"
+msgstr "使用 (X)medcon 函式庫 (libmdc) 匯入"
+
+#: ../src/amitk_data_set.c:122
+msgid "Raw Data"
+msgstr "原始資料"
+
+#: ../src/amitk_data_set.c:124
+msgid "DICOM via dcmtk"
+msgstr "DICOM 透過 dcmtk"
+
+#: ../src/amitk_data_set.c:133
+msgid "Export file as raw data"
+msgstr "匯出原始資料檔案"
+
+#: ../src/amitk_data_set.c:135
+msgid "Export a DICOM file or directory file using the DCMTK library"
+msgstr "使用 DCMTK 函式庫匯出 DICOM 檔案或目錄檔案"
+
+#: ../src/amitk_data_set.c:138
+msgid "Export via the (X)medcon library (libmdc)"
+msgstr "使用 (X)medcon 函式庫 (libmdc) 匯出"
+
+#: ../src/amitk_data_set.c:143
+msgid "Direct"
+msgstr "直接"
+
+#: ../src/amitk_data_set.c:144
+msgid "%ID/cc"
+msgstr "%ID/cc"
+
+#: ../src/amitk_data_set.c:145
+msgid "SUV"
+msgstr "SUV"
+
+#: ../src/amitk_data_set.c:149
+msgid "MBq"
+msgstr "MBq"
+
+#: ../src/amitk_data_set.c:150
+msgid "mCi"
+msgstr "mCi"
+
+#: ../src/amitk_data_set.c:151
+msgid "uCi"
+msgstr "uCi"
+
+#: ../src/amitk_data_set.c:152
+msgid "nCi"
+msgstr "nCi"
+
+#: ../src/amitk_data_set.c:156
+msgid "Kg"
+msgstr "公斤"
+
+#: ../src/amitk_data_set.c:157
+msgid "g"
+msgstr "公克"
+
+#: ../src/amitk_data_set.c:158
+msgid "lbs"
+msgstr "英磅"
+
+#: ../src/amitk_data_set.c:159
+msgid "ounces"
+msgstr "盎司"
+
+#: ../src/amitk_data_set.c:163
+msgid "MBq/cc/Image Units"
+msgstr "MBq/cc/影像單位"
+
+#: ../src/amitk_data_set.c:164
+msgid "mCi/cc/Image Units"
+msgstr "mCi/cc/影像單位"
+
+#: ../src/amitk_data_set.c:165
+msgid "uCi/cc/Image Units"
+msgstr "uCi/cc/影像單位"
+
+#: ../src/amitk_data_set.c:166
+msgid "nCi/cc/Image Units"
+msgstr "nCi/cc/影像單位"
+
+#: ../src/amitk_data_set.c:167
+msgid "Image Units/(MBq/cc)"
+msgstr "影像單位/(MBq/cc)"
+
+#: ../src/amitk_data_set.c:168
+msgid "Image Units/(mCi/cc)"
+msgstr "影像單位/(mCi/cc)"
+
+#: ../src/amitk_data_set.c:169
+msgid "Image Units/(uCi/cc)"
+msgstr "影像單位/(uCi/cc)"
+
+#: ../src/amitk_data_set.c:170
+msgid "Image Units/(nCi/cc)"
+msgstr "影像單位/(nCi/cc)"
+
+#: ../src/amitk_data_set.c:174
+msgid "Single Scale Factor"
+msgstr "單一伸縮因子"
+
+#: ../src/amitk_data_set.c:175
+msgid "Per Frame Scale Factor"
+msgstr "各影格伸縮因子"
+
+#: ../src/amitk_data_set.c:176
+msgid "Per Plane Scale Factor"
+msgstr "各平面伸縮因子"
+
+#: ../src/amitk_data_set.c:177
+msgid "Single Scale Factor with Intercept"
+msgstr "單一伸縮因子並截取"
+
+#: ../src/amitk_data_set.c:178
+msgid "Per Frame Scale Factor with Intercept"
+msgstr "各影格伸縮因子並截取"
+
+#: ../src/amitk_data_set.c:179
+msgid "Per Plane Scale Factor with Intercept"
+msgstr "各平面伸縮因子並截取"
+
+#: ../src/amitk_data_set.c:943 ../src/libmdc_interface.c:415
+msgid "Voxel size X was read as 0, setting to 1 mm.  This may be an internationalization error."
+msgstr "體素大小 X 讀出值為 0, 設定為 1 公釐。 這也許是軟體國際化的錯誤。"
+
+#: ../src/amitk_data_set.c:947 ../src/libmdc_interface.c:419
+msgid "Voxel size Y was read as 0, setting to 1 mm.  This may be an internationalization error."
+msgstr "體素大小 Y 讀出值為 0, 設定為 1 公釐。 這也許是軟體國際化的錯誤。"
+
+#: ../src/amitk_data_set.c:951 ../src/libmdc_interface.c:423
+msgid "Voxel size Z was read as 0, setting to 1 mm.  This may be an internationalization error."
+msgstr "體素大小 Z 讀出值為 0, 設定為 1 公釐。 這也許是軟體國際化的錯誤。"
+
+#: ../src/amitk_data_set.c:990
+msgid "internal scaling factor returned NULL... either file is corrupt, or AMIDE has a bug"
+msgstr "內部縮放因子回傳空值… 若非檔案損壞，就是 AMIDE 有程式錯誤"
+
+#: ../src/amitk_data_set.c:1057
+msgid "wrong type found on internal scaling, converting to double"
+msgstr "於內部縮放伸縮找到錯誤類型，轉換到雙精確度"
+
+#: ../src/amitk_data_set.c:1062
+msgid "Couldn't allocate memory space for the new scaling factors"
+msgstr "無法配置記憶體空間給新的縮放因子"
+
+#: ../src/amitk_data_set.c:1367
+msgid "couldn't allocate memory space for the data set structure to hold data"
+msgstr "無法配置記憶體空間給資料集結構以存放資料"
+
+#: ../src/amitk_data_set.c:1375
+msgid "raw_data_read_file failed returning NULL data set"
+msgstr "raw_data_read_file 失敗並回傳空值資料集"
+
+#: ../src/amitk_data_set.c:1382
+msgid "couldn't allocate memory space for the frame duration info"
+msgstr "無法配置記憶體空間給影格的時間資訊"
+
+#: ../src/amitk_data_set.c:1478
+#, c-format
+msgid ""
+"File has incorrect permissions for reading\n"
+"Can I try changing access permissions on:\n"
+"   %s?"
+msgstr ""
+"檔案的讀取許可不正確\n"
+"我可以嘗試變更存取許可於：\n"
+"  %s？"
+
+#: ../src/amitk_data_set.c:1490 ../src/amitk_data_set.c:1497
+msgid "failed to change read permissions, you're probably not the owner"
+msgstr "變更讀取許可時失敗，您或許並非擁有者"
+
+#: ../src/amitk_data_set.c:1504
+msgid "failed to change read permissions on raw data file, you're probably not the owner"
+msgstr "變更原始資料檔案的讀取許可時失敗，您或許並非擁有者"
+
+#. unrecognized file type
+#: ../src/amitk_data_set.c:1558
+#, c-format
+msgid ""
+"Extension %s not recognized on file: %s\n"
+"Guessing File Type"
+msgstr ""
+"延伸檔名 %s 無法辨識於檔案：%s\n"
+"正在猜測檔案類型"
+
+#: ../src/amitk_data_set.c:1630
+#, c-format
+msgid "Data Set %s has erroneous voxel size of %gx%gx%g, setting to 1.0x1.0x1.0"
+msgstr "資料集 %s 有錯誤的體素大小 %gx%gx%g，設定為 1.0x1.0x1.0"
+
+#: ../src/amitk_data_set.c:1709
+msgid "Couldn't allocate memory space for row_data"
+msgstr "無法配置記憶體空間給原始資料(_D)"
+
+#: ../src/amitk_data_set.c:1715
+#, c-format
+msgid "couldn't open file for writing: %s"
+msgstr "無法開啟檔案以供寫入：%s"
+
+#: ../src/amitk_data_set.c:1721
+#, c-format
+msgid ""
+"Exporting Raw Data for:\n"
+"   %s"
+msgstr ""
+"匯出原始資料給：\n"
+"   %s"
+
+#: ../src/amitk_data_set.c:1749 ../src/dcmtk_interface.cc:2384
+#: ../src/libmdc_interface.c:1120
+#, c-format
+msgid "Error in generating resliced data, %dx%d != %dx%d"
+msgstr "產生重新切片的資料時發生錯誤，%dx%d != %dx%d"
+
+#: ../src/amitk_data_set.c:1792
+#, c-format
+msgid "incomplete save of raw data, wrote %lx (bytes), file: %s"
+msgstr "原始資料儲存不完整，已寫入 %lx (位元組)，檔案：%s"
+
+#: ../src/amitk_data_set.c:1900
+#, c-format
+msgid "Generating new data set"
+msgstr "產生新資料集"
+
+#: ../src/amitk_data_set.c:1914
+msgid "Could not allocate memory space for volume"
+msgstr "無法配置記憶體空間給體積"
+
+#: ../src/amitk_data_set.c:1947
+msgid "Failed to allocate export data set"
+msgstr "配置匯出資料集時失敗"
+
+#: ../src/amitk_data_set.c:2464 ../src/amitk_data_set.c:2485
+#: ../src/amitk_data_set.c:2507 ../src/amitk_data_set.c:2529
+msgid "unknown"
+msgstr "不明"
+
+#: ../src/amitk_data_set.c:2973
+#, c-format
+msgid ""
+"Calculating Max/Min Values for:\n"
+"   %s"
+msgstr ""
+"計算最大/最小值用於：\n"
+"  %s"
+
+#: ../src/amitk_data_set.c:4145
+#, c-format
+msgid ""
+"Generating projections of:\n"
+"   %s"
+msgstr ""
+"產生資料投影自：\n"
+"  %s"
+
+#: ../src/amitk_data_set.c:4176
+#, c-format
+msgid "couldn't allocate memory space for the projection, wanted %dx%dx%dx%dx%d elements"
+msgstr "無法配置記憶體空間給資料投影，需要 %dx%dx%dx%dx%d 元素"
+
+#. set a new name for this guy
+#: ../src/amitk_data_set.c:4400
+#, c-format
+msgid "%s, cropped"
+msgstr "%s，已裁剪"
+
+#: ../src/amitk_data_set.c:4411 ../src/amitk_data_set.c:4418
+msgid "couldn't allocate memory space for the cropped internal scaling structure"
+msgstr "無法配置記憶體空間給裁剪過的內部縮放伸縮結構"
+
+#: ../src/amitk_data_set.c:4424
+#, c-format
+msgid ""
+"Generating cropped version of:\n"
+"   %s"
+msgstr ""
+"產生裁剪版本自：\n"
+"   %s"
+
+#: ../src/amitk_data_set.c:4604
+msgid "couldn't allocate memory space for the cropped raw data set structure"
+msgstr "無法配置記憶體空間給裁剪過的原始資料集結構"
+
+#: ../src/amitk_data_set.c:4732
+msgid "Filtering: Failed to allocate wavetable and workspace"
+msgstr "篩選：無法配置音效表和工作區"
+
+#: ../src/amitk_data_set.c:4739
+msgid "couldn't allocate memory space for the subset structure"
+msgstr "無法配置記憶體空間給子集結構"
+
+#: ../src/amitk_data_set.c:4759
+msgid "Couldn't allocate memory space for the subset data"
+msgstr "無法配置記憶體空間給子集資料"
+
+#: ../src/amitk_data_set.c:4768 ../src/amitk_data_set.c:4950
+#, c-format
+msgid "Filtering Data Set:  %s"
+msgstr "篩選資料集： %s"
+
+#: ../src/amitk_data_set.c:4921
+msgid "data set z dimension to small for kernel, setting kernel dimension to 1"
+msgstr "資料集 z 維度對內核而言太小，設定內核維度到 1"
+
+#: ../src/amitk_data_set.c:4925
+msgid "data set y dimension to small for kernel, setting kernel dimension to 1"
+msgstr "資料集 y 維度對內核而言太小，設定內核維度到 1"
+
+#: ../src/amitk_data_set.c:4929
+msgid "data set x dimension to small for kernel, setting kernel dimension to 1"
+msgstr "資料集 x 維度對內核而言太小，設定內核維度到 1"
+
+#: ../src/amitk_data_set.c:4942
+msgid "couldn't allocate memory space for the internal raw data"
+msgstr "無法配置記憶體空間給內部原始資料"
+
+#. set a new name for this guy
+#: ../src/amitk_data_set.c:5129
+#, c-format
+msgid "%s, %s filtered"
+msgstr "%s，%s 已篩選"
+
+#: ../src/amitk_data_set.c:5137
+msgid "couldn't allocate memory space for the filtered raw data set structure"
+msgstr "無法配置記憶體空間給篩選過的原始資料集結構"
+
+#: ../src/amitk_data_set.c:5164
+msgid "failed to calculate 3D gaussian kernel"
+msgstr "計算立體 gaussian 內核時失敗"
+
+#: ../src/amitk_data_set.c:5585
+#, c-format
+msgid "Can't handle 'by frame' operations with data sets with unequal frame numbers, will use all frames of %s and the first gate of %s"
+msgstr "具備不對等影格數量的資料集，無法「依影格」計算處理，將使用 %s 的所有影格以及 %s 的第一個影格"
+
+#: ../src/amitk_data_set.c:5589
+#, c-format
+msgid "Output data set will have the same number of frames as %s"
+msgstr "輸出資料集將具有與 %s 相同的影格數量"
+
+#: ../src/amitk_data_set.c:5598
+#, c-format
+msgid "Can't handle studies with different numbers of gates, will use all gates of %s and the first gate of %s "
+msgstr "無法處理具備不同閘口數量的檢驗，將使用 %s 的所有閘口以及 %s 的第一個閘口"
+
+#: ../src/amitk_data_set.c:5606
+#, c-format
+msgid "couldn't allocate %d MB for the output_ds data set structure"
+msgstr "無法配置 %d MB 給 output_ds 資料集結構"
+
+#. set a new name for this guy
+#: ../src/amitk_data_set.c:5623
+#, c-format
+msgid "Result: %s %s %s"
+msgstr "結果：%s %s %s"
+
+#: ../src/amitk_data_set.c:5630
+#, c-format
+msgid "Performing math operation"
+msgstr "施行數學運算"
+
+#: ../src/amitk_data_set.c:5684
+msgid "couldn't generate slices from the data set..."
+msgstr "無法產生切片自資料集…"
+
+#: ../src/amitk_data_set_variable_type.c:110
+msgid "couldn't allocate memory space for the data set structure to hold distribution data"
+msgstr "無法配置記憶體空間給資料集結構以存放發布資料"
+
+#: ../src/amitk_data_set_variable_type.c:118
+#, c-format
+msgid ""
+"Generating distribution data for:\n"
+"   %s"
+msgstr ""
+"產生發布資料自：\n"
+"   %s"
+
+#: ../src/amitk_data_set_variable_type.c:233
+#, c-format
+msgid "couldn't allocate memory space for the slice, wanted %dx%dx%d elements"
+msgstr "無法配置記憶體空間給切片，需要 %dx%dx%d 元素"
+
+#: ../src/amitk_filter.c:61
+msgid "couldn't allocate memory space for the kernel structure"
+msgstr "無法配置記憶體空間給內核結構"
+
+#: ../src/amitk_filter.c:73
+msgid "Couldn't allocate memory space for the kernel data"
+msgstr "無法配置記憶體空間給內核資料"
+
+#: ../src/amitk_object.c:633
+msgid "AMIDE xml file doesn't appear to have a root."
+msgstr "AMIDE xml 檔案不具備根項目。"
+
+#: ../src/amitk_object_dialog.c:157
+#, c-format
+msgid "Copy of %s"
+msgstr "%s 的複本"
+
+#: ../src/amitk_object_dialog.c:238
+msgid "Basic Info"
+msgstr "基本資訊"
+
+#: ../src/amitk_object_dialog.c:246
+msgid "Data Set Name:"
+msgstr "資料集名稱："
+
+#: ../src/amitk_object_dialog.c:248
+msgid "Name:"
+msgstr "名稱："
+
+#. widgets to change the object's type
+#: ../src/amitk_object_dialog.c:268
+msgid "Type:"
+msgstr "類型："
+
+#. widgets to change the date of the scan name
+#: ../src/amitk_object_dialog.c:319
+msgid "Scan Date:"
+msgstr "掃描日期："
+
+#. widgets to change the object's modality
+#: ../src/amitk_object_dialog.c:332
+msgid "Modality:"
+msgstr "造影："
+
+#. widget to change the interpolation
+#: ../src/amitk_object_dialog.c:348
+msgid "Interpolation Type"
+msgstr "內插法類型"
+
+#. widgets to change the subject name associated with the data
+#: ../src/amitk_object_dialog.c:416
+msgid "Subject Name:"
+msgstr "主題名稱："
+
+#. widgets to change the id associated with the data
+#: ../src/amitk_object_dialog.c:430
+msgid "Subject ID:"
+msgstr "主題識別號："
+
+#. widgets to change the subject's date of birth
+#: ../src/amitk_object_dialog.c:443
+msgid "Subject DOB:"
+msgstr "主題 DOB："
+
+#. widgets to change the subject's orientation
+#: ../src/amitk_object_dialog.c:458
+msgid "Subject Orientation:"
+msgstr "主題方向："
+
+#. widgets to change the subject's sex (much easier in the virtual world than in real life)
+#: ../src/amitk_object_dialog.c:473
+msgid "Subject Sex:"
+msgstr "主題性別："
+
+#. widget to change the scaling factor
+#: ../src/amitk_object_dialog.c:501
+msgid "Conversion Type:"
+msgstr "轉換類型："
+
+#: ../src/amitk_object_dialog.c:535
+msgid "Scaling Factor:"
+msgstr "縮放因子："
+
+#. injected dose
+#: ../src/amitk_object_dialog.c:562
+msgid "Injected Dose:"
+msgstr "注射劑量："
+
+#. subject weight
+#: ../src/amitk_object_dialog.c:594
+msgid "Subject Weight:"
+msgstr "主題重量："
+
+#. cylinder factor
+#: ../src/amitk_object_dialog.c:626
+msgid "Cylinder Factor:"
+msgstr "柱面因子："
+
+#. widgets to change the study's creation date
+#: ../src/amitk_object_dialog.c:663
+msgid "Creation Date:"
+msgstr "建立日期："
+
+#: ../src/amitk_object_dialog.c:703
+msgid "View Center"
+msgstr "檢視中心"
+
+#: ../src/amitk_object_dialog.c:712
+msgid "View Center (mm from origin)"
+msgstr "檢視中心 (從原點起算公釐數)"
+
+#: ../src/amitk_object_dialog.c:714
+msgid "Center Location (mm from origin)"
+msgstr "中心位置 (從原點起算公釐數)"
+
+#: ../src/amitk_object_dialog.c:779
+msgid "Voxel Size"
+msgstr "體素大小"
+
+#: ../src/amitk_object_dialog.c:783
+msgid "Voxel Size (mm)"
+msgstr "體素大小 (公釐)"
+
+#: ../src/amitk_object_dialog.c:837
+msgid "Dimensions"
+msgstr "維度"
+
+#. widgets to change the dimensions of the objects (in object's space)
+#: ../src/amitk_object_dialog.c:842
+msgid "Dimensions (mm) wrt to ROI"
+msgstr "維度 (公釐) wrt 到 ROI"
+
+#: ../src/amitk_object_dialog.c:887
+msgid "Rotate"
+msgstr "旋轉"
+
+#: ../src/amitk_object_dialog.c:902
+msgid "Colormap/Threshold"
+msgstr "顏色對照表/臨界值"
+
+#. start making the page to adjust time values
+#: ../src/amitk_object_dialog.c:919
+msgid "Time"
+msgstr "時間"
+
+#. scan start time.....
+#: ../src/amitk_object_dialog.c:927
+msgid "Scan Start Time (s)"
+msgstr "掃描起始時間 (秒)"
+
+#. frame duration(s)....
+#: ../src/amitk_object_dialog.c:953 ../src/tb_roi_analysis.c:85
+msgid "Frame"
+msgstr "影格"
+
+#: ../src/amitk_object_dialog.c:958 ../src/tb_roi_analysis.c:86
+msgid "Duration (s)"
+msgstr "持續時間 (s)"
+
+#: ../src/amitk_object_dialog.c:1017 ../src/ui_preferences_dialog.c:328
+msgid "ROI/View Preferences"
+msgstr "ROI/檢視偏好設定"
+
+#. AMITK_IS_DATA_SET
+#: ../src/amitk_object_dialog.c:1019
+msgid "Windowing Preferences"
+msgstr "視窗偏好設定"
+
+#: ../src/amitk_object_dialog.c:1104
+msgid "Immutables"
+msgstr "不可變的"
+
+#: ../src/amitk_object_dialog.c:1110
+msgid "Max-Min Voxel Dim"
+msgstr "最大-最小的體素維度"
+
+#: ../src/amitk_object_dialog.c:1126
+msgid "Isocontour Min Specified Value"
+msgstr "輪廓面最小指定值"
+
+#: ../src/amitk_object_dialog.c:1139
+msgid "Isocontour Max Specified Value"
+msgstr "輪廓面最大指定值"
+
+#: ../src/amitk_object_dialog.c:1180
+msgid "Memory Used (GB):"
+msgstr "已用記憶體 (GB)："
+
+#: ../src/amitk_object_dialog.c:1183
+msgid "Memory Used (MB):"
+msgstr "已用記憶體 (MB)："
+
+#: ../src/amitk_object_dialog.c:1186
+msgid "Memory Used (KB):"
+msgstr "已用記憶體 (KB)："
+
+#: ../src/amitk_object_dialog.c:1190
+msgid "Memory Used (bytes):"
+msgstr "已用記憶體 (位元組)："
+
+#. widget to tell you the internal data format
+#: ../src/amitk_object_dialog.c:1209
+msgid "Data Format:"
+msgstr "資料格式："
+
+#. widget to tell you the scaling format
+#: ../src/amitk_object_dialog.c:1232
+msgid "Scale Format:"
+msgstr "伸縮格式："
+
+#. widgets to display the data set dimensions
+#: ../src/amitk_object_dialog.c:1255
+msgid "Data Set Dimensions (voxels)"
+msgstr "資料集維度 (體素)"
+
+#. MRI parameters
+#: ../src/amitk_object_dialog.c:1290
+msgid "MRI Parameters"
+msgstr "MRI 參數"
+
+#. inversion time
+#: ../src/amitk_object_dialog.c:1299
+msgid "Inversion Time (ms):"
+msgstr "反逆時間 (ms)："
+
+#. echo time
+#: ../src/amitk_object_dialog.c:1317
+msgid "Echo Time (ms):"
+msgstr "回應時間 (ms)："
+
+#: ../src/amitk_object_dialog.c:2381
+#, c-format
+msgid "Modification Dialog: %s\n"
+msgstr "修改對話框：%s\n"
+
+#: ../src/amitk_point.c:90
+#, c-format
+msgid "Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]"
+msgstr "無法讀取 %s 的數值，正在替代 [%5.3f %5.3f %5.3f]"
+
+#: ../src/amitk_point.c:180
+#, c-format
+msgid "Couldn't read value for %s, substituting [%d %d %d %d %d]"
+msgstr "無法讀取 %s 的數值，正在替代 [%d %d %d %d %d]"
+
+#: ../src/amitk_point.c:188
+#, c-format
+msgid "Couldn't read gate value for %s, substituting %d"
+msgstr "無法讀取 %s 的數值，正在替代 %d"
+
+#: ../src/amitk_point.c:192
+#, c-format
+msgid "Couldn't read frame value for %s, substituting %d"
+msgstr "無法讀取 %s 的影格值，正在替代 %d"
+
+#: ../src/amitk_preferences.c:57
+msgid "None"
+msgstr "無"
+
+#: ../src/amitk_preferences.c:58
+msgid "Specified Directory"
+msgstr "指定目錄"
+
+#: ../src/amitk_preferences.c:59
+msgid "Working Directory"
+msgstr "工作目錄"
+
+#: ../src/amitk_progress_dialog.c:165
+msgid "Progress Dialog"
+msgstr "進度對話框"
+
+#: ../src/amitk_raw_data.c:62 ../src/amitk_raw_data.c:141
+msgid "Unsigned Byte (8 bit)"
+msgstr "無正負號位元組 (8 位元)"
+
+#: ../src/amitk_raw_data.c:63 ../src/amitk_raw_data.c:142
+msgid "Signed Byte (8 bit)"
+msgstr "帶正負號位元組 (8 位元)"
+
+#: ../src/amitk_raw_data.c:64
+msgid "Unsigned Short (16 bit)"
+msgstr "無正負號短整數 (16 位元)"
+
+#: ../src/amitk_raw_data.c:65
+msgid "Signed Short (16 bit)"
+msgstr "帶正負號短整數 (16 位元)"
+
+#: ../src/amitk_raw_data.c:66
+msgid "Unsigned Integer (32 bit)"
+msgstr "無正負號整數 (32 位元)"
+
+#: ../src/amitk_raw_data.c:67
+msgid "Signed Integer (32 bit)"
+msgstr "帶正負號整數 (32 位元)"
+
+#: ../src/amitk_raw_data.c:68
+msgid "Float (32 bit)"
+msgstr "浮點數 (32 位元)"
+
+#: ../src/amitk_raw_data.c:69
+msgid "Double (64 bit)"
+msgstr "倍精度浮點數 (64 位元)"
+
+#: ../src/amitk_raw_data.c:143
+msgid "Unsigned Short, Little Endian (16 bit)"
+msgstr "無正負號短整數，低位在前 (16 位元)"
+
+#: ../src/amitk_raw_data.c:144
+msgid "Signed Short, Little Endian (16 bit)"
+msgstr "帶正負號短整數，低位在前 (16 位元)"
+
+#: ../src/amitk_raw_data.c:145
+msgid "Unsigned Integer, Little Endian (32 bit)"
+msgstr "無正負號整數，低位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:146
+msgid "Signed Integer, Little Endian (32 bit)"
+msgstr "帶正負號整數，低位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:147
+msgid "Float, Little Endian (32 bit)"
+msgstr "浮點數，低位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:148
+msgid "Double, Little Endian (64 bit)"
+msgstr "倍精度浮點數，低位在前 (64 位元)"
+
+#: ../src/amitk_raw_data.c:149
+msgid "Unsigned Short, Big Endian (16 bit)"
+msgstr "無正負號短整數，高位在前 (16 位元)"
+
+#: ../src/amitk_raw_data.c:150
+msgid "Signed Short, Big Endian (16 bit)"
+msgstr "帶正負號短整數，高位在前 (16 位元)"
+
+#: ../src/amitk_raw_data.c:151
+msgid "Unsigned Integer, Big Endian (32 bit)"
+msgstr "無正負號整數，高位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:152
+msgid "Signed Integer, Big Endian (32 bit)"
+msgstr "帶正負號整數，高位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:153
+msgid "Float, Big Endian (32 bit)"
+msgstr "浮點數，高位在前 (32 位元)"
+
+#: ../src/amitk_raw_data.c:154
+msgid "Double, Big Endian (64 bit)"
+msgstr "倍精度浮點數，高位在前 (64 位元)"
+
+#: ../src/amitk_raw_data.c:155
+msgid "Unsigned Integer, PDP (32 bit)"
+msgstr "無正負號整數，PDP (32 位元)"
+
+#: ../src/amitk_raw_data.c:156
+msgid "Signed Integer, PDP (32 bit)"
+msgstr "帶正負號整數，PDP (32 位元)"
+
+#: ../src/amitk_raw_data.c:157
+msgid "Float, PDP/VAX (32 bit)"
+msgstr "浮點數，PDP/VAX (32 位元)"
+
+#: ../src/amitk_raw_data.c:158
+msgid "ASCII (8 bit)"
+msgstr "ASCII (8 位元)"
+
+#: ../src/amitk_raw_data.c:361
+#, c-format
+msgid "Reading: %s"
+msgstr "讀取：%s"
+
+#: ../src/amitk_raw_data.c:370
+msgid "couldn't allocate memory space for the raw data set structure"
+msgstr "無法配置記憶體空間給原始資料集結構"
+
+#: ../src/amitk_raw_data.c:378 ../src/amitk_raw_data.c:383
+#, c-format
+msgid "couldn't open raw data file %s"
+msgstr "無法開啟原始資料檔案 %s"
+
+#. EOF is usually -1
+#: ../src/amitk_raw_data.c:396
+#, c-format
+msgid "could not step forward %d elements in raw data file:\n\treturned error: %d"
+msgstr "無法在原始資料檔案中逐一讀取 %d 項元素：\n\t回傳的錯誤：%d"
+
+#: ../src/amitk_raw_data.c:402
+#, c-format
+msgid "could not seek forward %ld bytes in raw data file"
+msgstr "無法在原始資料檔案中逐一尋指 %ld 位元組"
+
+#: ../src/amitk_raw_data.c:411
+#, c-format
+msgid "couldn't malloc %zd bytes for file buffer\n"
+msgstr "無法配置 %zd 位元組給檔案緩衝區\n"
+
+#: ../src/amitk_raw_data.c:434
+#, c-format
+msgid "read wrong # of elements from raw data, expected %zd, got %zd"
+msgstr "從原始資料讀取了錯誤的元素數量，預期 %zd 卻得到 %zd"
+
+#. EOF = -1 (usually)
+#: ../src/amitk_raw_data.c:458
+#, c-format
+msgid "could not read ascii file after %d elements, file or parameters are erroneous"
+msgstr "於 %d 元素之後無法讀取 ASCII 檔案，檔案或參數有誤"
+
+#: ../src/amitk_raw_data.c:829
+#, c-format
+msgid "couldn't save raw data file: %s"
+msgstr "無法儲存原始資料檔案：%s"
+
+#: ../src/amitk_raw_data.c:857
+#, c-format
+msgid "incomplete save of raw data, wrote %zd (bytes), needed %zd (bytes), file: %s"
+msgstr "原始資料的儲存不完整，已寫入 %zd (位元組)，所需要 %zd (位元組)，檔案：%s"
+
+#: ../src/amitk_raw_data.c:931
+#, c-format
+msgid "Raw data xml file doesn't appear to have a root: %s"
+msgstr "原始資料 xml 檔案似乎沒有根項目：%s"
+
+#: ../src/amitk_raw_data.c:972 ../src/xml.c:672 ../src/xml.c:678
+msgid "File to large to read on 32bit platform."
+msgstr "檔案對於在 32 位元平臺上讀取而言過大。"
+
+#: ../src/amitk_roi.c:44
+msgid "_Ellipsoid"
+msgstr "橢圓體(_E)"
+
+#: ../src/amitk_roi.c:45
+msgid "Elliptic _Cylinder"
+msgstr "橢圓柱面(_C)"
+
+#: ../src/amitk_roi.c:46
+msgid "_Box"
+msgstr "方框(_B)"
+
+#: ../src/amitk_roi.c:47
+msgid "_2D Isocontour"
+msgstr "平面輪廓(_2)"
+
+#: ../src/amitk_roi.c:48
+msgid "_3D Isocontour"
+msgstr "立體輪廓(_3)"
+
+#: ../src/amitk_roi.c:49
+msgid "_2D Freehand"
+msgstr "平面手繪(_2)"
+
+#: ../src/amitk_roi.c:50
+msgid "_3D Freehand"
+msgstr "立體手繪(_3)"
+
+#: ../src/amitk_roi.c:54
+msgid "Add a new elliptical ROI"
+msgstr "加入新的橢圓 ROI"
+
+#: ../src/amitk_roi.c:55
+msgid "Add a new elliptic cylinder ROI"
+msgstr "加入新的橢圓柱面 ROI"
+
+#: ../src/amitk_roi.c:56
+msgid "Add a new box shaped ROI"
+msgstr "加入新的方框 ROI"
+
+#: ../src/amitk_roi.c:57
+msgid "Add a new 2D Isocontour ROI"
+msgstr "加入新的平面輪廓 ROI"
+
+#: ../src/amitk_roi.c:58
+msgid "Add a new 3D Isocontour ROI"
+msgstr "加入新的立體輪廓 ROI"
+
+#: ../src/amitk_roi.c:59
+msgid "Add a new 2D Freehand ROI"
+msgstr "加入新的平面手繪 ROI"
+
+#: ../src/amitk_roi.c:60
+msgid "Add a new 3D Freehand ROI"
+msgstr "加入新的立體手繪 ROI"
+
+#: ../src/amitk_roi_variable_type.c:59 ../src/amitk_roi_variable_type.c:71
+msgid "Out of Memory"
+msgstr "記憶體不足"
+
+#. and a display of the current axis
+#: ../src/amitk_space_edit.c:145
+msgid "i"
+msgstr "i"
+
+#: ../src/amitk_space_edit.c:148
+msgid "j"
+msgstr "j"
+
+#: ../src/amitk_space_edit.c:151
+msgid "k"
+msgstr "k"
+
+#: ../src/amitk_space_edit.c:186
+msgid "data set axis:"
+msgstr "資料集軸線："
+
+#. button to apply entries
+#: ../src/amitk_space_edit.c:192
+msgid "apply manual entries"
+msgstr "套用手動項目"
+
+#. button to reset the axis
+#: ../src/amitk_space_edit.c:200
+msgid "reset to identity"
+msgstr "重置為相同"
+
+#. our AIR buttons
+#: ../src/amitk_space_edit.c:216
+msgid "AIR Files:"
+msgstr "AIR 檔案："
+
+#: ../src/amitk_space_edit.c:221
+msgid "Apply .AIR"
+msgstr "套用 .AIR"
+
+#: ../src/amitk_space_edit.c:228
+msgid "Export .AIR"
+msgstr "匯出 .AIR"
+
+#. first double check that we really want to do this
+#: ../src/amitk_space_edit.c:362
+msgid ""
+"Do you really wish to manual set the axis?\n"
+"This may flip left/right relationships"
+msgstr ""
+"您真的希望手動設定軸線嗎？\n"
+"這也許會翻轉左/右關係"
+
+#. first double check that we really want to do this
+#: ../src/amitk_space_edit.c:392
+msgid ""
+"Do you really wish to reset the axis to identity?\n"
+"This may flip left/right relationships"
+msgstr ""
+"您真的希望重置軸線為相同嗎？\n"
+"這也許會翻轉左/右關係"
+
+#. first double check that we really want to do this
+#: ../src/amitk_space_edit.c:416
+msgid ""
+"Do you really wish to invert?\n"
+"This will flip left/right relationships"
+msgstr ""
+"您真的希望反轉嗎？\n"
+"這將會翻轉左/右關係"
+
+#: ../src/amitk_study.c:469
+#, c-format
+msgid "inappropriate zoom (%5.3f) for study, reseting to 1.0"
+msgstr "不適當的縮放 (%5.3f) 用於檢驗，重置為 1.0"
+
+#: ../src/amitk_study.c:907 ../src/amitk_study.c:1008
+#: ../src/amitk_study.c:1135
+#, c-format
+msgid "Couldn't open file %s\n"
+msgstr "無法開啟檔案 %s\n"
+
+#: ../src/amitk_study.c:968
+msgid "The above warnings may arise because portions of the XIF"
+msgstr "以上的警告也許會因為部分 XIF 而發生"
+
+#: ../src/amitk_study.c:969
+msgid "file were corrupted."
+msgstr "檔案已損壞。"
+
+#: ../src/amitk_study.c:1002
+msgid "Couldn't change directories in loading study"
+msgstr "無法在載入檢驗時變更目錄"
+
+#: ../src/amitk_study.c:1020
+msgid "File is corrupt.  The file may have been incompletely saved.  You can attempt recovering the file by using the recover function under the file menu."
+msgstr "檔案損壞。檔案儲存也許不完整。您可以藉由使用檔案選單之下的回復功能來嘗試回復檔案。"
+
+#: ../src/amitk_study.c:1037
+msgid "The above warnings most likely indicate changes to the"
+msgstr "以上的警告很有可能指出變更發生於"
+
+#: ../src/amitk_study.c:1038
+msgid "XIF file format, please resave the data as soon as possible."
+msgstr "XIF 檔案格式，請儘快重新儲存資料。"
+
+#: ../src/amitk_study.c:1050 ../src/amitk_study.c:1149
+msgid "Couldn't return to previous directory in load study"
+msgstr "無法在載入檢驗時回到上一個目錄"
+
+#: ../src/amitk_study.c:1089 ../src/amitk_study.c:1101
+#, c-format
+msgid "Couldn't unlink file: %s"
+msgstr "無法取消鏈結檔案：%s"
+
+#: ../src/amitk_study.c:1095
+#, c-format
+msgid "Couldn't remove directory: %s"
+msgstr "無法移除目錄：%s"
+
+#: ../src/amitk_study.c:1106
+#, c-format
+msgid "Unrecognized file type for file: %s, couldn't delete"
+msgstr "無法辨識的檔案類型之於檔案：%s，無法刪除"
+
+#: ../src/amitk_study.c:1116
+#, c-format
+msgid "Couldn't create amide directory: %s"
+msgstr "無法建立 amide 目錄：%s"
+
+#: ../src/amitk_study.c:1130
+msgid "Couldn't change directories in writing study, study not saved"
+msgstr "無法在寫入檢驗時變更目錄，檢驗並未儲存"
+
+#: ../src/amitk_threshold.c:49
+msgid "per slice"
+msgstr "各切片"
+
+#: ../src/amitk_threshold.c:50
+msgid "per frame"
+msgstr "各影格"
+
+#: ../src/amitk_threshold.c:51
+msgid "interpolated between frames"
+msgstr "已在影格之間添寫"
+
+#: ../src/amitk_threshold.c:52
+msgid "global"
+msgstr "全域"
+
+#: ../src/amitk_threshold.c:56
+msgid "Min/Max"
+msgstr "最小/最大"
+
+#: ../src/amitk_threshold.c:57
+msgid "Center/Width"
+msgstr "中心/寬度"
+
+#: ../src/amitk_threshold.c:64
+msgid "threshold the images based on the max and min values in the current slice"
+msgstr "臨界處理影像，基於目前切片中的最大和最小值"
+
+#: ../src/amitk_threshold.c:65
+msgid "threshold the images based on the max and min values in the current frame"
+msgstr "臨界處理影像，基於目前影格中的最大和最小值"
+
+#: ../src/amitk_threshold.c:66
+msgid "threshold the images based on max and min values interpolated from the reference frame thresholds"
+msgstr "臨界處理影像，基於從參考影格臨界值所添寫的最大和最小值"
+
+#: ../src/amitk_threshold.c:67
+msgid "threshold the images based on the max and min values of the entire data set"
+msgstr "臨界處理影像，基於目前影格中的最大和最小值"
+
+#: ../src/amitk_threshold.c:71
+msgid "threshold by setting min and max values - Nuclear Medicine Style"
+msgstr "依照最小和最大設定臨界值 - 核子醫學樣式"
+
+#: ../src/amitk_threshold.c:72
+msgid "theshold by setting a window center and width - Radiology Style"
+msgstr "由視窗中心和寬度設定臨界值 - 放射線科樣式"
+
+#: ../src/amitk_threshold.c:328
+msgid "Percent"
+msgstr "百分比"
+
+#: ../src/amitk_threshold.c:392
+msgid "Color Table:"
+msgstr "顏色表格："
+
+#: ../src/amitk_threshold.c:394
+#, c-format
+msgid "Color Table %d:"
+msgstr "顏色表格 %d："
+
+#: ../src/amitk_threshold.c:415 ../src/amitk_threshold.c:419
+msgid "if not enabled, the primary color table will be used for this set of views"
+msgstr "如果未啟用，主要的顏色表格將用於這個檢視集合"
+
+#: ../src/amitk_threshold.c:418
+msgid "enable color table"
+msgstr "啟用顏色表格"
+
+#. threshold type selection
+#: ../src/amitk_threshold.c:435
+msgid "Threshold Type"
+msgstr "臨界值類型"
+
+#. threshold type selection
+#: ../src/amitk_threshold.c:496 ../src/ui_preferences_dialog.c:433
+msgid "Threshold Style"
+msgstr "臨界值樣式"
+
+#. color table selector
+#: ../src/amitk_threshold.c:558
+msgid "ref. frame 0:"
+msgstr "參考影格 0："
+
+#. show/hide taken care of by threshold_update_layout
+#: ../src/amitk_threshold.c:563
+msgid "ref. frame 1:"
+msgstr "參考影格 1："
+
+#: ../src/amitk_threshold.c:587
+msgid "distribution"
+msgstr "發布"
+
+#: ../src/amitk_threshold.c:595
+msgid "full"
+msgstr "全螢幕"
+
+#. show/hide taken care of by threshold_update_layout
+#: ../src/amitk_threshold.c:601
+msgid "scaled"
+msgstr "伸縮"
+
+#: ../src/amitk_threshold.c:743
+msgid "Threshold has no style?\n"
+msgstr "臨界值沒有任何樣式？\n"
+
+#: ../src/amitk_threshold.c:1293
+msgid "Max Threshold"
+msgstr "最大臨界值"
+
+#: ../src/amitk_threshold.c:1294
+msgid "Min Threshold"
+msgstr "最小臨界值"
+
+#: ../src/amitk_threshold.c:1351
+msgid "Absolute"
+msgstr "絕對"
+
+#. reset the title
+#: ../src/amitk_threshold.c:2133 ../src/amitk_threshold.c:2173
+#, c-format
+msgid "Data Set: %s\n"
+msgstr "資料集：%s\n"
+
+#: ../src/amitk_threshold.c:2152 ../src/amitk_threshold.c:2293
+msgid "Threshold Dialog"
+msgstr "臨界值對話框"
+
+#: ../src/analysis.c:217
+#, c-format
+msgid "couldn't allocate memory space for data array for frame %d/gate %d"
+msgstr "無法配置記憶體空間給影格 %d/閘口 %d 的資料陣列"
+
+#: ../src/analysis.c:287
+#, c-format
+msgid "couldn't allocate memory space for roi analysis of frame %d/gate %d"
+msgstr "無法配置記憶體空間給影格 %d/閘口 %d 的 roi 分析"
+
+#: ../src/analysis.c:424
+msgid "couldn't allocate memory space for roi analysis of frames"
+msgstr "無法配置記憶體空間給影格的 roi 分析"
+
+#: ../src/analysis.c:455
+#, c-format
+msgid "ROI: %s appears not to have been drawn"
+msgstr "ROI：%s 似乎未被繪出"
+
+#: ../src/analysis.c:511
+msgid "couldn't allocate memory space for roi analysis of volumes"
+msgstr "無法配置記憶體空間給體積的 roi 分析"
+
+#: ../src/analysis.c:583
+msgid "couldn't allocate memory space for roi analyses"
+msgstr "無法配置記憶體空間給 roi 分析"
+
+#: ../src/dcmtk_interface.cc:140 ../src/dcmtk_interface.cc:1474
+#, c-format
+msgid "could not find dataset in DICOM file %s\n"
+msgstr "在 DICOM 檔案 %s 中找不到資料集\n"
+
+#: ../src/dcmtk_interface.cc:150
+#, c-format
+msgid "Modality %s is not understood.  Ignoring File %s"
+msgstr "成像方式 %s 無法理解。 忽略檔案 %s"
+
+#: ../src/dcmtk_interface.cc:182
+#, c-format
+msgid "could not find # of columns - Failed to load file %s\n"
+msgstr "找不到欄數 - 無法載入檔案 %s\n"
+
+#: ../src/dcmtk_interface.cc:188
+#, c-format
+msgid "could not find # of rows - Failed to load file %s\n"
+msgstr "找不到列數 - 無法載入檔案 %s\n"
+
+#: ../src/dcmtk_interface.cc:235
+#, c-format
+msgid "could not find # of bits allocated - Failed to load file %s\n"
+msgstr "找不到配置的位元數 - 無法載入檔案 %s\n"
+
+#: ../src/dcmtk_interface.cc:241
+#, c-format
+msgid "could not find pixel representation - Failed to load file %s\n"
+msgstr "找不到像素表示方式 - 無法載入檔案 %s\n"
+
+#: ../src/dcmtk_interface.cc:261
+#, c-format
+msgid "unsupported # of bits allocated (%d) - Failed to load file %s\n"
+msgstr "不受支援的配置位元數 (%d) - 無法載入檔案 %s\n"
+
+#: ../src/dcmtk_interface.cc:268
+#, c-format
+msgid "Couldn't allocate space for the data set structure to hold DCMTK data - Failed to load file %s"
+msgstr "無法配置記憶體空間給資料集結構以存放 DCMTK 資料 - 無法載入檔案 %s"
+
+#: ../src/dcmtk_interface.cc:286
+#, c-format
+msgid "Could not find the pixel size, setting to 1 mm for File %s"
+msgstr "找不到像素大小，設定為 1 公釐用於檔案 %s"
+
+#: ../src/dcmtk_interface.cc:298
+#, c-format
+msgid "Could not find the slice thickness, setting to 1 mm for File %s"
+msgstr "找不到切片粗細，設定為 1 公釐用於檔案 %s"
+
+#: ../src/dcmtk_interface.cc:612
+#, c-format
+msgid "error reading in pixel data -  DCMTK error: %s - Failed to read file %s"
+msgstr "讀入像素資料 -  DCMTK 錯誤時發生錯誤：%s - 無法讀取檔案 %s"
+
+#: ../src/dcmtk_interface.cc:890
+#, c-format
+msgid "Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"
+msgstr "無法由影格數量平衡劃分資料集 %s 中的切片數量 - 忽略動態資料"
+
+#: ../src/dcmtk_interface.cc:899
+#, c-format
+msgid "Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"
+msgstr "無法由閘口數量平衡劃分資料集 %s 中的切片數量 - 忽略閘口資料"
+
+#: ../src/dcmtk_interface.cc:945
+msgid "couldn't allocate space for the frame duration info"
+msgstr "無法配置記憶體空間給影格持續時間資訊"
+
+#: ../src/dcmtk_interface.cc:1028
+#, c-format
+msgid "Detected discontinous frames in data set %s - frame start times will be incorrect"
+msgstr "在資料集 %s 中偵測到不連續的影格 - 影格起始時間將不正確"
+
+#: ../src/dcmtk_interface.cc:1031
+#, c-format
+msgid "Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"
+msgstr "在資料集 %3$s 中切片粗細 (%1$5.3f 公釐) 不等於切片間隔 (%2$5.3f 公釐) - 將切片間隔做為切片粗細使用"
+
+#: ../src/dcmtk_interface.cc:1217
+msgid "Importing File(s) Through DCMTK"
+msgstr "透過 DCMTK 匯入檔案"
+
+#. can handle multiple dicom files each with a single slice, or one dicom file with multiple slices,
+#. can't handle multiple files each with multiple slices
+#: ../src/dcmtk_interface.cc:1236
+msgid "no support for multislice files within DICOM directory format"
+msgstr "在 DICOM 目錄格式之內不支援多重切片檔案"
+
+#: ../src/dcmtk_interface.cc:1482
+msgid "Scanning Files to find additional DICOM Slices"
+msgstr "掃描檔案以尋找額外的 DICOM 切片"
+
+#: ../src/dcmtk_interface.cc:1553
+msgid "Multiple data sets were found in the same directory as the specified file. In addition to the dataset corresponding to the specified file, would you like to load in these additional datasets?"
+msgstr "在相同目錄中找到了多重資料集做為指定的檔案。在相應於指定檔案的資料集以外，您也想要載入這些額外資料集？"
+
+#: ../src/dcmtk_interface.cc:1746
+msgid "Could not find a DICOM Data Dictionary.  Reading may fail.  Consider defining the environmental variable DCMDICTPATH to the dicom.dic file."
+msgstr "找不到 DICOM 資料辭典。 讀取也許會失敗。 請考慮定義環境變數 DCMDICTPATH 為 dicom.dic 檔案。"
+
+#: ../src/dcmtk_interface.cc:1751
+#, c-format
+msgid "could not read DICOM file %s, dcmtk returned %s"
+msgstr "無法讀取 DICOM 檔案 %s，dcmtk 回傳了 %s"
+
+#: ../src/dcmtk_interface.cc:1991
+#, c-format
+msgid "File already exists with name: %s"
+msgstr "檔案已存在且名為：%s"
+
+#: ../src/dcmtk_interface.cc:1997 ../src/dcmtk_interface.cc:2040
+#, c-format
+msgid "Couldn't create directory: %s"
+msgstr "無法建立目錄：%s"
+
+#: ../src/dcmtk_interface.cc:2006
+#, c-format
+msgid "Existing DICOMDIR file %s is not a regular file"
+msgstr "現有 DICOMDIR 檔案 %s 並非標準檔案"
+
+#: ../src/dcmtk_interface.cc:2011
+#, c-format
+msgid "Existing DICOMDIR file %s exists but is not appendable, error %s"
+msgstr "現有 DICOMDIR 檔案 %s 存在但是無法附加，錯誤 %s"
+
+#: ../src/dcmtk_interface.cc:2017
+#, c-format
+msgid "Could not create DICOMDIR file %s, error %s"
+msgstr "無法建立 DICOMDIR 檔案 %s，錯誤 %s"
+
+#: ../src/dcmtk_interface.cc:2073 ../src/libmdc_interface.c:981
+#, c-format
+msgid "dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f"
+msgstr "輸出資料集的維度將是 %dx%dx%d，體素大小為 %fx%fx%f"
+
+#: ../src/dcmtk_interface.cc:2329
+#, c-format
+msgid ""
+"Exporting File Through DCMTK:\n"
+"   %s"
+msgstr ""
+"透過 DCMTK 匯出檔案：\n"
+"  %s"
+
+#: ../src/dcmtk_interface.cc:2372
+msgid "Could not malloc transfer buffer"
+msgstr "無法配置記憶體給轉送緩衝區"
+
+#: ../src/dcmtk_interface.cc:2471
+#, c-format
+msgid "couldn't write out file %s, error %s"
+msgstr "無法寫出檔案 %s，錯誤 %s"
+
+#: ../src/dcmtk_interface.cc:2478
+#, c-format
+msgid "couldn't append file %s to DICOMDIR %s, error %s"
+msgstr "無法附加檔案 %s 到 DICOMDIR %s，錯誤 %s"
+
+#: ../src/dcmtk_interface.cc:2514
+#, c-format
+msgid "Failed to write DICOMDIR file, error %s\n"
+msgstr "寫入 DICOMDIR 檔案時失敗，錯誤 %s\n"
+
+#. N_("Steepest Descent"),
+#: ../src/fads.c:40
+msgid "Fletcher-Reeves conjugate gradient"
+msgstr "Fletcher-Reeves 共軛梯度"
+
+#: ../src/fads.c:41
+msgid "Polak-Ribiere conjugate gradient"
+msgstr "Polak-Ribiere 共軛梯度"
+
+#: ../src/fads.c:47
+msgid "Principle Component Analysis"
+msgstr "主成分分析"
+
+#: ../src/fads.c:48
+msgid "Penalized Least Squares Factor Analysis"
+msgstr "受罰最小平方因素分析"
+
+#: ../src/fads.c:49
+msgid "2 compartment model"
+msgstr "二室模型"
+
+#: ../src/fads.c:53
+msgid "Priniciple Component Analysis based on singular value decomposition."
+msgstr "基於單值分解的主成分分析。"
+
+#: ../src/fads.c:56
+msgid "Principle component analysis with positivity constraints and a penalized least squares objective, an adaptation of Sitek, et al., IEEE Trans. Med. Imag., 2002.  If beta is set to zero, this is normal factor analysis, similar to Di Paola, et al., IEEE Trans. Nuc. Sci., 1982"
+msgstr "主成分分析具備正向限制和受罰最小平方目的，是參考修改自 Sitek, et al., IEEE Trans. Med. Imag., 2002.  If beta is set to zero, this is normal factor analysis, similar to Di Paola, et al., IEEE Trans. Nuc. Sci., 1982"
+
+#: ../src/fads.c:62
+msgid "Standard 2 compartment model"
+msgstr "標準二室模型"
+
+#: ../src/fads.c:109
+msgid "need dynamic data set in order to perform factor analysis"
+msgstr "需要動態資料集以便施行因素分析"
+
+#: ../src/fads.c:115 ../src/fads.c:120 ../src/fads.c:271
+#, c-format
+msgid "Failed to allocate %dx%d array"
+msgstr "配置 %dx%d 陣列時失敗"
+
+#: ../src/fads.c:125 ../src/fads.c:276
+#, c-format
+msgid "Failed to allocate %d vector"
+msgstr "配置 %d 向量時失敗"
+
+#: ../src/fads.c:157
+#, c-format
+msgid "Failed to allocate %d factor array"
+msgstr "配置 %d 因子陣列時失敗"
+
+#: ../src/fads.c:266
+#, c-format
+msgid "failed to alloc matrix, size %dx%d"
+msgstr "配置矩陣時失敗，大小為 %dx%d"
+
+#: ../src/fads.c:311 ../src/fads.c:338
+#, c-format
+msgid "failed to alloc matrix size %dx%d"
+msgstr "配置矩陣大小 %dx%d 時失敗"
+
+#: ../src/fads.c:325
+#, c-format
+msgid "failed to alloc vector size %d"
+msgstr "配置向量大小 %d 時失敗"
+
+#: ../src/fads.c:398 ../src/fads.c:1207 ../src/fads.c:2178
+msgid "failed to allocate new_ds"
+msgstr "配置 new_ds 時失敗"
+
+#: ../src/fads.c:429
+#, c-format
+msgid "couldn't open: %s for writing PCA analyses"
+msgstr "無法開啟：%s 以寫入主成分分析"
+
+#: ../src/fads.c:941
+msgid "failed forward error malloc"
+msgstr "轉寄錯誤配置失敗"
+
+#: ../src/fads.c:948
+msgid "failed weight malloc"
+msgstr "權重配置失敗"
+
+#: ../src/fads.c:955
+msgid "failed equality constraint alpha malloc"
+msgstr "對等限制 alpha 配置失敗"
+
+#: ../src/fads.c:961
+msgid "failed equality constraint blood curve malloc"
+msgstr "對等限制血液曲線配置失敗"
+
+#: ../src/fads.c:967 ../src/fads.c:1938
+msgid "failed malloc for equality lagrange multiplier - alpha"
+msgstr "對等 lagrange 倍增器配置失敗 - alpha"
+
+#: ../src/fads.c:975 ../src/fads.c:1946
+msgid "failed malloc for equality lagrange multiplier - blood curve"
+msgstr "對等 lagrange 倍增器配置失敗 - 血液曲線"
+
+#: ../src/fads.c:983 ../src/fads.c:1954
+msgid "failed malloc for inequality lagrange multiplier - alpha"
+msgstr "不對等 lagrange 倍增器配置失敗 - alpha"
+
+#: ../src/fads.c:992
+msgid "failed malloc for inequailty lagrange multiplier - factors"
+msgstr "不對等 lagrange 倍增器配置失敗 - 因子"
+
+#: ../src/fads.c:1009 ../src/fads.c:2001
+msgid "failed to allocate multidimensional minimizer"
+msgstr "配置多維度倍減器時失敗"
+
+#: ../src/fads.c:1080
+#, c-format
+msgid ""
+"Calculating Penalized Least Squares Factor Analysis:\n"
+"   %s"
+msgstr ""
+"計算受罰最小平方因素分析：\n"
+"   %s"
+
+#: ../src/fads.c:1223
+#, c-format
+msgid "factor %d"
+msgstr "因子 %d"
+
+#: ../src/fads.c:1241 ../src/fads.c:2216
+#, c-format
+msgid "couldn't open: %s for writing fads analyses"
+msgstr "無法開啟：%s 用於寫入 fads 分析"
+
+#: ../src/fads.c:1890
+msgid "failed to allocate intermediate data storage for tissue components"
+msgstr "配置中介資料儲存體給組織組成時失敗"
+
+#: ../src/fads.c:1896
+msgid "failed to allocate intermediate data storage for forward error"
+msgstr "配置中介資料儲存體給轉寄錯誤時失敗"
+
+#: ../src/fads.c:1902
+msgid "failed to allocate frame start array"
+msgstr "配置影格啟始陣列時失敗"
+
+#: ../src/fads.c:1908
+msgid "failed to allocate frame end array"
+msgstr "配置影格結束陣列時失敗"
+
+#: ../src/fads.c:1914
+msgid "failed to allocate frame midpt array"
+msgstr "配置影格中段陣列時失敗"
+
+#: ../src/fads.c:1926
+msgid "failed malloc for equality constraint on alpha"
+msgstr "配置記憶體給 alpha 對等限制時失敗"
+
+#: ../src/fads.c:1932
+msgid "failed malloc for equality constraint on blood curve"
+msgstr "配置記憶體給血液曲線對等限制時失敗"
+
+#: ../src/fads.c:1962
+msgid "failed malloc for inequailty lagrange multiplier - blood curve"
+msgstr "配置記憶體給不對等 lagrange 倍增器時失敗 - 血液曲線"
+
+#: ../src/fads.c:1970
+msgid "failed malloc for inequailty lagrange multiplier - k12"
+msgstr "配置記憶體給不對等 lagrange 倍增器時失敗 - k12"
+
+#: ../src/fads.c:1978
+msgid "failed malloc for inequailty lagrange multiplier - k21"
+msgstr "配置記憶體給不對等 lagrange 倍增器時失敗 - k21"
+
+#: ../src/fads.c:2009
+msgid "failed to allocate initial vector"
+msgstr "配置初始向量時失敗"
+
+#: ../src/fads.c:2039
+#, c-format
+msgid ""
+"Calculating Two Compartment Factor Analysis:\n"
+"   %s"
+msgstr ""
+"計算二室因素分析：\n"
+"   %s"
+
+#: ../src/fads.c:2159
+#, c-format
+msgid "Minimum found after %d iterations\n"
+msgstr "%d 次反覆運算之後找到最小值\n"
+
+#: ../src/fads.c:2161
+#, c-format
+msgid "terminated minization \n"
+msgstr "最小化已終止\n"
+
+#: ../src/fads.c:2163
+#, c-format
+msgid "No minimum found after %d iterations, exited with: %s\n"
+msgstr "%d 次反覆運算之後找不到最小值，離開狀態：%s\n"
+
+#: ../src/fads.c:2197
+#, c-format
+msgid "tissue type %d: k12 %g k21 %g"
+msgstr "組織類型 %d：k12 %g k21 %g"
+
+#: ../src/fads.c:2199
+#, c-format
+msgid "blood fraction"
+msgstr "血液成分"
+
+#: ../src/image.c:180
+msgid "couldn't allocate memory for rgba_data for roi image"
+msgstr "無法配置記憶體給 rgba_data 用於 roi 影像"
+
+#: ../src/image.c:222
+msgid "couldn't allocate memory for rgb_data for blank image"
+msgstr "無法配置記憶體給 rgb_data 用於空白影像"
+
+#: ../src/image.c:254
+msgid "couldn't allocate memory for image from 8 bit data"
+msgstr "無法配置記憶體給八位元資料的影像"
+
+#: ../src/image.c:303
+msgid "couldn't allocate memory for rgba16_data for transfering rendering to image"
+msgstr "無法配置記憶體給 rgba16_data 用於轉換潤算為影像"
+
+#: ../src/image.c:380
+msgid "couldn't allocate memory for char_data for rendering image"
+msgstr "無法配置記憶體給 char_data 用於潤算影像"
+
+#: ../src/image.c:427
+msgid "couldn't allocate memory for rgba_data for bar_graph"
+msgstr "無法配置記憶體給 rgba_data 用於 bar_graph"
+
+#: ../src/image.c:502
+msgid "couldn't allocate memory for rgb_data for color_strip"
+msgstr "無法配置記憶體給 rgb_data 用於 color_strip"
+
+#: ../src/image.c:557
+msgid "couldn't allocate memory for rgba_data for projection image"
+msgstr "無法配置記憶體給 rgba_data 用於投影影像"
+
+#: ../src/image.c:608
+msgid "couldn't allocate memory for rgba_data for slice image"
+msgstr "無法配置記憶體給 rgba_data 用於切片影像"
+
+#: ../src/libecat_interface.c:35
+msgid "Unknown Data Type"
+msgstr "不明資料類型"
+
+#. UnknownMatDataType
+#: ../src/libecat_interface.c:36
+msgid "Byte"
+msgstr "位元組"
+
+#. ByteData
+#: ../src/libecat_interface.c:37
+msgid "Short (16 bit), Little Endian"
+msgstr "短整數 (16 位元)，低位在前"
+
+#. VAX_Ix2
+#: ../src/libecat_interface.c:38
+msgid "Integer (32 bit), Little Endian"
+msgstr "整數 (32 位元)，低位在前"
+
+#. VAX_Ix4
+#: ../src/libecat_interface.c:39
+msgid "VAX Float (32 bit)"
+msgstr "VAX 浮點數 (32 位元)"
+
+#. VAX_Rx4
+#: ../src/libecat_interface.c:40
+msgid "IEEE Float (32 bit)"
+msgstr "IEEE 浮點數 (32 位元)"
+
+#. IeeeFloat
+#: ../src/libecat_interface.c:41
+msgid "Short (16 bit), Big Endian"
+msgstr "短整數 (16 位元)，高位在前"
+
+#. SunShort
+#: ../src/libecat_interface.c:42
+msgid "Integer (32 bit), Big Endian"
+msgstr "整數 (32 位元)，高位在前"
+
+#: ../src/libecat_interface.c:87
+#, c-format
+msgid "Can't open file %s using libecat"
+msgstr "無法利用 libecat 開啟檔案 %s"
+
+#: ../src/libecat_interface.c:111
+#, c-format
+msgid "Don't know how to handle this CTI file type: %d"
+msgstr "不知道如何處理這個 CTI 檔案類型：%d"
+
+#: ../src/libecat_interface.c:121
+#, c-format
+msgid "Libecat can't get header info at matrix %x in file %s"
+msgstr "Libecat 無法取得矩陣 %x 的標頭資訊於檔案 %s"
+
+#: ../src/libecat_interface.c:143
+#, c-format
+msgid "No support for importing CTI files with data type of: %d (%s)"
+msgstr "不支援匯入具有資料類型：%d (%s) 的 CTI 檔案"
+
+#: ../src/libecat_interface.c:175
+msgid "Couldn't allocate memory space for the data set structure to hold CTI data"
+msgstr "無法配置記憶體空間給資料集結構以存放 CTI 資料"
+
+#. handle corrupted cti files
+#: ../src/libecat_interface.c:281
+msgid "Detected corrupted CTI file, will try to continue by guessing voxel_size"
+msgstr "偵測到損壞的 CTI 檔案，將會嘗試藉由猜測體素大小以繼續"
+
+#: ../src/libecat_interface.c:284
+msgid "Detected zero voxel size in CTI file, will try to continue by guessing voxel_size"
+msgstr "在 CTI 檔案中偵測到零值體素大小，將會嘗試藉由猜測體素大小以繼續"
+
+#. handle corrupted cti files
+#: ../src/libecat_interface.c:294
+msgid "Detected corrupted CTI file, will try to continue by guessing offset"
+msgstr "偵測到損壞的 CTI 檔案，將會嘗試藉由猜測偏移值以繼續"
+
+#: ../src/libecat_interface.c:323
+#, c-format
+msgid ""
+"Importing CTI File:\n"
+"   %s"
+msgstr ""
+"匯入 CTI 檔案：\n"
+"   %s"
+
+#: ../src/libecat_interface.c:428
+#, c-format
+msgid "Libecat returned %d blank planes... corrupted data file?  Use data with caution."
+msgstr "Libecat 回傳 %d 個空白平面… 資料檔案已損壞？ 使用資料請小心。"
+
+#: ../src/libmdc_interface.c:53
+msgid "(_X)MedCon Guess"
+msgstr "(_X)MedCon 猜測"
+
+#: ../src/libmdc_interface.c:54
+msgid "_GIF 87a/89a"
+msgstr "_GIF 87a/89a"
+
+#: ../src/libmdc_interface.c:55
+msgid "Acr/_Nema 2.0"
+msgstr "Acr/_Nema 2.0"
+
+#: ../src/libmdc_interface.c:56
+msgid "_Concorde/microPET"
+msgstr "_Concorde/microPET"
+
+#: ../src/libmdc_interface.c:57
+msgid "ECAT _6 via (X)MedCon"
+msgstr "ECAT _6 透過 (X)MedCon"
+
+#: ../src/libmdc_interface.c:58
+msgid "ECAT _7 via (X)MedCon"
+msgstr "ECAT _7 透過 (X)MedCon"
+
+#: ../src/libmdc_interface.c:59
+msgid "_InterFile 3.3"
+msgstr "_InterFile 3.3"
+
+#: ../src/libmdc_interface.c:60
+msgid "_Analyze (SPM)"
+msgstr "_Analyze (SPM)"
+
+#: ../src/libmdc_interface.c:61
+msgid "_DICOM 3.0 via (X)MedCon"
+msgstr "_DICOM 3.0 透過 (X)MedCon"
+
+#: ../src/libmdc_interface.c:62
+msgid "_NIFTI via (X)MedCon"
+msgstr "_NIFTI 透過 (X)MedCon"
+
+#: ../src/libmdc_interface.c:66
+msgid "let (X)MedCon/libmdc guess file type"
+msgstr "讓 (X)MedCon/libmdc 猜測檔案類型"
+
+#: ../src/libmdc_interface.c:67
+msgid "Import a file stored as GIF"
+msgstr "匯入儲存為 GIF 的檔案"
+
+#: ../src/libmdc_interface.c:68
+msgid "Import a Acr/Nema 2.0 file"
+msgstr "匯入 Acr/Nema 2.0 檔案"
+
+#: ../src/libmdc_interface.c:69
+msgid "Import a file from the Concorde microPET"
+msgstr "從 Concorde microPET 匯入檔案"
+
+#: ../src/libmdc_interface.c:70
+msgid "Import a CTI/ECAT 6 file through (X)MedCon"
+msgstr "透過 (X)MedCon 匯入 CTI/ECAT 6 檔案"
+
+#: ../src/libmdc_interface.c:71
+msgid "Import a CTI/ECAT 7 file through (X)MedCon"
+msgstr "透過 (X)MedCon 匯入 CTI/ECAT 7 檔案"
+
+#: ../src/libmdc_interface.c:72
+msgid "Import a InterFile 3.3 file"
+msgstr "匯入 InterFile 3.3 檔案"
+
+#: ../src/libmdc_interface.c:73
+msgid "Import an Analyze file"
+msgstr "匯入 Analyze 檔案"
+
+#: ../src/libmdc_interface.c:74
+msgid "Import a DICOM 3.0 file through (X)MedCon"
+msgstr "透過 (X)MedCon 匯入 DICOM 3.0 檔案"
+
+#: ../src/libmdc_interface.c:75
+msgid "Import a NIFTI file through (X)MedCon"
+msgstr "透過 (X)MedCon 匯入 NIFTI 檔案"
+
+#: ../src/libmdc_interface.c:89
+msgid "Acr/Nema 2.0"
+msgstr "Acr/Nema 2.0"
+
+#: ../src/libmdc_interface.c:90
+msgid "Concorde/microPET"
+msgstr "Concorde/microPET"
+
+#: ../src/libmdc_interface.c:91
+msgid "ECAT 6 via (X)MedCon"
+msgstr "透過 (X)MedCon 匯入 ECAT 6 檔案"
+
+#: ../src/libmdc_interface.c:92
+msgid "InterFile 3.3"
+msgstr "InterFile 3.3"
+
+#: ../src/libmdc_interface.c:93
+msgid "Analyze (SPM)"
+msgstr "Analyze (SPM)"
+
+#: ../src/libmdc_interface.c:94
+msgid "DICOM 3.0 via (X)MedCon"
+msgstr "DICOM 3.0 透過 (X)MedCon"
+
+#: ../src/libmdc_interface.c:95
+msgid "NIFTI"
+msgstr "NIFTI"
+
+#: ../src/libmdc_interface.c:99
+msgid "Export a Acr/Nema 2.0 file"
+msgstr "匯出 Acr/Nema 2.0 檔案"
+
+#: ../src/libmdc_interface.c:100
+msgid "Export a Concorde format file"
+msgstr "匯出 Concorde 格式檔案"
+
+#: ../src/libmdc_interface.c:101
+msgid "Export a CTI/ECAT 6 file"
+msgstr "匯出 CTI/ECAT 6 檔案"
+
+#: ../src/libmdc_interface.c:102
+msgid "Export a InterFile 3.3 file"
+msgstr "匯出 InterFile 3.3 檔案"
+
+#: ../src/libmdc_interface.c:103
+msgid "Export an Analyze file"
+msgstr "匯出 Analyze 檔案"
+
+#: ../src/libmdc_interface.c:104
+msgid "Export a DICOM 3.0 file"
+msgstr "匯出 DICOM 3.0 檔案"
+
+#: ../src/libmdc_interface.c:105
+msgid "Export a NIFTI file"
+msgstr "匯出 NIFTI 檔案"
+
+#: ../src/libmdc_interface.c:255
+#, c-format
+msgid "Can't open file %s with libmdc/(X)MedCon"
+msgstr "無法以 libmdc/(X)MedCon 開啟檔案 %s"
+
+#: ../src/libmdc_interface.c:262
+#, c-format
+msgid "Can't read file %s with libmdc/(X)MedCon"
+msgstr "無法以 libmdc/(X)MedCon 讀取檔案 %s"
+
+#. 9
+#. 8
+#. 11
+#. 12
+#. 13
+#. 1
+#: ../src/libmdc_interface.c:347
+#, c-format
+msgid "Importing data type %d file through (X)MedCon unsupported in AMIDE, trying anyway"
+msgstr "透過 (X)MedCon 匯入資料類型 %d 的檔案並不受 AMIDE 支援，無論如何還是試試看"
+
+#: ../src/libmdc_interface.c:361 ../src/libmdc_interface.c:607
+#, c-format
+msgid "Couldn't read plane %d in %s with libmdc/(X)MedCon"
+msgstr "無法以 libmdc/(X)MedCon 讀取 %2$s 中的 %1$d 平面"
+
+#: ../src/libmdc_interface.c:367
+#, c-format
+msgid "libmdc returned error: %s"
+msgstr "libmdc 回傳了錯誤：%s"
+
+#: ../src/libmdc_interface.c:406
+msgid "Couldn't allocate memory space for the data set structure to hold (X)MedCon data"
+msgstr "無法配置記憶體空間給資料集結構以存放 (X)MedCon 資料"
+
+#: ../src/libmdc_interface.c:543
+msgid "(X)MedCon returned no duration information.  Frame durations will be incorrect"
+msgstr "(X)MedCon 沒有回傳任何持續時間資訊。 影格持續時間將會不正確"
+
+#: ../src/libmdc_interface.c:563
+#, c-format
+msgid ""
+"Importing File Through (X)MedCon:\n"
+"   %s"
+msgstr ""
+"透過 (X)MedCon 匯入檔案：\n"
+"   %s"
+
+#: ../src/libmdc_interface.c:737
+msgid "(X)MedCon couldn't convert to a float... out of memory?"
+msgstr "(X)MedCon 無法轉換為浮點數… 記憶體不足？"
+
+#: ../src/libmdc_interface.c:773
+#, c-format
+msgid "(X)MedCon returned %d blank planes... corrupted data file?  Use data with caution."
+msgstr "(X)MedCon 回傳了 %d 空白平面… 資料檔案已損壞？ 使用資料請小心。"
+
+#: ../src/libmdc_interface.c:893
+#, c-format
+msgid "Unsupported export file format: %d\n"
+msgstr "不支援的匯出檔案格式：%d\n"
+
+#: ../src/libmdc_interface.c:1040
+msgid "couldn't malloc DYNAMIC_DATA structs"
+msgstr "無法配置記憶體給 DYNAMIC_DATA 結構"
+
+#: ../src/libmdc_interface.c:1046
+msgid "couldn't malloc img_data structs"
+msgstr "無法配置記憶體給 img_data 結構"
+
+#: ../src/libmdc_interface.c:1052
+#, c-format
+msgid ""
+"Exporting File Through (X)MedCon:\n"
+"   %s"
+msgstr ""
+"透過 (X)MedCon 匯出檔案：\n"
+"   %s"
+
+#: ../src/libmdc_interface.c:1111
+#, c-format
+msgid "couldn't alloc %d bytes for plane"
+msgstr "無法配置 %d 位元組給平面"
+
+#: ../src/libmdc_interface.c:1158
+#, c-format
+msgid "couldn't pixel fiddle, error: %s"
+msgstr "無法像素化無意義資料，錯誤：%s"
+
+#: ../src/libmdc_interface.c:1165
+#, c-format
+msgid "couldn't write out file %s, error %d"
+msgstr "無法寫出檔案 %s，錯誤 %d"
+
+#: ../src/mpeg_encode.c:325 ../src/mpeg_encode.c:516
+msgid "Unable to allocate yuv struct"
+msgstr "無法配置 yuv 結構"
+
+#: ../src/mpeg_encode.c:335 ../src/mpeg_encode.c:524
+msgid "Unable to allocate yuv buffer"
+msgstr "無法配置 yuv 緩衝區"
+
+#: ../src/mpeg_encode.c:491
+msgid "couldn't allocate memory space for context_t"
+msgstr "無法配置記憶體空間給 context_t"
+
+#: ../src/mpeg_encode.c:503
+msgid "couldn't allocate memory space for fame parameters"
+msgstr "無法配置記憶體空間給 fame 參數"
+
+#: ../src/mpeg_encode.c:510
+msgid "Unable to allocate memory space for mpeg encoding buffer"
+msgstr "無法配置記憶體空間給 mpeg 編碼緩衝區"
+
+#: ../src/mpeg_encode.c:543
+msgid "unable to open output file for mpeg encoding"
+msgstr "無法開啟輸出檔案給 mpeg 編碼"
+
+#: ../src/raw_data_import.c:242
+msgid "read offset (entries):"
+msgstr "讀取偏移 (項目)："
+
+#: ../src/raw_data_import.c:245
+msgid "read offset (bytes):"
+msgstr "讀取偏移 (位元組)："
+
+#: ../src/raw_data_import.c:259
+msgid "total entries to read through:"
+msgstr "透過讀取的項目總計："
+
+#: ../src/raw_data_import.c:274
+msgid "total bytes to read through:"
+msgstr "透過讀取的位元組總計："
+
+#: ../src/raw_data_import.c:349
+#, c-format
+msgid "%s: Raw Data Import Dialog\n"
+msgstr "%s：原始資料匯入對話框\n"
+
+#. widgets to change the roi's name
+#: ../src/raw_data_import.c:363
+msgid "name:"
+msgstr "名稱："
+
+#. widgets to change the object's modality
+#: ../src/raw_data_import.c:401
+msgid "modality:"
+msgstr "造影："
+
+#. widgets to change the raw data file's  data format
+#: ../src/raw_data_import.c:425
+msgid "data format:"
+msgstr "資料格式："
+
+#. how many bytes we can read from the file
+#: ../src/raw_data_import.c:446
+msgid "file size (bytes):"
+msgstr "檔案大小 (位元組)："
+
+#. labels for the x, y, and z components
+#: ../src/raw_data_import.c:493 ../src/ui_render.c:972
+msgid "x"
+msgstr "x"
+
+#: ../src/raw_data_import.c:496 ../src/ui_render.c:946
+msgid "y"
+msgstr "y"
+
+#: ../src/raw_data_import.c:499 ../src/ui_render.c:954
+msgid "z"
+msgstr "z"
+
+#: ../src/raw_data_import.c:502
+msgid "gates"
+msgstr "閘口"
+
+#: ../src/raw_data_import.c:505
+msgid "frames"
+msgstr "影格"
+
+#. widgets to change the dimensions of the data set
+#: ../src/raw_data_import.c:512
+msgid "dimensions (# voxels)"
+msgstr "維度 (# 體素)"
+
+#. widgets to change the voxel size of the data set
+#: ../src/raw_data_import.c:533
+msgid "voxel size (mm)"
+msgstr "體素大小 (公釐)"
+
+#. scale factor to apply to the data
+#: ../src/raw_data_import.c:556
+msgid "scale factor"
+msgstr "伸縮因子"
+
+#: ../src/raw_data_import.c:593
+msgid "Couldn't allocate memory space for raw_data_info structure for raw data import"
+msgstr "無法配置記憶體空間給 raw_data_info 結構用於原始資料匯入"
+
+#: ../src/raw_data_import.c:605
+#, c-format
+msgid "Couldn't get stat's on file %s for raw data import"
+msgstr "無法取得檔案 %s 的狀態用於原始資料匯入"
+
+#: ../src/render.c:46
+msgid "Highest Quality and Slowest"
+msgstr "最高品質且最慢"
+
+#: ../src/render.c:47
+msgid "High Quality and Medium Speed"
+msgstr "高品質且中等速度"
+
+#: ../src/render.c:48
+msgid "Medium Quality and Fast"
+msgstr "中等品質且快速"
+
+#: ../src/render.c:49
+msgid "Low Quality and Fastest"
+msgstr "低品質且最快"
+
+#: ../src/render.c:52
+msgid "Opacity"
+msgstr "濁度"
+
+#: ../src/render.c:53
+msgid "Grayscale"
+msgstr "灰階"
+
+#: ../src/render.c:150
+msgid "couldn't allocate memory space for rendering context"
+msgstr "無法配置記憶體空間給潤算狀態組合"
+
+#: ../src/render.c:201
+msgid "\"Per Slice\" thresholding illogical for conversion to volume rendering, using \"Global\" thresholding "
+msgstr "「各切片」用於轉換到體積潤算的臨界值不合邏輯，正在使用「全域」臨界值 "
+
+#: ../src/render.c:214
+msgid "couldn't allocate memory space for density ramp x"
+msgstr "無法配置記憶體空間給密度斜面 x"
+
+#: ../src/render.c:219
+msgid "couldn't allocate memory space for density ramp y"
+msgstr "無法配置記憶體空間給密度斜面 y"
+
+#: ../src/render.c:230
+msgid "couldn't allocate memory space for gradient ramp x"
+msgstr "無法配置記憶體空間給梯度斜面 x"
+
+#: ../src/render.c:235
+msgid "couldn't allocate memory space for gradient ramp y"
+msgstr "無法配置記憶體空間給梯度斜面 y"
+
+#: ../src/render.c:254
+msgid "Error Setting the Rendering Density Ramp"
+msgstr "設定潤算密度斜面時發生錯誤"
+
+#: ../src/render.c:264
+msgid "Error Setting the Rendering Gradient Ramp"
+msgstr "設定潤算梯度斜面時發生錯誤"
+
+#: ../src/render.c:272
+#, c-format
+msgid "Error Setting the Rendering Voxel Size (%s): %s"
+msgstr "設定潤算體素大小 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:282
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, NORMAL): %s"
+msgstr "指定潤算體素欄位 (%s，一般) 時發生錯誤：%s"
+
+#: ../src/render.c:289
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, DENSITY): %s"
+msgstr "指定潤算體素欄位 (%s，密度) 時發生錯誤：%s"
+
+#: ../src/render.c:297
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s"
+msgstr "指定潤算體素欄位 (%s，梯度) 時發生錯誤：%s"
+
+#: ../src/render.c:307
+#, c-format
+msgid "Error Setting the Rendering Classifier Table (%s, DENSITY): %s"
+msgstr "設定潤算分類表格 (%s，密度) 時發生錯誤：%s"
+
+#: ../src/render.c:317
+#, c-format
+msgid "Error Setting the Classifier Table (%s, GRADIENT): %s"
+msgstr "設定分類表格 (%s，梯度) 時發生錯誤：%s"
+
+#: ../src/render.c:415
+#, c-format
+msgid "Error Setting the Context Size (%s): %s"
+msgstr "設定狀態組合大小 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:428
+#, c-format
+msgid "Could not allocate memory space for density data for %s"
+msgstr "無法配置記憶體空間給密度資料用於 %s"
+
+#: ../src/render.c:440
+#, c-format
+msgid "Could not allocate memory space for rendering context volume for %s"
+msgstr "無法配置記憶體空間給潤算狀態組合體積用於 %s"
+
+#: ../src/render.c:452
+#, c-format
+msgid "Converting for rendering: %s"
+msgstr "正在轉換潤算：%s"
+
+#: ../src/render.c:654
+#, c-format
+msgid "Error Computing the Rendering Normals (%s): %s"
+msgstr "計算潤算法線 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:682
+#, c-format
+msgid "Error Setting Rendering Octree Threshold (%s, DENSITY): %s"
+msgstr "設定潤算八元樹臨界值 (%s，密度) 時發生錯誤：%s"
+
+#: ../src/render.c:688
+#, c-format
+msgid "Error Setting Rendering Octree Threshold (%s, GRADIENT): %s"
+msgstr "設定潤算八元樹臨界值 (%s，梯度) 時發生錯誤：%s"
+
+#: ../src/render.c:695
+#, c-format
+msgid "Error Generating Octree (%s): %s"
+msgstr "產生八元樹 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:722
+#, c-format
+msgid "Error Setting the Rendering Material (%s, SHINYNESS): %s"
+msgstr "設定潤算材料 (%s，光度) 時發生錯誤：%s"
+
+#: ../src/render.c:732
+#, c-format
+msgid "Error Setting the Rendering Shader (%s): %s"
+msgstr "設定潤算陰影 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:740
+#, c-format
+msgid "Error Shading Table for Rendering (%s): %s"
+msgstr "加潤算陰影表格 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:775
+#, c-format
+msgid "Error Setting The Item To Rotate (%s): %s"
+msgstr "設定項目為旋轉 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:780
+#, c-format
+msgid "Error Rotating Rendering (%s): %s"
+msgstr "旋轉潤算 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:858
+#, c-format
+msgid "Error Setting Rendering Max Ray Opacity (%s): %s"
+msgstr "設定潤算最大光線濁度 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:864
+#, c-format
+msgid "Error Setting the Min Voxel Opacity (%s): %s"
+msgstr "設定最小體素濁度 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:893
+#, c-format
+msgid "Could not allocate memory space for Rendering Image for %s"
+msgstr "無法配置記憶體空間給潤算影像用於 %s"
+
+#: ../src/render.c:901
+#, c-format
+msgid "Error Switching the Rendering Image Pixel Return Type (%s): %s"
+msgstr "交換潤算影像像素傳回類型 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:913
+#, c-format
+msgid "Error Setting the Rendering Depth Cue (%s): %s"
+msgstr "設定潤算深度暗示 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:930
+#, c-format
+msgid "Error Enabling Rendering Depth Cueing (%s): %s"
+msgstr "啟用潤算景深暗示 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:960
+#, c-format
+msgid "Error Classifying the Volume (%s): %s"
+msgstr "分類體積 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:966
+#, c-format
+msgid "Error Rendering the Classified Volume (%s): %s"
+msgstr "潤算分類的體積 (%s) 時發生錯誤：%s"
+
+#: ../src/render.c:972
+#, c-format
+msgid "Error Rendering the Volume (%s): %s"
+msgstr "潤算體積 (%s) 時發生錯誤：%s"
+
+#: ../src/tb_alignment.c:39
+msgid "There is only one data set in this study.  There needs to be at least two data sets to perform an alignment"
+msgstr "在這個檢驗中只有一個資料集。 至少需要兩個資料集才能施行對齊操作"
+
+#: ../src/tb_alignment.c:43
+msgid ""
+"In order to perform an alignment, each data set must have at least three objects with the same name as the corresponding three objects in the other data set.\n\n"
+"Please see the help documentation for a longer explanation as to how alignments can be done."
+msgstr ""
+"為了施行對齊，每個資料集至少要有三個與其他資料集中相應物件同名的物件。\n\n"
+"請參看說明文件中，關於如何完成對齊操作的詳細解釋。"
+
+#: ../src/tb_alignment.c:51
+msgid ""
+"Welcome to the data set alignment wizard, used for aligning one medical image data set with another. \n\n"
+"Currently, only rigid body registration using either fiducial marks, or maximization of mutual information has been implemented inside of AMIDE. This program was built without libgsl support, as such registration utilizing fiducial marks is not supported.\n\n"
+"The mutual information algorithm is run on the currently displayed slices, not the whole data sets."
+msgstr ""
+"歡迎使用資料集對齊精靈，用於將一個醫學影像資料集與另外一個對齊。\n\n"
+"目前只有使用基準標記或交互資訊最大化的 rigid 內文註冊，已被 AMIDE 實作於內部。這個程式是 built 而無需 libgsl 支援，因為此類註冊利用基準標記未被支援。\n\n"
+"交互資訊演算法是運行在之上目前顯示的切片，不是整個資料集。"
+
+#: ../src/tb_alignment.c:101
+msgid "Fiducial Markers"
+msgstr "基準標記"
+
+#: ../src/tb_alignment.c:103
+msgid "Mutual Information"
+msgstr "交互資訊"
+
+#: ../src/tb_alignment.c:212
+msgid "couldn't allocate memory space for tb_alignment_t"
+msgstr "無法配置記憶體空間給 tb_alignment_t"
+
+#: ../src/tb_alignment.c:498
+msgid "Align Data Set: (moving)"
+msgstr "對齊資料集：(移動)"
+
+#: ../src/tb_alignment.c:521
+msgid "Align Data Set: (fixed)"
+msgstr "對齊資料集：(固定)"
+
+#: ../src/tb_alignment.c:560
+msgid "Points for Alignment"
+msgstr "用於對齊的點數"
+
+#: ../src/tb_alignment.c:634
+#, c-format
+msgid ""
+"The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\n"
+"The calculated fiducial reference error is:\n\t %5.2f mm/point"
+msgstr ""
+"對齊已經計算，按下完成以套用，或按下取消以離開。\n\n"
+"計算出的基準參考錯誤是：\n\t%5.5f 公釐/點"
+
+#: ../src/tb_alignment.c:648
+#, c-format
+msgid ""
+"The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\n"
+"The calculated mutual information metric is:\n\t %5.2f"
+msgstr ""
+"對齊已計算，按下完成以套用，或取消以離開。\n\n"
+"已計算的交互資訊度量資訊是：\n\t%5.2f"
+
+#: ../src/tb_alignment.c:708
+msgid "Data Set Alignment Wizard"
+msgstr "資料集對齊精靈"
+
+#: ../src/tb_alignment.c:717
+msgid "Alignment Type Selection"
+msgstr "對齊型態選擇"
+
+#: ../src/tb_alignment.c:725 ../src/tb_math.c:543
+msgid "Data Set Selection"
+msgstr "資料集選擇"
+
+#: ../src/tb_alignment.c:731
+msgid "Fiducial Marks Selection"
+msgstr "基準標記選擇"
+
+#: ../src/tb_alignment.c:739
+msgid "Alignment Error"
+msgstr "對齊錯誤"
+
+#: ../src/tb_alignment.c:747 ../src/tb_math.c:560
+msgid "Conclusion"
+msgstr "結論"
+
+#: ../src/tb_crop.c:41
+msgid ""
+"When the apply button is hit, a new data set will be created\n"
+"and placed into the study's tree, consisting of the appropriately\n"
+"cropped data\n"
+msgstr ""
+"當套用按鈕被點擊時，新的資料集將被建立\n"
+"並且放入檢驗樹，而由適當裁剪的資料\n"
+"所構成\n"
+
+#. the zoom selection
+#: ../src/tb_crop.c:195
+msgid "zoom"
+msgstr "縮放"
+
+#: ../src/tb_crop.c:215
+msgid "gate"
+msgstr "閘口"
+
+#: ../src/tb_crop.c:236
+msgid "frame"
+msgstr "影格"
+
+#: ../src/tb_crop.c:291
+#, c-format
+msgid "%s range:"
+msgstr "%s 範圍："
+
+#: ../src/tb_crop.c:319
+msgid "(mm)"
+msgstr "(公釐)"
+
+#. widget to tell you the internal data format
+#: ../src/tb_crop.c:390
+msgid "Current Data Format:"
+msgstr "目前的資料格式："
+
+#. widget to tell you the scaling format
+#: ../src/tb_crop.c:403
+msgid "Current Scale Format:"
+msgstr "目前的伸縮格式："
+
+#. widget to tell you the internal data format
+#: ../src/tb_crop.c:422
+msgid "Output Data Format:"
+msgstr "輸出資料格式："
+
+#. widget to tell you the scaling format
+#: ../src/tb_crop.c:435
+msgid "Output Scale Format:"
+msgstr "輸出伸縮格式："
+
+#: ../src/tb_crop.c:992
+msgid "couldn't allocate memory space for tb_crop_t"
+msgstr "無法配置記憶體空間給 tb_crop_t"
+
+#: ../src/tb_crop.c:1033 ../src/tb_filter.c:429 ../src/ui_study_cb.c:56
+msgid "No data set is currently marked as active"
+msgstr "目前沒有資料集被標記為作用中"
+
+#: ../src/tb_crop.c:1076
+msgid "Data Set Cropping Wizard"
+msgstr "資料集裁剪精靈"
+
+#: ../src/tb_export_data_set.c:111
+msgid "couldn't allocate memory space for tb_export_t"
+msgstr "無法配置記憶體空間給 tb_export_t"
+
+#: ../src/tb_export_data_set.c:216 ../src/tb_export_data_set.c:373
+msgid "No Data Sets are current visible"
+msgstr "目前沒有任何可見的資料集"
+
+#. the rest of this function runs the file selection dialog box
+#: ../src/tb_export_data_set.c:249 ../src/ui_study_cb.c:535
+msgid "Export to File"
+msgstr "匯出至檔案"
+
+#: ../src/tb_export_data_set.c:535
+#, c-format
+msgid "%s: Export Data Set Dialog"
+msgstr "%s：匯出資料集對話框"
+
+#: ../src/tb_export_data_set.c:557
+msgid "Exporting Data Sets"
+msgstr "匯出資料集"
+
+#: ../src/tb_export_data_set.c:564
+msgid "Export:"
+msgstr "匯出："
+
+#. tooltip N_("Export the data set in its original orientation (unresliced)")
+#: ../src/tb_export_data_set.c:569
+#, c-format
+msgid "Original Orientation - %s"
+msgstr "原來的方向 - %s"
+
+#. tooltip N_("Export the data set in its current orientation (resliced)")
+#: ../src/tb_export_data_set.c:580
+#, c-format
+msgid "Resliced Orientation - %s"
+msgstr "重新切片方向 - %s"
+
+#: ../src/tb_export_data_set.c:592
+msgid "All Visible Data Sets (resliced)"
+msgstr "所有可見的資料集 (重新切片)"
+
+#: ../src/tb_export_data_set.c:617
+msgid "export format:"
+msgstr "匯出格式："
+
+#. widgets to change the voxel size of the data set
+#: ../src/tb_export_data_set.c:661
+msgid "voxel size (mm) [x,y,z]:"
+msgstr "體素大小 (公釐) [x,y,z]："
+
+#. gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[0]),FALSE);
+#. gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
+#. gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[0]), GTK_UPDATE_ALWAYS);
+#: ../src/tb_export_data_set.c:686
+msgid "bounding box:"
+msgstr "邊界方框："
+
+#: ../src/tb_fads.c:41
+msgid "Factor Analysis Wizard"
+msgstr "因素分析精靈"
+
+#: ../src/tb_fads.c:46
+msgid ""
+"This page allows the computation of the singular value decomposition for the data set in question.  These values can give you an idea of how many important factors the data set has.\n\n"
+"This process can be extremely slow, so skip this page if you already know the answer."
+msgstr ""
+"這個頁面允許用於所提資枓集的單值分解計算。 這些值可以給您有多少重要因子資料集的概念。\n\n"
+"這個程序可能會極度緩慢，因此如果您已經知道答案就跳過這個頁面。"
+
+#: ../src/tb_fads.c:54
+msgid "When the apply button is hit, the appropriate factor analysis data structures will be created, and placed underneath the given data set in the study tree\n"
+msgstr "當套用按鈕被點擊時，適當的因素分析資料結構將被建立，而且被置放於在檢驗樹中給定的資料集之下\n"
+
+#: ../src/tb_fads.c:59
+msgid ""
+"Welcome to the factor analysis of dynamic structures wizard. \n\n"
+"None of this code has been validated, and it's probably wrong, so use at your own risk"
+msgstr ""
+"歡迎使用動態結構精靈的因素分析。\n\n"
+"沒有任何編碼曾被驗證過，因此或許是錯誤的，使用時請自負風險"
+
+#: ../src/tb_fads.c:66
+msgid ""
+"Welcome to the factor analysis of dynamic structures wizard. \n\n"
+"This wizard only works with dynamic studies"
+msgstr ""
+"歡迎使用動態結構精靈的因素分析。\n\n"
+"這個精靈只適用於動態檢驗"
+
+#: ../src/tb_fads.c:154
+#, c-format
+msgid ""
+"%s\n"
+"Method Picked: %s"
+msgstr ""
+"%s\n"
+"揀取的方法：%s"
+
+#: ../src/tb_fads.c:187
+msgid "Filename for Factor Data"
+msgstr "因子資料檔名"
+
+#: ../src/tb_fads.c:389
+msgid "failed malloc for frames array"
+msgstr "配置記憶體給影格陣列時失敗"
+
+#: ../src/tb_fads.c:394
+msgid "failed malloc for vals array"
+msgstr "配置記憶體給 vals 陣列時失敗"
+
+#: ../src/tb_fads.c:523
+msgid "couldn't allocate memory space for tb_fads_t"
+msgstr "無法配置記憶體空間給 tb_fads_t"
+
+#. do I need to compute factors?
+#: ../src/tb_fads.c:650
+msgid "Compute Singular Values?"
+msgstr "計算單值？"
+
+#. ask for the fads method to use
+#: ../src/tb_fads.c:686
+msgid "FADS Method:"
+msgstr "FADS 方法："
+
+#. ask for the minimizer algorithm to use
+#: ../src/tb_fads.c:720
+msgid "Minimization Algorithm:"
+msgstr "最小化演算法："
+
+#. max # of iterations
+#: ../src/tb_fads.c:735
+msgid "Max. # of iterations:"
+msgstr "反覆運算最大次數："
+
+#. stopping criteria
+#: ../src/tb_fads.c:750
+msgid "Stopping Criteria:"
+msgstr "停止準則："
+
+#. stopping criteria
+#: ../src/tb_fads.c:767
+msgid "Beta:"
+msgstr "測試："
+
+#. how many factors to solve for?
+#: ../src/tb_fads.c:782
+msgid "# of Factors to use"
+msgstr "要使用的因子數量"
+
+#. k12 criteria
+#: ../src/tb_fads.c:797
+msgid "initial k12 (1/s):"
+msgstr "初始 k12 (1/s)："
+
+#. k21 criteria
+#: ../src/tb_fads.c:814
+msgid "initial K21 (1/s):"
+msgstr "初始 K21 (1/s)："
+
+#. A table to add blood sample measurements
+#: ../src/tb_fads.c:837
+msgid "Add Blood Sample"
+msgstr "加入血液樣本"
+
+#: ../src/tb_fads.c:877
+msgid "Remove Blood Sample"
+msgstr "移除血液樣本"
+
+#. mm
+#. mm
+#: ../src/tb_filter.c:46
+msgid "Data Set Filtering Wizard"
+msgstr "資料集篩選精靈"
+
+#: ../src/tb_filter.c:49
+msgid "When the apply button is hit, a new data set will be created and placed into the study's tree, consisting of the appropriately filtered data\n"
+msgstr "當套用按鈕被點擊時，新的資料集將被建立並被放入檢驗樹，而由適當篩選過的資料所構成\n"
+
+#: ../src/tb_filter.c:55
+msgid "The Gaussian filter is an effective smoothing filter"
+msgstr "Gaussian 篩選器是一種有效的平滑篩選器"
+
+#: ../src/tb_filter.c:60
+msgid ""
+"Median filter work relatively well at preserving edges while\n"
+"removing speckle noise.\n\n"
+"This filter is the 3D median filter, so the neighborhood used for\n"
+"determining the median will be KSxKSxKS, KS=kernel size"
+msgstr ""
+"我的篩選器作用相對的地得不錯於保留邊緣當\n"
+"移除斑點雜訊。\n\n"
+"這個篩選器是 3D 我的篩選器，因而 neighborhood 用於\n"
+"決定我的將是 KSxKSxKS，KS=內核大小"
+
+#: ../src/tb_filter.c:67
+msgid ""
+"Median filters work relatively well at preserving edges while\n"
+"removing speckle noise.\n\n"
+"This filter is the 1D median filter, so the neighboorhood used for\n"
+"determining the median will be of the given kernel size, and the\n"
+"data set will be filtered 3x (once for each direction)."
+msgstr ""
+"中值篩選器就保留邊緣值同時移除斑點雜訊\n"
+"來說相對表現不錯。\n\n"
+"這個篩選器是 1D 中值篩選器，因此用於\n"
+"決定中值的鄰值將是給定的內核大小，而\n"
+"資料集將被篩選三次 (每個方向一次)。"
+
+#: ../src/tb_filter.c:76
+msgid ""
+"This filter requires support from the GNU Scientific Library (GSL).\n"
+"This version of AMIDE has not been compiled with GSL support enabled."
+msgstr ""
+"這個篩選器需要來自 GNU 科學函式庫 (GSL) 的支援。\n"
+"這個版本的 AMIDE 編譯時並未啟用 GSL 支援。"
+
+#: ../src/tb_filter.c:282
+msgid "couldn't allocate memory space for tb_filter_t"
+msgstr "無法配置記憶體空間給 tb_filter_t"
+
+#: ../src/tb_filter.c:315
+msgid "Which Filter"
+msgstr "何種篩選器"
+
+#. the kernel selection
+#: ../src/tb_filter.c:343 ../src/tb_filter.c:394
+msgid "Kernel Size"
+msgstr "內核大小"
+
+#: ../src/tb_filter.c:360
+msgid "FWHM (mm)"
+msgstr "FWHM (公釐)"
+
+#. the rest of this function runs the file selection dialog box
+#: ../src/tb_fly_through.c:308 ../src/ui_render_movie.c:236
+msgid "Output MPEG As"
+msgstr "輸出 MPEG 為"
+
+#: ../src/tb_fly_through.c:479
+#, c-format
+msgid "encoding of frame %d failed"
+msgstr "影格 %d 編碼時失敗"
+
+#: ../src/tb_fly_through.c:630
+msgid "couldn't allocate memory space for tb_fly_through_t"
+msgstr "無法配置記憶體空間給 tb_fly_through_t"
+
+#: ../src/tb_fly_through.c:694
+msgid "Fly Through Generation"
+msgstr "產生掃視"
+
+#: ../src/tb_fly_through.c:697
+msgid "_Generate Fly Through"
+msgstr "產生掃視(_G)"
+
+#: ../src/tb_fly_through.c:716
+msgid "Current Position (mm):"
+msgstr "現行位置 (公釐)："
+
+#: ../src/tb_fly_through.c:726
+msgid "Start Position (mm):"
+msgstr "開始位置 (公釐)："
+
+#: ../src/tb_fly_through.c:741
+msgid "End Position (mm):"
+msgstr "結束位置 (公釐)："
+
+#: ../src/tb_fly_through.c:756
+msgid "Movie Duration (sec):"
+msgstr "影片持續時間 (sec)："
+
+#: ../src/tb_fly_through.c:774
+msgid "Fly through movie generation"
+msgstr "產生掃視影片"
+
+#: ../src/tb_fly_through.c:785
+msgid "Set Start Position"
+msgstr "設定開始位置"
+
+#: ../src/tb_fly_through.c:790
+msgid "Set End Position"
+msgstr "設定結束位置"
+
+#. do we want to make a movie over time or over frames
+#: ../src/tb_fly_through.c:848 ../src/ui_render_movie.c:702
+msgid "Dynamic Movie:"
+msgstr "動態影片："
+
+#. the radio buttons
+#: ../src/tb_fly_through.c:859 ../src/ui_render_movie.c:713
+msgid "No"
+msgstr "否"
+
+#: ../src/tb_fly_through.c:866 ../src/ui_render_movie.c:718
+msgid "over time"
+msgstr "經由時間"
+
+#: ../src/tb_fly_through.c:870 ../src/ui_render_movie.c:722
+msgid "over frames"
+msgstr "經由影格"
+
+#: ../src/tb_fly_through.c:882 ../src/ui_render_movie.c:732
+msgid "over frames smoothed"
+msgstr "經由影格平滑化"
+
+#: ../src/tb_fly_through.c:888 ../src/ui_render_movie.c:736
+msgid "over gates"
+msgstr "經由閘口"
+
+#. widgets to specify the start and end times
+#: ../src/tb_fly_through.c:908 ../src/ui_render_movie.c:748
+msgid "Start Time (s)"
+msgstr "開始時間 (秒)"
+
+#: ../src/tb_fly_through.c:911 ../src/ui_render_movie.c:751
+msgid "Start Frame"
+msgstr "開始影格"
+
+#: ../src/tb_fly_through.c:938 ../src/ui_render_movie.c:778
+msgid "End Time (s)"
+msgstr "結束時間 (秒)"
+
+#: ../src/tb_fly_through.c:941 ../src/ui_render_movie.c:781
+msgid "End Frame"
+msgstr "結束影格"
+
+#: ../src/tb_fly_through.c:969 ../src/ui_render_movie.c:810
+msgid "Display time on image"
+msgstr "在影像上顯示時間"
+
+#: ../src/tb_math.c:37
+msgid "There is only one data set in this study.  There needs to be at least two data sets to perform mathematical operations"
+msgstr "在這個檢驗中只有一個資料集。 需要至少兩個資料集以施行數學計算"
+
+#: ../src/tb_math.c:41
+msgid ""
+"Welcome to the data set math wizard, used for performing mathematical operations between medical image data sets.\n\n"
+"Note - you will get more pleasing results if the data sets in question are set to trilinear interpolation mode."
+msgstr ""
+"歡迎使用資料集數學精靈，用於在醫學影像資料集之間施行數學計算。\n\n"
+"註記 - 如果用到的資料集被設定為三線性內插模式，您將會得到更佳的結果。"
+
+#: ../src/tb_math.c:277
+#, c-format
+msgid "A new data set will be created with the math operation, press Finish to calculate this data set, or Cancel to quit."
+msgstr "新的資料集將以數學運算建立，按下完成將會計算這個資料集，或是按下取消以離開。"
+
+#: ../src/tb_math.c:309
+msgid "Math operation failed - results not added to study"
+msgstr "數學運算失敗 - 結果未加入檢驗"
+
+#: ../src/tb_math.c:386
+msgid "couldn't allocate memory space for tb_math_t"
+msgstr "無法配置記憶體空間給 tb_math_t"
+
+#: ../src/tb_math.c:419
+msgid "Data Set 1:"
+msgstr "資料集 1："
+
+#: ../src/tb_math.c:442
+msgid "Data Set 2:"
+msgstr "資料集 2："
+
+#: ../src/tb_math.c:474
+msgid "Math Operation"
+msgstr "數學運算"
+
+#: ../src/tb_math.c:533
+msgid "Data Set Math Wizard"
+msgstr "資料集數學精靈"
+
+#: ../src/tb_math.c:550
+msgid "Operation Selection"
+msgstr "運算選擇"
+
+#: ../src/tb_profile.c:223
+msgid "couldn't allocate memory space for tb_profile_t"
+msgstr "無法配置記憶體空間給 tb_profile_t"
+
+#: ../src/tb_profile.c:257
+#, c-format
+msgid "# Profiles on Study: %s\tGenerated on: %s"
+msgstr "# 檢驗輪廓檔：%s\t產生於：%s"
+
+#: ../src/tb_profile.c:262
+#, c-format
+msgid ""
+"#\n"
+"# Profile on: %s\n"
+msgstr ""
+"#\n"
+"# 輪廓檔於：%s\n"
+
+#: ../src/tb_profile.c:266
+msgid "# Gaussian Fit: b + p * e^(-0.5*(x-c)^2/s^2)\n"
+msgstr "# Gaussian 擬合：b + p * e^(-0.5*(x-c)^2/s^2)\n"
+
+#: ../src/tb_profile.c:267
+#, c-format
+msgid "#\titerations used %d, status %s\n"
+msgstr "#\t反覆運算已用 %d，狀態 %s\n"
+
+#: ../src/tb_profile.c:270 ../src/tb_profile.c:275 ../src/tb_profile.c:823
+#: ../src/tb_profile.c:826
+msgid "(fixed)"
+msgstr "(固定)"
+
+#: ../src/tb_profile.c:286
+msgid "# x\tvalue\n"
+msgstr "# x\t數值\n"
+
+#. the rest of this function runs the file selection dialog box
+#: ../src/tb_profile.c:315
+msgid "Export Profile"
+msgstr "匯出輪廓檔"
+
+#: ../src/tb_profile.c:366
+#, c-format
+msgid "couldn't open: %s for writing profiles"
+msgstr "無法開啟：%s 以寫入輪廓檔"
+
+#. write out the gaussian equation
+#: ../src/tb_profile.c:778
+msgid "fit = b + p * e^(-0.5*(x-c)^2/s^2)"
+msgstr "擬合 = b + p * e^(-0.5*(x-c)^2/s^2)"
+
+#: ../src/tb_profile.c:812
+#, c-format
+msgid ""
+"\n\n"
+"gaussian fit on: %s\n"
+"iterations used %d, status %s\n"
+"b    = %.5g +/- %.5g %s\n"
+"p    = %.5g +/- %.5g\n"
+"c    = %.5g +/- %.5g mm %s\n"
+"s    = %.5g +/- %.5g\n"
+"fwhm = %.5g +/- %.5g mm\n"
+"fwtm = %.5g +/- %.5g mm"
+msgstr ""
+"\n\n"
+"gaussian 擬合於：%s\n"
+"反覆運算已用 %d，狀態 %s\n"
+"b    = %.5g +/- %.5g %s\n"
+"p    = %.5g +/- %.5g\n"
+"c    = %.5g +/- %.5g 公釐 %s\n"
+"s    = %.5g +/- %.5g\n"
+"fwhm = %.5g +/- %.5g 公釐\n"
+"fwtm = %.5g +/- %.5g 公釐"
+
+#. start setting up the widget we'll display the info from
+#: ../src/tb_profile.c:1181
+#, c-format
+msgid "%s Profile Tool: Study %s"
+msgstr "%s 輪廓檔工具：檢驗 %s"
+
+#. which view do we want the profile on
+#: ../src/tb_profile.c:1215
+msgid "Line Profile on:"
+msgstr "曲線輪廓於："
+
+#. changing the angle
+#: ../src/tb_profile.c:1246
+msgid "Angle (degrees):"
+msgstr "角度 (度)："
+
+#: ../src/tb_roi_analysis.c:83
+msgid "ROI"
+msgstr "ROI"
+
+#: ../src/tb_roi_analysis.c:84 ../src/ui_time_dialog.c:62
+msgid "Data Set"
+msgstr "資料集"
+
+#: ../src/tb_roi_analysis.c:87
+msgid "Midpt (s)"
+msgstr "Midpt (秒)"
+
+#: ../src/tb_roi_analysis.c:88
+msgid "Gate"
+msgstr "閘口"
+
+#. N_("Total"),
+#: ../src/tb_roi_analysis.c:90
+msgid "Median"
+msgstr "中值"
+
+#: ../src/tb_roi_analysis.c:91
+msgid "Mean"
+msgstr "平均"
+
+#: ../src/tb_roi_analysis.c:92
+msgid "Var"
+msgstr "Var"
+
+#: ../src/tb_roi_analysis.c:93
+msgid "Std Dev"
+msgstr "Std Dev"
+
+#: ../src/tb_roi_analysis.c:96
+msgid "Size (mm^3)"
+msgstr "大小 (公釐^3)"
+
+#: ../src/tb_roi_analysis.c:97
+msgid "Frac. Voxels"
+msgstr "體素成分"
+
+#: ../src/tb_roi_analysis.c:98
+msgid "Voxels"
+msgstr "體素"
+
+#: ../src/tb_roi_analysis.c:139
+msgid "Export Statistics"
+msgstr "匯出統計資訊"
+
+#: ../src/tb_roi_analysis.c:139
+msgid "Export ROI Raw Data Values"
+msgstr "匯出 ROI 原始資料值"
+
+#: ../src/tb_roi_analysis.c:152
+msgid "roi_raw_data"
+msgstr "roi_raw_data"
+
+#: ../src/tb_roi_analysis.c:152
+msgid "analysis"
+msgstr "分析"
+
+#: ../src/tb_roi_analysis.c:197
+#, c-format
+msgid "couldn't open: %s for writing roi data"
+msgstr "無法開啟：%s 用於寫入 roi 資料"
+
+#: ../src/tb_roi_analysis.c:203
+#, c-format
+msgid "# %s: ROI Analysis File - generated on %s"
+msgstr "# %s：ROI 分析檔案 - 產生於 %s"
+
+#: ../src/tb_roi_analysis.c:205
+#, c-format
+msgid "# Study:\t%s\n"
+msgstr "# 檢驗：\t%s\n"
+
+#: ../src/tb_roi_analysis.c:209
+#, c-format
+msgid "# ROI:\t%s\tType:\t%s"
+msgstr "# ROI：\t%s\t類型：\t%s"
+
+#: ../src/tb_roi_analysis.c:214
+#, c-format
+msgid "\tIsocontour Above Value:\t%g"
+msgstr "\t數值之上的輪廓面：\t%g"
+
+#: ../src/tb_roi_analysis.c:216
+#, c-format
+msgid "\tIsocontour Below Value:\t%g"
+msgstr "\t數值之下的輪廓面：\t%g"
+
+#. AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX
+#: ../src/tb_roi_analysis.c:218
+#, c-format
+msgid "\tIsocontour Between Values:\t%g %g"
+msgstr "\t數值之間的輪廓面：\t%g %g"
+
+#: ../src/tb_roi_analysis.c:227
+#, c-format
+msgid "#   Calculation done with all voxels in ROI\n"
+msgstr "#   在 ROI 中的所有體素已經計算完畢\n"
+
+#: ../src/tb_roi_analysis.c:230
+#, c-format
+msgid "#   Calculation done on %5.3f percentile of voxels in ROI\n"
+msgstr "#   在 ROI 中的 %5.3f 體素已經計算完畢\n"
+
+#: ../src/tb_roi_analysis.c:233
+#, c-format
+msgid "#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"
+msgstr "#   在 ROI 中 >= %5.3f 最大值的體素已經計算完畢\n"
+
+#: ../src/tb_roi_analysis.c:236
+#, c-format
+msgid "#   Calculation done on voxels >= %g in ROI\n"
+msgstr "#   在 ROI 中 >= %g 的體素已經計算完畢\n"
+
+#: ../src/tb_roi_analysis.c:248
+#, c-format
+msgid "#   Data Set:\t%s\tScaling Factor:\t%g\n"
+msgstr "#   資料集：\t%s\t縮放因子：\t%g\n"
+
+#: ../src/tb_roi_analysis.c:255
+#, c-format
+msgid "#      Output Data Units: %s\n"
+msgstr "#      輸出資料單位：%s\n"
+
+#: ../src/tb_roi_analysis.c:257
+#, c-format
+msgid "#         Injected Dose: %g [%s]\n"
+msgstr "#         注射劑量：%g [%s]\n"
+
+#: ../src/tb_roi_analysis.c:261
+#, c-format
+msgid "#         Cylinder Factor: %g [%s]\n"
+msgstr "#         柱面因子：%g [%s]\n"
+
+#: ../src/tb_roi_analysis.c:272
+#, c-format
+msgid "#         Subject Weight: %g [%s]\n"
+msgstr "#         主題重量：%g [%s]\n"
+
+#: ../src/tb_roi_analysis.c:359
+#, c-format
+msgid "# Stats for Study: %s\tGenerated on: %s"
+msgstr "# 檢驗統計資訊：%s\t產生於：%s"
+
+#: ../src/tb_roi_analysis.c:535
+msgid "ROI Statistics"
+msgstr "ROI 統計資訊"
+
+#. tell us the type
+#: ../src/tb_roi_analysis.c:547
+msgid "type:"
+msgstr "類型："
+
+#: ../src/tb_roi_analysis.c:749
+msgid "couldn't allocate memory space for tb_roi_analysis_t"
+msgstr "無法配置記憶體空間給 tb_roi_analysis_t"
+
+#: ../src/tb_roi_analysis.c:793
+msgid "No Data Sets selected for calculating analyses"
+msgstr "未選取任何資料集用於計算分析"
+
+#: ../src/tb_roi_analysis.c:805
+msgid "No ROI's selected for calculating analyses"
+msgstr "未選取任何 ROI 用於計算分析"
+
+#. start setting up the widget we'll display the info from
+#: ../src/tb_roi_analysis.c:819
+#, c-format
+msgid "%s Roi Analysis: Study %s"
+msgstr "%s Roi 分析：檢驗 %s"
+
+#: ../src/tb_roi_analysis.c:959
+#, c-format
+msgid "%s: ROI Analysis Initialization Dialog"
+msgstr "%s：ROI 分析初始化對話框"
+
+#: ../src/tb_roi_analysis.c:979
+msgid "Calculate:"
+msgstr "計算："
+
+#: ../src/tb_roi_analysis.c:982
+msgid "All ROIS:"
+msgstr "所有 ROIS："
+
+#: ../src/tb_roi_analysis.c:985
+msgid "Selected ROIS:"
+msgstr "已選 ROIS："
+
+#: ../src/tb_roi_analysis.c:990
+msgid "On All Data Sets:"
+msgstr "於所有資料集："
+
+#: ../src/tb_roi_analysis.c:1008
+msgid "On Selected Data Sets:"
+msgstr "於已選資料集："
+
+#. do we want to calculate over a subfraction
+#: ../src/tb_roi_analysis.c:1047
+msgid "Calculate over all voxels (normal):"
+msgstr "對所有體素進行計算 (一般)："
+
+#. do we want to calculate over a subfraction
+#: ../src/tb_roi_analysis.c:1058
+#, c-format
+msgid "Calculate over % highest voxels:"
+msgstr "對最高體素百分比進行計算："
+
+#. do we want to calculate over a percentage of max
+#: ../src/tb_roi_analysis.c:1082
+#, c-format
+msgid "Calculate for voxels >= % of Max:"
+msgstr "對體素 >= 最大值百分比進行計算："
+
+#. do we want to calculate over a percentage of max
+#: ../src/tb_roi_analysis.c:1106
+msgid "Calculate for voxels >= Value:"
+msgstr "對體素 >= 某值進行計算："
+
+#. do we want more accurate quantitation
+#: ../src/tb_roi_analysis.c:1146
+msgid "More Accurate Quantitation (Slow)"
+msgstr "更多正確量化 (慢)"
+
+#. Help menu
+#: ../src/ui_common.c:72
+msgid "_Contents"
+msgstr "內容(_C)"
+
+#: ../src/ui_common.c:72
+msgid "Open the AMIDE manual"
+msgstr "開啟 AMIDE 手冊"
+
+#: ../src/ui_common.c:73
+msgid "About AMIDE"
+msgstr "關於 AMIDE"
+
+#: ../src/ui_common.c:87
+msgid "Solid"
+msgstr "純色"
+
+#: ../src/ui_common.c:88
+msgid "On/Off"
+msgstr "開/關"
+
+#: ../src/ui_common.c:89
+msgid "Double Dash"
+msgstr "雙破折號"
+
+#: ../src/ui_common.c:116
+msgid "AMIDE's a Medical Image Data Examiner\n"
+msgstr "AMIDE 醫學影像資料審視器\n"
+
+#: ../src/ui_common.c:118
+msgid "Email bug reports to: "
+msgstr "將錯誤以電子郵件回報給："
+
+#: ../src/ui_common.c:121
+msgid "Compiled with support for the following libraries:\n"
+msgstr "編譯時已支援下列函式庫：\n"
+
+#: ../src/ui_common.c:124
+msgid "libecat: CTI File library by Merence Sibomona\n"
+msgstr "libecat：CTI 檔案函式庫來自 Merence Sibomona\n"
+
+#: ../src/ui_common.c:127
+msgid "libgsl: GNU Scientific Library by the GSL Team (version "
+msgstr "libgsl：GNU 科學函式庫來自 GSL 團隊 (版本 "
+
+#: ../src/ui_common.c:130
+msgid "libmdc: Medical Imaging File library by Erik Nolf (version "
+msgstr "libmdc：醫學影像檔案函式庫來自 Erik Nolf (版本 "
+
+#: ../src/ui_common.c:133
+msgid "libdcmdata: OFFIS DICOM Toolkit DCMTK (C) 1993-2004, OFFIS e.V. (version "
+msgstr "libdcmdata：OFFIS DICOM 工具組 DCMTK ©1993-2004, OFFIS e.V. (版本 "
+
+#: ../src/ui_common.c:136
+msgid "libvolpack: Volume Rendering library by Philippe Lacroute (version "
+msgstr "libvolpack：體積潤算函式庫來自 Philippe Lacroute (版本 "
+
+#: ../src/ui_common.c:139
+msgid "libavcodec: media encoding library by the FFMPEG Team (version "
+msgstr "libavcodec：媒體編碼函式庫來自 FFMPEG 團隊 (版本 "
+
+#: ../src/ui_common.c:142
+msgid "libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "
+msgstr "libfame：快速組譯 Mpeg 編碼函式庫來自 FAME 團隊 (版本 "
+
+#. widgets to change the roi's size
+#: ../src/ui_common.c:397
+msgid "ROI Width (pixels)"
+msgstr "ROI 寬度 (像素)"
+
+#. widgets to change the roi's line style
+#. Anti-aliased canvas doesn't yet support this
+#. also need to remove #ifndef for relevant lines in amitk_canvas_object.c
+#: ../src/ui_common.c:454
+msgid "ROI Line Style:"
+msgstr "ROI 線條樣式："
+
+#. do we want to fill in isocontour roi's
+#: ../src/ui_common.c:471
+msgid "Draw Isocontours/Freehands Filled:"
+msgstr "繪製輪廓面/手繪填滿："
+
+#: ../src/ui_common.c:491
+msgid "Canvas Layout:"
+msgstr "畫布版面配置："
+
+#: ../src/ui_common.c:520
+msgid "Multiple Canvases Layout:"
+msgstr "多重畫布版面配置："
+
+#. do we want the size of the canvas to not resize
+#: ../src/ui_common.c:562
+msgid "Maintain view size constant:"
+msgstr "保持檢視大小常數："
+
+#. widgets to change the amount of empty space in the center of the target
+#: ../src/ui_common.c:575
+msgid "Target Empty Area (pixels)"
+msgstr "目標清空區域 (像素)"
+
+#: ../src/ui_common.c:764
+msgid "Request Dialog"
+msgstr "要求對話框"
+
+#: ../src/ui_gate_dialog.c:43
+msgid "Gate #"
+msgstr "閘口 #"
+
+#: ../src/ui_gate_dialog.c:340
+#, c-format
+msgid "%s: Gate Dialog"
+msgstr "%s：閘口對話框"
+
+#: ../src/ui_gate_dialog.c:361
+msgid "Start Gate"
+msgstr "開始閘口"
+
+#: ../src/ui_gate_dialog.c:378
+msgid "End Gate"
+msgstr "結束閘口"
+
+#: ../src/ui_preferences_dialog.c:39
+msgid ""
+"These preferences are used only for new studies.  \n"
+"Use the study modification dialog to change these \n"
+"parameters for the current study."
+msgstr ""
+"這些偏好設定只用於新的檢驗。\n"
+"使用檢驗修改對話框以對目前檢驗\n"
+"變更這些參數。"
+
+#: ../src/ui_preferences_dialog.c:44
+msgid ""
+"These preferences are used only for new data sets.  \n"
+"Use the data set modification dialog to change these \n"
+"parameters for the current data set."
+msgstr ""
+"這些偏好設定只用於新的資料集。\n"
+"使用資料集修改對話框以對目前資料集\n"
+"變更這些參數。"
+
+#: ../src/ui_preferences_dialog.c:302
+#, c-format
+msgid "%s: Preferences Dialog"
+msgstr "%s：偏好設定對話框"
+
+#: ../src/ui_preferences_dialog.c:412
+msgid "Thresholding"
+msgstr "臨界處理"
+
+#: ../src/ui_preferences_dialog.c:476
+msgid "Default Color Tables"
+msgstr "預設顏色表格"
+
+#. color table selector
+#: ../src/ui_preferences_dialog.c:483
+#, c-format
+msgid "default %s color table:"
+msgstr "預設 %s 顏色表格："
+
+#: ../src/ui_preferences_dialog.c:513
+msgid "Miscellaneous"
+msgstr "雜項"
+
+#: ../src/ui_preferences_dialog.c:517
+msgid "Send Warning Messages to Console:"
+msgstr "發送警告訊息到主控臺："
+
+#: ../src/ui_preferences_dialog.c:532
+msgid "Prompt for \"Save Changes\" on Exit:"
+msgstr "離開時提示「儲存變更」："
+
+#: ../src/ui_preferences_dialog.c:547
+msgid "Which Default Directory:"
+msgstr "何項預設目錄："
+
+#: ../src/ui_preferences_dialog.c:565
+msgid "Specified Directory:"
+msgstr "指定目錄："
+
+#: ../src/ui_preferences_dialog.c:570
+msgid "Default Directory:"
+msgstr "預設目錄："
+
+#: ../src/ui_render.c:369
+msgid "Export File"
+msgstr "匯出檔案"
+
+#: ../src/ui_render.c:408 ../src/ui_series.c:255 ../src/ui_study_cb.c:394
+#: ../src/ui_study_cb.c:611
+#, c-format
+msgid "Failure Saving File: %s"
+msgstr "儲存檔案失敗：%s"
+
+#: ../src/ui_render.c:411 ../src/ui_render_movie.c:526
+#: ../src/ui_study_cb.c:602
+msgid "Canvas failed to return a valid image\n"
+msgstr "畫布無法回傳有效影像\n"
+
+#. Toplevel
+#: ../src/ui_render.c:475 ../src/ui_series.c:369 ../src/ui_study.c:333
+msgid "_File"
+msgstr "檔案(_F)"
+
+#: ../src/ui_render.c:476 ../src/ui_study.c:334
+msgid "_Edit"
+msgstr "編輯(_E)"
+
+#: ../src/ui_render.c:477 ../src/ui_series.c:370 ../src/ui_study.c:337
+msgid "_Help"
+msgstr "求助(_H)"
+
+#. File menu
+#: ../src/ui_render.c:480
+msgid "_Export Rendering"
+msgstr "匯出潤算(_E)"
+
+#: ../src/ui_render.c:480
+msgid "Export the rendered image"
+msgstr "匯出潤算的影像"
+
+#: ../src/ui_render.c:482
+msgid "_Create Movie"
+msgstr "建立影片(_C)"
+
+#: ../src/ui_render.c:482
+msgid "Create a movie out of a sequence of renderings"
+msgstr "建立超出潤算序列的影片"
+
+#: ../src/ui_render.c:484
+msgid "Close the rendering dialog"
+msgstr "關閉潤算對話框"
+
+#. Edit menu
+#: ../src/ui_render.c:487
+msgid "_Rendering Parameters"
+msgstr "潤算參數(_R)"
+
+#: ../src/ui_render.c:487
+msgid "Adjust parameters pertinent to the rendered image"
+msgstr "調整與潤算影像有關的參數"
+
+#. Toolbar items
+#: ../src/ui_render.c:490
+msgid "X-fer"
+msgstr "X-fer"
+
+#: ../src/ui_render.c:490
+msgid "Opacity and density transfer functions"
+msgstr "濁度和密度轉換函式"
+
+#: ../src/ui_render.c:494
+msgid "Mono"
+msgstr "平面"
+
+#: ../src/ui_render.c:494
+msgid "Monoscopic rendering"
+msgstr "平面影像潤算"
+
+#: ../src/ui_render.c:495
+msgid "Stereo"
+msgstr "立體"
+
+#: ../src/ui_render.c:495
+msgid "Stereoscopic rendering"
+msgstr "立體影像潤算"
+
+#. add the zoom widget to our toolbar
+#: ../src/ui_render.c:570 ../src/ui_study.c:675
+msgid "zoom:"
+msgstr "縮放："
+
+#: ../src/ui_render.c:581
+msgid "specify how much to magnify the rendering"
+msgstr "指定放大潤算多少"
+
+#: ../src/ui_render.c:673
+msgid "couldn't allocate memory space for ui_render_t"
+msgstr "無法配置記憶體空間給 ui_render_t"
+
+#: ../src/ui_render.c:894
+msgid "Rendering Window"
+msgstr "潤算視窗"
+
+#. button to reset the axis
+#: ../src/ui_render.c:983
+msgid "Reset Axis"
+msgstr "重置軸線"
+
+#: ../src/ui_render.c:1039
+#, c-format
+msgid "%s: Rendering Initialization Dialog"
+msgstr "%s：潤算初始化對話框"
+
+#. do we want to strip values
+#: ../src/ui_render.c:1075
+msgid "Set values greater than max. threshold to zero?"
+msgstr "設定大於最大臨界值者為零？"
+
+#. do we want to converse memory
+#: ../src/ui_render.c:1083
+msgid "Accelerate Rendering?  Increases memory use ~3x"
+msgstr "加速潤算？ 增加記憶體使用約三倍"
+
+#. do we want the initial opacities to be only density dependent
+#: ../src/ui_render.c:1091
+msgid "Initial opacity functions only density dependent?"
+msgstr "初始濁度函式只相依於密度？"
+
+#: ../src/ui_render_dialog.c:323
+msgid "couldn't allocate memory space for ramp x"
+msgstr "無法配置記憶體空間給斜面 x"
+
+#: ../src/ui_render_dialog.c:328
+msgid "couldn't allocate memory space for ramp y"
+msgstr "無法配置記憶體空間給斜面 y"
+
+#: ../src/ui_render_dialog.c:419
+msgid "Failed to Allocate Memory for Ramp"
+msgstr "配置記憶體給斜面時失敗"
+
+#: ../src/ui_render_dialog.c:465
+#, c-format
+msgid "%s: Rendering Parameters Dialog"
+msgstr "%s：潤算參數對話框"
+
+#. widgets to change the quality versus speed of rendering
+#: ../src/ui_render_dialog.c:488
+msgid "Speed versus Quality"
+msgstr "速度對品質"
+
+#. allow rendering to be click and drag
+#: ../src/ui_render_dialog.c:505
+msgid "update without button release"
+msgstr "更新而不需放開按鈕"
+
+#. widget for the stereo eye angle
+#: ../src/ui_render_dialog.c:520
+msgid "Stereo Angle"
+msgstr "立體角度"
+
+#. widget for the stereo eye width
+#: ../src/ui_render_dialog.c:534
+msgid "Eye Width (mm)"
+msgstr "眼寬 (公釐)"
+
+#. the depth cueing enabling button
+#: ../src/ui_render_dialog.c:556
+msgid "enable/disable depth cueing"
+msgstr "啟用/停用景深暗示              "
+
+#: ../src/ui_render_dialog.c:564
+msgid "Front Factor"
+msgstr "正面因子"
+
+#: ../src/ui_render_dialog.c:577
+msgid "Density"
+msgstr "密度"
+
+#: ../src/ui_render_dialog.c:618
+#, c-format
+msgid "%s: Transfer Function Dialog"
+msgstr "%s：轉換函式對話框"
+
+#. widgets to change the returned pixel type of the rendering
+#: ../src/ui_render_dialog.c:644
+msgid "Return Type"
+msgstr "回傳類型"
+
+#. color table selector
+#: ../src/ui_render_dialog.c:659
+msgid "color table:"
+msgstr "顏色表格："
+
+#: ../src/ui_render_dialog.c:686
+msgid ""
+"Density\n"
+"Dependent\n"
+"Opacity"
+msgstr ""
+"密度\n"
+"相依\n"
+"濁度"
+
+#. gradient classification
+#: ../src/ui_render_dialog.c:688
+msgid ""
+"Gradient\n"
+"Dependent\n"
+"Opacity"
+msgstr ""
+"梯度\n"
+"相依\n"
+"濁度"
+
+#. GTK no longer has a way to detect automatically when the GtkCurve has been changed,
+#. user will now have to explicitly change
+#: ../src/ui_render_dialog.c:712
+msgid "Apply Curve Changes"
+msgstr "套用曲線變更"
+
+#: ../src/ui_render_movie.c:380
+msgid "couldn't allocate memory space for ui_render_movie_t"
+msgstr "無法配置記憶體空間給 ui_render_movie_t"
+
+#: ../src/ui_render_movie.c:621
+#, c-format
+msgid "%s: Rendering Movie Generation Dialog"
+msgstr "%s：潤算影片產生對話框"
+
+#: ../src/ui_render_movie.c:627
+msgid "_Generate Movie"
+msgstr "產生影片(_G)"
+
+#. widgets to specify how many frames
+#: ../src/ui_render_movie.c:649
+msgid "Movie Duration (sec)"
+msgstr "影片持續時間 (秒)"
+
+#: ../src/ui_render_movie.c:674
+#, c-format
+msgid "Rotations on %s"
+msgstr "旋轉於 %s"
+
+#: ../src/ui_render_movie.c:825
+msgid "Rendered Movie Progress"
+msgstr "潤算影片進度"
+
+#: ../src/ui_series.c:47
+msgid "over Space"
+msgstr "經由空間"
+
+#: ../src/ui_series.c:48
+msgid "over Time"
+msgstr "經由時間"
+
+#: ../src/ui_series.c:49
+msgid "over Gates"
+msgstr "經由閘口"
+
+#: ../src/ui_series.c:53
+msgid "Look at a series of images over a spatial dimension"
+msgstr "經由空間維度查看系列影像"
+
+#: ../src/ui_series.c:54
+msgid "Look at a series of images over time"
+msgstr "經由時間維度查看系列影像"
+
+#: ../src/ui_series.c:55
+msgid "Look at a series of images over gates"
+msgstr "經由閘口查看系列影像"
+
+#: ../src/ui_series.c:184
+msgid "Export to Image"
+msgstr "匯出為影像"
+
+#: ../src/ui_series.c:250
+msgid "ui_series canvas failed to return a valid image"
+msgstr "ui_series 畫布無法回傳有效影像"
+
+#: ../src/ui_series.c:309
+msgid "No data sets to threshold\n"
+msgstr "沒有任何資料集可以臨界處理\n"
+
+#. File menu
+#: ../src/ui_series.c:373
+msgid "_Export Series"
+msgstr "匯出系列(_E)"
+
+#: ../src/ui_series.c:373
+msgid "Export the series to a JPEG image file"
+msgstr "匯出系列為 JPEG 圖像檔案"
+
+#: ../src/ui_series.c:374
+msgid "Close the series dialog"
+msgstr "關閉系列對話框"
+
+#. Toolbar items
+#: ../src/ui_series.c:377
+msgid "Threshold"
+msgstr "臨界值"
+
+#: ../src/ui_series.c:377
+msgid "Set the thresholds and colormaps for the data sets in the series view"
+msgstr "設定用於系列檢視中資料集的臨界值和顏色對照表"
+
+#: ../src/ui_series.c:556
+msgid "couldn't allocate memory space for ui_series_t"
+msgstr "無法配置記憶體空間給 ui_series_t"
+
+#: ../src/ui_series.c:674
+#, c-format
+msgid "Slicing for series"
+msgstr "用於系列檢視的切片"
+
+#: ../src/ui_series.c:681
+msgid "couldn't allocate memory space for pointers to image GnomeCanvasItem's"
+msgstr "無法配置記憶體空間給影像 GnomeCanvasItem 的指標"
+
+#: ../src/ui_series.c:686
+msgid "couldn't allocate memory space for pointers to caption GnomeCanvasItem's"
+msgstr "無法配置記憶體空間給題要 GnomeCanvasItem 的指標"
+
+#: ../src/ui_series.c:691
+msgid "couldn't allocate memory space for pointers to GnomeCanavasItem lists"
+msgstr "無法配置記憶體空間給 GnomeCanavasItem 清單的指標"
+
+#: ../src/ui_series.c:965
+#, c-format
+msgid "Series: %s (%s - %s)"
+msgstr "系列：%s (%s - %s)"
+
+#: ../src/ui_series.c:987
+msgid "Need selected objects to create a series"
+msgstr "需要已選物件以建立系列"
+
+#: ../src/ui_series.c:1057
+msgid "Need selected data sets to generate a series of slices over time"
+msgstr "需要已選資料集以產生經由時的切片系列"
+
+#: ../src/ui_series.c:1065
+msgid "unable to allocate memory space for frames"
+msgstr "無法配置記憶體空間給影格"
+
+#: ../src/ui_series.c:1074
+msgid "unable to allocate memory for frame durations"
+msgstr "無法配置記憶體給影格持續時間"
+
+#: ../src/ui_series.c:1328
+#, c-format
+msgid "%s: Series Initialization Dialog"
+msgstr "%s：系列初始化對話框"
+
+#. what series type do we want
+#: ../src/ui_series.c:1352
+msgid "Series Type:"
+msgstr "系列類型："
+
+#. what view type do we want
+#: ../src/ui_series.c:1390
+msgid "View Type:"
+msgstr "檢視類型："
+
+#. internal variables
+#: ../src/ui_study.c:46
+msgid "new"
+msgstr "新"
+
+#: ../src/ui_study.c:49
+msgid "m1"
+msgstr "m1"
+
+#: ../src/ui_study.c:49
+msgid "shift-m1"
+msgstr "shift-m1"
+
+#: ../src/ui_study.c:50
+msgid "m2"
+msgstr "m2"
+
+#: ../src/ui_study.c:50
+msgid "shift-m2"
+msgstr "shift-m2"
+
+#: ../src/ui_study.c:51
+msgid "m3"
+msgstr "m3"
+
+#: ../src/ui_study.c:51 ../src/ui_study.c:63
+msgid "shift-m3"
+msgstr "shift-m3"
+
+#: ../src/ui_study.c:51
+msgid "ctrl-m3"
+msgstr "ctrl-m3"
+
+#: ../src/ui_study.c:62
+msgid "ctrl-x"
+msgstr "ctrl-x"
+
+#. BLANK
+#. CANVAS_FIDUCIAL_MARK
+#: ../src/ui_study.c:71 ../src/ui_study.c:83
+msgid "move view"
+msgstr "移動檢視"
+
+#: ../src/ui_study.c:71
+msgid "shift data set"
+msgstr "平移資料集"
+
+#: ../src/ui_study.c:72 ../src/ui_study.c:84
+msgid "move view, min. depth"
+msgstr "移動檢視，最小深度"
+
+#: ../src/ui_study.c:73 ../src/ui_study.c:85
+msgid "change depth"
+msgstr "變更深度"
+
+#: ../src/ui_study.c:73
+msgid "rotate data set"
+msgstr "旋轉資料集"
+
+#: ../src/ui_study.c:73 ../src/ui_study.c:129
+msgid "add fiducial mark"
+msgstr "加入基準標記"
+
+#. DATA SET
+#. CANVAS_ROI
+#. STUDY
+#. CANVAS_ISOCONTOUR_ROI
+#: ../src/ui_study.c:75 ../src/ui_study.c:79 ../src/ui_study.c:87
+#: ../src/ui_study.c:91 ../src/ui_study.c:121
+msgid "shift"
+msgstr "平移"
+
+#: ../src/ui_study.c:76
+msgid "scale"
+msgstr "伸縮"
+
+#: ../src/ui_study.c:77 ../src/ui_study.c:125
+msgid "rotate"
+msgstr "旋轉"
+
+#: ../src/ui_study.c:77 ../src/ui_study.c:89 ../src/ui_study.c:93
+msgid "set data set inside roi to zero"
+msgstr "設定 roi 內部資料集為零"
+
+#: ../src/ui_study.c:78 ../src/ui_study.c:90 ../src/ui_study.c:94
+msgid "set data set outside roi to zero"
+msgstr "設定 roi 外部資料集為零"
+
+#: ../src/ui_study.c:85
+msgid "rotate study"
+msgstr "旋轉檢驗"
+
+#: ../src/ui_study.c:88 ../src/ui_study.c:92
+msgid "enter draw mode"
+msgstr "輸入繪製模式"
+
+#: ../src/ui_study.c:89
+msgid "start isocontour change"
+msgstr "開始輪廓面變更"
+
+#. CANVAS_FREEHAND_ROI
+#: ../src/ui_study.c:95
+msgid "draw point"
+msgstr "繪製點"
+
+#: ../src/ui_study.c:95
+msgid "draw large point"
+msgstr "繪製大點"
+
+#: ../src/ui_study.c:96
+msgid "leave draw mode"
+msgstr "離開繪製模式"
+
+#: ../src/ui_study.c:97
+msgid "erase point"
+msgstr "清除點"
+
+#: ../src/ui_study.c:97
+msgid "erase large point"
+msgstr "清除大點"
+
+#. CANVAS_DRAWING_MODE
+#: ../src/ui_study.c:99
+msgid "move line"
+msgstr "移動線條"
+
+#: ../src/ui_study.c:101
+msgid "rotate line"
+msgstr "旋轉線條"
+
+#. CANVAS_LINE_PROFILE
+#: ../src/ui_study.c:103
+msgid "draw - edge-to-edge"
+msgstr "繪製 - 邊緣到邊緣"
+
+#: ../src/ui_study.c:104
+msgid "draw - center out"
+msgstr "繪製 - 從中心向外"
+
+#. CANVAS_NEW_ROI
+#: ../src/ui_study.c:107
+msgid "pick isocontour start point"
+msgstr "揀取輪廓面開始點"
+
+#. CANVAS_NEW_ISOCONTOUR_ROI
+#: ../src/ui_study.c:111
+msgid "pick freehand drawing start point"
+msgstr "揀取手繪開始點"
+
+#. CANVAS_NEW_FREEHAND_ROI
+#. CANVAS CHANGE ISOCONTOUR
+#. CANVAS SHIFT OBJECT
+#: ../src/ui_study.c:115 ../src/ui_study.c:119 ../src/ui_study.c:123
+msgid "cancel"
+msgstr "取消"
+
+#: ../src/ui_study.c:117
+msgid "pick new isocontour"
+msgstr "揀取新的輪廓面"
+
+#. CANVAS ROTATE OBJECT
+#: ../src/ui_study.c:127
+msgid "select data set"
+msgstr "選取資料集"
+
+#: ../src/ui_study.c:128 ../src/ui_study.c:140
+msgid "make active"
+msgstr "使其作用"
+
+#: ../src/ui_study.c:129
+msgid "pop up data set dialog"
+msgstr "彈出資料集對話框"
+
+#: ../src/ui_study.c:129 ../src/ui_study.c:141 ../src/ui_study.c:145
+msgid "add roi"
+msgstr "加入 roi"
+
+#: ../src/ui_study.c:130
+msgid "delete data set"
+msgstr "刪除資料集"
+
+#. TREE_DATA_SET
+#: ../src/ui_study.c:131
+msgid "select roi"
+msgstr "選取 roi"
+
+#: ../src/ui_study.c:132
+msgid "center view on roi"
+msgstr "以 ROI 為中心的檢視"
+
+#: ../src/ui_study.c:133
+msgid "pop up roi dialog"
+msgstr "彈出 roi 對話框"
+
+#: ../src/ui_study.c:134
+msgid "delete roi"
+msgstr "刪除 roi"
+
+#. TREE_ROI
+#: ../src/ui_study.c:135
+msgid "select point"
+msgstr "選取點"
+
+#: ../src/ui_study.c:136
+msgid "center view on point"
+msgstr "以點為中心的檢視"
+
+#: ../src/ui_study.c:137
+msgid "pop up point dialog"
+msgstr "彈出點對話框"
+
+#: ../src/ui_study.c:138
+msgid "delete mark"
+msgstr "刪除標記"
+
+#: ../src/ui_study.c:141
+msgid "pop up study dialog"
+msgstr "彈出檢驗對話框"
+
+#: ../src/ui_study.c:335
+msgid "_View"
+msgstr "檢視(_V)"
+
+#: ../src/ui_study.c:336
+msgid "_Tools"
+msgstr "工具(_T)"
+
+#. submenus
+#: ../src/ui_study.c:340
+msgid "Import File (_specify)"
+msgstr "匯入檔案 (指定類型)(_S)"
+
+#. N_("Import an image data file into this study, specifying the import type"),
+#: ../src/ui_study.c:342
+msgid "_Export View"
+msgstr "匯出檢視(_E)"
+
+#. N_("Export one of the views to a picture file")
+#: ../src/ui_study.c:344
+msgid "Add _ROI"
+msgstr "加入 _ROI"
+
+#: ../src/ui_study.c:347
+msgid "Generate _Fly Through"
+msgstr "產生掃視(_F)"
+
+#. FileMenu
+#: ../src/ui_study.c:352
+msgid "_New Study"
+msgstr "新檢驗(_N)"
+
+#: ../src/ui_study.c:352
+msgid "Create a new study viewer window"
+msgstr "建立新的檢驗檢視器視窗"
+
+#: ../src/ui_study.c:353
+msgid "_Open Study"
+msgstr "開啟檢驗(_O)"
+
+#: ../src/ui_study.c:353
+msgid "Open a previously saved study (XIF file)"
+msgstr "開啟之前儲存的檢驗 (XIF 檔案)"
+
+#: ../src/ui_study.c:354
+msgid "Save Study As"
+msgstr "儲存檢驗為"
+
+#: ../src/ui_study.c:354
+msgid "Save current study (as a XIF file)"
+msgstr "儲存目前的檢驗 (存成 XIF 檔案)"
+
+#: ../src/ui_study.c:355
+msgid "Import File (guess)"
+msgstr "匯入檔案 (猜測類型)"
+
+#: ../src/ui_study.c:355
+msgid "Import an image data file into this study, guessing at the file type"
+msgstr "匯入影像資料檔案到這個檢驗，並猜測檔案類型"
+
+#: ../src/ui_study.c:356
+msgid "Import _Object from Study"
+msgstr "從檢驗匯入物件(_O)"
+
+#: ../src/ui_study.c:356
+msgid "Import an object, such as an ROI, from a preexisting study (XIF file)"
+msgstr "匯入像是 ROI 的物件自既有的檢驗 (XIF 檔案)"
+
+#: ../src/ui_study.c:357
+msgid "Export _Data Set"
+msgstr "匯出資料集(_D)"
+
+#: ../src/ui_study.c:357
+msgid "Export data set(s) to a medical image format"
+msgstr "匯出資料集為醫學影像格式"
+
+#: ../src/ui_study.c:358
+msgid "_Recover Study"
+msgstr "回復檢驗(_R)"
+
+#: ../src/ui_study.c:358
+msgid "Try to recover a corrupted XIF file"
+msgstr "嘗試回復已損壞的 XIF 檔案"
+
+#: ../src/ui_study.c:359
+msgid "Open XIF Directory"
+msgstr "開啟 XIF 目錄"
+
+#: ../src/ui_study.c:359
+msgid "Open a study stored in XIF directory format"
+msgstr "開啟以 XIF 目錄格式儲存的檢驗"
+
+#: ../src/ui_study.c:360
+msgid "Save As XIF Drectory"
+msgstr "另存為 XIF 目錄"
+
+#: ../src/ui_study.c:360
+msgid "Save a study in XIF directory format"
+msgstr "以 XIF 目錄格式儲存檢驗"
+
+#: ../src/ui_study.c:361
+msgid "Import from XIF Directory"
+msgstr "從 XIF 目錄匯入"
+
+#: ../src/ui_study.c:361
+msgid "Import an object, such as an ROI, from a preexisting XIF directory"
+msgstr "匯入像是 ROI 的物件自既有的 XIF 目錄"
+
+#: ../src/ui_study.c:362
+msgid "Close the current study"
+msgstr "關閉目前的檢驗"
+
+#: ../src/ui_study.c:363
+msgid "Quit AMIDE"
+msgstr "離開 AMIDE"
+
+#. ExportView Submenu
+#: ../src/ui_study.c:366 ../src/ui_study.c:391
+msgid "_Transverse"
+msgstr "橫切面(_T)"
+
+#: ../src/ui_study.c:366
+msgid "Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr "匯出目前的橫切面檢視到影像檔案 (JPEG/TIFF/PNG/...)"
+
+#: ../src/ui_study.c:367 ../src/ui_study.c:392
+msgid "_Coronal"
+msgstr "冠切面(_C)"
+
+#: ../src/ui_study.c:367
+msgid "Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr "匯出目前的冠切面檢視到影像檔案 (JPEG/TIFF/PNG/...)"
+
+#: ../src/ui_study.c:368 ../src/ui_study.c:393
+msgid "_Sagittal"
+msgstr "縱切面(_S)"
+
+#: ../src/ui_study.c:368
+msgid "Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr "匯出目前的縱切面檢視到影像檔案 (JPEG/TIFF/PNG/...)"
+
+#. EditMenu
+#: ../src/ui_study.c:371
+msgid "Add _Fiducial Mark"
+msgstr "加入基準標記(_F)"
+
+#: ../src/ui_study.c:371
+msgid "Add a new fiducial mark to the active data set"
+msgstr "加入新的基準標記到作用資料集"
+
+#. ViewMenu
+#: ../src/ui_study.c:375
+msgid "_Series"
+msgstr "系列(_S)"
+
+#: ../src/ui_study.c:375
+msgid "Look at a series of images"
+msgstr "查看影像系列"
+
+#: ../src/ui_study.c:377
+msgid "_Volume Rendering"
+msgstr "體積潤算中(_V)"
+
+#: ../src/ui_study.c:377
+msgid "perform a volume rendering on the currently selected objects"
+msgstr "對目前已選物件施行體積潤算"
+
+#. ToolsMenu
+#: ../src/ui_study.c:381
+msgid "_Alignment Wizard"
+msgstr "對齊精靈(_A)"
+
+#: ../src/ui_study.c:381
+msgid "guides you throw the processing of alignment"
+msgstr "逐步指引您對齊的程序"
+
+#: ../src/ui_study.c:382
+msgid "_Crop Active Data Set"
+msgstr "裁剪作用資料集(_C)"
+
+#: ../src/ui_study.c:382
+msgid "allows you to crop the active data set"
+msgstr "允許您裁剪作用資料集"
+
+#: ../src/ui_study.c:383
+msgid "_Factor Analysis"
+msgstr "因素分析(_F)"
+
+#: ../src/ui_study.c:383
+msgid "allows you to do factor analysis of dynamic data on the active data set"
+msgstr "允許您於作用資料集進行動態資料的因素分析"
+
+#: ../src/ui_study.c:384
+msgid "_Filter Active Data Set"
+msgstr "篩選作用資料集(_F)"
+
+#: ../src/ui_study.c:384
+msgid "allows you to filter the active data set"
+msgstr "允許您篩選作用資料集"
+
+#: ../src/ui_study.c:385
+msgid "Generate Line _Profile"
+msgstr "產生曲線輪廓(_P)"
+
+#: ../src/ui_study.c:385
+msgid "allows generating a line profile between two fiducial marks"
+msgstr "允許在兩個基準標記之間產生曲線輪廓"
+
+#: ../src/ui_study.c:386
+msgid "Perform _Math on Data Sets"
+msgstr "於資料集施行數學運算(_M)"
+
+#: ../src/ui_study.c:386
+msgid "allows doing simple math operations between data sets"
+msgstr "允許在資料集之間進行簡單的數學計算"
+
+#: ../src/ui_study.c:387
+msgid "Calculate _ROI Statistics"
+msgstr "計算 _ROI 統計資訊"
+
+#: ../src/ui_study.c:387
+msgid "caculate ROI statistics"
+msgstr "計算 ROI 統計資訊"
+
+#: ../src/ui_study.c:391
+msgid "Generate a fly through using transaxial slices"
+msgstr "使用橫切面切片產生掃視"
+
+#: ../src/ui_study.c:392
+msgid "Generate a fly through using coronal slices"
+msgstr "使用冠切面切片產生掃視"
+
+#: ../src/ui_study.c:393
+msgid "Generate a fly through using sagittal slices"
+msgstr "使用縱切面切片產生掃視"
+
+#. Toolbar items
+#: ../src/ui_study.c:397
+msgid "_Threshold"
+msgstr "臨界值(_T)"
+
+#: ../src/ui_study.c:397
+msgid "Set the thresholds and colormaps for the active data set"
+msgstr "設定作用資料集的臨界值和顏色對照表"
+
+#: ../src/ui_study.c:402
+msgid "Near."
+msgstr "鄰近"
+
+#: ../src/ui_study.c:403
+msgid "Tri."
+msgstr "三線"
+
+#: ../src/ui_study.c:407
+msgid "Blend"
+msgstr "漸變"
+
+#: ../src/ui_study.c:407
+msgid "blend all data sets"
+msgstr "混合所有資料集"
+
+#: ../src/ui_study.c:408
+msgid "Overlay"
+msgstr "外罩"
+
+#: ../src/ui_study.c:408
+msgid "overlay active data set on blended data sets"
+msgstr "將作用資料集外罩於混和資料集"
+
+#: ../src/ui_study.c:412
+msgid "Single"
+msgstr "單一"
+
+#: ../src/ui_study.c:412
+msgid "All objects are shown in a single view"
+msgstr "所有物件顯示在單一檢視中"
+
+#: ../src/ui_study.c:413
+msgid "2-way"
+msgstr "雙向"
+
+#: ../src/ui_study.c:413
+msgid "Objects are shown between 2 linked views"
+msgstr "物件顯示在 2 鏈結檢視之間"
+
+#: ../src/ui_study.c:414
+msgid "3-way"
+msgstr "三向"
+
+#: ../src/ui_study.c:414
+msgid "Objects are shown between 3 linked views"
+msgstr "物件顯示在 3 鏈結檢視之間"
+
+#: ../src/ui_study.c:420
+msgid "Target"
+msgstr "目標"
+
+#: ../src/ui_study.c:420
+msgid "Leave crosshairs on views"
+msgstr "保留十字準線於檢視"
+
+#: ../src/ui_study.c:421
+msgid "Transverse"
+msgstr "橫切面"
+
+#: ../src/ui_study.c:421
+msgid "Enable transverse view"
+msgstr "啟用橫切面檢視"
+
+#: ../src/ui_study.c:422
+msgid "Coronal"
+msgstr "冠切面"
+
+#: ../src/ui_study.c:422
+msgid "Enable coronal view"
+msgstr "啟用冠切面檢視"
+
+#: ../src/ui_study.c:423
+msgid "Sagittal"
+msgstr "縱切面"
+
+#: ../src/ui_study.c:423
+msgid "Enable sagittal view"
+msgstr "啟用縱切面檢視"
+
+#: ../src/ui_study.c:691
+msgid "specify how much to magnify the images"
+msgstr "指定影像要放大多少"
+
+#. add the field of view widget to our toolbar
+#: ../src/ui_study.c:697
+msgid "fov (%):"
+msgstr "檢視範圍 (%)："
+
+#: ../src/ui_study.c:712
+msgid "specify how much of the image field of view to display"
+msgstr "指定要顯示多少的影像檢視範圍"
+
+#. add the slice thickness selector
+#: ../src/ui_study.c:718
+msgid "thickness (mm):"
+msgstr "厚度 (公釐)："
+
+#: ../src/ui_study.c:731
+msgid "specify how thick to make the slices (mm)"
+msgstr "指定切片要多厚 (公釐)"
+
+#. gate
+#. note, can't use gtk_tool_button, as no way to set the relief in gtk 2.10, and the default
+#. is no relief so you can't tell that it's a button.... -
+#: ../src/ui_study.c:739
+msgid "gate:"
+msgstr "閘口："
+
+#: ../src/ui_study.c:745
+msgid "the gate range over which to view the data"
+msgstr "檢視資料所經由的閘口範圍"
+
+#. frame selector
+#: ../src/ui_study.c:752
+msgid "time:"
+msgstr "時間："
+
+#: ../src/ui_study.c:758
+msgid "the time range over which to view the data (s)"
+msgstr "檢視資料所經由的時間範圍 (秒)"
+
+#: ../src/ui_study.c:949
+#, c-format
+msgid ""
+"Adding fiducial mark for data set: %s\n"
+"Enter the mark's name:"
+msgstr ""
+"加入基準標記於資料集：%s\n"
+"輸入標記名稱："
+
+#: ../src/ui_study.c:995
+#, c-format
+msgid ""
+"Adding ROI to: %s\n"
+"Enter ROI Name:"
+msgstr ""
+"加入 ROI 到：%s\n"
+"輸入 ROI 名稱："
+
+#: ../src/ui_study.c:1052
+#, c-format
+msgid "%d-%d"
+msgstr "%d-%d"
+
+#: ../src/ui_study.c:1056
+#, c-format
+msgid "N/A"
+msgstr "無法提供"
+
+#: ../src/ui_study.c:1069
+#, c-format
+msgid "%g-%g s"
+msgstr "%g-%g 秒"
+
+#: ../src/ui_study.c:1150
+#, c-format
+msgid "[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] mm"
+msgstr "[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] 公釐"
+
+#: ../src/ui_study.c:1153
+#, c-format
+msgid "value  = % 5.3g"
+msgstr "數值 = % 5.3g"
+
+#: ../src/ui_study.c:1155
+#, c-format
+msgid "value  = none"
+msgstr "數值 = 無"
+
+#: ../src/ui_study.c:1157
+#, c-format
+msgid "shift (x,y,z) ="
+msgstr "平移 (x,y,z) ="
+
+#: ../src/ui_study.c:1158 ../src/ui_study.c:1167
+#, c-format
+msgid "[% 5.2f,% 5.2f,% 5.2f] mm"
+msgstr "[% 5.2f,% 5.2f,% 5.2f] 公釐"
+
+#: ../src/ui_study.c:1162
+#, c-format
+msgid "theta = % 5.3f degrees"
+msgstr "theta = % 5.3f 度"
+
+#: ../src/ui_study.c:1166
+#, c-format
+msgid "view center (x,y,z) ="
+msgstr "檢視中心 (x,y,z) ="
+
+#: ../src/ui_study.c:1364
+#, c-format
+msgid "Study: %s %s"
+msgstr "檢驗：%s %s"
+
+#: ../src/ui_study.c:1368
+#, c-format
+msgid "Study: %s (%s) %s"
+msgstr "檢驗：%s (%s) %s"
+
+#: ../src/ui_study_cb.c:58
+msgid "This wizard requires compiled in support from the GNU Scientific Library (libgsl), which this copy of AMIDE does not have."
+msgstr "這個精靈需要編譯時就支援 GNU 科學函式庫 (libgsl)，而此份 AMIDE 並沒有。"
+
+#: ../src/ui_study_cb.c:77
+#, c-format
+msgid "%s: Pick Object(s) to Import"
+msgstr "%s：揀取物件以匯入"
+
+#: ../src/ui_study_cb.c:149
+msgid "XIF Files"
+msgstr "XIF 檔案"
+
+#: ../src/ui_study_cb.c:156
+msgid "All Files"
+msgstr "所有檔案"
+
+#. get the name of the file to import
+#: ../src/ui_study_cb.c:169
+msgid "Recover AMIDE XIF FILE"
+msgstr "回復 AMIDE XIF 檔案"
+
+#: ../src/ui_study_cb.c:169
+msgid "Open AMIDE XIF File"
+msgstr "開啟 AMIDE XIF 檔案"
+
+#: ../src/ui_study_cb.c:189 ../src/ui_study_cb.c:373
+#, c-format
+msgid "Inappropriate filename: %s"
+msgstr "不適當檔名：%s"
+
+#: ../src/ui_study_cb.c:199
+#, c-format
+msgid "error recovering study: %s"
+msgstr "回復檢驗時發生錯誤：%s"
+
+#: ../src/ui_study_cb.c:202
+#, c-format
+msgid "error loading study: %s"
+msgstr "載入檢驗時發生錯誤：%s"
+
+#: ../src/ui_study_cb.c:299
+#, c-format
+msgid "Overwrite file: %s"
+msgstr "覆寫檔案：%s"
+
+#. get the name of the file to import
+#: ../src/ui_study_cb.c:322
+msgid "Save AMIDE XIF File"
+msgstr "儲存 AMIDE XIF 檔案"
+
+#. get the name of the file to import
+#: ../src/ui_study_cb.c:430
+msgid "Import File"
+msgstr "匯入檔案"
+
+#: ../src/ui_study_cb.c:447
+#, c-format
+msgid "Inappropriate Filename: %s"
+msgstr "不適當檔名：%s"
+
+#: ../src/ui_study_cb.c:479
+#, c-format
+msgid "Could not import data sets from file %s\n"
+msgstr "無法匯入資料集自檔案 %s\n"
+
+#: ../src/ui_study_cb.c:498
+msgid "There's currently no active data set to export"
+msgstr "目前沒有作用中資料集可供匯出"
+
+#: ../src/ui_study_cb.c:700
+msgid "no active data set to erase from"
+msgstr "沒有作用中資料集可供清除"
+
+#: ../src/ui_study_cb.c:709
+#, c-format
+msgid ""
+"Do you really wish to erase the data set %s\n"
+"    to the ROI: %s\n"
+"     on the data set: %s\n"
+"This step is irreversible\n"
+"The minimum threshold value: %5.3f\n"
+"    will be used to fill in the volume"
+msgstr ""
+"您真的希望要清除資料集 %s\n"
+"   到 ROI：%s\n"
+"   於資料集：%s\n"
+"這個步驟是不可回復的\n"
+"最小臨界值：%5.3f\n"
+"   將被用來填入體積"
+
+#: ../src/ui_study_cb.c:710
+msgid "exterior"
+msgstr "外部"
+
+#: ../src/ui_study_cb.c:710
+msgid "interior"
+msgstr "內部"
+
+#: ../src/ui_study_cb.c:822
+#, c-format
+msgid "Do you really want to delete: %s%s"
+msgstr "您真的要刪除：%s%s"
+
+#: ../src/ui_study_cb.c:825
+msgid ""
+"\n"
+"and its children"
+msgstr ""
+"\n"
+"以及它的子項"
+
+#: ../src/ui_study_cb.c:1321
+msgid ""
+"There are unsaved changes to the study.\n"
+"Are you sure you wish to quit?"
+msgstr ""
+"有些檢驗的變更尚未儲存。\n"
+"您確定想要離開嗎？"
+
+#: ../src/ui_time_dialog.c:59 ../src/ui_time_dialog.c:485
+msgid "Start (s)"
+msgstr "開始 (秒)"
+
+#: ../src/ui_time_dialog.c:60 ../src/ui_time_dialog.c:504
+msgid "End (s)"
+msgstr "結束 (秒)"
+
+#: ../src/ui_time_dialog.c:61
+msgid "Frame #"
+msgstr "影格 #"
+
+#: ../src/ui_time_dialog.c:242
+msgid "can't count frames or allocate memory!"
+msgstr "無法計數影格或配置記憶體！"
+
+#: ../src/ui_time_dialog.c:459
+#, c-format
+msgid "%s: Time Dialog"
+msgstr "%s：時間對話框"
+
+#: ../src/xml.c:172
+#, c-format
+msgid "Couldn't read time value for %s, substituting %5.3f"
+msgstr "無法讀取 %s 的時間值，替代為 %5.3f"
+
+#: ../src/xml.c:201 ../src/xml.c:242
+msgid "Couldn't allocate memory space for time data"
+msgstr "無法配置記憶體空間給時間資料"
+
+#: ../src/xml.c:233
+msgid "XIF File appears corrupted, setting frame durations to 1"
+msgstr "XIF 檔案出現損壞，設定影格持續時間為 1"
+
+#: ../src/xml.c:240
+#, c-format
+msgid "Couldn't read value for %s, substituting 1"
+msgstr "無法讀取 %s 的值，替代為 1"
+
+#: ../src/xml.c:287
+#, c-format
+msgid "Couldn't read value for %s, substituting %5.3f"
+msgstr "無法讀取 %s 的值，替代為 %5.3f"
+
+#: ../src/xml.c:349
+#, c-format
+msgid "Couldn't read value for %s, substituting FALSE"
+msgstr "無法讀取 %s 的值，替代為 FALSE"
+
+#: ../src/xml.c:385
+#, c-format
+msgid "Couldn't read value for %s, substituting %d"
+msgstr "無法讀取 %s 的值，替代為 %d"
+
+#: ../src/xml.c:426
+#, c-format
+msgid "Couldn't read value for %s, substituting 0x%llx 0x%llx"
+msgstr "無法讀取 %s 的值，替代為 0x%llx 0x%llx"
+
+#: ../src/xml.c:663
+#, c-format
+msgid "Couldn't Parse AMIDE xml file %s"
+msgstr "無法剖析 AMIDE xml 檔案 %s"
+
+#: ../src/xml.c:687
+#, c-format
+msgid "Could not seek to location %lx in file."
+msgstr "無法尋指到檔案中的位置 %lx。"
+
+#: ../src/xml.c:693
+#, c-format
+msgid "Only read %x bytes from file, expected %x"
+msgstr "只從檔案讀取了 %x 位元組，預期為 %x"

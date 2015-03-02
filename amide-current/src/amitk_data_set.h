@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -63,6 +63,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_COLOR_TABLE(ds, view_mode)  (AMITK_DATA_SET(ds)->color_table[view_mode])
 #define AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(ds, view_mode) (AMITK_DATA_SET(ds)->color_table_independent[view_mode])
 #define AMITK_DATA_SET_INTERPOLATION(ds)           (AMITK_DATA_SET(ds)->interpolation)
+#define AMITK_DATA_SET_RENDERING(ds)               (AMITK_DATA_SET(ds)->rendering)
 #define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET_NUM_FRAMES(ds) > 1)
 #define AMITK_DATA_SET_GATED(ds)                   (AMITK_DATA_SET_NUM_GATES(ds) > 1)
 #define AMITK_DATA_SET_THRESHOLDING(ds)            (AMITK_DATA_SET(ds)->thresholding)
@@ -72,6 +73,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SUBJECT_NAME(ds)            (AMITK_DATA_SET(ds)->subject_name)
 #define AMITK_DATA_SET_SUBJECT_ID(ds)              (AMITK_DATA_SET(ds)->subject_id)
 #define AMITK_DATA_SET_SUBJECT_DOB(ds)             (AMITK_DATA_SET(ds)->subject_dob)
+#define AMITK_DATA_SET_SERIES_NUMBER(ds)           (AMITK_DATA_SET(ds)->series_number)
 #define AMITK_DATA_SET_DICOM_IMAGE_TYPE(ds)        (AMITK_DATA_SET(ds)->dicom_image_type)
 #define AMITK_DATA_SET_SCAN_START(ds)              (AMITK_DATA_SET(ds)->scan_start)
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
@@ -92,12 +94,16 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(ds) (AMITK_DATA_SET(ds)->displayed_cylinder_unit)
 #define AMITK_DATA_SET_INVERSION_TIME(ds)          (AMITK_DATA_SET(ds)->inversion_time)
 #define AMITK_DATA_SET_ECHO_TIME(ds)               (AMITK_DATA_SET(ds)->echo_time)
+#define AMITK_DATA_SET_DIFFUSION_B_VALUE(ds)       (AMITK_DATA_SET(ds)->diffusion_b_value)
+#define AMITK_DATA_SET_DIFFUSION_DIRECTION(ds)     (AMITK_DATA_SET(ds)->diffusion_direction)
 #define AMITK_DATA_SET_THRESHOLD_WINDOW(ds, i_win, limit) (AMITK_DATA_SET(ds)->threshold_window[i_win][limit])
 #define AMITK_DATA_SET_VIEW_START_GATE(ds)         (AMITK_DATA_SET(ds)->view_start_gate)
 #define AMITK_DATA_SET_VIEW_END_GATE(ds)           (AMITK_DATA_SET(ds)->view_end_gate)
 #define AMITK_DATA_SET_NUM_VIEW_GATES(ds)          (AMITK_DATA_SET(ds)->num_view_gates)
 
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
+#define AMITK_DATA_SET_MAX_LOCAL_CACHE_SIZE 6
+#define AMITK_DATA_SET_MIN_LOCAL_CACHE_SIZE 3
 
 typedef enum {
   AMITK_OPERATION_ADD,
@@ -111,6 +117,13 @@ typedef enum {
   AMITK_INTERPOLATION_TRILINEAR, 
   AMITK_INTERPOLATION_NUM
 } AmitkInterpolation;
+
+typedef enum {
+  AMITK_RENDERING_MPR,
+  AMITK_RENDERING_MIP,
+  AMITK_RENDERING_MINIP,
+  AMITK_RENDERING_NUM
+} AmitkRendering;
 
 typedef enum {
   AMITK_THRESHOLDING_PER_SLICE, 
@@ -229,6 +242,7 @@ struct _AmitkDataSet
   gchar * subject_name; /* name of the subject */
   gchar * subject_id; /* id of the subject */
   gchar * subject_dob; /* date of birth of the subject */
+  gint series_number; /* series number, used by dicom */
   gchar * dicom_image_type; /* dicom specific image type designator */
   AmitkModality modality;
   AmitkPoint voxel_size;  /* in mm */
@@ -241,6 +255,7 @@ struct _AmitkDataSet
   AmitkColorTable color_table[AMITK_VIEW_MODE_NUM]; /* the color table to draw this volume in */
   gboolean color_table_independent[AMITK_VIEW_MODE_NUM]; /* whether to use the independent color tables for 2-way or 3-way linked modes*/
   AmitkInterpolation interpolation;
+  AmitkRendering rendering; /* rendering mode - MPR/MIP/MINIP */
   AmitkSubjectOrientation subject_orientation; /* orientation of subject in scanner */
   AmitkSubjectSex subject_sex;
 
@@ -256,6 +271,8 @@ struct _AmitkDataSet
   /* MRI parameters */
   amide_time_t inversion_time; /* in milliseconds */
   amide_time_t echo_time; /* in milliseconds */
+  gdouble diffusion_b_value;
+  AmitkPoint diffusion_direction;
 
   /* Thresholding */
   AmitkThresholding thresholding; /* what sort of thresholding we're using (per slice, global, etc.) */
@@ -280,9 +297,7 @@ struct _AmitkDataSet
   AmitkRawData * current_scaling_factor; /* external_scaling * internal_scaling_factor[] */
   amide_intpoint_t num_view_gates;
 
-  GList * slice_cache;
-  gint max_slice_cache_size;
-
+  GList * slice_cache; /* size limited by AMITK_DATA_SET_MAX_LOCAL_CACHE_SIZE */
 
   /* only used by derived data sets (slices and projections)  */
   /* this is a weak pointer, it should be NULL'ed automatically by gtk on the parent's destruction */
@@ -307,6 +322,7 @@ struct _AmitkDataSetClass
   void (* color_table_independent_changed)(AmitkDataSet * ds,
 					   AmitkViewMode * view_mode);
   void (* interpolation_changed)        (AmitkDataSet * ds);
+  void (* rendering_changed)            (AmitkDataSet * ds);
   void (* subject_orientation_changed)  (AmitkDataSet * ds);
   void (* subject_sex_changed)          (AmitkDataSet * ds);
   void (* conversion_changed)           (AmitkDataSet * ds);
@@ -344,6 +360,7 @@ AmitkDataSet * amitk_data_set_import_raw_file    (const gchar * file_name,
 GList *        amitk_data_set_import_file        (AmitkImportMethod method, 
 						  int submethod,
 						  const gchar * filename,
+						  gchar ** pstudyname,
 						  AmitkPreferences * preferences,
 						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
@@ -404,6 +421,8 @@ void           amitk_data_set_set_color_table_independent(AmitkDataSet * ds,
 							  const gboolean independent);
 void           amitk_data_set_set_interpolation  (AmitkDataSet * ds,
 						  const AmitkInterpolation new_interpolation);
+void           amitk_data_set_set_rendering      (AmitkDataSet * ds,
+						  const AmitkRendering new_rendering);
 void           amitk_data_set_set_subject_orientation    (AmitkDataSet * ds,
 							  const AmitkSubjectOrientation subject_orientation);
 void           amitk_data_set_set_subject_sex    (AmitkDataSet * ds,
@@ -416,6 +435,8 @@ void           amitk_data_set_set_subject_id     (AmitkDataSet * ds,
 						  const gchar * new_id);
 void           amitk_data_set_set_subject_dob    (AmitkDataSet * ds, 
 						  const gchar * new_dob);
+void           amitk_data_set_set_series_number  (AmitkDataSet * ds,
+						  const gint new_series_number);
 void           amitk_data_set_set_dicom_image_type(AmitkDataSet * ds,
 						   const gchar * image_type);
 void           amitk_data_set_set_conversion     (AmitkDataSet * ds,
@@ -434,10 +455,14 @@ void           amitk_data_set_set_displayed_weight_unit  (AmitkDataSet * ds,
 						          AmitkWeightUnit new_weight_unit);
 void           amitk_data_set_set_displayed_cylinder_unit(AmitkDataSet * ds,
 						          AmitkCylinderUnit new_cylinder_unit);
-void           amitk_data_set_set_inversion_time(AmitkDataSet * ds,
-						 amide_time_t new_inversion_time);
-void           amitk_data_set_set_echo_time(AmitkDataSet * ds,
-						 amide_time_t new_echo_tim);
+void           amitk_data_set_set_inversion_time   (AmitkDataSet * ds,
+						    amide_time_t new_inversion_time);
+void           amitk_data_set_set_echo_time        (AmitkDataSet * ds,
+						    amide_time_t new_echo_time);
+void           amitk_data_set_set_diffusion_b_value(AmitkDataSet * ds,
+						    gdouble b_value);
+void           amitk_data_set_set_diffusion_direction(AmitkDataSet * ds,
+						      AmitkPoint direction);
 void           amitk_data_set_set_threshold_window (AmitkDataSet * ds,
 						    const AmitkWindow window,
 						    const AmitkLimit limit,
@@ -576,6 +601,7 @@ AmitkDataSet * amitk_data_sets_math                  (AmitkDataSet * ds1,
 const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling_type);
 const gchar *   amitk_operation_get_name          (const AmitkOperation operation);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
+const gchar *   amitk_rendering_get_name          (const AmitkRendering rendering);
 const gchar *   amitk_subject_orientation_get_name(const AmitkSubjectOrientation subject_orientation);
 const gchar *   amitk_subject_sex_get_name        (const AmitkSubjectSex subject_sex);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);
@@ -603,6 +629,7 @@ amide_data_t amitk_cylinder_unit_convert_from     (const amide_data_t cylinder_f
 /* external variables */
 extern AmitkColorTable amitk_modality_default_color_table[];
 extern const gchar * amitk_interpolation_explanations[];
+extern const gchar * amitk_rendering_explanation;
 extern const gchar * amitk_import_menu_names[];
 extern const gchar * amitk_import_menu_explanations[];
 extern const gchar * amitk_export_menu_names[];

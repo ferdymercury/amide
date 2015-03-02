@@ -1,7 +1,7 @@
 /* amitk_space.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -528,6 +528,20 @@ gboolean amitk_space_axes_equal(const AmitkSpace * space1, const AmitkSpace * sp
 
   for (i_axis=0;i_axis<AMITK_AXIS_NUM && inner;i_axis++) 
     inner = inner && POINT_EQUAL(space1->axes[i_axis], space2->axes[i_axis]);
+
+  return inner;
+}
+
+gboolean amitk_space_axes_close(const AmitkSpace * space1, const AmitkSpace * space2) {
+
+  gboolean inner = TRUE;
+  AmitkAxis i_axis;
+
+  g_return_val_if_fail(AMITK_IS_SPACE(space1), FALSE);
+  g_return_val_if_fail(AMITK_IS_SPACE(space2), FALSE);
+
+  for (i_axis=0;i_axis<AMITK_AXIS_NUM && inner;i_axis++) 
+    inner = inner && POINT_CLOSE(space1->axes[i_axis], space2->axes[i_axis]);
 
   return inner;
 }

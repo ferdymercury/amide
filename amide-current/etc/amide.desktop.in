@@ -2,11 +2,11 @@
 Encoding=UTF-8
 _GenericName=Medical Image Examiner
 _Name=Amide
-_Comment=A Medical Image Data Examiner
+_Comment=analysis tool for medical images
 Exec=amide
-Icon=amide_logo.png
+Icon=amide_logo
 Terminal=false
 Type=Application
-Categories=Graphics;MedicalSoftware;
+Categories=Graphics;Education;Science;MedicalSoftware;
 
 

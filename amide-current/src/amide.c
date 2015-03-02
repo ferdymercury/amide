@@ -1,7 +1,7 @@
 /* amide.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -164,6 +164,7 @@ int main (int argc, char *argv []) {
   amide_real_t min_voxel_size;
   gint i;
   gint num_args;
+  gchar * studyname=NULL;
   // GOptionContext *context;
 
 
@@ -191,7 +192,8 @@ int main (int argc, char *argv []) {
 
   //  g_option_context_parse (context, &argc, &argv, NULL);
   amide_gconf_init();
-
+  
+  /* translations */
   bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 
 #ifdef AMIDE_DEBUG
@@ -247,19 +249,26 @@ int main (int argc, char *argv []) {
       } else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
 	if ((new_data_sets = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filename, 
-							preferences, NULL, NULL)) != NULL) {
+							&studyname, preferences, NULL, NULL)) != NULL) {
+
 	  while (new_data_sets != NULL) {
 	    new_ds = new_data_sets->data;
 	    if (imported_study == NULL) {
 	      imported_study = amitk_study_new(preferences);
-	      if (AMITK_DATA_SET_SUBJECT_NAME(new_ds) != NULL)
-		amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_DATA_SET_SUBJECT_NAME(new_ds));
-	      else
-		amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds)); 
 
-	      amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_DATA_SET_SUBJECT_NAME(new_ds));
+	      if (studyname != NULL) { 
+		amitk_study_suggest_name(imported_study, studyname);
+		g_free(studyname);
+		studyname = NULL;
+	      } else if (AMITK_DATA_SET_SUBJECT_NAME(new_ds) != NULL)
+		amitk_study_suggest_name(imported_study, AMITK_DATA_SET_SUBJECT_NAME(new_ds));
+	      else
+		amitk_study_suggest_name(imported_study, AMITK_OBJECT_NAME(new_ds)); 
+
 	      amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
 	    }
+
+
 	    amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
 	    min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
 	    amitk_study_set_view_thickness(imported_study, min_voxel_size);

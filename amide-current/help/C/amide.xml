@@ -2,9 +2,9 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "AMIDE">
-<!ENTITY date "June 2005">
-<!ENTITY appversion "0.8.12">
-<!ENTITY manrevision "0.3">
+<!ENTITY date "Jan 2012">
+<!ENTITY appversion "1.0.2">
+<!ENTITY manrevision "0.3.1">
 <!ENTITY legal          SYSTEM "legal.xml">
 ]>
 
@@ -20,7 +20,7 @@
       </para>
     </abstract>
 
-    <copyright><year>2000-2005</year> <holder>Andy Loening</holder></copyright>
+    <copyright><year>2000-2012</year> <holder>Andy Loening</holder></copyright>
     <!--- translators should put additional copyright entries -->
 
     <authorgroup>
@@ -585,6 +585,22 @@
      generating slices from the active data set.  Nearest neighbor is
      faster, while tri-linear interpolation produces better looking
      (smoother) images with the penalty of being ~8x slower.
+    </para>
+   </sect3>
+
+   <sect3 id="slab_rendering"><title>Rendering</title>
+
+    <para>Three rendering methods are available, MPR (multiplanar
+    reformation), MIP (maximum intensity projection), and MINIP
+    (minimum intensity projection). These rendering algorithms are
+    utilized to combine data in the depth direction of the slice
+    and/or over multiple frames of data. As such, the effects are most
+    noticeable when the view thickness of the slices is increased
+    and/or several frames of data are being combined. For MPR, each
+    displayed pixel corresponds to the weighted average of the
+    underlying data. For MIP and MINIP, each displayed pixel
+    corresponds to the maximum or minimum value of the underlying data,
+    respectively.
     </para>
 
    </sect3>

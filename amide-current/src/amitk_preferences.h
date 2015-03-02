@@ -1,7 +1,7 @@
 /* amitk_preferences.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2003-2011 Andy Loening
+ * Copyright (C) 2003-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

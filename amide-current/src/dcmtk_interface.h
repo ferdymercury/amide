@@ -1,7 +1,7 @@
 /* dcmtk_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2011 Andy Loening
+ * Copyright (C) 2005-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -38,6 +38,7 @@ extern const gchar * dcmtk_version;
 /* external functions */
 gboolean dcmtk_test_dicom(const gchar * filename);
 GList * dcmtk_import(const gchar * filename, 
+		     gchar ** pstudyname,
 		     AmitkPreferences * preferences,
 		     AmitkUpdateFunc update_func,
 		     gpointer update_data);

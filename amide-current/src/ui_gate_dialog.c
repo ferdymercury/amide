@@ -1,7 +1,7 @@
 /* ui_gate_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2004-2011 Andy Loening
+ * Copyright (C) 2004-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -419,7 +419,7 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
 
   for (i_column=0; i_column<NUM_COLUMNS; i_column++) {
     renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(column_names[i_column], renderer,
+    column = gtk_tree_view_column_new_with_attributes(_(column_names[i_column]), renderer,
 						      "text", i_column, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (gd->tree_view), column);
   }

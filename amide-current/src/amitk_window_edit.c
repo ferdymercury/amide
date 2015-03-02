@@ -1,7 +1,7 @@
 /* amitk_window_edit.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2011 Andy Loening
+ * Copyright (C) 2005-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -103,7 +103,7 @@ static void window_edit_init (AmitkWindowEdit *window_edit)
   table_row++;
 
   for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) {
-    label = gtk_label_new(amitk_window_names[i_window]);
+    label = gtk_label_new(_(amitk_window_names[i_window]));
     gtk_table_attach(GTK_TABLE(table), label, 0,1, 
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);

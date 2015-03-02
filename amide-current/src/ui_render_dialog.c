@@ -1,7 +1,7 @@
 /* ui_render_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -491,7 +491,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
   menu = gtk_combo_box_new_text();
   for (i_quality=0; i_quality<NUM_QUALITIES; i_quality++) 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(menu), rendering_quality_names[i_quality]);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(rendering_quality_names[i_quality]));
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu), ui_render->quality);
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_quality_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, 
@@ -647,7 +647,7 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
 
     menu = gtk_combo_box_new_text();
     for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), pixel_type_names[i_pixel_type]);
+      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(pixel_type_names[i_pixel_type]));
     g_object_set_data(G_OBJECT(menu), "ui_render", ui_render);
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), temp_list->rendering->pixel_type);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_pixel_type_cb), temp_list->rendering);

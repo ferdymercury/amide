@@ -1,7 +1,7 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -82,6 +82,7 @@ void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget)
 GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr);
 void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog);
+void ui_common_toolbar_insert_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip, gint position);
 void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip);
 void ui_common_toolbar_append_separator(GtkWidget * toolbar);
 

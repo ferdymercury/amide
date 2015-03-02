@@ -13,6 +13,7 @@
 <!ENTITY AmitkObjectDialog SYSTEM "xml/amitk_object_dialog.xml">
 <!ENTITY AmitkObject SYSTEM "xml/amitk_object.xml">
 <!ENTITY AmitkPoint SYSTEM "xml/amitk_point.xml">
+<!ENTITY AmitkPreferences SYSTEM "xml/amitk_preferences.xml">
 <!ENTITY AmitkProgressDialog SYSTEM "xml/amitk_progress_dialog.xml">
 <!ENTITY AmitkRawData SYSTEM "xml/amitk_raw_data.xml">
 <!ENTITY AmitkRoi SYSTEM "xml/amitk_roi.xml">
@@ -23,6 +24,7 @@
 <!ENTITY AmitkTreeView SYSTEM "xml/amitk_tree_view.xml">
 <!ENTITY AmitkType SYSTEM "xml/amitk_type.xml">
 <!ENTITY AmitkVolume SYSTEM "xml/amitk_volume.xml">
+<!ENTITY AmitkWindowEdit SYSTEM "xml/amitk_window_edit.xml">
 <!ENTITY version SYSTEM "version.xml">
 <!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml">
 <!ENTITY amitk-Theory SYSTEM "theory.sgml">
@@ -41,7 +43,7 @@
       </author>
     </authorgroup>
     <copyright>
-       <year>2000-2005</year> <holder>Andy Loening</holder>
+       <year>2000-2012</year> <holder>Andy Loening</holder>
     </copyright>
  
     <legalnotice>
@@ -98,6 +100,7 @@ bindings for other languages.
         &AmitkFilter;
         &AmitkLineProfile;
         &AmitkObject;
+        &AmitkPreferences;
         &AmitkPoint;
         &AmitkRawData;
         &AmitkSpace;
@@ -130,6 +133,7 @@ bindings for other languages.
         &AmitkSpaceEdit;
         &AmitkThreshold;
         &AmitkTreeView;
+        &AmitkWindowEdit;
     </chapter>
 
   </part>

@@ -1,7 +1,7 @@
 /* dcmtk_interface.cc
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2011 Andy Loening
+ * Copyright (C) 2005-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -75,7 +75,9 @@ gboolean dcmtk_test_dicom(const gchar * filename) {
 }
 
 
+
 static AmitkDataSet * read_dicom_file(const gchar * filename,
+				      gchar ** pstudyname,
 				      AmitkPreferences * preferences,
 				      gint *pnum_frames,
 				      gint *pnum_gates,
@@ -112,13 +114,13 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   gint format_size;
   AmitkPoint new_offset;
   AmitkAxes new_axes;
+  AmitkPoint direction;
   amide_time_t acquisition_start_time=-1.0;
   amide_time_t dose_time=-1.0;
   amide_time_t decay_time=-1.0;
   gdouble decay_value;
   gdouble half_life=-1.0;
   gint hours, minutes, seconds;
-  gchar * object_name;
   struct tm time_structure;
 
   /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
@@ -225,6 +227,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlices, return_uint16).good()) 
 	  *pnum_frames = return_uint16;
 
+  
   if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
     if (return_str != NULL) 
       if (strstr(return_str, "GATED\\IMAGE") != NULL)
@@ -268,6 +271,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     g_warning(_("Couldn't allocate space for the data set structure to hold DCMTK data - Failed to load file %s"), filename);
     goto error;
   }
+
+  /* get the series number */
+  if (dcm_dataset->findAndGetSint32(DCM_SeriesNumber, return_sint32).good())
+    amitk_data_set_set_series_number(ds, return_sint32);
 
   /* get the dicom image type, we don't do anything with this, but we store
      it in case we're going to export this data set as DICOM data */
@@ -395,7 +402,34 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   if (dcm_dataset->findAndGetFloat64(DCM_EchoTime, return_float64).good())
     amitk_data_set_set_echo_time(ds, return_float64);
 
+  if (dcm_dataset->findAndGetFloat64(DCM_DiffusionBValue, return_float64, 0, OFTrue).good()) {
+    amitk_data_set_set_diffusion_b_value(ds, return_float64);
+  } else if (dcm_dataset->findAndGetSint32(DcmTagKey(0x0043, 0x1039), return_sint32, 0, OFTrue).good()) { /* GE */
+    amitk_data_set_set_diffusion_b_value(ds, return_sint32);
+  }
 
+  /* diffusion directions */
+  direction = zero_point;
+
+  if (dcm_dataset->findAndGetFloat64(DCM_DiffusionGradientOrientation, return_float64, 0, OFTrue).good())
+    direction.x = return_float64;
+  if (dcm_dataset->findAndGetFloat64(DCM_DiffusionGradientOrientation, return_float64, 1, OFTrue).good())
+    direction.y = return_float64;
+  if (dcm_dataset->findAndGetFloat64(DCM_DiffusionGradientOrientation, return_float64, 2, OFTrue).good())
+    direction.z = return_float64;
+
+  /* following works for GE.... */
+  if (POINT_EQUAL(direction, zero_point)) {
+    if (dcm_dataset->findAndGetFloat64(DcmTagKey(0x0019, 0x10bb), return_float64, 0, OFTrue).good())
+      direction.x = return_float64;
+    if (dcm_dataset->findAndGetFloat64(DcmTagKey(0x0019, 0x10bc), return_float64, 0, OFTrue).good())
+      direction.y = return_float64;
+    if (dcm_dataset->findAndGetFloat64(DcmTagKey(0x0019, 0x10bd), return_float64, 0, OFTrue).good())
+      direction.z = return_float64;
+  }
+
+  amitk_data_set_set_diffusion_direction(ds, direction);
+  
   /* store the gate time if possible */
   if (dcm_dataset->findAndGetFloat64(DCM_TriggerTime, return_float64).good()) 
     ds->gate_time = return_float64;
@@ -455,17 +489,14 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   if (dcm_dataset->findAndGetString(DCM_StudyDescription, return_str, OFTrue).good()) {
     amitk_object_set_name(AMITK_OBJECT(ds), return_str);
+    if (pstudyname != NULL)
+      *pstudyname = g_strdup(return_str);
   }
 
   if (dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue).good()) {
-    if (return_str != NULL) {
-      if (AMITK_OBJECT_NAME(ds) != NULL)
-	object_name = g_strdup_printf("%s - %s", AMITK_OBJECT_NAME(ds), return_str);
-      else
-	object_name = g_strdup(return_str);
-      amitk_object_set_name(AMITK_OBJECT(ds), object_name);
-      g_free(object_name);
-    }
+    /* note, this overwrites the name set immediately above based on StudyDescription */
+    if (return_str != NULL) 
+      amitk_object_set_name(AMITK_OBJECT(ds), return_str);
   }
 
   if (dcm_dataset->findAndGetString(DCM_PatientName, return_str, OFTrue).good()) {
@@ -779,18 +810,26 @@ static GList * find_slices_that_match(GList ** pslices) {
     if (match)
       match = (POINT_EQUAL(AMITK_DATA_SET_VOXEL_SIZE(initial_ds), AMITK_DATA_SET_VOXEL_SIZE(comparison_ds)));
 
-    /* check that the orientation of the slices are equal */
+    /* check that the orientation of the slices are equal. Note, we use _close instead of _equal (CLOSE vs EPSILON) because there values
+       are coming from character strings in the DICOM header, and may be a little imprecise. */
     if (match)
-      match = amitk_space_axes_equal(AMITK_SPACE(initial_ds), AMITK_SPACE(comparison_ds));
+      match = amitk_space_axes_close(AMITK_SPACE(initial_ds), AMITK_SPACE(comparison_ds));
 
-    /* if MRI, check inversion and echo times are equal */
+    /* if MRI, check inversion, echo times, and b-value are equal */
     if (AMITK_DATA_SET_MODALITY(initial_ds) == AMITK_MODALITY_MRI)  {
       if (match)
-	match = REAL_EQUAL(AMITK_DATA_SET_INVERSION_TIME(initial_ds), AMITK_DATA_SET_INVERSION_TIME(comparison_ds));
+	if (!isnan (AMITK_DATA_SET_INVERSION_TIME(initial_ds)) && !isnan(AMITK_DATA_SET_INVERSION_TIME(comparison_ds)))
+	  match = REAL_EQUAL(AMITK_DATA_SET_INVERSION_TIME(initial_ds), AMITK_DATA_SET_INVERSION_TIME(comparison_ds));
       if (match)
-	match = REAL_EQUAL(AMITK_DATA_SET_ECHO_TIME(initial_ds), AMITK_DATA_SET_ECHO_TIME(comparison_ds));
+	if (!isnan (AMITK_DATA_SET_ECHO_TIME(initial_ds)) && !isnan(AMITK_DATA_SET_ECHO_TIME(comparison_ds)))
+	  match = REAL_EQUAL(AMITK_DATA_SET_ECHO_TIME(initial_ds), AMITK_DATA_SET_ECHO_TIME(comparison_ds));
+      if (match)
+	if (!isnan (AMITK_DATA_SET_DIFFUSION_B_VALUE(initial_ds)) && !isnan(AMITK_DATA_SET_DIFFUSION_B_VALUE(comparison_ds))) {
+	  match = REAL_EQUAL(AMITK_DATA_SET_DIFFUSION_B_VALUE(initial_ds), AMITK_DATA_SET_DIFFUSION_B_VALUE(comparison_ds));
+	  if (match)
+	    match = POINT_EQUAL(AMITK_DATA_SET_DIFFUSION_DIRECTION(initial_ds), AMITK_DATA_SET_DIFFUSION_DIRECTION(comparison_ds));
+	}
     }
-
 
     if (match) 
       matching_slices = g_list_append(matching_slices, comparison_ds);
@@ -1147,6 +1186,7 @@ static GList * free_slices(GList * slices) {
   return slices;
 }
 
+
  
 
 static GList * organize_and_import_slices_as_datasets(GList ** premaining_slices, 
@@ -1192,6 +1232,7 @@ static GList * organize_and_import_slices_as_datasets(GList ** premaining_slices
 }
 
 static GList * import_files_as_datasets(GList * image_files, 
+					gchar ** pstudyname,
 					AmitkPreferences * preferences, 
 					AmitkUpdateFunc update_func,
 					gpointer update_data,
@@ -1227,7 +1268,9 @@ static GList * import_files_as_datasets(GList * image_files,
 
 
     slice_name = (gchar *) g_list_nth_data(image_files,image);
-    slice_ds = read_dicom_file(slice_name, preferences, &num_frames, &num_gates, NULL, NULL, perror_buf);
+
+    slice_ds = read_dicom_file(slice_name, pstudyname,preferences, 
+			       &num_frames, &num_gates, NULL, NULL, perror_buf);
     if (slice_ds == NULL) {
       goto cleanup;
     } else if ((AMITK_DATA_SET_DIM_Z(slice_ds) != 1) && (num_files > 1)) {
@@ -1262,10 +1305,10 @@ typedef struct slice_info_t {
   gchar * filename;
   gchar * series_instance_uid;
   gchar * modality;
-  gchar * series_number;
   gchar * series_description;
   gchar * patient_id;
   gchar * patient_name;
+  gint series_number;
 } slice_info_t;
 
 static void free_slice_info(slice_info_t * info) {
@@ -1279,9 +1322,6 @@ static void free_slice_info(slice_info_t * info) {
   if (info->modality != NULL)
     g_free(info->modality);
   
-  if (info->series_number != NULL)
-    g_free(info->series_number);
-
   if (info->series_description != NULL)
     g_free(info->series_description);
 
@@ -1304,10 +1344,10 @@ static slice_info_t * slice_info_new(void) {
   info->filename=NULL;
   info->series_instance_uid=NULL;
   info->modality=NULL;
-  info->series_number=NULL;
   info->series_description=NULL;
   info->patient_id=NULL;
   info->patient_name=NULL;
+  info->series_number = -1;
 
   return info;
 }
@@ -1320,6 +1360,7 @@ static slice_info_t * get_slice_info(const gchar * filename) {
   DcmDataset * dcm_dataset;
   const char * return_str=NULL;
   slice_info_t * info=NULL;
+  Sint32 return_sint32;
 
   result = dcm_format.loadFile(filename);
   if (result.bad()) return NULL;
@@ -1338,10 +1379,6 @@ static slice_info_t * get_slice_info(const gchar * filename) {
   if (return_str != NULL)
       info->modality = g_strdup(return_str);
 
-  dcm_dataset->findAndGetString(DCM_SeriesNumber, return_str, OFTrue);
-  if (return_str != NULL)
-      info->series_number = g_strdup(return_str);
-
   dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue);
   if (return_str != NULL) 
       info->series_description = g_strdup(return_str);
@@ -1353,6 +1390,9 @@ static slice_info_t * get_slice_info(const gchar * filename) {
   dcm_dataset->findAndGetString(DCM_PatientName, return_str, OFTrue);
   if (return_str != NULL) 
       info->patient_name = g_strdup(return_str);
+
+  if (dcm_dataset->findAndGetSint32(DCM_SeriesNumber, return_sint32).good())
+    info->series_number = return_sint32;
 
   return info;
 }
@@ -1406,7 +1446,7 @@ static gboolean check_same(slice_info_t * slice1, slice_info_t * slice2) {
   if (!check_str(slice1->series_description, slice2->series_description))
     return FALSE;
 
-  if (!check_str(slice1->series_number, slice2->series_number))
+  if (slice1->series_number != slice2->series_number)
     return FALSE;
 
   if (!check_str(slice1->modality, slice2->modality))
@@ -1427,10 +1467,41 @@ static gint sort_raw_info(gconstpointer a, gconstpointer b) {
   const slice_info_t * slicea = (slice_info_t *) a;
   const slice_info_t * sliceb = (slice_info_t *) b;
 
+  /* sort by series if we've got the data */
+  if ((slicea->series_number >=0) && (sliceb->series_number >=0)) {
+    if (slicea->series_number > sliceb->series_number)
+      return 1;
+    else if (slicea->series_number < sliceb->series_number)
+      return -1;
+  }
+
   return strcmp(slicea->filename, sliceb->filename);
 }
 
+static gint sort_datasets_by_dicom_params(gconstpointer a, gconstpointer b) {
+
+  g_return_val_if_fail(a != NULL, 0);
+  g_return_val_if_fail(b != NULL, 0);
+
+  /* first sort by series number */
+  if (AMITK_DATA_SET_SERIES_NUMBER(a) > AMITK_DATA_SET_SERIES_NUMBER(b))
+    return 1;
+  else if (AMITK_DATA_SET_SERIES_NUMBER(a) < AMITK_DATA_SET_SERIES_NUMBER(b))
+    return -1;
+
+  /* then sort by echo time if we have that parameter */
+  if (!isnan(AMITK_DATA_SET_ECHO_TIME(a)) && !isnan(AMITK_DATA_SET_ECHO_TIME(b))) {
+    if (AMITK_DATA_SET_ECHO_TIME(a) > AMITK_DATA_SET_ECHO_TIME(b))
+      return 1;
+    else if (AMITK_DATA_SET_ECHO_TIME(a) < AMITK_DATA_SET_ECHO_TIME(b))
+      return -1;
+  }
+
+  return 0;
+}
+
 static GList * import_files(const gchar * filename,
+			    gchar ** pstudyname,
 			    AmitkPreferences * preferences,
 			    AmitkUpdateFunc update_func,
 			    gpointer update_data) {
@@ -1450,31 +1521,31 @@ static GList * import_files(const gchar * filename,
   slice_info_t * current_info=NULL;
   gchar * dirname=NULL;
   gchar * basename=NULL;
+  gchar * regularized_filename;
   gchar * new_filename;
   DIR* dir;
   struct dirent* entry;
   gboolean continue_work=TRUE;
   gboolean all_datasets;
-  gint count;
+  gboolean use_this_one;
   GtkWidget * question;
   gint return_val;
- 
-  /* note, I generate a "new_filename" rather than just using filename, to insure that 
+
+  /* note, I generate a "regularized_filename" rather than just using filename, to insure that 
    when the filenames get sorted alphabetically, they're all of the same "./filename" form. */
   dirname = g_path_get_dirname(filename);
   basename = g_path_get_basename(filename);
   if (dirname == NULL)
-    new_filename = g_strdup_printf("%s", filename);
+    regularized_filename = g_strdup_printf("%s", filename);
   else
-    new_filename = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,basename);
+    regularized_filename = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,basename);
 
   /* get the intially requested file */
-  info = get_slice_info(new_filename);
+  info = get_slice_info(regularized_filename);
   if (info == NULL) {
-    g_warning(_("could not find dataset in DICOM file %s\n"), new_filename);
+    g_warning(_("could not find dataset in DICOM file %s\n"), regularized_filename);
     return NULL;
   }
-  g_free(new_filename);
   raw_info = g_list_append(raw_info, info); 
 
   /* ------- find all dicom files in the directory ------------ */
@@ -1510,7 +1581,7 @@ static GList * import_files(const gchar * filename,
   if (update_func != NULL) /* remove progress bar */
     (*update_func) (update_data, NULL, (gdouble) 2.0); 
 
-  /* sort by filename */
+  /* sort by series number, then filename */
   raw_info = g_list_sort(raw_info, sort_raw_info);
 
   /* ------------ sort the files ---------------- */
@@ -1560,24 +1631,28 @@ static GList * import_files(const gchar * filename,
       all_datasets=TRUE;
   }
 
-  count=0;
   while (all_slices != NULL) {
     sorted_slices = (GList *) all_slices->data;
     all_slices = g_list_remove(all_slices, sorted_slices);
+    use_this_one = FALSE;
 
     /* transfer file names */
     image_files = NULL;
     while (sorted_slices != NULL) {
       info = (slice_info_t *) sorted_slices->data;
+
+      /* see if this group of filenames contains the filename we initially started with */
+      if (strcmp(regularized_filename, info->filename) == 0)
+	use_this_one = TRUE;
+
       sorted_slices = g_list_remove(sorted_slices, info);
       image_files = g_list_append(image_files, info->filename);
       info->filename=NULL;
       free_slice_info(info);
     }
 
-    if (all_datasets || (count==0)) {
-      count++;
-      returned_sets = import_files_as_datasets(image_files, preferences, update_func, update_data, &error_buf);
+    if (all_datasets || (use_this_one)) {
+      returned_sets = import_files_as_datasets(image_files, pstudyname, preferences, update_func, update_data, &error_buf);
 
       while (returned_sets != NULL) {
 	ds = AMITK_DATA_SET(returned_sets->data);
@@ -1594,18 +1669,27 @@ static GList * import_files(const gchar * filename,
     }
   }
 
+  /* and sort datasets by series number, echo time, etc.*/
+  data_sets = g_list_sort(data_sets, sort_datasets_by_dicom_params);
+
   /* cleanup */
   if (error_buf != NULL) {
     g_warning("%s",error_buf);
     g_free(error_buf);
   }
 
+  if (regularized_filename != NULL)
+    g_free(regularized_filename);
+
   return data_sets;
 }
 
 
+
+
 /* read in a DICOMDIR type file */
 static GList * import_dir(const gchar * filename, 
+			  gchar ** pstudyname,
 			  AmitkPreferences * preferences,
 			  AmitkUpdateFunc update_func,
 			  gpointer update_data) {
@@ -1633,6 +1717,15 @@ static GList * import_dir(const gchar * filename,
   gchar * error_buf=NULL;
   gchar * image_name1;
   gchar * image_name2;
+  gchar * lowercase_image_name1=NULL;;
+  gchar * lowercase_image_name2=NULL;;
+  gboolean valid_filename;
+  gboolean ignore_missing_files = FALSE;
+  gboolean use_alternative;
+  gboolean always_use_alternative = FALSE;
+
+  GtkWidget * question;
+  gint return_val;
 
 
   /* first try loading it as a DIRFILE */
@@ -1675,8 +1768,63 @@ static GList * import_dir(const gchar * filename,
 	    image_name1 = g_strdup(return_str);
 	    g_strdelimit(image_name1, "\\", G_DIR_SEPARATOR); /* remove separators */
 	    image_name2 = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,image_name1);
-	    image_files = g_list_append(image_files, image_name2);
+
+	    /* check if there's a upper vs lower case issue, seems to happen with
+	       GE exported DICOMDIR files, likely due to some filesystems not being
+	       case aware */
+	    valid_filename = dcmtk_test_dicom(image_name2);
+	    if ((!valid_filename) && (!ignore_missing_files)) {
+	      use_alternative=FALSE;
+	      lowercase_image_name1 = g_ascii_strdown(image_name1,-1);
+	      lowercase_image_name2 = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,
+						     lowercase_image_name1);
+	      g_free(lowercase_image_name1);
+
+	      if (!dcmtk_test_dicom(lowercase_image_name2)) {
+		question = 
+		  gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, 
+					 GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+					 _("For series: %s\n\nListed in DICOMDIR: %s\n\nCould not read DICOM file: %s"),
+					 object_name, filename, image_name2);
+		gtk_dialog_add_button(GTK_DIALOG(question), GTK_STOCK_OK, GTK_RESPONSE_OK);
+		gtk_dialog_add_button(GTK_DIALOG(question), 
+				      _("OK, ignore similar errors"),1);
+		return_val = gtk_dialog_run(GTK_DIALOG(question));
+		gtk_widget_destroy(question);
+		if (return_val == 1) ignore_missing_files = TRUE;
+	      } else if (!always_use_alternative) {
+		question = 
+		  gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT, 
+					 GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+					 _("For series: %s\n\nListed in DICOMDIR: %s\n\nCould not read DICOM file: %s\n\nFound possible alternative file: %s"),
+					 object_name, filename, image_name2, lowercase_image_name2);
+		gtk_dialog_add_button(GTK_DIALOG(question), GTK_STOCK_OK, GTK_RESPONSE_OK);
+		gtk_dialog_add_button(GTK_DIALOG(question), 
+				      _("OK, ignore similar errors"), 1);
+		gtk_dialog_add_button(GTK_DIALOG(question), 
+				      _("Use alternative"), 2);
+		gtk_dialog_add_button(GTK_DIALOG(question), 
+				      _("Always use alternative"), 3);
+		return_val = gtk_dialog_run(GTK_DIALOG(question));
+		gtk_widget_destroy(question);
+		
+		if (return_val == 1) ignore_missing_files = TRUE;
+		if (return_val == 2) use_alternative=TRUE;
+		if (return_val == 3) always_use_alternative = TRUE;
+	      }
+
+	      if (use_alternative || always_use_alternative) {
+		g_free(image_name2);
+		image_name2=lowercase_image_name2;
+		valid_filename=TRUE;
+	      } else {
+		g_free(lowercase_image_name2);
+	      }
+	    }
+
 	    g_free(image_name1);
+	    if (valid_filename)
+	      image_files = g_list_append(image_files, image_name2);
 	  }
 	}
 
@@ -1685,19 +1833,29 @@ static GList * import_dir(const gchar * filename,
 #endif
 
 	/* read in slices as dataset(s) */
-	returned_sets = import_files_as_datasets(image_files, preferences, update_func, update_data, &error_buf);
+	if (g_list_length(image_files) != 0)
+	  returned_sets = import_files_as_datasets(image_files, pstudyname, preferences, 
+						   update_func, update_data, &error_buf);
+
 	while (returned_sets != NULL) {
 	  ds = AMITK_DATA_SET(returned_sets->data);
-	  /* use the DICOMDIR entries if available */
-	  /* Checking for record_name[2] - if we have a series description in the DICOMDIR file, 
-	     use that, otherwise use the name directly from the dicom file if available, otherwise
-	     use object_name */
-	  if ((record_name[2] != NULL) || (AMITK_OBJECT_NAME(ds) == NULL)) 
-	    amitk_object_set_name(AMITK_OBJECT(ds), object_name);
-	  if (record_name[0] != NULL)
-	    amitk_data_set_set_subject_name(ds, record_name[0]);
-	  if (patient_id != NULL)
-	    amitk_data_set_set_subject_id(ds, patient_id);
+	  /* If the actual dicom file didn't have these entries, we try using the 
+	     corresponding enteries from the DICOMDIR file */
+	  if (AMITK_OBJECT_NAME(ds) == NULL) {
+	    if (record_name[2] != NULL)
+	      amitk_object_set_name(AMITK_OBJECT(ds), record_name[2]);
+	    else 
+	      amitk_object_set_name(AMITK_OBJECT(ds), object_name);
+	  }
+
+	  if (AMITK_DATA_SET_SUBJECT_NAME(ds) == NULL) {
+	    if (record_name[0] != NULL)
+	      amitk_data_set_set_subject_name(ds, record_name[0]);
+	  }
+	  if (AMITK_DATA_SET_SUBJECT_ID(ds) == NULL) {
+	    if (patient_id != NULL)
+	      amitk_data_set_set_subject_id(ds, patient_id);
+	  }
 
 	  data_sets = g_list_append(data_sets, ds);
 	  returned_sets = g_list_remove(returned_sets, ds);
@@ -1718,6 +1876,9 @@ static GList * import_dir(const gchar * filename,
     }
   }
 
+  /* and sort datasets by series number, echo time, etc.*/
+  data_sets = g_list_sort(data_sets, sort_datasets_by_dicom_params);
+
   /* more cleanup */
   if (dirname != NULL)
     g_free(dirname);
@@ -1731,6 +1892,7 @@ static GList * import_dir(const gchar * filename,
 }
 
 GList * dcmtk_import(const gchar * filename,
+		     gchar ** pstudyname,
 		     AmitkPreferences * preferences,
 		     AmitkUpdateFunc update_func,
 		     gpointer update_data) {
@@ -1766,9 +1928,9 @@ GList * dcmtk_import(const gchar * filename,
 
 
   if (is_dir) {
-    data_sets = import_dir(filename, preferences, update_func, update_data);
+    data_sets = import_dir(filename, pstudyname, preferences, update_func, update_data);
   } else {
-    data_sets = import_files(filename, preferences, update_func, update_data);
+    data_sets = import_files(filename, pstudyname, preferences, update_func, update_data);
   }
 
   return data_sets;
@@ -1786,7 +1948,7 @@ static void insert_str(DcmItem * dcm_item, const DcmTag& tag, const gchar * str)
   return;
 }
 
-static void insert_int(DcmItem * dcm_item, const DcmTag& tag, gint value) {
+static void insert_int_str(DcmItem * dcm_item, const DcmTag& tag, gint value) {
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%d",value);
@@ -1796,7 +1958,7 @@ static void insert_int(DcmItem * dcm_item, const DcmTag& tag, gint value) {
   return;
 }
 
-static void insert_double(DcmItem * dcm_item, const DcmTag& tag, gdouble value) {
+static void insert_double_str(DcmItem * dcm_item, const DcmTag& tag, gdouble value) {
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%f",value);
@@ -1806,7 +1968,7 @@ static void insert_double(DcmItem * dcm_item, const DcmTag& tag, gdouble value) 
   return;
 }
 
-static void insert_double2(DcmItem * dcm_item, const DcmTag& tag, gdouble value1, gdouble value2) {
+static void insert_double2_str(DcmItem * dcm_item, const DcmTag& tag, gdouble value1, gdouble value2) {
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%f\\%f",value1,value2);
@@ -1816,8 +1978,8 @@ static void insert_double2(DcmItem * dcm_item, const DcmTag& tag, gdouble value1
   return;
 }
 
-static void insert_double3(DcmItem * dcm_item, const DcmTag& tag, 
-			   gdouble value1, gdouble value2, gdouble value3) {
+static void insert_double3_str(DcmItem * dcm_item, const DcmTag& tag, 
+			       gdouble value1, gdouble value2, gdouble value3) {
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%f\\%f\\%f",value1,value2,value3);
@@ -1827,9 +1989,9 @@ static void insert_double3(DcmItem * dcm_item, const DcmTag& tag,
   return;
 }
 
-static void insert_double6(DcmItem * dcm_item, const DcmTag& tag, 
-			   gdouble value1, gdouble value2, gdouble value3,
-			   gdouble value4, gdouble value5, gdouble value6) {
+static void insert_double6_str(DcmItem * dcm_item, const DcmTag& tag, 
+			       gdouble value1, gdouble value2, gdouble value3,
+			       gdouble value4, gdouble value5, gdouble value6) {
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%f\\%f\\%f\\%f\\%f\\%f",
@@ -2090,13 +2252,17 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   /* required dicom entries */
   insert_str(dcm_ds,DCM_SeriesInstanceUID,dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT));
 
-  /* if we're appending to a DICOMDIR, it would be a little better to copy the studyinstanceuid and frameofreferenceuid from
-     whatever DICOM files are already stored... but it's simpler to just regenerate these values */
+  /* if we're appending to a DICOMDIR, it would be a little better to copy the studyinstanceuid 
+     and frameofreferenceuid from whatever DICOM files are already stored... but it's simpler to 
+     just regenerate these values */
   insert_str(dcm_ds,DCM_StudyInstanceUID, dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT));
   insert_str(dcm_ds,DCM_FrameOfReferenceUID, dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT));
 	     
   insert_str(dcm_ds, DCM_StudyID,"0");
-  insert_str(dcm_ds, DCM_SeriesNumber,"0");
+  if (AMITK_DATA_SET_SERIES_NUMBER(dcm_ds) > 0)
+    insert_int_str(dcm_ds, DCM_SeriesNumber, AMITK_DATA_SET_SERIES_NUMBER(dcm_ds));
+  else
+    insert_str(dcm_ds, DCM_SeriesNumber,"0");
 
   /* other stuff */
   if (AMITK_DATA_SET_SUBJECT_NAME(ds) != NULL) 
@@ -2115,7 +2281,7 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   /* set SeriesDescription */
   if (AMITK_OBJECT_NAME(ds) != NULL) 
     insert_str(dcm_ds,DCM_SeriesDescription, AMITK_OBJECT_NAME(ds));
-  insert_double(dcm_ds,DCM_PatientWeight, AMITK_DATA_SET_SUBJECT_WEIGHT(ds));
+  insert_double_str(dcm_ds,DCM_PatientWeight, AMITK_DATA_SET_SUBJECT_WEIGHT(ds));
 
 
   switch(AMITK_DATA_SET_SUBJECT_SEX(ds)) {
@@ -2198,16 +2364,25 @@ gboolean dcmtk_export(AmitkDataSet * ds,
     /* create a radiopharmaceutical information sequence if we have the data */
     if (!isnan(AMITK_DATA_SET_INJECTED_DOSE(ds))) {
       if (dcm_ds->findOrCreateSequenceItem(DCM_RadiopharmaceuticalInformationSequence, dcm_item, 0).good()) {
-	insert_double(dcm_item, DCM_RadionuclideTotalDose, AMITK_DATA_SET_INJECTED_DOSE(ds));
+	insert_double_str(dcm_item, DCM_RadionuclideTotalDose, AMITK_DATA_SET_INJECTED_DOSE(ds));
       }
     }
     insert_str(dcm_ds, DCM_DecayCorrection, "START"); /* assume things were decay corrected from the start of the scan */
     break;
   case AMITK_MODALITY_MRI:
     if (!isnan(AMITK_DATA_SET_INVERSION_TIME(ds))) 
-      insert_double(dcm_item, DCM_InversionTime, AMITK_DATA_SET_INVERSION_TIME(ds));
+      insert_double_str(dcm_item, DCM_InversionTime, AMITK_DATA_SET_INVERSION_TIME(ds));
     if (!isnan(AMITK_DATA_SET_ECHO_TIME(ds))) 
-      insert_double(dcm_item, DCM_EchoTime, AMITK_DATA_SET_ECHO_TIME(ds));
+      insert_double_str(dcm_item, DCM_EchoTime, AMITK_DATA_SET_ECHO_TIME(ds));
+    if (!isnan(AMITK_DATA_SET_DIFFUSION_B_VALUE(ds))) {
+      insert_double_str(dcm_item, DCM_DiffusionBValue, AMITK_DATA_SET_DIFFUSION_B_VALUE(ds));
+      dcm_ds->putAndInsertFloat64(DCM_DiffusionGradientOrientation, 
+				  AMITK_DATA_SET_DIFFUSION_DIRECTION(ds).x, 0, OFTrue);
+      dcm_ds->putAndInsertFloat64(DCM_DiffusionGradientOrientation, 
+				  AMITK_DATA_SET_DIFFUSION_DIRECTION(ds).y, 1, OFTrue);
+      dcm_ds->putAndInsertFloat64(DCM_DiffusionGradientOrientation, 
+				  AMITK_DATA_SET_DIFFUSION_DIRECTION(ds).z, 2, OFTrue);
+    }
     break;
   default:
     break;
@@ -2294,10 +2469,10 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 			     amitk_format_sizes[AMITK_FORMAT_SSHORT] :
 			     amitk_format_sizes[AMITK_DATA_SET_FORMAT(ds)]);
 
-  insert_double2(dcm_ds, DCM_PixelSpacing,voxel_size.y,voxel_size.x);
+  insert_double2_str(dcm_ds, DCM_PixelSpacing,voxel_size.y,voxel_size.x);
 
-  insert_double(dcm_ds, DCM_SpacingBetweenSlices, voxel_size.z);
-  insert_double(dcm_ds, DCM_SliceThickness, voxel_size.z);
+  insert_double_str(dcm_ds, DCM_SpacingBetweenSlices, voxel_size.z);
+  insert_double_str(dcm_ds, DCM_SliceThickness, voxel_size.z);
 
   /* take a stab at converting the study date and putting it into the dicom header */
   generate_dicom_date_and_time(AMITK_DATA_SET_SCAN_DATE(ds), 0.0, &date_str, &time_str);
@@ -2319,9 +2494,9 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   axes[AMITK_AXIS_X].z *= -1.0;
   axes[AMITK_AXIS_Y].y *= -1.0;
   axes[AMITK_AXIS_Y].z *= -1.0;
-  insert_double6(dcm_ds, DCM_ImageOrientationPatient,
-		 axes[AMITK_AXIS_X].x,axes[AMITK_AXIS_X].y,axes[AMITK_AXIS_X].z,
-		 axes[AMITK_AXIS_Y].x,axes[AMITK_AXIS_Y].y,axes[AMITK_AXIS_Y].z);
+  insert_double6_str(dcm_ds, DCM_ImageOrientationPatient,
+		     axes[AMITK_AXIS_X].x,axes[AMITK_AXIS_X].y,axes[AMITK_AXIS_X].z,
+		     axes[AMITK_AXIS_Y].x,axes[AMITK_AXIS_Y].y,axes[AMITK_AXIS_Y].z);
 
 
   /* and finally, get to the real work */
@@ -2338,10 +2513,10 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   i_voxel = zero_voxel;
   for (i_voxel.t = 0; (i_voxel.t < dim.t) && (continue_work); i_voxel.t++) {
 
-    insert_int(dcm_ds, DCM_ActualFrameDuration,
+    insert_int_str(dcm_ds, DCM_ActualFrameDuration,
 	       (int) (1000*amitk_data_set_get_frame_duration(ds,i_voxel.t))); /* into ms */
-    insert_double(dcm_ds,DCM_FrameReferenceTime,
-		  1000.0*amitk_data_set_get_start_time(ds,i_voxel.t));
+    insert_double_str(dcm_ds,DCM_FrameReferenceTime,
+		      1000.0*amitk_data_set_get_start_time(ds,i_voxel.t));
 
     /* ContentDate/Time is actually when the pixel data is generated, not when the acquisition is started... so
        technically the below is wrong. Only including this because ContentDate/Time is apparently a Type 1 (required)
@@ -2435,15 +2610,15 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 	dcm_ds->putAndInsertUint16(DCM_ImageIndex, image_num);
 
 	/* store the scaling factor and offset */
-	insert_double(dcm_ds,DCM_RescaleSlope, 
-		      (resliced || format_changing) ? 
-		      max/amitk_format_max[AMITK_FORMAT_SSHORT] :
-		      amitk_data_set_get_scaling_factor(ds,i_voxel));
+	insert_double_str(dcm_ds,DCM_RescaleSlope, 
+			  (resliced || format_changing) ? 
+			  max/amitk_format_max[AMITK_FORMAT_SSHORT] :
+			  amitk_data_set_get_scaling_factor(ds,i_voxel));
 
-	insert_double(dcm_ds,DCM_RescaleIntercept, 
-		      (resliced || format_changing) ? 0.0 :
-		      amitk_data_set_get_scaling_intercept(ds,i_voxel));
-
+	insert_double_str(dcm_ds,DCM_RescaleIntercept, 
+			  (resliced || format_changing) ? 0.0 :
+			  amitk_data_set_get_scaling_intercept(ds,i_voxel));
+	
 	/* and get it an identifier */
 	dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT);
 	insert_str(dcm_ds,DCM_SOPInstanceUID,uid);
@@ -2452,16 +2627,16 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 	dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPInstanceUID,uid);
 
 	/* and some other data */
-	insert_int(dcm_ds,DCM_InstanceNumber, image_num);
+	insert_int_str(dcm_ds,DCM_InstanceNumber, image_num);
 
 	/* and save it's position in space - 
 	   see note in dicom_read_file about DICOM versus AMIDE conventions */
 	dicom_offset = AMITK_SPACE_OFFSET(output_volume);
 	dicom_offset.y = -1.0*dicom_offset.y; /* DICOM specifies y axis in wrong direction */
 	dicom_offset.z = -1.0*dicom_offset.z; /* DICOM specifies z axis in wrong direction */
-	insert_double3(dcm_ds, DCM_ImagePositionPatient,
-		       dicom_offset.x,dicom_offset.y, dicom_offset.z);
-	insert_double(dcm_ds, DCM_SliceLocation, dicom_offset.z);
+	insert_double3_str(dcm_ds, DCM_ImagePositionPatient,
+			   dicom_offset.x,dicom_offset.y, dicom_offset.z);
+	insert_double_str(dcm_ds, DCM_SliceLocation, dicom_offset.z);
 
 	/* and write it on out */
 	filename = g_strdup_printf("%s%sIMG%05d",subdirname,G_DIR_SEPARATOR_S,image_num);

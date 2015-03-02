@@ -1,7 +1,7 @@
 /* tb_fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2011 Andy Loening
+ * Copyright (C) 2003-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -152,7 +152,7 @@ static void set_text(tb_fads_t * tb_fads) {
   /* the output page text */
   if (tb_fads->page[CONCLUSION_PAGE] != NULL) {
     temp_string = g_strdup_printf(_("%s\nMethod Picked: %s"), 
-				  finish_page_text, fads_type_explanation[tb_fads->fads_type]);
+				  _(finish_page_text), _(fads_type_explanation[tb_fads->fads_type]));
     gtk_label_set_text(GTK_LABEL(tb_fads->page[CONCLUSION_PAGE]),temp_string);
     g_free(temp_string);
   }
@@ -160,7 +160,7 @@ static void set_text(tb_fads_t * tb_fads) {
   /* the factor analysis type picking page */
   if (tb_fads->explanation_buffer != NULL) {
     gtk_text_buffer_set_text (tb_fads->explanation_buffer, 
-			      fads_type_explanation[tb_fads->fads_type], -1);
+			      _(fads_type_explanation[tb_fads->fads_type]), -1);
 
     if (fads_type_icon[tb_fads->fads_type] != NULL) {
       gtk_text_buffer_get_end_iter(tb_fads->explanation_buffer, &iter);
@@ -635,7 +635,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
   case SVD_PAGE:
     view = gtk_text_view_new ();
     buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
-    gtk_text_buffer_set_text (buffer, svd_page_text, -1);
+    gtk_text_buffer_set_text (buffer, _(svd_page_text), -1);
     gtk_table_attach(GTK_TABLE(table), view, 0,1, table_row,table_row+2,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view), GTK_WRAP_WORD);
@@ -668,11 +668,11 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     g_object_unref(store); /* above command adds a reference */
     
     renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes("singular entry", renderer,"text", 0, NULL);
+    column = gtk_tree_view_column_new_with_attributes(_("singular entry"), renderer,"text", 0, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (tb_fads->svd_tree), column);
     
     renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes("value", renderer,"text", 1, NULL);
+    column = gtk_tree_view_column_new_with_attributes(_("value"), renderer,"text", 1, NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (tb_fads->svd_tree), column);
     
     selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tb_fads->svd_tree));
@@ -689,7 +689,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     menu = gtk_combo_box_new_text();
     
     for (i_fads_type = 0; i_fads_type < NUM_FADS_TYPES; i_fads_type++) 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), fads_type_name[i_fads_type]);
+      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), _(fads_type_name[i_fads_type]));
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_fads->fads_type);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
     gtk_table_attach(GTK_TABLE(table), menu, 1,2, table_row,table_row+1,
@@ -706,7 +706,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     view = gtk_text_view_new ();
     tb_fads->explanation_buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (view));
     gtk_text_buffer_set_text (tb_fads->explanation_buffer, 
-			      fads_type_explanation[tb_fads->fads_type], -1);
+			      _(fads_type_explanation[tb_fads->fads_type]), -1);
     gtk_table_attach(GTK_TABLE(table), view, 0,2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view), GTK_WRAP_WORD);
@@ -724,7 +724,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     tb_fads->algorithm_menu = gtk_combo_box_new_text();
     for (i_algorithm = 0; i_algorithm < NUM_FADS_MINIMIZERS; i_algorithm++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(tb_fads->algorithm_menu), 
-				fads_minimizer_algorithm_name[i_algorithm]);
+				_(fads_minimizer_algorithm_name[i_algorithm]));
     gtk_combo_box_set_active(GTK_COMBO_BOX(tb_fads->algorithm_menu), tb_fads->algorithm);
     g_signal_connect(G_OBJECT(tb_fads->algorithm_menu), "changed", G_CALLBACK(algorithm_cb), tb_fads);
     gtk_table_attach(GTK_TABLE(table), tb_fads->algorithm_menu, 1,2, table_row,table_row+1,
@@ -918,7 +918,7 @@ void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow
 
   /* --------------- initial page ------------------ */
   tb_fads->page[INTRO_PAGE]= gtk_label_new(((AMITK_DATA_SET_NUM_FRAMES(tb_fads->data_set) > 1) ? 
-					    start_page_text : not_enough_frames_text));
+					    _(start_page_text) : _(not_enough_frames_text)));
   gtk_widget_set_size_request(tb_fads->page[INTRO_PAGE],LABEL_WIDTH, -1);
   gtk_label_set_line_wrap(GTK_LABEL(tb_fads->page[INTRO_PAGE]), TRUE);
   gtk_assistant_append_page(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[INTRO_PAGE]);
@@ -951,7 +951,7 @@ void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow
   logo = gtk_widget_render_icon(GTK_WIDGET(tb_fads->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i_page=0; i_page<NUM_PAGES; i_page++) {
     gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[i_page], logo);
-    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[i_page], wizard_name);
+    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_fads->dialog), tb_fads->page[i_page], _(wizard_name));
     g_object_set_data(G_OBJECT(tb_fads->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
   }
   g_object_unref(logo);

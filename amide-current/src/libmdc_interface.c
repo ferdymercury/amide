@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -53,7 +53,7 @@ gchar * libmdc_import_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("(_X)MedCon Guess"),
   N_("_GIF 87a/89a"),
   N_("Acr/_Nema 2.0"),
-  N_("_Concorde/microPET"),
+  N_("_Siemens/Concorde"),
   N_("ECAT _6 via (X)MedCon"),
   N_("ECAT _7 via (X)MedCon"),
   N_("_InterFile 3.3"),
@@ -66,7 +66,7 @@ gchar * libmdc_import_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("let (X)MedCon/libmdc guess file type"),
   N_("Import a file stored as GIF"),
   N_("Import a Acr/Nema 2.0 file"),
-  N_("Import a file from the Concorde microPET"),
+  N_("Import a Siemens/Concorde file"),
   N_("Import a CTI/ECAT 6 file through (X)MedCon"),
   N_("Import a CTI/ECAT 7 file through (X)MedCon"),
   N_("Import a InterFile 3.3 file"),
@@ -87,7 +87,7 @@ libmdc_format_t libmdc_export_to_format[LIBMDC_NUM_EXPORT_METHODS] = {
 
 gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("Acr/Nema 2.0"),
-  N_("Concorde/microPET"),
+  N_("Siemens/Concorde"),
   N_("ECAT 6 via (X)MedCon"),
   N_("InterFile 3.3"),
   N_("Analyze (SPM)"),
@@ -97,7 +97,7 @@ gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
   
 gchar * libmdc_export_menu_explanations[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("Export a Acr/Nema 2.0 file"),
-  N_("Export a Concorde format file"),
+  N_("Export a Siemens/Concorde file"),
   N_("Export a CTI/ECAT 6 file"),
   N_("Export a InterFile 3.3 file"),
   N_("Export an Analyze file"),

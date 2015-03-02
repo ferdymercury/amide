@@ -1,7 +1,7 @@
 /* amitk_point.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -197,6 +197,11 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 		                    REAL_EQUAL(((point1).y),((point2).y)) && \
 			            REAL_EQUAL(((point1).z),((point2).z)))
 
+/* returns the boolean value of point1==point2 (within a factor of CLOSE */
+#define POINT_CLOSE(point1,point2) (REAL_CLOSE(((point1).x),((point2).x)) && \
+		                    REAL_CLOSE(((point1).y),((point2).y)) && \
+			            REAL_CLOSE(((point1).z),((point2).z)))
+
 #define VOXEL_EQUAL(voxel1,voxel2) (((voxel1).x == (voxel2).x) && \
 				    ((voxel1).y == (voxel2).y) && \
 				    ((voxel1).z == (voxel2).z) && \
@@ -208,11 +213,23 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 					     ((real).y = (((amide_real_t) (vox).y)+0.5) * (vox_size).y), \
 					     ((real).z = (((amide_real_t) (vox).z)+0.5) * (vox_size).z))
 
-#define POINT_TO_VOXEL(real, vox_size, frame, gate, vox) (((vox).x = floor((real).x/(vox_size).x)), \
-						          ((vox).y = floor((real).y/(vox_size).y)), \
-						          ((vox).z = floor((real).z/(vox_size).z)), \
+/* Macro to fill in a voxelpoint from a real coordinate. This does no
+   error checking, the real coordinates have to be non-negative for this
+   to work properly. The implementation use to use the "floor" function
+   instead of casting to type amide_intpoint_t, but the floor function
+   is really slow and this macro tends to get used a lot in tight
+   loops. Casting to int should be equivalent for positive values. */
+#define POINT_TO_VOXEL(real, vox_size, frame, gate, vox) (((vox).x = (amide_intpoint_t) ((real).x/(vox_size).x)), \
+							  ((vox).y = (amide_intpoint_t) ((real).y/(vox_size).y)), \
+							  ((vox).z = (amide_intpoint_t) ((real).z/(vox_size).z)), \
 							  ((vox).g = (gate)), \
 						          ((vox).t = (frame)))
+
+/* a version of the above that assumes vox.t and vox.g have already been set */
+#define POINT_TO_VOXEL_COORDS_ONLY(real, vox_size, vox) (((vox).x = (amide_intpoint_t) ((real).x/(vox_size).x)), \
+							 ((vox).y = (amide_intpoint_t) ((real).y/(vox_size).y)), \
+							 ((vox).z = (amide_intpoint_t) ((real).z/(vox_size).z)))
+
 
 /* corner of the voxel in real coordinates */
 #define VOXEL_CORNER(vox, vox_size, corner) (((corner).x = (((amide_real_t) (vox).x)) * (vox_size).x), \

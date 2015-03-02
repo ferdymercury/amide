@@ -1,7 +1,7 @@
 /* ui_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -68,6 +68,7 @@ typedef struct ui_study_t {
   GtkWidget * zoom_spin;
   GtkWidget * fov_spin;
   GtkAction * interpolation_action[AMITK_INTERPOLATION_NUM];
+  GtkWidget * rendering_menu;
   GtkAction * canvas_target_action;
   GtkAction * canvas_visible_action[AMITK_VIEW_NUM];
   GtkAction * view_mode_action[AMITK_VIEW_MODE_NUM];
@@ -122,7 +123,6 @@ void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
 void ui_study_update_fov(ui_study_t * ui_study);
 void ui_study_update_canvas_target(ui_study_t * ui_study);
-void ui_study_update_interpolation(ui_study_t * ui_study);
 void ui_study_update_fuse_type(ui_study_t * ui_study);
 void ui_study_update_view_mode(ui_study_t * ui_study);
 void ui_study_update_title(ui_study_t * ui_study);

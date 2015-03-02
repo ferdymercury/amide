@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -536,6 +536,7 @@ static void menus_toolbar_create(ui_render_t * ui_render) {
 
   /* create an action group with all the menu actions */
   action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_set_translation_domain(action_group, GETTEXT_PACKAGE);
   gtk_action_group_add_actions(action_group, normal_items, G_N_ELEMENTS(normal_items),ui_render);
   gtk_action_group_add_actions(action_group, ui_common_help_menu_items, G_N_ELEMENTS(ui_common_help_menu_items),ui_render);
   gtk_action_group_add_radio_actions(action_group, stereoscopic_radio_entries, G_N_ELEMENTS (stereoscopic_radio_entries), 

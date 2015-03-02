@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -423,6 +423,7 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
   AmitkImportMethod method;
   int submethod;
   gchar * filename;
+  gchar * studyname = NULL;
   GList * import_data_sets;
   AmitkDataSet * import_ds;
 
@@ -460,10 +461,16 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* now, what we need to do if we've successfully gotten an image filename */
-  if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename, 
+  if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename, &studyname,
 						     ui_study->preferences, amitk_progress_dialog_update, 
 						     ui_study->progress_dialog)) != NULL) {
     
+    if (studyname != NULL) {
+      amitk_study_suggest_name(ui_study->study, studyname);
+      g_free(studyname);
+    }
+
+
     while (import_data_sets != NULL) {
       import_ds = import_data_sets->data;
 #ifdef AMIDE_DEBUG
@@ -884,6 +891,11 @@ void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
 
   if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
 
+  /* this does the equivalent of hitting "enter", makes sure any rounding error
+     that is done on the entry is performed before we get the value */
+  g_signal_emit_by_name(G_OBJECT(spin_button), "activate", NULL, NULL);
+
+
   thickness = gtk_spin_button_get_value(spin_button);
   amitk_study_set_view_thickness(ui_study->study, thickness);
   
@@ -1204,12 +1216,26 @@ void ui_study_cb_interpolation(GtkRadioAction * action, GtkRadioAction * current
   return;
 }
 
+/* function to switch the rendering method */
+void ui_study_cb_rendering(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  g_return_if_fail(AMITK_IS_DATA_SET(ui_study->active_object));
+
+  amitk_data_set_set_rendering(AMITK_DATA_SET(ui_study->active_object),
+			       gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
+  return;
+}
+
 void ui_study_cb_study_changed(AmitkStudy * study, gpointer data) {
   ui_study_t * ui_study = data;
-
-  ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
   ui_study_update_time_button(ui_study);
   ui_study_update_canvas_target(ui_study);
+  return;
+}
+
+void ui_study_cb_thickness_changed(AmitkStudy * study, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
   return;
 }
 

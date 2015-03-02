@@ -1,7 +1,7 @@
 /* ui_time_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -550,7 +550,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 
   for (i_column=0; i_column<NUM_COLUMNS-1; i_column++) {
     renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(column_names[i_column], renderer,
+    column = gtk_tree_view_column_new_with_attributes(_(column_names[i_column]), renderer,
 						      "text", i_column, NULL);
     if (column_use_my_renderer[i_column]) 
       gtk_tree_view_column_set_cell_data_func(column, renderer,

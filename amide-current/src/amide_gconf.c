@@ -2,7 +2,7 @@
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  *
- * Copyright (C) 2007-2011 Andy Loening except as follows
+ * Copyright (C) 2007-2012 Andy Loening except as follows
  * win32 registery code is derived directly from gnumeric
  *
  * Author: Andy Loening <loening@alum.mit.edu>

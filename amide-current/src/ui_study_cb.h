@@ -1,7 +1,7 @@
 /* ui_study_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -80,7 +80,9 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data);
 void ui_study_cb_add_fiducial_mark(GtkAction * action, gpointer data);
 void ui_study_cb_preferences(GtkAction * action, gpointer data);
 void ui_study_cb_interpolation(GtkRadioAction * action, GtkRadioAction * current, gpointer data);
+void ui_study_cb_rendering(GtkWidget * widget, gpointer data);
 void ui_study_cb_study_changed(AmitkStudy * study, gpointer ui_study);
+void ui_study_cb_thickness_changed(AmitkStudy * study, gpointer data);
 void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_voxel_dim_or_zoom_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_fov_changed(AmitkStudy * study, gpointer ui_study);

@@ -1,7 +1,7 @@
 /* amitk_raw_data_variable_type.h - used to generate the different amitk_raw_data_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

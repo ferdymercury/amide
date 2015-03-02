@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -407,6 +407,7 @@ static void menus_toolbar_create(ui_series_t * ui_series) {
 
   /* create an action group with all the menu actions */
   action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_set_translation_domain(action_group, GETTEXT_PACKAGE);
   gtk_action_group_add_actions(action_group, normal_items, G_N_ELEMENTS(normal_items),ui_series);
   gtk_action_group_add_actions(action_group, ui_common_help_menu_items, G_N_ELEMENTS(ui_common_help_menu_items),ui_series);
 
@@ -963,7 +964,7 @@ void ui_series_create(AmitkStudy * study,
   g_return_if_fail(AMITK_IS_STUDY(study));
 
   title = g_strdup_printf(_("Series: %s (%s - %s)"), AMITK_OBJECT_NAME(study),
-			  amitk_view_get_name(view), series_names[series_type]);
+			  amitk_view_get_name(view), _(series_names[series_type]));
   window = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
   gtk_window_set_title(window, title);
   g_free(title);
@@ -1237,6 +1238,8 @@ void ui_series_create(AmitkStudy * study,
 		       G_CALLBACK(data_set_invalidate_slice_cache), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "interpolation_changed", 
 		       G_CALLBACK(changed_cb), ui_series);
+      g_signal_connect(G_OBJECT(temp_objects->data), "rendering_changed", 
+		       G_CALLBACK(changed_cb), ui_series);
     } 
     g_signal_connect(G_OBJECT(temp_objects->data), "space_changed", 
 		     G_CALLBACK(changed_cb), ui_series);
@@ -1314,10 +1317,6 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   GtkWidget * hseparator;
   GtkWidget * scrolled;
   GtkWidget * tree_view;
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  GtkTooltips * tips;
-#endif
   series_type_t i_series_type;
   AmitkView i_view;
   series_type_t series_type;
@@ -1343,10 +1342,6 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   table = gtk_table_new(7,3,FALSE);
   table_row=0;
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  tips = gtk_tooltips_new();
-#endif
 
   /* what series type do we want */
   label = gtk_label_new(_("Series Type:"));
@@ -1356,19 +1351,13 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   for (i_series_type = 0; i_series_type < NUM_SERIES_TYPES; i_series_type++) {
     if (i_series_type == 0) 
       radio_button[i_series_type] = 
-	gtk_radio_button_new_with_label(NULL, series_names[i_series_type]);
+	gtk_radio_button_new_with_label(NULL, _(series_names[i_series_type]));
     else
       radio_button[i_series_type] = 
 	gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), 
-						    series_names[i_series_type]);
-#if (GTK_MINOR_VERSION >= 12)
+						    _(series_names[i_series_type]));
     gtk_widget_set_tooltip_text(radio_button[i_series_type], 
-				series_explanations[i_series_type]);
-#else
-    gtk_tooltips_set_tip(tips, radio_button[i_series_type], 
-			 series_explanations[i_series_type],
-			 series_explanations[i_series_type]);
-#endif
+				_(series_explanations[i_series_type]));
     gtk_table_attach(GTK_TABLE(table), radio_button[i_series_type], 1, 2, 
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     g_object_set_data(G_OBJECT(radio_button[i_series_type]), "series_type", 

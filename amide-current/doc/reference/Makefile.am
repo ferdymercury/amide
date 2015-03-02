@@ -34,9 +34,9 @@ CFILE_GLOB=$(top_srcdir)/src/*.c
 
 # Header files to ignore when scanning
 IGNORE_HFILES=			\
-	alignment.h		\
+	alignment_mutal_information.h		\
+	alignment_procrustes.h	\
 	amide_intl.h		\
-	amitk_xif_sel.h         \
 	amitk_dial.h            \
 	analysis.h		\
 	dcmtk_interface.h	\
@@ -54,6 +54,7 @@ IGNORE_HFILES=			\
 	tb_fads.h		\
 	tb_filter.h		\
 	tb_fly_through.h	\
+	tb_math.h		\
 	tb_profile.h		\
 	tb_roi_analysis.h	\
 	ui_common.h   		\
@@ -69,8 +70,13 @@ IGNORE_HFILES=			\
 	ui_time_dialog.h	\
 	xml.h
 
-IGNORE_OBJ_FILES = \
+ALL_OBJ_FILES= \
+	 $(shell ls ${top_srcdir}/src/*.o)
+
+IGNORE_OBJ_FILES= \
 	${top_srcdir}/src/amide.o 
+
+OBJ_FILES= $(filter-out $(IGNORE_OBJ_FILES),$(ALL_OBJ_FILES))
 
 # Images to copy into HTML directory
 HTML_IMAGES = 
@@ -104,8 +110,10 @@ GTKDOC_LIBS=	\
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GTK_LIBS) \
 	$(XMEDCON_LIBS) \
-	$(AMIDE_LDADD_WIN32)  \
-	$(filter-out $(IGNORE_OBJ_FILES),$(wildcard ${top_srcdir}/src/*.o))
+	$(FFMPEG_LIBS) \
+	$(AMIDE_LIBDCMDATA_LIBS) \
+	$(AMIDE_LDADD_WIN32) \
+	$(OBJ_FILES)
 
 
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
@@ -120,11 +128,14 @@ INCLUDES = \
 # Extra options to supply to gtkdoc-fixref
 # FIXXREF_OPTIONS=--extra-dir=../gdk-pixbuf/html
 
-include $(top_srcdir)/doc/gtk-doc.make
+include $(top_srcdir)/gtk-doc.make
 
 # Other files to distribute
 EXTRA_DIST += version.xml.in
 
+CLEANFILES = \
+	tmpl/* \
+	xml/*
 
 DISTCLEANFILES = \
 	*~ \
@@ -135,3 +146,4 @@ DISTCLEANFILES = \
 	amitk-scan.c \
 	amitk-scan.o \
 	amitk.types
+

@@ -1,7 +1,7 @@
 /* amitk_object_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -49,12 +49,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 				    AmitkLayout layout);
 static void dialog_update_entries  (AmitkObjectDialog * dialog);
 static void dialog_update_interpolation(AmitkObjectDialog * dialog);
+static void dialog_update_rendering(AmitkObjectDialog * dialog);
 static void dialog_update_conversion(AmitkObjectDialog * dialog);
 
 static void dialog_response_cb        (GtkDialog * dialog,
 				       gint        response_id,
 				       gpointer    data);
-static void dialog_interpolation_cb          (GtkWidget * widget, gpointer data);
+static void dialog_change_interpolation_cb   (GtkWidget * widget, gpointer data);
+static void dialog_change_rendering_cb       (GtkWidget * widget, gpointer data);
 static void dialog_conversion_cb             (GtkWidget * widget, gpointer data);
 static void dialog_set_view_center_to_origin_cb(GtkWidget * widget, gpointer data);
 static void dialog_aspect_ratio_cb           (GtkWidget * widget, gpointer data);
@@ -145,6 +147,7 @@ static void object_dialog_destroy (GtkObject * object) {
   if (dialog->object != NULL) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_entries, dialog);
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_interpolation, dialog);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_rendering, dialog);
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_conversion, dialog);
     dialog->object->dialog = NULL;
     dialog->object = amitk_object_unref(dialog->object);
@@ -199,10 +202,6 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * hbox;
   GtkWidget * image;
   GtkWidget * button;
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  GtkTooltips * radio_button_tips;
-#endif
   gint table_row;
   gint inner_table_row;
   gint table_column;
@@ -306,6 +305,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   } else if (AMITK_IS_DATA_SET(object)) {
     AmitkInterpolation i_interpolation;
+    AmitkRendering i_rendering;
     AmitkConversion i_conversion;
     AmitkModality i_modality;
     AmitkDoseUnit i_dose_unit;
@@ -345,7 +345,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     table_row++;
     
     /* widget to change the interpolation */
-    label = gtk_label_new(_("Interpolation Type"));
+    label = gtk_label_new(_("Interpolation Type:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -354,11 +354,6 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(hbox);
-
-#if (GTK_MINOR_VERSION >= 12)
-#else
-    radio_button_tips = gtk_tooltips_new();
-#endif
 
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) {
 
@@ -384,22 +379,36 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       
       gtk_box_pack_start(GTK_BOX(hbox), dialog->interpolation_button[i_interpolation], FALSE, FALSE, 3);
       gtk_widget_show(dialog->interpolation_button[i_interpolation]);
-#if (GTK_MINOR_VERSION >= 12)
       gtk_widget_set_tooltip_text(dialog->interpolation_button[i_interpolation],
 				  amitk_interpolation_explanations[i_interpolation]);
-#else
-      gtk_tooltips_set_tip(radio_button_tips, dialog->interpolation_button[i_interpolation], 
-			   amitk_interpolation_get_name(i_interpolation),
-			   amitk_interpolation_explanations[i_interpolation]);
-#endif
       
       g_object_set_data(G_OBJECT(dialog->interpolation_button[i_interpolation]), "interpolation", 
 			GINT_TO_POINTER(i_interpolation));
       
       g_signal_connect(G_OBJECT(dialog->interpolation_button[i_interpolation]), "clicked",  
-		       G_CALLBACK(dialog_interpolation_cb), dialog);
+		       G_CALLBACK(dialog_change_interpolation_cb), dialog);
     }
+
+
+    /* widget to change the rendering */
+    label = gtk_label_new(_("Rendering Type:"));
+    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(label);
+    
+
+    dialog->rendering_menu = gtk_combo_box_new_text();
+    /*  gtk_widget_set_tooltip_text(dialog->rendering_menu, _(amitk_rendering_explanation)); 
+	combo box's (as of 2.24 at least, don't have functioning tool tips */
+    for (i_rendering = 0; i_rendering < AMITK_RENDERING_NUM; i_rendering++)
+      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->rendering_menu),
+				amitk_rendering_get_name(i_rendering));
+    g_signal_connect(G_OBJECT(dialog->rendering_menu), "changed", G_CALLBACK(dialog_change_rendering_cb), dialog);
+    gtk_table_attach(GTK_TABLE(packing_table), dialog->rendering_menu, 3,4,
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(dialog->rendering_menu);
     table_row++;
+
 
     /* a separator for clarity */
     hseparator = gtk_hseparator_new();
@@ -656,8 +665,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     dialog_update_interpolation(dialog);
+    dialog_update_rendering(dialog);
     dialog_update_conversion(dialog);
-
+    
   } else if (AMITK_IS_STUDY(object)) {
     /* widgets to change the study's creation date */
     label = gtk_label_new(_("Creation Date:"));
@@ -1330,9 +1340,78 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(entry);
       table_row++;
+
+      /* b factor */
+      label = gtk_label_new(_("Diffusion B Value:"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%f", AMITK_DATA_SET_DIFFUSION_B_VALUE(object));
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+			 
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       4,5, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
+
+      /* diffusion direction */
+      label = gtk_label_new(_("Diffusion Direction:"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%5.3f %5.3f %5.3f", 
+				    AMITK_DATA_SET_DIFFUSION_DIRECTION(object).x,
+				    AMITK_DATA_SET_DIFFUSION_DIRECTION(object).y,
+				    AMITK_DATA_SET_DIFFUSION_DIRECTION(object).z);
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+			 
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       4,5, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
+
+      /* a separator for clarity */
+      hseparator = gtk_hseparator_new();
+      gtk_table_attach(GTK_TABLE(packing_table), hseparator,3,5,
+		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      gtk_widget_show(hseparator);
+      table_row++;
+
+      /* additional parameters */
+      label = gtk_label_new(_("Misc. Parameters"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,5,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      table_row++;
+
+      /* series number */
+      label = gtk_label_new(_("Series Number:"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%d", AMITK_DATA_SET_SERIES_NUMBER(object));
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+			 
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       4,5, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
     }
-
-
 
     gtk_widget_show(packing_table);
   }
@@ -1623,14 +1702,24 @@ static void dialog_update_interpolation(AmitkObjectDialog * dialog) {
   interpolation = AMITK_DATA_SET_INTERPOLATION(dialog->object);
   for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
     g_signal_handlers_block_by_func(G_OBJECT(dialog->interpolation_button[i_interpolation]),
-				    G_CALLBACK(dialog_interpolation_cb), dialog);
+				    G_CALLBACK(dialog_change_interpolation_cb), dialog);
   /* need the button pressed to get the display to update correctly */
   gtk_button_pressed(GTK_BUTTON(dialog->interpolation_button[interpolation]));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->interpolation_button[interpolation]),TRUE);
 
   for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->interpolation_button[i_interpolation]),
-				      G_CALLBACK(dialog_interpolation_cb), dialog);
+				      G_CALLBACK(dialog_change_interpolation_cb), dialog);
+
+  return;
+}
+
+/* set which combo box item is present */
+static void dialog_update_rendering(AmitkObjectDialog * dialog) {
+  
+  g_signal_handlers_block_by_func(G_OBJECT(dialog->rendering_menu), G_CALLBACK(dialog_change_rendering_cb), dialog);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->rendering_menu), AMITK_DATA_SET_RENDERING(dialog->object));
+  g_signal_handlers_unblock_by_func(G_OBJECT(dialog->rendering_menu), G_CALLBACK(dialog_change_rendering_cb), dialog);
 
   return;
 }
@@ -1679,7 +1768,7 @@ static void dialog_update_conversion(AmitkObjectDialog * dialog) {
 }
   
 
-static void dialog_interpolation_cb(GtkWidget * widget, gpointer data) {
+static void dialog_change_interpolation_cb(GtkWidget * widget, gpointer data) {
 
   AmitkObjectDialog * dialog = data;
   AmitkInterpolation interpolation;
@@ -1687,6 +1776,16 @@ static void dialog_interpolation_cb(GtkWidget * widget, gpointer data) {
   interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
   amitk_data_set_set_interpolation(AMITK_DATA_SET(dialog->object), interpolation);
   
+  return;
+}
+
+static void dialog_change_rendering_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkObjectDialog * dialog = data;
+
+  g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
+  amitk_data_set_set_rendering(AMITK_DATA_SET(dialog->object), 
+			       gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
   return;
 }
 
@@ -2103,8 +2202,6 @@ static void dialog_change_modality_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
 
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
-
-  /* figure out which menu item called me */
   amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
 			      gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 
@@ -2371,6 +2468,8 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object) {
 			     G_CALLBACK(dialog_update_entries), dialog);
     g_signal_connect_swapped(G_OBJECT(object), "interpolation_changed", 
 			     G_CALLBACK(dialog_update_interpolation), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "rendering_changed", 
+			     G_CALLBACK(dialog_update_rendering), dialog);
     g_signal_connect_swapped(G_OBJECT(object), "conversion_changed", 
 			     G_CALLBACK(dialog_update_conversion), dialog);
   }

@@ -1,7 +1,7 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -279,9 +279,9 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       }
 
       if ((!raw_data) && (!title_printed)) {
-	fprintf(file_pointer, "#   %s", analysis_titles[COLUMN_FRAME]);
+	fprintf(file_pointer, "#   %s", _(analysis_titles[COLUMN_FRAME]));
 	for (i=COLUMN_FRAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
-	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
+	  fprintf(file_pointer, "\t%12s", _(analysis_titles[i]));
 	fprintf(file_pointer, "\n");
 	title_printed = TRUE;
       }
@@ -360,10 +360,10 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
 			      AMITK_OBJECT_NAME(roi_analyses->study), ctime(&current_time));
   
   /* print the titles */
-  amitk_append_str(&roi_stats,"# %-10s", analysis_titles[COLUMN_ROI_NAME]);
-  amitk_append_str(&roi_stats,"\t%-12s", analysis_titles[COLUMN_DATA_SET_NAME]);
+  amitk_append_str(&roi_stats,"# %-10s", _(analysis_titles[COLUMN_ROI_NAME]));
+  amitk_append_str(&roi_stats,"\t%-12s", _(analysis_titles[COLUMN_DATA_SET_NAME]));
   for (i=COLUMN_DATA_SET_NAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
-    amitk_append_str(&roi_stats,"\t%12s", analysis_titles[i]);
+    amitk_append_str(&roi_stats,"\t%12s", _(analysis_titles[i]));
   amitk_append_str(&roi_stats,"\n");
 
   /* print the stats */
@@ -612,7 +612,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 
 	if (display) {
 	  renderer = gtk_cell_renderer_text_new ();
-	  column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
+	  column = gtk_tree_view_column_new_with_attributes(_(analysis_titles[i_column]), renderer,
 							    "text", i_column, NULL);
 	  if (column_use_my_renderer[i_column]) 
 	    gtk_tree_view_column_set_cell_data_func(column, renderer,

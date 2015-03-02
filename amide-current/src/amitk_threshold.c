@@ -1,7 +1,7 @@
 /* amitk_threshold.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2001-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -52,26 +52,22 @@ static gchar * thresholding_names[] = {
   N_("global")
 };
 
+/* thresholding explanations:
+  per slice - threshold the images based on the max and min values in the current slice
+  per frame - threshold the images based on the max and min values in the current frame
+  interpolated between frames - threshold the images based on max and min values interpolated from the reference frame thresholds
+  global - threshold the images based on the max and min values of the entire data set
+*/
+
 static gchar * threshold_style_names[] = {
   N_("Min/Max"),
   N_("Center/Width")
 };
   
-#if (GTK_MINOR_VERSION >= 12)
-
-#else
-static gchar * thresholding_explanations[] = {
-  N_("threshold the images based on the max and min values in the current slice"),
-  N_("threshold the images based on the max and min values in the current frame"),
-  N_("threshold the images based on max and min values interpolated from the reference frame thresholds"),
-  N_("threshold the images based on the max and min values of the entire data set"),
-};
-
-static gchar * threshold_style_explanations[] = {
-  N_("threshold by setting min and max values - Nuclear Medicine Style"),
-  N_("theshold by setting a window center and width - Radiology Style")
-};
-#endif
+/* threshold style explanations
+  Min/Max - threshold by setting min and max values - Nuclear Medicine Style
+  Center/Width - theshold by setting a window center and width - Radiology Style
+*/
 
 static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
@@ -224,17 +220,8 @@ static void threshold_show_all (GtkWidget * widget) {
 
 void amitk_threshold_style_widgets(GtkWidget ** radio_buttons, GtkWidget * hbox) {
 
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  GtkTooltips * tips=NULL;
-#endif
   AmitkThresholdStyle i_threshold_style;
   GtkWidget * image;
-
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  tips = gtk_tooltips_new();
-#endif
 
   for (i_threshold_style = 0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++) {
       
@@ -255,14 +242,8 @@ void amitk_threshold_style_widgets(GtkWidget ** radio_buttons, GtkWidget * hbox)
       
     gtk_box_pack_start(GTK_BOX(hbox), radio_buttons[i_threshold_style], FALSE, FALSE, 3);
     gtk_widget_show(radio_buttons[i_threshold_style]);
-#if (GTK_MINOR_VERSION >= 12)
     gtk_widget_set_tooltip_text(radio_buttons[i_threshold_style],
 				threshold_style_names[i_threshold_style]);
-#else
-    gtk_tooltips_set_tip(tips, radio_buttons[i_threshold_style], 
-			 threshold_style_names[i_threshold_style],
-			 threshold_style_explanations[i_threshold_style]);
-#endif
       
     g_object_set_data(G_OBJECT(radio_buttons[i_threshold_style]), "threshold_style", 
 		      GINT_TO_POINTER(i_threshold_style));
@@ -293,19 +274,11 @@ static void threshold_construct(AmitkThreshold * threshold,
   AmitkWindow i_window;
   guint i_ref;
   AmitkThresholdEntry i_entry;
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  GtkTooltips * tips=NULL;
-#endif
   AmitkThresholdStyle i_threshold_style;
   AmitkLimit i_limit;
   AmitkViewMode i_view_mode;
   div_t x;
 
-#if (GTK_MINOR_VERSION >= 12)
-#else
-  tips = gtk_tooltips_new();
-#endif
 
   /* we're using two tables packed into a box */
   if (layout == AMITK_THRESHOLD_BOX_LAYOUT)
@@ -410,14 +383,8 @@ static void threshold_construct(AmitkThreshold * threshold,
       g_signal_connect(G_OBJECT(threshold->color_table_independent[i_view_mode]), "toggled", G_CALLBACK(color_table_independent_cb), threshold);
       gtk_box_pack_start(GTK_BOX(threshold->color_table_hbox[i_view_mode]), 
 			 threshold->color_table_independent[i_view_mode], FALSE, FALSE, 0);
-#if (GTK_MINOR_VERSION >= 12)
       gtk_widget_set_tooltip_text(threshold->color_table_independent[i_view_mode],
 				  _("if not enabled, the primary color table will be used for this set of views"));
-#else
-      gtk_tooltips_set_tip(tips, threshold->color_table_independent[i_view_mode],
-			   _("enable color table"),
-			   _("if not enabled, the primary color table will be used for this set of views"));
-#endif
       gtk_widget_show(threshold->color_table_independent[i_view_mode]);
     } 
 
@@ -467,14 +434,8 @@ static void threshold_construct(AmitkThreshold * threshold,
       gtk_button_set_image(GTK_BUTTON(threshold->type_button[i_thresholding]), image);
       gtk_box_pack_start(GTK_BOX(hbox), threshold->type_button[i_thresholding], FALSE, FALSE, 3);
       gtk_widget_show(threshold->type_button[i_thresholding]);
-#if (GTK_MINOR_VERSION >= 12)
       gtk_widget_set_tooltip_text(threshold->type_button[i_thresholding], 
 				  thresholding_names[i_thresholding]);
-#else
-      gtk_tooltips_set_tip(tips, threshold->type_button[i_thresholding], 
-			   thresholding_names[i_thresholding],
-			   thresholding_explanations[i_thresholding]);
-#endif
       
       g_object_set_data(G_OBJECT(threshold->type_button[i_thresholding]), "thresholding", 
 			GINT_TO_POINTER(i_thresholding));
@@ -536,12 +497,7 @@ static void threshold_construct(AmitkThreshold * threshold,
       gtk_widget_show(button);
 
       g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(windowing_cb), threshold);
-#if (GTK_MINOR_VERSION >= 12)
-      gtk_widget_set_tooltip_text(button, amitk_window_names[i_window]);
-#else
-      if (tips != NULL)
-	gtk_tooltips_set_tip(tips, button, amitk_window_names[i_window], amitk_window_names[i_window]);
-#endif
+      gtk_widget_set_tooltip_text(button, _(amitk_window_names[i_window]));
     }
 
     left_row++;

@@ -1,15 +1,15 @@
 dnl ===============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
-AC_PREREQ(2.53)
-AC_INIT([amide],[1.0.1],[amide-users@lists.sourceforge.net])
+AC_PREREQ(2.59)
+AC_INIT([amide],[1.0.2],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
+AM_INIT_AUTOMAKE
 
-AM_MAINTAINER_MODE
+AM_MAINTAINER_MODE([enable])
 
 AC_PROG_CC
 AC_PROG_CXX
@@ -23,12 +23,12 @@ AC_CHECK_FUNCS(strptime)
 
 dnl ================= translation =======================================
 
+AM_GLIB_GNU_GETTEXT
 GETTEXT_PACKAGE=amide
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Define the gettext package to be used])
 
-ALL_LINGUAS="zh_CN"
-AM_GLIB_GNU_GETTEXT
+ALL_LINGUAS="zh_CN zh_TW"
 AC_PROG_INTLTOOL
 
 dnl m4 required for compiling
@@ -104,9 +104,9 @@ AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="
 AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
 dnl 2010.02.20	AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include/dcmtk/dcmdata -I/usr/local/dicom/include/dcmtk/ofstd -I/usr/local/dicom/include -I/usr/include/dcmtk/dcmdata -I/usr/local/include/dcmtk/ofstd -I/sw/include/dcmtk/dcmdata -I/sw/include/dcmtk/ofstd -I/sw/include/dcmtk"
-saved_ldflags="${LDFLAGS}"            
+saved_libs="${LIBS}"
+LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"
 saved_cxxflags="${CXXFLAGS}"                                              
-LDFLAGS="${LDFLAGS} ${AMIDE_LIBDCMDATA_LIBS}"
 CXXFLAGS="${CXXFLAGS} ${AMIDE_LIBDCMDATA_CFLAGS} -DHAVE_CONFIG_H"
 FOUND_DCMDATA=no
 AC_LANG_CPLUSPLUS
@@ -116,7 +116,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <dcmtk/dcmdata/dcddirif.h>],
 					   ])],
     [FOUND_DCMDATA=yes],                                           
      [AC_MSG_WARN([libdcmdata was not found.])])
-LDFLAGS="${saved_ldflags}"
+LIBS="${saved_libs}"
 CXXFLAGS="${saved_cxxflags}"                                                                                        
 
 
@@ -392,7 +392,7 @@ dnl fi
 ################################################################
 
 dnl if we define --enable-gtk-doc, we build the library documentation
-GTK_DOC_CHECK([1.0])
+GTK_DOC_CHECK([1.10])
 
 dnl the following is for the application documentation
 AC_ARG_ENABLE(doc,
@@ -414,11 +414,6 @@ if test ${enable_doc} = yes; then
    dnl building documentatin
    GNOME_DOC_INIT
 
-   dnl scrollkeeper-update required for document building
-   AC_PATH_PROGS(SCROLLKEEPER, scrollkeeper-update, NOT_FOUND)
-   if test $SCROLLKEEPER = "NOT_FOUND"; then
-      echo "Could not find scrollkeeper-update on this system.  Will not compile help files."
-   fi
 else
   dnl not building documentation
   ENABLE_SK_TRUE="#"
@@ -429,7 +424,6 @@ fi
 
 AC_CHECK_PROG(DB2HTML, db2html, true, false)
 AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
-AM_CONDITIONAL(SCROLLKEEPER_EXISTS, [test "$SCROLLKEEPER" != "NOT_FOUND"])
 
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)

@@ -1,5 +1,5 @@
 Name: 		amide
-Version: 	1.0.1
+Version: 	1.0.2
 Release: 	2%{?dist}
 Summary: 	Program for viewing and analyzing medical image data sets
 License: 	GPLv2+
@@ -18,12 +18,9 @@ Requires:       gtk2 >= 2.16
 Requires:	gnome-vfs2
 Requires:	libgnomecanvas
 
-Requires(post):	scrollkeeper >= 0.1.4
-
 BuildRequires:  xmedcon-devel
 BuildRequires:  volpack-devel 
 BuildRequires:  libxml2-devel 
-BuildRequires:  gtk-doc 
 BuildRequires:  gnome-doc-utils
 BuildRequires:  libgnomecanvas-devel 
 BuildRequires:  ffmpeg-devel >= 0.4.9
@@ -48,7 +45,6 @@ alignments.
 
 %build
 %configure \
-	   --enable-gtk-doc=yes \
 	   --enable-libecat=no \
 	   --enable-amide-debug=no \
 	   --disable-scrollkeeper
@@ -63,19 +59,15 @@ desktop-file-install --vendor gnome --delete-original                   \
   --add-category X-Red-Hat-Extra                                        \
   $RPM_BUILD_ROOT%{_datadir}/applications/*
 
-rm -rf $RPM_BUILD_ROOT/var/scrollkeeper
-
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
 update-desktop-database %{_datadir}/applications
-scrollkeeper-update
 
 %postun
 update-desktop-database %{_datadir}/applications
-scrollkeeper-update
 
 %files
 %defattr(-, root, root)
@@ -85,13 +77,14 @@ scrollkeeper-update
 %{_datadir}/gnome
 %{_datadir}/omf
 %{_datadir}/applications
-%{_datadir}/gtk-doc
 %{_datadir}/locale
 %{_mandir}/*
 
 
 
 %changelog
+* Fri Feb 24 2011 Andy Loening <loening at alum dot mit dot edu>
+- cutout gtk-doc building and scrollkeeper
 * Sun Dec 16 2007 Andy Loening <loening at alum dot mit dot edu>
 - small tweak for new gnome-doc help files
 * Tue Nov 05 2002 Andy Loening <loening at alum dot mit dot edu>

@@ -1,7 +1,7 @@
 /* alignment_mutual_information.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2011 Ian Miller
+ * Copyright (C) 2011-2012 Ian Miller
  *
  */
 
@@ -66,11 +66,16 @@ gdouble calculate_mutual_information(AmitkDataSet * fixed_ds, AmitkDataSet * mov
   AmitkView i_view;
   AmitkVoxel i_voxel;
   gint i, j;                             // temporary counters to iterate through the bins for the two datasets
-     
 
+  amide_data_t moving_global_min;
+  amide_data_t fixed_global_min;
+  
+     
   /* use the range of values present in the data and the number of bins desired in order to determine how wide the bins should be */
-  bin_width_moving = (amitk_data_set_get_global_max(moving_ds) - amitk_data_set_get_global_min(moving_ds)) / NUM_BINS;
-  bin_width_fixed  = (amitk_data_set_get_global_max(fixed_ds)  - amitk_data_set_get_global_min(fixed_ds))  / NUM_BINS;
+  moving_global_min = amitk_data_set_get_global_min(moving_ds);
+  fixed_global_min = amitk_data_set_get_global_min(fixed_ds);
+  bin_width_moving = (amitk_data_set_get_global_max(moving_ds) - moving_global_min) / NUM_BINS;
+  bin_width_fixed  = (amitk_data_set_get_global_max(fixed_ds)  - fixed_global_min)  / NUM_BINS;
     
   /* iterate through the dataset, and build up a frequency matrix for binned values */
   /* granularity determines whether we look at all the voxels, or just a subset. */
@@ -94,7 +99,7 @@ gdouble calculate_mutual_information(AmitkDataSet * fixed_ds, AmitkDataSet * mov
 
     /* (re)calculate the fixed slice if we need to */
     if ((fixed_slice[i_view] == NULL) || (*pfixed_slices_current == FALSE)) {
-#ifdef AMID_DEBUG
+#ifdef AMIDE_DEBUG
       g_print("recompute fixed slice for view %d with pixel size %f\n", i_view, pixel_size.x);
 #endif
 
@@ -135,8 +140,11 @@ gdouble calculate_mutual_information(AmitkDataSet * fixed_ds, AmitkDataSet * mov
 	if (isnan(value_fixed)) value_fixed = 0;
 	if (isnan(value_moving)) value_moving = 0;
       
-	current_bin_number_fixed = rint(value_fixed/bin_width_fixed);
-	current_bin_number_moving = rint(value_moving/bin_width_moving);
+	current_bin_number_fixed = floor((value_fixed-fixed_global_min)/bin_width_fixed);
+	current_bin_number_moving = floor((value_moving-moving_global_min)/bin_width_moving);
+
+	g_assert(current_bin_number_fixed < NUM_BINS);
+	g_assert(current_bin_number_moving < NUM_BINS);
       
 	/* Update the count in this particular bin combination by incrementing the counter*/
 	mutual_information_array[current_bin_number_fixed][current_bin_number_moving]++;

@@ -1,7 +1,7 @@
 /* amitk_canvas.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,6 +147,8 @@ typedef enum {
   CANVAS_EVENT_ENACT_SHIFT_OBJECT,  
   CANVAS_EVENT_ENACT_ROTATE_OBJECT,
   CANVAS_EVENT_ENACT_CHANGE_ISOCONTOUR,
+  CANVAS_EVENT_SCROLL_UP,
+  CANVAS_EVENT_SCROLL_DOWN,
 } canvas_event_t;
 
 
@@ -182,7 +184,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi, 
 					   AmitkPoint position, AmitkDataSet * active_slice);
 static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
-static void canvas_scrollbar_cb(GtkObject * adjustment, gpointer data);
+static void canvas_scrollbar_adjustment_cb(GtkObject * adjustment, gpointer data);
 
 static gboolean canvas_recalc_corners(AmitkCanvas * canvas);
 static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, amide_real_t thickness);
@@ -324,7 +326,7 @@ static void canvas_init (AmitkCanvas *canvas)
 
   canvas->canvas = NULL;
   canvas->slice_cache = NULL;
-  canvas->max_slice_cache_size = 10;
+  canvas->max_slice_cache_size = 15;
   canvas->slices=NULL;
   canvas->image=NULL;
   canvas->pixbuf=NULL;
@@ -1504,6 +1506,16 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       canvas_event_type = CANVAS_EVENT_NONE;
     
     break;
+
+  case GDK_SCROLL: /* scroll wheel event */
+    event_cpoint.x = event_cpoint.y = 0;
+    if (event->scroll.direction == GDK_SCROLL_UP)
+      canvas_event_type = CANVAS_EVENT_SCROLL_UP;
+    else if (event->scroll.direction == GDK_SCROLL_DOWN)
+      canvas_event_type = CANVAS_EVENT_SCROLL_DOWN;
+    else
+      canvas_event_type = CANVAS_EVENT_NONE;
+    break;
     
   default: 
     event_cpoint.x = event_cpoint.y = 0;
@@ -2368,6 +2380,16 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_CHANGE_ISOCONTOUR, &base_point, 0.0);
     break;
 
+  case CANVAS_EVENT_SCROLL_UP:
+  case CANVAS_EVENT_SCROLL_DOWN:
+    /* just pretend this event is like the user pressed the scrollbar */
+    if (canvas_event_type == CANVAS_EVENT_SCROLL_UP)
+      g_signal_emit_by_name(G_OBJECT(canvas->scrollbar), "move_slider", GTK_SCROLL_PAGE_BACKWARD, canvas);
+    else  /* scroll down */
+      g_signal_emit_by_name(G_OBJECT(canvas->scrollbar), "move_slider", GTK_SCROLL_PAGE_FORWARD, canvas);
+
+    break;
+
   case CANVAS_EVENT_NONE:
     break;
   default:
@@ -2387,7 +2409,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
 /* function called indicating the plane adjustment has changed */
-static void canvas_scrollbar_cb(GtkObject * adjustment, gpointer data) {
+static void canvas_scrollbar_adjustment_cb(GtkObject * adjustment, gpointer data) {
 
   AmitkCanvas * canvas = data;
   AmitkPoint canvas_center;
@@ -2475,7 +2497,7 @@ static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, ami
   
   /* translate the view center point so that the z coordinate corresponds to depth in this view */
   zp_start = amitk_space_b2s(AMITK_SPACE(canvas->volume), center);
-  
+
   /* make sure our view center makes sense */
   if (zp_start.z < lower) {
     
@@ -2492,19 +2514,20 @@ static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, ami
       zp_start.z = upper;
   }
   
+  
   GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->upper = upper;
   GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->lower = lower;
   GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->step_increment = min_voxel_size;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_increment = thickness;
-  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_size = thickness;
+  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_increment = (thickness/2.0 < min_voxel_size) ? min_voxel_size : thickness/2.0;
+  GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->page_size = 0;
   GTK_ADJUSTMENT(canvas->scrollbar_adjustment)->value = zp_start.z;
-  
+
   /* allright, we need to update widgets connected to the adjustment without triggering our callback */
   g_signal_handlers_block_by_func(G_OBJECT(canvas->scrollbar_adjustment),
-				   G_CALLBACK(canvas_scrollbar_cb), canvas);
+				   G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
   gtk_adjustment_changed(GTK_ADJUSTMENT(canvas->scrollbar_adjustment));  
   g_signal_handlers_unblock_by_func(G_OBJECT(canvas->scrollbar_adjustment), 
-				     G_CALLBACK(canvas_scrollbar_cb), canvas);
+				     G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
 
   return;
 }
@@ -3163,14 +3186,14 @@ static void canvas_update_subject_orientation(AmitkCanvas * canvas) {
     
     for (i=0; i<4; i++) {
       if (canvas->orientation_label[i] != NULL ) 
-	gnome_canvas_item_set(canvas->orientation_label[i],"text", orientation_label[which_orientation[i]], 
+	gnome_canvas_item_set(canvas->orientation_label[i],"text", _(orientation_label[which_orientation[i]]), 
 			      "x", x[i], "y", y[i], NULL);
       else 
 	canvas->orientation_label[i] = 
 	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
 				gnome_canvas_text_get_type(),
 				"anchor", anchor[i],
-				"text", orientation_label[which_orientation[i]],
+				"text", _(orientation_label[which_orientation[i]]),
 				"x", x[i],
 				"y", y[i],
 				"fill_color", "black",
@@ -3389,7 +3412,7 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 
     canvas->scrollbar_adjustment = gtk_adjustment_new(0.5, 0, 1, 1, 1, 1); /* junk values */
     g_signal_connect(canvas->scrollbar_adjustment, "value_changed", 
-    		       G_CALLBACK(canvas_scrollbar_cb), canvas);
+		     G_CALLBACK(canvas_scrollbar_adjustment_cb), canvas);
     canvas->scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(canvas->scrollbar_adjustment));
     gtk_range_set_update_policy(GTK_RANGE(canvas->scrollbar), GTK_UPDATE_CONTINUOUS);
 
@@ -3578,12 +3601,12 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "data_set_changed", G_CALLBACK(data_set_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "invalidate_slice_cache", G_CALLBACK(canvas_data_set_invalidate_slice_cache), canvas);
     g_signal_connect(G_OBJECT(object), "interpolation_changed", G_CALLBACK(data_set_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "rendering_changed", G_CALLBACK(data_set_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholding_changed", G_CALLBACK(data_set_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholds_changed", G_CALLBACK(data_set_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(data_set_color_table_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "subject_orientation_changed", G_CALLBACK(data_set_subject_orientation_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "view_gates_changed", G_CALLBACK(data_set_changed_cb), canvas);
-    canvas->max_slice_cache_size += 3;
   }
 
   /* keep track of undrawn rois */
@@ -3659,7 +3682,6 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), data_set_color_table_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), data_set_subject_orientation_changed_cb, canvas);
     canvas->slice_cache = amitk_data_sets_remove_with_slice_parent(canvas->slice_cache, AMITK_DATA_SET(object));
-    canvas->max_slice_cache_size -= 3;
   }
   
   /* find corresponding CanvasItem and destroy */

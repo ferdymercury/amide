@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2011 Andy Loening
+ * Copyright (C) 2000-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -56,6 +56,9 @@ enum {
   PANEL_LAYOUT_PREFERENCE_CHANGED,
   LAST_SIGNAL
 };
+
+
+static gchar * blank_name = N_("new");
 
 
 static void          study_class_init          (AmitkStudyClass     *klass);
@@ -581,6 +584,7 @@ AmitkStudy * amitk_study_new (AmitkPreferences * preferences) {
   AmitkStudy * study;
 
   study = g_object_new(amitk_study_get_type(), NULL);
+  amitk_object_set_name(AMITK_OBJECT(study), blank_name);
 
   if (preferences != NULL) {
     study->canvas_roi_width = AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences);
@@ -623,6 +627,25 @@ void amitk_study_set_filename(AmitkStudy * study, const gchar * new_filename) {
 
   return;
 }
+
+void amitk_study_suggest_name(AmitkStudy * study, const gchar * suggested_name) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (suggested_name == 0)
+    return;
+  if (strlen(suggested_name) == 0)
+    return;
+
+  if ((AMITK_OBJECT_NAME(study) == NULL)  ||
+      (g_strcmp0(AMITK_OBJECT_NAME(study), "") == 0) ||
+      (g_ascii_strncasecmp(blank_name, AMITK_OBJECT_NAME(study),
+			   strlen(AMITK_OBJECT_NAME(study))) == 0)) 
+    amitk_object_set_name(AMITK_OBJECT(study), suggested_name);
+
+  return;
+}
+
 
 /* sets the date of a study
    note: no error checking of the date is currently done. */
@@ -964,7 +987,7 @@ AmitkStudy * amitk_study_recover_xml(const gchar * study_filename, AmitkPreferen
 
   /* display accumulated warning messages */
   if (error_buf != NULL) {
-    amitk_append_str_with_newline(&error_buf, _(""));
+    amitk_append_str_with_newline(&error_buf, "");
     amitk_append_str_with_newline(&error_buf, _("The above warnings may arise because portions of the XIF"));
     amitk_append_str_with_newline(&error_buf, _("file were corrupted."));
     g_warning("%s",error_buf);
@@ -1033,7 +1056,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
 
   /* display accumulated warning messages */
   if (error_buf != NULL) {
-    amitk_append_str_with_newline(&error_buf, _(""));
+    amitk_append_str_with_newline(&error_buf, "");
     amitk_append_str_with_newline(&error_buf, _("The above warnings most likely indicate changes to the"));
     amitk_append_str_with_newline(&error_buf, _("XIF file format, please resave the data as soon as possible."));
     g_warning("%s",error_buf);

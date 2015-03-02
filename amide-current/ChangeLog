@@ -1,4 +1,24 @@
-1.0.1
+1.0.2
+	* Added MIP and MINIP rendering methods for thick slices
+	* mac bundle now is able to export JPEG images [1]
+	* will now separate diffusion data into two volumes
+	* enabled scrollwheel use on canvases
+	* widend the tree box
+	* mutual information alignment now handles negative values
+	* cleaned up spec file
+	* zh_TW translation file [2]
+	* fixed several bugs related to translations
+	* thickness now not overwritten when loading in .xif
+	* try to read in DICOMDIR files with lower/upper case reference issues
+	* canvas slice cache size now fixed, was getting too large if multiple datasets
+	* nearest neighbor/trilinear algorithm now more graceful at data set edges
+	* POINT_TO_VOXEL macro now casts instead of floor, slight speed boost for slicing
+	* configure fix to us LIBS instead of LDFLAGS for dcmtk detection [3]
+	[1] Noticed by Youngho Seo
+	[2] contributed by William Chao
+	[3] contributed by Gert Wollny
+
+1.0.1 2011.11.11
 	* conversion between different raw data formats in dcmtk_export no longer fails
 	* data_set_copy_in_place no longer forces calculation of max/min values
 	* now reads in injected dose correctly from DCMTK [1]

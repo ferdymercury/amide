@@ -1,7 +1,7 @@
 /* tb_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2011 Andy Loening
+ * Copyright (C) 2002-2012 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -333,7 +333,7 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 #ifdef AMIDE_LIBGSL_SUPPORT
     tb_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
     
-    label = gtk_label_new(gaussian_filter_text);
+    label = gtk_label_new(_(gaussian_filter_text));
     gtk_table_attach(GTK_TABLE(table), label, 
 		     table_column,table_column+2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -373,7 +373,7 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
 		     table_column+1,table_column+2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
 #else /* no libgsl support */
-    label = gtk_label_new(no_libgsl_text);
+    label = gtk_label_new(_(no_libgsl_text));
     gtk_table_attach(GTK_TABLE(table), label, 
 		     table_column,table_column+2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -384,7 +384,7 @@ static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
   case MEDIAN_LINEAR_FILTER_PAGE:
     tb_filter->kernel_size = DEFAULT_MEDIAN_FILTER_SIZE;
     
-    label = gtk_label_new((i_page == MEDIAN_3D_FILTER_PAGE) ? median_3d_filter_text : median_linear_filter_text);
+    label = gtk_label_new((i_page == MEDIAN_3D_FILTER_PAGE) ? _(median_3d_filter_text) : _(median_linear_filter_text));
     gtk_table_attach(GTK_TABLE(table), label, 
 		     table_column,table_column+2, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -458,7 +458,7 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent)
     
 
   /* ----------------  conclusion page ---------------------------------- */
-  tb_filter->page[CONCLUSION_PAGE] = gtk_label_new(finish_page_text);
+  tb_filter->page[CONCLUSION_PAGE] = gtk_label_new(_(finish_page_text));
   gtk_widget_set_size_request(tb_filter->page[CONCLUSION_PAGE],LABEL_WIDTH, -1);
   gtk_label_set_line_wrap(GTK_LABEL(tb_filter->page[CONCLUSION_PAGE]), TRUE);
   gtk_assistant_append_page(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[CONCLUSION_PAGE]);
@@ -470,7 +470,7 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent)
   logo = gtk_widget_render_icon(GTK_WIDGET(tb_filter->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
   for (i_page=0; i_page<NUM_PAGES; i_page++) {
     gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], logo);
-    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], wizard_name);
+    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], _(wizard_name));
     gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], TRUE); /* all pages have default values */
     g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
   }
