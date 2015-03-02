@@ -95,27 +95,7 @@
     
   </sect1>
 
-<sect1><title>Grain size</title> 
-  <para>
-    The grain size determines how many sub-voxels each voxel will be
-    divided into when calculating an ROI's statistics.  A higher
-    grain (meaning more sub-voxels) will calculate more accurate
-    statistics at the expensive of increased calculation times.
-  </para>
-  
-</sect1>
-
 <sect1><title>Gotcha's to ROI calculations </title>
-
-  <sect2><title>My ROI statistics are zero</title>
-
-    <para>
-      This probably means your ROI is very thin in one of its
-      dimensions.  Try either increasing the size of the ROI, or
-      increasing the grain size used when calculation the statistics.
-    </para>
-
-  </sect2>
 
   <sect2><title>Variance/Std. Dev./Std. Err. Fallacies</title>
 

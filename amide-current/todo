@@ -4,42 +4,47 @@ misc list of things todo:
 for next release?
 -----------------
 
+
 big things:
 -----------
-* aligning of data sets by specifying three points in each
-* guppi? interface for drawing graphs of ROI statistics
-	-plotutils instead?
+* aligning of data sets by specifying >= 3 points in each
+* aligning of data using automated registration?
+* guppi interface for drawing graphs of ROI statistics
 * allow looking at only a subset of the data (i.e. cropping)
-* work around and remove the whole notion of "grains" for roi's
+* isocontour roi's
  
  
  
                        
 small things:
 -------------
-* slices shouldn't have to be the size of the largest dimensions
+* check that glitchy drawing of gamma curve doesn't crash under MacX anymore
 * change realpoint to 4D?
-* add quad-linear interpolation for short time periods?
-	would be especially useful for dynamic rendering movies
 * figure out what to do with the extraneous study if you start
 	amide, and then load in a file...
 * add drag-n-drop capabilities between study windows
-* add axis indications somewhere, so user knows which way x,y,z is on each canvas 
-	this should go on the volume dialog
 * put the canvases in a scrolled widget?
-* cardiac shaped ROI?
-* make caching of slices smarter.  We don't need to regenerate all slices
-	when removing one slice from the list...
+* make caching of slices smarter.  
+	We don't need to regenerate all slices when removing one slice from the list
+	slices shouldn't have to be the size of the largest dimensions
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
-* program preferences box?
-	-width of roi lines
 * when moving roi, should probably update roi dialog, same thing with volumes
 * get libamide compiling correctly under OS X
-* write a FileSelection widget that can handle directories
+
+
+probably before 1.0 things:
+--------------
+* if gtk_spin_button hasn't been fixed, fix it myself (check out gtkrange's DISCONTINUOUS mode)
+* progress bars
+* if we're not compiling in debug mode, have warning messages go to popup windows
+* rewrite documentation
+* add quad-linear interpolation for short time periods?
+	would be especially useful for dynamic rendering movies
 
 probably post 1.0 things:
 ----------------
+* widgetization and changing of data types to glib style (i.e. amitk, and amilib)
 * add corba/CIAS support
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.
@@ -50,27 +55,19 @@ probably post 1.0 things:
 	allow changing of material properties
 * change mpeg_encode to a library? 
 	would allow lose of "system" command, and proper progress reports, in ui_rendering_movie_dialog
+* cardiac shaped ROI?
+
 
 things dependent on other things: 
 -------------- 
-
 * figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
 	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities
 	- I believe this will be added in GTK 2.0
-
 * gtk_spin_button -> multiple value_changed are emitted when the callback takes
 	to long.  This is a gtk+ bug.
-
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
 	delete the following line from amide.c so we can have bug reporting
 	"signal(SIGSEGV, SIG_DFL);"
 
 
 
-
-polish things:
---------------
-* progress bars
-* if we're not compiling in debug mode, have warning messages go to 
-	popup windows
-* rewrite documentation

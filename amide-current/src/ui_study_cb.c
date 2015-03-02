@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include "gtkdirsel.h"
 #include "rendering.h"
 #include "study.h"
 #include "amitk_threshold.h"
@@ -39,22 +40,30 @@
 #include "ui_series.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
+#include "ui_preferences_dialog.h"
 #include "ui_roi_dialog.h"
 #include "ui_study_dialog.h"
 #include "ui_time_dialog.h"
 #include "ui_volume_dialog.h"
+#include "ui_roi_analysis_dialog.h"
 
+/* function which gets called from a name entry dialog */
+static void ui_study_cb_entry_name(gchar * entry_string, gpointer data) {
+  gchar ** p_roi_name = data;
+  *p_roi_name = entry_string;
+  return;
+}
 
 /* function to handle loading in an AMIDE study */
 static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * file_selection = data;
+  GtkWidget * dir_selection = data;
   gchar * open_filename;
   struct stat file_info;
   study_t * study;
 
   /* get the filename */
-  open_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+  open_filename = gtk_dir_selection_get_filename(GTK_DIR_SELECTION(dir_selection));
 
   /* check to see that the filename exists and it's a directory */
   if (stat(open_filename, &file_info) != 0) {
@@ -73,7 +82,7 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
   }
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, file_selection);
+  ui_common_cb_file_selection_cancel(widget, dir_selection);
 
   /* setup the study window */
   ui_study_create(study, NULL);
@@ -85,32 +94,32 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 /* function to load a study into a  study widget w*/
 void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
 
-  GtkWidget * file_selection;
+  GtkWidget * dir_selection;
 
-  file_selection = gtk_file_selection_new(_("Open AMIDE File"));
+  dir_selection = gtk_dir_selection_new(_("Open AMIDE File"));
 
   /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+  gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),
+  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->ok_button),
 		     "clicked",
 		     GTK_SIGNAL_FUNC(ui_study_cb_open_ok),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     dir_selection);
+  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->cancel_button),
 		     "clicked",
 		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     dir_selection);
+  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->cancel_button),
 		     "delete_event",
 		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
+		     dir_selection);
 
   /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+  gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(file_selection);
+  gtk_widget_show(dir_selection);
 
   return;
 }
@@ -127,7 +136,7 @@ void ui_study_cb_new_study(GtkWidget * button, gpointer data) {
 /* function to handle saving */
 static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * file_selection = data;
+  GtkWidget * dir_selection = data;
   GtkWidget * question;
   ui_study_t * ui_study;
   gchar * save_filename;
@@ -141,10 +150,10 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   gchar ** frags2=NULL;
 
   /* get a pointer to ui_study */
-  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+  ui_study = gtk_object_get_data(GTK_OBJECT(dir_selection), "ui_study");
 
   /* get the filename */
-  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+  save_filename = gtk_dir_selection_get_filename(GTK_DIR_SELECTION(dir_selection));
 
   /* some sanity checks */
   if ((strcmp(save_filename, ".") == 0) ||
@@ -225,7 +234,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   }
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, file_selection);
+  ui_common_cb_file_selection_cancel(widget, dir_selection);
 
   return;
 }
@@ -234,44 +243,38 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-  GtkFileSelection * file_selection;
+  GtkDirSelection * dir_selection;
   gchar * temp_string;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Save File")));
+  dir_selection = GTK_DIR_SELECTION(gtk_dir_selection_new(_("Save File")));
 
   /* take a guess at the filename */
   if (study_filename(ui_study->study) == NULL) 
     temp_string = g_strdup_printf("%s.xif", study_name(ui_study->study));
   else
     temp_string = g_strdup_printf("%s", study_filename(ui_study->study));
-  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  gtk_dir_selection_set_filename(GTK_DIR_SELECTION(dir_selection), temp_string);
   g_free(temp_string); 
 
   /* save a pointer to ui_study */
-  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
+  gtk_object_set_data(GTK_OBJECT(dir_selection), "ui_study", ui_study);
 
   /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+  gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_cb_save_as_ok),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "delete_event",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(dir_selection->ok_button), "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_cb_save_as_ok), dir_selection);
+  gtk_signal_connect(GTK_OBJECT(dir_selection->cancel_button), "clicked",
+		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel), dir_selection);
+  gtk_signal_connect(GTK_OBJECT(dir_selection->cancel_button), "delete_event",
+		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel), dir_selection);
 
   /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+  gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
-  gtk_widget_show(GTK_WIDGET(file_selection));
+  gtk_widget_show(GTK_WIDGET(dir_selection));
 
   return;
 }
@@ -339,6 +342,9 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
     g_free(model_filename);
   }
 
+  //  g_free(import_filename); /* this causes a crash for some reason, is import_filename just
+  //			    *  a reference into the file_selection box? */
+
   /* close the file selection box */
   ui_common_cb_file_selection_cancel(widget, file_selection);
   
@@ -397,7 +403,6 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   gchar * save_filename;
   gchar * temp_string;
   struct stat file_info;
-  GdkPixbuf * rgb_image;
   GdkImlibImage * export_image;
   guchar * pixels;
   view_t  view;
@@ -437,14 +442,13 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   }
 
   /* need to get a pointer to the pixels that we're going to save */
-  rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
-  pixels = gdk_pixbuf_get_pixels(rgb_image);
+  pixels = gdk_pixbuf_get_pixels(ui_study->canvas_rgb[view]);
 
   /* yep, we still need to use imlib for the moment for generating output images,
      maybe gdk_pixbuf will have this functionality at some point */
   export_image = gdk_imlib_create_image_from_data(pixels, NULL, 
-						  gdk_pixbuf_get_width(rgb_image),
-						  gdk_pixbuf_get_height(rgb_image));
+						  gdk_pixbuf_get_width(ui_study->canvas_rgb[view]),
+						  gdk_pixbuf_get_height(ui_study->canvas_rgb[view]));
   if (export_image == NULL) {
     g_warning("%s: Failure converting pixbuf to imlib image for exporting image file",PACKAGE);
     return;
@@ -476,7 +480,6 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   floatpoint_t upper, lower;
   realpoint_t view_center;
   realpoint_t temp_p;
-  realspace_t * canvas_coord_frame;
 
   /* sanity checks */
   if (study_volumes(ui_study->study) == NULL)
@@ -488,14 +491,13 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
   view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
-  canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
 
   /* get the center */
   view_center = study_view_center(ui_study->study);
   /* translate the point so that the z coordinate corresponds to depth in this view */
   temp_p = realspace_alt_coord_to_alt(view_center,
 				      study_coord_frame(ui_study->study),
-				      *canvas_coord_frame);
+				      ui_study->canvas_coord_frame[view]);
 
   /* figure out the top and bottom of this slice */
   upper = temp_p.z + study_view_thickness(ui_study->study)/2.0;
@@ -594,7 +596,6 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
   view_t i_view, view;
   canvaspoint_t canvas_cp, diff_cp;
   guint32 outline_color;
-  realspace_t * canvas_coord_frame_p;
   GnomeCanvas * canvas;
   GnomeCanvasPoints * align_line_points;
   static canvaspoint_t picture_center,picture0,picture1;
@@ -608,28 +609,23 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
   static realpoint_t initial_loc;
 
   /* sanity checks */
-  if (study_volumes(ui_study->study) == NULL)
-    return TRUE;
-  if (ui_study->current_volume == NULL)
-    return TRUE;
+  if (study_volumes(ui_study->study) == NULL) return TRUE;
+  if (ui_study->current_volume == NULL) return TRUE;
   if (ui_study->current_mode == ROI_MODE)
     if (ui_study->current_roi == NULL)
       ui_study->current_mode = VOLUME_MODE; /* switch back to volume mode */
 
   canvas = GNOME_CANVAS(widget);
 
-  /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cp.x, &canvas_cp.y);
-
   /* figure out which canvas called this (transverse/coronal/sagittal)*/
   view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(canvas), "view"));
 
-  /* get the coordinate frame of this canvas */
-  canvas_coord_frame_p = gtk_object_get_data(GTK_OBJECT(canvas), "coord_frame");
+  /* get the location of the event, and convert it to the canvas coordinates */
+  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cp.x, &canvas_cp.y);
 
   /* Convert the event location info to real units */
-  canvas_rp = ui_study_cp_2_rp(canvas, canvas_cp, study_view_thickness(ui_study->study));
-  real_loc = realspace_alt_coord_to_base(canvas_rp, *canvas_coord_frame_p); 
+  canvas_rp = ui_study_cp_2_rp(ui_study, view, canvas_cp);
+  real_loc = realspace_alt_coord_to_base(canvas_rp, ui_study->canvas_coord_frame[view]);
   view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
 
   /* switch on the event which called this */
@@ -643,12 +639,11 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 	/* if we're a new roi, using the drawing cursor */
 	if (roi_undrawn(ui_study->current_roi))
 	  ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
-	else
-	  /* cursor will be this until we're actually positioned on an roi */
-	  //	  ui_common_place_cursor(UI_CURSOR_NO_ROI_MODE, GTK_WIDGET(canvas));
-	  // since we need to double the remove cursor below, it's better not to do
-	  // this guy, as it starts to look really stupid
-	  ;
+	//	else
+	/* cursor will be this until we're actually positioned on an roi */
+	//	  ui_common_place_cursor(UI_CURSOR_NO_ROI_MODE, GTK_WIDGET(canvas));
+	// since we need to double the remove cursor below, it's better not to do
+	// this guy, as it starts to look really stupid
       } else  /* VOLUME_MODE */
 	ui_common_place_cursor(UI_CURSOR_VOLUME_MODE, GTK_WIDGET(canvas));
       
@@ -657,7 +652,7 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 
     case GDK_LEAVE_NOTIFY:
       /* yes, do it twice, there's a bug where if the canvas gets covered by a menu,
-	 no LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
+	 no GDK_LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
       ui_common_remove_cursor(GTK_WIDGET(canvas)); 
       ui_common_remove_cursor(GTK_WIDGET(canvas));
       break;
@@ -690,7 +685,7 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 				      "x2", picture1.x, "y2", picture1.y,
 				      "fill_color", NULL,
 				      "outline_color_rgba", outline_color,
-				      "width_units", 1.0,
+				      "width_pixels", ui_study->roi_width,
 				      NULL);
  	      
 	      break;
@@ -704,7 +699,7 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 				      "x2", picture1.x, "y2", picture1.y,
 				      "fill_color", NULL,
 				      "outline_color_rgba", outline_color,
-				      "width_units", 1.0,
+				      "width_pixels", ui_study->roi_width,
 				      NULL);
 	      break;
 	    }
@@ -738,7 +733,7 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 					     gnome_canvas_line_get_type(),
 					     "points", align_line_points,
 					     "fill_color_rgba", outline_color,
-					     "width_units", 2.0,
+					     "width_pixels", ui_study->roi_width,
 					     NULL);
 	  
 	  gnome_canvas_points_unref(align_line_points);
@@ -836,11 +831,12 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 	  /* let's save the info */
 	  /* we'll save the coord frame and offset of the roi */
 	  rs_set_offset(&ui_study->current_roi->coord_frame,
-			realspace_alt_coord_to_base(p0, *canvas_coord_frame_p));
-	  rs_set_axis(&ui_study->current_roi->coord_frame, rs_all_axis(*canvas_coord_frame_p));
+			realspace_alt_coord_to_base(p0, ui_study->canvas_coord_frame[view]));
+	  rs_set_axis(&ui_study->current_roi->coord_frame, 
+		      rs_all_axis(ui_study->canvas_coord_frame[view]));
 
 	  /* and set the far corner of the roi */
-	  p1 = realspace_alt_coord_to_base(p1, *canvas_coord_frame_p);
+	  p1 = realspace_alt_coord_to_base(p1, ui_study->canvas_coord_frame[view]);
 	  ui_study->current_roi->corner = 
 	    rp_abs(realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame));
 	  
@@ -925,11 +921,11 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
 	  else if (event->button.button == 2) {
 	    /* correct for the change in depth */
 	    p0 = realspace_alt_coord_to_alt(initial_loc, study_coord_frame(ui_study->study),
-					    *canvas_coord_frame_p);
+					    ui_study->canvas_coord_frame[view]);
 	    p1 = realspace_alt_coord_to_alt(view_loc, study_coord_frame(ui_study->study),
-					    *canvas_coord_frame_p);
+					    ui_study->canvas_coord_frame[view]);
 	    p1.z = p0.z; /* correct for any depth change */
-	    view_loc = realspace_alt_coord_to_alt(p1, *canvas_coord_frame_p,
+	    view_loc = realspace_alt_coord_to_alt(p1, ui_study->canvas_coord_frame[view],
 						  study_coord_frame(ui_study->study));
 	    study_set_view_center(ui_study->study, view_loc);
 	  } else /* button 1 */
@@ -975,6 +971,430 @@ gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer
   
   return FALSE;
 }
+
+/* function called when an event occurs on the roi item 
+   notes:
+   - new roi's are handled by ui_study_cb_canvas_event
+   - widget should generally by GnomeCanvasLine type */
+gboolean ui_study_cb_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+
+  GnomeCanvas * canvas;
+  ui_study_t * ui_study = data;
+  realpoint_t real_loc, canvas_rp; 
+  view_t i_view;
+  canvaspoint_t canvas_cp, diff;
+  realpoint_t t[2]; /* temp variables */
+  realpoint_t new_center, new_radius, roi_center, roi_radius;
+  realpoint_t canvas_zoom;
+  roi_t * roi;
+  gint rgb_width, rgb_height;
+  static realpoint_t center, radius;
+  static view_t view_static;
+  static realpoint_t initial_real_loc;
+  static realpoint_t initial_canvas_rp;
+  static canvaspoint_t last_pic_cp;
+  static gboolean dragging = FALSE;
+  static ui_roi_list_t * current_roi_list_item = NULL;
+  static GnomeCanvasItem * roi_item = NULL;
+  static double theta;
+  static realpoint_t roi_zoom;
+  static realpoint_t shift;
+
+
+  /* sanity checks */
+  if (study_volumes(ui_study->study) == NULL)  return TRUE;
+  if (ui_study->current_volume == NULL) return TRUE; 
+  if (ui_study->current_mode == VOLUME_MODE) return TRUE;
+		   
+  /* if we don't already know what roi_item we're dealing with, find out */
+  if (roi_item == NULL) {
+    view_static = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
+    roi = gtk_object_get_data(GTK_OBJECT(widget), "roi");
+    current_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
+  }
+
+  canvas = GNOME_CANVAS(ui_study->canvas[view_static]);
+      
+  /* get the location of the event, and convert it to the canvas coordinates */
+  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cp.x, &canvas_cp.y);
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view_static]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view_static]);
+
+  /* Convert the event location info to real units */
+  canvas_rp = ui_study_cp_2_rp(ui_study, view_static, canvas_cp);
+  real_loc = realspace_alt_coord_to_base(canvas_rp, ui_study->canvas_coord_frame[view_static]);
+
+  /* switch on the event which called this */
+  switch (event->type)
+    {
+
+    case GDK_ENTER_NOTIFY:
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
+      ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
+      break;
+
+
+    case GDK_LEAVE_NOTIFY:
+      /* yes, do it twice, there's a bug where if the canvas gets covered by a menu,
+	 no LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
+      ui_common_remove_cursor(GTK_WIDGET(canvas));
+      ui_common_remove_cursor(GTK_WIDGET(canvas));
+      break;
+      
+
+
+    case GDK_BUTTON_PRESS:
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
+      dragging = TRUE;
+
+      /* last second sanity check */
+      if (current_roi_list_item == NULL) {
+	g_warning("%s: null current_roi_list_item?", PACKAGE);
+	return TRUE;
+      }
+
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON)
+	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
+			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			       ui_common_cursor[UI_CURSOR_OLD_ROI_SHIFT], event->button.time);
+      else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON)
+	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
+			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			       ui_common_cursor[UI_CURSOR_OLD_ROI_ROTATE], event->button.time);
+      else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON)
+	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
+			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			       ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE], event->button.time);
+      else /* what the hell button got pressed? */
+	return TRUE;
+
+
+      /* save the roi we're going to manipulate for future use */
+      roi_item = current_roi_list_item->canvas_roi[view_static];
+
+      /* save some values in static variables for future use */
+      initial_real_loc = real_loc;
+      initial_canvas_rp = canvas_rp;
+      last_pic_cp = canvas_cp;
+      theta = 0.0;
+      roi_zoom.x = roi_zoom.y = roi_zoom.z = 1.0;
+      shift = realpoint_zero;
+
+      t[0] = realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
+					 current_roi_list_item->roi->coord_frame);
+      t[1] = current_roi_list_item->roi->corner;
+      center = rp_add(rp_cmult(0.5, t[1]), rp_cmult(0.5, t[0]));
+      radius=rp_cmult(0.5,rp_diff(t[1], t[0]));
+      break;
+
+    case GDK_MOTION_NOTIFY:
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
+      if (dragging && 
+	  ((event->motion.state & 
+	    (UI_STUDY_ROIS_SHIFT_MASK | UI_STUDY_ROIS_ROTATE_MASK | UI_STUDY_ROIS_RESIZE_MASK)))) {
+
+	/* last second sanity check */
+	if (current_roi_list_item == NULL) {
+	  g_warning("%s: null current_roi_list_item?", PACKAGE);
+	  return TRUE;
+	}
+
+
+	if (event->motion.state & UI_STUDY_ROIS_RESIZE_MASK) {
+	  /* RESIZE button Pressed, we're scaling the object */
+	  /* note, I'd like to use the function "gnome_canvas_item_scale"
+	     but this isn't defined in the current version of gnome.... 
+	     so I'll have to do a whole bunch of shit*/
+	  /* also, this "zoom" strategy doesn't always work if the object is not
+	     aligned with the view.... oh well... good enough for now... */
+	  double affine[6];
+	  realpoint_t item_center;
+	  floatpoint_t jump_limit, max, temp, dot;
+	  double cos_r, sin_r, rot;
+	  axis_t i_axis, axis[NUM_AXIS];
+	  canvaspoint_t radius_cp;
+	  
+	  /* calculating the radius and center wrt the canvas */
+	  roi_radius = realspace_alt_dim_to_alt(radius, current_roi_list_item->roi->coord_frame,
+						ui_study->canvas_coord_frame[view_static]);
+	  roi_center = realspace_alt_coord_to_alt(center, current_roi_list_item->roi->coord_frame,
+						  ui_study->canvas_coord_frame[view_static]);
+	  t[0] = rp_diff(initial_canvas_rp, roi_center);
+	  t[1] = rp_diff(canvas_rp,roi_center);
+	  radius_cp.x = radius.x;
+	  radius_cp.y = radius.y;
+	  jump_limit = cp_mag(radius_cp)/3.0;
+
+	  /* figure out the zoom we're specifying via the canvas */
+	  if (t[0].x < jump_limit) /* prevent jumping */
+	    canvas_zoom.x = (roi_radius.x+t[1].x)/(roi_radius.x+t[0].x);
+	  else
+	    canvas_zoom.x = t[1].x/t[0].x;
+	  if (t[0].y < jump_limit) /* prevent jumping */
+	    canvas_zoom.y = (roi_radius.x+t[1].y)/(roi_radius.x+t[0].y);
+	  else
+	    canvas_zoom.y = t[1].y/t[0].y;
+	  
+	  canvas_zoom.z = 1.0;
+
+	  //	  g_print("---------------------- view: %d\n", view_static);
+	  /* translate the canvas zoom into the ROI's coordinate frame */
+	  t[0].x = t[0].y = t[0].z = 1.0;
+	  t[0] = realspace_alt_dim_to_alt(t[0], ui_study->canvas_coord_frame[view_static],
+					  current_roi_list_item->roi->coord_frame);
+	  roi_zoom = realspace_alt_dim_to_alt(canvas_zoom, ui_study->canvas_coord_frame[view_static],
+					      current_roi_list_item->roi->coord_frame);
+	  roi_zoom = rp_div(roi_zoom, t[0]);
+
+	  /* first, figure out how much the roi is rotated in the plane of the canvas */
+
+	  /* allright, figure out which axis in the ROI is closest to the view's x axis */
+	  max = 0.0;
+	  axis[XAXIS]=XAXIS;
+	  t[0] = realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]),
+						    view_static, XAXIS);
+	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+	    temp = fabs(rp_dot_product(t[0],
+  				       rs_specific_axis(current_roi_list_item->roi->coord_frame, i_axis)));
+	    if (temp > max) {
+	      max=temp;
+	      axis[XAXIS]=i_axis;
+	    }
+	  }
+
+	  /* and y axis */
+	  max = 0.0;
+	  axis[YAXIS]= (axis[XAXIS]+1 < NUM_AXIS) ? axis[XAXIS]+1 : XAXIS;
+	  t[0] = realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]), 
+						    view_static, YAXIS);
+	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+	    temp = fabs(rp_dot_product(t[0],
+  				       rs_specific_axis(current_roi_list_item->roi->coord_frame, i_axis)));
+	    if (temp > max) {
+	      if (i_axis != axis[XAXIS]) {
+		max=temp;
+		axis[YAXIS]=i_axis;
+	      }
+	    }
+	  }
+
+	  i_axis = ZAXIS;
+	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+	    if (i_axis != axis[XAXIS])
+	      if (i_axis != axis[YAXIS])
+		axis[ZAXIS]=i_axis;
+
+	  rot = 0;
+	  for (i_axis=0;i_axis<=XAXIS;i_axis++) {
+	    /* and project that axis onto the x,y plane of the canvas */
+	    t[0] = rs_specific_axis(current_roi_list_item->roi->coord_frame,axis[i_axis]);
+	    	    t[0] = realspace_base_coord_to_alt(t[0], ui_study->canvas_coord_frame[view_static]);
+	    t[0].z = 0.0;
+	    t[1] = 
+	      realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]), 
+						 view_static, i_axis);
+	    t[1] = realspace_base_coord_to_alt(t[1], ui_study->canvas_coord_frame[view_static]);
+	    t[1].z = 0.0;
+	    //	    g_print("t[0] %5.3f %5.3f %5.3f\nt[1] %5.3f %5.3f %5.3f\n",
+	    //		    t[0].x,t[0].y,t[0].z,
+	    //		    t[1].x,t[1].y,t[1].z);
+
+	    /* and get the angle the projection makes to the x axis */
+	    dot = rp_dot_product(t[0],t[1])/(rp_mag(t[0]) * rp_mag(t[1]));
+	    /* correct for the fact that acos is always positive by using the cross product */
+	    if ((t[0].x*t[1].y-t[0].y*t[1].x) > 0.0)
+	      temp = acos(dot);
+	    else
+	      temp = -acos(dot);
+	    if (isnan(temp)) temp=0; 
+	    //	    g_print("rot is %5.3f dot is %5.3f\n",temp*180/M_PI, dot);
+
+	    rot += temp;
+	  }
+	  //	  rot = rot/2.0;
+
+	  /* precompute cos and sin of rot */
+	  cos_r = cos(rot);
+	  sin_r = sin(rot);
+
+	  //	  g_print("xaxis %d yaxis %d zaxis %d rot %5.3f\n", axis[0],axis[1], axis[2], 180*rot/M_PI);
+
+	  /* figure out what the center of the roi is in gnome_canvas_item coords */
+	  /* compensate for X's origin being top left (not bottom left) */
+	  item_center.x = ((roi_center.x/ui_study->canvas_corner[view_static].x)*rgb_width+UI_STUDY_TRIANGLE_HEIGHT);
+	  item_center.y =  rgb_height - ((roi_center.y/ui_study->canvas_corner[view_static].y) *rgb_height)
+	    +UI_STUDY_TRIANGLE_HEIGHT;
+
+	  /* do a wild ass affine matrix so that we can scale while preserving angles */
+	  affine[0] = canvas_zoom.x * cos_r * cos_r + canvas_zoom.y * sin_r * sin_r;
+	  affine[1] = (canvas_zoom.x-canvas_zoom.y)* cos_r * sin_r;
+	  affine[2] = affine[1];
+	  affine[3] = canvas_zoom.x * sin_r * sin_r + canvas_zoom.y * cos_r * cos_r;
+	  affine[4] = item_center.x - item_center.x*canvas_zoom.x*cos_r*cos_r 
+	    - item_center.x*canvas_zoom.y*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.y*cos_r*sin_r;
+	  affine[5] = item_center.y - item_center.y*canvas_zoom.y*cos_r*cos_r 
+	    - item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
+	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
+
+	} else if (event->motion.state & UI_STUDY_ROIS_ROTATE_MASK) {
+	  /* rotate button Pressed, we're rotating the object */
+	  /* note, I'd like to use the function "gnome_canvas_item_rotate"
+	     but this isn't defined in the current version of gnome.... 
+	     so I'll have to do a whole bunch of shit*/
+	  double affine[6];
+	  realpoint_t item_center;
+
+	  //	  gnome_canvas_item_i2w_affine(GNOME_CANVAS_ITEM(roi_item),affine);
+	  roi_center = realspace_alt_coord_to_alt(center,
+						  current_roi_list_item->roi->coord_frame,
+						  ui_study->canvas_coord_frame[view_static]);
+	  t[0] = rp_sub(initial_canvas_rp,roi_center);
+	  t[1] = rp_sub(canvas_rp,roi_center);
+
+	  /* figure out theta */
+	  theta = acos(rp_dot_product(t[0],t[1])/(rp_mag(t[0]) * rp_mag(t[1])));
+	  
+	  /* correct for the fact that acos is always positive by using the cross product */
+	  if ((t[0].x*t[1].y-t[0].y*t[1].x) > 0.0)
+	    theta = -theta;
+
+	  /* figure out what the center of the roi is in canvas_item coords */
+	  /* compensate for x's origin being top left (ours is bottom left) */
+	  item_center.x = 
+	    rgb_width * roi_center.x/ui_study->canvas_corner[view_static].x +UI_STUDY_TRIANGLE_HEIGHT;
+	  item_center.y = 
+	    rgb_height - 
+	    rgb_height * roi_center.y/ui_study->canvas_corner[view_static].y +UI_STUDY_TRIANGLE_HEIGHT;
+	  affine[0] = cos(theta);
+	  affine[1] = sin(theta);
+	  affine[2] = -affine[1];
+	  affine[3] = affine[0];
+	  affine[4] = (1.0-affine[0])*item_center.x+affine[1]*item_center.y;
+	  affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
+	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
+
+	} else if (event->motion.state & UI_STUDY_ROIS_SHIFT_MASK) {
+	  /* shift button pressed, we're shifting the object */
+	  /* do movement calculations */
+	  shift = rp_sub(real_loc, initial_real_loc);
+	  diff = cp_sub(canvas_cp, last_pic_cp);
+	  /* convert the location back to world coordiantes */
+	  gnome_canvas_item_i2w(GNOME_CANVAS_ITEM(roi_item)->parent, &diff.x, &diff.y);
+	  gnome_canvas_item_move(GNOME_CANVAS_ITEM(roi_item),diff.x,diff.y); 
+	} else {
+	  g_warning("%s: reached unsuspected condition in ui_study_rois_cb.c", PACKAGE);
+	  dragging = FALSE;
+	  return TRUE;
+	}
+	last_pic_cp = canvas_cp;
+      }
+      break;
+      
+    case GDK_BUTTON_RELEASE:
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
+      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+      dragging = FALSE;
+      roi_item = NULL;
+
+      /* last second sanity check */
+      if (current_roi_list_item == NULL) {
+	g_warning("%s: null current_roi_list_item?", PACKAGE);
+	return TRUE;
+      }
+
+      /* compensate for the fact that our origin is left bottom, not X's left top */
+      /* also, compensate for sagittal being a left-handed coordinate frame */
+      if (view_static != SAGITTAL)
+	theta = -theta;
+
+#ifdef AMIDE_DEBUG
+      g_print("roi changes\n");
+      g_print("\tshift\t%5.3f\t%5.3f\t%5.3f\n",shift.x,shift.y,shift.z);
+      g_print("\troi_zoom\t%5.3f\t%5.3f\t%5.3f\n",roi_zoom.x,roi_zoom.y,roi_zoom.z);
+      g_print("\ttheta\t%5.3f\n",theta*180/M_PI);
+#endif
+
+      /* apply our changes to the roi */
+
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
+	/* ------------- apply any shift done -------------- */
+	rs_set_offset(&current_roi_list_item->roi->coord_frame,
+		      rp_add(shift, rs_offset(current_roi_list_item->roi->coord_frame)));
+      } else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON) {
+	/* ------------- apply any zoom done -------------- */
+	new_radius = rp_mult(roi_zoom, radius);
+	
+	
+	t[0] = rp_sub(center, new_radius); /* figure out the new lower left corner */
+
+	/* the new roi offset will be the new lower left corner */
+	rs_set_offset(&current_roi_list_item->roi->coord_frame,
+		      realspace_alt_coord_to_base(t[0],
+						  current_roi_list_item->roi->coord_frame));
+	
+	/* and the new upper right corner is simply twice the radius */
+	t[1] = rp_cmult(2.0, new_radius);
+	current_roi_list_item->roi->corner = t[1];
+	
+      } else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON) {
+	
+	/* ------------- apply any rotation done -------------- */
+	new_center = /* get the center in real coords */
+	  realspace_alt_coord_to_base(center,
+				      current_roi_list_item->roi->coord_frame);
+	
+	/* reset the offset of the roi coord_frame to the object's center */
+	rs_set_offset(&current_roi_list_item->roi->coord_frame, new_center);
+
+	/* now rotate the roi coord_frame axis */
+	realspace_rotate_on_axis(&current_roi_list_item->roi->coord_frame,
+				 rs_specific_axis(ui_study->canvas_coord_frame[view_static],  ZAXIS),
+				 theta);
+	
+	/* and recaculate the offset */
+	new_center = /* get the center in roi coords */
+	  realspace_base_coord_to_alt(new_center,
+				      current_roi_list_item->roi->coord_frame);
+	t[0] = rp_sub(new_center, radius);
+	t[0] = /* get the new offset in real coords */
+	  realspace_alt_coord_to_base(t[0],
+				      current_roi_list_item->roi->coord_frame);
+	rs_set_offset(&current_roi_list_item->roi->coord_frame, t[0]); 
+	
+      } else 
+	return TRUE; /* shouldn't get here */
+
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
+	/* if we were moving the ROI, reset the view_center to the center of the current roi */
+	t[0] = realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
+					   current_roi_list_item->roi->coord_frame);
+	t[1] = current_roi_list_item->roi->corner;
+	center = rp_add(rp_cmult(0.5, t[0]), rp_cmult(0.5, t[1]));
+	center = realspace_alt_coord_to_alt(center,
+					    current_roi_list_item->roi->coord_frame,
+					    study_coord_frame(ui_study->study));
+	study_set_view_center(ui_study->study, center);
+
+	/* update everything */
+	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+      } else { 
+	/* we just need to update the ROI's otherwise */
+	/* update the roi's */
+	for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+	  current_roi_list_item->canvas_roi[i_view] =
+	    ui_study_update_canvas_roi(ui_study,i_view,
+				       current_roi_list_item->canvas_roi[i_view],
+				       current_roi_list_item->roi);
+      }
+      
+      break;
+    default:
+      break;
+    }
+      
+  return FALSE;
+}
+
 
 
 /* function called indicating the plane adjustment has changed */
@@ -1034,10 +1454,10 @@ void ui_study_cb_zoom(GtkObject * adjustment, gpointer data) {
     return;
 
   if (study_zoom(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
-    study_set_zoom(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
-    ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
+      study_set_zoom(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
+      ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
-
+    
   return;
 }
 
@@ -1062,11 +1482,12 @@ void ui_study_cb_thickness(GtkObject * adjustment, gpointer data) {
   if (study_volumes(ui_study->study) == NULL)
     return;
 
+  gtk_signal_emit_stop_by_name(GTK_OBJECT(adjustment), "value_changed");
   if (study_view_thickness(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
     study_set_view_thickness(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
     ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
-
+  
   return;
 }
 
@@ -1130,6 +1551,27 @@ void ui_study_cb_rendering_trilinear(GtkWidget * widget, gpointer data) {
 }
 #endif
 
+
+/* do roi calculations for selected ROI's over selected volumes */
+void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_study->canvas[0]));
+  ui_roi_analysis_dialog_create(ui_study, TRUE);
+  ui_common_remove_cursor(GTK_WIDGET(ui_study->canvas[0]));
+  return;
+
+}
+
+/* do roi calculations for all ROI's over selected volumes */
+void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_study->canvas[0]));
+  ui_roi_analysis_dialog_create(ui_study, FALSE);
+  ui_common_remove_cursor(GTK_WIDGET(ui_study->canvas[0]));
+  return;
+}
+
+
 /* function called when the threshold is changed */
 void ui_study_cb_threshold_changed(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study=data;
@@ -1151,7 +1593,7 @@ void ui_study_cb_color_changed(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static gboolean ui_study_cb_threshold_close_event(GtkWidget* widget, gpointer data) {
+static gboolean ui_study_cb_threshold_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -1172,12 +1614,8 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
     if (ui_volume_list_item->dialog != NULL)
       return;
               
-  if (ui_study->current_volume == NULL)
-    return;
-
-  if (ui_study->threshold_dialog != NULL) 
-    return;
-
+  if (ui_study->current_volume == NULL) return;
+  if (ui_study->threshold_dialog != NULL) return;
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_study->canvas[0]));
   ui_study->threshold_dialog = amitk_threshold_dialog_new(ui_study->current_volume);
@@ -1189,7 +1627,7 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
 		     GTK_SIGNAL_FUNC(ui_study_cb_color_changed),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(ui_study->threshold_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_study_cb_threshold_close_event),
+		     GTK_SIGNAL_FUNC(ui_study_cb_threshold_close),
 		     ui_study);
   gtk_widget_show(GTK_WIDGET(ui_study->threshold_dialog));
 
@@ -1216,16 +1654,9 @@ void ui_study_cb_scaling(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function which gets called from a name entry dialog */
-void ui_study_cb_entry_name(gchar * entry_string, gpointer data) {
-  gchar ** p_roi_name = data;
-  *p_roi_name = entry_string;
-  return;
-}
 
-
-/* callback function from the "add roi" pull down menu to add an roi */
-void ui_study_cb_add_roi_type(GtkWidget * widget, gpointer data) {
+/* callback function for adding an roi */
+void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   roi_type_t i_roi_type;
@@ -1249,7 +1680,6 @@ void ui_study_cb_add_roi_type(GtkWidget * widget, gpointer data) {
     roi = roi_init();
     roi_set_name(roi,roi_name);
     roi->type = i_roi_type;
-    roi->grain = ui_study->default_roi_grain;
     study_add_roi(ui_study->study, roi);
     ui_study_tree_add_roi(ui_study, roi);
     roi = roi_free(roi);
@@ -1258,6 +1688,44 @@ void ui_study_cb_add_roi_type(GtkWidget * widget, gpointer data) {
   return;
 }
 
+/* callback function for adding an alignment point */
+void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  GtkWidget * entry;
+  gchar * pt_name = NULL;
+  gint entry_return;
+  //  align_pt_t new_point;
+
+  if (ui_study->current_mode != VOLUME_MODE) return;
+  if (ui_study->current_volume == NULL) return;
+
+  entry = gnome_request_dialog(FALSE, "Alignment Point Name:", "", 256, 
+			       ui_study_cb_entry_name,
+			       &pt_name, 
+			       (GNOME_IS_APP(ui_study->app) ? 
+				GTK_WINDOW(ui_study->app) : NULL));
+  entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
+  
+  if (entry_return == 0) {
+    //    new_pt = align_pt_init();
+    //    align_pt_set_name(new_pt, pt_name);
+    //    study_add_alignment(ui_study->study, ui_study->current_volume, new_pt);
+    //    ui_study_tree_add_align_pt(ui_study, ui_study->current_volume, new_pt);
+    //    new_pt = alignt_pt_free(new_pt);
+  }
+
+  return;
+}
+
+/* callback function for changing user's preferences */
+void ui_study_cb_preferences(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study=data;
+  if (ui_study->preferences_dialog == NULL)
+    ui_study->preferences_dialog = ui_preferences_dialog_create(ui_study);
+
+}
 
 /* callback used when a leaf is clicked on, this handles all clicks */
 void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
@@ -1370,7 +1838,7 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
       /* destroy the threshold window if it's open and looking at this volume */
       if (ui_study->threshold_dialog != NULL)
       	if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume)
-      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event", NULL, ui_study);
+      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
       
       /* we'll need to redraw the canvas */
       ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
@@ -1386,7 +1854,7 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
       ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes,ui_study->current_volume);
       if (ui_volume_list_item != NULL) {
 	if (ui_volume_list_item->dialog != NULL) {
-      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event", NULL, ui_study);
+      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
 	} else {
 	  /* reset the threshold widget based on the current volume */
 	  if (ui_study->threshold_dialog != NULL)
@@ -1482,7 +1950,6 @@ void ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer
   GtkWidget * menu;
   GtkWidget * menuitem;
   roi_type_t i_roi_type;
-  gchar * temp_string;
 
   if (event->type != GDK_BUTTON_PRESS)
     return;
@@ -1491,13 +1958,11 @@ void ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer
     menu = gtk_menu_new();
 
     for (i_roi_type=0; i_roi_type<NUM_ROI_TYPES; i_roi_type++) {
-      temp_string = g_strdup_printf("add new %s",roi_type_names[i_roi_type]);
-      menuitem = gtk_menu_item_new_with_label(temp_string);
-      g_free(temp_string);
+      menuitem = gtk_menu_item_new_with_label(roi_menu_explanation[i_roi_type]);
       gtk_menu_append(GTK_MENU(menu), menuitem);
       gtk_object_set_data(GTK_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
       gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-			 GTK_SIGNAL_FUNC(ui_study_cb_add_roi_type), ui_study);
+			 GTK_SIGNAL_FUNC(ui_study_cb_add_roi), ui_study);
       gtk_widget_show(menuitem);
     }
     gtk_widget_show(menu);
@@ -1505,31 +1970,6 @@ void ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
   }
 
-  return;
-}
-
-/* callback functions for the add_roi menu items */
-void ui_study_cb_new_roi_ellipsoid(GtkWidget * widget, gpointer data) {
-  
-  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(ELLIPSOID));
-  ui_study_cb_add_roi_type(widget, data);
-  
-  return;
-}
-/* callback functions for the add_roi menu items */
-void ui_study_cb_new_roi_cylinder(GtkWidget * widget, gpointer data) {
-  
-  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(CYLINDER));
-  ui_study_cb_add_roi_type(widget, data);
-  
-  return;
-}
-/* callback functions for the add_roi menu items */
-void ui_study_cb_new_roi_box(GtkWidget * widget, gpointer data) {
-  
-  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(BOX));
-  ui_study_cb_add_roi_type(widget, data);
-  
   return;
 }
 
@@ -1620,7 +2060,7 @@ void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
     if (ui_study->current_volume==volume) {
       ui_study->current_volume = NULL;
       if (ui_study->threshold_dialog != NULL)
-	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event", NULL, ui_study);
+	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
     }
      
     /* remove the volume from existence */
@@ -1679,16 +2119,16 @@ void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
 /* function ran when closing a study window */
 void ui_study_cb_close(GtkWidget* widget, gpointer data) {
 
-  ui_study_t * ui_study = data;
+  GtkWidget * app = data;
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->app), "delete_event", NULL, ui_study);
+  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
 
   return;
 }
 
 /* function to run for a delete_event */
-void ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+gboolean ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -1696,7 +2136,11 @@ void ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data
 
   /* destroy the threshold window if it's open */
   if (ui_study->threshold_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event", NULL, ui_study);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+
+  /* destroy the preferences dialog if it's open */
+  if (ui_study->preferences_dialog != NULL)
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->preferences_dialog), "close", ui_study);
 
   /* destroy the time window if it's open */
   if (ui_study->time_dialog != NULL)
@@ -1713,7 +2157,7 @@ void ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data
   if (number_of_windows == 0)
     gtk_main_quit();
 
-  return;
+  return FALSE;
 }
 
 

@@ -161,6 +161,7 @@ inline realpoint_t rp_mult(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_div(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_diff(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
+inline realpoint_t rp_cross_product(const realpoint_t rp1, const realpoint_t rp2);
 inline floatpoint_t rp_dot_product(const realpoint_t rp1, const realpoint_t rp2);
 inline floatpoint_t rp_mag(const realpoint_t rp1);
 
@@ -169,6 +170,8 @@ inline canvaspoint_t cp_sub(const canvaspoint_t cp1,const canvaspoint_t cp2);
 inline canvaspoint_t cp_add(const canvaspoint_t cp1,const canvaspoint_t cp2);
 inline floatpoint_t cp_dot_product(const canvaspoint_t cp1, const canvaspoint_t cp2);
 inline floatpoint_t cp_mag(const canvaspoint_t cp1);
+
+inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2);
 
 gboolean realpoint_in_box(const realpoint_t p,
 			  const realpoint_t p0,
@@ -186,6 +189,9 @@ void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const rea
 void realspace_rotate_on_axis(realspace_t * rs, 
 			      const realpoint_t axis, 
 			      const floatpoint_t theta);
+realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
+					       const view_t view,
+					       const axis_t ax);
 realpoint_t realspace_get_view_normal(const realpoint_t axis[], const view_t view);
 realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
 					   const view_t view);

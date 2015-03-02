@@ -51,7 +51,7 @@ void ui_rendering_menus_create(ui_rendering_t * ui_rendering) {
 			  ui_rendering, NULL),
 #endif
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_rendering_cb_close_event, ui_rendering),
+    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_rendering_cb_close, ui_rendering->app),
     GNOMEUIINFO_END
   };
 

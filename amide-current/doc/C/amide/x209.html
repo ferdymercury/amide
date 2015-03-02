@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Gotcha's to ROI calculations </TITLE
+>Manipulating ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,11 +12,11 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Grain size"
+TITLE="Drawing ROI's"
 HREF="x206.html"><LINK
 REL="NEXT"
-TITLE="Rendering Data"
-HREF="rendering.html"></HEAD
+TITLE="Calculating Statistics over ROI's"
+HREF="x212.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -51,7 +51,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="rendering.html"
+HREF="x212.html"
 >Next</A
 ></TD
 ></TR
@@ -65,40 +65,24 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN209"
->Gotcha's to ROI calculations</A
+>Manipulating ROI's</A
 ></H1
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN211"
->My ROI statistics are zero</A
-></H2
 ><P
->      This probably means your ROI is very thin in one of its
-      dimensions.  Try either increasing the size of the ROI, or
-      increasing the grain size used when calculation the statistics.
+>      After an ROI is drawn, it can be further manipulated to adjust
+      it's size, placement, and orientation.  First double click with
+      the left button or select with the middle button the ROI in the
+      study item list to ensure that this ROI is the currently
+      activated object.  You can then directly manipulate the ROI by
+      clicking on it in any of the volume view windows.  Mouse button
+      1 is used to shift the ROI.  Mouse button 2 is used to rotate
+      the ROI.  And Mouse button 3 is used for zooming the ROI.
+
+      You can also edit the ROI size/placement/orientation/name
+      etc. by clicking on mouse button 3 while over the ROI's name in
+      the study item list.  This brings up the edit ROI dialog, which
+      allows keyboard entry of the ROI's parameters.
+
     </P
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN214"
->Variance/Std. Dev./Std. Err. Fallacies</A
-></H2
-><P
->      A common fallacy is to use the calculated variance (or standard
-      deviation, or standard error) of an ROI as an experiment's variance.
-      The variance of an experiment can only truly be measured by
-      taking multiple samples (i.e. performing multiple scans) and
-      calculating the variance between these different samples.
-      The variance that AMIDE calculates is only a measure of the
-      noise within an ROI in the given data set.
-    </P
-></DIV
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -131,7 +115,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="rendering.html"
+HREF="x212.html"
 >Next</A
 ></TD
 ></TR
@@ -140,7 +124,7 @@ HREF="rendering.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Grain size</TD
+>Drawing ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -153,7 +137,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Rendering Data</TD
+>Calculating Statistics over ROI's</TD
 ></TR
 ></TABLE
 ></DIV

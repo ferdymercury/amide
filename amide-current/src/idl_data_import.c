@@ -33,7 +33,7 @@
 
 
 /* function to load in volume data from an IDL data file */
-volume_t * idl_data_import(gchar * idl_data_filename) {
+volume_t * idl_data_import(const gchar * idl_data_filename) {
 
   volume_t * idl_volume;
   FILE * file_pointer;

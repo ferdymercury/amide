@@ -31,6 +31,7 @@
 #include <math.h>
 #include <gdk-pixbuf/gnome-canvas-pixbuf.h>
 #include "image.h"
+#include "ui_common.h"
 #include "ui_rendering.h"
 #include "ui_rendering_cb.h"
 #include "ui_rendering_menus.h"
@@ -47,14 +48,11 @@ ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
   /* sanity checks */
   g_return_val_if_fail(ui_rendering->reference_count > 0, NULL);
 
-  /* remove a reference count */
   ui_rendering->reference_count--;
-
-  /* things we always do */
-  ui_rendering->contexts = rendering_list_free(ui_rendering->contexts);
 
   /* things to do if we've removed all reference's */
   if (ui_rendering->reference_count == 0) {
+    ui_rendering->contexts = rendering_list_free(ui_rendering->contexts);
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_rendering\n");
 #endif
@@ -205,6 +203,8 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   ui_rendering->app = GNOME_APP(gnome_app_new(PACKAGE, "Rendering Window"));
 
   /* setup the callbacks for app */
+  gtk_signal_connect(GTK_OBJECT(ui_rendering->app), "realize", 
+		     GTK_SIGNAL_FUNC(ui_common_window_realize_cb), NULL);
   gtk_signal_connect(GTK_OBJECT(ui_rendering->app), "delete_event",
 		     GTK_SIGNAL_FUNC(ui_rendering_cb_delete_event),
 		     ui_rendering);
@@ -262,7 +262,6 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   /* the x label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
 			gnome_canvas_text_get_type(),
-			"justification", GTK_JUSTIFY_LEFT,
 			"anchor", GTK_ANCHOR_NORTH_EAST,
 			"text", "x",
 			"x", (gdouble) 80.0,
@@ -286,7 +285,6 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   /* the y label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
 			gnome_canvas_text_get_type(),
-			"justification", GTK_JUSTIFY_LEFT,
 			"anchor", GTK_ANCHOR_NORTH_WEST,
 			"text", "y",
 			"x", (gdouble) 45.0,
@@ -310,7 +308,6 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   /* the z label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
 			gnome_canvas_text_get_type(),
-			"justification", GTK_JUSTIFY_LEFT,
 			"anchor", GTK_ANCHOR_NORTH_WEST,
 			"text", "z",
 			"x", (gdouble) 20.0,

@@ -30,7 +30,7 @@
 #define __CTI_IMPORT_H__
 
 /* external functions */
-volume_t * cti_import(gchar * filename);
+volume_t * cti_import(const gchar * filename);
 
 #endif /* __CTI_IMPORT_H__ */
 

@@ -260,7 +260,7 @@ void ui_study_dialog_cb_help(GnomePropertyBox *study_dialog, gint page_number, g
 }
 
 /* function called to destroy the study dialog */
-void ui_study_dialog_cb_close_event(GtkWidget* widget, gpointer data) {
+void ui_study_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   study_t * study_new_info;

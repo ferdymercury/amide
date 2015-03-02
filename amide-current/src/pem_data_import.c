@@ -34,7 +34,7 @@
 
 
 /* function to load in volume data from a PEM data file */
-volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename) {
+volume_t * pem_data_import(const gchar * pem_data_filename, const gchar * pem_model_filename) {
 
   volume_t * pem_volume;
   volume_t * pem_model;

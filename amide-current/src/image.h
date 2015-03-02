@@ -41,7 +41,7 @@ GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const 
 GdkPixbuf * image_from_renderings(rendering_list_t * contexts, 
 				  gint16 width, gint16 height);
 #endif
-GdkPixbuf * image_of_distribution(volume_t * volume);
+GdkPixbuf * image_of_distribution(volume_t * volume, rgb_t fg, rgb_t bg);
 GdkPixbuf * image_from_colortable(const color_table_t color_table,
 				  const intpoint_t width, 
 				  const intpoint_t height,

@@ -36,7 +36,7 @@
 
 
 /* external functions */
-volume_t * idl_data_import(gchar * idl_data_filename);
+volume_t * idl_data_import(const gchar * idl_data_filename);
 
 
 #endif /* __IDL_DATA_IMPORT_H__ */

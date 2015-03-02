@@ -200,7 +200,7 @@ GdkPixbuf * image_from_renderings(rendering_list_t * contexts, gint16 width, gin
 #endif
 
 /* function to make the bar graph to put next to the color_strip image */
-GdkPixbuf * image_of_distribution(volume_t * volume) {
+GdkPixbuf * image_of_distribution(volume_t * volume, rgb_t fg, rgb_t bg) {
 
   GdkPixbuf * temp_image;
   guchar * rgb_data;
@@ -232,14 +232,14 @@ GdkPixbuf * image_of_distribution(volume_t * volume) {
     j.x = volume->distribution->dim.x-l-1;
     for (k=0; k < floor(((double) IMAGE_DISTRIBUTION_WIDTH)-
 			scale*(*DATA_SET_FLOAT_POINTER(volume->distribution,j))) ; k++) {
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+0] = 0xFF;
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+1] = 0xFF;
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+2] = 0xFF;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+0] = bg.r;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+1] = bg.g;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+2] = bg.b;
     }
     for ( ; k < IMAGE_DISTRIBUTION_WIDTH ; k++) {
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+0] = 0;
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+1] = 0;
-      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+2] = 0;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+0] = fg.r;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+1] = fg.g;
+      rgb_data[l*IMAGE_DISTRIBUTION_WIDTH*3+k*3+2] = fg.b;
     }
   }
     

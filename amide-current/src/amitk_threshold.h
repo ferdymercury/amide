@@ -49,24 +49,41 @@ typedef struct _AmitkThreshold             AmitkThreshold;
 typedef struct _AmitkThresholdClass        AmitkThresholdClass;
 
 typedef enum {
-  MAX_ARROW, MIN_ARROW, NUM_THRESHOLD_ARROWS
+  THRESHOLD_FULL_MAX_ARROW, 
+  THRESHOLD_FULL_MIN_ARROW,  
+  THRESHOLD_SCALED_MAX_ARROW, 
+  THRESHOLD_SCALED_MIN_ARROW,
+  NUM_THRESHOLD_ARROWS
 } which_threshold_arrow_t;
+
+typedef enum {
+  THRESHOLD_FULL, 
+  THRESHOLD_SCALED, 
+  NUM_THRESHOLD_SCALES
+} which_threshold_scale_t;
 
 typedef enum {
   MAX_ABSOLUTE, MAX_PERCENT, MIN_ABSOLUTE, MIN_PERCENT, NUM_THRESHOLD_ENTRIES
 } which_threshold_entry_t;
 
+typedef enum {
+  THRESHOLD_MAX_LINE,
+  THRESHOLD_MIN_LINE,
+  NUM_THRESHOLD_LINES
+} which_threshold_line_t;
+
 struct _AmitkThreshold
 {
   GtkVBox vbox;
 
-  GtkWidget * color_strip;
-  GtkWidget * bar_graph;
-  GnomeCanvasItem * color_strip_image;
-  GnomeCanvasItem * bar_graph_item;
+  GtkWidget * color_scales;
+  GtkWidget * histogram;
+  GnomeCanvasItem * color_scale_image[NUM_THRESHOLD_SCALES];
+  GnomeCanvasItem * histogram_image;
   GnomeCanvasItem * arrow[NUM_THRESHOLD_ARROWS];
-  GdkPixbuf * color_strip_rgb_image;
-  GdkPixbuf * bar_graph_rgb_image;
+  GnomeCanvasItem * connector_line[NUM_THRESHOLD_LINES];
+  GdkPixbuf * color_scale_rgb[NUM_THRESHOLD_SCALES];
+  GdkPixbuf * histogram_rgb;
   GtkWidget * entry[NUM_THRESHOLD_ENTRIES];
   GtkWidget * color_table_menu;
 

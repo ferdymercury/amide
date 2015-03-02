@@ -36,8 +36,8 @@ void ui_rendering_cb_parameters(GtkWidget * widget, gpointer data);
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
 void ui_rendering_cb_movie(GtkWidget * widget, gpointer data);
 #endif
-void ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
-void ui_rendering_cb_close_event(GtkWidget* widget, gpointer data);
+gboolean ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
+void ui_rendering_cb_close(GtkWidget* widget, gpointer data);
 
 
 

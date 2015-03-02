@@ -42,7 +42,7 @@ static char * cti_data_types[] = {
 	"Short (16 bit), Big Endian",
 	"Integer (32 bit), Big Endian"};
 
-volume_t * cti_import(gchar * cti_filename) {
+volume_t * cti_import(const gchar * cti_filename) {
 
   MatrixFile * cti_file;
   MatrixData * cti_subheader;

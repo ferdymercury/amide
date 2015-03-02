@@ -70,13 +70,13 @@ void ui_series_toolbar_create(ui_series_t * ui_series) {
   
   /* start make the scaling toolbar items*/
   for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++)
-    ui_study_menu_fill_in_radioitem(&(scaling_list[i_scaling]),
-				    (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
-				    scaling_explanations[i_scaling],
-				    ui_series_cb_scaling,
-				    ui_series, 
-				    icon_scaling[i_scaling]);
-  ui_study_menu_fill_in_end(&(scaling_list[NUM_SCALINGS]));
+    ui_study_menus_fill_in_radioitem(&(scaling_list[i_scaling]),
+				     (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
+				     scaling_explanations[i_scaling],
+				     ui_series_cb_scaling,
+				     ui_series, 
+				     icon_scaling[i_scaling]);
+  ui_study_menus_fill_in_end(&(scaling_list[NUM_SCALINGS]));
 
   /* make the toolbar */
   toolbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL,GTK_TOOLBAR_BOTH);

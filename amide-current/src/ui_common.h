@@ -52,6 +52,8 @@ typedef enum {
 #define UI_CURSOR_RENDERING_ROTATE_Z UI_CURSOR_OLD_ROI_ROTATE
 
 /* external functions */
+GtkWidget * ui_common_create_view_axis_indicator(void);
+void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_cursor(GtkWidget * widget);
 

@@ -33,6 +33,7 @@
 #include "ui_volume_dialog_cb.h"
 #include "ui_volume_dialog.h"
 #include "ui_study_cb.h"
+#include "ui_common.h"
 
 
 /* function to set that volume axis display widgets */
@@ -94,6 +95,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   GtkWidget * scrolled;
   GtkWidget * hseparator;
   GtkWidget * vseparator;
+  GtkWidget * axis_indicator;
   guint table_row = 0;
   modality_t i_modality;
   view_t i_view;
@@ -114,7 +116,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   /* and if the threshold dialog corresponds to this volume, kill it */
   if (ui_study->threshold_dialog != NULL)
     if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event", NULL, ui_study);
+      gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
 
   
   /* sanity checks */
@@ -139,7 +141,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(volume_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_close_event),
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_close),
 		     ui_volume_list_item);
   gtk_signal_connect(GTK_OBJECT(volume_dialog), "apply",
 		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_apply),
@@ -237,25 +239,6 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
 		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
 		     volume_new_info);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
-  table_row++;
-
-
-  /* widget to tell you the internal data format */
-  label = gtk_label_new("Data Format:");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), data_format_names[volume->data_set->format]);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -416,76 +399,15 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 
   table_row++;
 
-
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 5, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-
-  /* widgets to display the data set dimensions */
-  label = gtk_label_new("Data Set Dimensions (voxels)");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /**************/
-  label = gtk_label_new("x");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%d", volume->data_set->dim.x);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  table_row++;
-
-  /**************/
-  label = gtk_label_new("y");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%d", volume->data_set->dim.y);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  table_row++;
-
-  /**************/
-  label = gtk_label_new("z");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%d", volume->data_set->dim.z);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  table_row++;
-
-  /**************/
-  label = gtk_label_new("t");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%d", volume->data_set->dim.t);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+  /* a canvas to indicate which way is x, y, and z */
+  axis_indicator = ui_common_create_view_axis_indicator();
+  gtk_table_attach(GTK_TABLE(packing_table), axis_indicator,0,5,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
   table_row++;
@@ -555,8 +477,8 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,
-		   table_row, table_row+1,0,4, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4,
+		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
@@ -713,6 +635,103 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   }
 
   table_row++;
+
+  /* ----------------------------------------
+     Immutables Page:
+     ---------------------------------------- */
+
+  packing_table = gtk_table_new(4,2,FALSE);
+  label = gtk_label_new("Immutables");
+  table_row=0;
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
+  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
+
+
+  /* widget to tell you the internal data format */
+  label = gtk_label_new("Data Format:");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  gtk_entry_set_text(GTK_ENTRY(entry), data_format_names[volume->data_set->format]);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
+		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* widgets to display the data set dimensions */
+  label = gtk_label_new("Data Set Dimensions (voxels)");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /**************/
+  label = gtk_label_new("x");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", volume->data_set->dim.x);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
+
+  /**************/
+  label = gtk_label_new("y");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", volume->data_set->dim.y);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
+
+  /**************/
+  label = gtk_label_new("z");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", volume->data_set->dim.z);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
+
+  /**************/
+  label = gtk_label_new("t");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", volume->data_set->dim.t);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
+
+
 
   /* and show all our widgets */
   gtk_widget_show_all(volume_dialog);

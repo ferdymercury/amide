@@ -34,12 +34,20 @@
 #define VOLUME_DISTRIBUTION_SIZE 300
 
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
-typedef enum {NEAREST_NEIGHBOR, 
-	      TWO_BY_TWO, 
-	      TWO_BY_TWO_BY_TWO, 
-	      TRILINEAR, 
-	      NUM_INTERPOLATIONS} interpolation_t;
+typedef enum {NEAREST_NEIGHBOR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
 typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
+
+typedef enum {
+  AMIDE_GUESS, RAW_DATA, PEM_DATA, IDL_DATA,
+#ifdef AMIDE_LIBECAT_SUPPORT
+  LIBECAT_DATA, 
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+  LIBMDC_DATA, 
+#endif
+  NUM_IMPORT_METHODS
+} import_method_t;
+       
 
 /* the volume structure */
 typedef struct volume_t { 
@@ -90,6 +98,7 @@ struct _volume_list_t {
 						   ((real).y = (((floatpoint_t) (vox).y) + 0.5) * (vol)->voxel_size.y), \
 						   ((real).z = (((floatpoint_t) (vox).z) + 0.5) * (vol)->voxel_size.z))
 
+
 /* figure out the voxel point that corresponds to the real coordinates */
 /* makes use of floats being truncated when converting to int */
 #define VOLUME_REALPOINT_TO_VOXEL(vol, real, frame, vox) (((vox).x = ((real).x/(vol)->voxel_size.x)), \
@@ -110,6 +119,8 @@ volume_t * volume_free(volume_t * volume);
 volume_t * volume_init(void);
 gchar * volume_write_xml(volume_t * volume, gchar * study_directory);
 volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_directory);
+volume_t * volume_import_file(const gchar * import_filename, gchar * model_filename,
+			      import_method_t import_method);
 volume_t * volume_copy(volume_t * src_volume);
 volume_t * volume_add_reference(volume_t * volume);
 void volume_set_name(volume_t * volume, gchar * new_name);
@@ -128,7 +139,7 @@ volume_list_t * volume_list_free(volume_list_t * volume_list);
 volume_list_t * volume_list_init(void);
 void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * study_directory);
 volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
-volume_list_t * volume_list_add_reference(volume_list_t * volume_list_element);
+volume_list_t * volume_list_add_reference(volume_list_t * volume_list);
 gboolean volume_list_includes_volume(volume_list_t *list, volume_t * vol);
 volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vol);
 volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol);

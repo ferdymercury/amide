@@ -29,11 +29,11 @@
 #ifdef AMIDE_DEBUG
 #include <stdlib.h>
 #endif
-#include "volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'.h"
+#include "volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'.h"
 
 
 /* function to recalcule the max and min values of a volume */
-void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume) {
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume) {
 
   voxelpoint_t i;
   amide_data_t max, min, temp;
@@ -47,7 +47,7 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t
     for (i.z = 0; i.z < volume->data_set->dim.z; i.z++) 
       for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
-	  temp = VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume, i);
+	  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, i);
 	  if (temp > max)
 	    max = temp;
 	  else if (temp < min)
@@ -68,7 +68,7 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t
 }
 
 /* generate the distribution array for a volume */
-void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(volume_t * volume) {
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t * volume) {
 
   voxelpoint_t i,j;
   amide_data_t scale;
@@ -116,7 +116,7 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(v
 #endif
 	for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	  for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
-	    j.x = scale*(VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->min);
+	    j.x = scale*(VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->min);
 	    DATA_SET_FLOAT_SET_CONTENT(volume->distribution,j) += 1.0;
 	  }
     }
@@ -137,14 +137,14 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(v
 
 
 /* returns a slice  with the appropriate data from the volume */
-volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
-									 const amide_time_t start,
-									 const amide_time_t duration,
-									 const realpoint_t  requested_voxel_size,
-									 const realspace_t slice_coord_frame,
-									 const realpoint_t far_corner,
-									 const interpolation_t interpolation,
-									 const gboolean need_calc_max_min) {
+volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
+								  const amide_time_t start,
+								  const amide_time_t duration,
+								  const realpoint_t  requested_voxel_size,
+								  const realspace_t slice_coord_frame,
+								  const realpoint_t far_corner,
+								  const interpolation_t interpolation,
+								  const gboolean need_calc_max_min) {
 
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
@@ -152,13 +152,12 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
   volume_t * slice;
   voxelpoint_t i,j;
   intpoint_t z;
-  floatpoint_t volume_min_voxel_size, max_diff, voxel_length, z_steps;
-  floatpoint_t real_value[8];
-  realpoint_t alt,temp_p;
-  realpoint_t half_size[NUM_AXIS], stride[NUM_AXIS], last[NUM_AXIS];
+  floatpoint_t max_diff, voxel_length, z_steps;
+  realpoint_t alt;
+  realpoint_t stride[NUM_AXIS], last[NUM_AXIS];
   axis_t i_axis;
   guint l;
-  amide_data_t weight, total_weight;
+  amide_data_t weight;
   intpoint_t start_frame, num_frames, i_frame;
   amide_time_t volume_start, volume_end;
   gchar * temp_string;
@@ -269,141 +268,11 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
   voxel_length = REALPOINT_MAGNITUDE(alt);
   z_steps = slice->voxel_size.z/voxel_length;
 
-#ifdef AMIDE_DEBUG
-  //  g_print("\tz steps\t%5.3f\tvoxel length %5.3f (mm)\n",z_steps, voxel_length);
-#endif
-
-  /* figure out what stepping one voxel in a given direction in our slice
-     cooresponds to in our volume */
-  for (i_axis = 0; i_axis < NUM_AXIS; i_axis++) {
-    alt.x = (i_axis == XAXIS) ? slice->voxel_size.x : 0.0;
-    alt.y = (i_axis == YAXIS) ? slice->voxel_size.y : 0.0;
-    alt.z = (i_axis == ZAXIS) ? voxel_length : 0.0;
-    alt = realspace_alt_coord_to_base(alt, slice->coord_frame);
-    REALPOINT_SUB(alt, rs_offset(slice->coord_frame), alt);
-    REALPOINT_ADD(alt, rs_offset(volume->coord_frame), alt);
-    stride[i_axis] = realspace_base_coord_to_alt(alt, volume->coord_frame);
-  }
-
-  /* figure out what point in the volume we're going to start at */
-  alt.x = slice->voxel_size.x/2.0;
-  alt.y = slice->voxel_size.y/2.0;
-  alt.z = voxel_length/2.0;
-  volume_rp = realspace_alt_coord_to_alt(alt, slice->coord_frame, volume->coord_frame);
-
-  /* get some important dimensional information */
-  volume_min_voxel_size = REALPOINT_MIN_DIM(volume->voxel_size);
-
-  /* figure out how to step half a volume voxel's size in a given direction */
-  for (i_axis = 0 ; i_axis < NUM_AXIS ; i_axis++) {
-    alt.x = (i_axis == XAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
-    alt.y = (i_axis == YAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
-    alt.z = (i_axis == ZAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
-    half_size[i_axis] = realspace_alt_dim_to_alt(alt, slice->coord_frame, volume->coord_frame);
-  }
-
-
   /* initialize our data set */
   data_set_FLOAT_initialize_data(slice->data_set, 0.0);
 
   switch(interpolation) {
 
-  case TWO_BY_TWO:
-    i.t = i.z = 0;
-    /* iterate over the number of frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      
-      /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
-	last[ZAXIS] = volume_rp;
-	weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
-	weight = weight/4.0;
-	weight /= num_frames * z_steps;
-	
-	/* iterate over the y dimension */
-	for (i.y = 0; i.y < slice->data_set->dim.y; i.y++) {
-	  last[YAXIS] = volume_rp;
-	  /* and iteratate over x */
-	  for (i.x = 0; i.x < slice->data_set->dim.x; i.x++) {
-	    
-	    /* get the locations and values of the four voxels in the real volume
-	       which are closest to our slice's voxel */
-	    total_weight = 0;
-	    
-	    /* find the closest voxels in volume space and their values*/
-	    for (l=0; l<4; l++) {
-	      
-	      if (l & 0x1) REALPOINT_SUB(volume_rp, half_size[XAXIS],temp_p);
-	      else REALPOINT_ADD(volume_rp, half_size[XAXIS],temp_p);
-	      
-	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
-	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
-
-	      VOLUME_REALPOINT_TO_VOXEL(volume, temp_p, i_frame, j);
-	      
-	      /* get the value of the closest voxel in real space */
-	      if (!data_set_includes_voxel(volume->data_set,j)) real_value[l] = EMPTY;
-	      else real_value[l] = VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,j);
-	      
-	      DATA_SET_FLOAT_SET_CONTENT(slice->data_set,i)+=weight*real_value[l];
-	    }
-	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
-	  }
-	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);
-	}
-	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_rp); 
-      }
-    break;
-
-  case TWO_BY_TWO_BY_TWO:
-    i.t = i.z = 0;
-    /* iterate over the number of frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      
-      /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
-	last[ZAXIS] = volume_rp;
-	weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
-	weight = weight/8.0;
-	weight /= num_frames * z_steps;
-	
-	/* iterate over the y dimension */
-	for (i.y = 0; i.y < slice->data_set->dim.y; i.y++) {
-	  last[YAXIS] = volume_rp;
-	  /* and iteratate over x */
-	  for (i.x = 0; i.x < slice->data_set->dim.x; i.x++) {
-	    
-	    /* get the locations and values of the four voxels in the real volume
-	       which are closest to our slice's voxel */
-	    total_weight = 0;
-	    
-	    /* find the closest voxels in volume space and their values*/
-	    for (l=0; l<8; l++) {
-	      
-	      if (l & 0x1) REALPOINT_SUB(volume_rp, half_size[XAXIS],temp_p);
-	      else REALPOINT_ADD(volume_rp, half_size[XAXIS],temp_p);
-	      
-	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
-	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
-	      
-	      if (l & 0x4) REALPOINT_SUB(temp_p, half_size[ZAXIS],temp_p);
-	      else REALPOINT_ADD(temp_p, half_size[ZAXIS],temp_p);
-	      
-	      VOLUME_REALPOINT_TO_VOXEL(volume, temp_p, i_frame, j);
-	      
-	      /* get the value of the closest voxel in real space */
-	      if (!data_set_includes_voxel(volume->data_set,j)) real_value[l] = EMPTY;
-	      else real_value[l] = VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,j);
-	      
-	      DATA_SET_FLOAT_SET_CONTENT(slice->data_set,i)+=weight*real_value[l];
-	    }
-	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
-	  }
-	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);
-	}
-	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_rp); 
-      }
-    break;
   case TRILINEAR:
     i.t = i.z = 0;
     /* iterate over the frames we'll be incorporating into this slice */
@@ -466,7 +335,7 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
 
 	      /* get the value of the point on the box */
 	      if (data_set_includes_voxel(volume->data_set, box_vp[l]))
-		box_value[l] = VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume, box_vp[l]);
+		box_value[l] = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, box_vp[l]);
 	      else
 		box_value[l] = EMPTY;
 	    }
@@ -505,6 +374,23 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
     break;
   case NEAREST_NEIGHBOR:
   default:  
+    /* figure out what point in the volume we're going to start at */
+    alt.x = slice->voxel_size.x/2.0;
+    alt.y = slice->voxel_size.y/2.0;
+    alt.z = voxel_length/2.0;
+    volume_rp = realspace_alt_coord_to_alt(alt, slice->coord_frame, volume->coord_frame);
+
+    /* figure out what stepping one voxel in a given direction in our slice cooresponds to in our volume */
+    for (i_axis = 0; i_axis < NUM_AXIS; i_axis++) {
+      alt.x = (i_axis == XAXIS) ? slice->voxel_size.x : 0.0;
+      alt.y = (i_axis == YAXIS) ? slice->voxel_size.y : 0.0;
+      alt.z = (i_axis == ZAXIS) ? voxel_length : 0.0;
+      alt = rp_add(rp_sub(realspace_alt_coord_to_base(alt, slice->coord_frame),
+			  rs_offset(slice->coord_frame)),
+		   rs_offset(volume->coord_frame));
+      stride[i_axis] = realspace_base_coord_to_alt(alt, volume->coord_frame);
+    }
+
     i.t = i.z = 0;
     /* iterate over the number of frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++) {
@@ -531,7 +417,7 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
 	      DATA_SET_FLOAT_SET_CONTENT(slice->data_set,i) += weight*EMPTY;
 	    else
 	      DATA_SET_FLOAT_SET_CONTENT(slice->data_set,i) += 
-		weight*VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,j);
+		weight*VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume,j);
 	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
 	  }
 	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);

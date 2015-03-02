@@ -3,7 +3,7 @@ SUBDIRS = \
 
 if BUILD_LIBAMIDE
 INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
-CFLAGS = $(AMIDE_CFLAGS) @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
 lib_LTLIBRARIES = libamide.la
 libamideincludedir = $(includedir)/amide
 endif
@@ -21,10 +21,15 @@ libamide_la_SOURCES = \
 amide_SOURCES = \
 	gtkdial.c \
 	gtkdial.h \
+	gtkdirsel.c \
+	gtkdirsel.h \
 	$(DATA_SET_VARIABLE_SRCS) \
 	$(VOLUME_VARIABLE_SRCS) \
+	$(ANALYSIS_VARIABLE_SRCS) \
 	amide.c \
 	amide.h \
+	analysis.c \
+	analysis.h \
 	amitk_threshold.c \
 	amitk_threshold.h \
 	color_table.c \
@@ -59,6 +64,10 @@ amide_SOURCES = \
 	ui_common.h \
 	ui_common_cb.c \
 	ui_common_cb.h \
+	ui_preferences_dialog.c \
+	ui_preferences_dialog.h \
+	ui_preferences_dialog_cb.c \
+	ui_preferences_dialog_cb.h \
 	ui_rendering.c \
 	ui_rendering.h \
 	ui_rendering_cb.c \
@@ -79,6 +88,10 @@ amide_SOURCES = \
 	ui_roi_dialog.h \
 	ui_roi_dialog_cb.c \
 	ui_roi_dialog_cb.h \
+	ui_roi_analysis_dialog.c \
+	ui_roi_analysis_dialog.h \
+	ui_roi_analysis_dialog_cb.c \
+	ui_roi_analysis_dialog_cb.h \
 	ui_series.c \
 	ui_series.h \
 	ui_series_cb.c \
@@ -99,8 +112,6 @@ amide_SOURCES = \
 	ui_study_menus.h \
 	ui_study_toolbar.c \
 	ui_study_toolbar.h \
-	ui_study_rois_cb.c \
-	ui_study_rois_cb.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
 	ui_time_dialog_cb.c \
@@ -116,7 +127,13 @@ amide_SOURCES = \
 	xml.c \
 	xml.h
 
-
+ANALYSIS_VARIABLE_SRCS = \
+	analysis_ELLIPSOID.c \
+	analysis_ELLIPSOID.h \
+	analysis_CYLINDER.c \
+	analysis_CYLINDER.h \
+	analysis_BOX.c \
+	analysis_BOX.h
 
 DATA_SET_VARIABLE_SRCS = \
 	data_set_UBYTE.c \
@@ -186,6 +203,10 @@ VOLUME_VARIABLE_SRCS = \
 	volume_DOUBLE_2D_SCALING.c \
 	volume_DOUBLE_2D_SCALING.h 
 
+ANALYSIS_VARIABLE_INCLUDES = \
+	analysis_variable_type.c \
+	analysis_variable_type.h 
+
 VARIABLE_INPUT = \
 	variable_type.m4
 
@@ -196,6 +217,15 @@ DATA_SET_VARIABLE_INCLUDES = \
 VOLUME_VARIABLE_INCLUDES = \
 	volume_variable_type.c \
 	volume_variable_type.h 
+
+$(ANALYSIS_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_INCLUDES)
+	@for i in $(ANALYSIS_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
 
 $(DATA_SET_VARIABLE_SRCS): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_INCLUDES)
 	@for i in $(DATA_SET_VARIABLE_SRCS) ; \
@@ -216,7 +246,7 @@ $(VOLUME_VARIABLE_SRCS): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_INCLUDES)
             done
 
 
-CLEANFILES = $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
+CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
 
 DISTCLEANFILES = \
 	$(libamide_la_SOURCES) \

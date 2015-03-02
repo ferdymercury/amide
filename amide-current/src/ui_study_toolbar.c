@@ -38,9 +38,6 @@
 #include "../pixmaps/icon_scaling_per_slice.xpm"
 #include "../pixmaps/icon_scaling_global.xpm"
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
-#include "../pixmaps/icon_interpolation_2x2x1.xpm"
-#include "../pixmaps/icon_interpolation_2x2x2.xpm"
-//#include "../pixmaps/icon_interpolation_bilinear.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
 
 
@@ -55,15 +52,10 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   GtkWidget * toolbar;
   GtkObject * adjustment;
   GtkWidget * spin_button;
-  GtkWidget * button;
-  gchar * temp_string;
   gchar ** icon_scaling[NUM_SCALINGS] = {icon_scaling_per_slice_xpm,
 					icon_scaling_global_xpm};
 
   gchar ** icon_interpolation[NUM_INTERPOLATIONS] = {icon_interpolation_nearest_neighbor_xpm,
-						    icon_interpolation_2x2x1_xpm,
-						    icon_interpolation_2x2x2_xpm,
-						     //  icon_interpolation_bilinear_xpm,
 						    icon_interpolation_trilinear_xpm};
 
   /* the toolbar definitions */
@@ -90,24 +82,24 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   
   /* start make the scaling toolbar items*/
   for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++)
-    ui_study_menu_fill_in_radioitem(&(scaling_list[i_scaling]),
-				    (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
-				    scaling_explanations[i_scaling],
-				    ui_study_cb_scaling,
-				    ui_study, 
-				    icon_scaling[i_scaling]);
-  ui_study_menu_fill_in_end(&(scaling_list[NUM_SCALINGS]));
+    ui_study_menus_fill_in_radioitem(&(scaling_list[i_scaling]),
+				     (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
+				     scaling_explanations[i_scaling],
+				     ui_study_cb_scaling,
+				     ui_study, 
+				     icon_scaling[i_scaling]);
+  ui_study_menus_fill_in_end(&(scaling_list[NUM_SCALINGS]));
 
   /* start make the interpolation toolbar items*/
   for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
-    ui_study_menu_fill_in_radioitem(&(interpolation_list[i_interpolation]),
-				    (icon_interpolation[i_interpolation] == NULL) ? 
-				    interpolation_names[i_interpolation] : NULL,
-				    interpolation_explanations[i_interpolation],
-				    ui_study_cb_interpolation,
-				    ui_study, 
-				    icon_interpolation[i_interpolation]);
-  ui_study_menu_fill_in_end(&(interpolation_list[NUM_INTERPOLATIONS]));
+    ui_study_menus_fill_in_radioitem(&(interpolation_list[i_interpolation]),
+				     (icon_interpolation[i_interpolation] == NULL) ? 
+				     interpolation_names[i_interpolation] : NULL,
+				     interpolation_explanations[i_interpolation],
+				     ui_study_cb_interpolation,
+				     ui_study, 
+				     icon_interpolation[i_interpolation]);
+  ui_study_menus_fill_in_end(&(interpolation_list[NUM_INTERPOLATIONS]));
 
 
 
@@ -157,6 +149,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 2);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), TRUE);
   gtk_widget_set_usize (spin_button, 50, 0);
 
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
@@ -176,22 +169,21 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 
-  adjustment = gtk_adjustment_new(1.0,1.0,1.0,1.0,1.0,1.0);
-  ui_study->thickness_adjustment = adjustment;
-  ui_study->thickness_spin_button = spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 2);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_widget_set_usize (spin_button, 50, 0);
+  ui_study->thickness_adjustment = gtk_adjustment_new(1.0,1.0,1.0,1.0,1.0,1.0);
+  ui_study->thickness_spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(ui_study->thickness_adjustment),1.0, 2);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->thickness_spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->thickness_spin_button), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_widget_set_usize (ui_study->thickness_spin_button, 50, 0);
 
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), 
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->thickness_spin_button), 
 				    GTK_UPDATE_ALWAYS);
 
-  gtk_signal_connect(adjustment, "value_changed", 
-		     GTK_SIGNAL_FUNC(ui_study_cb_thickness), 
-		     ui_study);
-  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
-  			    spin_button, "specify how thick to make the slices (mm)", NULL);
-  gtk_widget_show(spin_button);
+  gtk_signal_connect(ui_study->thickness_adjustment, "value_changed", 
+		     GTK_SIGNAL_FUNC(ui_study_cb_thickness), ui_study);
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), ui_study->thickness_spin_button, 
+			    "specify how thick to make the slices (mm)", NULL);
+  gtk_widget_show(ui_study->thickness_spin_button);
 
   gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
 
@@ -200,18 +192,15 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 
-  temp_string = g_strdup_printf("%5.1f -%5.1fs",
-				study_view_time(ui_study->study),
-				study_view_duration(ui_study->study));
-  button = gtk_button_new_with_label(temp_string);
-  ui_study->time_button = button;
-  g_free(temp_string);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
+  ui_study->time_button = gtk_button_new_with_label(""); 
+  ui_study_update_time_button(ui_study); /* put in some meaningful text */
+
+  gtk_signal_connect(GTK_OBJECT(ui_study->time_button), "pressed",
 		     GTK_SIGNAL_FUNC(ui_study_cb_time_pressed), 
 		     ui_study);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
-  			    button, "the time range over which to view the data (s)", NULL);
-  gtk_widget_show(button);
+  			    ui_study->time_button, "the time range over which to view the data (s)", NULL);
+  gtk_widget_show(ui_study->time_button);
 
 
 

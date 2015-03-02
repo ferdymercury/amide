@@ -24,8 +24,8 @@
 */
 
 
-#ifndef __VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'__
-#define __VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'__
+#ifndef __VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__
+#define __VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__
 
 /* header files that are always needed with this file */
 #include "volume.h"
@@ -34,25 +34,25 @@
 /* defines */
 
 /* translates to the contents of the voxel specified by voxelpoint i */
-#define VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,i) \
+#define VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume,i) \
  (*(DATA_SET_FLOAT_`'m4_Scale_Dim`'_POINTER((volume)->current_scaling, (i))) * \
-  ((amide_data_t) (*(DATA_SET_`'m4_Internal_Data_Format`'_POINTER((volume)->data_set,(i))))))
+  ((amide_data_t) (*(DATA_SET_`'m4_Variable_Type`'_POINTER((volume)->data_set,(i))))))
 
 
 /* function declarations */
-void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume);
-void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(volume_t * volume);
-volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
-									 const amide_time_t start,
-									 const amide_time_t duration,
-									 const realpoint_t  requested_voxel_size,
-									 const realspace_t slice_coord_frame,
-									 const realpoint_t far_corner,
-									 const interpolation_t interpolation,
-									 const gboolean need_calc_max_min);
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume);
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t * volume);
+volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
+								  const amide_time_t start,
+								  const amide_time_t duration,
+								  const realpoint_t  requested_voxel_size,
+								  const realspace_t slice_coord_frame,
+								  const realpoint_t far_corner,
+								  const interpolation_t interpolation,
+								  const gboolean need_calc_max_min);
 
 
-#endif /* __VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'__ */
+#endif /* __VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'__ */
 
 
 

@@ -23,19 +23,23 @@
   02111-1307, USA.
 */
 
-/* adapated from gtkcolorsel.c */
+/* adapted from gtkcolorsel.c */
 
 
+#include "config.h"
 #include "amitk_threshold.h"
 #include "image.h"
 #include <gdk-pixbuf/gnome-canvas-pixbuf.h> 
+#include "../pixmaps/icon_threshold.xpm"
 
-#define THRESHOLD_DEFAULT_ENTRY_WIDTH 75
-#define THRESHOLD_COLOR_STRIP_WIDTH 16
-#define THRESHOLD_COLOR_STRIP_HEIGHT VOLUME_DISTRIBUTION_SIZE
-#define THRESHOLD_BAR_GRAPH_WIDTH IMAGE_DISTRIBUTION_WIDTH
-#define THRESHOLD_TRIANGLE_WIDTH 15
-#define THRESHOLD_TRIANGLE_HEIGHT 15
+#define THRESHOLD_DEFAULT_ENTRY_WIDTH 75.0
+#define THRESHOLD_COLOR_SCALE_SEPARATION 30.0
+#define THRESHOLD_COLOR_SCALE_WIDTH 16.0
+#define THRESHOLD_COLOR_SCALES_WIDTH (2.0*THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_COLOR_SCALE_SEPARATION)
+#define THRESHOLD_COLOR_SCALE_HEIGHT (gdouble) VOLUME_DISTRIBUTION_SIZE
+#define THRESHOLD_HISTOGRAM_WIDTH (gdouble) IMAGE_DISTRIBUTION_WIDTH
+#define THRESHOLD_TRIANGLE_WIDTH 16.0
+#define THRESHOLD_TRIANGLE_HEIGHT 16.0
 
 enum {
   THRESHOLD_CHANGED,
@@ -47,8 +51,12 @@ static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
 static void threshold_destroy (GtkObject *object);
 static void threshold_construct(AmitkThreshold * threshold);
+static void threshold_update_histogram(AmitkThreshold * threshold);
 static void threshold_update_entries(AmitkThreshold * threshold);
-static void threshold_update_canvas(AmitkThreshold * threshold);
+static void threshold_update_arrow(AmitkThreshold * threshold, which_threshold_arrow_t arrow);
+static void threshold_update_color_scale(AmitkThreshold * threshold, which_threshold_scale_t scale);
+static void threshold_update_connector_lines(AmitkThreshold * threshold, which_threshold_scale_t scale);
+static void threshold_update_color_scales(AmitkThreshold * threshold);
 static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void threshold_color_table_cb(GtkWidget * widget, gpointer data);
 static void threshold_entry_cb(GtkWidget* widget, gpointer data);
@@ -56,6 +64,7 @@ static void threshold_entry_cb(GtkWidget* widget, gpointer data);
 static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass);
 static void threshold_dialog_init (AmitkThresholdDialog *threshold_dialog);
 static void threshold_dialog_construct(AmitkThresholdDialog * dialog, volume_t * volume);
+static void threshold_dialog_realize_cb(GtkWidget * dialog, gpointer data);
 static void threshold_dialog_threshold_changed_cb(GtkWidget * threshold, gpointer dialog);
 static void threshold_dialog_color_changed_cb(GtkWidget * threshold, gpointer dialog);
 
@@ -71,6 +80,8 @@ static GtkWindowClass *thresholds_dialog_parent_class = NULL;
 static guint threshold_signals[LAST_SIGNAL] = {0};
 static guint threshold_dialog_signals[LAST_SIGNAL] = {0};
 static guint thresholds_dialog_signals[LAST_SIGNAL] = {0};
+
+static GdkCursor * threshold_cursor = NULL;
 
 GtkType amitk_threshold_get_type (void) {
 
@@ -137,14 +148,23 @@ static void threshold_init (AmitkThreshold *threshold)
   GtkWidget * menu;
   GtkWidget * menuitem;
   color_table_t i_color_table;
+  which_threshold_scale_t i_scale;
+  which_threshold_line_t i_line;
+
 
 
   /* initialize some critical stuff */
-  threshold->color_strip_image = NULL;
-  threshold->color_strip_rgb_image = NULL;
-  threshold->bar_graph_rgb_image = NULL;
+  for (i_scale=0;i_scale<NUM_THRESHOLD_SCALES;i_scale++) {
+    threshold->color_scale_image[i_scale] = NULL;
+    threshold->color_scale_rgb[i_scale] = NULL;
+  }
+  for (i_line=0;i_line<NUM_THRESHOLD_LINES; i_line++)
+    threshold->connector_line[i_line] = NULL;
+  threshold->histogram_image = NULL;
+  threshold->histogram_rgb = NULL;
 
-
+  if (threshold_cursor == NULL)
+    threshold_cursor = gdk_cursor_new(GDK_SB_V_DOUBLE_ARROW);
 
   /* we're using two tables packed into a horizontal box */
   main_box = gtk_hbox_new(FALSE,0);
@@ -252,30 +272,52 @@ static void threshold_init (AmitkThreshold *threshold)
   /*---------------------------------------
     right table 
     --------------------------------------- */
-  right_table = gtk_table_new(7,2,FALSE);
+  right_table = gtk_table_new(7,3,FALSE);
   gtk_box_pack_start(GTK_BOX(main_box), right_table, TRUE,TRUE,0);
 
 
-  label = gtk_label_new("distribution (log scale)");
+  //  label = gtk_label_new("distribution (log scale)");
+  label = gtk_label_new("distribution");
   gtk_table_attach(GTK_TABLE(right_table),  label, 0,1, right_row, right_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+  label = gtk_label_new("full");
+  gtk_table_attach(GTK_TABLE(right_table),  label, 1,2, right_row, right_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+  label = gtk_label_new("scaled");
+  gtk_table_attach(GTK_TABLE(right_table),  label, 2,3, right_row, right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
   right_row++;
 
 
-  /* the bar graph */
-  threshold->bar_graph = gnome_canvas_new();
-  gtk_table_attach(GTK_TABLE(right_table), threshold->bar_graph, 0,1,right_row,right_row+1,
+  /* the canvas */
+  threshold->histogram = gnome_canvas_new();
+  gtk_table_attach(GTK_TABLE(right_table), threshold->histogram, 0,1,right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
-  gtk_widget_show(threshold->bar_graph);
+  gtk_widget_set_usize(threshold->histogram,
+		       IMAGE_DISTRIBUTION_WIDTH,
+		       VOLUME_DISTRIBUTION_SIZE + THRESHOLD_TRIANGLE_HEIGHT);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->histogram), 
+				 0.0, THRESHOLD_TRIANGLE_WIDTH/2.0,
+				 IMAGE_DISTRIBUTION_WIDTH,
+				 (THRESHOLD_TRIANGLE_WIDTH/2.0 + VOLUME_DISTRIBUTION_SIZE));
+  gtk_widget_show(threshold->histogram);
 
 
 
-  /* the color strip */
-  threshold->color_strip = gnome_canvas_new();
-  gtk_table_attach(GTK_TABLE(right_table),  threshold->color_strip, 1,2,right_row,right_row+1,
+  /* the color scale */
+  threshold->color_scales = gnome_canvas_new();
+  gtk_table_attach(GTK_TABLE(right_table),  threshold->color_scales, 1,3,right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
-  gtk_widget_show(threshold->color_strip);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->color_scales), 0.0, 0.0,
+				 THRESHOLD_COLOR_SCALES_WIDTH+2* THRESHOLD_TRIANGLE_WIDTH,
+				 THRESHOLD_COLOR_SCALE_HEIGHT + THRESHOLD_TRIANGLE_HEIGHT + 1);
+  gtk_widget_set_usize(threshold->color_scales,
+		       THRESHOLD_COLOR_SCALES_WIDTH+2* THRESHOLD_TRIANGLE_WIDTH,
+		       THRESHOLD_COLOR_SCALE_HEIGHT + THRESHOLD_TRIANGLE_HEIGHT + 1);
+  gtk_widget_show(threshold->color_scales);
 
 
   right_row++;
@@ -288,6 +330,7 @@ static void threshold_init (AmitkThreshold *threshold)
 static void threshold_destroy (GtkObject * object) {
 
   AmitkThreshold * threshold;
+  which_threshold_scale_t i_scale;
 
   g_return_if_fail (object != NULL);
   g_return_if_fail (AMITK_IS_THRESHOLD (object));
@@ -295,10 +338,11 @@ static void threshold_destroy (GtkObject * object) {
   threshold =  AMITK_THRESHOLD (object);
 
   threshold->volume = volume_free(threshold->volume);
-  if (threshold->color_strip_rgb_image != NULL)
-    gdk_pixbuf_unref(threshold->color_strip_rgb_image);
-  if (threshold->bar_graph_rgb_image != NULL)
-    gdk_pixbuf_unref(threshold->bar_graph_rgb_image);
+  for (i_scale=0;i_scale<NUM_THRESHOLD_SCALES;i_scale++)
+    if (threshold->color_scale_rgb[i_scale] != NULL)
+    gdk_pixbuf_unref(threshold->color_scale_rgb[i_scale]);
+  if (threshold->histogram_rgb != NULL)
+    gdk_pixbuf_unref(threshold->histogram_rgb);
 
   if (GTK_OBJECT_CLASS (threshold_parent_class)->destroy)
     (* GTK_OBJECT_CLASS (threshold_parent_class)->destroy) (object);
@@ -308,30 +352,50 @@ static void threshold_destroy (GtkObject * object) {
 /* this gets called after we have a volume */
 static void threshold_construct(AmitkThreshold * threshold) {
 
-  /* get the distribution image */
-  threshold->bar_graph_rgb_image = image_of_distribution(threshold->volume);
-
-  gtk_widget_set_usize(threshold->bar_graph,
-		       gdk_pixbuf_get_width(threshold->bar_graph_rgb_image),
-		       gdk_pixbuf_get_height(threshold->bar_graph_rgb_image)
-		       + THRESHOLD_TRIANGLE_HEIGHT/2);
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->bar_graph), 
-				 0.0, THRESHOLD_TRIANGLE_WIDTH/2,
-				 (gdouble) gdk_pixbuf_get_width(threshold->bar_graph_rgb_image),
-				 (THRESHOLD_TRIANGLE_WIDTH/2.0 + 
-				  (gdouble) gdk_pixbuf_get_height(threshold->bar_graph_rgb_image)));
-
-  threshold->bar_graph_item = 
-    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->bar_graph)),
-			  gnome_canvas_pixbuf_get_type(),
-			  "pixbuf", threshold->bar_graph_rgb_image,
-			  "x", 0.0,
-			  "y", ((double) THRESHOLD_TRIANGLE_HEIGHT/2),
-			  NULL);
+  /* update what's on the histogram */
+  threshold_update_histogram(threshold);
 
   /* update what's on the pull down menu */
   gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu),
 			      threshold->volume->color_table);
+  return;
+}
+
+/* refresh what's on the histogram */
+static void threshold_update_histogram(AmitkThreshold * threshold) {
+
+  rgb_t fg, bg;
+  GtkStyle * widget_style;
+
+  /* figure out what colors to use for the distribution image */
+  widget_style = gtk_widget_get_style(GTK_WIDGET(threshold));
+  if (widget_style == NULL) {
+    g_warning("%s: Threshold has no style?\n",PACKAGE);
+    widget_style = gtk_style_new();
+  }
+
+  bg.r = widget_style->bg[GTK_STATE_NORMAL].red >> 8;
+  bg.g = widget_style->bg[GTK_STATE_NORMAL].green >> 8;
+  bg.b = widget_style->bg[GTK_STATE_NORMAL].blue >> 8;
+
+  fg.r = widget_style->fg[GTK_STATE_NORMAL].red >> 8;
+  fg.g = widget_style->fg[GTK_STATE_NORMAL].green >> 8;
+  fg.b = widget_style->fg[GTK_STATE_NORMAL].blue >> 8;
+
+  /* get the distribution image */
+  if (threshold->histogram_rgb != NULL)
+    gdk_pixbuf_unref(threshold->histogram_rgb);
+  threshold->histogram_rgb = image_of_distribution(threshold->volume, fg, bg);
+
+  if (threshold->histogram_image != NULL)
+    gnome_canvas_item_set(threshold->histogram_image, "pixbuf", threshold->histogram_rgb, NULL);
+  else
+    threshold->histogram_image = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->histogram)),
+			    gnome_canvas_pixbuf_get_type(),
+			    "pixbuf", threshold->histogram_rgb,
+			    "x", 0.0, "y", ((gdouble) THRESHOLD_TRIANGLE_HEIGHT/2.0),  NULL);
+  return;
 }
 
 /* function to update the entry widgets */
@@ -360,123 +424,240 @@ static void threshold_update_entries(AmitkThreshold * threshold) {
   return;
 }
 
-/* function called to update the canvas */
-static void threshold_update_canvas(AmitkThreshold * threshold) {
 
-  GnomeCanvasPoints * points[NUM_THRESHOLD_ARROWS];
-  amide_data_t max;
-  which_threshold_arrow_t i_arrow;
-  
-  if (threshold->color_strip_rgb_image != NULL)
-    gdk_pixbuf_unref(threshold->color_strip_rgb_image);
+static void threshold_update_arrow(AmitkThreshold * threshold, which_threshold_arrow_t arrow) {
 
-  threshold->color_strip_rgb_image =
-    image_from_colortable(threshold->volume->color_table,
-			  THRESHOLD_COLOR_STRIP_WIDTH,
-			  THRESHOLD_COLOR_STRIP_HEIGHT,
-			  threshold->volume->threshold_min,
-			  threshold->volume->threshold_max,
-			  threshold->volume->min,
-			  threshold->volume->max);
+  GnomeCanvasPoints * points;
+  gdouble left, right, point;
+  gboolean up_pointing=FALSE;
+  gboolean down_pointing=FALSE;
+  guint fill_color=0;
 
+  points = gnome_canvas_points_new(3);
 
-  /* the min arrow */
-  points[MIN_ARROW] = gnome_canvas_points_new(3);
-  points[MIN_ARROW]->coords[0] = THRESHOLD_COLOR_STRIP_WIDTH;
-  points[MIN_ARROW]->coords[1] = THRESHOLD_TRIANGLE_HEIGHT/2 + 
-    THRESHOLD_COLOR_STRIP_HEIGHT * 
-    (1-(threshold->volume->threshold_min-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-  points[MIN_ARROW]->coords[2] = THRESHOLD_TRIANGLE_WIDTH + 
-    THRESHOLD_COLOR_STRIP_WIDTH;
-  points[MIN_ARROW]->coords[3] = THRESHOLD_TRIANGLE_HEIGHT +
-    THRESHOLD_COLOR_STRIP_HEIGHT * 
-    (1-(threshold->volume->threshold_min-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-  points[MIN_ARROW]->coords[4] = THRESHOLD_TRIANGLE_WIDTH + 
-    THRESHOLD_COLOR_STRIP_WIDTH;
-  points[MIN_ARROW]->coords[5] = THRESHOLD_COLOR_STRIP_HEIGHT * 
-    (1-(threshold->volume->threshold_min-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
+  switch (arrow) {
 
-  points[MAX_ARROW] = gnome_canvas_points_new(3);
-  if (threshold->volume->threshold_max > threshold->volume->max) {
-    max = threshold->volume->max;
+  case THRESHOLD_FULL_MIN_ARROW:
+    left = 0;
+    right = THRESHOLD_TRIANGLE_WIDTH;
+    point = THRESHOLD_TRIANGLE_HEIGHT/2.0 + 
+      THRESHOLD_COLOR_SCALE_HEIGHT * 
+      (1-(threshold->volume->threshold_min-threshold->volume->min)/
+       (threshold->volume->max-threshold->volume->min));
+    fill_color = 0xFFFFFFFF;
+    break;
 
-    /* upward pointing max arrow */
-    points[MAX_ARROW]->coords[0] = THRESHOLD_COLOR_STRIP_WIDTH+
-      THRESHOLD_TRIANGLE_WIDTH/2;
-    points[MAX_ARROW]->coords[1] = THRESHOLD_COLOR_STRIP_HEIGHT * 
-      (1-(max-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-    points[MAX_ARROW]->coords[2] = THRESHOLD_COLOR_STRIP_WIDTH;
-    points[MAX_ARROW]->coords[3] = THRESHOLD_TRIANGLE_HEIGHT +
-      THRESHOLD_COLOR_STRIP_HEIGHT * 
-      (1-(max-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-    points[MAX_ARROW]->coords[4] = points[MAX_ARROW]->coords[2]+
-      THRESHOLD_TRIANGLE_WIDTH;
-    points[MAX_ARROW]->coords[5] = points[MAX_ARROW]->coords[3];
+  case THRESHOLD_FULL_MAX_ARROW:
+    left = 0;
+    right = THRESHOLD_TRIANGLE_WIDTH;
+    point = THRESHOLD_TRIANGLE_HEIGHT/2.0 + 
+      THRESHOLD_COLOR_SCALE_HEIGHT * 
+      (1-(threshold->volume->threshold_max-threshold->volume->min)/
+       (threshold->volume->max-threshold->volume->min));
+    if (threshold->volume->threshold_max > threshold->volume->max) 
+      up_pointing=TRUE; /* want upward pointing max arrow */
+    fill_color = 0x00000000;
+    break;
 
-  }  else {
-    max = threshold->volume->threshold_max;
+  case THRESHOLD_SCALED_MIN_ARROW:
+    left = THRESHOLD_COLOR_SCALES_WIDTH+2*THRESHOLD_TRIANGLE_WIDTH;
+    right = THRESHOLD_COLOR_SCALES_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
+    point = THRESHOLD_TRIANGLE_HEIGHT/2.0 + 
+      THRESHOLD_COLOR_SCALE_HEIGHT * 
+      (1-(threshold->volume->threshold_min-threshold->initial_min)/
+       (threshold->initial_max-threshold->initial_min));
+    if (threshold->volume->threshold_min < threshold->initial_min)
+      down_pointing=TRUE;
+    fill_color = 0xFFFFFFFF;
+    break;
 
-    /* normal max arrow */
-    points[MAX_ARROW]->coords[0] = THRESHOLD_COLOR_STRIP_WIDTH;
-    points[MAX_ARROW]->coords[1] = THRESHOLD_TRIANGLE_HEIGHT/2 +
-      THRESHOLD_COLOR_STRIP_HEIGHT * 
-      (1-(max-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-    points[MAX_ARROW]->coords[2] = THRESHOLD_TRIANGLE_WIDTH + 
-      THRESHOLD_COLOR_STRIP_WIDTH;
-    points[MAX_ARROW]->coords[3] = THRESHOLD_TRIANGLE_HEIGHT +
-      THRESHOLD_COLOR_STRIP_HEIGHT * 
-      (1-(max-threshold->volume->min)/(threshold->volume->max-threshold->volume->min));
-    points[MAX_ARROW]->coords[4] = points[MAX_ARROW]->coords[2];
-    points[MAX_ARROW]->coords[5] = points[MAX_ARROW]->coords[3]-THRESHOLD_TRIANGLE_HEIGHT;
-  }
-  
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(threshold->color_strip), 0.0, 0.0,
-				 gdk_pixbuf_get_width(threshold->color_strip_rgb_image) 
-				 + THRESHOLD_TRIANGLE_WIDTH,
-				 gdk_pixbuf_get_height(threshold->color_strip_rgb_image)
-				 + THRESHOLD_TRIANGLE_HEIGHT + 1);
+  case THRESHOLD_SCALED_MAX_ARROW:
+    left = THRESHOLD_COLOR_SCALES_WIDTH+2*THRESHOLD_TRIANGLE_WIDTH;
+    right = THRESHOLD_COLOR_SCALES_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
+    point = THRESHOLD_TRIANGLE_HEIGHT/2.0 + 
+      THRESHOLD_COLOR_SCALE_HEIGHT * 
+	(1-(threshold->volume->threshold_max-threshold->initial_min)/
+	 (threshold->initial_max-threshold->initial_min));
+    if (threshold->volume->threshold_max > threshold->initial_max)
+      up_pointing=TRUE;
+    fill_color = 0x00000000;
+    break;
 
+  default:
+    return;
+  } /* end switch (arrow) */
 
-  gtk_widget_set_usize(threshold->color_strip,
-		       gdk_pixbuf_get_width(threshold->color_strip_rgb_image) + THRESHOLD_TRIANGLE_WIDTH,
-		       gdk_pixbuf_get_height(threshold->color_strip_rgb_image) + THRESHOLD_TRIANGLE_HEIGHT + 1);
-
-  if (threshold->color_strip_image != NULL) {
-    gnome_canvas_item_set(threshold->color_strip_image, "pixbuf", threshold->color_strip_rgb_image, NULL);
-    for (i_arrow = 0 ; i_arrow < NUM_THRESHOLD_ARROWS; i_arrow++)
-      gnome_canvas_item_set(threshold->arrow[i_arrow], "points", points[i_arrow], NULL);
+  if (up_pointing) {
+    points->coords[0] = left;
+    points->coords[1] = THRESHOLD_TRIANGLE_HEIGHT;
+    points->coords[2] = (left+right)/2.0;
+    points->coords[3] = 0;
+    points->coords[4] = right;
+    points->coords[5] = THRESHOLD_TRIANGLE_HEIGHT;
+  } else if (down_pointing) {
+    points->coords[0] = left;
+    points->coords[1] = THRESHOLD_COLOR_SCALE_HEIGHT;
+    points->coords[2] = (left+right)/2.0;
+    points->coords[3] = THRESHOLD_COLOR_SCALE_HEIGHT + THRESHOLD_TRIANGLE_HEIGHT;
+    points->coords[4] = right;
+    points->coords[5] = THRESHOLD_COLOR_SCALE_HEIGHT;
   } else {
-    threshold->color_strip_image = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_strip)),
-			    gnome_canvas_pixbuf_get_type(),
-			    "pixbuf", threshold->color_strip_rgb_image,
-			    "x", 0.0,
-			    "y", ((double) THRESHOLD_TRIANGLE_HEIGHT/2),
-			    NULL);
-
-    for (i_arrow = 0 ; i_arrow < NUM_THRESHOLD_ARROWS; i_arrow++) {
-      threshold->arrow[i_arrow] = 
-	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_strip)),
-			      gnome_canvas_polygon_get_type(),
-			      "points", points[i_arrow],
-			      "fill_color", "white",
-			      "outline_color", "black",
-			      "width_pixels", 2,
-			      NULL);
-      gtk_object_set_data(GTK_OBJECT(threshold->arrow[i_arrow]), "type", GINT_TO_POINTER(i_arrow));
-      gtk_signal_connect(GTK_OBJECT(threshold->arrow[i_arrow]), "event",
-			 GTK_SIGNAL_FUNC(threshold_arrow_cb),
-			 threshold);
-    }
+    points->coords[0] = left;
+    points->coords[1] = point - THRESHOLD_TRIANGLE_HEIGHT/2.0;
+    points->coords[2] = left;
+    points->coords[3] = point + THRESHOLD_TRIANGLE_HEIGHT/2.0; 
+    points->coords[4] = right;
+    points->coords[5] = point;
   }
 
-  for (i_arrow = 0 ; i_arrow < NUM_THRESHOLD_ARROWS; i_arrow++)
-    gnome_canvas_points_unref(points[i_arrow]);
+  if (threshold->arrow[arrow] != NULL)
+    gnome_canvas_item_set(threshold->arrow[arrow], "points", points, NULL);
+  else {
+    threshold->arrow[arrow] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales)),
+			    gnome_canvas_polygon_get_type(),
+			    "points", points,
+			    "fill_color_rgba", fill_color,
+			    "outline_color", "black",
+			    "width_pixels", 2,
+			    NULL);
+    gtk_object_set_data(GTK_OBJECT(threshold->arrow[arrow]), "type", GINT_TO_POINTER(arrow));
+    gtk_signal_connect(GTK_OBJECT(threshold->arrow[arrow]), "event",
+		       GTK_SIGNAL_FUNC(threshold_arrow_cb),
+		       threshold);
+  }
+  
+  gnome_canvas_points_unref(points);
+  
+  return;
+}
+
+
+/* function called to update the color scales */
+static void threshold_update_color_scale(AmitkThreshold * threshold, which_threshold_scale_t scale) {
+
+  gdouble x,y;
+  
+
+  /* update the color scale pixbuf's */
+  if (threshold->color_scale_rgb[scale] != NULL)
+    gdk_pixbuf_unref(threshold->color_scale_rgb[scale]);
+
+  switch (scale) {
+
+  case THRESHOLD_FULL:
+    threshold->color_scale_rgb[scale] =
+      image_from_colortable(threshold->volume->color_table,
+			    THRESHOLD_COLOR_SCALE_WIDTH,
+			    THRESHOLD_COLOR_SCALE_HEIGHT,
+			    threshold->volume->threshold_min,
+			    threshold->volume->threshold_max,
+			    threshold->volume->min,
+			    threshold->volume->max);
+    x = THRESHOLD_TRIANGLE_WIDTH;
+    y = THRESHOLD_TRIANGLE_HEIGHT/2.0;
+    break;
+
+  case THRESHOLD_SCALED:
+    threshold->color_scale_rgb[scale] =
+      image_from_colortable(threshold->volume->color_table,
+			    THRESHOLD_COLOR_SCALE_WIDTH,
+			    THRESHOLD_COLOR_SCALE_HEIGHT,
+			    threshold->volume->threshold_min,
+			    threshold->volume->threshold_max,
+			    threshold->initial_min,
+			    threshold->initial_max);
+    x = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH+THRESHOLD_COLOR_SCALE_SEPARATION;
+    y = THRESHOLD_TRIANGLE_HEIGHT/2.0;
+    break;
+
+  default:
+    x = y = 0.0;
+    break;
+
+  }
+  
+  if (threshold->color_scale_image[scale] != NULL) {
+    gnome_canvas_item_set(threshold->color_scale_image[scale], "pixbuf", 
+			  threshold->color_scale_rgb[scale], NULL);
+  } else {
+    threshold->color_scale_image[scale] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales)),
+			    gnome_canvas_pixbuf_get_type(),
+			    "pixbuf", threshold->color_scale_rgb[scale],
+			    "x", x, "y", y, NULL);
+  }
+
+  return;
+}
+
+static void threshold_update_connector_lines(AmitkThreshold * threshold, which_threshold_scale_t scale) {
+
+  gdouble temp;
+  GnomeCanvasPoints * line_points;
+
+  /* update the lines that connect the max and min of each color scale */
+  line_points = gnome_canvas_points_new(2);
+  line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
+  temp = (1.0-(threshold->volume->threshold_max-threshold->volume->min)/
+	  (threshold->volume->max-threshold->volume->min));
+  if (temp < 0.0) temp = 0.0;
+  line_points->coords[1] = THRESHOLD_TRIANGLE_HEIGHT/2.0 + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
+  line_points->coords[2] = THRESHOLD_COLOR_SCALE_WIDTH+
+    THRESHOLD_TRIANGLE_WIDTH+THRESHOLD_COLOR_SCALE_SEPARATION;
+  temp = (1.0-(threshold->volume->threshold_max-threshold->initial_min)/
+	  (threshold->initial_max-threshold->initial_min));
+  if ((temp < 0.0) || (scale==THRESHOLD_FULL)) temp = 0.0;
+  line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT/2.0 + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
+  if (threshold->connector_line[THRESHOLD_MAX_LINE] != NULL)
+    gnome_canvas_item_set(threshold->connector_line[THRESHOLD_MAX_LINE],
+			  "points", line_points, NULL);
+  else
+    threshold->connector_line[THRESHOLD_MAX_LINE] =
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales)),
+			    gnome_canvas_line_get_type(),
+			    "points", line_points, 
+			    "fill_color", "black",
+			    "width_units", 1.0, NULL);
+  gnome_canvas_points_unref(line_points);
+
+  line_points = gnome_canvas_points_new(2);
+  line_points->coords[0] = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH;
+  temp = (1.0-(threshold->volume->threshold_min-threshold->volume->min)/
+	  (threshold->volume->max-threshold->volume->min));
+  if (temp > 1.0) temp = 1.0;
+  line_points->coords[1] = THRESHOLD_TRIANGLE_HEIGHT/2.0 + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
+  line_points->coords[2] = THRESHOLD_COLOR_SCALE_WIDTH+
+    THRESHOLD_TRIANGLE_WIDTH+THRESHOLD_COLOR_SCALE_SEPARATION;
+  temp = (1.0-(threshold->volume->threshold_min-threshold->initial_min)/
+	  (threshold->initial_max-threshold->initial_min));
+  if ((temp > 1.0) || (scale==THRESHOLD_FULL)) temp = 1.0;
+  line_points->coords[3] = THRESHOLD_TRIANGLE_HEIGHT/2.0 + THRESHOLD_COLOR_SCALE_HEIGHT * temp;
+  if (threshold->connector_line[THRESHOLD_MIN_LINE] != NULL)
+    gnome_canvas_item_set(threshold->connector_line[THRESHOLD_MIN_LINE],
+			  "points", line_points, NULL);
+  else
+    threshold->connector_line[THRESHOLD_MIN_LINE] =
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->color_scales)),
+			    gnome_canvas_line_get_type(),
+			    "points", line_points, 
+			    "fill_color", "black",
+			    "width_units", 1.0, NULL);
+  gnome_canvas_points_unref(line_points);
 
   return;
 } 
 
 
+/* update all the color scales */
+static void threshold_update_color_scales(AmitkThreshold * threshold) {
+    threshold_update_color_scale(threshold, THRESHOLD_FULL);
+    threshold->initial_min = threshold->volume->threshold_min;
+    threshold->initial_max = threshold->volume->threshold_max;
+    threshold_update_color_scale(threshold, THRESHOLD_SCALED);
+    threshold_update_connector_lines(threshold, THRESHOLD_SCALED);
+    return;
+}
 
 /* function called when the max or min triangle is moved 
  * mostly taken from Pennington's fine book */
@@ -486,7 +667,7 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
   gdouble item_x, item_y;
   gdouble delta;
   amide_data_t temp;
-  which_threshold_entry_t which_threshold_entry;
+  which_threshold_arrow_t which_threshold_arrow;
   
   /* get the location of the event, and convert it to our coordinate system */
   item_x = event->button.x;
@@ -494,56 +675,79 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
   gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item_x, &item_y);
 
   /* figure out which of the arrows triggered the callback */
-  which_threshold_entry = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "type"));
+  which_threshold_arrow = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "type"));
 
   /* switch on the event which called this */
   switch (event->type)
     {
     case GDK_BUTTON_PRESS:
       threshold->initial_y = item_y;
-      switch (which_threshold_entry)
-	{
-	case MAX_ARROW:
-	  threshold->initial_max = threshold->volume->threshold_max;
-	  break;
-	case MIN_ARROW:
-	default:
-	  threshold->initial_min = threshold->volume->threshold_min;
-	  break;
-	}
+      threshold->initial_max = threshold->volume->threshold_max;
+      threshold->initial_min = threshold->volume->threshold_min;
+      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(threshold->arrow[which_threshold_arrow]),
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     threshold_cursor,
+			     event->button.time);
       break;
 
     case GDK_MOTION_NOTIFY:
       delta = threshold->initial_y - item_y;
 
       if (event->motion.state & GDK_BUTTON1_MASK) {
-	delta = (delta / ((gdouble) THRESHOLD_COLOR_STRIP_HEIGHT)) *
-	  (threshold->volume->max - threshold->volume->min);
-
-	switch (which_threshold_entry) 
+	delta /= THRESHOLD_COLOR_SCALE_HEIGHT;
+	
+	switch (which_threshold_arrow) 
 	  {
-	  case MAX_ARROW:
+	  case THRESHOLD_FULL_MAX_ARROW:
+	    delta *= (threshold->volume->max - threshold->volume->min);
 	    temp = threshold->initial_max + delta;
-	    if (temp <= threshold->volume->threshold_min) 
-	      temp = threshold->volume->threshold_min;
-	    if (temp < 0.0)
-	      temp = 0.0;
+	    if (temp <= threshold->volume->threshold_min) temp = threshold->volume->threshold_min;
+	    if (temp < 0.0) temp = 0.0;
+	    if (temp-CLOSE < threshold->volume->threshold_min) temp = threshold->volume->threshold_min+CLOSE;
 	    threshold->volume->threshold_max = temp;
+	    threshold_update_arrow(threshold, THRESHOLD_FULL_MAX_ARROW);
+	    threshold_update_connector_lines(threshold, THRESHOLD_FULL);
 	    break;
-	  case MIN_ARROW:
-	  default:
+	  case THRESHOLD_FULL_MIN_ARROW:
+	    delta *= (threshold->volume->max - threshold->volume->min);
 	    temp = threshold->initial_min + delta;
-	    if (temp < threshold->volume->min) 
-	      temp = threshold->volume->min;
-	    if (temp >= threshold->volume->threshold_max)
-	      temp = threshold->volume->threshold_max;
-	    if (temp >= threshold->volume->max)
-	      temp = threshold->volume->max;
+	    if (temp < threshold->volume->min) temp = threshold->volume->min;
+	    if (temp+CLOSE > threshold->volume->threshold_max) temp = threshold->volume->threshold_max-CLOSE;
+	    if (temp > threshold->volume->max) temp = threshold->volume->max;
 	    threshold->volume->threshold_min = temp;
+	    threshold_update_arrow(threshold, THRESHOLD_FULL_MIN_ARROW);
+	    threshold_update_connector_lines(threshold, THRESHOLD_FULL);
+	    break;
+	  case THRESHOLD_SCALED_MAX_ARROW:
+	    delta *= (threshold->initial_max - threshold->initial_min);
+	    temp = threshold->initial_max + delta;
+	    if (temp <= threshold->volume->threshold_min) temp = threshold->volume->threshold_min;
+	    if (temp < 0.0) temp = 0.0;
+	    if (temp-CLOSE < threshold->volume->threshold_min) temp = threshold->volume->threshold_min+CLOSE;
+	    threshold->volume->threshold_max = temp;
+	    threshold_update_arrow(threshold, THRESHOLD_FULL_MAX_ARROW);
+	    threshold_update_arrow(threshold, THRESHOLD_SCALED_MAX_ARROW);
+	    threshold_update_color_scale(threshold, THRESHOLD_SCALED);
+	    threshold_update_connector_lines(threshold, THRESHOLD_SCALED);
+	    break;
+	  case THRESHOLD_SCALED_MIN_ARROW:
+	    delta *= (threshold->initial_max - threshold->initial_min);
+	    temp = threshold->initial_min + delta;
+	    if (temp < threshold->volume->min) temp = threshold->volume->min;
+	    if (temp >= threshold->volume->threshold_max) temp = threshold->volume->threshold_max;
+	    if (temp+CLOSE > threshold->volume->threshold_max) temp = threshold->volume->threshold_max-CLOSE;
+	    if (temp > threshold->volume->max) temp = threshold->volume->max;
+	    threshold->volume->threshold_min = temp;
+	    threshold_update_arrow(threshold, THRESHOLD_FULL_MIN_ARROW);
+	    threshold_update_arrow(threshold, THRESHOLD_SCALED_MIN_ARROW);
+	    threshold_update_color_scale(threshold, THRESHOLD_SCALED);
+	    threshold_update_connector_lines(threshold, THRESHOLD_SCALED);
+	    break;
+	  default:
 	    break;
 	  }
 
-	threshold_update_canvas(threshold);
+	threshold_update_color_scale(threshold, THRESHOLD_FULL);
 	threshold_update_entries(threshold);   /* reset the entry widgets */
       }
       break;
@@ -552,9 +756,16 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
       threshold_update_entries(threshold);   /* reset the entry widgets */
 
+      /* reset the scaled color scale */
+      threshold->initial_max = threshold->volume->threshold_max;
+      threshold->initial_min = threshold->volume->threshold_min;
+      threshold_update_arrow(threshold, THRESHOLD_SCALED_MAX_ARROW);
+      threshold_update_arrow(threshold, THRESHOLD_SCALED_MIN_ARROW);
+      threshold_update_color_scale(threshold, THRESHOLD_SCALED);
+      threshold_update_connector_lines(threshold, THRESHOLD_SCALED);
+
       /* signal we've changed */
       gtk_signal_emit (GTK_OBJECT (threshold), threshold_signals[THRESHOLD_CHANGED]);
-
       break;
 
     default:
@@ -579,7 +790,7 @@ static void threshold_color_table_cb(GtkWidget * widget, gpointer data) {
 
     /* and inact the changes */
     threshold->volume->color_table = i_color_table;
-    threshold_update_canvas(threshold);
+    threshold_update_color_scales(threshold);
 
     /* signal we've changed */
     gtk_signal_emit (GTK_OBJECT (threshold), threshold_signals[COLOR_CHANGED]);
@@ -638,7 +849,9 @@ static void threshold_entry_cb(GtkWidget* widget, gpointer data) {
   threshold_update_entries(threshold);
   /* if we had a valid change, update the canvases */
   if (update) {
-    threshold_update_canvas(threshold);
+    threshold_update_color_scales(threshold);
+    threshold_update_arrow(threshold, THRESHOLD_FULL_MAX_ARROW);
+    threshold_update_arrow(threshold, THRESHOLD_FULL_MIN_ARROW);
 
     /* signal we've changed */
     gtk_signal_emit (GTK_OBJECT (threshold), threshold_signals[THRESHOLD_CHANGED]);
@@ -659,13 +872,6 @@ void amitk_threshold_new_volume(AmitkThreshold * threshold, volume_t * new_volum
   threshold->volume = volume_free(threshold->volume); /* remove ref to the old volume */
   threshold->volume = volume_add_reference(new_volume); /* add a reference to the new volume */
 
-  /* reset the distribution image */
-  if (threshold->bar_graph_rgb_image != NULL)
-    gdk_pixbuf_unref(threshold->bar_graph_rgb_image);
-
-  threshold->bar_graph_rgb_image = image_of_distribution(threshold->volume);
-  gnome_canvas_item_set(threshold->bar_graph_item, "pixbuf", threshold->bar_graph_rgb_image, NULL);
-
   /* and upate the widget */
   amitk_threshold_update(threshold);
   
@@ -680,8 +886,11 @@ void amitk_threshold_update(AmitkThreshold * threshold) {
   /* update what's on the pull down menu */
   gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu), threshold->volume->color_table);
 
+  threshold_update_histogram(threshold);
   threshold_update_entries(threshold); /* update what's in the entry widgets */
-  threshold_update_canvas(threshold); /* reset the color strip */
+  threshold_update_color_scales(threshold);
+  threshold_update_arrow(threshold, THRESHOLD_FULL_MAX_ARROW);
+  threshold_update_arrow(threshold, THRESHOLD_FULL_MIN_ARROW);
 
   return;
 
@@ -690,6 +899,7 @@ void amitk_threshold_update(AmitkThreshold * threshold) {
 
 GtkWidget* amitk_threshold_new (volume_t * volume) {
   AmitkThreshold * threshold;
+  which_threshold_arrow_t i_arrow;
 
   g_return_val_if_fail(volume != NULL, NULL);
 
@@ -699,7 +909,9 @@ GtkWidget* amitk_threshold_new (volume_t * volume) {
 
   threshold_construct(threshold);
   threshold_update_entries(threshold); /* update what's in the entry widgets */
-  threshold_update_canvas(threshold); /* reset the color strip */
+  threshold_update_color_scales(threshold);
+  for (i_arrow=0;i_arrow<NUM_THRESHOLD_ARROWS;i_arrow++)
+    threshold_update_arrow(threshold, i_arrow);
 
   return GTK_WIDGET (threshold);
 }
@@ -759,7 +971,6 @@ static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass)
 
 static void threshold_dialog_init (AmitkThresholdDialog * dialog)
 {
-  GtkWidget * action_area;
   GtkWidget * main_vbox;
   GtkWidget * hseparator;
 
@@ -787,12 +998,9 @@ static void threshold_dialog_init (AmitkThresholdDialog * dialog)
   gtk_container_add (GTK_CONTAINER (main_vbox), dialog->frame);
   gtk_widget_show (dialog->frame);
 
-  action_area = gtk_hbutton_box_new ();
-  gtk_button_box_set_layout(GTK_BUTTON_BOX(action_area), GTK_BUTTONBOX_END);
-  gtk_button_box_set_spacing(GTK_BUTTON_BOX(action_area), 5);
-  gtk_box_pack_end (GTK_BOX(main_vbox), action_area, FALSE, FALSE, 0);
-  gtk_widget_show (action_area);
-
+  /* hookup a callback to load in a pixmap icon when realized */
+  gtk_signal_connect(GTK_OBJECT(dialog), "realize", GTK_SIGNAL_FUNC(threshold_dialog_realize_cb), NULL);
+  return;
 }
 
 /* this gets called after we have a volume */
@@ -812,6 +1020,21 @@ static void threshold_dialog_construct(AmitkThresholdDialog * dialog, volume_t *
   temp_string = g_strdup_printf("data set: %s\n",volume->name);
   gtk_label_set_text (GTK_LABEL(dialog->volume_label), temp_string);
   g_free(temp_string);
+
+  return;
+}
+
+
+/* this gets called when the threshold is realized */
+static void threshold_dialog_realize_cb(GtkWidget * dialog, gpointer data) {
+  GdkPixmap *pm;
+  GdkBitmap *bm;
+
+  g_return_if_fail(dialog != NULL);
+
+  /* setup the threshold's icon */
+  pm = gdk_pixmap_create_from_xpm_d(dialog->window, &bm,NULL,icon_threshold_xpm),
+  gdk_window_set_icon(dialog->window, NULL, pm, bm);
 
   return;
 }
@@ -926,7 +1149,6 @@ static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass)
 
 static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
 {
-  GtkWidget * action_area;
   GtkWidget * main_vbox;
 
   dialog->thresholds = NULL;
@@ -945,12 +1167,8 @@ static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
   gtk_container_add (GTK_CONTAINER (main_vbox), dialog->notebook);
   gtk_widget_show (dialog->notebook);
 
-  action_area = gtk_hbutton_box_new ();
-  gtk_button_box_set_layout(GTK_BUTTON_BOX(action_area), GTK_BUTTONBOX_END);
-  gtk_button_box_set_spacing(GTK_BUTTON_BOX(action_area), 5);
-  gtk_box_pack_end (GTK_BOX(main_vbox), action_area, FALSE, FALSE, 0);
-  gtk_widget_show (action_area);
-
+  /* hookup a callback to load in a pixmap icon when realized */
+  gtk_signal_connect(GTK_OBJECT(dialog), "realize", GTK_SIGNAL_FUNC(threshold_dialog_realize_cb), NULL);
 }
 
 /* this gets called after we have a volume */

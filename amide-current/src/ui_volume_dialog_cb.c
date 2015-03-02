@@ -372,9 +372,8 @@ void ui_volume_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer dat
     return;
   }
 
-  /* copy the new info on over */
+  /* copy the needed new info on over */
   ui_volume_list_item->volume->modality = volume_new_info->modality;
-  ui_volume_list_item->volume->color_table = volume_new_info->color_table; 
   ui_volume_list_item->volume->coord_frame = volume_new_info->coord_frame;
   ui_volume_list_item->volume->voxel_size = volume_new_info->voxel_size;
   volume_set_name(ui_volume_list_item->volume, volume_new_info->name);
@@ -452,6 +451,7 @@ void ui_volume_dialog_cb_help(GnomePropertyBox *volume_dialog, gint page_number,
   GnomeHelpMenuEntry help_ref_2 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-ROTATE"};
   GnomeHelpMenuEntry help_ref_3 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-COLORMAP_THRESHOLD"};
   GnomeHelpMenuEntry help_ref_4 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-TIME"};
+  GnomeHelpMenuEntry help_ref_5 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-IMMUTABLES"};
 
 
   switch (page_number) {
@@ -470,6 +470,9 @@ void ui_volume_dialog_cb_help(GnomePropertyBox *volume_dialog, gint page_number,
   case 4:
     gnome_help_display (0, &help_ref_4);
     break;
+  case 5:
+    gnome_help_display (0, &help_ref_5);
+    break;
   default:
     gnome_help_display (0, &help_ref);
     break;
@@ -479,7 +482,7 @@ void ui_volume_dialog_cb_help(GnomePropertyBox *volume_dialog, gint page_number,
 }
 
 /* function called to destroy the volume dialog */
-void ui_volume_dialog_cb_close_event(GtkWidget* widget, gpointer data) {
+void ui_volume_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_volume_list_t * ui_volume_list_item = data;
   volume_t * volume_new_info;

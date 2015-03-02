@@ -1,4 +1,4 @@
-/* ui_study_rois_cb.h
+/* ui_roi_analysis_dialog_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001 Andy Loening
@@ -23,19 +23,10 @@
   02111-1307, USA.
 */
 
-/* defines */
-#define UI_STUDY_ROIS_SHIFT_BUTTON 1
-#define UI_STUDY_ROIS_SHIFT_MASK GDK_BUTTON1_MASK
-#define UI_STUDY_ROIS_ROTATE_BUTTON 2
-#define UI_STUDY_ROIS_ROTATE_MASK GDK_BUTTON2_MASK
-#define UI_STUDY_ROIS_RESIZE_BUTTON 3
-#define UI_STUDY_ROIS_RESIZE_MASK GDK_BUTTON3_MASK
 
 
 
 /* external functions */
-gboolean ui_study_rois_cb_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data);
-void ui_study_rois_cb_calculate_all(GtkWidget * widget, gpointer data);
-void ui_study_rois_cb_calculate_selected(GtkWidget * widget, gpointer data);
-void ui_study_rois_cb_calculate(ui_study_t * ui_study, gboolean All);
-void ui_study_rois_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
+void ui_roi_analysis_dialog_cb_export(GtkWidget * widget, gpointer data);
+gboolean ui_roi_analysis_dialog_cb_delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+void ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data);

@@ -41,7 +41,7 @@ typedef guchar rendering_gradient_t;
 typedef enum {DENSITY_CLASSIFICATION, GRADIENT_CLASSIFICATION, NUM_CLASSIFICATIONS} classification_t;
 typedef enum {HIGHEST, HIGH, FAST, FASTEST, NUM_QUALITIES} rendering_quality_t;
 typedef enum {OPACITY, GRAYSCALE, NUM_PIXEL_TYPES} pixel_type_t;
-typedef enum {CURVE_LINEAR, CURVE_SPLINE, CURVE_FREE, NUM_CURVE_TYPES} curve_type_t;
+typedef enum {CURVE_LINEAR, CURVE_SPLINE, NUM_CURVE_TYPES} curve_type_t;
 
 typedef struct {        /*   contents of a voxel */
   rendering_normal_t normal;        /*   encoded surface normal vector */

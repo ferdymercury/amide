@@ -31,14 +31,15 @@
 #include "roi.h"
 
 /* external variables */
-gchar * roi_type_names[] = {"Ellipsoid", \
-			    "Elliptic Cylinder", \
+gchar * roi_type_names[] = {"Ellipsoid", 
+			    "Elliptic Cylinder", 
 			    "Box"};
-
-gchar * roi_grain_names[] = {"1", \
-			     "8", \
-			     "27", \
-			     "64"};
+gchar * roi_menu_names[] = {"_Ellipsoid", 
+			    "Elliptic _Cylinder", 
+			    "_Box"};
+gchar * roi_menu_explanation[] = {"Add a new elliptical ROI", 
+				  "Add a new elliptic cylinder ROI", 
+				  "Add a new box shaped ROI"};
 
 /* free up an roi */
 roi_t * roi_free(roi_t * roi) {
@@ -49,14 +50,11 @@ roi_t * roi_free(roi_t * roi) {
   /* sanity checks */
   g_return_val_if_fail(roi->reference_count > 0, NULL);
 
-  /* remove a reference count */
-  roi->reference_count--;
+  roi->reference_count--; /* remove a reference count */
 
-  /* things we always do */
-  roi->children = roi_list_free(roi->children);
-  
   /* if we've removed all reference's, free the roi */
   if (roi->reference_count == 0) {
+    roi->children = roi_list_free(roi->children);
 #ifdef AMIDE_DEBUG
     g_print("freeing roi: %s\n",roi->name);
 #endif
@@ -82,7 +80,6 @@ roi_t * roi_init(void) {
   temp_roi->name = NULL;
   temp_roi->corner = realpoint_zero;
   rs_set_offset(&temp_roi->coord_frame, realpoint_zero);
-  temp_roi->grain = GRAINS_1;
   rs_set_axis(&temp_roi->coord_frame, default_axis);
   temp_roi->parent = NULL;
   temp_roi->children = NULL;
@@ -120,7 +117,6 @@ gchar * roi_write_xml(roi_t * roi, gchar * study_directory) {
   doc = xmlNewDoc("1.0");
   doc->children = xmlNewDocNode(doc, NULL, "ROI", roi->name);
   xml_save_string(doc->children, "type", roi_type_names[roi->type]);
-  xml_save_string(doc->children, "grain", roi_grain_names[roi->grain]);
   xml_save_realspace(doc->children, "coord_frame", roi->coord_frame);
   xml_save_realpoint(doc->children, "corner", roi->corner);
 
@@ -145,7 +141,6 @@ roi_t * roi_load_xml(gchar * roi_xml_filename, const gchar * study_directory) {
   xmlNodePtr nodes;
   xmlNodePtr children_nodes;
   roi_type_t i_roi_type;
-  roi_grain_t i_roi_grain;
   gchar * temp_string;
 
   new_roi = roi_init();
@@ -183,14 +178,6 @@ roi_t * roi_load_xml(gchar * roi_xml_filename, const gchar * study_directory) {
 	new_roi->type = i_roi_type;
   g_free(temp_string);
 
-  /* figure out the grain */
-  temp_string = xml_get_string(nodes, "grain");
-  if (temp_string != NULL)
-    for (i_roi_grain=0; i_roi_grain < NUM_GRAIN_TYPES; i_roi_grain++) 
-      if (g_strcasecmp(temp_string, roi_grain_names[i_roi_grain]) == 0)
-	new_roi->grain = i_roi_grain;
-  g_free(temp_string);
-
   /* and figure out the rest of the parameters */
   new_roi->coord_frame = xml_get_realspace(nodes, "coord_frame");
   new_roi->corner = xml_get_realpoint(nodes, "corner");
@@ -226,7 +213,6 @@ roi_t * roi_copy(roi_t * src_roi) {
   dest_roi->coord_frame = src_roi->coord_frame;
   dest_roi->corner = src_roi->corner;
   dest_roi->parent = src_roi->parent;
-  dest_roi->grain = src_roi->grain;
 
   /* make a separate copy in memory of the roi's children */
   if (src_roi->children != NULL)
@@ -288,14 +274,14 @@ roi_list_t * roi_list_free(roi_list_t * roi_list) {
   /* remove a reference count */
   roi_list->reference_count--;
 
-  /* things we always do */
-  roi_list->roi = roi_free(roi_list->roi);
 
-  /* recursively delete rest of list */
-  roi_list->next = roi_list_free(roi_list->next);
 
   /* stuff to do if reference count is zero */
   if (roi_list->reference_count == 0) {
+    /* recursively delete rest of list */
+    roi_list->next = roi_list_free(roi_list->next);
+
+    roi_list->roi = roi_free(roi_list->roi);
     g_free(roi_list);
     roi_list = NULL;
   }
@@ -320,6 +306,11 @@ roi_list_t * roi_list_init(void) {
   return temp_roi_list;
 }
 
+/* count the number of roi's in the roi list */
+guint roi_list_count(roi_list_t * list) {
+  if (list == NULL) return 0;
+  else return (1+roi_list_count(list->next)+roi_list_count(list->roi->children));
+}
 
 /* function to write a list of rois as xml data.  Function calls
    roi_write_xml to writeout each roi, and adds information about the
@@ -457,6 +448,14 @@ roi_list_t * roi_list_copy(roi_list_t * src_roi_list) {
     dest_roi_list->next = roi_list_copy(src_roi_list->next);
 
   return dest_roi_list;
+}
+
+/* adds one to the reference count of an roi list*/
+roi_list_t * roi_list_add_reference(roi_list_t * rois) {
+
+  rois->reference_count++;
+
+  return rois;
 }
 
 
@@ -649,6 +648,7 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
    enclosed within */
 void roi_subset_of_volume(roi_t * roi,
 			  const volume_t * volume,
+			  intpoint_t frame,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim){
 
@@ -667,13 +667,16 @@ void roi_subset_of_volume(roi_t * roi,
   /* look at all eight corners of the roi cube, figure out the max and min dim */
   realspace_get_enclosing_corners(roi->coord_frame, roi_corner,
 				  volume->coord_frame, subset_corner);
-				  
 
   /* and convert the subset_corners into indexes */
-  //  subset_index[0] = volume_realpoint_to_voxel(volume,subset_corner[0],0);
   VOLUME_REALPOINT_TO_VOXEL(volume, subset_corner[0], 0, subset_index[0]);
-  //subset_index[1] = volume_realpoint_to_voxel(volume,subset_corner[1],0);
   VOLUME_REALPOINT_TO_VOXEL(volume, subset_corner[1], 0, subset_index[1]);
+
+  /* and add one, as we want to completely enclose the roi */
+  subset_index[1].x += 1;
+  subset_index[1].y += 1;
+  subset_index[1].z += 1;
+  
 
   /* sanity checks */
   if (subset_index[0].x < 0) subset_index[0].x = 0;
@@ -691,233 +694,12 @@ void roi_subset_of_volume(roi_t * roi,
 
   /* and calculate the return values */
   *subset_start = subset_index[0];
-  REALPOINT_SUB(subset_index[1],subset_index[0],*subset_dim);
+  subset_start->t = frame;
+  REALPOINT_SUB(subset_index[1], subset_index[0], *subset_dim);
+  subset_dim->t=1;
 
   return;
 }
-
-
-/* calculate an analysis of several statistical values for an roi on
-   a given volume.
-   note: the "grain" input indicates how many subvoxels we'll divide
-   each voxel up into when calculating our statistics.  Setting the grain
-   to something more than 1 [GRAIN_1], such as 8 [GRAIN_8] or 64 [GRAIN_64]
-   may be useful for getting accurate statistics on small roi's */
-roi_analysis_t roi_calculate_analysis(roi_t * roi, 
-				      const volume_t * volume,
-				      roi_grain_t grain,
-				      guint frame) {
-  
-  roi_analysis_t analysis;
-  realpoint_t roi_corner[2];
-  realpoint_t center, radius,roi_p, volume_p;
-  floatpoint_t height;
-  intpoint_t voxel_grain_steps;
-  amide_data_t temp_data, voxel_grain_size;
-  voxelpoint_t i,j;
-  voxelpoint_t init,dim;
-  gboolean voxel_in;
-
-#ifdef AMIDE_DEBUG
-  g_print("Calculating ROI: %s on Volume: %s using Grain %s\n",
-	  roi->name, volume->name, roi_grain_names[roi->grain]);
-#endif
-  
-  /* get the roi corners in roi space */
-  roi_corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame),
-					      roi->coord_frame);
-  roi_corner[1] = roi->corner;
-
-  /* figure out the center of the object in it's space*/
-  center = rp_add(rp_cmult(0.5,roi_corner[1]), rp_cmult(0.5,roi_corner[0]));
-  
-  /* figure out the radius in each direction */
-  radius = rp_cmult(0.5, rp_diff(roi_corner[1],roi_corner[0]));
-  
-  /* figure out the height, needed by some roi's */
-  height = fabs(roi_corner[1].z-roi_corner[0].z);
-  
-  /* initialize the analysis data structure based on the center of the roi */
-  volume_p =  realspace_alt_coord_to_alt(center, roi->coord_frame, volume->coord_frame);
-  //i = volume_realpoint_to_voxel(volume,volume_p, frame);
-  VOLUME_REALPOINT_TO_VOXEL(volume, volume_p, frame, i);
-  temp_data = (data_set_includes_voxel(volume->data_set,i)) ? volume_value(volume,i): EMPTY;
-
-  /* initialize values */
-  analysis.voxels = 0.0; 
-  analysis.mean = 0;
-  analysis.min = analysis.max = temp_data;
-  analysis.var = 0;
-
-  /* sanity checks */
-  if (roi_undrawn(roi)) {
-    g_warning("%s: ROI: %s appears not to have been drawn",PACKAGE, roi->name);
-    return analysis;
-  }
-
-  /* figure out what portion of the volume we'll be iterating over */
-  roi_subset_of_volume(roi,volume,&init,&dim);
-
-  /* set some variables based on or grain size */
-  switch(grain) {
-  case GRAINS_64:
-    voxel_grain_size = 1.0/64.0;
-    voxel_grain_steps = 4; /* the cube root of 64 */
-  break;
-  case GRAINS_27:
-    voxel_grain_size = 1.0/27.0;
-    voxel_grain_steps = 3; /* the cube root of 27 */
-  break;
-  case GRAINS_8:
-    voxel_grain_size = 1.0/8.0;
-    voxel_grain_steps = 2; /* the cube root of 8 */
-  break;
-  case GRAINS_1:
-  default:
-    voxel_grain_size = 1.0;
-    voxel_grain_steps = 1; /* the cube root of 1 */
-  break;
-  }
-
-  /* alright, iterate through the roi space and calculate our analysis values
-   * the index i corresponds to the voxel, the index j corresponds to the 
-   * subvoxel within that voxel */
-  i.t = frame;
-  for (i.z = init.z; i.z<(init.z+dim.z);i.z++) {
-    for (j.z = 0 ; j.z < voxel_grain_steps ; j.z++) {
-      volume_p.z = i.z*volume->voxel_size.z + 
-	(j.z+1)*volume->voxel_size.z/(voxel_grain_steps+1);
-
-      for (i.y = init.y; i.y<(init.y+dim.y);i.y++) {
-	for (j.y = 0 ; j.y < voxel_grain_steps ; j.y++) {
-	  volume_p.y = i.y*volume->voxel_size.y + 
-	    (j.y+1)*volume->voxel_size.y/(voxel_grain_steps+1);
-
-	  for (i.x = init.x; i.x<(init.x+dim.x);i.x++) {
-	    for (j.x = 0 ; j.x < voxel_grain_steps ; j.x++) {
-	      volume_p.x = i.x*volume->voxel_size.x + 
-		(j.x+1)*volume->voxel_size.x/(voxel_grain_steps+1);
-
-	      /* get the corresponding roi point */
-	      roi_p = realspace_alt_coord_to_alt(volume_p,
-						 volume->coord_frame,
-						 roi->coord_frame);
-
-	      /* determine if it's in or not */
-	      switch(roi->type) {
-	      case BOX: 
-		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
-		break;
-	      case CYLINDER:
-		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, 
-							  height, radius);
-		break;
-	      case ELLIPSOID: 
-		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
-		break;
-	      default:
-		g_warning("%s: roi type %d not fully implemented!",PACKAGE, roi->type);
-		return analysis;
-		break;
-	      };
-	      
-	      if (voxel_in) {
-		if (!data_set_includes_voxel(volume->data_set,i)) temp_data = EMPTY;
-		else temp_data = volume_value(volume,i);
-	  
-		analysis.mean += temp_data*voxel_grain_size;
-		analysis.voxels += voxel_grain_size;
-		if ((temp_data) < analysis.min)
-		  analysis.min = temp_data;
-		if ((temp_data) > analysis.max)
-		  analysis.max = temp_data;
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-
-  /* finish mean calculation */
-  if (analysis.voxels > CLOSE) /* make sure we don't div by 0 */
-    analysis.mean /= analysis.voxels;
-  else
-    analysis.mean /= CLOSE;
-  
-  /* now iterate over the volume again to calculate the variance.... */
-  i.t = frame;
-  for (i.z = init.z; i.z<(init.z+dim.z);i.z++) {
-    for (j.z = 0 ; j.z < voxel_grain_steps ; j.z++) {
-      volume_p.z = i.z*volume->voxel_size.z + 
-	(j.z+1)*volume->voxel_size.z/(voxel_grain_steps+1);
-
-      for (i.y = init.y; i.y<(init.y+dim.y);i.y++) {
-	for (j.y = 0 ; j.y < voxel_grain_steps ; j.y++) {
-	  volume_p.y = i.y*volume->voxel_size.y + 
-	    (j.y+1)*volume->voxel_size.y/(voxel_grain_steps+1);
-
-	  for (i.x = init.x; i.x<(init.x+dim.x);i.x++) {
-	    for (j.x = 0 ; j.x < voxel_grain_steps ; j.x++) {
-	      volume_p.x = i.x*volume->voxel_size.x + 
-		(j.x+1)*volume->voxel_size.x/(voxel_grain_steps+1);
-
-	      /* get the corresponding roi point */
-	      roi_p = realspace_alt_coord_to_alt(volume_p,
-						 volume->coord_frame,
-						 roi->coord_frame);
-
-	      /* determine if it's in or not */
-	      switch(roi->type) {
-	      case BOX: 
-		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
-		break;
-	      case CYLINDER:
-		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, 
-							  height, radius);
-		break;
-	      case ELLIPSOID: 
-		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
-		break;
-	      default:
-		g_warning("%s; roi type %d not fully implemented!",PACKAGE, roi->type);
-		return analysis;
-		break;
-	      };
-	      
-	      if (voxel_in) {
-		if (!data_set_includes_voxel(volume->data_set,i)) temp_data = EMPTY;
-		else temp_data = volume_value(volume,i);
-		
-		analysis.var += 
-		  voxel_grain_size*
-		  (temp_data-analysis.mean)*(temp_data-analysis.mean);
-	      }
-	    }
-	  }
-	}
-      }
-    }
-  }
-
-  /* and divide to get the final var, note I'm using N and not (N-1), cause
-     my mean is calculated from the whole data set and not just a sample of it.
-     If anyone else with more statistical experience disagrees, please speak
-     up */
-  if (analysis.voxels > CLOSE) /* make sure we don't div by 0 */
-    analysis.var /= analysis.voxels;
-  else
-    analysis.var /= CLOSE;
-
-  /* and calculate the time midpoint of the data */
-  analysis.time_midpoint = 
-    (volume_end_time(volume, frame) + volume_start_time(volume, frame))/2.0;
-
-  return analysis;
-}
-
-
-
 
 
 

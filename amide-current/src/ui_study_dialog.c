@@ -125,7 +125,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(study_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_close_event),
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_close),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(study_dialog), "apply",
 		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_apply),

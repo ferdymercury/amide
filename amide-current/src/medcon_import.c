@@ -37,7 +37,7 @@
 #undef VERSION 
 #include "config.h"
 
-volume_t * medcon_import(gchar * filename) {
+volume_t * medcon_import(const gchar * filename) {
 
   FILEINFO medcon_file_info;
   gint error;
@@ -45,6 +45,7 @@ volume_t * medcon_import(gchar * filename) {
   voxelpoint_t i;
   volume_t * temp_volume;
   gchar * volume_name;
+  gchar * import_filename;
   gchar ** frags=NULL;
   
   /* setup some defaults */
@@ -55,10 +56,13 @@ volume_t * medcon_import(gchar * filename) {
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
 
   /* open the file */
-  if ((error = MdcOpenFile(&medcon_file_info, filename)) != MDC_OK) {
+  import_filename = g_strdup(filename); /* this gets around the facts that filename is type const */
+  if ((error = MdcOpenFile(&medcon_file_info, import_filename)) != MDC_OK) {
     g_warning("%s: can't open file %s with libmdc (medcon)",PACKAGE, filename);
+    g_free(import_filename);
     return NULL;
   }
+  g_free(import_filename);
 
   /* read the file */
   if ((error = MdcReadFile(&medcon_file_info, 1)) != MDC_OK) {

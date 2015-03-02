@@ -35,21 +35,6 @@
 /* typedef's */
 typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
 
-typedef enum {
-  AMIDE_GUESS, 
-  RAW_DATA, 
-  PEM_DATA, 
-  IDL_DATA,
-#ifdef AMIDE_LIBECAT_SUPPORT
-  LIBECAT_DATA, 
-#endif
-#ifdef AMIDE_LIBMDC_SUPPORT
-  LIBMDC_DATA, 
-#endif
-  NUM_IMPORT_METHODS
-} import_method_t;
-       
-
 
 /* setup the types for various internal data formats */
 /* note, don't change the amide_data_t unless you want to do a 

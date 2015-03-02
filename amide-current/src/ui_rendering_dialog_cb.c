@@ -36,49 +36,6 @@
 
 
 
-/* function to set what's in the density or gradient opacity curves when it gets realized */
-void ui_rendering_dialog_cb_realize_curve(GtkWidget * gamma_curve, gpointer data) {
-
-  rendering_t * context = data;
-  gfloat (*curve_points)[2];
-  guint i;
-  classification_t classification;
-
-  classification = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(gamma_curve), "classification_type"));
-
-  /* allocate some memory for the curve we're passing to the curve widget */
-  if ((curve_points = g_malloc(context->num_points[classification]*sizeof(gfloat)*2)) == NULL) {
-    g_warning("%s: Failed to Allocate Memory for Ramp", PACKAGE);
-    return;
-  }
-
-  /* copy rampx and rampy into the curve array  */
-  for (i=0; i< context->num_points[classification]; i++) {
-    curve_points[i][0]=context->ramp_x[classification][i];
-    curve_points[i][1]=context->ramp_y[classification][i];
-  }
-
-  /* doing some hackish stuff to get this to work as I'd like it (i.e. saving state) */
-  GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints =  context->num_points[classification];
-  g_free(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->ctlpoint);
-  GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->ctlpoint = curve_points;
-
-  /* get the curve to redraw itself */
-  switch (context->curve_type[classification]) {
-  case CURVE_LINEAR:
-    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), GTK_CURVE_TYPE_LINEAR);
-    break;
-  case CURVE_SPLINE:
-    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), GTK_CURVE_TYPE_SPLINE);
-    break;
-  case CURVE_FREE:    
-  default:
-    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), GTK_CURVE_TYPE_FREE);
-    break;
-  }
-
-  return;
-}
 
 
 /* function to change  the rendering quality */
@@ -326,6 +283,7 @@ void ui_rendering_dialog_cb_opacity(GtkWidget * widget, gpointer data) {
   GtkWidget * rendering_dialog;
   GtkWidget * gamma_curve;
   gint i;
+  guint num_points;
   rendering_t * context=data;
   curve_type_t curve_type;
   classification_t which_classification;
@@ -340,15 +298,14 @@ void ui_rendering_dialog_cb_opacity(GtkWidget * widget, gpointer data) {
 
   /* figure out the curve type */
   switch (GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->curve_type) {
-  case GTK_CURVE_TYPE_LINEAR:       
-    curve_type = CURVE_LINEAR;
-    break;
   case GTK_CURVE_TYPE_SPLINE:
     curve_type = CURVE_SPLINE;
+    num_points = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; 
     break;
-  case GTK_CURVE_TYPE_FREE:    
+  case GTK_CURVE_TYPE_LINEAR:       
   default:
-    curve_type = CURVE_FREE;
+    curve_type = CURVE_LINEAR;
+    num_points = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; 
     break;
   }
 
@@ -363,8 +320,7 @@ void ui_rendering_dialog_cb_opacity(GtkWidget * widget, gpointer data) {
   /* store the control points on the widget for later use */
   g_free(context->ramp_x[which_classification]); /* free the old stuff */
   g_free(context->ramp_y[which_classification]); /* free the old stuff */
-  context->num_points[which_classification] =  
-    GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; /* get the # of ctrl points */
+  context->num_points[which_classification] =  num_points;
   context->curve_type[which_classification] = curve_type;
     
   /* allocate some new memory */
@@ -440,18 +396,20 @@ void ui_rendering_dialog_cb_help(GnomePropertyBox *rendering_dialog, gint page_n
   return;
 }
 
+
 /* function called to destroy the rendering parameter dialog */
-void ui_rendering_dialog_cb_close_event(GtkWidget* widget, gpointer data) {
+void ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
 
-  /* trash collection */
-
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_rendering->parameter_dialog));
+  /* destroy the dialog */
+  gtk_widget_destroy(widget);
   ui_rendering->parameter_dialog = NULL;
 
   return;
 }
 
 #endif
+
+
+

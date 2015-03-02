@@ -26,24 +26,25 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include "config.h"
-#include <glib.h>
+#include <gtk/gtk.h>
 #include <math.h>
 #include <sys/stat.h>
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
 #include "raw_data.h"
+#include "raw_data_import.h"
+#include "idl_data_import.h"
+#include "pem_data_import.h"
+#include "medcon_import.h"
+#include "cti_import.h"
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", 
-				 "2x2x1 Filter", 
-				 "2x2x2 Filter", 
 				 "Trilinear"};
 
 gchar * interpolation_explanations[] = {
   "interpolate using nearest neighbhor (fast)", 
-  "interpolate using a 2x2x1 blurring matrix (medium)",
-  "interpolate using a 2x2x2 blurring matrix (slow)",
   "interpolate using trilinear interpolation (slow)"
 };
 
@@ -65,11 +66,10 @@ volume_t * volume_free(volume_t * volume) {
   /* remove a reference count */
   volume->reference_count--;
 
-  /* things we always do */
-
   /* if we've removed all reference's, free remaining data structures */
   if (volume->reference_count == 0) {
 #ifdef AMIDE_DEBUG
+    g_print("freeing volume: %s\n",volume->name);
     //    g_print("freeing volume: %s\n\tdata:\t",volume->name);
 #endif
     volume->data_set = data_set_free(volume->data_set);
@@ -354,6 +354,101 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   xmlFreeDoc(doc);
   
   return new_volume;
+}
+
+
+/* function to import a file into a volume
+   note: model_name is a secondary file needed by PEM, usually going to be set to NULL */
+volume_t * volume_import_file(const gchar * import_filename, gchar * model_filename,
+			      import_method_t import_method) {
+  volume_t * import_volume;
+  gchar * import_filename_base;
+  gchar * import_filename_extension;
+  gchar ** frags=NULL;
+
+  /* sanity checks */
+  if (import_filename == NULL)
+    return NULL;
+
+  /* if we're guessing how to import.... */
+  if (import_method == AMIDE_GUESS) {
+
+    /* extract the extension of the file */
+    import_filename_base = g_basename(import_filename);
+    g_strreverse(import_filename_base);
+    frags = g_strsplit(import_filename_base, ".", 2);
+    import_filename_extension = frags[0];
+    g_strreverse(import_filename_base);
+    g_strreverse(import_filename_extension);
+
+    
+    if ((g_strcasecmp(import_filename_extension, "dat")==0) ||
+	(g_strcasecmp(import_filename_extension, "raw")==0))  
+      /* .dat and .raw are assumed to be raw data */
+      import_method = RAW_DATA;
+    else if (g_strcasecmp(import_filename_extension, "idl")==0)
+      /* if it appears to be some sort of an idl file */
+      import_method = IDL_DATA;
+#ifdef AMIDE_LIBECAT_SUPPORT      
+    else if ((g_strcasecmp(import_filename_extension, "img")==0) ||
+	     (g_strcasecmp(import_filename_extension, "v")==0))
+      /* if it appears to be a cti file */
+      import_method = LIBECAT_DATA;
+#endif
+    else /* fallback methods */
+#ifdef AMIDE_LIBMDC_SUPPORT
+      /* try passing it to the libmdc library.... */
+      import_method = LIBMDC_DATA;
+#else
+    { /* unrecognized file type */
+      g_warning("%s: Guessing raw data, as extension %s not recognized on file:\n\t%s", 
+		PACKAGE, import_filename_extension, import_filename);
+      import_method = RAW_DATA;
+    }
+#endif
+  }    
+
+  switch (import_method) {
+
+  case IDL_DATA:
+    if ((import_volume=idl_data_import(import_filename)) == NULL)
+      g_warning("PACKAGE: Could not interpret as an IDL file:\n\t%s",import_filename);
+    break;
+    
+  case PEM_DATA:
+    if ((import_volume= pem_data_import(import_filename, model_filename)) == NULL)
+      g_warning("PACKAGE: Could not interpret as a PEM technologies model file:\n\t%s",	model_filename);
+    break;
+    
+#ifdef AMIDE_LIBECAT_SUPPORT      
+  case LIBECAT_DATA:
+    if ((import_volume=cti_import(import_filename)) == NULL) 
+      g_warning("PACKAGE: Could not interpret as a CTI file using libecat:\n\t%s",import_filename);
+    break;
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+  case LIBMDC_DATA:
+    if ((import_volume=medcon_import(import_filename)) == NULL) 
+      g_warning("PACKAGE: Could not interpret using (X)medcon/libmdc file:\n\t%s", import_filename);
+    break;
+#endif
+  case RAW_DATA:
+  default:
+    if ((import_volume=raw_data_import(import_filename)) == NULL)
+      g_warning("PACKAGE: Could not interpret as a raw data file:\n\t%s", import_filename);
+    break;
+  }
+
+  if (import_volume != NULL) {
+    /* set the thresholds */
+    import_volume->threshold_max = import_volume->max;
+    import_volume->threshold_min = (import_volume->min >=0) ? import_volume->min : 0;
+  }
+
+  /* freeup our strings, note, the other two are just pointers into these strings */
+  g_strfreev(frags);
+
+  return import_volume;
 }
 
 
@@ -816,14 +911,13 @@ volume_list_t * volume_list_free(volume_list_t * volume_list) {
   /* remove a reference count */
   volume_list->reference_count--;
 
-  /* things we always do */
-  volume_list->volume = volume_free(volume_list->volume);
-
-  /* recursively delete rest of list */
-  volume_list->next = volume_list_free(volume_list->next); 
 
   /* things to do if our reference count is zero */
   if (volume_list->reference_count == 0) {
+    /* recursively delete rest of list */
+    volume_list->next = volume_list_free(volume_list->next); 
+
+    volume_list->volume = volume_free(volume_list->volume);
     g_free(volume_list);
     volume_list = NULL;
   }
@@ -894,11 +988,11 @@ volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * study_d
 
 
 /* adds one to the reference count of a volume list element*/
-volume_list_t * volume_list_add_reference(volume_list_t * volume_list_element) {
+volume_list_t * volume_list_add_reference(volume_list_t * volume_list) {
 
-  volume_list_element->reference_count++;
+  volume_list->reference_count++;
 
-  return volume_list_element;
+  return volume_list;
 }
 
 
@@ -998,7 +1092,6 @@ volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
   return dest_volume_list;
 }
 
-
 /* function to get the earliest time in a list of volumes */
 amide_time_t volume_list_start_time(volume_list_t * volume_list) {
   amide_time_t start, temp;
@@ -1072,6 +1165,7 @@ void volume_get_view_corners(const volume_t * volume,
   /* and return the corners in the base coord frame */
   view_corner[0] = realspace_alt_coord_to_base(view_corner[0], view_coord_frame);
   view_corner[1] = realspace_alt_coord_to_base(view_corner[1], view_coord_frame);
+
   return;
 }
 

@@ -103,12 +103,24 @@ inline realpoint_t rp_cmult(const floatpoint_t cmult,const realpoint_t rp1) {
   temp.z = cmult*rp1.z;
   return temp;
 }
+
+/* returns cross product of rp1 and rp2 for realpoint structures */
+inline realpoint_t rp_cross_product(const realpoint_t rp1, const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = rp1.y*rp2.z-rp1.z*rp2.y;
+  temp.y = rp1.z*rp2.x-rp1.x*rp2.z;
+  temp.z = rp1.x*rp2.y-rp1.y*rp2.x;
+  return temp;
+}
+
 /* returns dot product of rp1 and rp2 for realpoint structures */
 inline floatpoint_t rp_dot_product(const realpoint_t rp1, const realpoint_t rp2) {
 
   return rp1.x*rp2.x + rp1.y*rp2.y + rp1.z*rp2.z;
 
 }
+
+
 /* returns sqrt(rp_dot_product(rp1, rp1)) for realpoint structures */
 inline floatpoint_t rp_mag(const realpoint_t rp1) {
   return sqrt(rp_dot_product(rp1, rp1));
@@ -150,6 +162,16 @@ inline floatpoint_t cp_mag(const canvaspoint_t cp1) {
   return sqrt(cp_dot_product(cp1, cp1));
 }
 
+
+/* returns vp1+vp2 for voxelpoint structures */
+inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2) {
+  voxelpoint_t temp;
+  temp.x = vp1.x+vp2.x;
+  temp.y = vp1.y+vp2.y;
+  temp.z = vp1.z+vp2.z;
+  temp.t = vp1.t+vp2.t;
+  return temp;
+}
 
 
 /* returns true if the realpoint is in the given box */
@@ -407,9 +429,9 @@ void realspace_rotate_on_axis(realspace_t * rs,
 /* returns an axis vector which corresponds to the orthogonal axis (specified
    by ax) in the given view (i.e. coronal, sagittal, etc.) given the current
    axis */
-static realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
-						      const view_t view,
-						      const axis_t ax) {
+realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
+					       const view_t view,
+					       const axis_t ax) {
   
   switch(view) {
   case CORONAL:
@@ -540,13 +562,26 @@ inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
 					     const realspace_t in_alt_coord_frame) {
 
   realpoint_t return_point;
+  realpoint_t temp[NUM_AXIS];
+  realpoint_t temp_rp;
 
-  REALPOINT_ABS(in, return_point);/* dim's should always be positive */
+  /* all the fabs/rp_abs are 'cause dim's should always be positive */
+  temp_rp.x = fabs(in.x); 
+  temp_rp.y = temp_rp.z = 0.0;
+  temp[XAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
+			      in_alt_coord_frame.offset));
+  temp_rp.y = fabs(in.y); 
+  temp_rp.x = temp_rp.z = 0.0;
+  temp[YAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
+			      in_alt_coord_frame.offset));
+  temp_rp.z = fabs(in.z); 
+  temp_rp.x = temp_rp.y = 0.0;
+  temp[ZAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
+			      in_alt_coord_frame.offset));
 
-  return_point = realspace_alt_coord_to_base(return_point,in_alt_coord_frame);
-  REALPOINT_SUB(return_point,in_alt_coord_frame.offset,return_point);
-    
-  REALPOINT_ABS(return_point, return_point);/* dim's should always be positive */
+  return_point.x = temp[XAXIS].x+temp[YAXIS].x+temp[ZAXIS].x;
+  return_point.y = temp[XAXIS].y+temp[YAXIS].y+temp[ZAXIS].y;
+  return_point.z = temp[XAXIS].z+temp[YAXIS].z+temp[ZAXIS].z;
 
   return return_point;
 }
@@ -557,13 +592,26 @@ inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
 					     const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
+  realpoint_t temp[NUM_AXIS];
+  realpoint_t temp_rp;
   
-  REALPOINT_ABS(in, return_point);/* dim's should always be positive */
+  /* all the fabs/rp_abs are 'cause dim's should always be positive */
+  temp_rp.x = fabs(in.x); 
+  temp_rp.y = temp_rp.z = 0.0;
+  temp[XAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+						 out_alt_coord_frame));
+  temp_rp.y = fabs(in.y); 
+  temp_rp.x = temp_rp.z = 0.0;
+  temp[YAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+						 out_alt_coord_frame));
+  temp_rp.z = fabs(in.z); 
+  temp_rp.x = temp_rp.y = 0.0;
+  temp[ZAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+						 out_alt_coord_frame));
 
-  REALPOINT_ADD(return_point,out_alt_coord_frame.offset,return_point);
-  return_point = realspace_base_coord_to_alt(return_point,out_alt_coord_frame);
-    
-  REALPOINT_ABS(return_point, return_point);/* dim's should always be positive */
+  return_point.x = temp[XAXIS].x+temp[YAXIS].x+temp[ZAXIS].x;
+  return_point.y = temp[XAXIS].y+temp[YAXIS].y+temp[ZAXIS].y;
+  return_point.z = temp[XAXIS].z+temp[YAXIS].z+temp[ZAXIS].z;
 
   return return_point;
 }

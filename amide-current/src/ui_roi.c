@@ -33,31 +33,24 @@ ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
 
   view_t i_view;
 
-  if (ui_roi_list == NULL)
-    return ui_roi_list;
+  if (ui_roi_list == NULL) return ui_roi_list;
 
   /* sanity checks */
   g_return_val_if_fail(ui_roi_list->reference_count > 0, NULL);
 
-  
-  /* remove a reference count */
   ui_roi_list->reference_count--;
-
-  /* things we always do */
-  ui_roi_list->next = ui_roi_list_free(ui_roi_list->next);
-  ui_roi_list->roi = roi_free(ui_roi_list->roi);
-
 
   /* things to do if we've removed all reference's */
   if (ui_roi_list->reference_count == 0) {
+    ui_roi_list->next = ui_roi_list_free(ui_roi_list->next);
+    ui_roi_list->roi = roi_free(ui_roi_list->roi);
     for (i_view=0;i_view<NUM_VIEWS;i_view++)
       if (ui_roi_list->canvas_roi[i_view] != NULL) {
 	gtk_object_destroy(GTK_OBJECT(ui_roi_list->canvas_roi[i_view]));
 	ui_roi_list->canvas_roi[i_view] = NULL;
       }
     if (ui_roi_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_roi_list->dialog), 
-			      "delete_event", NULL, ui_roi_list);
+      gtk_signal_emit_by_name(GTK_OBJECT(ui_roi_list->dialog), "delete_event");
     g_free(ui_roi_list);
     ui_roi_list = NULL;
   }
@@ -85,6 +78,13 @@ ui_roi_list_t * ui_roi_list_init(void) {
   temp_roi_list->next = NULL;
 
   return temp_roi_list;
+}
+
+/* return the number of elements in an roi list */
+guint ui_roi_list_count(ui_roi_list_t * ui_roi_list) {
+
+  if (ui_roi_list == NULL) return 0;
+  else return (1+ui_roi_list_count(ui_roi_list->next));
 }
 
 /* function to return a pointer to the list element containing the specified roi */
@@ -180,5 +180,13 @@ ui_roi_list_t * ui_roi_list_remove_roi(ui_roi_list_t * ui_roi_list, roi_t * roi)
   return ui_roi_list;
 }
 
+/* function to generate a roi_list_t list from a ui_roi_list_t list */
+roi_list_t * ui_roi_list_return_roi_list(ui_roi_list_t * ui_roi_list) {
+  if (ui_roi_list == NULL) 
+    return NULL;
+  else 
+    return roi_list_add_roi(ui_roi_list_return_roi_list(ui_roi_list->next), 
+			    ui_roi_list->roi);
+}
 
 

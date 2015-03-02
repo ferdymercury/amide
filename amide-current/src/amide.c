@@ -40,11 +40,13 @@ gint number_of_windows = 0;
 int main (int argc, char *argv []) {
 
   struct stat file_info;
-  study_t * study;
+  study_t * study=NULL;
   const gchar ** input_filenames;
   poptContext amide_ctx;
   guint i=0;
   gint studies_launched=0;
+  volume_t * new_volume;
+  gboolean loaded;
 
   struct poptOption amide_popt_options[] = {
     {"input_study",
@@ -86,25 +88,38 @@ int main (int argc, char *argv []) {
   /* if we specified files on the command line, load it in */
   if (input_filenames != NULL) {
     for (i=0; input_filenames[i] != NULL; i++) {
+      loaded = FALSE;
+
       /* check to see that the filename exists and it's a directory */
       if (stat(input_filenames[i], &file_info) != 0) 
 	g_warning("%s: AMIDE study %s does not exist",PACKAGE, input_filenames[i]);
-      else if (!S_ISDIR(file_info.st_mode))
-	g_warning("%s: %s is not a directory/AMIDE study",PACKAGE, input_filenames[i]);
-      else if ((study=study_load_xml(input_filenames[i])) == NULL)
+      else if (!S_ISDIR(file_info.st_mode)) {
+	/* not a directory... maybe an import file? */
+	if ((new_volume = volume_import_file(input_filenames[i], NULL, AMIDE_GUESS)) != NULL) {
+	  study = study_init();
+	  study_add_volume(study, new_volume);
+	  study_set_name(study, new_volume->name); /* first guess at a name */
+	  new_volume = volume_free(new_volume); /* remove a reference */
+	  loaded = TRUE;
+	} else
+	  g_warning("PACKAGE: %s is not an AMIDE study or importable file type ", input_filenames[i]);
+      } else if ((study=study_load_xml(input_filenames[i])) == NULL)
 	/* try loading the study into memory */
 	g_warning("%s: error loading study: %s",PACKAGE, input_filenames[i]);
-      else {
+      else 
+	loaded = TRUE;
+
+      if (loaded) {
 	/* setup the study window */
 	ui_study_create(study, NULL);
 	studies_launched++;
       }
+
     }
   } 
 
   /* start up an empty study if we haven't loaded in anything */
-  if (studies_launched < 1)
-    ui_study_create(NULL,NULL);
+  if (studies_launched < 1) ui_study_create(NULL,NULL);
 
   poptFreeContext(amide_ctx);
 

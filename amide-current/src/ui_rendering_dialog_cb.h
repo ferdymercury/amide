@@ -26,7 +26,6 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-void ui_rendering_dialog_cb_realize_curve(GtkWidget * gamma_curve, gpointer data);
 void ui_rendering_dialog_cb_change_quality(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_pixel_type(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_density(GtkWidget * widget, gpointer data);
@@ -39,6 +38,6 @@ void ui_rendering_dialog_cb_opacity(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_rendering_dialog_cb_help(GnomePropertyBox *rendering_dialog, 
 				 gint page_number, gpointer data);
-void ui_rendering_dialog_cb_close_event(GtkWidget* widget, gpointer data);
+void ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data);
 
 #endif

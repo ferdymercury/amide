@@ -32,24 +32,19 @@
 /* free up a ui_volume list */
 ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list) {
 
-  if (ui_volume_list == NULL)
-    return ui_volume_list;
+  if (ui_volume_list == NULL) return ui_volume_list;
 
   /* sanity checks */
   g_return_val_if_fail(ui_volume_list->reference_count > 0, NULL);
 
-  /* remove a reference count */
   ui_volume_list->reference_count--;
-
-  /* things we always do */
-  ui_volume_list->next = ui_volume_list_free(ui_volume_list->next);
-  ui_volume_list->volume = volume_free(ui_volume_list->volume);
 
   /* things to do if we've removed all reference's */
   if (ui_volume_list->reference_count == 0) {
+    ui_volume_list->next = ui_volume_list_free(ui_volume_list->next);
+    ui_volume_list->volume = volume_free(ui_volume_list->volume);
     if (ui_volume_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_volume_list->dialog), 
-			      "delete_event", NULL, ui_volume_list);
+      gtk_signal_emit_by_name(GTK_OBJECT(ui_volume_list->dialog), "delete_event");
     g_free(ui_volume_list);
     ui_volume_list = NULL;
   }
@@ -177,15 +172,11 @@ ui_volume_list_t * ui_volume_list_remove_volume(ui_volume_list_t * ui_volume_lis
 
 /* function to generate a volume_list_t list from a ui_volume_list_t list */
 volume_list_t * ui_volume_list_return_volume_list(ui_volume_list_t * ui_volume_list) {
-
-  volume_list_t * temp_volumes=NULL;
-
-  while (ui_volume_list != NULL) {
-    temp_volumes = volume_list_add_volume(temp_volumes, ui_volume_list->volume);
-    ui_volume_list = ui_volume_list->next;
-  }
-
-  return temp_volumes;
+  if (ui_volume_list == NULL) 
+    return NULL;
+  else 
+    return volume_list_add_volume(ui_volume_list_return_volume_list(ui_volume_list->next),
+				  ui_volume_list->volume);
 }
 
 /* returns the minimum dimensional width of the volume with the largest voxel size */

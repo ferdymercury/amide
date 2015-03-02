@@ -492,7 +492,7 @@ void ui_rendering_cb_movie(GtkWidget * widget, gpointer data) {
 #endif
 
 /* function to run for a delete_event */
-void ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+gboolean ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
@@ -501,14 +501,12 @@ void ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer 
 
   /* if our parameter modification dialog is up, kill that */
   if (ui_rendering->parameter_dialog  != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering->parameter_dialog), "delete_event", 
-			    NULL, ui_rendering);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering->parameter_dialog), "delete_event"); 
 
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
   /* if the movie dialog is up, kill that */
   if (ui_rendering_movie  != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering_movie->dialog), "delete_event", 
-			    NULL, ui_rendering);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering_movie->dialog), "delete_event"); 
 #endif
 
 
@@ -523,16 +521,16 @@ void ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer 
   if (number_of_windows == 0)
     gtk_main_quit();
 
-  return;
+  return FALSE;
 }
 
-/* function ran when closing a study window */
-void ui_rendering_cb_close_event(GtkWidget* widget, gpointer data) {
+/* function ran when closing the rendering window */
+void ui_rendering_cb_close(GtkWidget* widget, gpointer data) {
 
-  ui_rendering_t * ui_rendering = data;
+  GtkWidget * app = data;
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering->app), "delete_event", NULL, ui_rendering);
+  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
 
   return;
 }

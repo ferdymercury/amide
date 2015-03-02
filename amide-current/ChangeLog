@@ -1,3 +1,18 @@
+0.4.5
+	* removed notion of "grains" for calculating ROI statistics
+	* added a "scaled" color strip to the threshold widget
+	* redesigned the roi analysis dialog box
+	* added a button to the roi analysis dialog save stats info to a text file
+	* fixed minor bug with time button display
+	* fixed minor bug with threshold changes getting lost in volume dialog
+	* can now import files from the command line
+	* dropped 2x2x1 and 2x2x2 interpolations
+	* gtkgammacurve setting is now faster in ui_rendering_dialog
+	* can now set the width of drawn roi's as a user preference
+	* added a gtkdirsel widget, this means .xif directories look more like files
+	* better (but still not perfect) ROI resizing.
+	* axis indicators on the roi and data set dialogs
+	
 0.4.4
 	* rendering dialog changed considerably
 	  - user can now grab canvas and spin it using buttons 1 and 2

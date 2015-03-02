@@ -46,7 +46,7 @@ void ui_series_menus_create(ui_series_t * ui_series) {
     //			  ui_series_cb_export,
     //			  ui_series, NULL),
     //    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_series_cb_close, ui_series),
+    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_series_cb_close, ui_series->app),
     GNOMEUIINFO_END
   };
 

@@ -183,8 +183,6 @@ void ui_time_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data)
   
   ui_study_t * ui_study = data;
   ui_time_dialog_t * new_time;
-  gchar * temp_string;
-  GtkLabel * label;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -196,12 +194,7 @@ void ui_time_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data)
   study_set_view_duration(ui_study->study, new_time->duration);
 
   /* through some new text onto the time popup button */
-  label = GTK_LABEL(GTK_BIN(ui_study->time_button)->child);
-  temp_string = g_strdup_printf("%5.1f-%5.1fs",
-				study_view_time(ui_study->study),
-				study_view_time(ui_study->study)+study_view_duration(ui_study->study));
-  gtk_label_set_text(label,temp_string);
-  g_free(temp_string);
+  ui_study_update_time_button(ui_study);
 
   /* redraw the volumes */
   ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
@@ -220,7 +213,7 @@ void ui_time_dialog_cb_help(GnomePropertyBox *time_dialog, gint page_number, gpo
 }
 
 /* function called to destroy the time dialog */
-void ui_time_dialog_cb_close_event(GtkWidget* widget, gpointer data) {
+void ui_time_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   ui_time_dialog_t * new_time;

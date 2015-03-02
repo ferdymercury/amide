@@ -238,8 +238,7 @@ data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * stud
 /* adds one to the reference count of a data_set */
 data_set_t * data_set_add_reference(data_set_t * data_set) {
 
-  if (data_set != NULL)
-    data_set->reference_count++;
+  if (data_set != NULL) data_set->reference_count++;
 
   return data_set;
 }

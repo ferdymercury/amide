@@ -28,6 +28,7 @@
 #include "config.h"
 #include <glib.h>
 #include <unistd.h>
+#include <string.h>
 #include "study.h"
 
 
@@ -53,12 +54,10 @@ study_t * study_free(study_t * study) {
   /* remove a reference count */
   study->reference_count--;
 
-  /* things we always do */
-  study->volumes = volume_list_free(study->volumes); /*  free volumes */
-  study->rois = roi_list_free(study->rois); /* free rois */
-
   /* if we've removed all reference's, free the study */
   if (study->reference_count == 0) {
+    study->volumes = volume_list_free(study->volumes); /*  free volumes */
+    study->rois = roi_list_free(study->rois); /* free rois */
     g_free(study->filename);
     g_free(study->creation_date);
     g_free(study->name);
@@ -442,7 +441,11 @@ study_t * study_copy(study_t * src_study) {
 /* adds one to the reference count of a study */
 study_t * study_add_reference(study_t * study) {
 
+  /* sanity checks */
+  g_return_val_if_fail(study != NULL, NULL);
+
   study->reference_count++;
+  
 
   return study;
 }
@@ -517,8 +520,20 @@ void study_set_name(study_t * study, const gchar * new_name) {
    note: new_filename is copied rather then just being referenced by study */
 void study_set_filename(study_t * study, const gchar * new_filename) {
 
+  gchar * temp_string;
+
   g_free(study->filename); /* free up the memory used by the old filename */
-  study->filename = g_strdup(new_filename); /* and assign the new name */
+  temp_string = g_strdup(new_filename); /* and assign the new name */
+  
+  /* and remove any trailing slashes */
+  g_strreverse(temp_string);
+  if (strchr(temp_string, '/') == temp_string) {
+    study->filename = g_strdup(temp_string+1);
+    g_free(temp_string);
+  } else {
+    study->filename=temp_string;
+  }
+  g_strreverse(study->filename);
 
   return;
 }

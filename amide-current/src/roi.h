@@ -23,14 +23,13 @@
   02111-1307, USA.
 */
 
-#ifndef __ROI__
-#define __ROI__
+#ifndef __ROI_H__
+#define __ROI_H__
 
 /* header files that are always needed with this file */
 #include "volume.h"
 
 typedef enum {ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
-typedef enum {GRAINS_1, GRAINS_8, GRAINS_27, GRAINS_64, NUM_GRAIN_TYPES} roi_grain_t;
 
 typedef struct _roi_t roi_t;
 typedef struct _roi_list_t roi_list_t;
@@ -39,7 +38,6 @@ typedef struct _roi_list_t roi_list_t;
 struct _roi_t {
   gchar * name;
   roi_type_t type;
-  roi_grain_t grain; /* how fine a grain to calculate this roi at */
   realspace_t coord_frame;
   realpoint_t corner; /*far corner,near corner is always 0,0,0 in roi coord frame*/
   roi_t * parent;
@@ -56,16 +54,6 @@ struct _roi_list_t {
   roi_list_t * next;
 };
 
-/* structure containing the results of an roi analysis */
-typedef struct roi_analysis_t {
-  amide_time_t time_midpoint;
-  amide_data_t mean;
-  amide_data_t voxels;
-  amide_data_t var;
-  amide_data_t min;
-  amide_data_t max;
-} roi_analysis_t;
-
 /* external functions */
 roi_t * roi_free(roi_t * roi);
 roi_t * roi_init(void);
@@ -75,8 +63,10 @@ roi_t * roi_copy(roi_t * src_roi);
 roi_t * roi_add_reference(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
 realpoint_t roi_calculate_center(const roi_t * roi);
+
 roi_list_t * roi_list_free(roi_list_t *roi_list);
 roi_list_t * roi_list_init(void);
+guint roi_list_count(roi_list_t * list);
 void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * study_directory);
 roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
 gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
@@ -84,29 +74,27 @@ roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_remove_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_copy(roi_list_t * src_roi_list);
+roi_list_t * roi_list_add_reference(roi_list_t * rois);
 void roi_free_points_list(GSList ** plist);
 gboolean roi_undrawn(const roi_t * roi);
 GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
 					    const roi_t * roi);
-roi_analysis_t roi_calculate_analysis(roi_t * roi, 
-				      const volume_t * volume,
-				      roi_grain_t grain,
-				      guint frame);
 
-/* internal functions */
 void roi_subset_of_volume(roi_t * roi,
 			  const volume_t * volume,
+			  intpoint_t frame,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim);
 
 /* external variables */
 extern gchar * roi_type_names[];
-extern gchar * roi_grain_names[];
+extern gchar * roi_menu_names[];
+extern gchar * roi_menu_explanation[];
 
 
 
 
-#endif /* __ROI__ */
+#endif /* __ROI_H_ */
 
 
 

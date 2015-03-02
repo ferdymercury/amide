@@ -366,7 +366,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-volume_t * raw_data_import(gchar * raw_data_filename) {
+volume_t * raw_data_import(const gchar * raw_data_filename) {
 
   struct stat file_info;
   raw_data_info_t * raw_data_info;

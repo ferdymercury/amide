@@ -29,4 +29,4 @@ void ui_series_cb_export(GtkWidget * widget, gpointer data);
 void ui_series_cb_scaling(GtkWidget * widget, gpointer data);
 void ui_series_cb_threshold(GtkWidget * widget, gpointer data);
 void ui_series_cb_close(GtkWidget* widget, gpointer data);
-void ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
+gboolean ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);

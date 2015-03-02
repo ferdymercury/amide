@@ -28,6 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include "study.h"
 #include "ui_roi.h"
 #include "ui_volume.h"
 
@@ -48,6 +49,9 @@
 #define UI_STUDY_HELP_FONT "fixed"
 #define UI_STUDY_HELP_INFO_LINE_X 20.0
 #define UI_STUDY_HELP_INFO_LINE_HEIGHT 13
+
+#define UI_STUDY_MIN_ROI_WIDTH 1
+#define UI_STUDY_MAX_ROI_WIDTH 5
 
 typedef enum {
   VOLUME_MODE, ROI_MODE, NUM_MODES
@@ -113,7 +117,6 @@ typedef enum {
 /* ui_study data structures */
 typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
-  GnomeCanvas * canvas[NUM_VIEWS];
   GtkObject * thickness_adjustment;
   GtkWidget * location[NUM_VIEWS];
   GnomeCanvas * help_info;
@@ -128,20 +131,34 @@ typedef struct ui_study_t {
   roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
-  roi_grain_t default_roi_grain;
   study_t * study; /* pointer to the study data structure */
   GtkWidget * threshold_dialog; /* pointer to the threshold dialog */
+  GtkWidget * preferences_dialog; /* pointer to the preferences dialog */
+
+  /* canvas specific info */
+  GnomeCanvas * canvas[NUM_VIEWS];
+  GnomeCanvasItem * canvas_image[NUM_VIEWS];
+  realspace_t canvas_coord_frame[NUM_VIEWS];
+  realpoint_t canvas_corner[NUM_VIEWS];
+  GdkPixbuf * canvas_rgb[NUM_VIEWS];
+  volume_list_t * current_slices[NUM_VIEWS];
+
+  /* stuff changed in the preferences dialog */
+  gint roi_width;
+  GdkLineStyle line_style;
+
   guint reference_count;
 } ui_study_t;
 
 /* external functions */
+void ui_study_add_volume(ui_study_t * ui_study, volume_t * new_volume);
 void ui_study_import_file(ui_study_t * ui_study, gchar * import_filename, 
 			  gchar * model_filename, import_method_t import_method);
 GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin);
 void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, realpoint_t new_point);
-realpoint_t ui_study_cp_2_rp(GnomeCanvas * canvas, canvaspoint_t canvas_cp,
-			     floatpoint_t view_thickness);
-canvaspoint_t ui_study_rp_2_cp(GnomeCanvas * canvas, realpoint_t canvas_rp);
+realpoint_t ui_study_cp_2_rp(ui_study_t * ui_study, view_t view, canvaspoint_t canvas_cp);
+canvaspoint_t ui_study_rp_2_cp(ui_study_t * ui_study, view_t view, realpoint_t canvas_rp);
+void ui_study_update_time_button(ui_study_t * ui_study);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, guint32 outline_color);

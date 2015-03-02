@@ -2,7 +2,8 @@
 
   AMIDE saves studies in an extensible XML based directory format
   called XIF (Xml Image Format).  These data directories
-  characteristically end with ".xif"
+  characteristically end with ".xif", and appear as files within
+  AMIDE.
 
 </para>
   
@@ -35,11 +36,8 @@
   <para>
     
     From the main window, select "File->Open", and a file selection
-    widget will open up.  Select an XIF directory in the left column,
-    and then hit the "OK" button.  Note that double clicking on the
-    desired XIF directory will not perform the desired function, as
-    the file selection widget will open the directory (the program
-    needs to know the directory, not any of the files in it).
+    widget will open up.  Select an XIF filename in the right column,
+    and then hit the "OK" button (or double click on the filename).  
 
   </para>
 </sect1>
@@ -50,9 +48,9 @@
     To save a study, from the study window select "File->Save As" and
     a file selection dialog will appear.  Look at the "selection:"
     line near the bottom of the window, if this is the desired XIF
-    directory, hit "OK" and the file will be saved.  If this is not
-    the desired XIF directory, select or enter in the correct XIF
-    directory, and hit the "OK" button.
+    filename, hit "OK" and the file will be saved.  If this is not
+    the desired XIF filename, select or enter in the correct XIF
+    study, and hit the "OK" button.
 
   </para>
 </sect1>

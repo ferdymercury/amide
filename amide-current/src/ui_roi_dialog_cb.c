@@ -150,25 +150,6 @@ void ui_roi_dialog_cb_change_type(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function to change the grain size used to calculate an roi's statistics */
-void ui_roi_dialog_cb_change_grain(GtkWidget * widget, gpointer data) {
-
-  roi_t * roi_new_info = data;
-  roi_grain_t i_grain;
-  GtkWidget * roi_dialog;
-
-  /* figure out which menu item called me */
-  i_grain = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"grain_size"));
-  roi_new_info->grain = i_grain;  /* save the new grain size until it's applied */
-
-  /* now tell the roi_dialog that we've changed */
-  roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(roi_dialog));
-
-  return;
-}
-
-
 
 
 
@@ -289,7 +270,6 @@ void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) 
   ui_roi_list_item->roi->children = roi_list_free(ui_roi_list_item->roi->children);
   if (roi_new_info->children != NULL) 
     ui_roi_list_item->roi->children = roi_list_copy(roi_new_info->children);
-  ui_roi_list_item->roi->grain = roi_new_info->grain;
 
   /* apply any changes to the name of the roi */
   label = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->tree_leaf), "text_label");
@@ -341,7 +321,7 @@ void ui_roi_dialog_cb_help(GnomePropertyBox *roi_dialog, gint page_number, gpoin
 }
 
 /* function called to destroy the roi dialog */
-void ui_roi_dialog_cb_close_event(GtkWidget* widget, gpointer data) {
+void ui_roi_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_roi_list_t * ui_roi_list_item = data;
   roi_t * roi_new_info;

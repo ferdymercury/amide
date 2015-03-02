@@ -34,13 +34,7 @@
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
 #include "ui_study_toolbar.h"
-#include "ui_study_rois_cb.h"
 #include "ui_time_dialog.h"
-#include "raw_data_import.h"
-#include "idl_data_import.h"
-#include "pem_data_import.h"
-#include "medcon_import.h"
-#include "cti_import.h"
 
 #include "../pixmaps/study.xpm"
 #include "../pixmaps/PET.xpm"
@@ -71,6 +65,8 @@ static gint next_study_num=1;
 
 /* destroy a ui_study data structure */
 ui_study_t * ui_study_free(ui_study_t * ui_study) {
+
+  view_t i_view;
   
   if (ui_study == NULL)
     return ui_study;
@@ -81,16 +77,18 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
   /* remove a reference count */
   ui_study->reference_count--;
 
-  /* things we always do */
-  ui_study->current_rois = ui_roi_list_free(ui_study->current_rois);
-  ui_study->current_volumes = ui_volume_list_free(ui_study->current_volumes);
-  ui_study->study = study_free(ui_study->study);
-
   /* if we've removed all reference's, free the structure */
   if (ui_study->reference_count == 0) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_study\n");
 #endif
+    ui_study->current_rois = ui_roi_list_free(ui_study->current_rois);
+    ui_study->current_volumes = ui_volume_list_free(ui_study->current_volumes);
+    ui_study->study = study_free(ui_study->study);
+    for (i_view=0;i_view<NUM_VIEWS;i_view++) {
+      gdk_pixbuf_unref(ui_study->canvas_rgb[i_view]);
+      ui_study->current_slices[i_view] = volume_list_free(ui_study->current_slices[i_view]);
+    }
     g_free(ui_study);
     ui_study = NULL;
   }
@@ -102,6 +100,7 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
 ui_study_t * ui_study_init(void) {
 
   ui_study_t * ui_study;
+  view_t i_view;
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_study = (ui_study_t *) g_malloc(sizeof(ui_study_t))) == NULL) {
@@ -116,15 +115,53 @@ ui_study_t * ui_study_init(void) {
   ui_study->current_roi = NULL;
   ui_study->current_volumes = NULL;
   ui_study->current_rois = NULL;
-  ui_study->default_roi_grain =  GRAINS_1;
   ui_study->threshold_dialog = NULL;
+  ui_study->preferences_dialog = NULL;
   ui_study->study_dialog = NULL;
   ui_study->study_selected = FALSE;
   ui_study->time_dialog = NULL;
   ui_study->thickness_adjustment = NULL;
   ui_study->thickness_spin_button = NULL;
 
+  for (i_view = 0;i_view<NUM_VIEWS;i_view++) {
+    ui_study->canvas_rgb[i_view]=NULL;
+    ui_study->current_slices[i_view]=NULL;
+    ui_study->canvas_image[i_view]=NULL;
+  }
+
+  /* load in saved preferences */
+  gnome_config_push_prefix("/"PACKAGE"/");
+  ui_study->roi_width = gnome_config_get_int("ROI/Width");
+  if (ui_study->roi_width == 0) ui_study->roi_width = 2; /* if no config file, put in sane value */
+
+  ui_study->line_style = gnome_config_get_int("ROI/LineStyle"); /* 0 is solid */
+  gnome_config_pop_prefix();
+
  return ui_study;
+}
+
+
+/* function to add a new volume into an amide study */
+void ui_study_add_volume(ui_study_t * ui_study, volume_t * new_volume) {
+
+  /* add the volume to the study structure */
+  study_add_volume(ui_study->study, new_volume);
+  
+  /* and add the volume to the ui_study tree structure */
+  ui_study_tree_add_volume(ui_study, new_volume);
+  
+  /* update the thickness widget */
+  ui_study_update_thickness_adjustment(ui_study);
+  
+  /* make sure we're pointing to something sensible */
+  if (study_view_center(ui_study->study).x < 0.0) {
+    study_set_view_center(ui_study->study, volume_calculate_center(new_volume));
+  }
+  
+  /* adjust the time dialog if necessary */
+  ui_time_dialog_set_times(ui_study);
+
+  return;
 }
 
 
@@ -136,214 +173,105 @@ void ui_study_import_file(ui_study_t * ui_study,
 			  gchar * model_filename,
 			  import_method_t import_method) {
 
-  volume_t * import_volume=NULL;
-  gchar * import_filename_base=NULL;
-  gchar * import_filename_extension=NULL;
-  gchar ** frags=NULL;
+  volume_t * import_volume;
 
 #ifdef AMIDE_DEBUG
   g_print("file to import: %s\n",import_filename);
 #endif
 
-  /* sanity checks */
-  if (import_filename == NULL)
-    return;
-
-  /* if we're guessing how to import.... */
-  if (import_method == AMIDE_GUESS) {
-
-    /* extract the extension of the file */
-    import_filename_base = g_basename(import_filename);
-    g_strreverse(import_filename_base);
-    frags = g_strsplit(import_filename_base, ".", 2);
-    import_filename_extension = frags[0];
-    g_strreverse(import_filename_base);
-    g_strreverse(import_filename_extension);
-
-    
-    if ((g_strcasecmp(import_filename_extension, "dat")==0) ||
-	(g_strcasecmp(import_filename_extension, "raw")==0))  
-      /* .dat and .raw are assumed to be raw data */
-      import_method = RAW_DATA;
-    else if (g_strcasecmp(import_filename_extension, "idl")==0)
-      /* if it appears to be some sort of an idl file */
-      import_method = IDL_DATA;
-#ifdef AMIDE_LIBECAT_SUPPORT      
-    else if ((g_strcasecmp(import_filename_extension, "img")==0) ||
-	     (g_strcasecmp(import_filename_extension, "v")==0))
-      /* if it appears to be a cti file */
-      import_method = LIBECAT_DATA;
-#endif
-    else /* fallback methods */
-#ifdef AMIDE_LIBMDC_SUPPORT
-      /* try passing it to the libmdc library.... */
-      import_method = LIBMDC_DATA;
-#else
-    { /* unrecognized file type */
-      g_warning("%s: Guessing raw data, as extension %s not recognized on file:\n\t%s", 
-		PACKAGE, import_filename_extension, import_filename);
-      import_method = RAW_DATA;
-    }
-#endif
-  }    
-
-  switch (import_method) {
-
-  case IDL_DATA:
-    if ((import_volume=idl_data_import(import_filename)) == NULL)
-      g_warning("%s: Could not interpret as an IDL file:\n\t%s",
-		PACKAGE, import_filename);
-    break;
-    
-  case PEM_DATA:
-    if ((import_volume= pem_data_import(import_filename, model_filename)) == NULL)
-      g_warning("%s: Could not interpret as a PEM technologies model file:\n\t%s",
-		PACKAGE, model_filename);
-    break;
-    
-#ifdef AMIDE_LIBECAT_SUPPORT      
-  case LIBECAT_DATA:
-    if ((import_volume=cti_import(import_filename)) == NULL) 
-      g_warning("%s: Could not interpret as a CTI file using libecat:\n\t%s", 
-		PACKAGE, import_filename);
-    break;
-#endif
-#ifdef AMIDE_LIBMDC_SUPPORT
-  case LIBMDC_DATA:
-    if ((import_volume=medcon_import(import_filename)) == NULL) 
-      g_warning("%s: Could not interpret using (X)medcon/libmdc file:\n\t%s",
-		PACKAGE, import_filename);
-    break;
-#endif
-  case RAW_DATA:
-  default:
-    if ((import_volume=raw_data_import(import_filename)) == NULL)
-      g_warning("%s: Could not interpret as a raw data file:\n\t%s",
-		PACKAGE, import_filename);
-    break;
-  }
   
   /* now, what we need to do if we've successfully loaded an image */
-  if (import_volume != NULL) {
+  if ((import_volume = volume_import_file(import_filename, model_filename, import_method)) == NULL)
+    return;
 
 #ifdef AMIDE_DEBUG
-    g_print("imported volume name %s\n",import_volume->name);
+  g_print("imported volume name %s\n",import_volume->name);
 #endif
 
-    /* add the volume to the study structure */
-    study_add_volume(ui_study->study, import_volume);
-      
-    /* and add the volume to the ui_study tree structure */
-    ui_study_tree_add_volume(ui_study, import_volume);
-      
-    /* set the thresholds */
-    import_volume->threshold_max = import_volume->max;
-    import_volume->threshold_min = (import_volume->min >=0) ? import_volume->min : 0;
-      
-    /* remove a reference to import_volume */
-    import_volume = volume_free(import_volume);
-      
-    /* update the thickness widget */
-    ui_study_update_thickness_adjustment(ui_study);
-      
-    /* make sure we're pointing to something sensible */
-    if (study_view_center(ui_study->study).x < 0.0) {
-      study_set_view_center(ui_study->study, volume_calculate_center(import_volume));
-    }
-      
-    /* update the ui_study cavases with the new volume */
-    ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
-      
-    /* adjust the time dialog if necessary */
-    ui_time_dialog_set_times(ui_study);
-      
-  }
-    
-  /* freeup our strings, note, the other two are just pointers into these strings */
-  //  g_free(import_filename); /* this causes a crash for some reason, is import_filename just
-  //			    *  a reference into the file_selection box? */
-  g_strfreev(frags);
-}    
+  ui_study_add_volume(ui_study, import_volume); /* this adds a reference to the volume*/
+  import_volume = volume_free(import_volume); /* so remove a reference */
+
+  /* update the ui_study cavases with the new volume */
+  ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+
+  return;
+}
+
 
 
 /* this function converts a gnome canvas event location to a location in the canvas's coord frame */
-realpoint_t ui_study_cp_2_rp(GnomeCanvas * canvas, canvaspoint_t canvas_cp,
-			     floatpoint_t view_thickness) {
+realpoint_t ui_study_cp_2_rp(ui_study_t * ui_study, view_t view, canvaspoint_t canvas_cp) {
 
   realpoint_t canvas_rp;
-  realpoint_t * canvas_far_corner_p;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
 
-  /* get the far corner of this canvas */
-  canvas_far_corner_p = gtk_object_get_data(GTK_OBJECT(canvas), "far_corner");
-
-  /* need the heigth and width of the rgb_image */
-  rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
-  rgb_width = gdk_pixbuf_get_width(rgb_image);
-  rgb_height = gdk_pixbuf_get_height(rgb_image);
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
 
   /* and convert */
-  canvas_rp.x = ((canvas_cp.x-UI_STUDY_TRIANGLE_HEIGHT)/rgb_width)*(*canvas_far_corner_p).x;
-  canvas_rp.y = ((rgb_height - (canvas_cp.y-UI_STUDY_TRIANGLE_HEIGHT))/rgb_height)*(*canvas_far_corner_p).y;
-  canvas_rp.z = view_thickness/2.0;
+  canvas_rp.x = 
+    ((canvas_cp.x-UI_STUDY_TRIANGLE_HEIGHT)/rgb_width)*ui_study->canvas_corner[view].x;
+  canvas_rp.y = 
+    ((rgb_height-(canvas_cp.y-UI_STUDY_TRIANGLE_HEIGHT))/rgb_height)*ui_study->canvas_corner[view].y;
+  canvas_rp.z = 
+    study_view_thickness(ui_study->study)/2.0;
 
   return canvas_rp;
 }
 
 /* this function converts a point in the canvas's coord frame to a gnome canvas event location */
-canvaspoint_t ui_study_rp_2_cp(GnomeCanvas * canvas, realpoint_t canvas_rp) {
+canvaspoint_t ui_study_rp_2_cp(ui_study_t * ui_study, view_t view, realpoint_t canvas_rp) {
 
   canvaspoint_t canvas_cp;
-  realpoint_t * canvas_far_corner_p;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
 
-  /* get the far corner of this canvas */
-  canvas_far_corner_p = gtk_object_get_data(GTK_OBJECT(canvas), "far_corner");
-
-  /* need the heigth and width of the rgb_image */
-  rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
-  rgb_width = gdk_pixbuf_get_width(rgb_image);
-  rgb_height = gdk_pixbuf_get_height(rgb_image);
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
 
   /* and convert */
-  canvas_cp.x = rgb_width * canvas_rp.x/(*canvas_far_corner_p).x 
-    + UI_STUDY_TRIANGLE_HEIGHT;
-  canvas_cp.y = rgb_height * ((*canvas_far_corner_p).y - canvas_rp.y)/(*canvas_far_corner_p).y 
+  canvas_cp.x = 
+    rgb_width * canvas_rp.x/ui_study->canvas_corner[view].x + UI_STUDY_TRIANGLE_HEIGHT;
+  canvas_cp.y = 
+    rgb_height * (ui_study->canvas_corner[view].y - canvas_rp.y)/ui_study->canvas_corner[view].y 
     + UI_STUDY_TRIANGLE_HEIGHT;
 
   return canvas_cp;
+}
+
+/* function to update the text in the time dialog popup widget */
+void ui_study_update_time_button(ui_study_t * ui_study) {
+
+  gchar * temp_string;
+
+  temp_string = g_strdup_printf("%5.1f-%5.1f s",
+				study_view_time(ui_study->study),
+				study_view_time(ui_study->study)+study_view_duration(ui_study->study));
+  gtk_label_set_text(GTK_LABEL(GTK_BIN(ui_study->time_button)->child),temp_string);
+  g_free(temp_string);
+
+  return;
 }
 
 /* function to update the coordinate frame associated with one of our canvases.
    this is a coord_frame encompasing all the slices associated with one of the orthogonal views */
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view) {
 
-  realspace_t * canvas_coord_frame_p;
-  realpoint_t * far_corner;
-
-  volume_list_t * current_slices;
   realpoint_t temp_corner[2];
 
-  /* get the current slices for the given view */
-  current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "slices");
-
-  /* get the pointers to the view's coordinate frame and far corner structures */
-  canvas_coord_frame_p = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
-  far_corner = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "far_corner");
-
   /* set the origin of the canvas_coord_frame to the current view locations */
-  *canvas_coord_frame_p = realspace_get_view_coord_frame(study_coord_frame(ui_study->study), view);
+  ui_study->canvas_coord_frame[view] = 
+    realspace_get_view_coord_frame(study_coord_frame(ui_study->study), view);
   
   /* figure out the corners */
-  volumes_get_view_corners(current_slices, *canvas_coord_frame_p, temp_corner);
+  volumes_get_view_corners(ui_study->current_slices[view], 
+			   ui_study->canvas_coord_frame[view], temp_corner);
 
   /* allright, reset the offset of the view frame to the lower left front corner */
-  rs_set_offset(canvas_coord_frame_p, temp_corner[0]);
+  rs_set_offset(&ui_study->canvas_coord_frame[view], temp_corner[0]);
 
   /* and set the upper right back corner */
-  *far_corner = realspace_base_coord_to_alt(temp_corner[1],*canvas_coord_frame_p);
+  ui_study->canvas_corner[view] = 
+    realspace_base_coord_to_alt(temp_corner[1],ui_study->canvas_coord_frame[view]);
 
   return;
 }
@@ -428,8 +356,6 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
   GnomeCanvasItem ** target_lines;
   canvaspoint_t point0, point1;
   realpoint_t start, end;
-  realspace_t * canvas_coord_frame;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
 
   /* get rid of the old target lines if they still exist and we're not just moving the target */
@@ -449,13 +375,8 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
   
   for (i_view = 0 ; i_view < NUM_VIEWS ; i_view++) {
 
-    /* get the coordinate frame and the far corner for this canvas,
-       the canvas_corner is in the canvas_coord_frame.  Also need rgb_image
-       for height and width of the canvas */
-    canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "coord_frame");
-    rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "rgb_image");
-    rgb_width = gdk_pixbuf_get_width(rgb_image);
-    rgb_height = gdk_pixbuf_get_height(rgb_image);
+    rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[i_view]);
+    rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[i_view]);
 
     /* if we're creating, allocate needed memory, otherwise just get a pointer to the object */
     if (action == TARGET_CREATE) {
@@ -470,16 +391,18 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
     }
     
     /* figure out some info */
-    start = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+    start = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),
+				       ui_study->canvas_coord_frame[i_view]);
     start.x -= study_view_thickness(ui_study->study)/2.0;
     start.y -= study_view_thickness(ui_study->study)/2.0;
-    end = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+    end = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),
+				     ui_study->canvas_coord_frame[i_view]);
     end.x += study_view_thickness(ui_study->study)/2.0;
     end.y += study_view_thickness(ui_study->study)/2.0;
 
     /* get the canvas locations corresponding to the start and end coordinates */
-    point0 = ui_study_rp_2_cp(ui_study->canvas[i_view], start);
-    point1 = ui_study_rp_2_cp(ui_study->canvas[i_view], end);
+    point0 = ui_study_rp_2_cp(ui_study, i_view, start);
+    point1 = ui_study_rp_2_cp(ui_study, i_view, end);
     
     /* line segment 0 */
     target_line_points = gnome_canvas_points_new(3);
@@ -493,7 +416,7 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
       target_lines[0] =
 	gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i_view]), gnome_canvas_line_get_type(),
 			      "points", target_line_points, "fill_color_rgba", outline_color,
-			      "width_units", 1.0, NULL);
+			      "width_pixels", 1, NULL);
     else /* action == TARGET_UPDATE */
       gnome_canvas_item_set(target_lines[0],"points",target_line_points, NULL);
     gnome_canvas_points_unref(target_line_points);
@@ -510,7 +433,7 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
       target_lines[1] =
 	gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i_view]), gnome_canvas_line_get_type(),
 			      "points", target_line_points, "fill_color_rgba", outline_color,
-			      "width_units", 1.0, NULL);
+			      "width_pixels", 1, NULL);
     else /* action == TARGET_UPDATE */
       gnome_canvas_item_set(target_lines[1],"points",target_line_points, NULL);
     gnome_canvas_points_unref(target_line_points);
@@ -528,7 +451,7 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
       target_lines[2] =
 	gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i_view]), gnome_canvas_line_get_type(),
 			      "points", target_line_points, "fill_color_rgba", outline_color,
-			      "width_units", 1.0, NULL);
+			      "width_pixels", 1, NULL);
     else /* action == TARGET_UPDATE */
       gnome_canvas_item_set(target_lines[2],"points",target_line_points, NULL);
     gnome_canvas_points_unref(target_line_points);
@@ -546,7 +469,7 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
       target_lines[3] =
 	gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i_view]), gnome_canvas_line_get_type(),
 			      "points", target_line_points, "fill_color_rgba", outline_color,
-			      "width_units", 1.0, NULL);
+			      "width_pixels", 1, NULL);
     else /* action == TARGET_UPDATE */
       gnome_canvas_item_set(target_lines[3],"points",target_line_points, NULL);
     gnome_canvas_points_unref(target_line_points);
@@ -706,9 +629,7 @@ void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
   GnomeCanvasPoints * points[4];
   canvaspoint_t point0, point1;
   realpoint_t start, end;
-  realspace_t * canvas_coord_frame;
   realpoint_t view_center;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
   GnomeCanvasItem * canvas_arrow[4];
 
@@ -735,25 +656,24 @@ void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
     return;
   }   /* otherwise, create/redraw the arrows */
 
-  canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
-  
   /* figure out the dimensions of the view "box" */
   view_center = study_view_center(ui_study->study);
-  start = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+  start = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),
+				     ui_study->canvas_coord_frame[view]);
   start.x -= study_view_thickness(ui_study->study)/2.0;
   start.y -= study_view_thickness(ui_study->study)/2.0;
-  end = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+  end = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),
+				   ui_study->canvas_coord_frame[view]);
   end.x += study_view_thickness(ui_study->study)/2.0;
   end.y += study_view_thickness(ui_study->study)/2.0;
   
   /* get the canvas locations corresponding to the start and end coordinates */
-  point0 = ui_study_rp_2_cp(ui_study->canvas[view], start);
-  point1 = ui_study_rp_2_cp(ui_study->canvas[view], end);
+  point0 = ui_study_rp_2_cp(ui_study,view, start);
+  point1 = ui_study_rp_2_cp(ui_study,view, end);
 
-  /* need to get rgb_image for the height and width */
-  rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
-  rgb_width = gdk_pixbuf_get_width(rgb_image);
-  rgb_height = gdk_pixbuf_get_height(rgb_image);
+  /* need to get the height and width of the canvas's rgb image*/
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
 
 
   /* notes:
@@ -862,23 +782,16 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
 
   realspace_t view_coord_frame;
   volume_list_t * temp_volumes=NULL;
-  volume_list_t * current_slices;
   realpoint_t temp_p;
   gint width, height;
-  GnomeCanvasItem * canvas_image;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
   rgba_t blank_rgba;
   GtkStyle * widget_style;
 
-  /* get points to the canvas image and rgb image associated with the current canvas */
-  canvas_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_image");
-  rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
-
-  if (rgb_image != NULL) {
-    width = gdk_pixbuf_get_width(rgb_image);
-    height = gdk_pixbuf_get_height(rgb_image);
-    gdk_pixbuf_unref(rgb_image);
+  if (ui_study->canvas_rgb[view] != NULL) {
+    width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+    height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
+    gdk_pixbuf_unref(ui_study->canvas_rgb[view]);
   } else {
     width = UI_STUDY_BLANK_WIDTH;
     height = UI_STUDY_BLANK_HEIGHT;
@@ -899,7 +812,7 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
     blank_rgba.b = widget_style->bg[GTK_STATE_NORMAL].blue >> 8;
     blank_rgba.a = 0xFF;
 
-    rgb_image = image_blank(width,height, blank_rgba);
+    ui_study->canvas_rgb[view] = image_blank(width,height, blank_rgba);
 
   } else {
     /* figure out our view coordinate frame */
@@ -912,22 +825,16 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
     /* first, generate a volume_list we can pass to image_from_volumes */
     temp_volumes = ui_volume_list_return_volume_list(ui_study->current_volumes);
     
-    /* get the pointer to the canvas's slices (if any) */
-    current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "slices");
+    ui_study->canvas_rgb[view] = image_from_volumes(&(ui_study->current_slices[view]),
+						    temp_volumes,
+						    study_view_time(ui_study->study),
+						    study_view_duration(ui_study->study),
+						    study_view_thickness(ui_study->study),
+						    view_coord_frame,
+						    study_scaling(ui_study->study),
+						    study_zoom(ui_study->study),
+						    study_interpolation(ui_study->study));
 
-    rgb_image = image_from_volumes(&(current_slices),
-				   temp_volumes,
-				   study_view_time(ui_study->study),
-				   study_view_duration(ui_study->study),
-				   study_view_thickness(ui_study->study),
-				   view_coord_frame,
-				   study_scaling(ui_study->study),
-				   study_zoom(ui_study->study),
-				   study_interpolation(ui_study->study));
-
-    /* save the pointer to the current slice list */
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "slices", current_slices);
-    
     /* and delete the volume_list */
     temp_volumes = volume_list_free(temp_volumes);
 
@@ -935,11 +842,12 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
     ui_study_update_coords_current_view(ui_study, view);
   }
 
-  rgb_width = gdk_pixbuf_get_width(rgb_image);
-  rgb_height = gdk_pixbuf_get_height(rgb_image);
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
 
   /* reset the min size of the widget and set the scroll region */
-  if ((width != rgb_width) || (height != rgb_height) || (canvas_image == NULL)) {
+  if ((width != rgb_width) || (height != rgb_height) || 
+      (ui_study->canvas_image[view] == NULL)) {
     gtk_widget_set_usize(GTK_WIDGET(ui_study->canvas[view]), 
 			 rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
 			 rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
@@ -948,22 +856,18 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
 				   rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
   }
 	
-  /* put the rgb_image on the canvas_image */
-  if (canvas_image != NULL)
-    gnome_canvas_item_set(canvas_image, "pixbuf", rgb_image,  NULL);
+  /* put the canvas rgb image on the canvas_image */
+  if (ui_study->canvas_image[view] != NULL)
+    gnome_canvas_item_set(ui_study->canvas_image[view], "pixbuf", ui_study->canvas_rgb[view],  NULL);
   else
     /* time to make a new image */
-    canvas_image =
+    ui_study->canvas_image[view] =
       gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[view]),
 			    gnome_canvas_pixbuf_get_type(),
-			    "pixbuf", rgb_image,
+			    "pixbuf", ui_study->canvas_rgb[view],
 			    "x", (double) UI_STUDY_TRIANGLE_HEIGHT,
 			    "y", (double) UI_STUDY_TRIANGLE_HEIGHT,
 			    NULL);
-
-  /* save pointers to the canvas image and rgb image as needed */
-  gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_image", canvas_image);
-  gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image", rgb_image);
 
   return;
 }
@@ -983,21 +887,17 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
   guint32 outline_color;
   floatpoint_t width,height;
   volume_t * volume;
-  volume_list_t * current_slices;
-  GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
   double affine[6];
   gboolean highlight;
   canvaspoint_t roi_cp;
 
-  /* get a pointer to the canvas's slices and the rgb_image */
-  current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "slices");
-  rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
-  rgb_width = gdk_pixbuf_get_width(rgb_image);
-  rgb_height = gdk_pixbuf_get_height(rgb_image);
+  /* get a pointer to the canvas's slices */
+  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view]);
 
   /* sanity check */
-  if (current_slices == NULL) {
+  if (ui_study->current_slices[view] == NULL) {
     if (roi_item != NULL) /* if no slices, destroy the old roi_item */
       gtk_object_destroy(GTK_OBJECT(roi_item));
     return NULL;
@@ -1020,7 +920,7 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
   outline_color = color_table_outline_color(volume->color_table, highlight);
 
   /* get the points */
-  roi_points =  roi_get_volume_intersection_points(current_slices->volume, roi);
+  roi_points =  roi_get_volume_intersection_points(ui_study->current_slices[view]->volume, roi);
 
   /* count the points */
   j=0;
@@ -1039,17 +939,22 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
 
 
   /* get some needed information */
-  width = current_slices->volume->data_set->dim.x* current_slices->volume->voxel_size.x;
-  height = current_slices->volume->data_set->dim.y* current_slices->volume->voxel_size.y;
-  offset = realspace_base_coord_to_alt(rs_offset(current_slices->volume->coord_frame),
-					current_slices->volume->coord_frame);
+  width = 
+    ui_study->current_slices[view]->volume->data_set->dim.x* 
+    ui_study->current_slices[view]->volume->voxel_size.x;
+  height = 
+    ui_study->current_slices[view]->volume->data_set->dim.y* 
+    ui_study->current_slices[view]->volume->voxel_size.y;
+  offset = 
+    realspace_base_coord_to_alt(rs_offset(ui_study->current_slices[view]->volume->coord_frame),
+				ui_study->current_slices[view]->volume->coord_frame);
 
   /* transfer the points list to what we'll be using to construction the figure */
   item_points = gnome_canvas_points_new(j);
   temp=roi_points;
   j=0;
   while(temp!=NULL) {
-    roi_cp = ui_study_rp_2_cp(ui_study->canvas[view], *((realpoint_t *) temp->data));
+    roi_cp = ui_study_rp_2_cp(ui_study, view, *((realpoint_t *) temp->data));
     item_points->coords[j] = roi_cp.x;
     item_points->coords[j+1] = roi_cp.y;
     temp=temp->next;
@@ -1067,19 +972,25 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
     gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
 
     /* and reset the line points */
-    gnome_canvas_item_set(roi_item, "points", item_points, "fill_color_rgba", outline_color,NULL);
+    gnome_canvas_item_set(roi_item, 
+			  "points", item_points, 
+			  "fill_color_rgba", outline_color,
+			  "width_pixels", ui_study->roi_width,
+			  "line_style", ui_study->line_style,
+			  NULL);
     return roi_item;
   } else {
     item =  gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[view]),
 				  gnome_canvas_line_get_type(),
 				  "points", item_points,
 				  "fill_color_rgba", outline_color,
-				  "width_units", 1.0,
+				  "width_pixels", ui_study->roi_width,
+				  "line_style", ui_study->line_style,
 				  NULL);
     
     /* attach it's callback */
     gtk_signal_connect(GTK_OBJECT(item), "event",
-		       GTK_SIGNAL_FUNC(ui_study_rois_cb_roi_event), ui_study);
+		       GTK_SIGNAL_FUNC(ui_study_cb_roi_event), ui_study);
     gtk_object_set_data(GTK_OBJECT(item), "view", GINT_TO_POINTER(view));
     gtk_object_set_data(GTK_OBJECT(item), "roi", roi);
     
@@ -1115,7 +1026,6 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, ui_study_updat
   view_t j_view,k_view;
   realpoint_t temp_center;
   realpoint_t view_corner[2];
-  volume_list_t * current_slices;
 
   if (i_view==NUM_VIEWS) {
     i_view=0;
@@ -1145,9 +1055,7 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, ui_study_updat
       break;
     case UPDATE_IMAGE:
       /* freeing the slices indicates to regenerate them */
-      current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[k_view]), "slices");
-      current_slices=volume_list_free(current_slices); 
-      gtk_object_set_data(GTK_OBJECT(ui_study->canvas[k_view]), "slices", current_slices);
+      ui_study->current_slices[k_view]=volume_list_free(ui_study->current_slices[k_view]); 
       ui_study_update_canvas_image(ui_study, k_view);       /* refresh the image */
       break;
     case UPDATE_ROIS:
@@ -1162,9 +1070,7 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, ui_study_updat
     case UPDATE_ALL:
     default:
       /* freeing the slices indicates to regenerate them */
-      current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[k_view]), "slices");
-      current_slices=volume_list_free(current_slices); 
-      gtk_object_set_data(GTK_OBJECT(ui_study->canvas[k_view]), "slices", current_slices);
+      ui_study->current_slices[k_view]=volume_list_free(ui_study->current_slices[k_view]); 
       ui_study_update_canvas_image(ui_study, k_view);
       ui_study_update_canvas_rois(ui_study, k_view);
       ui_study_update_canvas_arrows(ui_study,k_view);
@@ -1482,8 +1388,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   //  GtkWidget * viewport;
   GtkWidget * event_box;
   view_t i_view;
-  realpoint_t * far_corner;
-  realspace_t * canvas_coord_frame;
   guint main_table_row, main_table_column;
   guint left_table_row;
   gint middle_table_row, middle_table_column;
@@ -1620,14 +1524,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		     middle_table_row, middle_table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "target_lines", NULL);
-    g_return_if_fail((far_corner = (realpoint_t *) g_malloc(sizeof(realpoint_t))) != NULL);
-    *far_corner = realpoint_zero;
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "far_corner", far_corner);
-    g_return_if_fail((canvas_coord_frame = (realspace_t *) g_malloc(sizeof(realspace_t))) != NULL);
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "coord_frame", canvas_coord_frame);
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "slices", NULL);
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "canvas_image", NULL);
-    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "rgb_image", NULL);
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "canvas_arrow0", NULL);
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "canvas_arrow1", NULL);
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "canvas_arrow2", NULL);
@@ -1709,6 +1605,8 @@ GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin) {
     gtk_frame_set_shadow_type(GTK_FRAME(ui_study->app), GTK_SHADOW_NONE);
     gtk_container_add(GTK_CONTAINER(parent_bin), ui_study->app);
   }
+  gtk_signal_connect(GTK_OBJECT(ui_study->app), "realize", 
+		     GTK_SIGNAL_FUNC(ui_common_window_realize_cb), NULL);
   gtk_object_set_data(GTK_OBJECT(ui_study->app), "ui_study", ui_study);
   g_free(title);
 
@@ -1732,8 +1630,15 @@ GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin) {
   gtk_widget_show_all(ui_study->app);
   number_of_windows++;
 
-  /* and set any settings we can */
+  /* set any settings we can */
   ui_study_update_thickness_adjustment(ui_study);
+
+  /* make sure we're pointing to something sensible */
+  if (study_view_center(ui_study->study).x < 0.0) {
+    if (study_volumes(ui_study->study) != NULL)
+      study_set_view_center(ui_study->study, 
+			    volume_calculate_center(study_volumes(ui_study->study)->volume));
+  }
 
   return ui_study->app;
 }

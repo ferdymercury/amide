@@ -29,6 +29,7 @@
 #include <gdk-pixbuf/gnome-canvas-pixbuf.h>
 #include "study.h"
 #include "image.h"
+#include "ui_common.h"
 #include "ui_series.h"
 #include "ui_series_cb.h"
 #include "ui_series_menus.h"
@@ -64,15 +65,13 @@ ui_series_t * ui_series_free(ui_series_t * ui_series) {
   /* remove a reference count */
   ui_series->reference_count--;
 
-  /* things we always do */
-  ui_series_slices_free(ui_series);
-  ui_series->volumes = volume_list_free(ui_series->volumes);
-
   /* things to do if we've removed all reference's */
   if (ui_series->reference_count == 0) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_series\n");
 #endif
+    ui_series_slices_free(ui_series);
+    ui_series->volumes = volume_list_free(ui_series->volumes);
     g_free(ui_series->rgb_images);
     g_free(ui_series->images);
     g_free(ui_series->captions);
@@ -389,6 +388,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, ser
   ui_series->volumes = volume_list_copy(volumes);
 
   /* setup the callbacks for app */
+  gtk_signal_connect(GTK_OBJECT(app), "realize", GTK_SIGNAL_FUNC(ui_common_window_realize_cb), NULL);
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",
 		     GTK_SIGNAL_FUNC(ui_series_cb_delete_event),
 		     ui_series);

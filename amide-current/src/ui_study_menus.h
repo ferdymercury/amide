@@ -30,13 +30,18 @@
 #include "ui_study.h"
 
 /* external functions */
-void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item,
+void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
+				      gchar * name,
+				      gchar * tooltip,
+				      gpointer callback_func,
+				      gpointer callback_data,
+				      gpointer xpm_data);
+void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item, 
 				     gchar * name,
 				     gchar * tooltip,
 				     gpointer callback_func,
-				     gpointer callback_data,
-				     gpointer xpm_data);
-void ui_study_menu_fill_in_end(GnomeUIInfo * item);
+				     gpointer callback_data);
+void ui_study_menus_fill_in_end(GnomeUIInfo * item);
 void ui_study_menus_create(ui_study_t * ui_study);
 
 

@@ -137,22 +137,22 @@ void ui_series_cb_threshold(GtkWidget * widget, gpointer data) {
 /* function ran when closing a series window */
 void ui_series_cb_close(GtkWidget* widget, gpointer data) {
 
-  ui_series_t * ui_series = data;
+  GtkWidget * app = data;
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(ui_series->app), "delete_event", NULL, ui_series);
+  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
 
   return;
 }
 
 /* function to run for a delete_event */
-void ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+gboolean ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_series_t * ui_series = data;
 
   /* make sure our threshold dialog is gone */
   if (ui_series->thresholds_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_series->thresholds_dialog), "delete_event", NULL, ui_series);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_series->thresholds_dialog), "delete_event");
 
   /* free the associated data structure */
   ui_series = ui_series_free(ui_series);
@@ -165,7 +165,7 @@ void ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer dat
   if (number_of_windows == 0)
     gtk_main_quit();
 
-  return;
+  return FALSE;
 }
 
 

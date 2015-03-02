@@ -4,7 +4,7 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.4.4)
+AM_INIT_AUTOMAKE(amide, 0.4.5)
 
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
@@ -16,7 +16,14 @@ AM_PATH_GDK_PIXBUF(0.11.0)
 GNOME_XML2_CHECK
 
 dnl AC_ISC_POSIX
-AMIDE_CFLAGS="-O6"
+
+dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
+CFLAGS="-g -O6"
+case "$host_os" in
+darwin*) 	CFLAGS="-g -O2";;
+esac
+
+
 AC_PROG_CC
 dnl AC_STDC_HEADERS
 dnl AC_ARG_PROGRAM
@@ -144,7 +151,6 @@ fi
 
 AC_SUBST(EXTRA_GNOME_LIBS)
 AC_SUBST(EXTRA_GNOME_CFLAGS)
-AC_SUBST(AMIDE_CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 

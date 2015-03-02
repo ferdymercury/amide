@@ -31,11 +31,7 @@
 #include "ui_study.h"
 #include "ui_roi_dialog_cb.h"
 #include "ui_roi_dialog.h"
-
-
-
-
-
+#include "ui_common.h"
 
 
 
@@ -95,11 +91,11 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   GtkWidget * dial;
   GtkWidget * hseparator;
   GtkWidget * button;
+  GtkWidget * axis_indicator;
   GtkObject * adjustment;
   view_t i_view;
   axis_t i_axis, j_axis;
   roi_type_t i_roi_type;
-  roi_grain_t i_grain;
   guint table_row = 0;
   ui_roi_list_t * ui_roi_list_item;
   roi_t * roi_new_info = NULL;
@@ -136,7 +132,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_close_event),
+		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_close),
 		     ui_roi_list_item);
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "apply",
 		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_apply),
@@ -216,33 +212,6 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   table_row++;
 
 
-  /* widgets to change the object's grain size */
-  label = gtk_label_new("grain:");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_grain=0; i_grain<NUM_GRAIN_TYPES; i_grain++) {
-    menuitem = gtk_menu_item_new_with_label(roi_grain_names[i_grain]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "grain_size", GINT_TO_POINTER(i_grain)); 
-    gtk_object_set_data(GTK_OBJECT(menuitem), "roi_dialog", roi_dialog); 
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_grain), 
-    		       roi_new_info);
-  }
-  
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), roi->grain);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(option_menu), 1,2,
-		   table_row,table_row+1, 
-		   GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
-  table_row++;
-
-
   /* ---------------------------
      Center adjustment page
      --------------------------- */
@@ -316,6 +285,18 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   table_row++;
 
 
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* a canvas to indicate which way is x, y, and z */
+  axis_indicator = ui_common_create_view_axis_indicator();
+  gtk_table_attach(GTK_TABLE(packing_table), axis_indicator,0,4,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
 
 
 

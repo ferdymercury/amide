@@ -34,7 +34,7 @@ void ui_rendering_movie_dialog_cb_change_end(GtkWidget * widget, gpointer data);
 void ui_rendering_movie_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_rendering_movie_dialog_cb_help(GnomePropertyBox *rendering_dialog, 
 					      gint page_number, gpointer data);
-void ui_rendering_movie_dialog_cb_close_event(GtkWidget* widget, gpointer data);
+void ui_rendering_movie_dialog_cb_close(GtkWidget* widget, gpointer data);
 
 #endif /* AMIDE_MPEG_ENCODE_SUPPORT */
 #endif /* LIBVOLPACK_SUPPORT */

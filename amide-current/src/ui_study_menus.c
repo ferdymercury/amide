@@ -34,16 +34,15 @@
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
-#include "ui_study_rois_cb.h"
 #include "ui_series.h"
 
 /* function to fill in a radioitem */
-void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item, 
-				     gchar * name,
-				     gchar * tooltip,
-				     gpointer callback_func,
-				     gpointer callback_data,
-				     gpointer xpm_data) {
+void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item, 
+				      gchar * name,
+				      gchar * tooltip,
+				      gpointer callback_func,
+				      gpointer callback_data,
+				      gpointer xpm_data) {
   
   item->type = GNOME_APP_UI_ITEM;
   item->label = name;
@@ -60,8 +59,30 @@ void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item,
   return;
 }
 
+/* function to fill in a menuitem */
+void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item, 
+				     gchar * name,
+				     gchar * tooltip,
+				     gpointer callback_func,
+				     gpointer callback_data) {
+  
+  item->type = GNOME_APP_UI_ITEM;
+  item->label = name;
+  item->hint = tooltip;
+  item->moreinfo = callback_func;
+  item->user_data = callback_data;
+  item->unused_data = NULL;
+  item->pixmap_type =  GNOME_APP_PIXMAP_DATA;
+  item->pixmap_info = NULL;
+  item->accelerator_key = 0;
+  item->ac_mods = (GdkModifierType) 0;
+  item->widget = NULL;
+
+  return;
+}
+
 /* functionto fill in the end of a menu */
-void ui_study_menu_fill_in_end(GnomeUIInfo * item) {
+void ui_study_menus_fill_in_end(GnomeUIInfo * item) {
 
   item->type = GNOME_APP_UI_ENDOFINFO;
   item->label = NULL;
@@ -83,6 +104,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   view_t i_view;
   import_method_t i_method;
+  roi_type_t i_roi_type;
 
   /* the submenus under the series_type menu */
   GnomeUIInfo import_specific_menu[] = {
@@ -144,25 +166,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Export one of the views to a data file"),
 			     export_view_menu),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
+    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study->app),
     GNOMEUIINFO_END
   };
 
-  GnomeUIInfo add_roi_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(roi_type_names[ELLIPSOID], 
-			  N_("Add a new elliptical ROI"),
-			  ui_study_cb_new_roi_ellipsoid,
-			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(roi_type_names[CYLINDER], 
-			  N_("Add a new elliptic cylinder ROI"),
-			  ui_study_cb_new_roi_cylinder,
-			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(roi_type_names[BOX], 
-			  N_("Add a new box shaped ROI"),
-			  ui_study_cb_new_roi_box,
-			  ui_study, NULL),
-    GNOMEUIINFO_END
-  };
+  GnomeUIInfo add_roi_menu[NUM_ROI_TYPES+1];
 
   GnomeUIInfo edit_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Edit Items"),
@@ -173,9 +181,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  N_("Delete the selected objects"),
 			  ui_study_cb_delete_objects,
 			  ui_study, NULL),
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Add ROI"),
+    GNOMEUIINFO_SUBTREE_HINT(N_("Add _ROI"),
 			     N_("Add a new ROI"),
 			     add_roi_menu),
+    //    GNOMEUIINFO_ITEM_DATA(N_("Add _Alignment Point"),
+    //			  N_("Add a new alignment point to the active data set"),
+    //			  ui_study_cb_add_alignment_point,
+    //			  ui_study, NULL),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_MENU_PREFERENCES_ITEM(ui_study_cb_preferences, ui_study),
     GNOMEUIINFO_END
   };
 
@@ -255,11 +269,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo roi_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_All"),
 			  N_("caculate values for all ROI's"),
-			  ui_study_rois_cb_calculate_all,
+			  ui_study_cb_calculate_all,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Selected"),
 			  N_("calculate values only for the currently selected ROI's"),
-			  ui_study_rois_cb_calculate_selected,
+			  ui_study_cb_calculate_selected,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -287,6 +301,16 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   g_assert(ui_study!=NULL);
 
 
+  /* fill in some more menu definitions */
+  for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
+    ui_study_menus_fill_in_menuitem(&(add_roi_menu[i_roi_type]),
+				    roi_menu_names[i_roi_type], 
+				    roi_menu_explanation[i_roi_type],
+				    ui_study_cb_add_roi,
+				    ui_study);
+  ui_study_menus_fill_in_end(&(add_roi_menu[NUM_ROI_TYPES]));
+
+
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
 
@@ -295,6 +319,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++)
     gtk_object_set_data(GTK_OBJECT(import_specific_menu[i_method-RAW_DATA].widget),
 			"method", GINT_TO_POINTER(i_method));
+
+  for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++)
+    gtk_object_set_data(GTK_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 
+			GINT_TO_POINTER(i_roi_type));
 
   for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
     gtk_object_set_data(GTK_OBJECT(export_view_menu[i_view].widget),

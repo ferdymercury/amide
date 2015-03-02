@@ -46,7 +46,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info);
 /* external functions */
 void raw_data_update_offset_label(raw_data_info_t * raw_data_info);
 guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info);
-volume_t * raw_data_import(gchar * filename);
+volume_t * raw_data_import(const gchar * filename);
 
 
 

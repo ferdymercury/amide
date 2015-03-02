@@ -51,19 +51,16 @@ rendering_t * rendering_context_free(rendering_t * context) {
   /* sanity checks */
   g_return_val_if_fail(context->reference_count > 0, NULL);
 
-  /* remove a reference count */
-  context->reference_count--;
+  context->reference_count--; 
 
 #ifdef AMIDE_DEBUG
   if (context->reference_count == 0)
     g_print("freeing rendering context of %s\n",context->volume->name);
 #endif
 
-  /* things we always do */
-  context->volume = volume_free(context->volume);
-  
   /* if we've removed all reference's, free the context */
   if (context->reference_count == 0) {
+    context->volume = volume_free(context->volume);
     g_free(context->rendering_vol);
     if (context->vpc != NULL)
       vpDestroyContext(context->vpc);
@@ -652,17 +649,16 @@ rendering_list_t * rendering_list_free(rendering_list_t * rendering_list) {
   /* sanity check */
   g_return_val_if_fail(rendering_list->reference_count > 0, NULL);
 
-  /* remove a reference count */
   rendering_list->reference_count--;
 
-  /* things we always do */
-  rendering_list->rendering_context = rendering_context_free(rendering_list->rendering_context);
 
-  /* recursively delete rest of list */
-  rendering_list->next = rendering_list_free(rendering_list->next); 
 
   /* things to do if our reference count is zero */
   if (rendering_list->reference_count == 0) {
+    /* recursively delete rest of list */
+    rendering_list->next = rendering_list_free(rendering_list->next); 
+
+    rendering_list->rendering_context = rendering_context_free(rendering_list->rendering_context);
     g_free(rendering_list);
     rendering_list = NULL;
   }

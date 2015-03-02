@@ -41,6 +41,7 @@ struct _ui_roi_list_t {
 /* external functions */
 ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list);
 ui_roi_list_t * ui_roi_list_init(void);
+guint ui_roi_list_count(ui_roi_list_t * ui_roi_list);
 ui_roi_list_t * ui_roi_list_get_ui_roi(ui_roi_list_t * ui_roi_list, roi_t * roi);
 gboolean ui_roi_list_includes_roi(ui_roi_list_t * ui_roilist, roi_t * roi);
 ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list, 
@@ -52,6 +53,7 @@ ui_roi_list_t * ui_roi_list_add_roi_first(ui_roi_list_t * ui_roi_list,
 					  GnomeCanvasItem * canvas_roi_item[],
 					  GtkWidget * tree_leaf);
 ui_roi_list_t * ui_roi_list_remove_roi(ui_roi_list_t * ui_roi_list, roi_t * roi);
+roi_list_t * ui_roi_list_return_roi_list(ui_roi_list_t * ui_roi_list);
 
 
 

@@ -235,10 +235,10 @@ guint raw_data_calc_num_bytes(voxelpoint_t dim, raw_data_format_t raw_data_forma
          and conversion,  but format will be filled in 
    note: file_offset is bytes for a binary file, lines for an ascii file
 */
-data_set_t * raw_data_read_file(gchar * file_name, 
-			      data_set_t * raw_data_set,
-			      raw_data_format_t raw_data_format,
-			      guint file_offset) {
+data_set_t * raw_data_read_file(const gchar * file_name, 
+				data_set_t * raw_data_set,
+				raw_data_format_t raw_data_format,
+				guint file_offset) {
 
   FILE * file_pointer;
   void * file_buffer=NULL;
@@ -687,7 +687,7 @@ data_set_t * raw_data_read_file(gchar * file_name,
    note: if raw_data_volume->frame_duration is null, fake values will be entered
    note: file_offset is bytes for a binary file, lines for an ascii file
 */
-volume_t * raw_data_read_volume(gchar * file_name, 
+volume_t * raw_data_read_volume(const gchar * file_name, 
 				volume_t * raw_data_volume,
 				raw_data_format_t raw_data_format,
 				guint file_offset) {

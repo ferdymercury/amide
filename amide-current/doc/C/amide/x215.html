@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->DICOM Files</TITLE
+>Gotcha's to ROI calculations </TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -9,14 +9,14 @@ REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="UP"
-TITLE="Importing Data "
-HREF="importing.html"><LINK
+TITLE="Using ROI's "
+HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Raw Data Files"
-HREF="x143.html"><LINK
+TITLE="Calculating Statistics over ROI's"
+HREF="x212.html"><LINK
 REL="NEXT"
-TITLE="Other Filetypes"
-HREF="x149.html"></HEAD
+TITLE="Rendering Data"
+HREF="rendering.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,20 +38,20 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x143.html"
+HREF="x212.html"
 >Prev</A
 ></TD
 ><TD
 WIDTH="80%"
 ALIGN="center"
 VALIGN="bottom"
->Chapter 3. Importing Data</TD
+>Chapter 5. Using ROI's</TD
 ><TD
 WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x149.html"
+HREF="rendering.html"
 >Next</A
 ></TD
 ></TR
@@ -64,18 +64,27 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN146"
->DICOM Files</A
+NAME="AEN215"
+>Gotcha's to ROI calculations</A
 ></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN217"
+>Variance/Std. Dev./Std. Err. Fallacies</A
+></H2
 ><P
->    
-    DICOM 3.0 is partially supported through medcon/libmdc, which
-    actually uses a slightly modified version of Tony Voet's
-    VT-DICOM library.  The level of support for DICOM 3.0 is
-    entirely determined by medcon/libmdc/VT-DICOM.
-    
-    
-  </P
+>      A common fallacy is to use the calculated variance (or standard
+      deviation, or standard error) of an ROI as an experiment's variance.
+      The variance of an experiment can only truly be measured by
+      taking multiple samples (i.e. performing multiple scans) and
+      calculating the variance between these different samples.
+      The variance that AMIDE calculates is only a measure of the
+      noise within an ROI in the given data set.
+    </P
+></DIV
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -92,7 +101,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x143.html"
+HREF="x212.html"
 >Prev</A
 ></TD
 ><TD
@@ -108,7 +117,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x149.html"
+HREF="rendering.html"
 >Next</A
 ></TD
 ></TR
@@ -117,20 +126,20 @@ HREF="x149.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Raw Data Files</TD
+>Calculating Statistics over ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
 VALIGN="top"
 ><A
-HREF="importing.html"
+HREF="rois.html"
 >Up</A
 ></TD
 ><TD
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Other Filetypes</TD
+>Rendering Data</TD
 ></TR
 ></TABLE
 ></DIV

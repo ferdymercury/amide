@@ -39,16 +39,12 @@
 /* destroy a ui_rendering_movie data structure */
 ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_rendering_movie) {
 
-  if (ui_rendering_movie == NULL)
-    return ui_rendering_movie;
+  if (ui_rendering_movie == NULL) return ui_rendering_movie;
 
   /* sanity checks */
   g_return_val_if_fail(ui_rendering_movie->reference_count > 0, NULL);
 
-  /* remove a reference count */
   ui_rendering_movie->reference_count--;
-
-  /* things we always do */
 
   /* things we do if we've removed all references */
   if (ui_rendering_movie->reference_count == 0) {
@@ -66,7 +62,6 @@ ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_renderi
 /* adds one to the reference count  */
 ui_rendering_movie_t * ui_rendering_movie_add_reference(ui_rendering_movie_t * movie) {
 
-  /* sanity checks */
   g_return_val_if_fail(movie != NULL, NULL);
 
   movie->reference_count++;
@@ -360,7 +355,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->dialog), "close",
-  		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_close_event),
+  		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_close),
   		     ui_rendering_movie);
   gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->dialog), "apply",
   		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_apply), 
@@ -437,7 +432,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   table_row++;
 
   /* widgets to specify the start and end times */
-  label = gtk_label_new("Start Time");
+  label = gtk_label_new("Start Time (s)");
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
@@ -452,7 +447,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("End Time");
+  label = gtk_label_new("End Time (s)");
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
