@@ -1,7 +1,7 @@
 /* amitk_canvas.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -36,10 +36,10 @@
 G_BEGIN_DECLS
 
 #define AMITK_TYPE_CANVAS            (amitk_canvas_get_type ())
-#define AMITK_CANVAS(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_CANVAS, AmitkCanvas))
-#define AMITK_CANVAS_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_CANVAS, AmitkCanvasClass))
-#define AMITK_IS_CANVAS(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_CANVAS))
-#define AMITK_IS_CANVAS_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_CANVAS))
+#define AMITK_CANVAS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_CANVAS, AmitkCanvas))
+#define AMITK_CANVAS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_CANVAS, AmitkCanvasClass))
+#define AMITK_IS_CANVAS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_CANVAS))
+#define AMITK_IS_CANVAS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_CANVAS))
 
 #define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)->view)
 #define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)

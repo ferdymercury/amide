@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -999,7 +999,7 @@ void ui_study_cb_series(GtkAction * action, gpointer data) {
   return;
 }
 
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 void ui_study_cb_fly_through(GtkAction * action, gpointer data) {
 
   ui_study_t * ui_study = data;
@@ -1021,11 +1021,6 @@ void ui_study_cb_render(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
   gint return_val;
   GList * selected_objects;
-
-  /* need something to render */
-  if (!amitk_object_selected_children(AMITK_OBJECT(ui_study->study),
-				      AMITK_SELECTION_SELECTED_0, TRUE)) 
-    return;
 
   /* let the user input rendering options */
   dialog = ui_render_init_dialog_create(ui_study->study, ui_study->window);
@@ -1078,7 +1073,7 @@ void ui_study_cb_alignment_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
   tb_alignment(ui_study->study, ui_study->window);
 #else
-  g_warning(no_gsl);
+  g_warning("%s",no_gsl);
 #endif
   return;
 }
@@ -1090,7 +1085,7 @@ void ui_study_cb_crop_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning(no_active_ds);
+    g_warning("%s",no_active_ds);
   else
     tb_crop(ui_study->study, AMITK_DATA_SET(ui_study->active_object), ui_study->window);
   return;
@@ -1101,12 +1096,12 @@ void ui_study_cb_fads_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning(no_active_ds);
+    g_warning("%s",no_active_ds);
   else {
 #ifdef AMIDE_LIBGSL_SUPPORT
     tb_fads(AMITK_DATA_SET(ui_study->active_object), ui_study->window);
 #else
-    g_warning(no_gsl);
+    g_warning("%s",no_gsl);
 #endif
   }
   return;
@@ -1117,7 +1112,7 @@ void ui_study_cb_filter_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning(no_active_ds);
+    g_warning("%s",no_active_ds);
   else 
     tb_filter(ui_study->study, AMITK_DATA_SET(ui_study->active_object), ui_study->window);
 

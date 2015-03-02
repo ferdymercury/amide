@@ -1,7 +1,13 @@
 /* amide_config.h.in.  Generated from configure.in by autoheader.  */
 
+/* Define to compile with checks for obsolete GLib/GTK functions */
+#undef AMIDE_CHECK_OBSOLETE
+
 /* Define to compile AMIDE with debugging information */
 #undef AMIDE_DEBUG
+
+/* Define to compile with ffmpeg */
+#undef AMIDE_FFMPEG_SUPPORT
 
 /* Define to compile with DCMTK */
 #undef AMIDE_LIBDCMDATA_SUPPORT
@@ -51,9 +57,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
-/* Define to 1 if you have the `mkdir' function. */
-#undef HAVE_MKDIR
-
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -78,11 +81,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `_mkdir' function. */
-#undef HAVE__MKDIR
-
-/* Define if mkdir takes only one argument. */
-#undef MKDIR_TAKES_ONE_ARG
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
 
 /* Name of package */
 #undef PACKAGE

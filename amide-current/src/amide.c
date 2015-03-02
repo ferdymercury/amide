@@ -1,7 +1,7 @@
 /* amide.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -56,14 +56,10 @@ void amide_log_handler_nopopup(const gchar *log_domain,
 			       const gchar *message,
 			       gpointer user_data) {
 
-  gchar * temp_string;
   AmitkPreferences * preferences = user_data;
 
-  if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
-    temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
-    g_print(temp_string);
-    g_free(temp_string);
-  }
+  if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) 
+    g_print("AMIDE WARNING: %s\n", message);
 
   return;
 }
@@ -73,26 +69,29 @@ void amide_log_handler(const gchar *log_domain,
 		       const gchar *message,
 		       gpointer user_data) {
 
-  gchar * temp_string;
   AmitkPreferences * preferences = user_data;
   GtkWidget * dialog;
 
-  if (log_level == G_LOG_LEVEL_MESSAGE) 
-    temp_string = g_strdup_printf("AMIDE MESSAGE: %s\n", message);
-  else /* G_LOG_LEVEL_WARNING */
-    temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
-
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
-    g_print(temp_string);
+    if (log_level == G_LOG_LEVEL_MESSAGE) 
+      g_print("AMIDE MESSAGE: %s\n", message);
+    else /* G_LOG_LEVEL_WARNING */
+      g_print("AMIDE WARNING: %s\n", message);
+
   } else {
-    dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-				    (log_level == G_LOG_LEVEL_MESSAGE) ? GTK_MESSAGE_INFO : GTK_MESSAGE_WARNING,
-				    GTK_BUTTONS_OK,
-				    temp_string);
+    if (log_level == G_LOG_LEVEL_MESSAGE) 
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_INFO,
+				      GTK_BUTTONS_OK,
+				      "AMIDE_MESSAGE: %s", message);
+    else
+      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_WARNING,
+				      GTK_BUTTONS_OK,
+				      "AMIDE_WARNING: %s",message);
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }
-  g_free(temp_string);
 
   return;
 }
@@ -250,7 +249,7 @@ int main (int argc, char *argv []) {
 
   /* remove left over references */
   g_object_unref(preferences); 
-  
+
   /* the main event loop */
   gtk_main(); 
   

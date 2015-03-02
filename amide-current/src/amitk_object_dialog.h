@@ -1,7 +1,7 @@
 /* amitk_object_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -39,10 +39,10 @@ G_BEGIN_DECLS
 /* ------------- Threshold---------- */
 
 #define AMITK_TYPE_OBJECT_DIALOG            (amitk_object_dialog_get_type ())
-#define AMITK_OBJECT_DIALOG(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_OBJECT_DIALOG, AmitkObjectDialog))
-#define AMITK_OBJECT_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkObjectDialogClass))
-#define AMITK_IS_OBJECT_DIALOG(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_OBJECT_DIALOG))
-#define AMITK_IS_OBJECT_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_OBJECT_DIALOG))
+#define AMITK_OBJECT_DIALOG(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_OBJECT_DIALOG, AmitkObjectDialog))
+#define AMITK_OBJECT_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkObjectDialogClass))
+#define AMITK_IS_OBJECT_DIALOG(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_OBJECT_DIALOG))
+#define AMITK_IS_OBJECT_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_OBJECT_DIALOG))
 
 
 typedef struct _AmitkObjectDialog       AmitkObjectDialog;

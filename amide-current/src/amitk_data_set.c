@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -63,10 +63,8 @@
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
-#ifndef G_PLATFORM_WIN32
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #endif
 #include <fcntl.h>
 #include "raw_data_import.h"

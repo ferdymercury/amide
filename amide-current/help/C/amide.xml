@@ -1103,7 +1103,7 @@
 
     <varlistentry><term>Ellipsoid</term>
     <listitem><para> An ellipsoid is similar to a sphere, but with a
-      radius specified for each direction [x,y,z].  In the case of
+      diameter specified for each direction [x,y,z].  In the case of
       x=y=z, the ellipsoid is a sphere.</para></listitem>
     </varlistentry>
   
@@ -2050,6 +2050,12 @@
  by clicking on the profile with the left and right mouse buttons,
  respectively.  The x value used for initializing the gaussian fit can
  be picked by clicking on the profile with the middle mouse button.
+ </para>
+
+ <para> Note that the line profile is extracted from the currently
+   viewed image, not the underlying raw data itself. This means things
+   like the current interpolation and FOV will effect the line profile
+   that's generated, and as such may effect the FWHM that's fitted.
  </para>
 
 </sect2>

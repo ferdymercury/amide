@@ -1,7 +1,7 @@
 /* amitk_threshold.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -39,10 +39,10 @@ G_BEGIN_DECLS
 /* ------------- Threshold---------- */
 
 #define AMITK_TYPE_THRESHOLD            (amitk_threshold_get_type ())
-#define AMITK_THRESHOLD(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_THRESHOLD, AmitkThreshold))
-#define AMITK_THRESHOLD_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkThresholdClass))
-#define AMITK_IS_THRESHOLD(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLD))
-#define AMITK_IS_THRESHOLD_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD))
+#define AMITK_THRESHOLD(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_THRESHOLD, AmitkThreshold))
+#define AMITK_THRESHOLD_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkThresholdClass))
+#define AMITK_IS_THRESHOLD(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_THRESHOLD))
+#define AMITK_IS_THRESHOLD_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD))
 
 typedef struct _AmitkThreshold             AmitkThreshold;
 typedef struct _AmitkThresholdClass        AmitkThresholdClass;
@@ -146,10 +146,10 @@ void       amitk_threshold_style_widgets     (GtkWidget ** radio_buttons,
 /* ---------- ThresholdDialog------------- */
 
 #define AMITK_TYPE_THRESHOLD_DIALOG     (amitk_threshold_dialog_get_type ())
-#define AMITK_THRESHOLD_DIALOG(obj)     (GTK_CHECK_CAST ((obj), AMITK_TYPE_THRESHOLD_DIALOG, AmitkThresholdDialog))
-#define AMITK_THRESHOLD_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD_DIALOG, AmitkThresholdDialogClass))
-#define AMITK_IS_THRESHOLD_DIALOG(obj)  (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLD_DIALOG))
-#define AMITK_IS_THRESHOLD_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD_DIALOG))
+#define AMITK_THRESHOLD_DIALOG(obj)     (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_THRESHOLD_DIALOG, AmitkThresholdDialog))
+#define AMITK_THRESHOLD_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD_DIALOG, AmitkThresholdDialogClass))
+#define AMITK_IS_THRESHOLD_DIALOG(obj)  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_THRESHOLD_DIALOG))
+#define AMITK_IS_THRESHOLD_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD_DIALOG))
 
 typedef struct _AmitkThresholdDialog       AmitkThresholdDialog;
 typedef struct _AmitkThresholdDialogClass  AmitkThresholdDialogClass;
@@ -180,10 +180,10 @@ AmitkDataSet * amitk_threshold_dialog_data_set     (AmitkThresholdDialog * thres
 /*---------- ThresholdDialogs--------------- */
 
 #define AMITK_TYPE_THRESHOLDS_DIALOG     (amitk_thresholds_dialog_get_type ())
-#define AMITK_THRESHOLDS_DIALOG(obj)     (GTK_CHECK_CAST ((obj), AMITK_TYPE_THRESHOLDS_DIALOG, AmitkThresholdsDialog))
-#define AMITK_THRESHOLDS_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLDS_DIALOG, AmitkThresholdsDialogClass))
-#define AMITK_IS_THRESHOLDS_DIALOG(obj)  (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLDS_DIALOG))
-#define AMITK_IS_THRESHOLDS_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLDS_DIALOG))
+#define AMITK_THRESHOLDS_DIALOG(obj)     (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_THRESHOLDS_DIALOG, AmitkThresholdsDialog))
+#define AMITK_THRESHOLDS_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLDS_DIALOG, AmitkThresholdsDialogClass))
+#define AMITK_IS_THRESHOLDS_DIALOG(obj)  (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_THRESHOLDS_DIALOG))
+#define AMITK_IS_THRESHOLDS_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLDS_DIALOG))
 
 typedef struct _AmitkThresholdsDialog       AmitkThresholdsDialog;
 typedef struct _AmitkThresholdsDialogClass  AmitkThresholdsDialogClass;

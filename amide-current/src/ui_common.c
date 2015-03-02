@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -44,6 +44,9 @@
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
 #include <medcon.h>
+#endif
+#ifdef AMIDE_FFMPEG_SUPPORT
+#include <ffmpeg/libavcodec/avcodec.h>
 #endif
 #ifdef AMIDE_LIBFAME_SUPPORT
 #include <fame_version.h>
@@ -117,7 +120,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
 		       "\n",
 		       _("Email bug reports to: "), PACKAGE_BUGREPORT,"\n",
 		       "\n",
-#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBDCMDATA_SUPPRT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_LIBFAME_SUPPORT)
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBDCMDATA_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 		       _("Compiled with support for the following libraries:\n"),
 #endif
 #ifdef AMIDE_LIBECAT_SUPPORT
@@ -135,6 +138,9 @@ static void about_cb(GtkAction *action, gpointer * caller) {
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
 #endif
+#ifdef AMIDE_FFMPEG_SUPPORT
+		       _("libavcodec: media encoding library by the FFMPEG Team (version "),AV_STRINGIFY(LIBAVCODEC_VERSION), ")\n",
+#endif
 #ifdef AMIDE_LIBFAME_SUPPORT
 		       _("libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "), LIBFAME_VERSION, ")\n",
 #endif
@@ -143,7 +149,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2007 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2009 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,
@@ -563,7 +569,7 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
   adjustment = gtk_adjustment_new(AMITK_PREFERENCES_MIN_ROI_WIDTH,
 				  AMITK_PREFERENCES_MIN_ROI_WIDTH,
-				  AMITK_PREFERENCES_MAX_ROI_WIDTH,1.0, 1.0, 1.0);
+				  AMITK_PREFERENCES_MAX_ROI_WIDTH,1.0, 1.0, 0.0);
   *pspin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(*pspin_button),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(*pspin_button), TRUE);
@@ -740,7 +746,7 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
   adjustment = gtk_adjustment_new(AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA, 
 				  AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA, 
-				  AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA,1.0, 1.0, 1.0);
+				  AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA, 1.0, 1.0, 0.0);
   *ptarget_size_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(*ptarget_size_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(*ptarget_size_spin), TRUE);

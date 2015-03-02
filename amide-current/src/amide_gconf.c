@@ -1,7 +1,7 @@
 /* amide_gconf.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2007 Andy Loening
+ * Copyright (C) 2007-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  * win32 gconf code is derived directly from gnumeric
@@ -27,6 +27,7 @@
 
 
 #include "amide_gconf.h"
+#include <errno.h>
 
 
 
@@ -38,6 +39,7 @@
  */
 
 #include <windows.h>
+#include <errno.h>
 
 #ifndef ERANGE
 /* mingw has not defined ERANGE (yet), MSVC has it though */

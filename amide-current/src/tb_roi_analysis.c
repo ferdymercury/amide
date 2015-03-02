@@ -1,7 +1,7 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1043,7 +1043,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(radio_button[1]), "calculation_type", GINT_TO_POINTER(HIGHEST_FRACTION_VOXELS));
 
-  adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 1.0);
+  adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 0.0);
   spin_buttons[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[0]),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
@@ -1067,7 +1067,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(radio_button[2]), "calculation_type", GINT_TO_POINTER(VOXELS_NEAR_MAX));
 
-  adjustment = gtk_adjustment_new(threshold_percentage, 0.0, 100.0,1.0, 1.0, 1.0);
+  adjustment = gtk_adjustment_new(threshold_percentage, 0.0, 100.0,1.0, 1.0, 0.0);
   spin_buttons[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[1]),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[1]), FALSE);

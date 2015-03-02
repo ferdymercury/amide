@@ -75,7 +75,6 @@
 #ifdef G_OS_WIN32
 #include <direct.h>
 #include <io.h>
-#define mkdir(p,m) _mkdir(p)
 #ifndef S_ISDIR
 #define S_ISDIR(mode) ((mode)&_S_IFDIR)
 #endif
@@ -1418,7 +1417,7 @@ amitk_xif_selection_create_dir_confirmed (GtkWidget *widget,
       goto out;
     }
 
-  if (mkdir (sys_full_path, 0755) < 0) 
+  if (g_mkdir (sys_full_path, 0755) < 0) 
     {
       buf = g_strdup_printf (_("Error creating folder \"%s\": %s\n"), dirname,
 			     g_strerror (errno));

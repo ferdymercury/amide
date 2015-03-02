@@ -1,7 +1,7 @@
 /* amitk_roi_variable_type.h - used to generate the different amitk_roi_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

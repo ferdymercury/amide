@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -528,6 +528,17 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     ds->scan_start = 0.0;
   }
 
+  /* figure out the image orientation */
+#if NOT_DONE_YET
+  /* Note, XMedCon is like DICOM, it uses a right-handed space, that is LPH+: meaning 
+     x increases towards patient left, y increases toward patient posterior, and z increases 
+     toward patient head. In terms of how it stores data in memory though, it's actually LPF+.
+     AMIDE uses a right-handed space that is LAF+ in both space and memory */
+  /* to do this, should try to use libmdc_fi.image[0].image_orient_pat */
+  /* probably most important for NIFTI format */
+#endif /* NOT_DONE_YET */
+
+
 #ifdef AMIDE_DEBUG
   g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
@@ -754,6 +765,11 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
 
   /* if NIFTI format, try to get in the right orientation */
+#if NOT_DONE_YET
+  /* the below is not commpletely correct, see comments above under the
+     other NOT_DONE_YET section.
+  */
+#endif /* NOT_DONE_YET */
   if (libmdc_fi.iformat == MDC_FRMT_NIFTI) {
     for (i_axis = 0; i_axis < AMITK_AXIS_NUM; i_axis++)
       amitk_space_invert_axis(AMITK_SPACE(ds), i_axis, zero_point);

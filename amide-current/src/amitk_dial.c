@@ -91,7 +91,7 @@ amitk_dial_class_init (AmitkDialClass *class)
   object_class = (GtkObjectClass*) class;
   widget_class = (GtkWidgetClass*) class;
 
-  parent_class = gtk_type_class (gtk_widget_get_type ());
+  parent_class = g_type_class_peek_parent (class);
 
   object_class->destroy = amitk_dial_destroy;
 
@@ -188,10 +188,10 @@ amitk_dial_set_adjustment (AmitkDial      *dial,
   g_object_ref (G_OBJECT (dial->adjustment));
 
   g_signal_connect (G_OBJECT (adjustment), "changed",
-		    GTK_SIGNAL_FUNC (amitk_dial_adjustment_changed),
+		    G_CALLBACK (amitk_dial_adjustment_changed),
 		    (gpointer) dial);
   g_signal_connect (G_OBJECT (adjustment), "value_changed",
-		    GTK_SIGNAL_FUNC (amitk_dial_adjustment_value_changed),
+		    G_CALLBACK (amitk_dial_adjustment_value_changed),
 		    (gpointer) dial);
 
   dial->old_value = adjustment->value;

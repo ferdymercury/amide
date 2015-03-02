@@ -1,7 +1,7 @@
 /* amitk_space_edit.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -34,10 +34,10 @@
 G_BEGIN_DECLS
 
 #define AMITK_TYPE_SPACE_EDIT            (amitk_space_edit_get_type ())
-#define AMITK_SPACE_EDIT(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_SPACE_EDIT, AmitkSpaceEdit))
-#define AMITK_SPACE_EDIT_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_SPACE_EDIT, AmitkSpaceEditClass))
-#define AMITK_IS_SPACE_EDIT(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_SPACE_EDIT))
-#define AMITK_IS_SPACE_EDIT_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_SPACE_EDIT))
+#define AMITK_SPACE_EDIT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_SPACE_EDIT, AmitkSpaceEdit))
+#define AMITK_SPACE_EDIT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_SPACE_EDIT, AmitkSpaceEditClass))
+#define AMITK_IS_SPACE_EDIT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_SPACE_EDIT))
+#define AMITK_IS_SPACE_EDIT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_SPACE_EDIT))
 
 typedef struct _AmitkSpaceEdit             AmitkSpaceEdit;
 typedef struct _AmitkSpaceEditClass        AmitkSpaceEditClass;

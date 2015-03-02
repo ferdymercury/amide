@@ -1,7 +1,7 @@
 /* ui_render_movie.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,7 +24,7 @@
 */
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 /* header files that are always needed with this file */
 #include "ui_render.h"
@@ -33,7 +33,7 @@
 /* external functions */
 gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render);
 
-#endif /* AMIDE_LIBFAME_SUPPORT */
+#endif /* AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT */
 #endif /* LIBVOLPACK_SUPPORT */
 
 

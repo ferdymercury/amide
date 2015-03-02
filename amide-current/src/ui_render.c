@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -54,7 +54,7 @@ static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data);
 static void export_cb(GtkAction * action, gpointer data);
 static void parameters_cb(GtkAction * action, gpointer data);
 static void transfer_function_cb(GtkAction * action, gpointer data);
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 static void movie_cb(GtkAction * action, gpointer data);
 #endif
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
@@ -458,7 +458,7 @@ static void transfer_function_cb(GtkAction * action, gpointer data) {
 }
 
 
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 /* function called when the button to pop up a movie generation dialog */
 static void movie_cb(GtkAction * action, gpointer data) {
   ui_render_t * ui_render = data;
@@ -503,7 +503,7 @@ static const GtkActionEntry normal_items[] = {
   
   /* File menu */
   { "ExportRendering", NULL, N_("_Export Rendering"), NULL, N_("Export the rendered image"), G_CALLBACK(export_cb)},
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   { "CreateMovie", NULL, N_("_Create Movie"), NULL, N_("Create a movie out of a sequence of renderings"), G_CALLBACK(movie_cb)},
 #endif
   { "Close", GTK_STOCK_CLOSE, NULL, "<control>W", N_("Close the rendering dialog"), G_CALLBACK (close_cb)},
@@ -699,7 +699,7 @@ static ui_render_t * ui_render_init(GtkWindow * window,
   ui_render->window_vbox = window_vbox;
   ui_render->parameter_dialog = NULL;
   ui_render->transfer_function_dialog = NULL;
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   ui_render->movie = NULL;
 #endif
   ui_render->stereoscopic = FALSE;

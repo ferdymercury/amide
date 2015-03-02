@@ -12,10 +12,11 @@ Packager: 	Andy Loening <loening at alum dot mit dot edu>
 Requires:	xmedcon >= 0.10.0
 Requires:	gsl
 Requires:	volpack
-Requires:	libfame >= 0.9.1
+Requires:	ffmpeg-libs >= 0.4.9
 Requires:	dcmtk >= 3.5.4
 Requires:       gtk2 >= 2.10
 Requires:	gnome-vfs2
+Requires:	libgnomecanvas
 
 Requires(post):	scrollkeeper >= 0.1.4
 
@@ -23,8 +24,9 @@ BuildRequires:  xmedcon-devel
 BuildRequires:  volpack-devel 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gtk-doc 
+BuildRequires:  gnome-doc-utils
 BuildRequires:  libgnomecanvas-devel 
-BuildRequires:  libfame-devel >= 0.9.1 
+BuildRequires:  ffmpeg-devel >= 0.4.9
 BuildRequires:  gsl-devel
 BuildRequires:  dcmtk-devel
 BuildRequires:  perl-XML-Parser

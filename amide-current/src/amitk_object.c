@@ -1,7 +1,7 @@
 /* amitk_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -439,7 +439,9 @@ void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_obj
   children = src_object->children;
   while (children != NULL) {
     child = amitk_object_copy(children->data);
+#if AMIDE_DEBUG
     g_print("copying %s\n", AMITK_OBJECT_NAME(child));
+#endif
     amitk_object_add_child(dest_object, child);
     amitk_object_unref(child);
     children = children->next;

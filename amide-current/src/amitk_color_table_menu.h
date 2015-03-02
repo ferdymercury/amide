@@ -1,7 +1,7 @@
 /* amitk_color_table_menu.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2007 Andy Loening
+ * Copyright (C) 2003-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -34,10 +34,10 @@
 G_BEGIN_DECLS
 
 #define AMITK_TYPE_COLOR_TABLE_MENU             (amitk_color_table_menu_get_type ())
-#define AMITK_COLOR_TABLE_MENU(obj)             (GTK_CHECK_CAST ((obj), AMITK_TYPE_COLOR_TABLE_MENU, AmitkColorTableMenu))
-#define AMITK_COLOR_TABLE_MENU_CLASS(klass)     (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_COLOR_TABLE_MENU, AmitkColorTableMenuClass))
-#define AMITK_IS_COLOR_TABLE_MENU(obj)          (GTK_CHECK_TYPE ((obj), AMITK_TYPE_COLOR_TABLE_MENU))
-#define AMITK_IS_COLOR_TABLE_MENU_CLASS(klass)  (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_COLOR_TABLE_MENU))
+#define AMITK_COLOR_TABLE_MENU(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_COLOR_TABLE_MENU, AmitkColorTableMenu))
+#define AMITK_COLOR_TABLE_MENU_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_COLOR_TABLE_MENU, AmitkColorTableMenuClass))
+#define AMITK_IS_COLOR_TABLE_MENU(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_COLOR_TABLE_MENU))
+#define AMITK_IS_COLOR_TABLE_MENU_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_COLOR_TABLE_MENU))
 #define AMITK_COLOR_TABLE_MENU_COLOR_TABLE(obj) (AMITK_COLOR_TABLE_MENU(obj)->color_table)
 
 typedef struct _AmitkColorTableMenu             AmitkColorTableMenu;

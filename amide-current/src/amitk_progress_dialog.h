@@ -1,7 +1,7 @@
 /* amitk_progress_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -36,10 +36,10 @@ G_BEGIN_DECLS
 /* ------------- Progress_Dialog---------- */
 
 #define AMITK_TYPE_PROGRESS_DIALOG            (amitk_progress_dialog_get_type ())
-#define AMITK_PROGRESS_DIALOG(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_PROGRESS_DIALOG, AmitkProgressDialog))
-#define AMITK_PROGRESS_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkProgressDialogClass))
-#define AMITK_IS_PROGRESS_DIALOG(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_PROGRESS_DIALOG))
-#define AMITK_IS_PROGRESS_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_PROGRESS_DIALOG))
+#define AMITK_PROGRESS_DIALOG(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_PROGRESS_DIALOG, AmitkProgressDialog))
+#define AMITK_PROGRESS_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD, AmitkProgressDialogClass))
+#define AMITK_IS_PROGRESS_DIALOG(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_PROGRESS_DIALOG))
+#define AMITK_IS_PROGRESS_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_PROGRESS_DIALOG))
 
 #define AMITK_PROGRESS_DIALOG_CAN_CONTINUE(obj)   (AMITK_PROGRESS_DIALOG(obj)->can_continue);
 

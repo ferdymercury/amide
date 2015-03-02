@@ -102,16 +102,26 @@ available.
 
 
 
-5) libfame
+5) ffmpeg (libavcodec) [alternatively libfame]
 
-Another optional package, the fame library is used for generating
+Another optional package, the ffmpeg library is used for generating
 MPEG-1 movies from series of rendered images and for generating
 fly-through movies.
 
-Information, code, and binaries for libfame can be found at:
+Information, code, and binaries for ffmpeg can be found at;
+	     http://ffmpeg.mplayerhq.hu
+
+and Linux RPM binaries are available at:
+      http://rpm.livna.org/rlowiki/
+
+
+If for whatever reasons you do not want to use the ffmpeg package for
+generating MPEG-1 movies, there is still code in AMIDE for using the
+libfame package for doing this. Information, code, and binaries for
+libfame can be found at: 
 	http://fame.sourceforge.net
 
-Linux RPM binaries are available at:
+and Linux RPM binaries are available at:
 	http://atrpms.net/name/libfame/
 
 

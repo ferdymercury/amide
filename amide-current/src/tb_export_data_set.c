@@ -1,7 +1,7 @@
 /* tb_export_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2007 Andy Loening
+ * Copyright (C) 2006-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -178,7 +178,12 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
   /* get the filename and import - note DCMTK dicom files we don't want to 
      complain about file existing, as we might be appending */
   filename = ui_common_file_selection_get_save_name(file_selection,
-						    method!=AMITK_EXPORT_METHOD_DCMTK);
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+						    method!=AMITK_EXPORT_METHOD_DCMTK
+#else
+						    TRUE
+#endif
+						    );
   
   if (filename == NULL) return;
 

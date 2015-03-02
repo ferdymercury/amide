@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -258,7 +258,7 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
 
     /* see if we should reset the study name */
     if ((AMITK_OBJECT_NAME(ui_study->study) == NULL)  ||
-	(AMITK_OBJECT_NAME(ui_study->study) == "") ||
+	(g_strcmp0(AMITK_OBJECT_NAME(ui_study->study), "") == 0) ||
 	(g_ascii_strncasecmp(blank_name, AMITK_OBJECT_NAME(ui_study->study),
 			     strlen(AMITK_OBJECT_NAME(ui_study->study))) == 0))
       amitk_object_set_name(AMITK_OBJECT(ui_study->study), 
@@ -340,7 +340,7 @@ static const GtkActionEntry normal_items[] = {
   //N_("Export one of the views to a picture file")
   { "AddRoi", NULL, N_("Add _ROI")},
   //N_("Add a new ROI"),
-#if AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   { "FlyThrough",NULL,N_("Generate _Fly Through")},
   //N_("generate an mpeg fly through of the data sets")
 #endif
@@ -381,7 +381,7 @@ static const GtkActionEntry normal_items[] = {
   { "RoiStats",NULL,N_("Calculate _ROI Statistics"),NULL,N_("caculate ROI statistics"),G_CALLBACK(ui_study_cb_roi_statistics)},
 
   /* Flythrough Submenu */
-#if AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   { "FlyThroughTransverse",NULL,N_("_Transverse"),NULL,N_("Generate a fly through using transaxial slices"),G_CALLBACK(ui_study_cb_fly_through)},
   { "FlyThroughCoronal",NULL,N_("_Coronal"),NULL,N_("Generate a fly through using coronal slices"),G_CALLBACK(ui_study_cb_fly_through)},
   { "FlyThroughSagittal",NULL,N_("_Sagittal"),NULL,N_("Generate a fly through using sagittal slices"),G_CALLBACK(ui_study_cb_fly_through)},
@@ -462,7 +462,7 @@ static const char *ui_description =
 "       <menuitem action='CropWizard'/>"
 "       <menuitem action='FactorAnalysisWizard'/>"
 "       <menuitem action='FilterWizard'/>"
-#if AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 "       <menu action='FlyThrough'>"
 "          <menuitem action='FlyThroughTransverse'/>"
 "          <menuitem action='FlyThroughCoronal'/>"
@@ -557,12 +557,14 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
 		    "view", GINT_TO_POINTER(AMITK_VIEW_CORONAL));
   g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "ExportViewSagittal")),
 		    "view", GINT_TO_POINTER(AMITK_VIEW_SAGITTAL));
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughTransverse")),
 		    "view", GINT_TO_POINTER(AMITK_VIEW_TRANSVERSE));
   g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughCoronal")),
 		    "view", GINT_TO_POINTER(AMITK_VIEW_CORONAL));
   g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughSagittal")),
 		    "view", GINT_TO_POINTER(AMITK_VIEW_SAGITTAL));
+#endif
 
   /* build the import menu */
   submenu = gtk_menu_new();
@@ -668,8 +670,7 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
 				  AMIDE_LIMIT_ZOOM_LOWER,
 				  AMIDE_LIMIT_ZOOM_UPPER,
 				  AMIDE_LIMIT_ZOOM_STEP, 
-				  AMIDE_LIMIT_ZOOM_PAGE,
-				  AMIDE_LIMIT_ZOOM_PAGE);
+				  AMIDE_LIMIT_ZOOM_PAGE, 0.0);
   ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 3);
   gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
@@ -690,9 +691,8 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   adjustment = gtk_adjustment_new(1.0,
 				  AMIDE_LIMIT_FOV_LOWER,
 				  AMIDE_LIMIT_FOV_UPPER,
-				  AMIDE_LIMIT_FOV_STEP, 
-				  AMIDE_LIMIT_FOV_PAGE,
-				  AMIDE_LIMIT_FOV_PAGE);
+				  AMIDE_LIMIT_FOV_STEP,  
+				  AMIDE_LIMIT_FOV_PAGE, 0.0);
   ui_study->fov_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 0);
   gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->fov_spin),FALSE);
@@ -709,7 +709,7 @@ static void menus_toolbar_create(ui_study_t * ui_study) {
   label = gtk_label_new(_("thickness (mm):"));
   ui_common_toolbar_append_widget(toolbar, label, NULL);
 
-  adjustment = gtk_adjustment_new(1.0,0.2,5.0,0.2,0.2, 0.2);
+  adjustment = gtk_adjustment_new(1.0, 0.2, 5.0, 0.2, 0.2, 0.0);
   ui_study->thickness_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 3);
   gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->thickness_spin),FALSE);

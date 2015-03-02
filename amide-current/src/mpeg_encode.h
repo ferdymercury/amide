@@ -1,7 +1,7 @@
 /* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -23,7 +23,7 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 #ifndef __MPEG_ENCODE_H__
 #define __MPEG_ENCODE_H__
@@ -40,10 +40,10 @@ typedef enum {
 /* functions */
 
 
-gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsize, gint ysize);
+gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsize, gint ysize);
 gboolean mpeg_encode_frame(gpointer mpeg_encode_context, GdkPixbuf * pixbuf);
 gpointer mpeg_encode_close(gpointer mpeg_encode_context);
 
 #endif /* __MPEG_ENCODE_H__ */
-#endif /* AMIDE_LIBFAME_SUPPORT */
+#endif /* AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT */
 

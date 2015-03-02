@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.9.1],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.9.2],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -14,7 +14,6 @@ AM_MAINTAINER_MODE
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_LIBTOOL
-AC_FUNC_MKDIR
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 AC_CHECK_SIZEOF(long,8)
@@ -41,8 +40,11 @@ fi
 
 dnl =====================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
+dnl also, need the -headerpad_max_install_name to allow switching
+dnl the library paths with strings that have longer lengths
 case "$host_os" in
-darwin*) 	CFLAGS="-g -O2 -Wall";;
+darwin*) 	CFLAGS="-g -O2 -Wall"
+		LDFLAGS="-headerpad_max_install_names";;
 *)		CFLAGS="-g -O6 -Wall"
 		CXXFLAGS="-g -O6 -Wall";;
 esac
@@ -87,14 +89,14 @@ AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-AM_PATH_LIBFAME(0.9.1, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
-dnl AC_CHECK_LIB(libfame, fame_init, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
 AC_LANG_CPLUSPLUS
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
 AC_CHECK_LIB(dcmdata, main, FOUND_DCMDATA=yes, FOUND_DCMDATA=no, -lofstd  -lz -L/usr/local/dicom/lib -L/sw/lib $THREAD_LIBS)
 
+dnl trying to phase out libfame use in favor of ffmpeg
+PKG_CHECK_MODULES(FFMPEG, libavcodec >= 51.45.0, FOUND_FFMPEG=yes, FOUND_FFMPEG=no);
 
 dnl Let people compile without debugging information
 AC_ARG_ENABLE(
@@ -106,11 +108,31 @@ AC_ARG_ENABLE(
 if test $enable_amide_debug = yes; then
 	echo "Compiling with AMIDE debugging messages"
 	AMIDE_DEBUG_CFLAGS="-ggdb"
+
 	AC_SUBST(AMIDE_DEBUG_CFLAGS)
 	AC_DEFINE(AMIDE_DEBUG, 1, Define to compile AMIDE with debugging information)
 else
 	echo "Compiling without AMIDE debugging messages"
 fi
+
+dnl compile with warnings for obsolete Glib/GTK stuff
+AC_ARG_ENABLE(
+	amide_check_obsolete, 
+	[  --enable-amide-check-obsolete  Compile with checks for old GLib/GTK functions [default=no]], 
+	enable_amide_check_obsolete="$enableval", 
+	enable_amide_check_obsolete=no)
+
+if test $enable_amide_check_obsolete = yes; then
+	echo "Compiling with checks for obsolete GLib/GTK functions"
+	AMIDE_CHECK_OBSOLETE_CFLAGS="-DG_DISABLE_DEPRECATED -DGDK_DISABLE_SINGLE_INCLUDES -DGDK_DISABLE_DEPRECATED -DGDK_DISABLE_SINGLE_INCLUDES -DGTK_DISABLE_DEPRECATED -DGTK_DISABLE_SINGLE_INCLUDES"
+
+	AC_SUBST(AMIDE_CHECK_OBSOLETE_CFLAGS)
+	AC_DEFINE(AMIDE_CHECK_OBSOLETE, 1, Define to compile with checks for obsolete GLib/GTK functions)
+else
+	echo "Compiling without checks for obsolete GLib/GTK functions"
+fi
+ 
+
 
 dnl check if we're building on windows
 AC_MSG_CHECKING([for native Win32])
@@ -195,18 +217,36 @@ else
 fi
 
 
-dnl Let people compile without mpeg movie generation/libfame
+dnl Let people compile without mpeg movie generation/ffmpeg
 AC_ARG_ENABLE(
-	libfame,
-	[  --enable-libfame   	  Compile in libfame mpeg encoding support [default=yes]], 
-	enable_libfame="$enableval", 
-	enable_libfame=yes)
+	ffmpeg,
+	[  --enable-ffmpeg   	  Compile in ffmpeg (libavcodec) mpeg encoding support [default=yes]], 
+	enable_ffmpeg="$enableval", 
+	enable_ffmpeg=yes)
 
-if (test $enable_libfame = yes) && (test $FOUND_LIBFAME = yes); then
-	echo "Compiling with libfame mpeg encoding support "
-	AC_DEFINE(AMIDE_LIBFAME_SUPPORT, 1, Define to compile with Libfame)
+if (test $enable_ffmpeg = yes) && (test $FOUND_FFMPEG = yes); then
+	echo "Compiling with ffmpeg (libavcodec) mpeg encoding support "
+	AC_DEFINE(AMIDE_FFMPEG_SUPPORT, 1, Define to compile with ffmpeg)
+	AC_SUBST(FFMPEG_LIBS)
+	AC_SUBST(FFMPEG_CFLAGS)
 else
-	echo "Compiling without libfame mpeg encoding support"
+	echo "Compiling without ffmpeg (libavcodec) mpeg encoding support"
+
+	dnl Let people compile with libfame mpeg movie generation if not using ffmpeg
+	AM_PATH_LIBFAME(0.9.1, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
+	dnl AC_CHECK_LIB(libfame, fame_init, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
+	AC_ARG_ENABLE(
+		libfame,
+			[  --enable-libfame   	  Compile in libfame mpeg encoding support if not using ffmpeg [default=no]], 
+			enable_libfame="$enableval", 		 
+			enable_libfame=no)	
+
+	if (test $enable_libfame = yes) && (test $FOUND_LIBFAME = yes); then
+		echo "Compiling with libfame mpeg encoding support "
+		AC_DEFINE(AMIDE_LIBFAME_SUPPORT, 1, Define to compile with Libfame)
+	else
+		echo "Compiling without libfame mpeg encoding support"
+	fi
 fi
 
 dnl Let people compile without the DCMTK library
@@ -246,8 +286,8 @@ PKG_CHECK_MODULES(AMIDE_GTK,[
 ## gconf stuff is encapsulated in amide_gconf.c
 if (test $native_win32 = no); then
    PKG_CHECK_MODULES(AMIDE_GTK_EXTRA,[
-		gnome-vfs-2.0   >= 2.18.0
-		gconf-2.0	>= 2.18.0
+		gnome-vfs-2.0   >= 2.16.0
+		gconf-2.0	>= 2.14.0
    ])
    AMIDE_GTK_LIBS="$AMIDE_GTK_LIBS $AMIDE_GTK_EXTRA_LIBS"
    AMIDE_GTK_CFLAGS="$AMIDE_GTK_CFLAGS $AMIDE_GTK_EXTRA_CFLAGS"

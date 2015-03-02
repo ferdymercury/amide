@@ -27,9 +27,9 @@
 
 G_BEGIN_DECLS
 
-#define AMITK_DIAL(obj)          GTK_CHECK_CAST (obj, amitk_dial_get_type (), AmitkDial)
-#define AMITK_DIAL_CLASS(klass)  GTK_CHECK_CLASS_CAST (klass, amitk_dial_get_type (), AmitkDialClass)
-#define AMITK_IS_DIAL(obj)       GTK_CHECK_TYPE (obj, amitk_dial_get_type ())
+#define AMITK_DIAL(obj)          G_TYPE_CHECK_INSTANCE_CAST (obj, amitk_dial_get_type (), AmitkDial)
+#define AMITK_DIAL_CLASS(klass)  G_TYPE_CHECK_CLASS_CAST (klass, amitk_dial_get_type (), AmitkDialClass)
+#define AMITK_IS_DIAL(obj)       G_TYPE_CHECK_INSTANCE_TYPE (obj, amitk_dial_get_type ())
 
 
 typedef struct _AmitkDial        AmitkDial;
@@ -72,7 +72,7 @@ struct _AmitkDialClass
 
 
 GtkWidget*     amitk_dial_new                    (GtkAdjustment *adjustment);
-GtkType        amitk_dial_get_type               (void);
+GType          amitk_dial_get_type               (void);
 GtkAdjustment* amitk_dial_get_adjustment         (AmitkDial      *dial);
 void           amitk_dial_set_update_policy      (AmitkDial      *dial,
 						GtkUpdateType  policy);

@@ -1,7 +1,7 @@
 /* ui_render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2007 Andy Loening
+ * Copyright (C) 2001-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -46,7 +46,7 @@ typedef struct ui_render_t {
   GtkWidget * window_vbox;
   GtkWidget * parameter_dialog;
   GtkWidget * transfer_function_dialog;
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   gpointer movie; /* pointer to type ui_render_movie_t */
 #endif
   amide_time_t start;

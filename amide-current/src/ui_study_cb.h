@@ -1,7 +1,7 @@
 /* ui_study_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -59,7 +59,7 @@ void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_gate(GtkWidget * button, gpointer data);
 void ui_study_cb_time(GtkWidget * button, gpointer data);
 void ui_study_cb_series(GtkAction * action, gpointer ui_study);
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 void ui_study_cb_fly_through(GtkAction * action, gpointer ui_study);
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT

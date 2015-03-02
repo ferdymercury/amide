@@ -1,7 +1,7 @@
 /* tb_fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2007 Andy Loening
+ * Copyright (C) 2003-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,6 +26,7 @@
 
 #include "amide_config.h"
 #include "amide.h"
+#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include "amitk_progress_dialog.h"
 #include "fads.h"
 #include "tb_fads.h"

@@ -39,11 +39,11 @@
 G_BEGIN_DECLS
 
 #define AMITK_TYPE_XIF_SELECTION            (amitk_xif_selection_get_type ())
-#define AMITK_XIF_SELECTION(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelection))
-#define AMITK_XIF_SELECTION_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
-#define AMITK_IS_XIF_SELECTION(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_XIF_SELECTION))
-#define AMITK_IS_XIF_SELECTION_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_XIF_SELECTION))
-#define AMITK_XIF_SELECTION_GET_CLASS(obj)  (GTK_CHECK_GET_CLASS ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
+#define AMITK_XIF_SELECTION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelection))
+#define AMITK_XIF_SELECTION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
+#define AMITK_IS_XIF_SELECTION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), AMITK_TYPE_XIF_SELECTION))
+#define AMITK_IS_XIF_SELECTION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_XIF_SELECTION))
+#define AMITK_XIF_SELECTION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), AMITK_TYPE_XIF_SELECTION, AmitkXifSelectionClass))
 
 
 typedef struct _AmitkXifSelection       AmitkXifSelection;
@@ -94,7 +94,7 @@ struct _AmitkXifSelectionClass
 };
 
 
-GtkType    amitk_xif_selection_get_type            (void) G_GNUC_CONST;
+GType    amitk_xif_selection_get_type            (void) G_GNUC_CONST;
 GtkWidget* amitk_xif_selection_new                 (const gchar      *title);
 void       amitk_xif_selection_set_filename        (AmitkXifSelection *filesel,
 						   const gchar      *filename);

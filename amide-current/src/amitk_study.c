@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2007 Andy Loening
+ * Copyright (C) 2000-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,8 +26,8 @@
 #include "amide_config.h"
 
 #include <time.h>
-#include <string.h>
 #include <unistd.h>
+#include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -35,7 +35,6 @@
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 #include "legacy.h"
-
 
 
 enum {
@@ -964,7 +963,7 @@ AmitkStudy * amitk_study_recover_xml(const gchar * study_filename, AmitkPreferen
     amitk_append_str_with_newline(&error_buf, _(""));
     amitk_append_str_with_newline(&error_buf, _("The above warnings may arise because portions of the XIF"));
     amitk_append_str_with_newline(&error_buf, _("file were corrupted."));
-    g_warning(error_buf);
+    g_warning("%s",error_buf);
     g_free(error_buf);
   }
 
@@ -1033,7 +1032,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
     amitk_append_str_with_newline(&error_buf, _(""));
     amitk_append_str_with_newline(&error_buf, _("The above warnings most likely indicate changes to the"));
     amitk_append_str_with_newline(&error_buf, _("XIF file format, please resave the data as soon as possible."));
-    g_warning(error_buf);
+    g_warning("%s",error_buf);
     g_free(error_buf);
   }
 
@@ -1108,11 +1107,7 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
   if (save_as_directory) {
     if (stat(study_filename, &file_info) != 0) {
       /* make the directory if needed */
-#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
-      if (mkdir(study_filename) != 0) 
-#else /* unix */
-      if (mkdir(study_filename, 0766) != 0) 
-#endif 
+      if (g_mkdir(study_filename, 0766) != 0) 
 	{
 	  g_warning(_("Couldn't create amide directory: %s"),study_filename);
 	  return FALSE;

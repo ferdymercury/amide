@@ -1,7 +1,7 @@
 /* dcmtk_interface.cc
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2007 Andy Loening
+ * Copyright (C) 2005-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -36,6 +36,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
+#include <glib/gstdio.h> /* make sure we get g_mkdir on mingw32 */
 
 /* dcmtk redefines a lot of things that they shouldn't... */
 #undef PACKAGE_BUGREPORT
@@ -1485,11 +1486,9 @@ static GList * import_files(const gchar * filename,
     }
   }
 
-
-
   /* cleanup */
   if (error_buf != NULL) {
-    g_warning(error_buf);
+    g_warning("%s",error_buf);
     g_free(error_buf);
   }
 
@@ -1616,7 +1615,7 @@ static GList * import_dir(const gchar * filename,
     g_free(dirname);
 
   if (error_buf != NULL) {
-    g_warning(error_buf);
+    g_warning("%s",error_buf);
     g_free(error_buf);
   }
 
@@ -1796,13 +1795,7 @@ void dcmtk_export(AmitkDataSet * ds,
     }
 
   } else {
-    if (
-#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
-	(mkdir(dirname) != 0) 
-#else /* unix */
-	(mkdir(dirname,0766) != 0) 
-#endif 
-	) {
+    if (g_mkdir(dirname,0766) != 0) {
       g_warning(_("Couldn't create directory: %s"),dirname);
       goto cleanup;
     }
@@ -1852,13 +1845,7 @@ void dcmtk_export(AmitkDataSet * ds,
   g_print("selected subdirname %s\n", subdirname);
 #endif
 
-  if (
-#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
-      (mkdir(full_subdirname) != 0) 
-#else /* unix */
-      (mkdir(full_subdirname,0766) != 0) 
-#endif 
-      ) {
+  if (g_mkdir(full_subdirname,0766) != 0) {
     g_warning(_("Couldn't create directory: %s"),full_subdirname);
   }
 
@@ -2245,9 +2232,10 @@ void dcmtk_export(AmitkDataSet * ds,
 	/* add it to the DICOMDIR file */
 	status = dcm_dir.addDicomFile(filename,dirname);
 	if (status.bad()) {
-	  g_warning(_("couldn't append file %s to DICOMDIR, error %s"), filename, status.text());
+	  g_warning(_("couldn't append file %s to DICOMDIR %s, error %s"), filename, dirname, status.text());
 	  goto cleanup;
 	}
+
 
 	/* cleanups */
 	if (filename != NULL) {

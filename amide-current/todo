@@ -1,8 +1,8 @@
 misc list of things todo:
 
-
 for next release?
 -----------------
+* exporting gated studies via DICOM and reloading doesn't work. May be an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
 * help works in cygwin setup, but not in installed package. Seems to know the
   right place to look, just isn't doing something correctly....
@@ -16,6 +16,11 @@ for next release?
 * view_thickness isn't read in from .xif file - gets overridden at some point
 * Gate picker -> multiple selection still screwed up
 
+
+to test on win32
+----------------
+* export pixel size text boxes get ignored - likely using wrong "update" event
+  (noticed by Priti Madhav and Ian Miller)
 
 remaining things to do now that we're using gtk 2.10
 ----------------------------------------------------
@@ -54,10 +59,12 @@ factor analysis things:
 
 big things:
 -----------
-* switch from libfame to ffmpeg for mpeg encoding
+* figuring out orientation from files loaded from xmedcon isn't strictly correct, and screws up with NIFTI format
+  look at notes in libmdc_interface.c. Also would likely need fixes in libmdc itself (see
+  0.10.3_nifti_unsubmitted changes)
 * add drag-n-drop capabilities between study windows
 	don't use treeview reorderable stuff, too limited,
-* toolbox dialog for generating polar maps
+* toolbox dialog for generating polar maps (requested by Jeff Arkles and others)
 * should be able to specify units the image/display info is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 	-study would have an output units variable
@@ -95,6 +102,9 @@ big things:
                        
 small things:
 -------------
+* pop-up widget allowing value underneath cursor to be shown for all data sets (not just active). (requested by Axel Moeller)
+* hot key to cycle through time frames (requested by Michael Braden)
+* allow direct entry of transformation matrix in amitk_space_edit
 * data set icons in amitk_tree could be generated from the actual respective data sets
 * .xif files should try to compress data.
 * amitk_preferences.c : default color table, panel layout, layout should be saved in gconf as they 

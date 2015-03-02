@@ -1,7 +1,7 @@
 /* tb_fly_through.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -25,7 +25,7 @@
 
 #include "amide_config.h"
 
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 #undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <sys/stat.h>
@@ -1020,7 +1020,7 @@ void tb_fly_through(AmitkStudy * study,
 
 
 
-#endif /* AMIDE_LIBFAME_SUPPORT */
+#endif /* AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT */
 
 
 

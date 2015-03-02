@@ -1,7 +1,7 @@
 /* tb_fly_through.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2007 Andy Loening
+ * Copyright (C) 2002-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -23,7 +23,7 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_LIBFAME_SUPPORT
+#if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 #ifndef __TB_FLY_THROUGH_H__
 #define __TB_FLY_THROUGH_H__
@@ -39,6 +39,6 @@ void tb_fly_through(AmitkStudy * study,
 
 
 #endif /* TB_FLY_THROUGH_H */
-#endif /* AMIDE_LIBFAME_SUPPORT */
+#endif /* AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT */
 
 

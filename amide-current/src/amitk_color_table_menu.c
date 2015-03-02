@@ -1,7 +1,7 @@
 /* amitk_color_table_menu.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2007 Andy Loening
+ * Copyright (C) 2003-2009 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

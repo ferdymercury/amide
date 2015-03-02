@@ -24,25 +24,16 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GTK_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
+	$(AMIDE_CHECK_OBSOLETE_CFLAGS) \
 	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS) \
-	-DG_DISABLE_DEPRECATED \
-	-DGTK_DISABLE_DEPRECATED 
-
-##	-DGNOME_DISABLE_DEPRECATED 
+	$(FFMPEG_CFLAGS) 
 
 
 
 ## c++ gets the same includes
 AM_CXXFLAGS = $(AM_CFLAGS)
-
-
-# -- the below doesn't seem to be a problem as of 2005.11.19
-# following are "toxic", as they drag in Gtk1 stuff
-#	$(XMEDCON_CFLAGS) 
-# added -I/usr/local/include and -I/usr/local/xmedcon/include 
-# above as that's where XMEDCON usually gets installed
 
 bin_PROGRAMS = amide
 
@@ -55,6 +46,7 @@ amide_LDADD = \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GTK_LIBS) \
 	$(XMEDCON_LIBS) \
+	$(FFMPEG_LIBS) \
 	$(AMIDE_LIBDCMDATA_LIBS) \
 	$(AMIDE_LDADD_WIN32) 
 
