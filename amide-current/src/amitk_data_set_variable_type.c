@@ -63,6 +63,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
   i = zero_voxel;
   i_plane=0;
   for (i.t = 0; i.t < dim.t; i.t++) {
+    i.x = i.y = i.z = i.g = 0;
     temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
     if (finite(temp)) max = min = temp;   
     else max = min = 0.0; /* just throw in zero */

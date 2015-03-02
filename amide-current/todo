@@ -8,16 +8,12 @@ for next release?
 	finish gate support in ui_series (lots of fixmes)
 
 
-* get some form of help working on win32? html?
 * fink -> doesn't have yelp
 	need to update amide/unstable packages to new gnome .info files and
 	add in fink
 
 * requested by steve jones:
   add an import from file button for frame durations
-
-* profile tool:
-	-needs to update on data set selection change
 
 * ui_series:
 	-add support for gated data sets
@@ -61,6 +57,7 @@ windows todo
 	problem with mingw32 gcc and long comparisons
 * zdial on rendering doesn't work
 * preferences aren't currently saved between amide sessions
+* help buttons don't work.
 
 
 factor analysis things:

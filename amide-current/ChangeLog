@@ -1,4 +1,8 @@
-0.8.3 2004
+0.8.4 2004.04.26
+	* fixed bug in *_calc_frame_max_min [1]
+	[1] Found by Peter Bloomfield
+	
+0.8.3 2004.04.21
 	* added support for gated files [1,3]
         * profile tool now updated automatically on data set (de)select
  	* fixed small graphical glitch with line between full/scaled bars
