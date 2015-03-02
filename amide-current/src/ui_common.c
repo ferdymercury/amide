@@ -542,6 +542,7 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** pspin_button,
 					 GnomeCanvasItem ** proi_item,
 					 GtkWidget ** pline_style_menu,
+					 GtkWidget ** pfill_isocontour_button,
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** pmaintain_size_button,
@@ -651,6 +652,18 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   gtk_widget_show(*pline_style_menu);
   table_row++;
 #endif
+
+  /* do we want to fill in isocontour roi's */
+  label = gtk_label_new(_("Draw Isocontours as Filled:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+
+  *pfill_isocontour_button = gtk_check_button_new();
+  gtk_table_attach(GTK_TABLE(packing_table), *pfill_isocontour_button,
+		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(*pfill_isocontour_button);
+  table_row++;
 
 
   hseparator = gtk_hseparator_new();

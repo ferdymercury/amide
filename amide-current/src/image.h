@@ -38,6 +38,7 @@
 GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
 				     const amide_real_t pixel_dim,
+				     const gboolean fill_isocontour,
 				     rgba_t color,
 				     AmitkPoint * return_offset,
 				     AmitkPoint * return_corner);

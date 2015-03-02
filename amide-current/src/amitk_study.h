@@ -58,6 +58,7 @@ G_BEGIN_DECLS
 
 #define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)->canvas_roi_width)
 #define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)->canvas_line_style)
+#define AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(stu)   (AMITK_STUDY(stu)->canvas_fill_isocontour)
 #define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)->canvas_layout)
 #define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)->canvas_maintain_size)
 #define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)->canvas_target_empty_area)
@@ -102,6 +103,7 @@ struct _AmitkStudy
   /* canvas preferences */
   gint canvas_roi_width;
   GdkLineStyle canvas_line_style;
+  gboolean canvas_fill_isocontour;
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
@@ -167,6 +169,8 @@ void            amitk_study_set_canvas_roi_width    (AmitkStudy * study,
 						     gint roi_width);
 void            amitk_study_set_canvas_line_style   (AmitkStudy * study,
 						     const GdkLineStyle line_style);
+void            amitk_study_set_canvas_fill_isocontour (AmitkStudy * study,
+							const gboolean fill_isocontour);
 void            amitk_study_set_canvas_layout       (AmitkStudy * study,
 						     const AmitkLayout layout);
 void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,

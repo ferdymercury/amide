@@ -1,4 +1,19 @@
-0.8.7
+0.8.8
+	* crash when poping up object dialog of non-viewed data set [1]
+	* accurate roi quantitation algorithm didn't work in inverse mode [2]
+	* isocontour's were overdrawing by one voxel [3]
+	* can now add roi to study object in tree
+	* new preference: can have isocontours drawn as filled
+	* incorrect use of MdcSwapBytes was causing rotated images on big endian [4]
+	* added ability to specify isocontour value (lower value) [3]
+	* updates for (X)MedCon 0.9.8.0
+	[1] Found by Patrick Chow
+	[2] Found by David Stout
+	[3] Found/Requested by Steve Jones
+	[4] Found by Anna Wu
+	
+
+0.8.7 2004.08.22
 	* spin buttons on roi initial popup didn't take decimal places [1]
 	* ui_series panel size can now be adjusted [2]
 	* new isocontour, wasn't showing image value on help window [3]

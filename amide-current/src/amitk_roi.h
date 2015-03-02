@@ -39,12 +39,13 @@ G_BEGIN_DECLS
 #define AMITK_IS_ROI_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_ROI))
 #define	AMITK_ROI_GET_CLASS(object)	(G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_ROI, AmitkRoiClass))
 
-#define AMITK_ROI_TYPE(roi)             (AMITK_ROI(roi)->type)
-#define AMITK_ROI_ISOCONTOUR_VALUE(roi) (AMITK_ROI(roi)->isocontour_value)
-#define AMITK_ROI_VOXEL_SIZE(roi)       (AMITK_ROI(roi)->voxel_size)
-#define AMITK_ROI_UNDRAWN(roi)          (!AMITK_VOLUME_VALID(roi))
-#define AMITK_ROI_TYPE_ISOCONTOUR(roi)  ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || \
-					 (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
+#define AMITK_ROI_TYPE(roi)              (AMITK_ROI(roi)->type)
+#define AMITK_ROI_ISOCONTOUR_VALUE(roi)  (AMITK_ROI(roi)->isocontour_value)
+#define AMITK_ROI_ISOCONTOUR_INVERSE(roi)(AMITK_ROI(roi)->isocontour_inverse)
+#define AMITK_ROI_VOXEL_SIZE(roi)        (AMITK_ROI(roi)->voxel_size)
+#define AMITK_ROI_UNDRAWN(roi)           (!AMITK_VOLUME_VALID(roi))
+#define AMITK_ROI_TYPE_ISOCONTOUR(roi)   ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || \
+					  (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
 
 /* for iterative algorithms, how many subvoxels should we break the problem up into */
 #define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension, so 1/64 is grain size */
@@ -74,6 +75,7 @@ struct _AmitkRoi
   AmitkRawData * isocontour;
   AmitkPoint voxel_size;
   amide_data_t isocontour_value;
+  gboolean isocontour_inverse;
 
 };
 
@@ -98,13 +100,16 @@ GSList *        amitk_roi_get_intersection_line   (const AmitkRoi * roi,
 GSList *        amitk_roi_free_points_list        (GSList * list);
 AmitkDataSet *  amitk_roi_get_intersection_slice  (const AmitkRoi * roi, 
 						   const AmitkVolume * canvas_slice,
-						   const amide_real_t pixel_dim);
+						   const amide_real_t pixel_dim,
+						   const gboolean fill_isocontour);
 void            amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, 
 						   AmitkPoint voxel_size);
 void            amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi);
 void            amitk_roi_set_isocontour          (AmitkRoi * roi, 
 						   AmitkDataSet * ds,
-						   AmitkVoxel value_voxel);
+						   AmitkVoxel start_voxel,
+						   amide_data_t isocontour_value,
+						   gboolean isocontour_inverse);
 void            amitk_roi_isocontour_erase_area   (AmitkRoi * roi, 
 						   AmitkVoxel erase_voxel, 
 						   gint area_size);

@@ -196,15 +196,17 @@ static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkV
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
 				AmitkVoxel start_voxel, 
-				const amide_data_t iso_value);
+				const amide_data_t iso_value,
+				const gboolean iso_inverse);
 
 
 
 
-/* we return the intersection data in the form of a volume slice because it's convenient */
+/* intersection data is returned in the form of a volume slice */
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
-								     const amide_real_t pixel_dim) {
+								     const amide_real_t pixel_dim,
+								     const gboolean fill_isocontour) {
 
 
 
@@ -258,7 +260,7 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
 #ifdef ROI_TYPE_ISOCONTOUR_2D
 	if (value > 0)
 #else
-	if ( value == 1)
+	if (( value == 1) || ((value > 0) && fill_isocontour))
 #endif
 	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) = 1;
       }
@@ -269,13 +271,15 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
   }
 
 #ifdef ROI_TYPE_ISOCONTOUR_2D
-  /* mark the edges as such on the 2D isocontour slices */
-  i_voxel.z = i_voxel.g = i_voxel.t = 0;
-  for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
-    for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) 
-      if (AMITK_RAW_DATA_UBYTE_CONTENT(intersection->raw_data, i_voxel)) 
-	AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) =
-	  isocontour_edge(intersection->raw_data, i_voxel);
+  if (!fill_isocontour) {
+    /* mark the edges as such on the 2D isocontour slices */
+    i_voxel.z = i_voxel.g = i_voxel.t = 0;
+    for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
+      for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) 
+	if (AMITK_RAW_DATA_UBYTE_CONTENT(intersection->raw_data, i_voxel)) 
+	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) =
+	    isocontour_edge(intersection->raw_data, i_voxel);
+  }
 #endif
 
   amitk_space_copy_in_place(AMITK_SPACE(intersection), AMITK_SPACE(canvas_slice));
@@ -388,13 +392,15 @@ static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkV
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
 				AmitkVoxel ds_voxel, 
-				const amide_data_t iso_value) {
+				const amide_data_t iso_value,
+				const gboolean iso_inverse) {
 
 
   AmitkVoxel i_voxel;
   AmitkVoxel roi_voxel;
   gboolean found;
   gboolean done;
+  amide_data_t voxel_value;
 
   roi_voxel = ds_voxel;
   roi_voxel.t = roi_voxel.g = 0;
@@ -428,7 +434,9 @@ static void isocontour_consider(const AmitkDataSet * ds,
 	    ds_voxel.y = i_voxel.y;
 	    ds_voxel.x = i_voxel.x;
 
-	    if ((amitk_data_set_get_value(ds, ds_voxel) >= iso_value)) {
+	    voxel_value = amitk_data_set_get_value(ds, ds_voxel);
+	    if ((!iso_inverse && (voxel_value >= iso_value)) ||
+		(iso_inverse && (voxel_value <= iso_value))) {
 
 	      AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x01; /* it's in */
 
@@ -454,7 +462,7 @@ static void isocontour_consider(const AmitkDataSet * ds,
 	    }
 	  }
 
-	      
+        
     if (!found) { /* all neighbors exhaustively checked, backup */
 
       /* backup to previous voxel */
@@ -489,16 +497,19 @@ static void isocontour_consider(const AmitkDataSet * ds,
   
 
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, 
-						   AmitkVoxel iso_voxel) {
+						   AmitkVoxel iso_voxel,
+						   amide_data_t iso_value,
+						   gboolean iso_inverse) {
 
   AmitkRawData * temp_rd;
   AmitkPoint temp_point;
   AmitkVoxel min_voxel, max_voxel, i_voxel;
-  amide_data_t isocontour_value;
+  amide_data_t temp_value;
 
   g_return_if_fail(roi->type == AMITK_ROI_TYPE_`'m4_Variable_Type`');
 
-  roi->isocontour_value = amitk_data_set_get_value(ds, iso_voxel); /* what we're setting the isocontour too */
+  roi->isocontour_value = iso_value; /* what we're setting the isocontour too */
+  roi->isocontour_inverse = iso_inverse;
 
   /* we first make a raw data set the size of the data set to record the in/out values */
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
@@ -507,9 +518,14 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   temp_rd = amitk_raw_data_UBYTE_3D_init(0, ds->raw_data->dim.z, ds->raw_data->dim.y, ds->raw_data->dim.x);
 #endif
 
+  /* epsilon guards for floating point rounding */
+  if (!iso_inverse)
+    temp_value = roi->isocontour_value-EPSILON*fabs(roi->isocontour_value); 
+  else
+    temp_value = roi->isocontour_value+EPSILON*fabs(roi->isocontour_value); 
+
   /* fill in the data set */
-  isocontour_value = roi->isocontour_value-EPSILON*fabs(roi->isocontour_value); /* epsilon guards for floating point rounding */
-  isocontour_consider(ds, temp_rd, iso_voxel, isocontour_value);
+  isocontour_consider(ds, temp_rd, iso_voxel, temp_value, iso_inverse);
   
   /* figure out the min and max dimensions */
   min_voxel = max_voxel = iso_voxel;
@@ -548,11 +564,11 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
     for (i_voxel.y=0; i_voxel.y<roi->isocontour->dim.y; i_voxel.y++)
       for (i_voxel.x=0; i_voxel.x<roi->isocontour->dim.x; i_voxel.x++) {
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
-	AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->isocontour, i_voxel) =
-	  AMITK_RAW_DATA_UBYTE_2D_CONTENT(temp_rd, i_voxel.y+min_voxel.y, i_voxel.x+min_voxel.x);
+	AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->isocontour, i_voxel) = 
+	  0x01 & AMITK_RAW_DATA_UBYTE_2D_CONTENT(temp_rd, i_voxel.y+min_voxel.y, i_voxel.x+min_voxel.x);
 #elif defined(ROI_TYPE_ISOCONTOUR_3D)
 	AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->isocontour, i_voxel) =
-	  AMITK_RAW_DATA_UBYTE_3D_CONTENT(temp_rd, i_voxel.z+min_voxel.z,i_voxel.y+min_voxel.y, i_voxel.x+min_voxel.x);
+	  0x01 & AMITK_RAW_DATA_UBYTE_3D_CONTENT(temp_rd, i_voxel.z+min_voxel.z,i_voxel.y+min_voxel.y, i_voxel.x+min_voxel.x);
 #endif
       }
 
@@ -995,10 +1011,12 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRo
 	  } /* k.y loop */
 	} /* k.z loop */
 
-	if (voxel_fraction > 0.0) {
-	  if (!inverse) {
+	if (!inverse) {
+	  if (voxel_fraction > 0.0) {
 	    (*calculation)(j, value, voxel_fraction, data);
-	  } else {
+	  }
+	} else {
+	  if (voxel_fraction < 1.0) {
 	    (*calculation)(j, value, 1.0-voxel_fraction, data);
 	  }
 	}

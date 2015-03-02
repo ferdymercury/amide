@@ -219,6 +219,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   struct tm time_structure;
   AmitkVoxel i;
   gint j;
+  guint64 k;
   AmitkDataSet * ds=NULL;
   gchar * name;
   gchar * import_filename;
@@ -351,10 +352,36 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   }
 
   /* guess the modality */
-  if (g_ascii_strcasecmp(libmdc_fi.image[0].image_mod,"PT") == 0)
+  switch (libmdc_fi.modality) {
+  case M_PT:
     modality = AMITK_MODALITY_PET;
-  else
+    break;
+  case M_ST:
+  case M_NM:
+    modality = AMITK_MODALITY_SPECT;
+    break;
+  case M_MA:
+  case M_MR:
+  case M_MS:
+    modality = AMITK_MODALITY_MRI;
+    break;
+  case M_CR:
+  case M_CT:
+  case M_DF:
+  case M_DS:
+  case M_DX:
+  case M_MG:
+  case M_PX:
+  case M_RF:
+  case M_RG:
+  case M_XA:
     modality = AMITK_MODALITY_CT;
+    break;
+  case M_OT:
+  default:
+    modality = AMITK_MODALITY_OTHER;
+    break;
+  }
 
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D);
   if (ds == NULL) {
@@ -528,7 +555,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SSHORT:
 	  {
 	    amitk_format_SSHORT_t * libmdc_buffer;
-	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 2*ds->raw_data->dim.y*ds->raw_data->dim.x);
+	    if (MdcDoSwap) {
+	      k=0;
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
+		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
+	    }
 	    libmdc_buffer = (amitk_format_SSHORT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -541,7 +573,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_USHORT:
 	  {
 	    amitk_format_USHORT_t * libmdc_buffer;
-	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 2*ds->raw_data->dim.y*ds->raw_data->dim.x);
+	    if (MdcDoSwap) {
+	      k=0;
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
+		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
+	    }
 	    libmdc_buffer = (amitk_format_USHORT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -554,7 +591,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SINT:
 	  {
 	    amitk_format_SINT_t * libmdc_buffer;
-	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
+	    if (MdcDoSwap) {
+	      k=0;
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	    }
 	    libmdc_buffer = (amitk_format_SINT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -567,7 +609,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_UINT:
 	  {
 	    amitk_format_UINT_t * libmdc_buffer;
-	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
+	    if (MdcDoSwap) {
+	      k=0;
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	    }
 	    libmdc_buffer = (amitk_format_UINT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -580,7 +627,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_FLOAT: 
 	  {
 	    amitk_format_FLOAT_t * libmdc_buffer;
-	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
+	    if (MdcDoSwap) {
+	      k=0;
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	    }
 
 	    if (salvage) {
 	      /* convert the image to a 32 bit float to begin with */
@@ -764,6 +816,25 @@ void libmdc_export(AmitkDataSet * ds,
     fi.pixdim[3]=AMITK_DATA_SET_VOXEL_SIZE_Z(ds);
   }
 
+  switch (AMITK_DATA_SET_MODALITY(ds)) {
+  case AMITK_MODALITY_PET:
+    fi.modality = M_PT;
+    break;
+  case AMITK_MODALITY_SPECT:
+    fi.modality = M_ST;
+    break;
+  case AMITK_MODALITY_CT:
+    fi.modality = M_CT;
+    break;
+  case AMITK_MODALITY_MRI:
+    fi.modality = M_MR;
+    break;
+  case AMITK_MODALITY_OTHER:
+  default:
+    fi.modality = M_OT;
+    break;
+  }
+	
   if (dim.t > 1)
     fi.acquisition_type = MDC_ACQUISITION_DYNAMIC;
   else
@@ -839,25 +910,6 @@ void libmdc_export(AmitkDataSet * ds,
 	    AMITK_DATA_SET_SCALE_FACTOR(ds)*
 	    amitk_data_set_get_internal_scaling(ds, i);
 	plane->calibr_fctr = 1.0;
-	
-	switch (AMITK_DATA_SET_MODALITY(ds)) {
-	case AMITK_MODALITY_PET:
-	  strcpy(plane->image_mod, "PT"); 
-	  break;
-	case AMITK_MODALITY_SPECT:
-	  strcpy(plane->image_mod, "NM"); 
-	  break;
-	case AMITK_MODALITY_CT:
-	  strcpy(plane->image_mod, "CT"); 
-	  break;
-	case AMITK_MODALITY_MRI:
-	  strcpy(plane->image_mod, "MR"); 
-	  break;
-	case AMITK_MODALITY_OTHER:
-	default:
-	  strcpy(plane->image_mod, "OT"); 
-	  break;
-	}
 	
 	if ((plane->buf = MdcGetImgBuffer(bytes_per_plane)) == NULL) {
 	  g_warning("couldn't alloc %d bytes for plane\n", bytes_per_plane);

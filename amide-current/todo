@@ -5,6 +5,8 @@ for next release?
 
 * add free hand ROI drawing (2D and 3D)
 	2D for now?
+* Windows compile: get popt/libgnomecanvas/etc. to be able to find
+	libintl like gtk can.
 
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used

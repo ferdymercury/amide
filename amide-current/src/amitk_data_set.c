@@ -585,6 +585,9 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++)
     dest_ds->frame_duration[i] = amitk_data_set_get_frame_duration(src_ds, i);
 
+  if (!src_ds->max_min_calculated)
+    amitk_data_set_calc_max_min(src_ds, NULL, NULL);
+
   if (dest_ds->frame_max != NULL)
     g_free(dest_ds->frame_max);
   dest_ds->frame_max = amitk_data_set_get_frame_max_min_mem(dest_ds);

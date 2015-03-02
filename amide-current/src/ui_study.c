@@ -126,7 +126,7 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    N_("delete mark")}, /* TREE_FIDUCIAL_MARK */
   {"", "", 
    N_("make active"), "", 
-   N_("pop up study dialog"),"", "",
+   N_("pop up study dialog"),N_("add roi"), "",
    ""}, /* TREE_STUDY */
   {"", "", 
    "", "", 

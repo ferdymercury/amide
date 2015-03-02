@@ -151,6 +151,7 @@ static void roi_init (AmitkRoi * roi) {
   roi->isocontour = NULL;
   roi->voxel_size = zero_point;
   roi->isocontour_value = 0.0;
+  roi->isocontour_inverse = FALSE;
 }
 
 
@@ -225,6 +226,7 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 
   roi_isocontour_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
   dest_roi->isocontour_value = AMITK_ROI_ISOCONTOUR_VALUE(src_object);
+  dest_roi->isocontour_inverse = AMITK_ROI_ISOCONTOUR_INVERSE(src_object);
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -246,6 +248,7 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * 
   /* isocontour specific stuff */
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
   xml_save_real(nodes, "isocontour_value", AMITK_ROI_ISOCONTOUR_VALUE(roi));
+  xml_save_boolean(nodes, "isocontour_inverse", AMITK_ROI_ISOCONTOUR_INVERSE(roi));
 
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     name = g_strdup_printf("roi_%s_isocontour", AMITK_OBJECT_NAME(roi));
@@ -287,6 +290,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     roi_isocontour_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
     roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
+    roi->isocontour_inverse = xml_get_boolean(nodes, "isocontour_inverse", &error_buf);
 
     /* if the ROI's never been drawn, it's possible for this not to exist */
     if (xml_node_exists(nodes, "isocontour_file") || 
@@ -439,7 +443,8 @@ void amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi) {
 */
 AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi, 
 						const AmitkVolume * canvas_volume,
-						const amide_real_t pixel_dim) {
+						const amide_real_t pixel_dim,
+						const gboolean fill_isocontour) {
   
   AmitkDataSet * intersection = NULL;
 
@@ -450,11 +455,11 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     intersection = 
-      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim);
+      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_isocontour);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
     intersection = 
-      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim);
+      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_isocontour);
     break;
   default: 
     g_error("roi type %d not implemented!", AMITK_ROI_TYPE(roi));
@@ -469,18 +474,18 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
 
 /* sets/resets the isocontour value of an isocontour ROI based on the given volume and voxel 
    note: vol should be a slice for the case of ISOCONTOUR_2D */
-void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel value_voxel) {
+void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel start_voxel, 
+			      amide_data_t isocontour_value, gboolean isocontour_inverse) {
 
   g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
 
-  
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_set_isocontour(roi, ds, value_voxel);
+    amitk_roi_ISOCONTOUR_2D_set_isocontour(roi, ds, start_voxel, isocontour_value, isocontour_inverse);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
   default:
-    amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, value_voxel);
+    amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, start_voxel, isocontour_value, isocontour_inverse);
     break;
   }
   
@@ -610,7 +615,7 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 
   for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) 
     for (i_gate=0; i_gate<AMITK_DATA_SET_NUM_GATES(ds); i_gate++) 
-      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, TRUE, erase_volume, ds);
+      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, FALSE, erase_volume, ds);
 
   /* recalc max and min */
   amitk_data_set_calc_max_min(ds, update_func, update_data);

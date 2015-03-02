@@ -47,7 +47,8 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   gdouble y_offset,
 					   rgba_t roi_color,
 					   gint roi_width,
-					   GdkLineStyle line_style);
+					   GdkLineStyle line_style,
+					   gboolean fill_isocontour);
 
 
 

@@ -94,6 +94,7 @@ typedef struct ui_series_t {
   gboolean quit_generation;
   gint roi_width;
   GdkLineStyle line_style;
+  gboolean fill_isocontour;
   gint pixbuf_width;
   gint pixbuf_height;
 
@@ -595,6 +596,7 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
   ui_series->quit_generation=FALSE;
   ui_series->roi_width = 1.0;
   ui_series->line_style = 0;
+  ui_series->fill_isocontour = TRUE;
   ui_series->pixbuf_width = 0;
   ui_series->pixbuf_height = 0;
 
@@ -872,7 +874,9 @@ static gboolean update_immediate(gpointer data) {
 					ui_series->pixbuf_height,
 					x+UI_SERIES_L_MARGIN, y+UI_SERIES_TOP_MARGIN,
 					outline_color, 
-					ui_series->roi_width,ui_series->line_style);
+					ui_series->roi_width,
+					ui_series->line_style,
+					ui_series->fill_isocontour);
 	if (item != NULL)
 	  ui_series->items[i-start_i] = g_list_append(ui_series->items[i-start_i], item);
       }
@@ -988,6 +992,7 @@ void ui_series_create(AmitkStudy * study,
   ui_series = ui_series_init(app);
   ui_series->series_type = series_type;
   ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
+  ui_series->fill_isocontour = AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(study);
   ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
   ui_series->objects = amitk_objects_ref(selected_objects);

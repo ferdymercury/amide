@@ -48,7 +48,8 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   gdouble y_offset,
 					   rgba_t roi_color,
 					   gint roi_width,
-					   GdkLineStyle line_style) {
+					   GdkLineStyle line_style,
+					   gboolean fill_isocontour) {
 
   guint32 fill_color_rgba;
   gdouble affine[6];
@@ -145,7 +146,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
       offset = zero_point;
       corner = one_point;
-      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim,
+      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim, fill_isocontour,
 					roi_color,&offset, &corner);
       
       offset_cpoint= point_2_canvas_point(AMITK_VOLUME_CORNER(canvas_volume),

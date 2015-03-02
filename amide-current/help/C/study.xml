@@ -53,7 +53,8 @@
      <listitem><para>
 	The width of the line used to draw geometric ROIs can be
 	altered here (1-5 pixels).  This parameter is not relevant for
-	isocontour ROI's.
+	isocontour ROI's.  For isocontour ROI's, you can choose to have
+        them draw as filled in or hollow.
      </para><para>
 	Canvas layout allows you to switch the three views
 	(transverse, coronal, and sagittal) between a linear style

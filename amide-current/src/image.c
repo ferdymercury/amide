@@ -156,6 +156,7 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
 				     const amide_real_t pixel_dim,
+				     const gboolean fill_isocontour,
 				     rgba_t color,
 				     AmitkPoint * return_offset,
 				     AmitkPoint * return_corner) {
@@ -167,7 +168,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   AmitkVoxel dim;
 
   
-  intersection = amitk_roi_get_intersection_slice(roi, canvas_slice, pixel_dim);
+  intersection = amitk_roi_get_intersection_slice(roi, canvas_slice, pixel_dim, fill_isocontour);
   if (intersection == NULL) return NULL;
 
   dim = AMITK_DATA_SET_DIM(intersection);

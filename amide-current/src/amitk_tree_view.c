@@ -559,6 +559,9 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 		  add_type=AMITK_OBJECT_TYPE_ROI;
 		else
 		  add_type=AMITK_OBJECT_TYPE_FIDUCIAL_MARK;
+	      } else if (AMITK_IS_STUDY(object)) {
+		add_object=TRUE;
+		add_type=AMITK_OBJECT_TYPE_ROI;
 	      }
 	  } else {
 	    popup = TRUE;

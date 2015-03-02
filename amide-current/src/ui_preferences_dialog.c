@@ -54,6 +54,7 @@ static void roi_width_cb(GtkWidget * widget, gpointer data);
 #ifndef AMIDE_LIBGNOMECANVAS_AA
 static void line_style_cb(GtkWidget * widget, gpointer data);
 #endif
+static void fill_isocontour_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
@@ -116,6 +117,17 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 #endif
+
+static void fill_isocontour_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gboolean fill_isocontour;
+
+  fill_isocontour = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  amitk_preferences_set_canvas_fill_isocontour(ui_study->preferences, fill_isocontour);
+
+  return;
+}
 
 /* function called to change the layout */
 static void layout_cb(GtkWidget * widget, gpointer data) {
@@ -282,6 +294,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * roi_width_spin;
   GtkWidget * target_size_spin;
   GtkWidget * line_style_menu;
+  GtkWidget * fill_isocontour_button;
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * hseparator;
@@ -353,7 +366,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   ui_common_study_preferences_widgets(packing_table, table_row,
-				      &roi_width_spin, &roi_item, &line_style_menu,
+				      &roi_width_spin, &roi_item, &line_style_menu, &fill_isocontour_button,
 				      &layout_button1, &layout_button2, &maintain_size_button,
 				      &target_size_spin);
 
@@ -378,6 +391,11 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 #endif
   g_signal_connect(G_OBJECT(line_style_menu), "changed", G_CALLBACK(line_style_cb), ui_study);
 #endif
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fill_isocontour_button), 
+			       AMITK_PREFERENCES_CANVAS_FILL_ISOCONTOUR(ui_study->preferences));
+  g_signal_connect(G_OBJECT(fill_isocontour_button), "toggled", G_CALLBACK(fill_isocontour_cb), ui_study);
+
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(layout_button1), 
 			       (AMITK_PREFERENCES_CANVAS_LAYOUT(ui_study->preferences) == AMITK_LAYOUT_LINEAR));

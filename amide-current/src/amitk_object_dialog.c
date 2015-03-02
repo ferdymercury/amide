@@ -79,6 +79,7 @@ static void dialog_change_roi_width_cb           (GtkWidget * widget, gpointer d
 #ifndef AMIDE_LIBGNOMECANVAS_AA
 static void dialog_change_line_style_cb          (GtkWidget * widget, gpointer data);
 #endif
+static void dialog_change_fill_isocontour_cb     (GtkWidget * widget, gpointer data);
 static void dialog_change_layout_cb              (GtkWidget * widget, gpointer data);
 static void dialog_change_maintain_size_cb       (GtkWidget * widget, gpointer data);
 static void dialog_change_target_empty_area_cb   (GtkWidget * widget, gpointer data);
@@ -966,6 +967,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 					  &(dialog->roi_width_spin),
 					  &(dialog->roi_item), 
 					  &(dialog->line_style_menu),
+					  &(dialog->fill_isocontour_button),
 					  &(dialog->layout_button1), 
 					  &(dialog->layout_button2), 
 					  &(dialog->maintain_size_button),
@@ -978,6 +980,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_signal_connect(G_OBJECT(dialog->line_style_menu), "changed", 
 		       G_CALLBACK(dialog_change_line_style_cb), dialog);
 #endif
+      g_signal_connect(G_OBJECT(dialog->fill_isocontour_button), "toggled", 
+		       G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button1), "clicked", 
 		       G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button2), "clicked", 
@@ -1380,6 +1384,11 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 #endif
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
 #endif
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->fill_isocontour_button), G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->fill_isocontour_button), 
+				   AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->fill_isocontour_button), G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
+      
 
       g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button2),  G_CALLBACK(dialog_change_layout_cb), dialog);
@@ -1891,10 +1900,11 @@ static void dialog_change_roi_type_cb(GtkWidget * widget, gpointer data) {
 
   AmitkObjectDialog * dialog = data;
 
-  amitk_roi_set_type(AMITK_ROI(dialog->object), 
 #if 1
+  amitk_roi_set_type(AMITK_ROI(dialog->object), 
 		     gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
 #else
+  amitk_roi_set_type(AMITK_ROI(dialog->object), 
 		     gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 #endif
   return;
@@ -1908,10 +1918,11 @@ static void dialog_change_modality_cb(GtkWidget * widget, gpointer data) {
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
 
   /* figure out which menu item called me */
-  amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
 #if 1
+  amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
 			      gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
 #else
+  amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
 			      gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 #endif
 
@@ -2007,15 +2018,24 @@ static void dialog_change_roi_width_cb(GtkWidget * widget, gpointer data){
 static void dialog_change_line_style_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
   g_return_if_fail(AMITK_IS_STUDY(dialog->object));
-  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
 #if 1
+  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
 				    gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
 #else
+  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
 				    gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 #endif
   return;
 }
 #endif
+
+static void dialog_change_fill_isocontour_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  amitk_study_set_canvas_fill_isocontour(AMITK_STUDY(dialog->object),
+					 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+  return;
+}
 
 static void dialog_change_layout_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
