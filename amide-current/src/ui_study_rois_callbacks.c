@@ -1,7 +1,7 @@
 /* ui_study_rois_callbacks.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -196,12 +196,12 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 
     case GDK_MOTION_NOTIFY:
       if (dragging && 
-	  ((event->motion.state && 
-	    (GDK_BUTTON1_MASK || GDK_BUTTON2_MASK || GDK_BUTTON3_MASK)))) {
+	  ((event->motion.state & 
+	    (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)))) {
 
 	/* some sanity checks */
-	if ((view_loc.x < 0.0) | (view_loc.y < 0.0) | 
-	    (view_loc.x > view_width) |
+	if ((view_loc.x < 0.0) || (view_loc.y < 0.0) || 
+	    (view_loc.x > view_width) ||
 	    (view_loc.y > view_height))
 	  return TRUE;
 

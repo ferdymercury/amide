@@ -1,7 +1,7 @@
 /* raw_data_import.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -35,19 +35,21 @@ typedef enum {UBYTE, SBYTE,
 
 /* raw_data information structure */
 typedef struct raw_data_info_t {
+  gchar * filename;
   guint total_file_size;
   data_format_t data_format;
   guint offset;
   GtkWidget * num_bytes_label;
   GtkWidget * dialog;
-  amide_volume_t * temp_volume;
+  amide_volume_t * volume;
 } raw_data_info_t;
 
 /* internal functions */
-void raw_data_import_dialog(gchar * raw_data_filename, raw_data_info_t * raw_data_info);
+void raw_data_import_dialog(raw_data_info_t * raw_data_info);
 
 /* external functions */
 guint raw_data_calc_num_bytes(raw_data_info_t * raw_data_info);
+void raw_data_read_file(raw_data_info_t * raw_data_info);
 guint raw_data_ui_num_bytes(raw_data_info_t * raw_data_info);
 amide_volume_t * raw_data_import(gchar * filename);
 

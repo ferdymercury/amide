@@ -16,10 +16,15 @@ COPYING.
 Requirements
 ------------
 
-Compiler: 
+1) Compiler: 
 
 I currently use gcc-2.95.2, as amide is fairly unstable when compiled
 with egcs-1.1.2 
+
+2) Gtk+/Gnome:
+
+I'm developing on Gtk+-1.2.8/Gnome 1.0 at the moment (i.e. default
+Redhat 6.2 install). 
 
 
 Optional Packages
@@ -28,30 +33,33 @@ Optional Packages
 
 1) libecat (also called z_matrix_70)
 
-You will need this library if you want to import CTI files.  This
-library is released under a non-free license (which is why it's not
-incuded with amide).  It can be found on the amide sourceforge
-website, or at it's original site:
+You will need this library if you want to import CTI (6.4 and 7.0)
+files.  This library is released under a non-free license (which is
+why it's not incuded with amide).  It can be found on the amide
+sourceforge website, or at it's original site:
+
 	ftp://dormeur.topo.ucl.ac.be/pub/ecat/z_matrix_70/ecat.tar.gz
 
 The source file off of amide.sourceforge.net is preferable, as it
 includes a Makefile which will make a shared library, and a small
 patch.  Since the license for libecat is non-GPL compatible, you
-really should only link to it as a shared library.
+really should only link to it as a shared library.  A README file is
+included with the tarball that explains how to configure/compile the
+lbirary.
 
-To build:
-	download the tarball
-	tar -xvzf libecat_amide_2000.8.29.tgz
-	cd z_matrix_70
-	patch -p1 < amide_patch
-	make
-	cp libecat.so.1.0 /usr/local/lib
-	cp matrix.h /usr/local/include
-	/sbin/ldconfig (make sure /etc/ld.so.conf includes /usr/local/lib)
-	cd /usr/local/lib
-	ln -s libecat.so.1.0 libecat.so
+2) xmedcon
 
-And that should do it.
+This can be obtained from:
+	http://xmedcon.sourceforge.net
+
+Xmedcon includes a library (libmdc) which supports the following
+formats; Acr/Nema 2.0, Analyze (SPM), DICOM 3.0, Ecat/Matrix 6.4,
+InterFile3.3 and Gif87a/89a.  Note that CTI format is done by libecat
+if libmdc is available.  If you're compiling in support for using both
+libmdc and libecat, make sure to compile libmdc without CTI support or
+else you're going to run into namespace bugs when trying to load in
+any file through libmdc.
+
 
 
 

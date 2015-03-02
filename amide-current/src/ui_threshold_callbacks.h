@@ -1,7 +1,7 @@
 /* ui_threshold_callbacks.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -24,12 +24,7 @@
 */
 
 /* external functions */
-gint ui_threshold_callbacks_max_arrow(GtkWidget* widget, GdkEvent * event,
-				      gpointer data);
-void ui_threshold_callbacks_max_percentage(GtkWidget* widget, gpointer data);
-void ui_threshold_callbacks_max_absolute(GtkWidget* widget, gpointer data);
-gint ui_threshold_callbacks_min_arrow(GtkWidget* widget, GdkEvent * event,
-				      gpointer data);
-void ui_threshold_callbacks_min_percentage(GtkWidget* widget, gpointer data);
-void ui_threshold_callbacks_min_absolute(GtkWidget* widget, gpointer data);
+gint ui_threshold_callbacks_arrow(GtkWidget* widget, GdkEvent * event,
+				  gpointer data);
+void ui_threshold_callbacks_entry(GtkWidget* widget, gpointer data);
 void ui_threshold_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);

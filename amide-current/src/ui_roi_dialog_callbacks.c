@@ -1,7 +1,7 @@
 /* ui_roi_dialog_callbacks.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -208,6 +208,140 @@ void ui_roi_dialog_callbacks_change_grain(GtkWidget * widget, gpointer data) {
   return;
 }
 
+
+
+
+
+
+
+
+
+/* function called when rotating the roi around an axis */
+void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer data) {
+
+  ui_study_t * ui_study;
+  amide_roi_t * roi_new_info = data;
+  view_t i_view;
+  floatpoint_t rotation;
+  GtkWidget * roi_dialog;
+  realpoint_t center, temp;
+
+  /* we need the current view_axis so that we know what we're rotating around */
+  ui_study = gtk_object_get_data(GTK_OBJECT(adjustment), "ui_study"); 
+
+  /* saving the center, as we're rotating the roi around it's own center */
+  center = roi_calculate_center(roi_new_info); 
+
+  /* figure out which scale widget called me */
+  for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+    if (gtk_object_get_data(GTK_OBJECT(adjustment),"view") == view_names[i_view]) {
+      rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
+      switch(i_view) {
+      case TRANSVERSE:
+	roi_new_info->coord_frame.axis[XAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[YAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[ZAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
+				   rotation);
+	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+	break;
+      case CORONAL:
+	roi_new_info->coord_frame.axis[XAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[YAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[ZAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
+				   rotation);
+	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+	break;
+      case SAGITTAL:
+	roi_new_info->coord_frame.axis[XAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[YAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
+				   rotation);
+	roi_new_info->coord_frame.axis[ZAXIS] = 
+	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
+				   rotation);
+	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+	break;
+      default:
+	break;
+      }
+    }
+
+  
+  /* recalculate the offset of this roi based on the center we stored */
+  REALSPACE_CMULT(-0.5,roi_new_info->corner,temp);
+  roi_new_info->coord_frame.offset = center;
+  roi_new_info->coord_frame.offset = 
+    realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);
+
+  /* return adjustment back to normal */
+  adjustment->value = 0.0;
+  gtk_adjustment_changed(adjustment);
+
+
+  /* now tell the roi_dialog that we've changed */
+  roi_dialog =  gtk_object_get_data(GTK_OBJECT(adjustment), "roi_dialog");
+  ui_roi_dialog_set_axis_display(roi_dialog);
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(roi_dialog));
+
+  return;
+}
+
+/* function to reset the roi's axis back to the default coords */
+void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
+
+  amide_roi_t * roi_new_info = data;
+  axis_t i_axis;
+  GtkWidget * roi_dialog;
+  realpoint_t center, temp;
+
+  /* saving the center, as we're rotating the roi around it's own center */
+  center = roi_calculate_center(roi_new_info); 
+
+  /* reset the axis */
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+    roi_new_info->coord_frame.axis[i_axis] = default_axis[i_axis];
+  }
+
+  /* recalculate the offset of this roi based on the center we stored */
+  REALSPACE_CMULT(-0.5,roi_new_info->corner,temp);
+  roi_new_info->coord_frame.offset = center;
+  roi_new_info->coord_frame.offset = 
+    realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);
+
+  /* now tell the roi_dialog that we've changed */
+  roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
+  ui_roi_dialog_set_axis_display(roi_dialog);
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(roi_dialog));
+  
+  return;
+}
+
+
+
+
+
+
 /* function called when we hit the apply button */
 void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
@@ -260,7 +394,30 @@ void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer
 /* callback for the help button */
 void ui_roi_dialog_callbacks_help(GnomePropertyBox *roi_dialog, gint page_number, gpointer data) {
 
-  g_print("sorry, no help yet......\n");
+  GnomeHelpMenuEntry help_ref={PACKAGE,"basics.html#ROI-DIALOG-HELP"};
+  GnomeHelpMenuEntry help_ref_0 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-BASIC"};
+  GnomeHelpMenuEntry help_ref_1 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-CENTER"};
+  GnomeHelpMenuEntry help_ref_2 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-DIMENSIONS"};
+  GnomeHelpMenuEntry help_ref_3 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-ROTATE"};
+
+
+  switch (page_number) {
+  case 0:
+    gnome_help_display (0, &help_ref_0);
+    break;
+  case 1:
+    gnome_help_display (0, &help_ref_1);
+    break;
+  case 2:
+    gnome_help_display (0, &help_ref_2);
+    break;
+  case 3:
+    gnome_help_display (0, &help_ref_3);
+    break;
+  default:
+    gnome_help_display (0, &help_ref);
+    break;
+  }
 
   return;
 }

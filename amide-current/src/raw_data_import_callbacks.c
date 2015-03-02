@@ -1,7 +1,7 @@
 /* raw_data_import_callbacks.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -42,7 +42,7 @@ void raw_data_import_callbacks_change_name(GtkWidget * widget, gpointer data) {
 
   /* get the contents of the name entry box and save it */
   new_name = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
-  volume_set_name(raw_data_info->temp_volume, new_name);
+  volume_set_name(raw_data_info->volume, new_name);
   g_free(new_name);
 
   return;
@@ -66,7 +66,7 @@ void raw_data_import_callbacks_change_conversion(GtkWidget * widget, gpointer da
   g_free(str);
 
   /* and save the value */
-  raw_data_info->temp_volume->conversion = temp_real;
+  raw_data_info->volume->conversion = temp_real;
 
   return;
 }
@@ -91,7 +91,7 @@ void raw_data_import_callbacks_change_entry(GtkWidget * widget, gpointer data) {
 
 
   /* convert to the correct number */
-  if ((which_widget < NUM_DIMS) | (which_widget == NUM_DIMS+NUM_AXIS)) {
+  if ((which_widget < NUM_DIMS) || (which_widget == NUM_DIMS+NUM_AXIS)) {
     error = sscanf(str, "%d", &temp_int);
     if (error == EOF)
       return; /* make sure it's a valid number */
@@ -109,25 +109,25 @@ void raw_data_import_callbacks_change_entry(GtkWidget * widget, gpointer data) {
   /* and save the value in our temporary volume structure */
   switch(which_widget) {
   case XDIM:
-    raw_data_info->temp_volume->dim.x = temp_int;
+    raw_data_info->volume->dim.x = temp_int;
     break;
   case YDIM:
-    raw_data_info->temp_volume->dim.y = temp_int;
+    raw_data_info->volume->dim.y = temp_int;
     break;
   case ZDIM:
-    raw_data_info->temp_volume->dim.z = temp_int;
+    raw_data_info->volume->dim.z = temp_int;
     break;
   case TDIM:
-    raw_data_info->temp_volume->num_frames = temp_int;
+    raw_data_info->volume->num_frames = temp_int;
     break;
   case (NUM_DIMS+XAXIS):
-    raw_data_info->temp_volume->voxel_size.x = temp_real;
+    raw_data_info->volume->voxel_size.x = temp_real;
     break;
   case (NUM_DIMS+YAXIS):
-    raw_data_info->temp_volume->voxel_size.y = temp_real;
+    raw_data_info->volume->voxel_size.y = temp_real;
     break;
   case (NUM_DIMS+ZAXIS):
-    raw_data_info->temp_volume->voxel_size.z = temp_real;
+    raw_data_info->volume->voxel_size.z = temp_real;
     break;
   case (NUM_DIMS+NUM_AXIS):
     raw_data_info->offset = temp_int;
@@ -153,7 +153,7 @@ void raw_data_import_callbacks_change_modality(GtkWidget * widget, gpointer data
   /* figure out which menu item called me */
   for (i_modality=0;i_modality<NUM_MODALITIES;i_modality++)       
     if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"modality")) == i_modality)
-      raw_data_info->temp_volume->modality = i_modality;  /* save the new modality */
+      raw_data_info->volume->modality = i_modality;  /* save the new modality */
 
   return;
 }

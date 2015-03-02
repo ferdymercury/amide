@@ -12,8 +12,12 @@ amide_SOURCES = \
 	color_table2.h \
 	cti_import.c \
 	cti_import.h \
+	idl_data_import.c \
+	idl_data_import.h \
 	image.c \
 	image.h \
+	medcon_import.c \
+	medcon_import.h \
 	realspace.c \
 	realspace.h \
 	raw_data_import.c \
@@ -68,6 +72,11 @@ amide_SOURCES = \
 	volume.h \
 	volume.c
 
-amide_LDADD = $(GNOMEUI_LIBS) $(GNOME_LIBDIR) $(INTLLIBS) \
-	-L/usr/local/lib -lecat
+amide_LDADD = \
+	$(GNOMEUI_LIBS) \
+	$(GNOME_LIBDIR) \
+	$(INTLLIBS) \
+	$(AMIDE_LIBECAT_LIBS) \
+	$(AMIDE_LIBMDC_LIBS) \
+	-L/usr/local/lib 
 

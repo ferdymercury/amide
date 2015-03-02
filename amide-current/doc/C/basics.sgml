@@ -1,0 +1,357 @@
+  <para> 
+    As the use of AMIDE is bound to be completely intuitive only to
+    the one who wrote the program (i.e. me), this chapter will provide
+    a brief overview of the basic operating theory behind the program.
+  </para>
+  
+  <sect1><title>Components of the Display</title>
+
+    <sect2><title>Launch Window</title>
+      <para>
+	When AMIDE starts up, a small window pops up sporting a cheesy
+	AMIDE logo.  This small window is the launch point for
+	creating new studies and loading in old ones.  Currently,
+	nothing else is done from this window.
+      </para>
+    </sect2>
+    
+
+    <sect2><title>Study Window</title>
+      <para>
+	After starting a new study or opening an old one, the study
+	window will be displayed.  A study is a collection of related
+	objects (i.e. medical image data sets, regions of interest),
+	and most of the user's actions will take place in this window.
+	There are several elements to this window:
+      </para>
+
+      <sect3><title>Study List</title>
+	<para>
+	  On the left hand side of the study window is a list of all
+	  the objects in the study arranged in a tree.  Objects in the
+	  study list can be selected by left clicking on the object,
+	  and can become the focus of the study by either double
+	  clicking on the object or clicking on the object with the
+	  middle mouse button.  Note that focusing on an ROI will
+	  center the canvases around that ROI. Object modification
+	  dialog boxes can be brought up in one of two ways; right
+	  clicking on the object, or hitting the "edit item(s) button
+	  (which will bring up modification dialog boxes for all
+	  selected items).  An "add roi" pull down menu is available
+	  for adding different types of ROI's to the study.  A "delete
+	  object(s)" button is also available which will remove all
+	  objects that are currently selected from the study.
+	</para>
+      </sect3>
+
+      <sect3><title>Study Canvases</title>
+	<para>
+	  In the middle of the study window are three canvases which
+	  show 3 orthogonal 3 dimensional slices taken from the 3
+	  dimensional data sets.  The thickness of the slices is
+	  determined by the "thickness" widget on the right side of
+	  the study window.  The three canvases should be showing you
+	  transverse, coronal, and sagittal sections through the
+	  medical image data sets being analyzed.  Which data sets and
+	  regions of interest that are displayed on the canvases are
+	  determined by which of these objects are selected in the
+	  study list on the left side of the screen.  Below the
+	  canvases are dials for selecting where in the data set the
+	  displayed slices should be taken from.  Slice location can
+	  also be changed by directly clicking on the canvases.
+	  </para
+      </sect3>
+
+
+      <sect3><title>Misc. Widgets</title>
+	<para>
+	  On the right side of the study window are several widgets
+	  used for adjusting the most commonly changed parameters.
+	  Scaling, interpolation, zoom, and thickness are global
+	  options and will affect all displayed data sets.  Color
+	  table and threshold only apply to the data set that
+	  currently has the focus.
+	</para>
+
+	<sect4><title>Scaling</title>
+	  <para>
+	    The user has the option of specifying whether each slice
+	    should be scaled individually by the maximum and minimum
+	    values in that slice, or if the slices should be scaled to
+	    the maximum and minium values in their data set .
+	  </para>
+	</sect4>
+	
+	<sect4><title>Color Table</title>
+	  <para>
+	    The color table widget allows the user to change the
+	    color table/map of the currently focused object.
+	  </para>
+	  </sect4>
+
+	<sect4><title>Interpolation</title>
+	  <para>
+	    The user can specify what type of interpolation to use for
+	    generating the slices displayed on the canvas.  Nearest
+	    neighbhor is by far the quickest, but bi-linear (4x
+	    slower) and tri-linear (8x slower) interpolations give
+	    better appearing images.
+	  </para>
+	</sect4>
+
+	<sect4><title>Threshold</title>
+	  <para>
+	    This button will pop-up a threshold widget which can be
+	    used for scaling the currently focused data set.  Other
+	    data sets can be thresholded by either placing them as the
+	    focus or by using the data set modification dialog.  The
+	    threshold dialog is described below.
+	  </para>
+	</sect4>
+
+	<sect4><title>Zoom</title>
+	  <para>
+	    This specificies how much to enlarge the canvas for
+	    viewing.  AMIDE tries to make an educated guess about how
+	    large the display of the data set should be.  Zoom can be
+	    used in addition to that guesswork.
+	  </para>
+	</sect4>
+
+	<sect4><title>Time Pop-up</title>
+	  <para>
+	    This is another button to pop-up a dialog box.  The time
+	    dialog box allows the user to specify the time interval
+	    over which data should be displayed.
+	  </para>
+	</sect4>
+
+	<sect4><title>Thickness</title>
+	  <para>
+	    Thickness specifies how deep the slices displayed on the
+	    study canvas are.
+	  </para>
+	</sect4>
+
+
+	<sect4><title>Axis Reset</title>
+	  <para>
+	    If the view axis is altered, the axis reset button allows
+	    the view axis to be returned to normal.
+	  </para>
+	</sect4>
+
+
+
+      </sect3>
+
+
+    </sect2>
+
+    <sect2><title>Threshold Dialog</title>
+      <para>
+	The threshold dialog allows the threshold and colormap of the
+	currently focused data set to be altered.  On the left are
+	entry boxes where the maximum and minimum thresholds can be
+	entered, either in percent of the data set's maximum and
+	minimum levels or as absolute values.  On the right is a bar
+	graph showing the distribution of the data set's values.  On
+	the far right is a color scale from which the thresholds can
+	also be altered.  The color table of the data set can also be
+	altered from this dialog.
+
+      </para>
+    </sect2>
+
+    <sect2><title>Series View Window</title>
+      <para>
+	Instead of looking at three orthogonal slices through the data
+	set, a series of slices (all of the same orientation) can also
+	be examined.  Select:
+	"View->Series->Transverse/Coronal/Sagittal" from the menu
+	to bring up the series of slices.  The thickness,
+	interpolation, time frame, and orientation of the slices are
+	all determined at the time this window is brought up, although
+	the threshold and color table can still be altered.  A dial
+	appears on the top of the window which allows moving through
+	the data set.  Note that since slices are cached in memory
+	after being displayed, already displayed slices do not need to
+	be regenerated from the data set and reviewing these slices is
+	significantly faster.
+      </para>
+    </sect2>
+
+
+    <sect2 id="time-dialog-help"><title>Time Dialog</title>
+      <para>
+	The time dialog lets the user pick over which time period data
+	should be displayed.  Since data sets are often composed of
+	non-regular duration frames, the abstraction between the user
+	interface and the actual format of the data set has been
+	dropped in this case and the user is presented with a list of
+	the frames of data arranged in chronological order.  A time
+	period (i.e. frame) can be selected by clicking on a list
+	element.  Multiple frames can be selected by holding down the
+	shift key and selecting on additional frames.  Non-contigous
+	selections are not allowed.  Note that for each selected data
+	set, at least one frame will be highlighted.  If the choosen
+	time period does not encompose a frame for a given data set,
+	the closest frame will be choosen.  Hitting the OK or Apply
+	buttons will cause any changes made on this page to take
+	effect.
+      </para>
+    </sect2>
+
+    <sect2 id="volume-dialog-help"><title>Data Set Modification Dialog Box</title>
+      <para>
+	To modify parameters of a data set, first select the data set
+	in the study list and then right click on the data set.  The
+	Data Set Modification Dialog Box will then appear.  Parameters
+	that can be modified are divided into the following pages.
+      </para>
+
+      <sect3 id="volume-dialog-help-basic"><title>Basic Info</title>
+	<para>
+	  The name, type of modality, and conversion factor can be
+	  altered on this page.  The conversion factor is a parameter
+	  that is multiplied to the data set before it is used for
+	  viewing or quantitation.  Since the data set is in
+	  ECAT/MAP/abitrary scale units, the conversion factor can be
+	  used in order to analyze the data set in another type of
+	  reference unit (i.e. Percent Injected Dose [%ID]).  Hitting
+	  the OK or Apply buttons will cause any changes made on this
+	  page to take effect.
+	</para>
+      </sect3>
+
+      <sect3 id="volume-dialog-help-center-dimensions"><title>Center/Dimensions</title>
+	<para>
+	  The data set can be shifted by respecifing the center of the
+	  data set with respect to the origin.  The x, y, and z
+	  dimensions are in millimeters.  Being able to change the
+	  center of the data set is useful for manually aligning multiple
+	  data sets.  The size of the data set's voxels (again, in
+	  millimeters) can also be altered on this page.  The "keep
+	  aspect ratio" button specifies that when altering the size
+	  of any voxel component (x, y, or z), the relative sizes
+	  between the components should be kept the same.  Hitting the
+	  OK or Apply buttons will cause any changes made on this page
+	  to take effect. </para>
+      </sect3>
+
+      <sect3 id="volume-dialog-help-rotate"><title>Rotate</title>
+	<para>
+	  The data set can be rotated around its center in this page.
+	  This comes in useful when the data set doesn't quite line-up
+	  with the transverse/coronal/sagittal planes.  There is one
+	  dial for each of the three slice planes.  The transverse
+	  dial will spin the data set in the transverse plane
+	  (i.e. rotate on the z-axis).  The coronal dial will spin the
+	  data set in the coronal plane (i.e. rotate on the y-axis).
+	  And the sagittal dial will spin the data set in the sagittal
+	  plane (i.e. rotate on the x-axis).  The "reset to default"
+	  button allows the data set to be rotated back to it's
+	  initial orientation.  On the bottom of this page is a matrix
+	  showing the coordinate frame of the data set with respect to
+	  the base coordinate frame.  Hitting the OK or Apply buttons
+	  will cause any changes made on this page to take
+	  effect. </para>
+      </sect3>
+
+      <sect3 id="volume-dialog-help-colormap-threshold"><title>Colormap/Threshold</title>
+	<para>
+	  This page is analogous to the threshold dialog (described
+	  above).  Any changes made on this page are immediately
+	  carried out.
+	</para>
+      </sect3>
+
+      <sect3 id="volume-dialog-help-time"><title>Time</title>
+	<para>
+	  From this page, the timing information of the data set can
+	  be altered.  Scan start time can be used for altering the
+	  start time of the scan with respect to other data sets.
+	  Corrections in the duration of each data frame can also be
+	  made on this page.  Hitting the OK or Apply buttons will
+	  cause any changes made on this page to take effect. </para>
+      </sect3>
+
+    </sect2>
+
+
+    <sect2 id="roi-dialog-help"><title>Region of Interest Modification Dialog Box</title>
+      <para>
+	To modify parameters of an ROI, first select the ROI in the
+	study list and then right click on the data set.  The ROI
+	Modification Dialog Box will then appear.  Parameters that can
+	be modified are divided into the following pages.
+      </para>
+
+      <sect3 id="roi-dialog-help-basic"><title>Basic Info</title>
+	<para>
+	  The name, type of ROI, and grain level of can be altered on
+	  this page.  The grain level determines how finely to
+	  sub-divide voxels when calculating statistics for an ROI.
+	  Hitting the OK or Apply buttons will cause any changes made
+	  on this page to take effect.
+	</para>
+      </sect3>
+
+      <sect3  id="roi-dialog-helpcenter"><title>Center</title>
+	<para>
+	  The center of the ROI can be shifted with respect to the
+	  origin on this page.  The x, y, and z parameters are in
+	  millimeters Hitting the OK or Apply buttons will cause any
+	  changes made on this page to take effect. </para>
+      </sect3>
+
+      <sect3  id="roi-dialog-help-dimensions"><title>Dimensions</title>
+	<para>
+	  The size of the ROI can be altered from this page.  The x',
+	  y', and z' dimensions are in millimeters and are orientated
+	  with respect to the ROI.  Hitting the OK or Apply buttons
+	  will cause any changes made on this page to take
+	  effect. </para>
+      </sect3>
+
+      <sect3 id="roi-dialog-help-rotate"><title>Rotate</title>
+	<para>
+	  The ROI can be rotated around its center in this page.
+	  There is one dial for each of the three slice planes.  The
+	  transverse dial will spin the ROI in the transverse plane
+	  (i.e. rotate on the z-axis).  The coronal dial will spin the
+	  ROI in the coronal plane (i.e. rotate on the y-axis).  And
+	  the sagittal dial will spin the ROI in the sagittal plane
+	  (i.e. rotate on the x-axis).  The "reset to default" button
+	  allows the ROI to be rotated back to it's initial
+	  orientation.  On the bottom of this page is a matrix showing
+	  the coordinate frame of the ROI with respect to the base
+	  coordinate frame.  Hitting the OK or Apply buttons will
+	  cause any changes made on this page to take effect. </para>
+      </sect3>
+
+    </sect2>
+
+  </sect1>
+
+
+
+
+  
+  
+  <!-- Keep this comment at the end of the file
+  Local variables:
+  mode: sgml
+  sgml-omittag:t
+  sgml-shorttag:t
+  sgml-minimize-attributes:nil
+  sgml-always-quote-attributes:t
+  sgml-indent-step:2
+  sgml-indent-data:t
+  sgml-parent-document:nil
+  sgml-exposed-tags:nil
+  sgml-local-catalogs:nil
+  sgml-local-ecat-files:nil
+  End:
+  -->            
+

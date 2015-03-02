@@ -43,6 +43,12 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+#undef PACKAGE
+#undef VERSION
+#undef AMIDE_DEBUG
+#undef AMIDE_LIBECAT_SUPPORT
+#undef AMIDE_LIBMDC_SUPPORT
+
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY
 #undef ENABLE_NLS

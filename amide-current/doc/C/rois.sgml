@@ -1,6 +1,3 @@
-<sect1>
-  <title>Using ROI's</title>
-  
   <para> 
 
     ROI stands for Region of Interest.  ROI's designate a volume on
@@ -10,45 +7,45 @@
   
 
 
-  <sect2><title>ROI Types</title>
+  <sect1><title>ROI Types</title>
 
     <para>
       The following ROI types are currently supported.
     </para>
 
-    <sect3><title>Ellipsoid</title>
+    <sect2><title>Ellipsoid</title>
       <para>
 	An ellipsoid is similar to a sphere, but with a radius
 	specified for each direction [x,y,z].  In the case of x=y=z,
 	the ellipsoid is a sphere.
       </para>
-    </sect3>
+    </sect2>
 
-    <sect3><title>Elliptic Cylinder</title>
+    <sect2><title>Elliptic Cylinder</title>
       <para>
 	An elliptic cylinder is similar to a regular cylinder, except
 	it has an ellipse as it's base instead of a circle.
       </para>
-    </sect3>
+    </sect2>
 
-    <sect3><title>Box</title>
+    <sect2><title>Box</title>
       <para>
 	Exactly what it says, a 3D box.
       </para>
-    </sect3>
+    </sect2>
 
-    <sect3><title>Group</title>
+    <sect2><title>Group</title>
       <para>
 	Not currently implemented.  This will someday allow ROI's to
 	be defined in groups, so that ROI's can be manipulated both in
 	groups and individually.
       </para>
-    </sect3>
+    </sect2>
       
 
-  </sect2>
+  </sect1>
 
-  <sect2><title>Drawing ROI's</title>
+  <sect1><title>Drawing ROI's</title>
 
     <para>
       To draw an ROI, first select the ROI desired under the "add
@@ -63,9 +60,9 @@
       drawn ROI is determined by the current image thickness.
     </para>
     
-  </sect2>
+  </sect1>
 
-  <sect2><title>Manipulating ROI's</title>
+  <sect1><title>Manipulating ROI's</title>
 
     <para>
       After an ROI is drawn, it can be further manipulated to adjust
@@ -84,18 +81,15 @@
 
     </para>
     
-  </sect2>
+  </sect1>
 
-  <sect2><title>Calculating Statistics over ROI's</title>
+  <sect1><title>Calculating Statistics over ROI's</title>
 
     <para>
-      DICOM
+      coming...
     </para>
     
-  </sect2>
-
-
-</sect1>
+  </sect1>
 
 
 

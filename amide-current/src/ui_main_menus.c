@@ -1,7 +1,7 @@
 /* ui_main_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -36,7 +36,7 @@ static GnomeUIInfo file_menu[] = {
 			    N_("Create a new study viewer window"),
 			    ui_main_callbacks_new_study, 
 			    NULL),
-  GNOMEUIINFO_MENU_OPEN_ITEM(NULL, NULL),
+  GNOMEUIINFO_MENU_OPEN_ITEM(ui_main_callbacks_open_study, NULL),
   GNOMEUIINFO_SEPARATOR,
   GNOMEUIINFO_MENU_EXIT_ITEM(ui_main_callbacks_delete_event, NULL),
   GNOMEUIINFO_END

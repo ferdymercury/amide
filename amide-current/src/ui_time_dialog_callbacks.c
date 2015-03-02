@@ -43,11 +43,12 @@
 
 
 /* we've selected a row in the list of times */
-void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column, GdkEventButton *event, gpointer data) {
+void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column, 
+					 GdkEventButton *event, gpointer data) {
 
   ui_study_t * ui_study = data;
   amide_volume_t * volume;
-  volume_time_t start, end;
+  volume_time_t start, end, old_end;
   ui_time_dialog_t * new_time;
   guint frame;
   gchar * temp_string;
@@ -74,11 +75,25 @@ void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column
 
   /* save our new times */
   new_time = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "new_time");
-  if (start < new_time->time)
-    new_time->time = start+CLOSE;
-  if (end > (new_time->time+new_time->duration))
-    new_time->duration = end-new_time->time-2*CLOSE;
 
+  /* simple left click selects indicates the choosen frame should be
+     used as the time range, any other type of click
+     (i.e. shift-click, right click, middle click) does an "inclusive"
+     click, i.e. the time range will cover all previously selected
+     frames and the currently selected frame */
+  if ((event->state & GDK_SHIFT_MASK) || (event->button == 2) || (event->button == 3)) {
+    old_end = new_time->time+new_time->duration;
+    if (start < new_time->time)
+      new_time->time = start+CLOSE;
+    if (end > old_end)
+      new_time->duration = end-new_time->time-CLOSE;
+    else
+      new_time->duration = old_end-new_time->time-CLOSE;
+  } else {
+    new_time->time = start+CLOSE;
+    new_time->duration = end-new_time->time-CLOSE;
+  }
+  
   /* tell the property box that we've changed */
   gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_study->time_dialog));
 
@@ -160,8 +175,6 @@ void ui_time_dialog_callbacks_unselect_row(GtkCList * clist, gint row, gint colu
     selected_rows = selected_rows->next;
   }
 
-  g_print("new start %9.8f end %9.8f\n",new_time->time, new_time->time+new_time->duration);
-    
   /* tell the property box that we've changed */
   gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_study->time_dialog));
 
@@ -209,7 +222,9 @@ void ui_time_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointe
 /* callback for the help button */
 void ui_time_dialog_callbacks_help(GnomePropertyBox *time_dialog, gint page_number, gpointer data) {
 
-  g_print("sorry, no help yet......\n");
+  GnomeHelpMenuEntry help_ref={PACKAGE,"basics.html#TIME-DIALOG-HELP"};
+
+  gnome_help_display (0, &help_ref);
 
   return;
 }

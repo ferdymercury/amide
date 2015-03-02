@@ -1,7 +1,7 @@
 /* volume.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -43,7 +43,7 @@ typedef struct amide_volume_t {
   volume_data_t conversion; /* factor  to translate data into useable units */
   guint num_frames;
   volume_time_t scan_start;
-  volume_time_t * frame_duration;
+  volume_time_t * frame_duration; /* array of the duration of each frame */
   volume_data_t max; 
   volume_data_t min;
   color_table_t color_table; /* the color table to draw this roi in */

@@ -1,7 +1,7 @@
 /* realspace.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -59,17 +59,19 @@ typedef struct realspace_t {
 
 /* constants */
 #define CLOSE 0.00001 /* what's close enough to be equal.... */
-
+#define SMALL 0.01 /* in milimeter's, used as a lower limit on some dimensions */
 
 /* convenience functions */
 
-/* returns the boolean value of rp1==rp2 */
-#define REALPOINT_EQUAL(rp1,rp2) ((((rp1).x) > ((1.00-CLOSE)*(rp2).x-CLOSE)) & \
-				  (((rp1).x) < ((1.00+CLOSE)*(rp2).x+CLOSE)) & \
-				  (((rp1).y) > ((1.00-CLOSE)*(rp2).y-CLOSE)) & \
-				  (((rp1).y) < ((1.00+CLOSE)*(rp2).y+CLOSE)) & \
-				  (((rp1).z) > ((1.00-CLOSE)*(rp2).z-CLOSE)) & \
-				  (((rp1).z) < ((1.00+CLOSE)*(rp2).z+CLOSE)))
+/* returns the boolean value of fp1==fp2 (within a factor of CLOSE) */
+#define FLOATPOINT_EQUAL(fp1,fp2) (((fp1) > ((1.00-CLOSE)*(fp2)-CLOSE)) && \
+				   ((fp1) < ((1.00+CLOSE)*(fp2)+CLOSE)))
+
+/* returns the boolean value of rp1==rp2 (within a factor of CLOSE) */
+#define REALPOINT_EQUAL(rp1,rp2) (FLOATPOINT_EQUAL((rp1.x),(rp2.x)) && \
+				  FLOATPOINT_EQUAL((rp1.y),(rp2.y)) && \
+				  FLOATPOINT_EQUAL((rp1.z),(rp2.z)))
+
 #define REALPOINT_MAGNITUDE(rp) (sqrt(pow((rp).x,2.0) + pow((rp).y,2.0) + pow((rp).z,2.0)))
 				  
 /* returns the minimum dimension of the "box" defined by rp1*/
@@ -118,12 +120,6 @@ typedef struct realspace_t {
 					   ((rp3).y = cm*(rp1).y+dm*(rp2).y), \
 					   ((rp3).z = cm*(rp1).z+dm*(rp2).z)) 
 
-/* convenience definitions */
-extern const realpoint_t default_normal[NUM_VIEWS];
-extern const realpoint_t default_axis[NUM_VIEWS];
-extern const realpoint_t default_rotation[NUM_VIEWS];
-extern const realpoint_t realpoint_init;
-extern const voxelpoint_t voxelpoint_init;
 
 /* external functions */
 void realspace_make_orthogonal(realpoint_t axis[]);
@@ -153,7 +149,13 @@ realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
 				     const realspace_t in_alt_coord_frame,
 				     const realspace_t out_alt_coord_frame);
 
-
+/* external variables */
+extern const gchar * axis_names[];
+extern const realpoint_t default_normal[NUM_VIEWS];
+extern const realpoint_t default_axis[NUM_VIEWS];
+extern const realpoint_t default_rotation[NUM_VIEWS];
+extern const realpoint_t realpoint_init;
+extern const voxelpoint_t voxelpoint_init;
 
 
 

@@ -1,7 +1,7 @@
 /* ui_threshold.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -39,7 +39,7 @@
 #include "ui_study.h"
 #include "ui_threshold2.h"
 #include "ui_threshold_callbacks.h"
-
+#include "ui_study_callbacks.h"
 
 /* destroy a ui_threshold data structure */
 void ui_threshold_free(ui_threshold_t ** pui_threshold) {
@@ -97,16 +97,14 @@ void ui_threshold_update_entries(ui_threshold_t * ui_threshold) {
 }
 
 /* function called to update the canvas */
-void ui_threshold_update_canvas(ui_study_t * ui_study) {
+void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_threshold) {
 
   GdkImlibImage * temp_image;
   GnomeCanvasPoints * min_points;
   GnomeCanvasPoints * max_points;
   volume_data_t max;
   amide_volume_t * volume;
-  ui_threshold_t * ui_threshold;
 
-  ui_threshold = ui_study->threshold;
   volume = ui_threshold->volume;
   
   temp_image = image_from_colortable(volume->color_table,
@@ -208,10 +206,12 @@ void ui_threshold_update_canvas(ui_study_t * ui_study) {
 			    "outline_color", "black",
 			    "width_pixels", 2,
 			    NULL);
+    gtk_object_set_data(GTK_OBJECT(ui_threshold->min_arrow), "type", GINT_TO_POINTER(MIN_ARROW));
+    gtk_object_set_data(GTK_OBJECT(ui_threshold->min_arrow), "ui_study", ui_study);
     gtk_signal_connect(GTK_OBJECT(ui_threshold->min_arrow), "event",
-		       GTK_SIGNAL_FUNC(ui_threshold_callbacks_min_arrow),
-		       ui_study);
-    ui_study->threshold->max_arrow = 
+		       GTK_SIGNAL_FUNC(ui_threshold_callbacks_arrow),
+		       ui_threshold);
+    ui_threshold->max_arrow = 
       gnome_canvas_item_new(gnome_canvas_root(ui_threshold->color_strip),
 			    gnome_canvas_polygon_get_type(),
 			    "points", max_points,
@@ -219,9 +219,11 @@ void ui_threshold_update_canvas(ui_study_t * ui_study) {
 			    "outline_color", "black",
 			    "width_pixels", 2,
 			    NULL);
+    gtk_object_set_data(GTK_OBJECT(ui_threshold->max_arrow), "type", GINT_TO_POINTER(MAX_ARROW));
+    gtk_object_set_data(GTK_OBJECT(ui_threshold->max_arrow), "ui_study", ui_study);
     gtk_signal_connect(GTK_OBJECT(ui_threshold->max_arrow), "event",
-		       GTK_SIGNAL_FUNC(ui_threshold_callbacks_max_arrow),
-		       ui_study);
+		       GTK_SIGNAL_FUNC(ui_threshold_callbacks_arrow),
+		       ui_threshold);
   }
 
   gnome_canvas_points_unref(min_points);
@@ -235,7 +237,7 @@ void ui_threshold_update_canvas(ui_study_t * ui_study) {
 
 
 /* function to update the whole dialog */
-void ui_threshold_update(ui_study_t * ui_study) {
+void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
   amide_volume_t * volume;
   gchar * temp_string;
@@ -246,7 +248,7 @@ void ui_threshold_update(ui_study_t * ui_study) {
   if (ui_study->study->volumes == NULL)
     return;
   if (ui_study->threshold == NULL) { /* looks like we called the wrong function */
-    ui_threshold_create(ui_study);
+    ui_threshold_dialog_create(ui_study);
     return;
   }
 
@@ -258,13 +260,13 @@ void ui_threshold_update(ui_study_t * ui_study) {
   ui_study->threshold->volume = volume;
 
   /* reset the label which holds the volume name */
-  temp_string = g_strdup_printf("volume: %s\n",volume->name);
+  temp_string = g_strdup_printf("data set: %s\n",volume->name);
   gtk_label_set_text(GTK_LABEL(ui_study->threshold->name_label), temp_string);
   g_free(temp_string);
 
 
   /* reset the color strip */
-  ui_threshold_update_canvas(ui_study); 
+  ui_threshold_update_canvas(ui_study, ui_study->threshold); 
 
   /* reset the distribution image */
   temp_image = image_of_distribution(volume,
@@ -275,93 +277,199 @@ void ui_threshold_update(ui_study_t * ui_study) {
   gnome_canvas_destroy_image(temp_image);
 
 
+
   /* and update what's in the entry widgets */
   ui_threshold_update_entries(ui_study->threshold);
 
   return;
 }
 
-/* function that sets up the thresholding dialog */
-void ui_threshold_create(ui_study_t * ui_study) {
-  
-  GnomeApp * app;
-  gchar * temp_string = NULL;
-  GtkWidget * packing_table;
-  guint packing_row=0;
+
+/* function that sets up the thresholding/colormap widgets */
+GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_threshold) {
+
+  GtkWidget * right_table;
+  GtkWidget * left_table;
+  GtkWidget * main_box;
+  guint right_row=0;
+  guint left_row=0;
   GnomeCanvas * color_strip;
   GnomeCanvas * bar_graph;
   GdkImlibImage * temp_image;
   GtkWidget * label;
   GtkWidget * entry;
-  amide_volume_t * volume;
-  
-  /* sanity check */
-  if (ui_study->study->volumes == NULL)
-    return;
-  if (ui_study->threshold != NULL)
-    return;
-  if (ui_study->current_volumes == NULL)
-    return;
+  GtkWidget * option_menu;
+  GtkWidget * menu;
+  GtkWidget * menuitem;
+  color_table_t i_color_table;
 
-  ui_study->threshold = ui_threshold_init();
 
-  temp_string = g_strdup_printf("Threshold: %s",ui_study->study->name);
-  app = GNOME_APP(gnome_app_new(PACKAGE, temp_string));
-  g_free(temp_string);
-  ui_study->threshold->app = app;
+  /* we're using two tables packed into a horizontal box */
+  main_box = gtk_hbox_new(FALSE,0);
 
-  /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    volume = ui_study->current_volumes->volume;
-  else
-    volume = ui_study->current_volume;
-  ui_study->threshold->volume = volume;
 
-  g_print("threshold for volume %s\n",volume->name);
 
-  /* setup the callbacks for app */
-  gtk_signal_connect(GTK_OBJECT(app), "delete_event",
-		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_delete_event),
-		     ui_study);
+  /*---------------------------------------
+    left table 
+    --------------------------------------- */
 
-  /* make the widgets for this dialog box */
-  packing_table = gtk_table_new(7,5,FALSE);
-  gnome_app_set_contents(app, GTK_WIDGET(packing_table));
+  left_table = gtk_table_new(7,3,FALSE);
+  gtk_box_pack_start(GTK_BOX(main_box), left_table, TRUE,TRUE,0);
 
-  temp_string = g_strdup_printf("volume: %s\n",volume->name);
-  label = gtk_label_new(temp_string);
-  g_free(temp_string);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 0,3,packing_row, packing_row+1,
+
+  label = gtk_label_new("Percent");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(label), 1,2,left_row,left_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   0,
 		   X_PADDING, Y_PADDING);
-  ui_study->threshold->name_label = label; 
-  packing_row++;
+
+  label = gtk_label_new("Absolute");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(label), 2,3,left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+  left_row++;
+
+
+  label = gtk_label_new("Max Threshold");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(label), 0,1,left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+
+
+  entry = gtk_entry_new();
+  gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(MAX_PERCENT));
+  gtk_object_set_data(GTK_OBJECT(entry), "ui_study", ui_study);
+  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_entry), 
+  		     ui_threshold);
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(entry), 1,2,left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+  ui_threshold->max_percentage = entry;
+
+  entry = gtk_entry_new();
+  gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(MAX_ABSOLUTE));
+  gtk_object_set_data(GTK_OBJECT(entry), "ui_study", ui_study);
+  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_entry), 
+  		     ui_threshold);
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(entry), 2,3,left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+  ui_threshold->max_absolute = entry;
+
+  left_row++;
+
+  /* min threshold stuff */
+  label = gtk_label_new("Min Threshold");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(label), 0,1, left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+
+  entry = gtk_entry_new();
+  gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(MIN_PERCENT));
+  gtk_object_set_data(GTK_OBJECT(entry), "ui_study", ui_study);
+  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_entry),
+  		     ui_threshold);
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(entry), 1,2, left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+  ui_threshold->min_percentage = entry;
+
+  entry = gtk_entry_new();
+  gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(MIN_ABSOLUTE));
+  gtk_object_set_data(GTK_OBJECT(entry), "ui_study", ui_study);
+  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_entry),
+  		     ui_threshold);
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(entry), 2,3, left_row, left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   0,
+		   X_PADDING, Y_PADDING);
+  ui_threshold->min_absolute = entry;
+
+  left_row++;
+
+  /* and put valid entries into all the widgets */
+  ui_threshold_update_entries(ui_threshold);
+
+
+
+  /* color table selector */
+  label = gtk_label_new("color table:");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(label), 0,1, 
+		   left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  option_menu = gtk_option_menu_new();
+  menu = gtk_menu_new();
+
+  for (i_color_table=0; i_color_table<NUM_COLOR_TABLES; i_color_table++) {
+    menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
+    gtk_menu_append(GTK_MENU(menu), menuitem);
+    gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", color_table_names[i_color_table]);
+    gtk_object_set_data(GTK_OBJECT(menuitem),"threshold", ui_threshold);
+    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
+    		       GTK_SIGNAL_FUNC(ui_study_callbacks_color_table), ui_study);
+  }
+
+  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_threshold->volume->color_table);
+  ui_threshold->color_table_menu = option_menu;
+
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(option_menu), 1,3, 
+		   left_row,left_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  left_row++;
+
+
+
+
+  
+
+  /*---------------------------------------
+    right table 
+    --------------------------------------- */
+
+
+  right_table = gtk_table_new(7,2,FALSE);
+  gtk_box_pack_start(GTK_BOX(main_box), right_table, TRUE,TRUE,0);
+
 
   label = gtk_label_new("distribution (log)");
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 1,3,packing_row, packing_row+1,
+  gtk_table_attach(GTK_TABLE(right_table), 
+		   GTK_WIDGET(label), 0,1, right_row, right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   0,
 		   X_PADDING, Y_PADDING);
 
-  packing_row++;
+  right_row++;
 
 
-  color_strip = GNOME_CANVAS(gnome_canvas_new());
-  ui_study->threshold->color_strip = color_strip; /* save this for future use */
-  ui_threshold_update_canvas(ui_study); /* fill the canvas with the current
-					      color map, etc.*/
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(color_strip), 0,1,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
-
-
-
-  temp_image = image_of_distribution(volume,
+  /* the distribution image */
+  temp_image = image_of_distribution(ui_threshold->volume,
 				     UI_THRESHOLD_BAR_GRAPH_WIDTH,
 				     UI_THRESHOLD_COLOR_STRIP_HEIGHT);
   bar_graph = GNOME_CANVAS(gnome_canvas_new());
@@ -374,7 +482,7 @@ void ui_threshold_create(ui_study_t * ui_study) {
 		       temp_image->rgb_width,
 		       temp_image->rgb_height + UI_THRESHOLD_TRIANGLE_HEIGHT/2);
 
-  ui_study->threshold->bar_graph_item = 
+  ui_threshold->bar_graph_item = 
     gnome_canvas_item_new(gnome_canvas_root(bar_graph),
 			  gnome_canvas_image_get_type(),
 			  "image", temp_image,
@@ -387,98 +495,95 @@ void ui_threshold_create(ui_study_t * ui_study) {
 
   gnome_canvas_destroy_image(temp_image);
 
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(bar_graph), 1,3,packing_row, packing_row+1,
+  gtk_table_attach(GTK_TABLE(right_table), 
+		   GTK_WIDGET(bar_graph), 0,1,right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
 
-  /* max threshold stuff */
-  label = gtk_label_new("Percent");
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 1,2,packing_row, packing_row+1,
+
+
+  /* the color strip */
+  color_strip = GNOME_CANVAS(gnome_canvas_new());
+  ui_threshold->color_strip = color_strip; /* save this for future use */
+  ui_threshold_update_canvas(ui_study, ui_threshold); /* fill the canvas with the current
+							 color map, etc.*/
+  gtk_table_attach(GTK_TABLE(right_table), 
+		   GTK_WIDGET(color_strip), 1,2,right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-
-  label = gtk_label_new("Absolute");
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 2,3,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-
-  packing_row++;
-
-
-  label = gtk_label_new("Max Threshold");
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 0,1,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
+		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
 
 
-  entry = gtk_entry_new();
-  gtk_widget_set_usize(GTK_WIDGET(entry), UI_THRESHOLD_DEFAULT_ENTRY_WIDTH,0);
-  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_max_percentage), 
-  		     ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(entry), 1,2,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-  ui_study->threshold->max_percentage = entry;
+  right_row++;
 
-  entry = gtk_entry_new();
-  gtk_widget_set_usize(GTK_WIDGET(entry), UI_THRESHOLD_DEFAULT_ENTRY_WIDTH,0);
-  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_max_absolute), 
-  		     ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(entry), 2,3,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-  ui_study->threshold->max_absolute = entry;
 
-  packing_row++;
+  return main_box;
+}
 
-  /* min threshold stuff */
-  label = gtk_label_new("Min Threshold");
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(label), 0,1, packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
+/* function that sets up the thresholding dialog */
+void ui_threshold_dialog_create(ui_study_t * ui_study) {
+  
+  GnomeApp * app;
+  gchar * temp_string = NULL;
+  GtkWidget * threshold_widget;
+  GtkWidget * vbox;
+  GtkWidget * label;
+  amide_volume_t * volume;
+  ui_study_volume_list_t * volume_list_item;
+  
+  /* sanity check */
+  if (ui_study->study->volumes == NULL)
+    return;
+  if (ui_study->threshold != NULL)
+    return;
+  if (ui_study->current_volumes == NULL)
+    return;
 
-  entry = gtk_entry_new();
-  gtk_widget_set_usize(GTK_WIDGET(entry), UI_THRESHOLD_DEFAULT_ENTRY_WIDTH,0);
-  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_min_percentage), 
-  		     ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(entry), 1,2,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-  ui_study->threshold->min_percentage = entry;
+  /* figure out which volume we're dealing with */
+  if (ui_study->current_volume == NULL)
+    volume = ui_study->current_volumes->volume;
+  else
+    volume = ui_study->current_volume;
 
-  entry = gtk_entry_new();
-  gtk_widget_set_usize(GTK_WIDGET(entry), UI_THRESHOLD_DEFAULT_ENTRY_WIDTH,0);
-  gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-  		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_min_absolute), 
-  		     ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(entry), 2,3,packing_row, packing_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   0,
-		   X_PADDING, Y_PADDING);
-  ui_study->threshold->min_absolute = entry;
+  /* make sure we don't already have a volume edit dialog up */
+  volume_list_item = ui_study_volumes_list_get_volume(ui_study->current_volumes,volume);
+  if (volume_list_item != NULL)
+    if (volume_list_item->dialog != NULL)
+      return;
 
-  /* and put valid entries into all the widgets */
-  ui_threshold_update_entries(ui_study->threshold);
+  ui_study->threshold = ui_threshold_init();
+
+  temp_string = g_strdup_printf("Threshold: %s",ui_study->study->name);
+  app = GNOME_APP(gnome_app_new(PACKAGE, temp_string));
+  g_free(temp_string);
+  ui_study->threshold->app = app;
+  ui_study->threshold->volume = volume;
+
+  g_print("threshold for volume %s\n",volume->name);
+
+  /* setup the callbacks for app */
+  gtk_signal_connect(GTK_OBJECT(app), "delete_event",
+		     GTK_SIGNAL_FUNC(ui_threshold_callbacks_delete_event),
+		     ui_study);
+
+  /* setup the vertical packing box */
+  vbox = gtk_vbox_new(FALSE,0);
+  gnome_app_set_contents(app, GTK_WIDGET(vbox));
+
+
+  /* make the volume title thingie */
+  temp_string = g_strdup_printf("data set: %s\n",volume->name);
+  label = gtk_label_new(temp_string);
+  g_free(temp_string);
+  gtk_box_pack_start(GTK_BOX(vbox), label, TRUE,TRUE,0);
+  ui_study->threshold->name_label = label; 
+
+
+  /* setup the threshold widget */
+  threshold_widget = ui_threshold_create(ui_study, ui_study->threshold);
+  gtk_box_pack_start(GTK_BOX(vbox), threshold_widget, TRUE,TRUE,0);
+
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(app));

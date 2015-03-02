@@ -1,7 +1,7 @@
 /* ui_main.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -42,7 +42,7 @@ void ui_main_create(void) {
   /* create the main window */
   title = g_strdup_printf ("%s %s",PACKAGE, VERSION);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
-  free(title);
+  g_free(title);
 
   /* setup the main menu */
   ui_main_menus_create(app);

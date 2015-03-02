@@ -1,7 +1,7 @@
 /* cti_import.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -23,7 +23,7 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_CTI_SUPPORT
+#ifdef AMIDE_LIBECAT_SUPPORT
 
 /* external functions */
 amide_volume_t * cti_import(gchar * filename);

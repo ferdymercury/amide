@@ -1,7 +1,7 @@
 /* roi.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -279,7 +279,7 @@ void roi_free_points_list(GSList ** plist) {
 gboolean roi_undrawn(const amide_roi_t * roi) {
   
   return 
-    REALPOINT_EQUAL(roi->coord_frame.offset,realpoint_init) &
+    REALPOINT_EQUAL(roi->coord_frame.offset,realpoint_init) &&
     REALPOINT_EQUAL(roi->corner,realpoint_init);
 }
     
@@ -293,14 +293,14 @@ gboolean roi_voxel_in_box(const realpoint_t p,
   return (
 	  (
 	   (
-	    ((p.z >= p0.z-CLOSE) & (p.z <= p1.z+CLOSE)) |
-	    ((p.z <= p0.z+CLOSE) & (p.z >= p1.z-CLOSE))) & 
+	    ((p.z >= p0.z-CLOSE) && (p.z <= p1.z+CLOSE)) ||
+	    ((p.z <= p0.z+CLOSE) && (p.z >= p1.z-CLOSE))) && 
 	   (
-	    ((p.y >= p0.y-CLOSE) & (p.y <= p1.y+CLOSE)) |
-	    ((p.y <= p0.y+CLOSE) & (p.y >= p1.y-CLOSE))) & 
+	    ((p.y >= p0.y-CLOSE) && (p.y <= p1.y+CLOSE)) ||
+	    ((p.y <= p0.y+CLOSE) && (p.y >= p1.y-CLOSE))) && 
 	   (
-	    ((p.x >= p0.x-CLOSE) & (p.x <= p1.x+CLOSE)) |
-	    ((p.x <= p0.x+CLOSE) & (p.x >= p1.x-CLOSE)))));
+	    ((p.x >= p0.x-CLOSE) && (p.x <= p1.x+CLOSE)) ||
+	    ((p.x <= p0.x+CLOSE) && (p.x >= p1.x-CLOSE)))));
 
 }
 
@@ -314,8 +314,8 @@ gboolean roi_voxel_in_elliptic_cylinder(const realpoint_t p,
   return ((1.0+2*CLOSE >= 
 	   (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
 	    pow((p.y-center.y),2.0)/pow(radius.y,2.0)))
-	  &
-	  ((p.z > (center.z-height/2.0)-CLOSE) & 
+	  &&
+	  ((p.z > (center.z-height/2.0)-CLOSE) && 
 	   (p.z < (center.z+height/2.0)-CLOSE)));
   
 }
@@ -460,7 +460,7 @@ GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
 
       /* check if the edge of this row is still in the roi, if it is, add it as
 	 a point */
-      if ((voxel_in) & !(saved)) {
+      if ((voxel_in) && !(saved)) {
 
 	/* than save the point */
 	new_point = (GSList * ) g_malloc(sizeof(GSList));
@@ -715,8 +715,10 @@ amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi,
   analysis.var = 0;
 
   /* sanity checks */
-  if (roi_undrawn(roi))
+  if (roi_undrawn(roi)) {
+    g_warning("%s: roi appears not to have been drawn\n",PACKAGE);
     return analysis;
+  }
 
   /* figure out what portion of the volume we'll be iterating over */
   roi_subset_of_volume(roi,volume,&init,&dim);

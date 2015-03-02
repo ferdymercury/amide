@@ -1,7 +1,7 @@
 /* ui_main_callbacks.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -46,6 +46,15 @@ void ui_main_callbacks_new_study(GnomeApp* app, gpointer data) {
 
   return;
 }
+
+/* function to load a study into a  study widget w*/
+void ui_main_callbacks_open_study(GnomeApp* app, gpointer data) {
+
+  //  ui_study_create(NULL);
+  g_print("Not currently supported, sorry.\n");
+
+  return;
+}
   
 
 /* function which brings up an about box */
@@ -58,7 +67,7 @@ void ui_main_callbacks_about(GnomeApp* app, gpointer data) {
   };
 
   about = gnome_about_new(PACKAGE, VERSION, 
-			  "(c) 2000 Andy Loening",
+			  "(c) 2001 Andy Loening",
 			  authors,
 			  _("Amide's a Medical Image Data Examiner"),
 			  "amide.png");

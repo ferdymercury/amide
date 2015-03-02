@@ -59,6 +59,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
+AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AS = @AS@
 AUDIOFILE_CFLAGS = @AUDIOFILE_CFLAGS@
 AUDIOFILE_CONFIG = @AUDIOFILE_CONFIG@
@@ -124,7 +126,7 @@ amide_helpdir = $(datadir)/gnome/help/amide/C
 amide_help_DATA =  	amide.html		topic.dat
 
 
-SGML_FILES =  	amide.sgml			importing.sgml			rois.sgml
+SGML_FILES =  	amide.sgml			basics.sgml			importing.sgml			rois.sgml			volumes.sgml		
 
 
 PERL_FILES =  	make-index.pl			make-docbook.pl	

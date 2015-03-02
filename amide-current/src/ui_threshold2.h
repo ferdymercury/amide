@@ -1,7 +1,7 @@
 /* ui_threshold2.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -27,6 +27,7 @@
  * interdependencies */
 
 /* external functions */
-void ui_threshold_update_canvas(ui_study_t * ui_study);
-void ui_threshold_update(ui_study_t * ui_study);
-void ui_threshold_create(ui_study_t * ui_study);
+void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_threshold);
+void ui_threshold_dialog_update(ui_study_t * ui_study);
+GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_threshold);
+void ui_threshold_dialog_create(ui_study_t * ui_study);

@@ -9,11 +9,11 @@ REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="PREVIOUS"
-TITLE="Amide's user manual"
-HREF="amide.html"><LINK
+TITLE="AMIDE Basics"
+HREF="basics.html"><LINK
 REL="NEXT"
-TITLE="Using ROI's "
-HREF="rois.html"></HEAD
+TITLE="IDL Data Files"
+HREF="x118.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
 ><DIV
@@ -35,7 +35,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="amide.html"
+HREF="basics.html"
 >Prev</A
 ></TD
 ><TD
@@ -48,7 +48,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="rois.html"
+HREF="x118.html"
 >Next</A
 ></TD
 ></TR
@@ -61,21 +61,66 @@ CLASS="CHAPTER"
 ><H1
 ><A
 NAME="IMPORTING"
->Chapter 1. Importing Data </A
+>Chapter 2. Importing Data </A
 ></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="importing.html#AEN109"
+>CTI Files</A
+></DT
+><DT
+><A
+HREF="x118.html"
+>IDL Data Files</A
+></DT
+><DT
+><A
+HREF="x121.html"
+>Raw Data Files</A
+></DT
+><DT
+><A
+HREF="x124.html"
+>DICOM Files</A
+></DT
+><DT
+><A
+HREF="x127.html"
+>Other Filetypes</A
+></DT
+></DL
+></DIV
+><P
+> 
+
+  All imported files are converted into AMIDE's internal float
+  representation, which is a compile time option that defaults to
+  double (64 bit).  Importing is heavily dependent on Erik Nolf's
+  medcon/libmdc medical imaging conversion library and Merence
+  Sibomona/CTI's libecat CTI file library.
+  </P
 ><DIV
 CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN22"
->Importing Files</A
+NAME="AEN109"
+>CTI Files</A
 ></H1
 ><P
-> 
-
-    All imported files are converted into AMIDE's internal double
-    float representation.
+>    
+    Currently, static and dynamic CTI 6.4 and 7.0 files are supported.
+    AMIDE support for the CTI file format is generally achieved
+    through the libecat C library.  If libecat is not available, then
+    medcon/libmdc will be used for supporting CTI 6.4 files, and CTI
+    7.0 files will be unsupported.
 
   </P
 ><DIV
@@ -83,49 +128,26 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN25"
->CTI Files</A
+NAME="AEN112"
+>CTI 6.4</A
 ></H2
 ><P
->      Currently, the only file type supported for importing is CTI
-      6.4.  Adding support for CTI 7.0 files should be trivial, I just
-      don't have any 7.0 files.
+>      AMIDE will try to load any file ending in ".img" as a CTI 6.4
+      file.  This file format is used by both the microPET and some
+      clinical scanners.
     </P
-><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
-><A
-NAME="AEN28"
->CTI 6.4</A
-></H3
-><P
->	6.4
-      </P
-></DIV
-><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
-><A
-NAME="AEN31"
->CTI 7.0</A
-></H3
-><P
->	7.0: not currently supported
-      </P
-></DIV
 ></DIV
 ><DIV
 CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN34"
->DICOM Files</A
+NAME="AEN115"
+>CTI 7.0</A
 ></H2
 ><P
->      DICOM: not currently supported
+>      AMIDE will try to load any file ending in ".v" as a CTI 7.0
+      file.  This file format is used by newer clinical scanners.
     </P
 ></DIV
 ></DIV
@@ -145,7 +167,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="amide.html"
+HREF="basics.html"
 >Prev</A
 ></TD
 ><TD
@@ -161,7 +183,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="rois.html"
+HREF="x118.html"
 >Next</A
 ></TD
 ></TR
@@ -170,7 +192,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Amide's user manual</TD
+>AMIDE Basics</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -180,7 +202,7 @@ VALIGN="top"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Using ROI's</TD
+>IDL Data Files</TD
 ></TR
 ></TABLE
 ></DIV

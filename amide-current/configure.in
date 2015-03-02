@@ -1,7 +1,7 @@
 AC_INIT(src/amide.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.2.1)
+AM_INIT_AUTOMAKE(amide, 0.2.2)
 
 AM_MAINTAINER_MODE
 
@@ -27,6 +27,64 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
 
+
+
+
+dnl Let people compile without debugging information
+AC_ARG_ENABLE(
+	amide_debug, 
+	[  --enable-amide-debug    Compile with some debugging messages [default=yes]], 
+	enable_amide_debug="$enableval", 
+	enable_amide_debug=yes)
+
+if test $enable_amide_debug = yes; then
+	echo "Compiling with AMIDE debugging messages"
+	AC_DEFINE(AMIDE_DEBUG)
+else
+	echo "Compiling without AMIDE debugging messages"
+fi
+
+
+
+
+dnl Let people compile without having libecat (z_matrix_70)
+AC_ARG_ENABLE(
+	libecat, 
+	[  --enable-libecat        Compile with the libecat/CTI library [default=yes]],
+	enable_libecat="$enableval",
+	enable_libecat=yes)
+
+if test $enable_libecat = yes; then
+	echo "Compiling with libecat/CTI file support"
+	AMIDE_LIBECAT_LIBS="-lecat"
+	AC_SUBST(AMIDE_LIBECAT_LIBS)
+	AC_DEFINE(AMIDE_LIBECAT_SUPPORT)
+else
+	echo "Compiling without libecat/CTI file support"
+fi
+
+
+
+
+
+dnl Let people compile without having libmdc
+AC_ARG_ENABLE(
+	libmdc, 
+	[  --enable-libmdc         Compile with the xmedcon/libmdc library [default=yes]], 
+	enable_libmdc="$enableval", 
+	enable_libmdc=yes)
+
+if test $enable_libmdc = yes; then
+	echo "Compiling with xmedcon/libmdc file support"
+	AMIDE_LIBMDC_LIBS="-lmdc"
+	AC_SUBST(AMIDE_LIBMDC_LIBS)
+	AC_DEFINE_UNQUOTED(AMIDE_LIBMDC_SUPPORT)
+else
+	echo "Compiling without xmedcon/libmdc file support"
+fi
+
+
+
 AC_OUTPUT([
 Makefile
 pixmaps/Makefile
@@ -38,31 +96,4 @@ macros/Makefile
 intl/Makefile
 contrib/Makefile
 contrib/amide.spec]) 
-
-
-dnl Let people compile without debugging information
-AC_ARG_ENABLE(gtk-doc, [  --enable-debug-mesg     Compile with some debugging messages [default=yes]], enable_debug_mesg="$enableval", enable_debug_mesg=yes)
-
-if test $enable_debug_mesg = yes; then
-	cat >> config.h << EOF
-
-#define AMIDE_DEBUG
-EOF
-
-fi
-
-
-dnl Let people compile without having libecat (z_matrix_70)
-AC_ARG_ENABLE(libecat, [  --enable-cti-import     Compile with the CTI library [default=yes]], enable_cti_import="$enableval", enable_cti_import=yes)
-
-
-
-if test $enable_cti_import = yes; then
-	cat >> config.h << EOF
-
-#define AMIDE_CTI_SUPPORT 
-EOF
-
-fi
-
 

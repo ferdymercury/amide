@@ -1,7 +1,7 @@
 /* ui_roi_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -42,6 +42,51 @@
 #include "ui_roi_dialog_callbacks.h"
 #include "ui_roi_dialog.h"
 
+
+
+
+
+
+
+
+/* function to set that roi axis display widgets */
+void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog) {
+
+  GtkWidget * label;
+  GtkWidget * entry;
+  gchar * temp_string;
+  amide_roi_t * roi_new_info;
+  axis_t i_axis;
+
+  roi_new_info = gtk_object_get_data(GTK_OBJECT(roi_dialog), "roi_new_info");
+
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+    label = gtk_object_get_data(GTK_OBJECT(roi_dialog), axis_names[i_axis]);
+
+    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[XAXIS]);
+    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].x);
+    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+    g_free(temp_string);
+
+    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[YAXIS]);
+    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].y);
+    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+    g_free(temp_string);
+
+    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[ZAXIS]);
+    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].z);
+    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+    g_free(temp_string);
+
+  }
+
+  return;
+}
+
+
+
+
+
 /* function that sets up the roi dialog */
 void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   
@@ -53,6 +98,12 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   GtkWidget * menu;
   GtkWidget * menuitem;
   GtkWidget * entry;
+  GtkWidget * dial;
+  GtkWidget * hseparator;
+  GtkWidget * button;
+  GtkObject * adjustment;
+  view_t i_view;
+  axis_t i_axis, j_axis;
   roi_type_t i_roi_type;
   roi_grain_t i_grain;
   guint table_row = 0;
@@ -103,6 +154,14 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "help",
 		     GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_help),
 		     roi_list_item);
+
+
+
+
+  /* ---------------------------
+     Basic info page 
+     --------------------------- */
+
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,2,FALSE);
@@ -194,6 +253,10 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   table_row++;
 
 
+  /* ---------------------------
+     Center adjustment page
+     --------------------------- */
+
 
   /* the next page of options */
   packing_table = gtk_table_new(4,2,FALSE);
@@ -215,7 +278,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", center.x);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_X));
@@ -233,7 +296,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", center.y);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_Y));
@@ -251,7 +314,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", center.z);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_Z));
@@ -262,6 +325,13 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
+
+
+
+
+  /* ---------------------------
+     Dimension adjustment page
+     --------------------------- */
 
 
   /* the next page of options */
@@ -283,7 +353,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", roi_new_info->corner.x);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_X));
@@ -301,7 +371,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", roi_new_info->corner.y);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Y));
@@ -319,7 +389,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", roi_new_info->corner.z);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  free(temp_string);
+  g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Z));
@@ -330,11 +400,131 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  /* start making the widgets for rotating the roi */
-  packing_table = gtk_table_new(4,2,FALSE);
+
+
+
+  /* ---------------------------
+     Rotation adjustment page
+     --------------------------- */
+
+
+  /* start making the page to rotate the roi */
+  packing_table = gtk_table_new(9,4,FALSE);
   label = gtk_label_new("Rotate");
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
   table_row=0;
+
+
+  /* draw the x/y/z labels */
+  label = gtk_label_new("transverse");
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  table_row++;
+  label = gtk_label_new("coronal");
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  table_row++;
+  label = gtk_label_new("sagittal");
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  
+  
+  table_row=0;
+  /* make the three canvases, scales, dials, etc. */
+  for (i_view=0;i_view<NUM_VIEWS;i_view++) {
+
+    /* dial section */
+    adjustment = gtk_adjustment_new(0,-45.0,45.5,0.5,0.5,0.5);
+    /*so we can figure out which adjustment this is in callbacks */
+    gtk_object_set_data(GTK_OBJECT(adjustment), "view", view_names[i_view]); 
+    gtk_object_set_data(GTK_OBJECT(adjustment), "roi_dialog", roi_dialog); 
+    gtk_object_set_data(GTK_OBJECT(adjustment), "ui_study", ui_study);
+    dial = gtk_hscale_new(GTK_ADJUSTMENT(adjustment));
+    gtk_range_set_update_policy(GTK_RANGE(dial), GTK_UPDATE_DISCONTINUOUS);
+    gtk_table_attach(GTK_TABLE(packing_table), 
+		     GTK_WIDGET(dial),
+		     1,4, table_row, table_row+1,
+		     X_PACKING_OPTIONS | GTK_FILL,FALSE, X_PADDING, Y_PADDING);
+    gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
+		       GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_change_axis), 
+		       roi_new_info);
+    table_row++;
+  }
+
+
+  /* button to reset the axis */
+  label = gtk_label_new("roi axis:");
+  gtk_table_attach(GTK_TABLE(packing_table), 
+		   GTK_WIDGET(label), 0,1, 
+		   table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  
+  button = gtk_button_new_with_label("reset to default");
+  gtk_object_set_data(GTK_OBJECT(button), "roi_dialog", roi_dialog); 
+  gtk_table_attach(GTK_TABLE(packing_table), 
+		   GTK_WIDGET(button), 1,2, 
+		   table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  gtk_signal_connect(GTK_OBJECT(button), "pressed",
+		     GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_reset_axis), 
+		     roi_new_info);
+  table_row++;
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(hseparator),
+		   table_row, table_row+1,0,4, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+
+  /* and a display of the current axis */
+  label = gtk_label_new("i");
+  gtk_table_attach(GTK_TABLE(packing_table), 
+		   GTK_WIDGET(label), 1,2,
+		   table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+
+  label = gtk_label_new("j");
+  gtk_table_attach(GTK_TABLE(packing_table), 
+		   GTK_WIDGET(label), 2,3,
+		   table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+
+  label = gtk_label_new("k");
+  gtk_table_attach(GTK_TABLE(packing_table), 
+		   GTK_WIDGET(label), 3,4,
+		   table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+
+    /* the row label */
+    label = gtk_label_new(axis_names[i_axis]);
+    gtk_object_set_data(GTK_OBJECT(roi_dialog), axis_names[i_axis], label);
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1, 
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    for (j_axis=0;j_axis<NUM_AXIS;j_axis++) {
+
+      entry = gtk_entry_new();
+      gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+      gtk_object_set_data(GTK_OBJECT(label), axis_names[j_axis], entry);
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),j_axis+1, j_axis+2,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    }
+
+    table_row++;
+  }
+
+  ui_roi_dialog_set_axis_display(roi_dialog);
+
+
+
+
+
+
 
   /* and show all our widgets */
   gtk_widget_show_all(roi_dialog);

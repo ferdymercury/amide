@@ -1,7 +1,7 @@
 /* ui_study_callbacks.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -49,7 +49,8 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
 gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 					  GdkEventButton *event,
 					  gpointer data);
-void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data);
+void ui_study_callbacks_edit_object_pressed(GtkWidget * button, gpointer data);
+void ui_study_callbacks_delete_object_pressed(GtkWidget * button, gpointer data);
 void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, 
 				     gpointer data);

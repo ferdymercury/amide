@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -56,6 +56,14 @@ static gint next_study_num=1;
 
 /* destroy a ui_study data structure */
 void ui_study_free(ui_study_t ** pui_study) {
+  
+  while((*pui_study)->current_volumes != NULL)
+    ui_study_volumes_list_remove_volume(&((*pui_study)->current_volumes),
+					(*pui_study)->current_volumes->volume);
+  while((*pui_study)->current_rois != NULL)
+    ui_study_rois_list_remove_roi(&((*pui_study)->current_rois),
+				  (*pui_study)->current_rois->roi);
+
 
   if ((*pui_study)->study != NULL)
     study_free(&((*pui_study)->study));
@@ -83,9 +91,9 @@ ui_study_t * ui_study_init(void) {
     ui_study->current_slices[i] = NULL;
     ui_study->rgb_image[i] = NULL;
     ui_study->canvas_arrow[i][0] = NULL;
-    ui_study->current_coord_frame.axis[i] = default_axis[i];
+    ui_study->current_view_coord_frame.axis[i] = default_axis[i];
   }
-  ui_study->current_coord_frame.offset = realpoint_init;
+  ui_study->current_view_coord_frame.offset = realpoint_init;
   ui_study->tree_studies = NULL;
   ui_study->tree_rois = NULL;
   ui_study->tree_volumes = NULL;
@@ -101,9 +109,9 @@ ui_study_t * ui_study_init(void) {
   ui_study->current_time = 0.0+CLOSE;
   ui_study->current_duration = 1.0-CLOSE;
   ui_study->current_thickness = -1.0;
-  ui_study->current_axis_p_start.x = -1.0;
-  ui_study->current_axis_p_start.y = -1.0;  
-  ui_study->current_axis_p_start.z = -1.0;
+  ui_study->current_view_center.x =
+    ui_study->current_view_center.y =
+    ui_study->current_view_center.z = -1.0;
   ui_study->default_roi_grain =  GRAINS_1;
   ui_study->threshold = NULL;
   ui_study->series = NULL;
@@ -145,9 +153,9 @@ realspace_t ui_study_get_coords_current_view(ui_study_t * ui_study, view_t view,
   /* get the current slices for the given view */
   current_slices = ui_study->current_slices[view];
 
-  /* set the origin of the view_coord_frame to the current z' locations */
-  view_coord_frame = ui_study->current_coord_frame;
-  view_coord_frame.offset = ui_study->current_axis_p_start;
+  /* set the origin of the view_coord_frame to the current view locations */
+  view_coord_frame = ui_study->current_view_coord_frame;
+  //  view_coord_frame.offset = ui_study->current_axis_p_start;
   view_coord_frame = realspace_get_orthogonal_coord_frame(view_coord_frame, view);
   
   /* figure out the corners */
@@ -172,8 +180,9 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
 
   if (ui_study->current_volumes != NULL) {
 
-    view_coord_frame = ui_study->current_coord_frame;
-    view_coord_frame.offset = ui_study->current_axis_p_start;
+    view_coord_frame = ui_study->current_view_coord_frame;
+    view_coord_frame.offset = 
+      realspace_alt_coord_to_base(ui_study->current_view_center,view_coord_frame);
     view_coord_frame = realspace_get_orthogonal_coord_frame(view_coord_frame, view);
 
     length = ui_study_volumes_get_length(ui_study->current_volumes, view_coord_frame);
@@ -182,29 +191,29 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
 
     switch(view) {
       case TRANSVERSE:
-	zp_start = view_coord_frame.offset.z;
+	zp_start = ui_study->current_view_center.z;
 	break;
       case CORONAL:
-	zp_start = view_coord_frame.offset.y;
+	zp_start = ui_study->current_view_center.y;
 	break;
       case SAGITTAL:
       default:
-	zp_start = view_coord_frame.offset.x;
+	zp_start = ui_study->current_view_center.x;
 	break;
       }
 
 
-    if ((zp_start > length) | (zp_start < 0.0)) {
+    if ((zp_start > length) || (zp_start < 0.0)) {
       zp_start = length/2.0;
       switch(view) {
       case TRANSVERSE:
-	ui_study->current_axis_p_start.z = zp_start;
+	ui_study->current_view_center.z = zp_start;
 	break;
       case CORONAL:
-	ui_study->current_axis_p_start.y = zp_start;
+	ui_study->current_view_center.y = zp_start;
 	break;
       case SAGITTAL:
-	ui_study->current_axis_p_start.x = zp_start;
+	ui_study->current_view_center.x = zp_start;
 	break;
       default:
 	break;
@@ -297,12 +306,13 @@ void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
   points[2] = gnome_canvas_points_new(4);
   points[3] = gnome_canvas_points_new(4);
 
-  if ((ui_study->study->volumes == NULL) | (ui_study->current_volumes == NULL)) {
+  if ((ui_study->study->volumes == NULL) || (ui_study->current_volumes == NULL)) {
     x1 = y1 = x2 = y2 = 0.5;
   } else {
 
-    view_coord_frame = ui_study->current_coord_frame;
-    view_coord_frame.offset = ui_study->current_axis_p_start;
+    view_coord_frame = ui_study->current_view_coord_frame;
+    view_coord_frame.offset = 
+      realspace_alt_coord_to_base(ui_study->current_view_center,view_coord_frame);
     view_coord_frame = realspace_get_orthogonal_coord_frame(view_coord_frame, view);
     width = ui_study_volumes_get_width(ui_study->current_volumes, view_coord_frame);
     height = ui_study_volumes_get_height(ui_study->current_volumes, view_coord_frame);
@@ -310,22 +320,22 @@ void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
     /* figure out the x and y coordiantes we're currently pointing to */
     switch(view) {
     case TRANSVERSE:
-      x1 = ui_study->current_axis_p_start.x;
-      if (x1 < 0.0) x1 = ui_study->current_axis_p_start.x = width/2.0;
-      y1 = ui_study->current_axis_p_start.y;
-      if (y1 < 0.0) y1 = ui_study->current_axis_p_start.y = height/2.0;
+      x1 = ui_study->current_view_center.x;
+      if (x1 < 0.0) x1 = ui_study->current_view_center.x = width/2.0;
+      y1 = ui_study->current_view_center.y;
+      if (y1 < 0.0) y1 = ui_study->current_view_center.y = height/2.0;
       break;
     case CORONAL:
-      x1 = ui_study->current_axis_p_start.x;
-      if (x1 < 0.0) x1 = ui_study->current_axis_p_start.x = width/2.0;
-      y1 = ui_study->current_axis_p_start.z;
-      if (y1 < 0.0) y1 = ui_study->current_axis_p_start.z = height/2.0;
+      x1 = ui_study->current_view_center.x;
+      if (x1 < 0.0) x1 = ui_study->current_view_center.x = width/2.0;
+      y1 = ui_study->current_view_center.z;
+      if (y1 < 0.0) y1 = ui_study->current_view_center.z = height/2.0;
       break;
     case SAGITTAL:
-      x1 = ui_study->current_axis_p_start.y;
-      if (x1 < 0.0) x1 = ui_study->current_axis_p_start.y = width/2.0;
-      y1 = ui_study->current_axis_p_start.z;
-      if (y1 < 0.0) y1 = ui_study->current_axis_p_start.z = height/2.0;
+      x1 = ui_study->current_view_center.y;
+      if (x1 < 0.0) x1 = ui_study->current_view_center.y = width/2.0;
+      y1 = ui_study->current_view_center.z;
+      if (y1 < 0.0) y1 = ui_study->current_view_center.z = height/2.0;
       break;
     default:
       x1 = y1 = 0.5;
@@ -474,8 +484,9 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
     return;
 
   /* figure out our view coordinate frame */
-  view_coord_frame = ui_study->current_coord_frame;
-  view_coord_frame.offset = ui_study->current_axis_p_start;
+  view_coord_frame = ui_study->current_view_coord_frame;
+    view_coord_frame.offset = 
+      realspace_alt_coord_to_base(ui_study->current_view_center,view_coord_frame);
   view_coord_frame = realspace_get_orthogonal_coord_frame(view_coord_frame, view);
 
   if (ui_study->rgb_image[view] != NULL)
@@ -531,13 +542,47 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   return;
 }
 
+
+/* replaces the current cursor with the watch/hourglass/whatever cursor */
+void ui_study_place_wait_cursor(ui_study_t * ui_study) {
+
+  GdkCursor * cursor;
+
+  /* push our desired cursor onto the cursor stack */
+  cursor = ui_study->cursor[UI_STUDY_WAIT];
+  ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
+  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[0])), cursor);
+
+
+  /* do any events pending, this allows the cursor to get displayed */
+  while (gtk_events_pending()) 
+    gtk_main_iteration();
+
+  return;
+}
+
+/* removes the watch/hourglass/whatever cursor, going back to the previous cursor */
+void ui_study_remove_wait_cursor(ui_study_t * ui_study) {
+
+  GdkCursor * cursor;
+
+  /* pop the previous cursor off the stack */
+  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
+  ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
+  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
+  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[0])), cursor);
+
+  return;
+}
+
 /* function to update a canvas, if view_it is  NUM_VIEWS, update
    all canvases */
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i, 
 			    ui_study_update_t update) {
 
   view_t j,k;
-  GdkCursor * cursor;
+  realpoint_t temp_center;
+  realpoint_t view_corner[2];
 
   if (i==NUM_VIEWS) {
     i=0;
@@ -545,15 +590,16 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i,
   } else
     j=i+1;
 
-  /* push our desired cursor onto the cursor stack */
-  cursor = ui_study->cursor[UI_STUDY_WAIT];
-  ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i])), cursor);
+  ui_study_place_wait_cursor(ui_study);
 
-  /* do any events pending, this allows the cursor to get displayed */
-  while (gtk_events_pending()) 
-    gtk_main_iteration();
-
+  /* make sure the view_coord_frame offset is set correctly, 
+     adjust current_view_center if necessary */
+  temp_center = realspace_alt_coord_to_base(ui_study->current_view_center,
+    					    ui_study->current_view_coord_frame);
+  volumes_get_view_corners(ui_study->study->volumes,ui_study->current_view_coord_frame, view_corner);
+  ui_study->current_view_coord_frame.offset=view_corner[0];
+  ui_study->current_view_center = 
+    realspace_base_coord_to_alt(temp_center, ui_study->current_view_coord_frame);
 
 
   for (k=i;k<j;k++) {
@@ -578,7 +624,7 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i,
       break;
     case UPDATE_ALL:
     default:
-      /* indicates to regenerate the image */
+      /* indicates to regenerate everything */
       volume_list_free(&(ui_study->current_slices[k])); 
       ui_study_update_canvas_image(ui_study, k);
       ui_study_rois_update_canvas_rois(ui_study, k);
@@ -589,11 +635,7 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i,
 
   }
 
-  /* pop the previous cursor off the stack */
-  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-  ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
-  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i])), cursor);
+  ui_study_remove_wait_cursor(ui_study);
 
   return;
 }
@@ -853,16 +895,29 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   left_table_row++;
 
 
-
-  /* and if we want to delete an item from the study */
-  button = gtk_button_new_with_label("delete item(s)");
+  /* do we want to edit an object in the study */
+  button = gtk_button_new_with_label("edit object(s)");
   gtk_table_attach(GTK_TABLE(left_table), 
 		   GTK_WIDGET(button), 0,2, 
 		   left_table_row,left_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_delete_item_pressed), 
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_edit_object_pressed), 
 		     ui_study);
+  left_table_row++;
+
+
+
+  /* and if we want to delete an object from the study */
+  button = gtk_button_new_with_label("delete object(s)");
+  gtk_table_attach(GTK_TABLE(left_table), 
+		   GTK_WIDGET(button), 0,2, 
+		   left_table_row,left_table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_signal_connect(GTK_OBJECT(button), "pressed",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_delete_object_pressed), 
+		     ui_study);
+  left_table_row++;
 
 
 
@@ -1017,6 +1072,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
     menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", color_table_names[i_color_table]);
+    gtk_object_set_data(GTK_OBJECT(menuitem),"threshold", NULL);
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
     		       GTK_SIGNAL_FUNC(ui_study_callbacks_color_table), ui_study);
   }
@@ -1205,7 +1261,7 @@ void ui_study_create(gchar * study) {
   }
 
   app=GNOME_APP(gnome_app_new(PACKAGE, title));
-  free(title);
+  g_free(title);
   ui_study->app = app;
 
   /* setup the callbacks for app */

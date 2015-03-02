@@ -1,7 +1,7 @@
 /* cti_import.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -27,7 +27,7 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#ifdef AMIDE_CTI_SUPPORT
+#ifdef AMIDE_LIBECAT_SUPPORT
 #include <matrix.h>
 #include "realspace.h"
 #include "color_table.h"
@@ -126,6 +126,8 @@ amide_volume_t * cti_import(gchar * cti_filename) {
     temp_volume->voxel_size.z = 10*
       ((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
 
+
+
     /* guess the start of the scan is the same as the start of the first frame of data */
     /* note, CTI files specify time as integers in msecs */
     temp_volume->scan_start = 
@@ -144,14 +146,16 @@ amide_volume_t * cti_import(gchar * cti_filename) {
       return NULL;
     }
 
+
     /* and load in the data */
     for (t = 0; t < temp_volume->num_frames; t++) {
 #ifdef AMIDE_DEBUG
-      g_print("\tloading frame %d",t);
+      g_print("\tloading frame:\t%d",t);
 #endif
       for (slice=0; slice < num_slices ; slice++) {
 	matnum=mat_numcod(t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
 
+	/* read in the corresponding cti slice */
 	if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
 	  g_warning("%s: can't get image matrix %x in file %s\n",\
 		    PACKAGE, matnum, cti_filename);
@@ -178,7 +182,7 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 	free_matrix_data(cti_slice);
       }
 #ifdef AMIDE_DEBUG
-      g_print("\tduration %5.3f\n",temp_volume->frame_duration[t]);
+      g_print("\tduration:\t%5.3f\n",temp_volume->frame_duration[t]);
 #endif
     }
     break;
@@ -193,9 +197,7 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   }
 
   /* set the far corner of the volume */
-  temp_volume->corner.x = temp_volume->dim.x*temp_volume->voxel_size.x;
-  temp_volume->corner.y = temp_volume->dim.y*temp_volume->voxel_size.y;
-  temp_volume->corner.z = temp_volume->dim.z*temp_volume->voxel_size.z;
+  REALSPACE_MULT(temp_volume->dim, temp_volume->voxel_size, temp_volume->corner);
 
   /* set the max/min values in the volume */
 #ifdef AMIDE_DEBUG

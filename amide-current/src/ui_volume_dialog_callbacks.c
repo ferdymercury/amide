@@ -40,6 +40,7 @@
 #include "ui_study.h"
 #include "ui_volume_dialog.h"
 #include "ui_volume_dialog_callbacks.h"
+#include "ui_time_dialog.h"
 #include "../pixmaps/PET.xpm"
 #include "../pixmaps/SPECT.xpm"
 #include "../pixmaps/CT.xpm"
@@ -74,16 +75,28 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   gchar * str;
   gint error;
   gdouble temp_val;
+  floatpoint_t scale;
   which_entry_widget_t which_widget;
   realpoint_t old_center, new_center, shift;
   GtkWidget * volume_dialog;
-
+  GtkWidget * entry;
+  guint i;
+  gboolean aspect_ratio=TRUE;
+  gboolean update_size_x = FALSE;
+  gboolean update_size_y = FALSE;
+  gboolean update_size_z = FALSE;
+  
   /* initialize the center variables based on the old volume info */
   old_center = new_center = volume_calculate_center(volume_new_info); /* in real coords */
 
   /* figure out which widget this is */
   which_widget = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "type")); 
-  
+
+  /* get the pointer ot the volume dialog and get any necessary info */
+  volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
+  aspect_ratio =  GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(volume_dialog), "aspect_ratio"));
+
+
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
 
@@ -96,6 +109,39 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   
   /* and save the value until it's applied to the actual volume */
   switch(which_widget) {
+  case VOXEL_SIZE_X:
+    if (temp_val > SMALL) { /* can't be having negative/very small numbers */
+      if (aspect_ratio) {
+	scale = temp_val/volume_new_info->voxel_size.x;
+	volume_new_info->voxel_size.y = scale*volume_new_info->voxel_size.y;
+	volume_new_info->voxel_size.z = scale*volume_new_info->voxel_size.z;
+	update_size_y = update_size_z = TRUE;
+      }
+      volume_new_info->voxel_size.x = temp_val;
+    }
+    break;
+  case VOXEL_SIZE_Y:
+    if (temp_val > SMALL) { /* can't be having negative/very small numbers */
+      if (aspect_ratio) {
+	scale = temp_val/volume_new_info->voxel_size.y;
+	volume_new_info->voxel_size.x = scale*volume_new_info->voxel_size.x;
+	volume_new_info->voxel_size.z = scale*volume_new_info->voxel_size.z;
+	update_size_x = update_size_z = TRUE;
+      }
+      volume_new_info->voxel_size.y = temp_val;
+    }
+    break;
+  case VOXEL_SIZE_Z:
+    if (temp_val > SMALL) { /* can't be having negative/very small numbers */
+      if (aspect_ratio) {
+	scale = temp_val/volume_new_info->voxel_size.z;
+	volume_new_info->voxel_size.y = scale*volume_new_info->voxel_size.y;
+	volume_new_info->voxel_size.x = scale*volume_new_info->voxel_size.x;
+	update_size_x = update_size_y = TRUE;
+      }
+      volume_new_info->voxel_size.z = temp_val;
+    }
+    break;
   case CENTER_X:
     new_center.x = temp_val;
     break;
@@ -104,6 +150,19 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
     break;
   case CENTER_Z:
     new_center.z = temp_val;
+    break;
+  case CONVERSION_FACTOR:
+    if (fabs(temp_val) > CLOSE) /* avoid zero... */
+      volume_new_info->conversion = temp_val;
+    break;
+  case SCAN_START:
+    volume_new_info->scan_start = temp_val;
+    break;
+  case FRAME_DURATION:
+    if (temp_val > CLOSE) {/* avoid zero and negatives */
+      i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "frame"));
+      volume_new_info->frame_duration[i] = temp_val;
+    }
     break;
   default:
     break; /* do nothing */
@@ -115,14 +174,68 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   /* and save any changes to the coord frame */
   REALSPACE_ADD(volume_new_info->coord_frame.offset, shift, volume_new_info->coord_frame.offset);
 
+  /* update the entry widgets as necessary */
+  if (update_size_x) {
+    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_x");
+    gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
+    				     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				     volume_new_info);
+    str = g_strdup_printf("%f", volume_new_info->voxel_size.x);
+    gtk_entry_set_text(GTK_ENTRY(entry), str);
+    g_free(str);
+    gtk_signal_handler_unblock_by_func(GTK_OBJECT(entry), 
+    				       GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				       volume_new_info);
+  }
+  if (update_size_y) {
+    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_y");
+    gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
+    				     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				     volume_new_info);
+    str = g_strdup_printf("%f", volume_new_info->voxel_size.y);
+    gtk_entry_set_text(GTK_ENTRY(entry), str);
+    g_free(str);
+    gtk_signal_handler_unblock_by_func(GTK_OBJECT(entry), 
+    				       GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				       volume_new_info);
+  }
+  if (update_size_z) {
+    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_z");
+    gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
+    				     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				     volume_new_info);
+    str = g_strdup_printf("%f", volume_new_info->voxel_size.z);
+    gtk_entry_set_text(GTK_ENTRY(entry), str);
+    g_free(str);
+    gtk_signal_handler_unblock_by_func(GTK_OBJECT(entry), 
+    				       GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_change_entry), 
+    				       volume_new_info);
+  }
+
+
+
   /* now tell the volume_dialog that we've changed */
-  volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
   gnome_property_box_changed(GNOME_PROPERTY_BOX(volume_dialog));
 
   return;
 }
 
 
+/* function called when the aspect ratio button gets clicked */
+void ui_volume_dialog_callbacks_aspect_ratio(GtkWidget * widget, gpointer data) {
+
+  GtkWidget * volume_dialog;
+  gboolean state;
+
+  /* get the state of the button */
+  state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  /* record the change */
+  volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
+  gtk_object_set_data(GTK_OBJECT(volume_dialog), "aspect_ratio", GINT_TO_POINTER(state));
+
+  return;
+}
 
 /* function called when the modality type of the volume gets changed */
 void ui_volume_dialog_callbacks_change_modality(GtkWidget * widget, gpointer data) {
@@ -146,7 +259,7 @@ void ui_volume_dialog_callbacks_change_modality(GtkWidget * widget, gpointer dat
 
 
 /* function called when rotating the volume around an axis */
-void ui_volume_dialog_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
+void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer data) {
 
   ui_study_t * ui_study;
   amide_volume_t * volume_new_info = data;
@@ -169,45 +282,45 @@ void ui_volume_dialog_callbacks_axis_change(GtkAdjustment * adjustment, gpointer
       case TRANSVERSE:
 	volume_new_info->coord_frame.axis[XAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[YAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[ZAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
 				   rotation);
 	realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
 	break;
       case CORONAL:
 	volume_new_info->coord_frame.axis[XAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[YAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[ZAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
 				   rotation);
 	realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
 	break;
       case SAGITTAL:
 	volume_new_info->coord_frame.axis[XAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[YAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
 				   rotation);
 	volume_new_info->coord_frame.axis[ZAXIS] = 
 	  realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
 				   rotation);
 	realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
 	break;
@@ -220,19 +333,50 @@ void ui_volume_dialog_callbacks_axis_change(GtkAdjustment * adjustment, gpointer
   /* recalculate the offset of this volume based on the center we stored */
   REALSPACE_CMULT(-0.5,volume_new_info->corner,temp);
   volume_new_info->coord_frame.offset = center;
-  volume_new_info->coord_frame.offset = realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
+  volume_new_info->coord_frame.offset = 
+    realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
 
   /* return adjustment back to normal */
   adjustment->value = 0.0;
   gtk_adjustment_changed(adjustment);
 
+
   /* now tell the volume_dialog that we've changed */
   volume_dialog =  gtk_object_get_data(GTK_OBJECT(adjustment), "volume_dialog");
+  ui_volume_dialog_set_axis_display(volume_dialog);
   gnome_property_box_changed(GNOME_PROPERTY_BOX(volume_dialog));
 
   return;
 }
 
+/* function to reset the volume's axis back to the default coords */
+void ui_volume_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
+
+  amide_volume_t * volume_new_info = data;
+  axis_t i_axis;
+  GtkWidget * volume_dialog;
+  realpoint_t center, temp;
+
+  /* saving the center, as we're rotating the volume around it's own center */
+  center = volume_calculate_center(volume_new_info); 
+
+  /* reset the axis */
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+    volume_new_info->coord_frame.axis[i_axis] = default_axis[i_axis];
+  }
+
+  /* recalculate the offset of this volume based on the center we stored */
+  REALSPACE_CMULT(-0.5,volume_new_info->corner,temp);
+  volume_new_info->coord_frame.offset = center;
+  volume_new_info->coord_frame.offset = realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
+
+  /* now tell the volume_dialog that we've changed */
+  volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
+  ui_volume_dialog_set_axis_display(volume_dialog);
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(volume_dialog));
+  
+  return;
+}
 
 /* function called when we hit the apply button */
 void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data) {
@@ -243,6 +387,8 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   guint8 spacing;
   amide_volume_t * volume_new_info;
   GdkWindow * parent;
+  volume_data_t scale;
+  guint i;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -262,10 +408,34 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
 
   /* copy the new info on over */
   volume_list_item->volume->modality = volume_new_info->modality;
-  volume_list_item->volume->conversion = volume_new_info->conversion;
   volume_list_item->volume->color_table = volume_new_info->color_table;
   volume_list_item->volume->coord_frame = volume_new_info->coord_frame;
+  volume_list_item->volume->voxel_size = volume_new_info->voxel_size;
   volume_set_name(volume_list_item->volume, volume_new_info->name);
+
+  /* apply any changes in the conversion factor */
+  if (!FLOATPOINT_EQUAL(volume_list_item->volume->conversion, volume_new_info->conversion)) {
+    scale = (volume_new_info->conversion)/(volume_list_item->volume->conversion);
+    volume_list_item->volume->conversion = scale * volume_list_item->volume->conversion;
+    volume_list_item->volume->max = scale *  volume_list_item->volume->max;
+    volume_list_item->volume->min = scale *  volume_list_item->volume->min;
+    volume_list_item->volume->threshold_max = scale *  volume_list_item->volume->threshold_max;
+    volume_list_item->volume->threshold_min = scale *  volume_list_item->volume->threshold_min;
+    ui_threshold_update_entries(volume_list_item->threshold);
+    /* note, the threshold bar graph does not need to be redrawn as it's values
+       are all relative anyway */
+  }
+
+  /* reset the far corner */
+  REALSPACE_MULT(volume_list_item->volume->dim,volume_list_item->volume->voxel_size,
+		 volume_list_item->volume->corner);
+
+  /* apply any time changes, and recalculate the frame selection
+     widget in case any timing information in this volume has changed */
+  volume_list_item->volume->scan_start = volume_new_info->scan_start;
+  for (i=0;i<volume_list_item->volume->num_frames;i++)
+    volume_list_item->volume->frame_duration[i] = volume_new_info->frame_duration[i];
+  ui_time_dialog_set_times(ui_study);
 
 
   /* apply any changes to the name of the widget */
@@ -302,7 +472,7 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
 
 
   /* redraw the volume */
-  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
+  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
 
   return;
 }
@@ -310,7 +480,34 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
 /* callback for the help button */
 void ui_volume_dialog_callbacks_help(GnomePropertyBox *volume_dialog, gint page_number, gpointer data) {
 
-  g_print("sorry, no help yet......\n");
+  GnomeHelpMenuEntry help_ref={PACKAGE,"basics.html#VOLUME-DIALOG-HELP"};
+  GnomeHelpMenuEntry help_ref_0 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-BASIC"};
+  GnomeHelpMenuEntry help_ref_1 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-CENTER-DIMENSIONS"};
+  GnomeHelpMenuEntry help_ref_2 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-ROTATE"};
+  GnomeHelpMenuEntry help_ref_3 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-COLORMAP_THRESHOLD"};
+  GnomeHelpMenuEntry help_ref_4 = {PACKAGE,"basics.html#VOLUME-DIALOG-HELP-TIME"};
+
+
+  switch (page_number) {
+  case 0:
+    gnome_help_display (0, &help_ref_0);
+    break;
+  case 1:
+    gnome_help_display (0, &help_ref_1);
+    break;
+  case 2:
+    gnome_help_display (0, &help_ref_2);
+    break;
+  case 3:
+    gnome_help_display (0, &help_ref_3);
+    break;
+  case 4:
+    gnome_help_display (0, &help_ref_4);
+    break;
+  default:
+    gnome_help_display (0, &help_ref);
+    break;
+  }
 
   return;
 }

@@ -1,7 +1,7 @@
 /* ui_main_callbacks.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -25,6 +25,7 @@
 
 /* external functions */
 void ui_main_callbacks_new_study(GnomeApp* app, gpointer data);
+void ui_main_callbacks_open_study(GnomeApp* app, gpointer data);
 void ui_main_callbacks_about(GnomeApp* app, gpointer data);
 void ui_main_callbacks_delete_event(GnomeApp* app, gpointer data);
 

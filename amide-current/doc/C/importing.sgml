@@ -1,69 +1,102 @@
-<sect1>
-  <title>Importing Files</title>
-  
-  <para> 
+<para> 
 
-    All imported files are converted into AMIDE's internal float
-    representation, which is double (64 bit) by default.
+  All imported files are converted into AMIDE's internal float
+  representation, which is a compile time option that defaults to
+  double (64 bit).  Importing is heavily dependent on Erik Nolf's
+  medcon/libmdc medical imaging conversion library and Merence
+  Sibomona/CTI's libecat CTI file library.
+  
+</para>
+  
+
+
+
+<sect1><title>CTI Files</title>
+
+  <para>
+    
+    Currently, static and dynamic CTI 6.4 and 7.0 files are supported.
+    AMIDE support for the CTI file format is generally achieved
+    through the libecat C library.  If libecat is not available, then
+    medcon/libmdc will be used for supporting CTI 6.4 files, and CTI
+    7.0 files will be unsupported.
 
   </para>
-  
 
-
-
-  <sect2><title>CTI Files</title>
-
+  <sect2><title>CTI 6.4</title>
     <para>
-      Currently, static and dynamic CTI 6.4 and 7.0 files are
-      supported.  AMIDE support for the CTI file format is
-      accomplished through the libecat C library.
+      AMIDE will try to load any file ending in ".img" as a CTI 6.4
+      file.  This file format is used by both the microPET and some
+      clinical scanners.
     </para>
+  </sect2>
 
-    <sect3><title>CTI 6.4</title>
-      <para>
-	AMIDE will try to load any file ending in ".img" as a CTI 6.4
-	file.  This file format is used by both the microPET and some
-	clinical scanners.  
-      </para>
-    </sect3>
-
-    <sect3><title>CTI 7.0</title>
-      <para>
-	AMIDE will try to load any file ending in ".v" as a CTI 7.0
-	file.  This file format is used by newer clinical scanners.
-      </para>
-    </sect3>
+  <sect2><title>CTI 7.0</title>
+    <para>
+      AMIDE will try to load any file ending in ".v" as a CTI 7.0
+      file.  This file format is used by newer clinical scanners.
+    </para>
+  </sect2>
       
-
-  </sect2>
-
-  <sect2><title>Raw Data Files</title>
-
-    <para>
-      AMIDE will attempt to load any file ending in ".dat" or ".raw"
-      as a raw data file.  The user will be prompted for the
-      dimensions of the study, the offset of the data in the file, and
-      the data format of the data in the file.  Both big endian and
-      little endian files can be loaded, with the following data
-      formats supported: 8 bit integer, 16 bit signed or unsigned
-      integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
-      point, and 64 bit IEEE floating point.
-    </para>
-    
-  </sect2>
-
-  <sect2><title>DICOM Files</title>
-
-    <para>
-      DICOM is not currently supported.....
-    </para>
-    
-  </sect2>
 
 </sect1>
 
+<sect1><title>IDL Data Files</title>
+  
+  <para>
+    AMIDE will attempt to load any file ending in ".idl" or ".ucat"
+    as an IDL data file.  An IDL data file consists of a 35 byte
+    header followed by the volume data.
+  </para>
+  
+</sect1>
+
+<sect1><title>Raw Data Files</title>
+
+  <para>
+    AMIDE will attempt to load any file ending in ".dat" or ".raw"
+    as a raw data file.  The user will be prompted for the
+    dimensions of the study, the offset of the data in the file, and
+    the data format of the data in the file.  Both big endian and
+    little endian files can be loaded, with the following data
+    formats supported: 8 bit integer, 16 bit signed or unsigned
+    integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
+    point, and 64 bit IEEE floating point.
+  </para>
+  
+</sect1>
+
+<sect1><title>DICOM Files</title>
+  
+  <para>
+    
+    DICOM 3.0 is partially supported through medcon/libmdc, which
+    actually uses a slightly modified version of Tony Voet's
+    VT-DICOM library.  The level of support for DICOM 3.0 is
+    entirely determined by medcon/libmdc/VT-DICOM.
+    
+    
+  </para>
+  
+  
+</sect1>
 
 
+<sect1><title>Other Filetypes</title>
+
+  <para>
+    
+    A variety of other file formats are supported through the use of
+    medcon/libmdc, including: Acr/Nema 2.0, Analyze (SPM),
+    InterFile3.3, and Gif87a/89a.  For more current information,
+    check out the webpage at:
+    http://xmedcon.sourceforge.net
+    
+  </para>
+  
+  
+</sect1>
+  
   
   
   <!-- Keep this comment at the end of the file

@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -185,9 +185,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   if (ui_study->series->rgb_images[0] != NULL) 
     gnome_canvas_destroy_image(ui_study->series->rgb_images[0]);
   view_coord_frame = ui_study->series->coord_frame;
-  view_coord_frame.offset = 
-    realspace_alt_coord_to_base(ui_study->series->start,
-				ui_study->series->coord_frame);
+  view_coord_frame.offset = realpoint_init;
 
   ui_study->series->rgb_images[0] = 
     image_from_volumes(&(ui_study->series->slices[0]),
@@ -238,7 +236,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   x = y = 0.0;
 
   for (; ((i-start_i) < (ui_study->series->rows*ui_study->series->columns))
-	 & (i < ui_study->series->num_slices); i++) {
+	 && (i < ui_study->series->num_slices); i++) {
     temp_point = ui_study->series->start;
     temp_point.z = i*ui_study->series->thickness;
     view_coord_frame.offset = 
@@ -336,7 +334,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
 
   title = g_strdup_printf("Series: %s (%s)",ui_study->study->name, view_names[view]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
-  free(title);
+  g_free(title);
   ui_study->series->app = app;
 
   /* figure out the currrent number of volumes, and make a copy in our series's volume list */
@@ -356,11 +354,10 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
   /* save the coord_frame of the series */
-  ui_study->series->coord_frame = ui_study->current_coord_frame;
+  ui_study->series->coord_frame = ui_study->current_view_coord_frame;
   ui_study->series->coord_frame = 
     realspace_get_orthogonal_coord_frame(ui_study->series->coord_frame, view);
-  ui_study->series->start = realspace_base_coord_to_alt(ui_study->current_axis_p_start,
-							ui_study->series->coord_frame);
+  ui_study->series->start = ui_study->current_view_center;
 
   /* save some parameters */
   ui_study->series->thickness = ui_study->current_thickness;

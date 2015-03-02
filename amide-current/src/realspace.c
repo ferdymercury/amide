@@ -1,7 +1,7 @@
 /* realspace.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -29,8 +29,9 @@
 #include "amide.h"
 #include "realspace.h"
 
+/* external variables */
+const gchar * axis_names[] = {"x axis", "y axis", "z axis"};
 
-/* convenience definitions */
 const realpoint_t default_normal[NUM_VIEWS] = {{0.0,0.0,1.0},
 					       {0.0,1.0,0.0},
 					       {1.0,0.0,0.0}};

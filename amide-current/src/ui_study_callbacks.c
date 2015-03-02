@@ -1,7 +1,7 @@
 /* ui_study_callbacks.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -31,6 +31,8 @@
 #include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
+#include "medcon_import.h"
+#include "cti_import.h"
 #include "roi.h"
 #include "study.h"
 #include "image.h"
@@ -43,12 +45,11 @@
 #include "ui_threshold2.h"
 #include "ui_series2.h"
 #include "ui_study_rois2.h"
-#include "cti_import.h"
 #include "ui_roi_dialog.h"
 #include "ui_time_dialog.h"
 #include "ui_volume_dialog.h"
 #include "raw_data_import.h"
-
+#include "idl_data_import.h"
 
 /* function to close the file import widget */
 static void ui_study_callbacks_import_cancel(GtkWidget* widget, gpointer data) {
@@ -92,7 +93,7 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
 
 
     
-    if ((g_strcasecmp(import_filename_extension, "dat")==0) |
+    if ((g_strcasecmp(import_filename_extension, "dat")==0) ||
 	(g_strcasecmp(import_filename_extension, "raw")==0))  
       { /* .dat and .raw are assumed to be raw data */
       
@@ -100,25 +101,49 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
 	import_volume=raw_data_import(import_filename);
 
       }
-#ifdef AMIDE_CTI_SUPPORT      
-    else if ((g_strcasecmp(import_filename_extension, "img")==0) |
+#ifdef AMIDE_LIBECAT_SUPPORT      
+    else if ((g_strcasecmp(import_filename_extension, "img")==0) ||
 	     (g_strcasecmp(import_filename_extension, "v")==0))
       { /* if it appears to be a cti file, try importing it */
-      
-      
+
 	/* and call that import function */
 	if ((import_volume=cti_import(import_filename)) == NULL) {
-	  g_warning("%s: Could not open file: %s as a CTI File", 
+	  g_warning("%s: Could not interpret file: %s as a CTI File", 
 		    PACKAGE, import_filename);
+
 	} 
       }
 #endif
-     
-    else 
-      { /* unrecognized file type */
-	g_warning("%s: file: %s does not appear to be a supported data file\n", 
-		  PACKAGE, import_filename);
+    else if ((g_strcasecmp(import_filename_extension, "idl")==0) ||
+	     (g_strcasecmp(import_filename_extension, "ucat")==0))
+      { /* IDL format data files */
+
+	/* and call that import function */
+	if ((import_volume=idl_data_import(import_filename)) == NULL) {
+	  g_warning("%s: Could not interpret file: %s as an IDL File", 
+		    PACKAGE, import_filename);
+
+	} 
       }
+    else /* fallback methods */
+
+#ifdef AMIDE_LIBMDC_SUPPORT
+      { /* try passing it to the libmdc library.... */
+	
+	/* call that import function */
+	if ((import_volume=medcon_import(import_filename)) == NULL) {
+	  g_warning("%s: Could not interpret file: %s using libmdc (medcon)",
+		    PACKAGE, import_filename);
+
+	} 
+
+      }
+#else
+      { /* unrecognized file type */
+	g_warning("%s: Cannot recognize extension %s on file: %s\n", 
+		  PACKAGE, import_filename_extension, import_filename);
+      }
+#endif
     
   } else { /* no filename */
     ; 
@@ -354,32 +379,32 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
       } else { /* VOLUME_MODE */
 
 	/* some sanity checks */
-	if ((real_loc.x < 0.0) | (real_loc.y < 0.0) | (real_loc.z < 0.0) |
-	    (real_loc.x > far_corner.x) | (real_loc.y > far_corner.y))
+	if ((real_loc.x < 0.0) || (real_loc.y < 0.0) || (real_loc.z < 0.0) ||
+	    (real_loc.x > far_corner.x) || (real_loc.y > far_corner.y))
 	  // |(real_loc.z > far_corner.z))
 	  return TRUE;
 
 	switch (i)
 	  {
 	  case TRANSVERSE:
-	    ui_study->current_axis_p_start.x = view_loc.x;
-	    ui_study->current_axis_p_start.y = view_loc.y;
+	    ui_study->current_view_center.x = view_loc.x;
+	    ui_study->current_view_center.y = view_loc.y;
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
 	    break;
 	  case CORONAL:
-	    ui_study->current_axis_p_start.x = view_loc.x;
-	    ui_study->current_axis_p_start.z = view_loc.y;
+	    ui_study->current_view_center.x = view_loc.x;
+	    ui_study->current_view_center.z = view_loc.y;
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
 	    break;
 	  case SAGITTAL:
-	    ui_study->current_axis_p_start.y = view_loc.x;
-	    ui_study->current_axis_p_start.z = view_loc.y;
+	    ui_study->current_view_center.y = view_loc.x;
+	    ui_study->current_view_center.z = view_loc.y;
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
@@ -500,19 +525,19 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
     if (gtk_object_get_data(GTK_OBJECT(adjustment),"view") == view_names[i]) {
       switch(i) {
       case TRANSVERSE:
-	ui_study->current_axis_p_start.z = adjustment->value;
+	ui_study->current_view_center.z = adjustment->value;
 	ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ALL);
 	ui_study_update_canvas(ui_study,CORONAL,UPDATE_ARROWS);
 	ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ARROWS);
 	break;
       case CORONAL:
-	ui_study->current_axis_p_start.y = adjustment->value;
+	ui_study->current_view_center.y = adjustment->value;
 	ui_study_update_canvas(ui_study,CORONAL,UPDATE_ALL);
 	ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
 	ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ARROWS);
 	break;
       case SAGITTAL:
-	ui_study->current_axis_p_start.x = adjustment->value;
+	ui_study->current_view_center.x = adjustment->value;
 	ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ALL);
 	ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
 	ui_study_update_canvas(ui_study,CORONAL,UPDATE_ARROWS);
@@ -531,8 +556,7 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
   ui_study_t * ui_study = data;
   view_t i_view;
   floatpoint_t rotation;
-  floatpoint_t width,height,length;
-  floatpoint_t old_width,old_height,old_length;
+  realpoint_t temp_center;
 
   /* sanity check */
   if (ui_study->study->volumes == NULL)
@@ -540,10 +564,9 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
   if (ui_study->current_volumes == NULL)
     return;
 
-  /* get some info we'll need */
-  old_width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
-  old_height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
-  old_length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
+  /* we'll need this so that our viewing point doesn't get shifted */
+  temp_center = realspace_alt_coord_to_base(ui_study->current_view_center,
+    					    ui_study->current_view_coord_frame);
 
   /* figure out which scale widget called me */
   for (i_view=0;i_view<NUM_VIEWS;i_view++) 
@@ -551,60 +574,45 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
       rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
       switch(i_view) {
       case TRANSVERSE:
-	ui_study->current_coord_frame.axis[XAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[XAXIS],
-				   &ui_study->current_coord_frame.axis[ZAXIS],
+	ui_study->current_view_coord_frame.axis[XAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
 				   rotation);
-	ui_study->current_coord_frame.axis[YAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[YAXIS],
-				   &ui_study->current_coord_frame.axis[ZAXIS],
+	ui_study->current_view_coord_frame.axis[YAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[ZAXIS],
 				   rotation);
-	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
-	/* compensate the current viewing information for the change in size */
-	width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
-	height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
-	ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
-	  (width-old_width)/2.0;
-	ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
-	  (height-old_height)/2.0;
-	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+	realspace_make_orthonormal(ui_study->current_view_coord_frame.axis); /* orthonormalize*/
+	ui_study->current_view_center = 
+	  realspace_base_coord_to_alt(temp_center, ui_study->current_view_coord_frame);
+	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL); 
 	break;
       case CORONAL:
-	ui_study->current_coord_frame.axis[XAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[XAXIS],
-				   &ui_study->current_coord_frame.axis[YAXIS],
+	ui_study->current_view_coord_frame.axis[XAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[XAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
 				   rotation);
-	ui_study->current_coord_frame.axis[ZAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[ZAXIS],
-				   &ui_study->current_coord_frame.axis[YAXIS],
+	ui_study->current_view_coord_frame.axis[ZAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[YAXIS],
 				   rotation);
-	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
-	/* compensate the current viewing information for the change in size */
-	width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
-	length =ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
-	ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
-	  (width-old_width)/2.0;
-	ui_study->current_axis_p_start.z = ui_study->current_axis_p_start.z +
-	  (length-old_length)/2.0;
+	realspace_make_orthonormal(ui_study->current_view_coord_frame.axis); /* orthonormalize*/
+	ui_study->current_view_center = 
+	  realspace_base_coord_to_alt(temp_center, ui_study->current_view_coord_frame);
 	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
 	break;
       case SAGITTAL:
-	ui_study->current_coord_frame.axis[YAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[YAXIS],
-				   &ui_study->current_coord_frame.axis[XAXIS],
+	ui_study->current_view_coord_frame.axis[YAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[YAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
 				   rotation);
-	ui_study->current_coord_frame.axis[ZAXIS] = 
-	  realspace_rotate_on_axis(&ui_study->current_coord_frame.axis[ZAXIS],
-				   &ui_study->current_coord_frame.axis[XAXIS],
+	ui_study->current_view_coord_frame.axis[ZAXIS] = 
+	  realspace_rotate_on_axis(&ui_study->current_view_coord_frame.axis[ZAXIS],
+				   &ui_study->current_view_coord_frame.axis[XAXIS],
 				   rotation);
-	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
-	/* compensate the current viewing information for the change in size */
-	length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
-	height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
-	ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
-	  (height-old_height)/2.0;
-	ui_study->current_axis_p_start.z = ui_study->current_axis_p_start.z +
-	  (length-old_length)/2.0;
+	realspace_make_orthonormal(ui_study->current_view_coord_frame.axis); /* orthonormalize*/
+	ui_study->current_view_center = 
+	  realspace_base_coord_to_alt(temp_center, ui_study->current_view_coord_frame);
 	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
 	break;
       default:
@@ -624,9 +632,8 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
 void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  axis_t i;
-  floatpoint_t width,height,length;
-  floatpoint_t old_width,old_height,old_length;
+  axis_t i_axis;
+  realpoint_t temp_center;
 
   /* sanity check */
   if (ui_study->study->volumes == NULL)
@@ -634,28 +641,18 @@ void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data) {
   if (ui_study->current_volumes == NULL)
     return;
 
-  /* get some info we'll need */
-  old_width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
-  old_height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
-  old_length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
+  /* we'll need this so that our viewing point doesn't get shifted */
+  temp_center = realspace_alt_coord_to_base(ui_study->current_view_center,
+    					    ui_study->current_view_coord_frame);
 
   /* reset the axis */
-  for (i=0;i<NUM_AXIS;i++) {
-    ui_study->current_coord_frame.axis[i] = default_axis[i];
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+    ui_study->current_view_coord_frame.axis[i_axis] = default_axis[i_axis];
   }
-  ui_study->current_coord_frame.offset = realpoint_init;
+  ui_study->current_view_coord_frame.offset = realpoint_init;
 
-  /* compensate the current viewing information for the change in size */
-  width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
-  height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
-  length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
-  ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
-    (width-old_width)/2.0;
-  ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
-    (height-old_height)/2.0;
-  ui_study->current_axis_p_start.z = ui_study->current_axis_p_start.z +
-    (length-old_length)/2.0;
-
+  ui_study->current_view_center = 
+    realspace_base_coord_to_alt(temp_center, ui_study->current_view_coord_frame);
   ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
 
   return;
@@ -728,7 +725,7 @@ void ui_study_callbacks_sagittal_series(GtkWidget * widget, gpointer data) {
 /* function called when hitting the threshold button, pops up a dialog */
 void ui_study_callbacks_threshold_pressed(GtkWidget * button, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_threshold_create(ui_study);
+  ui_threshold_dialog_create(ui_study);
   return;
 }
 
@@ -760,12 +757,19 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   color_table_t i_color_table;
   amide_volume_t * volume;
+  ui_study_volume_list_t * volume_list_item;
+  ui_threshold_t * ui_threshold;
 
   /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    volume = ui_study->study->volumes->volume;
+  ui_threshold = gtk_object_get_data(GTK_OBJECT(widget),"threshold");
+  if (ui_threshold != NULL)
+    volume = ui_threshold->volume;
   else
-    volume = ui_study->current_volume;
+    if (ui_study->current_volume == NULL)
+      volume = ui_study->study->volumes->volume;
+    else
+      volume = ui_study->current_volume;
+
 
   /* figure out which scaling menu item called me */
   for (i_color_table=0;i_color_table<NUM_COLOR_TABLES;i_color_table++) 
@@ -775,10 +779,37 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
 	/* and inact the changes */
 	volume->color_table = i_color_table;
 	if (ui_study->study->volumes != NULL) {
+
+	  /* update the canvas */
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
-	  if (ui_study->threshold != NULL)
-	    ui_threshold_update_canvas(ui_study);
+
+	  /* update the main color table box if needed */
+	  if (volume == ui_study->current_volume)
+	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+					volume->color_table);
+
+	  /* update the threshold dialog box if needed */
+	  if (ui_study->threshold != NULL) 
+	    if (ui_study->threshold->volume == volume) {
+	      ui_threshold_update_canvas(ui_study, ui_study->threshold);
+	      gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->threshold->color_table_menu),
+					  volume->color_table);
+	    }
+
+	  /* update the volume dialog box if needed */
+	  if (volume == ui_study->current_volume) {
+	    volume_list_item = ui_study_volumes_list_get_volume(ui_study->current_volumes,volume);
+	    if (volume_list_item != NULL)
+	      if (volume_list_item->dialog != NULL)
+		if (volume_list_item->threshold != NULL) {
+		  ui_threshold_update_canvas(ui_study, volume_list_item->threshold);
+		  gtk_option_menu_set_history(GTK_OPTION_MENU(volume_list_item->threshold->color_table_menu),
+					      volume->color_table);
+		}
+	  }
+
+	  /* update the series if needed */
 	  if (ui_study->series != NULL)
 	    ui_series_update_canvas_image(ui_study);
 	}
@@ -836,7 +867,7 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
 void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node, 
 				       gint column, gpointer data) {
   ui_study_t * ui_study = data;
-  view_t i;
+  view_t i_view;
   gpointer node_pointer;
   GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
   amide_volume_list_t * volume_list = ui_study->study->volumes;
@@ -855,9 +886,9 @@ void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node,
 	if (!ui_study_rois_list_includes_roi(ui_study->current_rois, 
 					     roi_list->roi)) {
 	  /* make the canvas graphics */
-	  for (i=0;i<NUM_VIEWS;i++)
-	    roi_canvas_item[i] = 
-	      ui_study_rois_update_canvas_roi(ui_study,i,NULL, roi_list->roi);
+	  for (i_view=0;i_view<NUM_VIEWS;i_view++)
+	    roi_canvas_item[i_view] = 
+	      ui_study_rois_update_canvas_roi(ui_study,i_view,NULL, roi_list->roi);
 
 	  /* and add this roi to the current_rois list */
 	  ui_study_rois_list_add_roi(&(ui_study->current_rois), 
@@ -960,8 +991,8 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
  
   /* we're really only interest in double clicks with button 1, or clicks
      with buttons 2 or 3 */
-  if (((event->type == GDK_2BUTTON_PRESS) & (event->button == 1)) 
-      | (event->button == 3) | (event->button ==2)) {
+  if (((event->type == GDK_2BUTTON_PRESS) && (event->button == 1)) 
+      || (event->button == 3) || (event->button ==2)) {
 
     /* do some fancy stuff to figure out what node in the tree just got selected*/
     gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, 
@@ -979,7 +1010,7 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 
 	/* if it's an roi, do the appropriate roi action */
 	if (node_pointer == roi_list->roi) {
-	  if ((event->button == 1) | (event->button == 2)) {
+	  if ((event->button == 1) || (event->button == 2)) {
 	    ui_study->current_mode = ROI_MODE;
 	    ui_study->current_roi = node_pointer;
 	    
@@ -989,11 +1020,11 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	      p1 = realspace_alt_coord_to_base(ui_study->current_roi->corner,
 					       ui_study->current_roi->coord_frame);
 	      REALSPACE_MADD(0.5,p0,0.5,p1,center);
-	      ui_study->current_axis_p_start.x = center.x -
+	      ui_study->current_view_center.x = center.x -
 		ui_study->current_thickness/2.0;
-	      ui_study->current_axis_p_start.y = center.y -
+	      ui_study->current_view_center.y = center.y -
 		ui_study->current_thickness/2.0;
-	      ui_study->current_axis_p_start.z = center.z -
+	      ui_study->current_view_center.z = center.z -
 		ui_study->current_thickness/2.0;
 	      ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
 	    } else {
@@ -1017,7 +1048,7 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	/* if it's a volume, display that volume */
 	if (node_pointer == volume_list->volume) {
 
-	  if ((event->button == 1) | (event->button == 2)) {
+	  if ((event->button == 1) || (event->button == 2)) {
 	    ui_study->current_mode = VOLUME_MODE;
 	    ui_study->current_volume = node_pointer;
 	    /* reset the color_table picker based on the current volume */
@@ -1025,7 +1056,7 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 					ui_study->current_volume->color_table);
 	    /* reset the threshold widget based on the current volume */
 	    if (ui_study->threshold != NULL)
-	      ui_threshold_update(ui_study);
+	      ui_threshold_dialog_update(ui_study);
 
 	  } else { /* event.button == 3 */
 	    /* start up the volume dialog */
@@ -1045,9 +1076,32 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 }
 
 
+/* function called to edit selected objects in the study */
+void ui_study_callbacks_edit_object_pressed(GtkWidget * button, gpointer data) {
 
-/* function called to delete selected items from the tree and the study */
-void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_study_volume_list_t * volume_list = ui_study->current_volumes;
+  ui_study_roi_list_t * roi_list = ui_study->current_rois;
+
+  /* pop up dialogs for the selected volumes */
+  while (volume_list != NULL) {
+    ui_volume_dialog_create(ui_study, volume_list->volume);
+    volume_list = volume_list->next;
+  }
+
+  /* pop up dialogs for the selected rois */
+  while (roi_list != NULL) {
+    ui_roi_dialog_create(ui_study, roi_list->roi);
+    roi_list = roi_list->next;
+  }
+
+  return;
+}
+
+
+
+/* function called to delete selected objects from the tree and the study */
+void ui_study_callbacks_delete_object_pressed(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
   ui_study_volume_list_t * volume_list = ui_study->current_volumes;
@@ -1079,25 +1133,27 @@ void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
       current_volume = ui_study->current_volume;
     if (current_volume==volume)
       if (ui_study->threshold != NULL)
-	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
+	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", 
+				NULL, ui_study);
 
     /* if we're currently displaying this volume in the series widget, delete the series widget */
-    if (volume_list_includes_volume(ui_study->series->volumes, current_volume))
-      if (ui_study->series != NULL)
+    if (ui_study->series != NULL)
+      if (volume_list_includes_volume(ui_study->series->volumes, current_volume))
 	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->series->app), "delete_event", NULL, ui_study);
       
 
     /* remove the volume from existence */
-    ui_study_volumes_list_remove_volume(&(ui_study->current_volumes), volume);
-    volume_list_remove_volume(&(ui_study->study->volumes), volume);
     if (ui_study->current_volume == volume)
       ui_study->current_volume = NULL;
+    ui_study_volumes_list_remove_volume(&(ui_study->current_volumes), volume);
+    volume_list_remove_volume(&(ui_study->study->volumes), volume);
     volume_free(&volume);
   }
 
   /* delete the selected roi's */
   while (roi_list != NULL) {
     roi = roi_list->roi; /* store this so we can free it */
+    roi_list = roi_list->next;
 
     /*figure out what node in the tree corresponds to this and remove it */
     node = gtk_ctree_find_by_row_data(GTK_CTREE(ui_study->tree),
@@ -1107,16 +1163,10 @@ void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
       ui_study->tree_rois = GTK_CTREE_NODE_NEXT(node);
     gtk_ctree_remove_node(GTK_CTREE(ui_study->tree), node);
 
-    /* if there is a roi dialog widget up, kill it */
-    if (roi_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(roi_list->dialog), "delete_event", NULL, roi_list);
-
     /* remove the roi's data structure */
-    roi_list = roi_list->next;
-    ui_study_rois_list_remove_roi(&(ui_study->current_rois), roi);
-    g_assert(roi_list->dialog == NULL);
     if (ui_study->current_roi == roi)
       ui_study->current_roi = NULL;
+    ui_study_rois_list_remove_roi(&(ui_study->current_rois), roi);
     roi_list_remove_roi(&(ui_study->study->rois), roi);
     roi_free(&roi);
   }
@@ -1140,8 +1190,8 @@ void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data) {
 	ui_study->current_interpolation = i_interpolation;
 	if (ui_study->study->volumes != NULL) {
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
-	  if (ui_study->threshold != NULL)
-	    ui_threshold_update_canvas(ui_study);
+	  //	  if (ui_study->threshold != NULL)
+	  //	    ui_threshold_update_canvas(ui_study, ui_study->threshold);
 	}
       }
 
@@ -1159,11 +1209,16 @@ void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpoint
 
   /* destroy the threshold window if it's open */
   if (ui_study->threshold != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", 
+			    NULL, ui_study);
 
   /* destroy the series window if it's open */
   if (ui_study->series != NULL)
     gtk_signal_emit_by_name(GTK_OBJECT(ui_study->series->app), "delete_event", NULL, ui_study);
+
+  /* destroy the time window if it's open */
+  if (ui_study->time_dialog != NULL)
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->time_dialog), "close", ui_study);
 
   /* destroy the widget */
   gtk_widget_destroy(widget);

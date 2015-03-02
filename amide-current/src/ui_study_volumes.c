@@ -1,7 +1,7 @@
 /* ui_study_volumes.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -69,22 +69,33 @@ ui_study_volume_list_t * ui_study_volumes_list_init(void) {
   temp_volume_list->dialog = NULL;
   temp_volume_list->tree = NULL;
   temp_volume_list->tree_node = NULL;
+  temp_volume_list->threshold = NULL;
   temp_volume_list->next = NULL;
 
   return temp_volume_list;
+}
+
+/* function to return a pointer to the list element containing the specified volume */
+ui_study_volume_list_t * ui_study_volumes_list_get_volume(ui_study_volume_list_t *list, 
+							  amide_volume_t * volume) {
+
+  while (list != NULL)
+    if (list->volume == volume)
+      return list;
+    else
+      list = list->next;
+
+  return NULL;
 }
 
 /* function to check that a volume is in a ui_study_volume_list */
 gboolean ui_study_volumes_list_includes_volume(ui_study_volume_list_t *list, 
 					       amide_volume_t * volume) {
 
-  while (list != NULL)
-    if (list->volume == volume)
-      return TRUE;
-    else
-      list = list->next;
-
-  return FALSE;
+  if (ui_study_volumes_list_get_volume(list,volume) == NULL)
+    return FALSE;
+  else
+    return TRUE;
 }
 
 

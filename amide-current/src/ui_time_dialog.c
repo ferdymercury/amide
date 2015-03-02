@@ -56,6 +56,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   guint num_volumes;
   guint i_volume, min_volume_num;
   guint * frames;
+  gboolean * volume_used;
   guint total_frames=0;
   guint current_frames;
   volume_time_t min, temp;
@@ -83,8 +84,14 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 
   /* get space for the array that'll take care of which frame of which volume we're looking at*/
   frames = (guint *) g_malloc(num_volumes+sizeof(guint));
-  if ((frames == NULL) & (num_volumes !=0)) {
-    g_warning("%s: can't count frames!\n",PACKAGE);
+  if ((frames == NULL) && (num_volumes !=0)) {
+    g_warning("%s: can't count frames or allocate memory!\n",PACKAGE);
+    return;
+  }
+  volume_used = (gboolean *) g_malloc(num_volumes+sizeof(gboolean));
+  if (volume_used == NULL) {
+    g_warning("%s: coudn't find memory for a dang boolean array?\n",PACKAGE);
+    g_free(frames);
     return;
   }
 
@@ -97,8 +104,11 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 				   ui_study);
 
 
-  for (i_volume = 0; i_volume<num_volumes;i_volume++)
+  /* initialize */
+  for (i_volume = 0; i_volume<num_volumes;i_volume++) {
     frames[i_volume]=0;
+    volume_used[i_volume]=FALSE;
+  }
 
   /* start generating our list of options */
   current_frames=0;
@@ -146,18 +156,40 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 
     /* figure out if this row is suppose to be selected */
     if (((new_time->time <= min) 
-	 & 
+	 && 
 	 ((new_time->time+new_time->duration) > min))
-	|
+	||
 	((new_time->time <= (min+min_volume->frame_duration[frames[min_volume_num]])) 
-	 &
+	 &&
 	 ((new_time->time+new_time->duration) > (min+min_volume->frame_duration[frames[min_volume_num]])))
-	|
+	||
 	((new_time->time > (min)) 
-	 &
+	 &&
 	 ((new_time->time+new_time->duration) < (min+min_volume->frame_duration[frames[min_volume_num]])))
-	)
+	) {
       gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
+      volume_used[min_volume_num]=TRUE;
+    }
+
+    /* special case #1
+       this is the first frame in the volume and it's still behind the time, so select it anyway */
+    if ((!volume_used[min_volume_num]) && 
+	(frames[min_volume_num] == 0) && 
+	(new_time->time < min)) {
+      gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
+      volume_used[min_volume_num]=TRUE;
+    }
+
+    /* special case #2
+       this is the last frame in the volume and no other frame has been selected, so select this one anyway */
+    if ((!volume_used[min_volume_num]) && 
+	(frames[min_volume_num] == min_volume->num_frames-1) && 
+	(new_time->time > min + min_volume->frame_duration[frames[min_volume_num]])) {
+      gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
+      volume_used[min_volume_num]=TRUE;
+    }
+
+
 
     frames[min_volume_num]++;
     current_frames++;
@@ -165,6 +197,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 
   /* freeup our allocated data structures */
   g_free(frames);
+  g_free(volume_used);
 
   /* done updating the clist, we can reconnect signals now */
   gtk_signal_handler_unblock_by_func(GTK_OBJECT(clist),
@@ -248,6 +281,9 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
 		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_unselect_row),
+		     ui_study);
+  gtk_signal_connect(GTK_OBJECT(clist), "button_press_event",
+		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_select_row),
 		     ui_study);
   gtk_container_add(GTK_CONTAINER(scrolled),clist);
   ui_time_dialog_set_times(ui_study);

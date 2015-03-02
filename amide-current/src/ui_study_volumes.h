@@ -1,7 +1,7 @@
 /* ui_study_volumes.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -32,12 +32,15 @@ struct _ui_study_volume_list_t {
   GtkWidget * dialog;
   GtkCTree * tree;
   GtkCTreeNode * tree_node;
+  ui_threshold_t * threshold;
   ui_study_volume_list_t * next;
 };
 
 /* external functions */
 void ui_study_volumes_list_free(ui_study_volume_list_t ** pui_study_volumes);
 ui_study_volume_list_t * ui_study_volumes_list_init(void);
+ui_study_volume_list_t * ui_study_volumes_list_get_volume(ui_study_volume_list_t *list, 
+							  amide_volume_t * volume);
 gboolean ui_study_volumes_list_includes_volume(ui_study_volume_list_t *list, 
 					       amide_volume_t * volume);
 void ui_study_volumes_list_add_volume(ui_study_volume_list_t ** plist, 

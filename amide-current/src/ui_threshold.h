@@ -1,7 +1,7 @@
 /* ui_threshold.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -24,13 +24,18 @@
 */
 
 #define UI_THRESHOLD_COLOR_STRIP_WIDTH 16
-#define UI_THRESHOLD_COLOR_STRIP_HEIGHT 384
+#define UI_THRESHOLD_COLOR_STRIP_HEIGHT 300
 #define UI_THRESHOLD_BAR_GRAPH_WIDTH 128
 #define UI_THRESHOLD_TRIANGLE_WIDTH 15
 #define UI_THRESHOLD_TRIANGLE_HEIGHT 15
-#define UI_THRESHOLD_DEFAULT_ENTRY_WIDTH 60
 
 /* ui_threshold data structures */
+
+typedef enum {
+  MAX_ARROW, MAX_ABSOLUTE, MAX_PERCENT, 
+  MIN_ARROW, MIN_ABSOLUTE, MIN_PERCENT
+} which_threshold_widget_t;
+
 typedef struct ui_threshold_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
   GnomeCanvas * color_strip;
@@ -43,6 +48,7 @@ typedef struct ui_threshold_t {
   GtkWidget * max_absolute;
   GtkWidget * min_percentage;
   GtkWidget * min_absolute;
+  GtkWidget * color_table_menu;
   amide_volume_t * volume; /* what volume this threshold corresponds to */
 } ui_threshold_t;
 

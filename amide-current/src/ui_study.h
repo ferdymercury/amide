@@ -1,7 +1,7 @@
 /* ui_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -41,31 +41,44 @@
 #define UI_STUDY_WAIT_CURSOR GDK_WATCH
 #define UI_STUDY_BLANK_WIDTH 128
 #define UI_STUDY_BLANK_HEIGHT 256
+#define UI_STUDY_DEFAULT_ENTRY_WIDTH 75
 
-typedef enum {VOLUME_MODE, ROI_MODE, NUM_MODES} ui_study_mode_t;
-typedef enum {UPDATE_ARROWS, 
-	      REFRESH_IMAGE,
-	      UPDATE_IMAGE, 
-	      UPDATE_PLANE_ADJUSTMENT, 
-	      UPDATE_ROIS,
-	      UPDATE_ALL} ui_study_update_t;
-typedef enum {UI_STUDY_DEFAULT,
-	      UI_STUDY_NEW_ROI_MODE,
-	      UI_STUDY_NEW_ROI_MOTION, 
-	      UI_STUDY_NO_ROI_MODE,
-	      UI_STUDY_OLD_ROI_MODE,
-	      UI_STUDY_OLD_ROI_RESIZE,
-	      UI_STUDY_OLD_ROI_ROTATE,
-	      UI_STUDY_OLD_ROI_SHIFT,
-	      UI_STUDY_VOLUME_MODE, 
-	      UI_STUDY_WAIT,
-	      NUM_CURSORS} ui_study_cursor_t;
+typedef enum {
+  VOLUME_MODE, ROI_MODE, NUM_MODES
+} ui_study_mode_t;
 
-typedef enum {DIM_X, DIM_Y, DIM_Z, \
-	      CENTER_X, CENTER_Y, CENTER_Z, \
-	      AXIS_X_X, AXIS_X_Y, AXIS_X_Z, \
-	      AXIS_Y_X, AXIS_Y_Y, AXIS_Y_Z, \
-	      AXIS_Z_X, AXIS_Z_Y, AXIS_Z_Z} which_entry_widget_t;
+typedef enum {
+  UPDATE_ARROWS, 
+  REFRESH_IMAGE,
+  UPDATE_IMAGE, 
+  UPDATE_PLANE_ADJUSTMENT, 
+  UPDATE_ROIS,
+  UPDATE_ALL
+} ui_study_update_t;
+
+typedef enum {
+  UI_STUDY_DEFAULT,
+  UI_STUDY_NEW_ROI_MODE,
+  UI_STUDY_NEW_ROI_MOTION, 
+  UI_STUDY_NO_ROI_MODE,
+  UI_STUDY_OLD_ROI_MODE,
+  UI_STUDY_OLD_ROI_RESIZE,
+  UI_STUDY_OLD_ROI_ROTATE,
+  UI_STUDY_OLD_ROI_SHIFT,
+  UI_STUDY_VOLUME_MODE, 
+  UI_STUDY_WAIT,
+  NUM_CURSORS
+} ui_study_cursor_t;
+
+typedef enum {
+  DIM_X, DIM_Y, DIM_Z,
+  CENTER_X, CENTER_Y, CENTER_Z,
+  VOXEL_SIZE_X, VOXEL_SIZE_Y, VOXEL_SIZE_Z,
+  AXIS_X_X, AXIS_X_Y, AXIS_X_Z,
+  AXIS_Y_X, AXIS_Y_Y, AXIS_Y_Z,
+  AXIS_Z_X, AXIS_Z_Y, AXIS_Z_Z,
+  CONVERSION_FACTOR, SCAN_START, FRAME_DURATION,
+} which_entry_widget_t;
 
 /* ui_study data structures */
 typedef struct ui_study_t {
@@ -94,13 +107,13 @@ typedef struct ui_study_t {
   amide_roi_t * current_roi; /* the last roi double clicked on */
   ui_study_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_study_roi_list_t * current_rois; /* the currently selected rois */
-  realspace_t current_coord_frame;
+  realspace_t current_view_coord_frame;
   volume_time_t current_time;
   volume_time_t current_duration;
   floatpoint_t current_thickness;
   floatpoint_t current_zoom;
   interpolation_t current_interpolation;
-  realpoint_t current_axis_p_start;
+  realpoint_t current_view_center; /* this is in the current_view coord frame */
   amide_volume_list_t * current_slices[NUM_VIEWS];
   roi_grain_t default_roi_grain;
   amide_study_t * study; /* pointer to the study data structure */
@@ -114,6 +127,8 @@ realspace_t ui_study_get_coords_current_view(ui_study_t * ui_study, view_t view,
 					     realpoint_t * pfar_corner);
 GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
+void ui_study_place_wait_cursor(ui_study_t * ui_study);
+void ui_study_remove_wait_cursor(ui_study_t * ui_study);
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i, 
 			    ui_study_update_t update);
 void ui_study_tree_add_roi(ui_study_t * ui_study, amide_roi_t * roi);

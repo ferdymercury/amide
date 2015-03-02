@@ -1,0 +1,599 @@
+<HTML
+><HEAD
+><TITLE
+>AMIDE Basics</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+REL="HOME"
+TITLE="Amide's user manual"
+HREF="amide.html"><LINK
+REL="PREVIOUS"
+TITLE="Amide's user manual"
+HREF="amide.html"><LINK
+REL="NEXT"
+TITLE="Importing Data "
+HREF="importing.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Amide's user manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="amide.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="importing.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="BASICS"
+>Chapter 1. AMIDE Basics</A
+></H1
+><P
+> 
+    As the use of AMIDE is bound to be completely intuitive only to
+    the one who wrote the program (i.e. me), this chapter will provide
+    a brief overview of the basic operating theory behind the program.
+  </P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN23"
+>Components of the Display</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN25"
+>Launch Window</A
+></H2
+><P
+>	When AMIDE starts up, a small window pops up sporting a cheesy
+	AMIDE logo.  This small window is the launch point for
+	creating new studies and loading in old ones.  Currently,
+	nothing else is done from this window.
+      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN28"
+>Study Window</A
+></H2
+><P
+>	After starting a new study or opening an old one, the study
+	window will be displayed.  A study is a collection of related
+	objects (i.e. medical image data sets, regions of interest),
+	and most of the user's actions will take place in this window.
+	There are several elements to this window:
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN31"
+>Study List</A
+></H3
+><P
+>	  On the left hand side of the study window is a list of all
+	  the objects in the study arranged in a tree.  Objects in the
+	  study list can be selected by left clicking on the object,
+	  and can become the focus of the study by either double
+	  clicking on the object or clicking on the object with the
+	  middle mouse button.  Note that focusing on an ROI will
+	  center the canvases around that ROI. Object modification
+	  dialog boxes can be brought up in one of two ways; right
+	  clicking on the object, or hitting the "edit item(s) button
+	  (which will bring up modification dialog boxes for all
+	  selected items).  An "add roi" pull down menu is available
+	  for adding different types of ROI's to the study.  A "delete
+	  object(s)" button is also available which will remove all
+	  objects that are currently selected from the study.
+	</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN34"
+>Study Canvases</A
+></H3
+><P
+>	  In the middle of the study window are three canvases which
+	  show 3 orthogonal 3 dimensional slices taken from the 3
+	  dimensional data sets.  The thickness of the slices is
+	  determined by the "thickness" widget on the right side of
+	  the study window.  The three canvases should be showing you
+	  transverse, coronal, and sagittal sections through the
+	  medical image data sets being analyzed.  Which data sets and
+	  regions of interest that are displayed on the canvases are
+	  determined by which of these objects are selected in the
+	  study list on the left side of the screen.  Below the
+	  canvases are dials for selecting where in the data set the
+	  displayed slices should be taken from.  Slice location can
+	  also be changed by directly clicking on the canvases.
+	  </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN37"
+>Misc. Widgets</A
+></H3
+><P
+>	  On the right side of the study window are several widgets
+	  used for adjusting the most commonly changed parameters.
+	  Scaling, interpolation, zoom, and thickness are global
+	  options and will affect all displayed data sets.  Color
+	  table and threshold only apply to the data set that
+	  currently has the focus.
+	</P
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN40"
+>Scaling</A
+></H4
+><P
+>	    The user has the option of specifying whether each slice
+	    should be scaled individually by the maximum and minimum
+	    values in that slice, or if the slices should be scaled to
+	    the maximum and minium values in their data set .
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN43"
+>Color Table</A
+></H4
+><P
+>	    The color table widget allows the user to change the
+	    color table/map of the currently focused object.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN46"
+>Interpolation</A
+></H4
+><P
+>	    The user can specify what type of interpolation to use for
+	    generating the slices displayed on the canvas.  Nearest
+	    neighbhor is by far the quickest, but bi-linear (4x
+	    slower) and tri-linear (8x slower) interpolations give
+	    better appearing images.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN49"
+>Threshold</A
+></H4
+><P
+>	    This button will pop-up a threshold widget which can be
+	    used for scaling the currently focused data set.  Other
+	    data sets can be thresholded by either placing them as the
+	    focus or by using the data set modification dialog.  The
+	    threshold dialog is described below.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN52"
+>Zoom</A
+></H4
+><P
+>	    This specificies how much to enlarge the canvas for
+	    viewing.  AMIDE tries to make an educated guess about how
+	    large the display of the data set should be.  Zoom can be
+	    used in addition to that guesswork.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN55"
+>Time Pop-up</A
+></H4
+><P
+>	    This is another button to pop-up a dialog box.  The time
+	    dialog box allows the user to specify the time interval
+	    over which data should be displayed.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN58"
+>Thickness</A
+></H4
+><P
+>	    Thickness specifies how deep the slices displayed on the
+	    study canvas are.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN61"
+>Axis Reset</A
+></H4
+><P
+>	    If the view axis is altered, the axis reset button allows
+	    the view axis to be returned to normal.
+	  </P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN64"
+>Threshold Dialog</A
+></H2
+><P
+>	The threshold dialog allows the threshold and colormap of the
+	currently focused data set to be altered.  On the left are
+	entry boxes where the maximum and minimum thresholds can be
+	entered, either in percent of the data set's maximum and
+	minimum levels or as absolute values.  On the right is a bar
+	graph showing the distribution of the data set's values.  On
+	the far right is a color scale from which the thresholds can
+	also be altered.  The color table of the data set can also be
+	altered from this dialog.
+
+      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN67"
+>Series View Window</A
+></H2
+><P
+>	Instead of looking at three orthogonal slices through the data
+	set, a series of slices (all of the same orientation) can also
+	be examined.  Select:
+	"View-&#62;Series-&#62;Transverse/Coronal/Sagittal" from the menu
+	to bring up the series of slices.  The thickness,
+	interpolation, time frame, and orientation of the slices are
+	all determined at the time this window is brought up, although
+	the threshold and color table can still be altered.  A dial
+	appears on the top of the window which allows moving through
+	the data set.  Note that since slices are cached in memory
+	after being displayed, already displayed slices do not need to
+	be regenerated from the data set and reviewing these slices is
+	significantly faster.
+      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="TIME-DIALOG-HELP"
+>Time Dialog</A
+></H2
+><P
+>      </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="VOLUME-DIALOG-HELP"
+>Data Set Modification Dialog Box</A
+></H2
+><P
+>	To modify parameters of a data set, first select the data set
+	in the study list and then right click on the data set.  The
+	Data Set Modification Dialog Box will then appear.  Parameters
+	that can be modified are divided into the following pages.
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="VOLUME-DIALOG-HELP-0"
+>Basic Info</A
+></H3
+><P
+>	  The name, type of modality, and conversion factor can be
+	  altered on this page.  The conversion factor is a parameter
+	  that is multiplied to the data set before it is used for
+	  viewing or quantitation.  Since the data set is in
+	  ECAT/MAP/abitrary scale units, the conversion factor can be
+	  used in order to analyze the data set in another type of
+	  reference unit (i.e. Percent Injected Dose [%ID]).  Hitting
+	  the OK or Apply buttons will cause any changes made on this
+	  page to take effect.
+	</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="VOLUME-DIALOG-HELP-1"
+>Center/Dimensions</A
+></H3
+><P
+>	  The data set can be shifted by respecifing the center of the
+	  data set with respect to the origin.  The x, y, and z
+	  dimensions are in millimeters.  Being able to change the
+	  center of the data set is useful for manually aligning multiple
+	  data sets.  The size of the data set's voxels (again, in
+	  millimeters) can also be altered on this page.  The "keep
+	  aspect ratio" button specifies that when altering the size
+	  of any voxel component (x, y, or z), the relative sizes
+	  between the components should be kept the same.  Hitting the
+	  OK or Apply buttons will cause any changes made on this page
+	  to take effect. </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="VOLUME-DIALOG-HELP-2"
+>Rotate</A
+></H3
+><P
+>	  The data set can be rotated around its center in this page.
+	  This comes in useful when the data set doesn't quite line-up
+	  with the transverse/coronal/sagittal planes.  There is one
+	  dial for each of the three slice planes.  The transverse
+	  dial will spin the data set in the transverse plane
+	  (i.e. rotate on the z-axis).  The coronal dial will spin the
+	  data set in the coronal plane (i.e. rotate on the y-axis).
+	  And the sagittal dial will spin the data set in the sagittal
+	  plane (i.e. rotate on the x-axis).  The "reset to default"
+	  button allows the data set to be rotated back to it's
+	  initial orientation.  On the bottom of this page is a matrix
+	  showing the coordinate frame of the data set with respect to
+	  the base coordinate frame.  Hitting the OK or Apply buttons
+	  will cause any changes made on this page to take
+	  effect. </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="VOLUME-DIALOG-HELP-3"
+>Colormap/Threshold</A
+></H3
+><P
+>	  This page is analogous to the threshold dialog (described
+	  above).  Any changes made on this page are immediately
+	  carried out.
+	</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="VOLUME-DIALOG-HELP-4"
+>Time</A
+></H3
+><P
+>	  From this page, the timing information of the data set can
+	  be altered.  Scan start time can be used for altering the
+	  start time of the scan with respect to other data sets.
+	  Corrections in the duration of each data frame can also be
+	  made on this page.  Hitting the OK or Apply buttons will
+	  cause any changes made on this page to take effect. </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="ROI-DIALOG-HELP"
+>Region of Interest Modification Dialog Box</A
+></H2
+><P
+>	To modify parameters of an ROI, first select the ROI in the
+	study list and then right click on the data set.  The ROI
+	Modification Dialog Box will then appear.  Parameters that can
+	be modified are divided into the following pages.
+      </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN94"
+>Basic Info</A
+></H3
+><P
+>	  The name, type of ROI, and grain level of can be altered on
+	  this page.  The grain level determines how finely to
+	  sub-divide voxels when calculating statistics for an ROI.
+	  Hitting the OK or Apply buttons will cause any changes made
+	  on this page to take effect.
+	</P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN97"
+>Center</A
+></H3
+><P
+>	  The center of the ROI can be shifted with respect to the
+	  origin on this page.  The x, y, and z parameters are in
+	  millimeters Hitting the OK or Apply buttons will cause any
+	  changes made on this page to take effect. </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN100"
+>Dimensions</A
+></H3
+><P
+>	  The size of the ROI can be altered from this page.  The x',
+	  y', and z' dimensions are in millimeters and are orientated
+	  with respect to the ROI.  Hitting the OK or Apply buttons
+	  will cause any changes made on this page to take
+	  effect. </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN103"
+>Rotate</A
+></H3
+><P
+>	  The ROI can be rotated around its center in this page.
+	  There is one dial for each of the three slice planes.  The
+	  transverse dial will spin the ROI in the transverse plane
+	  (i.e. rotate on the z-axis).  The coronal dial will spin the
+	  ROI in the coronal plane (i.e. rotate on the y-axis).  And
+	  the sagittal dial will spin the ROI in the sagittal plane
+	  (i.e. rotate on the x-axis).  The "reset to default" button
+	  allows the ROI to be rotated back to it's initial
+	  orientation.  On the bottom of this page is a matrix showing
+	  the coordinate frame of the ROI with respect to the base
+	  coordinate frame.  Hitting the OK or Apply buttons will
+	  cause any changes made on this page to take effect. </P
+></DIV
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="amide.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="amide.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="importing.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Amide's user manual</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Importing Data</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

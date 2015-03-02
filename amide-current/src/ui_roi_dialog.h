@@ -1,7 +1,7 @@
 /* ui_roi_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -25,6 +25,7 @@
 
 
 /* external functions */
+void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog);
 void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi);
 
 

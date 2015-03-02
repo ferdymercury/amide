@@ -1,6 +1,8 @@
 #undef PACKAGE
 #undef VERSION
-#undef DEBUG
+#undef AMIDE_DEBUG
+#undef AMIDE_LIBECAT_SUPPORT
+#undef AMIDE_LIBMDC_SUPPORT
 
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY

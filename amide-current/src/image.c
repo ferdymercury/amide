@@ -1,7 +1,7 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -233,7 +233,7 @@ GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
   if ((*pslices) != NULL) {
     temp_slices = *pslices;
     temp_volumes = volumes;
-    while ((temp_slices != NULL) & (temp_volumes != NULL)) {
+    while ((temp_slices != NULL) && (temp_volumes != NULL)) {
       temp_slices = temp_slices->next;
       temp_volumes = temp_volumes->next;
     }

@@ -1,7 +1,7 @@
 /* ui_study_rois.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -323,7 +323,7 @@ void ui_study_rois_calculate(ui_study_t * ui_study, gboolean all) {
   /* start setting up the widget we'll display the info from */
   title = g_strdup_printf("Roi Analysis: Study %s",ui_study->study->name);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
-  free(title);
+  g_free(title);
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",
@@ -346,15 +346,15 @@ void ui_study_rois_calculate(ui_study_t * ui_study, gboolean all) {
   line = g_strdup_printf("Roi Analysis:\t\tStudy: %s\t\tVolume: %s\n",
 			 ui_study->study->name, volume->name);
   gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
-  free(line);
+  g_free(line);
 
   line = g_strdup_printf("-------------------------------------------------\n");
   gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
-  free(line);
+  g_free(line);
 
   line = g_strdup_printf("Roi #\tFrame\tVoxels\t\tMean\t\tVar\t\t\tStd E\t\tMin\t\t\tMax\t\t\t\tRoi Name\t\tType\n");
   gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
-  free(line);
+  g_free(line);
 
   while(roi_list != NULL) {
     for (j=0;j<volume->num_frames;j++) {
@@ -378,7 +378,7 @@ void ui_study_rois_calculate(ui_study_t * ui_study, gboolean all) {
 			roi_list->roi->name,
 			roi_type_names[roi_list->roi->type]);
       gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
-      free(line);
+      g_free(line);
     }
     roi_list = roi_list->next; /* go to next roi */
   }

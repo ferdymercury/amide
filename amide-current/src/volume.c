@@ -1,7 +1,7 @@
 /* volume.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -84,7 +84,7 @@ void volume_list_free(amide_volume_list_t ** pvolume_list) {
 amide_volume_t * volume_init(void) {
 
   amide_volume_t * temp_volume;
-  axis_t i;
+  axis_t i_axis;
 
   if ((temp_volume = 
        (amide_volume_t *) g_malloc(sizeof(amide_volume_t))) == NULL) {
@@ -102,8 +102,9 @@ amide_volume_t * volume_init(void) {
   temp_volume->frame_duration = NULL;
   temp_volume->color_table = BW_LINEAR;
   temp_volume->distribution = NULL;
-  for (i=0;i<NUM_VIEWS;i++)
-    temp_volume->coord_frame.axis[i] = default_axis[i];
+  temp_volume->coord_frame.offset=realpoint_init;
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    temp_volume->coord_frame.axis[i_axis] = default_axis[i_axis];
   temp_volume->corner = realpoint_init;
 
   return temp_volume;
@@ -112,6 +113,7 @@ amide_volume_t * volume_init(void) {
 /* copies the information of one volume into another, if dest volume
    doesn't exist, make it. Does not copy data*/
 void volume_copy(amide_volume_t ** dest_volume, amide_volume_t * src_volume) {
+  guint i;
 
   /* sanity checks */
   g_assert(src_volume != NULL);
@@ -137,6 +139,17 @@ void volume_copy(amide_volume_t ** dest_volume, amide_volume_t * src_volume) {
 
   /* make a separate copy in memory of the volume's name */
   volume_set_name(*dest_volume, src_volume->name);
+
+  /* make a separate copy in memory of the volume's frame durations */
+  (*dest_volume)->frame_duration =
+    (volume_time_t *) g_malloc((*dest_volume)->num_frames*sizeof(volume_time_t));
+  if ((*dest_volume)->frame_duration == NULL) {
+    g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+    volume_free(dest_volume);
+    return;
+  }
+  for (i=0;i<(*dest_volume)->num_frames;i++)
+    (*dest_volume)->frame_duration[i] = src_volume->frame_duration[i];
 
   return;
 }
@@ -274,8 +287,8 @@ void volume_list_remove_volume(amide_volume_list_t ** plist,
 gboolean volume_includes_voxel(const amide_volume_t * volume,
 			       const voxelpoint_t voxel) {
 
-  if ( (voxel.x < 0) | (voxel.y < 0) | (voxel.z < 0) |
-       (voxel.x >= volume->dim.x) | (voxel.y >= volume->dim.y) |
+  if ( (voxel.x < 0) || (voxel.y < 0) || (voxel.z < 0) ||
+       (voxel.x >= volume->dim.x) || (voxel.y >= volume->dim.y) ||
        (voxel.z >= volume->dim.z))
     return FALSE;
   else
@@ -615,7 +628,7 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 
   num_frames = volume->num_frames + 1;
   i_frame = start_frame;
-  while ((i_frame < volume->num_frames) & (num_frames > volume->num_frames)) {
+  while ((i_frame < volume->num_frames) && (num_frames > volume->num_frames)) {
     volume_end = volume_start_time(volume,i_frame)+volume->frame_duration[i_frame];
     if ((start+duration) < volume_end)
       num_frames = i_frame-start_frame+1;
@@ -633,7 +646,7 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
   g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",dimx,dimy,dimz);
 #endif
 
-  g_print("start %5.3f duration %5.3f\n",start, duration);
+  //  g_print("start %5.3f duration %5.3f\n",start, duration);
 
   /* make sure the slice thickness is set correctly */
   slice_corner = far_corner;
@@ -649,8 +662,8 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	  real_corner[0].x,real_corner[0].y,real_corner[0].z);
   g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
 	  real_corner[1].x,real_corner[1].y,real_corner[1].z);
-  g_print("\tvolume\tstart\t%5.4f\tend\t%5.3f\tframes %d-%d\n",
-	  volume_start, volume_end,start_frame,start_frame+num_frames);
+  g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
+	  volume_start, volume_end,start_frame,start_frame+num_frames-1);
 #endif
   return_slice = volume_init();
   return_slice->num_frames = 1;
@@ -755,11 +768,11 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    
 	    /* do the x direction linear interpolation of the sets of two points */
 	    for (l=0;l<4;l=l+2) {
-	      if ((view_p.x > box_corner_real[l].x) & 
+	      if ((view_p.x > box_corner_real[l].x) && 
 		  (view_p.x > box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
-	      else if ((view_p.x<box_corner_real[l].x) & 
+	      else if ((view_p.x<box_corner_real[l].x) && 
 		       (view_p.x<box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
@@ -778,11 +791,11 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 
 	    /* do the y direction interpolations of the pairs of x interpolations */
 	    for (l=0;l<4;l=l+4) {
-	      if ((view_p.y > box_corner_real[l].y) & 
+	      if ((view_p.y > box_corner_real[l].y) && 
 		  (view_p.y > box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
-	      else if ((view_p.y<box_corner_real[l].y) & 
+	      else if ((view_p.y<box_corner_real[l].y) && 
 		       (view_p.y<box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
@@ -880,11 +893,11 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    /* do the x direction linear interpolation of the sets of two points */
 	    for (l=0;l<8;l=l+2) {
 	      if ((view_p.x > box_corner_real[l].x) 
-		  & (view_p.x > box_corner_real[l+1].x))
+		  && (view_p.x > box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
 	      else if ((view_p.x<box_corner_real[l].x) 
-		       & (view_p.x<box_corner_real[l+1].x))
+		       && (view_p.x<box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
 	      else {
@@ -903,11 +916,11 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    /* do the y direction interpolations of the pairs of x interpolations */
 	    for (l=0;l<8;l=l+4) {
 	      if ((view_p.y > box_corner_real[l].y) 
-		  & (view_p.y > box_corner_real[l+2].y))
+		  && (view_p.y > box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
 	      else if ((view_p.y<box_corner_real[l].y) 
-		       & (view_p.y<box_corner_real[l+2].y))
+		       && (view_p.y<box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
 	      else {
@@ -926,11 +939,11 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    /* do the z direction interpolations of the pairs of y interpolations */
 	    for (l=0;l<8;l=l+8) {
 	      if ((view_p.z > box_corner_real[l].z) 
-		  & (view_p.z > box_corner_real[l+4].z))
+		  && (view_p.z > box_corner_real[l+4].z))
 		real_value[l] = box_corner_real[l].z > box_corner_real[l+4].z ? 
 		  real_value[l] : real_value[l+4];
 	      else if ((view_p.z<box_corner_real[l].z) 
-		       & (view_p.z<box_corner_real[l+4].z))
+		       && (view_p.z<box_corner_real[l+4].z))
 		real_value[l] = box_corner_real[l].z < box_corner_real[l+4].z ? 
 		  real_value[l] : real_value[l+4];
 	      else {

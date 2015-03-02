@@ -1,6 +1,8 @@
 <!DOCTYPE book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity basics SYSTEM "basics.sgml">
 <!entity importing SYSTEM "importing.sgml">
 <!entity rois SYSTEM "rois.sgml">
+<!entity volumes SYSTEM "volumes.sgml">
 ]>
 
 <book id="amide">
@@ -17,7 +19,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000</year> <holder>Andy Loening (n.)</holder>
+      <year>2001</year> <holder>Andy Loening (n.)</holder>
     </copyright>
 
     <legalnotice>
@@ -44,11 +46,21 @@
 
   <toc></toc>
 
+  <chapter id="basics">
+    <title>AMIDE Basics</title>
+      &basics;
+  </chapter>
+
   <chapter id="importing">
     <title>Importing Data </title>
     &importing;
   </chapter>
  
+  <chapter id="volumes">
+    <title>Manipulating Medical Data Sets </title>
+    &volumes;
+  </chapter>
+
   <chapter id="rois">
     <title>Using ROI's </title>
     &rois;

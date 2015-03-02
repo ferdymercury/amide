@@ -6,8 +6,10 @@ amide_help_DATA = 	\
 
 SGML_FILES =			\
 	amide.sgml		\
+	basics.sgml		\
 	importing.sgml		\
-	rois.sgml
+	rois.sgml		\
+	volumes.sgml		
 
 PERL_FILES = 			\
 	make-index.pl		\

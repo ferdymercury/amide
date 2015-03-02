@@ -1,7 +1,7 @@
 /* ui_study_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000 Andy Loening
+ * Copyright (C) 2001 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -51,12 +51,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
-#ifdef AMIDE_CTI_SUPPORT /*#ifdef AMIDE_CTI_SUPPORT | AMIDE_ANALYZE_SUPPORT | etc. (get it?) */
     GNOMEUIINFO_ITEM_DATA(N_("_Import File"),
 		     N_("Import a non-amide data file"),
 		     ui_study_callbacks_import, 
 		     ui_study, NULL),
-#endif 
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_callbacks_close_event, ui_study),
     GNOMEUIINFO_END
@@ -81,7 +79,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Slide Show"),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Series"),
 			     N_("Look at a series of images"), 
 			     slide_menu),
     GNOMEUIINFO_END
