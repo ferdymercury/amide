@@ -35,7 +35,7 @@
 #include "ui_common.h"
 
 
-#define GCONF_AMIDE_ANALYSIS "ANALYSIS/"
+#define GCONF_AMIDE_ANALYSIS "ANALYSIS"
 
 #define ROI_STATISTICS_WIDTH 950
 
@@ -98,16 +98,22 @@ static gchar * analysis_titles[] = {
   N_("Voxels")
 };
 
+typedef struct tb_roi_analysis_t {
+  GtkWidget * dialog;
+  AmitkPreferences * preferences;
+  analysis_roi_t * roi_analyses;
+  guint reference_count;
+} tb_roi_analysis_t;
+  
 
-static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses, gboolean raw_values);
+static void export_data(tb_roi_analysis_t * tb_roi_analysis, gboolean raw_values);
 static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses,
 			    gboolean raw_data);
 static gchar * analyses_as_string(analysis_roi_t * roi_analyses);
-static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer data);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
-static void add_pages(GtkWidget * notebook, AmitkStudy * study,
-		      analysis_roi_t * roi_analyses);
+static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t * roi_analyses);
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
 			     analysis_calculation_t * calculation_type,
@@ -115,36 +121,38 @@ static void read_preferences(gboolean * all_data_sets,
 			     gdouble * subfraction,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value);
+static tb_roi_analysis_t * tb_roi_analysis_free(tb_roi_analysis_t * tb_roi_analysis);
+static tb_roi_analysis_t * tb_roi_analysis_init(void);
 
 
 
 /* function to save the generated roi statistics */
-static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses, gboolean raw_data) {
-  
-  analysis_roi_t * temp_analyses = roi_analyses;
+static void export_data(tb_roi_analysis_t * tb_roi_analysis, gboolean raw_data) {  
+  analysis_roi_t * temp_analyses = tb_roi_analysis->roi_analyses;
   GtkWidget * file_chooser;
   gchar * temp_string;
   gchar * filename = NULL;
 
   /* sanity checks */
-  g_return_if_fail(roi_analyses != NULL);
+  g_return_if_fail(tb_roi_analysis->roi_analyses != NULL);
 
   file_chooser = gtk_file_chooser_dialog_new ((!raw_data) ? _("Export Statistics") : _("Export ROI Raw Data Values"),
-					      GTK_WINDOW(tb_roi_dialog), /* parent window */
+					      GTK_WINDOW(tb_roi_analysis->dialog), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(tb_roi_analysis->preferences, file_chooser); /* set the default directory if applicable */
 
   /* take a guess at the filename */
   filename = g_strdup_printf("%s_%s_{%s",
-			     AMITK_OBJECT_NAME(roi_analyses->study), 
+			     AMITK_OBJECT_NAME(tb_roi_analysis->roi_analyses->study), 
 			     raw_data ? _("roi_raw_data"): _("analysis"),
-			     AMITK_OBJECT_NAME(roi_analyses->roi));
+			     AMITK_OBJECT_NAME(tb_roi_analysis->roi_analyses->roi));
   
-  temp_analyses= roi_analyses->next_roi_analysis;
+  temp_analyses= tb_roi_analysis->roi_analyses->next_roi_analysis;
   while (temp_analyses != NULL) {
     temp_string = g_strdup_printf("%s+%s",filename,AMITK_OBJECT_NAME(temp_analyses->roi));
     g_free(filename);
@@ -159,7 +167,7 @@ static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses
 
   if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT)  {
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
-    export_analyses(filename, roi_analyses, raw_data); /* allright, save the data */
+    export_analyses(filename, tb_roi_analysis->roi_analyses, raw_data); /* allright, save the data */
     g_free (filename);
   }
   gtk_widget_destroy (file_chooser);
@@ -167,8 +175,7 @@ static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses
   return;
 }
 
-static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses,
-			    gboolean raw_data) {
+static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses, gboolean raw_data) {
 
   FILE * file_pointer;
   time_t current_time;
@@ -410,24 +417,24 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
   return roi_stats;
 }
 
-static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer data) {
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
-  analysis_roi_t * roi_analyses = data;
+  tb_roi_analysis_t * tb_roi_analysis = data;
   gint return_val;
   GtkClipboard * clipboard;
   gchar * roi_stats;
 
   switch(response_id) {
   case AMITK_RESPONSE_SAVE_AS:
-    export_data(tb_roi_dialog, roi_analyses, FALSE);
+    export_data(tb_roi_analysis, FALSE);
     break;
 
   case AMITK_RESPONSE_SAVE_RAW_AS:
-    export_data(tb_roi_dialog, roi_analyses, TRUE);
+    export_data(tb_roi_analysis, TRUE);
     break;
 
   case AMITK_RESPONSE_COPY:
-    roi_stats = analyses_as_string(roi_analyses);
+    roi_stats = analyses_as_string(tb_roi_analysis->roi_analyses);
 
     /* fill in select/button2 clipboard (X11) */
     clipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
@@ -445,8 +452,8 @@ static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer d
     break;
 
   case GTK_RESPONSE_CLOSE:
-    g_signal_emit_by_name(G_OBJECT(tb_roi_dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(tb_roi_dialog));
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
     break;
 
   default:
@@ -459,8 +466,8 @@ static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer d
 
 /* function called to destroy the roi analysis dialog */
 static void destroy_cb(GtkObject * object, gpointer data) {
-  analysis_roi_t * roi_analyses = data;
-  roi_analyses = analysis_roi_unref(roi_analyses);
+  tb_roi_analysis_t * tb_roi_analysis = data;
+  tb_roi_analysis = tb_roi_analysis_free(tb_roi_analysis);
   return;
 }
 
@@ -473,8 +480,7 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 
 
 /* create one page of our notebook */
-static void add_pages(GtkWidget * notebook, AmitkStudy * study,
-		      analysis_roi_t * roi_analyses) {
+static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t * roi_analyses) {
 
   GtkWidget * table;
   GtkWidget * label;
@@ -692,27 +698,74 @@ static void read_preferences(gboolean * all_data_sets,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value) {
 
-  *all_data_sets = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"CalculateAllDataSets");
-  *all_rois = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"CalculateAllRois");
-  *calculation_type = amide_gconf_get_int(GCONF_AMIDE_ANALYSIS"CalculationType");
-  *accurate = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"Accurate");
-  *subfraction = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"SubFraction");
-  *threshold_percentage = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"ThresholdPercentage");
-  *threshold_value = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"ThresholdValue");
+  *all_data_sets = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllDataSets");
+  *all_rois = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllRois");
+  *calculation_type = amide_gconf_get_int(GCONF_AMIDE_ANALYSIS,"CalculationType");
+  *accurate = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS,"Accurate");
+  *subfraction = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"SubFraction");
+  *threshold_percentage = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"ThresholdPercentage");
+  *threshold_value = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS,"ThresholdValue");
 
   return;
 }
 
+static tb_roi_analysis_t * tb_roi_analysis_free(tb_roi_analysis_t * tb_roi_analysis) {
+
+  /* sanity checks */
+  g_return_val_if_fail(tb_roi_analysis != NULL, NULL);
+  g_return_val_if_fail(tb_roi_analysis->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  tb_roi_analysis->reference_count--;
+
+  /* things to do if we've removed all reference's */
+  if (tb_roi_analysis->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing tb_roi_analysis\n");
+#endif
+
+    if (tb_roi_analysis->preferences != NULL) {
+      g_object_unref(tb_roi_analysis->preferences);
+      tb_roi_analysis->preferences = NULL;
+    }
+
+    if (tb_roi_analysis->roi_analyses != NULL) {
+      tb_roi_analysis->roi_analyses = analysis_roi_unref(tb_roi_analysis->roi_analyses);
+    }
+
+    g_free(tb_roi_analysis);
+    tb_roi_analysis = NULL;
+  }
+
+  return tb_roi_analysis;
+}
+
+static tb_roi_analysis_t * tb_roi_analysis_init(void) {
+
+  tb_roi_analysis_t * tb_roi_analysis;
+
+  /* alloc space for the data structure for passing ui info */
+  if ((tb_roi_analysis = g_try_new(tb_roi_analysis_t,1)) == NULL) {
+    g_warning(_("couldn't allocate memory space for tb_roi_analysis_t"));
+    return NULL;
+  }
+
+  tb_roi_analysis->reference_count = 1;
+  tb_roi_analysis->dialog = NULL;
+  tb_roi_analysis->preferences = NULL;
+  tb_roi_analysis->roi_analyses = NULL;
+
+  return tb_roi_analysis;
+}
 
 
-void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
+void tb_roi_analysis(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * parent) {
 
-  GtkWidget * tb_roi_dialog;
+  tb_roi_analysis_t * tb_roi_analysis;
   GtkWidget * notebook;
   gchar * title;
   GList * rois;
   GList * data_sets;
-  analysis_roi_t * roi_analyses;
 
   gboolean all_data_sets;
   gboolean all_rois;
@@ -724,6 +777,9 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 
   read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, &subfraction, 
 		   &threshold_percentage, &threshold_value);
+
+  tb_roi_analysis = tb_roi_analysis_init();
+  tb_roi_analysis->preferences = g_object_ref(preferences);
 
   /* figure out which data sets we're dealing with */
   if (all_data_sets)
@@ -752,44 +808,44 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, accurate, 
-				   subfraction, threshold_percentage, threshold_value);
+  tb_roi_analysis->roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, accurate, 
+						    subfraction, threshold_percentage, threshold_value);
 
   rois = amitk_objects_unref(rois);
   data_sets = amitk_objects_unref(data_sets);
-  g_return_if_fail(roi_analyses != NULL);
+  g_return_if_fail(tb_roi_analysis->roi_analyses != NULL);
   
   /* start setting up the widget we'll display the info from */
   title = g_strdup_printf(_("%s Roi Analysis: Study %s"), PACKAGE, 
 			  AMITK_OBJECT_NAME(study));
-  tb_roi_dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
-				       GTK_DIALOG_DESTROY_WITH_PARENT,
-				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
-				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
-				       "Save Raw Values", AMITK_RESPONSE_SAVE_RAW_AS,
-				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
-				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
-				       NULL);
+  tb_roi_analysis->dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
+							GTK_DIALOG_DESTROY_WITH_PARENT,
+							GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
+							GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
+							"Save Raw Values", AMITK_RESPONSE_SAVE_RAW_AS,
+							GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+							GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+							NULL);
   g_free(title);
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(tb_roi_dialog), "response", G_CALLBACK(response_cb), roi_analyses);
-  g_signal_connect(G_OBJECT(tb_roi_dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
-  g_signal_connect(G_OBJECT(tb_roi_dialog), "destroy", G_CALLBACK(destroy_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(tb_roi_analysis->dialog), "response", G_CALLBACK(response_cb), tb_roi_analysis);
+  g_signal_connect(G_OBJECT(tb_roi_analysis->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_roi_analysis);
+  g_signal_connect(G_OBJECT(tb_roi_analysis->dialog), "destroy", G_CALLBACK(destroy_cb), tb_roi_analysis);
 
-  gtk_window_set_resizable(GTK_WINDOW(tb_roi_dialog), TRUE);
+  gtk_window_set_resizable(GTK_WINDOW(tb_roi_analysis->dialog), TRUE);
 
 
  /* make the widgets for this dialog box */
   notebook = gtk_notebook_new();
-  gtk_container_set_border_width(GTK_CONTAINER(tb_roi_dialog), 10);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_dialog)->vbox), notebook);
+  gtk_container_set_border_width(GTK_CONTAINER(tb_roi_analysis->dialog), 10);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_analysis->dialog)->vbox), notebook);
 
   /* add the data pages */
-  add_pages(notebook, study, roi_analyses);
+  add_pages(notebook, study, tb_roi_analysis->roi_analyses);
 
   /* and show all our widgets */
-  gtk_widget_show_all(tb_roi_dialog);
+  gtk_widget_show_all(tb_roi_analysis->dialog);
 
   return;
 }
@@ -812,8 +868,8 @@ static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
   all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
   all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
 
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"CalculateAllDataSets",all_data_sets);
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"CalculateAllRois",all_rois);
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllDataSets",all_data_sets);
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"CalculateAllRois",all_rois);
 
   return;
 }
@@ -831,11 +887,11 @@ static void calculation_type_cb(GtkWidget * widget, gpointer data) {
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
   gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
 
-  amide_gconf_set_int(GCONF_AMIDE_ANALYSIS"CalculationType", calculation_type);
+  amide_gconf_set_int(GCONF_AMIDE_ANALYSIS,"CalculationType", calculation_type);
 }
 
 static void accurate_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"Accurate", 
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS,"Accurate", 
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
@@ -846,7 +902,7 @@ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 
   subfraction = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"SubFraction", subfraction);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"SubFraction", subfraction);
 
   return;
 }
@@ -857,7 +913,7 @@ static void threshold_percentage_cb(GtkWidget * widget, gpointer data) {
 
   threshold_percentage = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"ThresholdPercentage", threshold_percentage);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"ThresholdPercentage", threshold_percentage);
 
   return;
 }
@@ -869,7 +925,7 @@ static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 
   threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"ThresholdValue", threshold_value);
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS,"ThresholdValue", threshold_value);
 
   return;
 }

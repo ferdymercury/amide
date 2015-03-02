@@ -1173,40 +1173,6 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat format) {
 }
 
 
-void amitk_raw_data_slice_calc_min_max(AmitkRawData * amitk_raw_data, 
-				       const amide_intpoint_t frame,
-				       const amide_intpoint_t gate,
-				       const amide_intpoint_t z,
-				       amitk_format_DOUBLE_t * min_value,
-				       amitk_format_DOUBLE_t * max_value) {
-
-  g_return_if_fail(AMITK_IS_RAW_DATA(amitk_raw_data));
-  
-  /* hand everything off to the data type specific function */
-  switch(AMITK_RAW_DATA_FORMAT(amitk_raw_data)) {
-  case AMITK_FORMAT_UBYTE:
-    return amitk_raw_data_UBYTE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_SBYTE:
-    return amitk_raw_data_SBYTE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_USHORT:
-    return amitk_raw_data_USHORT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_SSHORT:
-    return amitk_raw_data_SSHORT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_UINT:
-    return amitk_raw_data_UINT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_SINT:
-    return amitk_raw_data_SINT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_FLOAT:
-    return amitk_raw_data_FLOAT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  case AMITK_FORMAT_DOUBLE:
-    return amitk_raw_data_DOUBLE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
-  default:
-    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-    return;
-  }
-}
-
-
 const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format) {
 
   GEnumClass * enum_class;

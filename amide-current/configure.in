@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[1.0.0],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[1.0.1],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -335,9 +335,9 @@ PKG_CHECK_MODULES(AMIDE_GTK,[
 	libgnomecanvas-2.0 >= 2.0.0
 ])
 
-## add in gconf if not on win32 
+## add in gconf if not on win32 or macos x 
 ## gconf stuff is encapsulated in amide_gconf.c
-if (test $native_win32 = no); then
+if (test $native_win32 = no) && (test $enable_native_gtk_osx = no); then
    PKG_CHECK_MODULES(AMIDE_GTK_EXTRA_GCONF,[
 		gconf-2.0	>= 2.14.0
    ])

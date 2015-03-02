@@ -38,7 +38,8 @@
 /* external functions */
 void ui_series_create(AmitkStudy * study, 
 		      AmitkObject * active_object, 
-		      GList * selected_objects);
+		      GList * selected_objects,
+		      AmitkPreferences * preferences);
 GtkWidget * ui_series_init_dialog_create(AmitkStudy * study,
 					 GtkWindow * parent);
 

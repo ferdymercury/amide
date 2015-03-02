@@ -518,8 +518,7 @@ AmitkSpace * amitk_space_copy(const AmitkSpace * space) {
   return new_space;
 }
 
-
-gboolean amitk_space_equal(const AmitkSpace * space1, const AmitkSpace * space2) {
+gboolean amitk_space_axes_equal(const AmitkSpace * space1, const AmitkSpace * space2) {
 
   gboolean inner = TRUE;
   AmitkAxis i_axis;
@@ -527,14 +526,22 @@ gboolean amitk_space_equal(const AmitkSpace * space1, const AmitkSpace * space2)
   g_return_val_if_fail(AMITK_IS_SPACE(space1), FALSE);
   g_return_val_if_fail(AMITK_IS_SPACE(space2), FALSE);
 
-  if (POINT_EQUAL(space1->offset, space2->offset)) {
-    for (i_axis=0;i_axis<AMITK_AXIS_NUM && inner;i_axis++) 
-      inner = inner && POINT_EQUAL(space1->axes[i_axis], space2->axes[i_axis]);
-    return inner;
-  }
+  for (i_axis=0;i_axis<AMITK_AXIS_NUM && inner;i_axis++) 
+    inner = inner && POINT_EQUAL(space1->axes[i_axis], space2->axes[i_axis]);
 
-  return FALSE;
+  return inner;
+}
 
+
+gboolean amitk_space_equal(const AmitkSpace * space1, const AmitkSpace * space2) {
+
+  g_return_val_if_fail(AMITK_IS_SPACE(space1), FALSE);
+  g_return_val_if_fail(AMITK_IS_SPACE(space2), FALSE);
+
+  if (POINT_EQUAL(space1->offset, space2->offset)) 
+    return amitk_space_axes_equal(space1, space2);
+  else
+    return FALSE;
 }
 
 

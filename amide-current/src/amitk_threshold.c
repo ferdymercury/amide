@@ -52,6 +52,14 @@ static gchar * thresholding_names[] = {
   N_("global")
 };
 
+static gchar * threshold_style_names[] = {
+  N_("Min/Max"),
+  N_("Center/Width")
+};
+  
+#if (GTK_MINOR_VERSION >= 12)
+
+#else
 static gchar * thresholding_explanations[] = {
   N_("threshold the images based on the max and min values in the current slice"),
   N_("threshold the images based on the max and min values in the current frame"),
@@ -59,16 +67,11 @@ static gchar * thresholding_explanations[] = {
   N_("threshold the images based on the max and min values of the entire data set"),
 };
 
-static gchar * threshold_style_names[] = {
-  N_("Min/Max"),
-  N_("Center/Width")
-};
-  
 static gchar * threshold_style_explanations[] = {
   N_("threshold by setting min and max values - Nuclear Medicine Style"),
   N_("theshold by setting a window center and width - Radiology Style")
 };
-
+#endif
 
 static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
@@ -208,12 +211,12 @@ static void threshold_destroy (GtkObject * object) {
    widgets that we're currently might be hiding */
 static void threshold_show_all (GtkWidget * widget) {
   
-  AmitkThreshold * threshold;
+  /*  AmitkThreshold * threshold; */
   
   g_return_if_fail (widget != NULL);
   g_return_if_fail (AMITK_IS_THRESHOLD(widget));
 
-  threshold = AMITK_THRESHOLD(widget);
+  /* threshold = AMITK_THRESHOLD(widget); */
   
   gtk_widget_show(widget);
 
@@ -837,6 +840,7 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
   guint i_ref;
   amide_data_t initial_diff;
   amide_data_t global_diff;
+  guint i;
   amide_data_t center;
 
   global_diff = 
@@ -985,6 +989,12 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
       points->coords[4] = right;
       points->coords[5] = point;
     }
+
+    /* sanity check */
+    for (i=0; i < 6; i++)
+      if (!finite(points->coords[i]))
+	points->coords[i] = 0.0;
+
 
     /* destroy the center arrow if needed */
     if ((AMITK_DATA_SET_THRESHOLD_STYLE(threshold->data_set) == AMITK_THRESHOLD_STYLE_MIN_MAX) && 
@@ -2065,9 +2075,9 @@ GType amitk_threshold_dialog_get_type (void)
 
 static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
+  /*  GtkObjectClass *gtkobject_class; */
 
-  gtkobject_class = (GtkObjectClass*) klass;
+  /* gtkobject_class = (GtkObjectClass*) klass; */
 
   threshold_dialog_parent_class = g_type_class_peek_parent(klass);
 
@@ -2208,9 +2218,9 @@ GType amitk_thresholds_dialog_get_type (void)
 
 static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
+  /*  GtkObjectClass *gtkobject_class; */
 
-  gtkobject_class = (GtkObjectClass*) klass;
+  /* gtkobject_class = (GtkObjectClass*) klass; */
 
   thresholds_dialog_parent_class = g_type_class_peek_parent(klass);
 

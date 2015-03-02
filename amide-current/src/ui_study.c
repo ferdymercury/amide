@@ -260,9 +260,12 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     if ((AMITK_OBJECT_NAME(ui_study->study) == NULL)  ||
 	(g_strcmp0(AMITK_OBJECT_NAME(ui_study->study), "") == 0) ||
 	(g_ascii_strncasecmp(blank_name, AMITK_OBJECT_NAME(ui_study->study),
-			     strlen(AMITK_OBJECT_NAME(ui_study->study))) == 0))
-      amitk_object_set_name(AMITK_OBJECT(ui_study->study), 
-			    AMITK_OBJECT_NAME(object));
+			     strlen(AMITK_OBJECT_NAME(ui_study->study))) == 0)) {
+      if (AMITK_DATA_SET_SUBJECT_NAME(object) != NULL)
+	amitk_object_set_name(AMITK_OBJECT(ui_study->study), AMITK_DATA_SET_SUBJECT_NAME(object));
+      else
+	amitk_object_set_name(AMITK_OBJECT(ui_study->study), AMITK_OBJECT_NAME(object)); 
+    }
 
     if (ui_study->study_altered != TRUE) {
       ui_study->study_altered=TRUE;
@@ -1665,7 +1668,6 @@ void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study) {
   ui_study_make_active_object(ui_study, NULL);
 
 }
-
 
 
 /* procedure to set up the study window */

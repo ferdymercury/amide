@@ -43,6 +43,7 @@ GList * dcmtk_import(const gchar * filename,
 		     gpointer update_data);
 gboolean dcmtk_export(AmitkDataSet * ds, 
 		      const gchar * dir_or_filename,
+		      const gchar * studyname,
 		      const gboolean resliced,
 		      const AmitkPoint voxel_size,
 		      const AmitkVolume * bounding_box,

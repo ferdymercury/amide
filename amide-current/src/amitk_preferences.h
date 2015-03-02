@@ -43,6 +43,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(object)     (AMITK_PREFERENCES(object)->warnings_to_console)
 
 #define AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(object) (AMITK_PREFERENCES(object)->prompt_for_save_on_exit)
+#define AMITK_PREFERENCES_WHICH_DEFAULT_DIRECTORY(object) (AMITK_PREFERENCES(object)->which_default_directory)
 #define AMITK_PREFERENCES_DEFAULT_DIRECTORY(object)       (AMITK_PREFERENCES(object)->default_directory)
 
 #define AMITK_PREFERENCES_CANVAS_ROI_WIDTH(pref)                (AMITK_PREFERENCES(pref)->canvas_roi_width)
@@ -57,6 +58,13 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_THRESHOLD_STYLE(pref)                 (AMITK_PREFERENCES(pref)->threshold_style)
 #define AMITK_PREFERENCES_DIALOG(pref)                          (AMITK_PREFERENCES(pref)->dialog)
 
+typedef enum {
+  AMITK_WHICH_DEFAULT_DIRECTORY_NONE,
+  AMITK_WHICH_DEFAULT_DIRECTORY_SPECIFIED,
+  AMITK_WHICH_DEFAULT_DIRECTORY_WORKING,
+  AMITK_WHICH_DEFAULT_DIRECTORY_NUM
+} AmitkWhichDefaultDirectory;
+
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH 2
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE GDK_LINE_SOLID
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI TRUE
@@ -67,6 +75,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE FALSE
 #define AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT TRUE
 #define AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY FALSE
+#define AMITK_PREFERENCES_DEFAULT_WHICH_DEFAULT_DIRECTORY AMITK_WHICH_DEFAULT_DIRECTORY_NONE
 #define AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY NULL
 #define AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE AMITK_THRESHOLD_STYLE_MIN_MAX
 
@@ -74,6 +83,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_MAX_ROI_WIDTH 5
 #define AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA 0
 #define AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA 25
+
 
 
 typedef struct _AmitkPreferencesClass AmitkPreferencesClass;
@@ -89,6 +99,7 @@ struct _AmitkPreferences {
   /* file saving preferences */
   gboolean prompt_for_save_on_exit;
   gboolean save_xif_as_directory;
+  AmitkWhichDefaultDirectory which_default_directory;
   gchar * default_directory;
 
   /* canvas preferences -> study preferences */
@@ -145,6 +156,8 @@ void                amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferenc
 								  gboolean new_value);
 void                amitk_preferences_set_xif_as_directory       (AmitkPreferences * preferences,
 							          gboolean new_value);
+void                amitk_preferences_set_which_default_directory(AmitkPreferences * preferences,
+								  const AmitkWhichDefaultDirectory which_default_directory);
 void                amitk_preferences_set_default_directory      (AmitkPreferences * preferences,
 								  const gchar * directory);
 void                amitk_preferences_set_color_table            (AmitkPreferences * preferences,
@@ -158,6 +171,11 @@ void                amitk_preferences_set_threshold_style        (AmitkPreferenc
 								  const AmitkThresholdStyle threshold_style);
 void                amitk_preferences_set_dialog                 (AmitkPreferences * preferences,
 								  GtkWidget * dialog);
+void                amitk_preferences_set_file_chooser_directory (AmitkPreferences * preferences,
+								  GtkWidget * file_chooser);
+
+/* external variables */
+extern const gchar * amitk_which_default_directory_names[];
 
 G_END_DECLS
 #endif /* __AMITK_PREFERENCES_H__ */

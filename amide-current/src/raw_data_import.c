@@ -33,7 +33,7 @@
 #include "raw_data_import.h"
 #include "amitk_progress_dialog.h"
 
-#define GCONF_AMIDE_RAWDATAIMPORT "RAWDATAIMPORT/"
+#define GCONF_AMIDE_RAWDATAIMPORT "RAWDATAIMPORT"
 
 /* raw_data information structure */
 typedef struct raw_data_info_t {
@@ -109,7 +109,7 @@ static void change_scaling_cb(GtkWidget * widget, gpointer data) {
   /* and save the value */
   raw_data_info->scale_factor = temp_real;
 
-  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT"LastScaleFactor", raw_data_info->scale_factor);
+  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT,"LastScaleFactor", raw_data_info->scale_factor);
 
   return;
 }
@@ -185,15 +185,15 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
   /* recalculate the total number of bytes to be read and have it displayed */
   update_num_bytes(raw_data_info);
 
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimG", raw_data_info->data_dim.g);
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimT", raw_data_info->data_dim.t);
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimZ", raw_data_info->data_dim.z);
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimY", raw_data_info->data_dim.y);
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimX", raw_data_info->data_dim.x);
-  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeZ", raw_data_info->voxel_size.z);
-  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeY", raw_data_info->voxel_size.y);
-  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeX", raw_data_info->voxel_size.x);
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastOffset", raw_data_info->offset);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimG", raw_data_info->data_dim.g);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimT", raw_data_info->data_dim.t);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimZ", raw_data_info->data_dim.z);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimY", raw_data_info->data_dim.y);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimX", raw_data_info->data_dim.x);
+  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeZ", raw_data_info->voxel_size.z);
+  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeY", raw_data_info->voxel_size.y);
+  amide_gconf_set_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeX", raw_data_info->voxel_size.x);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastOffset", raw_data_info->offset);
 
   return;
 }
@@ -206,7 +206,7 @@ static void change_modality_cb(GtkWidget * widget, gpointer data) {
 
   raw_data_info->modality = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastModality", raw_data_info->modality);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastModality", raw_data_info->modality);
 
   return;
 }
@@ -223,7 +223,7 @@ static void change_raw_format_cb(GtkWidget * widget, gpointer data) {
   /* update the offset label so it makes sense */
   update_offset_label(raw_data_info);
 
-  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT"LastRawFormat", raw_data_info->raw_format);
+  amide_gconf_set_int(GCONF_AMIDE_RAWDATAIMPORT,"LastRawFormat", raw_data_info->raw_format);
   return;
 }
 
@@ -294,31 +294,31 @@ static void read_last_values(AmitkModality * plast_modality,
   gint temp_int;
   gfloat temp_float;
 
-  *plast_modality = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastModality");
-  *plast_raw_format = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastRawFormat");
+  *plast_modality = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastModality");
+  *plast_raw_format = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastRawFormat");
 
-  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimG");
+  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimG");
   (*plast_data_dim).g = (temp_int == 0) ? 1 : temp_int;
-  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimT");
+  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimT");
   (*plast_data_dim).t = (temp_int == 0) ? 1 : temp_int;
-  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimZ");
+  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimZ");
   (*plast_data_dim).z = (temp_int == 0) ? 1 : temp_int;
-  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimY");
+  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimY");
   (*plast_data_dim).y = (temp_int == 0) ? 1 : temp_int; 
-  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastDataDimX");
+  temp_int = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastDataDimX");
   (*plast_data_dim).x = (temp_int == 0) ? 1 : temp_int; 
 
 
-  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeZ");
+  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeZ");
   (*plast_voxel_size).z =  EQUAL_ZERO(temp_float) ? 1.0 : temp_float;
-  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeY");
+  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeY");
   (*plast_voxel_size).y =  EQUAL_ZERO(temp_float) ? 1.0 : temp_float;
-  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT"LastVoxelSizeX");
+  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT,"LastVoxelSizeX");
   (*plast_voxel_size).x =  EQUAL_ZERO(temp_float) ? 1.0 : temp_float;
 
-  *plast_offset = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT"LastOffset");
+  *plast_offset = amide_gconf_get_int(GCONF_AMIDE_RAWDATAIMPORT,"LastOffset");
 
-  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT"LastScaleFactor");
+  temp_float = amide_gconf_get_float(GCONF_AMIDE_RAWDATAIMPORT,"LastScaleFactor");
   *plast_scale_factor =  EQUAL_ZERO(temp_float) ? 1.0 : temp_float;
 
   return;

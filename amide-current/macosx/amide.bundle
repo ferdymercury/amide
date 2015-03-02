@@ -124,35 +124,5 @@
     Tango
   </icon-theme -->
 
-<!-- and stuff for dbus -->
-<binary>
-  ${prefix}/bin/dbus-launch
-</binary>
-
-<binary>
-  ${prefix}/bin/dbus-daemon
-</binary>
-
-<binary>
-  ${prefix}/bin/dbus-uuidgen
-</binary>
-
-<data>
-  ${prefix}/etc/gconf
-</data>
-
-<data>
-  ${prefix}/share/GConf
-</data>
-
-<data>
-  ${prefix}/share/dbus-1/
-</data>
-
-<data dest='${bundle}/Contents/Resources/etc/dbus-1/'>
-  ${prefix}/etc/dbus-1/
-</data>
-
-
 
 </app-bundle>

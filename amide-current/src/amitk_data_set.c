@@ -204,6 +204,7 @@ enum {
   COLOR_TABLE_INDEPENDENT_CHANGED,
   INTERPOLATION_CHANGED,
   SUBJECT_ORIENTATION_CHANGED,
+  SUBJECT_SEX_CHANGED,
   CONVERSION_CHANGED,
   SCALE_FACTOR_CHANGED,
   MODALITY_CHANGED,
@@ -348,6 +349,13 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_STRUCT_OFFSET (AmitkDataSetClass, subject_orientation_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[SUBJECT_SEX_CHANGED] =
+    g_signal_new ("subject_sex_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, subject_sex_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[CONVERSION_CHANGED] =
     g_signal_new ("conversion_changed",
 		  G_TYPE_FROM_CLASS(class),
@@ -418,7 +426,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->raw_data = NULL;
   data_set->current_scaling_factor = NULL;
   data_set->frame_duration = NULL;
-  data_set->max_min_calculated = FALSE;
+  data_set->min_max_calculated = FALSE;
   data_set->frame_max = NULL;
   data_set->frame_min = NULL;
   data_set->global_max = 0.0;
@@ -437,12 +445,15 @@ static void data_set_init (AmitkDataSet * data_set) {
 
   amitk_data_set_set_scale_factor(data_set, 1.0);
   data_set->conversion = AMITK_CONVERSION_STRAIGHT;
-  data_set->injected_dose = 1.0;
+  data_set->injected_dose = NAN; /* unknown */
   data_set->displayed_dose_unit = AMITK_DOSE_UNIT_MEGABECQUEREL;
-  data_set->subject_weight = 1.0;
+  data_set->subject_weight = NAN; /* unknown */
   data_set->displayed_weight_unit = AMITK_WEIGHT_UNIT_KILOGRAM;
   data_set->cylinder_factor = 1.0;
   data_set->displayed_cylinder_unit = AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT;
+
+  data_set->inversion_time = NAN; /* unknown */
+  data_set->echo_time = NAN; /* unknown */
 
   data_set->view_start_gate = 0;
   data_set->view_end_gate = 0;
@@ -456,6 +467,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   }
   data_set->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
   data_set->subject_orientation = AMITK_SUBJECT_ORIENTATION_UNKNOWN;
+  data_set->subject_sex = AMITK_SUBJECT_SEX_UNKNOWN;
   data_set->slice_cache = NULL;
   data_set->max_slice_cache_size = 6;
   data_set->slice_parent = NULL;
@@ -476,6 +488,8 @@ static void data_set_init (AmitkDataSet * data_set) {
 
   data_set->subject_dob = NULL;
   amitk_data_set_set_subject_dob(data_set, NULL);
+
+  data_set->dicom_image_type = NULL;
 
   data_set->instance_number=0;
 }
@@ -547,6 +561,11 @@ static void data_set_finalize (GObject *object)
   if (data_set->subject_dob != NULL) {
     g_free(data_set->subject_dob);
     data_set->subject_dob = NULL;
+  }
+
+  if (data_set->dicom_image_type != NULL) {
+    g_free(data_set->dicom_image_type);
+    data_set->dicom_image_type = NULL;
   }
 
   if (data_set->slice_cache != NULL) {
@@ -635,6 +654,7 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   amitk_data_set_set_subject_name(dest_ds, AMITK_DATA_SET_SUBJECT_NAME(src_object));
   amitk_data_set_set_subject_id(dest_ds, AMITK_DATA_SET_SUBJECT_ID(src_object));
   amitk_data_set_set_subject_dob(dest_ds, AMITK_DATA_SET_SUBJECT_DOB(src_object));
+  amitk_data_set_set_dicom_image_type(dest_ds, AMITK_DATA_SET_DICOM_IMAGE_TYPE(src_object));
   amitk_data_set_set_modality(dest_ds, AMITK_DATA_SET_MODALITY(src_object));
   dest_ds->voxel_size = AMITK_DATA_SET_VOXEL_SIZE(src_object);
   if (src_ds->raw_data != NULL) {
@@ -671,6 +691,8 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   dest_ds->displayed_weight_unit = AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(src_object);
   dest_ds->cylinder_factor = AMITK_DATA_SET_CYLINDER_FACTOR(src_object);
   dest_ds->displayed_cylinder_unit = AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(src_object);
+  dest_ds->inversion_time = AMITK_DATA_SET_INVERSION_TIME(src_object);
+  dest_ds->echo_time = AMITK_DATA_SET_ECHO_TIME(src_object);
 
   for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
     amitk_data_set_set_color_table(dest_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(src_object, i_view_mode));
@@ -678,6 +700,7 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
     amitk_data_set_set_color_table_independent(dest_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(src_object, i_view_mode));
   amitk_data_set_set_interpolation(dest_ds, AMITK_DATA_SET_INTERPOLATION(src_object));
   amitk_data_set_set_subject_orientation(dest_ds, AMITK_DATA_SET_SUBJECT_ORIENTATION(src_object));
+  amitk_data_set_set_subject_sex(dest_ds, AMITK_DATA_SET_SUBJECT_SEX(src_object));
   amitk_data_set_set_thresholding(dest_ds,AMITK_DATA_SET_THRESHOLDING(src_object));
   amitk_data_set_set_threshold_style(dest_ds, AMITK_DATA_SET_THRESHOLD_STYLE(src_object));
   for (i=0; i<2; i++) {
@@ -687,11 +710,8 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   }
   amitk_data_set_set_view_start_gate(dest_ds, AMITK_DATA_SET_VIEW_START_GATE(src_object));
   amitk_data_set_set_view_end_gate(dest_ds, AMITK_DATA_SET_VIEW_END_GATE(src_object));
-  dest_ds->max_min_calculated = AMITK_DATA_SET(src_object)->max_min_calculated;
-  dest_ds->global_max = AMITK_DATA_SET(src_object)->global_max;
-  dest_ds->global_min = AMITK_DATA_SET(src_object)->global_min;
 
-  /* make a separate copy in memory of the volume's frame durations and max/min values */
+  /* make a separate copy in memory of the data set's frame durations */
   if (dest_ds->frame_duration != NULL) 
     g_free(dest_ds->frame_duration);
   dest_ds->frame_duration = amitk_data_set_get_frame_duration_mem(dest_ds);
@@ -699,22 +719,32 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++)
     dest_ds->frame_duration[i] = amitk_data_set_get_frame_duration(src_ds, i);
 
-  if (!src_ds->max_min_calculated)
-    amitk_data_set_calc_max_min(src_ds, NULL, NULL);
+  /* if they've already been calculated, make a copy in memory of the data set's max/min values */
+  dest_ds->min_max_calculated = AMITK_DATA_SET(src_object)->min_max_calculated;
 
-  if (dest_ds->frame_max != NULL)
+  if (dest_ds->frame_max != NULL) {
     g_free(dest_ds->frame_max);
-  dest_ds->frame_max = amitk_data_set_get_frame_max_min_mem(dest_ds);
-  g_return_if_fail(dest_ds->frame_max != NULL);
-  for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++) 
-    dest_ds->frame_max[i] = src_ds->frame_max[i];
-
-  if (dest_ds->frame_min != NULL)
+    dest_ds->frame_max = NULL;
+  }
+  if (dest_ds->frame_min != NULL) {
     g_free(dest_ds->frame_min);
-  dest_ds->frame_min = amitk_data_set_get_frame_max_min_mem(dest_ds);
-  g_return_if_fail(dest_ds->frame_min != NULL);
-  for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++)
-    dest_ds->frame_min[i] = src_ds->frame_min[i];
+    dest_ds->frame_min = NULL;
+  }
+
+  if (src_ds->min_max_calculated) {
+    dest_ds->global_max = AMITK_DATA_SET(src_object)->global_max;
+    dest_ds->global_min = AMITK_DATA_SET(src_object)->global_min;
+
+    dest_ds->frame_max = amitk_data_set_get_frame_min_max_mem(dest_ds);
+    g_return_if_fail(dest_ds->frame_max != NULL);
+    for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++) 
+      dest_ds->frame_max[i] = src_ds->frame_max[i];
+
+    dest_ds->frame_min = amitk_data_set_get_frame_min_max_mem(dest_ds);
+    g_return_if_fail(dest_ds->frame_min != NULL);
+    for (i=0;i<AMITK_DATA_SET_NUM_FRAMES(dest_ds);i++)
+      dest_ds->frame_min[i] = src_ds->frame_min[i];
+  }
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -744,6 +774,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   xml_save_string(nodes, "subject_name", AMITK_DATA_SET_SUBJECT_NAME(ds));
   xml_save_string(nodes, "subject_id", AMITK_DATA_SET_SUBJECT_ID(ds));
   xml_save_string(nodes, "subject_dob", AMITK_DATA_SET_SUBJECT_DOB(ds));
+  xml_save_string(nodes, "subject_dicom_image_type", AMITK_DATA_SET_DICOM_IMAGE_TYPE(ds));
   xml_save_string(nodes, "modality", amitk_modality_get_name(AMITK_DATA_SET_MODALITY(ds)));
   amitk_point_write_xml(nodes,"voxel_size", AMITK_DATA_SET_VOXEL_SIZE(ds));
 
@@ -800,6 +831,9 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   xml_save_string(nodes, "displayed_weight_unit", amitk_weight_unit_get_name(ds->displayed_weight_unit));
   xml_save_data(nodes, "cylinder_factor", AMITK_DATA_SET_CYLINDER_FACTOR(ds));
   xml_save_string(nodes, "displayed_cylinder_unit", amitk_cylinder_unit_get_name(ds->displayed_cylinder_unit));
+
+  xml_save_data(nodes, "inversion_time", AMITK_DATA_SET_INVERSION_TIME(ds));
+  xml_save_data(nodes, "echo_time", AMITK_DATA_SET_ECHO_TIME(ds));
 		  
   xml_save_time(nodes, "scan_start", AMITK_DATA_SET_SCAN_START(ds));
   xml_save_times(nodes, "frame_duration", ds->frame_duration, AMITK_DATA_SET_NUM_FRAMES(ds));
@@ -816,6 +850,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
 
   xml_save_string(nodes, "interpolation", amitk_interpolation_get_name(AMITK_DATA_SET_INTERPOLATION(ds)));
   xml_save_string(nodes, "subject_orientation", amitk_subject_orientation_get_name(AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)));
+  xml_save_string(nodes, "subject_sex", amitk_subject_sex_get_name(AMITK_DATA_SET_SUBJECT_SEX(ds)));
   xml_save_string(nodes, "thresholding", amitk_thresholding_get_name(AMITK_DATA_SET_THRESHOLDING(ds)));
   xml_save_string(nodes, "threshold_style", amitk_threshold_style_get_name(AMITK_DATA_SET_THRESHOLD_STYLE(ds)));
   xml_save_data(nodes, "threshold_max_0", ds->threshold_max[0]);
@@ -850,6 +885,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   AmitkThresholdStyle i_threshold_style;
   AmitkInterpolation i_interpolation;
   AmitkSubjectOrientation i_subject_orientation;
+  AmitkSubjectSex i_subject_sex;
   AmitkScalingType i_scaling_type;
   AmitkConversion i_conversion;
   AmitkDoseUnit i_dose_unit;
@@ -885,6 +921,12 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 
   if (xml_node_exists(nodes, "subject_dob")) {
     temp_string = xml_get_string(nodes, "subject_dob");
+    amitk_data_set_set_subject_dob(ds, temp_string);
+    g_free(temp_string);
+  }
+
+  if (xml_node_exists(nodes, "dicom_image_type")) {
+    temp_string = xml_get_string(nodes, "dicom_image_type");
     amitk_data_set_set_subject_dob(ds, temp_string);
     g_free(temp_string);
   }
@@ -1039,6 +1081,9 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   ds->subject_weight = xml_get_data(nodes, "subject_weight", &error_buf); 
   ds->cylinder_factor = xml_get_data(nodes, "cylinder_factor", &error_buf);
 
+  ds->inversion_time = xml_get_data(nodes, "inversion_time", &error_buf);
+  ds->echo_time = xml_get_data(nodes, "echo_time", &error_buf);
+
   temp_string = xml_get_string(nodes, "conversion");
   if (temp_string != NULL) {
     for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
@@ -1106,6 +1151,13 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
     for (i_subject_orientation=0; i_subject_orientation < AMITK_SUBJECT_ORIENTATION_NUM; i_subject_orientation++) 
       if (g_ascii_strcasecmp(temp_string, amitk_subject_orientation_get_name(i_subject_orientation)) == 0)
 	amitk_data_set_set_subject_orientation(ds, i_subject_orientation);
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "subject_sex");
+  if (temp_string != NULL) 
+    for (i_subject_sex=0; i_subject_sex < AMITK_SUBJECT_SEX_NUM; i_subject_sex++) 
+      if (g_ascii_strcasecmp(temp_string, amitk_subject_sex_get_name(i_subject_sex)) == 0)
+	amitk_data_set_set_subject_sex(ds, i_subject_sex);
   g_free(temp_string);
 
   temp_string = xml_get_string(nodes, "thresholding");
@@ -1337,7 +1389,7 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
     ds->frame_duration[t] = 1.0;
 
   /* calc max/min values now, as we have a progress dialog */
-  amitk_data_set_calc_max_min(ds, update_func, update_data);
+  amitk_data_set_calc_min_max(ds, update_func, update_data);
 
   /* set any remaining parameters */
   amitk_object_set_name(AMITK_OBJECT(ds),data_set_name);
@@ -1773,21 +1825,22 @@ static gboolean export_raw(AmitkDataSet *ds,
 
 /* if bounding_box == NULL, will create its own using the minimal necessary */
 gboolean amitk_data_set_export_to_file(AmitkDataSet *ds,
-				   const AmitkExportMethod method, 
-				   const int submethod,
-				   const gchar * filename,
-				   const gboolean resliced,
-				   const AmitkPoint voxel_size,
-				   const AmitkVolume * bounding_box,
-				   AmitkUpdateFunc update_func,
-				   gpointer update_data) {
+				       const AmitkExportMethod method, 
+				       const int submethod,
+				       const gchar * filename,
+				       const gchar * studyname,
+				       const gboolean resliced,
+				       const AmitkPoint voxel_size,
+				       const AmitkVolume * bounding_box,
+				       AmitkUpdateFunc update_func,
+				       gpointer update_data) {
 
   gboolean successful = FALSE;
   
   switch (method) {
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   case AMITK_EXPORT_METHOD_DCMTK:
-    successful = dcmtk_export(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
+    successful = dcmtk_export(ds, filename, studyname, resliced, voxel_size, bounding_box, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
@@ -1814,6 +1867,7 @@ gboolean amitk_data_sets_export_to_file(GList * data_sets,
 					const AmitkExportMethod method, 
 					const int submethod,
 					const gchar * filename,
+					const gchar * studyname,
 					const AmitkPoint voxel_size,
 					const AmitkVolume * bounding_box,
 					AmitkUpdateFunc update_func,
@@ -1917,6 +1971,7 @@ gboolean amitk_data_sets_export_to_file(GList * data_sets,
   amitk_raw_data_DOUBLE_initialize_data(AMITK_DATA_SET_RAW_DATA(export_ds), -INFINITY);
   export_ds->scan_start = AMITK_DATA_SET_SCAN_START(max_frames_ds);
   amitk_data_set_set_subject_orientation(export_ds, AMITK_DATA_SET_SUBJECT_ORIENTATION(max_frames_ds));
+  amitk_data_set_set_subject_sex(export_ds, AMITK_DATA_SET_SUBJECT_SEX(max_frames_ds));
 
   for (i_voxel.t = 0; i_voxel.t < dim.t; i_voxel.t++) {
     amitk_data_set_set_frame_duration(export_ds, i_voxel.t,
@@ -1982,7 +2037,7 @@ gboolean amitk_data_sets_export_to_file(GList * data_sets,
   switch (method) {
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   case AMITK_EXPORT_METHOD_DCMTK:
-    successful = dcmtk_export(export_ds, filename, FALSE, zero_point, volume, update_func, update_data);
+    successful = dcmtk_export(export_ds, filename, studyname, FALSE, zero_point, volume, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
@@ -2144,16 +2199,16 @@ static void data_set_reduce_scaling_dimension(AmitkDataSet * ds) {
 
 amide_data_t amitk_data_set_get_global_max(AmitkDataSet * ds) {
 
-  if (!ds->max_min_calculated)
-    amitk_data_set_calc_max_min(ds, NULL, NULL);
+  if (!ds->min_max_calculated)
+    amitk_data_set_calc_min_max(ds, NULL, NULL);
 
   return ds->global_max;
 }
 
 amide_data_t amitk_data_set_get_global_min(AmitkDataSet * ds) {
 
-  if (!ds->max_min_calculated)
-    amitk_data_set_calc_max_min(ds, NULL, NULL);
+  if (!ds->min_max_calculated)
+    amitk_data_set_calc_min_max(ds, NULL, NULL);
 
   return ds->global_min;
 }
@@ -2161,16 +2216,16 @@ amide_data_t amitk_data_set_get_global_min(AmitkDataSet * ds) {
 
 amide_data_t amitk_data_set_get_frame_max(AmitkDataSet * ds, const guint frame) {
 
-  if (!ds->max_min_calculated)
-    amitk_data_set_calc_max_min(ds, NULL, NULL);
+  if (!ds->min_max_calculated)
+    amitk_data_set_calc_min_max(ds, NULL, NULL);
 
   return ds->frame_max[frame];
 }
 
 amide_data_t amitk_data_set_get_frame_min(AmitkDataSet * ds, const guint frame) {
 
-  if (!ds->max_min_calculated)
-    amitk_data_set_calc_max_min(ds, NULL, NULL);
+  if (!ds->min_max_calculated)
+    amitk_data_set_calc_min_max(ds, NULL, NULL);
 
   return ds->frame_min[frame];
 }
@@ -2378,6 +2433,18 @@ void amitk_data_set_set_subject_orientation(AmitkDataSet * ds, const AmitkSubjec
   return;
 }
 
+void amitk_data_set_set_subject_sex(AmitkDataSet * ds, const AmitkSubjectSex subject_sex) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_sex != subject_sex) {
+    ds->subject_sex = subject_sex;
+    g_signal_emit(G_OBJECT (ds), data_set_signals[SUBJECT_SEX_CHANGED], 0);
+  }
+
+  return;
+}
+
 /* sets the scan date of a data set
    note: no error checking is done on the date, as of yet */
 void amitk_data_set_set_scan_date(AmitkDataSet * ds, const gchar * new_date) {
@@ -2460,6 +2527,27 @@ void amitk_data_set_set_subject_dob(AmitkDataSet * ds, const gchar * new_dob) {
     g_strstrip(ds->subject_dob); /* removes trailing and leading white space */
   } else {
     ds->subject_dob = g_strdup(_("unknown"));
+  }
+
+  return;
+}
+
+/* sets the dicom image type of the data set */
+void amitk_data_set_set_dicom_image_type(AmitkDataSet * ds, const gchar * new_image_type) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->dicom_image_type != NULL) {
+    g_free(ds->dicom_image_type); 
+    ds->dicom_image_type = NULL;
+  }
+
+  if (new_image_type != NULL) {
+    ds->dicom_image_type = g_strdup(new_image_type); 
+    g_strdelimit(ds->dicom_image_type, "\n", ' '); /* turns newlines to white space */
+    g_strstrip(ds->dicom_image_type); /* removes trailing and leading white space */
+  } else {
+    ; /* leave it as NULL */
   }
 
   return;
@@ -2569,15 +2657,15 @@ static amide_data_t calculate_scale_factor(AmitkDataSet * ds) {
     value = AMITK_DATA_SET_SCALE_FACTOR(ds);
     break;
   case AMITK_CONVERSION_PERCENT_ID_PER_CC:
-    if (EQUAL_ZERO(ds->injected_dose))
+    if (!isfinite(ds->injected_dose) || (EQUAL_ZERO(ds->injected_dose)))
       value = 1.0;
     else
       value = 100.0*ds->cylinder_factor/ds->injected_dose;
     break;
   case AMITK_CONVERSION_SUV:
-    if (EQUAL_ZERO(ds->subject_weight)) 
+    if (!isfinite(ds->subject_weight) || (EQUAL_ZERO(ds->subject_weight)))
       value = 1.0;
-    else if (EQUAL_ZERO(ds->injected_dose))
+    else if (!finite(ds->injected_dose) || (EQUAL_ZERO(ds->injected_dose)))
       value = 1.0;
     else
       value = ds->cylinder_factor/(ds->injected_dose/(1000.0*ds->subject_weight));
@@ -2643,6 +2731,16 @@ void amitk_data_set_set_displayed_weight_unit(AmitkDataSet * ds, AmitkWeightUnit
 void amitk_data_set_set_displayed_cylinder_unit(AmitkDataSet * ds, AmitkCylinderUnit new_cylinder_unit) {
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   ds->displayed_cylinder_unit = new_cylinder_unit;
+}
+
+void amitk_data_set_set_inversion_time(AmitkDataSet * ds, amide_time_t new_inversion_time) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  ds->inversion_time = new_inversion_time;
+}
+
+void amitk_data_set_set_echo_time(AmitkDataSet * ds, amide_time_t new_echo_time) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  ds->echo_time = new_echo_time;
 }
 
 void amitk_data_set_set_threshold_window(AmitkDataSet * ds, 
@@ -2821,50 +2919,114 @@ void amitk_data_set_calc_far_corner(AmitkDataSet * ds) {
 
 
 
-static void (*calc_frame_max_min_func[AMITK_FORMAT_NUM][AMITK_SCALING_TYPE_NUM])(AmitkDataSet *, AmitkUpdateFunc, gpointer) = {
-  {amitk_data_set_UBYTE_0D_SCALING_calc_frame_max_min, amitk_data_set_UBYTE_1D_SCALING_calc_frame_max_min,  amitk_data_set_UBYTE_2D_SCALING_calc_frame_max_min, amitk_data_set_UBYTE_0D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_UBYTE_1D_SCALING_INTERCEPT_calc_frame_max_min,  amitk_data_set_UBYTE_2D_SCALING_INTERCEPT_calc_frame_max_min  },
-  {amitk_data_set_SBYTE_0D_SCALING_calc_frame_max_min, amitk_data_set_SBYTE_1D_SCALING_calc_frame_max_min,  amitk_data_set_SBYTE_2D_SCALING_calc_frame_max_min, amitk_data_set_SBYTE_0D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_SBYTE_1D_SCALING_INTERCEPT_calc_frame_max_min,  amitk_data_set_SBYTE_2D_SCALING_INTERCEPT_calc_frame_max_min  },
-  {amitk_data_set_USHORT_0D_SCALING_calc_frame_max_min,amitk_data_set_USHORT_1D_SCALING_calc_frame_max_min, amitk_data_set_USHORT_2D_SCALING_calc_frame_max_min,amitk_data_set_USHORT_0D_SCALING_INTERCEPT_calc_frame_max_min,amitk_data_set_USHORT_1D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_USHORT_2D_SCALING_INTERCEPT_calc_frame_max_min },
-  {amitk_data_set_SSHORT_0D_SCALING_calc_frame_max_min,amitk_data_set_SSHORT_1D_SCALING_calc_frame_max_min, amitk_data_set_SSHORT_2D_SCALING_calc_frame_max_min,amitk_data_set_SSHORT_0D_SCALING_INTERCEPT_calc_frame_max_min,amitk_data_set_SSHORT_1D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_SSHORT_2D_SCALING_INTERCEPT_calc_frame_max_min },
-  {amitk_data_set_UINT_0D_SCALING_calc_frame_max_min,  amitk_data_set_UINT_1D_SCALING_calc_frame_max_min,   amitk_data_set_UINT_2D_SCALING_calc_frame_max_min,  amitk_data_set_UINT_0D_SCALING_INTERCEPT_calc_frame_max_min,  amitk_data_set_UINT_1D_SCALING_INTERCEPT_calc_frame_max_min,   amitk_data_set_UINT_2D_SCALING_INTERCEPT_calc_frame_max_min   },
-  {amitk_data_set_SINT_0D_SCALING_calc_frame_max_min,  amitk_data_set_SINT_1D_SCALING_calc_frame_max_min,   amitk_data_set_SINT_2D_SCALING_calc_frame_max_min,  amitk_data_set_SINT_0D_SCALING_INTERCEPT_calc_frame_max_min,  amitk_data_set_SINT_1D_SCALING_INTERCEPT_calc_frame_max_min,   amitk_data_set_SINT_2D_SCALING_INTERCEPT_calc_frame_max_min   },
-  {amitk_data_set_FLOAT_0D_SCALING_calc_frame_max_min, amitk_data_set_FLOAT_1D_SCALING_calc_frame_max_min,  amitk_data_set_FLOAT_2D_SCALING_calc_frame_max_min, amitk_data_set_FLOAT_0D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_FLOAT_1D_SCALING_INTERCEPT_calc_frame_max_min,  amitk_data_set_FLOAT_2D_SCALING_INTERCEPT_calc_frame_max_min  },
-  {amitk_data_set_DOUBLE_0D_SCALING_calc_frame_max_min,amitk_data_set_DOUBLE_1D_SCALING_calc_frame_max_min, amitk_data_set_DOUBLE_2D_SCALING_calc_frame_max_min,amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT_calc_frame_max_min,amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT_calc_frame_max_min, amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT_calc_frame_max_min }
+static void (*calc_slice_min_max_func[AMITK_FORMAT_NUM][AMITK_SCALING_TYPE_NUM])(AmitkDataSet *, const amide_intpoint_t, const amide_intpoint_t, const amide_intpoint_t, amitk_format_DOUBLE_t *, amitk_format_DOUBLE_t *) = {
+  {amitk_data_set_UBYTE_0D_SCALING_calc_slice_min_max, amitk_data_set_UBYTE_1D_SCALING_calc_slice_min_max,  amitk_data_set_UBYTE_2D_SCALING_calc_slice_min_max, amitk_data_set_UBYTE_0D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_UBYTE_1D_SCALING_INTERCEPT_calc_slice_min_max,  amitk_data_set_UBYTE_2D_SCALING_INTERCEPT_calc_slice_min_max  },
+  {amitk_data_set_SBYTE_0D_SCALING_calc_slice_min_max, amitk_data_set_SBYTE_1D_SCALING_calc_slice_min_max,  amitk_data_set_SBYTE_2D_SCALING_calc_slice_min_max, amitk_data_set_SBYTE_0D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_SBYTE_1D_SCALING_INTERCEPT_calc_slice_min_max,  amitk_data_set_SBYTE_2D_SCALING_INTERCEPT_calc_slice_min_max  },
+  {amitk_data_set_USHORT_0D_SCALING_calc_slice_min_max,amitk_data_set_USHORT_1D_SCALING_calc_slice_min_max, amitk_data_set_USHORT_2D_SCALING_calc_slice_min_max,amitk_data_set_USHORT_0D_SCALING_INTERCEPT_calc_slice_min_max,amitk_data_set_USHORT_1D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_USHORT_2D_SCALING_INTERCEPT_calc_slice_min_max },
+  {amitk_data_set_SSHORT_0D_SCALING_calc_slice_min_max,amitk_data_set_SSHORT_1D_SCALING_calc_slice_min_max, amitk_data_set_SSHORT_2D_SCALING_calc_slice_min_max,amitk_data_set_SSHORT_0D_SCALING_INTERCEPT_calc_slice_min_max,amitk_data_set_SSHORT_1D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_SSHORT_2D_SCALING_INTERCEPT_calc_slice_min_max },
+  {amitk_data_set_UINT_0D_SCALING_calc_slice_min_max,  amitk_data_set_UINT_1D_SCALING_calc_slice_min_max,   amitk_data_set_UINT_2D_SCALING_calc_slice_min_max,  amitk_data_set_UINT_0D_SCALING_INTERCEPT_calc_slice_min_max,  amitk_data_set_UINT_1D_SCALING_INTERCEPT_calc_slice_min_max,   amitk_data_set_UINT_2D_SCALING_INTERCEPT_calc_slice_min_max   },
+  {amitk_data_set_SINT_0D_SCALING_calc_slice_min_max,  amitk_data_set_SINT_1D_SCALING_calc_slice_min_max,   amitk_data_set_SINT_2D_SCALING_calc_slice_min_max,  amitk_data_set_SINT_0D_SCALING_INTERCEPT_calc_slice_min_max,  amitk_data_set_SINT_1D_SCALING_INTERCEPT_calc_slice_min_max,   amitk_data_set_SINT_2D_SCALING_INTERCEPT_calc_slice_min_max   },
+  {amitk_data_set_FLOAT_0D_SCALING_calc_slice_min_max, amitk_data_set_FLOAT_1D_SCALING_calc_slice_min_max,  amitk_data_set_FLOAT_2D_SCALING_calc_slice_min_max, amitk_data_set_FLOAT_0D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_FLOAT_1D_SCALING_INTERCEPT_calc_slice_min_max,  amitk_data_set_FLOAT_2D_SCALING_INTERCEPT_calc_slice_min_max  },
+  {amitk_data_set_DOUBLE_0D_SCALING_calc_slice_min_max,amitk_data_set_DOUBLE_1D_SCALING_calc_slice_min_max, amitk_data_set_DOUBLE_2D_SCALING_calc_slice_min_max,amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT_calc_slice_min_max,amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT_calc_slice_min_max, amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT_calc_slice_min_max }
 };
 
 
+void amitk_data_set_slice_calc_min_max (AmitkDataSet * ds,
+					const amide_intpoint_t frame,
+					const amide_intpoint_t gate,
+					const amide_intpoint_t z,
+					amitk_format_DOUBLE_t * pmin,
+					amitk_format_DOUBLE_t * pmax) {
+  (*calc_slice_min_max_func[ds->raw_data->format][ds->scaling_type])(ds, frame, gate, z, pmin, pmax);
+}
+
 /* function to calculate the max and min over the data frames */
-void amitk_data_set_calc_max_min(AmitkDataSet * ds,
+void amitk_data_set_calc_min_max(AmitkDataSet * ds,
 				 AmitkUpdateFunc update_func,
 				 gpointer update_data) {
 
-  guint i;
+  AmitkVoxel i;
+  amide_data_t max, min, temp;
+  amide_data_t slice_max, slice_min;
+  div_t x;
+  gint divider;
+  gint total_planes;
+  gint i_plane;
+  gchar * temp_string;
+  AmitkVoxel dim;
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   g_return_if_fail(ds->raw_data != NULL);
 
+  dim = AMITK_DATA_SET_DIM(ds);
+
   /* allocate the arrays if we haven't already */
   if (ds->frame_max == NULL) {
-    ds->frame_max = amitk_data_set_get_frame_max_min_mem(ds);
-    ds->frame_min = amitk_data_set_get_frame_max_min_mem(ds);
+    ds->frame_max = amitk_data_set_get_frame_min_max_mem(ds);
+    ds->frame_min = amitk_data_set_get_frame_min_max_mem(ds);
   }
   g_return_if_fail(ds->frame_max != NULL);
   g_return_if_fail(ds->frame_min != NULL);
 
-  (*calc_frame_max_min_func[ds->raw_data->format][ds->scaling_type])(ds, update_func, update_data);
+  /* note, we can't cancel this */
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf(_("Calculating Max/Min Values for:\n   %s"), 
+				  AMITK_OBJECT_NAME(ds) == NULL ? "dataset" :
+				  AMITK_OBJECT_NAME(ds));
+    (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+
+  total_planes = AMITK_DATA_SET_TOTAL_PLANES(ds);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
+
+  i_plane=0;
+  for (i.t = 0; i.t < dim.t; i.t++) {
+    i.x = i.y = i.z = i.g = 0;
+    temp = amitk_data_set_get_value(ds,i);
+    if (finite(temp)) max = min = temp;   
+    else max = min = 0.0; /* just throw in zero */
+
+    for (i.g = 0; i.g < dim.g; i.g++) {
+      for (i.z = 0; i.z < dim.z; i.z++, i_plane++) {
+	if (update_func != NULL) {
+	  x = div(i_plane, divider);
+	  if (x.rem == 0) 
+	    (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
+	}
+	amitk_data_set_slice_calc_min_max(ds, i.t, i.g, i.z, &slice_min, &slice_max);
+	if (finite(slice_min))
+	  if (slice_min < min)
+	    min = slice_min;
+	if (finite(slice_max))
+	  if (slice_max > max)
+	    max = slice_max;
+      }
+    }    
+    ds->frame_max[i.t] = max;
+    ds->frame_min[i.t] = min;
+    
+#ifdef AMIDE_DEBUG
+    if (dim.z > 1) /* don't print for slices */
+      g_print("\tframe %d max %5.3g frame min %5.3g\n",i.t, ds->frame_max[i.t],ds->frame_min[i.t]);
+#endif
+  }
+
+  if (update_func != NULL)
+    (*update_func)(update_data, NULL, (gdouble) 2.0); /* remove progress bar */
 
   /* calc the global max/min */
   ds->global_max = ds->frame_max[0];
   ds->global_min = ds->frame_min[0];
-  for (i=1; i<AMITK_DATA_SET_NUM_FRAMES(ds); i++) {
-    if (ds->global_max < ds->frame_max[i]) 
-      ds->global_max = ds->frame_max[i];
-    if (ds->global_min > ds->frame_min[i])
-      ds->global_min = ds->frame_min[i];
+  for (i.t=1; i.t<AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
+    if (ds->global_max < ds->frame_max[i.t]) 
+      ds->global_max = ds->frame_max[i.t];
+    if (ds->global_min > ds->frame_min[i.t])
+      ds->global_min = ds->frame_min[i.t];
   }
 
   /* note that we've calculated the max and mins */
-  ds->max_min_calculated = TRUE;
+  ds->min_max_calculated = TRUE;
 
 #ifdef AMIDE_DEBUG
   if (AMITK_DATA_SET_DIM_Z(ds) > 1) /* don't print for slices */
@@ -2979,11 +3141,11 @@ amide_data_t amitk_data_set_get_min(AmitkDataSet * ds,
 /* slice is only needed for THRESHOLDING_PER_SLICE */
 /* valid values for start and duration only needed for THRESHOLDING_PER_FRAME
    and THRESHOLDING_INTERPOLATE_FRAMES */
-void amitk_data_set_get_thresholding_max_min(AmitkDataSet * ds, 
+void amitk_data_set_get_thresholding_min_max(AmitkDataSet * ds, 
 					     AmitkDataSet * slice,
 					     const amide_time_t start,
 					     const amide_time_t duration,
-					     amide_data_t * max, amide_data_t * min) {
+					     amide_data_t * min, amide_data_t * max) {
 
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
@@ -4488,7 +4650,7 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(cropped);
-  amitk_data_set_calc_max_min(cropped, update_func, update_data);
+  amitk_data_set_calc_min_max(cropped, update_func, update_data);
 
   /* and shift the offset appropriately */
   POINT_MULT(start, AMITK_DATA_SET_VOXEL_SIZE(cropped), temp_pt);
@@ -5029,7 +5191,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 
 
   /* recalc the temporary parameters */
-  amitk_data_set_calc_max_min(filtered, update_func, update_data);
+  amitk_data_set_calc_min_max(filtered, update_func, update_data);
   return filtered;
     
  error:
@@ -5541,7 +5703,7 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1,
     goto error;
 
   /* recalc the temporary parameters */
-  amitk_data_set_calc_max_min(output_ds, NULL, NULL);
+  amitk_data_set_calc_min_max(output_ds, NULL, NULL);
 
   /* set some sensible thresholds */
   output_ds->threshold_max[0] = output_ds->threshold_max[1] = 
@@ -5616,6 +5778,18 @@ const gchar * amitk_subject_orientation_get_name(const AmitkSubjectOrientation s
 
   enum_class = g_type_class_ref(AMITK_TYPE_SUBJECT_ORIENTATION);
   enum_value = g_enum_get_value(enum_class, subject_orientation);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_subject_sex_get_name(const AmitkSubjectSex subject_sex) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_SUBJECT_SEX);
+  enum_value = g_enum_get_value(enum_class, subject_sex);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

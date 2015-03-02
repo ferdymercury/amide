@@ -173,6 +173,7 @@ void read_xif(ui_study_t * ui_study, gboolean import_object, gboolean as_directo
 					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
 
   if (!as_directory) 
     create_xif_filters(GTK_FILE_CHOOSER(file_chooser));  /* only include *.xif in the list by default */
@@ -433,6 +434,7 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
 					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
 
   if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
     filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
@@ -458,7 +460,7 @@ void ui_study_cb_import(GtkAction * action, gpointer data) {
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* now, what we need to do if we've successfully gotten an image filename */
-  if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename,
+  if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename, 
 						     ui_study->preferences, amitk_progress_dialog_update, 
 						     ui_study->progress_dialog)) != NULL) {
     
@@ -500,6 +502,7 @@ void ui_study_cb_export_data_set(GtkAction * action, gpointer data) {
   /* let the user input rendering options */
   tb_export_data_set(ui_study->study,
 		     AMITK_DATA_SET(ui_study->active_object),
+		     ui_study->preferences,
 		     ui_study->window);
 
   return;
@@ -537,6 +540,7 @@ void ui_study_cb_export_view(GtkAction * action, gpointer data) {
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(ui_study->preferences, file_chooser); /* set the default directory if applicable */
 
 
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "view"));
@@ -964,7 +968,8 @@ void ui_study_cb_series(GtkAction * action, gpointer data) {
     ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
     ui_series_create(ui_study->study, 
 		     ui_study->active_object,
-		     selected_objects);
+		     selected_objects,
+		     ui_study->preferences);
     ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   }
 
@@ -980,7 +985,7 @@ void ui_study_cb_fly_through(GtkAction * action, gpointer data) {
   
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(action), "view"));
 
-  tb_fly_through(ui_study->study, view,ui_study->window);
+  tb_fly_through(ui_study->study, view, ui_study->preferences, ui_study->window);
 
   return;
 }
@@ -1007,7 +1012,7 @@ void ui_study_cb_render(GtkAction * action, gpointer data) {
   /* we want to render */
   if (return_val == AMITK_RESPONSE_EXECUTE) {
     ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-    ui_render_create(ui_study->study, selected_objects);
+    ui_render_create(ui_study->study, selected_objects, ui_study->preferences);
     ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   }
 
@@ -1034,7 +1039,7 @@ void ui_study_cb_roi_statistics(GtkAction * action, gpointer data) {
     return; /* we hit cancel */
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  tb_roi_analysis(ui_study->study, ui_study->window);
+  tb_roi_analysis(ui_study->study, ui_study->preferences, ui_study->window);
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
@@ -1068,7 +1073,7 @@ void ui_study_cb_fads_selected(GtkAction * action, gpointer data) {
     g_warning("%s",no_active_ds);
   else {
 #ifdef AMIDE_LIBGSL_SUPPORT
-    tb_fads(AMITK_DATA_SET(ui_study->active_object), ui_study->window);
+    tb_fads(AMITK_DATA_SET(ui_study->active_object), ui_study->preferences, ui_study->window);
 #else
     g_warning("%s",no_gsl);
 #endif
@@ -1092,7 +1097,7 @@ void ui_study_cb_filter_selected(GtkAction * action, gpointer data) {
 void ui_study_cb_profile_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
 
-  tb_profile(ui_study->study, ui_study->window);
+  tb_profile(ui_study->study, ui_study->preferences, ui_study->window);
 
   return;
 }

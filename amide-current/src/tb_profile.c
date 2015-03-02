@@ -55,6 +55,7 @@ typedef struct tb_profile_t {
 
   GtkWidget * dialog;
   AmitkStudy * study;
+  AmitkPreferences * preferences;
   GtkWidget * angle_spin;
   guint idle_handler_id;
   GtkWidget * canvas;
@@ -187,6 +188,11 @@ static tb_profile_t * profile_free(tb_profile_t * tb_profile) {
 
     }
 
+    if (tb_profile->preferences != NULL) {
+      g_object_unref(tb_profile->preferences);
+      tb_profile->preferences = NULL;
+    }
+
     if (tb_profile->idle_handler_id != 0) {
       g_source_remove(tb_profile->idle_handler_id);
       tb_profile->idle_handler_id = 0;
@@ -220,6 +226,7 @@ static tb_profile_t * profile_init(void) {
 
   tb_profile->reference_count = 1;
   tb_profile->study = NULL;
+  tb_profile->preferences = NULL;
   tb_profile->dialog = NULL;
   tb_profile->idle_handler_id = 0;
   tb_profile->results = NULL;
@@ -313,6 +320,7 @@ static void export_profiles(tb_profile_t * tb_profile) {
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(tb_profile->preferences, file_chooser); /* set the default directory if applicable */
 
   /* take a guess at the filename */
   filename = g_strdup_printf("%s_profile_{%s",
@@ -1146,7 +1154,7 @@ static void profile_update_entries(tb_profile_t * tb_profile) {
 }
 
 
-void tb_profile(AmitkStudy * study, GtkWindow * parent) {
+void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * parent) {
 
   GtkWidget * dialog;
   gchar * title;
@@ -1164,6 +1172,7 @@ void tb_profile(AmitkStudy * study, GtkWindow * parent) {
   
   tb_profile = profile_init();
   tb_profile->study = g_object_ref(study);
+  tb_profile->preferences = g_object_ref(preferences);
 
   /* make the line profile visible */
   amitk_line_profile_set_visible(AMITK_STUDY_LINE_PROFILE(tb_profile->study), TRUE);

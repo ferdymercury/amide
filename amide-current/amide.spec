@@ -1,12 +1,12 @@
 Name: 		amide
-Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	1.0.0
-Release: 	1%{?dist}
-License: 	GPL
+Version: 	1.0.1
+Release: 	2%{?dist}
+Summary: 	Program for viewing and analyzing medical image data sets
+License: 	GPLv2+
 Group: 		Applications/Engineering
-Source: 	%{name}-%{version}.tgz
 URL: 		http://amide.sourceforge.net
-BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
+Source0: 	http://downloads.sourceforge.net/%{name}/%{name}-%{version}.tgz
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Packager: 	Andy Loening <loening at alum dot mit dot edu>
 
 Requires:	xmedcon >= 0.10.0
@@ -35,6 +35,7 @@ BuildRequires:  gtk2-devel >= 2.10
 BuildRequires:	gnome-vfs2-devel
 
 %description 
+
 AMIDE is a tool for viewing and analyzing medical image data sets.
 It's capabilities include the simultaneous handling of multiple data
 sets imported from a variety of file formats, image fusion, 3D region
@@ -55,7 +56,7 @@ make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%makeinstall
+make install DESTDIR=$RPM_BUILD_ROOT
 
 desktop-file-install --vendor gnome --delete-original                   \
   --dir $RPM_BUILD_ROOT%{_datadir}/applications                         \

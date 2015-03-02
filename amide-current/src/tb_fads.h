@@ -30,7 +30,7 @@
 #ifdef AMIDE_LIBGSL_SUPPORT
 
 /* external functions */
-void tb_fads(AmitkDataSet * active_ds, GtkWindow * parent);
+void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow * parent);
 
 
 #endif

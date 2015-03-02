@@ -67,10 +67,10 @@ GType amitk_progress_dialog_get_type (void)
 
 static void dialog_class_init (AmitkProgressDialogClass *klass)
 {
-  GtkObjectClass *gtkobject_class;
+  /*  GtkObjectClass *gtkobject_class; */
   GtkDialogClass *gtkdialog_class = GTK_DIALOG_CLASS(klass);
 
-  gtkobject_class = (GtkObjectClass*) klass;
+  /* gtkobject_class = (GtkObjectClass*) klass; */
 
   progress_dialog_parent_class = g_type_class_peek_parent(klass);
 

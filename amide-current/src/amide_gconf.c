@@ -1,11 +1,11 @@
 /* amide_gconf.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2007-2011 Andy Loening
+ *
+ * Copyright (C) 2007-2011 Andy Loening except as follows
+ * win32 registery code is derived directly from gnumeric
  *
  * Author: Andy Loening <loening@alum.mit.edu>
- * win32 gconf code is derived directly from gnumeric
- *
  */
 
 /*
@@ -27,7 +27,6 @@
 
 
 #include "amide_gconf.h"
-#include <errno.h>
 
 
 
@@ -304,9 +303,14 @@ void amide_gconf_shutdown(void) {
   return;
 }
 
-gboolean amide_gconf_get_bool_with_default(const gchar *key, gboolean default_val) {
-  guchar *val = go_conf_get (root, key, REG_BINARY);
+gboolean amide_gconf_get_bool_with_default(const gchar * group, const gchar *key, gboolean default_val) {
+  guchar * val;
   gboolean res;
+  gchar * real_key;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  val = go_conf_get (root, real_key, REG_BINARY);
+  g_free(real_key);
 
   if (val) {
     res = (gboolean) *val;
@@ -317,15 +321,20 @@ gboolean amide_gconf_get_bool_with_default(const gchar *key, gboolean default_va
   }
 }
 
-gboolean amide_gconf_get_bool(const gchar * key) {
-  return amide_gconf_get_bool_with_default(key,FALSE);
+gboolean amide_gconf_get_bool(const gchar * group, const gchar * key) {
+  return amide_gconf_get_bool_with_default(group, key,FALSE);
 }
 
 
 
-gint amide_gconf_get_int_with_default(const gchar *key, gint default_val) {
-  guchar *val = go_conf_get (root, key, REG_DWORD);
+gint amide_gconf_get_int_with_default(const gchar * group, const gchar *key, gint default_val) {
+  guchar * val;
   gint res;
+  gchar * real_key;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  val = go_conf_get (root, real_key, REG_DWORD);
+  g_free(real_key);
 
   if (val) {
     res = *(gint *) val;
@@ -336,16 +345,21 @@ gint amide_gconf_get_int_with_default(const gchar *key, gint default_val) {
   }
 }
 
-gint amide_gconf_get_int(const gchar * key) {
-  return amide_gconf_get_int_with_default(key,0);
+gint amide_gconf_get_int(const gchar * group, const gchar * key) {
+  return amide_gconf_get_int_with_default(group, key,0);
 }
 
 
 
-gdouble amide_gconf_get_float_with_default(const gchar *key,gdouble default_val) {
+gdouble amide_gconf_get_float_with_default(const gchar * group, const gchar *key, gdouble default_val) {
   gdouble res = -1;
-  gchar *val = (gchar *) go_conf_get (root, key, REG_SZ);
+  gchar *val;
   gboolean valid=FALSE;
+  gchar * real_key;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  val = (gchar *) go_conf_get (root, real_key, REG_SZ);  
+  g_free(real_key);
 
   if (val) {
     res = g_ascii_strtod (val, NULL);
@@ -359,16 +373,22 @@ gdouble amide_gconf_get_float_with_default(const gchar *key,gdouble default_val)
     return res;
 }
 
-gdouble amide_gconf_get_float(const gchar * key) {
-  return amide_gconf_get_float_with_default(key, 0.0);
+gdouble amide_gconf_get_float(const gchar * group, const gchar * key) {
+  return amide_gconf_get_float_with_default(group, key, 0.0);
 }
 
 
 
 /* returns an allocated string that'll need to be free'd */
-gchar * amide_gconf_get_string_with_default(const gchar * key, const gchar * default_str) {
+gchar * amide_gconf_get_string_with_default(const gchar * group, const gchar * key, const gchar * default_str) {
 
-  gchar *val = (gchar *) go_conf_get(root, key, REG_SZ);
+  gchar * val;
+  gchar * real_key;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  val = (gchar *) go_conf_get(root, real_key, REG_SZ);
+  g_free(real_key);
+
   if (val)
     return val;
   else
@@ -376,41 +396,242 @@ gchar * amide_gconf_get_string_with_default(const gchar * key, const gchar * def
 }
 
 /* returns an allocated string that'll need to be free'd */
-gchar * amide_gconf_get_string (const gchar *key) {
-  return amide_gconf_get_string_with_default(key,NULL);
+gchar * amide_gconf_get_string (const gchar * group, const gchar *key) {
+  return amide_gconf_get_string_with_default(group, key,NULL);
 }
 
 
 
-gboolean amide_gconf_set_int(const gchar *key, gint val) {
-  return go_conf_win32_set (root, key, REG_DWORD, (guchar *) &val, sizeof (DWORD));
+gboolean amide_gconf_set_int(const gchar * group, const gchar *key, gint val) {
+  gchar * real_key;
+  gboolean return_val;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  return_val = go_conf_win32_set (root, real_key, REG_DWORD, (guchar *) &val, sizeof (DWORD));
+  g_free(real_key);
+
+  return return_val;
 }
 
-gboolean amide_gconf_set_float(const char *key, gdouble val) {
+gboolean amide_gconf_set_float(const gchar * group, const char *key, gdouble val) {
+  gchar * real_key;
+  gboolean return_val;
   gchar str[G_ASCII_DTOSTR_BUF_SIZE];
   g_ascii_dtostr (str, sizeof (str), val);
-  return go_conf_win32_set(root, key, REG_SZ, (guchar *) str, strlen (str) + 1);
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  return_val = go_conf_win32_set(root, real_key, REG_SZ, (guchar *) str, strlen (str) + 1);
+  g_free(real_key);
+
+  return return_val;
 }
 
-gboolean amide_gconf_set_bool(const gchar *key, gboolean val) {
+gboolean amide_gconf_set_bool(const gchar * group, const gchar *key, gboolean val) {
+  gchar * real_key;
+  gboolean return_val;
   guchar bool = val ? 1 : 0;
-  return go_conf_win32_set (root, key, REG_BINARY, (guchar *) &bool, sizeof (bool));
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  return_val = go_conf_win32_set (root, real_key, REG_BINARY, (guchar *) &bool, sizeof (bool));
+  g_free(real_key);
+
+  return return_val;
 }
 
-gboolean amide_gconf_set_string (const char *key, const gchar *str) {
-  return go_conf_win32_set(root, key, REG_SZ, (guchar *) str, strlen (str) + 1);
+gboolean amide_gconf_set_string (const gchar * group, const char *key, const gchar *str) {
+  gchar * real_key;
+  gboolean return_val;
+
+  real_key = g_strdup_printf("%s/%s",group,key);
+  return_val = go_conf_win32_set(root, real_key, REG_SZ, (guchar *) str, strlen (str) + 1);
+  g_free(real_key);
+
+  return return_val;
 }
 
 
+
+#elif defined(AMIDE_NATIVE_GTK_OSX)
+
+/* --------------------- flatfile version ----------------- */
+
+#include <glib/gstdio.h>
+#include <errno.h>
+
+static GKeyFile *key_file = NULL;
+static gchar * rcfilename = NULL;
+
+
+
+void amide_gconf_init(void) {
+
+  const gchar *home;
+
+  home = g_get_home_dir();
+  g_return_if_fail(home != NULL);
+
+  rcfilename = g_build_filename (home, ".amiderc", NULL);
+  g_return_if_fail(rcfilename != NULL);
+
+  /* generate the key file, and load it in if a prior .ammiderc file exists */
+  key_file = g_key_file_new();
+  g_key_file_load_from_file(key_file, rcfilename, G_KEY_FILE_NONE, NULL); 
+
+  return;
+}
+
+void amide_gconf_shutdown(void) {
+  FILE *fp = NULL;
+  gchar *key_data;
+
+  g_return_if_fail(rcfilename != NULL);
+  g_return_if_fail(key_file != NULL);
+  
+  fp = g_fopen (rcfilename, "w");
+  if (fp == NULL) {
+    g_warning ("Couldn't write configuration info to %s", rcfilename);
+    return;
+  }
+  
+  key_data = g_key_file_to_data (key_file, NULL, NULL);
+
+  if (key_data != NULL) {
+    fputs (key_data, fp);
+    g_free (key_data);
+  }
+  
+  fclose (fp);
+  return;
+}
+
+gboolean amide_gconf_get_bool_with_default(const gchar * group, const gchar *key, gboolean default_val) {
+
+  gboolean val;
+  GError *error=NULL;
+
+  g_return_val_if_fail(key_file != NULL, default_val);
+
+  val = g_key_file_get_boolean (key_file, group, key, &error);
+
+  if (error != NULL) {
+    g_error_free(error);
+    return default_val;
+  } else
+    return val;
+}
+
+gboolean amide_gconf_get_bool(const gchar * group, const gchar * key) {
+  return amide_gconf_get_bool_with_default(group,key,FALSE);
+}
+
+
+
+gint amide_gconf_get_int_with_default(const gchar * group, const gchar *key, gint default_val) {
+  gint val;
+  GError *error=NULL;
+
+  g_return_val_if_fail(key_file != NULL, default_val);
+
+  val = g_key_file_get_integer(key_file, group, key, &error);
+
+  if (error != NULL) {
+    g_error_free(error);
+    return default_val;
+  } else
+    return val;
+}
+
+gint amide_gconf_get_int(const gchar * group, const gchar * key) {
+  return amide_gconf_get_int_with_default(group, key,0);
+}
+
+
+
+gdouble amide_gconf_get_float_with_default(const gchar * group, const gchar *key,gdouble default_val) {
+  gchar *ptr;
+  gdouble val;
+  GError *error=NULL;
+  gboolean valid = FALSE;
+
+  g_return_val_if_fail(key_file != NULL, default_val);
+
+  ptr = g_key_file_get_value (key_file, group, key, &error);
+
+  if ((ptr != NULL) && (error == NULL)) {
+    val = g_ascii_strtod (ptr, NULL);
+    if (errno != ERANGE) valid = TRUE;
+  }
+
+  if (ptr != NULL)
+    g_free (ptr);
+
+  if (!valid)
+    val = default_val;
+
+  return val;
+}
+
+gdouble amide_gconf_get_float(const gchar * group, const gchar * key) {
+  return amide_gconf_get_float_with_default(group, key, 0.0);
+}
+
+
+
+/* returns an allocated string that'll need to be free'd */
+gchar * amide_gconf_get_string_with_default(const gchar * group, const gchar * key, const gchar * default_val) {
+  gchar *val;
+  GError *error=NULL;
+
+  g_return_val_if_fail(key_file != NULL, NULL);
+
+  val = g_key_file_get_string(key_file, group, key, &error);
+
+  if(error == NULL) 
+    return val;
+  else
+    return g_strdup(default_val);
+}
+
+/* returns an allocated string that'll need to be free'd */
+gchar * amide_gconf_get_string (const gchar * group, const gchar *key) {
+  return amide_gconf_get_string_with_default(group, key,NULL);
+}
+
+
+gboolean amide_gconf_set_bool(const gchar * group, const gchar *key, gboolean val) {
+  g_return_val_if_fail(key_file != NULL, FALSE);
+  g_key_file_set_boolean(key_file, group, key, val);
+  return TRUE;
+}
+
+gboolean amide_gconf_set_int(const gchar * group, const gchar *key, gint val) {
+  g_return_val_if_fail(key_file != NULL, FALSE);
+  g_key_file_set_integer(key_file, group, key, val);
+  return TRUE;
+}
+
+gboolean amide_gconf_set_float(const gchar * group, const char *key, gdouble val) {
+  g_return_val_if_fail(key_file != NULL, FALSE);
+  g_key_file_set_integer(key_file, group, key, val);
+  return TRUE;
+}
+
+
+gboolean amide_gconf_set_string (const gchar * group, const char *key, const gchar *val) {
+  g_return_val_if_fail(key_file != NULL, FALSE);
+  g_key_file_set_string (key_file, group, key, val);
+  return TRUE;
+}
 
 
 
 
 #else
 
-/* ------------------- unix version ---------------------- */
+/* ------------------- gconf version ---------------------- */
 
 #include <gconf/gconf-client.h>
+#include <errno.h>
 
 /* internal variables */
 static GConfClient * client=NULL;
@@ -426,94 +647,94 @@ void amide_gconf_shutdown(void) {
   return;
 }
 
-gint amide_gconf_get_int(const char * key) {
-  gchar * temp_key;
+gint amide_gconf_get_int(const gchar * group, const gchar * key) {
+  gchar * real_key;
   gint return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_get_int(client,temp_key,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_get_int(client,real_key,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gdouble amide_gconf_get_float(const char * key) {
-  gchar * temp_key;
+gdouble amide_gconf_get_float(const gchar * group, const gchar * key) {
+  gchar * real_key;
   gdouble return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_get_float(client,temp_key,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_get_float(client,real_key,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gboolean amide_gconf_get_bool(const char * key) {
-  gchar * temp_key;
+gboolean amide_gconf_get_bool(const gchar * group, const gchar * key) {
+  gchar * real_key;
   gboolean return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_get_bool(client,temp_key,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_get_bool(client,real_key,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gchar * amide_gconf_get_string(const char * key) {
-  gchar * temp_key;
+gchar * amide_gconf_get_string(const gchar * group, const gchar * key) {
+  gchar * real_key;
   gchar * return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_get_string(client,temp_key,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_get_string(client,real_key,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gboolean amide_gconf_set_int(const char * key, gint val) {
-  gchar * temp_key;
+gboolean amide_gconf_set_int(const gchar * group, const gchar * key, gint val) {
+  gchar * real_key;
   gboolean return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_set_int(client,temp_key,val,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_set_int(client,real_key,val,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gboolean amide_gconf_set_float(const char * key, gdouble val) {
-  gchar * temp_key;
+gboolean amide_gconf_set_float(const gchar * group, const gchar * key, gdouble val) {
+  gchar * real_key;
   gboolean return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_set_float(client,temp_key,val,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_set_float(client,real_key,val,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gboolean amide_gconf_set_bool(const char * key, gboolean val) {
-  gchar * temp_key;
+gboolean amide_gconf_set_bool(const gchar * group, const gchar * key, gboolean val) {
+  gchar * real_key;
   gboolean return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_set_bool(client,temp_key,val,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  return_val = gconf_client_set_bool(client,real_key,val,NULL);
+  g_free(real_key);
   return return_val;
 }
 
-gboolean amide_gconf_set_string(const char * key, const gchar * val) {
-  gchar * temp_key;
+gboolean amide_gconf_set_string(const gchar * group, const gchar * key, const gchar * val) {
+  gchar * real_key;
   gboolean return_val;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  return_val = gconf_client_set_string(client,temp_key,val,NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group, key);
+  return_val = gconf_client_set_string(client,real_key,val,NULL);
+  g_free(real_key);
   return return_val;
 }
 
 /* it's pretty retarded that gconf doesn't have a function that can do this more easily */
-gboolean amide_gconf_has_value(const gchar *key) {
+static gboolean amide_gconf_has_value(const gchar * group, const gchar *key) {
   GConfValue * temp_val;
-  gchar * temp_key;
+  gchar * real_key;
 
-  temp_key = g_strdup_printf("/apps/%s/%s",PACKAGE,key);
-  temp_val = gconf_client_get(client, temp_key, NULL);
-  g_free(temp_key);
+  real_key = g_strdup_printf("/apps/%s/%s/%s",PACKAGE,group,key);
+  temp_val = gconf_client_get(client, real_key, NULL);
+  g_free(real_key);
 
   if (temp_val == NULL) return FALSE;
   gconf_value_free(temp_val);
@@ -522,32 +743,32 @@ gboolean amide_gconf_has_value(const gchar *key) {
 
 
 /* some helper functions */
-gint amide_gconf_get_int_with_default(const gchar * key, const gint default_int) {
+gint amide_gconf_get_int_with_default(const gchar * group, const gchar * key, const gint default_int) {
 
-  if (amide_gconf_has_value(key)) 
-    return amide_gconf_get_int(key);
+  if (amide_gconf_has_value(group, key)) 
+    return amide_gconf_get_int(group, key);
   else
     return default_int;
 }
 
-gdouble amide_gconf_get_float_with_default(const gchar * key, const gdouble default_float) {
-  if (amide_gconf_has_value(key)) 
-    return amide_gconf_get_float(key);
+gdouble amide_gconf_get_float_with_default(const gchar * group, const gchar * key, const gdouble default_float) {
+  if (amide_gconf_has_value(group, key)) 
+    return amide_gconf_get_float(group, key);
   else
     return default_float;
 }
 
-gboolean amide_gconf_get_bool_with_default(const gchar * key, const gboolean default_bool) {
-  if (amide_gconf_has_value(key)) 
-    return amide_gconf_get_bool(key);
+gboolean amide_gconf_get_bool_with_default(const gchar * group, const gchar * key, const gboolean default_bool) {
+  if (amide_gconf_has_value(group, key)) 
+    return amide_gconf_get_bool(group, key);
   else
     return default_bool;
 }
 
 /* returns an allocated string that'll need to be free'd */
-gchar * amide_gconf_get_string_with_default(const gchar * key, const gchar * default_str) {
-  if (amide_gconf_has_value(key)) 
-    return amide_gconf_get_string(key);
+gchar * amide_gconf_get_string_with_default(const gchar * group, const gchar * key, const gchar * default_str) {
+  if (amide_gconf_has_value(group, key)) 
+    return amide_gconf_get_string(group, key);
   else
     return g_strdup(default_str);
 }

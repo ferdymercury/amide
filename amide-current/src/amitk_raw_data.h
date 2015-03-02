@@ -184,13 +184,6 @@ amide_data_t    amitk_raw_data_get_value            (const AmitkRawData * rd,
 						     const AmitkVoxel i);
 gpointer        amitk_raw_data_get_pointer          (const AmitkRawData * rd,
 						     const AmitkVoxel i);
-void            amitk_raw_data_slice_calc_min_max   (AmitkRawData * amitk_raw_data, 
-						     const amide_intpoint_t frame,
-						     const amide_intpoint_t gate,
-						     const amide_intpoint_t z,
-						     amitk_format_DOUBLE_t * min_value,
-						     amitk_format_DOUBLE_t * max_value);
-
 
 AmitkFormat    amitk_raw_format_to_format(AmitkRawFormat raw_format);
 AmitkRawFormat amitk_format_to_raw_format(AmitkFormat data_format);

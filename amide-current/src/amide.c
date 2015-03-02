@@ -98,6 +98,48 @@ void amide_log_handler(const gchar *log_domain,
 
 
 
+void missing_functionality_warning(AmitkPreferences * preferences) {
+
+  gchar * comments;
+  gchar * already_warned;
+
+#if (AMIDE_LIBGSL_SUPPORT && AMIDE_LIBMDC_SUPPORT && AMIDE_LIBDCMDATA_SUPPORT && AMIDE_LIBVOLPACK_SUPPORT && (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT))
+  return; /* nothing to complain about */
+#endif
+
+  already_warned = amide_gconf_get_string_with_default("MISSING_FUNCTIONALITY", "AlreadyWarned", "0.0.0");
+
+  if (g_strcmp0(already_warned, VERSION) == 0)
+    return;
+  else {
+    comments = g_strconcat(_("This version of AMIDE has been compiled without the following functionality:"), 
+			   "\n\n",
+#ifndef AMIDE_LIBGSL_SUPPORT
+			   _("Line profiles, factor analysis, some filtering, and some alignment (missing libgsl)."),")\n",
+#endif
+#ifndef AMIDE_LIBMDC_SUPPORT
+			   _("Reading of most medical imaging formats except raw and DICOM (missing libmdc)."),"\n",
+#endif
+#ifndef AMIDE_LIBDCMDATA_SUPPORT
+			   _("Reading of most DICOM files (missing libdcmdata/dcmtk)."),"\n",
+#endif
+#ifndef AMIDE_LIBVOLPACK_SUPPORT
+			   _("Volume rendering (missing libvolpack)."),")\n",
+#endif
+#if !(defined(AMIDE_FFMPEG_SUPPORT) || defined(AMIDE_LIBFAME_SUPPORT))
+			   _("Saving MPEG output (missing ffmpeg and missing libfame)."),")\n",
+#endif
+			   NULL);
+
+    g_warning(comments);
+    
+    g_free(comments);
+    amide_gconf_set_string("MISSING_FUNCTIONALITY", "AlreadyWarned", VERSION);
+    return;
+  }
+}
+
+
 
 static  gchar **remaining_args = NULL;
 
@@ -184,6 +226,8 @@ int main (int argc, char *argv []) {
   amitk_common_font_init();
   pixmaps_initialize_icons();
 
+  /* complain about important missing functionality if appropriate */
+  missing_functionality_warning(preferences);
 
   /* if we specified files on the command line, load them in */
   if (remaining_args != NULL) {
@@ -208,7 +252,12 @@ int main (int argc, char *argv []) {
 	    new_ds = new_data_sets->data;
 	    if (imported_study == NULL) {
 	      imported_study = amitk_study_new(preferences);
-	      amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
+	      if (AMITK_DATA_SET_SUBJECT_NAME(new_ds) != NULL)
+		amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_DATA_SET_SUBJECT_NAME(new_ds));
+	      else
+		amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds)); 
+
+	      amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_DATA_SET_SUBJECT_NAME(new_ds));
 	      amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
 	    }
 	    amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));

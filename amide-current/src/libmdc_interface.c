@@ -91,7 +91,7 @@ gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("ECAT 6 via (X)MedCon"),
   N_("InterFile 3.3"),
   N_("Analyze (SPM)"),
-  N_("DICOM 3.0"),
+  N_("DICOM 3.0 via (X)MedCon"),
   N_("NIFTI")
 };
   
@@ -279,6 +279,10 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   if (!g_utf8_validate(libmdc_fi.study_id, -1, &bad_char)) {
     invalid_point = bad_char-libmdc_fi.study_id;
     libmdc_fi.study_id[invalid_point] = '\0';
+  }
+  if (!g_utf8_validate(libmdc_fi.patient_sex, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.patient_sex;
+    libmdc_fi.patient_sex[invalid_point] = '\0';
   }
   if (!g_utf8_validate(libmdc_fi.recon_method, -1, &bad_char)) {
     invalid_point = bad_char-libmdc_fi.recon_method;
@@ -515,6 +519,13 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_data_set_set_subject_name(ds, libmdc_fi.patient_name);
   amitk_data_set_set_subject_id(ds, libmdc_fi.patient_id);
   amitk_data_set_set_subject_dob(ds, libmdc_fi.patient_dob);
+
+  /* default sex is unknown */
+  if ((libmdc_fi.patient_sex[0] == 'M') || (libmdc_fi.patient_sex[0] == 'm'))
+    amitk_data_set_set_subject_sex(ds, AMITK_SUBJECT_SEX_MALE);
+  else if ((libmdc_fi.patient_sex[0] == 'F') || (libmdc_fi.patient_sex[0] == 'f'))
+    amitk_data_set_set_subject_sex(ds, AMITK_SUBJECT_SEX_FEMALE);
+
 
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, libmdc specifies time as integers in msecs */
@@ -768,7 +779,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_data_set_set_displayed_weight_unit(ds, AMITK_WEIGHT_UNIT_KILOGRAM);
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
-  amitk_data_set_calc_max_min(ds, update_func, update_data);
+  amitk_data_set_calc_min_max(ds, update_func, update_data);
   amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
 
   /* if NIFTI format, try to get in the right orientation */
@@ -895,6 +906,8 @@ gboolean libmdc_export(AmitkDataSet * ds,
     strncpy(fi.patient_id,AMITK_DATA_SET_SUBJECT_ID(ds), MDC_MAXSTR);
   if (AMITK_DATA_SET_SUBJECT_DOB(ds) != NULL) 
     strncpy(fi.patient_dob,AMITK_DATA_SET_SUBJECT_DOB(ds), MDC_MAXSTR);
+  strncpy(fi.patient_sex, amitk_subject_sex_get_name(AMITK_DATA_SET_SUBJECT_SEX(ds)), MDC_MAXSTR);
+
   fi.injected_dose = AMITK_DATA_SET_INJECTED_DOSE(ds);
   fi.patient_weight= AMITK_DATA_SET_SUBJECT_WEIGHT(ds);
 

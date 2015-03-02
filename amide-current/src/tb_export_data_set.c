@@ -37,11 +37,12 @@
 #include "dcmtk_interface.h"
 #endif
 
-#define GCONF_AMIDE_EXPORT "EXPORT/"
+#define GCONF_AMIDE_EXPORT "EXPORT"
 
 typedef struct tb_export_t {
   AmitkStudy * study;
   AmitkDataSet * active_ds;
+  AmitkPreferences * preferences;
 
   GtkWidget * dialog;
   GtkWidget * progress_dialog;
@@ -82,6 +83,11 @@ static tb_export_t * tb_export_unref(tb_export_t * tb_export) {
       tb_export->active_ds = NULL;
     }
 
+    if (tb_export->preferences != NULL) {
+      g_object_unref(tb_export->preferences);
+      tb_export->preferences = NULL;
+    }
+
     if (tb_export->progress_dialog != NULL) {
       g_signal_emit_by_name(G_OBJECT(tb_export->progress_dialog), "delete_event", NULL, &return_val);
       tb_export->progress_dialog = NULL;
@@ -110,6 +116,7 @@ static tb_export_t * tb_export_init(void) {
   /* set any needed parameters */
   tb_export->study = NULL;
   tb_export->active_ds = NULL;
+  tb_export->preferences = NULL;
   tb_export->progress_dialog = NULL;
 
   return tb_export;
@@ -135,26 +142,26 @@ static void read_preferences(gboolean * resliced,
 			     AmitkPoint * voxel_size) {
 
   if (resliced != NULL)
-    *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"ResliceDataSet");
+    *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"ResliceDataSet");
   if (all_visible != NULL)
-    *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets");
+    *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"AllVisibleDataSets");
   if (inclusive_bounding_box != NULL)
-    *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox");
+    *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT,"InclusiveBoundingBox");
   if (method != NULL)
-    *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Method");
+    *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"Method");
   if (submethod != NULL)
-    *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Submethod");
+    *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT,"Submethod");
 
   if (voxel_size != NULL) {
-    (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeZ");
+    (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeZ");
     if (EQUAL_ZERO((*voxel_size).z))
       (*voxel_size).z =  1.0;
     
-    (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeY");
+    (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeY");
     if (EQUAL_ZERO((*voxel_size).y)) 
       (*voxel_size).y =  1.0;
     
-    (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeX");
+    (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT,"VoxelSizeX");
     if (EQUAL_ZERO((*voxel_size).x)) 
       (*voxel_size).x =  1.0;
   }
@@ -196,8 +203,9 @@ static gboolean export_data_set(tb_export_t * tb_export, gchar * filename) {
 
   if (!all_visible) {
     successful = amitk_data_set_export_to_file(tb_export->active_ds, 
-					       method, submethod, filename, resliced,
-					       voxel_size, bounding_box,
+					       method, submethod, filename, 
+					       AMITK_OBJECT_NAME(tb_export->study),
+					       resliced, voxel_size, bounding_box,
 					       amitk_progress_dialog_update,
 					       tb_export->progress_dialog);
   } else {
@@ -208,6 +216,7 @@ static gboolean export_data_set(tb_export_t * tb_export, gchar * filename) {
       g_warning(_("No Data Sets are current visible"));
     } else {
       successful = amitk_data_sets_export_to_file(data_sets, method, submethod, filename, 
+						  AMITK_OBJECT_NAME(tb_export->study),
 						  voxel_size, bounding_box,
 						  amitk_progress_dialog_update,
 						  tb_export->progress_dialog);
@@ -244,6 +253,7 @@ static void response_cb (GtkDialog * main_dialog, gint response_id, gpointer dat
 					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+    amitk_preferences_set_file_chooser_directory(tb_export->preferences, file_chooser); /* set the default directory if applicable */
 
     /* for DCMTK dicom files we don't want to  complain about file existing, as we might be appending */
     read_preferences(NULL, NULL, NULL, &method, NULL, NULL);
@@ -293,14 +303,14 @@ static void response_cb (GtkDialog * main_dialog, gint response_id, gpointer dat
 
 
 static void write_voxel_size(AmitkPoint voxel_size) {
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeZ", voxel_size.z);
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeY", voxel_size.y);
-  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeX", voxel_size.x);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeZ", voxel_size.z);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeY", voxel_size.y);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT,"VoxelSizeX", voxel_size.x);
   return;
 }
 
 static void write_inclusive_bounding_box(gboolean inclusive) {
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox", inclusive);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"InclusiveBoundingBox", inclusive);
   return;
 }
 
@@ -400,8 +410,8 @@ static void reslice_radio_buttons_cb(GtkWidget * widget, gpointer data) {
   resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
   all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_visible"));
 
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"ResliceDataSet", resliced);
-  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets", all_visible);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"ResliceDataSet", resliced);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT,"AllVisibleDataSets", all_visible);
 
   /* recalculate voxel sizes */
   recommend_voxel_size(tb_export);
@@ -472,15 +482,17 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
       }  
   }
 
-  amide_gconf_set_int(GCONF_AMIDE_EXPORT"Method", method);
-  amide_gconf_set_int(GCONF_AMIDE_EXPORT"Submethod", submethod);
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"Method", method);
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT,"Submethod", submethod);
 
   return;
 }
 
 
 /* function to setup a dialog to allow us to choice options for rendering */
-void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds, 
+void tb_export_data_set(AmitkStudy * study, 
+			AmitkDataSet * active_ds, 
+			AmitkPreferences * preferences,
 			GtkWindow * parent) {
 
   
@@ -518,6 +530,7 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
   tb_export = tb_export_init();
   tb_export->study = AMITK_STUDY(amitk_object_ref(AMITK_OBJECT(study)));
   tb_export->active_ds = amitk_object_ref(active_ds);
+  tb_export->preferences = g_object_ref(preferences);
 
   temp_string = g_strdup_printf(_("%s: Export Data Set Dialog"), PACKAGE);
   tb_export->dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
@@ -602,6 +615,9 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
 
 
   label = gtk_label_new(_("export format:"));
+  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
   /* select the export type */
   export_menu = gtk_combo_box_new_text();
 

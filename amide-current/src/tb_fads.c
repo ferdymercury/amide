@@ -82,6 +82,7 @@ typedef struct tb_fads_t {
   GtkWidget * dialog;
 
   AmitkDataSet * data_set;
+  AmitkPreferences * preferences;
   gint num_factors;
   gint max_iterations;
   gdouble stopping_criteria;
@@ -114,7 +115,7 @@ typedef struct tb_fads_t {
 
 
 static void set_text(tb_fads_t * tb_fads);
-static gchar * get_filename(GtkWidget * parent_dialog, AmitkDataSet * ds);
+static gchar * get_filename(tb_fads_t * tb_fads);
 
 static void fads_type_cb(GtkWidget * widget, gpointer data);
 static void algorithm_cb(GtkWidget * widget, gpointer data);
@@ -177,23 +178,24 @@ static void set_text(tb_fads_t * tb_fads) {
 
 /* function to get a name to save the output as: 
    returned string will need to be free'd if not NULL */
-static gchar * get_filename(GtkWidget * parent_dialog, AmitkDataSet * data_set) {
+static gchar * get_filename(tb_fads_t * tb_fads) {
   
   GtkWidget * file_chooser;
   gchar * analysis_name;
   gchar * save_filename;
 
   file_chooser = gtk_file_chooser_dialog_new (_("Filename for Factor Data"),
-					      GTK_WINDOW(parent_dialog), /* parent window */
+					      GTK_WINDOW(tb_fads->dialog), /* parent window */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					      NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(tb_fads->preferences, file_chooser); /* set the default directory if applicable */
 
   /* take a guess at the filename */
-  analysis_name = g_strdup_printf("%s_fads_analysis.tsv",AMITK_OBJECT_NAME(data_set));
+  analysis_name = g_strdup_printf("%s_fads_analysis.tsv",AMITK_OBJECT_NAME(tb_fads->data_set));
   gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (file_chooser), analysis_name);
   g_free(analysis_name);
 
@@ -375,7 +377,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
   GtkTreeIter iter;
     
 
-  output_filename = get_filename(tb_fads->dialog, tb_fads->data_set);
+  output_filename = get_filename(tb_fads);
   if (output_filename == NULL) return; /* no filename, no go */
 
   /* get the blood values */
@@ -495,6 +497,11 @@ static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads) {
       tb_fads->data_set = NULL;
     }
 
+    if (tb_fads->preferences != NULL) {
+      g_object_unref(tb_fads->preferences);
+      tb_fads->preferences = NULL;
+    }
+
     if (tb_fads->progress_dialog != NULL) {
       g_signal_emit_by_name(G_OBJECT(tb_fads->progress_dialog), "delete_event", NULL, &return_val);
       tb_fads->progress_dialog = NULL;
@@ -520,6 +527,7 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->reference_count = 1;
   tb_fads->dialog = NULL;
   tb_fads->data_set = NULL;
+  tb_fads->preferences = NULL;
   tb_fads->num_factors = 2;
   tb_fads->max_iterations = 1e6;
   tb_fads->stopping_criteria = 1e-2;
@@ -532,7 +540,7 @@ static tb_fads_t * tb_fads_init(void) {
   //  tb_fads->algorithm = FADS_MINIMIZER_VECTOR_BFGS;
   tb_fads->algorithm = FADS_MINIMIZER_CONJUGATE_PR;
   tb_fads->explanation_buffer = NULL;
-
+  tb_fads->progress_dialog = NULL;
 
   return tb_fads;
 }
@@ -884,7 +892,7 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 }
 
 
-void tb_fads(AmitkDataSet * active_ds, GtkWindow * parent) {
+void tb_fads(AmitkDataSet * active_ds, AmitkPreferences * preferences, GtkWindow * parent) {
 
   tb_fads_t * tb_fads;
   GdkPixbuf * logo;
@@ -895,6 +903,8 @@ void tb_fads(AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_fads = tb_fads_init();
   tb_fads->data_set = amitk_object_ref(active_ds);
+  tb_fads->preferences = g_object_ref(preferences);
+
 
   tb_fads->dialog = gtk_assistant_new();
   gtk_window_set_transient_for(GTK_WINDOW(tb_fads->dialog), parent);

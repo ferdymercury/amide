@@ -74,7 +74,7 @@ N_("Median filters work relatively well at preserving edges while\n"
 #ifndef AMIDE_LIBGSL_SUPPORT
 static const char *no_libgsl_text =
 N_("This filter requires support from the GNU Scientific Library (GSL).\n"
-   "This version of AMIDE has not be compiled with GSL support enabled.");
+   "This version of AMIDE has not been compiled with GSL support enabled.");
 #endif
 
 

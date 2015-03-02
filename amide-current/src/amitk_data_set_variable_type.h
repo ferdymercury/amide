@@ -71,12 +71,18 @@
      - (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling_intercept, (i)))))
 
 /* function declarations */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set,
-									     AmitkUpdateFunc update_func,
-									     gpointer update_data);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_calc_frame_max_min(AmitkDataSet * data_set,
-										       AmitkUpdateFunc update_func,
-										       gpointer update_data);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_slice_min_max(AmitkDataSet * data_set,
+									     const amide_intpoint_t frame,
+									     const amide_intpoint_t gate,
+									     const amide_intpoint_t z,
+									     amitk_format_DOUBLE_t * pmin,
+									     amitk_format_DOUBLE_t * pmax);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERCEPT_calc_slice_min_max(AmitkDataSet * data_set,
+										       const amide_intpoint_t frame,
+										       const amide_intpoint_t gate,
+										       const amide_intpoint_t z,
+										       amitk_format_DOUBLE_t * pmin,
+										       amitk_format_DOUBLE_t * pmax);
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
 									     AmitkUpdateFunc update_func,
 									    gpointer update_data);

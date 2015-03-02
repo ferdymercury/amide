@@ -813,7 +813,7 @@ const gchar * amitk_roi_type_get_name(const AmitkRoiType roi_type) {
 
 /* returns the minimum dimensional width of the roi with the largest voxel size */
 /* only operates on ISOCONTOUR roi's */
-amide_real_t amitk_rois_get_max_min_voxel_size(GList * objects) {
+amide_real_t amitk_rois_get_m_voxel_size(GList * objects) {
 
   amide_real_t min_voxel_size, temp;
 

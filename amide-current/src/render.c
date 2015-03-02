@@ -601,10 +601,10 @@ gboolean rendering_load_object(rendering_t * rendering,
       dim.y = MIN(rendering->dim.y, AMITK_DATA_SET_DIM_Y(slice));
 
 
-      amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
+      amitk_data_set_get_thresholding_min_max(AMITK_DATA_SET_SLICE_PARENT(slice),
 					      AMITK_DATA_SET(slice),
 					      rendering->start, 
-					      rendering->duration, &max, &min);
+					      rendering->duration, &min, &max);
 
       scale = ((amide_data_t) RENDERING_DENSITY_MAX) / (max-min);
 

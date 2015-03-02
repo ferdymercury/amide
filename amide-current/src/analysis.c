@@ -141,7 +141,7 @@ static gint array_comparison(gconstpointer a, gconstpointer b) {
 
 
 
-/* note, the following function for weight variance calcuation is
+/* note, the following function for weight variance calculation is
    derived from statistics/wvariance_source.c from gsl version 1.3.  
    copyright Jim Davies, Brian Gough, released under GPL. */
 /* The variance is divided by N-1, since the mean in a sense is being

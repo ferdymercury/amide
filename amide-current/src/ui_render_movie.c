@@ -241,6 +241,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
+    amitk_preferences_set_file_chooser_directory(ui_render_movie->ui_render->preferences, file_chooser); /* set the default directory if applicable */
 
     /* take a guess at the filename */
     temp_renderings = ui_render_movie->ui_render->renderings;

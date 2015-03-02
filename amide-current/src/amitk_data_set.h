@@ -72,6 +72,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SUBJECT_NAME(ds)            (AMITK_DATA_SET(ds)->subject_name)
 #define AMITK_DATA_SET_SUBJECT_ID(ds)              (AMITK_DATA_SET(ds)->subject_id)
 #define AMITK_DATA_SET_SUBJECT_DOB(ds)             (AMITK_DATA_SET(ds)->subject_dob)
+#define AMITK_DATA_SET_DICOM_IMAGE_TYPE(ds)        (AMITK_DATA_SET(ds)->dicom_image_type)
 #define AMITK_DATA_SET_SCAN_START(ds)              (AMITK_DATA_SET(ds)->scan_start)
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
@@ -79,6 +80,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SCALING_TYPE(ds)            (AMITK_DATA_SET(ds)->scaling_type)
 #define AMITK_DATA_SET_SCALING_HAS_INTERCEPT(ds)   ((AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_0D_WITH_INTERCEPT) || (AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_1D_WITH_INTERCEPT) || (AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_2D_WITH_INTERCEPT)) 
 #define AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)     (AMITK_DATA_SET(ds)->subject_orientation)
+#define AMITK_DATA_SET_SUBJECT_SEX(ds)             (AMITK_DATA_SET(ds)->subject_sex)
 
 #define AMITK_DATA_SET_CONVERSION(ds)              (AMITK_DATA_SET(ds)->conversion)
 #define AMITK_DATA_SET_SCALE_FACTOR(ds)            (AMITK_DATA_SET(ds)->scale_factor)
@@ -88,6 +90,8 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(ds)   (AMITK_DATA_SET(ds)->displayed_weight_unit)
 #define AMITK_DATA_SET_CYLINDER_FACTOR(ds)         (AMITK_DATA_SET(ds)->cylinder_factor)
 #define AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(ds) (AMITK_DATA_SET(ds)->displayed_cylinder_unit)
+#define AMITK_DATA_SET_INVERSION_TIME(ds)          (AMITK_DATA_SET(ds)->inversion_time)
+#define AMITK_DATA_SET_ECHO_TIME(ds)               (AMITK_DATA_SET(ds)->echo_time)
 #define AMITK_DATA_SET_THRESHOLD_WINDOW(ds, i_win, limit) (AMITK_DATA_SET(ds)->threshold_window[i_win][limit])
 #define AMITK_DATA_SET_VIEW_START_GATE(ds)         (AMITK_DATA_SET(ds)->view_start_gate)
 #define AMITK_DATA_SET_VIEW_END_GATE(ds)           (AMITK_DATA_SET(ds)->view_end_gate)
@@ -177,6 +181,12 @@ typedef enum {
   AMITK_SUBJECT_ORIENTATION_NUM
 } AmitkSubjectOrientation;
 
+typedef enum {
+  AMITK_SUBJECT_SEX_UNKNOWN,
+  AMITK_SUBJECT_SEX_MALE,
+  AMITK_SUBJECT_SEX_FEMALE,
+  AMITK_SUBJECT_SEX_NUM
+} AmitkSubjectSex;
 
 /* the skip is for glib-mkenums, it doesn't know how to handle ifdef's */
 typedef enum { /*< skip >*/
@@ -219,6 +229,7 @@ struct _AmitkDataSet
   gchar * subject_name; /* name of the subject */
   gchar * subject_id; /* id of the subject */
   gchar * subject_dob; /* date of birth of the subject */
+  gchar * dicom_image_type; /* dicom specific image type designator */
   AmitkModality modality;
   AmitkPoint voxel_size;  /* in mm */
   AmitkRawData * raw_data;
@@ -231,6 +242,7 @@ struct _AmitkDataSet
   gboolean color_table_independent[AMITK_VIEW_MODE_NUM]; /* whether to use the independent color tables for 2-way or 3-way linked modes*/
   AmitkInterpolation interpolation;
   AmitkSubjectOrientation subject_orientation; /* orientation of subject in scanner */
+  AmitkSubjectSex subject_sex;
 
   amide_data_t scale_factor; /* user specified factor to multiply data set by */
   AmitkConversion conversion;
@@ -241,7 +253,11 @@ struct _AmitkDataSet
   amide_data_t cylinder_factor; /* (MBq/cc)/Image Unit */
   AmitkCylinderUnit displayed_cylinder_unit;
 
+  /* MRI parameters */
+  amide_time_t inversion_time; /* in milliseconds */
+  amide_time_t echo_time; /* in milliseconds */
 
+  /* Thresholding */
   AmitkThresholding thresholding; /* what sort of thresholding we're using (per slice, global, etc.) */
   AmitkThresholdStyle threshold_style; /* min/max or center/width */
   amide_data_t threshold_max[2]; /* the thresholds to use for this volume */
@@ -256,7 +272,7 @@ struct _AmitkDataSet
   /* parameters calculated as needed or on loading the object */
   /* in theory, could be recalculated on the fly, but used enough we'll store... */
   AmitkRawData * distribution; /* 1D array of data distribution, used in thresholding */
-  gboolean max_min_calculated; /* the min/max values can be calculated on demand */
+  gboolean min_max_calculated; /* the min/max values can be calculated on demand */
   amide_data_t global_max;
   amide_data_t global_min;
   amide_data_t * frame_max; 
@@ -266,6 +282,7 @@ struct _AmitkDataSet
 
   GList * slice_cache;
   gint max_slice_cache_size;
+
 
   /* only used by derived data sets (slices and projections)  */
   /* this is a weak pointer, it should be NULL'ed automatically by gtk on the parent's destruction */
@@ -291,6 +308,7 @@ struct _AmitkDataSetClass
 					   AmitkViewMode * view_mode);
   void (* interpolation_changed)        (AmitkDataSet * ds);
   void (* subject_orientation_changed)  (AmitkDataSet * ds);
+  void (* subject_sex_changed)          (AmitkDataSet * ds);
   void (* conversion_changed)           (AmitkDataSet * ds);
   void (* scale_factor_changed)         (AmitkDataSet * ds);
   void (* modality_changed)             (AmitkDataSet * ds);
@@ -333,6 +351,7 @@ gboolean       amitk_data_set_export_to_file     (AmitkDataSet * ds,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
+						  const gchar * studyname,
 						  const gboolean resliced,
 						  const AmitkPoint voxel_size,
 						  const AmitkVolume * bounding_box,
@@ -342,6 +361,7 @@ gboolean       amitk_data_sets_export_to_file    (GList * data_sets,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
+						  const gchar * studyname,
 						  const AmitkPoint voxel_size,
 						  const AmitkVolume * bounding_box,
 						  AmitkUpdateFunc update_func,
@@ -386,6 +406,8 @@ void           amitk_data_set_set_interpolation  (AmitkDataSet * ds,
 						  const AmitkInterpolation new_interpolation);
 void           amitk_data_set_set_subject_orientation    (AmitkDataSet * ds,
 							  const AmitkSubjectOrientation subject_orientation);
+void           amitk_data_set_set_subject_sex    (AmitkDataSet * ds,
+						  const AmitkSubjectSex subject_sex);
 void           amitk_data_set_set_scan_date      (AmitkDataSet * ds, 
 						  const gchar * new_date);
 void           amitk_data_set_set_subject_name   (AmitkDataSet * ds, 
@@ -394,6 +416,8 @@ void           amitk_data_set_set_subject_id     (AmitkDataSet * ds,
 						  const gchar * new_id);
 void           amitk_data_set_set_subject_dob    (AmitkDataSet * ds, 
 						  const gchar * new_dob);
+void           amitk_data_set_set_dicom_image_type(AmitkDataSet * ds,
+						   const gchar * image_type);
 void           amitk_data_set_set_conversion     (AmitkDataSet * ds,
 						  AmitkConversion new_conversion);
 void           amitk_data_set_set_scale_factor   (AmitkDataSet * ds, 
@@ -410,6 +434,10 @@ void           amitk_data_set_set_displayed_weight_unit  (AmitkDataSet * ds,
 						          AmitkWeightUnit new_weight_unit);
 void           amitk_data_set_set_displayed_cylinder_unit(AmitkDataSet * ds,
 						          AmitkCylinderUnit new_cylinder_unit);
+void           amitk_data_set_set_inversion_time(AmitkDataSet * ds,
+						 amide_time_t new_inversion_time);
+void           amitk_data_set_set_echo_time(AmitkDataSet * ds,
+						 amide_time_t new_echo_tim);
 void           amitk_data_set_set_threshold_window (AmitkDataSet * ds,
 						    const AmitkWindow window,
 						    const AmitkLimit limit,
@@ -432,23 +460,29 @@ amide_time_t   amitk_data_set_get_min_frame_duration (const AmitkDataSet * ds);
 void           amitk_data_set_calc_far_corner    (AmitkDataSet * ds);
 
 /* note: calling any of the get_*_max or get_*_min functions will automatically
-   call calc_max_min if needed.  The main reason to call this function independently
+   call calc_min_max if needed.  The main reason to call this function independently
    is if you know it'll be needed later, and you'd like to put up a progress 
    dialog. */
-void           amitk_data_set_calc_max_min       (AmitkDataSet * ds,
+void           amitk_data_set_calc_min_max       (AmitkDataSet * ds,
 						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
+void           amitk_data_set_slice_calc_min_max (AmitkDataSet * ds,
+						  const amide_intpoint_t frame,
+						  const amide_intpoint_t gate,
+						  const amide_intpoint_t z,
+						  amitk_format_DOUBLE_t * pmin,
+						  amitk_format_DOUBLE_t * pmax);
 amide_data_t   amitk_data_set_get_max            (AmitkDataSet * ds, 
 						  const amide_time_t start, 
 						  const amide_time_t duration);
 amide_data_t   amitk_data_set_get_min            (AmitkDataSet * ds, 
 						  const amide_time_t start, 
 						  const amide_time_t duration);
-void           amitk_data_set_get_thresholding_max_min(AmitkDataSet * ds, 
+void           amitk_data_set_get_thresholding_min_max(AmitkDataSet * ds, 
 						       AmitkDataSet * slice,
 						       const amide_time_t start,
 						       const amide_time_t duration,
-						       amide_data_t * max, amide_data_t * min);
+						       amide_data_t * min, amide_data_t * max);
 void           amitk_data_set_calc_distribution   (AmitkDataSet * ds, 
 						   AmitkUpdateFunc update_func,
 						   gpointer update_data);
@@ -533,7 +567,7 @@ AmitkDataSet * amitk_data_sets_math                  (AmitkDataSet * ds1,
 
 /* -------- defines ----------- */
 #define amitk_data_set_get_frame_duration_mem(ds) (g_try_new0(amide_time_t,(ds)->raw_data->dim.t))
-#define amitk_data_set_get_frame_max_min_mem(ds) (g_try_new0(amide_data_t,(ds)->raw_data->dim.t))
+#define amitk_data_set_get_frame_min_max_mem(ds) (g_try_new0(amide_data_t,(ds)->raw_data->dim.t))
 #define amitk_data_set_dynamic(ds) ((ds)->data_set->dim.t > 1)
 
 
@@ -543,6 +577,7 @@ const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scalin
 const gchar *   amitk_operation_get_name          (const AmitkOperation operation);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_subject_orientation_get_name(const AmitkSubjectOrientation subject_orientation);
+const gchar *   amitk_subject_sex_get_name        (const AmitkSubjectSex subject_sex);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);
 const gchar *   amitk_threshold_style_get_name    (const AmitkThresholdStyle threshold_style);
 const gchar *   amitk_conversion_get_name         (const AmitkConversion conversion);
@@ -578,8 +613,6 @@ extern const gchar * amitk_weight_unit_names[];
 extern const gchar * amitk_cylinder_unit_names[];
 extern const gchar * amitk_scaling_menu_names[];
 extern amide_data_t amitk_window_default[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
-
-/* external variables */
 
 
 G_END_DECLS

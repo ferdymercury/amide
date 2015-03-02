@@ -48,6 +48,7 @@ typedef enum {
 typedef struct tb_fly_through_t {
   AmitkStudy * study;
   AmitkSpace * space;
+  AmitkPreferences * preferences;
 
 
   amide_time_t start_time;
@@ -312,6 +313,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 					       NULL);
     gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
+    amitk_preferences_set_file_chooser_directory(tb_fly_through->preferences, file_chooser); /* set the default directory if applicable */
 
     /* take a guess at the filename */
     filename = g_strdup_printf("%s_FlyThrough_%d.mpg", 
@@ -590,6 +592,11 @@ static tb_fly_through_t * tb_fly_through_unref(tb_fly_through_t * tb_fly_through
       tb_fly_through->space = NULL;
     }
 
+    if (tb_fly_through->preferences != NULL) {
+      g_object_unref(tb_fly_through->preferences);
+      tb_fly_through->preferences = NULL;
+    }
+
     if (tb_fly_through->progress_dialog != NULL) {
       g_signal_emit_by_name(G_OBJECT(tb_fly_through->progress_dialog), "delete_event", NULL, &return_val);
       tb_fly_through->progress_dialog = NULL;
@@ -628,6 +635,7 @@ static tb_fly_through_t * tb_fly_through_init(void) {
   /* set any needed parameters */
   tb_fly_through->study = NULL;
   tb_fly_through->space = NULL;
+  tb_fly_through->preferences = NULL;
   tb_fly_through->start_z = 0.0;
   tb_fly_through->end_z = 0.0;
   tb_fly_through->duration = 10.0; /* seconds */
@@ -645,6 +653,7 @@ static tb_fly_through_t * tb_fly_through_init(void) {
 
 void tb_fly_through(AmitkStudy * study,
 		    AmitkView view, 
+		    AmitkPreferences * preferences,
 		    GtkWindow * parent) {
  
   tb_fly_through_t * tb_fly_through;
@@ -679,6 +688,7 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through = tb_fly_through_init();
   tb_fly_through->study = AMITK_STUDY(amitk_object_copy(AMITK_OBJECT(study)));
   tb_fly_through->space = amitk_space_get_view_space(view, AMITK_STUDY_CANVAS_LAYOUT(study));
+  tb_fly_through->preferences = g_object_ref(preferences);
 
   tb_fly_through->dialog = 
     gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,

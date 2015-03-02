@@ -649,6 +649,18 @@
        changes done on the study when exiting an AMIDE session.
        </para>
 
+       <para> The "Which Default Directory" controls which directory
+       the file chooser dialog (used for save/import/open operations)
+       will use as it's default location. "None" will cause the file
+       chooser to show a list of recent locations as
+       default. "Specified Directory" will cause the file chooser to
+       utilize the directory specified as the default
+       directory. "Working Directory" will utilize the directory from
+       which the AMIDE program was executed as the default directory -
+       this is most useful if you're often envoking AMIDE from the
+       command line.
+       </para>
+
      </listitem>
     </varlistentry>
 

@@ -76,6 +76,7 @@ static void dialog_change_frame_duration_cb  (GtkWidget * widget, gpointer data)
 static void dialog_change_roi_type_cb      (GtkWidget * widget, gpointer data);
 static void dialog_change_modality_cb      (GtkWidget * widget, gpointer data);
 static void dialog_change_subject_orientation_cb(GtkWidget * widget, gpointer data);
+static void dialog_change_subject_sex_cb   (GtkWidget * widget, gpointer data);
 static void dialog_change_dose_unit_cb     (GtkWidget * widget, gpointer data);
 static void dialog_change_weight_unit_cb   (GtkWidget * widget, gpointer data);
 static void dialog_change_cylinder_unit_cb (GtkWidget * widget, gpointer data);
@@ -190,6 +191,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * packing_table;
   GtkWidget * label;
   GtkWidget * hseparator;
+  GtkWidget * vseparator;
   GtkWidget * axis_indicator;
   GtkWidget * check_button;
   GtkWidget * notebook;
@@ -310,6 +312,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     AmitkWeightUnit i_weight_unit;
     AmitkCylinderUnit i_cylinder_unit;
     AmitkSubjectOrientation i_subject_orientation;
+    AmitkSubjectSex i_subject_sex;
 
 
     /* widgets to change the date of the scan name */
@@ -448,6 +451,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_dob_entry,3,4,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(dialog->subject_dob_entry);
+
     table_row++;
 
     /* widgets to change the subject's orientation */
@@ -464,6 +468,22 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_orientation_menu, 1,2, 
 		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(dialog->subject_orientation_menu);
+
+    /* widgets to change the subject's sex (much easier in the virtual world than in real life) */
+    label = gtk_label_new(_("Subject Sex:"));
+    gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(label);
+
+    dialog->subject_sex_menu = gtk_combo_box_new_text();
+    for (i_subject_sex=0; i_subject_sex<AMITK_SUBJECT_SEX_NUM; i_subject_sex++) 
+      gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->subject_sex_menu),
+				amitk_subject_sex_get_name(i_subject_sex));
+    g_signal_connect(G_OBJECT(dialog->subject_sex_menu), "changed", G_CALLBACK(dialog_change_subject_sex_cb), dialog);
+    gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_sex_menu, 3,4,
+		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(dialog->subject_sex_menu);
+
     table_row++;
     
     /* a separator for clarity */
@@ -1080,7 +1100,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
   if (immutables) {
 
-    packing_table = gtk_table_new(4,2,FALSE);
+    packing_table = gtk_table_new(12,5,FALSE);
     label = gtk_label_new(_("Immutables"));
     table_row=0;
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
@@ -1180,7 +1200,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_free(temp_string);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,3, table_row, table_row+1, 
+		       1,2, table_row, table_row+1, 
 		       GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(entry);
       table_row++;
@@ -1196,7 +1216,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 			 amitk_format_names[AMITK_DATA_SET_FORMAT(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,3, table_row, table_row+1, 
+		       1,2, table_row, table_row+1, 
 		       GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(entry);
       table_row++;
@@ -1219,7 +1239,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 			 amitk_scaling_menu_names[AMITK_DATA_SET_SCALING_TYPE(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
-		       1,3, table_row, table_row+1, 
+		       1,2, table_row, table_row+1, 
 		       GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(entry);
       table_row++;
@@ -1233,13 +1253,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       
       /* widgets to display the data set dimensions */
       label = gtk_label_new(_("Data Set Dimensions (voxels)"));
-      gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
+      gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
       table_row++;
       
       /**************/
       for (i_dim=0; i_dim < AMITK_DIM_NUM; i_dim++) {
+
 	label = gtk_label_new(amitk_dim_get_name(i_dim));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
@@ -1255,7 +1276,64 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	gtk_widget_show(entry);
 	table_row++;
       }
+
+
+      /* a separator for clarity */
+      vseparator = gtk_vseparator_new();
+      gtk_table_attach(GTK_TABLE(packing_table), vseparator,2,3,
+		       0, table_row, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      gtk_widget_show(vseparator);
+
+      table_row=0;
+
+      /* MRI parameters */
+      label = gtk_label_new(_("MRI Parameters"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,5,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      table_row++;
+
+
+
+      /* inversion time */
+      label = gtk_label_new(_("Inversion Time (ms):"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%f", AMITK_DATA_SET_INVERSION_TIME(object));
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+			 
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       4,5, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
+
+      /* echo time */
+      label = gtk_label_new(_("Echo Time (ms):"));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%f", AMITK_DATA_SET_ECHO_TIME(object));
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+			 
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       4,5, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
     }
+
+
+
     gtk_widget_show(packing_table);
   }
 
@@ -1308,6 +1386,10 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
     g_signal_handlers_block_by_func(G_OBJECT(dialog->subject_orientation_menu),G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->subject_orientation_menu), AMITK_DATA_SET_SUBJECT_ORIENTATION(dialog->object));
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->subject_orientation_menu),G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
+
+    g_signal_handlers_block_by_func(G_OBJECT(dialog->subject_sex_menu),G_CALLBACK(dialog_change_subject_sex_cb), dialog);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->subject_sex_menu), AMITK_DATA_SET_SUBJECT_SEX(dialog->object));
+    g_signal_handlers_unblock_by_func(G_OBJECT(dialog->subject_sex_menu),G_CALLBACK(dialog_change_subject_sex_cb), dialog);
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->scaling_factor_spin),
 				    G_CALLBACK(dialog_change_scale_factor_cb), dialog);
@@ -1928,8 +2010,7 @@ static void dialog_change_dose_cb(GtkWidget * widget, gpointer data) {
 
   injected_dose = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  /* make sure it's a valid number and avoid zero */
-  if (fabs(injected_dose) > EPSILON) { 
+  if (injected_dose >= 0.0) {
     injected_dose = amitk_dose_unit_convert_from(injected_dose,
 						 AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(dialog->object));
     amitk_data_set_set_injected_dose(AMITK_DATA_SET(dialog->object), injected_dose);
@@ -1946,8 +2027,8 @@ static void dialog_change_weight_cb(GtkWidget * widget, gpointer data) {
 
   subject_weight = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  /* make sure it's a valid number and avoid zero */
-  if (fabs(subject_weight) > EPSILON) { 
+  /* we allow zero, so that the user can put in a proxy for "I don't know" */
+  if (subject_weight >= 0.0) {
     subject_weight = amitk_weight_unit_convert_from(subject_weight,
 						    AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(dialog->object));
     amitk_data_set_set_subject_weight(AMITK_DATA_SET(dialog->object), subject_weight);
@@ -2040,6 +2121,20 @@ static void dialog_change_subject_orientation_cb(GtkWidget * widget, gpointer da
   /* figure out which menu item called me */
   amitk_data_set_set_subject_orientation(AMITK_DATA_SET(dialog->object), 
 					 gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
+
+  return;
+}
+
+/* function called when the subject sex of a data set gets changed */
+static void dialog_change_subject_sex_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkObjectDialog * dialog = data;
+
+  g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
+
+  /* figure out which menu item called me */
+  amitk_data_set_set_subject_sex(AMITK_DATA_SET(dialog->object), 
+				 gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
 
   return;
 }

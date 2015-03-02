@@ -187,12 +187,12 @@ GType amitk_tree_view_get_type (void) {
 static void tree_view_class_init (AmitkTreeViewClass *klass)
 {
   GtkObjectClass *gtkobject_class;
-  GtkTreeViewClass *tree_view_class;
+  /*  GtkTreeViewClass *tree_view_class; */
   GtkWidgetClass *widget_class;
 
   gtkobject_class = (GtkObjectClass*) klass;
   widget_class    = (GtkWidgetClass*) klass;
-  tree_view_class    = (GtkTreeViewClass*) klass;
+  /*  tree_view_class    = (GtkTreeViewClass*) klass; */
 
   parent_class = g_type_class_peek_parent(klass);
 

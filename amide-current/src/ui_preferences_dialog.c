@@ -60,8 +60,8 @@ static void threshold_style_cb(GtkWidget * widget, gpointer data);
 
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
-static void change_default_directory_cb(GtkWidget * widget, gpointer data);
-/*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data);*/
+static void which_default_directory_cb(GtkWidget * widget, gpointer data);
+static void default_directory_cb(GtkWidget * fc, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer preferences);
 
@@ -114,10 +114,8 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
 static void fill_roi_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gboolean fill_roi;
-
-  fill_roi = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  amitk_preferences_set_canvas_fill_roi(ui_study->preferences, fill_roi);
+  amitk_preferences_set_canvas_fill_roi(ui_study->preferences, 
+					gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
   return;
 }
@@ -126,11 +124,8 @@ static void fill_roi_cb(GtkWidget * widget, gpointer data) {
 static void layout_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  AmitkLayout new_layout;
-
-  new_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "layout"));
-  amitk_preferences_set_canvas_layout(ui_study->preferences, new_layout);
-
+  amitk_preferences_set_canvas_layout(ui_study->preferences, 
+				      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "layout")));
   return;
 }
 
@@ -138,10 +133,8 @@ static void layout_cb(GtkWidget * widget, gpointer data) {
 static void panel_layout_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  AmitkPanelLayout new_panel_layout;
-
-  new_panel_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "panel_layout"));
-  amitk_preferences_set_panel_layout(ui_study->preferences, new_panel_layout);
+  amitk_preferences_set_panel_layout(ui_study->preferences, 
+				     GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "panel_layout")));
 
   return;
 }
@@ -149,11 +142,8 @@ static void panel_layout_cb(GtkWidget * widget, gpointer data) {
 static void maintain_size_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gboolean canvas_maintain_size;
-
-  canvas_maintain_size = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  amitk_preferences_set_canvas_maintain_size(ui_study->preferences, canvas_maintain_size);
-
+  amitk_preferences_set_canvas_maintain_size(ui_study->preferences, 
+					     gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
@@ -162,18 +152,14 @@ static void maintain_size_cb(GtkWidget * widget, gpointer data) {
 static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gint new_target_empty_area;
-  
-  new_target_empty_area = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   amitk_preferences_set_canvas_target_empty_area(ui_study->preferences, 
-						 new_target_empty_area);
+						 gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget)));
   return;
 }
 
 static void threshold_style_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-
   amitk_preferences_set_threshold_style(ui_study->preferences, 
 					GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "threshold_style")));
 
@@ -184,11 +170,8 @@ static void threshold_style_cb(GtkWidget * widget, gpointer data) {
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gboolean warnings_to_console;
-
-  warnings_to_console = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  amitk_preferences_set_warnings_to_console(ui_study->preferences, warnings_to_console);
-
+  amitk_preferences_set_warnings_to_console(ui_study->preferences, 
+					    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
@@ -196,23 +179,27 @@ static void warnings_to_console_cb(GtkWidget * widget, gpointer data) {
 static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gboolean prompt_for_save_on_exit;
-
-  prompt_for_save_on_exit = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  amitk_preferences_set_prompt_for_save_on_exit(ui_study->preferences, prompt_for_save_on_exit);
+  amitk_preferences_set_prompt_for_save_on_exit(ui_study->preferences, 
+						gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 
   return;
 }
 
+static void which_default_directory_cb(GtkWidget * widget, gpointer data) {
 
-/*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data) { */
-static void change_default_directory_cb(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  amitk_preferences_set_which_default_directory(ui_study->preferences, 
+						gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
+  return;
+}
+
+
+static void default_directory_cb(GtkWidget * fc, gpointer data) { 
 
   ui_study_t * ui_study = data;
   gchar * str;
 
-  /*  str = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc)); */
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+  str = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc));
   amitk_preferences_set_default_directory(ui_study->preferences, str);
   g_free(str);
 
@@ -296,6 +283,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * scrolled;
   GtkWidget * entry;
   AmitkModality i_modality;
+  AmitkWhichDefaultDirectory i_which_default_directory;
   GnomeCanvasItem * roi_item;
   AmitkThresholdStyle i_threshold_style;
   GtkWidget * style_buttons[AMITK_THRESHOLD_STYLE_NUM];
@@ -531,7 +519,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 		   0,1, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  //  check_button = gtk_check_button_new_with_label(_("Send Warning Messages to Console:"));
   check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(ui_study->preferences));
@@ -557,30 +544,41 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
 
-  label = gtk_label_new(_("Default Directory on Startup:"));
+  label = gtk_label_new(_("Which Default Directory:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  /* gtk_file_chooser isn't really workable until the signal file-set is implemented
-     in gtk version 2.12. Will need to figure out a way to set this as "blank" as well
-     to allow behavior without a specified default-directory */
-  /*  entry =  gtk_file_chooser_button_new(_("Default Directory on Startup:"),
-  				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (entry),
-  				      (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) != NULL) ?
-  				      AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
-    g_signal_connect(G_OBJECT(entry), "file-set", G_CALLBACK(change_default_directory_cb), ui_study);
-  */
-  entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) != NULL) ?
-  		     AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_default_directory_cb), ui_study);
+  menu = gtk_combo_box_new_text();
+  for (i_which_default_directory=0; i_which_default_directory < AMITK_WHICH_DEFAULT_DIRECTORY_NUM; i_which_default_directory++)
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+			      amitk_which_default_directory_names[i_which_default_directory]);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
+			   AMITK_PREFERENCES_WHICH_DEFAULT_DIRECTORY(ui_study->preferences));
+  g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(which_default_directory_cb), ui_study);
+  gtk_table_attach(GTK_TABLE(packing_table), menu, 
+		   1,2, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
 
+
+  label = gtk_label_new(_("Specified Directory:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  entry =  gtk_file_chooser_button_new(_("Default Directory:"),
+  				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+  amitk_preferences_set_file_chooser_directory(ui_study->preferences, entry); /* set the default directory if applicable */
+  g_signal_connect(G_OBJECT(entry), "current-folder-changed", G_CALLBACK(default_directory_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), entry, 
 		   1,2, table_row, table_row+1,
 		   GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+
+  /* make sure what's being shown in the above widget is consistent with what we have,
+     this only comes up if we've never set a default directory before */
+  if (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) == NULL)
+    default_directory_cb(entry, ui_study);
 
   table_row++;
 

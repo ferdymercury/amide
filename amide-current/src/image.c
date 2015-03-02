@@ -558,10 +558,10 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
     return NULL;
   }
 
-  amitk_data_set_get_thresholding_max_min(projection, projection,
+  amitk_data_set_get_thresholding_min_max(projection, projection,
 					  AMITK_DATA_SET_SCAN_START(projection),
 					  amitk_data_set_get_frame_duration(projection,0),
-					  &max, &min);
+					  &min, &max);
       
   color_table = AMITK_DATA_SET_COLOR_TABLE(projection, AMITK_VIEW_MODE_SINGLE);
 
@@ -609,11 +609,11 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice, AmitkViewMode view_mode) {
     return NULL;
   }
 
-  amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
+  amitk_data_set_get_thresholding_min_max(AMITK_DATA_SET_SLICE_PARENT(slice),
 					  AMITK_DATA_SET(slice),
 					  AMITK_DATA_SET_SCAN_START(slice),
 					  amitk_data_set_get_frame_duration(slice,0),
-					  &max, &min);
+					  &min, &max);
       
   color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(slice), view_mode);
 
@@ -707,9 +707,9 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
     } else { /* blend this slice */
       slice_num++;
 
-      amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
+      amitk_data_set_get_thresholding_min_max(AMITK_DATA_SET_SLICE_PARENT(slice),
 					      AMITK_DATA_SET(slice),
-					      start, duration, &max, &min);
+					      start, duration, &min, &max);
       
       
       color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(slice), view_mode);
@@ -771,9 +771,9 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 
   /* if we have a data set we're overlaying, add it in now */
   if (overlay_slice != NULL) {
-      amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(overlay_slice),
+      amitk_data_set_get_thresholding_min_max(AMITK_DATA_SET_SLICE_PARENT(overlay_slice),
 					      AMITK_DATA_SET(overlay_slice),
-					      start, duration, &max, &min);
+					      start, duration, &min, &max);
       
       color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(overlay_slice), view_mode);
 

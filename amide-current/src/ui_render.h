@@ -33,7 +33,7 @@
 #include "render.h"
 #include "amitk_study.h"
 
-#define GCONF_AMIDE_RENDERING "RENDERING/"
+#define GCONF_AMIDE_RENDERING "RENDERING"
 
 /* defines */
 #define UI_RENDER_BLANK_WIDTH 200
@@ -46,6 +46,7 @@ typedef struct ui_render_t {
   GtkWidget * window_vbox;
   GtkWidget * parameter_dialog;
   GtkWidget * transfer_function_dialog;
+  AmitkPreferences * preferences;
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   gpointer movie; /* pointer to type ui_render_movie_t */
 #endif
@@ -84,7 +85,7 @@ typedef struct ui_render_t {
 GdkPixbuf * ui_render_get_pixbuf(ui_render_t * ui_render);
 void ui_render_add_update(ui_render_t * ui_render);
 gboolean ui_render_update_immediate(gpointer ui_render);
-void ui_render_create(AmitkStudy * study, GList * selected_objects);
+void ui_render_create(AmitkStudy * study, GList * selected_objects, AmitkPreferences * preferences);
 GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent);
 
 #endif /* __UI_RENDER_H__ */

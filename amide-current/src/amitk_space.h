@@ -124,6 +124,8 @@ void            amitk_space_get_enclosing_corners   (const AmitkSpace * in_space
 AmitkSpace *    amitk_space_copy                    (const AmitkSpace * space);
 void            amitk_space_copy_in_place           (AmitkSpace * dest_space,
 						     const AmitkSpace * src_space);
+gboolean        amitk_space_axes_equal              (const AmitkSpace * space1,
+						     const AmitkSpace * space2);
 gboolean        amitk_space_equal                   (const AmitkSpace * space1,
 						     const AmitkSpace * space2);
 void            amitk_space_invert_axis             (AmitkSpace * space, 

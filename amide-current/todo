@@ -88,7 +88,7 @@ small things:
 * allow direct entry of transformation matrix in amitk_space_edit
 * data set icons in amitk_tree could be generated from the actual respective data sets
 * .xif files should try to compress data.
-* amitk_preferences.c : default color table, panel layout, layout should be saved in gconf as they 
+* amitk_preferences.c : default color table, panel layout, layout should be saved in gsettings as they 
   associated strings for these values, not as the enumerated numbers
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used
@@ -187,10 +187,6 @@ least).
 things dependent on other things: 
 -------------- 
 
-* dependent on requiring gtk 2.12
- -update Default Directory bit in ui_preferences_dialog to be a
-  GtkFileChooserButton
-
 * dependent on gtk fixing the GTK_FILE_CHOOSER_CREATE_FOLDER properties of gtkfilechooser.
   Currently, the gtkfilechooser widget puts out an error if you try to select
   a folder that's currently a filename (rather than allowing overwriting). This comes
@@ -207,11 +203,15 @@ things dependent on other things:
 	handle_box's don't get minimized with the main window...
 	but no way to minimize them independently...
 
-* amide_gconf.c is used to encapsulate configuration support (based on
-       gconf for unix, based on code stolen from gnumeric for
-       win32). GConf is likely to be deprecated at some point in the
-       future, and replaced with DConf. If DConf ever emerges, and
-       looks useable, will switch to using it.
+* amide_gconf.c is used to encapsulate configuration support (gconf
+       for unix, registry entries based on code stolen from gnumeric
+       for win32, and g_key_file (flat file) for mac os x). GConf is
+       likely to be deprecated at some point in the future. GSettings
+       doesn't seem appropriate, as it absolutely requires a schema to
+       be in place (as of glib 2.30) or the program aborts... If
+       GSettings ever becomes more user friendly will switch the GConf
+       support to GSettings, otherwise will go with the g_key_file in
+       place of gconf.
 
 
 * setlocale is disabled on win32, this is because further setlocale

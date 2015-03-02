@@ -60,9 +60,9 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 static void close_cb(GtkAction * action, gpointer data);
 
 
-static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
-			     gboolean * initially_no_gradient_opacity);
-static ui_render_t * ui_render_init(GtkWindow * window, GtkWidget *window_vbox, AmitkStudy * study, GList * selected_objects);
+static void read_render_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
+				    gboolean * initially_no_gradient_opacity);
+static ui_render_t * ui_render_init(GtkWindow * window, GtkWidget *window_vbox, AmitkStudy * study, GList * selected_objects, AmitkPreferences * preferences);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
 
 
@@ -374,6 +374,7 @@ static void export_cb(GtkAction * action, gpointer data) {
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(ui_render->preferences, file_chooser); /* set the default directory if applicable */
 
   /* take a guess at the filename */
   temp_renderings = ui_render->renderings;
@@ -604,6 +605,11 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
     g_print("freeing ui_render\n");
 #endif
 
+    if (ui_render->preferences != NULL) {
+      g_object_unref(ui_render->preferences);
+      ui_render->preferences = NULL;
+    }
+
     if (ui_render->idle_handler_id != 0) {
       g_source_remove(ui_render->idle_handler_id);
       ui_render->idle_handler_id = 0;
@@ -634,15 +640,15 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
 
 
-static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
-			     gboolean * initially_no_gradient_opacity) {
+static void read_render_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
+				    gboolean * initially_no_gradient_opacity) {
 
   *strip_highs = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"StripHighs");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"StripHighs");
   *optimize_renderings = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"OptimizeRendering");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"OptimizeRendering");
   *initially_no_gradient_opacity = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"InitiallyNoGradientOpacity");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"InitiallyNoGradientOpacity");
 
   return;
 }
@@ -652,14 +658,15 @@ static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderi
 static ui_render_t * ui_render_init(GtkWindow * window,
 				    GtkWidget * window_vbox,
 				    AmitkStudy * study,
-				    GList * selected_objects) {
+				    GList * selected_objects,
+				    AmitkPreferences * preferences) {
 
   ui_render_t * ui_render;
   gboolean strip_highs;
   gboolean optimize_rendering;
   gboolean initially_no_gradient_opacity;
 
-  read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
+  read_render_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
@@ -673,6 +680,7 @@ static ui_render_t * ui_render_init(GtkWindow * window,
   ui_render->window_vbox = window_vbox;
   ui_render->parameter_dialog = NULL;
   ui_render->transfer_function_dialog = NULL;
+  ui_render->preferences = g_object_ref(preferences);
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
   ui_render->movie = NULL;
 #endif
@@ -700,17 +708,17 @@ static ui_render_t * ui_render_init(GtkWindow * window,
   ui_render->idle_handler_id = 0;
   ui_render->rendered_successfully=FALSE;
 
-  /* load in saved preferences */
+  /* load in saved render preferences */
   ui_render->update_without_release = 
-    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"UpdateWithoutRelease");
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING,"UpdateWithoutRelease");
 
   ui_render->stereo_eye_width = 
-    amide_gconf_get_int(GCONF_AMIDE_RENDERING"EyeWidth");
+    amide_gconf_get_int(GCONF_AMIDE_RENDERING,"EyeWidth");
   if (ui_render->stereo_eye_width == 0)  /* if no config file, put in sane value */
     ui_render->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
 
   ui_render->stereo_eye_angle = 
-    amide_gconf_get_float(GCONF_AMIDE_RENDERING"EyeAngle");
+    amide_gconf_get_float(GCONF_AMIDE_RENDERING,"EyeAngle");
   if ((ui_render->stereo_eye_angle <= 0.1) || (ui_render->stereo_eye_angle > 45.0))
     ui_render->stereo_eye_angle = 5.0; /* degrees */
 
@@ -863,7 +871,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
 
 /* function that sets up the rendering dialog */
-void ui_render_create(AmitkStudy * study, GList * selected_objects) {
+void ui_render_create(AmitkStudy * study, GList * selected_objects, AmitkPreferences * preferences) {
   
   GtkWidget * packing_table;
   GtkWidget * button;
@@ -887,7 +895,7 @@ void ui_render_create(AmitkStudy * study, GList * selected_objects) {
   gtk_window_set_resizable(window, FALSE);
   window_vbox = gtk_vbox_new(FALSE,0);
   gtk_container_add (GTK_CONTAINER (window), window_vbox);
-  ui_render = ui_render_init(window, window_vbox, study, selected_objects);
+  ui_render = ui_render_init(window, window_vbox, study, selected_objects, preferences);
 
   /* check we actually have something */
   if (ui_render->renderings == NULL) {
@@ -994,19 +1002,19 @@ static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data);
 
 
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"StripHighs", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"StripHighs", 
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"OptimizeRendering", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"OptimizeRendering", 
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"InitiallyNoGradientOpacity", 
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING,"InitiallyNoGradientOpacity", 
 		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
@@ -1026,7 +1034,7 @@ GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   gboolean optimize_rendering;
   gboolean initially_no_gradient_opacity;
 
-  read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
+  read_render_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
 
   temp_string = g_strdup_printf(_("%s: Rendering Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,

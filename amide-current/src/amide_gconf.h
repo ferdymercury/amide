@@ -35,21 +35,20 @@ G_BEGIN_DECLS
 void amide_gconf_init();
 void amide_gconf_shutdown();
 
-gint     amide_gconf_get_int   (const char * key);
-gdouble  amide_gconf_get_float (const char * key);
-gboolean amide_gconf_get_bool  (const char * key);
-gchar *  amide_gconf_get_string(const char * key);
+gint     amide_gconf_get_int   (const char * group, const char * key);
+gdouble  amide_gconf_get_float (const char * group, const char * key);
+gboolean amide_gconf_get_bool  (const char * group, const char * key);
+gchar *  amide_gconf_get_string(const char * group, const char * key);
 
-gboolean amide_gconf_set_int(const char * key, gint val);
-gboolean amide_gconf_set_float(const char * key, gdouble val);
-gboolean amide_gconf_set_bool(const char * key, gboolean val);
-gboolean amide_gconf_set_string(const char * key, const gchar * val);
+gboolean amide_gconf_set_int   (const char * group, const char * key, gint val);
+gboolean amide_gconf_set_float (const char * group, const char * key, gdouble val);
+gboolean amide_gconf_set_bool  (const char * group, const char * key, gboolean val);
+gboolean amide_gconf_set_string(const char * group, const char * key, const gchar * val);
 
-gboolean amide_gconf_has_value              (const gchar *key);
-gint     amide_gconf_get_int_with_default   (const gchar * key, const gint default_int);
-gdouble  amide_gconf_get_float_with_default (const gchar * key, const gdouble default_float);
-gboolean amide_gconf_get_bool_with_default  (const gchar * key, const gboolean default_bool);
-gchar *  amide_gconf_get_string_with_default(const gchar * key, const gchar * default_str);
+gint     amide_gconf_get_int_with_default   (const char * group, const gchar * key, const gint default_int);
+gdouble  amide_gconf_get_float_with_default (const char * group, const gchar * key, const gdouble default_float);
+gboolean amide_gconf_get_bool_with_default  (const char * group, const gchar * key, const gboolean default_bool);
+gchar *  amide_gconf_get_string_with_default(const char * group, const gchar * key, const gchar * default_str);
 
 G_END_DECLS
 

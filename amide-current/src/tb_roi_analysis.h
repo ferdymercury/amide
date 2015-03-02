@@ -31,7 +31,7 @@
 #include "amitk_study.h"
 
 /* external functions */
-void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent);
+void tb_roi_analysis(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * parent);
 GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent);
 
 

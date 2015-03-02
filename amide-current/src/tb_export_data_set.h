@@ -33,6 +33,7 @@
 /* external functions */
 void tb_export_data_set(AmitkStudy * study,
 			AmitkDataSet * active_ds,
+			AmitkPreferences * preferences,
 			GtkWindow * parent);
 
 #endif /* __TB_EXPORT_DATA_SET_H__ */

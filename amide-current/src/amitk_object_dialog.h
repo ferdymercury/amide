@@ -65,6 +65,7 @@ struct _AmitkObjectDialog
   GtkWidget * subject_dob_entry;
   GtkWidget * modality_menu;
   GtkWidget * subject_orientation_menu;
+  GtkWidget * subject_sex_menu;
   GtkWidget * scaling_factor_spin;
   GtkWidget * dose_spin;
   GtkWidget * dose_unit_menu;

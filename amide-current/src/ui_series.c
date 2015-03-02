@@ -57,7 +57,7 @@ static gchar * series_explanations[] = {
 
 #define UPDATE_NONE 0
 #define UPDATE_SERIES 0x1
-#define GCONF_AMIDE_SERIES "SERIES/"
+#define GCONF_AMIDE_SERIES "SERIES"
 
 
 
@@ -82,6 +82,7 @@ typedef struct ui_series_t {
   AmitkFuseType fuse_type;
   amide_real_t pixel_dim;
   series_type_t series_type;
+  AmitkPreferences * preferences;
   GtkWidget * progress_dialog;
   gboolean in_generation;
   gboolean quit_generation;
@@ -132,7 +133,7 @@ static ui_series_t * ui_series_init(GtkWindow * window, GtkWidget * window_vbox)
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series);
 static void add_update(ui_series_t * ui_series);
 static gboolean update_immediate(gpointer ui_series);
-static void read_preferences(series_type_t * series_type, AmitkView * view);
+static void read_series_preferences(series_type_t * series_type, AmitkView * view);
 
 
 /* function called by the adjustment in charge for scrolling */
@@ -188,6 +189,7 @@ static void export_cb(GtkAction * action, gpointer data) {
 					     NULL);
   gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
   gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(ui_series->preferences, file_chooser); /* set the default directory if applicable */
 
   /* take a guess at the filename */
   objects = ui_series->objects;
@@ -499,6 +501,11 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
       ui_series->thresholds_dialog = NULL;
     }
 
+    if (ui_series->preferences != NULL) {
+      g_object_unref(ui_series->preferences);
+      ui_series->preferences = NULL;
+    }
+
     if (ui_series->progress_dialog != NULL) {
       g_signal_emit_by_name(G_OBJECT(ui_series->progress_dialog), "delete_event", NULL, &return_val);
       ui_series->progress_dialog = NULL;
@@ -572,6 +579,7 @@ static ui_series_t * ui_series_init(GtkWindow * window, GtkWidget * window_vbox)
   ui_series->view_time = 0.0;
   ui_series->series_type = OVER_SPACE;
   ui_series->thresholds_dialog = NULL;
+  ui_series->preferences = NULL;
   ui_series->progress_dialog = amitk_progress_dialog_new(ui_series->window);
   ui_series->in_generation=FALSE;
   ui_series->quit_generation=FALSE;
@@ -919,10 +927,10 @@ static gboolean update_immediate(gpointer data) {
   return return_val;
 }
 
-static void read_preferences(series_type_t * series_type, AmitkView * view) {
+static void read_series_preferences(series_type_t * series_type, AmitkView * view) {
 
-  *series_type = amide_gconf_get_int(GCONF_AMIDE_SERIES"Type");
-  *view = amide_gconf_get_int(GCONF_AMIDE_SERIES"View");
+  *series_type = amide_gconf_get_int(GCONF_AMIDE_SERIES,"Type");
+  *view = amide_gconf_get_int(GCONF_AMIDE_SERIES,"View");
 
   return;
 }
@@ -930,7 +938,8 @@ static void read_preferences(series_type_t * series_type, AmitkView * view) {
 /* function that sets up the series dialog */
 void ui_series_create(AmitkStudy * study, 
 		      AmitkObject * active_object,
-		      GList * selected_objects) {
+		      GList * selected_objects,
+		      AmitkPreferences * preferences) {
 
  
   ui_series_t * ui_series;
@@ -948,7 +957,7 @@ void ui_series_create(AmitkStudy * study,
   series_type_t series_type;
   AmitkView view;
 
-  read_preferences(&series_type, &view);
+  read_series_preferences(&series_type, &view);
 
   /* sanity checks */
   g_return_if_fail(AMITK_IS_STUDY(study));
@@ -967,6 +976,7 @@ void ui_series_create(AmitkStudy * study,
   gtk_container_add (GTK_CONTAINER (window), window_vbox);
 
   ui_series = ui_series_init(window, window_vbox);
+  ui_series->preferences = g_object_ref(preferences);
   ui_series->series_type = series_type;
   ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
   ui_series->fill_roi = AMITK_STUDY_CANVAS_FILL_ROI(study);
@@ -1281,13 +1291,13 @@ static void init_view_cb(GtkWidget * widget, gpointer data);
 
 
 static void init_series_type_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_int(GCONF_AMIDE_SERIES"Type", 
+  amide_gconf_set_int(GCONF_AMIDE_SERIES,"Type", 
 		      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "series_type")));
   return;
 }
 
 static void init_view_cb(GtkWidget * widget, gpointer data) {
-  amide_gconf_set_int(GCONF_AMIDE_SERIES"View",
+  amide_gconf_set_int(GCONF_AMIDE_SERIES,"View",
 		      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view")));
   return;
 }
@@ -1313,7 +1323,7 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   series_type_t series_type;
   AmitkView view;
 
-  read_preferences(&series_type, &view);
+  read_series_preferences(&series_type, &view);
 
   temp_string = g_strdup_printf(_("%s: Series Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,

@@ -29,7 +29,7 @@
 
 
 /* external functions */
-void tb_profile(AmitkStudy * study, GtkWindow * parent);
+void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * parent);
 
 
 

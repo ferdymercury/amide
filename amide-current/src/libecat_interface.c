@@ -435,7 +435,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   amitk_data_set_set_subject_weight(ds, libecat_file->mhptr->patient_weight);
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
-  amitk_data_set_calc_max_min(ds, update_func, update_data);
+  amitk_data_set_calc_min_max(ds, update_func, update_data);
   amitk_volume_set_center(AMITK_VOLUME(ds), offset_rp);
   goto function_end;
 

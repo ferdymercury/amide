@@ -35,71 +35,43 @@
 #define DATA_TYPE_`'m4_Variable_Type`'
 
 
-/* function to recalcule the max and min values of a data set */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_frame_max_min(AmitkDataSet * data_set,
-											     AmitkUpdateFunc update_func,
-											     gpointer update_data) {
+/* function to calculate the max/min values of a slice within a data set */
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_slice_min_max(AmitkDataSet * data_set,
+											     const amide_intpoint_t frame,
+											     const amide_intpoint_t gate,
+											     const amide_intpoint_t z,
+											     amitk_format_DOUBLE_t * pmin,
+											     amitk_format_DOUBLE_t * pmax) {
 
   AmitkVoxel i;
   amide_data_t max, min, temp;
-  div_t x;
-  gint divider;
-  gint total_planes;
-  gint i_plane;
-  gchar * temp_string;
   AmitkVoxel dim;
   
   dim = AMITK_DATA_SET_DIM(data_set);
 
-  /* note, we can't cancel this */
-  if (update_func != NULL) {
-    temp_string = g_strdup_printf(_("Calculating Max/Min Values for:\n   %s"), 
-				  AMITK_OBJECT_NAME(data_set) == NULL ? "dataset" :
-				  AMITK_OBJECT_NAME(data_set));
-    (*update_func)(update_data, temp_string, (gdouble) 0.0);
-    g_free(temp_string);
-  }
-  total_planes = AMITK_DATA_SET_TOTAL_PLANES(data_set);
-  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
+  i.t = frame;
+  i.g = gate;
+  i.z = z;
+  i.y = i.x = 0;
 
-  i = zero_voxel;
-  i_plane=0;
+  temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
+  if (finite(temp)) max = min = temp;   
+  else max = min = 0.0; /* just throw in zero */
 
-  for (i.t = 0; i.t < dim.t; i.t++) {
-    i.x = i.y = i.z = i.g = 0;
-    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
-    if (finite(temp)) max = min = temp;   
-    else max = min = 0.0; /* just throw in zero */
-
-    for (i.g = 0; i.g < dim.g; i.g++) {
-      for (i.z = 0; i.z < dim.z; i.z++, i_plane++) {
-	if (update_func != NULL) {
-	  x = div(i_plane, divider);
-	  if (x.rem == 0) 
-	    (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
-	}
-	for (i.y = 0; i.y < dim.y; i.y++) 
-	  for (i.x = 0; i.x < dim.x; i.x++) {
-	    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
-	    if (finite(temp)) {
-	      if (temp > max) max = temp;
-	      else if (temp < min) min = temp;
-	    }
-	  }
+  for (i.y = 0; i.y < dim.y; i.y++) 
+    for (i.x = 0; i.x < dim.x; i.x++) {
+      temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
+      if (finite(temp)) {
+	if (temp > max) max = temp;
+	else if (temp < min) min = temp;
       }
     }
-    
-    data_set->frame_max[i.t] = max;
-    data_set->frame_min[i.t] = min;
-    
-#ifdef AMIDE_DEBUG
-    if (dim.z > 1) /* don't print for slices */
-      g_print("\tframe %d max %5.3g frame min %5.3g\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
-#endif
-  }
 
-  if (update_func != NULL)
-    (*update_func)(update_data, NULL, (gdouble) 2.0); /* remove progress bar */
+  if (pmin != NULL)
+    *pmin = min;
+
+  if (pmax != NULL)
+    *pmax = max;
   
   return;
 }

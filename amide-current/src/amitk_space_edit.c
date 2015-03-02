@@ -78,13 +78,13 @@ GType amitk_space_edit_get_type (void) {
 
 static void space_edit_class_init (AmitkSpaceEditClass *klass)
 {
-  GObjectClass   *gobject_class;
+  /*  GObjectClass   *gobject_class;
+      GtkWidgetClass *widget_class; */
   GtkObjectClass *gtkobject_class;
-  GtkWidgetClass *widget_class;
 
-  gobject_class =   (GObjectClass *) klass;
+  /*  gobject_class =   (GObjectClass *) klass;
+      widget_class =    (GtkWidgetClass*) klass; */
   gtkobject_class = (GtkObjectClass*) klass;
-  widget_class =    (GtkWidgetClass*) klass;
 
   parent_class = g_type_class_peek_parent(klass);
 

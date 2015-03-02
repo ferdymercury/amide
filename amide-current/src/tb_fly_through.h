@@ -34,6 +34,7 @@
 /* external functions */
 void tb_fly_through(AmitkStudy * study,
 		    AmitkView view, 
+		    AmitkPreferences * preferences,
 		    GtkWindow * parent);
 
 

@@ -235,13 +235,13 @@ GType amitk_canvas_get_type (void) {
 
 static void canvas_class_init (AmitkCanvasClass *klass)
 {
-  GObjectClass   *gobject_class;
   GtkObjectClass *gtkobject_class;
-  GtkWidgetClass *widget_class;
+  /*  GtkWidgetClass *widget_class;
+  GObjectClass   *gobject_class; */
 
-  gobject_class =   (GObjectClass *) klass;
   gtkobject_class = (GtkObjectClass*) klass;
-  widget_class =    (GtkWidgetClass*) klass;
+  /*  widget_class =    (GtkWidgetClass*) klass;
+      gobject_class =   (GObjectClass *) klass; */
 
   canvas_parent_class = g_type_class_peek_parent(klass);
 

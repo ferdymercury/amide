@@ -1,11 +1,25 @@
-1.0.0
+1.0.1
+	* conversion between different raw data formats in dcmtk_export no longer fails
+	* data_set_copy_in_place no longer forces calculation of max/min values
+	* now reads in injected dose correctly from DCMTK [1]
+	* default injected dose/weight now NaN
+	* additional tags in exported DICOM files for compliance [2]
+	* "default directory" preference fixed [3]
+	* added preference to utilize exec directory as default
+	* will now separate multi-TI dicom data
+	* added flat-file preferences (used on mac os x)
+	[1] Noticed by Wangxi Hai
+	[2] Requested by Chih-Ann Yang
+	[3] Noticed by Victor Yushmanov
+
+1.0.0 2011.07.22
 	* fixed color table for inverse hot metal contour
 	* fixed uninitialized iterator in data_set_reduce_scaling_dimensions [1]
 	* fixed manual entry of voxel size on tb_export_data_set dialog [2]
-	* updated configure.in for 3.6.0
-	* zoom no longer corrupted if no data sets
-	* fixed orientation errors on dcmtk_export
-	* added a mutual information alignment algorithm
+	* updated configure.in for 3.6.0 [3]
+	* zoom no longer corrupted if no data sets [4]
+	* fixed orientation errors on dcmtk_export [5]
+	* added a mutual information alignment algorithm [6]
 	* updates to Mac OSX package to allow saving prefs [7]
 	[1] Encountered by Done Ugarte
 	[2] Noticed by Morton Ostergard

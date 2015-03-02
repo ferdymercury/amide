@@ -204,7 +204,7 @@ amitk_dial_set_adjustment (AmitkDial      *dial,
 static void
 amitk_dial_realize (GtkWidget *widget)
 {
-  AmitkDial *dial;
+  /*  AmitkDial *dial; */
   GdkWindowAttr attributes;
   gint attributes_mask;
 
@@ -212,7 +212,7 @@ amitk_dial_realize (GtkWidget *widget)
   g_return_if_fail (AMITK_IS_DIAL (widget));
 
   GTK_WIDGET_SET_FLAGS (widget, GTK_REALIZED);
-  dial = AMITK_DIAL (widget);
+  /* dial = AMITK_DIAL (widget); */
 
   attributes.x = widget->allocation.x;
   attributes.y = widget->allocation.y;
@@ -278,7 +278,7 @@ amitk_dial_expose (GtkWidget      *widget,
   GdkPoint points[6];
   gdouble s,c;
   gint xc, yc;
-  gint upper, lower;
+  /*  gint upper, lower; */
 
   g_return_val_if_fail (widget != NULL, FALSE);
   g_return_val_if_fail (AMITK_IS_DIAL (widget), FALSE);
@@ -297,8 +297,8 @@ amitk_dial_expose (GtkWidget      *widget,
   xc = widget->allocation.width / 2;
   yc = widget->allocation.height / 2;
 
-  upper = dial->adjustment->upper;
-  lower = dial->adjustment->lower;
+  /*  upper = dial->adjustment->upper; */
+  /*  lower = dial->adjustment->lower; */
 
   /* draw circle */
   gdk_draw_arc(widget->window,
