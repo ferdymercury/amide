@@ -24,18 +24,199 @@
 */
 
 
-#include "config.h"
-#include <gnome.h>
-#include "volume.h"
+#include "amide_config.h"
+#include <gtk/gtk.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "raw_data_import.h"
-#include "raw_data_import_cb.h"
+
+
+
+typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
+
+/* raw_data information structure */
+typedef struct raw_data_info_t {
+  gchar * filename;
+  gchar * name;
+  guint total_file_size;
+  AmitkRawFormat raw_format;
+  AmitkVoxel data_dim;
+  AmitkPoint voxel_size;
+  AmitkModality modality;
+  amide_data_t scale_factor;
+  guint offset;
+  GtkWidget * num_bytes_label1;
+  GtkWidget * num_bytes_label2;
+  GtkWidget * read_offset_label;
+  GtkWidget * dialog;
+  GtkWidget * ok_button;
+} raw_data_info_t;
+
+
+
+static void change_name_cb(GtkWidget * widget, gpointer data);
+static void change_scaling_cb(GtkWidget * widget, gpointer data);
+static void change_entry_cb(GtkWidget * widget, gpointer data);
+static void change_modality_cb(GtkWidget * widget, gpointer data);
+static void change_raw_format_cb(GtkWidget * widget, gpointer data);
+
+
+static void import_dialog(raw_data_info_t * raw_data_info);
+static void update_offset_label(raw_data_info_t * raw_data_info);
+static guint update_num_bytes(raw_data_info_t * raw_data_info);
+
+
+
+/* function called when the name of the data set has been changed */
+static void change_name_cb(GtkWidget * widget, gpointer data) {
+
+  raw_data_info_t * raw_data_info = data;
+  gchar * new_name;
+
+  /* get the contents of the name entry box and save it */
+  new_name = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+  g_free(raw_data_info->name);
+  raw_data_info->name = new_name;
+
+  return;
+}
+
+/* function called to change the scaling factor */
+static void change_scaling_cb(GtkWidget * widget, gpointer data) {
+
+  gchar * str;
+  gint error;
+  gdouble temp_real;
+  raw_data_info_t * raw_data_info = data;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to the correct number */
+  error = sscanf(str, "%lf", &temp_real);
+  if (error == EOF)
+    return; /* make sure it's a valid number */
+  g_free(str);
+
+  /* and save the value */
+  raw_data_info->scale_factor = temp_real;
+
+  return;
+}
+      
+
+/* function called when a numerical entry of the data set has been changed, 
+   used for the dimensions and voxel_size */
+static void change_entry_cb(GtkWidget * widget, gpointer data) {
+
+  gchar * str;
+  gint error;
+  gdouble temp_real=0.0;
+  gint temp_int=0;
+  guint which_widget;
+  raw_data_info_t * raw_data_info = data;
+
+  /* figure out which widget this is */
+  which_widget = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "type")); 
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+
+  /* convert to the correct number */
+  if ((which_widget < NUM_DIMS) || (which_widget == NUM_DIMS+AMITK_AXIS_NUM)) {
+    error = sscanf(str, "%d", &temp_int);
+    if (error == EOF)
+      return; /* make sure it's a valid number */
+    if (temp_int < 0)
+      return;
+  } else { /* one of the voxel_size widgets */
+    error = sscanf(str, "%lf", &temp_real);
+    if (error == EOF) /* make sure it's a valid number */
+      return;
+    if (temp_real < 0.0)
+      return;
+  }
+  g_free(str);
+
+  /* and save the value in our temporary data set structure */
+  switch(which_widget) {
+  case XDIM:
+    raw_data_info->data_dim.x = temp_int;
+    break;
+  case YDIM:
+    raw_data_info->data_dim.y = temp_int;
+    break;
+  case ZDIM:
+    raw_data_info->data_dim.z = temp_int;
+    break;
+  case TDIM:
+    raw_data_info->data_dim.t = temp_int;
+    break;
+  case (NUM_DIMS+AMITK_AXIS_X):
+    raw_data_info->voxel_size.x = temp_real;
+    break;
+  case (NUM_DIMS+AMITK_AXIS_Y):
+    raw_data_info->voxel_size.y = temp_real;
+    break;
+  case (NUM_DIMS+AMITK_AXIS_Z):
+    raw_data_info->voxel_size.z = temp_real;
+    break;
+  case (NUM_DIMS+AMITK_AXIS_NUM):
+    raw_data_info->offset = temp_int;
+    break;
+  default:
+    break; /* do nothing */
+  }
+  
+  /* recalculate the total number of bytes to be read and have it displayed */
+  update_num_bytes(raw_data_info);
+
+  return;
+}
+      
+      
+
+/* function to change the modality */
+static void change_modality_cb(GtkWidget * widget, gpointer data) {
+  
+  raw_data_info_t * raw_data_info = data;
+
+  /* figure out which menu item called me */
+  raw_data_info->modality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+
+  return;
+}
+
+/* function to change the raw data file's data format */
+static void change_raw_format_cb(GtkWidget * widget, gpointer data) {
+
+  raw_data_info_t * raw_data_info = data;
+
+  /* figure out which menu item called me */
+  raw_data_info->raw_format = 
+    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"raw_format"));
+
+  /* recalculate the total number of bytes to be read and have it displayed*/
+  update_num_bytes(raw_data_info);
+
+  /* update the offset label so it makes sense */
+  update_offset_label(raw_data_info);
+
+  return;
+}
+
+
+
+
+
+
 
 
 /* reset the label for the offset entry */
-void raw_data_update_offset_label(raw_data_info_t * raw_data_info) {
+static void update_offset_label(raw_data_info_t * raw_data_info) {
 
-  if (raw_data_info->raw_data_format == ASCII_NE)
+  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_NE)
     gtk_label_set_text(GTK_LABEL(raw_data_info->read_offset_label), 
 		       "read offset (entries):");
   else
@@ -44,13 +225,13 @@ void raw_data_update_offset_label(raw_data_info_t * raw_data_info) {
 }
 
 /* calculate the total amount of the file that will be read through */
-guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
+static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 
   guint num_bytes, num_entries;
   gchar * temp_string;
   
   /* how many bytes we're currently reading from the file */
-  if (raw_data_info->raw_data_format == ASCII_NE) {
+  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_NE) {
     num_entries = raw_data_info->offset + 
       raw_data_info->data_dim.x*raw_data_info->data_dim.y*raw_data_info->data_dim.z*raw_data_info->data_dim.t;
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
@@ -66,8 +247,8 @@ guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
   } else {
     num_bytes = 
       raw_data_info->offset +
-      raw_data_calc_num_bytes(raw_data_info->data_dim, 
-			      raw_data_info->raw_data_format);
+      amitk_raw_format_calc_num_bytes(raw_data_info->data_dim, 
+				      raw_data_info->raw_format);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
 		       "total bytes to read through:");
     temp_string = g_strdup_printf("%d",num_bytes);
@@ -76,22 +257,20 @@ guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
   }
 
   /* if we think we can load in the file, desensitise the "ok" button */
-  if ((num_bytes <= raw_data_info->total_file_size) && (num_bytes > 0))
-    gnome_dialog_set_sensitive(GNOME_DIALOG(raw_data_info->dialog), 0, TRUE);
-  else
-    gnome_dialog_set_sensitive(GNOME_DIALOG(raw_data_info->dialog), 0, FALSE);
+  gtk_widget_set_sensitive(raw_data_info->ok_button, 
+			   (num_bytes <= raw_data_info->total_file_size) && (num_bytes > 0));
 
   return num_bytes;
 }
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
+static void import_dialog(raw_data_info_t * raw_data_info) {
 
-  modality_t i_modality;
+  AmitkModality i_modality;
   dimension_t i_dim;
-  raw_data_format_t i_raw_data_format;
-  axis_t i_axis;
+  AmitkRawFormat i_raw_format;
+  AmitkAxis i_axis;
   gchar * temp_string = NULL;
   gchar ** frags;
   GtkWidget * raw_data_dialog;
@@ -106,23 +285,22 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* start making the import dialog */
-  temp_string = g_strdup_printf(_("%s: Raw Data Import Dialog\n"), PACKAGE);
-  raw_data_dialog = gnome_dialog_new(temp_string,
-				     GNOME_STOCK_BUTTON_OK,
-				     GNOME_STOCK_BUTTON_CANCEL,
-				     NULL);
+  raw_data_dialog = gtk_dialog_new();
+
+  temp_string = g_strdup_printf("%s: Raw Data Import Dialog\n", PACKAGE);
+  gtk_window_set_title(GTK_WINDOW(raw_data_dialog), temp_string);
   g_free(temp_string);
+  
+  raw_data_info->ok_button = gtk_dialog_add_button(GTK_DIALOG(raw_data_dialog), 
+						   GTK_STOCK_OK, GTK_RESPONSE_YES);
+  gtk_dialog_add_button(GTK_DIALOG(raw_data_dialog),
+			GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE);
   raw_data_info->dialog = raw_data_dialog; 
 
-  /* set some dialog default actions */
-  gnome_dialog_set_close(GNOME_DIALOG(raw_data_dialog), TRUE);
-  gnome_dialog_set_default(GNOME_DIALOG(raw_data_dialog), GNOME_OK);
 
   /* make the packing table */
   packing_table = gtk_table_new(10,5,FALSE);
-  gtk_box_pack_start(GTK_BOX(GNOME_DIALOG(raw_data_dialog)->vbox),
-		     packing_table, TRUE, TRUE, 0);
-
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(raw_data_dialog)->vbox),packing_table);
 
   /* widgets to change the roi's name */
   label = gtk_label_new("name:");
@@ -139,19 +317,17 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   frags = g_strsplit(temp_string, ".", 2);
   g_free(temp_string);
   if (frags[1] != NULL)
-    raw_data_info->volume_name = strdup(frags[1]);
+    raw_data_info->name = strdup(frags[1]);
   else /* no extension on filename */
-    raw_data_info->volume_name = strdup(frags[0]);
+    raw_data_info->name = strdup(frags[0]);
   g_strfreev(frags); 
-  g_strreverse(raw_data_info->volume_name);
+  g_strreverse(raw_data_info->name);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), raw_data_info->volume_name);
+  gtk_entry_set_text(GTK_ENTRY(entry), raw_data_info->name);
 
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_name), 
-		     raw_data_info);
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_name_cb), raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1,
@@ -174,18 +350,15 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
 
-  for (i_modality=0; i_modality<NUM_MODALITIES; i_modality++) {
-    menuitem = gtk_menu_item_new_with_label(modality_names[i_modality]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "modality", GINT_TO_POINTER(i_modality)); 
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_modality), 
-    		       raw_data_info);
+  for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
+    menuitem = gtk_menu_item_new_with_label(amitk_modality_get_name(i_modality));
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), PET);
-  raw_data_info->modality = PET;
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_MODALITY_PET);
+  g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
+  raw_data_info->modality = AMITK_MODALITY_PET;
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(option_menu), 1,2, 
 		   table_row,table_row+1,
@@ -205,18 +378,17 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
 
-  for (i_raw_data_format=0; i_raw_data_format<NUM_RAW_DATA_FORMATS; i_raw_data_format++) {
-    menuitem = gtk_menu_item_new_with_label(raw_data_format_names[i_raw_data_format]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "raw_data_format", GINT_TO_POINTER(i_raw_data_format)); 
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_raw_data_format), 
-    		       raw_data_info);
+  for (i_raw_format=0; i_raw_format<AMITK_RAW_FORMAT_NUM; i_raw_format++) {
+    menuitem = gtk_menu_item_new_with_label(amitk_raw_format_names[i_raw_format]);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    g_object_set_data(G_OBJECT(menuitem), "raw_format", GINT_TO_POINTER(i_raw_format)); 
+    g_signal_connect(G_OBJECT(menuitem), "activate", 
+		     G_CALLBACK(change_raw_format_cb), raw_data_info);
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), UBYTE_NE);
-  raw_data_info->raw_data_format = UBYTE_NE;
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_RAW_FORMAT_UBYTE_NE);
+  raw_data_info->raw_format = AMITK_RAW_FORMAT_UBYTE_NE;
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(option_menu), 1,2, 
 		   table_row,table_row+1,
@@ -238,7 +410,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
   /* what offset in the raw_data file we should start reading at */
   raw_data_info->read_offset_label = gtk_label_new("");
-  raw_data_update_offset_label(raw_data_info);
+  update_offset_label(raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->read_offset_label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -248,10 +420,8 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(NUM_DIMS+NUM_AXIS));
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
-		     raw_data_info);
+  g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(NUM_DIMS+AMITK_AXIS_NUM));
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb),  raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
 
@@ -259,7 +429,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   /* how many bytes we're currently reading from the file */
   raw_data_info->num_bytes_label1 = gtk_label_new("");
   raw_data_info->num_bytes_label2 = gtk_label_new("");
-  raw_data_update_num_bytes(raw_data_info); /* put something sensible into the label */
+  update_num_bytes(raw_data_info); /* put something sensible into the label */
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label1), 
 		   3,4, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label2), 
@@ -284,7 +454,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   table_row++;
 
 
-  /* widgets to change the dimensions of the volume */
+  /* widgets to change the dimensions of the data set */
   label = gtk_label_new("dimensions (# voxels)");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
@@ -300,31 +470,28 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-    gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(i_dim));
-    gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
-		       raw_data_info);
+    g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_dim));
+    g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb), raw_data_info);
     gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_dim+1,i_dim+2,
 		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   }
   table_row++;
 
-  /* widgets to change the voxel size of the volume */
+  /* widgets to change the voxel size of the data set */
   label = gtk_label_new("voxel size (mm)");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
   raw_data_info->voxel_size.x = raw_data_info->voxel_size.y = raw_data_info->voxel_size.z=1;
-  for (i_axis=0; i_axis<NUM_AXIS; i_axis++) {
+  for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
     entry = gtk_entry_new();
     temp_string = g_strdup_printf("%d", 1);
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-    gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+NUM_DIMS));
-    gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
+    g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+NUM_DIMS));
+    g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb), 
 		       raw_data_info);
     gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_axis+1,i_axis+2,
 		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -332,19 +499,17 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   table_row++;
 
 
-  /* scaling factor to apply to the data */
-  label = gtk_label_new("scaling factor");
+  /* scale factor to apply to the data */
+  label = gtk_label_new("scale factor");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%5.3f", raw_data_info->external_scaling);
+  temp_string = g_strdup_printf("%5.3f", raw_data_info->scale_factor);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_scaling), 
-		     raw_data_info);
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_scaling_cb), raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -357,19 +522,19 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-volume_t * raw_data_import(const gchar * raw_data_filename) {
+AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 
   struct stat file_info;
   raw_data_info_t * raw_data_info;
-  volume_t * temp_volume;
+  AmitkDataSet * ds;
   gint dialog_reply;
 
   /* get space for our raw_data_info structure */
-  if ((raw_data_info = (raw_data_info_t * ) g_malloc(sizeof(raw_data_info_t))) == NULL) {
+  if ((raw_data_info = g_new(raw_data_info_t,1)) == NULL) {
     g_warning("couldn't allocate space for raw_data_info structure to load in RAW file");
     return NULL;
   }
-  raw_data_info->external_scaling = 1.0;
+  raw_data_info->scale_factor = 1.0;
   raw_data_info->filename = g_strdup(raw_data_filename);
 
   /* figure out the file size in bytes (file_info.st_size) */
@@ -380,32 +545,32 @@ volume_t * raw_data_import(const gchar * raw_data_filename) {
   }
   raw_data_info->total_file_size = file_info.st_size;
 
-  /* create and run the raw_data_import_dialog to acquire needed info from the user */
-  raw_data_import_dialog(raw_data_info);
+  /* create and run the import_dialog to acquire needed info from the user */
+  import_dialog(raw_data_info);
 
   /* block till the user closes the dialog */
-  dialog_reply = gnome_dialog_run(GNOME_DIALOG(raw_data_info->dialog));
+  dialog_reply = gtk_dialog_run(GTK_DIALOG(raw_data_info->dialog));
   
   /* and start loading in the file if we hit ok*/
-  if (dialog_reply == 0) {
-    temp_volume = raw_data_read_volume(raw_data_info->filename,
-				       raw_data_info->raw_data_format,
-				       raw_data_info->data_dim,
-				       raw_data_info->offset);
-
+  if (dialog_reply == GTK_RESPONSE_YES) {
+    ds = amitk_data_set_import_raw_file(raw_data_info->filename,
+					raw_data_info->raw_format,
+					raw_data_info->data_dim,
+					raw_data_info->offset);
+    
     /* set remaining parameters */
-    volume_set_name(temp_volume,raw_data_info->volume_name);
-    temp_volume->voxel_size = raw_data_info->voxel_size;
-    volume_recalc_far_corner(temp_volume);
-    temp_volume->modality = raw_data_info->modality;
-    volume_set_scaling(temp_volume, raw_data_info->external_scaling);
+    amitk_object_set_name(AMITK_OBJECT(ds),raw_data_info->name);
+    ds->voxel_size = raw_data_info->voxel_size;
+    amitk_data_set_calc_far_corner(ds);
+    ds->modality = raw_data_info->modality;
+    amitk_data_set_set_scale_factor(ds, raw_data_info->scale_factor);
   } else /* we hit the cancel button */
-    temp_volume = NULL;
+    ds = NULL;
 
   g_free(raw_data_info->filename);
-  g_free(raw_data_info->volume_name);
+  g_free(raw_data_info->name);
   g_free(raw_data_info); 
-  return temp_volume; /* NULL if we hit cancel */
+  return ds; /* NULL if we hit cancel */
 
 }
 

@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_interpolation_2x2x1_xpm[] = {
+const char * icon_interpolation_2x2x1_xpm[] = {
 "24 24 77 1",
 " 	c None",
 ".	c #434343",

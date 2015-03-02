@@ -1,6 +1,17 @@
 
-INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\""
-CFLAGS = @CFLAGS@ $(AMIDE_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
+INCLUDES = \
+	-DPREFIX=\""$(prefix)"\"			\
+	-DSYSCONFDIR=\""$(sysconfdir)"\"		\
+	-DDATADIR=\""$(datadir)"\"			\
+	-DLIBDIR=\""$(libdir)"\"			
+#	-DGNOMELOCALEDIR=\""$(datadir)/locale\""
+
+CFLAGS = \
+	@CFLAGS@ \
+	$(AMIDE_GNOME_CFLAGS) \
+	$(AMIDE_DEBUG_CFLAGS) \
+	 -DGTK_DISABLE_DEPRECATED 
+#	-DGNOME_DISABLE_DEPRECATED
 
 bin_PROGRAMS = amide
 
@@ -12,137 +23,103 @@ amide_LDADD = \
 	$(AMIDE_GNOME_LIBS) \
 	-L/usr/local/lib 
 
+
 amide_SOURCES = \
 	gtkdial.c \
 	gtkdial.h \
-	gtkdirsel.c \
-	gtkdirsel.h \
-	$(DATA_SET_VARIABLE_H) \
-	$(DATA_SET_VARIABLE_C) \
-	$(VOLUME_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
-	$(ROI_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
+	$(MARSHAL_SOURCES) \
+	$(TYPE_BUILTINS_SOURCES) \
+	$(AMITK_RAW_DATA_VARIABLE_H) \
+	$(AMITK_RAW_DATA_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
 	$(ANALYSIS_VARIABLE_C) \
+	$(AMITK_DATA_SET_VARIABLE_H) \
+	$(AMITK_DATA_SET_VARIABLE_C) \
+	$(AMITK_ROI_VARIABLE_H) \
+	$(AMITK_ROI_VARIABLE_C) \
+	$(AMITK_H_SOURCES) \
 	amide.c \
-	amide.h \
-	align_pt.c \
-	align_pt.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
 	analysis.h \
 	amitk_canvas.c \
-	amitk_canvas.h \
-	amitk_coord_frame_edit.c \
-	amitk_coord_frame_edit.h \
-	amitk_spin_button.c \
-	amitk_spin_button.h \
-	amitk_tree.c \
-	amitk_tree.h \
-	amitk_tree_item.c \
-	amitk_tree_item.h \
+	amitk_color_table.c \
+	amitk_data_set.c \
+	amitk_dir_sel.c \
+	amitk_fiducial_mark.c \
+	amitk_point.c \
+	amitk_object.c \
+	amitk_object_dialog.c \
+	amitk_raw_data.c \
+	amitk_roi.c \
+	amitk_space_edit.c \
+	amitk_space.c \
+	amitk_study.c \
 	amitk_threshold.c \
-	amitk_threshold.h \
-	color_table.c \
-	color_table.h \
+	amitk_tree.c \
+	amitk_volume.c \
 	cti_import.c \
 	cti_import.h \
-	data_set.c \
-	data_set.h \
 	idl_data_import.c \
 	idl_data_import.h \
 	image.c \
 	image.h \
+	legacy.c \
+	legacy.h \
 	medcon_import.c \
 	medcon_import.h \
-	pem_data_import.c \
-	pem_data_import.h \
-	raw_data.c \
-	raw_data.h \
 	raw_data_import.c \
 	raw_data_import.h \
-	raw_data_import_cb.c \
-	raw_data_import_cb.h \
-	realspace.c \
-	realspace.h \
 	rendering.c \
 	rendering.h \
-	roi.c \
-	roi.h \
-	study.c \
-	study.h \
-	ui_align_pt_dialog.c \
-	ui_align_pt_dialog.h \
-	ui_align_pt_dialog_cb.c \
-	ui_align_pt_dialog_cb.h \
 	ui_alignment_dialog.c \
 	ui_alignment_dialog.h \
-	ui_alignment_dialog_cb.c \
-	ui_alignment_dialog_cb.h \
 	ui_common.c \
 	ui_common.h \
-	ui_common_cb.c \
-	ui_common_cb.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
-	ui_preferences_dialog_cb.c \
-	ui_preferences_dialog_cb.h \
 	ui_rendering.c \
 	ui_rendering.h \
-	ui_rendering_cb.c \
-	ui_rendering_cb.h \
 	ui_rendering_dialog.c \
 	ui_rendering_dialog.h \
-	ui_rendering_dialog_cb.c \
-	ui_rendering_dialog_cb.h \
-	ui_rendering_menus.c \
-	ui_rendering_menus.h \
 	ui_rendering_movie_dialog.c \
 	ui_rendering_movie_dialog.h \
-	ui_rendering_movie_dialog_cb.c \
-	ui_rendering_movie_dialog_cb.h \
-	ui_roi_dialog.c \
-	ui_roi_dialog.h \
-	ui_roi_dialog_cb.c \
-	ui_roi_dialog_cb.h \
 	ui_roi_analysis_dialog.c \
 	ui_roi_analysis_dialog.h \
-	ui_roi_analysis_dialog_cb.c \
-	ui_roi_analysis_dialog_cb.h \
 	ui_series.c \
 	ui_series.h \
-	ui_series_cb.c \
-	ui_series_cb.h \
-	ui_series_menus.c \
-	ui_series_menus.h \
-	ui_series_toolbar.c \
-	ui_series_toolbar.h \
 	ui_study.c \
 	ui_study.h \
 	ui_study_cb.c \
 	ui_study_cb.h \
-	ui_study_dialog.c \
-	ui_study_dialog.h \
-	ui_study_dialog_cb.c \
-	ui_study_dialog_cb.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
 	ui_study_toolbar.c \
 	ui_study_toolbar.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
-	ui_time_dialog_cb.c \
-	ui_time_dialog_cb.h \
-	ui_volume_dialog.c \
-	ui_volume_dialog.h \
-	ui_volume_dialog_cb.c \
-	ui_volume_dialog_cb.h \
-	volume.c \
-	volume.h \
 	xml.c \
 	xml.h
+
+AMITK_H_SOURCES = \
+	amide.h \
+	amitk_canvas.h \
+	amitk_color_table.h \
+	amitk_dir_sel.h \
+	amitk_data_set.h \
+	amitk_fiducial_mark.h \
+	amitk_object.h \
+	amitk_object_dialog.h \
+	amitk_point.h \
+	amitk_raw_data.h \
+	amitk_roi.h \
+	amitk_space_edit.h \
+	amitk_space.h \
+	amitk_study.h \
+	amitk_threshold.h \
+	amitk_tree.h \
+	amitk_volume.h 
 
 ANALYSIS_VARIABLE_C = \
 	analysis_ELLIPSOID.c \
@@ -158,91 +135,91 @@ ANALYSIS_VARIABLE_H = \
 	analysis_ISOCONTOUR_2D.h \
 	analysis_ISOCONTOUR_3D.h
 
-ROI_VARIABLE_C = \
-	roi_ELLIPSOID.c \
-	roi_CYLINDER.c \
-	roi_BOX.c \
-	roi_ISOCONTOUR_2D.c \
-	roi_ISOCONTOUR_3D.c 
+AMITK_ROI_VARIABLE_C = \
+	amitk_roi_ELLIPSOID.c \
+	amitk_roi_CYLINDER.c \
+	amitk_roi_BOX.c \
+	amitk_roi_ISOCONTOUR_2D.c \
+	amitk_roi_ISOCONTOUR_3D.c 
 
-ROI_VARIABLE_H = \
-	roi_ELLIPSOID.h \
-	roi_CYLINDER.h \
-	roi_BOX.h \
-	roi_ISOCONTOUR_2D.h \
-	roi_ISOCONTOUR_3D.h
+AMITK_ROI_VARIABLE_H = \
+	amitk_roi_ELLIPSOID.h \
+	amitk_roi_CYLINDER.h \
+	amitk_roi_BOX.h \
+	amitk_roi_ISOCONTOUR_2D.h \
+	amitk_roi_ISOCONTOUR_3D.h
 
-DATA_SET_VARIABLE_C = \
-	data_set_UBYTE.c \
-	data_set_SBYTE.c \
-	data_set_USHORT.c \
-	data_set_SSHORT.c \
-	data_set_UINT.c \
-	data_set_SINT.c \
-	data_set_FLOAT.c \
-	data_set_DOUBLE.c 
+AMITK_RAW_DATA_VARIABLE_C = \
+	amitk_raw_data_UBYTE.c \
+	amitk_raw_data_SBYTE.c \
+	amitk_raw_data_USHORT.c \
+	amitk_raw_data_SSHORT.c \
+	amitk_raw_data_UINT.c \
+	amitk_raw_data_SINT.c \
+	amitk_raw_data_FLOAT.c \
+	amitk_raw_data_DOUBLE.c 
 
-DATA_SET_VARIABLE_H = \
-	data_set_UBYTE.h \
-	data_set_SBYTE.h \
-	data_set_USHORT.h \
-	data_set_SSHORT.h \
-	data_set_UINT.h \
-	data_set_SINT.h \
-	data_set_FLOAT.h \
-	data_set_DOUBLE.h 
+AMITK_RAW_DATA_VARIABLE_H = \
+	amitk_raw_data_UBYTE.h \
+	amitk_raw_data_SBYTE.h \
+	amitk_raw_data_USHORT.h \
+	amitk_raw_data_SSHORT.h \
+	amitk_raw_data_UINT.h \
+	amitk_raw_data_SINT.h \
+	amitk_raw_data_FLOAT.h \
+	amitk_raw_data_DOUBLE.h 
 
-VOLUME_VARIABLE_C = \
-	volume_UBYTE_0D_SCALING.c \
-	volume_UBYTE_1D_SCALING.c \
-	volume_UBYTE_2D_SCALING.c \
-	volume_SBYTE_0D_SCALING.c \
-	volume_SBYTE_1D_SCALING.c \
-	volume_SBYTE_2D_SCALING.c \
-	volume_USHORT_0D_SCALING.c \
-	volume_USHORT_1D_SCALING.c \
-	volume_USHORT_2D_SCALING.c \
-	volume_SSHORT_0D_SCALING.c \
-	volume_SSHORT_1D_SCALING.c \
-	volume_SSHORT_2D_SCALING.c \
-	volume_UINT_0D_SCALING.c \
-	volume_UINT_1D_SCALING.c \
-	volume_UINT_2D_SCALING.c \
-	volume_SINT_0D_SCALING.c \
-	volume_SINT_1D_SCALING.c \
-	volume_SINT_2D_SCALING.c \
-	volume_FLOAT_0D_SCALING.c \
-	volume_FLOAT_1D_SCALING.c \
-	volume_FLOAT_2D_SCALING.c \
-	volume_DOUBLE_0D_SCALING.c \
-	volume_DOUBLE_1D_SCALING.c \
-	volume_DOUBLE_2D_SCALING.c 
+AMITK_DATA_SET_VARIABLE_C = \
+	amitk_data_set_UBYTE_0D_SCALING.c \
+	amitk_data_set_UBYTE_1D_SCALING.c \
+	amitk_data_set_UBYTE_2D_SCALING.c \
+	amitk_data_set_SBYTE_0D_SCALING.c \
+	amitk_data_set_SBYTE_1D_SCALING.c \
+	amitk_data_set_SBYTE_2D_SCALING.c \
+	amitk_data_set_USHORT_0D_SCALING.c \
+	amitk_data_set_USHORT_1D_SCALING.c \
+	amitk_data_set_USHORT_2D_SCALING.c \
+	amitk_data_set_SSHORT_0D_SCALING.c \
+	amitk_data_set_SSHORT_1D_SCALING.c \
+	amitk_data_set_SSHORT_2D_SCALING.c \
+	amitk_data_set_UINT_0D_SCALING.c \
+	amitk_data_set_UINT_1D_SCALING.c \
+	amitk_data_set_UINT_2D_SCALING.c \
+	amitk_data_set_SINT_0D_SCALING.c \
+	amitk_data_set_SINT_1D_SCALING.c \
+	amitk_data_set_SINT_2D_SCALING.c \
+	amitk_data_set_FLOAT_0D_SCALING.c \
+	amitk_data_set_FLOAT_1D_SCALING.c \
+	amitk_data_set_FLOAT_2D_SCALING.c \
+	amitk_data_set_DOUBLE_0D_SCALING.c \
+	amitk_data_set_DOUBLE_1D_SCALING.c \
+	amitk_data_set_DOUBLE_2D_SCALING.c 
 
-VOLUME_VARIABLE_H = \
-	volume_UBYTE_0D_SCALING.h \
-	volume_UBYTE_1D_SCALING.h \
-	volume_UBYTE_2D_SCALING.h \
-	volume_SBYTE_0D_SCALING.h \
-	volume_SBYTE_1D_SCALING.h \
-	volume_SBYTE_2D_SCALING.h \
-	volume_USHORT_0D_SCALING.h \
-	volume_USHORT_1D_SCALING.h \
-	volume_USHORT_2D_SCALING.h \
-	volume_SSHORT_0D_SCALING.h \
-	volume_SSHORT_1D_SCALING.h \
-	volume_SSHORT_2D_SCALING.h \
-	volume_UINT_0D_SCALING.h \
-	volume_UINT_1D_SCALING.h \
-	volume_UINT_2D_SCALING.h \
-	volume_SINT_0D_SCALING.h \
-	volume_SINT_1D_SCALING.h \
-	volume_SINT_2D_SCALING.h \
-	volume_FLOAT_0D_SCALING.h \
-	volume_FLOAT_1D_SCALING.h \
-	volume_FLOAT_2D_SCALING.h \
-	volume_DOUBLE_0D_SCALING.h \
-	volume_DOUBLE_1D_SCALING.h \
-	volume_DOUBLE_2D_SCALING.h 
+AMITK_DATA_SET_VARIABLE_H = \
+	amitk_data_set_UBYTE_0D_SCALING.h \
+	amitk_data_set_UBYTE_1D_SCALING.h \
+	amitk_data_set_UBYTE_2D_SCALING.h \
+	amitk_data_set_SBYTE_0D_SCALING.h \
+	amitk_data_set_SBYTE_1D_SCALING.h \
+	amitk_data_set_SBYTE_2D_SCALING.h \
+	amitk_data_set_USHORT_0D_SCALING.h \
+	amitk_data_set_USHORT_1D_SCALING.h \
+	amitk_data_set_USHORT_2D_SCALING.h \
+	amitk_data_set_SSHORT_0D_SCALING.h \
+	amitk_data_set_SSHORT_1D_SCALING.h \
+	amitk_data_set_SSHORT_2D_SCALING.h \
+	amitk_data_set_UINT_0D_SCALING.h \
+	amitk_data_set_UINT_1D_SCALING.h \
+	amitk_data_set_UINT_2D_SCALING.h \
+	amitk_data_set_SINT_0D_SCALING.h \
+	amitk_data_set_SINT_1D_SCALING.h \
+	amitk_data_set_SINT_2D_SCALING.h \
+	amitk_data_set_FLOAT_0D_SCALING.h \
+	amitk_data_set_FLOAT_1D_SCALING.h \
+	amitk_data_set_FLOAT_2D_SCALING.h \
+	amitk_data_set_DOUBLE_0D_SCALING.h \
+	amitk_data_set_DOUBLE_1D_SCALING.h \
+	amitk_data_set_DOUBLE_2D_SCALING.h 
 
 VARIABLE_INPUT = \
 	variable_type.m4
@@ -250,23 +227,15 @@ VARIABLE_INPUT = \
 ANALYSIS_VARIABLE_C_SRC = analysis_variable_type.c 
 ANALYSIS_VARIABLE_H_SRC = analysis_variable_type.h 
 
-ROI_VARIABLE_C_SRC = roi_variable_type.c 
-ROI_VARIABLE_H_SRC = roi_variable_type.h
+AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c 
+AMITK_ROI_VARIABLE_H_SRC = amitk_roi_variable_type.h
 
-DATA_SET_VARIABLE_C_SRC = data_set_variable_type.c
-DATA_SET_VARIABLE_H_SRC = data_set_variable_type.h
+AMITK_RAW_DATA_VARIABLE_C_SRC = amitk_raw_data_variable_type.c
+AMITK_RAW_DATA_VARIABLE_H_SRC = amitk_raw_data_variable_type.h
 
-VOLUME_VARIABLE_C_SRC = volume_variable_type.c 
-VOLUME_VARIABLE_H_SRC = volume_variable_type.h 
+AMITK_DATA_SET_VARIABLE_C_SRC = amitk_data_set_variable_type.c 
+AMITK_DATA_SET_VARIABLE_H_SRC = amitk_data_set_variable_type.h 
 
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
-	@for i in $(ANALYSIS_VARIABLE_C) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
 
 $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
 	@for i in $(ANALYSIS_VARIABLE_H) ; \
@@ -277,8 +246,8 @@ $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
-	@for i in $(ROI_VARIABLE_C) ; \
+$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
+	@for i in $(ANALYSIS_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -286,8 +255,8 @@ $(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
-	@for i in $(ROI_VARIABLE_H) ; \
+$(AMITK_ROI_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_H_SRC)
+	@for i in $(AMITK_ROI_VARIABLE_H) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -295,8 +264,8 @@ $(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H)
-	@for i in $(DATA_SET_VARIABLE_C) ; \
+$(AMITK_ROI_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_C_SRC) $(AMITK_ROI_VARIABLE_H)
+	@for i in $(AMITK_ROI_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -304,8 +273,17 @@ $(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
-	@for i in $(DATA_SET_VARIABLE_H) ; \
+$(AMITK_RAW_DATA_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_RAW_DATA_VARIABLE_C_SRC) $(AMITK_RAW_DATA_VARIABLE_H)
+	@for i in $(AMITK_RAW_DATA_VARIABLE_C) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(AMITK_RAW_DATA_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_RAW_DATA_VARIABLE_H_SRC)
+	@for i in $(AMITK_RAW_DATA_VARIABLE_H) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -314,8 +292,8 @@ $(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
             done
 
 
-$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H)
-	@for i in $(VOLUME_VARIABLE_C) ; \
+$(AMITK_DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_C_SRC) $(AMITK_DATA_SET_VARIABLE_H)
+	@for i in $(AMITK_DATA_SET_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -323,26 +301,91 @@ $(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIAB
                 chmod -w $$i; \
             done
 
-$(VOLUME_VARIABLE_H): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_H_SRC)
-	@for i in $(VOLUME_VARIABLE_H) ; \
+$(AMITK_DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_H_SRC)
+	@for i in $(AMITK_DATA_SET_VARIABLE_H) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
                 $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
                 chmod -w $$i; \
             done
+
+## $(amide_la_OBJECTS): $(MARSHAL_SOURCES)
+## BUILT_SOURCES =	\
+##	$(MARSHAL_SOURCES) \
+##	$(TYPE_BUILTINS_SOURCES) \
+
+
+
+MARSHAL_SOURCES = \
+	amitk_marshal.c	\
+	amitk_marshal.h 
+
+amitk_marshal.h: amitk_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $< --header --prefix=amitk_marshal > $@
+amitk_marshal.c: amitk_marshal.list $(GLIB_GENMARSHAL) amitk_marshal.h
+	$(GLIB_GENMARSHAL) $< --body --prefix=amitk_marshal > $@
+
+TYPE_BUILTINS_SOURCES = \
+	amitk_type_builtins.h \
+	amitk_type_builtins.c 
+
+TEMP_FILES = \
+	xgen-atbh \
+	xgen-atbc
+
+STAMP_FILES = \
+	stamp-amitk_type_builtins.h \
+	stamp-amitk_type_builtins.c
+
+
+## fancy rebuild rules stolen from the Makefile.am from gtk-2.0
+
+$(srcdir)/amitk_type_builtins.h: stamp-amitk_type_builtins.h $(AMITK_DATA_SET_VARIABLE_H) $(AMITK_RAW_DATA_VARIABLE_H)
+	@true
+stamp-amitk_type_builtins.h: $(AMITK_H_SOURCES) Makefile
+	( cd $(srcdir) && glib-mkenums \
+		--fhead "#ifndef __AMITK_TYPE_BUILTINS_H__\n#define __AMITK_TYPE_BUILTINS_H__\n\n#include <glib-object.h>\n\nG_BEGIN_DECLS\n" \
+		--fprod "/* enumerations from \"@filename@\" */\n" \
+		--vhead "GType @enum_name@_get_type (void);\n#define AMITK_TYPE_@ENUMSHORT@ (@enum_name@_get_type())\n" \
+		--ftail "G_END_DECLS\n\n#endif /* __AMITK_TYPE_BUILTINS_H__ */" \
+		$(AMITK_H_SOURCES))  >> xgen-atbh \
+	&& (cmp -s xgen-atbh $(srcdir)/amitk_type_builtins.h || cp xgen-atbh $(srcdir)/amitk_type_builtins.h ) \
+	&& rm -f xgen-atbh \
+	&& echo timestamp > $(@F)
+
+
+
+$(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
+	@true
+stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
+	( cd $(srcdir) && glib-mkenums \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fprod "\n/* enumerations from \"@filename@\" */" \
+		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
+		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
+		--vtail "      { 0, NULL, NULL }\n    };\n    etype = g_@type@_register_static (\"@EnumName@\", values);\n  }\n  return etype;\n}\n" \
+		$(AMITK_H_SOURCES) ) > xgen-atbc \
+	&& cp xgen-atbc $(srcdir)/amitk_type_builtins.c  \
+	&& rm -f xgen-atbc \
+	&& echo timestamp > $(@F)
+
 
 
 
 CLEANFILES = \
 	$(ANALYSIS_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
-	$(ROI_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
-	$(VOLUME_VARIABLE_H) \
-	$(DATA_SET_VARIABLE_C) \
-	$(DATA_SET_VARIABLE_H)
+	$(AMITK_ROI_VARIABLE_C) \
+	$(AMITK_ROI_VARIABLE_H) \
+	$(AMITK_DATA_SET_VARIABLE_C) \
+	$(AMITK_DATA_SET_VARIABLE_H) \
+	$(AMITK_RAW_DATA_VARIABLE_C) \
+	$(AMITK_RAW_DATA_VARIABLE_H) \
+	$(MARSHAL_SOURCES) \
+	$(TYPE_BUILTINS_SOURCES) \
+	$(TEMP_FILES) \
+	$(STAMP_FILES) 
 
-DISTCLEANFILES = *~
+DISTCLEANFILES = *~ 
 

@@ -27,13 +27,13 @@
 #define __ANALYSIS_H__
 
 /* header files that are always needed with this file */
-#include "study.h"
+#include "amitk_study.h"
 
 /* defines */
 #define ANALYSIS_GRANULARITY 4
 #define ANALYSIS_GRAIN_SIZE 0.015625 /* 1/64 */
-/* #define ANALYSIS_GRANULARITY 10 */
-/* #define ANALYSIS_GRAIN_SIZE 0.001 */ /* 1/10^3 */
+//#define ANALYSIS_GRANULARITY 10 - takes way to long
+//#define ANALYSIS_GRAIN_SIZE 0.001 /* 1/10^3 */
 
 /* typedefs, etc. */
 
@@ -50,20 +50,21 @@ struct _analysis_frame_t {
   amide_data_t var;
   amide_data_t min;
   amide_data_t max;
+  amide_data_t total;
   analysis_frame_t * next_frame_analysis;
   guint ref_count;
 };
 
 struct _analysis_volume_t {
-  volume_t * volume;
+  AmitkDataSet * data_set;
   analysis_frame_t * frame_analyses;
   guint ref_count;
   analysis_volume_t * next_volume_analysis;
 };
 
 struct _analysis_roi_t {
-  roi_t * roi;
-  study_t * study;
+  AmitkRoi * roi;
+  AmitkStudy * study;
   analysis_volume_t * volume_analyses;
   guint ref_count;
   analysis_roi_t * next_roi_analysis;
@@ -71,13 +72,13 @@ struct _analysis_roi_t {
 
 /* external functions */
 analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
-analysis_frame_t * analysis_frame_init(roi_t * roi, volume_t * volume);
+analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds);
 
 analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
-analysis_volume_t * analysis_volume_init(roi_t * roi, volumes_t * volumes);
+analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes);
 
 analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
-analysis_roi_t * analysis_roi_init(study_t * study, rois_t * rois, volumes_t * volumes);
+analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * volumes);
 
 /* variable type function declarations */
 #include "analysis_ELLIPSOID.h"

@@ -24,7 +24,7 @@
 */
 
 
-#include "config.h"
+#include "amide_config.h"
 #include <gnome.h>
 #include <sys/stat.h>
 #include "raw_data_import.h"
@@ -33,9 +33,9 @@
 
 
 /* function to load in volume data from an IDL data file */
-volume_t * idl_data_import(const gchar * idl_data_filename) {
+AmitkDataSet * idl_data_import(const gchar * idl_data_filename) {
 
-  volume_t * idl_volume;
+  AmitkDataSet * ds;
   FILE * file_pointer;
   void * file_buffer = NULL;
   size_t bytes_read;
@@ -43,11 +43,11 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
   guint8 * bytes;
   guint32 * uints;
   guint dimensions;
-  voxelpoint_t dim;
-  gchar * volume_name;
+  AmitkVoxel dim;
+  gchar * name;
   gchar ** frags;
   guint file_offset = 35; /* the idl header is 35 bytes */
-  realpoint_t new_axis[NUM_AXIS];
+  AmitkAxes new_axes;
 
   /* we need to read in the first 35 bytes of the IDL data file (the header) */
   if ((file_pointer = fopen(idl_data_filename, "r")) == NULL) {
@@ -98,42 +98,42 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
 #endif
 
   /* now that we've figured out the header info, read in the rest of the idl data file as raw data*/
-  idl_volume = raw_data_read_volume(idl_data_filename, IDL_RAW_DATA_FORMAT,dim, file_offset);
-  if (idl_volume == NULL) {
+  ds = amitk_data_set_import_raw_file(idl_data_filename, IDL_RAW_DATA_FORMAT,dim, file_offset);
+  if (ds == NULL) {
     g_warning("couldn't read in idl data set");
     return NULL;
   }
 
   /* figure out an initial name for the data */
-  volume_name = g_strdup(g_basename(idl_data_filename));
+  name = g_strdup(g_basename(idl_data_filename));
   /* remove the extension of the file */
-  g_strreverse(volume_name);
-  frags = g_strsplit(volume_name, ".", 2);
-  g_strreverse(volume_name);
-  volume_name = frags[1];
-  g_strreverse(volume_name);
-  volume_set_name(idl_volume,volume_name);
+  g_strreverse(name);
+  frags = g_strsplit(name, ".", 2);
+  g_free(name);
+  g_strreverse(frags[1]);
+  amitk_object_set_name(AMITK_OBJECT(ds), frags[1]);
   g_strfreev(frags); /* free up now unused strings */
-  g_free(volume_name);
 
   /* set the axis such that transverse/coronal/sagittal match up correctly */
   /* this is all derived empirically */
-  new_axis[0].x = -1.0;
-  new_axis[0].y = 0.0;
-  new_axis[0].z = 0.0;
-  new_axis[1].x = 0.0;
-  new_axis[1].y = 0.0;
-  new_axis[1].z = 1.0;
-  new_axis[2].x = 0.0;
-  new_axis[2].y = 1.0;
-  new_axis[2].z = 0.0;
-  rs_set_axis((idl_volume->coord_frame), new_axis); 
-  volume_set_center(idl_volume, zero_rp); /* reset the center, needed as we've reset the axis */
+  new_axes[0].x = -1.0;
+  new_axes[0].y = 0.0;
+  new_axes[0].z = 0.0;
+  new_axes[1].x = 0.0;
+  new_axes[1].y = 0.0;
+  new_axes[1].z = 1.0;
+  new_axes[2].x = 0.0;
+  new_axes[2].y = 1.0;
+  new_axes[2].z = 0.0;
+  amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point); 
+
+  /* reset the center, needed as we've reset the axis */
+  amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
 
   /* garbage collection */
   g_free(file_buffer);
 
-  return idl_volume; /* and return the new volume structure (it's NULL if we cancelled) */
+  return ds; 
 
 }
 

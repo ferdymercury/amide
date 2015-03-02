@@ -24,10 +24,9 @@
 */
 
 
-typedef struct ui_time_dialog_t {
-  amide_time_t time;
-  amide_time_t duration;
-} ui_time_dialog_t;
+/* header files always needed with this */
+#include "ui_study.h"
 
+/* external functions */
 void ui_time_dialog_set_times(ui_study_t * ui_study);
 void ui_time_dialog_create(ui_study_t * ui_study);

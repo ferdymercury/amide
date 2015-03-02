@@ -1,5 +1,5 @@
 /* XPM */
-static char * SPECT_xpm[] = {
+const char * SPECT_xpm[] = {
 "24 24 181 2",
 "  	c None",
 ". 	c #BF74C5",

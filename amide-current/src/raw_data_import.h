@@ -25,32 +25,10 @@
 
 
 /* header files that are always needed with this file */
-#include "raw_data.h"
-
-/* raw_data information structure */
-typedef struct raw_data_info_t {
-  gchar * filename;
-  gchar * volume_name;
-  guint total_file_size;
-  raw_data_format_t raw_data_format;
-  voxelpoint_t data_dim;
-  realpoint_t voxel_size;
-  modality_t modality;
-  amide_data_t external_scaling;
-  guint offset;
-  GtkWidget * num_bytes_label1;
-  GtkWidget * num_bytes_label2;
-  GtkWidget * read_offset_label;
-  GtkWidget * dialog;
-} raw_data_info_t;
-
-/* internal functions */
-void raw_data_import_dialog(raw_data_info_t * raw_data_info);
+#include "amitk_data_set.h"
 
 /* external functions */
-void raw_data_update_offset_label(raw_data_info_t * raw_data_info);
-guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info);
-volume_t * raw_data_import(const gchar * filename);
+AmitkDataSet * raw_data_import(const gchar * filename);
 
 
 

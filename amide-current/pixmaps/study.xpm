@@ -1,5 +1,5 @@
 /* XPM */
-static char * study_xpm[] = {
+const char * study_xpm[] = {
 "24 24 121 2",
 "  	c None",
 ". 	c #949494",

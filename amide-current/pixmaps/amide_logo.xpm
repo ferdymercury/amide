@@ -1,5 +1,5 @@
 /* XPM */
-static char * amide_logo_xpm[] = {
+const char * amide_logo_xpm[] = {
 "50 50 118 2",
 "  	c None",
 ". 	c #2D2DC8",

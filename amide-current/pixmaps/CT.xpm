@@ -1,5 +1,5 @@
 /* XPM */
-static char * CT_xpm[] = {
+const char * CT_xpm[] = {
 "24 24 154 2",
 "  	c None",
 ". 	c #000000",

@@ -1,3 +1,8 @@
-EXTRA_DIST = amide.spec
+EXTRA_DIST = \
+	amide.spec \
+	amide-$(VERSION)-1.info \
+	amide.desktop
 
-DISTCLEANFILES = *~
+DISTCLEANFILES = \
+	*~ 	\
+	amide-$(VERSION)-1.info

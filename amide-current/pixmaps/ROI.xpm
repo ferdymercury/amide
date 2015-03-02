@@ -1,5 +1,5 @@
 /* XPM */
-static char * ROI_xpm[] = {
+const char * ROI_xpm[] = {
 "24 24 196 2",
 "  	c None",
 ". 	c #73BC79",

@@ -28,7 +28,8 @@
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include "study.h"
+#include "amitk_study.h"
+#include <gnome.h>
 
 typedef enum {
   HELP_INFO_LINE_1,
@@ -38,6 +39,7 @@ typedef enum {
   HELP_INFO_LINE_3,
   HELP_INFO_LINE_3_SHIFT,
   HELP_INFO_LINE_3_CTRL,
+  HELP_INFO_LINE_CUT,
   HELP_INFO_LINE_BLANK,
   HELP_INFO_LINE_LOCATION1,
   HELP_INFO_LINE_LOCATION2,
@@ -49,12 +51,6 @@ typedef enum {
 #define UI_STUDY_MIN_ROI_WIDTH 1
 #define UI_STUDY_MAX_ROI_WIDTH 5
 
-typedef enum {
-  DIM_X, DIM_Y, DIM_Z,
-  CENTER_X, CENTER_Y, CENTER_Z,
-  VOXEL_SIZE_X, VOXEL_SIZE_Y, VOXEL_SIZE_Z,
-  SCALING_FACTOR, SCAN_START, FRAME_DURATION,
-} which_entry_widget_t;
 
 /* ui_study data structures */
 typedef struct ui_study_t {
@@ -62,21 +58,18 @@ typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
-  GtkWidget * tree[NUM_VIEW_MODES]; /* the tree showing the study data structure info */
-  GtkWidget * tree_event_box[NUM_VIEW_MODES];
-  GtkWidget * tree_scrolled[NUM_VIEW_MODES];
-  pixelpoint_t tree_table_location[NUM_VIEW_MODES][NUM_LAYOUTS];
+  GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * time_dialog;
   GtkWidget * time_button;
-  volume_t * active_volume[NUM_VIEW_MODES]; /* which volume to use for actions that are specific for one volume*/
-  study_t * study; /* pointer to the study data structure */
+  AmitkDataSet * active_ds; /* which data set to use for actions that are specific for one data set*/
+  AmitkStudy * study; /* pointer to the study data structure */
   GtkWidget * threshold_dialog; /* pointer to the threshold dialog */
   GtkWidget * preferences_dialog; /* pointer to the preferences dialog */
 
   /* canvas specific info */
   GtkWidget * center_table;
-  GtkWidget * canvas_table[NUM_VIEW_MODES];
-  GtkWidget * canvas[NUM_VIEW_MODES][NUM_VIEWS];
+  GtkWidget * canvas_table[AMITK_VIEW_MODE_NUM];
+  GtkWidget * canvas[AMITK_VIEW_MODE_NUM][AMITK_VIEW_NUM];
 
   /* help canvas info */
   GnomeCanvas * help_info;
@@ -84,14 +77,14 @@ typedef struct ui_study_t {
   GnomeCanvasItem * help_line[NUM_HELP_INFO_LINES];
 
   /* stuff changed in the preferences dialog */
-  layout_t canvas_layout;
+  AmitkLayout canvas_layout;
   gint roi_width;
   GdkLineStyle line_style;
   gboolean dont_prompt_for_save_on_exit;
 
   gboolean study_altered;
   gboolean study_virgin;
-  view_mode_t view_mode;
+  AmitkViewMode view_mode;
 
   guint reference_count;
 } ui_study_t;
@@ -99,19 +92,20 @@ typedef struct ui_study_t {
 /* external functions */
 ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
-volumes_t * ui_study_selected_volumes(ui_study_t * ui_study);
-rois_t * ui_study_selected_rois(ui_study_t * ui_study);
-void ui_study_make_active_volume(ui_study_t * ui_study, view_mode_t view_mode, volume_t * volume);
-align_pt_t * ui_study_add_align_pt(ui_study_t * ui_study, volume_t * volume);
-void ui_study_add_volume(ui_study_t * ui_study, volume_t * volume);
-void ui_study_add_roi(ui_study_t * ui_study, roi_t * roi);
-void ui_study_replace_study(ui_study_t * ui_study, study_t * study);
-GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin);
-void ui_study_update_help_info(ui_study_t * ui_study, help_info_t which_info, 
-			       realpoint_t new_point, amide_data_t value);
+GList * ui_study_selected_data_sets(ui_study_t * ui_study);
+GList * ui_study_selected_rois(ui_study_t * ui_study);
+void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds);
+void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_object,
+				gboolean selected, AmitkPoint position);
+void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkRoiType roi_type);
+void ui_study_add_data_set(ui_study_t * ui_study, AmitkDataSet * data_set);
+void ui_study_replace_study(ui_study_t * ui_study, AmitkStudy * study);
+GtkWidget * ui_study_create(AmitkStudy * study);
+void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info, 
+			       AmitkPoint new_point, amide_data_t value);
 void ui_study_update_time_button(ui_study_t * ui_study);
-void ui_study_update_thickness(ui_study_t * ui_study, floatpoint_t thickness);
-void ui_study_update_zoom(ui_study_t * ui_study, floatpoint_t zoom);
+void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
+void ui_study_update_zoom(ui_study_t * ui_study, amide_real_t zoom);
 void ui_study_update_title(ui_study_t * ui_study);
 void ui_study_setup_layout(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);

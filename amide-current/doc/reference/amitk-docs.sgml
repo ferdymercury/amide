@@ -1,0 +1,128 @@
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!notation PNG system "PNG">
+<!entity % local.notation.class "| PNG">
+
+<!entity hash "#">
+<!entity percent "%">
+<!entity AmitkCanvas SYSTEM "sgml/amitk_canvas.sgml">
+<!entity AmitkColorTable SYSTEM "sgml/amitk_color_table.sgml">
+<!entity AmitkDataSet SYSTEM "sgml/amitk_data_set.sgml">
+<!entity AmitkFiducialMark SYSTEM "sgml/amitk_fiducial_mark.sgml">
+<!entity AmitkObjectDialog SYSTEM "sgml/amitk_object_dialog.sgml">
+<!entity AmitkObject SYSTEM "sgml/amitk_object.sgml">
+<!entity AmitkPoint SYSTEM "sgml/amitk_point.sgml">
+<!entity AmitkRawData SYSTEM "sgml/amitk_raw_data.sgml">
+<!entity AmitkRoi SYSTEM "sgml/amitk_roi.sgml">
+<!entity AmitkSpaceEdit SYSTEM "sgml/amitk_space_edit.sgml">
+<!entity AmitkSpace SYSTEM "sgml/amitk_space.sgml">
+<!entity AmitkStudy SYSTEM "sgml/amitk_study.sgml">
+<!entity AmitkThreshold SYSTEM "sgml/amitk_threshold.sgml">
+<!entity AmitkTree SYSTEM "sgml/amitk_tree.sgml">
+<!entity AmitkVolume SYSTEM "sgml/amitk_volume.sgml">
+
+<!entity index-Object-Tree SYSTEM "sgml/tree_index.sgml">
+
+<!entity amitk-Theory SYSTEM "theory.sgml">
+
+]>
+<book id="index">
+  <bookinfo>
+    <title>AMITK Reference Manual</title>
+    <authorgroup>
+      <author>
+         <firstname>Andy</firstname> <surname>Loening</surname>
+         <affiliation>
+             <address>
+                 <email>loening@ucla.edu</email>
+             </address>
+         </affiliation>
+      </author>
+    </authorgroup>
+    <copyright>
+       <year>2002</year> <holder>Andy Loening</holder>
+    </copyright>
+ 
+    <legalnotice>
+      <para>
+	Permission is granted to copy, distribute and/or modify this
+	document under the terms of the <citetitle>GNU Free
+	Documentation License</citetitle>, Version 1.1 or any later
+	version published by the Free Software Foundation with no
+	Invariant Sections, no Front-Cover Texts, and no Back-Cover
+	Texts. You may obtain a copy of the <citetitle>GNU Free
+	Documentation License</citetitle> from the Free Software
+	Foundation by visiting <ulink type="http"
+	url="http://www.fsf.org">their Web site</ulink> or by writing
+	to:
+
+	<address>
+	  The Free Software Foundation, Inc.,
+	  <street>59 Temple Place</street> - Suite 330,
+	  <city>Boston</city>, <state>MA</state> <postcode>02111-1307</postcode>,
+	  <country>USA</country>
+	</address>
+      </para>
+
+      <para>
+	Many of the names used by companies to distinguish their
+	products and services are claimed as trademarks. Where those
+	names appear in any GNOME documentation, and those trademarks
+	are made aware to the members of the GNOME Documentation
+	Project, the names have been printed in caps or initial caps.
+      </para>
+    </legalnotice>
+
+ </bookinfo>
+
+  <part id="amitk_intro">
+    <title>AMITK+ Overview</title>
+    <partintro>
+    <para>
+AMITK is an extension of the GTK library designed for handling objects
+of a medical imaging nature.  AMITK is released under the GNU 
+General Public License (GNU GPL).  AMITK has a C-based object-oriented
+architecture that allows for maximum flexibility and the creation of
+bindings for other languages.
+    </para>
+   </partintro>
+     &amitk-Theory;
+  </part>
+
+
+  <part  id="amitk_base">
+    <title>AMITK Core Objects</title>
+        &AmitkColorTable;
+        &AmitkObject;
+        &AmitkPoint;
+        &AmitkRawData;
+        &AmitkSpace;
+        &AmitkVolume;
+  </part>
+
+  <part id="amitk_objects">
+    <title>AMITK Objects</title>
+    <chapter>
+      <title>AMITK Object Hierarchy</title>
+    &index-Object-Tree;
+    </chapter>
+
+    <chapter id="SpaceObjects">
+      <title>Medical Image Objects</title>
+        &AmitkDataSet;
+        &AmitkFiducialMark;
+        &AmitkRoi;
+        &AmitkStudy;
+    </chapter>
+
+    <chapter id="AmitkWidgets">
+      <title>Amitk Widgets</title>
+        &AmitkCanvas;
+        &AmitkObjectDialog;
+        &AmitkSpaceEdit;
+        &AmitkThreshold;
+        &AmitkTree;
+    </chapter>
+
+  </part>
+
+</book>

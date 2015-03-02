@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_view_linked_xpm[] = {
+const char * icon_view_linked_xpm[] = {
 "24 24 150 2",
 "  	c None",
 ". 	c #CCCCCC",

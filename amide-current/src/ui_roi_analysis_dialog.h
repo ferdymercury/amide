@@ -28,11 +28,9 @@
 
 
 /* header files always needed with this one */
-#include "analysis.h"
 #include "ui_study.h"
 
 /* external functions */
-void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_analyses);
 void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all);
 
 

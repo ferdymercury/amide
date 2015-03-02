@@ -23,23 +23,41 @@
   02111-1307, USA.
 */
 
-
-#include "config.h"
-#include <gnome.h>
-#include <math.h>
+#include "amide_config.h"
+#include <gtk/gtk.h>
+#include <sys/stat.h>
+#include <string.h>
+#include "ui_common.h"
+#include "analysis.h"
 #include "ui_roi_analysis_dialog.h"
-#include "ui_roi_analysis_dialog_cb.h"
-#include "amitk_tree.h"
 
 
-/* internal defines */
-#define NUM_ANALYSIS_COLUMNS 12
+
+#define AMITK_RESPONSE_SAVE_AS 3
+
+typedef enum {
+  COLUMN_NAME,
+  COLUMN_FRAME,
+  COLUMN_DURATION,
+  COLUMN_TIME_MIDPT,
+  COLUMN_TOTAL,
+  COLUMN_MEAN,
+  COLUMN_VAR,
+  COLUMN_STD_DEV,
+  COLUMN_STD_ERR,
+  COLUMN_MIN,
+  COLUMN_MAX,
+  COLUMN_SIZE,
+  COLUMN_VOXELS,
+  NUM_ANALYSIS_COLUMNS,
+} column_t;
 
 static gchar * analysis_titles[] = {
-  "Volume",
+  "Data Set",
   "Frame",
   "Duration (s)",
   "Time Midpt (s)",
+  "Total",
   "Mean",
   "Var",
   "Std Dev",
@@ -51,7 +69,122 @@ static gchar * analysis_titles[] = {
 };
 
 
-void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_analyses) {
+static void export_ok_cb(GtkWidget* widget, gpointer data);
+static void export_data(analysis_roi_t * roi_analyses);
+static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
+static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * study,
+					    AmitkRoi * roi, analysis_volume_t * volume_analyses);
+
+
+/* function to handle exporting the roi analyses */
+static void export_ok_cb(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  GtkWidget * question;
+  analysis_roi_t * roi_analyses;
+  const gchar * save_filename;
+  struct stat file_info;
+  gint return_val;
+
+  /* get a pointer to the analysis */
+  roi_analyses = g_object_get_data(G_OBJECT(file_selection), "roi_analyses");
+
+  /* get the filename */
+  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
+  /* some sanity checks */
+  if ((strcmp(save_filename, ".") == 0) ||
+      (strcmp(save_filename, "..") == 0) ||
+      (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "/") == 0)) {
+    g_warning("Inappropriate filename: %s",save_filename);
+    return;
+  }
+
+  /* see if the filename already exists */
+  if (stat(save_filename, &file_info) == 0) {
+    /* check if it's okay to writeover the file */
+    question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "Overwrite file: %s", save_filename);
+
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val != GTK_RESPONSE_OK)
+      return; /* we don't want to overwrite the file.... */
+  }
+
+
+  /* allright, save the data */
+  export_analyses(save_filename, roi_analyses);
+
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
+  return;
+}
+
+/* function to save the generated roi statistics */
+static void export_data(analysis_roi_t * roi_analyses) {
+  
+  analysis_roi_t * temp_analyses = roi_analyses;
+  GtkFileSelection * file_selection;
+  gchar * temp_string;
+  gchar * analysis_name = NULL;
+
+  /* sanity checks */
+  g_return_if_fail(roi_analyses != NULL);
+
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export Statistics")));
+
+  /* take a guess at the filename */
+  analysis_name = g_strdup_printf("%s_analysis_{%s",
+				  AMITK_OBJECT_NAME(roi_analyses->study), 
+				  AMITK_OBJECT_NAME(roi_analyses->roi));
+  temp_analyses= roi_analyses->next_roi_analysis;
+  while (temp_analyses != NULL) {
+    temp_string = g_strdup_printf("%s+%s",analysis_name,AMITK_OBJECT_NAME(temp_analyses->roi));
+    g_free(analysis_name);
+    analysis_name = temp_string;
+    temp_analyses= temp_analyses->next_roi_analysis;
+  }
+  temp_string = g_strdup_printf("%s}.csv",analysis_name);
+  g_free(analysis_name);
+  analysis_name = temp_string;
+  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), analysis_name);
+  g_free(analysis_name);
+
+  /* save a pointer to the analyses */
+  g_object_set_data(G_OBJECT(file_selection), "roi_analyses", roi_analyses);
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+		   G_CALLBACK(export_ok_cb), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(GTK_WIDGET(file_selection));
+
+  return;
+}
+
+
+static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses) {
 
   FILE * file_pointer;
   time_t current_time;
@@ -59,8 +192,9 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
   analysis_frame_t * frame_analyses;
   guint frame;
   guint i;
-  floatpoint_t voxel_volume;
+  amide_real_t voxel_volume;
   gboolean title_printed;
+  AmitkPoint voxel_size;
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
     g_warning("couldn't open: %s for writing roi analyses", save_filename);
@@ -71,20 +205,20 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
   time(&current_time);
   fprintf(file_pointer, "# %s: ROI Analysis File - generated on %s", PACKAGE, ctime(&current_time));
   fprintf(file_pointer, "#\n");
-  fprintf(file_pointer, "# Study:\t%s\n",study_name(roi_analyses->study));
+  fprintf(file_pointer, "# Study:\t%s\n", AMITK_OBJECT_NAME(roi_analyses->study));
   fprintf(file_pointer, "#\n");
   
   while (roi_analyses != NULL) {
     fprintf(file_pointer, "# ROI:\t%s\tType:\t%s\n",
-	    roi_analyses->roi->name,
-	    roi_type_names[roi_analyses->roi->type]);
+	    AMITK_OBJECT_NAME(roi_analyses->roi),
+	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
       fprintf(file_pointer, "#\tVolume:\t%s\tscaling factor:\t%g\n",
-	      volume_analyses->volume->name,
-	      volume_analyses->volume->external_scaling);
+	      AMITK_OBJECT_NAME(volume_analyses->data_set),
+	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
 
       if (!title_printed) {
 	fprintf(file_pointer, "#\t\t%s", analysis_titles[1]);
@@ -94,9 +228,8 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
 	title_printed = TRUE;
       }
 
-      voxel_volume = volume_analyses->volume->voxel_size.x*
-	volume_analyses->volume->voxel_size.y*
-	volume_analyses->volume->voxel_size.z;
+      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
+      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
 
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
@@ -104,6 +237,7 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
 	fprintf(file_pointer, "\t\t%d", frame);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->duration);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->time_midpoint);
+	fprintf(file_pointer, "\t% 12g", frame_analyses->total);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->mean);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->var);
 	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var));
@@ -131,25 +265,68 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
   return;
 }
 
+/* function called when we hit the apply button */
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  analysis_roi_t * roi_analyses = data;
+  gint return_val;
+
+  switch(response_id) {
+  case AMITK_RESPONSE_SAVE_AS:
+    export_data(roi_analyses);
+    break;
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+
+/* function called to destroy the roi dialog */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+
+  analysis_roi_t * roi_analyses = data;
+
+  /* free the associated data structure */
+  roi_analyses = analysis_roi_unref(roi_analyses);
+
+  return FALSE;
+}
+
+
+
+
 /* create one page of our notebook */
-static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * study,
-					    roi_t * roi, analysis_volume_t * volume_analyses) {
+static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * study,
+					    AmitkRoi * roi, analysis_volume_t * volume_analyses) {
 
   GtkWidget * table;
-  gchar * line[NUM_ANALYSIS_COLUMNS];
   GtkWidget * label;
   GtkWidget * entry;
-  GtkWidget * clist;
+  GtkWidget * list;
   GtkWidget * scrolled;
   GtkWidget * hbox;
   analysis_frame_t * frame_analyses;
   guint frame;
   guint table_row=0;
-  guint i;
-  floatpoint_t voxel_volume;
+  amide_real_t voxel_volume;
+  AmitkPoint voxel_size;
+  GtkListStore * store;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
+  GtkTreeSelection *selection;
+  GtkTreeIter iter;
+  column_t i_column;
   
 
-  label = gtk_label_new(roi->name);
+  label = gtk_label_new(AMITK_OBJECT_NAME(roi));
   table = gtk_table_new(5,3,FALSE);
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
@@ -164,68 +341,86 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), roi_type_names[roi->type]);
+  gtk_entry_set_text(GTK_ENTRY(entry), amitk_roi_type_get_name(AMITK_ROI_TYPE(roi)));
   gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
   gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
  
   /* the scroll widget which the list will go into */
   scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_usize(scrolled,-1,250);
+  gtk_widget_set_size_request(scrolled,-1,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				 GTK_POLICY_NEVER,
 				 GTK_POLICY_AUTOMATIC);
-  /* and throw the clist into the packing table */
+
+  /* and throw the scrolled widget into the packing table */
   gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(scrolled), 0,5,table_row, table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
   table_row++;
 
-  /* put in the CLIST */
-  clist = gtk_clist_new_with_titles(NUM_ANALYSIS_COLUMNS, analysis_titles);
+  /* and the list itself */
+  store = gtk_list_store_new(NUM_ANALYSIS_COLUMNS, 
+			     G_TYPE_STRING,
+			     G_TYPE_INT,
+			     AMITK_TYPE_TIME,
+			     AMITK_TYPE_TIME,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_REAL,
+			     AMITK_TYPE_REAL);
+  list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
+  g_object_unref(store);
+
+  for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS-1; i_column++) {
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
+						      "text", i_column, NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (list), column);
+  }
 
   /* iterate over the analysis of each volume */
   while (volume_analyses != NULL) {
     frame_analyses = volume_analyses->frame_analyses;
 
-    voxel_volume = volume_analyses->volume->voxel_size.x*
-      volume_analyses->volume->voxel_size.y*
-      volume_analyses->volume->voxel_size.z;
+    voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
+    voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
 
     /* iterate over the frames */
     frame = 0;
     while (frame_analyses != NULL) {
-      line[0] = g_strdup(volume_analyses->volume->name);
-      line[1] = g_strdup_printf("%d",frame);
-      line[2] = g_strdup_printf("%5.4f",frame_analyses->duration);
-      line[3] = g_strdup_printf("%5.4f",frame_analyses->time_midpoint);
-      line[4] = g_strdup_printf("%5.4g",frame_analyses->mean);
-      line[5] = g_strdup_printf("%5.4g",frame_analyses->var);
-      line[6] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var));
-      line[7] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var/frame_analyses->voxels));
-      line[8] = g_strdup_printf("%5.4g",frame_analyses->min);
-      line[9] = g_strdup_printf("%5.4g",frame_analyses->max);
-      line[10] = g_strdup_printf("%5.4g", frame_analyses->voxels*voxel_volume);
-      line[11] = g_strdup_printf("%5.1f",frame_analyses->voxels);
-
-      gtk_clist_append(GTK_CLIST(clist), line);
-
-      for (i=0;i<NUM_ANALYSIS_COLUMNS;i++)
-	g_free(line[i]); /* garbage collection */
-
+      gtk_list_store_append (store, &iter);  /* Acquire an iterator */
+      gtk_list_store_set (store, &iter,
+			  COLUMN_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
+			  COLUMN_FRAME, frame,
+			  COLUMN_DURATION, frame_analyses->duration,
+			  COLUMN_TIME_MIDPT, frame_analyses->time_midpoint,
+			  COLUMN_TOTAL, frame_analyses->total,
+			  COLUMN_MEAN, frame_analyses->mean,
+			  COLUMN_VAR, frame_analyses->var,
+			  COLUMN_STD_DEV, sqrt(frame_analyses->var),
+			  COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels),
+			  COLUMN_MIN,frame_analyses->min,
+			  COLUMN_MAX,frame_analyses->max,
+			  COLUMN_SIZE,frame_analyses->voxels*voxel_volume,
+			  COLUMN_VOXELS,frame_analyses->voxels,
+			  -1);
       frame++;
       frame_analyses = frame_analyses->next_frame_analysis;
     }
     volume_analyses = volume_analyses->next_volume_analysis;
   }
 
+  /* just using the list for display */
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
+  gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
 
-  /* make sure all the data is legible */
-  for (i=0;i<NUM_ANALYSIS_COLUMNS;i++) 
-    gtk_clist_set_column_width(GTK_CLIST(clist), i, 
-			       gtk_clist_optimal_column_width(GTK_CLIST(clist), i));
-
-  gtk_container_add(GTK_CONTAINER(scrolled),clist); /* and put it in the scrolled widget */
+  gtk_container_add(GTK_CONTAINER(scrolled),list); /* and put it in the scrolled widget */
   table_row++;
 
   return;
@@ -237,61 +432,59 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   GtkWidget * dialog;
   GtkWidget * notebook;
   gchar * title;
-  rois_t * rois;
-  volumes_t * volumes;
+  GList * rois;
+  GList * data_sets;
   analysis_roi_t * roi_analyses;
   analysis_roi_t * temp_analyses;
-  guint button_num;
 
-  /* figure out which volume we're dealing with */
-  volumes = ui_study_selected_volumes(ui_study);
-  if (volumes == NULL) {
+  /* figure out which data sets we're dealing with */
+  data_sets = ui_study_selected_data_sets(ui_study);
+  if (data_sets == NULL) {
     g_warning("No Data Sets selected for calculating analyses");
     return;
   }
 
   /* get the list of roi's we're going to be calculating over */
   if (all)
-    rois = rois_ref(study_rois(ui_study->study));
+    rois = amitk_object_children_of_type(AMITK_OBJECT(ui_study->study), AMITK_OBJECT_TYPE_ROI, TRUE);
   else 
     rois = ui_study_selected_rois(ui_study);
 
   if (rois == NULL) {
     g_warning("No ROI's selected for calculating analyses");
+    amitk_objects_unref(data_sets);
     return;
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(ui_study->study, rois, volumes);
-  rois = rois_unref(rois);
-  volumes = volumes_unref(volumes);
+  roi_analyses = analysis_roi_init(ui_study->study, rois, data_sets);
+
+  rois = amitk_objects_unref(rois);
+  data_sets = amitk_objects_unref(data_sets);
   g_return_if_fail(roi_analyses != NULL);
   
   /* start setting up the widget we'll display the info from */
-  title = g_strdup_printf("%s Roi Analysis: Study %s", PACKAGE, study_name(ui_study->study));
-  dialog = gnome_dialog_new(title, "Save Analysis", GNOME_STOCK_BUTTON_CLOSE, NULL);
-  gnome_dialog_set_close(GNOME_DIALOG(dialog), FALSE);
-
-  /* order is allow shrink, allow grow, autoshrink */
-  gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, TRUE, FALSE); 
-
-  gnome_dialog_button_connect(GNOME_DIALOG(dialog), 1,  /* 1 corresponds to the close button */
-			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close_button),dialog);
-  gtk_signal_connect(GTK_OBJECT(dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close),
-		     roi_analyses);
+  title = g_strdup_printf("%s Roi Analysis: Study %s", PACKAGE, 
+			  AMITK_OBJECT_NAME(ui_study->study));
+  dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(ui_study->app),
+				       GTK_DIALOG_DESTROY_WITH_PARENT,
+				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
+				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+				       NULL);
   g_free(title);
 
-  /* connect the buttons */
-  button_num=0;
-  gnome_dialog_button_connect(GNOME_DIALOG(dialog), button_num, 
-  			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_export), roi_analyses);
-  button_num++;
+  /* setup the callbacks for app */
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
+
+  /* order is allow shrink, allow grow, autoshrink */
+  gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
+
 
  /* make the widgets for this dialog box */
   notebook = gtk_notebook_new();
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
-  gtk_container_add(GTK_CONTAINER(GNOME_DIALOG(dialog)->vbox), notebook);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), notebook);
 
   /* add the data pages */
   temp_analyses = roi_analyses;

@@ -23,41 +23,232 @@
   02111-1307, USA.
 */
 
-#include "config.h"
+#include "amide_config.h"
 #include <gnome.h>
-#include <math.h>
-#include <gdk-pixbuf/gnome-canvas-pixbuf.h>
-#include "study.h"
+#include <libgnomecanvas/gnome-canvas-pixbuf.h>
+#include "amitk_threshold.h"
 #include "image.h"
 #include "ui_common.h"
 #include "ui_series.h"
-#include "ui_series_cb.h"
-#include "ui_series_menus.h"
-#include "ui_series_toolbar.h"
+#include "ui_study_menus.h"
+#include "../pixmaps/icon_threshold.xpm"
 
 /* external variables */
-gchar * series_names[] = {"over Space", "over Time"};
+static gchar * series_names[] = {"over Space", "over Time"};
+
+
+
+static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data);
+static void export_cb(GtkWidget * widget, gpointer data);
+static void data_set_changed_cb(AmitkDataSet * ds, gpointer data);
+static void threshold_cb(GtkWidget * widget, gpointer data);
+static void close_cb(GtkWidget* widget, gpointer data);
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+
+
+static void menus_create(ui_series_t * ui_series);
+static void toolbar_create(ui_series_t * ui_series);
+
+static ui_series_t * ui_series_free(ui_series_t * ui_series);
+static ui_series_t * ui_series_init(void);
+static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series);
+static void update_canvas(ui_series_t * ui_series);
+
+
+/* function called by the adjustment in charge for scrolling */
+static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
+
+  ui_series_t * ui_series = data;
+
+  if (ui_series->type == PLANES)
+    ui_series->view_point.z = adjustment->value;
+  else
+    ui_series->view_frame = adjustment->value;
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+  update_canvas(ui_series);
+  ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
+
+  return;
+}
+
+/* function to save the series as an external data format */
+static void export_cb(GtkWidget * widget, gpointer data) {
+  
+  //  ui_series_t * ui_series = data;
+
+  /* this function would require being able to transform a canvas back into
+     a single image/pixbuf/etc.... don't know how to do this yet */
+
+  return;
+}
+
+
+/* function called when a data set changed */
+static void data_set_changed_cb(AmitkDataSet * ds, gpointer data) {
+  ui_series_t * ui_series=data;
+  update_canvas(ui_series);
+  return;
+}
+
+
+
+static gboolean thresholds_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+  ui_series_t * ui_series = data;
+
+  /* just keeping track on whether or not the threshold widget is up */
+  ui_series->thresholds_dialog = NULL;
+
+  return FALSE;
+}
+
+/* function called when we hit the threshold button */
+static void threshold_cb(GtkWidget * widget, gpointer data) {
+
+  ui_series_t * ui_series = data;
+
+  if (ui_series->thresholds_dialog != NULL)
+    return;
+
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+
+  ui_series->thresholds_dialog = 
+    amitk_thresholds_dialog_new(ui_series->objects, GTK_WINDOW(ui_series->app));
+  g_signal_connect(G_OBJECT(ui_series->thresholds_dialog), "delete_event",
+		   G_CALLBACK(thresholds_delete_event), ui_series);
+  gtk_widget_show(ui_series->thresholds_dialog);
+
+  ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
+
+  return;
+}
+
+
+
+/* function ran when closing a series window */
+static void close_cb(GtkWidget* widget, gpointer data) {
+
+  ui_series_t * ui_series = data;
+  GtkWidget * app = GTK_WIDGET(ui_series->app);
+  gboolean return_val;
+
+  /* run the delete event function */
+  g_signal_emit_by_name(G_OBJECT(app), "delete_event", NULL, &return_val);
+  if (!return_val) gtk_widget_destroy(app);
+
+  return;
+}
+
+/* function to run for a delete_event */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+
+  ui_series_t * ui_series = data;
+  GtkWidget * app = GTK_WIDGET(ui_series->app);
+
+  /* free the associated data structure */
+  ui_series = ui_series_free(ui_series);
+
+  /* tell the rest of the program this window is no longer here */
+  amide_unregister_window((gpointer) app);
+
+  return FALSE;
+}
+
+
+
+
+
+
+/* function to setup the menus for the series ui */
+static void menus_create(ui_series_t * ui_series) {
+
+  /* defining the menus for the series ui interface */
+  GnomeUIInfo file_menu[] = {
+    //    GNOMEUIINFO_ITEM_DATA(N_("_Export Series"),
+    //			  N_("Export the series view to an image file (JPEG/TIFF/PNG/etc.)"),
+    //			  ui_series_cb_export,
+    //			  ui_series, NULL),
+    //    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_MENU_CLOSE_ITEM(close_cb, ui_series),
+    GNOMEUIINFO_END
+  };
+
+  /* and the main menu definition */
+  GnomeUIInfo series_main_menu[] = {
+    GNOMEUIINFO_MENU_FILE_TREE(file_menu),
+    GNOMEUIINFO_MENU_HELP_TREE(ui_common_help_menu),
+    GNOMEUIINFO_END
+  };
+
+
+  /* sanity check */
+  g_assert(ui_series!=NULL);
+
+
+  /* make the menu */
+  gnome_app_create_menus(GNOME_APP(ui_series->app), series_main_menu);
+
+  return;
+
+}
+
+
+
+      
+
+/* function to setup the toolbar for the seriesui */
+void toolbar_create(ui_series_t * ui_series) {
+
+  GtkWidget * toolbar;
+
+  /* the toolbar definitions */
+  GnomeUIInfo series_main_toolbar[] = {
+    GNOMEUIINFO_ITEM_DATA(NULL,
+			  N_("Set the thresholds and colormaps for the data sets in the series view"),
+			  threshold_cb,
+			  ui_series, icon_threshold_xpm),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_END
+  };
+
+  /* sanity check */
+  g_assert(ui_series!=NULL);
+  
+  /* make the toolbar */
+  toolbar = gtk_toolbar_new();
+  gnome_app_fill_toolbar(GTK_TOOLBAR(toolbar), series_main_toolbar, NULL);
+
+  /* add our toolbar to our app */
+  gnome_app_set_toolbar(GNOME_APP(ui_series->app), GTK_TOOLBAR(toolbar));
+
+  return;
+}
+
+
+
+
+
 
 /* destroy the ui_series slices data */
 static void ui_series_slices_free(ui_series_t * ui_series) {
   guint i;
 
-  for (i=0; i < ui_series->num_slices; i++) {
-    ui_series->slices[i] = volumes_unref(ui_series->slices[i]);
-    if (ui_series->rgb_images[i] != NULL)
-      gdk_pixbuf_unref(ui_series->rgb_images[i]);
+  if (ui_series->slices != NULL) {
+    for (i=0; i < ui_series->num_slices; i++) {
+      ui_series->slices[i] = amitk_objects_unref(ui_series->slices[i]);
+    }
+    g_free(ui_series->slices);
+    ui_series->slices = NULL;
   }
-  g_free(ui_series->slices);
-  ui_series->slices = NULL;
 
   return;
 }
 
 /* destroy a ui_series data structure */
-ui_series_t * ui_series_free(ui_series_t * ui_series) {
+static ui_series_t * ui_series_free(ui_series_t * ui_series) {
 
-  if (ui_series == NULL)
-    return ui_series;
+  g_return_val_if_fail(ui_series != NULL, NULL);
 
   /* sanity checks */
   g_return_val_if_fail(ui_series->reference_count > 0, NULL);
@@ -71,9 +262,22 @@ ui_series_t * ui_series_free(ui_series_t * ui_series) {
     g_print("freeing ui_series\n");
 #endif
     ui_series_slices_free(ui_series);
-    ui_series->volumes = volumes_unref(ui_series->volumes);
-    ui_series->coord_frame = rs_unref(ui_series->coord_frame);
-    g_free(ui_series->rgb_images);
+
+    if (ui_series->objects != NULL) {
+      amitk_objects_unref(ui_series->objects);
+      ui_series->objects = NULL;
+    }
+
+    if (ui_series->volume != NULL) {
+      g_object_unref(ui_series->volume);
+      ui_series->volume = NULL;
+    }
+
+    if (ui_series->thresholds_dialog != NULL) {
+      gtk_widget_destroy(ui_series->thresholds_dialog);
+      ui_series->thresholds_dialog = NULL;
+    }
+
     g_free(ui_series->images);
     g_free(ui_series->captions);
     g_free(ui_series->frame_durations);
@@ -85,13 +289,13 @@ ui_series_t * ui_series_free(ui_series_t * ui_series) {
 
 }
 
-/* malloc and initialize a ui_series data structure */
+/* allocate and initialize a ui_series data structure */
 static ui_series_t * ui_series_init(void) {
 
   ui_series_t * ui_series;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_series = (ui_series_t *) g_malloc(sizeof(ui_series_t))) == NULL) {
+  if ((ui_series = g_new(ui_series_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_series_t");
     return NULL;
   }
@@ -104,13 +308,11 @@ static ui_series_t * ui_series_init(void) {
   ui_series->columns = 0;
   ui_series->images = NULL;
   ui_series->captions = NULL;
-  ui_series->rgb_images = NULL;
-  ui_series->volumes = NULL;
-  ui_series->interpolation = NEAREST_NEIGHBOR;
+  ui_series->objects = NULL;
+  ui_series->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
   ui_series->voxel_dim = 1.0;
-  ui_series->thickness = -1.0;
-  ui_series->view_point = zero_rp;
-  ui_series->coord_frame = NULL;
+  ui_series->view_point = zero_point;
+  ui_series->volume = NULL;
   ui_series->view_time = 0.0;
   ui_series->type = PLANES;
   ui_series->thresholds_dialog = NULL;
@@ -131,33 +333,37 @@ static ui_series_t * ui_series_init(void) {
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series) { 
 
   if (ui_series->type == PLANES) {
-    realpoint_t view_corner[2];
+    AmitkCorners view_corners;
 
-    volumes_get_view_corners(ui_series->volumes, ui_series->coord_frame, view_corner);
+    amitk_volumes_get_enclosing_corners(ui_series->objects, 
+					AMITK_SPACE(ui_series->volume), 
+					view_corners);
     
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_point.z,
-					     view_corner[0].z,
-					     view_corner[1].z,
-					     ui_series->thickness,
-					     ui_series->thickness,
-					     ui_series->thickness));
+					     view_corners[0].z,
+					     view_corners[1].z,
+					     AMITK_VOLUME_Z_CORNER(ui_series->volume),
+					     AMITK_VOLUME_Z_CORNER(ui_series->volume),
+					     AMITK_VOLUME_Z_CORNER(ui_series->volume)));
   } else { /* FRAMES */
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_frame, 0, ui_series->num_slices, 1,1,1));
   }
 }
 
-/* funtion to update the canvas */
-void ui_series_update_canvas(ui_series_t * ui_series) {
 
-  realpoint_t temp_point;
+/* funtion to update the canvas */
+static void update_canvas(ui_series_t * ui_series) {
+
+  AmitkPoint temp_point;
   amide_time_t temp_time, temp_duration;
   gint i, start_i;
   gint width, height;
   gdouble x, y;
   GtkRequisition requisition;
-  realspace_t * view_coord_frame;
+  AmitkVolume * view_volume;
   gint image_width, image_height;
   gchar * temp_string;
+  GdkPixbuf * pixbuf;
 
 
   /* get the view axis to use*/
@@ -166,8 +372,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 
   /* allocate space for pointers to our slices if needed */
   if (ui_series->slices == NULL) {
-    if ((ui_series->slices = 
-	 (volumes_t **) g_malloc(sizeof(volumes_t *) *ui_series->num_slices)) == NULL) {
+    if ((ui_series->slices = g_new(GList *,ui_series->num_slices)) == NULL) {
       g_warning("couldn't allocate space for pointers to amide_volume_t's");
       return;
     }
@@ -175,22 +380,9 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
       ui_series->slices[i] = NULL;
   }
     
-  /* allocate space for pointers to our rgb_images if needed */
-  if (ui_series->rgb_images == NULL) {
-    if ((ui_series->rgb_images = (GdkPixbuf **) g_malloc(sizeof(GdkPixbuf *)*ui_series->num_slices)) == NULL) {
-      g_warning("couldn't allocate space for pointers to GdkPixbuf's");
-      return;
-    }
-    for (i=0; i < ui_series->num_slices ; i++)
-      ui_series->rgb_images[i] = NULL;
-  }
-
   /* always do the first image, so that we can get the width and height
      of an image (needed for computing the rows and columns portions
      of the ui_series data structure */
-  if (ui_series->rgb_images[0] != NULL) 
-    gdk_pixbuf_unref(ui_series->rgb_images[0]);
-
   temp_point = ui_series->view_point;
   if (ui_series->type == PLANES) {
     temp_point.z = ui_series->start_z;
@@ -200,19 +392,19 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     temp_time = ui_series->start_time;
     temp_duration = ui_series->frame_durations[0];
   }
-  view_coord_frame = rs_copy(ui_series->coord_frame);
-  rs_set_offset(view_coord_frame, realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
-  ui_series->rgb_images[0] = image_from_volumes(&(ui_series->slices[0]),
-						ui_series->volumes,
-						temp_time+CLOSE,
-						temp_duration-CLOSE,
-						ui_series->thickness,
-						ui_series->voxel_dim,
-						view_coord_frame,
-						ui_series->interpolation);
-  view_coord_frame = rs_unref(view_coord_frame);
-  image_width = gdk_pixbuf_get_width(ui_series->rgb_images[0]) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
-  image_height = gdk_pixbuf_get_height(ui_series->rgb_images[0]) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
+  view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
+  amitk_space_set_offset(AMITK_SPACE(view_volume), 
+			 amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
+  pixbuf = image_from_data_sets(&(ui_series->slices[0]),
+				ui_series->objects,
+				temp_time*(1.0+EPSILON),
+				temp_duration*(1.0-EPSILON),
+				ui_series->voxel_dim,
+				view_volume,
+				ui_series->interpolation);
+  g_object_unref(view_volume);
+  image_width = gdk_pixbuf_get_width(pixbuf) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
+  image_height = gdk_pixbuf_get_height(pixbuf) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
 
 
   /* allocate space for pointers to our canvas_images and captions, if needed */
@@ -227,13 +419,11 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     if ((ui_series->columns * ui_series->rows) > ui_series->num_slices)
       ui_series->rows = ceil((double) ui_series->num_slices/(double) ui_series->columns);
 
-    if ((ui_series->images = (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *) * ui_series->rows
-							   * ui_series->columns)) == NULL) {
+    if ((ui_series->images = (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *)*ui_series->rows*ui_series->columns)) == NULL) {
       g_warning("couldn't allocate space for pointers to image GnomeCanvasItem's");
       return;
     }
-    if ((ui_series->captions = (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *) * ui_series->rows
-							     * ui_series->columns)) == NULL) {
+    if ((ui_series->captions = (GnomeCanvasItem **) g_malloc(sizeof(GnomeCanvasItem *)*ui_series->rows*ui_series->columns)) == NULL) {
       g_warning("couldn't allocate space for pointers to caption GnomeCanavasItem's");
       return;
     }
@@ -276,28 +466,24 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 
   for (i=start_i; ((i-start_i) < (ui_series->rows*ui_series->columns)) && (i < ui_series->num_slices); i++) {
     if (ui_series->type == PLANES) {
-      temp_point.z = i*ui_series->thickness+ui_series->start_z;
+      temp_point.z = i*AMITK_VOLUME_Z_CORNER(ui_series->volume)+ui_series->start_z;
     } else { /* frames */
       temp_time += temp_duration; /* duration from last time through the loop */
       temp_duration = ui_series->frame_durations[i];
     }
-    view_coord_frame = rs_copy(ui_series->coord_frame);
-    rs_set_offset(view_coord_frame,  realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
+    view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
+    amitk_space_set_offset(AMITK_SPACE(view_volume), 
+			   amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
     
     if (i != 0) /* we've already done image 0 */
-      if (ui_series->rgb_images[i] != NULL)
-	gdk_pixbuf_unref(ui_series->rgb_images[i]);
-    
-    if (i != 0) /* we've already done image 0 */
-      ui_series->rgb_images[i] = image_from_volumes(&(ui_series->slices[i]),
-						    ui_series->volumes,
-						    temp_time+CLOSE,
-						    temp_duration-CLOSE,
-						    ui_series->thickness,
-						    ui_series->voxel_dim,
-						    view_coord_frame,
-						    ui_series->interpolation);
-    view_coord_frame = rs_unref(view_coord_frame);
+      pixbuf = image_from_data_sets(&(ui_series->slices[i]),
+				    ui_series->objects,
+				    temp_time*(1.0+EPSILON),
+				    temp_duration*(1.0-EPSILON),
+				    ui_series->voxel_dim,
+				    view_volume,
+				    ui_series->interpolation);
+    g_object_unref(view_volume);
     
     /* figure out the next x,y spot to put this guy */
     y = floor((i-start_i)/ui_series->columns)*image_height;
@@ -306,15 +492,16 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     if (ui_series->images[i-start_i] == NULL) 
       ui_series->images[i-start_i] = gnome_canvas_item_new(gnome_canvas_root(ui_series->canvas),
 							   gnome_canvas_pixbuf_get_type(),
-							   "pixbuf", ui_series->rgb_images[i],
+							   "pixbuf", pixbuf,
 							   "x", x+UI_SERIES_L_MARGIN,
 							   "y", y+UI_SERIES_TOP_MARGIN,
 							   NULL);
     else
-      gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", ui_series->rgb_images[i], NULL);
+      gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
+    g_object_unref(pixbuf);
     
     if (ui_series->type == PLANES)
-      temp_string = g_strdup_printf("%2.1f-%2.1f mm", temp_point.z, temp_point.z+ui_series->thickness);
+      temp_string = g_strdup_printf("%2.1f-%2.1f mm", temp_point.z, temp_point.z+AMITK_VOLUME_Z_CORNER(ui_series->volume));
     else /* frames */
       temp_string = g_strdup_printf("%2.1f-%2.1f s", temp_time, temp_time+temp_duration);
     if (ui_series->captions[i-start_i] == NULL) 
@@ -347,16 +534,16 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     requisition.width = width;
     requisition.height = height;
     gtk_widget_size_request(GTK_WIDGET(ui_series->canvas), &requisition);
-    gtk_widget_set_usize(GTK_WIDGET(ui_series->canvas), width, height);
-    /* the requisition thing should work.... I'll use usize for now... */
+    gtk_widget_set_size_request(GTK_WIDGET(ui_series->canvas), width, height);
+    /* the requisition thing should work.... I'll use this for now for now... */
 
 
   return;
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(study_t * study, volumes_t * volumes, view_t view, 
-		      layout_t layout, series_t series_type) {
+void ui_series_create(AmitkStudy * study, GList * objects, AmitkView view, 
+		      AmitkVolume * canvas_view, series_t series_type) {
  
   ui_series_t * ui_series;
   GnomeApp * app;
@@ -365,90 +552,84 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
   GtkAdjustment * adjustment;
   GtkWidget * scale;
   amide_time_t min_duration;
+  GList * temp_objects;
 
   /* sanity checks */
-  if (study_volumes(study) == NULL)
-    return;
-  if (study_first_volume(study) == NULL)
-    return;
-  if (volumes == NULL)
-    return;
+  g_return_if_fail(AMITK_IS_STUDY(study));
+  g_return_if_fail(objects != NULL);
 
   ui_series = ui_series_init();
   ui_series->type = series_type;
 
-  title = g_strdup_printf("Series: %s (%s - %s)",
-			  study_name(study), 
-			  view_names[view], 
-			  series_names[ui_series->type]);
+  title = g_strdup_printf("Series: %s (%s - %s)", AMITK_OBJECT_NAME(study),
+			  view_names[view], series_names[ui_series->type]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
   ui_series->app = app;
-  gtk_window_set_policy (GTK_WINDOW(ui_series->app), TRUE, TRUE, TRUE);
+  gtk_window_set_resizable(GTK_WINDOW(ui_series->app), TRUE);
 
-  /* make a copy of the volumes sent to this series */
-  ui_series->volumes = volumes_copy(volumes);
+  /* add a reference to the objects sent to this series */
+  ui_series->objects = amitk_objects_ref(objects);
 
   /* setup the callbacks for app */
-  gtk_signal_connect(GTK_OBJECT(app), "realize", GTK_SIGNAL_FUNC(ui_common_window_realize_cb), NULL);
-  gtk_signal_connect(GTK_OBJECT(app), "delete_event",
-		     GTK_SIGNAL_FUNC(ui_series_cb_delete_event),
-		     ui_series);
+  g_signal_connect(G_OBJECT(app), "realize", G_CALLBACK(ui_common_window_realize_cb), NULL);
+  g_signal_connect(G_OBJECT(app), "delete_event", G_CALLBACK(delete_event_cb), ui_series);
 
-  /* save the coord_frame of the series and some other parameters */
-  ui_series->coord_frame =  realspace_get_view_coord_frame(study_coord_frame(study), view, layout);
-  ui_series->view_point = realspace_alt_coord_to_alt(study_view_center(study),
-						     study_coord_frame(study),
-						     ui_series->coord_frame);
-  ui_series->thickness = study_view_thickness(study);
-  ui_series->interpolation = study_interpolation(study);
-  ui_series->view_time = study_view_time(study);
-  min_duration = volumes_min_frame_duration(ui_series->volumes);
+  /* save the coordinate space of the series and some other parameters */
+  ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(canvas_view)));
+
+  ui_series->view_point = 
+    amitk_space_b2s(AMITK_SPACE(ui_series->volume), AMITK_STUDY_VIEW_CENTER(study));
+  ui_series->interpolation = AMITK_STUDY_INTERPOLATION(study);
+  ui_series->view_time = AMITK_STUDY_VIEW_START_TIME(study);
+  min_duration = amitk_data_sets_get_min_frame_duration(ui_series->objects);
   ui_series->view_duration =  
-    (min_duration > study_view_duration(study)) ?  min_duration : study_view_duration(study);
-  ui_series->voxel_dim = (1/study_zoom(study)) * volumes_max_min_voxel_size(study_volumes(study));
+    (min_duration > AMITK_STUDY_VIEW_DURATION(study)) ?  min_duration : AMITK_STUDY_VIEW_DURATION(study);
+  ui_series->voxel_dim = (1/AMITK_STUDY_ZOOM(study)) * 
+    amitk_data_sets_get_max_min_voxel_size(ui_series->objects);
 
 
   /* do some initial calculations */
   if (ui_series->type == PLANES) {
-    realpoint_t view_corner[2];
+    AmitkCorners view_corners;
 
-    volumes_get_view_corners(ui_series->volumes, ui_series->coord_frame, view_corner);
-    ui_series->start_z = view_corner[0].z;
-    ui_series->end_z = view_corner[1].z;
-    ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/ui_series->thickness);
+    amitk_volumes_get_enclosing_corners(ui_series->objects, AMITK_SPACE(ui_series->volume), view_corners);
+    ui_series->start_z = view_corners[0].z;
+    ui_series->end_z = view_corners[1].z;
+    ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/AMITK_VOLUME_Z_CORNER(ui_series->volume));
 
   } else { /* FRAMES */
     amide_time_t current_start = 0.0;
     amide_time_t last_start, current_end, temp_time;
-    guint num_volumes = 0;
+    guint num_data_sets = 0;
     guint * frames;
     guint i;
-    guint total_volume_frames=0;
+    guint total_data_set_frames=0;
     guint series_frame = 0;
-    volumes_t * temp_volumes;
     gboolean done;
     gboolean valid;
 
-    /* first count num volumes */
-    temp_volumes = ui_series->volumes;
-    while (temp_volumes != NULL) {
-      num_volumes++;
-      total_volume_frames += temp_volumes->volume->data_set->dim.t;
-      temp_volumes = temp_volumes->next;
+    /* first count num objects */
+    temp_objects = ui_series->objects;
+    while (temp_objects != NULL) {
+      if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	num_data_sets++;
+	total_data_set_frames += AMITK_DATA_SET_NUM_FRAMES(temp_objects->data);
+      }
+      temp_objects = temp_objects->next;
     }
-
-    /* get space for the array that'll take care of which frame of which volume we're looking at*/
-    frames = (guint *) g_malloc(num_volumes*sizeof(guint));
+    
+    /* get space for the array that'll take care of which frame of which data set we're looking at*/
+    frames = g_new(guint,num_data_sets);
     if (frames == NULL) {
       g_warning("unable to allocate memory for frames");
       ui_series_free(ui_series);
       return;
     }
-    for (i=0;i<num_volumes;i++) frames[i]=0; /* initialize */
+    for (i=0;i<num_data_sets;i++) frames[i]=0; /* initialize */
     
     /* get space for the array that'll hold the series' frame durations, overestimate the size */
-    ui_series->frame_durations = (amide_time_t *) g_malloc((total_volume_frames+2)*sizeof(amide_time_t));
+    ui_series->frame_durations = g_new(amide_time_t,total_data_set_frames+2);
     if (ui_series->frame_durations == NULL) {
       g_warning("unable to allocate memory for frame durations");
       g_free(frames);
@@ -457,34 +638,38 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
     }
 
     /* do the initial case */
-    temp_volumes = ui_series->volumes;
+    temp_objects = ui_series->objects;
     i=0;
     valid = FALSE;
-    while (temp_volumes != NULL) {
-      if (temp_volumes->volume->data_set->dim.t != frames[i]) {
-	temp_time = volume_start_time(temp_volumes->volume, frames[i]);
-	if (!valid) /* first valid volume */ {
-	  current_start = temp_time;
-	  valid = TRUE;
-	} else if (temp_time < current_start) {
-	  current_start = temp_time;
+    while (temp_objects != NULL) {
+      if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+	  temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	  if (!valid) /* first valid data set */ {
+	    current_start = temp_time;
+	    valid = TRUE;
+	  } else if (temp_time < current_start) {
+	    current_start = temp_time;
+	  }
 	}
+	i++;
       }
-      i++;
-      temp_volumes = temp_volumes->next;
+      temp_objects = temp_objects->next;
     }
 
     ui_series->start_time = current_start;
     /* ignore any frames boundaries close to this one */
-    temp_volumes = ui_series->volumes;
+    temp_objects = ui_series->objects;
     i=0;
-    while (temp_volumes != NULL) {
-      temp_time = volume_start_time(temp_volumes->volume, frames[i]);
-      if ((ui_series->start_time-CLOSE < temp_time) &&
-	  (ui_series->start_time+CLOSE > temp_time))
-	frames[i]++;
-      i++;
-      temp_volumes = temp_volumes->next;
+    while (temp_objects != NULL) {
+      if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	if ((ui_series->start_time*(1.0-EPSILON) < temp_time) &&
+	    (ui_series->start_time*(1.0+EPSILON) > temp_time))
+	  frames[i]++;
+	i++;
+      }
+      temp_objects = temp_objects->next;
     }
     
     done = FALSE;
@@ -492,33 +677,37 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
     while (!done) {
 
       /* check if we're done */
-      temp_volumes = ui_series->volumes;
+      temp_objects = ui_series->objects;
       i=0;
       done = TRUE;
-      while (temp_volumes != NULL) {
-	if (frames[i] != temp_volumes->volume->data_set->dim.t) 
-	  done = FALSE;
-	i++; 
-	temp_volumes = temp_volumes->next;
+      while (temp_objects != NULL) {
+	if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	  if (frames[i] != AMITK_DATA_SET_NUM_FRAMES(temp_objects->data)) 
+	    done = FALSE;
+	  i++; 
+	}
+	temp_objects = temp_objects->next;
       }
 
       if (!done) {
 	/* check for the next earliest start time */
-	temp_volumes = ui_series->volumes;
+	temp_objects = ui_series->objects;
 	i=0;
 	valid = FALSE;
-	while (temp_volumes != NULL) {
-	  if (temp_volumes->volume->data_set->dim.t != frames[i]) {
-	    temp_time = volume_start_time(temp_volumes->volume, frames[i]);
-	    if (!valid) /* first valid volume */ {
-	      current_start = temp_time;
-	      valid = TRUE;
-	    } else if (temp_time < current_start) {
-	      current_start = temp_time;
+	while (temp_objects != NULL) {
+	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	    if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+	      temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	      if (!valid) /* first valid data set */ {
+		current_start = temp_time;
+		valid = TRUE;
+	      } else if (temp_time < current_start) {
+		current_start = temp_time;
+	      }
 	    }
+	    i++;
 	  }
-	  i++;
-	  temp_volumes = temp_volumes->next;
+	  temp_objects = temp_objects->next;
 	}
 
 	/* allright, found the next start time */
@@ -527,34 +716,38 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
 	last_start = current_start;
 
 	/* and ignore any frames boundaries close to this one */
-	temp_volumes = ui_series->volumes;
+	temp_objects = ui_series->objects;
 	i=0;
-	while (temp_volumes != NULL) {
-	  if (temp_volumes->volume->data_set->dim.t != frames[i]) {
-	    temp_time = volume_start_time(temp_volumes->volume, frames[i]);
-	    if ((current_start-CLOSE < temp_time) &&
-		(current_start+CLOSE > temp_time))
-	      frames[i]++;
+	while (temp_objects != NULL) {
+	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	    if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+	      temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	      if ((current_start*(1.0-EPSILON) < temp_time) &&
+		  (current_start*(1.0+EPSILON) > temp_time))
+		frames[i]++;
+	    }
+	    i++;
 	  }
-	  i++;
-	  temp_volumes = temp_volumes->next;
+	  temp_objects = temp_objects->next;
 	}
       }
     }
-      
+    
     /* need to get the last frame */
-    temp_volumes=ui_series->volumes;
+    temp_objects = ui_series->objects;
     i=0;
-    current_end = volume_end_time(temp_volumes->volume, frames[i]-1);
-    temp_volumes=temp_volumes->next;
+    current_end = amitk_data_set_get_end_time(temp_objects->data, frames[i]-1);
+    temp_objects = temp_objects->next;
     i++;
-    while (temp_volumes != NULL) {
-      temp_time = volume_end_time(temp_volumes->volume, frames[i]-1);
-      if (temp_time > current_end) {
-	current_end = temp_time;
+    while (temp_objects != NULL) {
+      if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	temp_time = amitk_data_set_get_end_time(AMITK_DATA_SET(temp_objects->data), frames[i]-1);
+	if (temp_time > current_end) {
+	  current_end = temp_time;
+	}
+	i++;
       }
-      temp_volumes=temp_volumes->next;
-      i++;
+      temp_objects = temp_objects->next;
     }
     ui_series->frame_durations[series_frame] = current_end-last_start;
     series_frame++;
@@ -576,10 +769,21 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
 
   }
 
+  /* connect the thresholding and color table signals */
+  temp_objects = ui_series->objects;
+  while (temp_objects != NULL) {
+    if (AMITK_IS_DATA_SET(temp_objects->data)) {
+      g_signal_connect(G_OBJECT(temp_objects->data), "thresholding_changed",
+		       G_CALLBACK(data_set_changed_cb), ui_series);
+      g_signal_connect(G_OBJECT(temp_objects->data), "color_table_changed",
+		       G_CALLBACK(data_set_changed_cb), ui_series);
+    }
+    temp_objects = temp_objects->next;
+  }
 
 
-  ui_series_menus_create(ui_series); /* setup the study menu */
-  ui_series_toolbar_create(ui_series); /* setup the toolbar */
+  menus_create(ui_series); /* setup the menu */
+  toolbar_create(ui_series); /* setup the toolbar */
 
   /* make the widgets for this dialog box */
   packing_table = gtk_table_new(1,2,FALSE);
@@ -587,7 +791,7 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
 
   /* setup the canvas */
   ui_series->canvas = GNOME_CANVAS(gnome_canvas_new_aa()); /* save for future use */
-  ui_series_update_canvas(ui_series); /* fill in the canvas */
+  update_canvas(ui_series); /* fill in the canvas */
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(ui_series->canvas), 0,1,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL,
@@ -603,9 +807,7 @@ void ui_series_create(study_t * study, volumes_t * volumes, view_t view,
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(scale), 0,1,0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
-		     GTK_SIGNAL_FUNC(ui_series_cb_scroll_change), 
-		     ui_series);
+  g_signal_connect(G_OBJECT(adjustment), "value_changed", G_CALLBACK(scroll_change_cb), ui_series);
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(app));

@@ -30,13 +30,9 @@
 /* includes we always need with this widget */
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gnome.h>
-#include "volume.h"
-#include "roi.h"
-#include "align_pt.h"
+#include "amitk_study.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define AMITK_TYPE_CANVAS            (amitk_canvas_get_type ())
 #define AMITK_CANVAS(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_CANVAS, AmitkCanvas))
@@ -46,14 +42,14 @@ extern "C" {
 
 #define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)->view)
 #define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)
+#define AMITK_CANVAS_PIXBUF(obj)     (AMITK_CANVAS(obj)->pixbuf)
 
 
 
 typedef enum {
-  AMITK_CANVAS_CROSS_HIDE,
-  AMITK_CANVAS_CROSS_SHOW,
-  NUM_AMITK_CANVAS_CROSS_ACTIONS
-} amitk_canvas_cross_action_t;
+  AMITK_CANVAS_CROSS_ACTION_HIDE,
+  AMITK_CANVAS_CROSS_ACTION_SHOW
+} AmitkCanvasCrossAction;
 
 typedef struct _AmitkCanvas             AmitkCanvas;
 typedef struct _AmitkCanvasClass        AmitkCanvasClass;
@@ -67,38 +63,41 @@ struct _AmitkCanvas
   GtkWidget * label;
   GtkWidget * scrollbar;
   GtkObject * scrollbar_adjustment;
-  GnomeCanvasItem * cross[4];
   GnomeCanvasItem * arrows[4];
 
-  realspace_t * coord_frame;
-  realpoint_t corner;
-  realpoint_t center; /* in base coord frame */
-  floatpoint_t thickness;
-  floatpoint_t voxel_dim;
-  floatpoint_t zoom;
+  AmitkVolume * volume; /* the volume that this canvas slice displays */
+  AmitkPoint center; /* in base coordinate space */
+  amide_real_t voxel_dim;
+  amide_real_t zoom;
   amide_time_t start_time;
   amide_time_t duration;
-  interpolation_t interpolation;
+  AmitkInterpolation interpolation;
 
-  view_t view;
-  layout_t layout;
-  view_mode_t view_mode;
+  AmitkView view;
+  AmitkLayout layout;
+  AmitkViewMode view_mode;
   gint roi_width;
   GdkLineStyle line_style;
-  volume_t * active_volume;
+  AmitkDataSet * active_ds;
 
-  volumes_t * volumes;
-  volumes_t * slices;
-  realpoint_t voxel_size;
-  GdkPixbuf * pixbuf;
+  GList * slices;
   gint pixbuf_width, pixbuf_height;
   GnomeCanvasItem * image;
+  GdkPixbuf * pixbuf;
 
-  rois_t * rois;
-  GList * roi_items;
+  GList * objects;
+  GList * object_items;
 
-  align_pts_t * pts;
-  GList * pt_items;
+  guint next_update;
+  guint idle_handler_id;
+  GList * next_update_items;
+
+  /* cross stuff */
+  GnomeCanvasItem * cross[4];
+  AmitkCanvasCrossAction next_cross_action;
+  AmitkPoint next_cross_center;
+  rgba_t next_cross_color;
+  amide_real_t next_cross_thickness;
 
 };
 
@@ -107,101 +106,53 @@ struct _AmitkCanvasClass
   GtkVBoxClass parent_class;
   
   void (* help_event)                (AmitkCanvas *Canvas,
-				      help_info_t which_help,
-				      realpoint_t *position,
-				      gfloat      value);
+				      AmitkHelpInfo which_help,
+				      AmitkPoint *position,
+				      amide_data_t value);
   void (* view_changing)             (AmitkCanvas *Canvas,
-				      realpoint_t *position,
-				      gfloat thickness);
+				      AmitkPoint *position,
+				      amide_real_t thickness);
   void (* view_changed)              (AmitkCanvas *Canvas,
-				      realpoint_t *position,
-				      gfloat thickness);
+				      AmitkPoint *position,
+				      amide_real_t thickness);
   void (* view_z_position_changed)   (AmitkCanvas *Canvas,
-				      realpoint_t *position);
-  void (* object_changed)            (AmitkCanvas *Canvas,
-				      gpointer    object,
-				      object_t    type);
+				      AmitkPoint *position);
   void (* isocontour_3d_changed)     (AmitkCanvas *Canvas,
-				      roi_t       *roi,
-				      realpoint_t *position);
-  void (* new_align_pt)              (AmitkCanvas *Canvas,
-				      realpoint_t *position);
+				      AmitkRoi * roi,
+				      AmitkPoint *position);
+  void (* new_object)                (AmitkCanvas *Canvas,
+				      AmitkObjectType type,
+				      AmitkPoint *position);
 };  
 
 
-GtkType       amitk_canvas_get_type           (void);
-GtkWidget*    amitk_canvas_new                (view_t view, 
-					       layout_t layout,
-					       view_mode_t view_mode,
-					       realspace_t * view_coord_frame, 
-					       realpoint_t center,
-					       floatpoint_t thickness,
-					       floatpoint_t voxel_dim,
-					       floatpoint_t zoom,
-					       amide_time_t start_time,
-					       amide_time_t duration,
-					       interpolation_t interpolation,
+GType         amitk_canvas_get_type           (void);
+GtkWidget *   amitk_canvas_new                (AmitkStudy * study,
+					       AmitkView view, 
+					       AmitkLayout layout, 
+					       AmitkViewMode view_mode,
 					       GdkLineStyle line_style,
 					       gint roi_width);
 void          amitk_canvas_set_layout         (AmitkCanvas * canvas, 
-					       layout_t new_layout,
-					       realspace_t * view_coord_frame);
-void          amitk_canvas_set_coord_frame    (AmitkCanvas * canvas, 
-					       realspace_t * view_coord_frame,
-					       gboolean update_now);
-void          amitk_canvas_set_center         (AmitkCanvas * canvas, 
-					       realpoint_t center,
-					       gboolean update_now);
-void          amitk_canvas_set_thickness      (AmitkCanvas * canvas, 
-					       floatpoint_t thickness,
-					       gboolean update_now);
-void          amitk_canvas_set_voxel_dim      (AmitkCanvas * canvas, 
-					       floatpoint_t base_voxel_dim,
-					       gboolean update_now);
-void          amitk_canvas_set_zoom           (AmitkCanvas * canvas, 
-					       floatpoint_t zoom,
-					       gboolean update_now);
-void          amitk_canvas_set_start_time     (AmitkCanvas * canvas, 
-					       amide_time_t start_time,
-					       gboolean update_now);
-void          amitk_canvas_set_duration       (AmitkCanvas * canvas, 
-					       amide_time_t duration,
-					       gboolean update_now);
-void          amitk_canvas_set_interpolation  (AmitkCanvas * canvas, 
-					       interpolation_t interpolation,
-					       gboolean update_now);
-void          amitk_canvas_set_active_volume  (AmitkCanvas * canvas, 
-					       volume_t * active_volume,
-					       gboolean update_now);
+					       AmitkLayout new_layout);
+void          amitk_canvas_set_active_data_set(AmitkCanvas * canvas, 
+					       AmitkDataSet * active_ds);
 void          amitk_canvas_set_line_style     (AmitkCanvas * canvas, 
-					       GdkLineStyle new_line_style,
-					       gboolean update_now);
+					       GdkLineStyle new_line_style);
 void          amitk_canvas_set_roi_width      (AmitkCanvas * canvas, 
-					       gint new_roi_width,
-					       gboolean update_now);
+					       gint new_roi_width);
 void          amitk_canvas_add_object         (AmitkCanvas * canvas, 
-					       gpointer object, 
-					       object_t type,
-					       gpointer parent_object);
-void          amitk_canvas_remove_object      (AmitkCanvas * canvas, 
-					       gpointer object, 
-					       object_t type,
-					       gboolean update_now);
-void          amitk_canvas_update_object      (AmitkCanvas * canvas, gpointer object, object_t type);
-void          amitk_canvas_threshold_changed  (AmitkCanvas * canvas);
-void          amitk_canvas_color_table_changed(AmitkCanvas * canvas);
-void          amitk_canvas_update_scrollbar   (AmitkCanvas * canvas);
-void          amitk_canvas_update_arrows      (AmitkCanvas * canvas);
+					       AmitkObject * object);
+gboolean      amitk_canvas_remove_object      (AmitkCanvas * canvas, 
+					       AmitkObject * object);
 void          amitk_canvas_update_cross       (AmitkCanvas * canvas, 
-					       amitk_canvas_cross_action_t action, 
-					       realpoint_t center, 
-					       rgba_t outline_color, 
-					       floatpoint_t thickness);
+					       AmitkCanvasCrossAction action, 
+					       AmitkPoint center, 
+					       rgba_t color, 
+					       amide_real_t thickness);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 
 #endif /* __AMITK_CANVAS_H__ */

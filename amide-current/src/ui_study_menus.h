@@ -31,7 +31,7 @@
 
 /* external functions */
 void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
-				      gchar * name,
+				      const gchar * name,
 				      gchar * tooltip,
 				      gpointer callback_func,
 				      gpointer callback_data,

@@ -1,5 +1,5 @@
 /* XPM */
-static char * PET_xpm[] = {
+const char * PET_xpm[] = {
 "24 24 374 2",
 "  	c None",
 ". 	c #000000",

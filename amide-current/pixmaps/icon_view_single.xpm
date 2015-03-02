@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_view_single_xpm[] = {
+const char * icon_view_single_xpm[] = {
 "24 24 30 1",
 " 	c None",
 ".	c #C6C6C6",

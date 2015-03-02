@@ -23,9 +23,8 @@
   02111-1307, USA.
 */
 
-#include "config.h"
+#include "amide_config.h"
 #include <glib.h>
-#include <math.h>
 #include <sys/stat.h>
 #include "analysis.h"
 
@@ -57,36 +56,37 @@ analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
 }
 
 
-/* calculate an analysis of several statistical values for an roi on a given volume frame. */
-static analysis_frame_t * analysis_frame_init_recurse(roi_t * roi, 
-						      volume_t * volume, 
+/* calculate an analysis of several statistical values for an roi on a given data set frame. */
+static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
+						      AmitkDataSet * ds,
 						      guint frame) {
 
   analysis_frame_t * frame_analysis = NULL;
 
-  if (frame == volume->data_set->dim.t) return NULL; /* check if we're done */
-  g_assert(frame < volume->data_set->dim.t); /* sanity check */
+  if (frame == AMITK_DATA_SET_NUM_FRAMES(ds)) return NULL; /* check if we're done */
+  g_assert(frame < AMITK_DATA_SET_NUM_FRAMES(ds)); /* sanity check */
 
   /* and now calculate this frame's data */
 #ifdef AMIDE_DEBUG
-  g_print("Calculating ROI: %s on Volume: %s Frame %d\n", roi->name, volume->name, frame);
+  g_print("Calculating ROI: %s on Data Set: %s Frame %d\n", 
+	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame);
 #endif
 
-  switch (roi->type) {
-  case ELLIPSOID:
-    frame_analysis = analysis_frame_ELLIPSOID_init(roi, volume, frame);
+  switch (AMITK_ROI_TYPE(roi)) {
+  case AMITK_ROI_TYPE_ELLIPSOID:
+    frame_analysis = analysis_frame_ELLIPSOID_init(roi, ds, frame);
     break;
-  case CYLINDER:
-    frame_analysis = analysis_frame_CYLINDER_init(roi, volume, frame);
+  case AMITK_ROI_TYPE_CYLINDER:
+    frame_analysis = analysis_frame_CYLINDER_init(roi, ds, frame);
     break;
-  case BOX:
-    frame_analysis = analysis_frame_BOX_init(roi, volume, frame);
+  case AMITK_ROI_TYPE_BOX:
+    frame_analysis = analysis_frame_BOX_init(roi, ds, frame);
     break;
-  case ISOCONTOUR_2D:
-    frame_analysis = analysis_frame_ISOCONTOUR_2D_init(roi, volume, frame);
+  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
+    frame_analysis = analysis_frame_ISOCONTOUR_2D_init(roi, ds, frame);
     break;
-  case ISOCONTOUR_3D:
-    frame_analysis = analysis_frame_ISOCONTOUR_3D_init(roi, volume, frame);
+  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+    frame_analysis = analysis_frame_ISOCONTOUR_3D_init(roi, ds, frame);
     break;
   default:
     g_error("roi type %d not implemented!", roi->type);
@@ -95,27 +95,27 @@ static analysis_frame_t * analysis_frame_init_recurse(roi_t * roi,
   }
 
   /* now let's recurse  */
-  frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, volume, frame+1);
+  frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, frame+1);
 
   return frame_analysis;
 }
 
 
 
-/* returns a calculated analysis structure of an roi on a frame of a volume */
-analysis_frame_t * analysis_frame_init(roi_t * roi, volume_t * volume) {
+/* returns a calculated analysis structure of an roi on a frame of a data set */
+analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds) {
 
   /* sanity checks */
-  if (roi_undrawn(roi)) {
-    g_warning("ROI: %s appears not to have been drawn",roi->name);
+  if (amitk_roi_undrawn(roi)) {
+    g_warning("ROI: %s appears not to have been drawn", AMITK_OBJECT_NAME(roi));
     return NULL;
   }
 
-  return analysis_frame_init_recurse(roi, volume, 0);
+  return analysis_frame_init_recurse(roi, ds, 0);
 }
 
 
-/* free up an roi analysis over a volume */
+/* free up an roi analysis over a data set */
 analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
 
   analysis_volume_t * return_list;
@@ -135,7 +135,10 @@ analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
     volume_analysis->next_volume_analysis = NULL;
 
     volume_analysis->frame_analyses = analysis_frame_unref(volume_analysis->frame_analyses);
-    volume_analysis->volume = volume_unref(volume_analysis->volume);
+    if (volume_analysis->data_set != NULL) {
+      g_object_unref(volume_analysis->data_set);
+      volume_analysis->data_set=NULL;
+    }
     g_free(volume_analysis);
     volume_analysis = NULL;
   } else
@@ -145,25 +148,28 @@ analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
 }
 
 /* returns an initialized roi analysis of a list of volumes */
-analysis_volume_t * analysis_volume_init(roi_t * roi, volumes_t * volumes) {
+analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets) {
   
   analysis_volume_t * temp_volume_analysis;
-  
-  if (volumes == NULL)  return NULL;
 
-  if ((temp_volume_analysis =  (analysis_volume_t *) g_malloc(sizeof(analysis_volume_t))) == NULL) {
+  
+  if (data_sets == NULL)  return NULL;
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(data_sets->data), NULL);
+
+  if ((temp_volume_analysis =  g_new(analysis_volume_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analysis of volumes");
     return NULL;
   }
 
   temp_volume_analysis->ref_count = 1;
-  temp_volume_analysis->volume = volume_ref(volumes->volume);
+  temp_volume_analysis->data_set = g_object_ref(data_sets->data);
 
   /* calculate this one */
-  temp_volume_analysis->frame_analyses = analysis_frame_init(roi, temp_volume_analysis->volume);
+  temp_volume_analysis->frame_analyses = analysis_frame_init(roi, temp_volume_analysis->data_set);
 
   /* recurse */
-  temp_volume_analysis->next_volume_analysis = analysis_volume_init(roi, volumes->next);
+  temp_volume_analysis->next_volume_analysis = analysis_volume_init(roi, data_sets->next);
 
   
   return temp_volume_analysis;
@@ -191,8 +197,14 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
     roi_analysis->next_roi_analysis = NULL;
 
     roi_analysis->volume_analyses = analysis_volume_unref(roi_analysis->volume_analyses);
-    roi_analysis->roi = roi_unref(roi_analysis->roi);
-    roi_analysis->study = study_unref(roi_analysis->study);
+    if (roi_analysis->roi != NULL) {
+      g_object_unref(roi_analysis->roi);
+      roi_analysis->roi = NULL;
+    }
+    if (roi_analysis->study != NULL) {
+      g_object_unref(roi_analysis->study);
+      roi_analysis->study = NULL;
+    }
     g_free(roi_analysis);
     roi_analysis = NULL;
   } else
@@ -202,26 +214,26 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
 }
 
 /* returns an initialized list of roi analyses */
-analysis_roi_t * analysis_roi_init(study_t * study, rois_t * rois, volumes_t * volumes) {
+analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * data_sets) {
   
   analysis_roi_t * temp_roi_analysis;
   
   if (rois == NULL)  return NULL;
 
-  if ((temp_roi_analysis =  (analysis_roi_t *) g_malloc(sizeof(analysis_roi_t))) == NULL) {
+  if ((temp_roi_analysis =  g_new(analysis_roi_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analyses");
     return NULL;
   }
 
   temp_roi_analysis->ref_count = 1;
-  temp_roi_analysis->roi = roi_ref(rois->roi);
-  temp_roi_analysis->study = study_ref(study);
+  temp_roi_analysis->roi = g_object_ref(rois->data);
+  temp_roi_analysis->study = g_object_ref(study);
 
   /* calculate this one */
-  temp_roi_analysis->volume_analyses = analysis_volume_init(temp_roi_analysis->roi, volumes);
+  temp_roi_analysis->volume_analyses = analysis_volume_init(temp_roi_analysis->roi, data_sets);
 
   /* recurse */
-  temp_roi_analysis->next_roi_analysis = analysis_roi_init(study, rois->next, volumes);
+  temp_roi_analysis->next_roi_analysis = analysis_roi_init(study, rois->next, data_sets);
 
   
   return temp_roi_analysis;

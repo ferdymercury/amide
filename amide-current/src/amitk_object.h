@@ -1,0 +1,121 @@
+/* amitk_object.h
+ *
+ * Part of amide - Amide's a Medical Image Dataset Examiner
+ * Copyright (C) 2000-2002 Andy Loening
+ *
+ * Author: Andy Loening <loening@ucla.edu>
+ */
+
+/*
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2, or (at your option)
+  any later version.
+ 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+  02111-1307, USA.
+*/
+
+#ifndef __AMITK_OBJECT_H__
+#define __AMITK_OBJECT_H__
+
+
+#include "amitk_space.h"
+
+G_BEGIN_DECLS
+
+#define	AMITK_TYPE_OBJECT		(amitk_object_get_type ())
+#define AMITK_OBJECT(object)		(G_TYPE_CHECK_INSTANCE_CAST ((object), AMITK_TYPE_OBJECT, AmitkObject))
+#define AMITK_OBJECT_CLASS(klass)	(G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_OBJECT, AmitkObjectClass))
+#define AMITK_IS_OBJECT(object)		(G_TYPE_CHECK_INSTANCE_TYPE ((object), AMITK_TYPE_OBJECT))
+#define AMITK_IS_OBJECT_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_OBJECT))
+#define	AMITK_OBJECT_GET_CLASS(object)	(G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_OBJECT, AmitkObjectClass))
+
+#define AMITK_OBJECT_CHILDREN(object)   (AMITK_OBJECT(object)->children)
+#define AMITK_OBJECT_PARENT(object)     (AMITK_OBJECT(object)->parent)
+#define AMITK_OBJECT_NAME(object)       ((const gchar *) (AMITK_OBJECT(object)->name))
+
+typedef struct _AmitkObjectClass AmitkObjectClass;
+typedef struct _AmitkObject AmitkObject;
+
+typedef enum {
+  AMITK_OBJECT_TYPE_STUDY,
+  AMITK_OBJECT_TYPE_DATA_SET,
+  AMITK_OBJECT_TYPE_FIDUCIAL_MARK,
+  AMITK_OBJECT_TYPE_ROI,
+  AMITK_OBJECT_TYPE_NUM
+} AmitkObjectType;
+
+
+struct _AmitkObject
+{
+  AmitkSpace space;
+
+  gchar * name;
+
+  AmitkObject * parent;
+  GList * children;
+
+  GObject * dialog; 
+};
+
+struct _AmitkObjectClass
+{
+  AmitkSpaceClass space_class;
+
+  void (* object_name_changed)      (AmitkObject * object);
+  AmitkObject * (* object_copy)     (const AmitkObject * object);
+  void (* object_copy_in_place)     (AmitkObject * dest_object, const AmitkObject * src_object);
+  void (* object_write_xml)         (const AmitkObject * object, xmlNodePtr nodes);
+  void (* object_read_xml)          (AmitkObject * object, xmlNodePtr nodes);
+  void (* object_add_child)         (AmitkObject * object, AmitkObject * child);
+  void (* object_remove_child)      (AmitkObject * object, AmitkObject * child);
+       
+};
+
+
+
+/* Application-level methods */
+
+GType	        amitk_object_get_type	             (void);
+AmitkObject *   amitk_object_new                     (void);
+gchar *         amitk_object_write_xml               (AmitkObject * object);
+AmitkObject *   amitk_object_read_xml                (gchar * xml_filename);
+AmitkObject *   amitk_object_copy                    (const AmitkObject * object);
+void            amitk_object_copy_in_place           (AmitkObject * dest_object,
+						      const AmitkObject * src_object);
+void            amitk_object_set_name                (AmitkObject * object, 
+						      const gchar * new_name);
+void            amitk_object_set_parent              (AmitkObject * object,
+						      AmitkObject * parent);
+void            amitk_object_add_child               (AmitkObject * object,
+						      AmitkObject * child);
+void            amitk_object_add_children            (AmitkObject * object,
+						      GList * children);
+gboolean        amitk_object_remove_child            (AmitkObject * object,
+						      AmitkObject * child);
+gboolean        amitk_object_remove_children         (AmitkObject * object, 
+						      GList * children);
+GList *         amitk_object_children_of_type        (AmitkObject * object,
+						      const AmitkObjectType type,
+						      const gboolean recurse);
+
+GList *         amitk_objects_ref                    (GList * objects);
+GList *         amitk_objects_unref                  (GList * objects);
+gint            amitk_objects_count                  (GList * objects);
+AmitkObject *   amitk_objects_find_object_by_name    (GList * objects, const gchar * name);
+gint            amitk_objects_count_pairs_by_name    (GList * objects1, GList * objects2);
+void            amitk_objects_write_xml              (GList * objects, xmlNodePtr node_list);
+GList *         amitk_objects_read_xml               (xmlNodePtr node_list);
+const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);
+
+G_END_DECLS
+
+#endif /* __AMITK_OBJECT_H__ */

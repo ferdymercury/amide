@@ -1,5 +1,5 @@
 /* XPM */
-static char * BOX_xpm[] = {
+const char * BOX_xpm[] = {
 "24 24 2 1",
 " 	c None",
 ".	c #000000",

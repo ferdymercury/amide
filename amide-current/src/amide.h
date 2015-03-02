@@ -26,6 +26,8 @@
 #ifndef __AMIDE_H__
 #define __AMIDE_H__
 
+#include <glib.h>
+
 /* some basic defines for packing tables */
 #define X_PACKING_OPTIONS GTK_EXPAND
 #define Y_PACKING_OPTIONS GTK_EXPAND
@@ -33,67 +35,84 @@
 #define Y_PADDING 5                 
 
 /* typedef's */
-typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
-typedef enum {LINEAR_LAYOUT, ORTHOGONAL_LAYOUT, NUM_LAYOUTS} layout_t;
-typedef enum {STUDY, VOLUME, ROI, ALIGN_PT, NUM_OBJECTS} object_t;      
-typedef enum {LEFT, RIGHT, NUM_EYES} eye_t;
-typedef enum {SINGLE_VIEW, LINKED_VIEW, NUM_VIEW_MODES} view_mode_t;
+typedef enum {
+  AMITK_VIEW_TRANSVERSE, 
+  AMITK_VIEW_CORONAL, 
+  AMITK_VIEW_SAGITTAL, 
+  AMITK_VIEW_NUM
+} AmitkView;
 
 typedef enum {
-  THRESHOLD_PER_SLICE, 
-  THRESHOLD_PER_FRAME, 
-  THRESHOLD_INTERPOLATE_FRAMES,
-  THRESHOLD_GLOBAL, 
-  NUM_THRESHOLD_TYPES
-} threshold_t;
+  AMITK_LAYOUT_LINEAR, 
+  AMITK_LAYOUT_ORTHOGONAL,
+  AMITK_LAYOUT_NUM
+} AmitkLayout;
+
 
 typedef enum {
-  HELP_INFO_BLANK,
-  HELP_INFO_CANVAS_VOLUME,
-  HELP_INFO_CANVAS_ROI,
-  HELP_INFO_CANVAS_ALIGN_PT,
-  HELP_INFO_CANVAS_ISOCONTOUR_ROI,
-  HELP_INFO_CANVAS_NEW_ROI,
-  HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
-  HELP_INFO_CANVAS_SHIFT,
-  HELP_INFO_CANVAS_ALIGN,
-  HELP_INFO_TREE_VOLUME,
-  HELP_INFO_TREE_ROI,
-  HELP_INFO_TREE_ALIGN_PT,
-  HELP_INFO_TREE_STUDY,
-  HELP_INFO_TREE_NONE,
-  HELP_INFO_UPDATE_LOCATION,
-  HELP_INFO_UPDATE_VALUE,
-  HELP_INFO_UPDATE_THETA,
-  HELP_INFO_UPDATE_SHIFT,
-  NUM_HELP_INFOS
-} help_info_t;
+  AMITK_EYE_LEFT, 
+  AMITK_EYE_RIGHT, 
+  AMITK_EYE_NUM
+} AmitkEye;
+
+typedef enum {
+  AMITK_VIEW_MODE_SINGLE,
+  AMITK_VIEW_MODE_LINKED,
+  AMITK_VIEW_MODE_NUM
+} AmitkViewMode;
+
+
+typedef enum {
+  AMITK_HELP_INFO_BLANK,
+  AMITK_HELP_INFO_CANVAS_DATA_SET,
+  AMITK_HELP_INFO_CANVAS_ROI,
+  AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_NEW_ROI,
+  AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_SHIFT,
+  AMITK_HELP_INFO_CANVAS_ALIGN,
+  AMITK_HELP_INFO_TREE_DATA_SET,
+  AMITK_HELP_INFO_TREE_ROI,
+  AMITK_HELP_INFO_TREE_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_TREE_STUDY,
+  AMITK_HELP_INFO_TREE_NONE,
+  AMITK_HELP_INFO_UPDATE_LOCATION,
+  AMITK_HELP_INFO_UPDATE_VALUE,
+  AMITK_HELP_INFO_UPDATE_THETA,
+  AMITK_HELP_INFO_UPDATE_SHIFT,
+  AMITK_HELP_INFO_NUM
+} AmitkHelpInfo;
 
 /* setup the types for various internal data formats */
-/* note, don't change the amide_data_t unless you want to do a 
-   lot of digging through the code, a lot of assumptions are
-   based on the data type being float */
-typedef gfloat amide_data_t;
-#define SIZE_OF_AMIDE_DATA_T 4
+/* note, don't change these unless you want to go digging through the
+   code for locations where the signal marshallers expect the type
+   to be DOUBLE
+*/
+
+typedef gdouble amide_data_t;
+#define SIZE_OF_AMIDE_DATA_T 8
+#define AMITK_TYPE_DATA G_TYPE_DOUBLE
+
 typedef gdouble amide_time_t;
 #define SIZE_OF_AMIDE_TIME_T 8
-typedef gdouble floatpoint_t;
-#define SIZE_OF_FLOATPOINT_T 8
-typedef gint16 intpoint_t;
-#define SIZE_OF_INTPOINT_T 2;
+#define AMITK_TYPE_TIME G_TYPE_DOUBLE
+
+typedef gdouble amide_real_t;
+#define SIZE_OF_AMIDE_REAL_T 8
+#define AMITK_TYPE_REAL G_TYPE_DOUBLE
+
+/* size of a point in integer space */
+typedef gint16 amide_intpoint_t;
+#define SIZE_OF_AMIDE_INTPOINT_T 2;
 
 
 
 /* external variables */
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
-extern gchar * object_edit_menu_explanation[];
-extern gchar * object_delete_menu_explanation[];
-extern gchar * threshold_type_names[];
-extern gchar * threshold_type_explanations[];
 extern gchar * view_mode_names[];
 extern gchar * view_mode_explanations[];
-
 
 
 /* external functions */

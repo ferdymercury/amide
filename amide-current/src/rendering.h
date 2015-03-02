@@ -30,8 +30,8 @@
 
 /* header files that are always needed with this file */
 #include <volpack.h>
-#include "volume.h"
-#include "roi.h"
+#include "amitk_object.h"
+#include "amitk_data_set.h"
 
 /* -------------- structures and such ------------- */
 
@@ -74,7 +74,7 @@ rendering_voxel_t * dummy_voxel;
 
 #define RENDERING_DENSITY_FIELD 	1
 #define RENDERING_DENSITY_OFFSET	vpFieldOffset(dummy_voxel, density)
-#define RENDERING_DENSITY_SIZE  	sizeof(rendering_density_t)
+#define RENDERING_DENSITY_SIZE   	sizeof(rendering_density_t)
 #define RENDERING_DENSITY_MAX   	VP_SCALAR_MAX /*255 last time I checked */
 
 #define RENDERING_GRADIENT_FIELD	2
@@ -112,18 +112,15 @@ rendering_voxel_t * dummy_voxel;
 
 typedef struct _rendering_t {
   vpContext * vpc;      /*  VolPack rendering Context */
-  object_t type;
-  volume_t * volume;
-  roi_t * roi;
+  AmitkObject * object;
   gchar * name;
-  color_table_t color_table;
+  AmitkColorTable color_table;
   amide_time_t start;
   amide_time_t duration;
-  realspace_t * current_coord_frame;
-  realspace_t * initial_coord_frame;
-  rendering_voxel_t * rendering_vol;
-  realpoint_t voxel_size;
-  voxelpoint_t dim; /* dimensions of our rendering_vol and image */
+  AmitkVolume * volume; /* volume in which the data resides */
+  rendering_voxel_t * rendering_data;
+  AmitkPoint voxel_size;
+  AmitkVoxel dim; /* dimensions of our rendering_data and image */
   guchar * image;
   pixel_type_t pixel_type;
   gfloat shade_table[RENDERING_NORMAL_MAX+1];	/* shading lookup table */
@@ -150,20 +147,19 @@ struct _renderings_t {
 
 /* external functions */
 rendering_t * rendering_context_unref(rendering_t * context);
-rendering_t * rendering_context_volume_init(volume_t * volume, 
-					    realspace_t * render_coord_frame, 
-					    const realpoint_t render_far_corner, 
-					    const floatpoint_t min_voxel_size, 
-					    const amide_time_t start, 
-					    const amide_time_t duration, 
-					    const interpolation_t interpolation);
+rendering_t * rendering_context_init(const AmitkObject * object,
+				     AmitkVolume * rendering_volume,
+				     const amide_real_t min_voxel_size, 
+				     const amide_time_t start, 
+				     const amide_time_t duration, 
+				     const AmitkInterpolation interpolation);
 void rendering_context_reload_object(rendering_t * rendering_context, 
 				     const amide_time_t new_start,
 				     const amide_time_t new_duration, 
-				     const interpolation_t interpolation);
+				     const AmitkInterpolation interpolation);
 void rendering_context_load_object(rendering_t * rendering_context, 
-				   const interpolation_t interpolation);
-void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble rotation);
+				   const AmitkInterpolation interpolation);
+void rendering_context_set_rotation(rendering_t * context, AmitkAxis dir, gdouble rotation);
 void rendering_context_reset_rotation(rendering_t * context);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
 void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type, gdouble zoom);
@@ -172,12 +168,11 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 						   gdouble front_factor, gdouble density);
 void rendering_context_render(rendering_t * context);
 renderings_t * renderings_unref(renderings_t * renderings);
-renderings_t * renderings_init(volumes_t * volumes, rois_t * rois,
-			       realspace_t * render_coord_frame, const amide_time_t start, 
-			       const amide_time_t duration, const interpolation_t interpolation);
+renderings_t * renderings_init(GList * objects, const amide_time_t start, 
+			       const amide_time_t duration, const AmitkInterpolation interpolation);
 void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
-			       const amide_time_t duration, const interpolation_t interpolation);
-void renderings_set_rotation(renderings_t * contexts, axis_t dir, gdouble rotation);
+			       const amide_time_t duration, const AmitkInterpolation interpolation);
+void renderings_set_rotation(renderings_t * contexts, AmitkAxis dir, gdouble rotation);
 void renderings_reset_rotation(renderings_t * contexts);
 void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);
 void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gdouble zoom);

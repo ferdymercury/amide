@@ -1,5 +1,5 @@
 /* XPM */
-static char * OTHER_xpm[] = {
+const char * OTHER_xpm[] = {
 "24 24 190 2",
 "  	c None",
 ". 	c #C67EC2",

@@ -1,0 +1,24 @@
+<refentry id="amitk-theory" revision="Aug. 15th, 2002">
+<refmeta>
+<refentrytitle>Theory behind the AMITK Library</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>Theory behind the AMITK Library</refname>
+<refpurpose>
+Mathematical underpinnings of the AMITK Library
+</refpurpose>
+</refnamediv>
+  <refsect1 id="overview">
+    <title>Basics</title>
+    <para>
+      nothing written yet
+    </para>
+  </refsect1>
+</refentry>
+
+<!-- Local Variables: -->
+<!-- sgml-parent-document: ("gtk-docs.sgml" "chapter" "refentry")  -->
+<!-- End: -->

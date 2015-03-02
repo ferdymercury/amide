@@ -48,7 +48,7 @@ typedef struct ui_rendering_t {
   amide_time_t duration;
   GnomeCanvas * canvas;
   GnomeCanvasItem * canvas_image;
-  GdkPixbuf * rgb_image;
+  GdkPixbuf * pixbuf;
   renderings_t * contexts;
   GtkWidget * render_button;
   gboolean immediate;
@@ -61,19 +61,15 @@ typedef struct ui_rendering_t {
   gdouble front_factor;
   gdouble density;
   gdouble zoom;
-  interpolation_t interpolation;
+  AmitkInterpolation interpolation;
+  AmitkSpace * box_space;
   guint reference_count;
 } ui_rendering_t;
 
 /* external functions */
-ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering);
-ui_rendering_t * ui_rendering_init(volumes_t * volumes, rois_t * rois,
-				   realspace_t * coord_frame, amide_time_t start, 
-				   amide_time_t duration, interpolation_t interpolation);
 void ui_rendering_update_canvases(ui_rendering_t * ui_rendering);
-void ui_rendering_create(volumes_t * volumes, rois_t * rois, realspace_t * coord_frame, 
-			 amide_time_t start, amide_time_t duration, 
-			 interpolation_t interpolation);
+void ui_rendering_create(GList * objects, amide_time_t start, 
+			 amide_time_t duration, AmitkInterpolation interpolation);
 
 #endif /* __UI_RENDERING_H__ */
 #endif /* AMIDE_LIBVOLPACK_SUPPORT */

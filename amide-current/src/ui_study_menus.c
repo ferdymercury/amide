@@ -26,9 +26,8 @@
 
 
 
-#include "config.h"
+#include "amide_config.h"
 #include <gnome.h>
-#include "study.h"
 #include "rendering.h"
 #include "ui_common.h"
 #include "ui_study.h"
@@ -39,14 +38,17 @@
 
 /* function to fill in a radioitem */
 void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item, 
-				      gchar * name,
+				      const gchar * name,
 				      gchar * tooltip,
 				      gpointer callback_func,
 				      gpointer callback_data,
 				      gpointer xpm_data) {
   
   item->type = GNOME_APP_UI_ITEM;
-  item->label = name;
+  if (name != NULL)
+    item->label = g_strdup(name);
+  else
+    item->label = NULL;
   item->hint = tooltip;
   item->moreinfo = callback_func;
   item->user_data = callback_data;
@@ -111,23 +113,22 @@ void ui_study_menus_fill_in_end(GnomeUIInfo * item) {
 /* function to setup the menus for the study ui */
 void ui_study_menus_create(ui_study_t * ui_study) {
 
-  view_t i_view;
-  import_method_t i_method;
+  AmitkView i_view;
+  AmitkImportMethod i_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_import_method_t i_libmdc;
   gint counter;
 #endif
-  roi_type_t i_roi_type;
+  AmitkRoiType i_roi_type;
 #if AMIDE_LIBVOLPACK_SUPPORT
-  interpolation_t i_interpolation;
+  AmitkInterpolation i_interpolation;
 #endif
-  object_t i_object;
 
 
 #ifdef AMIDE_LIBMDC_SUPPORT
   GnomeUIInfo libmdc_specific_menu[LIBMDC_NUM_IMPORT_METHODS+1];
 #endif
-  GnomeUIInfo import_specific_menu[NUM_IMPORT_METHODS+1];
+  GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
 
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
@@ -170,18 +171,9 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  GnomeUIInfo add_roi_menu[NUM_ROI_TYPES+1];
-
-  GnomeUIInfo edit_item_menu[NUM_OBJECTS+1];
-  GnomeUIInfo delete_item_menu[NUM_OBJECTS];
+  GnomeUIInfo add_roi_menu[AMITK_ROI_TYPE_NUM+1];
 
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Edit Items"),
-			     N_("Edit the selected objects"),
-			     edit_item_menu),
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Delete Items"),
-			     N_("Delete the selected objects"),
-			     delete_item_menu),
     GNOMEUIINFO_SUBTREE_HINT(N_("Add _ROI"),
 			     N_("Add a new ROI"),
 			     add_roi_menu),
@@ -307,41 +299,27 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 
   /* fill in some more menu definitions */
-  for (i_object = 0; i_object < NUM_OBJECTS; i_object ++)
-    ui_study_menus_fill_in_menuitem(&(edit_item_menu[i_object]),
-				    object_menu_names[i_object], 
-				    object_edit_menu_explanation[i_object],
-				    ui_study_cb_edit_objects, ui_study);
-  ui_study_menus_fill_in_end(&(edit_item_menu[NUM_OBJECTS]));
-
-  for (i_object = VOLUME; i_object < NUM_OBJECTS; i_object ++)
-    ui_study_menus_fill_in_menuitem(&(delete_item_menu[i_object-VOLUME]),
-				    object_menu_names[i_object], 
-				    object_delete_menu_explanation[i_object],
-				    ui_study_cb_delete_objects, ui_study);
-  ui_study_menus_fill_in_end(&(delete_item_menu[NUM_OBJECTS-VOLUME]));
-
-  for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
+  for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++) 
     ui_study_menus_fill_in_menuitem(&(add_roi_menu[i_roi_type]),
-				    roi_menu_names[i_roi_type], 
-				    roi_menu_explanation[i_roi_type],
+				    amitk_roi_menu_names[i_roi_type], 
+				    amitk_roi_menu_explanation[i_roi_type],
 				    ui_study_cb_add_roi, ui_study);
-  ui_study_menus_fill_in_end(&(add_roi_menu[NUM_ROI_TYPES]));
+  ui_study_menus_fill_in_end(&(add_roi_menu[AMITK_ROI_TYPE_NUM]));
 
-  for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++) 
+  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) 
 #ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_method == LIBMDC_DATA) 
-      ui_study_menus_fill_in_submenu(&(import_specific_menu[i_method-RAW_DATA]),
-				     import_menu_names[i_method],
-				     import_menu_explanations[i_method],
+    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) 
+      ui_study_menus_fill_in_submenu(&(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW]),
+				     amitk_import_menu_names[i_method],
+				     amitk_import_menu_explanations[i_method],
 				     libmdc_specific_menu);
     else
 #endif
-      ui_study_menus_fill_in_menuitem(&(import_specific_menu[i_method-RAW_DATA]),
-				      import_menu_names[i_method],
-				      import_menu_explanations[i_method],
+      ui_study_menus_fill_in_menuitem(&(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW]),
+				      amitk_import_menu_names[i_method],
+				      amitk_import_menu_explanations[i_method],
 				      ui_study_cb_import, ui_study);
-  ui_study_menus_fill_in_end(&(import_specific_menu[NUM_IMPORT_METHODS-RAW_DATA]));
+  ui_study_menus_fill_in_end(&(import_specific_menu[AMITK_IMPORT_METHOD_NUM-AMITK_IMPORT_METHOD_RAW]));
 
 #ifdef AMIDE_LIBMDC_SUPPORT
   counter = 0;
@@ -364,51 +342,43 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* add some info to some of the menus 
      note: the "Importing guess" widget doesn't have data set, NULL == AMIDE_GUESS */ 
-  for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++) 
-    gtk_object_set_data(GTK_OBJECT(import_specific_menu[i_method-RAW_DATA].widget),
-			"method", GINT_TO_POINTER(i_method));
+  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) 
+    g_object_set_data(G_OBJECT(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW].widget),
+		      "method", GINT_TO_POINTER(i_method));
 #ifdef AMIDE_LIBMDC_SUPPORT
   counter = 0;
   for (i_libmdc = LIBMDC_NONE; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
     if (medcon_import_supports(i_libmdc)) {
-      gtk_object_set_data(GTK_OBJECT(libmdc_specific_menu[counter].widget),
-			  "method", GINT_TO_POINTER(LIBMDC_DATA));
-      gtk_object_set_data(GTK_OBJECT(libmdc_specific_menu[counter].widget),
-			  "submethod", GINT_TO_POINTER(i_libmdc));
+      g_object_set_data(G_OBJECT(libmdc_specific_menu[counter].widget),
+			"method", GINT_TO_POINTER(AMITK_IMPORT_METHOD_LIBMDC));
+      g_object_set_data(G_OBJECT(libmdc_specific_menu[counter].widget),
+			"submethod", GINT_TO_POINTER(i_libmdc));
       counter++;
     }
   }
 #endif
 
 #if AMIDE_LIBVOLPACK_SUPPORT
-  for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
-    gtk_object_set_data(GTK_OBJECT(rendering_type_menu[i_interpolation].widget), 
-			"interpolation", GINT_TO_POINTER(i_interpolation));
+  for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+    g_object_set_data(G_OBJECT(rendering_type_menu[i_interpolation].widget), 
+		      "interpolation", GINT_TO_POINTER(i_interpolation));
 #endif
 
-  for (i_object = 0; i_object < NUM_OBJECTS; i_object++)
-    gtk_object_set_data(GTK_OBJECT(edit_item_menu[i_object].widget), "type",
-			GINT_TO_POINTER(i_object));
+  for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)
+    g_object_set_data(G_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 
+		      GINT_TO_POINTER(i_roi_type));
 
-  for (i_object = VOLUME; i_object < NUM_OBJECTS; i_object++)
-    gtk_object_set_data(GTK_OBJECT(delete_item_menu[i_object-VOLUME].widget), "type",
-			GINT_TO_POINTER(i_object));
-
-  for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++)
-    gtk_object_set_data(GTK_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 
-			GINT_TO_POINTER(i_roi_type));
-
-  for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
-    gtk_object_set_data(GTK_OBJECT(export_view_menu[i_view].widget),
-			"view", GINT_TO_POINTER(i_view));
-    gtk_object_set_data(GTK_OBJECT(series_space_menu[i_view].widget),
-			"view", GINT_TO_POINTER(i_view));
-    gtk_object_set_data(GTK_OBJECT(series_space_menu[i_view].widget),
-			"series_type", GINT_TO_POINTER(PLANES));
-    gtk_object_set_data(GTK_OBJECT(series_time_menu[i_view].widget),
-			"view", GINT_TO_POINTER(i_view));
-    gtk_object_set_data(GTK_OBJECT(series_time_menu[i_view].widget),
-			"series_type", GINT_TO_POINTER(FRAMES));
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    g_object_set_data(G_OBJECT(export_view_menu[i_view].widget),
+		      "view", GINT_TO_POINTER(i_view));
+    g_object_set_data(G_OBJECT(series_space_menu[i_view].widget),
+		      "view", GINT_TO_POINTER(i_view));
+    g_object_set_data(G_OBJECT(series_space_menu[i_view].widget),
+		      "series_type", GINT_TO_POINTER(PLANES));
+    g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
+		      "view", GINT_TO_POINTER(i_view));
+    g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
+		      "series_type", GINT_TO_POINTER(FRAMES));
   }
 
   return;

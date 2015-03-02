@@ -23,49 +23,42 @@
   02111-1307, USA.
 */
 
-
-#include "config.h"
+#include "amide_config.h"
 #include <gnome.h>
-#include <math.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <fnmatch.h>
-#include "gtkdirsel.h"
+#include <string.h>
+#include "amitk_dir_sel.h"
 #include "rendering.h"
-#include "study.h"
 #include "amitk_threshold.h"
 #include "amitk_canvas.h"
 #include "amitk_tree.h"
-#include "amitk_tree_item.h"
 #include "ui_common.h"
-#include "ui_common_cb.h"
 #include "ui_rendering.h"
 #include "ui_series.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_preferences_dialog.h"
-#include "ui_roi_dialog.h"
-#include "ui_study_dialog.h"
+#include "amitk_object_dialog.h"
 #include "ui_time_dialog.h"
 #include "ui_alignment_dialog.h"
-#include "ui_volume_dialog.h"
-#include "ui_align_pt_dialog.h"
 #include "ui_roi_analysis_dialog.h"
+
 
 /* function to handle loading in an AMIDE study */
 static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * dir_selection = data;
-  gchar * open_filename;
+  const gchar * open_filename;
   struct stat file_info;
-  study_t * study;
+  AmitkStudy * study;
   ui_study_t * ui_study;
 
   /* get the filename */
-  open_filename = gtk_dir_selection_get_filename(GTK_DIR_SELECTION(dir_selection));
+  open_filename = amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection));
 
   /* get a pointer to ui_study */
-  ui_study = gtk_object_get_data(GTK_OBJECT(dir_selection), "ui_study");
+  ui_study = g_object_get_data(G_OBJECT(dir_selection), "ui_study");
 
   /* check to see that the filename exists and it's a directory */
   if (stat(open_filename, &file_info) != 0) {
@@ -78,19 +71,20 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
   }
 
   /* try loading the study into memory */
-  if ((study=study_load_xml(open_filename)) == NULL) {
+  if ((study=amitk_study_load_xml(open_filename)) == NULL) {
     g_warning("error loading study: %s",open_filename);
     return;
   }
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, dir_selection);
+  ui_common_file_selection_cancel_cb(widget, dir_selection);
 
   /* setup the study window */
   if (ui_study->study_virgin)
     ui_study_replace_study(ui_study, study);
   else
-    ui_study_create(study, NULL);
+    ui_study_create(study);
+
 
   return;
 }
@@ -102,27 +96,21 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
   ui_study_t * ui_study=data;
   GtkWidget * dir_selection;
 
-  dir_selection = gtk_dir_selection_new(_("Open AMIDE File"));
+  dir_selection = amitk_dir_selection_new(_("Open AMIDE File"));
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
 
   /* save a pointer to ui_study */
-  gtk_object_set_data(GTK_OBJECT(dir_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(dir_selection), "ui_study", ui_study);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->ok_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_cb_open_ok),
-		     dir_selection);
-  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->cancel_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     dir_selection);
-  gtk_signal_connect(GTK_OBJECT(GTK_DIR_SELECTION(dir_selection)->cancel_button),
-		     "delete_event",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->ok_button),
+		   "clicked", G_CALLBACK(ui_study_cb_open_ok), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button),
+		   "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb),dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button),
+		   "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
@@ -137,7 +125,7 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
 /* function to create a new study widget */
 void ui_study_cb_new_study(GtkWidget * button, gpointer data) {
 
-  ui_study_create(NULL, NULL);
+  ui_study_create(NULL);
 
   return;
 }
@@ -157,12 +145,13 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   struct dirent * directory_entry;
   gchar ** frags1=NULL;
   gchar ** frags2=NULL;
+  gint return_val;
 
   /* get a pointer to ui_study */
-  ui_study = gtk_object_get_data(GTK_OBJECT(dir_selection), "ui_study");
+  ui_study = g_object_get_data(G_OBJECT(dir_selection), "ui_study");
 
   /* get the filename */
-  save_filename = gtk_dir_selection_get_filename(GTK_DIR_SELECTION(dir_selection));
+  save_filename = g_strdup(amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection)));
 
   /* some sanity checks */
   if ((strcmp(save_filename, ".") == 0) ||
@@ -190,16 +179,17 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   /* see if the filename already exists */
   if (stat(save_filename, &file_info) == 0) {
     /* check if it's okay to writeover the file */
-    temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
-    if (GNOME_IS_APP(ui_study->app))
-      question = gnome_question_dialog_modal_parented(temp_string, NULL, NULL, 
-						      GTK_WINDOW(ui_study->app));
-    else
-      question = gnome_question_dialog_modal(temp_string, NULL, NULL);
-    g_free(temp_string);
+    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "Overwrite file: %s", save_filename);
 
     /* and wait for the question to return */
-    if (gnome_dialog_run_and_close(GNOME_DIALOG(question)) == 1)
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val != GTK_RESPONSE_OK)
       return; /* we don't want to overwrite the file.... */
 
     /* and start deleting everything in the filename/directory */
@@ -209,10 +199,10 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 	temp_string = 
 	  g_strdup_printf("%s%s%s", save_filename,G_DIR_SEPARATOR_S, directory_entry->d_name);
 
-	if (fnmatch("*.xml",directory_entry->d_name,FNM_NOESCAPE) == 0) 
+	if (g_pattern_match_simple("*.xml",directory_entry->d_name))
 	  if (unlink(temp_string) != 0)
 	    g_warning("Couldn't unlink file: %s",temp_string);
-	if (fnmatch("*.dat",directory_entry->d_name,FNM_NOESCAPE) == 0) 
+	if (g_pattern_match_simple("*.dat",directory_entry->d_name)) 
 	  if (unlink(temp_string) != 0)
 	    g_warning("Couldn't unlink file: %s",temp_string);
 
@@ -237,13 +227,13 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   }
 
   /* allright, save our study */
-  if (study_write_xml(ui_study->study, save_filename) == FALSE) {
+  if (amitk_study_save_xml(ui_study->study, save_filename) == FALSE) {
     g_warning("Failure Saving File: %s",save_filename);
     return;
   }
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, dir_selection);
+  ui_common_file_selection_cancel_cb(widget, dir_selection);
 
   /* indicate no new changes */
   ui_study->study_altered=FALSE;
@@ -256,32 +246,32 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-  GtkDirSelection * dir_selection;
+  GtkWidget * dir_selection;
   gchar * temp_string;
 
-  dir_selection = GTK_DIR_SELECTION(gtk_dir_selection_new(_("Save File")));
+  dir_selection = amitk_dir_selection_new(_("Save File"));
 
   /* take a guess at the filename */
-  if (study_filename(ui_study->study) == NULL) 
-    temp_string = g_strdup_printf("%s.xif", study_name(ui_study->study));
+  if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) 
+    temp_string = g_strdup_printf("%s.xif",AMITK_OBJECT_NAME(ui_study->study));
   else
-    temp_string = g_strdup_printf("%s", study_filename(ui_study->study));
-  gtk_dir_selection_set_filename(GTK_DIR_SELECTION(dir_selection), temp_string);
+    temp_string = g_strdup_printf("%s", AMITK_STUDY_FILENAME(ui_study->study));
+  amitk_dir_selection_set_filename(AMITK_DIR_SELECTION(dir_selection), temp_string);
   g_free(temp_string); 
 
   /* save a pointer to ui_study */
-  gtk_object_set_data(GTK_OBJECT(dir_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(dir_selection), "ui_study", ui_study);
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(dir_selection->ok_button), "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_cb_save_as_ok), dir_selection);
-  gtk_signal_connect(GTK_OBJECT(dir_selection->cancel_button), "clicked",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel), dir_selection);
-  gtk_signal_connect(GTK_OBJECT(dir_selection->cancel_button), "delete_event",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->ok_button), "clicked",
+		   G_CALLBACK(ui_study_cb_save_as_ok), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
+  g_signal_connect(G_OBJECT(AMITK_DIR_SELECTION(dir_selection)->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), dir_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(dir_selection), GTK_WIN_POS_MOUSE);
@@ -297,57 +287,21 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
   ui_study_t * ui_study;
-  gchar * import_filename=NULL;
-  import_method_t import_method;
-  gchar * model_filename=NULL;
-  gchar * model_name;
-  GtkWidget * entry;
-  gint entry_return;
-  struct stat file_info;
+  const gchar * import_filename=NULL;
+  AmitkImportMethod import_method;
   int submethod = 0;
-  volume_t * import_volume;
+  AmitkDataSet * import_ds;
 
   /* get a pointer to ui_study */
-  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+  ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
 
   /* figure out how we want to import */
-  import_method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(file_selection), "method"));
-
-  /* we need some more info if we're doing a PEM file */
-  if (import_method == PEM_DATA) {
-
-    /* get the name of the model data file */
-    entry = gnome_request_dialog(FALSE, 
-				 "Corresponding Model File, if any?", "", 
-				 256,  ui_common_cb_entry_name,
-				 &model_name, 
-				 (GNOME_IS_APP(ui_study->app) ? 
-				  GTK_WINDOW(ui_study->app) : NULL));
-    entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
-  
-    if (model_name == NULL)
-      model_filename = NULL; 
-    else if (entry_return != 0) /* did we hit cancel */
-      model_filename = NULL;
-    else if (strcmp(model_name, "") == 0) /* hit ok, but no entry */
-      model_filename = NULL;
-    else {
-      /* assumes the model is in the same directory as the data file */
-      model_filename = 
-	g_strconcat(g_dirname(import_filename),"/",model_name, NULL);
-
-      if (stat(model_filename, &file_info) != 0) {
-	/* hit ok, but no such file */
-	g_warning("no such PEM Model File:\n\t%s",model_filename);
-	model_filename = NULL;
-      }
-    }
-  }
+  import_method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
 
 #ifdef AMIDE_LIBMDC_SUPPORT
   /* figure out the submethod if we're loading through libmdc */
-  if (import_method == LIBMDC_DATA) 
-    submethod =  GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(file_selection), "submethod"));
+  if (import_method == AMITK_IMPORT_METHOD_LIBMDC) 
+    submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
 #endif
 
 
@@ -358,29 +312,19 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 #endif
 
   /* now, what we need to do if we've successfully loaded an image */
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-  if ((import_volume = volume_import_file(import_method, submethod,
-					  import_filename, model_filename)) != NULL) {
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  if ((import_ds = amitk_data_set_import_file(import_method, submethod, import_filename)) != NULL) {
 #ifdef AMIDE_DEBUG
-    g_print("imported volume name %s\n",import_volume->name);
+    g_print("imported data set name %s\n",AMITK_OBJECT_NAME(import_ds));
 #endif
-    ui_study_add_volume(ui_study, import_volume); /* this adds a reference to the volume*/
-    import_volume = volume_unref(import_volume); /* so remove a reference */
+    ui_study_add_data_set(ui_study, import_ds); /* this adds a reference to the data set*/
+    g_object_unref(import_ds); /* so remove a reference */
   }
 
-  ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-
-  /* garbage cleanup */
-  if (import_method == PEM_DATA) {
-    g_free(model_name);
-    g_free(model_filename);
-  }
-
-  //  g_free(import_filename); /* this causes a crash for some reason, is import_filename just
-  //			    *  a reference into the file_selection box? */
+  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, file_selection);
+  ui_common_file_selection_cancel_cb(widget, file_selection);
   
   return;
 }
@@ -391,38 +335,32 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
   GtkFileSelection * file_selection;
-  import_method_t import_method;
+  AmitkImportMethod import_method;
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
 
   /* save a pointer to ui_study */
-  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
   
   /* and save which method of importing we want to use */
-  import_method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "method"));
-  gtk_object_set_data(GTK_OBJECT(file_selection), "method", GINT_TO_POINTER(import_method));
+  import_method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
+  g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(import_method));
 #ifdef AMIDE_LIBMDC_SUPPORT
-  if (import_method == LIBMDC_DATA)
-    gtk_object_set_data(GTK_OBJECT(file_selection), "submethod",
-			gtk_object_get_data(GTK_OBJECT(widget), "submethod"));
+  if (import_method == AMITK_IMPORT_METHOD_LIBMDC)
+    g_object_set_data(G_OBJECT(file_selection), "submethod",
+		      g_object_get_data(G_OBJECT(widget), "submethod"));
 #endif
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_cb_import_ok),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "delete_event",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
+  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+		   G_CALLBACK(ui_study_cb_import_ok), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button),"delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
@@ -440,21 +378,19 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   GtkWidget * file_selection = data;
   GtkWidget * question;
   ui_study_t * ui_study;
-  gchar * save_filename;
-  gchar * temp_string;
+  const gchar * save_filename;
   struct stat file_info;
-  GdkImlibImage * export_image;
-  guchar * pixels;
-  view_t  view;
+  AmitkView  view;
+  gint return_val;
 
   /* get a pointer to ui_study */
-  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+  ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
 
   /* get the filename */
   save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
 
   /* figure out which view we're saving */
-  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(file_selection), "view"));
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "view"));
 
   /* some sanity checks */
   if ((strcmp(save_filename, ".") == 0) ||
@@ -468,43 +404,35 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   /* see if the filename already exists */
   if (stat(save_filename, &file_info) == 0) {
     /* check if it's okay to writeover the file */
-    temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
-    if (GNOME_IS_APP(ui_study->app))
-      question = gnome_question_dialog_modal_parented(temp_string, NULL, NULL, 
-						      GTK_WINDOW(ui_study->app));
-    else
-      question = gnome_question_dialog_modal(temp_string, NULL, NULL);
-    g_free(temp_string);
+    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "Overwrite file: %s", save_filename);
 
     /* and wait for the question to return */
-    if (gnome_dialog_run_and_close(GNOME_DIALOG(question)) == 1)
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val != GTK_RESPONSE_OK)
       return; /* we don't want to overwrite the file.... */
   }
 
-  /* need to get a pointer to the pixels that we're going to save */
-  pixels = gdk_pixbuf_get_pixels(AMITK_CANVAS(ui_study->canvas[SINGLE_VIEW][view])->pixbuf);
 
-  /* yep, we still need to use imlib for the moment for generating output images,
-     maybe gdk_pixbuf will have this functionality at some point */
-  export_image = 
-    gdk_imlib_create_image_from_data(pixels, NULL, 
-				     gdk_pixbuf_get_width(AMITK_CANVAS(ui_study->canvas[SINGLE_VIEW][view])->pixbuf),
-				     gdk_pixbuf_get_height(AMITK_CANVAS(ui_study->canvas[SINGLE_VIEW][view])->pixbuf));
-  if (export_image == NULL) {
-    g_warning("Failure converting pixbuf to imlib image for exporting image file");
+  if (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]) == NULL) {
+    g_warning("No data sets selected\n");
     return;
   }
 
-  /* allright, export the view */
-  if (gdk_imlib_save_image(export_image, save_filename, NULL) == FALSE) {
+  if (gdk_pixbuf_save (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]),
+		       save_filename, "jpeg", NULL, 
+		       "quality", "100", NULL) == FALSE) {
     g_warning("Failure Saving File: %s",save_filename);
-    gdk_imlib_destroy_image(export_image);
     return;
   }
-  gdk_imlib_destroy_image(export_image);
 
   /* close the file selection box */
-  ui_common_cb_file_selection_cancel(widget, file_selection);
+  ui_common_file_selection_cancel_cb(widget, file_selection);
 
   return;
 }
@@ -513,49 +441,43 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
 void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
-  volumes_t * current_volumes;
+  GList * current_data_sets;
+  GList * temp_sets;
   GtkFileSelection * file_selection;
   gchar * temp_string;
   gchar * data_set_names = NULL;
-  view_t view;
-  floatpoint_t upper, lower;
-  realpoint_t view_center;
-  realpoint_t temp_p;
-  realspace_t * canvas_coord_frame;
+  AmitkView view;
+  amide_real_t upper, lower;
+  AmitkPoint temp_p;
+  AmitkVolume * canvas_volume;
 
-  /* sanity checks */
-  if (study_volumes(ui_study->study) == NULL) return;
-
-  current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-  if (current_volumes == NULL) return;
+  current_data_sets = ui_study_selected_data_sets(ui_study);
+  if (current_data_sets == NULL) return;
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
-  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
-  canvas_coord_frame = AMITK_CANVAS(ui_study->canvas[SINGLE_VIEW][view])->coord_frame;
-  g_return_if_fail(canvas_coord_frame != NULL);
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+  canvas_volume = AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume;
+  g_return_if_fail(canvas_volume != NULL);
 
-  /* get the center */
-  view_center = study_view_center(ui_study->study);
-  /* translate the point so that the z coordinate corresponds to depth in this view */
-  temp_p = realspace_alt_coord_to_alt(view_center,
-				      study_coord_frame(ui_study->study),
-				      canvas_coord_frame);
+  /* translate the center so that the z coordinate corresponds to depth in this view */
+  temp_p = amitk_space_b2s(AMITK_SPACE(canvas_volume), AMITK_STUDY_VIEW_CENTER(ui_study->study));
 
   /* figure out the top and bottom of this slice */
-  upper = temp_p.z + study_view_thickness(ui_study->study)/2.0;
-  lower = temp_p.z - study_view_thickness(ui_study->study)/2.0;
+  upper = temp_p.z + AMITK_STUDY_VIEW_THICKNESS(ui_study->study)/2.0;
+  lower = temp_p.z - AMITK_STUDY_VIEW_THICKNESS(ui_study->study)/2.0;
 
   /* take a guess at the filename */
-  data_set_names = g_strdup(current_volumes->volume->name);
-  current_volumes = current_volumes->next;
-  while (current_volumes != NULL) {
-    temp_string = g_strdup_printf("%s+%s",data_set_names, current_volumes->volume->name);
+  data_set_names = g_strdup(AMITK_OBJECT_NAME(current_data_sets->data));
+  temp_sets = current_data_sets->next;
+  while (temp_sets != NULL) {
+    temp_string = g_strdup_printf("%s+%s",data_set_names, 
+				  AMITK_OBJECT_NAME(temp_sets->data));
     g_free(data_set_names);
     data_set_names = temp_string;
-    current_volumes = current_volumes->next;
+    temp_sets = temp_sets->next;
   }
   temp_string = g_strdup_printf("%s_{%s}_%s_%3.1f-%3.1f.jpg", 
-				study_name(ui_study->study),
+				AMITK_OBJECT_NAME(ui_study->study),
 				data_set_names,
 				view_names[view],
 				lower,
@@ -565,25 +487,19 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   g_free(temp_string); 
 
   /* save a pointer to ui_study, and record which view we're saving*/
-  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
-  gtk_object_set_data(GTK_OBJECT(file_selection), "view", GINT_TO_POINTER(view));
+  g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
+  g_object_set_data(G_OBJECT(file_selection), "view", GINT_TO_POINTER(view));
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
 
   /* connect the signals */
-  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_study_cb_export_ok),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "clicked",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
-  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
-		     "delete_event",
-		     GTK_SIGNAL_FUNC(ui_common_cb_file_selection_cancel),
-		     file_selection);
+  g_signal_connect(G_OBJECT(file_selection->ok_button), "clicked",
+		   G_CALLBACK(ui_study_cb_export_ok), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  g_signal_connect(G_OBJECT(file_selection->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
 
   /* set the position of the dialog */
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
@@ -591,448 +507,314 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
   /* run the dialog */
   gtk_widget_show(GTK_WIDGET(file_selection));
 
+  amitk_objects_unref(current_data_sets);
   return;
 }
 
 /* callback generally attached to the entry_notify_event */
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data) {
   ui_study_t * ui_study = data;
-  help_info_t which_info;
+  AmitkHelpInfo which_info;
 
-  which_info = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_help"));
-  ui_study_update_help_info(ui_study, which_info, study_view_center(ui_study->study), 0.0);
+  which_info = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_help"));
+  ui_study_update_help_info(ui_study, which_info, AMITK_STUDY_VIEW_CENTER(ui_study->study), 0.0);
 
   return FALSE;
 }
 
 
 
-void ui_study_cb_canvas_help_event(GtkWidget * canvas,  help_info_t help_type,
-				   realpoint_t *location, gfloat value,  gpointer data) {
+void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
+				   AmitkPoint *location, amide_data_t value,  gpointer data) {
   ui_study_t * ui_study = data;
   ui_study_update_help_info(ui_study, help_type, *location, value);
   return;
 }
 
-void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, realpoint_t *position, gpointer data) {
+void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, AmitkPoint *position, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
 
-  study_set_view_center(ui_study->study, 
-			realspace_base_coord_to_alt(*position, study_coord_frame(ui_study->study)));
-
-  /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view]) {
-	amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), *position, 
-				i_view==AMITK_CANVAS_VIEW(canvas));
-	amitk_canvas_update_arrows(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-      }
+  amitk_study_set_view_center(ui_study->study, *position); 
 
   return;
 }
 
-void ui_study_cb_canvas_view_changing(GtkWidget * canvas, realpoint_t *position,
-				      gfloat thickness, gpointer data) {
+void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
+				      amide_real_t thickness, gpointer data) {
 
 
   ui_study_t * ui_study = data;
   rgba_t outline_color;
-  view_t i_view;
-  view_mode_t i_view_mode;
-
+  AmitkView i_view;
+  AmitkViewMode i_view_mode;
 
   /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
-    if (ui_study->active_volume[i_view_mode] != NULL)
-      outline_color = color_table_outline_color(ui_study->active_volume[i_view_mode]->color_table, FALSE);
-    else
-      outline_color = color_table_outline_color(BW_LINEAR, TRUE);
-
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
+  outline_color = amitk_color_table_outline_color(ui_study->active_ds->color_table, FALSE);
+  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
+    for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
       if (canvas != ui_study->canvas[i_view_mode][i_view])
 	amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				  AMITK_CANVAS_CROSS_SHOW,*position, outline_color, thickness);
-  }
+				  AMITK_CANVAS_CROSS_ACTION_SHOW,*position, outline_color, thickness);
 
   ui_study_update_thickness(ui_study, thickness);
 
   return;
 }
 
-void ui_study_cb_canvas_view_changed(GtkWidget * canvas, realpoint_t *position,
-				     gfloat thickness, gpointer data) {
+void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
+				     amide_real_t thickness, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
+  AmitkView i_view;
+  AmitkViewMode i_view_mode;
 
-  study_set_view_center(ui_study->study, 
-  			realspace_base_coord_to_alt(*position, study_coord_frame(ui_study->study)));
-  study_set_view_thickness(ui_study->study, thickness);
-  ui_study_update_thickness(ui_study, study_view_thickness(ui_study->study));
-
-  /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view]) {
-	amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), AMITK_CANVAS_CROSS_HIDE,
-				  zero_rp, rgba_black, 0);/* remove targets */
-	amitk_canvas_set_thickness(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				   study_view_thickness(ui_study->study), FALSE);
-	amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]),  *position, TRUE);
-      }
-
-  return;
-}
-
-
-void ui_study_cb_canvas_object_changed(GtkWidget * canvas, gpointer object, object_t type, 
-				       gpointer data) {
-  ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-  GtkWidget * tree_item;
+  amitk_study_set_view_center(ui_study->study, *position);
+  amitk_study_set_view_thickness(ui_study->study, thickness);
+  ui_study_update_thickness(ui_study, thickness);
 
   /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view])
-	amitk_canvas_update_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), object, type);
-
-  /* check if the corresponding dialog modification dialog is up, and update it */
-  tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), object, type);
-  g_return_if_fail(AMITK_IS_TREE_ITEM(tree_item));
-  if (AMITK_TREE_ITEM_DIALOG(tree_item)) {
-    switch(type) {
-    case VOLUME:
-      ui_volume_dialog_update(AMITK_TREE_ITEM_DIALOG(tree_item), object);
-      break;
-    case ROI:
-      ui_roi_dialog_update(AMITK_TREE_ITEM_DIALOG(tree_item), object);
-      break;
-    case ALIGN_PT:
-      ui_align_pt_dialog_update(AMITK_TREE_ITEM_DIALOG(tree_item), object);
-      break;
-    default:
-      break;
-    }
+  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
+    for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+      amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				AMITK_CANVAS_CROSS_ACTION_HIDE,*position, rgba_black, thickness);
   }
-  
+
   return;
 }
 
-void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, roi_t * roi, 
-					      realpoint_t *position, gpointer data) {
+
+void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
+					      AmitkPoint *position, gpointer data) {
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-  view_mode_t view_mode;
-  realpoint_t temp_rp;
-  voxelpoint_t temp_vp;
-  GtkWidget * tree_item;
-  GtkWidget * dialog;
-  GtkWidget * label;
+  AmitkPoint temp_point;
+  AmitkVoxel temp_voxel;
+  GtkWidget * question;
   amide_time_t start_time, end_time;
-  gchar * temp_string;
+  gint return_val;
 
-  view_mode = AMITK_CANVAS_VIEW_MODE(canvas);
-  g_return_if_fail(ui_study->active_volume[view_mode] != NULL);
+  g_return_if_fail(ui_study->active_ds != NULL);
 
-  start_time = study_view_time(ui_study->study);
-  end_time = start_time + study_view_duration(ui_study->study);
-  temp_rp = realspace_base_coord_to_alt(*position, ui_study->active_volume[view_mode]->coord_frame);
-  REALPOINT_TO_VOXEL(temp_rp, ui_study->active_volume[view_mode]->voxel_size, 
-		     volume_frame(ui_study->active_volume[view_mode], start_time),
-		     temp_vp);
+  start_time = AMITK_STUDY_VIEW_START_TIME(ui_study->study);
+  end_time = start_time + AMITK_STUDY_VIEW_DURATION(ui_study->study);
+  temp_point = amitk_space_b2s(AMITK_SPACE(ui_study->active_ds), *position);
+  POINT_TO_VOXEL(temp_point, ui_study->active_ds->voxel_size, 
+		 amitk_data_set_get_frame(ui_study->active_ds, start_time),
+		 temp_voxel);
 
   /* complain if more then one frame is currently showing */
-  if (temp_vp.t != volume_frame(ui_study->active_volume[view_mode], end_time)) {
+  if (temp_voxel.t != amitk_data_set_get_frame(ui_study->active_ds, end_time)) {
 
-    dialog = gnome_dialog_new("Multiple Frames Being Shown",
-			      GNOME_STOCK_BUTTON_OK,
-			      GNOME_STOCK_BUTTON_CANCEL,
-			      NULL);
+    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "%s: %s\n%s %d",
+				      "Multiple data frames are currently being shown from",
+				      AMITK_OBJECT_NAME(ui_study->active_ds),
+				      "The isocontour will only be drawn over frame",
+				      temp_voxel.t);
 
-    temp_string = g_strdup_printf("%s: %s\n%s %d",
-				  "Multiple data frames are currently being shown from",
-				  ui_study->active_volume[view_mode]->name,
-				  "The isocontour will only be drawn over frame",
-				  temp_vp.t);
-    label = gtk_label_new(temp_string);
-    gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_LEFT);
-    g_free(temp_string);
-    gtk_box_pack_start(GTK_BOX(GNOME_DIALOG(dialog)->vbox), label, TRUE, TRUE, 0);
-    gtk_widget_show(label);
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
 
-    if (gnome_dialog_run_and_close(GNOME_DIALOG(dialog)) != 0)
+    gtk_widget_destroy(question);
+    if (return_val != GTK_RESPONSE_OK)
       return; /* cancel */
   }
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-  if (data_set_includes_voxel(ui_study->active_volume[view_mode]->data_set,temp_vp))
-    roi_set_isocontour(roi, ui_study->active_volume[view_mode], temp_vp);
+  if (amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(ui_study->active_ds),temp_voxel))
+    amitk_roi_set_isocontour(roi, ui_study->active_ds, temp_voxel);
   ui_common_remove_cursor(GTK_WIDGET(canvas));
 
-  /* update all the canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      amitk_canvas_update_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), roi, ROI);
+  return;
+}
 
-  /* check if the corresponding dialog modification dialog is up, and update it */
-  tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), roi, ROI);
-  g_return_if_fail(AMITK_IS_TREE_ITEM(tree_item));
-  if (AMITK_TREE_ITEM_DIALOG(tree_item))
-    ui_roi_dialog_update(AMITK_TREE_ITEM_DIALOG(tree_item), roi);
+void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObjectType type,
+				   AmitkPoint *position, gpointer data) {
+
+  ui_study_t * ui_study = data;
+
+  g_return_if_fail(ui_study->active_ds != NULL);
+
+  /* only handles fiducial marks currently */
+  g_return_if_fail(type == AMITK_OBJECT_TYPE_FIDUCIAL_MARK); 
+
+  ui_study_add_fiducial_mark(ui_study, AMITK_OBJECT(ui_study->active_ds), TRUE, *position);
 
   return;
 }
 
-void ui_study_cb_canvas_new_align_pt(GtkWidget * canvas, realpoint_t *position, gpointer data) {
+void ui_study_cb_tree_select_object(GtkWidget * tree, AmitkObject * object, AmitkViewMode view_mode, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-  view_mode_t view_mode;
-  align_pt_t * new_pt;
+  AmitkView i_view;
 
-  view_mode = AMITK_CANVAS_VIEW_MODE(canvas);
-  g_return_if_fail(ui_study->active_volume[view_mode] != NULL);
-  new_pt = ui_study_add_align_pt(ui_study, ui_study->active_volume[view_mode]);
-  if (new_pt == NULL) return;
+  for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+    amitk_canvas_add_object(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), object);
 
-  new_pt->point = realspace_base_coord_to_alt(*position, ui_study->active_volume[view_mode]->coord_frame);
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      amitk_canvas_add_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-			      new_pt, ALIGN_PT, ui_study->active_volume[view_mode]);
-
-  return;
-}
-
-void ui_study_cb_tree_select_object(GtkWidget * tree, gpointer object, object_t type, 
-				    gpointer parent, object_t parent_type, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t view_mode;
-
-  view_mode = AMITK_TREE_VIEW_MODE(tree);
-  for (i_view=0; i_view<NUM_VIEWS; i_view++)
-    amitk_canvas_add_object(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), 
-			    object, type, parent);
-
-
-  switch(type) {
-  case VOLUME:
+  if (AMITK_IS_DATA_SET(object)) {
     ui_time_dialog_set_times(ui_study);
-    if (ui_study->active_volume[view_mode] == NULL)
-      ui_study_make_active_volume(ui_study, view_mode, object);
-    break;
-  default:
-    break;
+    if (view_mode == AMITK_VIEW_MODE_SINGLE)
+      if (ui_study->active_ds == NULL)
+	ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
   }
 
   return;
 }
 
-void ui_study_cb_tree_unselect_object(GtkWidget * tree, gpointer object, object_t type, 
-				      gpointer parent, object_t parent_type, gpointer data) {
+void ui_study_cb_tree_unselect_object(GtkWidget * tree, AmitkObject * object, AmitkViewMode view_mode, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t view_mode;
+  AmitkView i_view;
 
-  view_mode = AMITK_TREE_VIEW_MODE(tree);
-  for (i_view=0; i_view<NUM_VIEWS; i_view++)
-    amitk_canvas_remove_object(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), 
-			       object, type, TRUE);
+  for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+    amitk_canvas_remove_object(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), object);
 
-  switch(type) {
-  case VOLUME:
+  if (AMITK_IS_DATA_SET(object)) {
     ui_time_dialog_set_times(ui_study);
-    if (ui_study->active_volume[view_mode] == object)
-      ui_study_make_active_volume(ui_study, view_mode, NULL);
-    break;
-  default:
-    break;
+    if (view_mode == AMITK_VIEW_MODE_SINGLE)
+      if (ui_study->active_ds == AMITK_DATA_SET(object))
+	ui_study_make_active_data_set(ui_study, NULL);
   }
 
   return;
 }
 
-void ui_study_cb_tree_make_active_object(GtkWidget * tree, gpointer object, object_t type, 
-					 gpointer parent, object_t parent_type, gpointer data) {
+void ui_study_cb_tree_make_active_object(GtkWidget * tree, AmitkObject * object, AmitkViewMode view_mode, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t view_mode;
-  view_mode_t i_view_mode;
-  roi_t * roi=object;
-  volume_t * parent_volume = parent;
-  align_pt_t * align_pt=object;
-  realpoint_t center;
+  AmitkPoint center;
 
-  view_mode = AMITK_TREE_VIEW_MODE(tree);
-  switch(type) {
-  case VOLUME:
-    ui_study_make_active_volume(ui_study, view_mode, object);
-    break;
-  case ROI:
-    center = realspace_base_coord_to_alt(roi_center(roi), study_coord_frame(ui_study->study));
-    if (!roi_undrawn(roi) && !REALPOINT_EQUAL(center, study_view_center(ui_study->study))) {
-      study_set_view_center(ui_study->study, center);
-      for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-	for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	  amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				  realspace_alt_coord_to_base(study_view_center(ui_study->study),
-							      study_coord_frame(ui_study->study)),
-				  TRUE);
+  if (AMITK_IS_DATA_SET(object) && (view_mode == AMITK_VIEW_MODE_SINGLE)) {
+    ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
+  } else if (AMITK_IS_ROI(object)) {
+    center = amitk_volume_center(AMITK_VOLUME(object));
+    if (AMITK_IS_ROI(object))
+      if (!amitk_roi_undrawn(AMITK_ROI(object)) && 
+	  !POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
+	amitk_study_set_view_center(ui_study->study, center);
+  } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
+    center = AMITK_FIDUCIAL_MARK_GET(object);
+    if ( !POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
+      amitk_study_set_view_center(ui_study->study, center);
+  }
+}
+
+
+void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  GtkWidget * dialog;
+
+  if (AMITK_IS_DATA_SET(object)) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    if (ui_study->threshold_dialog != NULL) {
+      if (amitk_threshold_dialog_data_set(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == 
+	  AMITK_DATA_SET(object)) {
+	gtk_widget_destroy(ui_study->threshold_dialog);
+	ui_study->threshold_dialog = NULL;
+      }
     }
-    break;
-  case ALIGN_PT:
-    center = realspace_alt_coord_to_alt(align_pt->point, 
-					parent_volume->coord_frame,
-					study_coord_frame(ui_study->study));
-    if ( !REALPOINT_EQUAL(center, study_view_center(ui_study->study))) {
-      study_set_view_center(ui_study->study, center);
-      for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-	for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	  amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				  realspace_alt_coord_to_base(study_view_center(ui_study->study),
-							      study_coord_frame(ui_study->study)),
-				  TRUE);
-    }
-    break;
-  default:
-    break;
   }
-  return;
-}
 
-void ui_study_cb_tree_popup_object(GtkWidget * tree, gpointer object, object_t type, 
-				   gpointer parent, object_t parent_type, gpointer data) {
+  dialog = amitk_object_dialog_new(object, ui_study->canvas_layout);
 
-  ui_study_t * ui_study = data;
-  GtkWidget * tree_item;
+  if (AMITK_IS_DATA_SET(object))
+    ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
-  /* get the tree item, using the first tree to track modification dialogs */
-  tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), object, type);
-  g_return_if_fail(AMITK_IS_TREE_ITEM(tree_item));
-
-  if (!AMITK_TREE_ITEM_DIALOG(tree_item)) {
-    switch(type) {
-    case VOLUME:
-      ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-      /* if the threshold dialog corresponds to this volume, kill it */
-      if (ui_study->threshold_dialog != NULL)
-	if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == object) {
-	  gtk_widget_destroy(ui_study->threshold_dialog);
-	  ui_study->threshold_dialog = NULL;
-	}
-      AMITK_TREE_ITEM_DIALOG(tree_item) = 
-	ui_volume_dialog_create(ui_study, object); /* start up the volume dialog */
-      ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-      break;
-    case ROI:
-      AMITK_TREE_ITEM_DIALOG(tree_item) = 
-	ui_roi_dialog_create(ui_study, object);
-      break;
-    case ALIGN_PT:
-      AMITK_TREE_ITEM_DIALOG(tree_item) = 
-	ui_align_pt_dialog_create(ui_study, object, parent);
-      break;
-    case STUDY:
-      AMITK_TREE_ITEM_DIALOG(tree_item) = 
-	ui_study_dialog_create(ui_study);
-      break;
-    default:
-      break;
-    }
-  } else {
-    /* pop the window to the top */
-    ; //GTK 2.0    gtk_window_present(GTK_WINDOW(AMITK_TREE_ITEM_DIALOG(tree_item)));
-  }
+  if (dialog != NULL) 
+    gtk_widget_show(dialog);
+  else /* already up ,pop the window to the top */
+    gtk_window_present(GTK_WINDOW(object->dialog));
 
   return;
 }
 
-void ui_study_cb_tree_add_object(GtkWidget * tree, object_t type, gpointer parent, 
-				 object_t parent_type, gpointer data) {
+void ui_study_cb_tree_add_object(GtkWidget * tree, AmitkObject * parent, 
+				 AmitkObjectType object_type, AmitkRoiType roi_type, gpointer data) {
   ui_study_t * ui_study = data;
 
-  switch(type) {
+  if (parent == NULL)
+    parent = AMITK_OBJECT(ui_study->study);
 
-  case ALIGN_PT:
+  if (object_type == AMITK_OBJECT_TYPE_FIDUCIAL_MARK)
+    ui_study_add_fiducial_mark(ui_study, parent, TRUE,AMITK_STUDY_VIEW_CENTER(ui_study->study));
+  else if (object_type == AMITK_OBJECT_TYPE_ROI)
+    ui_study_add_roi(ui_study, parent, roi_type);
 
-    switch(parent_type) {
-    case VOLUME:
-      ui_study_add_align_pt(ui_study, parent);
-      break;
-    default:
-      break;
-    }
-    break;
 
-  default:
-    break;
+  return;
+}
+
+void ui_study_cb_tree_delete_object(GtkWidget * tree, AmitkObject * object, gpointer data) {
+  ui_study_t * ui_study = data;
+  GtkWidget * question;
+  gint return_val;
+
+  g_return_if_fail(AMITK_IS_OBJECT(object));
+
+  /* check if it's okay to writeover the file */
+  question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_QUESTION,
+				    GTK_BUTTONS_OK_CANCEL,
+				    "Do you really want to delete: %s%s",
+				    AMITK_OBJECT_NAME(object),
+				    AMITK_OBJECT_CHILDREN(object) != NULL ? 
+				    "\nand it's children" : "");
+  
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+  gtk_widget_destroy(question);
+  if (return_val != GTK_RESPONSE_OK)
+    return; /* we don't want to overwrite the file.... */
+
+  amitk_tree_remove_object(AMITK_TREE(ui_study->tree), object);
+  amitk_object_remove_child(AMITK_OBJECT_PARENT(object), object);
+
+  if (ui_study->study_altered != TRUE) {
+    ui_study->study_virgin=FALSE;
+    ui_study->study_altered=TRUE;
+    ui_study_update_title(ui_study);
   }
 
   return;
 }
 
-void ui_study_cb_tree_help_event(GtkWidget * widget, help_info_t help_type, gpointer data) {
+
+void ui_study_cb_tree_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_study_update_help_info(ui_study, help_type, zero_rp, 0.0);
+  ui_study_update_help_info(ui_study, help_type, zero_point, 0.0);
   return;
 }
 
 
-
-
-void ui_study_cb_zoom(GtkObject * adjustment, gpointer data) {
+void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
+  amide_real_t zoom;
 
-  /* sanity check */
-  if (study_volumes(ui_study->study) == NULL)
-    return;
+  if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
+  zoom = gtk_spin_button_get_value(spin_button);
 
-  if (study_zoom(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
-      study_set_zoom(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
-      for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-	for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	  amitk_canvas_set_zoom(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				study_zoom(ui_study->study),TRUE);
-  }
+  amitk_study_set_zoom(ui_study->study, zoom);
     
   return;
 }
 
 
-void ui_study_cb_thickness(GtkObject * adjustment, gpointer data) {
+void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
+  amide_real_t thickness;
 
-  /* sanity check */
-  if (study_volumes(ui_study->study) == NULL)
-    return;
+  if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
+  thickness = gtk_spin_button_get_value(spin_button);
 
-  gtk_signal_emit_stop_by_name(GTK_OBJECT(adjustment), "value_changed");
-  if (study_view_thickness(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
-    study_set_view_thickness(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
-    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-      for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	amitk_canvas_set_thickness(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				   study_view_thickness(ui_study->study), TRUE);
-  }
+  amitk_study_set_view_thickness(ui_study->study, thickness);
   
   return;
 }
@@ -1041,7 +823,12 @@ void ui_study_cb_thickness(GtkObject * adjustment, gpointer data) {
 
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_time_dialog_create(ui_study);
+
+  if (ui_study->time_dialog == NULL)
+    ui_time_dialog_create(ui_study);
+  else /* pop the window to the top */
+    gtk_window_present(GTK_WINDOW(ui_study->time_dialog));
+
   return;
 }
 
@@ -1052,17 +839,19 @@ void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data) {
 void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_t view;
+  AmitkView view;
   series_t series_type;
   
-  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
-  series_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "series_type"));
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+  series_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "series_type"));
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_series_create(ui_study->study, 
-		   AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]), 
-		   view, ui_study->canvas_layout,series_type);
-  ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+		   AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE), 
+		   view, 
+		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume,
+		   series_type);
+  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
 }
@@ -1072,80 +861,51 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 void ui_study_cb_rendering(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  interpolation_t interpolation;
+  AmitkInterpolation interpolation;
 
+  /* need something to rendering */
+  if (AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE) == NULL) return;
 
-  interpolation = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "interpolation"));
+  interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "interpolation"));
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-  ui_rendering_create(AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]),
-		      AMITK_TREE_SELECTED_ROIS(ui_study->tree[SINGLE_VIEW]),
-		      study_coord_frame(ui_study->study),
-		      study_view_time(ui_study->study), 
-		      study_view_duration(ui_study->study),interpolation);
-  ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  ui_rendering_create(AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE),
+		      AMITK_STUDY_VIEW_START_TIME(ui_study->study), 
+		      AMITK_STUDY_VIEW_DURATION(ui_study->study),interpolation);
+  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
 }
 #endif
 
 
-/* do roi calculations for selected ROI's over selected volumes */
+/* do roi calculations for selected ROI's over selected data sets */
 void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_roi_analysis_dialog_create(ui_study, TRUE);
-  ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   return;
 
 }
 
-/* do roi calculations for all ROI's over selected volumes */
+/* do roi calculations for all ROI's over selected datas */
 void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_roi_analysis_dialog_create(ui_study, FALSE);
-  ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
+  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   return;
 }
 
 /* user wants to run the alignment wizard */
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  ui_alignment_dialog_create(ui_study);
+  ui_alignment_dialog_create(ui_study->study);
   return;
 }
 
-/* function called when the threshold is changed */
-void ui_study_cb_threshold_changed(GtkWidget * widget, gpointer data) {
-  ui_study_t * ui_study=data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for(i_view=0; i_view<NUM_VIEWS;i_view++)
-      amitk_canvas_threshold_changed(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-
-  return;
-}
-
-
-/* function called when the volume's color is changed */
-void ui_study_cb_color_changed(GtkWidget * widget, gpointer data) {
-  ui_study_t * ui_study=data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
-    for(i_view=0; i_view<NUM_VIEWS;i_view++)
-      amitk_canvas_color_table_changed(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-  }
-
-  return;
-}
-
-static gboolean ui_study_cb_threshold_close(GtkWidget* widget, gpointer data) {
-
+static gboolean ui_study_cb_threshold_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_study_t * ui_study = data;
 
   /* just keeping track on whether or not the threshold widget is up */
@@ -1158,39 +918,25 @@ static gboolean ui_study_cb_threshold_close(GtkWidget* widget, gpointer data) {
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  GtkWidget * tree_item;
-  view_mode_t view_mode=0;
 
-  while ((ui_study->active_volume[view_mode] == NULL) && (view_mode < NUM_VIEW_MODES-1))
-    view_mode++;
-  
-  if (ui_study->active_volume[view_mode] == NULL) return;
+  if (ui_study->active_ds == NULL) return;
 
-  /* make sure we don't already have a volume edit dialog up */
-  tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree[view_mode]), 
-				     ui_study->active_volume[view_mode], VOLUME);
-  g_return_if_fail(AMITK_IS_TREE_ITEM(tree_item));
-
-  if (!AMITK_TREE_ITEM_DIALOG(tree_item) && (ui_study->threshold_dialog == NULL)) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-    ui_study->threshold_dialog = amitk_threshold_dialog_new(ui_study->active_volume[view_mode]);
-    ui_common_remove_cursor(ui_study->canvas[SINGLE_VIEW][TRANSVERSE]);
-    gtk_signal_connect(GTK_OBJECT(ui_study->threshold_dialog), "threshold_changed",
-		       GTK_SIGNAL_FUNC(ui_study_cb_threshold_changed),
-		       ui_study);
-    gtk_signal_connect(GTK_OBJECT(ui_study->threshold_dialog), "color_changed",
-		     GTK_SIGNAL_FUNC(ui_study_cb_color_changed),
-		       ui_study);
-    gtk_signal_connect(GTK_OBJECT(ui_study->threshold_dialog), "close",
-		       GTK_SIGNAL_FUNC(ui_study_cb_threshold_close),
-		       ui_study);
+  /* make sure we don't already have a data set edit dialog up */
+  if ((AMITK_OBJECT(ui_study->active_ds)->dialog == NULL) &&
+      (ui_study->threshold_dialog == NULL)) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    ui_study->threshold_dialog = amitk_threshold_dialog_new(ui_study->active_ds,
+							    GTK_WINDOW(ui_study->app));
+    ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    g_signal_connect(G_OBJECT(ui_study->threshold_dialog), "delete_event",
+		     G_CALLBACK(ui_study_cb_threshold_delete_event), ui_study);
     gtk_widget_show(GTK_WIDGET(ui_study->threshold_dialog));
   } else {
     /* pop the window to the top */
-    ; //    if (!AMITK_TREE_ITEM_DIALOG(tree_item))
-    //GTK2.0      gtk_window_present(GTK_WINDOW(AMITK_TREE_ITEM_DIALOG(tree_item)));
-    //    else
-    //GTK2.0      gtk_window_present(GTK_WINDOW(ui_study->threshold_dialog));
+    if (AMITK_OBJECT(ui_study->active_ds)->dialog)
+      gtk_window_present(GTK_WINDOW(AMITK_OBJECT(ui_study->active_ds)->dialog));
+    else
+      gtk_window_present(GTK_WINDOW(ui_study->threshold_dialog));
   }
 
   return;
@@ -1200,30 +946,11 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
 void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  roi_type_t i_roi_type;
-  GtkWidget * entry;
-  gchar * roi_name = NULL;
-  gint entry_return;
-  roi_t * roi;
+  AmitkRoiType roi_type;
 
   /* figure out which menu item called me */
-  i_roi_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"roi_type"));
-
-  entry = gnome_request_dialog(FALSE, "ROI Name:", "", 256, 
-			       ui_common_cb_entry_name,
-			       &roi_name, 
-			       (GNOME_IS_APP(ui_study->app) ? 
-				GTK_WINDOW(ui_study->app) : NULL));
-  
-  entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
-  
-  if (entry_return == 0) {
-    roi = roi_init();
-    roi_set_name(roi,roi_name);
-    roi->type = i_roi_type;
-    ui_study_add_roi(ui_study, roi); /* this adds a reference */
-    roi = roi_unref(roi); /* so remove a reference */
-  }
+  roi_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"roi_type"));
+  ui_study_add_roi(ui_study, AMITK_OBJECT(ui_study->study), roi_type);
 
   return;
 }
@@ -1233,8 +960,9 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  if (ui_study->active_volume[SINGLE_VIEW] == NULL) return;
-  ui_study_add_align_pt(ui_study, ui_study->active_volume[SINGLE_VIEW]);
+  if (ui_study->active_ds == NULL) return;
+  ui_study_add_fiducial_mark(ui_study, AMITK_OBJECT(ui_study->active_ds), TRUE,
+			     AMITK_STUDY_VIEW_CENTER(ui_study->study));
   return;
 }
 
@@ -1248,308 +976,34 @@ void ui_study_cb_preferences(GtkWidget * widget, gpointer data) {
 }
 
 
-/* callback used when the background of the tree is clicked on */
-gboolean ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  GtkWidget * menu;
-  GtkWidget * menuitem;
-  roi_type_t i_roi_type;
-
-  if (event->type != GDK_BUTTON_PRESS)
-    return TRUE;
-
-  if (event->button == 3) {
-    menu = gtk_menu_new();
-
-    for (i_roi_type=0; i_roi_type<NUM_ROI_TYPES; i_roi_type++) {
-      menuitem = gtk_menu_item_new_with_label(roi_menu_explanation[i_roi_type]);
-      gtk_menu_append(GTK_MENU(menu), menuitem);
-      gtk_object_set_data(GTK_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
-      gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-			 GTK_SIGNAL_FUNC(ui_study_cb_add_roi), ui_study);
-      gtk_widget_show(menuitem);
-    }
-    gtk_widget_show(menu);
-    
-    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
-  }
-
-  return TRUE;
-}
-
-
-/* function called to edit selected objects in the study */
-void ui_study_cb_edit_objects(GtkWidget * button, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  object_t type;
-  volumes_t * current_volumes;
-  rois_t * current_rois;
-  align_pts_t * current_pts;
-  align_pts_t * temp_pts;
-
-  type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(button), "type"));
-
-
-  switch(type) {
-  case VOLUME:
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    /* pop up dialogs for the selected volumes */
-    while (current_volumes != NULL) {
-      ui_volume_dialog_create(ui_study, current_volumes->volume);
-      current_volumes = current_volumes->next;
-    }
-    break;
-    
-  case ROI:
-    current_rois = AMITK_TREE_SELECTED_ROIS(ui_study->tree[SINGLE_VIEW]);
-    /* pop up dialogs for the selected rois */
-    while (current_rois != NULL) {
-      ui_roi_dialog_create(ui_study, current_rois->roi);
-      current_rois = current_rois->next;
-    }
-    break;
-
-  case ALIGN_PT:
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    /* pop up dialogs for the selected alignment points */
-    while (current_volumes != NULL) {
-      current_pts = amitk_tree_selected_pts(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), 
-					    current_volumes->volume, VOLUME);
-      temp_pts = current_pts;
-
-      while (temp_pts != NULL) {
-	ui_align_pt_dialog_create(ui_study, temp_pts->align_pt, current_volumes->volume);
-	temp_pts = temp_pts->next;
-      }
-      current_pts = align_pts_unref(current_pts);
-
-      current_volumes = current_volumes->next;
-    }
-    break;
-
-  case STUDY:
-    ui_study_dialog_create(ui_study);
-    break;
-
-  default:
-    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-    break;
-  }
-
-  return;
-}
-
-
-
-/* function called to delete selected objects from the tree and the study */
-void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  object_t type;
-  volume_t * volume;
-  roi_t * roi;
-  GtkWidget * question;
-  gchar * message;
-  gchar * temp;
-  gint question_return;
-  volumes_t * current_volumes;
-  rois_t * current_rois;
-  align_pts_t * current_pts;
-  align_pts_t * temp_pts;
-  gboolean found_some = FALSE;
-
-  type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(button), "type"));
-
-  if (ui_study->view_mode != SINGLE_VIEW) {
-    g_warning("Can't remove objects while in linked view mode\n");
-    return;
-  }
-
-  switch(type) {
-  case VOLUME:
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    if (current_volumes == NULL) return;
-
-    message = g_strdup_printf("Do you want to delete:\n");
-    while (current_volumes != NULL) {
-      temp = message;
-      message = g_strdup_printf("%s\tdata set:\t%s\n", temp, current_volumes->volume->name);
-      g_free(temp);
-      current_volumes = current_volumes->next;
-    }
-    break;
-  case ROI:
-    current_rois = AMITK_TREE_SELECTED_ROIS(ui_study->tree[SINGLE_VIEW]);
-    if (current_rois == NULL) return;
-
-    message = g_strdup_printf("Do you want to delete:\n");
-    while (current_rois != NULL) {
-      temp = message;
-      message = g_strdup_printf("%s\troi:\t%s\n", temp, current_rois->roi->name);
-      g_free(temp);
-      current_rois = current_rois->next;
-    }
-
-    break;
-
-  case ALIGN_PT:
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    while ((current_volumes != NULL) && (!found_some)) {
-      current_pts = amitk_tree_selected_pts(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_volumes->volume, VOLUME);
-      if (current_pts != NULL)
-	found_some = TRUE;
-      current_pts = align_pts_unref(current_pts);
-      current_volumes = current_volumes->next;
-    }
-    if (!found_some) return;
-
-    message = g_strdup_printf("Do you want to delete:\n");
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    while (current_volumes != NULL) {
-      current_pts = amitk_tree_selected_pts(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_volumes->volume, VOLUME);
-      temp_pts = current_pts;
-      while (temp_pts != NULL) {
-	temp = message;
-	message = g_strdup_printf("%s\talignment point:\t%s - on data set:\t%s\n", temp, 
-				  temp_pts->align_pt->name,
-				  current_volumes->volume->name);
-	g_free(temp);
-	temp_pts = temp_pts->next;
-      }
-      current_pts = align_pts_unref(current_pts);
-      current_volumes = current_volumes->next;
-    }
-    break;
-
-  default:
-    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-    return;
-    break;
-  }
-
-  /* see if we really wanna delete this crap */
-  if (GNOME_IS_APP(ui_study->app))
-    question = gnome_ok_cancel_dialog_modal_parented(message, NULL, NULL, 
-						     GTK_WINDOW(ui_study->app));
-  else
-    question = gnome_ok_cancel_dialog_modal(message, NULL, NULL);
-
-  g_free(message);
-  question_return = gnome_dialog_run_and_close(GNOME_DIALOG(question));
-
-  if (question_return != 0) return; /* didn't hit the "ok" button */
-
-  if (ui_study->study_altered != TRUE) {
-    ui_study->study_virgin=FALSE;
-    ui_study->study_altered=TRUE;
-    ui_study_update_title(ui_study);
-  }
-  
-  switch(type) {
-
-  case VOLUME:
-    /* delete the selected volumes */
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    while (current_volumes != NULL) {
-
-      volume = volume_ref(current_volumes->volume);
-      amitk_tree_remove_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_volumes->volume, VOLUME);
-
-
-      /* destroy the threshold window if it's open, and remove the active mark */
-      if (ui_study->active_volume[SINGLE_VIEW]==volume)
-	ui_study_make_active_volume(ui_study, SINGLE_VIEW, NULL);
-     
-      study_remove_volume(ui_study->study, volume);
-      volume = volume_unref(volume);
-      current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    }
-
-    break;
-
-  case ROI:
-    /* delete the selected roi's */
-    current_rois = AMITK_TREE_SELECTED_ROIS(ui_study->tree[SINGLE_VIEW]);
-    while (current_rois != NULL) {
-
-      roi = roi_ref(current_rois->roi);
-      amitk_tree_remove_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_rois->roi, ROI);
-
-      /* remove the roi's data structure */
-      study_remove_roi(ui_study->study, roi);
-      roi = roi_unref(roi);
-      current_rois = AMITK_TREE_SELECTED_ROIS(ui_study->tree[SINGLE_VIEW]);
-    }
-    break;
-
-  case ALIGN_PT:
-    /* delete the selected alignment points */
-    current_volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-    while (current_volumes != NULL) {
-      current_pts = amitk_tree_selected_pts(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_volumes->volume, VOLUME);
-      temp_pts = current_pts;
-      while (temp_pts != NULL) {
-	amitk_tree_remove_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), temp_pts->align_pt, ALIGN_PT);
-
-	/* remove the point from existence */
-	current_volumes->volume->align_pts = 
-	  align_pts_remove_pt(current_volumes->volume->align_pts, temp_pts->align_pt);
-	temp_pts = temp_pts->next;
-      }
-      current_pts = align_pts_unref(current_pts);
-      current_volumes = current_volumes->next;
-    }
-    break;
-
-  default:
-    g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
-    return;
-    break;
-  }
-
-  return;
-}
-
-
 /* function to switch the interpolation method */
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  interpolation_t i_interpolation;
-  view_t i_view;
-  view_mode_t i_view_mode;
+  AmitkInterpolation i_interpolation;
 
   /* figure out which interpolation menu item called me */
-  i_interpolation = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"interpolation"));
+  i_interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
 
-  /* check if we actually changed values */
-  if (study_interpolation(ui_study->study) != i_interpolation) {
-    /* and inact the changes */
-    study_set_interpolation(ui_study->study, i_interpolation);
-    if (study_volumes(ui_study->study) != NULL) 
-      for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-	for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	  amitk_canvas_set_interpolation(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-					 study_interpolation(ui_study->study), TRUE);
-  }
-
+  amitk_study_set_interpolation(ui_study->study,  i_interpolation);
+				
   return;
 }
 
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  view_mode_t i_view_mode;
+  AmitkViewMode view_mode;
 
   /* figure out which interpolation menu item called me */
-  i_view_mode = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"view_mode"));
+  view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode"));
   
   /* check if we actually changed values */
-  if (ui_study->view_mode != i_view_mode) {
+  if (ui_study->view_mode != view_mode) {
     /* and inact the changes */
-    ui_study->view_mode = i_view_mode;
+    ui_study->view_mode = view_mode;
+    amitk_tree_set_linked_mode_column_visible(AMITK_TREE(ui_study->tree),
+    					      view_mode == AMITK_VIEW_MODE_LINKED);
     ui_study_setup_layout(ui_study);
   }
 
@@ -1565,7 +1019,7 @@ void ui_study_cb_exit(GtkWidget* widget, gpointer data) {
   gboolean return_val;
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event", NULL, &return_val);
+  g_signal_emit_by_name(G_OBJECT(app), "delete_event", NULL, &return_val);
 
   if (!return_val) { /* if we don't cancel the quit */
     gtk_widget_destroy(app);
@@ -1583,7 +1037,7 @@ void ui_study_cb_close(GtkWidget* widget, gpointer data) {
   gboolean return_val;
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event", NULL, &return_val);
+  g_signal_emit_by_name(G_OBJECT(app), "delete_event", NULL, &return_val);
   if (!return_val) gtk_widget_destroy(app);
 
   return;
@@ -1595,47 +1049,26 @@ gboolean ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer 
   ui_study_t * ui_study = data;
   GtkWidget * app = ui_study->app;
   GtkWidget * exit_dialog;
-  gint entry_return;
-  GtkWidget * label;
+  gint return_val;
 
   /* check to see if we need saving */
   if ((ui_study->study_altered == TRUE) && 
       !(ui_study->dont_prompt_for_save_on_exit)) {
 
-    exit_dialog = gnome_dialog_new("Unsaved Changes!",
-				   GNOME_STOCK_BUTTON_YES,
-				   GNOME_STOCK_BUTTON_CANCEL,
-				   NULL);
+    exit_dialog = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+					 GTK_DIALOG_DESTROY_WITH_PARENT,
+					 GTK_MESSAGE_QUESTION,
+					 GTK_BUTTONS_OK_CANCEL,
+					 "There are unsaved changes to the study.\nAre you sure you wish to quit?");
 
-    label = gtk_label_new ("There are unsaved changes to the study.\nAre you sure you wish to quit?");
-    gtk_box_pack_start (GTK_BOX (GNOME_DIALOG (exit_dialog)->vbox), label, TRUE, TRUE, 0);
-    gtk_widget_show(label);
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(exit_dialog));
 
-    entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(exit_dialog));
-
-    if (entry_return != 0) 
+    gtk_widget_destroy(exit_dialog);
+    if (return_val != GTK_RESPONSE_OK)
       return TRUE; /* cancel */
 
   }
-
-  /* destroy the threshold window if it's open */
-  if (ui_study->threshold_dialog != NULL) {
-    gtk_widget_destroy(ui_study->threshold_dialog);
-    ui_study->threshold_dialog = NULL;
-  }
-
-  /* destroy the preferences dialog if it's open */
-  if (ui_study->preferences_dialog != NULL) {
-    gnome_dialog_close(GNOME_DIALOG(ui_study->preferences_dialog));
-    ui_study->preferences_dialog = NULL;
-  }
-
-  /* destroy the time window if it's open */
-  if (ui_study->time_dialog != NULL) {
-    gnome_dialog_close(GNOME_DIALOG(ui_study->time_dialog));
-    ui_study->time_dialog = NULL;
-  }
-
   
   ui_study = ui_study_free(ui_study); /* free our data structure's */
   amide_unregister_window((gpointer) app); /* tell the rest of the program this window's gone */

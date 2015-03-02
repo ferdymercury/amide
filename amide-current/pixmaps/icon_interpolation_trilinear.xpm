@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_interpolation_trilinear_xpm[] = {
+const char * icon_interpolation_trilinear_xpm[] = {
 "24 24 105 2",
 "  	c None",
 ". 	c #BCBCBC",

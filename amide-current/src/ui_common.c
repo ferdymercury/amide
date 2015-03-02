@@ -23,13 +23,10 @@
   02111-1307, USA.
 */
 
-#include "config.h"
+#include "amide_config.h"
 #include <gnome.h>
-#include <math.h>
 #include "amide.h"
-#include "realspace.h"
 #include "ui_common.h"
-#include "ui_common_cb.h"
 #include "../pixmaps/icon_amide.xpm"
 
 #define AXIS_WIDTH 120
@@ -46,7 +43,7 @@
 GnomeUIInfo ui_common_help_menu[]= {
   GNOMEUIINFO_HELP(PACKAGE),
   GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_MENU_ABOUT_ITEM(ui_common_cb_about, NULL), 
+  GNOMEUIINFO_MENU_ABOUT_ITEM(ui_common_about_cb, NULL), 
   GNOMEUIINFO_END
 };
 
@@ -59,34 +56,110 @@ static gboolean ui_common_cursors_initialized = FALSE;
 static GSList * ui_common_cursor_stack=NULL;
 static GSList * ui_common_pending_cursors=NULL;
 
-GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
+
+
+
+/* function which gets called from a name entry dialog */
+void ui_common_entry_name_cb(gchar * entry_string, gpointer data) {
+  gchar ** p_roi_name = data;
+  *p_roi_name = entry_string;
+  return;
+}
+
+
+/* function to close a file selection widget */
+void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
+
+  GtkFileSelection * file_selection = data;
+
+  gtk_widget_destroy(GTK_WIDGET(file_selection));
+
+  return;
+}
+
+/* function which brings up an about box */
+void ui_common_about_cb(GtkWidget * button, gpointer data) {
+
+  GtkWidget *about;
+  GdkPixbuf * amide_logo;
+
+  const gchar *authors[] = {
+    "Andy Loening <loening@ucla.edu>",
+    NULL
+  };
+
+  gchar * contents;
+
+
+  contents = g_strjoin("", 
+		       "AMIDE's a Medical Image Data Examiner\n",
+		       "\n",
+		       "Email bug reports to: ", PACKAGE_BUGREPORT,"\n",
+		       "\n",
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
+		       "Compiled with support for the following libraries:\n",
+#endif
+#ifdef AMIDE_LIBECAT_SUPPORT
+		       "libecat: CTI File library by Merence Sibomona\n",
+#endif
+#ifdef AMIDE_LIBGSL_SUPPORT
+		       "libgsl: GNU Scientific Library by the GSL Team\n",
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+		       "libmdc: Medical Imaging File library by Erik Nolf\n",
+#endif
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+		       "libvolpack: Volume Rendering library by Philippe Lacroute\n",
+#endif
+		       NULL);
+
+  amide_logo = gdk_pixbuf_new_from_xpm_data((const char **) icon_amide_xpm);
+
+  about = gnome_about_new(PACKAGE, VERSION, 
+			  "Copyright (c) 2000-2002 Andy Loening",
+			  contents,
+			  authors, NULL, NULL, amide_logo);
+  g_object_unref(amide_logo);
+
+  gtk_window_set_modal(GTK_WINDOW(about), FALSE);
+
+  gtk_widget_show(about);
+
+  g_free(contents);
+
+  return;
+}
+
+
+
+GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout) {
 
   GnomeCanvas * axis_indicator;
   GnomeCanvasPoints * axis_line_points;
-  gint column[NUM_VIEWS];
-  gint row[NUM_VIEWS];
-  view_t i_view;
+  gint column[AMITK_VIEW_NUM];
+  gint row[AMITK_VIEW_NUM];
+  AmitkView i_view;
   gint axis_height;
 
   axis_indicator = GNOME_CANVAS(gnome_canvas_new_aa());
   switch(layout) {
-  case ORTHOGONAL_LAYOUT:
+  case AMITK_LAYOUT_ORTHOGONAL:
     axis_height = ORTHOGONAL_AXIS_HEIGHT;
-    gtk_widget_set_usize(GTK_WIDGET(axis_indicator), 2.0*AXIS_WIDTH, 2.0*axis_height);
+    gtk_widget_set_size_request(GTK_WIDGET(axis_indicator), 2.0*AXIS_WIDTH, 2.0*axis_height);
     gnome_canvas_set_scroll_region(axis_indicator, 0.0, 0.0, 2.0*AXIS_WIDTH, 2.0*axis_height);
-    column[TRANSVERSE] = 0;
-    column[CORONAL] = 0;
-    column[SAGITTAL] = 1;
-    row[TRANSVERSE] = 0;
-    row[CORONAL] = 1;
-    row[SAGITTAL] = 0;
+    column[AMITK_VIEW_TRANSVERSE] = 0;
+    column[AMITK_VIEW_CORONAL] = 0;
+    column[AMITK_VIEW_SAGITTAL] = 1;
+    row[AMITK_VIEW_TRANSVERSE] = 0;
+    row[AMITK_VIEW_CORONAL] = 1;
+    row[AMITK_VIEW_SAGITTAL] = 0;
     break;
-  case LINEAR_LAYOUT:
+  case AMITK_LAYOUT_LINEAR:
   default:
     axis_height = LINEAR_AXIS_HEIGHT;
-    gtk_widget_set_usize(GTK_WIDGET(axis_indicator), 3.0*AXIS_WIDTH, axis_height);
+    gtk_widget_set_size_request(GTK_WIDGET(axis_indicator), 3.0*AXIS_WIDTH, axis_height);
     gnome_canvas_set_scroll_region(axis_indicator, 0.0, 0.0, 3.0*AXIS_WIDTH, axis_height);
-    for (i_view=0;i_view<NUM_VIEWS;i_view++) {
+    for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++) {
       column[i_view] = i_view;
       row[i_view] = 0;
     }
@@ -95,18 +168,18 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
 
   /*----------- transverse ------------*/
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH, "text", view_names[TRANSVERSE],
-			"x", (gdouble) (column[TRANSVERSE]+0.5)*AXIS_WIDTH,
-			"y", (gdouble) (row[TRANSVERSE]+0.5)*axis_height, 
+			"anchor", GTK_ANCHOR_NORTH, "text", view_names[AMITK_VIEW_TRANSVERSE],
+			"x", (gdouble) (column[AMITK_VIEW_TRANSVERSE]+0.5)*AXIS_WIDTH,
+			"y", (gdouble) (row[AMITK_VIEW_TRANSVERSE]+0.5)*axis_height, 
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /* the x axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[1] = row[TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
-  axis_line_points->coords[2] = column[TRANSVERSE]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
-  axis_line_points->coords[3] = row[TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[1] = row[AMITK_VIEW_TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
+  axis_line_points->coords[2] = column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
 			"width_pixels", 3, "last_arrowhead", TRUE, 
@@ -119,17 +192,17 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   /* the x label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
 			"anchor", GTK_ANCHOR_SOUTH_EAST,"text", "x",
-			"x", (gdouble) column[TRANSVERSE]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
-			"y", (gdouble) row[TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			"x", (gdouble) column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			"y", (gdouble) row[AMITK_VIEW_TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /* the y axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[1] = row[TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
-  axis_line_points->coords[2] = column[TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
-  axis_line_points->coords[3] = row[TRANSVERSE]*axis_height + AXIS_HEADER; /* y2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[1] = row[AMITK_VIEW_TRANSVERSE]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
+  axis_line_points->coords[2] = column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_TRANSVERSE]*axis_height + AXIS_HEADER; /* y2 */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
 			"width_pixels", 3, "last_arrowhead", TRUE, 
@@ -142,26 +215,26 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   /* the y label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator),gnome_canvas_text_get_type(),
 			"anchor", GTK_ANCHOR_NORTH_WEST, "text", "y",
-			"x", (gdouble) column[TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
-			"y", (gdouble) row[TRANSVERSE]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
+			"x", (gdouble) column[AMITK_VIEW_TRANSVERSE]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
+			"y", (gdouble) row[AMITK_VIEW_TRANSVERSE]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
 
   /*----------- coronal ------------*/
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH, "text", view_names[CORONAL],
-			"x", (gdouble) (column[CORONAL]+0.5)*AXIS_WIDTH,
-			"y", (gdouble) (row[CORONAL]+0.5)*axis_height,
+			"anchor", GTK_ANCHOR_NORTH, "text", view_names[AMITK_VIEW_CORONAL],
+			"x", (gdouble) (column[AMITK_VIEW_CORONAL]+0.5)*AXIS_WIDTH,
+			"y", (gdouble) (row[AMITK_VIEW_CORONAL]+0.5)*axis_height,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /* the x axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[1] = row[CORONAL]*axis_height + AXIS_HEADER; /* y1 */
-  axis_line_points->coords[2] = column[CORONAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
-  axis_line_points->coords[3] = row[CORONAL]*axis_height + AXIS_HEADER; /* y2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[1] = row[AMITK_VIEW_CORONAL]*axis_height + AXIS_HEADER; /* y1 */
+  axis_line_points->coords[2] = column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_CORONAL]*axis_height + AXIS_HEADER; /* y2 */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
 			"width_pixels", 3, "last_arrowhead", TRUE, 
@@ -174,17 +247,17 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   /* the x label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
 			"anchor", GTK_ANCHOR_NORTH_EAST, "text", "x",
-			"x", (gdouble) column[CORONAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
-			"y", (gdouble) row[CORONAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
+			"x", (gdouble) column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			"y", (gdouble) row[AMITK_VIEW_CORONAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /* the z axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[1] = row[CORONAL]*axis_height + AXIS_HEADER; /* y1 */
-  axis_line_points->coords[2] = column[CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
-  axis_line_points->coords[3] = row[CORONAL]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[1] = row[AMITK_VIEW_CORONAL]*axis_height + AXIS_HEADER; /* y1 */
+  axis_line_points->coords[2] = column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_CORONAL]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
 			"width_pixels", 3, "last_arrowhead", TRUE, 
@@ -197,29 +270,29 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   /* the z label */
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
 			"anchor", GTK_ANCHOR_NORTH_WEST, "text", "z",
-			"x", (gdouble) column[CORONAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
-			"y", (gdouble) row[CORONAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			"x", (gdouble) column[AMITK_VIEW_CORONAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
+			"y", (gdouble) row[AMITK_VIEW_CORONAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /*------------ sagittal --------------*/
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH, "text", view_names[SAGITTAL],
-			"x", (gdouble) (column[SAGITTAL]+0.5)*AXIS_WIDTH,
-			"y", (gdouble) (row[SAGITTAL]+0.5)*axis_height,
+			"anchor", GTK_ANCHOR_NORTH, "text", view_names[AMITK_VIEW_SAGITTAL],
+			"x", (gdouble) (column[AMITK_VIEW_SAGITTAL]+0.5)*AXIS_WIDTH,
+			"y", (gdouble) (row[AMITK_VIEW_SAGITTAL]+0.5)*axis_height,
 			"fill_color", "black",
 			"font", "fixed", NULL);
 
   /* the y axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[3] = row[SAGITTAL]*axis_height + AXIS_HEADER; /* y2 */
-  if (layout == ORTHOGONAL_LAYOUT) {
-    axis_line_points->coords[1] = row[SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
-    axis_line_points->coords[2] = column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
-  } else { /* LINEAR_LAYOUT */ 
-    axis_line_points->coords[1] = row[SAGITTAL]*axis_height + AXIS_HEADER; /* y1 */
-    axis_line_points->coords[2] = column[SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_SAGITTAL]*axis_height + AXIS_HEADER; /* y2 */
+  if (layout == AMITK_LAYOUT_ORTHOGONAL) {
+    axis_line_points->coords[1] = row[AMITK_VIEW_SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
+    axis_line_points->coords[2] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
+  } else { /* AMITK_LAYOUT_LINEAR */ 
+    axis_line_points->coords[1] = row[AMITK_VIEW_SAGITTAL]*axis_height + AXIS_HEADER; /* y1 */
+    axis_line_points->coords[2] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
   }
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
@@ -231,31 +304,31 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   gnome_canvas_points_unref(axis_line_points);
 
   /* the y label */
-  if (layout == ORTHOGONAL_LAYOUT) 
+  if (layout == AMITK_LAYOUT_ORTHOGONAL) 
     gnome_canvas_item_new(gnome_canvas_root(axis_indicator),gnome_canvas_text_get_type(),
 			  "anchor", GTK_ANCHOR_NORTH_WEST, "text", "y",
-			  "x", (gdouble) column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
-			  "y", (gdouble) row[SAGITTAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
+			  "x", (gdouble) column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
+			  "y", (gdouble) row[AMITK_VIEW_SAGITTAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
 			  "fill_color", "black",
 			  "font", "fixed", NULL);
-  else /* LINEAR_LAYOUT */
+  else /* AMITK_LAYOUT_LINEAR */
     gnome_canvas_item_new(gnome_canvas_root(axis_indicator),gnome_canvas_text_get_type(),
 			  "anchor", GTK_ANCHOR_NORTH_EAST, "text", "y",
-			  "x", (gdouble) column[SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
-			  "y", (gdouble) row[SAGITTAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
+			  "x", (gdouble) column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			  "y", (gdouble) row[AMITK_VIEW_SAGITTAL]*axis_height + AXIS_HEADER+AXIS_TEXT_MARGIN,
 			  "fill_color", "black",
 			  "font", "fixed", NULL);
 
   /* the z axis */
   axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
-  axis_line_points->coords[3] = row[SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
-  if (layout == ORTHOGONAL_LAYOUT) {
-    axis_line_points->coords[1] = row[SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
-    axis_line_points->coords[2] = column[SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
-  } else { /* LINEAR_LAYOUT */ 
-    axis_line_points->coords[1] = row[SAGITTAL]*axis_height + AXIS_HEADER; /* y1 */
-    axis_line_points->coords[2] = column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
+  axis_line_points->coords[0] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x1 */
+  axis_line_points->coords[3] = row[AMITK_VIEW_SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y2 */
+  if (layout == AMITK_LAYOUT_ORTHOGONAL) {
+    axis_line_points->coords[1] = row[AMITK_VIEW_SAGITTAL]*axis_height + axis_height-AXIS_MARGIN; /* y1 */
+    axis_line_points->coords[2] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN; /* x2 */
+  } else { /* AMITK_LAYOUT_LINEAR */ 
+    axis_line_points->coords[1] = row[AMITK_VIEW_SAGITTAL]*axis_height + AXIS_HEADER; /* y1 */
+    axis_line_points->coords[2] = column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN; /* x2 */
   }
   gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
 			"points", axis_line_points, "fill_color", "black",
@@ -267,18 +340,18 @@ GtkWidget * ui_common_create_view_axis_indicator(layout_t layout) {
   gnome_canvas_points_unref(axis_line_points);
 
   /* the z label */
-  if (layout == ORTHOGONAL_LAYOUT) 
+  if (layout == AMITK_LAYOUT_ORTHOGONAL) 
     gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
 			  "anchor", GTK_ANCHOR_SOUTH_EAST, "text", "z",
-			  "x", (gdouble) column[SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
-			  "y", (gdouble) row[SAGITTAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			  "x", (gdouble) column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_WIDTH-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			  "y", (gdouble) row[AMITK_VIEW_SAGITTAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
 			  "fill_color", "black",
 			  "font", "fixed", NULL);
-  else  /* LINEAR_LAYOUT */ 
+  else  /* AMITK_LAYOUT_LINEAR */ 
     gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_text_get_type(),
 			  "anchor", GTK_ANCHOR_NORTH_WEST, "text", "z",
-			  "x", (gdouble) column[SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
-			  "y", (gdouble) row[SAGITTAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
+			  "x", (gdouble) column[AMITK_VIEW_SAGITTAL]*AXIS_WIDTH + AXIS_MARGIN+AXIS_TEXT_MARGIN,
+			  "y", (gdouble) row[AMITK_VIEW_SAGITTAL]*axis_height + axis_height-AXIS_MARGIN-AXIS_TEXT_MARGIN,
 			  "fill_color", "black",
 			  "font", "fixed", NULL);
 
@@ -299,8 +372,8 @@ static void ui_common_cursor_init(void) {
   ui_common_cursor[UI_CURSOR_OLD_ROI_SHIFT] = gdk_cursor_new(UI_COMMON_OLD_ROI_SHIFT_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_ISOCONTOUR] = gdk_cursor_new(UI_COMMON_OLD_ROI_ISOCONTOUR_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_ERASE] = gdk_cursor_new(UI_COMMON_OLD_ROI_ERASE_CURSOR);
-  ui_common_cursor[UI_CURSOR_VOLUME_MODE] = gdk_cursor_new(UI_COMMON_VOLUME_MODE_CURSOR);
-  ui_common_cursor[UI_CURSOR_ALIGN_PT_MODE] = gdk_cursor_new(UI_COMMON_ALIGN_PT_MODE_CURSOR);
+  ui_common_cursor[UI_CURSOR_DATA_SET_MODE] = gdk_cursor_new(UI_COMMON_DATA_SET_MODE_CURSOR);
+  ui_common_cursor[UI_CURSOR_FIDUCIAL_MARK_MODE] = gdk_cursor_new(UI_COMMON_FIDUCIAL_MARK_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_WAIT] = gdk_cursor_new(UI_COMMON_WAIT_CURSOR);
 
   ui_common_cursors_initialized = TRUE;

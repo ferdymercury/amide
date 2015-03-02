@@ -24,10 +24,8 @@
 */
 
 
-#include "config.h"
-#include <glib.h>
+#include "amide_config.h"
 #include "xml.h"
-
 
 
 /* ----------------- the load functions ------------------ */
@@ -35,7 +33,7 @@
 
 /* go through a list of nodes, and return a pointer to the node
    matching the descriptor */
-xmlNodePtr xml_get_node(xmlNodePtr nodes, gchar * descriptor) {
+xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor) {
 
   if (nodes == NULL)
     return NULL;
@@ -50,88 +48,16 @@ xmlNodePtr xml_get_node(xmlNodePtr nodes, gchar * descriptor) {
 
 
 /* go through a list of nodes, and return the text which matches the descriptor */
-gchar * xml_get_string(xmlNodePtr nodes, gchar * descriptor) {
+gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor) {
   return xmlNodeGetContent(xml_get_node(nodes, descriptor));
 }
 
 
 
-realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
-
-  gchar * temp_string;
-  realpoint_t return_rp;
-  gint error;
-
-  temp_string = xml_get_string(nodes, descriptor);
-
-  if (temp_string != NULL) {
-#if (SIZE_OF_FLOATPOINT_T == 8)
-    /* convert to doubles */
-    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
-#elif (SIZE_OF_FLOATPOINT_T == 4)
-    /* convert to float */
-    error = sscanf(temp_string, "%f\t%f\t%f", &(return_rp.x), &(return_rp.y), &(return_rp.z));
-#else
-#error "Unknown size for SIZE_OF_FLOATPOINT_T"
-#endif
-    g_free(temp_string);
-  }
-
-  if ((temp_string == NULL) || (error == EOF)) {
-    return_rp = zero_rp;
-    g_warning("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",descriptor,
-	      return_rp.x, return_rp.y, return_rp.z);
-  }
-
-  return return_rp;
-
-}
 
 
 
-
-
-
-voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
-
-  gchar * temp_string;
-  voxelpoint_t return_vp;
-  gint x,y,z,t;
-  gint error=0;
-
-  temp_string = xml_get_string(nodes, descriptor);
-
-  if (temp_string != NULL) {
-
-    /* convert to a voxelpoint */
-    error = sscanf(temp_string,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
-    g_free(temp_string);
-    
-    return_vp.x = x;
-    return_vp.y = y;
-    return_vp.z = z;
-    return_vp.t = t;
-
-  } 
-
-  if ((temp_string == NULL) || (error == EOF)) {
-    return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
-    g_warning("Couldn't read value for %s, substituting [%d %d %d %d]",descriptor,
-	      return_vp.x, return_vp.y, return_vp.z, return_vp.z);
-  }
-
-  if (error < 4) {
-    return_vp.t = 0;
-    g_warning("Couldn't read frame value for %s, substituting %d",descriptor,
-	      return_vp.t);
-  }
-
-  return return_vp;
-}
-
-
-
-amide_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
+amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor) {
 
   gchar * temp_string;
   amide_time_t return_time;
@@ -142,7 +68,7 @@ amide_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
   if (temp_string != NULL) {
 
 #if (SIZE_OF_AMIDE_TIME_T == 8)
-    /* convert to doubles */
+    /* convert to double */
     error = sscanf(temp_string, "%lf", &return_time);
 #elif (SIZE_OF_AMIDE_TIME_T == 4)
     /* convert to float */
@@ -165,7 +91,7 @@ amide_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_times) {
+amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times) {
 
   gchar * temp_string;
   gchar ** string_chunks;
@@ -177,7 +103,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_tim
 
   if (temp_string != NULL) {
 
-    if ((return_times = (amide_time_t * ) g_malloc(num_times*sizeof(amide_time_t))) == NULL) {
+    if ((return_times = g_new(amide_time_t,num_times)) == NULL) {
       g_warning("Couldn't allocate space for time data");
       return return_times;
     }
@@ -207,7 +133,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_tim
 
   if (temp_string == NULL) {
     g_warning("Couldn't read value for %s, substituting zero",descriptor);
-    if ((return_times = (amide_time_t * ) g_malloc(1*sizeof(amide_time_t))) == NULL) {
+    if ((return_times = g_new(amide_time_t,1)) == NULL) {
       g_warning("Couldn't allocate space for time data");
       return return_times;
     }
@@ -219,7 +145,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_tim
 
 
 
-amide_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
+amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor) {
 
   gchar * temp_string;
   amide_data_t return_data;
@@ -251,24 +177,24 @@ amide_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
   return return_data;
 }
 
-floatpoint_t xml_get_floatpoint(xmlNodePtr nodes, gchar * descriptor) {
+amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor) {
 
   gchar * temp_string;
-  floatpoint_t return_data;
+  amide_real_t return_data;
   gint error;
 
   temp_string = xml_get_string(nodes, descriptor);
   
   if (temp_string != NULL) {
 
-#if (SIZE_OF_FLOATPOINT_T == 8)
+#if (SIZE_OF_AMIDE_REAL_T == 8)
     /* convert to doubles */
     error = sscanf(temp_string, "%lf", &return_data);
-#elif (SIZE_OF_FLOATPOINT_T == 4)
+#elif (SIZE_OF_AMIDE_REAL_T == 4)
     /* convert to float */
     error = sscanf(temp_string, "%f", &return_data);
 #else
-#error "Unkown size for SIZE_OF_FLOATPOINT_T"
+#error "Unkown size for SIZE_OF_AMIDE_REAL_T"
 #endif
 
     g_free(temp_string);
@@ -280,7 +206,7 @@ floatpoint_t xml_get_floatpoint(xmlNodePtr nodes, gchar * descriptor) {
 }
 
 
-gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
+gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor) {
 
   gchar * temp_string;
   gint return_int;
@@ -305,38 +231,6 @@ gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-realspace_t * xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
-
-  gchar * temp_string;
-  axis_t i_axis;
-  realspace_t * new_space;
-  realpoint_t new_axis[NUM_AXIS];
-
-  new_space = rs_init();
-
-  temp_string = g_strdup_printf("%s_offset", descriptor);
-  rs_set_offset(new_space, xml_get_realpoint(nodes,temp_string));
-  g_free(temp_string);
-
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
-    new_axis[i_axis] = xml_get_realpoint(nodes,temp_string);
-    if (REALPOINT_EQUAL(new_axis[i_axis], zero_rp))
-	new_axis[i_axis] = default_axis[i_axis];
-    g_free(temp_string);
-  }
-  rs_set_axis(new_space, new_axis);
-
-  return new_space;
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -346,38 +240,16 @@ realspace_t * xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
 /* ----------------- the save functions ------------------ */
 
 
-void xml_save_string(xmlNodePtr node, gchar * descriptor, gchar * string) {
+void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string) {
   
   xmlNewChild(node, NULL, descriptor, string);
 
   return;
 }
 
-void xml_save_realpoint(xmlNodePtr node, gchar * descriptor, realpoint_t rp) {
-
-  gchar * temp_string;
-
-  temp_string = g_strdup_printf("%10.9f\t%10.9f\t%10.9f",rp.x, rp.y,rp.z);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
-
-  return;
-}
-
-void xml_save_voxelpoint(xmlNodePtr node, gchar * descriptor, voxelpoint_t vp) {
-
-  gchar * temp_string;
-
-  temp_string = g_strdup_printf("%d\t%d\t%d\t%d",vp.x, vp.y,vp.z,vp.t);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
-
-  return;
-}
 
 
-
-void xml_save_time(xmlNodePtr node, gchar * descriptor, amide_time_t num) {
+void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num) {
 
   gchar * temp_string;
 
@@ -389,7 +261,7 @@ void xml_save_time(xmlNodePtr node, gchar * descriptor, amide_time_t num) {
 }
 
 
-void xml_save_times(xmlNodePtr node, gchar * descriptor, amide_time_t * numbers, int num) {
+void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num) {
 
   gchar * temp_string;
   int i;
@@ -408,7 +280,7 @@ void xml_save_times(xmlNodePtr node, gchar * descriptor, amide_time_t * numbers,
   return;
 }
 
-void xml_save_data(xmlNodePtr node, gchar * descriptor, amide_data_t num) {
+void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num) {
 
   gchar * temp_string;
 
@@ -419,7 +291,7 @@ void xml_save_data(xmlNodePtr node, gchar * descriptor, amide_data_t num) {
   return;
 }
 
-void xml_save_floatpoint(xmlNodePtr node, gchar * descriptor, floatpoint_t num) {
+void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num) {
 
   gchar * temp_string;
 
@@ -431,7 +303,7 @@ void xml_save_floatpoint(xmlNodePtr node, gchar * descriptor, floatpoint_t num) 
 }
 
 
-void xml_save_int(xmlNodePtr node, gchar * descriptor, int num) {
+void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num) {
 
   gchar * temp_string;
 
@@ -444,23 +316,6 @@ void xml_save_int(xmlNodePtr node, gchar * descriptor, int num) {
 
 
 
-void xml_save_realspace(xmlNodePtr node, gchar * descriptor, const realspace_t * coord_frame) {
-
-  gchar * temp_string;
-  axis_t i_axis;
-
-  temp_string = g_strdup_printf("%s_offset", descriptor);
-  xml_save_realpoint(node,temp_string, rs_offset(coord_frame));
-  g_free(temp_string);
-
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
-    xml_save_realpoint(node,temp_string, rs_specific_axis(coord_frame, i_axis));
-    g_free(temp_string);
-  }
-
-  return;
-}
 
 
 
@@ -469,36 +324,3 @@ void xml_save_realspace(xmlNodePtr node, gchar * descriptor, const realspace_t *
 
 
 
-
-
-/* -------------- legacy cruft ----------------- */
-voxelpoint_t xml_get_voxelpoint3D(xmlNodePtr nodes, gchar * descriptor) {
-
-  gchar * temp_string;
-  voxelpoint_t return_vp;
-  gint x,y,z;
-  gint error;
-
-  temp_string = xml_get_string(nodes, descriptor);
-
-  if (temp_string != NULL) {
-
-    /* convert to a voxelpoint */
-    error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
-    g_free(temp_string);
-    
-    return_vp.x = x;
-    return_vp.y = y;
-    return_vp.z = z;
-    return_vp.t = 1;
-
-  } 
-
-  if ((temp_string == NULL) || (error == EOF)) {
-    return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
-    g_warning("Couldn't read value for %s, substituting [%d %d %d %d]",descriptor,
-	      return_vp.x, return_vp.y, return_vp.z, return_vp.t);
-  }
-
-  return return_vp;
-}

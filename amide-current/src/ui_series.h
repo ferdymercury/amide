@@ -28,6 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include "amitk_study.h"
 
 
 #define UI_SERIES_L_MARGIN 2.0
@@ -41,27 +42,25 @@ typedef enum {PLANES, FRAMES} series_t;
 /* ui_series data structures */
 typedef struct ui_series_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
-  volumes_t ** slices;
-  volumes_t * volumes;
+  GList ** slices;
+  GList * objects;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
   GnomeCanvasItem ** captions;
-  GdkPixbuf ** rgb_images;
   GtkWidget * thresholds_dialog;
   guint num_slices, rows, columns;
-  realspace_t * coord_frame;
-  realpoint_t view_point;
+  AmitkVolume * volume;
+  AmitkPoint view_point;
   amide_time_t view_time;
-  floatpoint_t thickness;
-  interpolation_t interpolation;
-  floatpoint_t voxel_dim;
+  AmitkInterpolation interpolation;
+  amide_real_t voxel_dim;
   series_t type;
   guint reference_count;
 
   /* for "PLANES" series */
   amide_time_t view_duration;
-  floatpoint_t start_z;
-  floatpoint_t end_z;
+  amide_real_t start_z;
+  amide_real_t end_z;
 
   /* for "FRAMES" series */
   guint view_frame;
@@ -71,13 +70,9 @@ typedef struct ui_series_t {
 } ui_series_t;
 
 /* external functions */
-ui_series_t * ui_series_free(ui_series_t * ui_series);
-void ui_series_update_canvas(ui_series_t * ui_series);
-void ui_series_create(study_t * study, volumes_t * volumes, view_t view, 
-		      layout_t layout, series_t series_type);
+void ui_series_create(AmitkStudy * study,GList * objects, AmitkView view, 
+		      AmitkVolume * canvas_view, series_t series_type);
 
-/* external variables */
-extern gchar * series_names[];
 
 
 #endif /* UI_SERIES_H */

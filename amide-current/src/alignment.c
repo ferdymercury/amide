@@ -23,14 +23,14 @@
   02111-1307, USA.
 */
 
-#include "config.h"
+#include "amide_config.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <sys/stat.h>
 #include <string.h>
 #include <glib.h>
 #include <gsl/gsl_linalg.h>
-#include <math.h>
 #include "alignment.h"
+#include "amitk_fiducial_mark.h"
 
 /* convient functions that gsl doesn't supply */
 static gsl_matrix * matrix_mult(gsl_matrix * matrix1, gsl_matrix * matrix2) {
@@ -53,47 +53,50 @@ static gsl_matrix * matrix_mult(gsl_matrix * matrix1, gsl_matrix * matrix2) {
   return matrix_r;
 }
 
-static realpoint_t matrix_mult_rp(gsl_matrix * matrix, realpoint_t rp) {
+static AmitkPoint matrix_mult_point(gsl_matrix * matrix, AmitkPoint rp) {
 
-  realpoint_t return_rp;
+  AmitkPoint return_point;
 
-  g_return_val_if_fail(matrix->size1 = NUM_AXIS, rp);
-  g_return_val_if_fail(matrix->size2 = NUM_AXIS, rp);
+  g_return_val_if_fail(matrix->size1 == AMITK_AXIS_NUM, rp);
+  g_return_val_if_fail(matrix->size2 == AMITK_AXIS_NUM, rp);
 
-  return_rp.x = \
+  return_point.x = \
     gsl_matrix_get(matrix, 0, 0)*rp.x + 
     gsl_matrix_get(matrix, 0, 1)*rp.y + 
     gsl_matrix_get(matrix, 0, 2)*rp.z;
-  return_rp.y = \
+  return_point.y = \
     gsl_matrix_get(matrix, 1, 0)*rp.x + 
     gsl_matrix_get(matrix, 1, 1)*rp.y + 
     gsl_matrix_get(matrix, 1, 2)*rp.z;
-  return_rp.z = \
+  return_point.z = \
     gsl_matrix_get(matrix, 2, 0)*rp.x + 
     gsl_matrix_get(matrix, 2, 1)*rp.y + 
     gsl_matrix_get(matrix, 2, 2)*rp.z;
 
-  return return_rp;
+  return return_point;
 }
 
-/* this algorithm is derived from the review article:
+/* this is the procrustes rigid registration algorithm, derived from the review article:
    "Medical Image Registration", 
    Hill, Batchelor, Holden, and Hawkes Phys. Med. Biol 46 (2001) R1-R45
 */
 
-realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts) {
+AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds,GList * marks) {
 
-  realspace_t * coord_frame;
+  AmitkSpace * space;
   guint count = 0;
-  align_pts_t * moving_pts = NULL;
-  align_pts_t * fixed_pts = NULL;
-  align_pt_t * temp_pt;
-  realpoint_t moving_centroid = zero_rp;
-  realpoint_t fixed_centroid = zero_rp;
-  realpoint_t temp_rp;
-  realpoint_t offset_rp;
-  realpoint_t translation_rp;
-  realpoint_t axis[NUM_AXIS];
+  GList * moving_fiducial_marks = NULL;
+  GList * fixed_fiducial_marks = NULL;
+  AmitkObject * moving_fiducial_mark;
+  AmitkObject * fixed_fiducial_mark;
+  AmitkFiducialMark * fiducial_mark;
+  AmitkPoint moving_centroid = zero_point;
+  AmitkPoint fixed_centroid = zero_point;
+  AmitkPoint temp_point;
+  AmitkPoint offset_point;
+  AmitkPoint translation_point;
+  AmitkPoint axis[AMITK_AXIS_NUM];
+  AmitkPoint center;
   gsl_matrix * fixed_matrix;
   gsl_matrix * moving_matrixt;
   gsl_matrix * matrix_a;
@@ -106,70 +109,97 @@ realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, a
   gint i;
   gint signum;
   gdouble det;
+  const char * mark_name;
 
-  coord_frame = rs_init();
+  space = amitk_space_new();
 
-  g_return_val_if_fail(moving_vol != NULL, coord_frame);
-  g_return_val_if_fail(fixed_vol != NULL, coord_frame);
-  g_return_val_if_fail(pts != NULL, coord_frame);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(moving_ds), space);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(fixed_ds), space);
+  g_return_val_if_fail(marks != NULL, space);
 
 
   /* get the two lists of points */
-  while (pts != NULL) {
-    if (align_pts_includes_pt_by_name(moving_vol->align_pts, pts->align_pt->name) &&
-	align_pts_includes_pt_by_name(fixed_vol->align_pts, pts->align_pt->name)) {
-      temp_pt = align_pts_find_pt_by_name(moving_vol->align_pts, pts->align_pt->name);
-      moving_pts = align_pts_add_pt(moving_pts, temp_pt);
-      moving_centroid = rp_add(moving_centroid, 
-			   realspace_alt_coord_to_base(temp_pt->point, moving_vol->coord_frame));
+  while (marks != NULL) {
+    fiducial_mark = marks->data;
+    if (AMITK_IS_FIDUCIAL_MARK(fiducial_mark) || AMITK_IS_VOLUME(fiducial_mark)) {
+      mark_name = AMITK_OBJECT_NAME(fiducial_mark);
 
-      temp_pt = align_pts_find_pt_by_name(fixed_vol->align_pts, pts->align_pt->name);
-      fixed_pts = align_pts_add_pt(fixed_pts, temp_pt);
-      fixed_centroid = rp_add(fixed_centroid, 
-			  realspace_alt_coord_to_base(temp_pt->point, fixed_vol->coord_frame));
-      count++;
+      moving_fiducial_mark = amitk_objects_find_object_by_name(AMITK_OBJECT_CHILDREN(moving_ds), mark_name);
+      fixed_fiducial_mark = amitk_objects_find_object_by_name(AMITK_OBJECT_CHILDREN(fixed_ds), mark_name);
+      
+      if ((AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark) || AMITK_IS_VOLUME(moving_fiducial_mark)) &&
+	  (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark) || AMITK_IS_VOLUME(moving_fiducial_mark))) {
+
+	moving_fiducial_marks = g_list_append(moving_fiducial_marks, g_object_ref(moving_fiducial_mark));
+	if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
+	  center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
+	else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+	  center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
+	moving_centroid = point_add(moving_centroid, center);
+	
+	fixed_fiducial_marks = g_list_append(fixed_fiducial_marks, g_object_ref(fixed_fiducial_mark));
+	if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
+	  center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
+	else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) */
+	  center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
+	fixed_centroid = point_add(fixed_centroid, center);
+	count++;
+      }
     }
-    pts = pts->next;
+    marks = marks->next;
   }
 
   /* calculate the centroid of each point set */
-  moving_centroid = rp_cmult((1.0/(gdouble) count), moving_centroid);
-  fixed_centroid = rp_cmult((1.0/(gdouble) count), fixed_centroid);
+  moving_centroid = point_cmult((1.0/(gdouble) count), moving_centroid);
+  fixed_centroid = point_cmult((1.0/(gdouble) count), fixed_centroid);
 
   /* sanity check */
   if (count < 3) {
     g_warning("Cannot perform an alignment with %d points, need at least 3",count);
-    moving_pts = align_pts_unref(moving_pts);
-    fixed_pts = align_pts_unref(fixed_pts);
+    moving_fiducial_marks = amitk_objects_unref(moving_fiducial_marks);
+    fixed_fiducial_marks = amitk_objects_unref(fixed_fiducial_marks);
+    return space;
   }
 
   /* translate the points into data structures that GSL can handle */
   /* also demean the alignment points so the centroid of each set is the origin */
   /* the matrix are constructed such that each row is a point */
   /* moving_matrixt is the transpose of the moving matrix */
-  fixed_matrix = gsl_matrix_alloc(count, NUM_AXIS);
-  moving_matrixt = gsl_matrix_alloc(NUM_AXIS, count);
+  fixed_matrix = gsl_matrix_alloc(count, AMITK_AXIS_NUM);
+  moving_matrixt = gsl_matrix_alloc(AMITK_AXIS_NUM, count);
   for (i=0;i<count;i++) {
-    temp_rp = rp_sub(realspace_alt_coord_to_base(moving_pts->align_pt->point, moving_vol->coord_frame),
-		     moving_centroid);
-    gsl_matrix_set(moving_matrixt, XAXIS, i, temp_rp.x);
-    gsl_matrix_set(moving_matrixt, YAXIS, i, temp_rp.y);
-    gsl_matrix_set(moving_matrixt, ZAXIS, i, temp_rp.z);
+    moving_fiducial_mark = moving_fiducial_marks->data;
+    if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
+      center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
+    else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+      center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
+    temp_point = point_sub(center, moving_centroid);
+    gsl_matrix_set(moving_matrixt, AMITK_AXIS_X, i, temp_point.x);
+    gsl_matrix_set(moving_matrixt, AMITK_AXIS_Y, i, temp_point.y);
+    gsl_matrix_set(moving_matrixt, AMITK_AXIS_Z, i, temp_point.z);
+    moving_fiducial_marks = g_list_remove(moving_fiducial_marks, moving_fiducial_mark);
+    g_object_unref(moving_fiducial_mark);
 
-    temp_rp = rp_sub(realspace_alt_coord_to_base(fixed_pts->align_pt->point, fixed_vol->coord_frame),
-		     fixed_centroid);
-    gsl_matrix_set(fixed_matrix, i, XAXIS, temp_rp.x);
-    gsl_matrix_set(fixed_matrix, i, YAXIS, temp_rp.y);
-    gsl_matrix_set(fixed_matrix, i, ZAXIS, temp_rp.z);
-    moving_pts = align_pts_remove_pt(moving_pts, moving_pts->align_pt);
-    fixed_pts = align_pts_remove_pt(fixed_pts, fixed_pts->align_pt);
+    fixed_fiducial_mark = fixed_fiducial_marks->data;;
+    if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
+      center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
+    else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+      center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
+    temp_point = point_sub(center,fixed_centroid);
+    gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_X, temp_point.x);
+    gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_Y, temp_point.y);
+    gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_Z, temp_point.z);
+    fixed_fiducial_marks = g_list_remove(fixed_fiducial_marks, fixed_fiducial_mark);
+    g_object_unref(fixed_fiducial_mark);
   }
 
-  if ((moving_pts != NULL) || (fixed_pts != NULL)) {
+  if ((moving_fiducial_marks != NULL) || (fixed_fiducial_marks != NULL)) {
     g_warning("points lists not completely used in %s at %d", __FILE__, __LINE__);
     gsl_matrix_free(fixed_matrix);
     gsl_matrix_free(moving_matrixt);
-    return coord_frame;
+    moving_fiducial_marks = amitk_objects_unref(moving_fiducial_marks);
+    fixed_fiducial_marks = amitk_objects_unref(fixed_fiducial_marks);
+    return space;
   }
 
   /* calculate the correlation matrix */
@@ -180,8 +210,8 @@ realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, a
   /* get the singular value decomposition of the correlation matrix
      matrix_a = U*S*Vt
      note, that the function will place the value of U into matrix_a */
-  matrix_v = gsl_matrix_alloc(NUM_AXIS, NUM_AXIS);
-  vector_s = gsl_vector_alloc(NUM_AXIS);
+  matrix_v = gsl_matrix_alloc(AMITK_AXIS_NUM, AMITK_AXIS_NUM);
+  vector_s = gsl_vector_alloc(AMITK_AXIS_NUM);
   gsl_linalg_SV_decomp_jacobi(matrix_a, matrix_v, vector_s);
   gsl_vector_free(vector_s);
 
@@ -190,7 +220,7 @@ realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, a
 
   /* figure out the determinant of V*Ut */
   matrix_temp = matrix_mult(matrix_v, matrix_a);
-  permutation = gsl_permutation_alloc(NUM_AXIS);
+  permutation = gsl_permutation_alloc(AMITK_AXIS_NUM);
   gsl_linalg_LU_decomp(matrix_temp, permutation, &signum);
   det = gsl_linalg_LU_det(matrix_temp, signum);
   gsl_permutation_free(permutation);
@@ -200,9 +230,9 @@ realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, a
 
   /* compute the rotation
    r = V * delta * Ut, where delta = diag(1,1,det(V,Ut))*/
-  matrix_diag = gsl_matrix_alloc(NUM_AXIS, NUM_AXIS);
+  matrix_diag = gsl_matrix_alloc(AMITK_AXIS_NUM, AMITK_AXIS_NUM);
   gsl_matrix_set_identity (matrix_diag);
-  gsl_matrix_set(matrix_diag, NUM_AXIS-1, NUM_AXIS-1, det);
+  gsl_matrix_set(matrix_diag, AMITK_AXIS_NUM-1, AMITK_AXIS_NUM-1, det);
   matrix_temp = matrix_mult(matrix_diag, matrix_a);
   matrix_r = matrix_mult(matrix_v, matrix_temp);
 
@@ -217,36 +247,35 @@ realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, a
     gint z, y;
 
     g_print("rotation matrix:\n");
-    for (z=0;z<NUM_AXIS;z++) {
+    for (z=0;z<AMITK_AXIS_NUM;z++) {
       g_print("\t");
-      for (y=0;y<NUM_AXIS;y++)
+      for (y=0;y<AMITK_AXIS_NUM;y++)
 	g_print("%f\t",gsl_matrix_get(matrix_r, z, y));
       g_print("\n");
     }
   }
 #endif
 
-
   /* figure out the new coordinate frame */
-  for (i=0;i<NUM_AXIS;i++)
-    axis[i]=matrix_mult_rp(matrix_r, rs_specific_axis(moving_vol->coord_frame, i));
-  rs_set_axis(coord_frame, axis);
+  for (i=0;i<AMITK_AXIS_NUM;i++)
+    axis[i]=matrix_mult_point(matrix_r, amitk_space_get_axis(AMITK_SPACE(moving_ds), i));
+  amitk_space_set_axes(space, axis, AMITK_SPACE_OFFSET(space));
 
   /* and compute the new offset */
-  translation_rp = rp_sub(fixed_centroid, matrix_mult_rp(matrix_r, moving_centroid));
-  offset_rp = matrix_mult_rp(matrix_r, rs_offset(moving_vol->coord_frame));
-  offset_rp = rp_add(offset_rp, translation_rp);
-  rs_set_offset(coord_frame, offset_rp);
+  translation_point = point_sub(fixed_centroid, matrix_mult_point(matrix_r, moving_centroid));
+  offset_point = matrix_mult_point(matrix_r,AMITK_SPACE_OFFSET(moving_ds));
+  offset_point = point_add(offset_point, translation_point);
+  amitk_space_set_offset(space, offset_point);
   
 #if AMIDE_DEBUG		     
-  rs_print("old coord frame", moving_vol->coord_frame);
-  rs_print("new    coord frame   ", coord_frame);
+  amitk_space_print(AMITK_SPACE(moving_ds), "old coordinate space");
+  amitk_space_print(space, "new coordinate space");
 #endif
 
   /* garbage collection */
   gsl_matrix_free(matrix_r);
 
-  return coord_frame;
+  return space;
 }
 
 

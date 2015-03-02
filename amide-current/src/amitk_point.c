@@ -1,0 +1,795 @@
+/* amitk_point.c
+ *
+ * Part of amide - Amide's a Medical Image Dataset Examiner
+ * Copyright (C) 2000-2002 Andy Loening
+ *
+ * Author: Andy Loening <loening@ucla.edu>
+ */
+
+/*
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2, or (at your option)
+  any later version.
+ 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+  02111-1307, USA.
+*/
+
+#include "amide_config.h"
+#include "amitk_point.h"
+#include "amitk_marshal.h"
+#include "amitk_type_builtins.h"
+
+
+const AmitkAxes base_axes =
+  {{1.0,0.0,0.0},
+   {0.0,1.0,0.0},
+   {0.0,0.0,1.0}};
+
+
+static void       make_orthogonal           (AmitkAxes axes);
+
+
+GType amitk_point_get_type (void) {
+
+  static GType our_type = 0;
+
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkPoint",
+					     (GBoxedCopyFunc) amitk_point_copy,
+					     (GBoxedFreeFunc) amitk_point_free);
+  return our_type;
+}
+
+AmitkPoint * amitk_point_copy(const AmitkPoint * point) {
+  return (AmitkPoint *)g_memdup(point, sizeof(AmitkPoint));
+}
+
+void amitk_point_free (AmitkPoint * point) {
+  g_free (point);
+}
+
+
+
+AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+
+  gchar * temp_string;
+  AmitkPoint return_rp;
+  gint error;
+
+  temp_string = xml_get_string(nodes, descriptor);
+
+  if (temp_string != NULL) {
+#if (SIZE_OF_AMIDE_REAL_T == 8)
+    /* convert to doubles */
+    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
+#elif (SIZE_OF_AMIDE_REAL_T == 4)
+    /* convert to float */
+    error = sscanf(temp_string, "%f\t%f\t%f", &(return_rp.x), &(return_rp.y), &(return_rp.z));
+#else
+#error "Unknown size for SIZE_OF_AMIDE_REAL_T"
+#endif
+    g_free(temp_string);
+  }
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    return_rp = zero_point;
+    g_warning("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",descriptor,
+	      return_rp.x, return_rp.y, return_rp.z);
+  }
+
+  return return_rp;
+
+}
+
+void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point) {
+
+  gchar * temp_string;
+
+  temp_string = g_strdup_printf("%10.9f\t%10.9f\t%10.9f",point.x, point.y,point.z);
+  xml_save_string(node, descriptor, temp_string);
+  g_free(temp_string);
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+GType amitk_voxel_get_type (void) {
+
+  static GType our_type = 0;
+  
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkVoxel",
+					     (GBoxedCopyFunc) amitk_voxel_copy,
+					     (GBoxedFreeFunc) amitk_voxel_free);
+  return our_type;
+}
+
+AmitkVoxel * amitk_voxel_copy(const AmitkVoxel * voxel) {
+  return (AmitkVoxel *)g_memdup(voxel, sizeof(AmitkVoxel));
+}
+
+void amitk_voxel_free (AmitkVoxel * voxel) {
+  g_free(voxel);
+}
+
+AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+
+  gchar * temp_string;
+  AmitkVoxel voxel;
+  gint x,y,z,t;
+  gint error=0;
+
+  temp_string = xml_get_string(nodes, descriptor);
+
+  if (temp_string != NULL) {
+
+    /* convert to a voxel */
+    error = sscanf(temp_string,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
+    g_free(temp_string);
+    
+    voxel.x = x;
+    voxel.y = y;
+    voxel.z = z;
+    voxel.t = t;
+
+  } 
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    voxel = zero_voxel;
+    g_warning("Couldn't read value for %s, substituting [%d %d %d %d]",descriptor,
+	      voxel.x, voxel.y,voxel.z,voxel.z);
+  }
+
+  if (error < 4) {
+    voxel.t = 0;
+    g_warning("Couldn't read frame value for %s, substituting %d",descriptor, voxel.t);
+  }
+
+  return voxel;
+}
+
+
+void amitk_voxel_write_xml(xmlNodePtr node, gchar * descriptor, AmitkVoxel voxel) {
+
+  gchar * temp_string;
+
+  temp_string = g_strdup_printf("%d\t%d\t%d\t%d",voxel.x, voxel.y, voxel.z, voxel.t);
+  xml_save_string(node, descriptor, temp_string);
+  g_free(temp_string);
+
+  return;
+}
+
+
+
+GType amitk_pixel_get_type (void) {
+
+  static GType our_type = 0;
+  
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkPixel",
+					     (GBoxedCopyFunc) amitk_pixel_copy,
+					     (GBoxedFreeFunc) amitk_pixel_free);
+  return our_type;
+}
+
+AmitkPixel * amitk_pixel_copy(const AmitkPixel * pixel) {
+  return (AmitkPixel *)g_memdup(pixel, sizeof(AmitkPixel));
+}
+
+void amitk_pixel_free (AmitkPixel * pixel) {
+  g_free (pixel);
+}
+
+GType amitk_canvas_point_get_type (void) {
+
+  static GType our_type = 0;
+  
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkCanvasPoint",
+					     (GBoxedCopyFunc) amitk_canvas_point_copy,
+					     (GBoxedFreeFunc) amitk_canvas_point_free);
+  return our_type;
+}
+
+AmitkCanvasPoint * amitk_canvas_point_copy(const AmitkCanvasPoint * point) {
+  return (AmitkCanvasPoint *)g_memdup(point, sizeof(AmitkCanvasPoint));
+}
+
+void amitk_canvas_point_free (AmitkCanvasPoint * point) {
+  g_free (point);
+}
+
+
+
+
+
+GType amitk_axes_get_type (void) {
+
+  static GType our_type = 0;
+
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkAxes",
+					     (GBoxedCopyFunc) amitk_axes_copy,
+					     (GBoxedFreeFunc) amitk_axes_free);
+  return our_type;
+}
+
+AmitkAxes * amitk_axes_copy(const AmitkAxes * axes) {
+  return (AmitkAxes *)g_memdup(axes, sizeof(AmitkAxes));
+}
+
+void amitk_axes_free (AmitkAxes * axes) {
+  g_free (axes);
+}
+
+void amitk_axes_copy_in_place(AmitkAxes dest_axes, const AmitkAxes src_axes) {
+
+  AmitkAxis i_axis;
+
+  for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++)
+    dest_axes[i_axis] = src_axes[i_axis];
+
+  return;
+}
+
+void amitk_axes_transpose(AmitkAxes axes) {
+
+  amide_real_t temp_val;
+
+
+  temp_val = axes[AMITK_AXIS_Y].x;
+  axes[AMITK_AXIS_Y].x = axes[AMITK_AXIS_X].y;
+  axes[AMITK_AXIS_X].y = temp_val;
+
+  temp_val = axes[AMITK_AXIS_Z].x;
+  axes[AMITK_AXIS_Z].x = axes[AMITK_AXIS_X].z;
+  axes[AMITK_AXIS_X].z = temp_val;
+
+  temp_val = axes[AMITK_AXIS_Z].y;
+  axes[AMITK_AXIS_Z].y = axes[AMITK_AXIS_Y].z;
+  axes[AMITK_AXIS_Y].z = temp_val;
+
+  return;
+}
+
+void amitk_axes_mult(const AmitkAxes const_axes1, const AmitkAxes const_axes2, AmitkAxes dest_axes) {
+
+  AmitkAxes axes1;
+  AmitkAxes axes2;
+
+  amitk_axes_copy_in_place(axes1, const_axes1);
+  amitk_axes_copy_in_place(axes2, const_axes2);
+
+  dest_axes[AMITK_AXIS_X].x = 
+    axes1[AMITK_AXIS_X].x * axes2[AMITK_AXIS_X].x +
+    axes1[AMITK_AXIS_Y].x * axes2[AMITK_AXIS_X].y +
+    axes1[AMITK_AXIS_Z].x * axes2[AMITK_AXIS_X].z;
+  dest_axes[AMITK_AXIS_Y].x = 
+    axes1[AMITK_AXIS_X].x * axes2[AMITK_AXIS_Y].x +
+    axes1[AMITK_AXIS_Y].x * axes2[AMITK_AXIS_Y].y +
+    axes1[AMITK_AXIS_Z].x * axes2[AMITK_AXIS_Y].z;
+  dest_axes[AMITK_AXIS_Z].x = 
+    axes1[AMITK_AXIS_X].x * axes2[AMITK_AXIS_Z].x +
+    axes1[AMITK_AXIS_Y].x * axes2[AMITK_AXIS_Z].y +
+    axes1[AMITK_AXIS_Z].x * axes2[AMITK_AXIS_Z].z;
+
+  dest_axes[AMITK_AXIS_X].y = 
+    axes1[AMITK_AXIS_X].y * axes2[AMITK_AXIS_X].x +
+    axes1[AMITK_AXIS_Y].y * axes2[AMITK_AXIS_X].y +
+    axes1[AMITK_AXIS_Z].y * axes2[AMITK_AXIS_X].z;
+  dest_axes[AMITK_AXIS_Y].y = 
+    axes1[AMITK_AXIS_X].y * axes2[AMITK_AXIS_Y].x +
+    axes1[AMITK_AXIS_Y].y * axes2[AMITK_AXIS_Y].y +
+    axes1[AMITK_AXIS_Z].y * axes2[AMITK_AXIS_Y].z;
+  dest_axes[AMITK_AXIS_Z].y = 
+    axes1[AMITK_AXIS_X].y * axes2[AMITK_AXIS_Z].x +
+    axes1[AMITK_AXIS_Y].y * axes2[AMITK_AXIS_Z].y +
+    axes1[AMITK_AXIS_Z].y * axes2[AMITK_AXIS_Z].z;
+
+  dest_axes[AMITK_AXIS_X].z = 
+    axes1[AMITK_AXIS_X].z * axes2[AMITK_AXIS_X].x +
+    axes1[AMITK_AXIS_Y].z * axes2[AMITK_AXIS_X].y +
+    axes1[AMITK_AXIS_Z].z * axes2[AMITK_AXIS_X].z;
+  dest_axes[AMITK_AXIS_Y].z = 
+    axes1[AMITK_AXIS_X].z * axes2[AMITK_AXIS_Y].x +
+    axes1[AMITK_AXIS_Y].z * axes2[AMITK_AXIS_Y].y +
+    axes1[AMITK_AXIS_Z].z * axes2[AMITK_AXIS_Y].z;
+  dest_axes[AMITK_AXIS_Z].z = 
+    axes1[AMITK_AXIS_X].z * axes2[AMITK_AXIS_Z].x +
+    axes1[AMITK_AXIS_Y].z * axes2[AMITK_AXIS_Z].y +
+    axes1[AMITK_AXIS_Z].z * axes2[AMITK_AXIS_Z].z;
+
+  return;
+}
+
+
+/* adjusts the given axis into an orthogonal set via gram-schmidt */
+static void make_orthogonal(AmitkAxes axes) {
+
+   AmitkPoint temp;
+
+  /* leave the xaxis as is */
+
+  /* make the y axis orthogonal */
+  POINT_MADD(1.0,
+	     axes[AMITK_AXIS_Y],
+	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Y]) /
+	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X]),
+	     axes[AMITK_AXIS_X],
+	     axes[AMITK_AXIS_Y]);
+  
+  /* and make the z axis orthogonal */
+  POINT_MADD(1.0,
+	     axes[AMITK_AXIS_Z],
+	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Z]) /
+	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X]),
+	     axes[AMITK_AXIS_X],
+	     temp);
+  POINT_MADD(1.0,
+	     temp,
+	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Z]) /
+	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Y]),
+	     axes[AMITK_AXIS_Y],
+	     axes[AMITK_AXIS_Z]);
+  return;
+}
+
+/* adjusts the given axis into a true orthonormal axis set */
+void amitk_axes_make_orthonormal(AmitkAxes axes) {
+
+  make_orthogonal(axes); 
+
+  /* now normalize the axis to make it orthonormal */
+  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X])),
+		  axes[AMITK_AXIS_X],
+		  axes[AMITK_AXIS_X]);
+  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Y])),
+		  axes[AMITK_AXIS_Y],
+		  axes[AMITK_AXIS_Y]);
+  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_Z],axes[AMITK_AXIS_Z])),
+		  axes[AMITK_AXIS_Z],
+		  axes[AMITK_AXIS_Z]);
+  return;
+}
+
+
+
+void amitk_axes_rotate_on_vector(AmitkAxes axes, AmitkPoint vector, amide_real_t theta) {
+  AmitkAxis i_axis;
+  for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++)
+    axes[i_axis] = point_rotate_on_vector(axes[i_axis], vector, theta);
+  return;
+}
+
+
+
+
+/* returns the axis vector which corresponds to the orthogonal axis (specified
+   by ax) for the given set of axes in the given view (i.e. coronal, sagittal, etc.) */
+AmitkPoint amitk_axes_get_orthogonal_axis(const AmitkAxes axes,
+					  const AmitkView which_view,
+					  const AmitkLayout which_layout,
+					  const AmitkAxis which_axis) {
+  
+  switch(which_view) {
+  case AMITK_VIEW_CORONAL:
+    switch (which_axis) {
+    case AMITK_AXIS_X:
+      return axes[AMITK_AXIS_X];
+      break;
+    case AMITK_AXIS_Y:
+      return point_neg(axes[AMITK_AXIS_Z]);
+      break;
+    case AMITK_AXIS_Z:
+    default:
+      return axes[AMITK_AXIS_Y];
+      break;
+    }
+    break;
+  case AMITK_VIEW_SAGITTAL:
+    switch (which_axis) {
+    case AMITK_AXIS_X:
+      if (which_layout == AMITK_LAYOUT_ORTHOGONAL)
+	return axes[AMITK_AXIS_Z];
+      else /* AMITK_LAYOUT_LINEAR */
+	return axes[AMITK_AXIS_Y];
+      break;
+    case AMITK_AXIS_Y:
+      if (which_layout == AMITK_LAYOUT_ORTHOGONAL)
+	return axes[AMITK_AXIS_Y];
+      else /* AMITK_LAYOUT_LINEAR */
+	return point_neg(axes[AMITK_AXIS_Z]);
+      break;
+    case AMITK_AXIS_Z:
+    default:
+      return axes[AMITK_AXIS_X];
+      break;
+    }
+  case AMITK_VIEW_TRANSVERSE:
+  default:
+    switch (which_axis) {
+    case AMITK_AXIS_X:
+      return axes[AMITK_AXIS_X];
+      break;
+    case AMITK_AXIS_Y:
+      return axes[AMITK_AXIS_Y];
+      break;
+    case AMITK_AXIS_Z:
+    default:
+      return axes[AMITK_AXIS_Z];
+      break;
+    }
+    break;
+  }
+}
+
+/* returns the normal axis vector for the given view */
+AmitkPoint amitk_axes_get_normal_axis(const AmitkAxes axes, const AmitkView which_view) {
+
+  /* don't need layout here, as the AMITK_AXIS_Z isn't determined by the layout */
+  return amitk_axes_get_orthogonal_axis(axes, which_view, AMITK_LAYOUT_LINEAR, AMITK_AXIS_Z);
+}
+
+
+GType amitk_corners_get_type (void) {
+
+  static GType our_type = 0;
+
+  if (our_type == 0)
+    our_type = g_boxed_type_register_static ("AmitkCorners",
+					     (GBoxedCopyFunc) amitk_corners_copy,
+					     (GBoxedFreeFunc) amitk_corners_free);
+  return our_type;
+}
+
+AmitkCorners * amitk_corners_copy(const AmitkCorners * corners) {
+  return (AmitkCorners *)g_memdup(corners, sizeof(AmitkCorners));
+}
+
+void amitk_corners_free (AmitkCorners * corners) {
+  g_free (corners);
+}
+
+
+
+
+
+
+
+
+
+
+
+const AmitkPoint zero_point = {0.0,0.0,0.0};
+const AmitkPoint one_point = {1.0,1.0,1.0};
+const AmitkPoint ten_point = {10.0,10.0,10.0};
+
+const AmitkVoxel zero_voxel = {0,0,0,0};
+const AmitkVoxel one_voxel = {1,1,1,1};
+
+/* returns abs(point1) for realpoint structures */
+inline AmitkPoint point_abs(const AmitkPoint point1) {
+  AmitkPoint temp;
+  POINT_ABS(point1, temp);
+  return temp;
+}
+/* returns -point1 for realpoint structures */
+inline AmitkPoint point_neg(const AmitkPoint point1) {
+  AmitkPoint temp;
+  temp.x = -point1.x;
+  temp.y = -point1.y;
+  temp.z = -point1.z;
+  return temp;
+}
+/* returns point1+point2 for realpoint structures */
+inline AmitkPoint point_add(const AmitkPoint point1,const AmitkPoint point2) {
+  AmitkPoint temp;
+  POINT_ADD(point1, point2, temp);
+  return temp;
+}
+/* returns point1-point2 for realpoint structures */
+inline AmitkPoint point_sub(const AmitkPoint point1,const AmitkPoint point2) {
+  AmitkPoint temp;
+  POINT_SUB(point1, point2, temp);
+  return temp;
+}
+/* returns point1.*point2 for realpoint structures */
+inline AmitkPoint point_mult(const AmitkPoint point1,const AmitkPoint point2) {
+  AmitkPoint temp;
+  POINT_MULT(point1, point2, temp);
+  return temp;
+}
+/* returns point1./point2 for realpoint structures */
+inline AmitkPoint point_div(const AmitkPoint point1,const AmitkPoint point2) {
+  AmitkPoint temp;
+  POINT_DIV(point1, point2, temp);
+  return temp;
+}
+/* returns abs(point1-point2) for realpoint structures */
+inline AmitkPoint point_diff(const AmitkPoint point1,const AmitkPoint point2) {
+  AmitkPoint temp;
+  POINT_DIFF(point1, point2, temp);
+  return temp;
+}
+/* returns cm*point1 for realpoint structures */
+inline AmitkPoint point_cmult(const amide_real_t cmult,const AmitkPoint point1) {
+  AmitkPoint temp;
+  POINT_CMULT(cmult, point1, temp);
+  return temp;
+}
+
+/* returns cross product of point1 and point2 for realpoint structures */
+inline AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2) {
+  AmitkPoint temp;
+  
+  temp.x = point1.y*point2.z-point1.z*point2.y;
+  temp.y = point1.z*point2.x-point1.x*point2.z;
+  temp.z = point1.x*point2.y-point1.y*point2.x;
+  return temp;
+}
+
+/* returns dot product of point1 and point2 for realpoint structures */
+inline amide_real_t point_dot_product(const AmitkPoint point1, const AmitkPoint point2) {
+  return POINT_DOT_PRODUCT(point1, point2);
+}
+
+
+/* returns sqrt(point_dot_product(point1, point1)) for realpoint structures */
+inline amide_real_t point_mag(const AmitkPoint point1) {
+  return sqrt(POINT_DOT_PRODUCT(point1, point1));
+}
+
+/* returns the minimum dimension of the "box" defined by point1*/
+inline amide_real_t point_min_dim(const AmitkPoint point1) {
+  return MIN( MIN(point1.x,point1.y), point1.z);
+}
+
+/* returns the maximum dimension of the "box" defined by point1 */
+inline amide_real_t point_max_dim(const AmitkPoint point1) {
+  return point_mag(point1);
+}
+
+
+
+
+/* returns abs(point1-point2) for canvaspoint structures */
+inline AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+  AmitkCanvasPoint temp;
+  temp.x = fabs(point1.x-point2.x);
+  temp.y = fabs(point1.y-point2.y);
+  return temp;
+}
+/* returns point1-point2 for canvaspoint structures */
+inline AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+  AmitkCanvasPoint temp;
+  temp.x = point1.x-point2.x;
+  temp.y = point1.y-point2.y;
+  return temp;
+}
+/* returns point1+point2 for canvaspoint structures */
+inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
+  AmitkCanvasPoint temp;
+  temp.x = point1.x+point2.x;
+  temp.y = point1.y+point2.y;
+  return temp;
+}
+/* returns dot product of point1 and point2 for canvaspoint structures */
+inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2) {
+
+  return point1.x*point2.x + point1.y*point2.y;
+
+}
+/* returns sqrt(canvas_point_dot_product(point1, point1)) for canvaspoint structures */
+inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1) {
+  return sqrt(canvas_point_dot_product(point1, point1));
+}
+
+
+/* returns voxel1+voxel2 for voxelpoint structures */
+inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
+  AmitkVoxel temp;
+  temp.x = voxel1.x+voxel2.x;
+  temp.y = voxel1.y+voxel2.y;
+  temp.z = voxel1.z+voxel2.z;
+  temp.t = voxel1.t+voxel2.t;
+  return temp;
+}
+
+/* returns voxel1-voxel2 for voxelpoint structures */
+inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
+  AmitkVoxel temp;
+  temp.x = voxel1.x-voxel2.x;
+  temp.y = voxel1.y-voxel2.y;
+  temp.z = voxel1.z-voxel2.z;
+  temp.t = voxel1.t-voxel2.t;
+  return temp;
+}
+
+/* returns voxel1 == voxel2 for voxelpoint structures */
+inline gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2) {
+
+  return ((voxel1.x == voxel2.x) &&
+	  (voxel1.y == voxel2.y) &&
+	  (voxel1.z == voxel2.z) &&
+	  (voxel1.t == voxel2.t));
+}
+/* returns the maximum dimension of the "box" defined by voxel1 */
+inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1) {
+  AmitkPoint temp_point;
+  VOXEL_TO_POINT(voxel1, one_point, temp_point);
+  return point_mag(temp_point);
+}
+
+/* little utility function for debugging */
+void voxel_print(gchar * message, const AmitkVoxel voxel) {
+  g_print("%s\t%d\t%d\t%d\t%d\n",message, voxel.x, voxel.y, voxel.z, voxel.t);
+  return;
+}
+
+amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
+			       const AmitkDim which_dim) {
+
+  switch(which_dim) {
+  case AMITK_DIM_X:
+    return voxel.x;
+    break;
+  case AMITK_DIM_Y:
+    return voxel.y;
+    break;
+  case AMITK_DIM_Z:
+    return voxel.z;
+    break;
+  case AMITK_DIM_T:
+    return voxel.t;
+    break;
+  default:
+    g_return_val_if_reached(0);
+  }
+
+}
+
+
+/* returns true if the realpoint is in the given box */
+/* box first corner is zero point */
+inline gboolean point_in_box(const AmitkPoint p,
+			     const AmitkPoint box_corner) {
+
+
+  return (((p.z >= 0.0) && (p.z <= box_corner.z)) &&
+	  ((p.y >= 0.0) && (p.y <= box_corner.y)) &&
+	  ((p.x >= 0.0) && (p.x <= box_corner.x)));
+}
+
+
+/* returns true if the realpoint is in the elliptic cylinder, 
+   cylinder must be inline with the coordinate space center is in 
+   note: height is in the z direction, and radius.z isn't used for anything 
+*/
+inline gboolean point_in_elliptic_cylinder(const AmitkPoint p,
+					   const AmitkPoint center,
+					   const amide_real_t height,
+					   const AmitkPoint radius) {
+
+  AmitkPoint diff;
+  diff.x = p.x-center.x;
+  diff.y = p.y-center.y;
+
+  return ((1.0 >= 
+	   ((diff.x*diff.x)/(radius.x*radius.x) +
+	    (diff.y*diff.y)/(radius.y*radius.y)))
+	  &&
+	  ((p.z >= (center.z-height/2.0)) && 
+	   (p.z <= (center.z+height/2.0))));
+  
+}
+
+
+
+/* returns true if the realpoint is in the ellipsoid */
+inline gboolean point_in_ellipsoid(const AmitkPoint p,
+				   const AmitkPoint center,
+				   const AmitkPoint radius) {
+  
+  AmitkPoint diff;
+  diff = point_sub(p, center);
+  	  
+  return (1.0 >= 
+	  (diff.x*diff.x)/(radius.x*radius.x) +
+	  (diff.y*diff.y)/(radius.y*radius.y) +
+	  (diff.z*diff.z)/(radius.z*radius.z));
+}
+
+
+/* little utility function for debugging */
+void point_print(gchar * message, const AmitkPoint point) {
+  g_print("%s\t%5.3f\t%5.3f\t%5.3f\n",message, point.x, point.y, point.z);
+  return;
+}
+
+
+
+
+/* rotate the vector on the given vector by the given rotation */
+AmitkPoint point_rotate_on_vector(const AmitkPoint in,
+				  const AmitkPoint vector,
+				  const amide_real_t theta) {
+
+  AmitkPoint return_vector;
+
+  return_vector.x = 
+    (pow(vector.x,2.0) + cos(theta) * (1.0 - pow(vector.x,2.0))) * in.x +
+    (vector.x*vector.y*(1.0-cos(theta)) - vector.z * sin(theta)) * in.y +
+    (vector.z*vector.x*(1.0-cos(theta)) + vector.y * sin(theta)) * in.z;
+  return_vector.y = 
+    (vector.x*vector.y*(1.0-cos(theta)) + vector.z * sin(theta)) * in.x +
+    (pow(vector.y,2.0) + cos(theta) * (1.0 - pow(vector.y,2.0))) * in.y +
+    (vector.y*vector.z*(1.0-cos(theta)) - vector.x * sin(theta)) * in.z;
+  return_vector.z = 
+    (vector.z*vector.x*(1.0-cos(theta)) - vector.y * sin(theta)) * in.x +
+    (vector.y*vector.z*(1.0-cos(theta)) + vector.x * sin(theta)) * in.y +
+    (pow(vector.z,2.0) + cos(theta) * (1.0 - pow(vector.z,2.0))) * in.z;
+
+  return return_vector;
+}
+
+amide_real_t point_get_component(const AmitkPoint point,
+				 const AmitkAxis which_axis) {
+
+  switch(which_axis) {
+  case AMITK_AXIS_X:
+    return point.x;
+    break;
+  case AMITK_AXIS_Y:
+    return point.y;
+    break;
+  case AMITK_AXIS_Z:
+    return point.z;
+    break;
+  default:
+    g_return_val_if_reached(0.0);
+  }
+
+}
+
+
+
+const gchar * amitk_dim_get_name(const AmitkDim dim) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_DIM);
+  enum_value = g_enum_get_value(enum_class, dim);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_axis_get_name(const AmitkAxis axis) {
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_AXIS);
+  enum_value = g_enum_get_value(enum_class, axis);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+

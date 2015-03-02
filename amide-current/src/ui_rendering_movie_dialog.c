@@ -23,21 +23,390 @@
   02111-1307, USA.
 */
 
-#include "config.h"
+#include "amide_config.h"
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
 
 #include <gnome.h>
-#include <math.h>
 #include <sys/stat.h>
+#include <string.h>
 #include "ui_common.h"
 #include "ui_rendering_movie_dialog.h"
-#include "ui_rendering_movie_dialog_cb.h"
+#include "amitk_type_builtins.h"
+
+
+#define MOVIE_DEFAULT_FRAMES 300
+#define AMITK_RESPONSE_EXECUTE 1
+
+static void change_frames_cb(GtkWidget * widget, gpointer data);
+static void change_rotation_cb(GtkWidget * widget, gpointer data);
+static void dynamic_type_cb(GtkWidget * widget, gpointer data);
+static void change_start_time_cb(GtkWidget * widget, gpointer data);
+static void change_start_frame_cb(GtkWidget * widget, gpointer data);
+static void change_end_time_cb(GtkWidget * widget, gpointer data);
+static void change_end_frame_cb(GtkWidget * widget, gpointer data);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+
+
+static ui_rendering_movie_t * movie_unref(ui_rendering_movie_t * ui_rendering_movie);
+static ui_rendering_movie_t * movie_init(void);
+static ui_rendering_movie_t * movie_ref(ui_rendering_movie_t * movie);
+static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, char * output_file_name);
+
+
+/* function to handle picking an output mpeg file name */
+static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  GtkWidget * question;
+  ui_rendering_movie_t * ui_rendering_movie;
+  gchar * save_filename;
+  struct stat file_info;
+  gint return_val;
+
+  /* get a pointer to ui_rendering_movie */
+  ui_rendering_movie = g_object_get_data(G_OBJECT(file_selection), "ui_movie");
+
+  /* get the filename */
+  save_filename = g_strdup(gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection)));
+  
+
+  /* some sanity checks */
+  if ((strcmp(save_filename, ".") == 0) ||
+      (strcmp(save_filename, "..") == 0) ||
+      (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "/") == 0)) {
+    g_warning("Inappropriate filename: %s",save_filename);
+    return;
+  }
+
+  /* see if the filename already exists, delete if needed */
+  if (stat(save_filename, &file_info) == 0) {
+    /* check if it's okay to writeover the file */
+    question = gtk_message_dialog_new(GTK_WINDOW(ui_rendering_movie->ui_rendering->app),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "Overwrite file: %s", save_filename);
+
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val != GTK_RESPONSE_OK)
+      return; /* we don't want to overwrite the file.... */
+
+    /* unlinking the file will occur immediately before writing the new one 
+       (i.e. not here ) */
+  }
+
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
+  /* and generate our movie */
+  movie_generate(ui_rendering_movie, save_filename);
+  g_free(save_filename);
+
+  return;
+}
+
+
+
+/* function to change the number of frames in the movie */
+static void change_frames_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gint temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%d", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+  if (temp_val < 0)
+    return;
+
+  /* set the frames */
+  ui_rendering_movie->num_frames = temp_val;
+
+  return;
+}
+
+/* function to change the number of rotations on an axis */
+static void change_rotation_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+  AmitkAxis i_axis;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  /* figure out which axis this is for */
+  i_axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_entry"));
+
+  /* set the rotation */
+  ui_rendering_movie->rotation[i_axis] = temp_val;
+
+  return;
+}
+
+static void dynamic_type_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  dynamic_t type;
+
+  type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "dynamic_type"));
+
+  if (type != ui_rendering_movie->type) {
+    ui_rendering_movie->type = type;
+    if (type == OVER_TIME) {
+      gtk_widget_show(ui_rendering_movie->start_time_label);
+      gtk_widget_show(ui_rendering_movie->start_time_entry);
+      gtk_widget_show(ui_rendering_movie->end_time_label);
+      gtk_widget_show(ui_rendering_movie->end_time_entry);
+      gtk_widget_hide(ui_rendering_movie->start_frame_label);
+      gtk_widget_hide(ui_rendering_movie->start_frame_entry);
+      gtk_widget_hide(ui_rendering_movie->end_frame_label);
+      gtk_widget_hide(ui_rendering_movie->end_frame_entry);
+    } else {
+      gtk_widget_hide(ui_rendering_movie->start_time_label);
+      gtk_widget_hide(ui_rendering_movie->start_time_entry);
+      gtk_widget_hide(ui_rendering_movie->end_time_label);
+      gtk_widget_hide(ui_rendering_movie->end_time_entry);
+      gtk_widget_show(ui_rendering_movie->start_frame_label);
+      gtk_widget_show(ui_rendering_movie->start_frame_entry);
+      gtk_widget_show(ui_rendering_movie->end_frame_label);
+      gtk_widget_show(ui_rendering_movie->end_frame_entry);
+    }
+  }
+  return;
+}
+
+
+/* function to change the start time */
+static void change_start_time_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  ui_rendering_movie->start_time = temp_val;
+
+  return;
+}
+
+/* function to change the start frame */
+static void change_start_frame_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gint temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%d", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  /* set the start frame */
+  if (temp_val >= 0)
+    ui_rendering_movie->start_frame = temp_val;
+
+  return;
+}
+
+/* function to change the end time */
+static void change_end_time_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  ui_rendering_movie->end_time = temp_val;
+
+  return;
+}
+
+/* function to change the end frame */
+static void change_end_frame_cb(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gint temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%d", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  /* set the end frame */
+  ui_rendering_movie->end_frame = temp_val;
+
+  return;
+}
+
+/* function called when we hit the apply button */
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  renderings_t * temp_contexts;
+  GtkWidget * file_selection;
+  gchar * temp_string;
+  gchar * data_set_names = NULL;
+  static guint save_image_num = 0;
+  gboolean return_val;
+  
+  switch(response_id) {
+  case AMITK_RESPONSE_EXECUTE:
+    /* the rest of this function runs the file selection dialog box */
+    file_selection = gtk_file_selection_new(_("Output MPEG As"));
+    
+    /* take a guess at the filename */
+    temp_contexts = ui_rendering_movie->ui_rendering->contexts;
+    data_set_names = g_strdup(temp_contexts->rendering_context->name);
+    temp_contexts = temp_contexts->next;
+    while (temp_contexts != NULL) {
+      temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->name);
+      g_free(data_set_names);
+      data_set_names = temp_string;
+      temp_contexts = temp_contexts->next;
+    }
+    temp_string = g_strdup_printf("Rendering%s(%s)_%d.mpg", 
+				  ui_rendering_movie->ui_rendering->stereoscopic ? "_stereo_" : "_", 
+				  data_set_names,save_image_num++);
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+    g_free(temp_string); 
+    
+    /* don't want anything else going on till this window is gone */
+    gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+    
+    /* save a pointer to the ui_rendering_movie data, so we can use it in the callbacks */
+    g_object_set_data(G_OBJECT(file_selection), "ui_movie", ui_rendering_movie);
+    
+    /* connect the signals */
+    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),
+		     "clicked", G_CALLBACK(save_as_ok_cb), file_selection);
+    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb),  file_selection);
+    
+    /* set the position of the dialog */
+    gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+    
+    /* run the dialog */
+    gtk_widget_show(file_selection);
+
+    break;
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+/* callback for the help button */
+/*
+static void help_cb(GnomePropertyBox *rendering_dialog, gint page_number, gpointer data) {
+
+  GError *err=NULL;
+
+  switch (page_number) {
+  case 0:
+    gnome_help_display (PACKAGE,"rendering-dialog-help.html#RENDERING-MOVIE-DIALOG-HELP-MOVIE", &err);
+    break;
+  default:
+    gnome_help_display (PACKAGE, "rendering-dialog-help.html#RENDERING-MOVIE-DIALOG-HELP", &err);
+    break;
+  }
+
+  if (err != NULL) {
+    g_warning("couldn't open help file, error: %s", err->message);
+    g_error_free(err);
+  }
+
+  return;
+}
+*/
+
+
+/* function called to destroy the rendering parameter dialog */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  ui_rendering_t * ui_rendering = ui_rendering_movie->ui_rendering;
+
+  g_print("moive delete\n");
+  /* trash collection */
+  movie_unref(ui_rendering->movie);
+  ui_rendering->movie = NULL; /* informs the ui_rendering widget that the movie widget is gone */
+
+  return FALSE;
+}
+
+
+
 
 
 /* destroy a ui_rendering_movie data structure */
-ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_rendering_movie) {
+static ui_rendering_movie_t * movie_unref(ui_rendering_movie_t * ui_rendering_movie) {
 
   if (ui_rendering_movie == NULL) return ui_rendering_movie;
 
@@ -60,7 +429,7 @@ ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_renderi
 }
 
 /* adds one to the reference count  */
-ui_rendering_movie_t * ui_rendering_movie_add_reference(ui_rendering_movie_t * movie) {
+static ui_rendering_movie_t * movie_ref(ui_rendering_movie_t * movie) {
 
   g_return_val_if_fail(movie != NULL, NULL);
 
@@ -70,24 +439,23 @@ ui_rendering_movie_t * ui_rendering_movie_add_reference(ui_rendering_movie_t * m
 }
 
 
-/* malloc and initialize a ui_rendering_movie data structure */
-ui_rendering_movie_t * ui_rendering_movie_init(void) {
+/* allocate and initialize a ui_rendering_movie data structure */
+static ui_rendering_movie_t * movie_init(void) {
 
   ui_rendering_movie_t * ui_rendering_movie;
 
 
   /* alloc space for the data structure */
-  if ((ui_rendering_movie = (ui_rendering_movie_t *) g_malloc(sizeof(ui_rendering_movie_t))) == NULL) {
+  if ((ui_rendering_movie = g_new(ui_rendering_movie_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_rendering_movie_t");
     return NULL;
   }
 
   ui_rendering_movie->reference_count = 1;
-  ui_rendering_movie->dialog = NULL;
   ui_rendering_movie->num_frames = MOVIE_DEFAULT_FRAMES;
-  ui_rendering_movie->rotation[XAXIS] = 0;
-  ui_rendering_movie->rotation[YAXIS] = 1;
-  ui_rendering_movie->rotation[ZAXIS] = 0;
+  ui_rendering_movie->rotation[AMITK_AXIS_X] = 0;
+  ui_rendering_movie->rotation[AMITK_AXIS_Y] = 1;
+  ui_rendering_movie->rotation[AMITK_AXIS_Z] = 0;
   ui_rendering_movie->type = OVER_TIME;
   ui_rendering_movie->ui_rendering = NULL;
   ui_rendering_movie->start_time = 0.0;
@@ -102,35 +470,34 @@ ui_rendering_movie_t * ui_rendering_movie_init(void) {
 
 
 /* perform the movie generation */
-void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie, gchar * output_file_name) {
+static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * output_filename) {
 
   guint i_frame;
-  gdouble rotation_step[NUM_AXIS];
-  axis_t i_axis;
+  gdouble rotation_step[AMITK_AXIS_NUM];
+  AmitkAxis i_axis;
   gint return_val = 1;
-   FILE * param_file;
+  FILE * param_file;
   GTimeVal current_time;
   guint i;
-  gchar * frame_file_name = NULL;
-  gchar * param_file_name = NULL;
-  gchar * temp_dir = NULL;
+  gchar * frame_filename = NULL;
+  gchar * param_filename = NULL;
+  const gchar * temp_dir = NULL;
   gchar * temp_string;
   struct stat file_info;
   GList * file_list = NULL;
   GList * temp_list;
-  GdkImlibImage * ppm_image;
   amide_time_t initial_start, initial_duration;
   ui_rendering_t * ui_rendering;
-  volume_t * most_frames_volume=NULL;
+  AmitkDataSet * most_frames_ds=NULL;
   renderings_t * contexts;
-  guint volume_frame=0;
+  guint ds_frame=0;
 
   /* figure out what the temp directory is */
   temp_dir = g_get_tmp_dir();
 
   /* add a reference, we do this 'cause if there's only one reference left (i.e. this one), we 
      know that the user has hit a cancel button */
-  ui_rendering_movie = ui_rendering_movie_add_reference(ui_rendering_movie);
+  ui_rendering_movie = movie_ref(ui_rendering_movie);
 
   /* get the current time, this is so we have a, "hopefully" unique file name */
   g_get_current_time(&current_time);
@@ -140,15 +507,16 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   initial_start = ui_rendering->start;
   initial_duration = ui_rendering->duration;
   
-  /* figure out which volume has the most frames, need this if we're doing a 
-     movie over frames */
+  /* figure out which data set has the most frames, need this if we're doing a movie over frames */
   contexts = ui_rendering->contexts;
-  most_frames_volume = contexts->rendering_context->volume;
-  contexts = contexts->next;
   while (contexts != NULL) {
-    if (contexts->rendering_context->volume->data_set->dim.t >
-	most_frames_volume->data_set->dim.t)
-      most_frames_volume = contexts->rendering_context->volume;
+    if (AMITK_IS_DATA_SET(contexts->rendering_context->object)) {
+      if (most_frames_ds == NULL)
+	most_frames_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+      else if (AMITK_DATA_SET_NUM_FRAMES(most_frames_ds) <
+	       AMITK_DATA_SET_NUM_FRAMES(contexts->rendering_context->object))
+	most_frames_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+    }
     contexts = contexts->next;
   }
 
@@ -169,7 +537,7 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       /* continue if good so far and we haven't closed the dialog box */
 
       /* figure out the rotation for this frame */
-      for (i_axis = 0; i_axis < NUM_AXIS ; i_axis++) {
+      for (i_axis = 0; i_axis < AMITK_AXIS_NUM ; i_axis++) {
 	rotation_step[i_axis] = 
 	  (((double) i_frame)*2.0*M_PI*ui_rendering_movie->rotation[i_axis])
 	  / ui_rendering_movie->num_frames;
@@ -180,22 +548,32 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       if (ui_rendering_movie->type == OVER_TIME) {
 	ui_rendering->start = ui_rendering_movie->start_time + i_frame*ui_rendering->duration;
       }  else {
-	volume_frame = floor((i_frame/((float) ui_rendering_movie->num_frames)
-			      * most_frames_volume->data_set->dim.t));
-	ui_rendering->start = volume_start_time(most_frames_volume, volume_frame)+CLOSE;
-	ui_rendering->duration = 
-	  volume_end_time(most_frames_volume, volume_frame) -ui_rendering->start-CLOSE;
+	if (most_frames_ds) {
+	  ds_frame = floor((i_frame/((float) ui_rendering_movie->num_frames)
+			    * AMITK_DATA_SET_NUM_FRAMES(most_frames_ds)));
+	  ui_rendering->start = amitk_data_set_get_start_time(most_frames_ds, ds_frame)*(1.0+EPSILON);
+	  ui_rendering->duration = 
+	    amitk_data_set_get_end_time(most_frames_ds, ds_frame)-ui_rendering->start*(1.0-EPSILON);
+	} else { /* just have roi's.... doesn't make much sense if we get here */
+	  ui_rendering->start = 0.0;
+	  ui_rendering->duration = 1.0;
+	}
       }
  
 
 #ifdef AMIDE_DEBUG
       if (ui_rendering_movie->type == OVER_TIME)
-	g_print("\tRendering\t%d\tstart-end time %5.3f-%5.3f\trotation x %5.3f y %5.3f z %5.3f\n",
+	g_print("\tRendering %d --- start/end %5.3f-%5.3f s --- rotation x %5.1f y %5.1f z %5.1f\r",
 		i_frame, ui_rendering->start, ui_rendering->start+ui_rendering->duration,
-		rotation_step[XAXIS], rotation_step[YAXIS], rotation_step[ZAXIS]);
+		180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
+		180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
+		180.0*rotation_step[AMITK_AXIS_Z]/M_PI);
       else
-	g_print("\tRendering\t%d\tdata frame %d\trotation x %5.3f y %5.3f z %5.3f\n",
-		i_frame, volume_frame, rotation_step[XAXIS], rotation_step[YAXIS], rotation_step[ZAXIS]);
+	g_print("\tRendering %d --- data frame %d --- rotation x %5.1f y %5.1f z %5.1f\r",
+		i_frame, ds_frame, 
+		180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
+		180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
+		180.0*rotation_step[AMITK_AXIS_Z]/M_PI);
 #endif
       
       /* render the contexts */
@@ -204,34 +582,29 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
       
 #ifdef AMIDE_DEBUG
-      g_print("\tWriting\t\t%d\n",i_frame);
+      g_print("\tWriting  %d\r",i_frame);
 #endif
 
       i = 0;
       do {
-	if (i > 0) g_free(frame_file_name);
+	if (i > 0) g_free(frame_filename);
 	i++;
-	frame_file_name = g_strdup_printf("%s/%ld_%d_amide_rendering_%d.ppm",
+	frame_filename = g_strdup_printf("%s/%ld_%d_amide_rendering_%d.jpg",
 					  temp_dir, current_time.tv_sec, i, i_frame);
-      } while (stat(frame_file_name, &file_info) == 0);
+      } while (stat(frame_filename, &file_info) == 0);
       
-      /* yep, we still need to use imlib to export ppm files, as gdk_pixbuf doesn't seem to have
-	 this capability */
-      ppm_image = 
-	gdk_imlib_create_image_from_data(gdk_pixbuf_get_pixels(ui_rendering->rgb_image), 
-					 NULL,
-					 gdk_pixbuf_get_width(ui_rendering->rgb_image), 
-					 gdk_pixbuf_get_height(ui_rendering->rgb_image));
 
-      return_val = gdk_imlib_save_image_to_ppm(ppm_image, frame_file_name);
-      gdk_imlib_destroy_image(ppm_image);
-
-      
-      if (return_val != 1) 
-	g_warning("saving of following ppm file failed: %s\n\tAborting movie generation",
-		  frame_file_name);
+      if (gdk_pixbuf_save (ui_rendering->pixbuf, frame_filename, 
+			   "jpeg", NULL, "quality", "100", NULL))
+	return_val = 1;
       else
-	file_list = g_list_append(file_list, frame_file_name);
+	return_val = 0;
+
+      if (return_val != 1) 
+	g_warning("saving of following jpeg file failed: %s\n\tAborting movie generation",
+		  frame_filename);
+      else
+	file_list = g_list_append(file_list, frame_filename);
       
       /* do any events pending, this allows the canvas to get displayed */
       while (gtk_events_pending()) 
@@ -239,14 +612,14 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       
       /* and unrotate the rendering contexts so that we can properly rerotate
 	 for the next frame */
-      for (i_axis = NUM_AXIS; i_axis > 0 ; i_axis--) {
+      for (i_axis = AMITK_AXIS_NUM; i_axis > 0 ; i_axis--) {
 	renderings_set_rotation(ui_rendering->contexts, 
 				i_axis-1, -rotation_step[i_axis-1]);
       }
       
       /* update the progress bar */
-      gtk_progress_set_percentage(GTK_PROGRESS(ui_rendering_movie->progress),
-				  (gfloat) i_frame/((gfloat) ui_rendering_movie->num_frames*2.0));
+      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress),
+				    (gfloat) i_frame/((gfloat) ui_rendering_movie->num_frames*2.0));
     }
   }
 
@@ -255,32 +628,32 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   /* do the mpeg stuff if no errors so far and we haven't closed the dialog box */
   if ((return_val == 1) && (ui_rendering_movie->reference_count > 1)) { 
 #ifdef AMIDE_DEBUG
-    g_print("Encoding the MPEG\n");
+    g_print("\nEncoding the MPEG\n");
 #endif
 
     i = 0;
     do { /* get a unique file name */
-      if (i > 0) g_free(param_file_name); 
+      if (i > 0) g_free(param_filename); 
       i++;
-      param_file_name = g_strdup_printf("%s/%ld_%d_amide_rendering.param",
-					temp_dir, current_time.tv_sec, i);
-    } while (stat(param_file_name, &file_info) == 0);
+      param_filename = g_strdup_printf("%s/%ld_%d_amide_rendering.param",
+				       temp_dir, current_time.tv_sec, i);
+    } while (stat(param_filename, &file_info) == 0);
     
     /* open the parameter file for writing */
-    if ((param_file = fopen(param_file_name, "w")) != NULL) {
+    if ((param_file = fopen(param_filename, "w")) != NULL) {
       fprintf(param_file, "PATTERN\tIBBPBBPBBPBBPBBP\n");
-      fprintf(param_file, "OUTPUT\t%s\n",output_file_name);
+      fprintf(param_file, "OUTPUT\t%s\n",output_filename);
       fprintf(param_file, "INPUT_DIR\t%s\n","");
       fprintf(param_file, "INPUT\n");
       
       temp_list = file_list;
       while (temp_list != NULL) {
-	frame_file_name = temp_list->data;
-	fprintf(param_file, "%s\n",frame_file_name);
+	frame_filename = temp_list->data;
+	fprintf(param_file, "%s\n",frame_filename);
 	temp_list = temp_list->next;
       }
       fprintf(param_file, "END_INPUT\n");
-      fprintf(param_file, "BASE_FILE_FORMAT\tPPM\n");
+      fprintf(param_file, "BASE_FILE_FORMAT\tJPEG\n");
       fprintf(param_file, "INPUT_CONVERT\t*\n");
       fprintf(param_file, "GOP_SIZE\t16\n");
       fprintf(param_file, "SLICES_PER_FRAME\t1\n");
@@ -294,26 +667,27 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       fprintf(param_file, "BQSCALE\t25\n");
       fprintf(param_file, "REFERENCE_FRAME\tDECODED\n");
       fprintf(param_file, "FRAME_RATE\t30\n");
+      fprintf(param_file, "FORCE_ENCODE_LAST_FRAME\n");
       
-      file_list = g_list_append(file_list, param_file_name);
+      file_list = g_list_append(file_list, param_filename);
       fclose(param_file);
 
       /* delete the previous .mpg file if it existed */
-      if (stat(output_file_name, &file_info) == 0) {
+      if (stat(output_filename, &file_info) == 0) {
 	if (S_ISREG(file_info.st_mode)) {
-	  if (unlink(output_file_name) != 0) {
-	    g_warning("Couldn't unlink file: %s",output_file_name);
+	  if (unlink(output_filename) != 0) {
+	    g_warning("Couldn't unlink file: %s",output_filename);
 	    return_val = -1;
 	  }
 	} else {
-	  g_warning("Unrecognized file type for file: %s, couldn't delete", output_file_name);
+	  g_warning("Unrecognized file type for file: %s, couldn't delete", output_filename);
 	  return_val = -1;
 	}
       }
       
       if (return_val != -1) {
 	/* and run the mpeg encoding process */
-	temp_string = g_strdup_printf("%s -quiet 1 -no_frame_summary %s",AMIDE_MPEG_ENCODE_BIN, param_file_name);
+	temp_string = g_strdup_printf("%s -quiet 1 -no_frame_summary %s",AMIDE_MPEG_ENCODE_BIN, param_filename);
 	ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
 	return_val = system(temp_string);
 	ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
@@ -327,19 +701,18 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       }
       
       /* update the progress bar */
-      gtk_progress_set_percentage(GTK_PROGRESS(ui_rendering_movie->progress), 1.0);
+      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress), 1.0);
     }
   }
 
 
   /* do some cleanups */
   /* note, temp_dir is just a pointer to a string, not a copy, so don't free it */
-
   while (file_list != NULL) {
-    frame_file_name = file_list->data;
-    file_list = g_list_remove(file_list, frame_file_name);
-    unlink(frame_file_name);
-    g_free(frame_file_name);
+    frame_filename = file_list->data;
+    file_list = g_list_remove(file_list, frame_filename);
+    unlink(frame_filename);
+    g_free(frame_filename);
   }
     
   /* and rerender one last time to back to the initial rotation and time */
@@ -350,7 +723,7 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
 
   /* and remove the reference we added here*/
-  ui_rendering_movie = ui_rendering_movie_free(ui_rendering_movie);
+  ui_rendering_movie = movie_unref(ui_rendering_movie);
 
   return;
 }
@@ -360,6 +733,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   
   ui_rendering_movie_t * ui_rendering_movie;
   gchar * temp_string = NULL;
+  GtkWidget * dialog;
   GtkWidget * packing_table;
   GtkWidget * hseparator;
   GtkWidget * label;
@@ -367,58 +741,61 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   GtkWidget * radio_button1;
   GtkWidget * radio_button2;
   guint table_row = 0;
-  axis_t i_axis;
+  AmitkAxis i_axis;
   renderings_t * contexts;
-  amide_time_t temp_time;
+  AmitkDataSet * temp_ds;
+  gboolean valid;
+  gint temp_end_frame;
+  amide_time_t temp_end_time;
+  amide_time_t temp_start_time;
   
   if (ui_rendering->movie != NULL)
     return ui_rendering->movie;
 
-  ui_rendering_movie = ui_rendering_movie_init();
+  ui_rendering_movie = movie_init();
   ui_rendering->movie = ui_rendering_movie;
   ui_rendering_movie->ui_rendering = ui_rendering;
 
-  contexts = ui_rendering->contexts;
 
   ui_rendering_movie->start_frame = 0;
-  ui_rendering_movie->end_frame = contexts->rendering_context->volume->data_set->dim.t-1;
-  ui_rendering_movie->start_time = volume_start_time(contexts->rendering_context->volume,0);
-  ui_rendering_movie->end_time = volume_end_time(contexts->rendering_context->volume,
-						 contexts->rendering_context->volume->data_set->dim.t-1);
-  contexts = contexts->next;
+
+  /* try to get reasonable default values */
+  contexts = ui_rendering->contexts;
+  valid = FALSE;
   while (contexts != NULL) {
-    if (contexts->rendering_context->volume->data_set->dim.t-1 > ui_rendering_movie->end_frame)
-      ui_rendering_movie->end_frame = contexts->rendering_context->volume->data_set->dim.t-1;
-    temp_time = volume_start_time(contexts->rendering_context->volume,0);
-    if (temp_time < ui_rendering_movie->start_time)
-      ui_rendering_movie->start_time = temp_time;
-    temp_time = volume_end_time(contexts->rendering_context->volume,
-				contexts->rendering_context->volume->data_set->dim.t-1);
-    if (temp_time > ui_rendering_movie->end_time)
-      ui_rendering_movie->end_time = temp_time;
+    if (AMITK_IS_DATA_SET(contexts->rendering_context->object)) {
+      temp_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+      temp_end_frame = AMITK_DATA_SET_NUM_FRAMES(temp_ds)-1;
+      temp_start_time = amitk_data_set_get_start_time(temp_ds,0);
+      temp_end_time = amitk_data_set_get_end_time(temp_ds, temp_end_frame);
+      if (!valid) {
+	ui_rendering_movie->end_frame = temp_end_frame;
+	ui_rendering_movie->start_time = temp_start_time;
+	ui_rendering_movie->end_time = temp_end_time;
+      } else {
+	if (temp_end_frame > ui_rendering_movie->end_frame)
+	  ui_rendering_movie->end_frame = temp_end_frame;
+	if (temp_start_time < ui_rendering_movie->start_time)
+	  ui_rendering_movie->start_time = temp_start_time;
+	if (temp_end_time > ui_rendering_movie->end_time)
+	  ui_rendering_movie->end_time = temp_end_time;
+      }
+      valid = TRUE;
+    }
     contexts = contexts->next;
   }
     
   temp_string = g_strdup_printf("%s: Rendering Movie Generation Dialog",PACKAGE);
-  ui_rendering_movie->dialog = gnome_property_box_new();
-  gtk_window_set_title(GTK_WINDOW(ui_rendering_movie->dialog), temp_string);
+  dialog = gtk_dialog_new_with_buttons(temp_string,  GTK_WINDOW(ui_rendering->app),
+				       GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+				       GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+				       NULL);
   g_free(temp_string);
 
   /* setup the callbacks for app */
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->dialog), "close",
-  		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_close),
-  		     ui_rendering_movie);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->dialog), "apply",
-  		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_apply), 
-		     ui_rendering_movie);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->dialog), "help",
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_help),
-		     ui_rendering_movie);
-
-  /* not operating as a true property box dialog, i.e. no ok option */
-  /* having an ok button get's really confusing, as we get a close signal in addition
-     to an apply signal with the ok button */
-  gtk_widget_destroy(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog)->ok_button);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), ui_rendering_movie);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), ui_rendering_movie);
 
 
   /* ---------------------------
@@ -428,9 +805,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(5,3,FALSE);
-  label = gtk_label_new("Movie Parameters");
   table_row=0;
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(ui_rendering_movie->dialog),  packing_table, label);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
 
   /* widgets to specify how many frames */
   label = gtk_label_new("Movie Frames");
@@ -441,9 +817,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_frames), 
-		     ui_rendering_movie);
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_frames_cb),  ui_rendering_movie);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -455,8 +829,9 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   table_row++;
 
   /* widgets to specify number of rotations on the axis */
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    temp_string = g_strdup_printf("Rotations on %s", axis_names[i_axis]);
+  for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
+
+    temp_string = g_strdup_printf("Rotations on %s", amitk_axis_get_name(i_axis));
     label = gtk_label_new(temp_string);
     g_free(temp_string);
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
@@ -467,10 +842,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-    gtk_object_set_data(GTK_OBJECT(entry), "which_entry", GINT_TO_POINTER(i_axis));
-    gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_rotation), 
-		       ui_rendering_movie);
+    g_object_set_data(G_OBJECT(entry), "which_entry", GINT_TO_POINTER(i_axis));
+    g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_rotation_cb), ui_rendering_movie);
     gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     table_row++;
@@ -494,20 +867,18 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   		   0, 0, X_PADDING, Y_PADDING);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
 
-  gtk_object_set_data(GTK_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
+  g_object_set_data(G_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
 
   radio_button2 = gtk_radio_button_new_with_label(NULL, "over frames");
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(radio_button2), 
-			     gtk_radio_button_group(GTK_RADIO_BUTTON(radio_button1)));
+			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio_button1)));
   gtk_table_attach(GTK_TABLE(packing_table), radio_button2,
   		   2,3, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
-  gtk_object_set_data(GTK_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
+  g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
 
-  gtk_signal_connect(GTK_OBJECT(radio_button1), "clicked",  
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_dynamic_type), ui_rendering_movie);
-  gtk_signal_connect(GTK_OBJECT(radio_button2), "clicked",  
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_dynamic_type), ui_rendering_movie);
+  g_signal_connect(G_OBJECT(radio_button1), "clicked", G_CALLBACK(dynamic_type_cb), ui_rendering_movie);
+  g_signal_connect(G_OBJECT(radio_button2), "clicked", G_CALLBACK(dynamic_type_cb), ui_rendering_movie);
 
   table_row++;
 
@@ -524,9 +895,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->start_time_entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->start_time_entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->start_time_entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start_time), 
-		     ui_rendering_movie);
+  g_signal_connect(G_OBJECT(ui_rendering_movie->start_time_entry), "changed", 
+		   G_CALLBACK(change_start_time_cb), ui_rendering_movie);
   gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_time_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -535,9 +905,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->start_frame_entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->start_frame_entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->start_frame_entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start_frame), 
-		     ui_rendering_movie);
+  g_signal_connect(G_OBJECT(ui_rendering_movie->start_frame_entry), "changed", 
+		   G_CALLBACK(change_start_frame_cb), ui_rendering_movie);
   gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_frame_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -555,9 +924,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->end_time_entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->end_time_entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->end_time_entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_end_time), 
-		     ui_rendering_movie);
+  g_signal_connect(G_OBJECT(ui_rendering_movie->end_time_entry), "changed", 
+		   G_CALLBACK(change_end_time_cb), ui_rendering_movie);
   gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_time_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -566,9 +934,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->end_frame_entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->end_frame_entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->end_frame_entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_end_frame), 
-		     ui_rendering_movie);
+  g_signal_connect(G_OBJECT(ui_rendering_movie->end_frame_entry), "changed", 
+		   G_CALLBACK(change_end_frame_cb), ui_rendering_movie);
   gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_frame_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -591,7 +958,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   table_row++;
 
   /* show all our widgets */
-  gtk_widget_show_all(ui_rendering_movie->dialog);
+  gtk_widget_show_all(dialog);
 
   /* and hide the appropriate widgets */
   gtk_widget_hide(ui_rendering_movie->start_frame_label);
@@ -599,21 +966,9 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_widget_hide(ui_rendering_movie->end_frame_label);
   gtk_widget_hide(ui_rendering_movie->end_frame_entry);
 
-  /* tell the dialog we've changed */
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));
-
   return ui_rendering_movie;
 }
 
+
 #endif /* AMIDE_MPEG_ENCODE_SUPPORT */
 #endif /* LIBVOLPACK_SUPPORT */
-
-
-
-
-
-
-
-
-
-

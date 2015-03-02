@@ -1,0 +1,43 @@
+<?xml version="1.0" standalone="no"?>
+<omf>
+  <resource>
+
+    <title>
+	AMIDE User's Manual V0.2
+    </title>
+
+    <creator>
+	<person>
+	<firstName>Andy</firstName>
+	<lastName>Loening</lastName>
+	<email>loening@ucla.edu</email>
+	</person>
+    </creator>
+
+    <date>
+      2002-06-02
+    </date>
+
+    <version identifier="0.2" date="2002-06-02" 
+    description="Updated for GNOME 2.0"/>
+
+    <subject>
+	<category>Applications|Other</category>
+    </subject>
+
+    <description>
+      This is the user's manual for the AMIDE medical imaging program
+    </description>
+
+    <type>
+	manual
+    </type>
+
+    <format mime="text/xml" dtd="-//OASIS//DTD DocBook XML V4.1.2//EN"/>
+
+    <identifier url="amide.xml"/>
+
+    <language code="C"/>
+
+  </resource>
+</omf>

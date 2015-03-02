@@ -1,0 +1,115 @@
+/* amitk_roi.h
+ *
+ * Part of amide - Amide's a Medical Image Dataset Examiner
+ * Copyright (C) 2000-2002 Andy Loening
+ *
+ * Author: Andy Loening <loening@ucla.edu>
+ */
+
+/*
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2, or (at your option)
+  any later version.
+ 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+  02111-1307, USA.
+*/
+
+#ifndef __AMITK_ROI_H__
+#define __AMITK_ROI_H__
+
+
+#include "amitk_volume.h"
+#include "amitk_data_set.h"
+
+G_BEGIN_DECLS
+
+#define	AMITK_TYPE_ROI		        (amitk_roi_get_type ())
+#define AMITK_ROI(object)		(G_TYPE_CHECK_INSTANCE_CAST ((object), AMITK_TYPE_ROI, AmitkRoi))
+#define AMITK_ROI_CLASS(klass)	        (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_ROI, AmitkRoiClass))
+#define AMITK_IS_ROI(object)		(G_TYPE_CHECK_INSTANCE_TYPE ((object), AMITK_TYPE_ROI))
+#define AMITK_IS_ROI_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_ROI))
+#define	AMITK_ROI_GET_CLASS(object)	(G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_ROI, AmitkRoiClass))
+
+#define AMITK_ROI_TYPE(roi)             (AMITK_ROI(roi)->type)
+#define AMITK_ROI_ISOCONTOUR_VALUE(roi) (AMITK_ROI(roi)->isocontour_value)
+#define AMITK_ROI_VOXEL_SIZE(roi)       (AMITK_ROI(roi)->voxel_size)
+
+typedef enum {
+  AMITK_ROI_TYPE_ELLIPSOID, 
+  AMITK_ROI_TYPE_CYLINDER, 
+  AMITK_ROI_TYPE_BOX, 
+  AMITK_ROI_TYPE_ISOCONTOUR_2D, 
+  AMITK_ROI_TYPE_ISOCONTOUR_3D, 
+  AMITK_ROI_TYPE_NUM
+} AmitkRoiType;
+
+
+typedef struct _AmitkRoiClass AmitkRoiClass;
+typedef struct _AmitkRoi AmitkRoi;
+
+
+struct _AmitkRoi
+{
+  AmitkVolume parent;
+
+  AmitkRoiType type;
+
+  /* isocontour specific stuff */
+  AmitkRawData * isocontour;
+  AmitkPoint voxel_size;
+  amide_data_t isocontour_value;
+
+};
+
+struct _AmitkRoiClass
+{
+  AmitkVolumeClass parent_class;
+
+  void (* roi_changed)      (AmitkRoi * roi);
+  void (* roi_type_changed) (AmitkRoi * roi);
+
+};
+
+
+
+/* Application-level methods */
+
+GType	        amitk_roi_get_type	          (void);
+AmitkRoi *      amitk_roi_new                     (AmitkRoiType type);
+gboolean        amitk_roi_undrawn                 (const AmitkRoi * roi);
+GSList *        amitk_roi_get_intersection_line   (const AmitkRoi * roi, 
+						   const AmitkVolume * canvas_slice,
+						   const amide_real_t pixel_dim);
+GSList *        amitk_roi_free_points_list        (GSList * list);
+AmitkDataSet *  amitk_roi_get_intersection_slice  (const AmitkRoi * roi, 
+						   const AmitkVolume * canvas_slice,
+						   const amide_real_t pixel_dim);
+void            amitk_roi_set_isocontour          (AmitkRoi * roi, 
+						   AmitkDataSet * ds,
+						   AmitkVoxel value_voxel);
+void            amitk_roi_isocontour_erase_area   (AmitkRoi * roi, 
+						   AmitkVoxel erase_voxel, 
+						   gint area_size);
+void            amitk_roi_set_type                (AmitkRoi * roi, AmitkRoiType new_type);
+void            amitk_roi_set_voxel_size          (AmitkRoi * roi, AmitkPoint voxel_size);
+const gchar *   amitk_roi_type_get_name           (const AmitkRoiType roi_type);
+
+amide_real_t    amitk_rois_get_max_min_voxel_size (GList * objects);
+
+
+/* external variables */
+extern gchar * amitk_roi_menu_names[];
+extern gchar * amitk_roi_menu_explanation[];
+
+G_END_DECLS
+
+#endif /* __AMITK_ROI_H__ */

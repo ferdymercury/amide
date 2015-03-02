@@ -24,13 +24,11 @@
 */
 
 
-#include "config.h"
+#include "amide_config.h"
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <time.h>
 #include <gnome.h>
-#include <math.h>
 #include <matrix.h>
-#include "volume.h"
 #include "cti_import.h"
 
 static char * cti_data_types[] = {
@@ -44,29 +42,25 @@ static char * cti_data_types[] = {
   "Integer (32 bit), Big Endian" /* SunLong */
 }; /* NumMatrixDataTypes */
 
-volume_t * cti_import(const gchar * cti_filename) {
+AmitkDataSet * cti_import(const gchar * cti_filename) {
 
-  MatrixFile * cti_file;
-  MatrixData * cti_subheader;
-  MatrixData * cti_slice;
-  voxelpoint_t i, j;
+  MatrixFile * cti_file=NULL;
+  MatrixData * cti_subheader=NULL;
+  MatrixData * cti_slice=NULL;
+  AmitkVoxel i, j;
   gint matnum;
-  volume_t * temp_volume;
+  AmitkDataSet * ds=NULL;
   guint slice, num_slices;
-  gchar * name;
   gchar * temp_name;
   gchar ** frags=NULL;
   time_t scan_time;
   gboolean two_dim_scale;
-  realpoint_t temp_rp;
-  data_format_t data_format;
-  Image_subheader * ish;
-  Scan_subheader * ssh;
-  Attn_subheader * ash;
+  AmitkPoint temp_point;
+  AmitkFormat data_format;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("can't open file %s", cti_filename);
-    return NULL;
+    goto error;
   }
 
   /* check if we can handle the file type */
@@ -90,8 +84,8 @@ volume_t * cti_import(const gchar * cti_filename) {
   case ByteVolume:
   default:
     g_warning("can't open this CTI file type: %d", cti_file->mhptr->file_type);
-    matrix_close(cti_file);
-    return NULL;
+    goto error;
+    break;
   }
 
   /* we always start at the first iamge */
@@ -99,10 +93,8 @@ volume_t * cti_import(const gchar * cti_filename) {
   matnum = cti_file->dirlist->first->matnum;
 
   if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
-    g_warning("can't get header info at matrix %x in file %s",\
-	      matnum, cti_filename);
-    matrix_close(cti_file);
-    return NULL;
+    g_warning("can't get header info at matrix %x in file %s", matnum, cti_filename);
+    goto error;
   }
 
   /* make sure we know how to process the data type */
@@ -110,11 +102,11 @@ volume_t * cti_import(const gchar * cti_filename) {
   switch (cti_subheader->data_type) {
   case VAX_Ix2:  /* little endian short */
   case SunShort: /* big endian short */
-    data_format = SSHORT;
+    data_format = AMITK_FORMAT_SSHORT;
     break;
   case IeeeFloat: /* big endian float */
   case VAX_Rx4:  /* PDP float */
-    data_format = FLOAT;
+    data_format = AMITK_FORMAT_FLOAT;
     break; /* handled data types */
   case UnknownMatDataType:
   case ByteData: 
@@ -126,151 +118,108 @@ volume_t * cti_import(const gchar * cti_filename) {
     g_warning("no support for importing CTI files with data type of: %s", 
 	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
 			     cti_subheader->data_type : 0]);
-    matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
-    return NULL;
+    goto error;
+    break;
   }
 
   /* init our data structures */
-  if ((temp_volume = volume_init()) == NULL) {
-    g_warning("couldn't allocate space for the volume structure to hold CTI data");
-    matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
-    return temp_volume;
+  if ((ds = amitk_data_set_new()) == NULL) {
+    g_warning("couldn't allocate space for the data set structure to hold CTI data");
+    goto error;
   }
-  temp_volume->data_set = data_set_init();
-  temp_volume->coord_frame = rs_init();
-  if ((temp_volume->data_set == NULL) ||(temp_volume->coord_frame == NULL)) {
-    g_warning("couldn't allocate space for the data set structure/coord_frame to hold CTI data");
-    matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
-    return volume_unref(temp_volume);
+  
+  if ((ds->raw_data = amitk_raw_data_new()) == NULL) {
+    g_warning("couldn't allocate space for the raw data structure to hold CTI data");
+    goto error;
   }
 
   /* start acquiring some useful information */
-  temp_volume->data_set->format = data_format;
-  temp_volume->data_set->dim.x = cti_subheader->xdim;
-  temp_volume->data_set->dim.y = cti_subheader->ydim;
-  temp_volume->data_set->dim.z = (cti_subheader->zdim == 1) ? 
+  ds->raw_data->format = data_format;
+  ds->raw_data->dim.x = cti_subheader->xdim;
+  ds->raw_data->dim.y = cti_subheader->ydim;
+  ds->raw_data->dim.z = (cti_subheader->zdim == 1) ? 
     cti_file->mhptr->num_planes : cti_subheader->zdim;
-  temp_volume->data_set->dim.t = cti_file->mhptr->num_frames;
+  ds->raw_data->dim.t = cti_file->mhptr->num_frames;
   num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
 
   /* figure out the size of our factor array */
-  if ( data_format == FLOAT) { /* float image, so we don't need scaling factors */
+  if ( data_format == AMITK_FORMAT_FLOAT) { /* float image, so we don't need scaling factors */
     two_dim_scale = FALSE;
   } else if (cti_subheader->zdim == 1) {
     /* slice image, non-float data, so we'll need a 2D array of scaling factors */
-    temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
-    temp_volume->internal_scaling->dim.z = temp_volume->data_set->dim.z;
+    ds->internal_scaling->dim.t = ds->raw_data->dim.t;
+    ds->internal_scaling->dim.z = ds->raw_data->dim.z;
     two_dim_scale = TRUE;
   } else { /* volume image, so we'll need a 1D array of scaling factors */
-    temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
+    ds->internal_scaling->dim.t = ds->raw_data->dim.t;
     two_dim_scale = FALSE;
   }
 
-  /* malloc the space for the scaling factors */
-  g_free(temp_volume->internal_scaling->data); /* get rid of any old scaling factors */
-  if ((temp_volume->internal_scaling->data = data_set_get_data_mem(temp_volume->internal_scaling)) == NULL) {
+  /* allocate the space for the scaling factors */
+  g_free(ds->internal_scaling->data); /* get rid of any old scaling factors */
+  if ((ds->internal_scaling->data = amitk_raw_data_get_data_mem(ds->internal_scaling)) == NULL) {
     g_warning("couldn't allocate space for the scaling factors for the CTI data");
-    matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
-    return volume_unref(temp_volume);
+    goto error;
   }
   
-  /* malloc the space for the volume */
-  if ((temp_volume->data_set->data = data_set_get_data_mem(temp_volume->data_set)) == NULL) {
+  /* allocate the space for the raw data */
+  if ((ds->raw_data->data = amitk_raw_data_get_data_mem(ds->raw_data)) == NULL) {
     g_warning("couldn't allocate space for the data set to hold CTI data");
-    matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
-    return volume_unref(temp_volume);
+    goto error;
   }
 
 
   /* it's a CTI File, we'll guess it's PET data */
-  temp_volume->modality = PET;
+  ds->modality = AMITK_MODALITY_PET;
 
-  /* try figuring out the name */  
-  if (cti_file->mhptr->study_name[0] != '\0')
-    name = g_strdup(cti_file->mhptr->study_name);
-  else if (cti_file->mhptr->original_file_name[0] != '\0')
-    name = g_strdup(cti_file->mhptr->original_file_name);
-  else {/* no original filename? */
+  /* try figuring out the name */
+  if (cti_file->mhptr->original_file_name != NULL) {
+    amitk_object_set_name(AMITK_OBJECT(ds),cti_file->mhptr->original_file_name);
+  } else {/* no original filename? */
     temp_name = g_strdup(g_basename(cti_filename));
     /* remove the extension of the file */
     g_strreverse(temp_name);
     frags = g_strsplit(temp_name, ".", 2);
     g_free(temp_name);
     g_strreverse(frags[1]);
-    name = g_strdup_printf(frags[1]);
+    amitk_object_set_name(AMITK_OBJECT(ds),frags[1]);
     g_strfreev(frags); /* free up now unused strings */
   }
-  /* try adding on the reconstruction method */
-  switch(cti_file->mhptr->file_type) {
-  case PetImage: 
-  case PetVolume: 
-  case InterfileImage:
-    ish = (Image_subheader *) cti_subheader->shptr;
-    temp_name = name;
-    if (ish->annotation[0] != '\0')
-      name = g_strdup_printf("%s - %s", temp_name, ish->annotation);
-    else
-      name = g_strdup_printf("%s, %d", temp_name, ish->recon_type);
-    g_free(temp_name);
-    break;
-  case AttenCor:
-    ash = (Attn_subheader *) cti_subheader->shptr;
-    temp_name = name;
-    name = g_strdup_printf("%s,%d", temp_name, ash->attenuation_type);
-    g_free(temp_name);
-    break;
-  case Sinogram:
-  default:
-    break; 
-  }
-
-
-  volume_set_name(temp_volume,name);
-  g_free(name);
 #ifdef AMIDE_DEBUG
-  g_print("volume name %s\n",temp_volume->name);
+  g_print("data set name %s\n",AMITK_OBJECT_NAME(ds));
   g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", 
-	  temp_volume->data_set->dim.x, temp_volume->data_set->dim.y, 
-	  temp_volume->data_set->dim.z, temp_volume->data_set->dim.t);
+	  ds->raw_data->dim.x, ds->raw_data->dim.y, 
+	  ds->raw_data->dim.z, ds->raw_data->dim.t);
   g_print("\tslices/volume %d\n",num_slices);
 	  
 #endif
   
   /* try to enter in a scan date */
   scan_time = cti_file->mhptr->scan_start_time;
-  volume_set_scan_date(temp_volume, ctime(&scan_time));
-  g_strdelimit(temp_volume->scan_date, "\n", ' '); /* turns newlines to white space */
-  g_strstrip(temp_volume->scan_date); /* removes trailing and leading white space */
+  amitk_data_set_set_scan_date(ds, ctime(&scan_time));
 
   /* get the voxel size */
-  temp_rp.x = 10*cti_subheader->pixel_size;
-  temp_rp.y = 10*cti_subheader->y_size;
-  temp_rp.z = 10*cti_subheader->z_size;
-  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) {/*handle corrupted cti files */ 
+  temp_point.x = 10*cti_subheader->pixel_size;
+  temp_point.y = 10*cti_subheader->y_size;
+  temp_point.z = 10*cti_subheader->z_size;
+  if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {/*handle corrupted cti files */ 
     g_warning("dectected corrupted CTI file, will try to continue by guessing voxel_size");
-    temp_volume->voxel_size = one_rp;
-  } else if (FLOATPOINT_EQUAL(temp_rp.x, 0.0) || 
-	     FLOATPOINT_EQUAL(temp_rp.y, 0.0) || 
-	     FLOATPOINT_EQUAL(temp_rp.z, 0.0)) {
+    ds->voxel_size = one_point;
+  } else if (EQUAL_ZERO(temp_point.x) || EQUAL_ZERO(temp_point.y) || EQUAL_ZERO(temp_point.z)) {
     g_warning("detected zero voxel size in CTI file, will try to continue by guessing voxel_size");
-    temp_volume->voxel_size = one_rp;
+    ds->voxel_size = one_point;
   } else
-    temp_volume->voxel_size = temp_rp;
+    ds->voxel_size = temp_point;
 
   /* get the offset */
-  temp_rp.x = 10*cti_subheader->x_origin;
-  temp_rp.y = 10*cti_subheader->y_origin;
-  temp_rp.z = 10*cti_subheader->z_origin;
-  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) {    /*handle corrupted cti files */ 
+  temp_point.x = 10*(((Image_subheader*)cti_subheader->shptr)->x_offset);
+  temp_point.y = 10*(((Image_subheader*)cti_subheader->shptr)->y_offset);
+  temp_point.z = 10*(((Image_subheader*)cti_subheader->shptr)->z_offset);
+  if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {    /*handle corrupted cti files */ 
     g_warning("detected corrupted CTI file, will try to continue by guessing offset");
-    temp_rp = zero_rp;
+    temp_point = zero_point;
   }
-  volume_set_center(temp_volume, temp_rp);
+  amitk_space_set_offset(AMITK_SPACE(ds), temp_point);
 
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, CTI files specify time as integers in msecs */
@@ -278,32 +227,32 @@ volume_t * cti_import(const gchar * cti_filename) {
   switch(cti_file->mhptr->file_type) {
   case PetImage: 
   case PetVolume: 
-    temp_volume->scan_start = (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    ds->scan_start = (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
     break;
   case AttenCor:
-    temp_volume->scan_start = 0.0; /* doesn't mean anything */
+    ds->scan_start = 0.0; /* doesn't mean anything */
     break;
   case Sinogram:
-    temp_volume->scan_start = (((Scan_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    ds->scan_start = (((Scan_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
     break;
   default:
     break; /* should never get here */
   }
 #ifdef AMIDE_DEBUG
-  g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
+  g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
   free_matrix_data(cti_subheader);
+  cti_subheader = NULL;
   
 
   /* allocate space for the array containing info on the duration of the frames */
-  if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
+  if ((ds->frame_duration = amitk_data_set_get_frame_duration_mem(ds)) == NULL) {
     g_warning("couldn't allocate space for the frame duration info");
-    matrix_close(cti_file);
-    return volume_unref(temp_volume);
+    goto error;
   }
   
   /* and load in the data */
-  for (i.t = 0; i.t < temp_volume->data_set->dim.t; i.t++) {
+  for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
 #ifdef AMIDE_DEBUG
     g_print("\tloading frame:\t%d",i.t);
 #endif
@@ -312,96 +261,111 @@ volume_t * cti_import(const gchar * cti_filename) {
       
       /* read in the corresponding cti slice */
       if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	g_warning("can't get image matrix %x in file %s",\
-		  matnum, cti_filename);
-	matrix_close(cti_file);
-	return volume_unref(temp_volume);
+	g_warning("can't get image matrix %x in file %s", matnum, cti_filename);
+	goto error;
       }
       
       /* set the frame duration, note, CTI files specify time as integers in msecs */
       switch(cti_file->mhptr->file_type) {
       case PetImage: 
       case PetVolume: 
-	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
+	ds->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
 	break;
       case AttenCor:
-	temp_volume->frame_duration[i.t] = 1.0; /* doesn't mean anything */
+	ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
 	break;
       case Sinogram:
-	temp_volume->frame_duration[i.t] = (((Scan_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
+	ds->frame_duration[i.t] = (((Scan_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
 	break;
       default:
 	break; /* should never get here */
       }
       
       switch (data_format) {
-      case SSHORT:
+      case AMITK_FORMAT_SSHORT:
 	
 	/* save the scale factor */
 	j.x = j.y = 0;
 	j.z = slice;
 	j.t = i.t;
 	if (two_dim_scale)
-	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
 	else if (slice == 0)
-	  *DATA_SET_FLOAT_1D_SCALING_POINTER(temp_volume->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
 	
 	/* copy the data into the volume */
 	/* note, we compensate here for the fact that we define 
 	   our origin as the bottom left, not top left like the CTI file */
-	for (i.z = slice*(temp_volume->data_set->dim.z/num_slices); 
-	     i.z < temp_volume->data_set->dim.z/num_slices + slice*(temp_volume->data_set->dim.z/num_slices); 
+	for (i.z = slice*(ds->raw_data->dim.z/num_slices); 
+	     i.z < ds->raw_data->dim.z/num_slices + slice*(ds->raw_data->dim.z/num_slices); 
 	     i.z++) {
-	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
-	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
-	      DATA_SET_SSHORT_SET_CONTENT(temp_volume->data_set,i) =
-		*(((data_set_SSHORT_t *) cti_slice->data_ptr) + 
-		  (temp_volume->data_set->dim.y*temp_volume->data_set->dim.x*
-		   (i.z-slice*(temp_volume->data_set->dim.z/num_slices))
-		   +temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)
+	  for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+	    for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
+		*(((amitk_format_SSHORT_t *) cti_slice->data_ptr) + 
+		  (ds->raw_data->dim.y*ds->raw_data->dim.x*
+		   (i.z-slice*(ds->raw_data->dim.z/num_slices))
+		   +ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)
 		   +i.x));
 	}
 	break;
-      case FLOAT:
+      case AMITK_FORMAT_FLOAT:
 	/* floating point data should use no scale factor */
 	
 	/* copy the data into the volume */
 	/* note, we compensate here for the fact that we define 
 	   our origin as the bottom left, not top left like the CTI file */
-	for (i.z = slice*(temp_volume->data_set->dim.z/num_slices); 
-	     i.z < temp_volume->data_set->dim.z/num_slices + slice*(temp_volume->data_set->dim.z/num_slices); 
+	for (i.z = slice*(ds->raw_data->dim.z/num_slices); 
+	     i.z < ds->raw_data->dim.z/num_slices + slice*(ds->raw_data->dim.z/num_slices); 
 	     i.z++) {
-	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
-	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
-	      DATA_SET_FLOAT_SET_CONTENT(temp_volume->data_set,i) =
-		*(((data_set_FLOAT_t *) cti_slice->data_ptr) + 
-		  (temp_volume->data_set->dim.y*temp_volume->data_set->dim.x*
-		   (i.z-slice*(temp_volume->data_set->dim.z/num_slices))
-		   +temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)
+	  for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+	    for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
+		*(((amitk_format_FLOAT_t *) cti_slice->data_ptr) + 
+		  (ds->raw_data->dim.y*ds->raw_data->dim.x*
+		   (i.z-slice*(ds->raw_data->dim.z/num_slices))
+		   +ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)
 		   +i.x));
 	}
       default:
-	break; /* should never get here */
+	g_warning("unexpected case in %s at %d\n", __FILE__, __LINE__);
+	goto error;
+	break; 
       }
 
       free_matrix_data(cti_slice);
     }
 #ifdef AMIDE_DEBUG
-    g_print("\tduration:\t%5.3f\n",temp_volume->frame_duration[i.t]);
+    g_print("\tduration:\t%5.3f\n",ds->frame_duration[i.t]);
 #endif
   }
 
   /* garbage collection */
   matrix_close(cti_file);
+  cti_file = NULL;
 
 
   /* setup remaining volume parameters */
-  volume_set_scaling(temp_volume, 1.0); /* set the external scaling factor */
-  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
-  volume_calc_frame_max_min(temp_volume);
-  volume_calc_global_max_min(temp_volume); 
+  amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
+  amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
+  amitk_data_set_calc_frame_max_min(ds);
+  amitk_data_set_calc_global_max_min(ds); 
 
-  return temp_volume;
+  return ds;
+
+ error:
+
+  if (cti_file != NULL)
+    matrix_close(cti_file);
+
+  if (cti_subheader != NULL)
+    free_matrix_data(cti_subheader);
+
+  if (ds != NULL)
+    g_object_unref(ds);
+
+  return NULL;
+
 }
 
 

@@ -29,11 +29,11 @@
 /* includes we always need with this widget */
 #include <gnome.h>
 #include "amide.h"
-#include "roi.h"
+#include "amitk_type_builtins.h"
+#include "amitk_object.h"
+#include "amitk_roi.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define AMITK_TYPE_TREE            (amitk_tree_get_type ())
 #define AMITK_TREE(obj)            (GTK_CHECK_CAST ((obj), AMITK_TYPE_TREE, AmitkTree))
@@ -41,9 +41,7 @@ extern "C" {
 #define AMITK_IS_TREE(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_TREE))
 #define AMITK_IS_TREE_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_TREE))
 
-#define AMITK_TREE_SELECTED_VOLUMES(obj)   (AMITK_TREE(obj)->selected_volumes)
-#define AMITK_TREE_SELECTED_ROIS(obj)      (AMITK_TREE(obj)->selected_rois)
-#define AMITK_TREE_VIEW_MODE(obj)      (AMITK_TREE(obj)->view_mode)
+#define AMITK_TREE_VISIBLE_OBJECTS(obj, view_mode)   (AMITK_TREE(obj)->visible_objects[(view_mode)])
 
 
 typedef struct _AmitkTree             AmitkTree;
@@ -51,87 +49,63 @@ typedef struct _AmitkTreeClass        AmitkTreeClass;
 
 struct _AmitkTree
 {
-  GtkTree tree;
+  GtkTreeView tree;
 
-  GtkWidget * active_leaf; /* which leaf carries the active symbol */
+  GList * visible_objects[AMITK_VIEW_MODE_NUM];
 
-  volumes_t * selected_volumes;
-  rois_t * selected_rois;
-
-  view_mode_t view_mode;
+  GtkTreeViewColumn * linked_column;
+  gint mouse_x; /* the current mouse position */
+  gint mouse_y; 
   
-  gboolean clicked;
-
 };
 
 struct _AmitkTreeClass
 {
-  GtkTreeClass parent_class;
+  GtkTreeViewClass parent_class;
 
   
-  void (* help_event)                (AmitkTree    *tree,
-				      help_info_t  help_type);
-  void (* select_object)             (AmitkTree    *tree,
-				      gpointer     object,
-				      object_t     type,
-				      gpointer     parent,
-				      object_t     parent_type);
-  void (* unselect_object)           (AmitkTree    *tree,
-				      gpointer     object,
-				      object_t     type,
-				      gpointer     parent,
-				      object_t     parent_type);
-  void (* make_active_object)        (AmitkTree    *tree,
-				      gpointer     object,
-				      object_t     type,
-				      gpointer     parent,
-				      object_t     parent_type);
-  void (* popup_object)              (AmitkTree    *tree,
-				      object_t     type,
-				      gpointer     parent,
-				      object_t     parent_type);
-  void (* add_object)                (AmitkTree    *tree,
-				      object_t     type,
-				      gpointer     parent,
-				      object_t     parent_type);
+  void (* help_event)                (AmitkTree *     tree,
+				      AmitkHelpInfo   help_type);
+  void (* select_object)             (AmitkTree *     tree,
+				      AmitkObject *   object,
+				      AmitkViewMode   view_mode);
+  void (* unselect_object)           (AmitkTree *     tree,
+				      AmitkObject *   object,
+				      AmitkViewMode   view_mode);
+  void (* make_active_object)        (AmitkTree *     tree,
+				      AmitkObject *   object,
+				      AmitkViewMode   view_mode);
+  void (* popup_object)              (AmitkTree *     tree,
+				      AmitkObject *   object);
+  void (* add_object)                (AmitkTree *     tree,
+				      AmitkObject *   parent,
+				      AmitkObjectType type,
+				      AmitkRoiType    roi_type);
+  void (* delete_object)             (AmitkTree *     tree,
+				      AmitkObject *   object);
 };  
 
 
-GtkType         amitk_tree_get_type          (void);
-GtkWidget*      amitk_tree_new               (view_mode_t view_mode);
+GType           amitk_tree_get_type          (void);
+GtkWidget*      amitk_tree_new               (void);
 void            amitk_tree_add_object        (AmitkTree * tree, 
-					      gpointer object, 
-					      object_t type, 
-					      gpointer parent,
-					      object_t parent_type,
+					      AmitkObject * object,
 					      gboolean expand_parent);
 void            amitk_tree_remove_object     (AmitkTree * tree, 
-					      gpointer object, 
-					      object_t type);
-GtkWidget *     amitk_tree_find_object       (AmitkTree * tree, 
-					      gpointer object, 
-					      object_t type);
+					      AmitkObject * object);
 void            amitk_tree_set_active_mark   (AmitkTree * tree,
-					      gpointer object,
-					      object_t type);
+					      AmitkObject * object);
 void            amitk_tree_select_object     (AmitkTree * tree,
-					      gpointer object,
-					      object_t type);
-void            amitk_tree_unselect_object   (AmitkTree * tree, 
-					      gpointer object, 
-					      object_t type);
-void            amitk_tree_update_object     (AmitkTree * tree, 
-					      gpointer object, 
-					      object_t type);
-align_pts_t *   amitk_tree_selected_pts      (AmitkTree * tree,
-					      gpointer parent,
-					      object_t parent_type);
+					      AmitkObject * object,
+					      AmitkViewMode view_mode);
+gboolean        amitk_tree_unselect_object   (AmitkTree * tree, 
+					      AmitkObject * object,
+					      AmitkViewMode view_mode);
+void            amitk_tree_set_linked_mode_column_visible (AmitkTree * tree,
+							   gboolean visible);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-
+G_END_DECLS
 
 #endif /* __AMITK_TREE_H__ */
 

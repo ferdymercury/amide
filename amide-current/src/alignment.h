@@ -29,11 +29,11 @@
 #define __ALIGNMENT_H__
 
 /* header files that are always needed with this file */
-#include "volume.h"
+#include "amitk_data_set.h"
 
 
 /* external functions */
-realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts);
+AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds, GList * marks);
 
 
 #endif /* __ALIGNMENT_H__ */

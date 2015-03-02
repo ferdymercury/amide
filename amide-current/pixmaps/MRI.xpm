@@ -1,5 +1,5 @@
 /* XPM */
-static char * MRI_xpm[] = {
+const char * MRI_xpm[] = {
 "24 24 168 2",
 "  	c None",
 ". 	c #161616",

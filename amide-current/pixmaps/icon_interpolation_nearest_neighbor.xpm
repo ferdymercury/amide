@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_interpolation_nearest_neighbor_xpm[] = {
+const char * icon_interpolation_nearest_neighbor_xpm[] = {
 "24 24 75 1",
 " 	c None",
 ".	c #434343",

@@ -24,39 +24,12 @@
 */
 
 
-/* typedefs */
+/* includes always needed with this */
+#include "amitk_study.h"
 
-typedef enum {
-  INTRO_PAGE, 
-  VOLUME_PAGE, 
-  ALIGN_PTS_PAGE, 
-  CONCLUSION_PAGE, 
-  NO_ALIGN_PTS_PAGE,
-  NUM_PAGES
-} which_page_t;
-
-/* data structures */
-typedef struct ui_alignment_t {
-  GtkWidget * dialog;
-  GtkWidget * druid;
-  GtkWidget * pages[NUM_PAGES];
-  GtkWidget * clist_volume_moving;
-  GtkWidget * clist_volume_fixed;
-  GtkWidget * clist_points;
-  GdkImlibImage * logo;
-
-  volumes_t * volumes;
-  volume_t * volume_moving;
-  volume_t * volume_fixed;
-  align_pts_t * align_pts;
-  realspace_t * coord_frame; /* the new coord frame for the moving volume */
-
-  guint reference_count;
-} ui_alignment_t;
 
 /* external functions */
-ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment);
-void ui_alignment_dialog_create(ui_study_t * ui_study);
+void ui_alignment_dialog_create(AmitkStudy * study);
 
 
 

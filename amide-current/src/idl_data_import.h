@@ -27,16 +27,16 @@
 #define __IDL_DATA_IMPORT_H__
 
 /* header files that are always needed with this file */
-#include "volume.h"
+#include "amitk_data_set.h"
 
 /* defines */
-#define IDL_RAW_DATA_FORMAT UBYTE_NE
+#define IDL_RAW_DATA_FORMAT AMITK_RAW_FORMAT_UBYTE_NE
 
 /* internal functions */
 
 
 /* external functions */
-volume_t * idl_data_import(const gchar * idl_data_filename);
+AmitkDataSet * idl_data_import(const gchar * idl_data_filename);
 
 
 #endif /* __IDL_DATA_IMPORT_H__ */

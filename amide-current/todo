@@ -1,20 +1,133 @@
 misc list of things todo:
 
-note: list is small, as this branch is currently considered "stable", and no more development will be done on it.
+
+for next release?
+-----------------
+
+* start commenting the widgets, run gtk-doc to generate documentation
+* closing ui_rendering dialog has a problem with reference counting on something... not sure what
+* some weird sort of bug with ui_series, where after closing a series, opening another and 
+	then setting threshold, it crashes
+       
+big things:
+-----------
+* guppi interface for drawing graphs of ROI statistics
+* add drag-n-drop capabilities between study windows
+* allow changing of displayed units (mm, cm, m, s, min)
+* now that i'm using a view_volume instead of a view_space,
+	the view should be able to be less then the size
+	of the data set slices
+* progress bars
+* ui_series should show all selected objects, not just data sets
+* add a objects list item,
+	-would allow reading in multi-bed data sets
+
                        
 small things:
 -------------
+* add "fly through" movie generation capability
+* add .vol file support
 * ISOCONTOUR_2D drawing doesn't know the active slice... just using the 1st for now
+* would changing the icons to .png files allow anti-aliasing?
 * rewrite isocontour determining algorithm so it's not recursive
+* add thickness/line style for isocontours?
+* change realpoint to 4D?
+* put the canvases in a scrolled widget?
+* make caching of slices smarter.  
+	We don't need to regenerate all slices when removing one slice from the list
+	slices shouldn't have to be the size of the largest dimensions
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
+* isocontour erase function only updates at button release, not during mouse movement
+* amide_logo.png should be distributed in the rpm, put in /usr/share/pixmaps
+	-should figure out how to get AMIDE into the gnome menu
+* should be able to specify units the image is in, and request different output units.
+	-study would have an output units variable
+	-each data set, can specify it's original units, and (if needed), a scaling factor to output unit
+* implement help buttons on most of the dialogs
+	-gnome_druid has a add help button function
+* add close button to threshold dialogs
+* ui_time_dialog shouldn't show so much precision on times
 
+pre 1.0 things:
+--------------
+* rewrite documentation
+* check README's, INSTALL guides, etc.
+* check that make distcheck works
+* write a man page
+* add tooltips to everything....
+
+
+probably post 1.0 things:
+----------------
+* add in a cropping wizard, to allow looking at only a subset of the data 
+* multi-step undo/redo
+* add report generation.  This would add colormaps, location, thickness
+	study name, volume name, scan date, etc. to the export function.
+	Would handle multiple images.
+* rendering alterations -> 
+	3D red/green imaging
+	allow rotation of light source and view in addition to object
+	allow changing of material properties
+	transformation to rendering structure is inefficient when doing multiple volumes,
+		each volume should be transfered using it's minimal voxel size, not the
+		group's maximum minimal voxel size.  the rendered images should then be scaled
+		and overlapped.  
+* change mpeg_encode to a library? 
+	would allow loss of "system" command, and proper 
+	progress reports, in ui_rendering_movie_dialog
+* aligning of data using automated registration?
+* preset thresholds (bone window, fat window, etc.)
+* roi object's could store their calculated values, and update on changes
+	updating could be done in idle time
+* could probably sublass isocontour's from AmitkRoi -> AimtkIsocontourRoi
+	also probably get rid of roi_variable types... not worth the performance improvement
 
 things dependent on other things: 
 -------------- 
-* when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
+
+* complete change to anti-aliased canvases
+	check with newer version of libgnomecanvas ( > 2.0.1-3)
+	- all canvases are now anti-aliased except for two:
+	  1- amitk_canvas, canvas coredumps occasionally (not stable)
+	  2- ui_preferences, line_style not followed by libart....
+
+* ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of
+	AMITK_TYPE_OBJECT when setting up gtk_list_store - this is due
+	to a gtk bug, adds a reference with G_TYPE_OBJECT but doesn't
+	remove it
+	- also in amitk_tree.c, ui_alignment_dialog.c
+
+* at some point, GtkGammaCurve will probably be deprecated from Gtk,
+	can either copy the code into amide, or come up with something
+	more fitting
+
+* when bug-buddy supports sourceforge bug reporting,
 	delete the following line from amide.c so we can have bug reporting
 	"signal(SIGSEGV, SIG_DFL);"
-* remove no-ops in raw_data.c when gcc > 3.0.3 comes out
+
+* there's a bunch of places where I'm attaching a widget to an object's signal,
+	then I need to remove those attachments when the widget is destroyed...
+	you would think there would be a way for this to happen automatically...
+
+* remove no-ops in raw_data.c
+	I've needed this (at least) for gcc <= 3.0.3.  Left in for the moment as
+	I haven't tested gcc 3.1 for this bug, and other people may be using
+	old versions of gcc.
+
+* currently, alpha blending is done inside of image.c, a single pixbuf is generated,
+	and this is handed to gnome_canvas.  It'd be nice to use separate pixbuf's but 
+	each data set, and throwing them on the canvas.  The single biggest problem with this is 
+	that the background buffer in gnome_canvas is RGB, not RGBA, so the buffer has an effective
+	alpha of 0xFF, and you're just blending the image with whatever that background is, 
+	screwing up the color levels.  may have to rewrite libgnomecanvas to use
+	a 32bit buffer
+	-would allow using cursor keys to shift data sets around each other in real time
 
 
+remaining GNOME 2.0 changes that need to be done 
+----------------------------------------------------
+* enable GNOME_DISABLE_DEPRECATED on compile
+	-need to replace the use of gnome_request_dialog in ui_study.c
+
+* should replace gnome_config with gconf

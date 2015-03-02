@@ -25,6 +25,12 @@
 
 #ifdef AMIDE_LIBMDC_SUPPORT
 
+#ifndef __MEDCON_IMPORT_H__
+#define __MEDCON_IMPORT_H__
+
+/* includes always needed with this file */
+#include "amitk_data_set.h"
+
 typedef enum {
   LIBMDC_NONE,
   LIBMDC_RAW, 
@@ -33,8 +39,7 @@ typedef enum {
   LIBMDC_ACR, 
   LIBMDC_INW, 
   LIBMDC_CONC, 
-  LIBMDC_ECAT6, 
-  LIBMDC_ECAT7,
+  LIBMDC_ECAT, 
   LIBMDC_INTF, 
   LIBMDC_ANLZ, 
   LIBMDC_DICM,
@@ -43,11 +48,12 @@ typedef enum {
 
 /* external functions */
 gboolean medcon_import_supports(libmdc_import_method_t submethod);
-volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submethod);
+AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t submethod);
 
 extern gchar * libmdc_menu_names[];
 extern gchar * libmdc_menu_explanations[];
 
+#endif /* __MEDCON_IMPORT_H__ */
 #endif
 
 

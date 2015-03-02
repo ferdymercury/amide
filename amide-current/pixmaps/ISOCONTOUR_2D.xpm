@@ -1,5 +1,5 @@
 /* XPM */
-static char * ISOCONTOUR_2D_xpm[] = {
+const char * ISOCONTOUR_2D_xpm[] = {
 "24 26 2 1",
 " 	c None",
 ".	c #000000",

@@ -1,15 +1,9 @@
 pixmapdir = $(datadir)/pixmaps
 
-BITMAPS     = \
-	CT.xpm \
-	MRI.xpm \
-	OTHER.xpm \
-	PET.xpm	\
-	ROI.xpm	\
-	SPECT.xpm \
-	study.xpm 
+pixmap_DATA = \
+	amide_logo.png
 
-## pixmap_DATA = $(BITMAPS)
+EXTRA_DIST  = $(pixmap_DATA) 
 
 
 

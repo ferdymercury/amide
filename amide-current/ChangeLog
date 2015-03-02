@@ -1,25 +1,32 @@
-0.6.7 2006.01.25
-	* update for xmedcon 0.9.x
+0.7.0
+     A complete rewrite of almost all of the code in AMIDE
 
-0.6.6 2003.05.02
-	* update for xmedcon 0.8.11
-	* removed libecat dependency for default rpm build
+	Major Changes:
+	* ported program to GTK 2.0 and GNOME 2.0
+	* data set's, roi's, etc. code has now been totally rewritten
+	  - these items are now subclasses of GObject
+	  - any object can be a child of any object
+	  - single object modification dialog that handles all objects
+	* new .xif format (2.0) that follows new object code
+	* old .xif format supported via legacy.c
+	* dropped notion of having a "view coordinate frame", same as base
+	* canvas updates are now done by an idle handler
+	* switched internally used data type to double (was float)
 
-0.6.5
-	* reduced memory consumption when importing raw data
-	* configure.in fix for medcon now using glib
-	* configure.in update for pkg-config
-	* threshold fix, uses %g instead of %f
-	* more intelligent CTI data set naming
-	* more intelligent medcon data set naming
-	* worked around delete during linked view bug - disallow
-	* fixed bug - getting color table on NULL data set with linked viewing
-	
-	
+	Minor Changes:
+	* when threshold or popup button hit, and dialog already up, brought to front
+	* dropped all remaining uses of imlib - can now only export images as jpeg...
+	* user is prompted/warned on inverting an axis
+	* ROI's can also be used as fiducial markers for alignments.
+	* added total counts to roi analysis
+	* single tree now used for linked viewing
+	* EPSILON value is now used correctly for comparing floats
+	* ROI rendering conversion speeded up greatly
+
 0.6.4
 	* view center notifier on help panel now gives correct location
 	* fixed subtle floating point rounding error in drawing isocontours
-	
+
 0.6.3
 	* Mac OS X doesn't have lround, using rint instead
 	* canvas arrows weren't being updated with canvas slider change

@@ -29,8 +29,11 @@
 #ifndef __CTI_IMPORT_H__
 #define __CTI_IMPORT_H__
 
+/* headers always needed with this guy */
+#include "amitk_data_set.h"
+
 /* external functions */
-volume_t * cti_import(const gchar * filename);
+AmitkDataSet * cti_import(const gchar * filename);
 
 #endif /* __CTI_IMPORT_H__ */
 

@@ -33,7 +33,7 @@
 /* defines */
 
 /* function declarations */
-analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_t * volume, guint frame);
+analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(AmitkRoi * roi, AmitkDataSet * ds, guint frame);
 
 #endif /* __ANALYSIS_`'m4_Variable_Type`'__ */
 

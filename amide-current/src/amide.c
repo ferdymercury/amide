@@ -23,12 +23,12 @@
   02111-1307, USA.
 */
 
-#include "config.h" 
+#include "amide_config.h" 
 #include <signal.h>
 #include <sys/stat.h>
 #include <gnome.h>
 #include "amide.h"
-#include "study.h"
+#include "amitk_study.h"
 #include "ui_study.h"
 
 /* external variables */
@@ -45,34 +45,6 @@ gchar * object_menu_names[] = {
   "Selected _Alignment Points"
 };
 
-gchar * object_edit_menu_explanation[] = {
-  "Edit study parameters",
-  "Edit parameters for selected data sets",
-  "Edit parameters for selected ROIs",
-  "Edit parameters for selected alignment points"
-};
-
-gchar * object_delete_menu_explanation[] = {
-  "BUG",
-  "Delete selected data sets",
-  "Delete selected ROIs",
-  "Delete selected alignment points"
-};
-
-gchar * threshold_type_names[] = {
-  "per slice", 
-  "per frame", 
-  "interpolated between frames",
-  "global"
-};
-
-gchar * threshold_type_explanations[] = {
-  "threshold the images based on the max and min values in the current slice",
-  "threshold the images based on the max and min values in the current frame",
-  "threshold the images based on max and min values interpolated from the reference frame thresholds",
-  "threshold the images based on the max and min values of the entire data set",
-};
-
 gchar * view_mode_names[] = {
   "single view",
   "linked view"
@@ -82,6 +54,7 @@ gchar * view_mode_explanations[] = {
   "All objects are shown in a single view",
   "Objects are shown in 1 of 2 linked views"
 };
+
 
 /* internal variables */
 static GList * windows = NULL;
@@ -120,40 +93,24 @@ void amide_log_handler(const gchar *log_domain,
 int main (int argc, char *argv []) {
 
   struct stat file_info;
-  study_t * study=NULL;
+  AmitkStudy * study = NULL;
+  AmitkStudy * imported_study = NULL;
   const gchar ** input_filenames;
   poptContext amide_ctx;
   guint i=0;
   gint studies_launched=0;
-  volume_t * new_volume;
+  AmitkDataSet * new_ds;
   gboolean loaded;
-
-  struct poptOption amide_popt_options[] = {
-    {"input_study",
-     'i',
-     POPT_ARG_NONE,
-     NULL,
-     0,
-     N_("Depreciated"),
-     N_("DEPRECIATED")
-    },
-    {NULL,
-     '\0',
-     0,
-     NULL,
-     0,
-     NULL,
-     NULL
-    }
-  };
+  amide_real_t min_voxel_size;
+  GnomeProgram * program;
 
   /* uncomment these whenever we get around to using i18n */
   //  bindtextdomain(PACKAGE, GNOMELOCALEDIR);
   //  textdomain(PACKAGE);
 
-  gnome_init_with_popt_table(PACKAGE, VERSION, argc, argv,
-			     amide_popt_options, 0, &amide_ctx);
-
+  program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
+			       GNOME_PROGRAM_STANDARD_PROPERTIES, NULL);
+  g_object_get (G_OBJECT (program),GNOME_PARAM_POPT_CONTEXT,&amide_ctx,NULL);
 #ifdef AMIDE_DEBUG
   /* restore the normal segmentation fault signalling so we can get 
      core dumps and don't get the gnome crash dialog */
@@ -162,10 +119,6 @@ int main (int argc, char *argv []) {
 
   /* specify my own error handler */
   g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
-
-
-
-  gdk_rgb_init(); /* needed for the rgb graphics usage stuff */
 
   /* figure out if there was anything else on the command line */
   input_filenames = poptGetArgs(amide_ctx);
@@ -182,36 +135,48 @@ int main (int argc, char *argv []) {
 	g_warning("AMIDE study %s does not exist",input_filenames[i]);
       else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
-	if ((new_volume = volume_import_file(AMIDE_GUESS, 0,input_filenames[i], NULL)) != NULL) {
-	  study = study_init();
-	  study->coord_frame = rs_init();
-	  study_add_volume(study, new_volume);
-	  study_set_name(study, new_volume->name); /* first guess at a name */
-	  new_volume = volume_unref(new_volume); /* remove a reference */
-	  loaded = TRUE;
+	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0,
+						 input_filenames[i])) != NULL) {
+	  if (imported_study == NULL) {
+	    imported_study = amitk_study_new();
+	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
+	    amitk_study_set_view_center(imported_study, amitk_volume_center(AMITK_VOLUME(new_ds)));
+	  }
+	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
+	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
+	  if (min_voxel_size > AMITK_STUDY_VIEW_THICKNESS(imported_study)) 
+	    amitk_study_set_view_thickness(imported_study, min_voxel_size);
+	  g_object_unref(new_ds);
+	  new_ds = NULL;
 	} else
 	  g_warning("%s is not an AMIDE study or importable file type ", input_filenames[i]);
-      } else if ((study=study_load_xml(input_filenames[i])) == NULL)
-	/* try loading the study into memory */
+      } else if ((study=amitk_study_load_xml(input_filenames[i])) == NULL)
 	g_warning("error loading study: %s",input_filenames[i]);
-      else 
-	loaded = TRUE;
 
-      if (loaded) {
-	/* setup the study window */
-	ui_study_create(study, NULL);
+      if (study != NULL) {
+	/* each whole study gets it's own window */
+	ui_study_create(study);
 	studies_launched++;
-      } else {
-	study = study_unref(study);
-      }
+	g_object_unref(study);
+	study = NULL;
+      } 
 
     }
   } 
 
+  if (imported_study != NULL) {
+    /* all imported data sets go into one study */
+    ui_study_create(imported_study);
+    studies_launched++;
+    g_object_unref(imported_study);
+    imported_study =NULL;
+  }
+
   /* start up an empty study if we haven't loaded in anything */
-  if (studies_launched < 1) ui_study_create(NULL,NULL);
+  if (studies_launched < 1) ui_study_create(NULL);
 
   poptFreeContext(amide_ctx);
+
 
   /* the main event loop */
   gtk_main();
@@ -253,7 +218,7 @@ void amide_unregister_all_windows(void) {
 
   while (g_list_nth(windows, number_to_leave) != NULL) {
     /* this works, because each delete event should call amide_unregister_window */
-    gtk_signal_emit_by_name(GTK_OBJECT(windows->data), "delete_event", NULL, &return_val);
+    g_signal_emit_by_name(G_OBJECT(windows->data), "delete_event", NULL, &return_val);
     if (return_val == TRUE) number_to_leave++;
   }
 

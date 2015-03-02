@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_interpolation_bilinear_xpm[] = {
+const char * icon_interpolation_bilinear_xpm[] = {
 "24 24 71 1",
 " 	c None",
 ".	c #434343",

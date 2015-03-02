@@ -1,10 +1,9 @@
 SUBDIRS = \
 	src \
-	lib \
 	doc \
+	help \
 	pixmaps \
 	etc
 
 
-DISTCLEANFILES = *~
-
+DISTCLEANFILES = *~ 

@@ -29,16 +29,13 @@
 /* header files that are always needed with this file */
 #include "ui_rendering.h"
 
-#define MOVIE_DEFAULT_FRAMES 300
-
 typedef enum {OVER_TIME, OVER_FRAMES, DYNAMIC_TYPES} dynamic_t;
 
 /* data structures */
 typedef struct ui_rendering_movie_t {
-  GtkWidget * dialog;
   GtkWidget * progress;
   guint num_frames;
-  gdouble rotation[NUM_AXIS];
+  gdouble rotation[AMITK_AXIS_NUM];
   dynamic_t type;
   amide_time_t start_time;
   amide_time_t end_time;
@@ -59,10 +56,6 @@ typedef struct ui_rendering_movie_t {
 
 
 /* external functions */
-ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_rendering_movie);
-ui_rendering_movie_t * ui_rendering_movie_init(void);
-ui_rendering_movie_t * ui_rendering_movie_add_reference(ui_rendering_movie_t * movie);
-void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie, char * output_file_name);
 ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rendering);
 
 #endif /* AMIDE_MPEG_ENCODE_SUPPORT */

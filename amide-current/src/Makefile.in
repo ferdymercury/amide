@@ -73,22 +73,19 @@ AMIDE_LIBGSL_LIBS = @AMIDE_LIBGSL_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AMTAR = @AMTAR@
-AR = @AR@
 AS = @AS@
 AWK = @AWK@
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@
-CXX = @CXX@
-CXXCPP = @CXXCPP@
+DB2HTML = @DB2HTML@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 ECHO = @ECHO@
-EGREP = @EGREP@
 EXTRA_GNOME_CFLAGS = @EXTRA_GNOME_CFLAGS@
 EXTRA_GNOME_LIBS = @EXTRA_GNOME_LIBS@
-F77 = @F77@
-GCJ = @GCJ@
-GCJFLAGS = @GCJFLAGS@
+GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
+GTKDOC = @GTKDOC@
+HTML_DIR = @HTML_DIR@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
@@ -100,16 +97,28 @@ OBJDUMP = @OBJDUMP@
 PACKAGE = @PACKAGE@
 PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
-RC = @RC@
 STRIP = @STRIP@
 VERSION = @VERSION@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
 
-INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\""
-CFLAGS = @CFLAGS@ $(AMIDE_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
+INCLUDES = \
+	-DPREFIX=\""$(prefix)"\"			\
+	-DSYSCONFDIR=\""$(sysconfdir)"\"		\
+	-DDATADIR=\""$(datadir)"\"			\
+	-DLIBDIR=\""$(libdir)"\"			
 
+
+#	-DGNOMELOCALEDIR=\""$(datadir)/locale\""
+CFLAGS = \
+	@CFLAGS@ \
+	$(AMIDE_GNOME_CFLAGS) \
+	$(AMIDE_DEBUG_CFLAGS) \
+	 -DGTK_DISABLE_DEPRECATED 
+
+
+#	-DGNOME_DISABLE_DEPRECATED
 bin_PROGRAMS = amide
 
 amide_LDADD = \
@@ -124,134 +133,100 @@ amide_LDADD = \
 amide_SOURCES = \
 	gtkdial.c \
 	gtkdial.h \
-	gtkdirsel.c \
-	gtkdirsel.h \
-	$(DATA_SET_VARIABLE_H) \
-	$(DATA_SET_VARIABLE_C) \
-	$(VOLUME_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
-	$(ROI_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
+	$(MARSHAL_SOURCES) \
+	$(TYPE_BUILTINS_SOURCES) \
+	$(AMITK_RAW_DATA_VARIABLE_H) \
+	$(AMITK_RAW_DATA_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
 	$(ANALYSIS_VARIABLE_C) \
+	$(AMITK_DATA_SET_VARIABLE_H) \
+	$(AMITK_DATA_SET_VARIABLE_C) \
+	$(AMITK_ROI_VARIABLE_H) \
+	$(AMITK_ROI_VARIABLE_C) \
+	$(AMITK_H_SOURCES) \
 	amide.c \
-	amide.h \
-	align_pt.c \
-	align_pt.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
 	analysis.h \
 	amitk_canvas.c \
-	amitk_canvas.h \
-	amitk_coord_frame_edit.c \
-	amitk_coord_frame_edit.h \
-	amitk_spin_button.c \
-	amitk_spin_button.h \
-	amitk_tree.c \
-	amitk_tree.h \
-	amitk_tree_item.c \
-	amitk_tree_item.h \
+	amitk_color_table.c \
+	amitk_data_set.c \
+	amitk_dir_sel.c \
+	amitk_fiducial_mark.c \
+	amitk_point.c \
+	amitk_object.c \
+	amitk_object_dialog.c \
+	amitk_raw_data.c \
+	amitk_roi.c \
+	amitk_space_edit.c \
+	amitk_space.c \
+	amitk_study.c \
 	amitk_threshold.c \
-	amitk_threshold.h \
-	color_table.c \
-	color_table.h \
+	amitk_tree.c \
+	amitk_volume.c \
 	cti_import.c \
 	cti_import.h \
-	data_set.c \
-	data_set.h \
 	idl_data_import.c \
 	idl_data_import.h \
 	image.c \
 	image.h \
+	legacy.c \
+	legacy.h \
 	medcon_import.c \
 	medcon_import.h \
-	pem_data_import.c \
-	pem_data_import.h \
-	raw_data.c \
-	raw_data.h \
 	raw_data_import.c \
 	raw_data_import.h \
-	raw_data_import_cb.c \
-	raw_data_import_cb.h \
-	realspace.c \
-	realspace.h \
 	rendering.c \
 	rendering.h \
-	roi.c \
-	roi.h \
-	study.c \
-	study.h \
-	ui_align_pt_dialog.c \
-	ui_align_pt_dialog.h \
-	ui_align_pt_dialog_cb.c \
-	ui_align_pt_dialog_cb.h \
 	ui_alignment_dialog.c \
 	ui_alignment_dialog.h \
-	ui_alignment_dialog_cb.c \
-	ui_alignment_dialog_cb.h \
 	ui_common.c \
 	ui_common.h \
-	ui_common_cb.c \
-	ui_common_cb.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
-	ui_preferences_dialog_cb.c \
-	ui_preferences_dialog_cb.h \
 	ui_rendering.c \
 	ui_rendering.h \
-	ui_rendering_cb.c \
-	ui_rendering_cb.h \
 	ui_rendering_dialog.c \
 	ui_rendering_dialog.h \
-	ui_rendering_dialog_cb.c \
-	ui_rendering_dialog_cb.h \
-	ui_rendering_menus.c \
-	ui_rendering_menus.h \
 	ui_rendering_movie_dialog.c \
 	ui_rendering_movie_dialog.h \
-	ui_rendering_movie_dialog_cb.c \
-	ui_rendering_movie_dialog_cb.h \
-	ui_roi_dialog.c \
-	ui_roi_dialog.h \
-	ui_roi_dialog_cb.c \
-	ui_roi_dialog_cb.h \
 	ui_roi_analysis_dialog.c \
 	ui_roi_analysis_dialog.h \
-	ui_roi_analysis_dialog_cb.c \
-	ui_roi_analysis_dialog_cb.h \
 	ui_series.c \
 	ui_series.h \
-	ui_series_cb.c \
-	ui_series_cb.h \
-	ui_series_menus.c \
-	ui_series_menus.h \
-	ui_series_toolbar.c \
-	ui_series_toolbar.h \
 	ui_study.c \
 	ui_study.h \
 	ui_study_cb.c \
 	ui_study_cb.h \
-	ui_study_dialog.c \
-	ui_study_dialog.h \
-	ui_study_dialog_cb.c \
-	ui_study_dialog_cb.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
 	ui_study_toolbar.c \
 	ui_study_toolbar.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
-	ui_time_dialog_cb.c \
-	ui_time_dialog_cb.h \
-	ui_volume_dialog.c \
-	ui_volume_dialog.h \
-	ui_volume_dialog_cb.c \
-	ui_volume_dialog_cb.h \
-	volume.c \
-	volume.h \
 	xml.c \
 	xml.h
+
+
+AMITK_H_SOURCES = \
+	amide.h \
+	amitk_canvas.h \
+	amitk_color_table.h \
+	amitk_dir_sel.h \
+	amitk_data_set.h \
+	amitk_fiducial_mark.h \
+	amitk_object.h \
+	amitk_object_dialog.h \
+	amitk_point.h \
+	amitk_raw_data.h \
+	amitk_roi.h \
+	amitk_space_edit.h \
+	amitk_space.h \
+	amitk_study.h \
+	amitk_threshold.h \
+	amitk_tree.h \
+	amitk_volume.h 
 
 
 ANALYSIS_VARIABLE_C = \
@@ -270,96 +245,96 @@ ANALYSIS_VARIABLE_H = \
 	analysis_ISOCONTOUR_3D.h
 
 
-ROI_VARIABLE_C = \
-	roi_ELLIPSOID.c \
-	roi_CYLINDER.c \
-	roi_BOX.c \
-	roi_ISOCONTOUR_2D.c \
-	roi_ISOCONTOUR_3D.c 
+AMITK_ROI_VARIABLE_C = \
+	amitk_roi_ELLIPSOID.c \
+	amitk_roi_CYLINDER.c \
+	amitk_roi_BOX.c \
+	amitk_roi_ISOCONTOUR_2D.c \
+	amitk_roi_ISOCONTOUR_3D.c 
 
 
-ROI_VARIABLE_H = \
-	roi_ELLIPSOID.h \
-	roi_CYLINDER.h \
-	roi_BOX.h \
-	roi_ISOCONTOUR_2D.h \
-	roi_ISOCONTOUR_3D.h
+AMITK_ROI_VARIABLE_H = \
+	amitk_roi_ELLIPSOID.h \
+	amitk_roi_CYLINDER.h \
+	amitk_roi_BOX.h \
+	amitk_roi_ISOCONTOUR_2D.h \
+	amitk_roi_ISOCONTOUR_3D.h
 
 
-DATA_SET_VARIABLE_C = \
-	data_set_UBYTE.c \
-	data_set_SBYTE.c \
-	data_set_USHORT.c \
-	data_set_SSHORT.c \
-	data_set_UINT.c \
-	data_set_SINT.c \
-	data_set_FLOAT.c \
-	data_set_DOUBLE.c 
+AMITK_RAW_DATA_VARIABLE_C = \
+	amitk_raw_data_UBYTE.c \
+	amitk_raw_data_SBYTE.c \
+	amitk_raw_data_USHORT.c \
+	amitk_raw_data_SSHORT.c \
+	amitk_raw_data_UINT.c \
+	amitk_raw_data_SINT.c \
+	amitk_raw_data_FLOAT.c \
+	amitk_raw_data_DOUBLE.c 
 
 
-DATA_SET_VARIABLE_H = \
-	data_set_UBYTE.h \
-	data_set_SBYTE.h \
-	data_set_USHORT.h \
-	data_set_SSHORT.h \
-	data_set_UINT.h \
-	data_set_SINT.h \
-	data_set_FLOAT.h \
-	data_set_DOUBLE.h 
+AMITK_RAW_DATA_VARIABLE_H = \
+	amitk_raw_data_UBYTE.h \
+	amitk_raw_data_SBYTE.h \
+	amitk_raw_data_USHORT.h \
+	amitk_raw_data_SSHORT.h \
+	amitk_raw_data_UINT.h \
+	amitk_raw_data_SINT.h \
+	amitk_raw_data_FLOAT.h \
+	amitk_raw_data_DOUBLE.h 
 
 
-VOLUME_VARIABLE_C = \
-	volume_UBYTE_0D_SCALING.c \
-	volume_UBYTE_1D_SCALING.c \
-	volume_UBYTE_2D_SCALING.c \
-	volume_SBYTE_0D_SCALING.c \
-	volume_SBYTE_1D_SCALING.c \
-	volume_SBYTE_2D_SCALING.c \
-	volume_USHORT_0D_SCALING.c \
-	volume_USHORT_1D_SCALING.c \
-	volume_USHORT_2D_SCALING.c \
-	volume_SSHORT_0D_SCALING.c \
-	volume_SSHORT_1D_SCALING.c \
-	volume_SSHORT_2D_SCALING.c \
-	volume_UINT_0D_SCALING.c \
-	volume_UINT_1D_SCALING.c \
-	volume_UINT_2D_SCALING.c \
-	volume_SINT_0D_SCALING.c \
-	volume_SINT_1D_SCALING.c \
-	volume_SINT_2D_SCALING.c \
-	volume_FLOAT_0D_SCALING.c \
-	volume_FLOAT_1D_SCALING.c \
-	volume_FLOAT_2D_SCALING.c \
-	volume_DOUBLE_0D_SCALING.c \
-	volume_DOUBLE_1D_SCALING.c \
-	volume_DOUBLE_2D_SCALING.c 
+AMITK_DATA_SET_VARIABLE_C = \
+	amitk_data_set_UBYTE_0D_SCALING.c \
+	amitk_data_set_UBYTE_1D_SCALING.c \
+	amitk_data_set_UBYTE_2D_SCALING.c \
+	amitk_data_set_SBYTE_0D_SCALING.c \
+	amitk_data_set_SBYTE_1D_SCALING.c \
+	amitk_data_set_SBYTE_2D_SCALING.c \
+	amitk_data_set_USHORT_0D_SCALING.c \
+	amitk_data_set_USHORT_1D_SCALING.c \
+	amitk_data_set_USHORT_2D_SCALING.c \
+	amitk_data_set_SSHORT_0D_SCALING.c \
+	amitk_data_set_SSHORT_1D_SCALING.c \
+	amitk_data_set_SSHORT_2D_SCALING.c \
+	amitk_data_set_UINT_0D_SCALING.c \
+	amitk_data_set_UINT_1D_SCALING.c \
+	amitk_data_set_UINT_2D_SCALING.c \
+	amitk_data_set_SINT_0D_SCALING.c \
+	amitk_data_set_SINT_1D_SCALING.c \
+	amitk_data_set_SINT_2D_SCALING.c \
+	amitk_data_set_FLOAT_0D_SCALING.c \
+	amitk_data_set_FLOAT_1D_SCALING.c \
+	amitk_data_set_FLOAT_2D_SCALING.c \
+	amitk_data_set_DOUBLE_0D_SCALING.c \
+	amitk_data_set_DOUBLE_1D_SCALING.c \
+	amitk_data_set_DOUBLE_2D_SCALING.c 
 
 
-VOLUME_VARIABLE_H = \
-	volume_UBYTE_0D_SCALING.h \
-	volume_UBYTE_1D_SCALING.h \
-	volume_UBYTE_2D_SCALING.h \
-	volume_SBYTE_0D_SCALING.h \
-	volume_SBYTE_1D_SCALING.h \
-	volume_SBYTE_2D_SCALING.h \
-	volume_USHORT_0D_SCALING.h \
-	volume_USHORT_1D_SCALING.h \
-	volume_USHORT_2D_SCALING.h \
-	volume_SSHORT_0D_SCALING.h \
-	volume_SSHORT_1D_SCALING.h \
-	volume_SSHORT_2D_SCALING.h \
-	volume_UINT_0D_SCALING.h \
-	volume_UINT_1D_SCALING.h \
-	volume_UINT_2D_SCALING.h \
-	volume_SINT_0D_SCALING.h \
-	volume_SINT_1D_SCALING.h \
-	volume_SINT_2D_SCALING.h \
-	volume_FLOAT_0D_SCALING.h \
-	volume_FLOAT_1D_SCALING.h \
-	volume_FLOAT_2D_SCALING.h \
-	volume_DOUBLE_0D_SCALING.h \
-	volume_DOUBLE_1D_SCALING.h \
-	volume_DOUBLE_2D_SCALING.h 
+AMITK_DATA_SET_VARIABLE_H = \
+	amitk_data_set_UBYTE_0D_SCALING.h \
+	amitk_data_set_UBYTE_1D_SCALING.h \
+	amitk_data_set_UBYTE_2D_SCALING.h \
+	amitk_data_set_SBYTE_0D_SCALING.h \
+	amitk_data_set_SBYTE_1D_SCALING.h \
+	amitk_data_set_SBYTE_2D_SCALING.h \
+	amitk_data_set_USHORT_0D_SCALING.h \
+	amitk_data_set_USHORT_1D_SCALING.h \
+	amitk_data_set_USHORT_2D_SCALING.h \
+	amitk_data_set_SSHORT_0D_SCALING.h \
+	amitk_data_set_SSHORT_1D_SCALING.h \
+	amitk_data_set_SSHORT_2D_SCALING.h \
+	amitk_data_set_UINT_0D_SCALING.h \
+	amitk_data_set_UINT_1D_SCALING.h \
+	amitk_data_set_UINT_2D_SCALING.h \
+	amitk_data_set_SINT_0D_SCALING.h \
+	amitk_data_set_SINT_1D_SCALING.h \
+	amitk_data_set_SINT_2D_SCALING.h \
+	amitk_data_set_FLOAT_0D_SCALING.h \
+	amitk_data_set_FLOAT_1D_SCALING.h \
+	amitk_data_set_FLOAT_2D_SCALING.h \
+	amitk_data_set_DOUBLE_0D_SCALING.h \
+	amitk_data_set_DOUBLE_1D_SCALING.h \
+	amitk_data_set_DOUBLE_2D_SCALING.h 
 
 
 VARIABLE_INPUT = \
@@ -369,101 +344,121 @@ VARIABLE_INPUT = \
 ANALYSIS_VARIABLE_C_SRC = analysis_variable_type.c 
 ANALYSIS_VARIABLE_H_SRC = analysis_variable_type.h 
 
-ROI_VARIABLE_C_SRC = roi_variable_type.c 
-ROI_VARIABLE_H_SRC = roi_variable_type.h
+AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c 
+AMITK_ROI_VARIABLE_H_SRC = amitk_roi_variable_type.h
 
-DATA_SET_VARIABLE_C_SRC = data_set_variable_type.c
-DATA_SET_VARIABLE_H_SRC = data_set_variable_type.h
+AMITK_RAW_DATA_VARIABLE_C_SRC = amitk_raw_data_variable_type.c
+AMITK_RAW_DATA_VARIABLE_H_SRC = amitk_raw_data_variable_type.h
 
-VOLUME_VARIABLE_C_SRC = volume_variable_type.c 
-VOLUME_VARIABLE_H_SRC = volume_variable_type.h 
+AMITK_DATA_SET_VARIABLE_C_SRC = amitk_data_set_variable_type.c 
+AMITK_DATA_SET_VARIABLE_H_SRC = amitk_data_set_variable_type.h 
+
+MARSHAL_SOURCES = \
+	amitk_marshal.c	\
+	amitk_marshal.h 
+
+
+TYPE_BUILTINS_SOURCES = \
+	amitk_type_builtins.h \
+	amitk_type_builtins.c 
+
+
+TEMP_FILES = \
+	xgen-atbh \
+	xgen-atbc
+
+
+STAMP_FILES = \
+	stamp-amitk_type_builtins.h \
+	stamp-amitk_type_builtins.c
+
 
 CLEANFILES = \
 	$(ANALYSIS_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
-	$(ROI_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
-	$(VOLUME_VARIABLE_H) \
-	$(DATA_SET_VARIABLE_C) \
-	$(DATA_SET_VARIABLE_H)
+	$(AMITK_ROI_VARIABLE_C) \
+	$(AMITK_ROI_VARIABLE_H) \
+	$(AMITK_DATA_SET_VARIABLE_C) \
+	$(AMITK_DATA_SET_VARIABLE_H) \
+	$(AMITK_RAW_DATA_VARIABLE_C) \
+	$(AMITK_RAW_DATA_VARIABLE_H) \
+	$(MARSHAL_SOURCES) \
+	$(TYPE_BUILTINS_SOURCES) \
+	$(TEMP_FILES) \
+	$(STAMP_FILES) 
 
 
-DISTCLEANFILES = *~
+DISTCLEANFILES = *~ 
 subdir = src
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
-CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_HEADER = $(top_builddir)/amide_config.h
 CONFIG_CLEAN_FILES =
 bin_PROGRAMS = amide$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 
-am__objects_1 =
-am__objects_2 = data_set_UBYTE.$(OBJEXT) data_set_SBYTE.$(OBJEXT) \
-	data_set_USHORT.$(OBJEXT) data_set_SSHORT.$(OBJEXT) \
-	data_set_UINT.$(OBJEXT) data_set_SINT.$(OBJEXT) \
-	data_set_FLOAT.$(OBJEXT) data_set_DOUBLE.$(OBJEXT)
-am__objects_3 = volume_UBYTE_0D_SCALING.$(OBJEXT) \
-	volume_UBYTE_1D_SCALING.$(OBJEXT) \
-	volume_UBYTE_2D_SCALING.$(OBJEXT) \
-	volume_SBYTE_0D_SCALING.$(OBJEXT) \
-	volume_SBYTE_1D_SCALING.$(OBJEXT) \
-	volume_SBYTE_2D_SCALING.$(OBJEXT) \
-	volume_USHORT_0D_SCALING.$(OBJEXT) \
-	volume_USHORT_1D_SCALING.$(OBJEXT) \
-	volume_USHORT_2D_SCALING.$(OBJEXT) \
-	volume_SSHORT_0D_SCALING.$(OBJEXT) \
-	volume_SSHORT_1D_SCALING.$(OBJEXT) \
-	volume_SSHORT_2D_SCALING.$(OBJEXT) \
-	volume_UINT_0D_SCALING.$(OBJEXT) \
-	volume_UINT_1D_SCALING.$(OBJEXT) \
-	volume_UINT_2D_SCALING.$(OBJEXT) \
-	volume_SINT_0D_SCALING.$(OBJEXT) \
-	volume_SINT_1D_SCALING.$(OBJEXT) \
-	volume_SINT_2D_SCALING.$(OBJEXT) \
-	volume_FLOAT_0D_SCALING.$(OBJEXT) \
-	volume_FLOAT_1D_SCALING.$(OBJEXT) \
-	volume_FLOAT_2D_SCALING.$(OBJEXT) \
-	volume_DOUBLE_0D_SCALING.$(OBJEXT) \
-	volume_DOUBLE_1D_SCALING.$(OBJEXT) \
-	volume_DOUBLE_2D_SCALING.$(OBJEXT)
-am__objects_4 = roi_ELLIPSOID.$(OBJEXT) roi_CYLINDER.$(OBJEXT) \
-	roi_BOX.$(OBJEXT) roi_ISOCONTOUR_2D.$(OBJEXT) \
-	roi_ISOCONTOUR_3D.$(OBJEXT)
+am__objects_1 = amitk_marshal.$(OBJEXT)
+am__objects_2 = amitk_type_builtins.$(OBJEXT)
+am__objects_3 =
+am__objects_4 = amitk_raw_data_UBYTE.$(OBJEXT) \
+	amitk_raw_data_SBYTE.$(OBJEXT) amitk_raw_data_USHORT.$(OBJEXT) \
+	amitk_raw_data_SSHORT.$(OBJEXT) amitk_raw_data_UINT.$(OBJEXT) \
+	amitk_raw_data_SINT.$(OBJEXT) amitk_raw_data_FLOAT.$(OBJEXT) \
+	amitk_raw_data_DOUBLE.$(OBJEXT)
 am__objects_5 = analysis_ELLIPSOID.$(OBJEXT) analysis_CYLINDER.$(OBJEXT) \
 	analysis_BOX.$(OBJEXT) analysis_ISOCONTOUR_2D.$(OBJEXT) \
 	analysis_ISOCONTOUR_3D.$(OBJEXT)
-am_amide_OBJECTS = gtkdial.$(OBJEXT) gtkdirsel.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_1) \
-	$(am__objects_3) $(am__objects_1) $(am__objects_4) \
-	$(am__objects_1) $(am__objects_5) amide.$(OBJEXT) \
-	align_pt.$(OBJEXT) alignment.$(OBJEXT) analysis.$(OBJEXT) \
-	amitk_canvas.$(OBJEXT) amitk_coord_frame_edit.$(OBJEXT) \
-	amitk_spin_button.$(OBJEXT) amitk_tree.$(OBJEXT) \
-	amitk_tree_item.$(OBJEXT) amitk_threshold.$(OBJEXT) \
-	color_table.$(OBJEXT) cti_import.$(OBJEXT) data_set.$(OBJEXT) \
-	idl_data_import.$(OBJEXT) image.$(OBJEXT) \
-	medcon_import.$(OBJEXT) pem_data_import.$(OBJEXT) \
-	raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
-	raw_data_import_cb.$(OBJEXT) realspace.$(OBJEXT) \
-	rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
-	ui_align_pt_dialog.$(OBJEXT) ui_align_pt_dialog_cb.$(OBJEXT) \
-	ui_alignment_dialog.$(OBJEXT) ui_alignment_dialog_cb.$(OBJEXT) \
-	ui_common.$(OBJEXT) ui_common_cb.$(OBJEXT) \
-	ui_preferences_dialog.$(OBJEXT) \
-	ui_preferences_dialog_cb.$(OBJEXT) ui_rendering.$(OBJEXT) \
-	ui_rendering_cb.$(OBJEXT) ui_rendering_dialog.$(OBJEXT) \
-	ui_rendering_dialog_cb.$(OBJEXT) ui_rendering_menus.$(OBJEXT) \
+am__objects_6 = amitk_data_set_UBYTE_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_UBYTE_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_UBYTE_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_SBYTE_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_SBYTE_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_SBYTE_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_USHORT_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_USHORT_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_USHORT_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_SSHORT_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_SSHORT_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_SSHORT_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_UINT_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_UINT_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_UINT_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_SINT_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_SINT_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_SINT_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_FLOAT_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_FLOAT_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_FLOAT_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_DOUBLE_0D_SCALING.$(OBJEXT) \
+	amitk_data_set_DOUBLE_1D_SCALING.$(OBJEXT) \
+	amitk_data_set_DOUBLE_2D_SCALING.$(OBJEXT)
+am__objects_7 = amitk_roi_ELLIPSOID.$(OBJEXT) \
+	amitk_roi_CYLINDER.$(OBJEXT) amitk_roi_BOX.$(OBJEXT) \
+	amitk_roi_ISOCONTOUR_2D.$(OBJEXT) \
+	amitk_roi_ISOCONTOUR_3D.$(OBJEXT)
+am_amide_OBJECTS = gtkdial.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_3) \
+	$(am__objects_5) $(am__objects_3) $(am__objects_6) \
+	$(am__objects_3) $(am__objects_7) $(am__objects_3) \
+	amide.$(OBJEXT) alignment.$(OBJEXT) analysis.$(OBJEXT) \
+	amitk_canvas.$(OBJEXT) amitk_color_table.$(OBJEXT) \
+	amitk_data_set.$(OBJEXT) amitk_dir_sel.$(OBJEXT) \
+	amitk_fiducial_mark.$(OBJEXT) amitk_point.$(OBJEXT) \
+	amitk_object.$(OBJEXT) amitk_object_dialog.$(OBJEXT) \
+	amitk_raw_data.$(OBJEXT) amitk_roi.$(OBJEXT) \
+	amitk_space_edit.$(OBJEXT) amitk_space.$(OBJEXT) \
+	amitk_study.$(OBJEXT) amitk_threshold.$(OBJEXT) \
+	amitk_tree.$(OBJEXT) amitk_volume.$(OBJEXT) \
+	cti_import.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
+	legacy.$(OBJEXT) medcon_import.$(OBJEXT) \
+	raw_data_import.$(OBJEXT) rendering.$(OBJEXT) \
+	ui_alignment_dialog.$(OBJEXT) ui_common.$(OBJEXT) \
+	ui_preferences_dialog.$(OBJEXT) ui_rendering.$(OBJEXT) \
+	ui_rendering_dialog.$(OBJEXT) \
 	ui_rendering_movie_dialog.$(OBJEXT) \
-	ui_rendering_movie_dialog_cb.$(OBJEXT) ui_roi_dialog.$(OBJEXT) \
-	ui_roi_dialog_cb.$(OBJEXT) ui_roi_analysis_dialog.$(OBJEXT) \
-	ui_roi_analysis_dialog_cb.$(OBJEXT) ui_series.$(OBJEXT) \
-	ui_series_cb.$(OBJEXT) ui_series_menus.$(OBJEXT) \
-	ui_series_toolbar.$(OBJEXT) ui_study.$(OBJEXT) \
-	ui_study_cb.$(OBJEXT) ui_study_dialog.$(OBJEXT) \
-	ui_study_dialog_cb.$(OBJEXT) ui_study_menus.$(OBJEXT) \
-	ui_study_toolbar.$(OBJEXT) ui_time_dialog.$(OBJEXT) \
-	ui_time_dialog_cb.$(OBJEXT) ui_volume_dialog.$(OBJEXT) \
-	ui_volume_dialog_cb.$(OBJEXT) volume.$(OBJEXT) xml.$(OBJEXT)
+	ui_roi_analysis_dialog.$(OBJEXT) ui_series.$(OBJEXT) \
+	ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
+	ui_study_menus.$(OBJEXT) ui_study_toolbar.$(OBJEXT) \
+	ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
 amide_OBJECTS = $(am_amide_OBJECTS)
 amide_DEPENDENCIES =
 amide_LDFLAGS =
@@ -473,100 +468,84 @@ DEFAULT_INCLUDES =  -I. -I$(srcdir) -I$(top_builddir)
 LIBS = @LIBS@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/align_pt.Po ./$(DEPDIR)/alignment.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/amide.Po ./$(DEPDIR)/amitk_canvas.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/amitk_coord_frame_edit.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/amitk_spin_button.Po \
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/alignment.Po ./$(DEPDIR)/amide.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_canvas.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_color_table.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_DOUBLE_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_DOUBLE_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_DOUBLE_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_FLOAT_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_FLOAT_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_FLOAT_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SBYTE_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SBYTE_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SBYTE_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SINT_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SINT_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SINT_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SSHORT_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SSHORT_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_SSHORT_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UBYTE_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UBYTE_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UBYTE_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UINT_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UINT_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_UINT_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_USHORT_0D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_USHORT_1D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_dir_sel.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_fiducial_mark.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_marshal.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_object.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_object_dialog.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_point.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_DOUBLE.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_FLOAT.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_SBYTE.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_SINT.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_SSHORT.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_UBYTE.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_UINT.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_raw_data_USHORT.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi_BOX.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi_CYLINDER.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi_ELLIPSOID.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi_ISOCONTOUR_2D.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_roi_ISOCONTOUR_3D.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_space.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_space_edit.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_study.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_threshold.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_tree.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/amitk_tree_item.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis.Po ./$(DEPDIR)/analysis_BOX.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_type_builtins.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_volume.Po ./$(DEPDIR)/analysis.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/analysis_BOX.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/analysis_CYLINDER.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/analysis_ELLIPSOID.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/analysis_ISOCONTOUR_2D.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/analysis_ISOCONTOUR_3D.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/color_table.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/cti_import.Po ./$(DEPDIR)/data_set.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_DOUBLE.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_FLOAT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_SBYTE.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_SINT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_SSHORT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_UBYTE.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_UINT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/data_set_USHORT.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/gtkdial.Po ./$(DEPDIR)/gtkdirsel.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/cti_import.Po ./$(DEPDIR)/gtkdial.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/idl_data_import.Po ./$(DEPDIR)/image.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/medcon_import.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/pem_data_import.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/raw_data.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/legacy.Po ./$(DEPDIR)/medcon_import.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/raw_data_import.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/raw_data_import_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/realspace.Po ./$(DEPDIR)/rendering.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/roi.Po ./$(DEPDIR)/roi_BOX.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/roi_CYLINDER.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/roi_ELLIPSOID.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/roi_ISOCONTOUR_2D.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/roi_ISOCONTOUR_3D.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/study.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_align_pt_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_align_pt_dialog_cb.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/rendering.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_alignment_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_alignment_dialog_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_common.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_common_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_dialog_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_menus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_movie_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_movie_dialog_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_roi_analysis_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_roi_analysis_dialog_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_roi_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_roi_dialog_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_series.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_series_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_series_menus.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_series_toolbar.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_study.Po ./$(DEPDIR)/ui_study_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_study_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_study_dialog_cb.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_series.Po ./$(DEPDIR)/ui_study.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_study_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_study_menus.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_study_toolbar.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_time_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_time_dialog_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_volume_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_volume_dialog_cb.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_DOUBLE_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_DOUBLE_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_DOUBLE_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_FLOAT_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_FLOAT_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_FLOAT_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SBYTE_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SBYTE_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SBYTE_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SINT_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SINT_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SINT_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SSHORT_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SSHORT_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_SSHORT_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UBYTE_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UBYTE_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UBYTE_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UINT_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UINT_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_UINT_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_USHORT_0D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_USHORT_1D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/volume_USHORT_2D_SCALING.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/xml.Po
+@AMDEP_TRUE@	./$(DEPDIR)/ui_time_dialog.Po ./$(DEPDIR)/xml.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
@@ -626,108 +605,90 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/align_pt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alignment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amide.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_canvas.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_coord_frame_edit.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_spin_button.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_color_table.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_dir_sel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_fiducial_mark.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_marshal.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_object.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_object_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_point.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_DOUBLE.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_FLOAT.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_SBYTE.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_SINT.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_SSHORT.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_UBYTE.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_UINT.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_raw_data_USHORT.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi_BOX.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi_CYLINDER.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi_ELLIPSOID.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi_ISOCONTOUR_2D.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_roi_ISOCONTOUR_3D.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_space.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_space_edit.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_study.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_threshold.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_tree.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_tree_item.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_type_builtins.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_volume.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_BOX.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_CYLINDER.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ELLIPSOID.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ISOCONTOUR_2D.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ISOCONTOUR_3D.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/color_table.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cti_import.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_DOUBLE.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_FLOAT.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_SBYTE.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_SINT.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_SSHORT.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_UBYTE.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_UINT.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_set_USHORT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkdial.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkdirsel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/idl_data_import.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/legacy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/medcon_import.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pem_data_import.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw_data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw_data_import.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw_data_import_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/realspace.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rendering.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi_BOX.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi_CYLINDER.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi_ELLIPSOID.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi_ISOCONTOUR_2D.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/roi_ISOCONTOUR_3D.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/study.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_align_pt_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_align_pt_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_alignment_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_alignment_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_dialog_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_menus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_movie_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_movie_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_roi_analysis_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_roi_analysis_dialog_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_roi_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_roi_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_series.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_series_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_series_menus.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_series_toolbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_dialog_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_menus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_toolbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_time_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_time_dialog_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_volume_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_volume_dialog_cb.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_DOUBLE_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_DOUBLE_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_DOUBLE_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_FLOAT_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_FLOAT_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_FLOAT_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SBYTE_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SBYTE_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SBYTE_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SINT_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SINT_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SINT_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SSHORT_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SSHORT_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_SSHORT_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UBYTE_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UBYTE_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UBYTE_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UINT_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UINT_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_UINT_2D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_USHORT_0D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_USHORT_1D_SCALING.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume_USHORT_2D_SCALING.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 
 distclean-depend:
@@ -907,15 +868,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	uninstall-binPROGRAMS uninstall-info-am
 
 
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
-	@for i in $(ANALYSIS_VARIABLE_C) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
-
 $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
 	@for i in $(ANALYSIS_VARIABLE_H) ; \
             do \
@@ -925,8 +877,8 @@ $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
-	@for i in $(ROI_VARIABLE_C) ; \
+$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
+	@for i in $(ANALYSIS_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -934,8 +886,8 @@ $(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
-	@for i in $(ROI_VARIABLE_H) ; \
+$(AMITK_ROI_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_H_SRC)
+	@for i in $(AMITK_ROI_VARIABLE_H) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -943,8 +895,8 @@ $(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H)
-	@for i in $(DATA_SET_VARIABLE_C) ; \
+$(AMITK_ROI_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_C_SRC) $(AMITK_ROI_VARIABLE_H)
+	@for i in $(AMITK_ROI_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -952,8 +904,8 @@ $(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
-	@for i in $(DATA_SET_VARIABLE_H) ; \
+$(AMITK_RAW_DATA_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_RAW_DATA_VARIABLE_C_SRC) $(AMITK_RAW_DATA_VARIABLE_H)
+	@for i in $(AMITK_RAW_DATA_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -961,8 +913,8 @@ $(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H)
-	@for i in $(VOLUME_VARIABLE_C) ; \
+$(AMITK_RAW_DATA_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_RAW_DATA_VARIABLE_H_SRC)
+	@for i in $(AMITK_RAW_DATA_VARIABLE_H) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -970,14 +922,55 @@ $(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIAB
                 chmod -w $$i; \
             done
 
-$(VOLUME_VARIABLE_H): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_H_SRC)
-	@for i in $(VOLUME_VARIABLE_H) ; \
+$(AMITK_DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_C_SRC) $(AMITK_DATA_SET_VARIABLE_H)
+	@for i in $(AMITK_DATA_SET_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
                 $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
                 chmod -w $$i; \
             done
+
+$(AMITK_DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_DATA_SET_VARIABLE_H_SRC)
+	@for i in $(AMITK_DATA_SET_VARIABLE_H) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+amitk_marshal.h: amitk_marshal.list $(GLIB_GENMARSHAL)
+	$(GLIB_GENMARSHAL) $< --header --prefix=amitk_marshal > $@
+amitk_marshal.c: amitk_marshal.list $(GLIB_GENMARSHAL) amitk_marshal.h
+	$(GLIB_GENMARSHAL) $< --body --prefix=amitk_marshal > $@
+
+$(srcdir)/amitk_type_builtins.h: stamp-amitk_type_builtins.h $(AMITK_DATA_SET_VARIABLE_H) $(AMITK_RAW_DATA_VARIABLE_H)
+	@true
+stamp-amitk_type_builtins.h: $(AMITK_H_SOURCES) Makefile
+	( cd $(srcdir) && glib-mkenums \
+		--fhead "#ifndef __AMITK_TYPE_BUILTINS_H__\n#define __AMITK_TYPE_BUILTINS_H__\n\n#include <glib-object.h>\n\nG_BEGIN_DECLS\n" \
+		--fprod "/* enumerations from \"@filename@\" */\n" \
+		--vhead "GType @enum_name@_get_type (void);\n#define AMITK_TYPE_@ENUMSHORT@ (@enum_name@_get_type())\n" \
+		--ftail "G_END_DECLS\n\n#endif /* __AMITK_TYPE_BUILTINS_H__ */" \
+		$(AMITK_H_SOURCES))  >> xgen-atbh \
+	&& (cmp -s xgen-atbh $(srcdir)/amitk_type_builtins.h || cp xgen-atbh $(srcdir)/amitk_type_builtins.h ) \
+	&& rm -f xgen-atbh \
+	&& echo timestamp > $(@F)
+
+$(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
+	@true
+stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
+	( cd $(srcdir) && glib-mkenums \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fprod "\n/* enumerations from \"@filename@\" */" \
+		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
+		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \
+		--vtail "      { 0, NULL, NULL }\n    };\n    etype = g_@type@_register_static (\"@EnumName@\", values);\n  }\n  return etype;\n}\n" \
+		$(AMITK_H_SOURCES) ) > xgen-atbc \
+	&& cp xgen-atbc $(srcdir)/amitk_type_builtins.c  \
+	&& rm -f xgen-atbc \
+	&& echo timestamp > $(@F)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

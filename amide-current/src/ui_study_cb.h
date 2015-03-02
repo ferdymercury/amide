@@ -32,31 +32,36 @@ void ui_study_cb_save_as(GtkWidget * widget, gpointer data);
 void ui_study_cb_import(GtkWidget * widget, gpointer data);
 void ui_study_cb_export(GtkWidget * widget, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
-void ui_study_cb_canvas_help_event(GtkWidget * canvas,  help_info_t help_type,
-				   realpoint_t *location, gfloat value, gpointer ui_study);
-void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, realpoint_t *position, gpointer ui_study);
-void ui_study_cb_canvas_view_changing(GtkWidget * canvas, realpoint_t *position,
-				      gfloat thickness, gpointer ui_study);
-void ui_study_cb_canvas_view_changed(GtkWidget * canvas, realpoint_t *position,
-				     gfloat thickness, gpointer ui_study);
-void ui_study_cb_canvas_object_changed(GtkWidget * canvas, gpointer object, object_t type, 
-				       gpointer ui_study);
-void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, roi_t * roi, 
-					      realpoint_t *position, gpointer ui_study);
-void ui_study_cb_canvas_new_align_pt(GtkWidget * canvas, realpoint_t *position, gpointer ui_study);
-void ui_study_cb_tree_select_object(GtkWidget * tree, gpointer object, object_t type, 
-				    gpointer parent, object_t parent_type, gpointer ui_study);
-void ui_study_cb_tree_unselect_object(GtkWidget * tree, gpointer object, object_t type, 
-				      gpointer parent, object_t parent_type, gpointer ui_study);
-void ui_study_cb_tree_make_active_object(GtkWidget * tree, gpointer object, object_t type, 
-					 gpointer parent, object_t parent_type, gpointer ui_study);
-void ui_study_cb_tree_popup_object(GtkWidget * tree, gpointer object, object_t type, 
-				   gpointer parent, object_t parent_type, gpointer ui_study);
-void ui_study_cb_tree_add_object(GtkWidget * tree, object_t type, gpointer parent, 
-				 object_t parent_type, gpointer data);
-void ui_study_cb_tree_help_event(GtkWidget * widget, help_info_t help_type, gpointer ui_study);
-void ui_study_cb_zoom(GtkObject * adjustment, gpointer ui_study);
-void ui_study_cb_thickness(GtkObject * adjustment, gpointer ui_study);
+void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
+				   AmitkPoint *location, amide_data_t value, gpointer ui_study);
+void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, AmitkPoint *position, gpointer ui_study);
+void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
+				      amide_real_t thickness, gpointer ui_study);
+void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
+				     amide_real_t thickness, gpointer ui_study);
+void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
+					      AmitkPoint *position, gpointer ui_study);
+void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObjectType type, 
+				   AmitkPoint *position, gpointer ui_study);
+void ui_study_cb_tree_select_object(GtkWidget * tree, 
+				    AmitkObject * object, 
+				    AmitkViewMode view_mode, 
+				    gpointer ui_study);
+void ui_study_cb_tree_unselect_object(GtkWidget * tree, 
+				      AmitkObject * object, 
+				      AmitkViewMode view_mode, 
+				      gpointer ui_study);
+void ui_study_cb_tree_make_active_object(GtkWidget * tree, 
+					 AmitkObject * object, 
+					 AmitkViewMode view_mode, 
+					 gpointer ui_study);
+void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpointer ui_study);
+void ui_study_cb_tree_add_object(GtkWidget * tree, AmitkObject * parent, 
+				 AmitkObjectType object_type, AmitkRoiType roi_type, gpointer ui_study);
+void ui_study_cb_tree_delete_object(GtkWidget * tree,AmitkObject * object, gpointer ui_study);
+void ui_study_cb_tree_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer ui_study);
+void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
+void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_cb_series(GtkWidget * widget, gpointer ui_study_p);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
@@ -65,15 +70,10 @@ void ui_study_cb_rendering(GtkWidget * widget, gpointer data);
 void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data);
 void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data);
-void ui_study_cb_threshold_changed(GtkWidget * widget, gpointer data);
-void ui_study_cb_color_changed(GtkWidget * widget, gpointer data);
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_cb_add_roi(GtkWidget * widget, gpointer data);
 void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data);
 void ui_study_cb_preferences(GtkWidget * widget, gpointer data);
-gboolean ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data);
-void ui_study_cb_edit_objects(GtkWidget * button, gpointer data);
-void ui_study_cb_delete_objects(GtkWidget * button, gpointer data);
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_exit(GtkWidget* widget, gpointer data);

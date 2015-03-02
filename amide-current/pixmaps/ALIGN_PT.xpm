@@ -1,5 +1,5 @@
 /* XPM */
-static char * ALIGN_PT_xpm[] = {
+const char * ALIGN_PT_xpm[] = {
 "24 24 29 1",
 " 	c None",
 ".	c #AAA814",

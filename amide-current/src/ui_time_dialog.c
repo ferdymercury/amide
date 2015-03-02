@@ -23,181 +23,455 @@
   02111-1307, USA.
 */
 
-#include "config.h"
-#include <gnome.h>
-#include <math.h>
-#include "study.h"
-#include "ui_study.h"
+#include "amide_config.h"
+#include <gtk/gtk.h>
 #include "ui_time_dialog.h"
-#include "ui_time_dialog_cb.h"
-#include "amitk_tree.h"
+#include "amitk_canvas.h"
+
+#define AMITK_RESPONSE_EXECUTE 1
+
+typedef enum {
+  COLUMN_START,
+  COLUMN_END,
+  COLUMN_FRAME,
+  COLUMN_NAME,
+  COLUMN_DATA_SET,
+  NUM_COLUMNS
+} column_type_t;
+
+enum {
+  ENTRY_START,
+  ENTRY_END,
+  NUM_ENTRIES
+};
+ 
+static gchar * column_names[] =  {
+  "Start (s)",
+  "End (s)", 
+  "Frame #", 
+  "Data Set",
+  "error - shouldn't be used"
+};
+
+typedef struct ui_time_dialog_t {
+  amide_time_t start;
+  amide_time_t end;
+  gboolean valid;
+  GList * data_sets;
+} ui_time_dialog_t;
 
 
-static gchar * column_names[] =  {"Start (s)", \
-				  "End (s)", \
-				  "Frame #", \
-				  "Volume"};
+static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
+				    GtkTreeIter *iter, gpointer data);
+static void selection_changed_cb (GtkTreeSelection *selection, gpointer data);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static void change_entry_cb(GtkWidget * widget, gpointer data);
+static void update_model(GtkListStore * store, GtkTreeSelection *selection,
+			 GList * data_sets, amide_time_t start, amide_time_t end);
+static void update_selections(GtkTreeModel * model, GtkTreeSelection *selection,
+			      GtkWidget * dialog, amide_time_t start, amide_time_t end);
+static void update_entries(GtkWidget * dialog, amide_time_t new_start, amide_time_t new_end);
+static void data_set_time_changed_cb(AmitkDataSet * ds, gpointer data);
+static void add_data_set(ui_study_t * ui_study, ui_time_dialog_t * new_time, AmitkDataSet * ds);
+static void remove_data_set(ui_study_t * ui_study, ui_time_dialog_t * new_time, AmitkDataSet * ds);
 
-/* function to setup the time combo widget */
-void ui_time_dialog_set_times(ui_study_t * ui_study) {
+
+
+
+static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
+				    GtkTreeIter *iter, gpointer data) {
+
+  amide_time_t start, end, old_end;
+  ui_time_dialog_t * new_time = data;
   
-  volumes_t * current_volumes;
-  volumes_t * selected_volumes;
-  volume_t * min_volume;
-  GtkWidget * clist;
-  guint num_volumes;
-  guint i_volume, min_volume_num;
+  gtk_tree_model_get(model, iter, COLUMN_START, &start, COLUMN_END, &end, -1);
+
+  /* save our new times */
+  if (new_time->valid) {
+    old_end = new_time->end;
+    if (start < new_time->start)
+      new_time->start = start*(1.0+EPSILON);
+    if (end > old_end)
+      new_time->end = end*(1.0-EPSILON);
+    else
+      new_time->end = old_end*(1.0-EPSILON);
+  } else {
+    new_time->valid = TRUE;
+    new_time->start = start*(1.0+EPSILON);
+    new_time->end = end*(1.0-EPSILON);
+  }
+  
+  return;
+}
+
+/* reset out start and duration based on what just got selected */
+static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
+
+  GtkWidget * dialog = data;
+  GtkTreeView * tree_view;
+  GtkTreeModel * model;
+  ui_time_dialog_t * new_time;
+
+  new_time = g_object_get_data(G_OBJECT(dialog), "new_time");
+  new_time->valid = FALSE;
+
+  /* run the following function on each selected row */
+  gtk_tree_selection_selected_foreach(selection, selection_for_each_func, new_time);
+
+  if (!new_time->valid)
+    new_time->valid = TRUE; /* reset selected rows to old values */
+
+  tree_view = gtk_tree_selection_get_tree_view(selection);
+  model = gtk_tree_view_get_model(tree_view);
+
+  update_selections(model, selection, dialog, new_time->start, new_time->end);
+  update_entries(dialog, new_time->start, new_time->end);
+
+  return;
+}
+
+
+/* function called when we hit the apply button */
+static void response_cb(GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  ui_study_t * ui_study = data;
+  ui_time_dialog_t * new_time;
+  gint return_val;
+
+  switch(response_id) {
+  case AMITK_RESPONSE_EXECUTE:
+    /* reset the time */
+    new_time = g_object_get_data(G_OBJECT(ui_study->time_dialog), "new_time");
+    amitk_study_set_view_start_time(ui_study->study, new_time->start);
+    amitk_study_set_view_duration(ui_study->study, new_time->end-new_time->start);
+
+    /* through some new text onto the time popup button */
+    ui_study_update_time_button(ui_study);
+
+    break;
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+  
+  return;
+}
+
+/* callback for the help button */
+/*
+static void help_cb(GnomePropertyBox *time_dialog, gint page_number, gpointer data) {
+
+  GError *err=NULL;
+
+  gnome_help_display (PACKAGE,"basics.html#TIME-DIALOG-HELP", &err);
+
+  if (err != NULL) {
+    g_warning("couldn't open help file, error: %s", err->message);
+    g_error_free(err);
+  }
+
+  return;
+}
+*/
+
+/* function called to destroy the time dialog */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  ui_time_dialog_t * new_time;
+
+  /* trash collection */
+  new_time = g_object_get_data(G_OBJECT(ui_study->time_dialog), "new_time");
+  while(new_time->data_sets != NULL) 
+    remove_data_set(ui_study, new_time, new_time->data_sets->data);
+  g_free(new_time);
+
+  /* make sure the pointer in ui_study do this dialog is nulled */
+  ui_study->time_dialog = NULL;
+
+  return FALSE;
+}
+
+/* function called when a numerical entry has been changed */
+static void change_entry_cb(GtkWidget * widget, gpointer data) {
+
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+  gint which_widget;
+  GtkWidget * dialog = data;
+  ui_time_dialog_t * new_time;
+  GtkTreeView *tree_view;
+  GtkTreeSelection *selection;
+  GtkTreeModel * model;
+  
+  which_widget = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "type")); 
+  new_time = g_object_get_data(G_OBJECT(dialog), "new_time");
+  tree_view = g_object_get_data(G_OBJECT(dialog), "tree_view");
+  
+  /* get the contents of the name entry box, convert to floating point */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+  
+  switch(which_widget) {
+  case ENTRY_START:
+    if (temp_val*(1.0-EPSILON) > new_time->end)
+      new_time->start = new_time->end*(1.0-EPSILON);
+    else
+      new_time->start = temp_val;
+    break;
+  case ENTRY_END:
+    if (temp_val*(1.0+EPSILON) < new_time->start)
+      new_time->end = new_time->start*(1.0+EPSILON);
+    else
+      new_time->end = temp_val;
+    break;
+  }
+
+  model = gtk_tree_view_get_model(tree_view);
+  selection = gtk_tree_view_get_selection(tree_view);
+  update_selections(model, selection, dialog, new_time->start, new_time->end);
+
+  return;
+}
+
+static void update_model(GtkListStore * store, GtkTreeSelection *selection,
+			 GList * data_sets, amide_time_t start, amide_time_t end) {
+
+  GList * sets;
+  AmitkDataSet * min_ds;
+  guint num_sets;
+  guint i_ds, min_ds_num;
   guint * frames;
-  gboolean * volume_used;
   guint total_frames=0;
   guint current_frames;
   amide_time_t min, temp;
-  gchar * temp_strings[4];
-  ui_time_dialog_t * new_time;
+  GtkTreeIter iter;
 
-  if (ui_study->time_dialog == NULL)
-    return;
+  gtk_list_store_clear(store);  /* make sure the list is clear */
 
-  /* get the pointer to the list widget */
-  clist = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "clist");
-  gtk_clist_clear(GTK_CLIST(clist)); /* make sure the list is clear */
-
-  /* get the pointer to our new time structure */
-  new_time = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "new_time");
-
-  /* count the number of volumes */
-  selected_volumes = ui_study_selected_volumes(ui_study);
-  current_volumes = selected_volumes;
-  num_volumes=0;
-  while (current_volumes != NULL) {
-    num_volumes++;
-    total_frames += current_volumes->volume->data_set->dim.t;
-    current_volumes = current_volumes->next;
+  /* count the number of data setss */
+  sets = data_sets;
+  num_sets=0;
+  while (sets != NULL) {
+    num_sets++;
+    total_frames += AMITK_DATA_SET_NUM_FRAMES(sets->data);
+    sets = sets->next;
   }
 
-  /* get space for the array that'll take care of which frame of which volume we're looking at*/
-  frames = (guint *) g_malloc(num_volumes*sizeof(guint));
-  if ((frames == NULL) && (num_volumes !=0)) {
+  /* get space for the array that'll take care of which frame of which data set we're looking at*/
+  frames = g_new(guint,num_sets);
+  if ((frames == NULL) && (num_sets !=0)) {
     g_warning("can't count frames or allocate memory!");
     return;
   }
-  volume_used = (gboolean *) g_malloc(num_volumes+sizeof(gboolean));
-  if (volume_used == NULL) {
-    g_warning("couldn't find memory for a dang boolean array?");
-    g_free(frames);
-    return;
-  }
-
-  /* Block signals to this list widget.  I need to do this, as the
-     only way I could figure out how to get rows highlighted is
-     throught the gtk_clist_select_row function, which emits a
-     "select_row" signal.  Unblocking is at the end of this function */
-  gtk_signal_handler_block_by_func(GTK_OBJECT(clist),
-				   GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
-				   ui_study);
-
 
   /* initialize */
-  for (i_volume = 0; i_volume<num_volumes;i_volume++) {
-    frames[i_volume]=0;
-    volume_used[i_volume]=FALSE;
+  for (i_ds = 0; i_ds<num_sets;i_ds++) {
+    frames[i_ds]=0;
   }
 
   /* start generating our list of options */
   current_frames=0;
   while (current_frames < total_frames) {
-    current_volumes = selected_volumes;
+    sets = data_sets;
 
-    /* initialize the variables with the first volume on the volumes list */
-    i_volume=0;
-    while (current_volumes->volume->data_set->dim.t <= frames[i_volume]) {
-      current_volumes = current_volumes->next; /* advancing to a volume that still has frames left */
-      i_volume++;
+    /* initialize the variables with the first data set on the list */
+    i_ds=0;
+    while (AMITK_DATA_SET_NUM_FRAMES(sets->data) <= frames[i_ds]) {
+      sets = sets->next; /* advancing to a data set that still has frames left */
+      i_ds++;
     }
-    min_volume = current_volumes->volume;
-    min_volume_num = i_volume;
-    min = volume_start_time(min_volume,frames[i_volume]);
+    min_ds = AMITK_DATA_SET(sets->data);
+    min_ds_num = i_ds;
+    min = amitk_data_set_get_start_time(min_ds,frames[i_ds]);
 
-    current_volumes = current_volumes->next;
-    i_volume++;
-    while (current_volumes != NULL) {
-      if (frames[i_volume] < current_volumes->volume->data_set->dim.t) {
-	temp = volume_start_time(current_volumes->volume, frames[i_volume]);
+    sets = sets->next;
+    i_ds++;
+    while (sets != NULL) {
+      if (frames[i_ds] < AMITK_DATA_SET_NUM_FRAMES(sets->data)) {
+	temp = amitk_data_set_get_start_time(AMITK_DATA_SET(sets->data), frames[i_ds]);
 	if (temp < min) {
-	  min_volume = current_volumes->volume;
+	  min_ds = AMITK_DATA_SET(sets->data);
 	  min = temp;
-	  min_volume_num = i_volume;
+	  min_ds_num = i_ds;
 	}	
       }
-      i_volume++;
-      current_volumes = current_volumes->next;
+      i_ds++;
+      sets = sets->next;
     }
     
     /* we now have the next minimum start time */
     
     /* setup the corresponding list entry */
-    temp_strings[0] = g_strdup_printf("%5.1fs", min);
-    temp_strings[1] = g_strdup_printf("%5.1fs", min+min_volume->frame_duration[frames[min_volume_num]]);
-    temp_strings[2] =  g_strdup_printf("%d", frames[min_volume_num]);
-    temp_strings[3] = g_strdup_printf("%s", min_volume->name);
-    gtk_clist_append(GTK_CLIST(clist),temp_strings);
-    gtk_clist_set_row_data(GTK_CLIST(clist), current_frames, min_volume);
-    g_free(temp_strings[0]);
-    g_free(temp_strings[1]);
-    g_free(temp_strings[2]);
-    g_free(temp_strings[3]);
+    gtk_list_store_append (store, &iter);  /* Acquire an iterator */
+    gtk_list_store_set (store, &iter,
+			COLUMN_START, min,
+			COLUMN_END, min+min_ds->frame_duration[frames[min_ds_num]],
+			COLUMN_FRAME,frames[min_ds_num],
+			COLUMN_NAME,AMITK_OBJECT_NAME(min_ds), 
+			COLUMN_DATA_SET, min_ds,-1);
 
-    /* figure out if this row is suppose to be selected */
-    if (((new_time->time <= min) 
-	 && 
-	 ((new_time->time+new_time->duration) > min))
-	||
-	((new_time->time <= (min+min_volume->frame_duration[frames[min_volume_num]])) 
-	 &&
-	 ((new_time->time+new_time->duration) > (min+min_volume->frame_duration[frames[min_volume_num]])))
-	||
-	((new_time->time > (min)) 
-	 &&
-	 ((new_time->time+new_time->duration) < (min+min_volume->frame_duration[frames[min_volume_num]])))
-	) {
-      gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
-      volume_used[min_volume_num]=TRUE;
-    }
-
-    /* special case #1
-       this is the first frame in the volume and it's still behind the time, so select it anyway */
-    if ((!volume_used[min_volume_num]) && 
-	(frames[min_volume_num] == 0) && 
-	(new_time->time < min)) {
-      gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
-      volume_used[min_volume_num]=TRUE;
-    }
-
-    /* special case #2
-       this is the last frame in the volume and no other frame has been selected, so select this one anyway */
-    if ((!volume_used[min_volume_num]) && 
-	(frames[min_volume_num] == min_volume->data_set->dim.t-1) && 
-	(new_time->time > min + min_volume->frame_duration[frames[min_volume_num]])) {
-      gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
-      volume_used[min_volume_num]=TRUE;
-    }
-
-
-
-    frames[min_volume_num]++;
+    frames[min_ds_num]++;
     current_frames++;
   }
 
   /* freeup our allocated data structures */
   g_free(frames);
-  g_free(volume_used);
-  selected_volumes = volumes_unref(selected_volumes);
 
-  /* done updating the clist, we can reconnect signals now */
-  gtk_signal_handler_unblock_by_func(GTK_OBJECT(clist),
-				     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
-				     ui_study);
+  return;
+}
+
+static void update_selections(GtkTreeModel * model, GtkTreeSelection *selection, 
+			      GtkWidget * dialog, amide_time_t start, amide_time_t end) {
+  AmitkDataSet * ds;
+  gboolean ds_used;
+  GtkTreeIter iter;
+  gint iter_frame;
+  amide_time_t iter_start, iter_end;
+  GList * used_sets=NULL;;
+
+  /* Block signals to this list widget.  I need to do this, as I'll be
+     selecting rows, causing the emission of "changed" signals */
+  g_signal_handlers_block_by_func(G_OBJECT(selection), G_CALLBACK(selection_changed_cb), dialog);
+
+
+  if (gtk_tree_model_get_iter_first(model, &iter)) {
+    do {
+      
+      gtk_tree_model_get(model, &iter, 
+			 COLUMN_START, &iter_start, COLUMN_END, &iter_end, 
+			 COLUMN_FRAME, &iter_frame, COLUMN_DATA_SET, &ds,-1);
+      
+      /* see if we've already marked a frame in this data set */
+      ds_used = (g_list_index(used_sets, ds) >= 0);
+
+      /* figure out if this row is suppose to be selected */
+      if (((start <= iter_start) && ((end) > iter_start)) ||
+	  ((start <= (iter_end)) && ((end) > (iter_end))) ||
+	  ((start > (iter_start)) &&((end) < (iter_end)))) {
+	gtk_tree_selection_select_iter(selection, &iter);
+	if (!ds_used) used_sets = g_list_append(used_sets, ds);
+      } else if ((!ds_used) && (iter_frame == 0) && (start < iter_start)) {
+	/* special case #1
+	   this is the first frame in the data set and it's still behind the time, so select it anyway */
+	gtk_tree_selection_select_iter(selection, &iter);
+	used_sets = g_list_append(used_sets, ds);
+      } else if ((!ds_used) && (iter_frame == AMITK_DATA_SET_NUM_FRAMES(ds)-1) && (start > iter_end)) {
+	/* special case #2
+	   this is the last frame in the data set and no other frame has been selected, 
+	   so select this one anyway */
+	gtk_tree_selection_select_iter(selection, &iter);
+	used_sets = g_list_append(used_sets, ds);
+      } else {
+	gtk_tree_selection_unselect_iter(selection, &iter);
+      }
+	  
+    } while(gtk_tree_model_iter_next(model, &iter));
+  }
   
+  g_list_free(used_sets);
+
+  /* done updating the list, we can reconnect signals now */
+  g_signal_handlers_unblock_by_func(G_OBJECT(selection), G_CALLBACK(selection_changed_cb), dialog);
+
+  return;
+}
+
+static void update_entries(GtkWidget * dialog, amide_time_t new_start, amide_time_t new_end) {
+  
+  GtkWidget * entry;
+  gchar * temp_str;
+
+  entry = g_object_get_data(G_OBJECT(dialog), "start_entry");
+  g_signal_handlers_block_by_func(G_OBJECT(entry), G_CALLBACK(change_entry_cb), dialog);
+  temp_str = g_strdup_printf("%5.2f", new_start);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_str);
+  g_free(temp_str);
+  g_signal_handlers_unblock_by_func(G_OBJECT(entry), G_CALLBACK(change_entry_cb), dialog);
+
+  entry = g_object_get_data(G_OBJECT(dialog), "end_entry");
+  g_signal_handlers_block_by_func(G_OBJECT(entry), G_CALLBACK(change_entry_cb), dialog);
+  temp_str = g_strdup_printf("%5.2f", new_end);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_str);
+  g_free(temp_str);
+  g_signal_handlers_unblock_by_func(G_OBJECT(entry), G_CALLBACK(change_entry_cb), dialog);
+
+  return;
+}
+
+static void data_set_time_changed_cb(AmitkDataSet * ds, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_time_dialog_set_times(ui_study);
+}
+
+static void add_data_set(ui_study_t * ui_study, ui_time_dialog_t * new_time, AmitkDataSet * ds) {
+  g_object_ref(ds);
+  new_time->data_sets = g_list_append(new_time->data_sets, ds);
+  g_signal_connect(G_OBJECT(ds), "time_changed", 
+		   G_CALLBACK(data_set_time_changed_cb), ui_study);
+  //  g_print("add %s %d\n", AMITK_OBJECT_NAME(ds), G_OBJECT(ds)->ref_count);
+  return;
+}
+
+static void remove_data_set(ui_study_t * ui_study, ui_time_dialog_t * new_time, AmitkDataSet * ds) {
+
+  g_return_if_fail(g_list_index(new_time->data_sets, ds) >= 0);
+
+  //  g_print("remove %s %d\n", AMITK_OBJECT_NAME(ds), G_OBJECT(ds)->ref_count);
+  g_signal_handlers_disconnect_by_func(G_OBJECT(ds), G_CALLBACK(data_set_time_changed_cb), ui_study);
+  new_time->data_sets = g_list_remove(new_time->data_sets, ds);
+  g_object_unref(ds);
+  return;
+}
+
+/* function to setup the time combo widget */
+void ui_time_dialog_set_times(ui_study_t * ui_study) {
+
+  ui_time_dialog_t * new_time;
+  GtkTreeSelection *selection;
+  GtkTreeModel * model;
+  GtkTreeView * tree_view;
+  GList * selected_sets;
+  GList * temp_sets;
+
+
+  if (ui_study->time_dialog == NULL) return;
+
+  tree_view = g_object_get_data(G_OBJECT(ui_study->time_dialog), "tree_view");
+  new_time = g_object_get_data(G_OBJECT(ui_study->time_dialog), "new_time");
+
+  while(new_time->data_sets != NULL) 
+    remove_data_set(ui_study, new_time, new_time->data_sets->data);
+
+  selected_sets = ui_study_selected_data_sets(ui_study);
+  temp_sets = selected_sets;
+  while (temp_sets != NULL) {
+    add_data_set(ui_study, new_time, temp_sets->data);
+    temp_sets = temp_sets->next;
+  }
+  amitk_objects_unref(selected_sets);
+
+  model = gtk_tree_view_get_model(tree_view);
+  selection = gtk_tree_view_get_selection(tree_view);
+
+  update_model(GTK_LIST_STORE(model), selection,new_time->data_sets, 
+	       new_time->start, new_time->end);
+
+  update_selections(model, selection, ui_study->time_dialog, 
+		    new_time->start, new_time->end);
+  update_entries(ui_study->time_dialog, new_time->start, new_time->end);
+
   return;
 }
 
@@ -210,83 +484,131 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
   GtkWidget * time_dialog;
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
-  GtkWidget * clist;
   GtkWidget * label;
   GtkWidget * scrolled;
   guint table_row = 0;
   ui_time_dialog_t * new_time;
+  GtkListStore * store;
+  GtkWidget *tree;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *column;
+  GtkTreeSelection *selection;
+  GtkWidget * hseparator;
+  GtkWidget * entry;
+  GtkWidget * notebook;
+  column_type_t i_column;
 
   /* sanity checks */
   if (ui_study->time_dialog != NULL)
     return;
 
   temp_string = g_strdup_printf("%s: Time Dialog",PACKAGE);
-  time_dialog = gnome_property_box_new();
-  gtk_window_set_title(GTK_WINDOW(time_dialog), temp_string);
+  time_dialog = gtk_dialog_new_with_buttons(temp_string,  GTK_WINDOW(ui_study->app),
+					    GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+					    GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+					    GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					    NULL);
   g_free(temp_string);
   ui_study->time_dialog = time_dialog; /* save a pointer to the dialog */
 
   /* order is allow shrink, allow grow, autoshrink */
-  gtk_window_set_policy(GTK_WINDOW(time_dialog), FALSE, TRUE, FALSE); 
+  gtk_window_set_resizable(GTK_WINDOW(time_dialog), TRUE);
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
-  new_time = (ui_time_dialog_t *) g_malloc(sizeof(ui_time_dialog_t));
-  new_time->time = study_view_time(ui_study->study);
-  new_time->duration = study_view_duration(ui_study->study);
-  gtk_object_set_data(GTK_OBJECT(time_dialog), "new_time", new_time);
+  new_time = g_new(ui_time_dialog_t, 1);
+  new_time->start = AMITK_STUDY_VIEW_START_TIME(ui_study->study);
+  new_time->end = new_time->start+AMITK_STUDY_VIEW_DURATION(ui_study->study);
+  new_time->valid = TRUE;
+  new_time->data_sets = NULL;
+  g_object_set_data(G_OBJECT(time_dialog), "new_time", new_time);
   
-					   
-
   /* setup the callbacks for app */
-  gtk_signal_connect(GTK_OBJECT(time_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_close),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(time_dialog), "apply",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_apply),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(time_dialog), "help",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_help),
-		     ui_study);
+  g_signal_connect(G_OBJECT(time_dialog), "response", G_CALLBACK(response_cb), ui_study);
+  g_signal_connect(G_OBJECT(time_dialog), "delete_event", G_CALLBACK(delete_event_cb), ui_study);
+
+
+  notebook = gtk_notebook_new();
+
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(1,1,FALSE);
-  label = gtk_label_new("Time Interval");
+  packing_table = gtk_table_new(4,4,FALSE);
   table_row=0;
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(time_dialog), GTK_WIDGET(packing_table), label);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(time_dialog)->vbox), packing_table);
+
+  label = gtk_label_new("Start (s)");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    
+  entry = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+  g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(ENTRY_START));
+  g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_entry_cb), time_dialog);
+  g_object_set_data(G_OBJECT(time_dialog), "start_entry", entry);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+
+
+  label = gtk_label_new("End (s)");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    
+  entry = gtk_entry_new();
+  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+  g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(ENTRY_END));
+  g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_entry_cb), time_dialog);
+  g_object_set_data(G_OBJECT(time_dialog), "end_entry", entry);
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4, 
+		   table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
 
   /* the scroll widget which the list will go into */
   scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_usize(scrolled,150,150);
+  gtk_widget_set_size_request(scrolled,200,200);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-				 GTK_POLICY_AUTOMATIC,
-				 GTK_POLICY_AUTOMATIC);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(scrolled), 0,1, 
-		   table_row, table_row+1, 
-		   X_PACKING_OPTIONS | GTK_FILL, 
-		   Y_PACKING_OPTIONS | GTK_FILL, 
-		   X_PADDING, Y_PADDING);
+  				 GTK_POLICY_AUTOMATIC,
+  				 GTK_POLICY_AUTOMATIC);
+  gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2, 
+  		   table_row, table_row+1, 
+  		   X_PACKING_OPTIONS | GTK_FILL, 
+  		   Y_PACKING_OPTIONS | GTK_FILL, 
+  		   X_PADDING, Y_PADDING);
   table_row++;
+    
+
 
   /* and the list itself */
-  clist = gtk_clist_new_with_titles(4, column_names);
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_MULTIPLE);
-  gtk_object_set_data(GTK_OBJECT(clist), "time_dialog", time_dialog);
-  gtk_object_set_data(GTK_OBJECT(time_dialog), "clist", clist);
-  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_unselect_row),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(clist), "button_press_event",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
-		     ui_study);
-  gtk_container_add(GTK_CONTAINER(scrolled),clist);
+  store = gtk_list_store_new(NUM_COLUMNS, AMITK_TYPE_TIME, AMITK_TYPE_TIME,
+			     G_TYPE_INT, G_TYPE_STRING, G_TYPE_POINTER);
+  tree = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
+  g_object_unref(store);
+  g_object_set_data(G_OBJECT(time_dialog), "tree_view", GTK_TREE_VIEW(tree));
+
+  for (i_column=0; i_column<NUM_COLUMNS-1; i_column++) {
+    renderer = gtk_cell_renderer_text_new ();
+    column = gtk_tree_view_column_new_with_attributes(column_names[i_column], renderer,
+						      "text", i_column, NULL);
+    gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
+  }
+
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree));
+  gtk_tree_selection_set_mode (selection, GTK_SELECTION_MULTIPLE);
+  g_signal_connect (G_OBJECT (selection), "changed",
+		    G_CALLBACK (selection_changed_cb), time_dialog);
+  gtk_container_add(GTK_CONTAINER(scrolled),tree);
+
+  /* fill in the list */
   ui_time_dialog_set_times(ui_study);
-
-
-
-
 
   /* and show all our widgets */
   gtk_widget_show_all(time_dialog);
