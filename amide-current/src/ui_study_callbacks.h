@@ -27,7 +27,9 @@
 /* external functions */
 void ui_study_callbacks_save_as(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_import(GtkWidget * widget, gpointer data);
-gint ui_study_callbacks_canvas_event(GtkWidget* widget, GdkEvent * event,
+gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossing * event,
+					     gpointer data);
+gboolean ui_study_callbacks_canvas_event(GtkWidget* widget, GdkEvent * event,
 					 gpointer data);
 void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data);

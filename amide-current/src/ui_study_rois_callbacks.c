@@ -41,9 +41,7 @@
    notes:
    - new roi's are handled by ui_study_callbacks_canvas_event
    - widget should generally by GnomeCanvasLine type */
-gint ui_study_rois_callbacks_roi_event(GtkWidget* widget, 
-				       GdkEvent * event,
-				       gpointer data) {
+gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
   realpoint_t real_loc, canvas_loc; 
@@ -126,17 +124,22 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
     {
 
     case GDK_ENTER_NOTIFY:
+      ui_study_update_location_display(ui_study, real_loc);
       ui_study_place_cursor(ui_study, UI_STUDY_OLD_ROI_MODE, GTK_WIDGET(ui_study->canvas[view_static]));
       break;
 
 
     case GDK_LEAVE_NOTIFY:
+       ui_study_update_location_display(ui_study, 
+					realspace_alt_coord_to_base(study_view_center(ui_study->study),
+								    study_coord_frame(ui_study->study)));
        ui_study_remove_cursor(ui_study, GTK_WIDGET(ui_study->canvas[view_static]));
       break;
       
 
 
     case GDK_BUTTON_PRESS:
+      ui_study_update_location_display(ui_study, real_loc);
       dragging = TRUE;
 
       /* last second sanity check */
@@ -186,6 +189,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       break;
 
     case GDK_MOTION_NOTIFY:
+      ui_study_update_location_display(ui_study, real_loc);
       if (dragging && 
 	  ((event->motion.state & 
 	    (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)))) {
@@ -242,7 +246,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	  //	  g_print("roi_zoom\t%5.3f %5.3f %5.3f\n",roi_zoom.x,roi_zoom.y,roi_zoom.z);
 
 	  /* get the portions of the roi_zoom that are in the plane of the canvas */
-	  canvas_zoom = realspace_coord_to_orthogonal_view(roi_zoom, view_static);
+	  //	  canvas_zoom = realspace_coord_to_orthogonal_view(roi_zoom, view_static);
 
 	  /* do a wild ass affine matrix so that we can scale while preserving angles */
 
@@ -323,6 +327,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       break;
       
     case GDK_BUTTON_RELEASE:
+      ui_study_update_location_display(ui_study, real_loc);
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
       dragging = FALSE;
       roi_item = NULL;

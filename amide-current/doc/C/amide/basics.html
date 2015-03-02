@@ -12,8 +12,8 @@ REL="PREVIOUS"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="NEXT"
-TITLE="Importing Data "
-HREF="importing.html"></HEAD
+TITLE="Saving/Loading Files"
+HREF="file-handling.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
 ><DIV
@@ -48,7 +48,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="importing.html"
+HREF="file-handling.html"
 >Next</A
 ></TD
 ></TR
@@ -65,9 +65,11 @@ NAME="BASICS"
 ></H1
 ><P
 > 
-    As the use of AMIDE is bound to be completely intuitive only to
-    the one who wrote the program (i.e. me), this chapter will provide
-    a brief overview of the basic operating theory behind the program.
+
+  As the use of AMIDE is bound to be completely intuitive only to the
+    one who wrote the program (i.e. me), this chapter will provide a
+    brief overview of the basic operating theory behind the program.
+
   </P
 ><DIV
 CLASS="SECT1"
@@ -83,7 +85,7 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN25"
->Launch Window</A
+>Main Window</A
 ></H2
 ><P
 >	When AMIDE starts up, a small window pops up sporting a cheesy
@@ -103,7 +105,7 @@ NAME="AEN28"
 ><P
 >	After starting a new study or opening an old one, the study
 	window will be displayed.  A study is a collection of related
-	objects (i.e. medical image data sets, regions of interest),
+	objects (i.e. medical image data sets and regions of interest),
 	and most of the user's actions will take place in this window.
 	There are several elements to this window:
       </P
@@ -119,17 +121,18 @@ NAME="AEN31"
 >	  On the left hand side of the study window is a list of all
 	  the objects in the study arranged in a tree.  Objects in the
 	  study list can be selected by left clicking on the object,
-	  and can become the focus of the study by either double
-	  clicking on the object or clicking on the object with the
-	  middle mouse button.  Note that focusing on an ROI will
-	  center the canvases around that ROI. Object modification
-	  dialog boxes can be brought up in one of two ways; right
-	  clicking on the object, or hitting the "edit item(s) button
-	  (which will bring up modification dialog boxes for all
-	  selected items).  An "add roi" pull down menu is available
-	  for adding different types of ROI's to the study.  A "delete
-	  object(s)" button is also available which will remove all
-	  objects that are currently selected from the study.
+	  and can become the active focus of the study by either
+	  double clicking on the object or clicking on the object with
+	  the middle mouse button.  Note that making an ROI the active
+	  object will center the canvases around that ROI. Object
+	  modification dialog boxes can be brought up in one of two
+	  ways; right clicking on the object, or hitting the "edit
+	  item(s) button (which will bring up modification dialog
+	  boxes for all selected items).  An "add roi" pull down menu
+	  is available for adding different types of ROI's to the
+	  study.  A "delete object(s)" button is also available which
+	  will remove all objects that are currently selected from the
+	  study.
 	</P
 ></DIV
 ><DIV
@@ -142,19 +145,24 @@ NAME="AEN34"
 ></H3
 ><P
 >	  In the middle of the study window are three canvases which
-	  show 3 orthogonal 3 dimensional slices taken from the 3
-	  dimensional data sets.  The thickness of the slices is
-	  determined by the "thickness" widget on the right side of
-	  the study window.  The three canvases should be showing you
-	  transverse, coronal, and sagittal sections through the
-	  medical image data sets being analyzed.  Which data sets and
-	  regions of interest that are displayed on the canvases are
-	  determined by which of these objects are selected in the
-	  study list on the left side of the screen.  Below the
-	  canvases are dials for selecting where in the data set the
-	  displayed slices should be taken from.  Slice location can
-	  also be changed by directly clicking on the canvases.
-	  </P
+	  show three orthogonal 3-dimensional slices taken from the
+	  data sets.  The thickness of the slices is determined by the
+	  "thickness" widget on the right side of the study window.
+	  The three canvases should be showing you transverse,
+	  coronal, and sagittal sections through the medical image
+	  data sets being analyzed.  Which data sets and regions of
+	  interest that are displayed on the canvases are determined
+	  by which of these objects are selected in the study list on
+	  the left side of the screen.  Below the canvases are dials
+	  for selecting where in the data set the displayed slices
+	  should be taken from.  Slice location can also be changed by
+	  directly clicking on the canvases.  The thickness of the
+	  slices can also be changed by clicking the middle mouse
+	  button (which will minimize the thickness) or by
+	  click-n-dragging with the right mouse button (which allows
+	  interactive specification of the thickness).
+
+      </P
 ></DIV
 ><DIV
 CLASS="SECT3"
@@ -166,11 +174,11 @@ NAME="AEN37"
 ></H3
 ><P
 >	  On the right side of the study window are several widgets
-	  used for adjusting the most commonly changed parameters.
-	  Scaling, interpolation, zoom, and thickness are global
-	  options and will affect all displayed data sets.  Color
-	  table and threshold only apply to the data set that
-	  currently has the focus.
+	  used for adjusting the most commonly changed display
+	  parameters.  Scaling, interpolation, zoom, and thickness are
+	  global options and will affect all displayed data sets.
+	  Color table and threshold only apply to the data set that
+	  currently has the active focus.
 	</P
 ><DIV
 CLASS="SECT4"
@@ -184,7 +192,7 @@ NAME="AEN40"
 >	    The user has the option of specifying whether each slice
 	    should be scaled individually by the maximum and minimum
 	    values in that slice, or if the slices should be scaled to
-	    the maximum and minium values in their data set .
+	    the maximum and minium values in their respective data sets.
 	  </P
 ></DIV
 ><DIV
@@ -277,19 +285,6 @@ NAME="AEN58"
 	    study canvas are.
 	  </P
 ></DIV
-><DIV
-CLASS="SECT4"
-><H4
-CLASS="SECT4"
-><A
-NAME="AEN61"
->Axis Reset</A
-></H4
-><P
->	    If the view axis is altered, the axis reset button allows
-	    the view axis to be returned to normal.
-	  </P
-></DIV
 ></DIV
 ></DIV
 ><DIV
@@ -297,7 +292,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN64"
+NAME="AEN61"
 >Threshold Dialog</A
 ></H2
 ><P
@@ -318,7 +313,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN67"
+NAME="AEN64"
 >Series View Window</A
 ></H2
 ><P
@@ -349,7 +344,7 @@ NAME="TIME-DIALOG-HELP"
 >	The time dialog lets the user pick over which time period data
 	should be displayed.  Since data sets are often composed of
 	non-regular duration frames, the abstraction between the user
-	interface and the actual format of the data set has been
+	interface and the underlying format of the data set has been
 	dropped in this case and the user is presented with a list of
 	the frames of data arranged in chronological order.  A time
 	period (i.e. frame) can be selected by clicking on a list
@@ -589,7 +584,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="importing.html"
+HREF="file-handling.html"
 >Next</A
 ></TD
 ></TR
@@ -608,7 +603,7 @@ VALIGN="top"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Importing Data</TD
+>Saving/Loading Files</TD
 ></TR
 ></TABLE
 ></DIV

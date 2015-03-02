@@ -1,3 +1,10 @@
+0.3.4
+	* corrected stupid roi-zooming error, although roi-zooming still not correct
+	* added a little display to indicate the current coordinates
+	* added a continously running help window to indicate what the different
+	  mouse buttons indicate at any given time.
+	* corrected activating an object without selecting it (now not possible)
+
 0.3.3
 	* added "targets" onto the canvases
 	* can now change thickness by click-n-dragging on canvases

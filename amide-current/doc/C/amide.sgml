@@ -1,5 +1,6 @@
 <!DOCTYPE book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 <!entity basics SYSTEM "basics.sgml">
+<!entity file-handling SYSTEM "file-handling.sgml">
 <!entity importing SYSTEM "importing.sgml">
 <!entity rois SYSTEM "rois.sgml">
 <!entity volumes SYSTEM "volumes.sgml">
@@ -49,6 +50,11 @@
   <chapter id="basics">
     <title>AMIDE Basics</title>
       &basics;
+  </chapter>
+
+  <chapter id="file-handling">
+    <title>Saving/Loading Files</title>
+    &file-handling;
   </chapter>
 
   <chapter id="importing">

@@ -7,6 +7,7 @@ amide_help_DATA = 	\
 SGML_FILES =			\
 	amide.sgml		\
 	basics.sgml		\
+	file-handling.sgml	\
 	importing.sgml		\
 	rois.sgml		\
 	volumes.sgml		

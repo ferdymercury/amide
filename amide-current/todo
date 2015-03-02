@@ -18,10 +18,12 @@ big things:
 small things:
 -------------
 
+* when dragging an ROI, keep the center of the view the center of the ROI
+* figure out why we lost the horizontal scrollbar on the tree widget
+* put the canvases in a scrolled widget?
 * figure out what's going wrong with my use of gtk_gamma_curve
 	to set the density and gradient classification functions
-* indicate what the current coordinates are in the study
-* a little help thingie -> indicate what each of the mouse buttons will currently do
+* need to change the GtkCTree to GtkTree so we can get item specific help
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
 * ui_main delete events should call ui_study_delete_event

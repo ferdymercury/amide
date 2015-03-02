@@ -58,6 +58,9 @@ roi_t * roi_free(roi_t * roi) {
   
   /* if we've removed all reference's, free the roi */
   if (roi->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing roi: %s\n",roi->name);
+#endif
     g_free(roi->name);
     g_free(roi);
     roi = NULL;

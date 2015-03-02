@@ -26,10 +26,12 @@
 
 #define UI_STUDY_TRIANGLE_WIDTH 15
 #define UI_STUDY_TRIANGLE_HEIGHT 7.5
-#define UI_STUDY_PACKING_TABLE_HEIGHT 5
-#define UI_STUDY_PACKING_TABLE_WIDTH 5
+#define UI_STUDY_MAIN_TABLE_HEIGHT 3
+#define UI_STUDY_MAIN_TABLE_WIDTH 3
 #define UI_STUDY_RIGHT_TABLE_HEIGHT 8
 #define UI_STUDY_RIGHT_TABLE_WIDTH 2
+#define UI_STUDY_MIDDLE_TABLE_HEIGHT 3
+#define UI_STUDY_MIDDLE_TABLE_WIDTH 3
 #define UI_STUDY_SIZE_TREE_PIXMAPS 24
 #define UI_STUDY_NEW_ROI_MODE_CURSOR GDK_DRAFT_SMALL
 #define UI_STUDY_NEW_ROI_MOTION_CURSOR GDK_PENCIL
@@ -47,6 +49,9 @@
 #define UI_STUDY_TREE_TREE_COLUMN 1
 #define UI_STUDY_TREE_TEXT_COLUMN 1
 #define UI_STUDY_TREE_NUM_COLUMNS 2
+#define UI_STUDY_HELP_FONT "fixed"
+#define UI_STUDY_HELP_INFO_LINE_X 20.0
+#define UI_STUDY_HELP_INFO_LINE_HEIGHT 13
 
 typedef enum {
   VOLUME_MODE, ROI_MODE, NUM_MODES
@@ -76,6 +81,27 @@ typedef enum {
 } ui_study_cursor_t;
 
 typedef enum {
+  HELP_INFO_BLANK,
+  HELP_INFO_CANVAS_VOLUME,
+  HELP_INFO_CANVAS_ROI,
+  HELP_INFO_TREE_VOLUME,
+  HELP_INFO_TREE_ROI,
+  HELP_INFO_TREE_STUDY,
+  HELP_INFO_TREE_NONE,
+  NUM_HELP_INFOS
+} ui_study_help_info_t;
+
+typedef enum {
+  HELP_INFO_LINE_1,
+  HELP_INFO_LINE_1_SHIFT,
+  HELP_INFO_LINE_2,
+  HELP_INFO_LINE_2_SHIFT,
+  HELP_INFO_LINE_3,
+  HELP_INFO_LINE_3_SHIFT,
+  NUM_HELP_INFO_LINES
+} ui_study_help_info_line_t;
+
+typedef enum {
   TARGET_DELETE,
   TARGET_CREATE,
   TARGET_UPDATE,
@@ -99,6 +125,8 @@ typedef struct ui_study_t {
   GtkAdjustment * thickness_adjustment;
   GdkCursor * cursor[NUM_CURSORS];
   GSList * cursor_stack;
+  GtkWidget * location[NUM_VIEWS];
+  GnomeCanvas * help_info;
   GtkWidget * thickness_spin_button;
   GtkWidget * color_table_menu;
   GtkWidget * add_roi_option_menu;
@@ -124,8 +152,10 @@ typedef struct ui_study_t {
 
 /* external functions */
 GnomeApp * ui_study_create(study_t * study);
+void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
-void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action, 
+void ui_study_update_location_display(ui_study_t * ui_study, realpoint_t new_point);
+void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, guint32 outline_color);
 GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
@@ -151,4 +181,3 @@ ui_study_t * ui_study_init(void);
 
 
 /* external variables */
-extern gchar * ui_study_tree_active_mark;

@@ -24,12 +24,8 @@
 */
 
 /* external functions */
-gint ui_study_rois_callbacks_roi_event(GtkWidget* widget, 
-				       GdkEvent * event,
-				       gpointer data);
-
+gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 void ui_study_rois_callbacks_calculate_all(GtkWidget * widget, gpointer data);
 void ui_study_rois_callbacks_calculate_selected(GtkWidget * widget, gpointer data);
 void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean All);
-void ui_study_rois_callbacks_delete_event(GtkWidget* widget, 
-					  GdkEvent * event, gpointer data);
+void ui_study_rois_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);

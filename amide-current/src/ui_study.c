@@ -48,9 +48,18 @@
 #include "../pixmaps/ROI.xpm"
 
 /* external variables */
-gchar * ui_study_tree_active_mark = "*";
 
 /* internal variables */
+static gchar * ui_study_help_info_lines[][NUM_HELP_INFO_LINES] = {
+  {"", "", "", "", "", ""}, /* BLANK */
+  {"1-Move View", "", "2-Move View, Min. Depth", "", "3-Change Depth",""},
+  {"1-Shift", "", "2-Rotate", "", "3-Scale", ""}, /*CANVAS_ROI */
+  {"1-select", "", "2-make active", "", "3-pop up dialog", ""}, /* TREE_VOLUME */
+  {"1-select", "", "2-make active", "", "3-pop up dialog", ""}, /* TREE_ROI */
+  {"", "", "", "", "3-pop up dialog",""}, /* TREE_STUDY */
+  {"1-select", "", "2-make active", "", "3-pop up dialog",""} /* TREE_NONE */
+};
+static gchar * ui_study_tree_active_mark = "*";
 static gint next_study_num=1;
 static gchar * ui_study_tree_column_titles[] = {"*", "object"};
 
@@ -67,8 +76,8 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
   ui_study->reference_count--;
 
   /* things we always do */
-  ui_study->current_volumes = ui_volume_list_free(ui_study->current_volumes);
   ui_study->current_rois = ui_roi_list_free(ui_study->current_rois);
+  ui_study->current_volumes = ui_volume_list_free(ui_study->current_volumes);
   ui_study->study = study_free(ui_study->study);
 
   /* if we've removed all reference's,f ree the structure */
@@ -168,6 +177,61 @@ void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view) {
   return;
 }
 
+/* This function updates the little info box which tells us what the different 
+   mouse buttons will do */
+void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info) {
+  GnomeCanvasItem * button[NUM_HELP_INFO_LINES];
+  ui_study_help_info_line_t i_line;
+
+  button[HELP_INFO_LINE_1] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1_info");
+  button[HELP_INFO_LINE_1_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1s_info");
+  button[HELP_INFO_LINE_2] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2_info");
+  button[HELP_INFO_LINE_2_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2s_info");
+  button[HELP_INFO_LINE_3] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3_info");
+  button[HELP_INFO_LINE_3_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3s_info");
+
+  for (i_line=0;i_line<NUM_HELP_INFO_LINES;i_line++) 
+    if (button[i_line] == NULL) 
+      button[i_line] = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+					     gnome_canvas_text_get_type(),
+					     "justification", GTK_JUSTIFY_LEFT,
+					     "anchor", GTK_ANCHOR_NORTH_WEST,
+					     "text", ui_study_help_info_lines[which_info][i_line],
+					     "x", (gdouble) UI_STUDY_HELP_INFO_LINE_X,
+					     "y", (gdouble) (i_line*UI_STUDY_HELP_INFO_LINE_HEIGHT),
+					     "font", UI_STUDY_HELP_FONT, NULL);
+    else /* just need to change the text */
+      gnome_canvas_item_set(button[i_line], "text", ui_study_help_info_lines[which_info][i_line], NULL);
+  
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", button[HELP_INFO_LINE_1]);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", button[HELP_INFO_LINE_1_SHIFT]);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", button[HELP_INFO_LINE_2]);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", button[HELP_INFO_LINE_2_SHIFT]);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", button[HELP_INFO_LINE_3]);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", button[HELP_INFO_LINE_3_SHIFT]);
+
+  return;
+}
+
+/* This function updates the little boxes which display the current location */
+void ui_study_update_location_display(ui_study_t * ui_study, realpoint_t new_point) {
+
+  gchar * temp_string;
+
+  temp_string = g_strdup_printf("% 5.2f", new_point.x);
+  gtk_entry_set_text(GTK_ENTRY(ui_study->location[XAXIS]), temp_string);
+  g_free(temp_string);
+
+  temp_string = g_strdup_printf("% 5.2f", new_point.y);
+  gtk_entry_set_text(GTK_ENTRY(ui_study->location[YAXIS]), temp_string);
+  g_free(temp_string);
+
+  temp_string = g_strdup_printf("% 5.2f", new_point.z);
+  gtk_entry_set_text(GTK_ENTRY(ui_study->location[ZAXIS]), temp_string);
+  g_free(temp_string);
+
+  return;
+}
 
 /* this function is used to draw/update/remove the target lines on the canvases */
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action, 
@@ -655,7 +719,7 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   GdkImlibImage * rgb_image;
   color_point_t blank_color;
   GtkStyle * widget_style;
-  //  GtkRequisition requisition;
+  //GtkRequisition requisition;
 
   /* get points to the canvas image and rgb image associated with the current canvas */
   canvas_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_image");
@@ -725,12 +789,12 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   /* reset the min size of the widget */
   if ((width != rgb_image->rgb_width) || (height != rgb_image->rgb_height) || (canvas_image == NULL)) {
     gtk_widget_set_usize(GTK_WIDGET(ui_study->canvas[view]), 
-    			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
-    			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
-    //      requisition.width = rgb_image->rgb_width;
-    //      requisition.height = rgb_image->rgb_height;
-    //      gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
-    //      gtk_widget_queue_resize(GTK_WIDGET(ui_study->canvas[view]));
+			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
+			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
+    //requisition.width = rgb_image->rgb_width;
+    //    requisition.height = rgb_image->rgb_height;
+    //gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
+    //gtk_widget_queue_resize(GTK_WIDGET(ui_study->app));
   }
 
   /* set the scroll region */
@@ -829,8 +893,11 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
   rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
 
   /* sanity check */
-  if (current_slices == NULL)
-    return roi_item;
+  if (current_slices == NULL) {
+    if (roi_item != NULL) /* if no slices, destroy the old roi_item */
+      gtk_object_destroy(GTK_OBJECT(roi_item));
+    return NULL;
+  }
 
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
@@ -960,7 +1027,7 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,
   study_set_coord_frame_offset(ui_study->study, view_corner[0]);
   study_set_view_center(ui_study->study, 
 			realspace_base_coord_to_alt(temp_center, study_coord_frame(ui_study->study)));
-
+  ui_study_update_location_display(ui_study, temp_center);
 
   for (k_view=i_view;k_view<j_view;k_view++) {
     switch (update) {
@@ -1176,9 +1243,10 @@ void ui_study_update_tree(ui_study_t * ui_study) {
 /* function to setup the widgets inside of the GnomeApp study */
 void ui_study_setup_widgets(ui_study_t * ui_study) {
 
-  GtkWidget * packing_table;
+  GtkWidget * main_table;
   GtkWidget * right_table;
   GtkWidget * left_table;
+  GtkWidget * middle_table;
   GtkWidget * label;
   GtkWidget * scrollbar;
   GtkAdjustment * adjustment;
@@ -1189,49 +1257,70 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   GtkWidget * spin_button;
   GtkWidget * tree;
   GtkWidget * scrolled;
+  GtkWidget * entry;
+  GtkWidget * event_box;
   view_t i_view;
+  axis_t i_axis;
   scaling_t i_scaling;
   color_table_t i_color_table;
   interpolation_t i_interpolation;
   roi_type_t i_roi_type;
   realpoint_t * far_corner;
   realspace_t * canvas_coord_frame;
-  guint packing_table_row, packing_table_column;
-  guint left_table_row, right_table_row;  
+  guint main_table_row, main_table_column;
+  guint left_table_row, right_table_row;
+  gint middle_table_row, middle_table_column;
   gchar * temp_string;
 
 
-  /* make and add the packing table */
-  packing_table = gtk_table_new(UI_STUDY_PACKING_TABLE_WIDTH,
-				UI_STUDY_PACKING_TABLE_HEIGHT,FALSE);
-  packing_table_row = packing_table_column=0;
-  gnome_app_set_contents(ui_study->app, GTK_WIDGET(packing_table));
+  /* make and add the main packing table */
+  main_table = gtk_table_new(UI_STUDY_MAIN_TABLE_WIDTH,
+			     UI_STUDY_MAIN_TABLE_HEIGHT,FALSE);
+  main_table_row = main_table_column=0;
+  gnome_app_set_contents(ui_study->app, GTK_WIDGET(main_table));
+
+  /* connect the blank help signal */
+  gtk_object_set_data(GTK_OBJECT(ui_study->app), "which_help", GINT_TO_POINTER(HELP_INFO_BLANK));
+  gtk_signal_connect(GTK_OBJECT(ui_study->app), "enter_notify_event",
+  		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
 
   /* setup the left tree widget */
   left_table = gtk_table_new(2,5, FALSE);
   left_table_row=0;
-  gtk_table_attach(GTK_TABLE(packing_table), 
+  gtk_table_attach(GTK_TABLE(main_table), 
 		   left_table, 
-		   packing_table_column, packing_table_column+1, 
-		   packing_table_row, UI_STUDY_PACKING_TABLE_HEIGHT,
+		   main_table_column, main_table_column+1, 
+		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
 		   X_PACKING_OPTIONS | GTK_FILL, 
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
-  packing_table_column++;
+  main_table_column++;
+  main_table_row = 0;
 
-  /* make a scrolled area for the tree */
-  scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_usize(scrolled,200,-1);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-				 GTK_POLICY_AUTOMATIC,
-				 GTK_POLICY_AUTOMATIC);
-  gtk_table_attach(GTK_TABLE(left_table),
-		   scrolled,
+  /* make an event box, this allows us to catch events for the tree */
+  event_box = gtk_event_box_new();
+  gtk_table_attach(GTK_TABLE(left_table), event_box,
 		   0,2, left_table_row, left_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 
 		   Y_PACKING_OPTIONS | GTK_FILL, 
 		   X_PADDING, Y_PADDING);
   left_table_row++;
+  gtk_object_set_data(GTK_OBJECT(event_box), "which_help", GINT_TO_POINTER(HELP_INFO_TREE_NONE));
+  gtk_signal_connect(GTK_OBJECT(event_box), "enter_notify_event",
+  		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+
+
+  /* make a scrolled area for the tree */
+  scrolled = gtk_scrolled_window_new(NULL,NULL);
+  gtk_widget_set_usize(scrolled,200,200);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_container_add(GTK_CONTAINER(event_box),scrolled);
+  //  gtk_table_attach(GTK_TABLE(left_table), scrolled,
+  //		   0,2, left_table_row, left_table_row+1,
+  //		   X_PACKING_OPTIONS | GTK_FILL, 
+  //		   Y_PACKING_OPTIONS | GTK_FILL, 
+  //		   X_PADDING, Y_PADDING);
+
 
   /* make the tree */
   tree = gtk_ctree_new_with_titles(UI_STUDY_TREE_NUM_COLUMNS,
@@ -1249,6 +1338,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		     GTK_SIGNAL_FUNC(ui_study_callback_tree_click_row),
 		     ui_study);
   gtk_object_set_data(GTK_OBJECT(tree), "active_row", NULL);
+
 
   gtk_container_add(GTK_CONTAINER(scrolled),tree);
   ui_study->tree = tree;
@@ -1311,29 +1401,70 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		     ui_study);
   left_table_row++;
 
+  /* the help information canvas */
+  ui_study->help_info = GNOME_CANVAS(gnome_canvas_new());
+  gtk_table_attach(GTK_TABLE(left_table), GTK_WIDGET(ui_study->help_info), 
+		   0,2, left_table_row, left_table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", NULL);
+  gtk_widget_set_usize(GTK_WIDGET(ui_study->help_info), 150,
+		       UI_STUDY_HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
+  gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, 150.0, 100.0);
+  left_table_row++;
 
+  /* make the stuff in the middle, we'll have the entire middle table in a scrolled window  */
+  //  scrolled = gtk_scrolled_window_new(NULL,NULL);
+  //  gtk_widget_set_usize(scrolled,-1,-1);
+  //  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+  //				 GTK_POLICY_AUTOMATIC,
+  //				 GTK_POLICY_AUTOMATIC);
+  //  gtk_table_attach(GTK_TABLE(main_table), scrolled,
+  //		   main_table_column, main_table_column+1, 
+  //		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
+  //		   X_PACKING_OPTIONS | GTK_FILL, 
+  //		   Y_PACKING_OPTIONS | GTK_FILL, 
+  //		   X_PADDING, Y_PADDING);
+  //  main_table_column++;
+  //  main_table_row = 0;
+
+  middle_table = gtk_table_new(UI_STUDY_MIDDLE_TABLE_WIDTH, UI_STUDY_MIDDLE_TABLE_HEIGHT,FALSE);
+  middle_table_row=middle_table_column = 0;
+  //  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled),middle_table);
+  gtk_table_attach(GTK_TABLE(main_table), middle_table,
+		   main_table_column, main_table_column+1, 
+		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
+		   X_PACKING_OPTIONS | GTK_FILL, 
+		   Y_PACKING_OPTIONS | GTK_FILL, 
+		   X_PADDING, Y_PADDING);
+  main_table_column++;
+  main_table_row = 0;
 
 
   /* make the three canvases, scrollbars, dials, etc. */
   for (i_view=0;i_view<NUM_VIEWS;i_view++) {
-    packing_table_row=0;
+    middle_table_row=0;
 
     /* make the label for this column */
     label = gtk_label_new(view_names[i_view]);
-    gtk_table_attach(GTK_TABLE(packing_table), 
+    gtk_table_attach(GTK_TABLE(middle_table), 
 		     label, 
-		     packing_table_column, packing_table_column+1, 
-		     packing_table_row, packing_table_row+1,
+		     middle_table_column, middle_table_column+1, 
+		     middle_table_row, middle_table_row+1,
 		     GTK_FILL, FALSE, X_PADDING, Y_PADDING);
-    packing_table_row++;
+    middle_table_row++;
 
     /* canvas section */
     //    ui_study->canvas[i] = GNOME_CANVAS(gnome_canvas_new_aa());
     ui_study->canvas[i_view] = GNOME_CANVAS(gnome_canvas_new());
-    gtk_table_attach(GTK_TABLE(packing_table), 
+    gtk_table_attach(GTK_TABLE(middle_table), 
 		     GTK_WIDGET(ui_study->canvas[i_view]), 
-		     packing_table_column, packing_table_column+1,
-		     packing_table_row, packing_table_row+1,
+		     middle_table_column, middle_table_column+1,
+		     middle_table_row, middle_table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "target_lines", NULL);
     g_return_if_fail((far_corner = (realpoint_t *) g_malloc(sizeof(realpoint_t))) != NULL);
@@ -1354,12 +1485,16 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
     /* and put something into the canvas */
     ui_study_update_canvas_image(ui_study, i_view); 
 
-    /* hook up the callback */
+    /* hook up the callbacks */
     gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view]), "event",
 		       GTK_SIGNAL_FUNC(ui_study_callbacks_canvas_event),
 		       ui_study);
+    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[i_view]), "which_help", 
+			GINT_TO_POINTER(HELP_INFO_CANVAS_VOLUME));
+    gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view]), "enter_notify_event",
+		       GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
 
-    packing_table_row++;
+    middle_table_row++;
 
 
     /* scrollbar section */
@@ -1368,26 +1503,50 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
     gtk_object_set_data(GTK_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view));
     scrollbar = gtk_hscrollbar_new(adjustment);
     gtk_range_set_update_policy(GTK_RANGE(scrollbar), GTK_UPDATE_DISCONTINUOUS);
-    gtk_table_attach(GTK_TABLE(packing_table), 
+    gtk_table_attach(GTK_TABLE(middle_table), 
 		     GTK_WIDGET(scrollbar), 
-		     packing_table_column, packing_table_column+1,
-		     packing_table_row, packing_table_row+1,
+		     middle_table_column, middle_table_column+1,
+		     middle_table_row, middle_table_row+1,
 		     GTK_FILL,FALSE, X_PADDING, Y_PADDING);
     gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
 		       GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change), 
 		       ui_study);
-    packing_table_row++;
+    middle_table_row++;
 
     /* I should hook up a entry widget to this to allow more fine settings */
 
-    packing_table_column++;
+    middle_table_column++;
   }
-  packing_table_row=0;
+  main_table_row=0;
 
   /* things to put in the right most column */
   right_table = gtk_table_new(UI_STUDY_RIGHT_TABLE_WIDTH,
 			      UI_STUDY_RIGHT_TABLE_HEIGHT,FALSE);
   right_table_row=0;
+
+  /* displaying the current location */
+  label = gtk_label_new("location:");
+  gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(label), 0,1, 
+		   right_table_row,right_table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  right_table_row++;
+		   
+  for (i_axis = 0; i_axis < NUM_AXIS; i_axis++) {
+    label = gtk_label_new(axis_names[i_axis]);
+    gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(label), 0,1, 
+		     right_table_row,right_table_row+1,
+		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    entry = gtk_entry_new();
+    gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
+    gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+    gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(entry), 1, 2,
+		     right_table_row, right_table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    ui_study->location[i_axis] = entry;
+    right_table_row++;
+  }
+  ui_study_update_location_display(ui_study, 
+				   realspace_alt_coord_to_base(study_view_center(ui_study->study),
+							       study_coord_frame(ui_study->study)));
 
   /* selecting per slice/global file normalization */
   label = gtk_label_new("scaling:");
@@ -1569,11 +1728,14 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
 
   /* and add the right column to the main table */
-  gtk_table_attach(GTK_TABLE(packing_table), 
+  gtk_table_attach(GTK_TABLE(main_table), 
 		   GTK_WIDGET(right_table), 
-		   packing_table_column,packing_table_column+1,
-		   packing_table_row, UI_STUDY_PACKING_TABLE_HEIGHT,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+		   main_table_column,main_table_column+1,
+		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
+		   //		   X_PACKING_OPTIONS | GTK_FILL, 
+		   0, 
+		   0, 
+		   X_PADDING, Y_PADDING);
 
   return;
 }

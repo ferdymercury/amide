@@ -1,5 +1,6 @@
-amide.html	AMIDE Manual
-basics.html	AMIDE Basics
-importing.html	Importing Data
-volumes.html	Manipulating Data
-rois.html	Handling ROI's
+amide.html		AMIDE Manual
+basics.html		AMIDE Basics
+file-handling.html	Saving/Loading Files
+importing.html		Importing Data
+volumes.html		Manipulating Data
+rois.html		Handling ROI's

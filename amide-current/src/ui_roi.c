@@ -50,11 +50,14 @@ ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
   ui_roi_list->next = ui_roi_list_free(ui_roi_list->next);
   ui_roi_list->roi = roi_free(ui_roi_list->roi);
 
+
   /* things to do if we've removed all reference's */
   if (ui_roi_list->reference_count == 0) {
     for (i_view=0;i_view<NUM_VIEWS;i_view++)
-      if (ui_roi_list->canvas_roi[i_view] != NULL) 
+      if (ui_roi_list->canvas_roi[i_view] != NULL) {
 	gtk_object_destroy(GTK_OBJECT(ui_roi_list->canvas_roi[i_view]));
+	ui_roi_list->canvas_roi[i_view] = NULL;
+      }
     if (ui_roi_list->dialog != NULL)
       gtk_signal_emit_by_name(GTK_OBJECT(ui_roi_list->dialog), 
 			      "delete_event", NULL, ui_roi_list);

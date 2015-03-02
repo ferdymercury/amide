@@ -372,13 +372,28 @@ void ui_study_callbacks_import(GtkWidget * widget, gpointer data) {
   return;
 }
 
+/* callback generally attached to the entry_notify_event */
+gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossing * event,
+					     gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_study_help_info_t which_info;
+
+  which_info = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_help"));
+  /* quick correction so we can handle when the canvas switches to roi mode */
+  if (which_info == HELP_INFO_CANVAS_VOLUME)
+    if (ui_study->current_mode == ROI_MODE)
+      which_info = HELP_INFO_CANVAS_ROI;
+  ui_study_update_help_info(ui_study, which_info);
+
+  return FALSE;
+}
 
 /* function called when an event occurs on the image canvas, 
    notes:
    -events for non-new roi's are handled by ui_study_rois_callbacks_roi_event 
 
 */
-gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data) {
+gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
   realpoint_t real_loc, view_loc, temp_loc;
@@ -449,6 +464,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 
 
     case GDK_ENTER_NOTIFY:
+      ui_study_update_location_display(ui_study, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	/* if we're a new roi, using the drawing cursor */
 	if (roi_undrawn(ui_study->current_roi))
@@ -463,12 +479,16 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 
 
      case GDK_LEAVE_NOTIFY:
+       ui_study_update_location_display(ui_study, 
+					realspace_alt_coord_to_base(study_view_center(ui_study->study),
+								    study_coord_frame(ui_study->study)));
        ui_study_remove_cursor(ui_study, GTK_WIDGET(canvas));
        break;
 
 
 
     case GDK_BUTTON_PRESS:
+      ui_study_update_location_display(ui_study, real_loc);
       /* figure out the outline color */
       outline_color = color_table_outline_color(volume->color_table, TRUE);
 
@@ -535,6 +555,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
       break;
 
     case GDK_MOTION_NOTIFY:
+      ui_study_update_location_display(ui_study, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	if (dragging && (event->motion.state & GDK_BUTTON1_MASK)) {
 	  if ( roi_undrawn(ui_study->current_roi)) {
@@ -566,6 +587,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
       break;
 
     case GDK_BUTTON_RELEASE:
+      ui_study_update_location_display(ui_study, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	if ( roi_undrawn(ui_study->current_roi)) {
 	  /* only new roi's handled in this function, old ones handled by
@@ -626,7 +648,9 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	/* get rid of the "target" lines */
 	ui_study_update_targets(ui_study, TARGET_DELETE, realpoint_init, 0);
 
-	study_set_view_center(ui_study->study, view_loc);
+	/* update the view center if it's been changed */
+	if (event->button.button != 3)
+	  study_set_view_center(ui_study->study, view_loc);
 
 	/* update the canvases */
 	if (depth_change == TRUE) {
@@ -950,6 +974,7 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
   return;
 }
 
+
 /* function called when another row has been selected in the tree */
 void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node, 
 				       gint column, gpointer data) {
@@ -1137,7 +1162,6 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
     gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, &row, &col);
     if (row != -1) 
       node = gtk_ctree_node_nth(ctree, (guint)row);
-                    
 
     /* figure out what this node corresponds to, if anything, and take
        appropriate corresponding action */
@@ -1151,6 +1175,10 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	  if ((event->button == 1) || (event->button == 2)) {
 	    ui_study->current_mode = ROI_MODE;
 	    ui_study->current_roi = node_pointer;
+
+	    /* make sure it's already selected */
+	    if (!ui_roi_list_includes_roi(ui_study->current_rois, roi_list->roi))
+	      gtk_clist_select_row(GTK_CLIST(ui_study->tree),row, col);
 	    
 	    /* center the view on this roi, check first if the roi has been drawn */
 	    if ( !roi_undrawn(ui_study->current_roi)) {
@@ -1186,6 +1214,10 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	  if ((event->button == 1) || (event->button == 2)) {
 	    ui_study->current_mode = VOLUME_MODE;
 	    ui_study->current_volume = node_pointer;
+
+	    /* make sure it's already selected */
+	    if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume_list->volume))
+	      gtk_clist_select_row(GTK_CLIST(ui_study->tree),row, col);
 
 	    /* reset the threshold widget based on the current volume */
 	    if (ui_study->threshold != NULL)
