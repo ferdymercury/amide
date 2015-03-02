@@ -1960,7 +1960,27 @@
 
   <para>In addition to manually aligning data sets (described at <xref
   linkend="manual_alignment" />), data sets can also be aligned using
-  the alignment wizard.  The process is basically:</para>
+  the alignment wizard utilizing either mutual information or
+  fiducial markers.</para>
+
+
+  <sect3 id="mutual_information"><title>Alignment with Mutal Information</title>
+  <para> A rigid body alignment can be performed utilizing mutual
+  information between two data sets. This algorithm works by
+  taking orthogonal slices from one data set (transverse, coronal, and
+  sagittal) and computing a transform to best allow matching of these
+  slices to the second data set. This algorithm works best when the
+  two data sets have already been roughly aligned. Note that the
+  orthogonal slices utilized for the matching are derived utilizing
+  the current viewing parameters (current viewing location, slice
+  width, interpolation method, etc).
+  </para>
+  </sect3>
+
+  <sect3 id="procrustes"><title>Alignment with Fiducial Markers</title>
+
+  <para>A rigid body alignment can be performed utilizing fiducial
+  markers. The process is basically:</para>
   
   <procedure>
     <step>
@@ -1980,6 +2000,7 @@
       </para>
     </step>
   </procedure>          
+  </sect3>
   
 
   <sect3 id="fiducial-marker"><title>Drawing Fiducial Markers</title>

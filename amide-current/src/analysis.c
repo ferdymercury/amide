@@ -100,7 +100,7 @@ static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
   } else
     return_list = gate_analysis;
 
-  return gate_analysis;
+  return return_list;
 }
 
 
@@ -402,7 +402,7 @@ static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis
   } else
     return_list = frame_analysis;
 
-  return frame_analysis;
+  return return_list;
 }
 
 
@@ -489,7 +489,7 @@ static analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_anal
   } else
     return_list = volume_analysis;
 
-  return volume_analysis;
+  return return_list;
 }
 
 /* returns an initialized roi analysis of a list of volumes */

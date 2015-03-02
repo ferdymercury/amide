@@ -377,7 +377,6 @@ static GtkWidget * create_conversion_page(tb_crop_t * tb_crop) {
   GtkWidget * table;
   GtkWidget * label;
   gint table_row;
-  gint table_column;
   AmitkFormat i_format;
   AmitkScalingType i_scaling_type;
   GtkWidget * entry;
@@ -386,7 +385,6 @@ static GtkWidget * create_conversion_page(tb_crop_t * tb_crop) {
 
   table = gtk_table_new(3,3,FALSE);
   table_row = 0;
-  table_column=0;
   
   /* widget to tell you the internal data format */
   label = gtk_label_new(_("Current Data Format:"));
@@ -642,7 +640,6 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   AmitkDim dim;
   range_t which_range;
   gint int_value;
-  gboolean valid = FALSE;
 
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_view"));
   dim = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_dim"));
@@ -651,15 +648,11 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   int_value = gtk_spin_button_get_value_as_int(spin_button);
   
   if (which_range == RANGE_MIN) {
-    if (int_value <= voxel_get_dim(tb_crop->range[RANGE_MAX], dim)) {
-      valid = TRUE;
-    } else {
+    if (int_value > voxel_get_dim(tb_crop->range[RANGE_MAX], dim)) {
       int_value = voxel_get_dim(tb_crop->range[RANGE_MAX], dim);
     }
   } else { /* RANGE_MAX */
-    if (int_value >= voxel_get_dim(tb_crop->range[RANGE_MIN], dim)) {
-      valid = TRUE;
-    } else {
+    if (int_value < voxel_get_dim(tb_crop->range[RANGE_MIN], dim)) {
       int_value = voxel_get_dim(tb_crop->range[RANGE_MIN], dim);
     }
   }

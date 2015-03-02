@@ -530,7 +530,6 @@ gboolean amitk_volumes_calc_display_volume(const GList * volumes,
   gboolean valid;
   AmitkPoint width;
   amide_real_t max_width;
-  AmitkCorners old_corner;
 
   if (volumes == NULL) return FALSE;
 
@@ -551,8 +550,6 @@ gboolean amitk_volumes_calc_display_volume(const GList * volumes,
     /* compensate for field of view */
     width = point_sub(temp_corner[1], temp_corner[0]);
     max_width = (fov/100.0)*POINT_MAX(width);
-    old_corner[0] = amitk_space_b2s(space, AMITK_SPACE_OFFSET(volume));
-    old_corner[1] = amitk_space_b2s(space, AMITK_VOLUME_CORNER(volume));
 
     if (width.x > max_width) { /* bigger than FOV */
       if ((temp_point.x-max_width/2.0) < temp_corner[0].x)
@@ -587,7 +584,7 @@ gboolean amitk_volumes_calc_display_volume(const GList * volumes,
       changed = TRUE;
     }
     
-    temp_corner[1] = amitk_space_b2s(space, temp_corner[1]);
+    temp_corner[1] = amitk_space_b2s(AMITK_SPACE(volume), temp_corner[1]);
     if (!POINT_EQUAL(AMITK_VOLUME_CORNER(volume), temp_corner[1])) {
       amitk_volume_set_corner(volume, temp_corner[1]);
       changed = TRUE;

@@ -1042,12 +1042,8 @@ void ui_study_cb_roi_statistics(GtkAction * action, gpointer data) {
 
 /* user wants to run the alignment wizard */
 void ui_study_cb_alignment_selected(GtkAction * action, gpointer data) {
-#ifdef AMIDE_LIBGSL_SUPPORT
   ui_study_t * ui_study = data;
   tb_alignment(ui_study->study, ui_study->window);
-#else
-  g_warning("%s",no_gsl);
-#endif
   return;
 }
 

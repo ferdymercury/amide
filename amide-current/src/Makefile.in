@@ -117,23 +117,24 @@ am_amide_OBJECTS = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	$(am__objects_4) $(am__objects_3) $(am__objects_5) \
 	$(am__objects_3) $(am__objects_6) $(am__objects_3) \
 	amide.$(OBJEXT) amide_gconf.$(OBJEXT) amide_gnome.$(OBJEXT) \
-	amitk_common.$(OBJEXT) alignment.$(OBJEXT) analysis.$(OBJEXT) \
-	amitk_canvas.$(OBJEXT) amitk_canvas_object.$(OBJEXT) \
-	amitk_color_table.$(OBJEXT) amitk_color_table_menu.$(OBJEXT) \
-	amitk_data_set.$(OBJEXT) amitk_dial.$(OBJEXT) \
-	amitk_fiducial_mark.$(OBJEXT) amitk_filter.$(OBJEXT) \
-	amitk_line_profile.$(OBJEXT) amitk_object.$(OBJEXT) \
-	amitk_object_dialog.$(OBJEXT) amitk_point.$(OBJEXT) \
-	amitk_preferences.$(OBJEXT) amitk_progress_dialog.$(OBJEXT) \
-	amitk_raw_data.$(OBJEXT) amitk_roi.$(OBJEXT) \
-	amitk_space.$(OBJEXT) amitk_space_edit.$(OBJEXT) \
-	amitk_study.$(OBJEXT) amitk_threshold.$(OBJEXT) \
-	amitk_tree_view.$(OBJEXT) amitk_volume.$(OBJEXT) \
-	amitk_window_edit.$(OBJEXT) dcmtk_interface.$(OBJEXT) \
-	fads.$(OBJEXT) image.$(OBJEXT) legacy.$(OBJEXT) \
-	libecat_interface.$(OBJEXT) libmdc_interface.$(OBJEXT) \
-	mpeg_encode.$(OBJEXT) pixmaps.$(OBJEXT) \
-	raw_data_import.$(OBJEXT) render.$(OBJEXT) \
+	amitk_common.$(OBJEXT) amitk_canvas.$(OBJEXT) \
+	amitk_canvas_object.$(OBJEXT) amitk_color_table.$(OBJEXT) \
+	amitk_color_table_menu.$(OBJEXT) amitk_data_set.$(OBJEXT) \
+	amitk_dial.$(OBJEXT) amitk_fiducial_mark.$(OBJEXT) \
+	amitk_filter.$(OBJEXT) amitk_line_profile.$(OBJEXT) \
+	amitk_object.$(OBJEXT) amitk_object_dialog.$(OBJEXT) \
+	amitk_point.$(OBJEXT) amitk_preferences.$(OBJEXT) \
+	amitk_progress_dialog.$(OBJEXT) amitk_raw_data.$(OBJEXT) \
+	amitk_roi.$(OBJEXT) amitk_space.$(OBJEXT) \
+	amitk_space_edit.$(OBJEXT) amitk_study.$(OBJEXT) \
+	amitk_threshold.$(OBJEXT) amitk_tree_view.$(OBJEXT) \
+	amitk_volume.$(OBJEXT) amitk_window_edit.$(OBJEXT) \
+	alignment_mutual_information.$(OBJEXT) \
+	alignment_procrustes.$(OBJEXT) analysis.$(OBJEXT) \
+	dcmtk_interface.$(OBJEXT) fads.$(OBJEXT) image.$(OBJEXT) \
+	legacy.$(OBJEXT) libecat_interface.$(OBJEXT) \
+	libmdc_interface.$(OBJEXT) mpeg_encode.$(OBJEXT) \
+	pixmaps.$(OBJEXT) raw_data_import.$(OBJEXT) render.$(OBJEXT) \
 	tb_alignment.$(OBJEXT) tb_crop.$(OBJEXT) \
 	tb_export_data_set.$(OBJEXT) tb_fads.$(OBJEXT) \
 	tb_filter.$(OBJEXT) tb_fly_through.$(OBJEXT) tb_math.$(OBJEXT) \
@@ -217,6 +218,7 @@ DATADIRNAME = @DATADIRNAME@
 DB2HTML = @DB2HTML@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DLLTOOL = @DLLTOOL@
 DOC_USER_FORMATS = @DOC_USER_FORMATS@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
@@ -264,6 +266,7 @@ LTLIBOBJS = @LTLIBOBJS@
 M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
@@ -307,6 +310,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
@@ -340,7 +344,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -416,10 +419,6 @@ amide_SOURCES = \
 	amide_gnome.h \
 	amitk_common.c \
 	amitk_common.h \
-	alignment.c \
-	alignment.h \
-	analysis.c \
-	analysis.h \
 	amitk_canvas.c \
 	amitk_canvas_object.c \
 	amitk_color_table.c \
@@ -443,6 +442,12 @@ amide_SOURCES = \
 	amitk_tree_view.c \
 	amitk_volume.c \
 	amitk_window_edit.c \
+	alignment_mutual_information.c \
+	alignment_mutual_information.h \
+	alignment_procrustes.c \
+	alignment_procrustes.h \
+	analysis.c \
+	analysis.h \
 	dcmtk_interface.cc \
 	dcmtk_interface.h \
 	fads.c \
@@ -770,7 +775,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alignment.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alignment_mutual_information.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alignment_procrustes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amide.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amide_gconf.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amide_gnome.Po@am__quote@

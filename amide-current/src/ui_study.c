@@ -1235,9 +1235,10 @@ void ui_study_update_zoom(ui_study_t * ui_study) {
      unblock at the end of this function */
   g_signal_handlers_block_by_func(G_OBJECT(ui_study->zoom_spin),
 				  G_CALLBACK(ui_study_cb_zoom), ui_study);
-  
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), 
-			    AMITK_STUDY_ZOOM(ui_study->study));
+
+  if (ui_study->study != NULL)
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), 
+			      AMITK_STUDY_ZOOM(ui_study->study));
   
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->zoom_spin),

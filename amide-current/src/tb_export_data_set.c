@@ -336,6 +336,7 @@ static void change_voxel_size_cb(GtkWidget * widget, gpointer data) {
     break; /* do nothing */
   }
 
+
   write_voxel_size(voxel_size);
 
   return;
@@ -650,8 +651,9 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
     tb_export->vs_spin_button[i_axis] = 
       gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.2);
     gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_export->vs_spin_button[i_axis]), FALSE);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_export->vs_spin_button[i_axis]), 4);
     g_object_set_data(G_OBJECT(tb_export->vs_spin_button[i_axis]), "axis", GINT_TO_POINTER(i_axis));
-    g_signal_connect(G_OBJECT(tb_export->vs_spin_button[i_axis]), "changed", G_CALLBACK(change_voxel_size_cb), tb_export);
+    g_signal_connect(G_OBJECT(tb_export->vs_spin_button[i_axis]), "value_changed", G_CALLBACK(change_voxel_size_cb), tb_export);
 
     gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(tb_export->vs_spin_button[i_axis]),i_axis+1,i_axis+2,
 		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);

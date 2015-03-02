@@ -2094,6 +2094,7 @@ static void data_set_reduce_scaling_dimension(AmitkDataSet * ds) {
 	  return;
 
   if (AMITK_DATA_SET_SCALING_HAS_INTERCEPT(ds)) {
+    i_voxel = zero_voxel;
     initial_scale_intercept = *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i_voxel);
     for (i_voxel.t=0; i_voxel.t < ds->internal_scaling_intercept->dim.t; i_voxel.t++)
       for (i_voxel.g=0; i_voxel.g < ds->internal_scaling_intercept->dim.g; i_voxel.g++) 

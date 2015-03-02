@@ -331,8 +331,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
   amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
 
-  /* note, ImagePositionPatient is defined as the center of the upper left hand voxel 
-     in Patient space, not necessarily with respect to the Gantry */
+  /* note, ImagePositionPatient is suppose to be defined as the center of the upper left hand voxel 
+     in Patient space, not necessarily with respect to the Gantry. At least for GE scanners, 
+     the offset is on corner of this voxel */
   found_value=FALSE;
   if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0).good()) {
     new_offset.x = return_float64;
@@ -340,15 +341,20 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       new_offset.y = return_float64;
       if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 2).good()) {
       	new_offset.z = return_float64;
-	// not doing the half voxel correction... values seem more correct without, at least for GE 
-	//      new_offset.x -= 0.5*voxel_size.x;
-	//      new_offset.y -= 0.5*voxel_size.y;
-	// new_offset.z -= 0.5*voxel_size.z;
 
+	/* not doing the half voxel correction... values seem more correct without, at least for GE.
+	   If this was not the case, the code would be:
+	      new_offset.x -= 0.5*voxel_size.x;
+	      new_offset.y -= 0.5*voxel_size.y;
+	      new_offset.z -= 0.5*voxel_size.z;
+	*/
+
+	/* Offset seems to be in base coordinate space, otherwise the code would be
+	   amitk_space_set_offset(AMITK_SPACE(ds), amitk_space_s2b(AMITK_SPACE(ds), new_offset));
+	*/
 	new_offset.y = -1.0*new_offset.y; /* DICOM specifies y axis in wrong direction */
 	new_offset.z = -1.0*new_offset.z; /* DICOM specifies z axis in wrong direction */
 
-	//	amitk_space_set_offset(AMITK_SPACE(ds), amitk_space_s2b(AMITK_SPACE(ds), new_offset));
 	amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
 	found_value=TRUE;
       }
@@ -1923,7 +1929,8 @@ gboolean dcmtk_export(AmitkDataSet * ds,
     g_warning(_("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f"), dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #endif
   } else {
-    output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ds)));
+    output_volume = amitk_volume_new();
+    amitk_space_copy_in_place(AMITK_SPACE(output_volume), AMITK_SPACE(ds));
     voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
     corner = AMITK_VOLUME_CORNER(ds);
   }
@@ -2122,7 +2129,7 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 
   /* put in orientation - see note in read_dicom_file about AMIDE versus DICOM orientation */
   /* do flips for dicom convention */
-  amitk_axes_copy_in_place(axes, AMITK_SPACE_AXES(ds));
+  amitk_axes_copy_in_place(axes, AMITK_SPACE_AXES(output_volume));
   axes[AMITK_AXIS_X].y *= -1.0;
   axes[AMITK_AXIS_X].z *= -1.0;
   axes[AMITK_AXIS_Y].y *= -1.0;
@@ -2298,9 +2305,10 @@ gboolean dcmtk_export(AmitkDataSet * ds,
 	  slice = AMITK_DATA_SET(amitk_object_unref(slice));
 
 	/* advance for next iteration */
-	new_offset = AMITK_SPACE_OFFSET(output_volume);
+	new_offset = zero_point;
 	new_offset.z += voxel_size.z;
-	amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
+	amitk_space_set_offset(AMITK_SPACE(output_volume), 
+			       amitk_space_s2b(AMITK_SPACE(output_volume), new_offset));
 
       } /* i_voxel.z */
     } /* i_voxel.g */

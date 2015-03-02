@@ -1,4 +1,21 @@
-0.9.3
+1.0.0
+	* fixed color table for inverse hot metal contour
+	* fixed uninitialized iterator in data_set_reduce_scaling_dimensions [1]
+	* fixed manual entry of voxel size on tb_export_data_set dialog [2]
+	* updated configure.in for 3.6.0
+	* zoom no longer corrupted if no data sets
+	* fixed orientation errors on dcmtk_export
+	* added a mutual information alignment algorithm
+	* updates to Mac OSX package to allow saving prefs [7]
+	[1] Encountered by Done Ugarte
+	[2] Noticed by Morton Ostergard
+	[3] Noticed by Wolfgang Pichl
+	[4] Noticed by Erik Nolf
+	[5] Noticed by Chih-Ann Yang
+	[6] Contribution by Ian Miller
+	[7] Noticed by Janet O'Sullivan
+
+0.9.3 2011.03.06
 	* altered ffmpeg include paths for compiling on non-fedora systems [1]
 	* more gtk deprecated cleanups [2]
 	* converted GtkFileSelection to GtkFileChooserDialog
@@ -11,12 +28,14 @@
 	* updates for dcmtk 3.6.0
 	* multiframe dicom file support via DCMTK [5]
 	* problems deleting objects in amitk_tree_view [6]
+	* exporting in mac os x version broken due to dbus issues [7]
 	[1] Suggested by Peter Bloomfield
 	[2] Suggested by Ian Miller
 	[3] Suggested by Felix Gremse
 	[4] Found by Henrique Rocha
 	[5] Suggested by Robert Miletich
 	[6] Found by Otto Muzik
+	[7] Found by Jul Lea
 	
 0.9.2 2009.12.17
 	* switched from libfame based mpeg encoding to ffmpeg

@@ -526,6 +526,8 @@ static void study_recalc_voxel_dim(AmitkStudy * study) {
   amide_real_t voxel_dim;
   amide_real_t zoom;
 
+  if (AMITK_OBJECT_CHILDREN(study) == NULL)
+    return; /* no children, no voxel dim to recalculate */
   voxel_dim = amitk_data_sets_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(study));
 
   if (AMITK_STUDY_VOXEL_DIM_VALID(study) && !REAL_EQUAL(voxel_dim,AMITK_STUDY_VOXEL_DIM(study))) {
@@ -538,6 +540,7 @@ static void study_recalc_voxel_dim(AmitkStudy * study) {
   } else {
     set_voxel_dim_and_zoom(study, voxel_dim,AMITK_STUDY_ZOOM(study));
   }
+
 
   return;
 }

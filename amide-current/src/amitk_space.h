@@ -105,6 +105,8 @@ void            amitk_space_shift_offset            (AmitkSpace * space,
 void            amitk_space_set_axes                (AmitkSpace * space, 
 						     const AmitkAxes new_axes,
 						     const AmitkPoint center_of_rotation);
+AmitkSpace *    amitk_space_calculate_transform    (const AmitkSpace * dest_space,
+						    const AmitkSpace * src_space);
 void            amitk_space_transform               (AmitkSpace * space, 
 						     const AmitkSpace * transform_space);
 void            amitk_space_transform_axes          (AmitkSpace * space, 

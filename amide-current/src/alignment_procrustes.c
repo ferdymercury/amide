@@ -29,7 +29,7 @@
 #include <string.h>
 #include <glib.h>
 #include <gsl/gsl_linalg.h>
-#include "alignment.h"
+#include "alignment_procrustes.h"
 #include "amitk_fiducial_mark.h"
 
 /* convient functions that gsl doesn't supply */
@@ -76,13 +76,14 @@ static AmitkPoint matrix_mult_point(gsl_matrix * matrix, AmitkPoint rp) {
   return return_point;
 }
 
+
 /* this is the procrustes rigid registration algorithm, derived from the review article:
    "Medical Image Registration", 
    Hill, Batchelor, Holden, and Hawkes Phys. Med. Biol 46 (2001) R1-R45
 */
 
-AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds, GList * marks,
-				 gdouble *pfre) {
+AmitkSpace * alignment_procrustes(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds, GList * marks,
+				  gdouble *pointer_fiducial_reference_error) {
 
   AmitkSpace * transform_space=NULL;
   guint count = 0;
@@ -281,8 +282,8 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 #endif
 
   /* calculate fiducial reference error */
-  if (pfre != NULL) {
-    AmitkSpace * new_space;
+  if (pointer_fiducial_reference_error != NULL) {
+    AmitkSpace * new_space = NULL;
     fre = 0.0;
 
     new_space = amitk_space_copy(AMITK_SPACE(moving_ds));
@@ -313,9 +314,10 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
     }
 
     fre = fre/((gdouble) count);
-    *pfre = fre;
-  }
+    *pointer_fiducial_reference_error = fre;
 
+    if (new_space != NULL) g_object_unref(new_space);
+  }
  ending:
 
   /* garbage collection */

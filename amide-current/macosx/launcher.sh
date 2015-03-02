@@ -1,5 +1,11 @@
 #!/bin/sh
 
+PROGRAM_NAME=amide
+VERSION=1.0.0
+
+export PREFIX=/opt/"$PROGRAM_NAME"-"$VERSION"
+export PREFIXDIR="`dirname $PREFIX`"
+
 if test "x$IGE_DEBUG_LAUNCHER" != x; then
     set -x
 fi
@@ -166,5 +172,74 @@ if [ x`echo "x$1" | sed -e "s/^x-psn_.*//"` == x ]; then
 fi
 
 
-#AML
-eval `$bundle_contents/MacOS/dbus-launch --sh-syntax`"$bundle_contents/MacOS/$name-bin" $EXTRA_ARGS $*
+
+
+#AML taken from gnucash launcher file
+export RESPFX="${bundle_res}"
+PATH="${RESPFX}"/bin:"${PATH}"
+export PATH
+
+if [ -w "$PREFIXDIR" ]; then
+    if [ -e "$PREFIX" ] || [ -L "$PREFIX" ]  && [ ! "$PREFIX" -ef "$bundle_res" ]; then
+	if [ ! -d "$PREFIX" ]; then 
+	    rm "$PREFIX"; else 
+	    mv "$PREFIX" "$PREFIX.Save"; 
+	fi
+	ln -s "$RESPFX" "$PREFIX"
+    elif [ ! -e "$PREFIX" ] ; then
+	echo "Linking $RESPFX to $PREFIX"
+	if [ ! -d "$PREFIXDIR" ]; then 
+	    mkdir -p "$PREFIXDIR"; 
+	fi 
+	ln -s "$RESPFX" "$PREFIX"
+    fi
+else 
+    echo "Don't have write access to $PREFIXDIR"
+    if [ -e "$PREFIX" ] || [ -L "$PREFIX" ]  && [ ! "$PREFIX" -ef "$bundle_res" ]; then
+	echo "moving the $PREFIX directory to $PREFIX.save"
+	osascript  <<EOF 
+display alert "Create Link" message "AMIDEh requires authentication to create a link to the binary" as informational giving up after 3
+do shell script  "echo foo; if [ ! -d \"$PREFIX\" ]; then rm \"$PREFIX\"; else mv \"$PREFIX\" \"$PREFIX.Save\"; fi; ln -s \"$RESPFX\" \"$PREFIX\" " with administrator privileges
+
+EOF
+
+    elif [ ! -e "$PREFIX" ] ; 
+    then 
+	echo "Linking $RESPFX to $PREFIX" 
+	osascript <<EOF 
+display alert "Create Link" message "AMIDE requires authentication to create a link to the binary" as informational giving up after 3
+do shell script "if [ ! -d \"$PREFIXDIR\" ]; then mkdir -p \"$PREFIXDIR\"; fi; ln -s \"$RESPFX\" \"$PREFIX\"" with administrator privileges
+
+EOF
+
+
+    fi
+fi
+
+
+
+#AML ensure dbus-machine-id is created
+eval $PREFIX/bin/dbus-uuidgen --ensure
+
+
+#AML taken from gnucash launcher file
+if test -z "$DBUS_SESSION_BUS_ADDRESS"; then
+    # If we get here without a way to connect to an instance of dbus-daemon,
+    # then we can kill any existing instances of dbus-daemon that originate
+    # in this copy of Gnucash.
+
+    DBUS_PIDS=`ps ux | grep dbus-daemon | grep "${PREFIX}" | awk '{print $2}'`
+
+    if /bin/test "$DBUS_PIDS"; then
+        for DBUS_PID in ${DBUS_PIDS}
+        do
+            /bin/kill "${DBUS_PID}"
+        done
+    fi
+
+    eval `"$PREFIX/bin/dbus-launch" --sh-syntax --exit-with-session --config-file="$bundle_res/etc/dbus-1/session.conf"`
+fi
+
+
+#eval `$bundle_contents/MacOS/dbus-launch --sh-syntax`"$bundle_contents/MacOS/$name-bin" $EXTRA_ARGS $*
+$EXEC "$bundle_contents/MacOS/$name-bin" $EXTRA_ARGS $*

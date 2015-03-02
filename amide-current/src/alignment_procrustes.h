@@ -1,4 +1,4 @@
-/* tb_alignment.h
+/* alignment.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2011 Andy Loening
@@ -23,9 +23,24 @@
   02111-1307, USA.
 */
 
+#ifdef AMIDE_LIBGSL_SUPPORT
 
-/* includes always needed with this */
-#include "amitk_study.h"
+#ifndef __ALIGNMENT_PROCRUSTES_H__
+#define __ALIGNMENT_PROCRUSTES_H__
+
+/* header files that are always needed with this file */
+#include "amitk_data_set.h"
+
 
 /* external functions */
-void tb_alignment(AmitkStudy * study, GtkWindow * parent);
+/* the space returned is the transform needed to change moving_ds's space to the
+   aligned space, incoding an axes rotation, as well as the necessary shift
+   with respect to the dataset's center */
+AmitkSpace * alignment_procrustes(AmitkDataSet * moving_ds, 
+				  AmitkDataSet * fixed_ds, 
+				  GList * marks,
+				  gdouble * pointer_fiducial_registration_error);
+
+
+#endif /* __ALIGNMENT_PROCRUSTE_H__ */
+#endif /* AMIDE_LIBGSL_SUPPORT */

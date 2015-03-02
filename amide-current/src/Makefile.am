@@ -83,10 +83,6 @@ amide_SOURCES = \
 	amide_gnome.h \
 	amitk_common.c \
 	amitk_common.h \
-	alignment.c \
-	alignment.h \
-	analysis.c \
-	analysis.h \
 	amitk_canvas.c \
 	amitk_canvas_object.c \
 	amitk_color_table.c \
@@ -110,6 +106,12 @@ amide_SOURCES = \
 	amitk_tree_view.c \
 	amitk_volume.c \
 	amitk_window_edit.c \
+	alignment_mutual_information.c \
+	alignment_mutual_information.h \
+	alignment_procrustes.c \
+	alignment_procrustes.h \
+	analysis.c \
+	analysis.h \
 	dcmtk_interface.cc \
 	dcmtk_interface.h \
 	fads.c \

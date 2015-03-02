@@ -377,7 +377,6 @@ void fads_pca(AmitkDataSet * data_set,
   gsl_vector * s=NULL;
   gsl_matrix * v=NULL;
   AmitkVoxel dim, i_voxel;
-  guint num_frames;
   guint f, i, j;
   AmitkDataSet * new_ds;
   gchar * temp_string;
@@ -386,7 +385,6 @@ void fads_pca(AmitkDataSet * data_set,
   AmitkViewMode i_view_mode;
 
   dim = AMITK_DATA_SET_DIM(data_set);
-  num_frames = dim.t;
   dim.t = 1;
 
   perform_pca(data_set, num_factors, &u, &s, &v);

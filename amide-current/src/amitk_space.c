@@ -379,12 +379,14 @@ void amitk_space_set_axes(AmitkSpace * space, const AmitkAxes new_axes,
 
 
 
-void amitk_space_copy_in_place(AmitkSpace * dest_space, const AmitkSpace * src_space) {
+/* given two spaces, calculate the transform space that when applied to src_space will 
+   make it equal to dest_space. */
+AmitkSpace * amitk_space_calculate_transform(const AmitkSpace * dest_space, const AmitkSpace * src_space) {
 
   AmitkSpace * transform_space;
 
-  g_return_if_fail(AMITK_IS_SPACE(src_space));
-  g_return_if_fail(AMITK_IS_SPACE(dest_space));
+  g_return_val_if_fail(AMITK_IS_SPACE(src_space), NULL);
+  g_return_val_if_fail(AMITK_IS_SPACE(dest_space), NULL);
 
   /* transform_space will encode the shift and rotation of the coordinate space */
   transform_space = amitk_space_new();
@@ -398,8 +400,20 @@ void amitk_space_copy_in_place(AmitkSpace * dest_space, const AmitkSpace * src_s
   /* now transform_space->axes incodes the rotation of the original coordinate space
      that will result in the new coordinate space */
 
-  amitk_space_transform(dest_space, transform_space);
+  return transform_space;
+}
 
+void amitk_space_copy_in_place(AmitkSpace * dest_space, const AmitkSpace * src_space) {
+
+  AmitkSpace * transform_space;
+
+
+  g_return_if_fail(AMITK_IS_SPACE(src_space));
+  g_return_if_fail(AMITK_IS_SPACE(dest_space));
+
+  transform_space = amitk_space_calculate_transform(dest_space, src_space);
+  g_return_if_fail(transform_space != NULL);
+  amitk_space_transform(dest_space, transform_space);
   g_object_unref(transform_space);
 
   return;

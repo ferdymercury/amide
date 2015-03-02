@@ -1,9 +1,8 @@
 /* alignment.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2011 Andy Loening
+ * Copyright (C) 2011 Ian Miller
  *
- * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -23,10 +22,8 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_LIBGSL_SUPPORT
-
-#ifndef __ALIGNMENT_H__
-#define __ALIGNMENT_H__
+#ifndef __ALIGNMENT_MUTUAL_INFORMATION_H__
+#define __ALIGNMENT_MUTUAL_INFORMATION_H__
 
 /* header files that are always needed with this file */
 #include "amitk_data_set.h"
@@ -36,11 +33,15 @@
 /* the space returned is the transform needed to change moving_ds's space to the
    aligned space, incoding an axes rotation, as well as the necessary shift
    with respect to the dataset's center */
-AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, 
-				 AmitkDataSet * fixed_ds, 
-				 GList * marks,
-				 gdouble * fiducial_registration_error);
+AmitkSpace * alignment_mutual_information(AmitkDataSet * moving_ds, 
+					  AmitkDataSet * fixed_ds, 
+					  AmitkPoint view_center,
+					  amide_real_t thickness,
+					  amide_time_t view_start_time,
+					  amide_time_t view_duration,
+					  gdouble * pointer_mutual_information_error,
+					  AmitkUpdateFunc update_func,
+					  gpointer update_data);
 
 
-#endif /* __ALIGNMENT_H__ */
-#endif /* AMIDE_LIBGSL_SUPPORT */
+#endif /* __ALIGNMENT_MUTUAL_INFORMATION_H__ */

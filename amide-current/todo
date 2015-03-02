@@ -2,17 +2,18 @@ misc list of things todo:
 
 for next release?
 -----------------
+* Mac OS X - clicking on a .xif study loads up AMIDE, but without the file.
+[x] noticed by Eric Wolsztynski
 * exporting gated studies via DICOM and reloading doesn't work. May be an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
 * help works in cygwin setup, but not in installed package. Seems to know the
   right place to look, just isn't doing something correctly....
 * revert on dialogs doesn't work correctly... children get readded
 * some sort of way to easily measure distances between fiducials [1]
- [1] suggested by Michael Braden, A. Mehranian
+ [x] suggested by Michael Braden, A. Mehranian
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
- [2] noticed by Mark Huisman
-* dcmtk shouldn't be required for mac os x install - figure out how to embed
-  dicom.dic
+ [x] noticed by Mark Huisman
+
 * view_thickness isn't read in from .xif file - gets overridden at some point
 * Gate picker -> multiple selection still screwed up
 
@@ -22,7 +23,7 @@ to test on win32
 * export pixel size text boxes get ignored - likely using wrong "update" event
   (noticed by Priti Madhav and Ian Miller)
 
-remaining things to do now that we're using gtk 2.10
+remaining things to do now that we're using gtk >= 2.10
 ----------------------------------------------------
 1. combine open and import menu items onto same file dialog.
 	There's no reason this can't currently be done on the AMIDE side.  There's a function
@@ -63,10 +64,6 @@ big things:
 * multi-step undo/redo, look into how other GTK apps do it
 	-once this is done, drop the enact/cancel bit of shifting data sets and study's
 	  as we can now just undo such a change
-* add image calculator
-	-you pick data set, then subtract/divide/etc. another data set from
-	 picked data set, with slices grabbed via amitk_data_set_get_slice to
-	 be in the coordinate set of the picked data set.
 * create an AmitkAnalysis type, holding voxel statistics
 	-when created, passed a study
 	-use callbacks, so that stats are marked as current or obsolete,
@@ -117,16 +114,15 @@ small things:
                                                                                 
 
 
-pre 1.0 things:
+small short range things
 --------------
-* try to change dialog box buttons to verbs
-* start commenting the widgets, run gtk-doc to generate documentation
-* check README's, INSTALL guides, etc.
+* try to change all dialog box buttons to verbs
+* start commenting the widgets, can run gtk-doc to generate documentation
 * add tooltips to everything....
 * add more help buttons to the dialogs 
 
 
-probably post 1.0 things:
+longer range things
 ----------------
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.

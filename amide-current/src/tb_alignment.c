@@ -2,9 +2,9 @@
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2011 Andy Loening
+ * except mutual information addition Copyright (C) 2011 Ian Miller
  *
- * Author: Andy Loening <loening@alum.mit.edu>
- */
+*/
 
 /*
   This program is free software; you can redistribute it and/or modify
@@ -26,12 +26,12 @@
 
 #include "amide_config.h"
 #include "amide.h"
-#include "alignment.h"
+#include "amitk_progress_dialog.h"
+#include "alignment_mutual_information.h"
+#include "alignment_procrustes.h"
 #include "tb_alignment.h"
 #include "ui_common.h"
 
-
-#ifdef AMIDE_LIBGSL_SUPPORT
 
 #define LABEL_WIDTH 375
 
@@ -51,8 +51,18 @@ static gchar * start_page_text =
 N_("Welcome to the data set alignment wizard, used for "
    "aligning one medical image data set with another. "
    "\n\n"
-   "Currently, only registration using fiducial marks has "
-   "been implemented inside of AMIDE.");
+#ifdef AMIDE_LIBGSL_SUPPORT
+   "Currently, only rigid body registration using either "
+   "fiducial marks, or maximization of mutual information "
+   "has been implemented inside of AMIDE. "
+#else
+   "This program was built without libgsl support, as such "
+   "registration utilizing fiducial marks is not supported."
+#endif
+   "\n\n"
+   "The mutual information algorithm is run on the "
+   "currently displayed slices, not the whole data "
+   "sets.");
 
 
 typedef enum {
@@ -70,12 +80,28 @@ typedef enum {
 
 typedef enum {
   INTRO_PAGE, 
-  DATA_SETS_PAGE, 
-  FIDUCIAL_MARKS_PAGE, 
+  ALIGNMENT_TYPE_PAGE,  
+  DATA_SETS_PAGE,
+  FIDUCIAL_MARKS_PAGE,
   NO_FIDUCIAL_MARKS_PAGE,
   CONCLUSION_PAGE, 
   NUM_PAGES
 } which_page_t;
+
+typedef enum {
+#ifdef AMIDE_LIBGSL_SUPPORT
+  PROCRUSTES,
+#endif
+  MUTUAL_INFORMATION,
+  NUM_ALIGNMENT_TYPES
+} which_alignment_t;
+
+static gchar * alignment_names[] = {
+#ifdef AMIDE_LIBGSL_SUPPORT
+  N_("Fiducial Markers"),
+#endif
+  N_("Mutual Information")
+};
 
 /* data structures */
 typedef struct tb_alignment_t {
@@ -84,12 +110,19 @@ typedef struct tb_alignment_t {
   GtkWidget * list_moving_ds;
   GtkWidget * list_fixed_ds;
   GtkWidget * list_points;
+  GtkWidget * progress_dialog;
 
   GList * data_sets;
   AmitkDataSet * moving_ds;
   AmitkDataSet * fixed_ds;
+  which_alignment_t alignment_type;
   GList * selected_marks;
   AmitkSpace * transform_space; /* the new coordinate space for the moving volume */
+  amide_time_t view_start_time;
+  amide_time_t view_duration;
+  AmitkPoint view_center;
+  amide_real_t view_thickness;
+  
 
   guint reference_count;
 } tb_alignment_t;
@@ -103,9 +136,11 @@ static void close_cb(GtkAssistant * assistant, gpointer data);
 
 static void data_sets_update_model(tb_alignment_t * alignment);
 static void points_update_model(tb_alignment_t * alignment);
+static void alignment_type_changed_cb(GtkRadioButton * clicked_button, gpointer data );
 static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data);
 static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * event, gpointer data);
 
+static GtkWidget * create_alignment_type_page(tb_alignment_t * tb_alignment);
 static GtkWidget * create_data_sets_page(tb_alignment_t * tb_alignment);
 static GtkWidget * create_fiducial_marks_page(tb_alignment_t * tb_alignment);
 
@@ -115,6 +150,8 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
 
 /* destroy a alignment data structure */
 static tb_alignment_t * tb_alignment_free(tb_alignment_t * tb_alignment) {
+
+  gboolean return_val;
 
   g_return_val_if_fail(tb_alignment != NULL, NULL);
 
@@ -151,6 +188,12 @@ static tb_alignment_t * tb_alignment_free(tb_alignment_t * tb_alignment) {
       tb_alignment->transform_space = NULL;
     }
 
+    if (tb_alignment->progress_dialog != NULL) {
+      g_signal_emit_by_name(G_OBJECT(tb_alignment->progress_dialog), "delete_event", NULL, &return_val);
+      tb_alignment->progress_dialog = NULL;
+    }
+
+
     g_free(tb_alignment);
     tb_alignment = NULL;
   }
@@ -159,7 +202,7 @@ static tb_alignment_t * tb_alignment_free(tb_alignment_t * tb_alignment) {
 
 }
 
-/* allocate and initialize a alignment data structure */
+/* allocate and initialize an alignment data structure */
 static tb_alignment_t * tb_alignment_init(void) {
 
   tb_alignment_t * tb_alignment;
@@ -172,8 +215,10 @@ static tb_alignment_t * tb_alignment_init(void) {
 
   tb_alignment->reference_count = 1;
   tb_alignment->dialog = NULL;
+  tb_alignment->progress_dialog = NULL;
   tb_alignment->moving_ds = NULL;
   tb_alignment->fixed_ds = NULL;
+  tb_alignment->alignment_type = 0; /* PROCRUSTES if with GSL support */
   tb_alignment->selected_marks = NULL;
   tb_alignment->transform_space = NULL;
 
@@ -303,6 +348,17 @@ static void points_update_model(tb_alignment_t * tb_alignment) {
   return;
 }
 
+static void alignment_type_changed_cb(GtkRadioButton * rb, gpointer data ) {
+  
+  tb_alignment_t * tb_alignment = data;
+
+  g_return_if_fail(tb_alignment != NULL);
+
+  tb_alignment->alignment_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(rb), "alignment_type"));
+
+  return;
+}
+
 static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data) {
 
   tb_alignment_t * tb_alignment = data;
@@ -345,6 +401,8 @@ static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer
 				  can_continue);
   return;
 }
+
+
 static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * event, gpointer data) {
 
   tb_alignment_t * tb_alignment = data;
@@ -394,6 +452,32 @@ static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * eve
 }
 
 
+/* Ian Miller addition */
+/* this sets up the user interface for the "Alignment type" page/section of the wizard */
+static GtkWidget * create_alignment_type_page(tb_alignment_t * tb_alignment) {
+  GtkWidget * vbox;
+  GtkWidget * rb[NUM_ALIGNMENT_TYPES];
+  which_alignment_t i_alignment;
+
+  vbox = gtk_vbox_new (TRUE, 2);
+  for (i_alignment = 0; i_alignment < NUM_ALIGNMENT_TYPES; i_alignment ++) {
+    if (i_alignment == 0)
+      rb[i_alignment] =  gtk_radio_button_new_with_label(NULL, alignment_names[i_alignment]);
+    else
+      rb[i_alignment] =  gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(rb[0]), alignment_names[i_alignment]);
+    gtk_box_pack_start (GTK_BOX (vbox), rb[i_alignment], TRUE, TRUE, 2);
+    g_object_set_data(G_OBJECT(rb[i_alignment]), "alignment_type", GINT_TO_POINTER(i_alignment));
+  }
+
+  /* set which toggle button is pressed in before connecting signals */
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rb[tb_alignment->alignment_type]), TRUE);
+
+  for (i_alignment = 0; i_alignment < NUM_ALIGNMENT_TYPES; i_alignment ++) {
+    g_signal_connect(G_OBJECT(rb[i_alignment]), "clicked", G_CALLBACK(alignment_type_changed_cb), tb_alignment);
+  }
+  
+  return vbox;
+}
 
 static GtkWidget * create_data_sets_page(tb_alignment_t * tb_alignment) {
   GtkWidget * table;
@@ -491,7 +575,11 @@ static gint forward_page_function (gint current_page, gpointer data) {
   gint num_pairs=0;
 
   switch (current_page) {
+  case ALIGNMENT_TYPE_PAGE:
+    return DATA_SETS_PAGE;
+    break;
   case DATA_SETS_PAGE:
+    if (tb_alignment->alignment_type == MUTUAL_INFORMATION) return CONCLUSION_PAGE;
     if ((tb_alignment->fixed_ds != NULL) && (tb_alignment->moving_ds != NULL)) 
       num_pairs = amitk_objects_count_pairs_by_name(AMITK_OBJECT_CHILDREN(tb_alignment->fixed_ds),
 						    AMITK_OBJECT_CHILDREN(tb_alignment->moving_ds));
@@ -515,10 +603,12 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
  
   tb_alignment_t * tb_alignment = data;
   which_page_t which_page;
-  gdouble fre;
+  which_alignment_t which_alignment;
+  gdouble performance_metric;
   gchar * temp_string;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
+  which_alignment = tb_alignment->alignment_type;
 
   switch(which_page) {
   case DATA_SETS_PAGE:
@@ -534,12 +624,34 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
     break;
   case CONCLUSION_PAGE:
     /* calculate the alignment */
-    tb_alignment->transform_space = alignment_calculate(tb_alignment->moving_ds, 
-							tb_alignment->fixed_ds, 
-							tb_alignment->selected_marks,&fre);
-
-    temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated fiducial reference error is:\n\t %5.2f mm/point"), 
-				  fre);
+    switch(which_alignment) {
+#ifdef AMIDE_LIBGSL_SUPPORT
+    case PROCRUSTES:
+      tb_alignment->transform_space = alignment_procrustes(tb_alignment->moving_ds, 
+							   tb_alignment->fixed_ds, 
+							   tb_alignment->selected_marks,
+							   &performance_metric);
+      temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated fiducial reference error is:\n\t %5.2f mm/point"), 
+				    performance_metric);
+      break;
+#endif
+    case MUTUAL_INFORMATION:
+      tb_alignment->transform_space = alignment_mutual_information(tb_alignment->moving_ds, 
+								   tb_alignment->fixed_ds,
+								   tb_alignment->view_center,
+								   tb_alignment->view_thickness,
+								   tb_alignment->view_start_time,
+								   tb_alignment->view_duration,
+								   &performance_metric,
+      								   amitk_progress_dialog_update,
+      								   tb_alignment->progress_dialog);
+      temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated mutual information metric is:\n\t %5.2f"),
+				    performance_metric);
+      break;
+    default:
+      g_return_if_reached();
+      break;
+    }
     gtk_label_set_text(GTK_LABEL(page), temp_string);
     g_free(temp_string);
     gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_alignment->dialog), page, TRUE);
@@ -568,6 +680,11 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
   tb_alignment->data_sets = 
     amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
 
+  tb_alignment->view_start_time = AMITK_STUDY_VIEW_START_TIME(study);
+  tb_alignment->view_duration = AMITK_STUDY_VIEW_DURATION(study);
+  tb_alignment->view_center = AMITK_STUDY_VIEW_CENTER(study);
+  tb_alignment->view_thickness = AMITK_STUDY_VIEW_THICKNESS(study);
+
   tb_alignment->dialog = gtk_assistant_new();
   gtk_window_set_transient_for(GTK_WINDOW(tb_alignment->dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_alignment->dialog), TRUE);
@@ -578,6 +695,8 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
   gtk_assistant_set_forward_page_func(GTK_ASSISTANT(tb_alignment->dialog),
 				      forward_page_function,
 				      tb_alignment, NULL);
+  
+  tb_alignment->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_alignment->dialog));
 
   /* --------------- initial page ------------------ */
   count = amitk_data_sets_count(tb_alignment->data_sets, TRUE);
@@ -590,6 +709,13 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
   gtk_assistant_set_page_type(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[INTRO_PAGE],
 			      GTK_ASSISTANT_PAGE_INTRO);
   gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[INTRO_PAGE], count >= 2);
+
+  /*------------------ pick your alignment type page ------------------ */
+  tb_alignment->page[ALIGNMENT_TYPE_PAGE] = create_alignment_type_page(tb_alignment);
+  gtk_assistant_append_page(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[ALIGNMENT_TYPE_PAGE]);
+  gtk_assistant_set_page_title(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[ALIGNMENT_TYPE_PAGE], 
+			       _("Alignment Type Selection"));
+  gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_alignment->dialog), tb_alignment->page[ALIGNMENT_TYPE_PAGE], TRUE);
 
 
   /*------------------ pick your data set page ------------------ */
@@ -634,12 +760,6 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 
   return;
 }
-
-
-
-#endif /* AMIDE_LIBGSL_SUPPORT */
-
-
 
 
 
