@@ -1,7 +1,7 @@
 /* amitk_roi_variable_type.c - used to generate the different amitk_roi_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -196,8 +196,9 @@ static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkV
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
 				AmitkVoxel start_voxel, 
-				const amide_data_t iso_value,
-				const gboolean iso_inverse);
+				const amide_data_t iso_min_value,
+				const amide_data_t iso_max_value,
+				const AmitkRoiIsocontourRange iso_range);
 
 
 
@@ -392,8 +393,9 @@ static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkV
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
 				AmitkVoxel ds_voxel, 
-				const amide_data_t iso_value,
-				const gboolean iso_inverse) {
+				const amide_data_t iso_min_value,
+				const amide_data_t iso_max_value,
+				const AmitkRoiIsocontourRange iso_range) {
 
 
   AmitkVoxel i_voxel;
@@ -435,8 +437,9 @@ static void isocontour_consider(const AmitkDataSet * ds,
 	    ds_voxel.x = i_voxel.x;
 
 	    voxel_value = amitk_data_set_get_value(ds, ds_voxel);
-	    if ((!iso_inverse && (voxel_value >= iso_value)) ||
-		(iso_inverse && (voxel_value <= iso_value))) {
+	    if (((iso_range == AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN) && (voxel_value >= iso_min_value)) ||
+		((iso_range == AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX) && (voxel_value <= iso_max_value)) ||
+		((iso_range == AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX) && (voxel_value >= iso_min_value) && (voxel_value <= iso_max_value))) {
 
 	      AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x01; /* it's in */
 
@@ -498,18 +501,21 @@ static void isocontour_consider(const AmitkDataSet * ds,
 
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, 
 						   AmitkVoxel iso_voxel,
-						   amide_data_t iso_value,
-						   gboolean iso_inverse) {
+						   amide_data_t iso_min_value,
+						   amide_data_t iso_max_value,
+						   AmitkRoiIsocontourRange iso_range) {
 
   AmitkRawData * temp_rd;
   AmitkPoint temp_point;
   AmitkVoxel min_voxel, max_voxel, i_voxel;
-  amide_data_t temp_value;
+  amide_data_t temp_min_value, temp_max_value;
 
   g_return_if_fail(roi->type == AMITK_ROI_TYPE_`'m4_Variable_Type`');
 
-  roi->isocontour_value = iso_value; /* what we're setting the isocontour too */
-  roi->isocontour_inverse = iso_inverse;
+  /* what we're setting the isocontour too */
+  roi->isocontour_min_value = iso_min_value; 
+  roi->isocontour_max_value = iso_max_value; 
+  roi->isocontour_range = iso_range; 
 
   /* we first make a raw data set the size of the data set to record the in/out values */
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
@@ -519,13 +525,11 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 #endif
 
   /* epsilon guards for floating point rounding */
-  if (!iso_inverse)
-    temp_value = roi->isocontour_value-EPSILON*fabs(roi->isocontour_value); 
-  else
-    temp_value = roi->isocontour_value+EPSILON*fabs(roi->isocontour_value); 
+  temp_min_value = roi->isocontour_min_value-EPSILON*fabs(roi->isocontour_min_value); 
+  temp_max_value = roi->isocontour_max_value+EPSILON*fabs(roi->isocontour_max_value); 
 
   /* fill in the data set */
-  isocontour_consider(ds, temp_rd, iso_voxel, temp_value, iso_inverse);
+  isocontour_consider(ds, temp_rd, iso_voxel, temp_min_value, temp_max_value, iso_range);
   
   /* figure out the min and max dimensions */
   min_voxel = max_voxel = iso_voxel;

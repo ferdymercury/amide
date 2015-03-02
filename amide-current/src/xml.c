@@ -1,7 +1,7 @@
 /* xml.c - convience functions for working with xml files 
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -29,6 +29,7 @@
 #include "xml.h"
 #include <errno.h>
 #include <string.h>
+#include <locale.h>
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
 static char * true_string = "true";
@@ -68,7 +69,7 @@ xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor) {
 /* go through a list of nodes, and return the text which matches the descriptor */
 gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor) {
 
-  xmlChar * xml_str;
+  gchar * xml_str;
   gchar * return_str;
 
   xml_str = xmlNodeGetContent(xml_get_node(nodes, descriptor));
@@ -595,7 +596,7 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
   long location_long;
   size_t size_size;
   size_t bytes_read;
-  
+
   if (study_file == NULL) { /* directory format */
     if ((doc = xmlParseFile(xml_filename)) == NULL) {
       amitk_append_str_with_newline(perror_buf,_("Couldn't Parse AMIDE xml file %s"),xml_filename);
@@ -624,7 +625,6 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
       }
 #endif
     size_size = size;
-
 
     xml_buffer = g_try_new(gchar, size_size);
     g_return_val_if_fail(xml_buffer != NULL, NULL);

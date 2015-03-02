@@ -1,7 +1,7 @@
 /* amitk_space.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,8 +26,8 @@
 #ifndef __AMITK_SPACE_H__
 #define __AMITK_SPACE_H__
 
-#include <glib-object.h>
 #include "amitk_point.h"
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 

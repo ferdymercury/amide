@@ -1,7 +1,7 @@
 /* amitk_tree_view.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2004 Andy Loening
+ * Copyright (C) 2002-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -552,7 +552,7 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 	  
 	case 3: /* right button */
 	  if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)) {
-	    if (object != NULL)
+	    if (object != NULL) {
 	      if (AMITK_IS_DATA_SET(object)) {
 		add_object=TRUE;
 		if (event->state & GDK_SHIFT_MASK)
@@ -563,6 +563,7 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 		add_object=TRUE;
 		add_type=AMITK_OBJECT_TYPE_ROI;
 	      }
+	    }
 	  } else {
 	    popup = TRUE;
 	  }

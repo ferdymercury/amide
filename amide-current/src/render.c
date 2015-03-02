@@ -1,7 +1,7 @@
 /* rendering.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -330,6 +330,7 @@ gboolean rendering_reload_object(rendering_t * rendering,
 				 gpointer update_data) {
   
   amide_time_t old_start, old_duration;
+  guint frame;
 
 
   old_start = rendering->start;
@@ -345,13 +346,21 @@ gboolean rendering_reload_object(rendering_t * rendering,
   if (!(AMITK_DATA_SET_DYNAMIC(rendering->object) || AMITK_DATA_SET_GATED(rendering->object)))
     return TRUE;
 
-  if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start) == 
-      amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start))
-    if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start+new_duration) ==
-	amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start+old_duration))
-      if (AMITK_DATA_SET_VIEW_START_GATE(rendering->object) == rendering->view_start_gate)
-	if (AMITK_DATA_SET_VIEW_END_GATE(rendering->object) == rendering->view_end_gate)
-	  return TRUE;
+  // changed as of 0.8.12 -- delete when sure everything works
+  //  if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start) == 
+  //      amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start))
+  //    if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start+new_duration) ==
+  //	amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start+old_duration))
+  frame = amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start);
+
+  /* if we're completely inside one frame, or we haven't changed time */
+  if (((frame == amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start)) &&
+       (frame == amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start+new_duration)) &&
+       (frame == amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start+old_duration))) ||
+      (REAL_EQUAL(new_start, old_start) && REAL_EQUAL(new_duration, old_duration)))
+    if (AMITK_DATA_SET_VIEW_START_GATE(rendering->object) == rendering->view_start_gate)
+      if (AMITK_DATA_SET_VIEW_END_GATE(rendering->object) == rendering->view_end_gate)
+	return TRUE;
 
   rendering->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(rendering->object);
   rendering->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(rendering->object);
@@ -458,7 +467,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     if (!amitk_volume_volume_intersection_corners(rendering->extraction_volume, 
 						  AMITK_VOLUME(rendering->object), 
 						  intersection_corners)) {
-      end = zero_voxel;
+      start = end = zero_voxel;
     } else {
       //      intersection_corners[1] = point_cmult(1.0-EPSILON, intersection_corners[1]);
       POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, 0, start);

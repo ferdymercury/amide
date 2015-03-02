@@ -1,7 +1,7 @@
 /* amide.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -43,7 +43,7 @@
 #define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
 
 /* file info.  magic string needs to be < 64 bytes */
-#define AMIDE_FILE_VERSION "2.0"
+#define AMIDE_FILE_VERSION (xmlChar *) "2.0"
 #define AMIDE_FLAT_FILE_MAGIC_STRING "AMIDE XML Image Format Flat File"
 
 

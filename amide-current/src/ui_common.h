@@ -1,7 +1,7 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

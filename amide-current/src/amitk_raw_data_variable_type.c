@@ -1,7 +1,7 @@
 /* amitk_raw_data_variable_type.c - used to generate the different amitk_raw_data_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -89,7 +89,7 @@ void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_ra
       for (i.z = 0; i.z < amitk_raw_data->dim.z; i.z++) 
 	for (i.y = 0; i.y < amitk_raw_data->dim.y; i.y++) 
 	  for (i.x = 0; i.x < amitk_raw_data->dim.x; i.x++) 
-	    AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i)=0.0;
+	    AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i)=init_value;
 
   return;
 }

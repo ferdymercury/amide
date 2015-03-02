@@ -1,7 +1,7 @@
 /* amitk_canvas.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2004 Andy Loening
+ * Copyright (C) 2002-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -86,6 +86,9 @@ struct _AmitkCanvas
   GnomeCanvasItem * image;
   GdkPixbuf * pixbuf;
 
+  gboolean time_on_image;
+  GnomeCanvasItem * time_label;
+
   AmitkStudy * study;
   GList * undrawn_rois;
   GList * object_items;
@@ -142,7 +145,8 @@ void          amitk_canvas_update_target        (AmitkCanvas * canvas,
 						 AmitkCanvasTargetAction action, 
 						 AmitkPoint center, 
 						 amide_real_t thickness);
-
+void          amitk_canvas_set_time_on_image    (AmitkCanvas * canvas,
+						 gboolean time_on_image);
 gint          amitk_canvas_get_width            (AmitkCanvas * canvas);
 gint          amitk_canvas_get_height           (AmitkCanvas * canvas);
 

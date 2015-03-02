@@ -1,7 +1,7 @@
 /* amitk_roi.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -155,8 +155,9 @@ static void roi_init (AmitkRoi * roi) {
 
   roi->isocontour = NULL;
   roi->voxel_size = zero_point;
-  roi->isocontour_value = 0.0;
-  roi->isocontour_inverse = FALSE;
+  roi->isocontour_min_value = 0.0;
+  roi->isocontour_max_value = 0.0;
+  roi->isocontour_range = AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN;
   roi->isocontour_center_of_mass_calculated=FALSE;
   roi->isocontour_center_of_mass=zero_point;
 }
@@ -232,8 +233,9 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
   }
 
   roi_isocontour_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
-  dest_roi->isocontour_value = AMITK_ROI_ISOCONTOUR_VALUE(src_object);
-  dest_roi->isocontour_inverse = AMITK_ROI_ISOCONTOUR_INVERSE(src_object);
+  dest_roi->isocontour_min_value = AMITK_ROI_ISOCONTOUR_MIN_VALUE(src_object);
+  dest_roi->isocontour_max_value = AMITK_ROI_ISOCONTOUR_MAX_VALUE(src_object);
+  dest_roi->isocontour_range = AMITK_ROI_ISOCONTOUR_RANGE(src_object);
   dest_roi->isocontour_center_of_mass_calculated = src_roi->isocontour_center_of_mass_calculated;
   dest_roi->isocontour_center_of_mass = src_roi->isocontour_center_of_mass;
 
@@ -256,8 +258,9 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * 
 
   /* isocontour specific stuff */
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
-  xml_save_real(nodes, "isocontour_value", AMITK_ROI_ISOCONTOUR_VALUE(roi));
-  xml_save_boolean(nodes, "isocontour_inverse", AMITK_ROI_ISOCONTOUR_INVERSE(roi));
+  xml_save_real(nodes, "isocontour_min_value", AMITK_ROI_ISOCONTOUR_MIN_VALUE(roi));
+  xml_save_real(nodes, "isocontour_max_value", AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi));
+  xml_save_int(nodes, "isocontour_range", AMITK_ROI_ISOCONTOUR_RANGE(roi));
   xml_save_boolean(nodes, "isocontour_center_of_mass_calculated", AMITK_ROI(roi)->isocontour_center_of_mass_calculated);
   amitk_point_write_xml(nodes, "isocontour_center_of_mass", AMITK_ROI(roi)->isocontour_center_of_mass);
 
@@ -300,10 +303,23 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
   /* isocontour specific stuff */
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     roi_isocontour_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
-    roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
-    roi->isocontour_inverse = xml_get_boolean(nodes, "isocontour_inverse", &error_buf);
     roi->isocontour_center_of_mass_calculated = xml_get_boolean(nodes, "isocontour_center_of_mass_calculated", &error_buf);
     roi->isocontour_center_of_mass = amitk_point_read_xml(nodes, "isocontour_center_of_mass", &error_buf);
+
+    /* check first if we're using the old isocontour_value and isocontour_inverse entries */
+    if (xml_node_exists(nodes, "isocontour_value")) {
+      /* works, cause inverse=TRUE=1=AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX */
+      roi->isocontour_range = xml_get_boolean(nodes, "isocontour_inverse", &error_buf);
+      if (roi->isocontour_range == AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX)
+	roi->isocontour_min_value = xml_get_real(nodes, "isocontour_value", &error_buf);
+      else
+	roi->isocontour_max_value = xml_get_real(nodes, "isocontour_value", &error_buf);
+    } else {
+      /* how we currently store isocontour information */
+      roi->isocontour_range = xml_get_int(nodes, "isocontour_range", &error_buf);
+      roi->isocontour_min_value = xml_get_real(nodes, "isocontour_min_value", &error_buf);
+      roi->isocontour_max_value = xml_get_real(nodes, "isocontour_max_value", &error_buf);
+    }
 
     /* if the ROI's never been drawn, it's possible for this not to exist */
     if (xml_node_exists(nodes, "isocontour_file") || 
@@ -502,17 +518,18 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
 /* sets/resets the isocontour value of an isocontour ROI based on the given volume and voxel 
    note: vol should be a slice for the case of ISOCONTOUR_2D */
 void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel start_voxel, 
-			      amide_data_t isocontour_value, gboolean isocontour_inverse) {
+			      amide_data_t isocontour_min_value, amide_data_t isocontour_max_value,
+			      AmitkRoiIsocontourRange isocontour_range) {
 
   g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_set_isocontour(roi, ds, start_voxel, isocontour_value, isocontour_inverse);
+    amitk_roi_ISOCONTOUR_2D_set_isocontour(roi, ds, start_voxel, isocontour_min_value, isocontour_max_value, isocontour_range);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
   default:
-    amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, start_voxel, isocontour_value, isocontour_inverse);
+    amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, start_voxel, isocontour_min_value, isocontour_max_value, isocontour_range);
     break;
   }
   roi->isocontour_center_of_mass_calculated = FALSE;

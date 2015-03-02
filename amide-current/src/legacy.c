@@ -3,7 +3,7 @@
  *
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -89,6 +89,8 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar *
   AmitkVoxel return_vp;
   gint x,y,z;
   gint error=0;
+
+  return_vp = zero_voxel;
 
   temp_string = xml_get_string(nodes, descriptor);
 
@@ -527,7 +529,7 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
   /* isocontour specific stuff */
   if (AMITK_ROI_TYPE_ISOCONTOUR(new_roi)) {
     new_roi->voxel_size = amitk_point_read_xml(nodes, "voxel_size", perror_buf);
-    new_roi->isocontour_value = xml_get_real(nodes, "isocontour_value", perror_buf);
+    new_roi->isocontour_min_value = xml_get_real(nodes, "isocontour_value", perror_buf);
 
     isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
     if (isocontour_xml_filename != NULL)

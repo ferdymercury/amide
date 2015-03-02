@@ -1,7 +1,7 @@
 /* libecat_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -28,6 +28,7 @@
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <time.h>
 #include <matrix.h>
+#include <locale.h>
 #include "libecat_interface.h"
 
 static char * libecat_data_types[] = {

@@ -1,7 +1,7 @@
 /* amitk_object_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2004 Andy Loening
+ * Copyright (C) 2002-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -79,7 +79,8 @@ struct _AmitkObjectDialog
   GtkWidget * start_spin;
   GtkWidget * * duration_spins;
 
-  GtkWidget * isocontour_value_entry;
+  GtkWidget * isocontour_min_value_entry;
+  GtkWidget * isocontour_max_value_entry;
   GtkWidget * voxel_dim_entry;
 
   /* study preferences */

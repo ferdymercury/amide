@@ -1,7 +1,7 @@
 /* ui_study_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -168,10 +168,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS+1];
   GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
   GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
+  GnomeUIInfo export_data_set_visible_menu[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
 #else
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
   GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM+1];
   GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM+1];
+  GnomeUIInfo export_data_set_visible_menu[AMITK_EXPORT_METHOD_NUM+1];
 #endif
 
   GnomeUIInfo export_view_menu[] = {
@@ -214,7 +216,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
 			     N_("Import an image data file into this study, specifying the import type"), 
 			     import_specific_menu),
-    //    GNOMEUIINFO_SEPARATOR,
     //    GNOMEUIINFO_ITEM_DATA(N_("Import ROI"),
     //			  N_("Import an ROI from a previous study"),
     //			  ui_study_cb_import_roi,
@@ -226,6 +227,14 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("Export _Data Set"),
 			     N_("Export the active data set to the specified format"),
 			     export_data_set_resliced_menu),
+    GNOMEUIINFO_SUBTREE_HINT(N_("Export _Visible Data Sets"),
+			     N_("Export all the visible data sets into a single file"),
+			     export_data_set_visible_menu),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_ITEM_DATA(N_("_Recover Study"),
+			  N_("Try to recover a corrupted XIF flat file"),
+			  ui_study_cb_recover_study, 
+			  ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
     GNOMEUIINFO_MENU_EXIT_ITEM(ui_study_cb_exit, ui_study),
@@ -365,6 +374,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			   libmdc_export_menu_names[i_libmdc_export],
 			   libmdc_export_menu_explanations[i_libmdc_export],
 			   ui_study_cb_export_data_set, ui_study);
+	  fill_in_menuitem(&(export_data_set_visible_menu[counter]),
+			   libmdc_export_menu_names[i_libmdc_export],
+			   libmdc_export_menu_explanations[i_libmdc_export],
+			   ui_study_cb_export_data_set, ui_study);
 	  counter++;
       }
     } else 
@@ -374,8 +387,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			 amitk_export_menu_names[i_export_method],
 			 amitk_export_menu_explanations[i_export_method],
 			 ui_study_cb_export_data_set, ui_study);
-	
 	fill_in_menuitem(&(export_data_set_menu2[counter]),
+			 amitk_export_menu_names[i_export_method],
+			 amitk_export_menu_explanations[i_export_method],
+			 ui_study_cb_export_data_set, ui_study);
+	fill_in_menuitem(&(export_data_set_visible_menu[counter]),
 			 amitk_export_menu_names[i_export_method],
 			 amitk_export_menu_explanations[i_export_method],
 			 ui_study_cb_export_data_set, ui_study);
@@ -384,6 +400,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   }
   fill_in_end(&(export_data_set_menu1[counter]));
   fill_in_end(&(export_data_set_menu2[counter]));
+  fill_in_end(&(export_data_set_visible_menu[counter]));
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
@@ -424,12 +441,24 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
 	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			    "resliced", GINT_TO_POINTER(FALSE));
+	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
+			    "all_visible", GINT_TO_POINTER(FALSE));
 	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			    "method", GINT_TO_POINTER(i_export_method));
 	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
 	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			    "resliced", GINT_TO_POINTER(TRUE));
+	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			    "all_visible", GINT_TO_POINTER(FALSE));
+	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			    "method", GINT_TO_POINTER(i_export_method));
+	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
+	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			    "resliced", GINT_TO_POINTER(TRUE));
+	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			    "all_visible", GINT_TO_POINTER(TRUE));
 	  counter++;
 	}
       }
@@ -442,12 +471,24 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  "submethod", GINT_TO_POINTER(0));
 	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			  "resliced", GINT_TO_POINTER(FALSE));
+	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
+			  "all_visible", GINT_TO_POINTER(FALSE));
 	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			  "method", GINT_TO_POINTER(i_export_method));
 	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			  "submethod", GINT_TO_POINTER(0));
 	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
 			  "resliced", GINT_TO_POINTER(TRUE));
+	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			  "all_visible", GINT_TO_POINTER(FALSE));
+	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			  "method", GINT_TO_POINTER(i_export_method));
+	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			  "submethod", GINT_TO_POINTER(0));
+	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			  "resliced", GINT_TO_POINTER(TRUE));
+	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
+			  "all_visible", GINT_TO_POINTER(TRUE));
 	counter++;
       }
   }

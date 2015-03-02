@@ -1,7 +1,7 @@
 /* amitk_point.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,9 +26,10 @@
 #ifndef __AMITK_POINT_H__
 #define __AMITK_POINT_H__
 
-#include <glib-object.h>
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
 #include <math.h>
+
+#include <glib-object.h>
 #include "amide.h"
 #include "amitk_type.h"
 #include "xml.h"

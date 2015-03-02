@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -330,10 +330,9 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   
   if (gdk_pixbuf_save (pixbuf,
   		       filename, "jpeg", NULL, 
-  		       "quality", "100", NULL) == FALSE) {
+  		       "quality", "100", NULL) == FALSE) 
     g_warning(_("Failure Saving File: %s"),filename);
-    return;
-  }
+
 
   g_object_unref(pixbuf);
 
@@ -352,6 +351,8 @@ static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
   AmitkExportMethod method;
   int submethod;
   gboolean resliced;
+  gboolean all_visible;
+  GList * data_sets;
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
@@ -365,14 +366,30 @@ static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
   /* do we want the data resliced into its currently orientation? */
   resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "resliced"));
 
+  /* are we saving all visible data sets into one output file */
+  all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "all_visible"));
 
   /* get the filename and import */
   filename = ui_common_file_selection_get_save_name(file_selection);
   if (filename == NULL) return;
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  amitk_data_set_export_file(AMITK_DATA_SET(ui_study->active_object), method, submethod, filename, resliced,
-			     amitk_progress_dialog_update, ui_study->progress_dialog);
+
+  if (!all_visible) {
+    amitk_data_set_export_to_file(AMITK_DATA_SET(ui_study->active_object), method, submethod, filename, resliced,
+			       amitk_progress_dialog_update, ui_study->progress_dialog);
+  } else {
+    data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(ui_study->study), 
+							   AMITK_OBJECT_TYPE_DATA_SET, 
+							   AMITK_SELECTION_SELECTED_0, TRUE);
+    if (data_sets == NULL) {
+      g_warning(_("No Data Sets are visible in the first panel"));
+    } else {
+      amitk_data_sets_export_to_file(data_sets, method, submethod, filename,
+				     amitk_progress_dialog_update, ui_study->progress_dialog);
+      amitk_objects_unref(data_sets);
+    }
+  }
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* close the file selection box */
@@ -382,7 +399,7 @@ static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function to selection which file to export */
+/* function to selection which file to export to */
 void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
@@ -390,30 +407,31 @@ void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data) {
   AmitkExportMethod method;
   int submethod;
   gboolean resliced;
+  gboolean all_visible;
+
+  /* get the data from the widget */
+  all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_visible"));
+  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
+  method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
+  resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
-    g_warning(_("There's currently no active data set to export"));
+    if (all_visible)
+      g_warning(_("There's currently no visible data sets to export"));
+    else
+      g_warning(_("There's currently no active data set to export"));
     return;
   }
 
-  file_selection = gtk_file_selection_new(_("Export File"));
+  file_selection = gtk_file_selection_new(_("Export to File"));
 
-  /* save a pointer to ui_study */
+  /* save info we'll need in the next function */
   g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
-  
-  /* and save which method of exporting we want to use */
-  method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
   g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(method));
-
-  /* figure out submethod if using libmdc */
-  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
   g_object_set_data(G_OBJECT(file_selection), "submethod",GINT_TO_POINTER(submethod));
-
-  /* figure out if we want the data resliced into it's current orientation */
-  resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
   g_object_set_data(G_OBJECT(file_selection), "resliced",GINT_TO_POINTER(resliced));
+  g_object_set_data(G_OBJECT(file_selection), "all_visible", GINT_TO_POINTER(all_visible));
 		    
-
   ui_common_file_selection_set_filename(file_selection, NULL);
 
   /* don't want anything else going on till this window is gone */
@@ -455,7 +473,7 @@ void ui_study_cb_export_view(GtkWidget * widget, gpointer data) {
 								 AMITK_SELECTION_SELECTED_0, TRUE);
   if (current_data_sets == NULL) return;
 
-  file_selection = gtk_file_selection_new(_("Export File"));
+  file_selection = gtk_file_selection_new(_("Export to File"));
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
 
   if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
@@ -514,6 +532,75 @@ void ui_study_cb_export_view(GtkWidget * widget, gpointer data) {
   amitk_objects_unref(current_data_sets);
   return;
 }
+
+
+/* function to handle recovering an AMIDE study */
+static void ui_study_cb_recover_ok(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * xif_selection = data;
+  gchar * returned_filename;
+  AmitkStudy * study;
+  ui_study_t * ui_study;
+
+  /* get the filename and a pointer to ui_study */
+  returned_filename = ui_common_xif_selection_get_load_name(xif_selection);
+  if (returned_filename == NULL) return;
+  ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
+
+  /* try recovering the study */
+  if ((study=amitk_study_recover_xml(returned_filename, ui_study->preferences)) == NULL) {
+    g_warning(_("error recovering study: %s"),returned_filename);
+    g_free(returned_filename);
+    return;
+  }
+  g_free(returned_filename);
+
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, xif_selection);
+
+  /* setup the study window */
+  if (ui_study->study_virgin)
+    ui_study_set_study(ui_study, study);
+  else
+    ui_study_create(study, ui_study->preferences);
+  amitk_object_unref(study);
+
+  return;
+}
+
+/* try to recover portions of a study file */
+void ui_study_cb_recover_study(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study=data;
+  GtkWidget * xif_selection;
+
+  xif_selection = amitk_xif_selection_new(_("Recover AMIDE XIF File"));
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(xif_selection), TRUE);
+
+  /* save a pointer to ui_study */
+  g_object_set_data(G_OBJECT(xif_selection), "ui_study", ui_study);
+
+  ui_common_xif_selection_set_filename(xif_selection, NULL);
+
+  /* connect the signals */
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->ok_button),
+		   "clicked", G_CALLBACK(ui_study_cb_recover_ok), xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
+		   "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb),xif_selection);
+  g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
+		   "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb), xif_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(xif_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(xif_selection);
+
+  return;
+}
+
 
 
 /* callback generally attached to the entry_notify_event */
@@ -1110,6 +1197,12 @@ void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer data) {
   ui_study_t * ui_study = data;
   ui_study_update_canvas_visible_buttons(ui_study);
   ui_study_update_layout(ui_study);
+  return;
+}
+
+void ui_study_cb_voxel_dim_or_zoom_changed(AmitkStudy * study, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_study_update_zoom(ui_study);
   return;
 }
 

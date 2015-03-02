@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -65,8 +65,7 @@ enum {
   CANVAS_VISIBLE_CHANGED,
   VIEW_MODE_CHANGED,
   CANVAS_TARGET_CHANGED,
-  ZOOM_CHANGED,
-  VOXEL_DIM_CHANGED,
+  VOXEL_DIM_OR_ZOOM_CHANGED,
   FUSE_TYPE_CHANGED,
   VIEW_CENTER_CHANGED,
   CANVAS_ROI_PREFERENCE_CHANGED,
@@ -185,18 +184,11 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_target_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
-  study_signals[ZOOM_CHANGED] =
-    g_signal_new ("zoom_changed",
+  study_signals[VOXEL_DIM_OR_ZOOM_CHANGED] =
+    g_signal_new ("voxel_dim_or_zoom_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(AmitkStudyClass, zoom_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
-		  G_TYPE_NONE,0);
-  study_signals[VOXEL_DIM_CHANGED] =
-    g_signal_new ("voxel_dim_changed",
-		  G_TYPE_FROM_CLASS(class),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(AmitkStudyClass, voxel_dim_changed),
+		  G_STRUCT_OFFSET(AmitkStudyClass, voxel_dim_or_zoom_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
   study_signals[FUSE_TYPE_CHANGED] =
@@ -500,14 +492,25 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
 }
 
 
+
+static void set_voxel_dim_and_zoom(AmitkStudy * study, amide_real_t voxel_dim, amide_real_t zoom) {
+
+  study->zoom = zoom;
+  study->voxel_dim = voxel_dim;
+  g_signal_emit(G_OBJECT(study), study_signals[VOXEL_DIM_OR_ZOOM_CHANGED], 0);
+}
+
 static void study_recalc_voxel_dim(AmitkStudy * study) {
 
   amide_real_t voxel_dim;
+  amide_real_t zoom;
 
   voxel_dim = amitk_data_sets_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(study));
+
   if (!REAL_EQUAL(voxel_dim,AMITK_STUDY_VOXEL_DIM(study))) {
-    study->voxel_dim = voxel_dim;
-    g_signal_emit(G_OBJECT(study), study_signals[VOXEL_DIM_CHANGED], 0);
+    /* update the zoom as well, so the canvas size stays equal */
+    zoom = AMITK_STUDY_ZOOM(study)*voxel_dim/AMITK_STUDY_VOXEL_DIM(study);
+    set_voxel_dim_and_zoom(study, voxel_dim, zoom);
   }
 
   return;
@@ -536,7 +539,7 @@ static void study_remove_child(AmitkObject *object, AmitkObject *child) {
 
   AMITK_OBJECT_CLASS(parent_class)->object_remove_child (object, child);
 
-  if (data_set)
+  if (data_set) 
     study_recalc_voxel_dim(AMITK_STUDY(object));
 
   return;
@@ -724,10 +727,8 @@ void amitk_study_set_zoom(AmitkStudy * study, const amide_real_t new_zoom) {
 
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  if (!REAL_EQUAL(study->zoom, new_zoom)) {
-    study->zoom = new_zoom;
-    g_signal_emit(G_OBJECT(study), study_signals[ZOOM_CHANGED], 0);
-  }
+  if (!REAL_EQUAL(AMITK_STUDY_ZOOM(study), new_zoom)) 
+    set_voxel_dim_and_zoom(study, AMITK_STUDY_VOXEL_DIM(study), new_zoom);
 
   return;
 
@@ -829,6 +830,98 @@ void amitk_study_set_canvas_target_empty_area(AmitkStudy * study, gint target_em
   return;
 }
 
+/* try to recover a corrupted file */
+AmitkStudy * amitk_study_recover_xml(const gchar * study_filename, AmitkPreferences * preferences) {
+
+  AmitkStudy * study = NULL;
+  AmitkObject * recovered_object;
+  gchar * error_buf=NULL;
+  FILE * study_file=NULL;
+  guint64 size, counter, start_location=0, end_location=0;
+  gint returned_char;
+  gboolean have_start_location;
+
+  if (amide_is_xif_directory(study_filename, NULL, NULL)) {
+    g_warning("Recover function only works with XIF flat files, not XIF directories");
+    return NULL;
+  }
+
+  /* open her on up */
+  if ((study_file = fopen(study_filename, "rb")) == NULL) {
+    g_warning(_("Couldn't open file %s\n"), study_filename);
+    return NULL;
+  }
+
+  have_start_location = FALSE;
+  counter = 0;
+  while ((returned_char = fgetc(study_file)) != EOF) {
+
+    /* find the start of the amide xml object */
+    if (!have_start_location) {
+      if (returned_char == amide_data_file_xml_start_tag[counter]) {
+	if (counter == 0) start_location = ftell(study_file)-1;
+	counter++;
+	
+	if (counter == strlen(amide_data_file_xml_start_tag)) {
+	  /* we've got the start of an object */
+	  counter = 0;
+	  have_start_location = TRUE;
+	}
+      } else {
+	counter = 0;
+      }
+
+      /* work on finding the end of the amide xml object */
+    } else {
+      if (returned_char == amide_data_file_xml_end_tag[counter]) {
+	counter++;
+	if (counter == strlen(amide_data_file_xml_end_tag)) {
+	  counter = 0;
+
+	  /* back the start location to include the xml tag*/
+	  start_location -= strlen(amide_data_file_xml_tag)+3;
+
+	  /* read in object */
+	  end_location = ftell(study_file);
+	  size = end_location-start_location+1;
+
+	  recovered_object = amitk_object_read_xml(NULL, study_file, start_location, size, &error_buf);
+	  if (recovered_object != NULL) {
+	    if (!AMITK_IS_STUDY(recovered_object)) {
+	      if (study == NULL) study = amitk_study_new(preferences);
+	      amitk_object_add_child(AMITK_OBJECT(study), recovered_object);
+	    }
+	    amitk_object_unref(recovered_object);
+	  }
+
+	  /* return to the current spot in the file */
+	  fseek(study_file, end_location,SEEK_SET);
+	  have_start_location = FALSE;
+
+	}
+      } else {
+	counter = 0;
+      }
+    }
+
+  }
+
+  /* display accumulated warning messages */
+  if (error_buf != NULL) {
+    amitk_append_str_with_newline(&error_buf, _(""));
+    amitk_append_str_with_newline(&error_buf, _("The above warnings may arise because portions of the XIF"));
+    amitk_append_str_with_newline(&error_buf, _("file were corrupted."));
+    g_warning(error_buf);
+    g_free(error_buf);
+  }
+
+  /* remember the name of the file/directory for convience */
+  if (study != NULL)
+    amitk_study_set_filename(study, study_filename);
+
+  return study;
+}
+
 /* function to load in a study from disk in xml format */
 AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
 
@@ -864,6 +957,12 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
   }
   location = GUINT64_FROM_LE(location_le);
   size = GUINT64_FROM_LE(size_le);
+
+  /* sanity check */
+  if ((((location == 0) || (size == 0))) && !xif_directory) {
+    g_warning(_("File is corrupt.  The file may have been incompletely saved.  You can attempt recovering the file by using the recover function under the file menu."));
+    return NULL;
+  }
 
   /* load in the study */
   if (legacy1)

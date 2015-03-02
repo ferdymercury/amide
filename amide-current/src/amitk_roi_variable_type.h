@@ -1,7 +1,7 @@
 /* amitk_roi_variable_type.h - used to generate the different amitk_roi_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -49,8 +49,9 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, 
 						   AmitkDataSet * ds, 
 						   AmitkVoxel iso_vp,
-						   amide_data_t iso_value,
-						   gboolean iso_inverse);
+						   amide_data_t iso_min_value,
+						   amide_data_t iso_max_value,
+						   AmitkRoiIsocontourRange iso_range);
 void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
 void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi);
 #endif

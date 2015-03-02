@@ -1,7 +1,7 @@
 /* amitk_point.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,6 +24,7 @@
 */
 
 #include "amide_config.h"
+#include <locale.h>
 #include "amitk_point.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
@@ -157,6 +158,7 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   gint x,y,z,g,t;
   gint error=0;
 
+  voxel = one_voxel; /* initialize */
   temp_str = xml_get_string(nodes, descriptor);
 
   if (temp_str != NULL) {

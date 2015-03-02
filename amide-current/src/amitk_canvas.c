@@ -1,7 +1,7 @@
 /* amitk_canvas.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2004 Andy Loening
+ * Copyright (C) 2002-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -49,7 +49,8 @@
 #define UPDATE_OBJECT 0x20
 #define UPDATE_OBJECTS 0x40
 #define UPDATE_TARGET 0x80
-#define UPDATE_ALL 0xFF
+#define UPDATE_TIME 0x100
+#define UPDATE_ALL 0x1FF
 
 #define cp_2_p(canvas, canvas_cpoint) (canvas_point_2_point(AMITK_VOLUME_CORNER((canvas)->volume),\
 							    (canvas)->pixbuf_width, \
@@ -163,6 +164,7 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
 				 AmitkPoint center, amide_real_t thickness);
 static void canvas_update_arrows(AmitkCanvas * canvas);
 static void canvas_update_line_profile(AmitkCanvas * canvas);
+static void canvas_update_time_on_image(AmitkCanvas * canvas);
 static void canvas_update_pixbuf(AmitkCanvas * canvas);
 static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object);
 static void canvas_update_objects(AmitkCanvas * canvas, gboolean all);
@@ -298,6 +300,9 @@ static void canvas_init (AmitkCanvas *canvas)
   canvas->slices=NULL;
   canvas->image=NULL;
   canvas->pixbuf=NULL;
+
+  canvas->time_on_image=FALSE;
+  canvas->time_label=NULL;
 
   canvas->pixbuf_width = 128;
   canvas->pixbuf_height = 128;
@@ -710,22 +715,42 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   return z;
 }
 
-static void inverse_isocontour_cb(GtkWidget * widget, gpointer data) {
+static void isocontour_gray_spins(AmitkRoiIsocontourRange isocontour_range, 
+				  GtkWidget * min_spin_button,
+				  GtkWidget * max_spin_button) {
 
-  gboolean *pisocontour_inverse = data;
-  GtkWidget * spin_button;
-  amide_data_t * pinitial_value;
+  switch (isocontour_range) {
+  case AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX:
+    gtk_widget_set_sensitive(min_spin_button, TRUE);
+    gtk_widget_set_sensitive(max_spin_button, TRUE);
+    break;
+  case AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX:
+    gtk_widget_set_sensitive(min_spin_button, FALSE);
+    gtk_widget_set_sensitive(max_spin_button, TRUE);
+    break;
+  case AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN:
+  default:
+    gtk_widget_set_sensitive(min_spin_button, TRUE);
+    gtk_widget_set_sensitive(max_spin_button, FALSE);
+    break;
+  }
+
+  return;
+}
+
+static void isocontour_range_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkRoiIsocontourRange *pisocontour_range = data;
+  GtkWidget * min_spin_button;
+  GtkWidget * max_spin_button;
 
   /* get the state of the button */
-  *pisocontour_inverse = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  spin_button = g_object_get_data(G_OBJECT(widget), "spin_button");
-  pinitial_value = g_object_get_data(G_OBJECT(widget), "initial_value");
+  *pisocontour_range = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "isocontour_range"));
+  min_spin_button = g_object_get_data(G_OBJECT(widget), "min_spin_button");
+  max_spin_button = g_object_get_data(G_OBJECT(widget), "max_spin_button");
 
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), *pinitial_value);
-  if (*pisocontour_inverse)
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin_button), *pinitial_value, G_MAXDOUBLE);
-  else
-    gtk_spin_button_set_range(GTK_SPIN_BUTTON(spin_button), -G_MAXDOUBLE, *pinitial_value);
+  /* appropriately gray them out */
+  isocontour_gray_spins(*pisocontour_range, min_spin_button, max_spin_button);
 
   return;
 }
@@ -741,15 +766,18 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   GtkWindow * window;
   GtkWidget * toplevel;
   amide_intpoint_t gate;
+  GtkWidget * hbox;
   GtkWidget * dialog;
   GtkWidget * table;
   GtkWidget * label;
-  GtkWidget * spin_button;
+  GtkWidget * min_spin_button;
+  GtkWidget * max_spin_button;
   GtkWidget * image;
-  GtkWidget * check_button;
-  amide_data_t isocontour_value;
-  amide_data_t initial_value;
-  gboolean isocontour_inverse;
+  GtkWidget * radio_button[3];
+  amide_data_t isocontour_min_value;
+  amide_data_t isocontour_max_value;
+  AmitkRoiIsocontourRange isocontour_range;
+  AmitkRoiIsocontourRange i_range;
   gint table_row;
   gchar * temp_str;
   gint return_val;
@@ -807,15 +835,15 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   }
 
   /* what we probably want to set the isocontour too */
-  isocontour_value = amitk_data_set_get_value(draw_on_ds, temp_voxel); 
-  initial_value = isocontour_value;
-  isocontour_inverse = AMITK_ROI_ISOCONTOUR_INVERSE(roi);
+  isocontour_min_value = amitk_data_set_get_value(draw_on_ds, temp_voxel); 
+  isocontour_max_value = isocontour_min_value;
+  isocontour_range = AMITK_ROI_ISOCONTOUR_RANGE(roi);
 
   toplevel = gtk_widget_get_toplevel (GTK_WIDGET(canvas));
   if (toplevel != NULL) window = GTK_WINDOW(toplevel);
   else window = NULL;
 
-  /* pop up dialog to let user pick isocontour value and for any warning messages */
+  /* pop up dialog to let user pick isocontour values, etc. and for any warning messages */
   dialog = gtk_dialog_new_with_buttons (_("Isocontour Value Selection"),
 					window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -860,33 +888,69 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 
   image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
   gtk_table_attach(GTK_TABLE(table), image, 0,1, table_row,table_row+2, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
-  
-  check_button = gtk_check_button_new_with_label ("Inverse isocontour (this value and lower)?");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), isocontour_inverse);
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(inverse_isocontour_cb), &isocontour_inverse);
-  g_object_set_data(G_OBJECT(check_button), "initial_value", &initial_value);
-  gtk_table_attach(GTK_TABLE(table), check_button,1,3,
+
+  /* box where the radio buttons will go */
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_table_attach(GTK_TABLE(table), hbox,1,3,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(hbox);
   table_row++;
 
-  label = gtk_label_new(_("Value to draw isocontour at:"));
+
+  /* the spin buttons */
+  label = gtk_label_new(_("Min:"));
   gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
-  if (isocontour_inverse)
-    spin_button = gtk_spin_button_new_with_range(isocontour_value, G_MAXDOUBLE, MAX(EPSILON,fabs(isocontour_value)/10));
-  else
-    spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, isocontour_value, MAX(EPSILON,fabs(isocontour_value)/10));
-  g_object_set_data(G_OBJECT(check_button), "spin_button", spin_button);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), isocontour_value);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
-  gtk_entry_set_activates_default(GTK_ENTRY(spin_button), TRUE);
-  g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_value);
-  g_signal_connect(G_OBJECT(spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  min_spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, isocontour_min_value, MAX(EPSILON,fabs(isocontour_min_value)/10));
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(min_spin_button), isocontour_min_value);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(min_spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(min_spin_button), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(min_spin_button), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(min_spin_button), GTK_UPDATE_ALWAYS);
+  gtk_entry_set_activates_default(GTK_ENTRY(min_spin_button), TRUE);
+  g_signal_connect(G_OBJECT(min_spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_min_value);
+  g_signal_connect(G_OBJECT(min_spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  gtk_table_attach(GTK_TABLE(table), min_spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
 
+
+  label = gtk_label_new(_("Max:"));
+  gtk_table_attach(GTK_TABLE(table), label, 1,2, table_row,table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  max_spin_button = gtk_spin_button_new_with_range(isocontour_max_value, G_MAXDOUBLE, MAX(EPSILON,fabs(isocontour_max_value)/10));
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(max_spin_button), isocontour_max_value);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(max_spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(max_spin_button), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(max_spin_button), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(max_spin_button), GTK_UPDATE_ALWAYS);
+  gtk_entry_set_activates_default(GTK_ENTRY(max_spin_button), TRUE);
+  g_signal_connect(G_OBJECT(max_spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_max_value);
+  g_signal_connect(G_OBJECT(max_spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  gtk_table_attach(GTK_TABLE(table), max_spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* appropriately gray them out */
+  isocontour_gray_spins(isocontour_range, min_spin_button, max_spin_button);
+
+  /* radio buttons to choose the isocontour type */
+  radio_button[0] = gtk_radio_button_new_with_label(NULL, _("Above Min"));
+  radio_button[1] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), _("Below Max"));
+  radio_button[2] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), _("Between Min/Max"));
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[isocontour_range]), TRUE);
+
+  for (i_range=0; i_range < AMITK_ROI_ISOCONTOUR_RANGE_NUM; i_range++) {
+    gtk_box_pack_start(GTK_BOX(hbox), radio_button[i_range], FALSE, FALSE, 3);
+    g_object_set_data(G_OBJECT(radio_button[i_range]), "isocontour_range", 
+		      GINT_TO_POINTER(i_range));
+    g_object_set_data(G_OBJECT(radio_button[i_range]), "min_spin_button", min_spin_button);
+    g_object_set_data(G_OBJECT(radio_button[i_range]), "max_spin_button", max_spin_button);
+    g_signal_connect(G_OBJECT(radio_button[i_range]), "clicked", 
+		     G_CALLBACK(isocontour_range_cb), &isocontour_range);
+  }
+
+
+  /* run the dialog */
   gtk_widget_show_all(dialog);
   return_val = gtk_dialog_run(GTK_DIALOG(dialog)); /* let the user input */
   gtk_widget_destroy(dialog);
@@ -895,7 +959,8 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
     return; /* cancel */
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-  amitk_roi_set_isocontour(roi, AMITK_DATA_SET(draw_on_ds), temp_voxel, isocontour_value,isocontour_inverse);
+  amitk_roi_set_isocontour(roi, AMITK_DATA_SET(draw_on_ds), temp_voxel, 
+			   isocontour_min_value,isocontour_max_value, isocontour_range);
   ui_common_remove_wait_cursor(GTK_WIDGET(canvas));
 
   return;
@@ -1281,10 +1346,21 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,help_info, &base_point, 0.0);
     if (AMITK_IS_ROI(object))
       if (!AMITK_ROI_UNDRAWN(object) && 
-	  (AMITK_ROI_TYPE_ISOCONTOUR(object))) 
-	g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
-		      AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, 
-		      AMITK_ROI(object)->isocontour_value);
+	  (AMITK_ROI_TYPE_ISOCONTOUR(object))) {
+	if (AMITK_ROI_ISOCONTOUR_RANGE(object) == AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN)
+	  g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
+			AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, 
+			AMITK_ROI(object)->isocontour_min_value);
+	else if (AMITK_ROI_ISOCONTOUR_RANGE(object) == AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX)
+	  g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
+			AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, 
+			AMITK_ROI(object)->isocontour_max_value);
+	else /* AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX */
+	  g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
+			AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, 
+			0.5*AMITK_ROI(object)->isocontour_min_value+
+			0.5*AMITK_ROI(object)->isocontour_max_value);
+      }
 
 
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
@@ -1488,9 +1564,15 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_MOTION:
     if (AMITK_IS_ROI(object))
       if (!AMITK_ROI_UNDRAWN(object))
-	if (AMITK_ROI_TYPE_ISOCONTOUR(object))
-	  voxel_value = AMITK_ROI(object)->isocontour_value;
-  
+	if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
+	  if (AMITK_ROI_ISOCONTOUR_RANGE(object) == AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN)
+	    voxel_value = AMITK_ROI(object)->isocontour_min_value;
+	  else if (AMITK_ROI_ISOCONTOUR_RANGE(object) == AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX)
+	    voxel_value = AMITK_ROI(object)->isocontour_max_value;
+	  else /* AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX */
+	    voxel_value = 0.5*(AMITK_ROI(object)->isocontour_min_value+AMITK_ROI(object)->isocontour_max_value);
+	}
+	  
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
     
@@ -2509,6 +2591,53 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
 }
 
 
+/* function to update the line profile on the canvas */
+static void canvas_update_time_on_image(AmitkCanvas * canvas) {
+
+  amide_time_t midpt_time;
+  gint hours, minutes, seconds;
+  gchar * time_str;
+  rgba_t color;
+
+  /* put up the timer */
+  if (canvas->time_on_image) {
+
+    midpt_time =   AMITK_STUDY_VIEW_START_TIME(canvas->study)+
+      AMITK_STUDY_VIEW_DURATION(canvas->study)/2.0;
+    hours = floor(midpt_time/3600);
+    midpt_time -= hours*3600;
+    minutes = floor(midpt_time/60);
+    midpt_time -= minutes*60;
+    seconds = midpt_time;
+    time_str = g_strdup_printf("%d:%.2d:%.2d",hours,minutes,seconds);
+
+    color = amitk_color_table_outline_color(canvas_get_color_table(canvas), FALSE);
+    if (canvas->time_label != NULL) 
+      gnome_canvas_item_set(canvas->time_label,
+			    "text", time_str,
+			    "fill_color_rgba", color, NULL);
+    else
+      canvas->time_label = 
+	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
+			      gnome_canvas_text_get_type(),
+			      "anchor", GTK_ANCHOR_SOUTH_WEST,
+			      "text", time_str,
+			      "x", 4.0,
+			      "y", canvas->pixbuf_height-2.0,
+			      "fill_color_rgba", color,
+			      "font_desc", amitk_fixed_font_desc, NULL);
+    g_free(time_str);
+  } else {
+    if (canvas->time_label != NULL) {
+      gtk_object_destroy(GTK_OBJECT(canvas->time_label));
+      canvas->time_label = NULL;
+    }
+  }
+
+  return;
+}
+
+
 
 
 
@@ -2825,6 +2954,9 @@ static gboolean canvas_update_while_idle(gpointer data) {
     canvas_update_line_profile(canvas);
   }
 
+  if (canvas->next_update & UPDATE_TIME) {
+    canvas_update_time_on_image(canvas);
+  }
 
   if (canvas->next_update & UPDATE_TARGET) {
     canvas_update_target(canvas, canvas->next_target_action, canvas->next_target_center,
@@ -2871,8 +3003,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "thickness_changed", G_CALLBACK(canvas_view_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "time_changed", G_CALLBACK(canvas_time_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "canvas_target_changed", G_CALLBACK(canvas_target_changed_cb), canvas);
-    g_signal_connect(G_OBJECT(object), "zoom_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
-    g_signal_connect(G_OBJECT(object), "voxel_dim_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "voxel_dim_or_zoom_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "fuse_type_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "view_center_changed", G_CALLBACK(canvas_view_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "canvas_roi_preference_changed", G_CALLBACK(canvas_roi_preference_changed_cb), canvas);
@@ -3072,6 +3203,16 @@ void amitk_canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction ac
   return;
 }
 
+void amitk_canvas_set_time_on_image(AmitkCanvas * canvas, gboolean time_on_image) {
+
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+  if (time_on_image != canvas->time_on_image) {
+    canvas->time_on_image = time_on_image;
+    canvas_add_update(canvas, UPDATE_TIME);
+  }
+
+  return;
+}
 
 gint amitk_canvas_get_width(AmitkCanvas * canvas) {
 

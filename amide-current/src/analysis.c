@@ -1,7 +1,7 @@
 /* analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,9 +24,9 @@
 */
 
 #include "amide_config.h"
+#include "analysis.h"
 #include <glib.h>
 #include <sys/stat.h>
-#include "analysis.h"
 
 #include <sys/time.h>
 #include <time.h>
@@ -35,10 +35,13 @@
 #endif
 
 
+
 /* make sure we have NAN defined to at least something */
-#ifndef NAN
-#define NAN 0.0
-#endif
+//0.8.12 - hopefully all systems have bits/nan.h
+//remove in a couple versions
+//#ifndef NAN
+//#define NAN 0.0
+//#endif
 
 #define EMPTY 0.0
 
@@ -104,11 +107,10 @@ static void record_stats(AmitkVoxel voxel,
   GPtrArray * array = data;
   element_t * element;
   
-
   /* crashes if alloc fails, but I don't want to do error checking in the inner loop... 
      let's not run out of memory */
   element = g_malloc(sizeof(element_t)); 
-
+    
   element->value = value;
   element->weight = voxel_fraction;
   g_ptr_array_add(array, element);

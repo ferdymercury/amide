@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -318,7 +318,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 
   logo = gdk_pixbuf_new_from_inline(-1, amide_logo, FALSE, NULL);
   about = gnome_about_new(PACKAGE, VERSION, 
-			  _("Copyright (c) 2000-2004 Andy Loening"),
+			  _("Copyright (c) 2000-2005 Andy Loening"),
 			  contents,
 			  authors, NULL, NULL, logo);
   g_object_unref(logo);
@@ -788,7 +788,7 @@ GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout) {
 /* This data is in X bitmap format, and can be created with the 'bitmap' utility. */
 #define small_dot_width 3
 #define small_dot_height 3
-static unsigned char small_dot_bits[] = {0x00, 0x02, 0x00};
+static gchar small_dot_bits[] = {0x00, 0x02, 0x00};
  
 
 /* load in the cursors */

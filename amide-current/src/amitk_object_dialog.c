@@ -1,7 +1,7 @@
 /* amitk_object_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2004 Andy Loening
+ * Copyright (C) 2002-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1059,16 +1059,29 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     } else if (AMITK_IS_ROI(object)) {
       if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
-	label = gtk_label_new(_("Isocontour Value"));
+	label = gtk_label_new(_("Isocontour Min Value"));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	gtk_widget_show(label);
 	
-	dialog->isocontour_value_entry = gtk_entry_new();
-	gtk_editable_set_editable(GTK_EDITABLE(dialog->isocontour_value_entry), FALSE);
-	gtk_table_attach(GTK_TABLE(packing_table), dialog->isocontour_value_entry,1,2,
+	dialog->isocontour_min_value_entry = gtk_entry_new();
+	gtk_editable_set_editable(GTK_EDITABLE(dialog->isocontour_min_value_entry), FALSE);
+	gtk_table_attach(GTK_TABLE(packing_table), dialog->isocontour_min_value_entry,1,2,
 			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-	gtk_widget_show(dialog->isocontour_value_entry);
+	gtk_widget_show(dialog->isocontour_min_value_entry);
+	
+	table_row++;
+
+	label = gtk_label_new(_("Isocontour Max Value"));
+	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	gtk_widget_show(label);
+	
+	dialog->isocontour_max_value_entry = gtk_entry_new();
+	gtk_editable_set_editable(GTK_EDITABLE(dialog->isocontour_max_value_entry), FALSE);
+	gtk_table_attach(GTK_TABLE(packing_table), dialog->isocontour_max_value_entry,1,2,
+			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+	gtk_widget_show(dialog->isocontour_max_value_entry);
 	
 	table_row++;
       }
@@ -1216,7 +1229,8 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 
   /* object name */
   g_signal_handlers_block_by_func(G_OBJECT(dialog->name_entry),G_CALLBACK(dialog_change_name_cb), dialog);
-  gtk_entry_set_text(GTK_ENTRY(dialog->name_entry), AMITK_OBJECT_NAME(dialog->object));
+  if (AMITK_OBJECT_NAME(dialog->object) != NULL)
+    gtk_entry_set_text(GTK_ENTRY(dialog->name_entry), AMITK_OBJECT_NAME(dialog->object));
   g_signal_handlers_unblock_by_func(G_OBJECT(dialog->name_entry), G_CALLBACK(dialog_change_name_cb), dialog);
   
   if (AMITK_IS_ROI(dialog->object)) {
@@ -1444,9 +1458,17 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 
     } else if AMITK_IS_ROI(dialog->object) {
       if (AMITK_ROI_TYPE_ISOCONTOUR(dialog->object)) {
-	temp_str = g_strdup_printf("%f", AMITK_ROI_ISOCONTOUR_VALUE(dialog->object));
-	gtk_entry_set_text(GTK_ENTRY(dialog->isocontour_value_entry), temp_str);
+	temp_str = g_strdup_printf("%f", AMITK_ROI_ISOCONTOUR_MIN_VALUE(dialog->object));
+	gtk_entry_set_text(GTK_ENTRY(dialog->isocontour_min_value_entry), temp_str);
 	g_free(temp_str);
+	gtk_widget_set_sensitive(dialog->isocontour_min_value_entry, 
+				 AMITK_ROI_ISOCONTOUR_RANGE(dialog->object) != AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX);
+
+	temp_str = g_strdup_printf("%f", AMITK_ROI_ISOCONTOUR_MAX_VALUE(dialog->object));
+	gtk_entry_set_text(GTK_ENTRY(dialog->isocontour_max_value_entry), temp_str);
+	g_free(temp_str);
+	gtk_widget_set_sensitive(dialog->isocontour_max_value_entry, 
+				 AMITK_ROI_ISOCONTOUR_RANGE(dialog->object) != AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN);
       }
     } else if (AMITK_IS_DATA_SET(dialog->object)) {
       g_signal_handlers_block_by_func(G_OBJECT(dialog->start_spin), 
@@ -2171,7 +2193,7 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object) {
 			   G_CALLBACK(dialog_update_entries), dialog);
 
   if (AMITK_IS_STUDY(object)) {
-    g_signal_connect_swapped(G_OBJECT(object), "voxel_dim_changed", 
+    g_signal_connect_swapped(G_OBJECT(object), "voxel_dim_or_zoom_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
     g_signal_connect_swapped(G_OBJECT(object), "view_center_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);

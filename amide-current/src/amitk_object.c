@@ -1,7 +1,7 @@
 /* amitk_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -425,7 +425,7 @@ static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE
 
   amitk_space_write_xml(nodes, "coordinate_space", AMITK_SPACE(object));
 
-  children_nodes = xmlNewChild(nodes, NULL, "children", NULL);
+  children_nodes = xmlNewChild(nodes, NULL, (xmlChar*) "children", NULL);
   amitk_objects_write_xml(AMITK_OBJECT_CHILDREN(object), children_nodes, study_file);
 
   for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
@@ -489,6 +489,14 @@ AmitkObject * amitk_object_new (void) {
 
 
 
+/* amide_data_file_xml_start_tag and amide_data_file_end_tag are used 
+   by amitk_study_recover_xml as it searches through the file 
+   looking for xml objects to load in */
+gchar * amide_data_file_version_str = "amide_data_file_version";
+gchar * amide_data_file_xml_tag = "<?xml version-""1.0""?>";
+gchar * amide_data_file_xml_start_tag = "<amide_data_file_version>";
+gchar * amide_data_file_xml_end_tag = "</amide_data_file_version>";
+
 /* if study_file is NULL, we're saving as a directory, 
    and output_filename will be set (if not NULL),
    otherwise location will be set */
@@ -540,11 +548,10 @@ void amitk_object_write_xml(AmitkObject * object, FILE * study_file,
   }
 
 
-
   /* write the xml file */
-  doc = xmlNewDoc("1.0");
+  doc = xmlNewDoc((xmlChar *) "1.0");
 
-  doc->children = xmlNewDocNode(doc, NULL, "amide_data_file_version", AMIDE_FILE_VERSION);
+  doc->children = xmlNewDocNode(doc, NULL, amide_data_file_version_str, AMIDE_FILE_VERSION);
 
   nodes = xmlNewChild(doc->children, NULL, object_name, AMITK_OBJECT_NAME(object));
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_WRITE_XML], 0, nodes, study_file);
@@ -1153,9 +1160,9 @@ void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list, FILE * study
 			 &location, &size);
 
   if (study_file == NULL) 
-    xmlNewChild(node_list, NULL, "object_file", object_filename);
+    xmlNewChild(node_list, NULL, (xmlChar*) "object_file", object_filename);
   else 
-    xml_save_location_and_size(node_list, "object_location_and_size", location, size);
+    xml_save_location_and_size(node_list, (xmlChar*) "object_location_and_size", location, size);
 
 
 

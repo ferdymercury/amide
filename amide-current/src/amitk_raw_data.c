@@ -1,7 +1,7 @@
 /* amitk_raw_data.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -376,6 +376,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	case AMITK_RAW_FORMAT_ASCII_8_NE:
 	  
 	  /* copy this frame into the data set */
+	  i.x = 0;
 	  for (i.y = 0; (i.y < dim.y) && (error_code >= 0); i.y++) {
 	    for (i.x = 0; (i.x < dim.x) && (error_code >= 0); i.x++) {
 	      if (raw_data->format == AMITK_FORMAT_DOUBLE)
@@ -798,8 +799,8 @@ void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name,
   if (study_file == NULL) fclose(file_pointer);
     
   /* write the xml portion */
-  doc = xmlNewDoc("1.0");
-  doc->children = xmlNewDocNode(doc, NULL, "raw_data", name);
+  doc = xmlNewDoc((xmlChar *) "1.0");
+  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) "raw_data", name);
   amitk_voxel_write_xml(doc->children, "dim", raw_data->dim);
   xml_save_string(doc->children,"raw_format", 
 		  amitk_raw_format_get_name(amitk_format_to_raw_format(raw_data->format)));

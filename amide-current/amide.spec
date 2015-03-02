@@ -1,6 +1,6 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.8.11
+Version: 	0.8.12
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering

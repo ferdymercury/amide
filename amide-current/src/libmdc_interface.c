@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -32,6 +32,7 @@
 #include "libmdc_interface.h"
 #include <medcon.h>
 #include <string.h>
+#include <locale.h>
 
 static char * libmdc_unknown = "Unknown";
 
@@ -906,6 +907,7 @@ void libmdc_export(AmitkDataSet * ds,
   image_num=0;
   data_ptr = ds->raw_data->data;
   j = zero_voxel;
+  i = zero_voxel;
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
 
     frame_start = amitk_data_set_get_start_time(ds, i.t);

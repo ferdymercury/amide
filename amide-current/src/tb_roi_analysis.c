@@ -1,7 +1,7 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -231,8 +231,16 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
     fprintf(file_pointer, _("# ROI:\t%s\tType:\t%s"),
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
-    if (AMITK_ROI_TYPE_ISOCONTOUR(roi_analyses->roi))
-      fprintf(file_pointer, _("\tIsocontour Value:\t%g"), AMITK_ROI_ISOCONTOUR_VALUE(roi_analyses->roi));
+    if (AMITK_ROI_TYPE_ISOCONTOUR(roi_analyses->roi)) {
+      if (AMITK_ROI_ISOCONTOUR_RANGE(roi_analyses->roi) == AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN) 
+	fprintf(file_pointer, _("\tIsocontour Above Value:\t%g"), AMITK_ROI_ISOCONTOUR_MIN_VALUE(roi_analyses->roi));
+      else if (AMITK_ROI_ISOCONTOUR_RANGE(roi_analyses->roi) == AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX) 
+	fprintf(file_pointer, _("\tIsocontour Below Value:\t%g"), AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi_analyses->roi));
+      else  /* AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX */
+	fprintf(file_pointer, _("\tIsocontour Between Values:\t%g %g"), 
+		AMITK_ROI_ISOCONTOUR_MIN_VALUE(roi_analyses->roi),
+		AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi_analyses->roi));
+    }
     fprintf(file_pointer,"\n");
     switch(roi_analyses->calculation_type) {
     case ALL_VOXELS:

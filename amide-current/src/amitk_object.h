@@ -1,7 +1,7 @@
 /* amitk_object.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -172,6 +172,10 @@ GList *         amitk_objects_read_xml               (xmlNodePtr node_list,
 
 const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);
 const gchar *   amitk_selection_get_name             (const AmitkSelection type);
+
+extern gchar * amide_data_file_xml_tag;
+extern gchar * amide_data_file_xml_start_tag;
+extern gchar * amide_data_file_xml_end_tag;
 
 G_END_DECLS
 

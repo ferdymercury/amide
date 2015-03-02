@@ -1,7 +1,7 @@
 /* ui_study_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -32,6 +32,7 @@ void ui_study_cb_save_as(GtkWidget * widget, gpointer data);
 void ui_study_cb_import(GtkWidget * widget, gpointer data);
 void ui_study_cb_export_view(GtkWidget * widget, gpointer data);
 void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data);
+void ui_study_cb_recover_study(GtkWidget * widget, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
 void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
 				   AmitkPoint *location, amide_data_t value, gpointer ui_study);
@@ -76,6 +77,7 @@ void ui_study_cb_preferences(GtkWidget * widget, gpointer data);
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_study_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer ui_study);
+void ui_study_cb_voxel_dim_or_zoom_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_fuse_type(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_canvas_visible(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer ui_study);

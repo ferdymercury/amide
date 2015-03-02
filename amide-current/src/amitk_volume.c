@@ -1,7 +1,7 @@
 /* amitk_volume.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -218,7 +218,7 @@ static AmitkObject * volume_copy(const AmitkObject * object) {
 
   copy = amitk_volume_new();
 
-  amitk_object_copy_in_place(AMITK_OBJECT(copy), object);
+  amitk_object_copy_in_place(AMITK_OBJECT(copy), AMITK_OBJECT(object));
 
   return AMITK_OBJECT(copy);
 
@@ -236,8 +236,6 @@ static void volume_copy_in_place(AmitkObject * dest_object, const AmitkObject * 
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
-
-
 
 
 static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes, FILE * study_file) {

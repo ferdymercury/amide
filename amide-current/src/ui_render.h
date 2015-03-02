@@ -1,7 +1,7 @@
 /* ui_render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -50,6 +50,9 @@ typedef struct ui_render_t {
   amide_time_t duration;
   GtkWidget * canvas;
   GnomeCanvasItem * canvas_image;
+  GnomeCanvasItem * canvas_time_label;
+  gboolean time_label_on;
+  gint pixbuf_width, pixbuf_height;
   GdkPixbuf * pixbuf;
   renderings_t * renderings;
   gboolean update_without_release;
@@ -68,10 +71,12 @@ typedef struct ui_render_t {
   gboolean rendered_successfully;
 
   GtkWidget * progress_dialog;
+  gboolean disable_progress_dialog;
   guint reference_count;
 } ui_render_t;
 
 /* external functions */
+GdkPixbuf * ui_render_get_pixbuf(ui_render_t * ui_render);
 void ui_render_add_update(ui_render_t * ui_render);
 gboolean ui_render_update_immediate(gpointer ui_render);
 void ui_render_create(AmitkStudy * study, GList * selected_objects);

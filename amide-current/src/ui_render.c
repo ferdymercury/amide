@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -45,6 +45,7 @@
 #include "amitk_dial.h"
 #include "amitk_progress_dialog.h"
 #include "amitk_tree_view.h"
+#include "amitk_common.h"
 #include "pixmaps.h"
 
 
@@ -91,7 +92,6 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   guint i, j,k;
   rgba_t color;
   gdouble dim;
-  gdouble height, width;
   static AmitkPoint prev_theta;
   static AmitkPoint theta;
   static AmitkCanvasPoint initial_cpoint, center_cpoint;
@@ -104,9 +104,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   /* get the location of the event, and convert it to the canvas coordinates */
   gnome_canvas_window_to_world(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
   gnome_canvas_w2c_d(canvas, canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
-  height = gdk_pixbuf_get_height(ui_render->pixbuf);
-  width = gdk_pixbuf_get_width(ui_render->pixbuf);
-  dim = MIN(width, height);
+  dim = MIN(ui_render->pixbuf_width, ui_render->pixbuf_height);
   temp_point.x = temp_point.y = temp_point.z = -dim/2.0;
   amitk_space_set_offset(ui_render->box_space, temp_point);
   //  amitk_space_set_axes(ui_render->box_space, base_axes, AMITK_SPACE_OFFSET(ui_render->box_space));
@@ -373,6 +371,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   GtkWidget * file_selection = data;
   ui_render_t * ui_render;
   const gchar * save_filename;
+  GdkPixbuf * pixbuf;
 
   /* get a pointer to ui_render */
   ui_render = g_object_get_data(G_OBJECT(file_selection), "ui_render");
@@ -380,13 +379,18 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   save_filename = ui_common_file_selection_get_save_name(file_selection);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
-  if (gdk_pixbuf_save (ui_render->pixbuf, save_filename, "jpeg", NULL, 
-		       "quality", "100", NULL) == FALSE) {
-    g_warning(_("Failure Saving File: %s"),save_filename);
+  pixbuf = ui_render_get_pixbuf(ui_render);
+  if (pixbuf == NULL) {
+    g_warning(_("Canvas failed to return a valid image\n"));
     return;
   }
 
+  if (gdk_pixbuf_save (pixbuf, save_filename, "jpeg", NULL, 
+		       "quality", "100", NULL) == FALSE) 
+    g_warning(_("Failure Saving File: %s"),save_filename);
 
+
+  g_object_unref(pixbuf);
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
@@ -708,7 +712,11 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->stereoscopic = FALSE;
   ui_render->renderings = NULL;
   ui_render->pixbuf = NULL;
+  ui_render->pixbuf_width = 128;
+  ui_render->pixbuf_height = 128;
   ui_render->canvas_image = NULL;
+  ui_render->canvas_time_label = NULL;
+  ui_render->time_label_on = FALSE;
   ui_render->quality = RENDERING_DEFAULT_QUALITY;
   ui_render->depth_cueing = RENDERING_DEFAULT_DEPTH_CUEING;
   ui_render->front_factor = RENDERING_DEFAULT_FRONT_FACTOR;
@@ -718,6 +726,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->duration = AMITK_STUDY_VIEW_DURATION(study);
   ui_render->box_space = amitk_space_new();
   ui_render->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render->app));
+  ui_render->disable_progress_dialog=FALSE;
   ui_render->next_update= UPDATE_NONE;
   ui_render->idle_handler_id = 0;
   ui_render->rendered_successfully=FALSE;
@@ -748,12 +757,20 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 					  ui_render->start, 
 					  ui_render->duration, 
 					  strip_highs, optimize_rendering,
-					  amitk_progress_dialog_update,
-					  ui_render->progress_dialog);
+					  ui_render->disable_progress_dialog ? NULL : amitk_progress_dialog_update,
+					  ui_render->disable_progress_dialog ? NULL : ui_render->progress_dialog);
 
   return ui_render;
 }
 
+
+GdkPixbuf * ui_render_get_pixbuf(ui_render_t * ui_render) {
+
+  GdkPixbuf * pixbuf;
+  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(ui_render->canvas), 0.0,0.0,
+					ui_render->pixbuf_width, ui_render->pixbuf_height);
+  return pixbuf;
+}
 
 
 void ui_render_add_update(ui_render_t * ui_render) {
@@ -776,8 +793,11 @@ gboolean ui_render_update_immediate(gpointer data) {
   ui_render_t * ui_render = data;
   amide_intpoint_t size_dim; 
   AmitkEye eyes;
-  gint width, height;
   gboolean return_val=TRUE;
+  amide_time_t midpt_time;
+  gint hours, minutes, seconds;
+  gchar * time_str;
+  rgba_t color;
 
   g_return_val_if_fail(ui_render != NULL, FALSE);
   g_return_val_if_fail(ui_render->renderings != NULL, FALSE);
@@ -785,8 +805,8 @@ gboolean ui_render_update_immediate(gpointer data) {
   ui_render->rendered_successfully=FALSE;
   if (!renderings_reload_objects(ui_render->renderings, ui_render->start,
 				 ui_render->duration,
-				 amitk_progress_dialog_update, 
-				 ui_render->progress_dialog)) {
+				 ui_render->disable_progress_dialog ? NULL : amitk_progress_dialog_update,
+				 ui_render->disable_progress_dialog ? NULL : ui_render->progress_dialog )) {
     return_val=FALSE;
     goto function_end;
   }
@@ -823,12 +843,46 @@ gboolean ui_render_update_immediate(gpointer data) {
 			    "y", (double) 0.0,
 			    NULL);
 
-  width = gdk_pixbuf_get_width(ui_render->pixbuf);  
-  height = gdk_pixbuf_get_height(ui_render->pixbuf);  
+  /* get the height and width */
+  ui_render->pixbuf_width = gdk_pixbuf_get_width(ui_render->pixbuf);  
+  ui_render->pixbuf_height = gdk_pixbuf_get_height(ui_render->pixbuf);  
+
+  /* put up the timer */
+  if (ui_render->time_label_on) {
+    midpt_time = ui_render->start+ui_render->duration/2.0;
+    hours = floor(midpt_time/3600);
+    midpt_time -= hours*3600;
+    minutes = floor(midpt_time/60);
+    midpt_time -= minutes*60;
+    seconds = midpt_time;
+    time_str = g_strdup_printf("%d:%.2d:%.2d",hours,minutes,seconds);
+
+    color = amitk_color_table_outline_color(ui_render->renderings->rendering->color_table, FALSE);
+    if (ui_render->canvas_time_label != NULL) 
+      gnome_canvas_item_set(ui_render->canvas_time_label,
+			    "text", time_str,
+			    "fill_color_rgba", color, NULL);
+    else
+      ui_render->canvas_time_label = 
+	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_render->canvas)),
+			      gnome_canvas_text_get_type(),
+			      "anchor", GTK_ANCHOR_SOUTH_WEST,
+			      "text", time_str,
+			      "x", 4.0,
+			      "y", ui_render->pixbuf_height-2.0,
+			      "fill_color_rgba", color,
+			      "font_desc", amitk_fixed_font_desc, NULL);
+    g_free(time_str);
+  } else {
+    if (ui_render->canvas_time_label != NULL) {
+      gtk_object_destroy(GTK_OBJECT(ui_render->canvas_time_label));
+      ui_render->canvas_time_label = NULL;
+    }
+  }
 
   /* reset the min size of the widget */
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_render->canvas), 0.0, 0.0, width, height);
-  gtk_widget_set_size_request(ui_render->canvas, width, height);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_render->canvas), 0.0, 0.0, ui_render->pixbuf_width, ui_render->pixbuf_height);
+  gtk_widget_set_size_request(ui_render->canvas, ui_render->pixbuf_width, ui_render->pixbuf_height);
   ui_render->rendered_successfully = TRUE;
   return_val = FALSE;
 

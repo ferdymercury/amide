@@ -1,7 +1,7 @@
 /* amitk_color_table.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -116,6 +116,7 @@ static rgb_t hsv_to_rgb(hsv_t * hsv) {
       rgb.r = UCHAR_MAX * hsv->v;
       rgb.g = UCHAR_MAX * p;
       rgb.b = UCHAR_MAX * q;
+      break;
     }
   }    
 
@@ -131,6 +132,14 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
   hsv_t hsv;
   amide_data_t scale;
   amide_data_t temp;
+  gboolean not_a_number=FALSE;
+
+  /* if not a number, computer as min value, and then set to transparent */
+  if (isnan(datum)) {
+    datum = min;
+    not_a_number = TRUE;
+  }
+    
 
   switch(which) {
   case AMITK_COLOR_TABLE_BWB_LINEAR:
@@ -347,6 +356,8 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
     rgba.a = temp;
     break;
   }
+
+  if (not_a_number) rgba.a = 0;
 
   return rgba;
 }

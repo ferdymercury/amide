@@ -13,7 +13,6 @@ for next release?
 * Gate picker -> multiple selection still screwed up
 * add drag-n-drop capabilities between study windows
 	don't use treeview reorderable stuff, too limited,
-* requested by steve jones- add an import from file button for frame durations
 * ability to import and export AIR .air files
   -probably from rotate axis page
   -need object list widget: should update automatically when something is removed somewhere else
@@ -231,6 +230,12 @@ things dependent on other things:
 	radix sign.  Need to test if g_strdup_printf will work with later
 	versions of glib.
 
+* amitk_data_sets_export_to_file is very wasteful of memory.  It reslices the requisite
+	data sets into a new data set, and then an additional copy data set is made
+	inside of libmdc.  If medcon/libmdc ever supports slice-by-slice saving
+	of data sets (instead of as an entire volume at once), we would only need
+	to allocate one slice in amide, and one slice in libmdc, rather than
+	one volume in amide, and one volume in libmdc.
 	
 
 

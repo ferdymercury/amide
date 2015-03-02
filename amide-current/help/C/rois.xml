@@ -37,7 +37,11 @@
 
     <para> Isocontour ROI's are regions selected from the data set
       such that the edge values of the ROI are always the same value.
-      There are two types, 2D and 3D isocontours.</para>
+      There are two types, 2D and 3D isocontours.  Additionally, both
+      these ROI types can be defined so that they encompass all
+      neighboring values either above a certain minimum value, below a
+      certain maximum value, or between a minimum and maximum
+      value.</para>
     
    <variablelist> 
 

@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -233,6 +233,7 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "view_mode_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_target_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_layout_preference_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "voxel_dim_or_zoom_changed", G_CALLBACK(ui_study_cb_voxel_dim_or_zoom_changed), ui_study);
 
   } else if (AMITK_IS_DATA_SET(object)) {
     amitk_tree_view_expand_object(AMITK_TREE_VIEW(ui_study->tree_view), AMITK_OBJECT_PARENT(object));
@@ -240,8 +241,10 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     amitk_study_set_view_thickness(ui_study->study, vox_size);
 
     /* see if we should reset the study name */
-    if (g_ascii_strncasecmp(blank_name, AMITK_OBJECT_NAME(ui_study->study),
-			    strlen(AMITK_OBJECT_NAME(ui_study->study))) == 0)
+    if ((AMITK_OBJECT_NAME(ui_study->study) == NULL)  ||
+	(AMITK_OBJECT_NAME(ui_study->study) == "") ||
+	(g_ascii_strncasecmp(blank_name, AMITK_OBJECT_NAME(ui_study->study),
+			     strlen(AMITK_OBJECT_NAME(ui_study->study))) == 0))
       amitk_object_set_name(AMITK_OBJECT(ui_study->study), 
 			    AMITK_OBJECT_NAME(object));
 

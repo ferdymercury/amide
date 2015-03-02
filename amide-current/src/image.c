@@ -1,7 +1,7 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -33,7 +33,7 @@
 #define OBJECT_ICON_XSIZE 24
 #define OBJECT_ICON_YSIZE 24
 
-gchar CT_icon_data[] = { 
+guchar CT_icon_data[] = { 
   0,   0,   0,   0,   0,   0,   0,   0,  17,  43,  35,  35,  43,  43,  43,  26,  35,   8,   0,   0,   0,   0,   0,   0,
   0,   0,   0,   0,   0,   0,  43,  79, 105, 105, 131, 149, 158, 149, 149, 105, 149,  79,  52,   8,   0,   0,   0,   0,
   0,   0,   0,   0,   0,  61,  96, 149, 175, 123, 105, 114, 246, 140, 105, 123, 123, 149, 131,  79,   0,   0,   0,   0,
@@ -60,7 +60,7 @@ gchar CT_icon_data[] = {
   0,   0,   0,   0,   0,   0,   0,   0,   0,  61,  70,  35,  17,  17,   8,   0,   0,   0,   0,   0,   0,   0,   0,   0
 };
 
-gchar PET_icon_data[] = {
+guchar PET_icon_data[] = {
   3,    8,  25,  35,  21,  22,  50,  96, 148, 171, 134, 109, 145, 177, 156, 134,  86,  54,  42,  40,  42,  25,  11,   3,
   8,   27,  29,  25,  24,  53, 120, 162, 187, 216, 224, 184, 211, 224, 198, 185, 147, 108,  61,  33,  34,  32,  26,  10,
   28,  34,  18,  25,  88, 129, 160, 154, 166, 214, 234, 203, 210, 211, 185, 176, 169, 156, 133,  83,  37,  21,  28,  26,
@@ -88,7 +88,7 @@ gchar PET_icon_data[] = {
 };
 
   
-gchar MRI_icon_data[] = {
+guchar MRI_icon_data[] = {
   0,   0,   0,   0,   0,   0,   0,   0,   6,  10,  16,  14,  15,  13,   3,   2,   0,   0,   0,   0,   0,   0,   0,   0,
   0,   0,   0,   0,   0,   0,   3,  22,  19,  32,  58,  24,  22,  50,  16,  19,  12,   1,   0,   0,   0,   0,   0,   0,
   0,   0,   0,   0,   0,   4,  24,  42, 153, 222, 133, 111, 108, 160, 162,  99,  22,  22,   1,   0,   0,   0,   0,   0,
@@ -116,7 +116,7 @@ gchar MRI_icon_data[] = {
 };
 
 
-gchar SPECT_icon_data[] = {
+guchar SPECT_icon_data[] = {
   17,  17,  36,  56,  51,  46,  36,  31,  29,  31,  39,  63,  93, 115, 147, 147, 102,  78,  41,  22,  17,  17,  19,  12,
   12,  24,  61, 125, 102,  80,  71,  63,  53,  58,  51,  73,  95, 132, 152, 139, 112,  80,  39,  22,  17,  17,  19,  12,
   2,   17,  66, 166, 139, 102,  78,  76,  76,  83,  71,  73, 102, 134, 139, 115,  98,  73,  34,  17,  17,  17,  12,   7,
@@ -597,7 +597,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   guint index;
   rgba_t rgba_temp;
   AmitkColorTable color_table;
-  
+
   /* sanity checks */
   g_return_val_if_fail(AMITK_IS_DATA_SET(slice), NULL);
   g_return_val_if_fail(AMITK_DATA_SET_SLICE_PARENT(slice) != NULL, NULL);
@@ -619,6 +619,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
 
   i.t = i.g = i.z = 0;
   index=0;
+
   /* compensate for the fact that X defines the origin as top left, not bottom left */
   for (i.y = dim.y-1; i.y >= 0; i.y--) 
     for (i.x = 0; i.x < dim.x; i.x++, index+=4) {
@@ -820,7 +821,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 GdkPixbuf * image_get_object_pixbuf(AmitkObject * object) {
 
   GdkPixbuf * pixbuf;
-  gchar * object_icon_data;
+  guchar * object_icon_data;
 
   g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 

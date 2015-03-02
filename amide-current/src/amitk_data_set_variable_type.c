@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2004 Andy Loening
+ * Copyright (C) 2001-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,12 +24,12 @@
 */
 
 #include "amide_config.h"
-#include <glib.h>
+#include "amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'.h"
+#include "amitk_data_set_FLOAT_0D_SCALING.h"
+
 #ifdef AMIDE_DEBUG
 #include <stdlib.h>
 #endif
-#include "amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'.h"
-#include "amitk_data_set_FLOAT_0D_SCALING.h"
 
 #define DIM_TYPE_`'m4_Scale_Dim`'
 #define DATA_TYPE_`'m4_Variable_Type`'
@@ -254,11 +254,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   slice = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set), 
 				       AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
   if (slice == NULL) {
-    g_warning(_("couldn't allocate space for the slice, wanted %dx%dx%dx%d elements"), 
-	      dim.x, dim.y, dim.z, dim.t);
+    g_warning(_("couldn't allocate space for the slice, wanted %dx%dx%d elements"), 
+	      dim.x, dim.y, dim.z);
     return NULL;
   }
-
 
   slice->slice_parent = data_set;
   g_object_add_weak_pointer(G_OBJECT(data_set), 
@@ -340,12 +339,13 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   if (end.y >= dim.y) end.y = dim.y-1;
 
   /* empty is what we fill voxels with that aren't in the data set*/
-  if (amitk_data_set_get_global_max(data_set) < 0)
-    empty = amitk_data_set_get_global_min(data_set);
-  else
-    empty = 0;
+  // commented out for 0.8.12
+  //  if (amitk_data_set_get_global_max(data_set) < 0)
+  //    empty = amitk_data_set_get_global_min(data_set);
+  //  else
+  empty = NAN;
 
-  /* iterate over those voxels that we didn't cover, and set them to empty */
+  /* iterate over those voxels that we didn't cover, and mark them as NAN */
   i_voxel.t = i_voxel.g = i_voxel.z = 0;
   for (i_voxel.y = 0; i_voxel.y < start.y; i_voxel.y++) 
     for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
@@ -365,8 +365,9 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++)
       AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = 0;
 
-  switch(data_set->interpolation) {
 
+  switch(data_set->interpolation) {
+    
   case AMITK_INTERPOLATION_TRILINEAR:
     /* iterate over the frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
@@ -381,19 +382,19 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/(duration*num_gates);
       } else
 	time_weight = 1.0/((gdouble) num_gates);
-
+      
       for (i_gate=0; i_gate < num_gates; i_gate++) {
 	if (gate < 0)
 	  use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
 	else
 	  use_gate = i_gate+gate;
-
+	
 	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
 	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
-
+	
 	/* iterate over the number of planes we'll be compressing into this slice */
 	for (z = 0; z < ceil(z_steps); z++) {
-	
+	  
 	  /* the slices z_coordinate for this iteration's slice voxel */
 	  if (ceil(z_steps) > 1.0)
 	    slice_point.z = (z+0.5)*voxel_length;
@@ -411,7 +412,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	    
 	    /* the slice y_coordinate of the center of this iteration's slice voxel */
 	    slice_point.y = (((amide_real_t) i_voxel.y)+0.5)*slice->voxel_size.y;
-	  
+	    
 	    /* the slice x coord of the center of the first slice voxel in this loop */
 	    slice_point.x = (((amide_real_t) start.x)+0.5)*slice->voxel_size.x;
 	    
@@ -551,7 +552,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	    /* and iterate over x */
 	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
 	      POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, use_gate, ds_voxel);
-	      if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel))
+	      if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel)) 
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
 	      else
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 

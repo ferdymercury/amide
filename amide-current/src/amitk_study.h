@@ -1,7 +1,7 @@
 /* amitk_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -126,8 +126,7 @@ struct _AmitkStudyClass
   void (* canvas_visible_changed) (AmitkStudy * study);
   void (* view_mode_changed) (AmitkStudy * study);
   void (* canvas_target_changed) (AmitkStudy * study);
-  void (* zoom_changed) (AmitkStudy * study);
-  void (* voxel_dim_changed) (AmitkStudy * study);
+  void (* voxel_dim_or_zoom_changed) (AmitkStudy * study);
   void (* fuse_type_changed) (AmitkStudy * study);
   void (* view_center_changed) (AmitkStudy * study);
   void (* canvas_roi_preference_changed) (AmitkStudy * study);
@@ -178,6 +177,8 @@ void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,
 						     const gboolean maintain_size);
 void            amitk_study_set_canvas_target_empty_area(AmitkStudy * study,
 							 gint target_empty_area);
+AmitkStudy *    amitk_study_recover_xml             (const gchar * study_filename, 
+						     AmitkPreferences * preferences);
 AmitkStudy *    amitk_study_load_xml                (const gchar * study_filename);
 gboolean        amitk_study_save_xml                (AmitkStudy * study, 
 						     const gchar * study_filename,

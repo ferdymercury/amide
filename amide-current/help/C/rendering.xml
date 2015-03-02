@@ -287,14 +287,23 @@
       </para>
  </sect3>
 
- <sect3><title>Static/Over Time/Over Frames</title>
+ <sect3><title>Dynamic Movie: No/Over Time/Over Frames Smoothed/Over Gates</title>
 
    <para> This option allows a rendered movie to be made over a time
-   period, which is useful for dynamic data sets.  Picking "over time"
-   will allow entry of a start and end time for which the data from
-   the data sets should be drawn.  With the "over time" option, each
-   second is given equal waiting in terms of how many images from that
-   time period are generated for the output movie.</para>
+   period, which is useful for dynamic data sets. 
+   </para>
+
+    <para> Note that every time a frame boundary in the data set is
+    passed over, the rendering process must slice and load in a new
+    frame of data.  This makes creating a rendered movie over time
+    significantly slower than a movie with just rotations.
+    </para>
+
+   <para> Picking "over time" will allow entry of a start and end time
+   for which the data from the data sets should be drawn.  With the
+   "over time" option, each second is given equal waiting in terms of
+   how many images from that time period are generated for the output
+   movie.</para> 
 
    <para>Picking "over frames" allows entry of a start and end frame
    (note that this really only makes sense with a single data set).
@@ -305,11 +314,12 @@
    frames" may give a more appealing result.
    </para>
 
-    <para> Note that every time a frame boundary in the data set is
-    passed over, the rendering process must slice and load in a new
-    frame of data.  This makes creating a rendered movie over time
-    significantly slower than a movie with just rotations.
-    </para>
+   <para> The "over frames smoothed" option is almost the same as
+   "over frames", except that data will be interpolated between
+   frames.  This makes for a smoother movie (no jumps) but takes much
+   longer as nearly every movie frame has to be reloaded.
+   </para>
+
  </sect3>
 
 </sect2>

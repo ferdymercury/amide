@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2000-2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -272,14 +272,19 @@ AmitkDataSet * amitk_data_set_import_file        (AmitkImportMethod method,
 						  AmitkPreferences * preferences,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
-void           amitk_data_set_export_file        (AmitkDataSet * ds,
+void           amitk_data_set_export_to_file     (AmitkDataSet * ds,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
 						  const gboolean resliced,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
-
+void           amitk_data_sets_export_to_file    (GList * data_sets,
+						  const AmitkExportMethod method, 
+						  const int submethod,
+						  const gchar * filename,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 amide_data_t   amitk_data_set_get_global_max     (AmitkDataSet * ds);
 amide_data_t   amitk_data_set_get_global_min     (AmitkDataSet * ds);
 amide_data_t   amitk_data_set_get_frame_max      (AmitkDataSet * ds,
