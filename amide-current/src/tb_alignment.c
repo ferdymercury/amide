@@ -1,7 +1,7 @@
 /* tb_alignment.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -499,7 +499,7 @@ static tb_alignment_t * tb_alignment_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((alignment = g_try_new(tb_alignment_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_alignment_t"));
+    g_warning(_("couldn't allocate memory space for tb_alignment_t"));
     return NULL;
   }
 

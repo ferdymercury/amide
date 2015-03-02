@@ -1,7 +1,7 @@
 /* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -106,7 +106,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
 
   /* alloc space for the mpeg_encoding structure */
   if ((context = g_try_new(context_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for context_t"));
+    g_warning(_("couldn't allocate memory space for context_t"));
     return NULL;
   }
   context->fame_context = NULL;
@@ -118,14 +118,14 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->buffer_size = xsize*ysize*BUFFER_MULT; /* needs to be able to hold a couple frames */
 
   if ((context->fame_parameters = g_try_new(fame_parameters_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for fame parameters"));
+    g_warning(_("couldn't allocate memory space for fame parameters"));
     context_free(context);
     return NULL;
   }
   memcpy(context->fame_parameters, &default_fame_parameters, sizeof(fame_parameters_t));
 
   if ((context->buffer = g_try_new(guchar, context->buffer_size)) == NULL) {
-    g_warning(_("Unable to allocate mpeg encoding buffer"));
+    g_warning(_("Unable to allocate memory space for mpeg encoding buffer"));
     context_free(context);
     return NULL;
   }

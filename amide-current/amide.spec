@@ -1,6 +1,6 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.8.19
+Version: 	0.8.20
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering
@@ -26,6 +26,9 @@ BuildRequires:  libgnomecanvas-devel
 BuildRequires:  libfame-devel >= 0.9.1 
 BuildRequires:  gsl-devel
 BuildRequires:  dcmtk-devel
+BuildRequires:  perl-XML-Parser
+BuildRequires:  glib2-devel
+BuildRequires:  gtk2-devel
 
 %description 
 AMIDE is a tool for viewing and analyzing medical image data sets.

@@ -1,7 +1,7 @@
 /* amitk_preferences.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2003-2006 Andy Loening
+ * Copyright (C) 2003-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -44,6 +44,7 @@ G_BEGIN_DECLS
 
 #define AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(object) (AMITK_PREFERENCES(object)->prompt_for_save_on_exit)
 #define AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(object)   (AMITK_PREFERENCES(object)->save_xif_as_directory)
+#define AMITK_PREFERENCES_DEFAULT_DIRECTORY(object)       (AMITK_PREFERENCES(object)->default_directory)
 
 #define AMITK_PREFERENCES_CANVAS_ROI_WIDTH(pref)                (AMITK_PREFERENCES(pref)->canvas_roi_width)
 #define AMITK_PREFERENCES_CANVAS_LINE_STYLE(pref)               (AMITK_PREFERENCES(pref)->canvas_line_style)
@@ -67,6 +68,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE FALSE
 #define AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT TRUE
 #define AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY FALSE
+#define AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY NULL
 #define AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE AMITK_THRESHOLD_STYLE_MIN_MAX
 
 #define AMITK_PREFERENCES_MIN_ROI_WIDTH 1
@@ -88,6 +90,7 @@ struct _AmitkPreferences {
   /* file saving preferences */
   gboolean prompt_for_save_on_exit;
   gboolean save_xif_as_directory;
+  gchar * default_directory;
 
   /* canvas preferences -> study preferences */
   gint canvas_roi_width;
@@ -143,6 +146,8 @@ void                amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferenc
 								  gboolean new_value);
 void                amitk_preferences_set_xif_as_directory       (AmitkPreferences * preferences,
 							          gboolean new_value);
+void                amitk_preferences_set_default_directory      (AmitkPreferences * preferences,
+								  const gchar * directory);
 void                amitk_preferences_set_color_table            (AmitkPreferences * preferences,
 								  AmitkModality modality,
 								  AmitkColorTable color_table);

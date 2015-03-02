@@ -1,7 +1,7 @@
 /* libmdc_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -43,6 +43,7 @@ typedef enum {
   LIBMDC_INTF, 
   LIBMDC_ANLZ, 
   LIBMDC_DICM,
+  LIBMDC_NIFTI,
   LIBMDC_NUM_FORMATS
 } libmdc_format_t;
 
@@ -56,6 +57,7 @@ typedef enum {
   LIBMDC_IMPORT_INTF, 
   LIBMDC_IMPORT_ANLZ, 
   LIBMDC_IMPORT_DICM,
+  LIBMDC_IMPORT_NIFTI,
   LIBMDC_NUM_IMPORT_METHODS
 } libmdc_import_t;
 
@@ -66,6 +68,7 @@ typedef enum {
   LIBMDC_EXPORT_INTF, 
   LIBMDC_EXPORT_ANLZ, 
   LIBMDC_EXPORT_DICM,
+  LIBMDC_EXPORT_NIFTI,
   LIBMDC_NUM_EXPORT_METHODS
 } libmdc_export_t;
 

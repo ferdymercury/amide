@@ -1,7 +1,7 @@
 /* rendering.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,7 +147,7 @@ rendering_t * rendering_init(const AmitkObject * object,
     return NULL;
 
   if ((new_rendering =  g_try_new(rendering_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for rendering context"));
+    g_warning(_("couldn't allocate memory space for rendering context"));
     return NULL;
   }
   new_rendering->ref_count = 1;
@@ -211,12 +211,12 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->num_points[DENSITY_CLASSIFICATION] = RENDERING_DENSITY_RAMP_POINTS;
   if ((new_rendering->ramp_x[DENSITY_CLASSIFICATION] = 
        g_try_new(gint, new_rendering->num_points[DENSITY_CLASSIFICATION])) == NULL) {
-    g_warning(_("couldn't allocate space for density ramp x"));
+    g_warning(_("couldn't allocate memory space for density ramp x"));
     return NULL;
   }
   if ((new_rendering->ramp_y[DENSITY_CLASSIFICATION] = 
        g_try_new(gfloat,new_rendering->num_points[DENSITY_CLASSIFICATION])) == NULL) {
-    g_warning(_("couldn't allocate space for density ramp y"));
+    g_warning(_("couldn't allocate memory space for density ramp y"));
     return NULL;
   }
   for (i=0;i<new_rendering->num_points[DENSITY_CLASSIFICATION];i++) {
@@ -227,12 +227,12 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->num_points[GRADIENT_CLASSIFICATION] = RENDERING_GRADIENT_RAMP_POINTS;
   if ((new_rendering->ramp_x[GRADIENT_CLASSIFICATION] = 
        g_try_new(gint,new_rendering->num_points[GRADIENT_CLASSIFICATION])) == NULL) {
-    g_warning(_("couldn't allocate space for gradient ramp x"));
+    g_warning(_("couldn't allocate memory space for gradient ramp x"));
     return NULL;
   }
   if ((new_rendering->ramp_y[GRADIENT_CLASSIFICATION] = 
        g_try_new(gfloat,new_rendering->num_points[GRADIENT_CLASSIFICATION])) == NULL) {
-    g_warning(_("couldn't allocate space for gradient ramp y"));
+    g_warning(_("couldn't allocate memory space for gradient ramp y"));
     return NULL;
   }
   for (i=0;i<new_rendering->num_points[GRADIENT_CLASSIFICATION];i++) {
@@ -424,8 +424,8 @@ gboolean rendering_load_object(rendering_t * rendering,
   context_size =  rendering->dim.x *  rendering->dim.y * 
      rendering->dim.z * RENDERING_BYTES_PER_VOXEL;
 
-  if ((density = (rendering_density_t * ) g_try_malloc(density_size)) == NULL) {
-    g_warning(_("Could not allocate space for density data for %s"), 
+  if ((density = (rendering_density_t * ) g_try_malloc0(density_size)) == NULL) {
+    g_warning(_("Could not allocate memory space for density data for %s"), 
 	      rendering->name);
     return FALSE;
   }
@@ -437,7 +437,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   }
 
   if ((rendering->rendering_data = (rendering_voxel_t * ) g_try_malloc(context_size)) == NULL) {
-    g_warning(_("Could not allocate space for rendering context volume for %s"), 
+    g_warning(_("Could not allocate memory space for rendering context volume for %s"), 
 	      rendering->name);
     g_free(density);
     return FALSE;
@@ -890,7 +890,7 @@ void rendering_set_image(rendering_t * rendering, pixel_type_t pixel_type, gdoub
   size_dim = ceil(zoom*POINT_MAX(rendering->dim));
   g_free(rendering->image);
   if ((rendering->image = g_try_new(guchar,size_dim*size_dim)) == NULL) {
-    g_warning(_("Could not allocate space for Rendering Image for %s"), 
+    g_warning(_("Could not allocate memory space for Rendering Image for %s"), 
 	      rendering->name);
     return;
   }

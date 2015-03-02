@@ -1,7 +1,7 @@
 /* ui_study_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -196,7 +196,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
 			     N_("Import an image data file into this study, specifying the import type"), 
 			     import_specific_menu),
-    GNOMEUIINFO_ITEM_DATA(N_("Import _Object"),
+    GNOMEUIINFO_ITEM_DATA(N_("Import _Object from Study"),
         			  N_("Import an object, such as an ROI, from a preexisting .xif file"),
         			  ui_study_cb_import_object,
         			  ui_study,NULL),

@@ -1,7 +1,7 @@
 /* ui_preferences_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -66,6 +66,9 @@ static void threshold_style_cb(GtkWidget * widget, gpointer data);
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data);
+#ifndef AMIDE_WIN32_HACKS
+static void change_default_directory_cb(GtkWidget * widget, gpointer data);
+#endif
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer preferences);
 
@@ -228,6 +231,19 @@ static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+#ifndef AMIDE_WIN32_HACKS
+static void change_default_directory_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gchar * str;
+
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+  amitk_preferences_set_default_directory(ui_study->preferences, str);
+  g_free(str);
+
+  return;
+}
+#endif
 
 
 /* changing the color table of a rendering context */
@@ -309,6 +325,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * menu;
   GtkWidget * windows_widget;
   GtkWidget * scrolled;
+  GtkWidget * entry;
   AmitkModality i_modality;
   GnomeCanvasItem * roi_item;
   AmitkThresholdStyle i_threshold_style;
@@ -557,36 +574,70 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
-  check_button = gtk_check_button_new_with_label(_("Send Warning Messages to Console:"));
+  label = gtk_label_new(_("Send Warning Messages to Console:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  //  check_button = gtk_check_button_new_with_label(_("Send Warning Messages to Console:"));
+  check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(warnings_to_console_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   0,1, table_row, table_row+1,
+		   1,2, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
-  check_button = gtk_check_button_new_with_label(_("Don't Prompt for \"Save Changes\" on Exit:"));
+  label = gtk_label_new(_("Don't Prompt for \"Save Changes\" on Exit:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_on_exit_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   0,1, table_row, table_row+1,
+		   1,2, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
-  check_button = gtk_check_button_new_with_label(_("Save .XIF file as directory:"));
+  label = gtk_label_new(_("Save .XIF file as directory:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_xif_as_directory_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   0,1, table_row, table_row+1,
+		   1,2, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
-  gtk_widget_show_all(packing_table);
 
+
+#ifndef AMIDE_WIN32_HACKS
+  label = gtk_label_new(_("Default Directory on Startup:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  entry = gtk_entry_new();
+  gtk_entry_set_text(GTK_ENTRY(entry), (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) != NULL) ?
+		     AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
+  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_default_directory_cb), ui_study);
+  gtk_table_attach(GTK_TABLE(packing_table), entry, 
+		   1,2, table_row, table_row+1,
+		   GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
+
+  table_row++;
+#endif
+
+  gtk_widget_show_all(packing_table);
 
   /* and show all our widgets */
   gtk_widget_show(notebook);

@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -574,7 +574,7 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_series = g_try_new(ui_series_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for ui_series_t"));
+    g_warning(_("couldn't allocate memory space for ui_series_t"));
     return NULL;
   }
   ui_series->reference_count = 1;
@@ -697,17 +697,17 @@ static gboolean update_immediate(gpointer data) {
   /* allocate space for the following if this is the first time through */
   if (ui_series->images == NULL) {
     if ((ui_series->images = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate space for pointers to image GnomeCanvasItem's"));
+      g_warning(_("couldn't allocate memory space for pointers to image GnomeCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
     if ((ui_series->captions = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate space for pointers to caption GnomeCanvasItem's"));
+      g_warning(_("couldn't allocate memory space for pointers to caption GnomeCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
     if ((ui_series->items = g_try_new(GList *,ui_series->num_slices)) == NULL) {
-      g_warning(_("couldn't allocate space for pointers to GnomeCanavasItem lists"));
+      g_warning(_("couldn't allocate memory space for pointers to GnomeCanavasItem lists"));
       return_val = FALSE;
       goto exit_update;
     }
@@ -1083,7 +1083,7 @@ void ui_series_create(AmitkStudy * study,
       /* get space for the array that'll take care of which frame of which data set we're looking at*/
       frames = g_try_new(guint,num_data_sets);
       if (frames == NULL) {
-	g_warning(_("unable to allocate memory for frames"));
+	g_warning(_("unable to allocate memory space for frames"));
 	ui_series_unref(ui_series);
 	return;
       }

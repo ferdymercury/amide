@@ -1,7 +1,7 @@
 /* amitk_preferences.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2006 Andy Loening
+ * Copyright (C) 2003-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,6 +24,7 @@
 */
 
 #include "amide_config.h"
+#include <string.h>
 
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
@@ -115,6 +116,7 @@ static void preferences_init (AmitkPreferences * preferences) {
   gint default_value;
   gfloat temp_float;
   gint temp_int;
+  gchar * temp_str;
 #endif
   AmitkLimit i_limit;
   AmitkWindow i_window;
@@ -154,6 +156,13 @@ static void preferences_init (AmitkPreferences * preferences) {
 
   temp_int = gnome_config_get_int_with_default("MISC/SaveXifAsDirectory", &default_value); 
   preferences->save_xif_as_directory = default_value ? AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY : temp_int;
+
+  temp_str = gnome_config_get_string_with_default("MISC/DefaultDirectory", &default_value);
+  if ((temp_str == NULL) || default_value)
+    preferences->default_directory = AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY;
+  else
+    preferences->default_directory = g_strdup(temp_str);
+  if (temp_str != NULL) g_free(temp_str);
 
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
     temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", amitk_modality_get_name(i_modality));
@@ -195,6 +204,7 @@ static void preferences_init (AmitkPreferences * preferences) {
   /* file preferences */
   preferences->prompt_for_save_on_exit = AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT;
   preferences->save_xif_as_directory = AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY;
+  preferences->default_directory = AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY;
 
   /* data set preferences */
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
@@ -421,6 +431,34 @@ void amitk_preferences_set_xif_as_directory(AmitkPreferences * preferences, gboo
 #ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("MISC/SaveXifAsDirectory", new_value);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+#endif
+    g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
+  }
+  return;
+}
+
+void amitk_preferences_set_default_directory(AmitkPreferences * preferences, const gchar * new_directory) {
+
+  gboolean different=FALSE;
+  g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
+
+  if (((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) == NULL) && (new_directory != NULL)) ||
+      ((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) != NULL) && (new_directory == NULL)))
+    different=TRUE;
+  else if ((AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences) != NULL) && (new_directory != NULL))
+    if (strcmp(AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences), new_directory) != 0)
+      different=TRUE;
+
+  if (different) {
+    if (preferences->default_directory != NULL)
+      g_free(preferences->default_directory);
+    if (new_directory != NULL)
+      preferences->default_directory = g_strdup(new_directory);
+#ifndef AMIDE_WIN32_HACKS
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_string("MISC/DefaultDirectory", new_directory);
     gnome_config_pop_prefix();
     gnome_config_sync();
 #endif

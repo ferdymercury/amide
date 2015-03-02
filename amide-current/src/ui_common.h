@@ -1,7 +1,7 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -48,6 +48,7 @@ typedef enum {
 
 /* external functions */
 gboolean ui_common_check_filename(const gchar * filename);
+void ui_common_set_last_path_used(const gchar * last_path_used);
 void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
 void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data);
 gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection);

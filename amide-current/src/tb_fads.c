@@ -1,7 +1,7 @@
 /* tb_fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2006 Andy Loening
+ * Copyright (C) 2003-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -932,7 +932,7 @@ static tb_fads_t * tb_fads_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_fads = g_try_new(tb_fads_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_fads_t"));
+    g_warning(_("couldn't allocate memory space for tb_fads_t"));
     return NULL;
   }
 

@@ -3,6 +3,8 @@ misc list of things todo:
 for next release?
 -----------------
 
+* locale isn't working on windows.... foreign .xif files have comma's in them...
+
 * look careful at use of amitk_space_transform, and see if this function is
 	really needed/used correctly - as I don't think this operation 
 	propogates correctly to an object's children
@@ -181,6 +183,7 @@ things dependent on other things:
 * dependent on upgrading to gtk 2.6
 1. update about dialog in ui_common.c to GtkAboutDialog
    documentation on switching available in gtk api documentation on www.gtk.org
+2. update Default Directory bit in ui_preferences_dialog to be a GtkFileChooserButton
 
 
 * I'd like to change the icons on the toolbar to pixbuf data structures generated from

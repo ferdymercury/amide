@@ -1,7 +1,7 @@
 /* analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -218,7 +218,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
 
   /* and now calculate this gate's data */
   if ((data_array = g_ptr_array_new()) == NULL) {
-    g_warning(_("couldn't allocate space for data array for frame %d/gate %d"), frame, gate);
+    g_warning(_("couldn't allocate memory space for data array for frame %d/gate %d"), frame, gate);
     return NULL;
   }
   /* fill the array with the appropriate info from the data set */
@@ -288,7 +288,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
 
   /* fill in our gate_analysis structure */
   if ((analysis =  g_try_new(analysis_gate_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for roi analysis of frame %d/gate %d"), frame, gate);
+    g_warning(_("couldn't allocate memory space for roi analysis of frame %d/gate %d"), frame, gate);
     return analysis;
   }
   analysis->ref_count = 1;
@@ -423,7 +423,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   if (frame == AMITK_DATA_SET_NUM_FRAMES(ds)) return NULL; /* check if we're done */
 
   if ((temp_frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for roi analysis of frames"));
+    g_warning(_("couldn't allocate memory space for roi analysis of frames"));
     return NULL;
   }
   
@@ -510,7 +510,7 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_set
   g_return_val_if_fail(AMITK_IS_DATA_SET(data_sets->data), NULL);
 
   if ((temp_volume_analysis =  g_try_new(analysis_volume_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for roi analysis of volumes"));
+    g_warning(_("couldn't allocate memory space for roi analysis of volumes"));
     return NULL;
   }
 
@@ -582,7 +582,7 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois,
   if (rois == NULL)  return NULL;
 
   if ((temp_roi_analysis =  g_try_new(analysis_roi_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for roi analyses"));
+    g_warning(_("couldn't allocate memory space for roi analyses"));
     return NULL;
   }
 

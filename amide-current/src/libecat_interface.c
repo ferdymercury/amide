@@ -1,7 +1,7 @@
 /* libecat_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -172,7 +172,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   ds = amitk_data_set_new_with_data(preferences, AMITK_MODALITY_PET,
 				    format, dim, scaling_type);
   if (ds == NULL) {
-    g_warning(_("Couldn't allocate space for the data set structure to hold CTI data"));
+    g_warning(_("Couldn't allocate memory space for the data set structure to hold CTI data"));
     goto error;
   }
   

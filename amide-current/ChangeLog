@@ -1,4 +1,24 @@
-0.8.19
+0.8.20 2007.06.29
+	* message popup for export raw data dimensions
+	* init allocated density memory to 0 in render.c
+	* check that voxel sizes are valid in imported data sets [1]
+ 	* tightened up raw_data_import dialog
+	* added millimeter indicators to crop dialog [2]      
+ 	* update for NIFTI support in XMedCon [3]
+	* even more correct placement/orientation of dicom data [3]
+	* added ability to output PNG instead of JPG [4]
+	* added a contour form of hot metal [4]
+	* add a preference for the initial directory to look in [4]
+	* added ability to manually enter in the rotation transform [4]
+	* fixed a bug with rotations
+	* internationalization, now uses en_US instead of POSIX on windows,
+	  also guesses if incorrect radix sign, and tries to fix
+	[1] Suggested by Gokhan Ozer
+	[2] Suggested by Luca Guerrieri
+ 	[3] Suggested by Buyean Lee
+	[4] Suggested by Andre Manook
+	
+0.8.19 2006.10.22
 	* fixed string error in dcmtk_interface.cc [1]
  	* somewhat more correct placement/orientation of dicom data
  	* fixed bug for reading in dynamic dicom data

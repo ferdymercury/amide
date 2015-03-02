@@ -1,7 +1,7 @@
 /* amitk_color_table.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -47,6 +47,8 @@ gchar * color_table_menu_names[] = {
   N_("inv. green temp."), 
   N_("hot metal"), 
   N_("inv. hot metal"), 
+  N_("hot metal contour"),
+  N_("inv. hot metal c."),
   N_("hot blue"), 
   N_("inverse hot blue"), 
   N_("hot green"), 
@@ -143,7 +145,6 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
     datum = min;
     not_a_number = TRUE;
   }
-    
 
   switch(which) {
   case AMITK_COLOR_TABLE_BWB_LINEAR:
@@ -231,6 +232,18 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
   case AMITK_COLOR_TABLE_INV_HOT_METAL:
     rgba = amitk_color_table_lookup((max-datum)+min, AMITK_COLOR_TABLE_HOT_METAL, min, max);
     rgba.a = 0xFF-rgba.a; 
+    break;
+  case AMITK_COLOR_TABLE_HOT_METAL_CONTOUR:
+    temp = 2*(datum-min) * 0xFF/(max-min);
+    if (temp > 255)
+      temp = 511-temp;
+    if (temp < 0)
+      temp = 0;
+    rgba = amitk_color_table_lookup(temp, AMITK_COLOR_TABLE_HOT_METAL, 0, 255);
+    break;
+  case AMITK_COLOR_TABLE_INV_HOT_METAL_CONTOUR:
+    rgba = amitk_color_table_lookup((max-datum)+min, AMITK_COLOR_TABLE_HOT_METAL_CONTOUR, min, max);
+    rgba.a = 0xFF-rgba.a;
     break;
   case AMITK_COLOR_TABLE_HOT_BLUE:
     temp_rgba = amitk_color_table_lookup(datum, AMITK_COLOR_TABLE_HOT_METAL, min, max);

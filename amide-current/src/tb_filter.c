@@ -1,7 +1,7 @@
 /* tb_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2006 Andy Loening
+ * Copyright (C) 2002-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -510,7 +510,7 @@ static tb_filter_t * tb_filter_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_filter = g_try_new(tb_filter_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_filter_t"));
+    g_warning(_("couldn't allocate memory space for tb_filter_t"));
     return NULL;
   }
 

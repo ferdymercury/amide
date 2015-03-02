@@ -1,7 +1,7 @@
 /* tb_profile.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2006 Andy Loening
+ * Copyright (C) 2003-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -215,7 +215,7 @@ static tb_profile_t * profile_init(void) {
   tb_profile_t * tb_profile;
 
   if ((tb_profile = g_try_new(tb_profile_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_profile_t"));
+    g_warning(_("couldn't allocate memory space for tb_profile_t"));
     return NULL;
   }
 

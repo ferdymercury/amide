@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -45,7 +45,8 @@ libmdc_format_t libmdc_import_to_format[LIBMDC_NUM_IMPORT_METHODS] = {
   LIBMDC_ECAT7, 
   LIBMDC_INTF, 
   LIBMDC_ANLZ, 
-  LIBMDC_DICM
+  LIBMDC_DICM,
+  LIBMDC_NIFTI
 };
 
 gchar * libmdc_import_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
@@ -58,6 +59,7 @@ gchar * libmdc_import_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("_InterFile 3.3"),
   N_("_Analyze (SPM)"),
   N_("_DICOM 3.0 via (X)MedCon"),
+  N_("_NIFTI via (X)MedCon")
 };
   
 gchar * libmdc_import_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
@@ -69,7 +71,8 @@ gchar * libmdc_import_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("Import a CTI/ECAT 7 file through (X)MedCon"),
   N_("Import a InterFile 3.3 file"),
   N_("Import an Analyze file"),
-  N_("Import a DICOM 3.0 file through (X)MedCon")
+  N_("Import a DICOM 3.0 file through (X)MedCon"),
+  N_("Import a NIFTI file through (X)MedCon")
 };
 
 libmdc_format_t libmdc_export_to_format[LIBMDC_NUM_EXPORT_METHODS] = {
@@ -78,7 +81,8 @@ libmdc_format_t libmdc_export_to_format[LIBMDC_NUM_EXPORT_METHODS] = {
   LIBMDC_ECAT6, 
   LIBMDC_INTF, 
   LIBMDC_ANLZ, 
-  LIBMDC_DICM
+  LIBMDC_DICM,
+  LIBMDC_NIFTI
 };
 
 gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
@@ -88,6 +92,7 @@ gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("InterFile 3.3"),
   N_("Analyze (SPM)"),
   N_("DICOM 3.0"),
+  N_("NIFTI")
 };
   
 gchar * libmdc_export_menu_explanations[LIBMDC_NUM_EXPORT_METHODS] = {
@@ -96,7 +101,8 @@ gchar * libmdc_export_menu_explanations[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("Export a CTI/ECAT 6 file"),
   N_("Export a InterFile 3.3 file"),
   N_("Export an Analyze file"),
-  N_("Export a DICOM 3.0 file")
+  N_("Export a DICOM 3.0 file"),
+  N_("Export a NIFTI file")
 };
 
 gboolean libmdc_supports(libmdc_format_t format) {
@@ -127,6 +133,9 @@ gboolean libmdc_supports(libmdc_format_t format) {
     break;
   case LIBMDC_DICM:
     return MDC_INCLUDE_DICM;
+    break;
+  case LIBMDC_NIFTI:
+    return MDC_INCLUDE_NIFTI;
     break;
   case LIBMDC_NONE:
   default:
@@ -167,6 +176,9 @@ static gint libmdc_format_number(libmdc_format_t format) {
     break;
   case LIBMDC_DICM:
     return MDC_FRMT_DICM;
+    break;
+  case LIBMDC_NIFTI:
+    return MDC_FRMT_NIFTI;
     break;
   case LIBMDC_NONE: /* let libmdc guess */
   default:
@@ -419,7 +431,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D_WITH_INTERCEPT);
   if (ds == NULL) {
-    g_warning(_("Couldn't allocate space for the data set structure to hold (X)MedCon data"));
+    g_warning(_("Couldn't allocate memory space for the data set structure to hold (X)MedCon data"));
     goto error;
   }
 

@@ -1,7 +1,7 @@
 /* amitk_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -58,7 +58,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   g_return_val_if_fail((kernel_size.x & 0x1), NULL); 
 
   if ((kernel = amitk_raw_data_new()) == NULL) {
-    g_warning(_("couldn't allocate space for the kernel structure"));
+    g_warning(_("couldn't allocate memory space for the kernel structure"));
     return NULL;
   }
   kernel->format = AMITK_FORMAT_DOUBLE;
@@ -70,7 +70,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
 
   /* get mem for the kernel, initialized to 0 */
   if ((kernel->data = amitk_raw_data_get_data_mem0(kernel)) == NULL) {
-    g_warning(_("Couldn't allocate space for the kernel data"));
+    g_warning(_("Couldn't allocate memory space for the kernel data"));
     amitk_object_unref(kernel);
     return NULL;
   }

@@ -1,7 +1,7 @@
 /* xml.c - convience functions for working with xml files 
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -123,9 +123,17 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   temp_str = xml_get_string(nodes, descriptor);
+
+  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
+  if (index(temp_str, ',') != NULL)
+    setlocale(LC_NUMERIC,"de_DE");
 
   if (temp_str != NULL) {
 
@@ -165,14 +173,22 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   gboolean corrupted=FALSE;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   temp_str = xml_get_string(nodes, descriptor);
+
+  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
+  if (index(temp_str, ',') != NULL)
+    setlocale(LC_NUMERIC,"de_DE");
 
   if (temp_str != NULL) {
 
     if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
-      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate space for time data"));
+      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate memory space for time data"));
       return return_times;
     }
     
@@ -210,7 +226,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   if (temp_str == NULL) {
     amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting 1"),descriptor);
     if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
-      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate space for time data"));
+      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate memory space for time data"));
       return return_times;
     }
     return_times[0] = 1.0;
@@ -231,9 +247,17 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   temp_str = xml_get_string(nodes, descriptor);
+
+  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
+  if (index(temp_str, ',') != NULL)
+    setlocale(LC_NUMERIC,"de_DE");
 
   if (temp_str != NULL) {
 
@@ -279,10 +303,18 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   temp_str = xml_get_string(nodes, descriptor);
   
+  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
+  if (index(temp_str, ',') != NULL)
+    setlocale(LC_NUMERIC,"de_DE");
+
   if (temp_str != NULL) {
 
 #if (SIZE_OF_AMIDE_REAL_T == 8)
@@ -428,7 +460,11 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
@@ -455,7 +491,11 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); 
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
@@ -483,7 +523,11 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
@@ -523,7 +567,11 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
@@ -550,7 +598,11 @@ void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);

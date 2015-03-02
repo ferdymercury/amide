@@ -1,7 +1,7 @@
 /* ui_gate_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2004-2006 Andy Loening
+ * Copyright (C) 2004-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

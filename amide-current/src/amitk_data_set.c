@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -472,6 +472,8 @@ static void data_set_init (AmitkDataSet * data_set) {
 
   data_set->subject_dob = NULL;
   amitk_data_set_set_subject_dob(data_set, NULL);
+
+  data_set->instance_number=0;
 }
 
 
@@ -1011,7 +1013,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 
     ds->internal_scaling_factor = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
     if (ds->internal_scaling_factor == NULL) {
-      amitk_append_str_with_newline(&error_buf, _("Couldn't allocate space for the new scaling factors"));
+      amitk_append_str_with_newline(&error_buf, _("Couldn't allocate memory space for the new scaling factors"));
       return error_buf;
     }
 
@@ -1303,7 +1305,7 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
   AmitkDataSet * ds;
 
   if ((ds = amitk_data_set_new(preferences, modality)) == NULL) {
-    g_warning(_("couldn't allocate space for the data set structure to hold data"));
+    g_warning(_("couldn't allocate memory space for the data set structure to hold data"));
     return NULL;
   }
 
@@ -1318,7 +1320,7 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
 
   /* allocate space for the array containing info on the duration of the frames */
   if ((ds->frame_duration = amitk_data_set_get_frame_duration_mem(ds)) == NULL) {
-    g_warning(_("couldn't allocate space for the frame duration info"));
+    g_warning(_("couldn't allocate memory space for the frame duration info"));
     amitk_object_unref(ds);
     return NULL;
   }
@@ -1534,10 +1536,12 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     import_data_sets = g_list_append(import_data_sets, import_ds);
   }
 
-  /* set the thresholds */
+  /* run through the list, and do some last minute corrections */
   temp_list = import_data_sets;
   while (temp_list != NULL) {
     import_ds = temp_list->data;
+
+    /* set the thresholds */
     import_ds->threshold_max[0] = import_ds->threshold_max[1] = 
       amitk_data_set_get_global_max(import_ds);
     import_ds->threshold_min[0] = import_ds->threshold_min[1] =
@@ -1558,6 +1562,17 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     /* see if we can drop the offset/reducing scaling dimension */
     data_set_drop_intercept(import_ds);
     data_set_reduce_scaling_dimension(import_ds);
+
+    if (!((AMITK_DATA_SET_VOXEL_SIZE_Z(import_ds) > 0.0) && 
+	  (AMITK_DATA_SET_VOXEL_SIZE_Y(import_ds) > 0.0) && 
+	  (AMITK_DATA_SET_VOXEL_SIZE_X(import_ds) > 0.0))) {
+      g_warning("Data Set %s has erroneous voxel size of %gx%gx%g, setting to 1.0x1.0x1.0",
+		AMITK_OBJECT_NAME(import_ds),
+		AMITK_DATA_SET_VOXEL_SIZE_X(import_ds),
+		AMITK_DATA_SET_VOXEL_SIZE_Y(import_ds),
+		AMITK_DATA_SET_VOXEL_SIZE_Z(import_ds));
+      amitk_data_set_set_voxel_size(import_ds, one_point);
+    }
 
     temp_list = temp_list->next;
   }
@@ -1618,15 +1633,11 @@ static void export_raw(AmitkDataSet *ds,
     corner.z = voxel_size.z;
     amitk_volume_set_corner(output_volume, corner);
 
-#ifdef AMIDE_DEBUG
-    g_print("output dimensions %d %d %d, voxel size %f %f %f\n", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
-#else
-    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
-#endif
+    g_message("dimensions of output data set will be %dx%dx%dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, dim.g, dim.t, voxel_size.x, voxel_size.y, voxel_size.z);
   }
 
   if ((row_data = g_try_new(gfloat,dim.x)) == NULL) {
-    g_warning(_("Couldn't allocate space for row_data"));
+    g_warning(_("Couldn't allocate memory space for row_data"));
     goto exit_strategy;
   }
 
@@ -1797,7 +1808,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
     AmitkCorners corners;
     volume = amitk_volume_new(); /* base coordinate frame */
     if (volume == NULL) {
-      g_warning(_("Could not allocate space for volume"));
+      g_warning(_("Could not allocate memory space for volume"));
       goto exit_strategy;
     }
     amitk_volumes_get_enclosing_corners(data_sets, AMITK_SPACE(volume), corners);
@@ -3921,7 +3932,7 @@ void amitk_data_set_get_projections(AmitkDataSet * ds,
     projections[i_view] = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(ds),
 						       AMITK_FORMAT_DOUBLE, planar_dim, AMITK_SCALING_TYPE_0D);
     if (projections[i_view] == NULL) {
-      g_warning(_("couldn't allocate space for the projection, wanted %dx%dx%dx%dx%d elements"), 
+      g_warning(_("couldn't allocate memory space for the projection, wanted %dx%dx%dx%dx%d elements"), 
 		planar_dim.x, planar_dim.y, planar_dim.z, planar_dim.g, planar_dim.t);
       return;
     }
@@ -4156,14 +4167,14 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
   /* setup the scale factors */
   cropped->internal_scaling_factor =  amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE,scaling_dim);
   if (cropped->internal_scaling_factor == NULL) {
-    g_warning(_("couldn't allocate space for the cropped internal scaling structure"));
+    g_warning(_("couldn't allocate memory space for the cropped internal scaling structure"));
     goto error;
   }
 
   if (AMITK_DATA_SET_SCALING_HAS_INTERCEPT(cropped)) {
     cropped->internal_scaling_intercept =  amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE,scaling_dim);
     if (cropped->internal_scaling_intercept == NULL) {
-      g_warning(_("couldn't allocate space for the cropped internal scaling structure"));
+      g_warning(_("couldn't allocate memory space for the cropped internal scaling structure"));
       goto error;
     }
   }
@@ -4349,7 +4360,7 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
   /* and setup the data */
   cropped->raw_data = amitk_raw_data_new_with_data(format, voxel_add(voxel_sub(end, start), one_voxel));
   if (cropped->raw_data == NULL) {
-    g_warning(_("couldn't allocate space for the cropped raw data set structure"));
+    g_warning(_("couldn't allocate memory space for the cropped raw data set structure"));
     goto error;
   }
 
@@ -4484,7 +4495,7 @@ static gboolean filter_fir(const AmitkDataSet * data_set,
 
   /* get space for our data subset*/
   if ((subset = amitk_raw_data_new()) == NULL) {
-    g_warning(_("couldn't allocate space for the subset structure"));
+    g_warning(_("couldn't allocate memory space for the subset structure"));
     continue_work=FALSE;
     goto exit_strategy;
   }
@@ -4504,7 +4515,7 @@ static gboolean filter_fir(const AmitkDataSet * data_set,
   half.x = kernel_size.x>>1;
 
   if ((subset->data = amitk_raw_data_get_data_mem(subset)) == NULL) {
-    g_warning(_("Couldn't allocate space for the subset data"));
+    g_warning(_("Couldn't allocate memory space for the subset data"));
     continue_work=FALSE;
     goto exit_strategy;
   }
@@ -4687,7 +4698,7 @@ static gboolean filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * f
   output_dim = ds_dim;
   output_dim.t = output_dim.g = 1;
   if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, output_dim)) == NULL) {
-    g_warning(_("couldn't allocate space for the internal raw data"));
+    g_warning(_("couldn't allocate memory space for the internal raw data"));
     return FALSE;
   }
   amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
@@ -4882,7 +4893,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
   /* start the new building process */
   filtered->raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, AMITK_DATA_SET_DIM(ds));
   if (filtered->raw_data == NULL) {
-    g_warning(_("couldn't allocate space for the filtered raw data set structure"));
+    g_warning(_("couldn't allocate memory space for the filtered raw data set structure"));
     goto error;
   }
   
@@ -5327,7 +5338,7 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
   output_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(ds1), 
 					   AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
   if (output_ds == NULL) {
-    g_warning(_("couldn't allocate space for the output_ds data set structure"));
+    g_warning(_("couldn't allocate memory space for the output_ds data set structure"));
     goto error;
   }
 

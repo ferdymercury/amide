@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -270,6 +270,7 @@ struct _AmitkDataSet
 
   /* misc data items - not saved in .xif file */
   gdouble gate_time; /* used by dcmtk_interface.cc for sorting by gate */
+  gint instance_number; /* used by dcmtk_interface.cc occasionally for sorting */
 
 };
 

@@ -1,7 +1,7 @@
 /* dcmtk_interface.cc
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2006 Andy Loening
+ * Copyright (C) 2005-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -167,7 +167,6 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     }
   }
 
-
   /* get basic data */
   if (dcm_dataset->findAndGetUint16(DCM_Columns, return_uint16).bad()) {
     g_warning(_("could not find # of columns - Failed to load file %s\n"), filename);
@@ -267,6 +266,12 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       voxel_size.z = 1;
     }
 
+  /* store this number, occasionally used in sorting */
+  if (dcm_dataset->findAndGetSint32(DCM_InstanceNumber, return_sint32).good())
+    ds->instance_number = return_sint32;
+
+  /* DICOM coordinates are LPH+, meaning that x increases toward patient left, y increases towards
+     patient posterior, and z increases toward patient head. AMIDE is LAF+ */
   /* ImageOrientationPatient contains a vector along the row direction, as well as the column direction,
      note though that the column direction in DICOM is in the wrong direction - it's from top to bottom,
      the z axis is off as well */
@@ -283,13 +288,12 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	    new_axes[AMITK_AXIS_Y].y = return_float64;
 	    if (dcm_dataset->findAndGetFloat64(DCM_ImageOrientationPatient, return_float64, 5).good()) {
 	      new_axes[AMITK_AXIS_Y].z = return_float64;
+	      
 	      new_axes[AMITK_AXIS_X].y *= -1.0;
 	      new_axes[AMITK_AXIS_X].z *= -1.0;
 	      new_axes[AMITK_AXIS_Y].y *= -1.0;
 	      new_axes[AMITK_AXIS_Y].z *= -1.0;
 	      POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
-	      /* spin the coordinate frame by 180 degrees to get it to correspond to what we use */
-	      amitk_axes_rotate_on_vector(new_axes, base_axes[AMITK_AXIS_X], M_PI);
 	      amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
 	    }
 	  }
@@ -299,7 +303,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   /* note, ImagePositionPatient is defined as the center of the upper left hand voxel 
-     in Patient space, not with respect to the Gantry */
+     in Patient space, not necessarily with respect to the Gantry */
   found_value=FALSE;
   if (dcm_dataset->findAndGetFloat64(DCM_ImagePositionPatient, return_float64, 0).good()) {
     new_offset.x = return_float64;
@@ -311,9 +315,12 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	//      new_offset.x -= 0.5*voxel_size.x;
 	//      new_offset.y -= 0.5*voxel_size.y;
 	// new_offset.z -= 0.5*voxel_size.z;
-	new_offset.z = -1.0*(new_offset.z+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
-	new_offset.y = -1.0*(new_offset.y+voxel_size.y*dim.y); /* DICOM specifies y axis in wrong direction */
-	amitk_space_set_offset(AMITK_SPACE(ds), amitk_space_s2b(AMITK_SPACE(ds), new_offset));
+
+	new_offset.y = -1.0*new_offset.y; /* DICOM specifies y axis in wrong direction */
+	new_offset.z = -1.0*new_offset.z; /* DICOM specifies z axis in wrong direction */
+
+	//	amitk_space_set_offset(AMITK_SPACE(ds), amitk_space_s2b(AMITK_SPACE(ds), new_offset));
+	amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
 	found_value=TRUE;
       }
     }
@@ -427,30 +434,29 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   if (dcm_dataset->findAndGetString(DCM_PatientsBirthDate, return_str, OFTrue).good()) 
     amitk_data_set_set_subject_dob(ds, return_str);
 
-  if (dcm_dataset->findAndGetString(DCM_PatientPosition, return_str, OFTrue).good()) {
-    if (return_str != NULL) {
-      if (g_strcasecmp(return_str, "HFS")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
-      else if (g_strcasecmp(return_str, "FFS")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
-      else if (g_strcasecmp(return_str, "HFP")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
-      else if (g_strcasecmp(return_str, "FFP")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
-      else if (g_strcasecmp(return_str, "HFDR")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
-      else if (g_strcasecmp(return_str, "FFDR")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
-      else if (g_strcasecmp(return_str, "HFDL")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
-      else if (g_strcasecmp(return_str, "FFDL")==0)
-	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
-    }
-  }
-
-  //  total_planes = dim.z*dim.g*dim.t;
-  //  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
-
+  /* because of how the dicom coordinates are setup, after reading in the patient slices, 
+     they should all be oriented as SUPINE_HEADFIRST in AMIDE */
+  amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+  //  if (dcm_dataset->findAndGetString(DCM_PatientPosition, return_str, OFTrue).good()) {
+  //    if (return_str != NULL) {
+  //      if (g_strcasecmp(return_str, "HFS")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+  //      else if (g_strcasecmp(return_str, "FFS")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
+  //      else if (g_strcasecmp(return_str, "HFP")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
+  //      else if (g_strcasecmp(return_str, "FFP")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
+  //      else if (g_strcasecmp(return_str, "HFDR")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+  //      else if (g_strcasecmp(return_str, "FFDR")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+  //      else if (g_strcasecmp(return_str, "HFDL")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+  //      else if (g_strcasecmp(return_str, "FFDL")==0)
+  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+  //    }
+  //  }
 
   format_size = amitk_format_sizes[format];
   num_bytes = amitk_raw_format_calc_num_bytes(dim, amitk_format_to_raw_format(format));
@@ -525,7 +531,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 	/* transfer over the buffer */
 	for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) {
 	  ds_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i);
-	  memcpy(ds_pointer, (guchar *) buffer + format_size*ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1), format_size*ds->raw_data->dim.x);
+	  /* note, we've already flipped the coordinate axis, so reading in the data straight is correct */
+	  /* memcpy(ds_pointer, (guchar *) buffer + format_size*ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1), format_size*ds->raw_data->dim.x); */
+	  memcpy(ds_pointer, (guchar *) buffer + format_size*ds->raw_data->dim.x*i.y, format_size*ds->raw_data->dim.x);
 	}
       }
     }
@@ -643,7 +651,6 @@ static GList * check_slices(GList * slices) {
   AmitkDataSet * slice;
   AmitkVoxel dim;
   AmitkPoint voxel_size;
-  gint discarded=0;
   GList * discard_slices=NULL;
 
   current_slice = g_list_first(slices);
@@ -671,91 +678,84 @@ static GList * check_slices(GList * slices) {
   return slices;
 }
 
+static void separate_duplicate_slices(GList ** pslices, GList ** pdiscard_slices) {
 
-static AmitkDataSet * import_files_as_dataset(GList * image_files, 
-					      AmitkPreferences * preferences, 
-					      AmitkUpdateFunc update_func,
-					      gpointer update_data,
-					      gchar **perror_buf) {
+  GList * current_slices;
+  GList * discard_slices=NULL;
+  AmitkDataSet * previous_slice;
+  AmitkDataSet * slice;
+  AmitkDataSet * discard_slice;
+  gint discard=0;
+  AmitkPoint offset1;
+  AmitkPoint offset2;
 
+  g_return_if_fail(pslices != NULL);
+  g_return_if_fail(pdiscard_slices != NULL);
+
+  current_slices = g_list_first(*pslices);
+  previous_slice = AMITK_DATA_SET(current_slices->data);
+
+  /* get a list of the duplicates */
+  current_slices = current_slices->next;
+  while (current_slices != NULL) {
+    slice = AMITK_DATA_SET(current_slices->data);
+
+
+    offset1 = AMITK_SPACE_OFFSET(previous_slice);
+    offset2 = AMITK_SPACE_OFFSET(slice);
+    if (POINT_EQUAL(offset1, offset2)) {
+      if (slice->instance_number < previous_slice->instance_number) 
+	discard_slice = previous_slice;	
+      else
+	discard_slice = slice;
+
+      *pdiscard_slices = g_list_append(*pdiscard_slices, discard_slice);
+    } 
+
+    previous_slice = slice;
+    current_slices = current_slices->next;
+  }
+
+  current_slices = *pdiscard_slices;
+  while (current_slices != NULL) {
+    *pslices = g_list_remove(*pslices, current_slices->data);
+    current_slices = current_slices->next;
+  }
+
+  return;
+}
+
+static AmitkDataSet * import_slices_as_dataset(GList * slices, 
+					       gint num_frames, 
+					       gint num_gates,
+					       AmitkUpdateFunc update_func,
+					       gpointer update_data,
+					       gchar **perror_buf) {
 
   AmitkDataSet * ds=NULL;
-  AmitkDataSet * slice_ds=NULL;
-  div_t x;
-  //  gint divider;
-  //  gint total_planes;
-  AmitkVoxel i,k;
-  gchar * slice_name;
+  guint num_images;
   gint image;
+  AmitkDataSet * slice_ds=NULL;
   AmitkVoxel dim, scaling_dim;
-  gint num_frames=1;
-  gint num_gates=1;
-  gint frame;
+  div_t x;
+  AmitkVoxel i;
   amide_time_t last_scan_start;
-  //  GArray * durations;
+  AmitkPoint offset, initial_offset, diff;
   gboolean screwed_up_timing;
   gboolean screwed_up_thickness;
-  AmitkPoint offset, initial_offset, diff;
   amide_real_t true_thickness, old_thickness;
   AmitkPoint voxel_size;
-  guint num_files;
-  guint num_images;
-  GList * slices=NULL;
-  gboolean first_slice;
-  gboolean continue_work=TRUE;
-  gint divider;
-  gdouble theta;
 
-  num_files = g_list_length(image_files);
-  g_return_val_if_fail(num_files != 0, NULL);
+  g_return_val_if_fail(slices != NULL, NULL);
 
-  //	durations= g_array_new(FALSE, FALSE, sizeof(amide_time_t));
   screwed_up_timing=FALSE;
   screwed_up_thickness=FALSE;
+  image=0;
   
-  if (update_func != NULL) 
-    continue_work = (*update_func)(update_data, _("Importing File(s) Through DCMTK"), (gdouble) 0.0);
-  divider = (num_files/AMIDE_UPDATE_DIVIDER < 1.0) ? 1 : (gint) rint(num_files/AMIDE_UPDATE_DIVIDER);
-
-  for (image=0; (image < num_files) && (continue_work); image++) {
-    
-    if (update_func != NULL) {
-      x = div(image,divider);
-      if (x.rem == 0)
-	continue_work = (*update_func)(update_data, NULL, ((gdouble) image)/((gdouble) num_files));
-    }
-
-
-    slice_name = (gchar *) g_list_nth_data(image_files,image);
-    slice_ds = read_dicom_file(slice_name, preferences, &num_frames, &num_gates, NULL, NULL, perror_buf);
-    if (slice_ds == NULL) {
-      goto error;
-    } else if (AMITK_DATA_SET_DIM_Z(slice_ds) != 1) {
-      g_warning(_("no support for multislice files within DICOM directory format"));
-      goto error;
-    } 
-    slices = g_list_append(slices, slice_ds);
-  }
-  if (!continue_work) goto error;
-
-  if ((num_frames > 1) && (num_gates > 1)) 
-    g_warning("Don't know how to deal with multi-gate and multi-frame data, results will be undefined");
-
-  /* throw out any slices that don't fit in */
-  slices = check_slices(slices);
-
-  /* sort list based on the slice's time and z position */
-  if (num_frames > 1)
-    slices = g_list_sort(slices, sort_slices_func_with_time);
-  else if (num_gates > 1)
-    slices = g_list_sort(slices, sort_slices_func_with_gate);
-  else
-    slices = g_list_sort(slices, sort_slices_func);
   num_images = g_list_length(slices);
 
-  image=0;
-  while(slices != NULL) {
-    slice_ds = (AmitkDataSet *) g_list_nth_data(slices,0);
+  while(image < num_images) {
+    slice_ds = (AmitkDataSet *) g_list_nth_data(slices,image);
 
     /* special stuff for 1st slice */
     if (image==0) {
@@ -765,7 +765,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
       if (num_frames > 1) {
 	x = div(num_images, num_frames);
 	if (x.rem != 0) {
- 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), slice_name);
+ 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), AMITK_OBJECT_NAME(slice_ds));
 	  dim.t = num_frames=1;
 	} else {
 	  dim.t = num_frames;
@@ -774,7 +774,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
       } else if (num_gates > 1) {
 	x = div(num_images, num_gates);
 	if (x.rem != 0) {
- 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), slice_name);
+ 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), AMITK_OBJECT_NAME(slice_ds));
 	  dim.g = num_gates=1;
 	} else {
 	  dim.g = num_gates;
@@ -796,7 +796,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
       scaling_dim.t = dim.t;
       scaling_dim.g = dim.g;
       scaling_dim.z = dim.z;
-      
+
       if (ds->internal_scaling_factor != NULL) g_object_unref(ds->internal_scaling_factor);
       ds->internal_scaling_factor = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
       if (ds->internal_scaling_intercept != NULL) g_object_unref(ds->internal_scaling_intercept);
@@ -891,11 +891,8 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
 
     //    last_offset = AMITK_SPACE_OFFSET(slice_ds);
 
-    slices = g_list_remove(slices, slice_ds);
-    amitk_object_unref(slice_ds);
-    slice_ds = NULL;
     image++;
-  }
+  } /* slice loop */
 
   if (screwed_up_timing) 
     amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame start times will be incorrect"), AMITK_OBJECT_NAME(ds));
@@ -994,32 +991,113 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   amitk_data_set_calc_max_min(ds, update_func, update_data);
   
   goto end;
-  
+
  error:
   if (ds != NULL) {
     amitk_object_unref(ds);
     ds = NULL;
   }
-  
-  if (slice_ds != NULL) {
-    amitk_object_unref(slice_ds);
-    slice_ds = NULL;
-  }
-  
+
  end:
 
+  return ds;
+}
+
+static GList * import_files_as_datasets(GList * image_files, 
+					AmitkPreferences * preferences, 
+					AmitkUpdateFunc update_func,
+					gpointer update_data,
+					gchar **perror_buf) {
+
+
+  GList * returned_sets=NULL;
+  AmitkDataSet * ds=NULL;
+  AmitkDataSet * slice_ds=NULL;
+  div_t x;
+  gchar * slice_name;
+  gint image;
+  gint num_frames=1;
+  gint num_gates=1;
+  guint num_files;
+  GList * slices=NULL;
+  GList * discarded_slices=NULL;
+  gboolean continue_work=TRUE;
+  gint divider;
+
+  num_files = g_list_length(image_files);
+  g_return_val_if_fail(num_files != 0, NULL);
+
+  if (update_func != NULL) 
+    continue_work = (*update_func)(update_data, _("Importing File(s) Through DCMTK"), (gdouble) 0.0);
+  divider = (num_files/AMIDE_UPDATE_DIVIDER < 1.0) ? 1 : (gint) rint(num_files/AMIDE_UPDATE_DIVIDER);
+
+  for (image=0; (image < num_files) && (continue_work); image++) {
+    
+    if (update_func != NULL) {
+      x = div(image,divider);
+      if (x.rem == 0)
+	continue_work = (*update_func)(update_data, NULL, ((gdouble) image)/((gdouble) num_files));
+    }
+
+
+    slice_name = (gchar *) g_list_nth_data(image_files,image);
+    slice_ds = read_dicom_file(slice_name, preferences, &num_frames, &num_gates, NULL, NULL, perror_buf);
+    if (slice_ds == NULL) {
+      goto cleanup;
+    } else if (AMITK_DATA_SET_DIM_Z(slice_ds) != 1) {
+      g_warning(_("no support for multislice files within DICOM directory format"));
+      amitk_object_unref(slice_ds);
+      slice_ds = NULL;
+      goto cleanup;
+    } 
+    slices = g_list_append(slices, slice_ds);
+  }
+  if (!continue_work) goto cleanup;
+
+  if ((num_frames > 1) && (num_gates > 1)) 
+    g_warning("Don't know how to deal with multi-gate and multi-frame data, results will be undefined");
+
+  /* throw out any slices that don't fit in */
+  slices = check_slices(slices);
+
+  /* sort list based on the slice's time and z position */
+  if (num_frames > 1)
+    slices = g_list_sort(slices, sort_slices_func_with_time);
+  else if (num_gates > 1)
+    slices = g_list_sort(slices, sort_slices_func_with_gate);
+  else
+    slices = g_list_sort(slices, sort_slices_func);
+
+  /* throw out any slices that are duplicated in terms of orientation */
+  separate_duplicate_slices(&slices, &discarded_slices);
+
+
+  /* load in the primary data set */
+  ds = import_slices_as_dataset(slices, num_frames, num_gates, update_func, update_data, perror_buf);
+  if (ds != NULL)
+    returned_sets = g_list_append(returned_sets, ds);
+  
+  /* if we had left over slices, try loading them in as well */
+  if (discarded_slices != NULL) {
+    ds = import_slices_as_dataset(discarded_slices, num_frames, num_gates, update_func, update_data, perror_buf);
+    if (ds != NULL)
+      returned_sets = g_list_append(returned_sets, ds);
+  }
+
+
+ cleanup:
   if (update_func != NULL) /* remove progress bar */
     (*update_func) (update_data, NULL, (gdouble) 2.0); 
 
+  slices = g_list_concat(slices, discarded_slices);
   while (slices != NULL) {
     slice_ds = (AmitkDataSet *) g_list_nth_data(slices,0);
     slices = g_list_remove(slices, slice_ds);
     amitk_object_unref(slice_ds);
   }
-  
-  
+
  
-  return ds;
+  return returned_sets;
 }
 
 typedef struct slice_info_t {
@@ -1028,6 +1106,8 @@ typedef struct slice_info_t {
   gchar * modality;
   gchar * series_number;
   gchar * series_description;
+  gchar * patient_id;
+  gchar * patient_name;
 } slice_info_t;
 
 static void free_slice_info(slice_info_t * info) {
@@ -1047,6 +1127,12 @@ static void free_slice_info(slice_info_t * info) {
   if (info->series_description != NULL)
     g_free(info->series_description);
 
+  if (info->patient_id != NULL)
+    g_free(info->patient_id);
+
+  if (info->patient_name != NULL)
+    g_free(info->patient_name);
+
   g_free(info);
 
   return;
@@ -1062,6 +1148,8 @@ static slice_info_t * slice_info_new(void) {
   info->modality=NULL;
   info->series_number=NULL;
   info->series_description=NULL;
+  info->patient_id=NULL;
+  info->patient_name=NULL;
 
   return info;
 }
@@ -1099,7 +1187,15 @@ static slice_info_t * get_slice_info(const gchar * filename) {
   dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue);
   if (return_str != NULL) 
       info->series_description = g_strdup(return_str);
-  
+
+  dcm_dataset->findAndGetString(DCM_PatientID, return_str, OFTrue);
+  if (return_str != NULL) 
+      info->patient_id = g_strdup(return_str);
+
+  dcm_dataset->findAndGetString(DCM_PatientsName, return_str, OFTrue);
+  if (return_str != NULL) 
+      info->patient_name = g_strdup(return_str);
+
   return info;
 }
 
@@ -1121,10 +1217,6 @@ static gboolean check_same(slice_info_t * slice1, slice_info_t * slice2) {
   gchar ** slice1_uid_split=NULL;
   gchar ** slice2_uid_split=NULL;
 
-  gchar * new_series_description=NULL;
-  gchar * new_modality=NULL;
-  gchar * new_series_number=NULL;
-  gint string_cmp_val;
   gboolean same_dataset;
 
 
@@ -1162,6 +1254,14 @@ static gboolean check_same(slice_info_t * slice1, slice_info_t * slice2) {
   if (!check_str(slice1->modality, slice2->modality))
     return FALSE;
 
+  if (!check_str(slice1->patient_id, slice2->patient_id)) {
+    return FALSE;
+  }
+
+  if (!check_str(slice1->patient_name, slice2->patient_name)) {
+    return FALSE;
+  }
+
   return TRUE;
 }
 
@@ -1173,6 +1273,7 @@ static GList * import_files(const gchar * filename,
 
   AmitkDataSet * ds;
   GList * data_sets = NULL;
+  GList * returned_sets = NULL;
   GList * image_files=NULL;
   GList * raw_info=NULL;
   GList * all_slices=NULL; /* list of lists */
@@ -1303,10 +1404,13 @@ static GList * import_files(const gchar * filename,
 
     if (all_datasets || (count==0)) {
       count++;
-      ds = import_files_as_dataset(image_files, preferences, update_func, update_data, &error_buf);
+      returned_sets = import_files_as_datasets(image_files, preferences, update_func, update_data, &error_buf);
 
-      if (ds != NULL)
+      while (returned_sets != NULL) {
+	ds = AMITK_DATA_SET(returned_sets->data);
 	data_sets = g_list_append(data_sets, ds);
+	returned_sets = g_list_remove(returned_sets, ds);
+      }
     }
 
     /* cleanup */
@@ -1336,6 +1440,7 @@ static GList * import_dir(const gchar * filename,
 			  gpointer update_data) {
 
   GList * data_sets=NULL;
+  GList * returned_sets=NULL;
   DcmDirectoryRecord * dcm_root_record;
   DcmDirectoryRecord * patient_record=NULL;
   DcmDirectoryRecord * study_record=NULL;
@@ -1408,9 +1513,10 @@ static GList * import_dir(const gchar * filename,
 	g_print("object name: %s    with %d files (images)\n", object_name, g_list_length(image_files));
 #endif
 
-	/* read in slices */
-	ds = import_files_as_dataset(image_files, preferences, update_func, update_data, &error_buf);
-	if (ds != NULL) {
+	/* read in slices as dataset(s) */
+	returned_sets = import_files_as_datasets(image_files, preferences, update_func, update_data, &error_buf);
+	while (returned_sets != NULL) {
+	  ds = AMITK_DATA_SET(returned_sets->data);
 	  /* use the DICOMDIR entries if available */
 	  /* Checking for record_name[2] - if we have a series description in the DICOMDIR file, 
 	     use that, otherwise use the name directly from the dicom file if available, otherwise
@@ -1423,6 +1529,7 @@ static GList * import_dir(const gchar * filename,
 	    amitk_data_set_set_subject_id(ds, patient_id);
 
 	  data_sets = g_list_append(data_sets, ds);
+	  returned_sets = g_list_remove(returned_sets, ds);
 	}
 
 

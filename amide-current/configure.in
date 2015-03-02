@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.19],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.20],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -239,7 +239,7 @@ if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	dnl redefine the xmedcon libs line, as otherwise we'll get errors from linking to glib1
 	dnl 2005.11.19 - doesn't seem to be a problem anymore
 	dnl 2006.03.29 - it's a problem again
-	XMEDCON_LIBS="-L/usr/local/lib -lmdc"
+	XMEDCON_LIBS="-L/usr/local/lib -L/usr/local/xmedcon/lib -lmdc"
 	AC_SUBST(XMEDCON_LIBS)
 else
 	echo "Compiling without xmedcon/libmdc file support"

@@ -1,7 +1,7 @@
 /* tb_fly_through.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2006 Andy Loening
+ * Copyright (C) 2002-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -641,7 +641,7 @@ static tb_fly_through_t * tb_fly_through_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_fly_through = g_try_new(tb_fly_through_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_fly_through_t"));
+    g_warning(_("couldn't allocate memory space for tb_fly_through_t"));
     return NULL;
   }
   tb_fly_through->reference_count = 1;

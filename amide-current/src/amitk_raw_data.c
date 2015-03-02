@@ -1,7 +1,7 @@
 /* amitk_raw_data.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -356,7 +356,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
   raw_data = amitk_raw_data_new_with_data(amitk_raw_format_to_format(raw_format), dim);
   if (raw_data == NULL) {
-    g_warning(_("couldn't allocate space for the raw data set structure"));
+    g_warning(_("couldn't allocate memory space for the raw data set structure"));
     goto error_condition;
   }
 

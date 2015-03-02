@@ -1,7 +1,7 @@
 /* amitk_point.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -36,9 +36,6 @@ const AmitkAxes base_axes =
    {0.0,0.0,1.0}};
 
 
-static void       make_orthogonal           (AmitkAxes axes);
-
-
 GType amitk_point_get_type (void) {
 
   static GType our_type = 0;
@@ -68,9 +65,17 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
   temp_str = xml_get_string(nodes, descriptor);
+
+  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
+  if (index(temp_str, ',') != NULL)
+    setlocale(LC_NUMERIC,"de_DE");
 
   if (temp_str != NULL) {
 #if (SIZE_OF_AMIDE_REAL_T == 8)
@@ -107,7 +112,11 @@ void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point
   gchar * saved_locale;
 
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+#ifdef AMIDE_WIN32_HACKS  
+  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
+#else
   setlocale(LC_NUMERIC,"POSIX");
+#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f\t%10.9f\t%10.9f", point.x,point.y,point.z);
@@ -355,49 +364,56 @@ void amitk_axes_mult(const AmitkAxes const_axes1, const AmitkAxes const_axes2, A
 /* adjusts the given axis into an orthogonal set via gram-schmidt */
 static void make_orthogonal(AmitkAxes axes) {
 
-   AmitkPoint temp;
+  AmitkPoint temp;
+  amide_real_t scale;
 
   /* leave the xaxis as is */
 
   /* make the y axis orthogonal */
-  POINT_MADD(1.0,
-	     axes[AMITK_AXIS_Y],
-	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Y]) /
-	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X]),
-	     axes[AMITK_AXIS_X],
-	     axes[AMITK_AXIS_Y]);
+  scale = -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Y]) /
+    POINT_DOT_PRODUCT(axes[AMITK_AXIS_X], axes[AMITK_AXIS_X]);
+  POINT_MADD(1.0,axes[AMITK_AXIS_Y], scale, axes[AMITK_AXIS_X], axes[AMITK_AXIS_Y]);
   
   /* and make the z axis orthogonal */
-  POINT_MADD(1.0,
-	     axes[AMITK_AXIS_Z],
-	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Z]) /
+  scale = -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_Z]) /
 	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X]),
-	     axes[AMITK_AXIS_X],
-	     temp);
-  POINT_MADD(1.0,
-	     temp,
-	     -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Z]) /
-	     POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Y]),
-	     axes[AMITK_AXIS_Y],
-	     axes[AMITK_AXIS_Z]);
+  POINT_MADD(1.0, axes[AMITK_AXIS_Z], scale, axes[AMITK_AXIS_X], temp);
+  scale = -1.0*POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Z]) /
+    POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Y]);
+  POINT_MADD(1.0, temp, scale, axes[AMITK_AXIS_Y], axes[AMITK_AXIS_Z]);
+
   return;
 }
 
 /* adjusts the given axis into a true orthonormal axis set */
 void amitk_axes_make_orthonormal(AmitkAxes axes) {
 
+  amide_real_t scale;
+  AmitkAxis i_axis;
+  gboolean nonsense=FALSE;
+
   make_orthogonal(axes); 
 
   /* now normalize the axis to make it orthonormal */
-  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_X],axes[AMITK_AXIS_X])),
-		  axes[AMITK_AXIS_X],
-		  axes[AMITK_AXIS_X]);
-  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_Y],axes[AMITK_AXIS_Y])),
-		  axes[AMITK_AXIS_Y],
-		  axes[AMITK_AXIS_Y]);
-  POINT_CMULT(1.0/sqrt(POINT_DOT_PRODUCT(axes[AMITK_AXIS_Z],axes[AMITK_AXIS_Z])),
-		  axes[AMITK_AXIS_Z],
-		  axes[AMITK_AXIS_Z]);
+  scale = 1.0/POINT_MAGNITUDE(axes[AMITK_AXIS_X]);
+  POINT_CMULT(scale, axes[AMITK_AXIS_X], axes[AMITK_AXIS_X]);
+  scale = 1.0/POINT_MAGNITUDE(axes[AMITK_AXIS_Y]);
+  POINT_CMULT(scale, axes[AMITK_AXIS_Y], axes[AMITK_AXIS_Y]);
+  scale = 1.0/POINT_MAGNITUDE(axes[AMITK_AXIS_Z]);
+  POINT_CMULT(scale, axes[AMITK_AXIS_Z], axes[AMITK_AXIS_Z]);
+
+  /* insure we didn't nan ourselves into oblivion with the divisions */
+  for (i_axis=0; (i_axis < AMITK_AXIS_NUM) && !nonsense; i_axis++) {
+    if (isnan(axes[i_axis].x) || isnan(axes[i_axis].y) || isnan(axes[i_axis].z)) {
+      g_warning("inappropriate axes, division by zero? Setting to identity");
+      nonsense=TRUE;
+    }
+  }
+
+  if (nonsense)
+    for (i_axis=0; i_axis < AMITK_AXIS_NUM; i_axis++) 
+      axes[i_axis] = base_axes[i_axis];
+
   return;
 }
 

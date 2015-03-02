@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -702,7 +702,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for ui_render_t"));
+    g_warning(_("couldn't allocate memory space for ui_render_t"));
     return NULL;
   }
   ui_render->reference_count = 1;

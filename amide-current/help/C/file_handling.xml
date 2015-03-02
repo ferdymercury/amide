@@ -176,11 +176,13 @@
 
 
 
-<sect2><title>Exporting a View to JPEG</title>
+<sect2><title>Exporting a View to JPEG/PNG</title>
 
   <para> To export one of the views (transverse/coronal/sagittal) to
     an external image file, select "File->Export View->[view]" from
-    the menu.  The saved data format is jpeg.
+    the menu.  The saved data format by default is jpeg. If the saved
+    filename ends in ".png", the saved data format will be PNG.
+
   </para>
 
 </sect2>

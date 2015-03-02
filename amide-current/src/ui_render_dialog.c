@@ -1,7 +1,7 @@
 /* ui_render_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -347,12 +347,12 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
     /* allocate some new memory */
     if ((rendering->ramp_x[i_classification] = 
 	 g_try_new(gint,rendering->num_points[i_classification])) == NULL) {
-      g_warning(_("couldn't allocate space for ramp x"));
+      g_warning(_("couldn't allocate memory space for ramp x"));
       return;
     }
     if ((rendering->ramp_y[i_classification] = 
 	 g_try_new(gfloat,rendering->num_points[i_classification])) == NULL) {
-      g_warning(_("couldn't allocate space for ramp y"));
+      g_warning(_("couldn't allocate memory space for ramp y"));
       return;
     }
     

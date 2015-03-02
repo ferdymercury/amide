@@ -1,7 +1,7 @@
 /* amitk_space_edit.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2006 Andy Loening
+ * Copyright (C) 2002-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -30,7 +30,7 @@
 #include "amitk_space_edit.h"
 #include "amitk_study.h"
 
-#define DEFAULT_ENTRY_WIDTH 75
+#define DEFAULT_ENTRY_WIDTH 100
 
 
 static void space_edit_class_init (AmitkSpaceEditClass *klass);
@@ -39,6 +39,7 @@ static void space_edit_destroy(GtkObject * object);
 static void space_edit_update_entries(AmitkSpaceEdit * space_edit);
 static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data);
 static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * message);
+static void space_edit_apply_entries(GtkWidget * button, gpointer space_edit);
 static void space_edit_reset_axis(GtkWidget * button, gpointer data);
 static void space_edit_invert_axis(GtkWidget * button, gpointer data);
 #if 0
@@ -106,8 +107,7 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   /* initialize some critical stuff */
   space_edit->object = NULL;
 
-  /* we're using two tables packed into a horizontal box */
-  table = gtk_table_new(12,5, FALSE);
+  table = gtk_table_new(14,5, FALSE);
   gtk_container_add(GTK_CONTAINER(space_edit), table);
   gtk_widget_show(table);
 
@@ -164,7 +164,7 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
 
       space_edit->entry[i_axis][j_axis] = gtk_entry_new();
       gtk_widget_set_size_request(space_edit->entry[i_axis][j_axis], DEFAULT_ENTRY_WIDTH,-1);
-      gtk_editable_set_editable(GTK_EDITABLE(space_edit->entry[i_axis][j_axis]), FALSE);
+      gtk_editable_set_editable(GTK_EDITABLE(space_edit->entry[i_axis][j_axis]), TRUE);
       gtk_table_attach(GTK_TABLE(table), space_edit->entry[i_axis][j_axis],j_axis+1, j_axis+2,
 		       row, row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(space_edit->entry[i_axis][j_axis]);
@@ -182,14 +182,22 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
     row++;
   }
 
-  /* button to reset the axis */
   label = gtk_label_new(_("data set axis:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1,
-		   0, 0, X_PADDING, Y_PADDING);
+  		   0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
   
-  button = gtk_button_new_with_label(_("reset to default"));
+  /* button to apply entries */
+  button = gtk_button_new_with_label(_("apply manual entries"));
   gtk_table_attach(GTK_TABLE(table), button, 1,2, 
+		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(button), "pressed",
+		   G_CALLBACK(space_edit_apply_entries), space_edit);
+  gtk_widget_show(button);
+
+  /* button to reset the axis */
+  button = gtk_button_new_with_label(_("reset to identity"));
+  gtk_table_attach(GTK_TABLE(table), button, 2,3, 
 		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(button), "pressed",
 		   G_CALLBACK(space_edit_reset_axis), space_edit);
@@ -254,7 +262,7 @@ static void space_edit_destroy (GtkObject * gtkobject) {
 /* function to update the entry widgets */
 static void space_edit_update_entries(AmitkSpaceEdit * space_edit) {
 
-  AmitkAxis i_axis;
+  AmitkAxis i_axis, j_axis;
   gchar * temp_string;
   AmitkPoint one_axis;
 
@@ -263,18 +271,11 @@ static void space_edit_update_entries(AmitkSpaceEdit * space_edit) {
   for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
     one_axis = amitk_space_get_axis(AMITK_SPACE(space_edit->object), i_axis);
 
-    temp_string = g_strdup_printf("%f", one_axis.x);
-    gtk_entry_set_text(GTK_ENTRY(space_edit->entry[i_axis][AMITK_AXIS_X]), temp_string);
-    g_free(temp_string);
-
-    temp_string = g_strdup_printf("%f", one_axis.y);
-    gtk_entry_set_text(GTK_ENTRY(space_edit->entry[i_axis][AMITK_AXIS_Y]), temp_string);
-    g_free(temp_string);
-
-    temp_string = g_strdup_printf("%f", one_axis.z);
-    gtk_entry_set_text(GTK_ENTRY(space_edit->entry[i_axis][AMITK_AXIS_Z]), temp_string);
-    g_free(temp_string);
-
+    for (j_axis=0; j_axis<AMITK_AXIS_NUM;j_axis++) {
+      temp_string = g_strdup_printf("%g", point_get_component(one_axis, j_axis));
+      gtk_entry_set_text(GTK_ENTRY(space_edit->entry[i_axis][j_axis]), temp_string);
+      g_free(temp_string);
+    }
   }
 
   return;
@@ -341,6 +342,43 @@ static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * mes
     return FALSE; 
   else
     return TRUE;
+}
+
+
+
+
+static void space_edit_apply_entries(GtkWidget * entry, gpointer data) {
+
+  AmitkSpaceEdit * space_edit = data;
+  AmitkAxis i_axis, j_axis;
+  const gchar * text;
+  AmitkAxes axes;
+  gdouble temp_real;
+  AmitkPoint center;
+  gint error;
+
+  /* first double check that we really want to do this */
+  if (!space_edit_prompt(space_edit, _("Do you really wish to manual set the axis?\nThis may flip left/right relationships")))
+    return;
+
+  for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
+    for (j_axis=0; j_axis<AMITK_AXIS_NUM;j_axis++) {
+      text = gtk_entry_get_text(GTK_ENTRY(space_edit->entry[i_axis][j_axis]));
+      error = sscanf(text, "%lf", &temp_real);
+      if (error != EOF)
+	point_set_component(&(axes[i_axis]), j_axis, temp_real);
+    }
+  }
+
+  amitk_axes_make_orthonormal(axes);
+
+  if (AMITK_IS_VOLUME(space_edit->object))
+    center = amitk_volume_get_center(AMITK_VOLUME(space_edit->object));
+  else
+    center = AMITK_SPACE_OFFSET(space_edit->object);
+  amitk_space_set_axes(AMITK_SPACE(space_edit->object), axes, center);
+ 
+  return;
 }
 
 

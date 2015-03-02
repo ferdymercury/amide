@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -415,6 +415,10 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   const gchar * filename;
   AmitkView  view;
   GdkPixbuf * pixbuf;
+  gboolean save_as_png=FALSE;
+  gint length;
+  const gchar * extension;
+  gboolean return_val;
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
@@ -426,16 +430,31 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   filename = ui_common_file_selection_get_save_name(file_selection);
   if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
+  /* check if we want a png */
+  length = strlen(filename);
+  g_print("length %d\n", length);
+  if (length > 4) {
+    extension = filename + length-4;
+    g_print("extension %s\n", extension);
+    if (g_ascii_strncasecmp(extension, ".png", 4)==0) {
+      save_as_png = TRUE;
+      g_print("save as png\n");
+    }
+  }
+
   /* get a pixbuf of the canvas */
   pixbuf = amitk_canvas_get_pixbuf(AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]));
   if (pixbuf == NULL) {
     g_warning(_("Canvas failed to return a valid image\n"));
     return;
   }
-  
-  if (gdk_pixbuf_save (pixbuf,
-  		       filename, "jpeg", NULL, 
-  		       "quality", "100", NULL) == FALSE) 
+
+  if (save_as_png)
+    return_val = gdk_pixbuf_save (pixbuf, filename, "png", NULL, NULL);
+  else
+    return_val = gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, "quality", "100", NULL);
+
+  if (!return_val)
     g_warning(_("Failure Saving File: %s"),filename);
 
 

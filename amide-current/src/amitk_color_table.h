@@ -1,7 +1,7 @@
 /* amitk_color_table.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -45,6 +45,8 @@ typedef enum {
   AMITK_COLOR_TABLE_INV_GREEN_TEMP, 
   AMITK_COLOR_TABLE_HOT_METAL, 
   AMITK_COLOR_TABLE_INV_HOT_METAL, 
+  AMITK_COLOR_TABLE_HOT_METAL_CONTOUR,
+  AMITK_COLOR_TABLE_INV_HOT_METAL_CONTOUR,
   AMITK_COLOR_TABLE_HOT_BLUE, 
   AMITK_COLOR_TABLE_INV_HOT_BLUE, 
   AMITK_COLOR_TABLE_HOT_GREEN, 

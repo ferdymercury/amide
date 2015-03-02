@@ -1,7 +1,7 @@
 /* tb_math.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006 Andy Loening
+ * Copyright (C) 2006-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -382,7 +382,7 @@ static tb_math_t * tb_math_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((math = g_try_new(tb_math_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_math_t"));
+    g_warning(_("couldn't allocate memory space for tb_math_t"));
     return NULL;
   }
 

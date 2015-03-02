@@ -1,7 +1,7 @@
 /* tb_export_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006 Andy Loening
+ * Copyright (C) 2006-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -108,7 +108,7 @@ static tb_export_t * tb_export_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_export = g_try_new(tb_export_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_export_t"));
+    g_warning(_("couldn't allocate memory space for tb_export_t"));
     return NULL;
   }
   tb_export->reference_count = 1;

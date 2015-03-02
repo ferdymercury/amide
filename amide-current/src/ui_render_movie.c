@@ -1,7 +1,7 @@
 /* ui_render_movie_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -396,7 +396,7 @@ static ui_render_movie_t * movie_init(void) {
 
   /* alloc space for the data structure */
   if ((ui_render_movie = g_try_new(ui_render_movie_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for ui_render_movie_t"));
+    g_warning(_("couldn't allocate memory space for ui_render_movie_t"));
     return NULL;
   }
 

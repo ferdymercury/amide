@@ -1,7 +1,7 @@
 /* amitk_space.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -237,7 +237,7 @@ static void space_transform(AmitkSpace * space, AmitkSpace * transform_space) {
       isnan(space->axes[AMITK_AXIS_Y].x) || isnan(space->axes[AMITK_AXIS_Y].y) || isnan(space->axes[AMITK_AXIS_Y].z) ||
       isnan(space->axes[AMITK_AXIS_Z].x) || isnan(space->axes[AMITK_AXIS_Z].y) || isnan(space->axes[AMITK_AXIS_Z].z)) {
     AmitkAxis i_axis;
-    g_warning("inappropriate offset, possibly an internalization problem, or a compiler bug from libecat, working around");
+    g_warning("inappropriate offset: compiler bug? internalization problem? Working around");
     for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++)
       space->axes[i_axis]=base_axes[i_axis];
   }

@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -133,7 +133,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_d
   distribution_dim.y = distribution_dim.z = distribution_dim.g = distribution_dim.t = 1;
   distribution = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, distribution_dim);
   if (distribution == NULL) {
-    g_warning(_("couldn't allocate space for the data set structure to hold distribution data"));
+    g_warning(_("couldn't allocate memory space for the data set structure to hold distribution data"));
     return;
   }
 
@@ -256,7 +256,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   slice = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set), 
 				       AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
   if (slice == NULL) {
-    g_warning(_("couldn't allocate space for the slice, wanted %dx%dx%d elements"), 
+    g_warning(_("couldn't allocate memory space for the slice, wanted %dx%dx%d elements"), 
 	      dim.x, dim.y, dim.z);
     return NULL;
   }

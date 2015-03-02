@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2006 Andy Loening
+ * Copyright (C) 2001-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -106,6 +106,10 @@ gboolean ui_common_check_filename(const gchar * filename) {
 }
 
 
+void ui_common_set_last_path_used(const gchar * path) {
+  last_path_used = g_strdup(path);
+  return;
+}
 
 static gchar * save_name_common(GtkWidget * file_selection, const gchar * filename) {
 
@@ -325,7 +329,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 
   logo = gdk_pixbuf_new_from_inline(-1, amide_logo, FALSE, NULL);
   about = gnome_about_new(PACKAGE, VERSION, 
-			  _("Copyright (c) 2000-2006 Andy Loening"),
+			  _("Copyright (c) 2000-2007 Andy Loening"),
 			  contents,
 			  authors, NULL, NULL, logo);
   g_object_unref(logo);

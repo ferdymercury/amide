@@ -1,7 +1,7 @@
 /* amide.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2000-2007 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -237,13 +237,16 @@ void amide_log_handler(const gchar *log_domain,
   AmitkPreferences * preferences = user_data;
   GtkWidget * dialog;
 
-  temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
+  if (log_level == G_LOG_LEVEL_MESSAGE) 
+    temp_string = g_strdup_printf("AMIDE MESSAGE: %s\n", message);
+  else /* G_LOG_LEVEL_WARNING */
+    temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
 
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
     g_print(temp_string);
   } else {
     dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-				    GTK_MESSAGE_WARNING,
+				    (log_level == G_LOG_LEVEL_MESSAGE) ? GTK_MESSAGE_INFO : GTK_MESSAGE_WARNING,
 				    GTK_BUTTONS_OK,
 				    temp_string);
     gtk_dialog_run(GTK_DIALOG(dialog));
@@ -339,7 +342,7 @@ int main (int argc, char *argv []) {
 #ifndef AMIDE_WIN32_HACKS
   /* setup i18n */
   setlocale(LC_ALL, "");
-  //  setlocale(LC_NUMERIC, "POSIX"); /* don't switch radix sign (it's a period not a comma dammit */
+  // setlocale(LC_NUMERIC, "POSIX"); /* don't switch radix sign (it's a period not a comma dammit */
   bindtextdomain(GETTEXT_PACKAGE, GNOMELOCALEDIR);
   textdomain(GETTEXT_PACKAGE);
   program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
@@ -372,6 +375,12 @@ int main (int argc, char *argv []) {
 
   /* and tell gnome-ui to pump its errors similarly */
   g_log_set_handler ("GnomeUI", G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
+
+  /* specify my message handler */
+  g_log_set_handler (NULL, G_LOG_LEVEL_MESSAGE, amide_log_handler, preferences);
+
+  /* specify the default directory */
+  ui_common_set_last_path_used(AMITK_PREFERENCES_DEFAULT_DIRECTORY(preferences));
 
 #ifdef AMIDE_WIN32_HACKS
   /* ignore gdk warnings on win32 */
