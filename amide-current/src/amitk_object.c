@@ -64,6 +64,9 @@ static void          object_transform           (AmitkSpace * space,
 static void          object_transform_axes      (AmitkSpace * space, 
 						 AmitkAxes    transform_axes,
 						 AmitkPoint * center_of_rotation);
+static void          object_scale               (AmitkSpace * space, 
+						 AmitkPoint * ref_point,
+						 AmitkPoint * scaling);
 static AmitkObject * object_copy                (const AmitkObject * object);
 static void          object_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          object_write_xml           (const AmitkObject * object, 
@@ -122,6 +125,7 @@ static void object_class_init (AmitkObjectClass * class) {
   space_class->space_invert = object_invert_axis;
   space_class->space_transform = object_transform;
   space_class->space_transform_axes = object_transform_axes;
+  space_class->space_scale = object_scale;
 
   class->object_name_changed = NULL;
   class->object_selection_changed = NULL;
@@ -333,6 +337,24 @@ static void object_transform_axes(AmitkSpace * space, AmitkAxes   transform_axes
   }
 
   AMITK_SPACE_CLASS(parent_class)->space_transform_axes (space, transform_axes, center_of_rotation);
+}
+
+
+static void object_scale(AmitkSpace * space, AmitkPoint * ref_point, AmitkPoint * scaling) {
+
+  AmitkObject * object;
+  GList * children;
+
+  g_return_if_fail(AMITK_IS_OBJECT(space));
+  object = AMITK_OBJECT(space);
+
+  children = object->children;
+  while (children != NULL) {
+    amitk_space_scale(children->data, *ref_point, *scaling);
+    children = children->next;
+  }
+
+  AMITK_SPACE_CLASS(parent_class)->space_scale (space, ref_point, scaling);
 }
 
 
@@ -951,26 +973,16 @@ GList * amitk_object_get_selected_children_of_type(AmitkObject * object,
 /* this function is used mainly so that I can debug referencing within amide */
 gpointer amitk_object_ref(gpointer object) {
 
-  //  g_return_val_if_fail(object != NULL, NULL);
-  //  g_assert(AMITK_IS_OBJECT(object));
-  //  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+  g_return_val_if_fail(object != NULL, NULL);
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 
-  //  if (AMITK_IS_DATA_SET(object))
-  //    if (AMITK_DATA_SET_DIM_Z(object) != 1) /* avoid slices */
-  //      g_print("add ref %s\n", AMITK_OBJECT_NAME(object));
-  
   return g_object_ref(object);
 }
 
 gpointer amitk_object_unref(gpointer object) {
 
-  //  g_return_val_if_fail(object != NULL, NULL);
-  //  g_assert(AMITK_IS_OBJECT(object));
-  //  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
-
-  //  if (AMITK_IS_DATA_SET(object))
-  //    if (AMITK_DATA_SET_DIM_Z(object) != 1) /* avoid slices */
-  //      g_print("un  ref %s\n", AMITK_OBJECT_NAME(object));
+  g_return_val_if_fail(object != NULL, NULL);
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 
   g_object_unref(object);
   return NULL;

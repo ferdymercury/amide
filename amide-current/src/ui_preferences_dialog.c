@@ -46,6 +46,7 @@ static void roi_width_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
@@ -311,32 +312,32 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* callback for the help button */
-/*
-void help_cb(GnomePropertyBox *preferences_dialog, gint page_number, gpointer data) {
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
 
-  GError *err=NULL;
+  switch(response_id) {
 
-  switch (page_number) {
-  case 1:
-    gnome_help_display (PACKAGE, "basics.html#PREFERENCES-DIALOG-HELP-CANVAS", &err);
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (!gnome_help_display("amide.xml", "preferences-dialog", NULL)) 
+      g_warning("Failed to load help");
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
     break;
-  case 0:
-    gnome_help_display (PACKAGE, "basics.html#PREFERENCES-DIALOG-HELP-ROI", &err);
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
     break;
+
   default:
-    gnome_help_display (PACKAGE, "basics.html#PREFERENCES-DIALOG-HELP", &err);
     break;
-  }
-
-  if (err != NULL) {
-    g_warning("couldn't open help file, error: %s", err->message);
-    g_error_free(err);
   }
 
   return;
 }
-*/
 
 /* function called to destroy the preferences dialog */
 gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
@@ -354,7 +355,7 @@ gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 /* function that sets up the preferences dialog */
 GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   
-  GtkWidget * preferences_dialog;
+  GtkWidget * dialog;
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
   GtkWidget * label;
@@ -384,18 +385,20 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_return_val_if_fail(ui_study->preferences_dialog == NULL, NULL);
     
   temp_string = g_strdup_printf(_("%s: Preferences Dialog"), PACKAGE);
-  preferences_dialog = 
-    gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_study->app),
-				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				 NULL);
-  gtk_window_set_title(GTK_WINDOW(preferences_dialog), temp_string);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_study->app),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					NULL);
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(preferences_dialog), "delete_event", G_CALLBACK(delete_event_cb), ui_study);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), ui_study);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), ui_study);
 
   notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(preferences_dialog)->vbox), notebook);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
 
   /* ---------------------------
      ROI Drawing page 
@@ -485,7 +488,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   				   "width_pixels", ui_study->roi_width,
     				   "line_style", ui_study->line_style, NULL);
   gnome_canvas_points_unref(roi_line_points);
-  g_object_set_data(G_OBJECT(preferences_dialog), "roi_item", roi_item);
+  g_object_set_data(G_OBJECT(dialog), "roi_item", roi_item);
 
   /* ---------------------------
      Canvas Setup
@@ -505,7 +508,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   /* the radio buttons */
   radio_button1 = gtk_radio_button_new(NULL);
-  colormap = gtk_widget_get_colormap(preferences_dialog);
+  colormap = gtk_widget_get_colormap(dialog);
   pixbuf = gdk_pixbuf_new_from_xpm_data(linear_layout_xpm);
   image = gtk_image_new_from_pixbuf(pixbuf);
   g_object_unref(pixbuf);
@@ -632,9 +635,9 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* and show all our widgets */
-  gtk_widget_show_all(preferences_dialog);
+  gtk_widget_show_all(dialog);
 
-  return preferences_dialog;
+  return dialog;
 }
 
 

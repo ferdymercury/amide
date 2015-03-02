@@ -49,8 +49,10 @@ static void depth_cueing_toggle_cb(GtkWidget * widget, gpointer data);
 static void change_front_factor_cb(GtkWidget * widget, gpointer data);
 static void color_table_cb(GtkWidget * widget, gpointer data);
 static void change_opacity_cb(GtkWidget * widget, gpointer data);
-static gboolean parameter_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
-static gboolean transfer_function_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static void p_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static void tf_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static gboolean p_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static gboolean tf_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 
 static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t type);
 
@@ -360,43 +362,66 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
 
 
 
+static void p_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
 
-/* callback for the help button */
-/*
-static void help_cb(GnomePropertyBox *rendering_dialog, gint page_number, gpointer data) {
-
-  GError *err=NULL;
-
-  switch (page_number) {
-  case 0:
-    gnome_help_display (PACKAGE, "rendering-dialog-help.html#RENDERING-DIALOG-HELP-DATA-SET", &err);
+  switch(response_id) {
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (!gnome_help_display("amide.xml", "rendering-dialog", NULL)) 
+      g_warning("Failed to load help");
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
     break;
-  case 1:
-    gnome_help_display (PACKAGE, "rendering-dialog-help.html#RENDERING-DIALOG-HELP-BASIC", &err);
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
     break;
+
   default:
-    gnome_help_display (PACKAGE, "rendering-dialog-help.html#RENDERING-DIALOG-HELP", &err);
     break;
-  }
-
-  if (err != NULL) {
-    g_warning("couldn't open help file, error: %s", err->message);
-    g_error_free(err);
   }
 
   return;
 }
-*/
+
+static void tf_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
+
+  switch(response_id) {
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (!gnome_help_display("amide.xml", "transfer-function-dialog", NULL)) 
+      g_warning("Failed to load help");
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
+    break;
+
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
 
 
-
-static gboolean parameter_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+static gboolean p_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_render_t * ui_render = data;
   ui_render->parameter_dialog = NULL;
   return FALSE;
 }
 
-static gboolean transfer_function_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+static gboolean tf_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_render_t * ui_render = data;
   ui_render->transfer_function_dialog = NULL;
   return FALSE;
@@ -450,6 +475,7 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
 /* function that sets up the rendering options dialog */
 void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   
+  GtkWidget * dialog;
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
   GtkWidget * label;
@@ -465,22 +491,26 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   if (ui_render->parameter_dialog != NULL)
     return;
   temp_string = g_strdup_printf(_("%s: Rendering Parameters Dialog"),PACKAGE);
-  ui_render->parameter_dialog = 
-    gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
-				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				 NULL);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					NULL);
   g_free(temp_string);
+  ui_render->parameter_dialog = dialog;
+
+
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(ui_render->parameter_dialog), "delete_event", 
-		   G_CALLBACK(parameter_delete_event_cb), ui_render);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(p_response_cb), ui_render);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(p_delete_event_cb), ui_render);
 		   
 
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,2,FALSE);
   table_row=0;
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render->parameter_dialog)->vbox), packing_table);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
 
   /* widgets to change the quality versus speed of rendering */
   label = gtk_label_new(_("Speed versus Quality"));
@@ -594,7 +624,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 
 
   /* and show all our widgets */
-  gtk_widget_show_all(ui_render->parameter_dialog);
+  gtk_widget_show_all(dialog);
 
   return;
 }
@@ -603,6 +633,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
 /* function that sets up the rendering options dialog */
 void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
   
+  GtkWidget * dialog;
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
   GtkWidget * label;
@@ -622,19 +653,21 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
   if (ui_render->transfer_function_dialog != NULL)
     return;
   temp_string = g_strdup_printf(_("%s: Transfer Function Dialog"),PACKAGE);
-  ui_render->transfer_function_dialog = 
-    gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
-				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				 NULL);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+					NULL);
   g_free(temp_string);
+  ui_render->transfer_function_dialog = dialog;
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(ui_render->transfer_function_dialog), "delete_event", 
-		   G_CALLBACK(transfer_function_delete_event_cb), ui_render);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(tf_response_cb), ui_render);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(tf_delete_event_cb), ui_render);
 		   
 
   notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render->transfer_function_dialog)->vbox), notebook);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
 
 
   temp_list = ui_render->renderings;
@@ -736,7 +769,7 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
 
 
   /* and show all our widgets */
-  gtk_widget_show_all(ui_render->transfer_function_dialog);
+  gtk_widget_show_all(dialog);
 
   return;
 }

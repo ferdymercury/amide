@@ -167,6 +167,8 @@ AmitkRawData *  amitk_raw_data_read_xml             (gchar * xml_filename,
 						     gpointer update_data);
 amide_data_t    amitk_raw_data_get_value            (const AmitkRawData * rd, 
 						     const AmitkVoxel i);
+gpointer        amitk_raw_data_get_pointer          (const AmitkRawData * rd,
+						     const AmitkVoxel i);
 
 
 AmitkFormat    amitk_raw_format_to_format(AmitkRawFormat raw_format);
@@ -180,6 +182,8 @@ const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format);
 /* external variables */
 extern guint amitk_format_sizes[];
 extern gchar * amitk_format_names[];
+extern amide_data_t amitk_format_max[];
+extern amide_data_t amitk_format_min[];
 extern guint amitk_raw_format_sizes[];
 extern gchar * amitk_raw_format_names[];
 extern gchar * amitk_raw_format_legacy_names[];

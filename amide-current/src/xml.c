@@ -88,7 +88,7 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
 
   gchar * temp_str;
   amide_time_t return_time;
-  gint error;
+  gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -121,7 +121,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   gchar * temp_str;
   gchar ** string_chunks;
-  amide_time_t * return_times;
+  amide_time_t * return_times=NULL;
   gint error;
   guint i;
 
@@ -175,7 +175,7 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 
   gchar * temp_str;
   amide_data_t return_data;
-  gint error;
+  gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -208,7 +208,7 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 
   gchar * temp_str;
   amide_real_t return_data;
-  gint error;
+  gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
   
@@ -256,7 +256,7 @@ gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf)
 
   gchar * temp_str;
   gint return_int;
-  gint error;
+  gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -278,7 +278,7 @@ void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor,
 			       guint64 * location, guint64 * size, gchar **perror_buf) {
 
   gchar * temp_str;
-  gint error;
+  gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -431,19 +431,23 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
   } else { /* flat file format */
 
     /* check for file size problems */
+#ifndef AMIDE_WIN32_HACKS
     if (sizeof(long) < sizeof(guint64))
       if ((location>>32) > 0) {
 	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
 	return NULL;
       }
+#endif
     location_long = location;
 
 
+#ifndef AMIDE_WIN32_HACKS
     if (sizeof(size_t) < sizeof(guint64))
       if ((size>>32) > 0) {
 	amitk_append_str(perror_buf,_("File to large to read on 32bit platform.")); 
 	return NULL;
       }
+#endif
     size_size = size;
 
 

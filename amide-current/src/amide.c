@@ -59,8 +59,17 @@ gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gch
   gchar * temp_str;
   DIR * directory;
   struct dirent * directory_entry;
+  gchar *xifname;
+  gint length;
 
-  if (stat(filename, &file_info) != 0) 
+  /* remove any trailing directory characters */
+  length = strlen(filename);
+  if ((length >= 1) && (strcmp(filename+length-1, G_DIR_SEPARATOR_S) == 0))
+    length--;
+  xifname = g_strndup(filename, length);
+
+
+  if (stat(xifname, &file_info) != 0) 
     return FALSE; /* file doesn't exist */
 
   if (!S_ISDIR(file_info.st_mode)) 
@@ -68,7 +77,7 @@ gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gch
 
 
   /* check for legacy .xif file (< 2.0 version) */
-  temp_str = g_strdup_printf("%s%sStudy.xml", filename, G_DIR_SEPARATOR_S);
+  temp_str = g_strdup_printf("%s%sStudy.xml", xifname, G_DIR_SEPARATOR_S);
   if (stat(temp_str, &file_info) == 0) {
     if (plegacy1 != NULL)  *plegacy1 = TRUE;
     if (pxml_filename != NULL) *pxml_filename = temp_str;
@@ -79,7 +88,7 @@ gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gch
   g_free(temp_str);
 
   /* figure out the name of the study file */
-  directory = opendir(filename);
+  directory = opendir(xifname);
       
   /* currently, only looks at the first study_*.xml file... there should be only one anyway */
   while (((directory_entry = readdir(directory)) != NULL))

@@ -41,6 +41,9 @@ static void          volume_class_init       (AmitkVolumeClass *klass);
 static void          volume_init             (AmitkVolume      *volume);
 static void          volume_corner_changed   (AmitkVolume      *volume,
 					      AmitkPoint       *new_corner);
+static void          volume_scale            (AmitkSpace * space,
+					      AmitkPoint * ref_point,
+					      AmitkPoint * scaling);
 static AmitkObject * volume_copy             (const AmitkObject * object);
 static void          volume_copy_in_place    (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          volume_write_xml        (const AmitkObject *object, 
@@ -50,6 +53,7 @@ static gchar *       volume_read_xml         (AmitkObject       *object,
 					      xmlNodePtr         nodes, 
 					      FILE              *study_file,
 					      gchar             *error_buf);
+
 
 
 static AmitkObjectClass* parent_class;
@@ -88,15 +92,19 @@ static void volume_class_init (AmitkVolumeClass * class) {
 
   //  GObjectClass *gobject_class = G_OBJECT_CLASS (class);
   AmitkObjectClass * object_class = AMITK_OBJECT_CLASS(class);
+  AmitkSpaceClass * space_class = AMITK_SPACE_CLASS(class);
 
   parent_class = g_type_class_peek_parent(class);
   
-  class->volume_corner_changed = volume_corner_changed;
+  space_class->space_scale = volume_scale;
+
 
   object_class->object_copy = volume_copy;
   object_class->object_copy_in_place = volume_copy_in_place;
   object_class->object_write_xml = volume_write_xml;
   object_class->object_read_xml = volume_read_xml;
+  
+  class->volume_corner_changed = volume_corner_changed;
 
   volume_signals[VOLUME_CORNER_CHANGED] =
     g_signal_new ("volume_corner_changed",
@@ -133,6 +141,43 @@ static void volume_corner_changed(AmitkVolume *volume, AmitkPoint * new_corner) 
   volume->valid = TRUE;
 
   return;
+}
+
+
+static void volume_scale(AmitkSpace * space, AmitkPoint * ref_point, AmitkPoint * scaling) {
+
+  AmitkVolume * volume;
+  AmitkPoint new_corner;
+  AmitkPoint shift;
+
+  g_return_if_fail(AMITK_IS_VOLUME(space));
+  volume = AMITK_VOLUME(space);
+
+  /* readjust the far corner */
+  /* note that this is an approximate scaling.  Since we preserve angles,
+     we can't correctly scale ROI's if the ROI is not orthogonal to the
+     space that's initially being scaled.   */
+  new_corner = AMITK_VOLUME_CORNER(volume);
+  new_corner = amitk_space_s2b(AMITK_SPACE(volume), new_corner);
+  shift = point_sub(new_corner, *ref_point);
+  shift = point_mult(*scaling, shift);
+  new_corner = point_add(*ref_point, shift);
+
+
+  /* update the space */
+  AMITK_SPACE_CLASS(parent_class)->space_scale (space, ref_point, scaling);
+
+  /* calculate the new corner */
+  if (AMITK_VOLUME_VALID(volume)) {
+    new_corner = amitk_space_b2s(AMITK_SPACE(volume), new_corner);
+
+    g_return_if_fail(new_corner.x >= 0);
+    g_return_if_fail(new_corner.y >= 0);
+    g_return_if_fail(new_corner.z >= 0);
+
+    amitk_volume_set_corner(volume, new_corner);
+  }
+
 }
 
 static AmitkObject * volume_copy(const AmitkObject * object) {

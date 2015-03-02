@@ -602,6 +602,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   
   /* sanity checks */
   g_return_val_if_fail(AMITK_IS_DATA_SET(slice), NULL);
+  g_return_val_if_fail(AMITK_DATA_SET_SLICE_PARENT(slice) != NULL, NULL);
   
   dim = AMITK_DATA_SET_DIM(slice);
 

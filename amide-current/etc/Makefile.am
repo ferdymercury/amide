@@ -11,10 +11,8 @@ Applications_in_files = amide.desktop.in
 Applications_DATA = $(Applications_in_files:.desktop.in=.desktop)
 @INTLTOOL_DESKTOP_RULE@
 
-CLEANFILES = \
-	$(Applications_DATA)
-
 DISTCLEANFILES = \
+	$(Applications_DATA)
 	*~ 	\
 	amide-*.info \
 	amide-*.iss

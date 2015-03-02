@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.13],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.14],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -81,12 +81,12 @@ dnl record if our version of libgnomecanvas can handle anti-aliasing
 PKG_CHECK_MODULES(dummy, 
 	[libgnomecanvas-2.0 >= 2.2.0], 
 	 enable_antialiasing=yes, enable_antialiasing=no)
-if test $enable_antialiasing = yes; then
-	echo "Compiling with libgnomecanvas antialiasing support"
-else
+dnl if test $enable_antialiasing = yes; then
+dnl	echo "Compiling with libgnomecanvas antialiasing support"
+dnl else
 	echo "Compiling without libgnomecanvas antialiasing support"
 	AC_DEFINE(AMIDE_LIBGNOMECANVAS_OLD, 1, Define to 1 to compile AMIDE without antialiasing)
-fi
+dnl fi
 
 
 
@@ -305,3 +305,6 @@ etc/amide.spec
 po/Makefile.in])
 AC_OUTPUT 
 
+dnl Move the spec file so it won't get eaten by make distclean
+echo "Moving SPEC file to base directory"
+mv etc/amide.spec ./

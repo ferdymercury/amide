@@ -88,7 +88,7 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar *
   gchar * temp_string;
   AmitkVoxel return_vp;
   gint x,y,z;
-  gint error;
+  gint error=0;
 
   temp_string = xml_get_string(nodes, descriptor);
 
@@ -344,7 +344,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
 		amitk_raw_data_get_value(old_scaling, i);
       
-      amitk_object_unref(old_scaling);
+      g_object_unref(old_scaling);
     }
 
     /* parameters that aren't in older versions and default values aren't good enough*/

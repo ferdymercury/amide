@@ -27,6 +27,11 @@
 
 
 #include "amide_config.h"
+
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
+
 #include "amitk_marshal.h"
 #include "amitk_object_dialog.h"
 #include "amitk_study.h"
@@ -34,6 +39,7 @@
 #include "amitk_threshold.h"
 #include "ui_common.h"
 #include "pixmaps.h"
+
 
 #define AMITK_RESPONSE_REVERT 2
 #define DIMENSION_STEP 0.2
@@ -194,6 +200,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
   gtk_dialog_add_buttons(GTK_DIALOG(dialog),
 			 GTK_STOCK_REVERT_TO_SAVED, AMITK_RESPONSE_REVERT,
+			 GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 			 GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE, 
 			 NULL);
 
@@ -1010,7 +1017,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       
       entry = gtk_entry_new();
       gtk_entry_set_text(GTK_ENTRY(entry), 
-			 amitk_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
+			 amitk_format_names[AMITK_DATA_SET_FORMAT(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
 		       1,3, table_row, table_row+1, 
@@ -1032,18 +1039,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
-      switch(AMITK_DATA_SET_SCALING_TYPE(object)) {
-      case AMITK_SCALING_TYPE_1D:
-	gtk_entry_set_text(GTK_ENTRY(entry), _("Per Frame Scale Factor"));
-	break;
-      case AMITK_SCALING_TYPE_2D:
-	gtk_entry_set_text(GTK_ENTRY(entry), _("Per Plane Scale Factor"));
-	break;
-      default:
-      case AMITK_SCALING_TYPE_0D:
-	gtk_entry_set_text(GTK_ENTRY(entry), _("Single Scale Factor"));
-	break;
-      }
+      gtk_entry_set_text(GTK_ENTRY(entry), 
+			 amitk_scaling_menu_names[AMITK_DATA_SET_SCALING_TYPE(object)]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
 		       1,3, table_row, table_row+1, 
@@ -1507,7 +1504,7 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
     if (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
       AmitkPoint new_voxel_size = AMITK_ROI_VOXEL_SIZE(dialog->object);
       new_voxel_size.z = new_corner.z;
-      amitk_roi_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
+      amitk_roi_isocontour_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
     }
   }
 
@@ -1783,6 +1780,7 @@ static void dialog_change_cylinder_unit_cb(GtkWidget * widget, gpointer data) {
 static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer data) {
 
   gboolean return_val;
+  GError *err=NULL;
 
   g_return_if_fail(AMITK_IS_OBJECT_DIALOG(dialog));
 
@@ -1793,6 +1791,26 @@ static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer dat
 			       AMITK_OBJECT_DIALOG(dialog)->original_object);
     dialog_update_entries(AMITK_OBJECT_DIALOG(dialog));
   break;
+
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (AMITK_IS_DATA_SET(AMITK_OBJECT_DIALOG(dialog)->object))
+      gnome_help_display ("amide.xml","data-set-dialog", &err);
+    else if (AMITK_IS_ROI(AMITK_OBJECT_DIALOG(dialog)->object))
+      gnome_help_display ("amide.xml","roi-dialog", &err);
+    else if (AMITK_IS_FIDUCIAL_MARK(AMITK_OBJECT_DIALOG(dialog)->object))
+      gnome_help_display ("amide.xml","fiducial-marker-dialog", &err);
+    else if (AMITK_IS_STUDY(AMITK_OBJECT_DIALOG(dialog)->object))
+      gnome_help_display ("amide.xml","study-dialog", &err);
+    if (err != NULL) {
+      g_warning("couldn't open help file, error: %s", err->message);
+      g_error_free(err);
+    }
+
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
+    break;
 
   case GTK_RESPONSE_CLOSE:
     g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
@@ -1805,40 +1823,6 @@ static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer dat
 
   return;
 }
-
-
-/* callback for the help button */
-/*
-void dialog_help_cb(GnomePropertyBox *dialog, gint page_number, gpointer data) {
-
-  GError *err=NULL;
-
-  switch (page_number) {
-  case 0:
-    gnome_help_display (PACKAGE,"basics.html#ROI-DIALOG-HELP-BASIC", &err);
-    break;
-  case 1:
-    gnome_help_display (PACKAGE,"basics.html#ROI-DIALOG-HELP-CENTER", &err);
-    break;
-  case 2:
-    gnome_help_display (PACKAGE,"basics.html#ROI-DIALOG-HELP-DIMENSIONS", &err);
-    break;
-  case 3:
-    gnome_help_display (PACKAGE,"basics.html#ROI-DIALOG-HELP-ROTATE", &err);
-    break;
-  default:
-    gnome_help_display (PACKAGE,"basics.html#ROI-DIALOG-HELP", &err);
-    break;
-  }
-
-  if (err != NULL) {
-    g_warning("couldn't open help file, error: %s", err->message);
-    g_error_free(err);
-  }
-
-  return;
-}
-*/
 
 
 
@@ -1865,7 +1849,9 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
 			   G_CALLBACK(dialog_update_entries), dialog);
 
   if (AMITK_IS_STUDY(object)) {
-    g_signal_connect_swapped(G_OBJECT(object), "study_changed", 
+    g_signal_connect_swapped(G_OBJECT(object), "voxel_dim_changed", 
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "view_center_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
   }
 

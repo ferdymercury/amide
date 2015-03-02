@@ -30,6 +30,9 @@
 
 #include <sys/stat.h>
 #include <string.h>
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 #include "ui_common.h"
 #include "ui_render_movie.h"
 #include "amitk_type_builtins.h"
@@ -274,6 +277,16 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
     break;
 
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (!gnome_help_display("amide.xml", "rendering-movie-dialog", NULL)) 
+      g_warning("Failed to load help");
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
+    break;
+
+
   case GTK_RESPONSE_CANCEL:
     g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
     if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
@@ -286,29 +299,6 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   return;
 }
 
-/* callback for the help button */
-/*
-static void help_cb(GnomePropertyBox *rendering_dialog, gint page_number, gpointer data) {
-
-  GError *err=NULL;
-
-  switch (page_number) {
-  case 0:
-    gnome_help_display (PACKAGE,"rendering-dialog-help.html#RENDERING-MOVIE-DIALOG-HELP-MOVIE", &err);
-    break;
-  default:
-    gnome_help_display (PACKAGE, "rendering-dialog-help.html#RENDERING-MOVIE-DIALOG-HELP", &err);
-    break;
-  }
-
-  if (err != NULL) {
-    g_warning("couldn't open help file, error: %s", err->message);
-    g_error_free(err);
-  }
-
-  return;
-}
-*/
 
 
 /* function called to destroy the  dialog */
@@ -597,8 +587,9 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   temp_string = g_strdup_printf(_("%s: Rendering Movie Generation Dialog"),PACKAGE);
   ui_render_movie->dialog = 
     gtk_dialog_new_with_buttons(temp_string,  GTK_WINDOW(ui_render->app),
-				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+				GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+				GTK_STOCK_HELP, GTK_RESPONSE_HELP,				
 				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 				NULL);
   g_free(temp_string);

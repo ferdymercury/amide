@@ -173,9 +173,9 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->optimize_rendering = optimize_rendering;
 
   /* figure out the size of our context */
-  new_rendering->dim.x = ceil(AMITK_VOLUME_X_CORNER(rendering_volume)/voxel_size);
-  new_rendering->dim.y = ceil(AMITK_VOLUME_Y_CORNER(rendering_volume)/voxel_size);
-  new_rendering->dim.z = ceil(AMITK_VOLUME_Z_CORNER(rendering_volume)/voxel_size);
+  new_rendering->dim.x = ceil((AMITK_VOLUME_X_CORNER(rendering_volume)+EPSILON)/voxel_size);
+  new_rendering->dim.y = ceil((AMITK_VOLUME_Y_CORNER(rendering_volume)+EPSILON)/voxel_size);
+  new_rendering->dim.z = ceil((AMITK_VOLUME_Z_CORNER(rendering_volume)+EPSILON)/voxel_size);
   new_rendering->voxel_size = voxel_size;
 
   /* adjust the thresholding if needed */
@@ -445,8 +445,9 @@ gboolean rendering_load_object(rendering_t * rendering,
 						  intersection_corners)) {
       end = zero_voxel;
     } else {
+      //      intersection_corners[1] = point_cmult(1.0-EPSILON, intersection_corners[1]);
       POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, start);
-      POINT_TO_VOXEL(intersection_corners[1], voxel_size, 0, end);
+      POINT_TO_VOXEL(intersection_corners[1], voxel_size, 1, end);
     }
     
     g_return_val_if_fail(end.x < rendering->dim.x, FALSE);

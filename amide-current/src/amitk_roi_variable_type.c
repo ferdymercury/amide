@@ -127,9 +127,9 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
   view_point.y = slice_corners[0].y+pixel_dim/2.0;
 
   canvas_dim.t = 0;
-  canvas_dim.z = ceil(canvas_corner.z/AMITK_VOLUME_Z_CORNER(canvas_slice));
-  canvas_dim.y = ceil(canvas_corner.y/pixel_dim);
-  canvas_dim.x = ceil(canvas_corner.x/pixel_dim);
+  canvas_dim.z = ceil((canvas_corner.z)/AMITK_VOLUME_Z_CORNER(canvas_slice));
+  canvas_dim.y = ceil((canvas_corner.y)/pixel_dim);
+  canvas_dim.x = ceil((canvas_corner.x)/pixel_dim);
   g_return_val_if_fail(canvas_dim.z == 1, NULL);
 
   for (i.y=0; i.y < canvas_dim.y ; i.y++) {
@@ -534,7 +534,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   
   /* transfer the subset of the data set that contains positive information */
   if (roi->isocontour != NULL)
-    amitk_object_unref(roi->isocontour);
+    g_object_unref(roi->isocontour);
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
   roi->isocontour = amitk_raw_data_UBYTE_2D_init(0, max_voxel.y-min_voxel.y+1, max_voxel.x-min_voxel.x+1);
 #elif defined(ROI_TYPE_ISOCONTOUR_3D)
@@ -556,7 +556,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 #endif
       }
 
-  amitk_object_unref(temp_rd);
+  g_object_unref(temp_rd);
 
   /* mark the edges as such */
   i_voxel.t = 0;
@@ -575,8 +575,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   temp_point = amitk_space_s2b(AMITK_SPACE(ds), temp_point);
   amitk_space_set_offset(AMITK_SPACE(roi), temp_point);
 
-  POINT_MULT(roi->isocontour->dim, roi->voxel_size, temp_point);
-  amitk_volume_set_corner(AMITK_VOLUME(roi), temp_point);
+  amitk_roi_isocontour_calc_far_corner(roi);
 
   return;
 
@@ -712,6 +711,14 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   dim.y += 1;
   dim.z += 1;
 
+  /* check all dimensions */
+  if (start.x < 0) start.x = 0;
+  if (start.y < 0) start.y = 0;
+  if (start.z < 0) start.z = 0;
+  if (dim.x+start.x > ds_dim.x) dim.x = ds_dim.x-start.x;
+  if (dim.y+start.y > ds_dim.y) dim.y = ds_dim.y-start.y;
+  if (dim.z+start.z > ds_dim.z) dim.z = ds_dim.z-start.z;
+
   /* start and dim specify (in the data set's voxel space) the voxels in 
      the volume we should be iterating over */
 
@@ -825,7 +832,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	    (*calculation)(j, value, 1.0-voxel_fraction, data);
 	  }
 
-	} else { /* this voxel is outside the ROI, do nothing*/
+	} else { /* this voxel is outside the ROI */
 	  if (inverse) {
 	    value = amitk_data_set_get_value(ds,j);
 	    (*calculation)(j, value, 1.0, data);
@@ -842,8 +849,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   } /* i.z loop */
 
   /* trash collection */
-  amitk_object_unref(curr_plane_in);
-  amitk_object_unref(next_plane_in);
+  g_object_unref(curr_plane_in);
+  g_object_unref(next_plane_in);
 
 
   return;

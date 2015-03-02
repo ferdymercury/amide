@@ -57,6 +57,28 @@ gchar * amitk_format_names[] = {
   N_("Float (32 bit)"), 
   N_("Double (64 bit)")
 };
+
+amide_data_t amitk_format_max[] = {
+  255.0,
+  127.0,
+  G_MAXUSHORT,
+  G_MAXSHORT,
+  G_MAXUINT,
+  G_MAXINT,
+  G_MAXFLOAT,
+  G_MAXDOUBLE
+};
+
+amide_data_t amitk_format_min[] = {
+  0.0,
+  -128.0,
+  0.0,
+  G_MINSHORT,
+  0.0,
+  G_MININT,
+  -G_MAXFLOAT,
+  -G_MAXDOUBLE
+};
  
 
 guint amitk_raw_format_sizes[] = {
@@ -225,7 +247,7 @@ AmitkRawData* amitk_raw_data_new_with_data(AmitkFormat format, AmitkVoxel dim) {
   /* allocate the space for the data */
   raw_data->data = amitk_raw_data_get_data_mem(raw_data);
   if (raw_data->data == NULL) {
-    amitk_object_unref(raw_data);
+    g_object_unref(raw_data);
     return NULL;
   }
 
@@ -666,7 +688,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
  error_condition:
 
   if (raw_data != NULL)
-    amitk_object_unref(raw_data);
+    g_object_unref(raw_data);
   raw_data = NULL;
 
 
@@ -848,12 +870,14 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
   } else {
     xml_get_location_and_size(nodes, "raw_data_location_and_size", &offset, &dummy, perror_buf);
 
+#ifndef AMIDE_WIN32_HACKS
     /* check for file size problems */
     if (sizeof(long) < sizeof(guint64))
       if ((offset>>32) > 0) {
 	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
 	return NULL;
       }
+#endif
     offset_long = offset;
   }
 
@@ -899,6 +923,34 @@ amide_data_t amitk_raw_data_get_value(const AmitkRawData * rd, const AmitkVoxel 
   }
 }
 
+gpointer amitk_raw_data_get_pointer(const AmitkRawData * rd, const AmitkVoxel i) {
+
+  g_return_val_if_fail(AMITK_IS_RAW_DATA(rd), NULL);
+  g_return_val_if_fail(amitk_raw_data_includes_voxel(rd, i), NULL);
+
+  /* hand everything off to the data type specific function */
+  switch(rd->format) {
+  case AMITK_FORMAT_UBYTE:
+    return AMITK_RAW_DATA_UBYTE_POINTER(rd, i);
+  case AMITK_FORMAT_SBYTE:
+    return AMITK_RAW_DATA_SBYTE_POINTER(rd, i);
+  case AMITK_FORMAT_USHORT:
+    return AMITK_RAW_DATA_USHORT_POINTER(rd, i);
+  case AMITK_FORMAT_SSHORT:
+    return AMITK_RAW_DATA_SSHORT_POINTER(rd, i);
+  case AMITK_FORMAT_UINT:
+    return AMITK_RAW_DATA_UINT_POINTER(rd, i);
+  case AMITK_FORMAT_SINT:
+    return AMITK_RAW_DATA_SINT_POINTER(rd, i);
+  case AMITK_FORMAT_FLOAT:
+    return AMITK_RAW_DATA_FLOAT_POINTER(rd, i);
+  case AMITK_FORMAT_DOUBLE:
+    return AMITK_RAW_DATA_DOUBLE_POINTER(rd, i);
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    return NULL;
+  }
+}
 
 
 

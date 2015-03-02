@@ -212,10 +212,10 @@ static gchar * set_filename_common(gchar * suggested_name) {
 
   if (suggested_name != NULL) {
     base_string = g_path_get_basename(suggested_name);
-    return_string = g_strdup_printf("%s/%s", dir_string, base_string);
+    return_string = g_strdup_printf("%s%s%s", dir_string, G_DIR_SEPARATOR_S, base_string);
     g_free(base_string);
   } else {
-    return_string = g_strdup_printf("%s/",dir_string);
+    return_string = g_strdup_printf("%s%s",dir_string, G_DIR_SEPARATOR_S);
   }
 
   if (dir_string != NULL) g_free(dir_string);

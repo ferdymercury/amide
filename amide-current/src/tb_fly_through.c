@@ -106,7 +106,6 @@ static void dialog_update_position_entry(tb_fly_through_t * tb_fly_through);
 static void dialog_set_sensitive(tb_fly_through_t * tb_fly_through, gboolean sensitive);
 static void dialog_update_entries(tb_fly_through_t * tb_fly_through);
 static tb_fly_through_t * tb_fly_through_unref(tb_fly_through_t * tb_fly_through);
-static tb_fly_through_t * fly_through_ref(tb_fly_through_t * fly_through);
 static tb_fly_through_t * tb_fly_through_init(void);
 
 
@@ -568,14 +567,14 @@ static tb_fly_through_t * tb_fly_through_unref(tb_fly_through_t * tb_fly_through
 }
 
 /* adds one to the reference count  */
-static tb_fly_through_t * fly_through_ref(tb_fly_through_t * fly_through) {
-
-  g_return_val_if_fail(fly_through != NULL, NULL);
-
-  fly_through->reference_count++;
-
-  return fly_through;
-}
+//static tb_fly_through_t * fly_through_ref(tb_fly_through_t * fly_through) {
+//
+//  g_return_val_if_fail(fly_through != NULL, NULL);
+//
+//  fly_through->reference_count++;
+//
+//  return fly_through;
+//}
 
 /* allocate and initialize a tb_fly_through data structure */
 static tb_fly_through_t * tb_fly_through_init(void) {

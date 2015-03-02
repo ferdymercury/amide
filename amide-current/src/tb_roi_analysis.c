@@ -302,6 +302,15 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     export_data(roi_analyses);
     break;
 
+  case GTK_RESPONSE_HELP:
+#ifndef AMIDE_WIN32_HACKS
+    if (!gnome_help_display("amide.xml", "roi-terms", NULL)) 
+      g_warning("Failed to load help");
+#else
+    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
+    break;
+
   case GTK_RESPONSE_CLOSE:
     g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
     if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
@@ -596,6 +605,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
 				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
+				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
 				       NULL);
   g_free(title);

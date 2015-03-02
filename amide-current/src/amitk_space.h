@@ -80,6 +80,9 @@ struct _AmitkSpaceClass
   void (* space_transform_axes) (AmitkSpace * space,
 				 AmitkAxes    transform_axes,
 				 AmitkPoint * center_of_rotation);
+  void (* space_scale)          (AmitkSpace * space,
+				 AmitkPoint * ref_point,
+				 AmitkPoint * scaling);
   void (* space_changed)        (AmitkSpace * space);
 
 };
@@ -108,6 +111,9 @@ void            amitk_space_transform               (AmitkSpace * space,
 void            amitk_space_transform_axes          (AmitkSpace * space, 
 						     const AmitkAxes transform_axes,
 						     AmitkPoint center_of_rotation);
+void            amitk_space_scale                   (AmitkSpace * space, 
+						     AmitkPoint ref_point, 
+						     AmitkPoint scaling);
 AmitkPoint      amitk_space_get_axis                (const AmitkSpace * space, 
 						     const AmitkAxis which_axis);
 void            amitk_space_get_enclosing_corners   (const AmitkSpace * in_space, 

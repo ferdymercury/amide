@@ -2084,7 +2084,8 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
 			    "fill_color_rgba", amitk_color_table_rgba_to_uint32(color),
 			    "width_pixels", 1, NULL);
     else 
-      gnome_canvas_item_set(canvas->target[i],"points",points[i], NULL);
+      gnome_canvas_item_set(canvas->target[i],"points",points[i], 
+			    "fill_color_rgba", amitk_color_table_rgba_to_uint32(color), NULL);
     gnome_canvas_item_show(canvas->target[i]);
     gnome_canvas_points_unref(points[i]);
   }
@@ -2756,10 +2757,12 @@ void amitk_canvas_set_active_object(AmitkCanvas * canvas,
 
   if (canvas->active_object != active_object) {
     canvas->active_object = active_object;
-    if (AMITK_STUDY_FUSE_TYPE(canvas->study) == AMITK_FUSE_TYPE_BLEND) 
+    if (AMITK_STUDY_FUSE_TYPE(canvas->study) == AMITK_FUSE_TYPE_BLEND) {
       canvas_add_update(canvas, UPDATE_OBJECTS);
-    else /* AMITK_FUSE_TYPE_OVERLAY */
+    } else /* AMITK_FUSE_TYPE_OVERLAY */
       canvas_add_update(canvas, UPDATE_DATA_SETS);
+
+    canvas_add_update(canvas, UPDATE_TARGET);
   }
 
   return;

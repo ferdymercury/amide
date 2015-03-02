@@ -32,6 +32,20 @@
 #include "image.h"
 #include <gdk/gdkkeysyms.h>
 
+
+
+#if 0
+#define AMITK_TREE_DND_OBJECT_TYPE 	         "pointer/object"
+
+enum {
+	AMITK_TREE_DND_OBJECT
+};
+
+static const GtkTargetEntry drag_types[] = {
+  { AMITK_TREE_DND_OBJECT_TYPE, 0, AMITK_TREE_DND_OBJECT }
+};
+#endif
+
 enum {
   HELP_EVENT,
   ACTIVATE_OBJECT,
@@ -72,9 +86,47 @@ static void tree_emit_help_signal(AmitkTree * tree);
 static gboolean tree_motion_notify_event(GtkWidget *widget, GdkEventMotion *event);
 static gboolean tree_enter_notify_event(GtkWidget * tree,
 					GdkEventCrossing *event);
-//static void tree_row_inserted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1, 
-//				 GtkTreeIter *arg2, gpointer amitk_tree);
-//static void tree_row_deleted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1,gpointer amitk_tree);
+
+#if 0
+static void tree_drop_cb(GtkWidget * menu, gpointer context);
+
+/* source drag-n-drop */
+static void tree_drag_begin       (GtkWidget        *widget,
+				   GdkDragContext   *context);
+static void tree_drag_end         (GtkWidget        *widget,
+				   GdkDragContext   *context);
+static void tree_drag_data_get    (GtkWidget        *widget,
+				   GdkDragContext   *context,
+				   GtkSelectionData *selection_data,
+				   guint             info,
+				   guint             time);
+static void tree_drag_data_delete (GtkWidget        *widget,
+				   GdkDragContext   *context);
+
+
+/* target drag-n-drop */
+static void     tree_drag_leave         (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 guint             time);
+static gboolean tree_drag_motion        (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 guint             time);
+static gboolean tree_drag_drop          (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 guint             time);
+static void     tree_drag_data_received (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 GtkSelectionData *selection_data,
+					 guint             info,
+					 guint             time);
+#endif
+
 static void tree_object_update_cb(AmitkObject * object, gpointer tree);
 static void tree_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
 static void tree_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
@@ -134,6 +186,17 @@ static void tree_class_init (AmitkTreeClass *klass)
   widget_class->motion_notify_event = tree_motion_notify_event;
   widget_class->enter_notify_event = tree_enter_notify_event;
 
+#if 0
+  widget_class->drag_begin = tree_drag_begin;
+  widget_class->drag_end = tree_drag_end;
+  widget_class->drag_data_get = tree_drag_data_get;
+  widget_class->drag_data_delete = tree_drag_data_delete;
+  widget_class->drag_leave = tree_drag_leave; 
+  widget_class->drag_motion = tree_drag_motion;
+  widget_class->drag_drop = tree_drag_drop;
+  widget_class->drag_data_received = tree_drag_data_received;
+#endif
+
   tree_signals[HELP_EVENT] =
     g_signal_new ("help_event",
 		  G_TYPE_FROM_CLASS(klass),
@@ -188,11 +251,25 @@ static void tree_init (AmitkTree * tree)
 {
   tree->study = NULL;
   tree->active_object = NULL;
-  tree->mouse_x = 0;
-  tree->mouse_y = 0;
+  tree->mouse_x = -1;
+  tree->mouse_y = -1;
   tree->current_path = NULL;
   tree->prev_view_mode = AMITK_VIEW_MODE_SINGLE;
+#if 0
+  tree->press_x = -1;
+  tree->press_y = -1;
+  tree->drag_begin_possible = FALSE;
+  tree->src_object = NULL;
+  tree->dest_object = NULL;
+  tree->drag_list = gtk_target_list_new(drag_types, G_N_ELEMENTS(drag_types));
 
+  /* setup ability to do drag-n-drop */
+  gtk_drag_dest_set (GTK_WIDGET (tree),
+		     GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT,
+    		     drag_types, G_N_ELEMENTS(drag_types),
+		     GDK_ACTION_ASK);
+#endif
+  
 }
 
 static void tree_destroy (GtkObject * object) {
@@ -217,6 +294,13 @@ static void tree_destroy (GtkObject * object) {
     tree_remove_object(tree, AMITK_OBJECT(tree->study));
     tree->study = NULL;
   }
+
+#if 0
+  if (tree->drag_list != NULL) {
+    gtk_target_list_unref (tree->drag_list);
+    tree->drag_list = NULL;
+  }
+#endif
 
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
     (* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
@@ -284,7 +368,7 @@ static void tree_popup_roi_menu(AmitkTree * tree, AmitkObject * parent_object,
   return;
 }
 
-static gboolean tree_button_press_event (GtkWidget      *tree,
+static gboolean tree_button_press_event (GtkWidget      *widget,
 					 GdkEventButton *event) {
   
   gint cell_x, cell_y;
@@ -292,12 +376,24 @@ static gboolean tree_button_press_event (GtkWidget      *tree,
   gboolean return_value;
   GtkTreeSelection *selection;
   gboolean valid_row;
+  AmitkTree * tree;
 
-  g_return_val_if_fail (AMITK_IS_TREE (tree), FALSE);
+  g_return_val_if_fail (AMITK_IS_TREE (widget), FALSE);
+  tree = AMITK_TREE(widget);
   g_return_val_if_fail (event != NULL, FALSE);
 
+#if 0
+  g_print("button press\n");
+
+  if (event->button == 1) {
+    tree->drag_begin_possible = TRUE;
+    tree->press_x = event->x;
+    tree->press_y = event->y;
+  }
+#endif
+
   valid_row = gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree), event->x, event->y, 
-					    &(AMITK_TREE(tree)->current_path), 
+					    &(tree->current_path), 
 					    &column, &cell_x, &cell_y);
 
   /* making the selection mode none reduces some of the flickering caused by us
@@ -306,26 +402,38 @@ static gboolean tree_button_press_event (GtkWidget      *tree,
   gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
 
   /* run the tree widget's button press event first */
-  return_value = GTK_WIDGET_CLASS (parent_class)->button_press_event (tree, event);
+  return_value = GTK_WIDGET_CLASS (parent_class)->button_press_event (widget, event);
 
   /* reset what's the active mark */
   gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
-  amitk_tree_set_active_object(AMITK_TREE(tree), AMITK_TREE(tree)->active_object);
+  amitk_tree_set_active_object(tree, tree->active_object);
 
   if ((event->button == 3) && !valid_row)
-    tree_popup_roi_menu(AMITK_TREE(tree), NULL, event->button, event->time);
+    tree_popup_roi_menu(tree, NULL, event->button, event->time);
 
   return return_value;
 }
 
-static gboolean tree_button_release_event (GtkWidget      *tree,
+static gboolean tree_button_release_event (GtkWidget      *widget,
 					   GdkEventButton *event) {
   GtkTreePath * path=NULL;
   gint cell_x, cell_y;
   GtkTreeViewColumn * column;
+  AmitkTree * tree;
   
-  g_return_val_if_fail (AMITK_IS_TREE (tree), FALSE);
+  g_return_val_if_fail (AMITK_IS_TREE (widget), FALSE);
+  tree = AMITK_TREE(widget);
   g_return_val_if_fail (event != NULL, FALSE);
+
+#if 0
+  g_print("release button\n");
+  tree->drag_begin_possible = FALSE;
+  //  gtk_drag_finish (tree->drag_context, 
+  //		 gboolean        success,
+  //		 gboolean        del,
+  //		 guint32         time)
+  //  gtk_grab_remove (widget);
+#endif
 
   /* figure out if this click was on an item in the tree */
   if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree), event->x, event->y, 
@@ -335,7 +443,7 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
        also check that we're doing a button release on the object we started
        the button press with */
     if (column != gtk_tree_view_get_expander_column(GTK_TREE_VIEW(tree)) &&
-	gtk_tree_path_compare(path, AMITK_TREE(tree)->current_path)==0) {
+	gtk_tree_path_compare(path, tree->current_path)==0) {
       
       GtkTreeModel * model;
       GtkTreeIter iter;
@@ -364,7 +472,7 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
 
       for (i_view_mode = AMITK_VIEW_MODE_NUM-1; i_view_mode > 0; i_view_mode--) {
 	visible_at_all = visible_at_all || visible[i_view_mode];
-	if (column == AMITK_TREE(tree)->select_column[i_view_mode]) {
+	if (column == tree->select_column[i_view_mode]) {
 	  view_mode = i_view_mode;
 	}
       }
@@ -421,18 +529,18 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
 	g_signal_emit(G_OBJECT(tree),  tree_signals[ADD_OBJECT], 0, object, add_type, 0);
       
       if ((add_object) && (add_type==AMITK_OBJECT_TYPE_ROI))
-	tree_popup_roi_menu(AMITK_TREE(tree), object, event->button, event->time);
+	tree_popup_roi_menu(tree, object, event->button, event->time);
     }
 
     gtk_tree_path_free(path);
   }
 
-  if (AMITK_TREE(tree)->current_path != NULL) {
-    gtk_tree_path_free(AMITK_TREE(tree)->current_path);
-    AMITK_TREE(tree)->current_path = NULL;
+  if (tree->current_path != NULL) {
+    gtk_tree_path_free(tree->current_path);
+    tree->current_path = NULL;
   }
 
-  return GTK_WIDGET_CLASS (parent_class)->button_release_event (tree, event);
+  return GTK_WIDGET_CLASS (parent_class)->button_release_event (widget, event);
   
 }
 
@@ -441,6 +549,10 @@ static gboolean tree_key_press_event(GtkWidget * tree,
 
   GtkTreePath * path;
   gint cell_x, cell_y;
+  GtkTreeModel * model;
+  GtkTreeIter iter;
+  AmitkObject * object;
+      
 
   g_return_val_if_fail(AMITK_IS_TREE(tree), FALSE);
 
@@ -449,10 +561,7 @@ static gboolean tree_key_press_event(GtkWidget * tree,
 				      AMITK_TREE(tree)->mouse_x, 
 				      AMITK_TREE(tree)->mouse_y, 
 				      &path, NULL, &cell_x, &cell_y)) {
-      GtkTreeModel * model;
-      GtkTreeIter iter;
-      AmitkObject * object;
-      
+
       model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
       gtk_tree_model_get_iter(model, &iter, path);
       gtk_tree_path_free(path);
@@ -472,12 +581,13 @@ static void tree_emit_help_signal(AmitkTree * tree) {
   GtkTreePath * path=NULL;
   gint cell_x, cell_y;
   AmitkHelpInfo help_type;
+  GtkTreeModel * model;
+  GtkTreeIter iter;
+  AmitkObject * object;
+
 
   if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree), tree->mouse_x, tree->mouse_y,
 				    &path, NULL, &cell_x, &cell_y)) {
-    GtkTreeModel * model;
-    GtkTreeIter iter;
-    AmitkObject * object;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
     gtk_tree_model_get_iter(model, &iter, path);
@@ -507,22 +617,73 @@ static void tree_emit_help_signal(AmitkTree * tree) {
 
 
 
-/* using motion_notify is inefficient... yes, but the only way I 
-   could figure out how to get context specific help to flash up, 
-   plus I need the mouse position for the key_press event function to work*/
-static gboolean tree_motion_notify_event(GtkWidget *tree, GdkEventMotion *event) {
+/* we have to track motion notify for several reasons:
+   1. know which entry we're on for button_press events
+   2. context sensitive help
+   3. are we initiating a drag?
+*/
+static gboolean tree_motion_notify_event(GtkWidget *widget, GdkEventMotion *event) {
+
+  AmitkTree * tree;
+#if 0
+  GdkDragContext *context;
+  GtkTreePath * path=NULL;
+  GtkTreeIter iter;
+  GdkPixbuf * pixbuf;
+  AmitkObject * object;
+  gint cell_x, cell_y;
+  GtkTreeModel * model;
+#endif
+
+  g_return_val_if_fail(AMITK_IS_TREE(widget), FALSE);
+  tree = AMITK_TREE(widget);
+
+  tree->mouse_x = event->x;
+  tree->mouse_y = event->y;
+  tree_emit_help_signal(tree);
+
+  /* see if we can start a drag */
+#if 0
+  if (tree->drag_begin_possible) {
+
+    /* see if we've moved the mouse enough */
+    if (gtk_drag_check_threshold(widget, tree->press_x, tree->press_y,
+				 event->x, event->y)) {
+      tree->drag_begin_possible = FALSE;
+
+      /* figure out which object we're manipulating */
+      if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree), 
+					tree->mouse_x, tree->mouse_y,
+					&path, NULL, &cell_x, &cell_y)) {
+
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_path_free(path);
+	gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, -1);
+	g_return_val_if_fail(AMITK_IS_OBJECT(object), FALSE);
 
 
-  g_return_val_if_fail(AMITK_IS_TREE(tree), FALSE);
-
-  AMITK_TREE(tree)->mouse_x = event->x;
-  AMITK_TREE(tree)->mouse_y = event->y;
-  tree_emit_help_signal(AMITK_TREE(tree));
+	/* if object is appropriate, start dragging */
+	if (!AMITK_IS_STUDY(object)) {
+	  tree->src_object = object;
+	  g_print("start drag\n");
+	  context = gtk_drag_begin(widget, tree->drag_list, 
+				   GDK_ACTION_ASK, 1, (GdkEvent*)event);
+	  
+	  pixbuf = image_get_object_pixbuf(object);
+	  gtk_drag_set_icon_pixbuf(context, pixbuf, -10,-10);
+	  g_object_unref(pixbuf);
+	}
+      }
+    }
+  }
+#endif
 
   /* pass the signal on */
-  return GTK_WIDGET_CLASS (parent_class)->motion_notify_event (tree, event);
-
+  return GTK_WIDGET_CLASS (parent_class)->motion_notify_event (widget, event);
 }
+
+
 
 static gboolean tree_enter_notify_event(GtkWidget * tree,
 					GdkEventCrossing *event) {
@@ -554,29 +715,150 @@ static gboolean tree_enter_notify_event(GtkWidget * tree,
 }
 
 
-//static void tree_row_inserted_cb(GtkTreeModel *treemodel,
-//				 GtkTreePath *arg1,
-//				 GtkTreeIter *arg2,
-//				 gpointer data) {
-//  AmitkTree * tree = data;
-//  
-//  g_return_if_fail(AMITK_IS_TREE(tree));
-//  g_print("inserted\n");
-//
-//  return;
-//}
+#if 0
+static void tree_drop_cb(GtkWidget * menu, gpointer data) {
 
-//static void tree_row_deleted_cb(GtkTreeModel *treemodel,
-//				 GtkTreePath *arg1,
-//				 gpointer data) {
-//  AmitkTree * tree = data;
-//  
-//  g_return_if_fail(AMITK_IS_TREE(tree));
-//  g_print("deleted\n");
-//
-//  return;
-//}
+  GdkDragContext * context =data;
+  AmitkTree * tree;
+  gboolean move;
 
+  move = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menu), "move"));
+  tree = g_object_get_data(G_OBJECT(menu), "tree");
+
+  return;
+}
+
+static void tree_drag_begin (GtkWidget *widget, GdkDragContext *context)
+{
+  g_print("drag begin\n");
+  /* figure out what we're suppose to be dragging */
+}
+
+static void tree_drag_end         (GtkWidget        *widget,
+				   GdkDragContext   *context) {
+  g_print("drag end\n");
+}
+static void tree_drag_data_get    (GtkWidget        *widget,
+				   GdkDragContext   *context,
+				   GtkSelectionData *selection_data,
+				   guint             info,
+				   guint             time) {
+
+  g_print("drag data get from %s\n", AMITK_OBJECT_NAME(AMITK_TREE(widget)->study));
+
+  gtk_selection_data_set_text (selection_data, "blah blah", -1);
+      
+  /* record what we're dragging */
+}
+
+static void tree_drag_data_delete (GtkWidget        *widget,
+				   GdkDragContext   *context) {
+  g_print("drag data delete\n");
+}
+
+
+static void     tree_drag_leave         (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 guint             time) {
+
+  g_print("target leave\n");
+
+  /* pass the signal on */
+}
+
+static gboolean tree_drag_motion        (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 guint             time) {
+
+  g_print("target motion %d %d\n", x, y);
+  //  gdk_drag_status (context, 0, time);
+  // gtk_drag_finish (context, FALSE, FALSE, time);
+
+  //  valid_row = gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree), event->x, event->y, 
+  //					    &(AMITK_TREE(tree)->current_path), 
+  //					    &column, &cell_x, &cell_y);
+
+
+  return TRUE;
+}
+
+static gboolean tree_drag_drop          (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 guint             time) {
+
+
+  //  GtkWidget * menu;
+  //  GtkWidget * menuitem;
+  GdkAtom target = GDK_NONE;
+
+  g_print("drop on %d %d %s\n", x, y,  AMITK_OBJECT_NAME(AMITK_TREE(widget)->study));
+  /* check if drop is valid */
+
+  /* record which object we're moving/copying, and to where */
+  
+  /* see if we want to copy or move */
+  //  menu = gtk_menu_new();
+
+  //  menuitem = gtk_menu_item_new_with_label("Move");
+  //  gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+  //  g_object_set_data(G_OBJECT(menuitem), "move", GINT_TO_POINTER(TRUE));
+  //  g_object_set(data(G_OBJECT(menuitem), "tree", tree);
+  //  g_signal_connect(G_OBJECT(menuitem), "activate",  G_CALLBACK(tree_drop_cb), context);
+  //  gtk_widget_show(menuitem);
+
+  //  menuitem = gtk_menu_item_new_with_label("Copy");
+  //  gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+  //  g_object_set_data(G_OBJECT(menuitem), "move", GINT_TO_POINTER(FALSE));
+  //  g_object_set(data(G_OBJECT(menuitem), "tree", tree);
+  //  g_signal_connect(G_OBJECT(menuitem), "activate",  G_CALLBACK(tree_drop_cb), context);
+  //  gtk_widget_show(menuitem);
+
+  //  gtk_widget_show(menu);
+  
+  //  gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, 1, time);
+
+  
+  target = gtk_drag_dest_find_target (widget, context, NULL);
+
+  if (target != GDK_NONE) {
+    g_print("target\n");
+    gtk_drag_get_data (widget, context, target, time);
+  } else {
+    gtk_drag_finish (context, FALSE, FALSE, time);
+  }
+  
+
+  /* Drag and drop didn't happen! */
+  //  gtk_drag_finish (context, FALSE, FALSE, time);
+
+
+  return TRUE;
+}
+
+
+static void     tree_drag_data_received (GtkWidget        *widget,
+					 GdkDragContext   *context,
+					 gint              x,
+					 gint              y,
+					 GtkSelectionData *selection_data,
+					 guint             info,
+					 guint             time) {
+
+  gchar *str;
+
+  str = gtk_selection_data_get_text (selection_data);
+
+  g_print("target receive x %d y %d    info %d action %d selection %s\n", x,y,info, context->suggested_action,str);
+  g_free(str);
+  //  if (context->suggested_action == GDK_ACTION_COPY)  
+
+}
+
+#endif
 
 
 static void tree_study_view_mode_cb(AmitkStudy * study, gpointer data) {
@@ -802,8 +1084,6 @@ GtkWidget* amitk_tree_new (void) {
   tree = g_object_new(amitk_tree_get_type(), NULL);
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), FALSE);
 
-  //  gtk_tree_view_set_reorderable(GTK_TREE_VIEW(tree), TRUE);
-
   store = gtk_tree_store_new(NUM_COLUMNS, 
 			     G_TYPE_BOOLEAN, /* COLUMN_VISIBLE_SINGLE */
 			     G_TYPE_BOOLEAN,/* COLUMN_VISIBLE_LINKED_2WAY */
@@ -813,8 +1093,6 @@ GtkWidget* amitk_tree_new (void) {
 			     G_TYPE_STRING, 
 			     G_TYPE_POINTER);
   gtk_tree_view_set_model (GTK_TREE_VIEW(tree), GTK_TREE_MODEL (store));
-  //  g_signal_connect(G_OBJECT(store), "row_inserted", G_CALLBACK(tree_row_inserted_cb), tree);
-  //  g_signal_connect(G_OBJECT(store), "row_deleted", G_CALLBACK(tree_row_deleted_cb), tree);
   g_object_unref(store);
 
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {

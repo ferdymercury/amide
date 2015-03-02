@@ -1,3 +1,20 @@
+0.7.14
+	* disabled anti-aliasing on canvas, was getting core dumps on ROI resizing.
+	* problems with self-referencing with slice_parent fixed, data sets now freed
+	* crop wizard now allows data type/scaling conversions too
+	* updates to help in rois.xml
+	* added help button to several dialogs
+	* fixed small bug with rendering isocontours alone
+	* removed data type specific crop and projection functions
+	  complexity not worth incremental performance improvement
+	* amitk_data_set_get_projection now does all 3 planes at once
+	* cursor color now changes immediately when data set changed
+	* erase outside roi no longer core dumps
+	* when voxel sizes of a data set are changed, the children
+	  now try to follow the scaling changes.
+
+
+
 0.7.13
 	* fixed problems with selecting XIF files in the file selector
 

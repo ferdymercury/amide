@@ -5,20 +5,20 @@
   rendering used by many other libraries and hardware
   accelerators).</para>
 
-<para> To start a rendering dialog, select the data sets and ROI that
+<para> To start a rendering window, select the data sets and ROI that
   you would like to include in your rendering, and then hit the
-  "View->Rendering" menu item.  A small dialog will pop-up with two
-  options.  The first "Set values greater than max threshold to zero"
-  allows you to strip high level voxels out of the rendering process.
-  In general you won't want this, but it might be useful if you have
-  high valued areas in your data set that obscures what you'd like to
-  see.  The second option "Accelerate Rendering" tells VolPack to use
-  a faster method for doing the volume rendering.  You will in general
-  want to use this option, as it causes a significance performance
-  enhancement (around 10 fold).  It does, however, require around 3
-  fold as much rendering as the non-accelerated option, so if you're
-  running out of memory, you'll want to try to rendering without the
-  acceleration. </para>
+  "View->Rendering" menu item.  A small dialog window will pop-up with
+  two options.  The first "Set values greater than max threshold to
+  zero" allows you to strip high level voxels out of the rendering
+  process.  In general you won't want this, but it might be useful if
+  you have high valued areas in your data set that obscures what you'd
+  like to see.  The second option "Accelerate Rendering" tells VolPack
+  to use a faster method for doing the volume rendering.  You will in
+  general want to use this option, as it causes a significance
+  performance enhancement (around 10 fold).  It does, however, require
+  around 3 fold as much rendering as the non-accelerated option, so if
+  you're running out of memory, you'll want to try to rendering
+  without the acceleration. </para>
 
 <para> After hitting "Execute" the program will reslice the data sets
   and ROI's into a data structure that the volpack library can handle,
@@ -37,17 +37,17 @@
   context of volume rendering, and is interpreted as "Global"
   scaling. </para>
 
-<para> When all this is completed, the rendering dialog should pop-up.
+<para> When all this is completed, the rendering window should pop-up.
   It's use is described below. </para>
 
 
 
-<sect2><title>Rendering Dialog</title>
+<sect2><title>Rendering Window</title>
 
   <sect3><title>Main Rendering Canvas</title>
     <para>
       The result of the rendering process is presented on the canvas
-      in the center of the dialog.  This canvas can accept user input
+      in the center of the window.  This canvas can accept user input
       to change the orientation of the rendering.  Button 1 allows
       rotating on the x and y axis, and button 2 allows rotating on
       the z axis.
@@ -77,7 +77,7 @@
 
   <sect3><title>Toolbar</title>
 
-    <sect4><title>Transfer Function Button</title>
+    <sect4 id="transfer-function-dialog"><title>Transfer Function Button</title>
 
     <para> This will pop-up a dialog with a panel for each object
     being rendered.  The available options are described below:

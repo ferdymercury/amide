@@ -57,6 +57,16 @@ struct _AmitkTree
   gint mouse_x; /* the current mouse position */
   gint mouse_y; 
   GtkTreePath * current_path;
+
+  /* drag-n-drop info */
+#if 0
+  gboolean drag_begin_possible;
+  gint press_x;
+  gint press_y;
+  AmitkObject * src_object; /* not referenced */
+  AmitkObject * dest_object; /* not referenced */
+  GtkTargetList * drag_list;
+#endif
   
 };
 

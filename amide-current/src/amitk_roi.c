@@ -64,6 +64,9 @@ enum {
 static void          roi_class_init          (AmitkRoiClass *klass);
 static void          roi_init                (AmitkRoi      *roi);
 static void          roi_finalize            (GObject          *object);
+static void          roi_scale               (AmitkSpace        *space,
+					      AmitkPoint        *ref_point,
+					      AmitkPoint        *scaling);
 static AmitkObject * roi_copy                (const AmitkObject * object);
 static void          roi_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          roi_write_xml           (const AmitkObject  *object, 
@@ -73,6 +76,9 @@ static gchar *       roi_read_xml            (AmitkObject        *object,
 					      xmlNodePtr          nodes, 
 					      FILE               *study_file, 
 					      gchar              *error_buf);
+static void          roi_isocontour_set_voxel_size(AmitkRoi * roi, 
+						   AmitkPoint voxel_size);
+
 static AmitkVolumeClass * parent_class;
 static guint        roi_signals[LAST_SIGNAL];
 
@@ -109,8 +115,11 @@ static void roi_class_init (AmitkRoiClass * class) {
 
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
   AmitkObjectClass * object_class = AMITK_OBJECT_CLASS(class);
+  AmitkSpaceClass * space_class = AMITK_SPACE_CLASS(class);
 
   parent_class = g_type_class_peek_parent(class);
+
+  space_class->space_scale = roi_scale;
 
   object_class->object_copy = roi_copy;
   object_class->object_copy_in_place = roi_copy_in_place;
@@ -150,12 +159,37 @@ static void roi_finalize (GObject *object)
   AmitkRoi * roi = AMITK_ROI(object);
 
   if (roi->isocontour != NULL) {
-    amitk_object_unref(roi->isocontour);
+    g_object_unref(roi->isocontour);
     roi->isocontour = NULL;
   }
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
+
+static void roi_scale(AmitkSpace *space, AmitkPoint *ref_point, AmitkPoint *scaling) {
+
+  AmitkRoi * roi;
+  AmitkPoint voxel_size;
+
+  g_return_if_fail(AMITK_IS_ROI(space));
+  roi = AMITK_ROI(space);
+
+  /* first, pass the signal on, this gets the volume corner value readjusted */
+  AMITK_SPACE_CLASS(parent_class)->space_scale (space, ref_point, scaling);
+
+  /* and readjust the voxel size based on the new corner */
+  if (AMITK_VOLUME_VALID(roi)) {
+    if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
+
+      voxel_size = AMITK_VOLUME_CORNER(roi);
+      voxel_size.x /= roi->isocontour->dim.x;
+      voxel_size.y /= roi->isocontour->dim.y;
+      voxel_size.z /= roi->isocontour->dim.z;
+      roi_isocontour_set_voxel_size(roi, voxel_size);
+    }
+  }
+}
+
 
 static AmitkObject * roi_copy (const AmitkObject * object) {
 
@@ -185,11 +219,11 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 
   if (src_roi->isocontour != NULL) {
     if (dest_roi->isocontour != NULL)
-      amitk_object_unref(dest_roi->isocontour);
-    dest_roi->isocontour = amitk_object_ref(src_roi->isocontour);
+      g_object_unref(dest_roi->isocontour);
+    dest_roi->isocontour = g_object_ref(src_roi->isocontour);
   }
 
-  amitk_roi_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
+  roi_isocontour_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
   dest_roi->isocontour_value = AMITK_ROI_ISOCONTOUR_VALUE(src_object);
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
@@ -251,7 +285,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
 
   /* isocontour specific stuff */
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
-    amitk_roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
+    roi_isocontour_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
     roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
 
     /* if the ROI's never been drawn, it's possible for this not to exist */
@@ -290,39 +324,6 @@ AmitkRoi * amitk_roi_new (AmitkRoiType type) {
 
   return roi;
 }
-
-
-/* figure out the smallest subset of the specified volume in space that completely  encloses the roi */
-void amitk_roi_volume_intersection(const AmitkRoi * roi,
-				   const AmitkVolume * volume,
-				   const AmitkPoint voxel_size,
-				   AmitkVoxel * subset_start,
-				   AmitkVoxel * subset_dim) {
-  
-  AmitkCorners roi_corners;
-  AmitkCorners subset_corners;
-  AmitkVoxel subset_indexes[2];
-
-  g_return_if_fail(AMITK_IS_ROI(roi));
-
-  /* get the corners in the volume's space that orthogonally encloses the roi */
-  amitk_volume_get_enclosing_corners(AMITK_VOLUME(roi), AMITK_SPACE(volume), subset_corners);
-
-  /* look at all eight corners of the roi cube, figure out the max and min dim */
-  amitk_space_get_enclosing_corners(AMITK_SPACE(roi), roi_corners, AMITK_SPACE(volume), subset_corners);
-
-  /* and convert the subset_corners into indexes */
-  POINT_TO_VOXEL(subset_corners[0], voxel_size, 0, subset_indexes[0]);
-  POINT_TO_VOXEL(subset_corners[1], voxel_size, 0, subset_indexes[1]);
-
-  /* and calculate the return values */
-  *subset_start = subset_indexes[0];
-  *subset_dim = voxel_add(voxel_sub(subset_indexes[1], subset_indexes[0]), one_voxel);
-
-  return;
-}
-
-
 
 
 
@@ -375,6 +376,60 @@ GSList * amitk_roi_free_points_list(GSList * list) {
   g_free(ppoint);
 
   return list;
+}
+
+
+/* this does not recalc the far corner, needs to be done separately */
+static void roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
+
+  if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
+    roi->voxel_size = voxel_size;
+    g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
+  }
+}
+
+void amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
+
+  GList * children;
+  AmitkPoint ref_point;
+  AmitkPoint scaling;
+  AmitkPoint old_corner;
+
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
+
+  if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
+    old_corner = AMITK_VOLUME_CORNER(roi);
+    roi_isocontour_set_voxel_size(roi, voxel_size);
+    amitk_roi_isocontour_calc_far_corner(roi);
+
+    scaling = point_div(AMITK_VOLUME_CORNER(roi), old_corner);
+    scaling = amitk_space_s2b_dim(AMITK_SPACE(roi), scaling);
+    ref_point = AMITK_SPACE_OFFSET(roi);
+
+    /* propagate this scaling operation to the children */
+    children = AMITK_OBJECT_CHILDREN(roi);
+    while (children != NULL) {
+      amitk_space_scale(children->data, ref_point, scaling);
+      children = children->next;
+    }
+  }
+}
+
+
+
+/* function to recalculate the far corner of an isocontour roi */
+void amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi) {
+
+  AmitkPoint new_point;
+
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
+
+  POINT_MULT(roi->isocontour->dim, roi->voxel_size, new_point);
+  amitk_volume_set_corner(AMITK_VOLUME(roi), new_point);
+
+  return;
 }
 
 
@@ -471,17 +526,6 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
   return;
 }
 
-void amitk_roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
-
-  g_return_if_fail(AMITK_IS_ROI(roi));
-
-  if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
-    roi->voxel_size = voxel_size;
-    g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
-  }
-}
-
-
 /* iterates over the voxels in the given data set that are inside the given roi,
    and performs the specified calculation function for those points */
 /* if inverse is true, the calculation is done for the portion of the data set not in the roi */
@@ -552,7 +596,7 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 
   /* mark the distribution data as invalid */
   if (AMITK_DATA_SET_DISTRIBUTION(ds) != NULL) {
-    amitk_object_unref(AMITK_DATA_SET_DISTRIBUTION(ds));
+    g_object_unref(AMITK_DATA_SET_DISTRIBUTION(ds));
     ds->distribution = NULL;
   }
 

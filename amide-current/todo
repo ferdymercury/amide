@@ -2,26 +2,28 @@ misc list of things todo:
 
 for next release?
 -----------------
-* figure out how to get autoconf not to kill .spec file
-* figure out why data set's aren't getting freed
 
-1. extend help documentation - what do different stat columsn means (i.e.
-"voxels")
-2. add help button to roi analysis widget
-3. need to implement drag-n-drop.
-4. export ROI's to external file? and allow import?
-5. finish profile tool.  allow doing 2D ROI through all planes.
+* checking that file can be read on 32bit system doesn't
+	currently work on windows... work around is define
+	out at the moment. not the right thing to do.
+	files: xml.c and amitk_raw_data.c
+
+
+* add drag-n-drop capabilities between study windows
+	don't use treeview reorderable stuff, too limited,
+
+* preset thresholds for CT (bone window, fat window, etc.)
+
+* export ROI's to external file? and allow import?
+
+* finish profile tool.  allow doing 2D ROI through all planes.
    show planar view -> allow switching transverse/coronal/sagittal
    allow picking point, box, or circle, and moving/resizing on screen
+   also, can request line profile between 2 arbitrary fiducial marks
 
-* rendering of 3D isocontour doesn't work
-
-* be able to generate line profiles.  You specify 2 points...
-  -page 1, list of points (pick 1)
-  -page 2, list of points (pick 1)
-  -page 3, graph of line profile, option to save
 
 * ability to import and export AIR .air files
+
 * histogram for roi's
   - probably an option on the ROI stat's pop-up
 
@@ -38,6 +40,10 @@ windows todo
 	-specify icon for .xif files
 * zdial on rendering doesn't work
 * figure out how to lose the black text window 
+* configuration:
+	gsl: need to edit gsl-config program so it doesn't have -lgslcblas
+	xmedcon: need to correct xmedcon-config generation so it doesn't include -glib if not needed
+
 
 factor analysis things:
 -----------------------       
@@ -53,9 +59,6 @@ factor analysis things:
 
 big things:
 -----------
-* add drag-n-drop capabilities between study windows
-	-need to uncomment gtk_tree_view-set_reorderable line (this approach may not work)
-	-filtered/cropped object should be added right below the predecessor object
 * should be able to specify units the image is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 	-study would have an output units variable
@@ -64,7 +67,7 @@ big things:
 	-need gobject based approach, so widgets can listen for change
 * add a data sets list item,
 	-would allow reading in multi-bed data sets
-	-raw_data type already has its own space...
+	-raw_data type could have amitk_space made its parent, so it has its own space...
 * calculating PV correction.  
 	Correction factors could be calculated for each volume's 
 	resolution and then cached.
@@ -77,18 +80,18 @@ big things:
                        
 small things:
 -------------
+* should have option to use rigid body registration with scaling
+* need to check that the stderr is being calculated correctly. 
+	it's currently using the unweighted voxel value
+	if changed, need to update rois.xml appropriately
 * sliders don't work currently under Xwin32, stopped working 
 	after 0.7.6 (addition of optional transverse/coronal/etc. buttons).
-* be able to change type/down convert on crop dialog
-	specify if single, multiple scale factors
 * need to switch gtk_idle (deprecated) calls to g_source calls
 * try to work in the max/min/distribution calculations into the loading loop
 * would changing the icons to .png files allow anti-aliasing? better icons?
 * fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
         -would mean creating roi canvas object as pixmap, similar to isocontour
-* implement help buttons on most of the dialogs
-	-gnome_druid has an add help button function
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
 * ui_series, should add popup dialog asking for # columns and rows
@@ -100,12 +103,14 @@ small things:
 pre 1.0 things:
 --------------
 * try to change dialog box buttons to verbs
-* rewrite documentation
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
 * check that make distcheck works
 * write a man page
 * add tooltips to everything....
+* add more help buttons to the dialogs 
+  -gnome_druid has an add help button function
+
 
 
 probably post 1.0 things:
@@ -123,13 +128,22 @@ probably post 1.0 things:
 		and overlapped.  
 	MIP rendering would be nice....
 * aligning of data using automated registration?
-* preset thresholds (bone window, fat window, etc.)
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
 	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
 
 
 things dependent on other things: 
 -------------- 
+
+* antialiased canvases have been disabled again, due to instabilities with ROI resizing
+	starts spewing "*** attempt to put segment in horiz list twice" errors
+	and eventually core dumps.  Either a libart or libgnomecanvas bug.  Uncomment
+	appropriate lines in configure.in to reenable
+
+	last tested versions:
+		libart_lgpl-2.3.14-1
+		libgnomecanvas-2.3.6-1
+
 
 * AMIDE_OSX_HACKS, on OS X we currently
 	1- Disable interaction with ESD (enlightenment sound daemon).

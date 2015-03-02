@@ -49,16 +49,6 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
 									    gboolean (*update_func)(),
 									    gpointer update_data);
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
-										   const AmitkView view,
-										   const guint frame,
-										   gboolean (*update_func)(),
-										   gpointer update_data);
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(const AmitkDataSet * data_set,
-										const AmitkVoxel start,
-										const AmitkVoxel end,
-										gboolean (*update_func)(),
-										gpointer update_data);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t start_time,
 									      const amide_time_t duration,

@@ -49,6 +49,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DIM_Y(ds)                   (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_DIM_Z(ds)                   (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_DIM_T(ds)                   (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_FORMAT(ds)                  (AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_NUM_FRAMES(ds)              (AMITK_DATA_SET_DIM_T(ds))
 #define AMITK_DATA_SET_DISTRIBUTION(ds)            (AMITK_DATA_SET(ds)->distribution)
 #define AMITK_DATA_SET_COLOR_TABLE(ds)             (AMITK_DATA_SET(ds)->color_table)
@@ -203,7 +204,10 @@ struct _AmitkDataSet
 
   GList * slice_cache;
   gint max_slice_cache_size;
-  AmitkDataSet * slice_parent; /* only used by derived data sets */
+
+  /* only used by derived data sets (slices and projections)  */
+  /* this is a weak pointer, it should be NULL'ed automatically by gtk on the parent's destruction */
+  AmitkDataSet * slice_parent; 
 
 };
 
@@ -321,14 +325,16 @@ void           amitk_data_set_set_value          (AmitkDataSet *ds,
 						  const AmitkVoxel i,
 						  const amide_data_t value,
 						  const gboolean signal_change);
-AmitkDataSet * amitk_data_set_get_projection     (AmitkDataSet * ds,
-						  const AmitkView view,
+void           amitk_data_set_get_projections    (AmitkDataSet * ds,
 						  const guint frame,
+						  AmitkDataSet ** projections,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
 AmitkDataSet * amitk_data_set_get_cropped        (const AmitkDataSet * ds,
 						  const AmitkVoxel start,
 						  const AmitkVoxel end,
+						  const AmitkFormat format,
+						  const AmitkScalingType scaling_type,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
 AmitkDataSet * amitk_data_set_get_filtered       (const AmitkDataSet * ds,
@@ -375,7 +381,7 @@ GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
 
 
 
-const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling);
+const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling_type);
 const gchar *   amitk_modality_get_name           (const AmitkModality modality);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);
@@ -408,6 +414,7 @@ extern gchar * amitk_conversion_names[];
 extern gchar * amitk_dose_unit_names[];
 extern gchar * amitk_weight_unit_names[];
 extern gchar * amitk_cylinder_unit_names[];
+extern gchar * amitk_scaling_menu_names[];
 
 G_END_DECLS
 

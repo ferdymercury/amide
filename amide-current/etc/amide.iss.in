@@ -11,7 +11,7 @@ AppUpdatesURL=http://amide.sourceforge.net
 DefaultDirName={pf}\@PACKAGE@
 DefaultGroupName=@PACKAGE@
 AllowNoIcons=yes
-LicenseFile=C:\Documents and Settings\loening\Desktop\amide\COPYING
+LicenseFile=C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\COPYING
 OutputBaseFileName=@PACKAGE@-@VERSION@-1_install
 OutputDir=Inno_Output
 
@@ -19,11 +19,11 @@ OutputDir=Inno_Output
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
 
 [Files]
-Source: "C:\Documents and Settings\loening\Desktop\amide\bin\amide.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "C:\Documents and Settings\loening\Desktop\amide\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "C:\Documents and Settings\loening\Desktop\amide\etc\*"; DestDir: "{app}\etc\"; Flags: ignoreversion recursesubdirs
-Source: "C:\Documents and Settings\loening\Desktop\amide\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
-Source: "C:\Documents and Settings\loening\Desktop\amide\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\amide.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\etc\*"; DestDir: "{app}\etc\"; Flags: ignoreversion recursesubdirs
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

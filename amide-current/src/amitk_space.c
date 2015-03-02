@@ -33,8 +33,9 @@ enum {
   SPACE_SHIFT,
   SPACE_ROTATE,
   SPACE_INVERT,
-  SPACE_TRANSFORM_AXES,
   SPACE_TRANSFORM,
+  SPACE_TRANSFORM_AXES,
+  SPACE_SCALE,
   SPACE_CHANGED,
   LAST_SIGNAL
 };
@@ -58,6 +59,9 @@ static void          space_transform           (AmitkSpace * space,
 static void          space_transform_axes      (AmitkSpace * space,
 						AmitkAxes    axes,
 						AmitkPoint * center_of_rotation);
+static void          space_scale               (AmitkSpace * space, 
+						AmitkPoint * ref_point, 
+						AmitkPoint * scaling);
 
 static GObjectClass * parent_class;
 static guint     space_signals[LAST_SIGNAL];
@@ -101,6 +105,7 @@ static void space_class_init (AmitkSpaceClass * class) {
   class->space_invert = space_invert_axis;
   class->space_transform = space_transform;
   class->space_transform_axes = space_transform_axes;
+  class->space_scale = space_scale;
 
   space_signals[SPACE_SHIFT] =
     g_signal_new ("space_shift",
@@ -145,6 +150,15 @@ static void space_class_init (AmitkSpaceClass * class) {
 		  NULL, NULL, amitk_marshal_NONE__BOXED_BOXED,
 		  G_TYPE_NONE,2,
 		  AMITK_TYPE_AXES,
+		  AMITK_TYPE_POINT);
+  space_signals[SPACE_SCALE] =
+    g_signal_new ("space_scale",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkSpaceClass, space_scale),
+		  NULL, NULL, amitk_marshal_NONE__BOXED_BOXED,
+		  G_TYPE_NONE,2,
+		  AMITK_TYPE_POINT,
 		  AMITK_TYPE_POINT);
   space_signals[SPACE_CHANGED] =
     g_signal_new ("space_changed",
@@ -242,6 +256,20 @@ static void space_transform_axes(AmitkSpace * space, AmitkAxes transform_axes,
   shift = point_sub(*center_of_rotation, amitk_space_s2b(space, shift));
   space->offset = point_add(space->offset, shift);
 
+  return;
+}
+
+
+/* scaling and ref_point need to be wrt the base reference frame */
+static void space_scale(AmitkSpace * space, AmitkPoint * ref_point, AmitkPoint * scaling) {
+
+  AmitkPoint shift;
+
+  shift = point_sub(AMITK_SPACE_OFFSET(space), *ref_point);
+  shift = point_mult(*scaling, shift);
+  space->offset = point_add(shift, *ref_point);
+
+  return;
 }
 
 AmitkSpace * amitk_space_new (void) {
@@ -399,6 +427,23 @@ void amitk_space_transform_axes(AmitkSpace * space, const AmitkAxes transform_ax
   g_signal_emit(G_OBJECT(space), space_signals[SPACE_CHANGED], 0);
 
   return;
+}
+
+/* scaling and ref_point need to be wrt the base reference frame */
+
+/* note, this doesn't actually scale the coordinate axis, 
+   as we always leave those as orthonormal.
+   instead, it shifts the offset of the space appropriately giving the ref_point,
+   and leaves further scaling operations to objects that inherit from this class
+ */
+void amitk_space_scale(AmitkSpace * space, AmitkPoint ref_point, AmitkPoint scaling) {
+
+
+  g_return_if_fail(AMITK_IS_SPACE(space));
+
+  g_signal_emit(G_OBJECT(space), space_signals[SPACE_SCALE], 0, &ref_point, &scaling);
+  g_signal_emit(G_OBJECT(space), space_signals[SPACE_CHANGED], 0);
+
 }
 
 

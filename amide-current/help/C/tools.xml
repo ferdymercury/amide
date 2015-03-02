@@ -43,7 +43,7 @@
    </para>
  </sect3>
 
- <sect3><title>Fiducial Marker Modification Dialog Box</title>
+ <sect3 id="fiducial-marker-dialog"><title>Fiducial Marker Modification Dialog Box</title>
   <para>
       To modify parameters of a fiducial mark, right click the point
       in the study list to pop-up the Fiducial Marker Modification

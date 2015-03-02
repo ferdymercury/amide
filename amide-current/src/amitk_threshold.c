@@ -990,6 +990,8 @@ static void threshold_update_absolute_label(AmitkThreshold * threshold) {
 
   guint i_ref;
 
+  if (threshold->minimal) return; /* not shown in minimal setup */
+
   for (i_ref=0; i_ref<2; i_ref++) {
 
     switch (AMITK_DATA_SET_CONVERSION(threshold->data_set)) {

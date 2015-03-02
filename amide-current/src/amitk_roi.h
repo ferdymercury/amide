@@ -99,6 +99,9 @@ GSList *        amitk_roi_free_points_list        (GSList * list);
 AmitkDataSet *  amitk_roi_get_intersection_slice  (const AmitkRoi * roi, 
 						   const AmitkVolume * canvas_slice,
 						   const amide_real_t pixel_dim);
+void            amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, 
+						   AmitkPoint voxel_size);
+void            amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi);
 void            amitk_roi_set_isocontour          (AmitkRoi * roi, 
 						   AmitkDataSet * ds,
 						   AmitkVoxel value_voxel);
@@ -106,7 +109,6 @@ void            amitk_roi_isocontour_erase_area   (AmitkRoi * roi,
 						   AmitkVoxel erase_voxel, 
 						   gint area_size);
 void            amitk_roi_set_type                (AmitkRoi * roi, AmitkRoiType new_type);
-void            amitk_roi_set_voxel_size          (AmitkRoi * roi, AmitkPoint voxel_size);
 void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,  
 						   const AmitkDataSet * ds, 
 						   const guint frame,

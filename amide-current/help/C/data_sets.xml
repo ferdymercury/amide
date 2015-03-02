@@ -107,7 +107,7 @@
 </sect2>
 
 
-<sect2 id="data-set-dialog-help"><title>Data Set Modification Dialog</title>
+<sect2 id="data-set-dialog"><title>Data Set Modification Dialog</title>
 
     <para> To modify parameters of a data set, right click on the name
       of the data set in the study tree to pop-up the data set
