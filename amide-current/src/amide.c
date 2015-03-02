@@ -55,6 +55,14 @@ gchar * object_delete_menu_explanation[] = {
   "Delete selected alignment points"
 };
 
+gchar * threshold_type_names[] = {"per slice", "per frame", "interpolated between frames","global"};
+gchar * threshold_type_explanations[] = {
+  "threshold the images based on the max and min values in the current slice",
+  "threshold the images based on the max and min values in the current frame",
+  "threshold the images based on max and min values interpolated from the reference frame thresholds",
+  "threshold the images based on the max and min values of the entire data set",
+};
+
 /* internal variables */
 static GList * windows = NULL;
 
@@ -118,9 +126,10 @@ int main (int argc, char *argv []) {
 	/* not a directory... maybe an import file? */
 	if ((new_volume = volume_import_file(AMIDE_GUESS, 0,input_filenames[i], NULL)) != NULL) {
 	  study = study_init();
+	  study->coord_frame = rs_init();
 	  study_add_volume(study, new_volume);
 	  study_set_name(study, new_volume->name); /* first guess at a name */
-	  new_volume = volume_free(new_volume); /* remove a reference */
+	  new_volume = volume_unref(new_volume); /* remove a reference */
 	  loaded = TRUE;
 	} else
 	  g_warning("%s: %s is not an AMIDE study or importable file type ", PACKAGE, input_filenames[i]);

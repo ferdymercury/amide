@@ -81,7 +81,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
     g_warning("%s: couldn't allocate space for roi analysis of frame %d", PACKAGE, frame);
     return frame_analysis;
   }
-  frame_analysis->reference_count = 1;
+  frame_analysis->ref_count = 1;
 
   /* note the frame duation */
   frame_analysis->duration = volume->frame_duration[frame];
@@ -166,7 +166,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
-	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+	REALPOINT_TO_VOXEL(roi_p, roi->voxel_size, 0, roi_vp);
 	if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
 	else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
 	else voxel_in = TRUE;
@@ -231,7 +231,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 		voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
-		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+		REALPOINT_TO_VOXEL(roi_p, roi->voxel_size, 0, roi_vp);
 		if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
 		else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
 		else voxel_in = TRUE;
@@ -291,7 +291,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
-	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+	REALPOINT_TO_VOXEL(roi_p, roi->voxel_size, 0, roi_vp);
 	if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
 	else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
 	else voxel_in = TRUE;
@@ -355,7 +355,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 		voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
-		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+		REALPOINT_TO_VOXEL(roi_p, roi->voxel_size, 0, roi_vp);
 		if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
 		else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
 		else voxel_in = TRUE;
@@ -392,8 +392,8 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
       /(frame_analysis->voxels-1.0);
 
   /* trash collection */
-  curr_plane_in = data_set_free(curr_plane_in);
-  next_plane_in = data_set_free(next_plane_in);
+  curr_plane_in = data_set_unref(curr_plane_in);
+  next_plane_in = data_set_unref(next_plane_in);
 
 
   return frame_analysis;

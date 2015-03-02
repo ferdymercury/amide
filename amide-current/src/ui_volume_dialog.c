@@ -28,6 +28,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "study.h"
+#include "amitk_coord_frame_edit.h"
 #include "amitk_threshold.h" 
 #include "ui_study.h"
 #include "ui_volume_dialog_cb.h"
@@ -36,50 +37,12 @@
 #include "ui_common.h"
 
 
-/* function to set that volume axis display widgets */
-void ui_volume_dialog_set_axis_display(GtkWidget * volume_dialog) {
-
-  GtkWidget * label;
-  GtkWidget * entry;
-  gchar * temp_string;
-  volume_t * volume_new_info;
-  axis_t i_axis;
-  realpoint_t one_axis;
-
-  volume_new_info = gtk_object_get_data(GTK_OBJECT(volume_dialog), "volume_new_info");
-
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    one_axis = rs_specific_axis(volume_new_info->coord_frame, i_axis);
-
-    label = gtk_object_get_data(GTK_OBJECT(volume_dialog), axis_names[i_axis]);
-
-    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[XAXIS]);
-    temp_string = g_strdup_printf("%f", one_axis.x);
-    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-    g_free(temp_string);
-
-    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[YAXIS]);
-    temp_string = g_strdup_printf("%f", one_axis.y);
-    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-    g_free(temp_string);
-
-    entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[ZAXIS]);
-    temp_string = g_strdup_printf("%f", one_axis.z);
-    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-    g_free(temp_string);
-
-  }
-
-  return;
-}
-
-
 
 
 /* function that sets up the volume dialog */
-void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
+GtkWidget * ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   
-  GtkWidget * volume_dialog;
+  GtkWidget * dialog;
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
   GtkWidget * frames_table;
@@ -88,65 +51,43 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   GtkWidget * menu;
   GtkWidget * menuitem;
   GtkWidget * entry;
-  GtkObject * adjustment;
-  GtkWidget * dial;
-  GtkWidget * button;
   GtkWidget * check_button;
   GtkWidget * scrolled;
   GtkWidget * hseparator;
   GtkWidget * vseparator;
   GtkWidget * axis_indicator;
+  GtkWidget * cfe;
+  GtkWidget * threshold;
   guint table_row = 0;
   modality_t i_modality;
-  view_t i_view;
-  axis_t i_axis, j_axis;
   guint i;
-  ui_volume_list_t * ui_volume_list_item;
-  volume_t * volume_new_info;
+  volume_t * new_info;
   realpoint_t center;
 
-  /* figure out the ui_study_volume_list item corresponding to this volume */
-  ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes, volume);
-  /* sanity checks */
-  g_return_if_fail(ui_volume_list_item != NULL);
-  g_return_if_fail(ui_volume_list_item->tree_leaf != NULL);
-    
-  /* only want one of these dialogs at a time for a given volume */
-  if (ui_volume_list_item->dialog != NULL) return;
-
-  /* and if the threshold dialog corresponds to this volume, kill it */
-  if (ui_study->threshold_dialog != NULL)
-    if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume)
-      gtk_widget_destroy(ui_study->threshold_dialog);
-
-  
   temp_string = g_strdup_printf("%s: Medical Data Set Modification Dialog",PACKAGE);
-  volume_dialog = gnome_property_box_new();
-  gtk_window_set_title(GTK_WINDOW(volume_dialog), temp_string);
+  dialog = gnome_property_box_new();
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
-  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
 
   /* create the temp volume which will store the new information, and then
      can either be applied or cancelled */
-  volume_new_info = volume_copy(volume);
+  new_info = volume_copy(volume);
 
-  /* attach it to the dialog */
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "volume_new_info", volume_new_info);
+  /* attach the data to the dialog */
+  gtk_object_set_data(GTK_OBJECT(dialog), "new_info", new_info);
+  gtk_object_set_data(GTK_OBJECT(dialog), "old_info", volume);
 
   /* save a pointer to ui_study with the dialog widget so we can redraw volumes's */ 
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "ui_study", ui_study);
+  gtk_object_set_data(GTK_OBJECT(dialog), "ui_study", ui_study);
 
   
   /* setup the callbacks for app */
-  gtk_signal_connect(GTK_OBJECT(volume_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_close),
-		     ui_volume_list_item);
-  gtk_signal_connect(GTK_OBJECT(volume_dialog), "apply",
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_apply),
-		     ui_volume_list_item);
-  gtk_signal_connect(GTK_OBJECT(volume_dialog), "help",
-    		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_help),
-    		     ui_volume_list_item);
+  gtk_signal_connect(GTK_OBJECT(dialog), "close",
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_close), ui_study);
+  gtk_signal_connect(GTK_OBJECT(dialog), "apply",
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_apply), ui_study);
+  gtk_signal_connect(GTK_OBJECT(dialog), "help",
+    		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_help), NULL);
 
   /* start making the widgets for this dialog box */
 
@@ -157,8 +98,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   packing_table = gtk_table_new(4,2,FALSE);
   label = gtk_label_new("Basic Info");
   table_row=0;
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
-  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), packing_table, label);
 
   /* widgets to change the volume's name */
   label = gtk_label_new("name:");
@@ -166,12 +106,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), volume_new_info->name);
+  gtk_entry_set_text(GTK_ENTRY(entry), new_info->name);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_name), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_name), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
  
@@ -185,12 +123,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), volume_new_info->scan_date);
+  gtk_entry_set_text(GTK_ENTRY(entry), new_info->scan_date);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_scan_date), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_scan_date), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
  
@@ -210,10 +146,8 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
     menuitem = gtk_menu_item_new_with_label(modality_names[i_modality]);
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "modality", GINT_TO_POINTER(i_modality)); 
-    gtk_object_set_data(GTK_OBJECT(menuitem), "volume_dialog", volume_dialog); 
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_modality), 
-    		       volume_new_info);
+     		       GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_modality), dialog);
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
@@ -232,11 +166,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(SCALING_FACTOR));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -250,7 +182,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   packing_table = gtk_table_new(5,5,FALSE);
   table_row=0;
   label = gtk_label_new("Center/Dimensions");
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), packing_table, label);
 
   /* widgets to change the location of the volume's center in real space and dimensions*/
   label = gtk_label_new("Center (mm from view origin)");
@@ -279,11 +211,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_X));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -296,12 +226,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "voxel_size_x", entry); 
+  gtk_object_set_data(GTK_OBJECT(dialog), "voxel_size_x", entry); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(VOXEL_SIZE_X));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,4,5,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -317,11 +245,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_Y));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -334,12 +260,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "voxel_size_y", entry); 
+  gtk_object_set_data(GTK_OBJECT(dialog), "voxel_size_y", entry); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(VOXEL_SIZE_Y));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,4,5,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -355,11 +279,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(CENTER_Z));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -372,12 +294,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "voxel_size_z", entry); 
+  gtk_object_set_data(GTK_OBJECT(dialog), "voxel_size_z", entry); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(VOXEL_SIZE_Z));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,4,5,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -388,11 +308,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 
   check_button = gtk_check_button_new_with_label ("keep aspect ratio");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), TRUE);
-  gtk_object_set_data(GTK_OBJECT(volume_dialog), "aspect_ratio", GINT_TO_POINTER(TRUE));
-  gtk_object_set_data(GTK_OBJECT(check_button), "volume_dialog", volume_dialog); 
+  gtk_object_set_data(GTK_OBJECT(dialog), "aspect_ratio", GINT_TO_POINTER(TRUE));
   gtk_signal_connect(GTK_OBJECT(check_button), "toggled", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_aspect_ratio), 
-		     NULL);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_aspect_ratio), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), check_button,4,5,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -415,134 +333,33 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   /* ----------------------------------------
      Rotations page
      ---------------------------------------- */
-
-
-  /* start making the page to rotate the volume */
-  packing_table = gtk_table_new(9,4,FALSE);
   label = gtk_label_new("Rotate");
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
-  table_row=0;
-
-
-  /* draw the x/y/z labels */
-  label = gtk_label_new("transverse");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-  label = gtk_label_new("coronal");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-  label = gtk_label_new("sagittal");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  
-  
-  table_row=0;
-  /* make the three canvases, scales, dials, etc. */
-  for (i_view=0;i_view<NUM_VIEWS;i_view++) {
-
-    /* dial section */
-    adjustment = gtk_adjustment_new(0,-45.0,45.5,0.5,0.5,0.5);
-    /*so we can figure out which adjustment this is in callbacks */
-    gtk_object_set_data(GTK_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view));
-    gtk_object_set_data(GTK_OBJECT(adjustment), "volume_dialog", volume_dialog); 
-    gtk_object_set_data(GTK_OBJECT(adjustment), "ui_study", ui_study);
-    dial = gtk_hscale_new(GTK_ADJUSTMENT(adjustment));
-    gtk_range_set_update_policy(GTK_RANGE(dial), GTK_UPDATE_DISCONTINUOUS);
-    gtk_table_attach(GTK_TABLE(packing_table), dial, 1,4, table_row, table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL,FALSE, X_PADDING, Y_PADDING);
-    gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
-		       GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_axis), 
-		       volume_new_info);
-    table_row++;
-  }
-
-
-
-  /* button to reset the axis */
-  label = gtk_label_new("data set axis:");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
-  
-  button = gtk_button_new_with_label("reset to default");
-  gtk_object_set_data(GTK_OBJECT(button), "volume_dialog", volume_dialog); 
-  gtk_table_attach(GTK_TABLE(packing_table), button, 1,2, 
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_reset_axis), 
-		     volume_new_info);
-  table_row++;
-
-  /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 4,
-		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-
-  /* and a display of the current axis */
-  label = gtk_label_new("i");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  label = gtk_label_new("j");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 2,3,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  label = gtk_label_new("k");
-  gtk_table_attach(GTK_TABLE(packing_table),  label, 3,4,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-
-    /* the row label */
-    label = gtk_label_new(axis_names[i_axis]);
-    gtk_object_set_data(GTK_OBJECT(volume_dialog), axis_names[i_axis], label);
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, 
-		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-    for (j_axis=0;j_axis<NUM_AXIS;j_axis++) {
-
-      entry = gtk_entry_new();
-      gtk_widget_set_usize(entry, UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
-      gtk_object_set_data(GTK_OBJECT(label), axis_names[j_axis], entry);
-      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,j_axis+1, j_axis+2,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-    }
-
-    table_row++;
-  }
-
-  ui_volume_dialog_set_axis_display(volume_dialog);
+  cfe = amitk_coord_frame_edit_new(new_info->coord_frame, 
+				   volume_center(new_info),
+				   study_coord_frame(ui_study->study));
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), cfe, label);
+ 
+  gtk_object_set_data(GTK_OBJECT(dialog), "cfe", cfe);
+  gtk_signal_connect(GTK_OBJECT(cfe), "coord_frame_changed",
+  		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_coord_frame_changed),
+  		     dialog);
 
 
   /* ----------------------------------------
      Colormap/threshold page
      ---------------------------------------- */
 
-
-  /* start making the page to change the threshold/colormap */
-  packing_table = gtk_table_new(1,1,FALSE);
   label = gtk_label_new("Colormap/Threshold");
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
-  table_row=0;
+  threshold = amitk_threshold_new(volume, AMITK_THRESHOLD_BOX_LAYOUT);
+  gtk_object_set_data(GTK_OBJECT(dialog), "threshold", threshold);
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), threshold, label);
 
-
-  ui_volume_list_item->threshold = amitk_threshold_new(volume);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   ui_volume_list_item->threshold, 0,1,
-		   table_row, table_row+1,
-		   0, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(ui_volume_list_item->threshold), "threshold_changed",
+  gtk_signal_connect(GTK_OBJECT(threshold), "threshold_changed",
 		     GTK_SIGNAL_FUNC(ui_study_cb_threshold_changed),
 		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(ui_volume_list_item->threshold), "color_changed",
+  gtk_signal_connect(GTK_OBJECT(threshold), "color_changed",
 		     GTK_SIGNAL_FUNC(ui_study_cb_color_changed),
 		     ui_study);
-  table_row++;
 
   /* ----------------------------------------
      Time page
@@ -551,7 +368,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   /* start making the page to adjust time values */
   packing_table = gtk_table_new(4,4,FALSE);
   label = gtk_label_new("Time");
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), packing_table, label);
   table_row=0;
 
 
@@ -565,11 +382,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(SCAN_START));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		     volume_new_info);
+		     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
   gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -622,18 +437,17 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-    gtk_object_set_data(GTK_OBJECT(entry), "volume_dialog", volume_dialog); 
     gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(FRAME_DURATION));
     gtk_object_set_data(GTK_OBJECT(entry), "frame", GINT_TO_POINTER(i));
     gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
-		       volume_new_info);
+		       GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), dialog);
     gtk_table_attach(GTK_TABLE(frames_table), entry,1,2,
 		   i, i+1, 0, 0, X_PADDING, Y_PADDING);
 
   }
 
   table_row++;
+
 
   /* ----------------------------------------
      Immutables Page:
@@ -642,7 +456,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   packing_table = gtk_table_new(4,2,FALSE);
   label = gtk_label_new("Immutables");
   table_row=0;
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
+  gnome_property_box_append_page (GNOME_PROPERTY_BOX(dialog), packing_table, label);
 
 
   /* widget to tell you the internal data format */
@@ -731,10 +545,10 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 
 
 
-  /* and show all our widgets */
-  gtk_widget_show_all(volume_dialog);
+  /* and show our dialog */
+  gtk_widget_show_all(dialog);
 
-  return;
+  return dialog;
 }
 
 

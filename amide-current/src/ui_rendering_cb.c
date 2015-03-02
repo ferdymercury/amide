@@ -134,7 +134,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 
 	/* translate the 8 vertices back to the base frame */
 	for (i=0; i<8; i++)
-	  box_rp[i] = realspace_alt_coord_to_base(box_rp[i], box_coord_frame);
+	  box_rp[i] = realspace_alt_coord_to_base(box_rp[i], &box_coord_frame);
 
 	if (event->button.button == 1)
 	  gnome_canvas_item_grab(GNOME_CANVAS_ITEM(rotation_box[0]),
@@ -159,10 +159,10 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 
 	  /* rotate the axis */
 	  realspace_rotate_on_axis(&box_coord_frame,
-				   rs_specific_axis(box_coord_frame, XAXIS),
+				   rs_specific_axis(&box_coord_frame, XAXIS),
 				   theta.x);
 	  realspace_rotate_on_axis(&box_coord_frame,
-				   rs_specific_axis(box_coord_frame, YAXIS),
+				   rs_specific_axis(&box_coord_frame, YAXIS),
 				   theta.y);
 	} else {/* button 2 */
 	  temp_cp1 = cp_sub(initial_cp,center_cp);
@@ -176,18 +176,18 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 	  if ((temp_cp1.x*temp_cp2.y-temp_cp1.y*temp_cp2.x) > 0.0)
 	    theta.z = -theta.z;
 	  realspace_rotate_on_axis(&box_coord_frame,
-				   rs_specific_axis(box_coord_frame, ZAXIS),
+				   rs_specific_axis(&box_coord_frame, ZAXIS),
 				   theta.z);
 	}
 	/* recalculate the offset */
 	temp_rp.x = temp_rp.y = temp_rp.z = -dim/2.0;
 	rs_set_offset(&box_coord_frame, zero_rp);
 	rs_set_offset(&box_coord_frame, 
-		      realspace_alt_coord_to_base(temp_rp, box_coord_frame));
+		      realspace_alt_coord_to_base(temp_rp, &box_coord_frame));
 
 	/* translate the 8 vertices */
 	for (i=0; i<8; i++)
-	  box_rp[i] = realspace_base_coord_to_alt(box_rp[i], box_coord_frame);
+	  box_rp[i] = realspace_base_coord_to_alt(box_rp[i], &box_coord_frame);
 	
 	/* draw the 8 lines we use to represent out cube */
 	for (i=0; i<8; i++) {
@@ -212,7 +212,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 	
 	/* translate the 8 vertices back to the base frame */
 	for (i=0; i<8; i++)
-	  box_rp[i] = realspace_alt_coord_to_base(box_rp[i], box_coord_frame);
+	  box_rp[i] = realspace_alt_coord_to_base(box_rp[i], &box_coord_frame);
 
 
 	last_cp = canvas_cp;
@@ -230,9 +230,9 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 	  gtk_object_destroy(GTK_OBJECT(rotation_box[i]));
 
 	/* update the rotation values */
-	rendering_list_set_rotation(ui_rendering->contexts, XAXIS, theta.x);
-	rendering_list_set_rotation(ui_rendering->contexts, YAXIS, -theta.y); 
-	rendering_list_set_rotation(ui_rendering->contexts, ZAXIS, -theta.z); 
+	renderings_set_rotation(ui_rendering->contexts, XAXIS, theta.x);
+	renderings_set_rotation(ui_rendering->contexts, YAXIS, -theta.y); 
+	renderings_set_rotation(ui_rendering->contexts, ZAXIS, -theta.z); 
 
 	/* render now if appropriate*/
 	if (ui_rendering->immediate) {
@@ -320,7 +320,7 @@ void ui_rendering_cb_rotate(GtkAdjustment * adjustment, gpointer data) {
   rot = (adjustment->value/180)*M_PI; /* get rotation in radians */
 
   /* update the rotation values */
-  rendering_list_set_rotation(ui_rendering->contexts, i_axis, rot);
+  renderings_set_rotation(ui_rendering->contexts, i_axis, rot);
 
   /* render now if appropriate*/
   if (ui_rendering->immediate) {
@@ -341,7 +341,7 @@ void ui_rendering_cb_reset_axis_pressed(GtkWidget * widget, gpointer data) {
   ui_rendering_t * ui_rendering = data;
 
   /* reset the rotations */
-  rendering_list_reset_rotation(ui_rendering->contexts);
+  renderings_reset_rotation(ui_rendering->contexts);
 
   /* render now if appropriate*/
   if (ui_rendering->immediate) {
@@ -426,7 +426,7 @@ static void ui_rendering_cb_export_ok(GtkWidget* widget, gpointer data) {
 void ui_rendering_cb_export(GtkWidget * widget, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
-  rendering_list_t * temp_contexts;
+  renderings_t * temp_contexts;
   GtkFileSelection * file_selection;
   gchar * temp_string;
   gchar * data_set_names = NULL;

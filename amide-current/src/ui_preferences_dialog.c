@@ -172,8 +172,8 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   roi_line_points->coords[8] = 25.0; /* x4 */
   roi_line_points->coords[9] = 25.0; /* y4 */
 
-  if (ui_study->current_volume != NULL)
-    outline_color = color_table_outline_color(ui_study->current_volume->color_table, TRUE);
+  if (ui_study->active_volume != NULL)
+    outline_color = color_table_outline_color(ui_study->active_volume->color_table, TRUE);
   else
     outline_color = color_table_outline_color(BW_LINEAR, TRUE);
   roi_item = gnome_canvas_item_new(gnome_canvas_root(roi_indicator), 

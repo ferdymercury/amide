@@ -88,9 +88,12 @@ ui_rendering_movie_t * ui_rendering_movie_init(void) {
   ui_rendering_movie->rotation[XAXIS] = 0;
   ui_rendering_movie->rotation[YAXIS] = 1;
   ui_rendering_movie->rotation[ZAXIS] = 0;
+  ui_rendering_movie->type = OVER_TIME;
   ui_rendering_movie->ui_rendering = NULL;
-  ui_rendering_movie->start = 0.0;
-  ui_rendering_movie->duration = 1.0;
+  ui_rendering_movie->start_time = 0.0;
+  ui_rendering_movie->end_time = 1.0;
+  ui_rendering_movie->start_frame = 0;
+  ui_rendering_movie->end_frame = 0;
 
  return ui_rendering_movie;
 }
@@ -118,6 +121,9 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   GdkImlibImage * ppm_image;
   amide_time_t initial_start, initial_duration;
   ui_rendering_t * ui_rendering;
+  volume_t * most_frames_volume=NULL;
+  renderings_t * contexts;
+  guint volume_frame=0;
 
   /* figure out what the temp directory is */
   temp_dir = g_get_tmp_dir();
@@ -129,20 +135,33 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   /* get the current time, this is so we have a, "hopefully" unique file name */
   g_get_current_time(&current_time);
 
-  /* save the initial time and duration so we can set it back later */
+  /* save the initial times so we can set it back later */
   ui_rendering = ui_rendering_movie->ui_rendering;
   initial_start = ui_rendering->start;
   initial_duration = ui_rendering->duration;
   
+  /* figure out which volume has the most frames, need this if we're doing a 
+     movie over frames */
+  contexts = ui_rendering->contexts;
+  most_frames_volume = contexts->rendering_context->volume;
+  contexts = contexts->next;
+  while (contexts != NULL) {
+    if (contexts->rendering_context->volume->data_set->dim.t >
+	most_frames_volume->data_set->dim.t)
+      most_frames_volume = contexts->rendering_context->volume;
+    contexts = contexts->next;
+  }
+
+  /* figure out each frame's duration, needed if we're doing a movie over time */
+  ui_rendering->duration = 
+    (ui_rendering_movie->end_time-ui_rendering_movie->start_time)
+    /((amide_time_t) ui_rendering_movie->num_frames);
 
 #ifdef AMIDE_DEBUG
-  g_print("Total number of frames to do:\t%d\n",ui_rendering_movie->num_frames);
+  g_print("Total number of movie frames to do:\t%d\n",ui_rendering_movie->num_frames);
   g_print("Frame:\n");
 #endif
   
-  /* figure out each frame's duration */
-  ui_rendering->duration = 
-    ui_rendering_movie->duration/((amide_time_t) ui_rendering_movie->num_frames);
 
   /* start generating the frames */
   for (i_frame = 0; i_frame < ui_rendering_movie->num_frames; i_frame++) {
@@ -154,18 +173,29 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
 	rotation_step[i_axis] = 
 	  (((double) i_frame)*2.0*M_PI*ui_rendering_movie->rotation[i_axis])
 	  / ui_rendering_movie->num_frames;
-	rendering_list_set_rotation(ui_rendering->contexts, 
-				    i_axis, rotation_step[i_axis]);
+	renderings_set_rotation(ui_rendering->contexts, i_axis, rotation_step[i_axis]);
       }
 
       /* figure out the start interval for this frame */
-      ui_rendering->start = ui_rendering_movie->start + i_frame*ui_rendering->duration;
+      if (ui_rendering_movie->type == OVER_TIME) {
+	ui_rendering->start = ui_rendering_movie->start_time + i_frame*ui_rendering->duration;
+      }  else {
+	volume_frame = floor((i_frame/((float) ui_rendering_movie->num_frames)
+			      * most_frames_volume->data_set->dim.t));
+	ui_rendering->start = volume_start_time(most_frames_volume, volume_frame)+CLOSE;
+	ui_rendering->duration = 
+	  volume_end_time(most_frames_volume, volume_frame) -ui_rendering->start-CLOSE;
+      }
  
 
 #ifdef AMIDE_DEBUG
-      g_print("\tRendering\t%d\tstart-end time %5.3f-%5.3f\trotation x %5.3f y %5.3f z %5.3f\n",
-	      i_frame, ui_rendering->start, ui_rendering->start+ui_rendering->duration,
-	      rotation_step[XAXIS], rotation_step[YAXIS], rotation_step[ZAXIS]);
+      if (ui_rendering_movie->type == OVER_TIME)
+	g_print("\tRendering\t%d\tstart-end time %5.3f-%5.3f\trotation x %5.3f y %5.3f z %5.3f\n",
+		i_frame, ui_rendering->start, ui_rendering->start+ui_rendering->duration,
+		rotation_step[XAXIS], rotation_step[YAXIS], rotation_step[ZAXIS]);
+      else
+	g_print("\tRendering\t%d\tdata frame %d\trotation x %5.3f y %5.3f z %5.3f\n",
+		i_frame, volume_frame, rotation_step[XAXIS], rotation_step[YAXIS], rotation_step[ZAXIS]);
 #endif
       
       /* render the contexts */
@@ -210,8 +240,8 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       /* and unrotate the rendering contexts so that we can properly rerotate
 	 for the next frame */
       for (i_axis = NUM_AXIS; i_axis > 0 ; i_axis--) {
-	rendering_list_set_rotation(ui_rendering->contexts, 
-				    i_axis-1, -rotation_step[i_axis-1]);
+	renderings_set_rotation(ui_rendering->contexts, 
+				i_axis-1, -rotation_step[i_axis-1]);
       }
       
       /* update the progress bar */
@@ -335,8 +365,12 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   GtkWidget * hseparator;
   GtkWidget * label;
   GtkWidget * entry;
+  GtkWidget * radio_button1;
+  GtkWidget * radio_button2;
   guint table_row = 0;
   axis_t i_axis;
+  renderings_t * contexts;
+  amide_time_t temp_time;
   
   if (ui_rendering->movie != NULL)
     return ui_rendering->movie;
@@ -344,8 +378,27 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   ui_rendering_movie = ui_rendering_movie_init();
   ui_rendering->movie = ui_rendering_movie;
   ui_rendering_movie->ui_rendering = ui_rendering;
-  ui_rendering_movie->start = ui_rendering->start;
-  ui_rendering_movie->duration = ui_rendering->duration;
+
+  contexts = ui_rendering->contexts;
+
+  ui_rendering_movie->start_frame = 0;
+  ui_rendering_movie->end_frame = contexts->rendering_context->volume->data_set->dim.t-1;
+  ui_rendering_movie->start_time = volume_start_time(contexts->rendering_context->volume,0);
+  ui_rendering_movie->end_time = volume_end_time(contexts->rendering_context->volume,
+						 contexts->rendering_context->volume->data_set->dim.t-1);
+  contexts = contexts->next;
+  while (contexts != NULL) {
+    if (contexts->rendering_context->volume->data_set->dim.t-1 > ui_rendering_movie->end_frame)
+      ui_rendering_movie->end_frame = contexts->rendering_context->volume->data_set->dim.t-1;
+    temp_time = volume_start_time(contexts->rendering_context->volume,0);
+    if (temp_time < ui_rendering_movie->start_time)
+      ui_rendering_movie->start_time = temp_time;
+    temp_time = volume_end_time(contexts->rendering_context->volume,
+				contexts->rendering_context->volume->data_set->dim.t-1);
+    if (temp_time > ui_rendering_movie->end_time)
+      ui_rendering_movie->end_time = temp_time;
+    contexts = contexts->next;
+  }
     
   temp_string = g_strdup_printf("%s: Rendering Movie Generation Dialog",PACKAGE);
   ui_rendering_movie->dialog = gnome_property_box_new();
@@ -375,13 +428,13 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(5,2,FALSE);
+  packing_table = gtk_table_new(5,3,FALSE);
   label = gtk_label_new("Movie Parameters");
   table_row=0;
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(ui_rendering_movie->dialog),  packing_table, label);
 
   /* widgets to specify how many frames */
-  label = gtk_label_new("Frames");
+  label = gtk_label_new("Movie Frames");
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
@@ -398,7 +451,7 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,2,
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
 		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -426,44 +479,104 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,2,
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
 		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  /* widgets to specify the start and end times */
-  label = gtk_label_new("Start Time (s)");
+  /* do we want to make a movie over time or over frames */
+  label = gtk_label_new("Dynamic Movie:");
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%5.3f", ui_rendering_movie->start);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+
+  /* the radio buttons */
+  radio_button1 = gtk_radio_button_new_with_label(NULL, "over time");
+  gtk_table_attach(GTK_TABLE(packing_table), radio_button1,
+  		   1,2, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
+
+  gtk_object_set_data(GTK_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
+
+  radio_button2 = gtk_radio_button_new_with_label(NULL, "over frames");
+  gtk_radio_button_set_group(GTK_RADIO_BUTTON(radio_button2), 
+			     gtk_radio_button_group(GTK_RADIO_BUTTON(radio_button1)));
+  gtk_table_attach(GTK_TABLE(packing_table), radio_button2,
+  		   2,3, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_object_set_data(GTK_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
+
+  gtk_signal_connect(GTK_OBJECT(radio_button1), "clicked",  
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_dynamic_type), ui_rendering_movie);
+  gtk_signal_connect(GTK_OBJECT(radio_button2), "clicked",  
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_dynamic_type), ui_rendering_movie);
+
+  table_row++;
+
+  /* widgets to specify the start and end times */
+  ui_rendering_movie->start_time_label = gtk_label_new("Start Time (s)");
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_time_label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  ui_rendering_movie->start_frame_label = gtk_label_new("Start Frame");
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_frame_label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  ui_rendering_movie->start_time_entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%5.3f", ui_rendering_movie->start_time);
+  gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->start_time_entry), temp_string);
   g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start), 
+  gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->start_time_entry), TRUE);
+  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->start_time_entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start_time), 
 		     ui_rendering_movie);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_time_entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  ui_rendering_movie->start_frame_entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", ui_rendering_movie->start_frame);
+  gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->start_frame_entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->start_frame_entry), TRUE);
+  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->start_frame_entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start_frame), 
+		     ui_rendering_movie);
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->start_frame_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("End Time (s)");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+  ui_rendering_movie->end_time_label = gtk_label_new("End Time (s)");
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_time_label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%5.3f", ui_rendering_movie->start+ui_rendering_movie->duration);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  ui_rendering_movie->end_frame_label = gtk_label_new("End Frame");
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_frame_label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+
+  ui_rendering_movie->end_time_entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%5.3f", ui_rendering_movie->end_time);
+  gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->end_time_entry), temp_string);
   g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_start), 
+  gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->end_time_entry), TRUE);
+  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->end_time_entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_end_time), 
 		     ui_rendering_movie);
-  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_time_entry,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  ui_rendering_movie->end_frame_entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%d", ui_rendering_movie->end_frame);
+  gtk_entry_set_text(GTK_ENTRY(ui_rendering_movie->end_frame_entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(ui_rendering_movie->end_frame_entry), TRUE);
+  gtk_signal_connect(GTK_OBJECT(ui_rendering_movie->end_frame_entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_movie_dialog_cb_change_end_frame), 
+		     ui_rendering_movie);
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->end_frame_entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,2,
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
 		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -474,12 +587,18 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 
   ui_rendering_movie->progress = gtk_progress_bar_new();
   gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(ui_rendering_movie->progress), GTK_PROGRESS_LEFT_TO_RIGHT);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->progress,1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), ui_rendering_movie->progress,1,3,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
   /* show all our widgets */
   gtk_widget_show_all(ui_rendering_movie->dialog);
+
+  /* and hide the appropriate widgets */
+  gtk_widget_hide(ui_rendering_movie->start_frame_label);
+  gtk_widget_hide(ui_rendering_movie->start_frame_entry);
+  gtk_widget_hide(ui_rendering_movie->end_frame_label);
+  gtk_widget_hide(ui_rendering_movie->end_frame_entry);
 
   /* tell the dialog we've changed */
   gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));

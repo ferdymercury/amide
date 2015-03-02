@@ -86,7 +86,7 @@ void amide_study_set_scaling_global(GtkWidget * amide_widget) {
   ui_study_t * ui_study;
 
   ui_study = gtk_object_get_data(GTK_OBJECT(amide_widget), "ui_study");
-  study_set_scaling(ui_study->study, SCALING_GLOBAL);
+  study_set_scaling(ui_study->study, THRESHOLD_GLOBAL);
 
   return;
 }

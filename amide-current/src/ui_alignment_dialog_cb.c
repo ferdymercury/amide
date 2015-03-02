@@ -31,7 +31,8 @@
 #include "ui_study.h"
 #include "ui_alignment_dialog.h"
 #include "ui_alignment_dialog_cb.h"
-
+#include "amitk_canvas.h"
+#include "amitk_tree.h"
 
 
 gboolean ui_alignment_dialog_cb_next_page(GtkWidget * page, gpointer *druid, gpointer data) {
@@ -128,7 +129,7 @@ void ui_alignment_dialog_cb_prepare_page(GtkWidget * page, gpointer * druid, gpo
       }
       align_pts = align_pts->next;
     }
-    selected_pts = align_pts_free(selected_pts);
+    selected_pts = align_pts_unref(selected_pts);
 
     break;
   case CONCLUSION_PAGE:
@@ -165,9 +166,9 @@ void ui_alignment_dialog_cb_select_volume(GtkCList * clist, gint row, gint colum
   g_return_if_fail(volume != NULL);
 
   if (fixed_volume) 
-    ui_alignment->volume_fixed = volume_add_reference(volume);
+    ui_alignment->volume_fixed = volume_ref(volume);
   else 
-    ui_alignment->volume_moving = volume_add_reference(volume);
+    ui_alignment->volume_moving = volume_ref(volume);
   
 
   can_continue = ((ui_alignment->volume_fixed != NULL) &&
@@ -191,9 +192,9 @@ void ui_alignment_dialog_cb_unselect_volume(GtkCList * clist, gint row, gint col
   g_return_if_fail(volume != NULL);
 
   if (fixed_volume)
-    ui_alignment->volume_fixed = volume_free(ui_alignment->volume_fixed);
+    ui_alignment->volume_fixed = volume_unref(ui_alignment->volume_fixed);
   else 
-    ui_alignment->volume_moving = volume_free(ui_alignment->volume_moving);
+    ui_alignment->volume_moving = volume_unref(ui_alignment->volume_moving);
 
   gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), TRUE, FALSE, TRUE);
 
@@ -244,14 +245,20 @@ void ui_alignment_dialog_cb_unselect_point(GtkCList * clist, gint row, gint colu
 void ui_alignment_dialog_cb_finish(GtkWidget* widget, gpointer druid, gpointer data) {
   ui_alignment_t * ui_alignment = data;
   ui_study_t * ui_study;
+  view_t i_view;
+
+  /* sanity check */
+  g_return_if_fail(ui_alignment->coord_frame != NULL);
 
   /* apply the alignment transform */
-  ui_alignment->volume_moving->coord_frame = ui_alignment->coord_frame;
+  rs_set_coord_frame(ui_alignment->volume_moving->coord_frame,ui_alignment->coord_frame);
 
   /* update the display */
   ui_study = gtk_object_get_data(GTK_OBJECT(druid), "ui_study");
-  if (ui_volume_list_includes_volume(ui_study->current_volumes, ui_alignment->volume_moving))
-      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+  if (volumes_includes_volume(AMITK_TREE_SELECTED_VOLUMES(ui_study->tree), ui_alignment->volume_moving)) {
+    for (i_view=0; i_view<NUM_VIEWS; i_view++)
+      amitk_canvas_update_volumes(AMITK_CANVAS(ui_study->canvas[i_view]));
+  }
 
   /* close the dialog box */
   ui_alignment_dialog_cb_cancel(widget, data);

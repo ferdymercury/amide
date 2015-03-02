@@ -1,7 +1,7 @@
 /* data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -51,19 +51,19 @@ gchar * data_format_names[] = {"Unsigned Byte (8 bit)", \
 
 
 /* removes a reference to a data_set, frees up the data_set if no more references */
-data_set_t * data_set_free(data_set_t * data_set) {
+data_set_t * data_set_unref(data_set_t * data_set) {
 
   if (data_set == NULL)
     return data_set;
 
   /* sanity checks */
-  g_return_val_if_fail(data_set->reference_count > 0, NULL);
+  g_return_val_if_fail(data_set->ref_count > 0, NULL);
   
   /* remove a reference count */
-  data_set->reference_count--;
+  data_set->ref_count--;
 
   /* if we've removed all reference's, free the data_set */
-  if (data_set->reference_count == 0) {
+  if (data_set->ref_count == 0) {
 #ifdef AMIDE_DEBUG
     //    g_print("freeing data_set\n");
 #endif
@@ -85,7 +85,7 @@ data_set_t * data_set_init(void) {
     g_warning("%s: Couldn't allocate memory for the data_set structure",PACKAGE);
     return NULL;
   }
-  temp_data_set->reference_count = 1;
+  temp_data_set->ref_count = 1;
 
   /* put in some sensable values */
   temp_data_set->dim = zero_vp;
@@ -181,20 +181,19 @@ data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * stud
   raw_data_format_t i_raw_data_format, raw_data_format;
   gchar * temp_string;
   gchar * data_set_raw_filename;
-
-  new_data_set = data_set_init();
+  voxelpoint_t dim;
 
   /* parse the xml file */
   if ((doc = xmlParseFile(data_set_xml_filename)) == NULL) {
     g_warning("%s: Couldn't Parse AMIDE data_set xml file %s/%s",PACKAGE, study_directory,data_set_xml_filename);
-    return data_set_free(new_data_set);
+    return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE Data Set xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, study_directory,data_set_xml_filename);
-    return data_set_free(new_data_set);
+    return NULL;
   }
 
   /* get the document tree */
@@ -212,10 +211,9 @@ data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * stud
       if (g_strcasecmp(temp_string, raw_data_format_names[i_raw_data_format]) == 0)
 	raw_data_format = i_raw_data_format;
   g_free(temp_string);
-  new_data_set->format = raw_data_format_data(raw_data_format);
 
   /* get the rest of the parameters */
-  new_data_set->dim = xml_get_voxelpoint(nodes, "dim");
+  dim = xml_get_voxelpoint(nodes, "dim");
 
   /* get the name of our associated data file */
   data_set_raw_filename = xml_get_string(nodes, "raw_data_file");
@@ -224,7 +222,7 @@ data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * stud
 #ifdef AMIDE_DEBUG
   g_print("reading data from file %s\n", data_set_raw_filename);
 #endif
-  new_data_set = raw_data_read_file(data_set_raw_filename, new_data_set, raw_data_format, 0);
+  new_data_set = raw_data_read_file(data_set_raw_filename, raw_data_format, dim, 0);
    
   /* and we're done */
   g_free(data_set_raw_filename);
@@ -236,9 +234,9 @@ data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * stud
 
 
 /* adds one to the reference count of a data_set */
-data_set_t * data_set_add_reference(data_set_t * data_set) {
+data_set_t * data_set_ref(data_set_t * data_set) {
 
-  if (data_set != NULL) data_set->reference_count++;
+  if (data_set != NULL) data_set->ref_count++;
 
   return data_set;
 }

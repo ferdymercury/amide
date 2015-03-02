@@ -1,7 +1,7 @@
 /* data_set.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -64,7 +64,7 @@ typedef struct data_set_t {
   data_format_t format;
   
   /* parameters calculated at run time */
-  guint reference_count;
+  guint ref_count;
 } data_set_t;
 
 
@@ -84,11 +84,11 @@ typedef struct data_set_t {
 
 
 /* ------------ external functions ---------- */
-data_set_t * data_set_free(data_set_t * data_set);
+data_set_t * data_set_unref(data_set_t * data_set);
 data_set_t * data_set_init(void);
 gchar * data_set_write_xml(data_set_t * data_set, gchar * study_directory, gchar * data_set_name);
 data_set_t * data_set_load_xml(gchar * data_set_xml_filename, const gchar * study_directory);
-data_set_t * data_set_add_reference(data_set_t * data_set);
+data_set_t * data_set_ref(data_set_t * data_set);
 
 /* external variables */
 extern guint data_format_sizes[];

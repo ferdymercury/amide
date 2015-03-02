@@ -20,7 +20,12 @@
   the data is scaled between the current minimum and maximum
   threshold, with all data above the current maximum threshold set to
   the maximum threshold value, and all data below the current minimum
-  threshold set to the minimum threshold value.
+  threshold set to the minimum threshold value.  This scaling can be
+  relative to the data set's "Global" maximum and minimum, to the "Per
+  Frame" maximum and minimum, or can be from maximum and minimum
+  values "Interpolated Between Frames".  "Per slice" scaling does not
+  make sense in the context of volume rendering, and is interpreted as
+  "Global" scaling.
 
 </para>
 <para>

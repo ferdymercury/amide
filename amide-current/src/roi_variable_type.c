@@ -28,6 +28,8 @@
 #include "config.h"
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
 #include <math.h>
+#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include <glib.h>
 #include "roi_`'m4_Variable_Type`'.h"
@@ -58,14 +60,19 @@ static GSList * prepend_intersection_point(GSList * points_list, realpoint_t new
 }
 
 /* returns a singly linked list of intersection points between the roi
-   and the given slice.  returned points are in the slice's coord_frame */
-GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const volume_t * view_slice) {
+   and the given canvas slice.  returned points are in the canvas's coord_frame.
+*/
+GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, 
+							const realpoint_t canvas_voxel_size,
+							const realspace_t * canvas_coord_frame,
+							const realpoint_t canvas_corner) {
 
 
   GSList * return_points = NULL;
   realpoint_t view_rp,temp_rp, slice_corner[2], roi_corner[2];
   realpoint_t * temp_rpp;
   voxelpoint_t i;
+  voxelpoint_t canvas_dim;
   gboolean voxel_in=FALSE, prev_voxel_intersection, saved=TRUE;
 #if defined(ROI_ELLIPSOID_TYPE) || defined(ROI_CYLINDER_TYPE)
   realpoint_t center, radius;
@@ -75,8 +82,6 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
 #endif
 
   
-  g_assert(view_slice->data_set->dim.z == 1); /* sanity check */
-
   /* make sure we've already defined this guy */
   if (roi_undrawn(roi))  return NULL;
 
@@ -98,22 +103,27 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
   height = fabs(roi_corner[1].z-roi_corner[0].z);
 #endif
 
-  /* get the corners of the view slice in view coordinate space */
-  slice_corner[0] = realspace_base_coord_to_alt(rs_offset(view_slice->coord_frame), view_slice->coord_frame);
-  slice_corner[1] = view_slice->corner;
+  /* get the corners of the canvas slice in view coordinate space */
+  slice_corner[0] = realspace_base_coord_to_alt(rs_offset(canvas_coord_frame), canvas_coord_frame);
+  slice_corner[1] = canvas_corner;
 
   /* iterate through the slice, putting all edge points in the list */
   i.t = i.z=0;
   view_rp.z = (slice_corner[0].z+slice_corner[1].z)/2.0;
-  view_rp.y = slice_corner[0].y+view_slice->voxel_size.y/2.0;
+  view_rp.y = slice_corner[0].y+canvas_voxel_size.y/2.0;
 
-  for (i.y=0; i.y < view_slice->data_set->dim.y ; i.y++) {
+  canvas_dim.z = lround(canvas_corner.z/canvas_voxel_size.z);
+  canvas_dim.y = lround(canvas_corner.y/canvas_voxel_size.y);
+  canvas_dim.x = lround(canvas_corner.x/canvas_voxel_size.x);
+  g_return_val_if_fail(canvas_dim.z == 1, NULL);
 
-    view_rp.x = slice_corner[0].x+view_slice->voxel_size.x/2.0;
+  for (i.y=0; i.y < canvas_dim.y ; i.y++) {
+
+    view_rp.x = slice_corner[0].x+canvas_voxel_size.x/2.0;
     prev_voxel_intersection = FALSE;
 
-    for (i.x=0; i.x < view_slice->data_set->dim.x ; i.x++) {
-      temp_rp = realspace_alt_coord_to_alt(view_rp, view_slice->coord_frame, roi->coord_frame);
+    for (i.x=0; i.x < canvas_dim.x ; i.x++) {
+      temp_rp = realspace_alt_coord_to_alt(view_rp, canvas_coord_frame, roi->coord_frame);
       
 #ifdef ROI_BOX_TYPE
       voxel_in = rp_in_box(temp_rp, roi_corner[0],roi_corner[1]);
@@ -135,7 +145,7 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
 	if (voxel_in ) {
 	  return_points = prepend_intersection_point(return_points, temp_rp);
 	} else { /* previous voxel should be returned */
-	  temp_rp.x = view_rp.x - view_slice->voxel_size.x; /* backup one voxel */
+	  temp_rp.x = view_rp.x - canvas_voxel_size.x; /* backup one voxel */
 	  return_points = append_intersection_point(return_points, temp_rp);
 	}
       } else {
@@ -143,7 +153,7 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
       }
       
       prev_voxel_intersection = voxel_in;
-      view_rp.x += view_slice->voxel_size.x; /* advance one voxel */
+      view_rp.x += canvas_voxel_size.x; /* advance one voxel */
     }
     
     /* check if the edge of this row is still in the roi, if it is, add it as
@@ -151,7 +161,7 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
     if ((voxel_in) && !(saved))
       return_points = append_intersection_point(return_points, view_rp);
 
-    view_rp.y += view_slice->voxel_size.y; /* advance one row */
+    view_rp.y += canvas_voxel_size.y; /* advance one row */
   }
   
   /* make sure the two ends meet */
@@ -167,8 +177,13 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi, const
 
 
 #if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
-/* we return the intersection data in the form of a volume slice because it's convienent */
-volume_t * roi_`'m4_Variable_Type`'_get_slice(const roi_t * roi, const volume_t * view_slice) {
+/* we return the intersection data in the form of a volume slice because it's convenient */
+volume_t * roi_`'m4_Variable_Type`'_get_intersection_slice(const roi_t * roi,
+							   const realspace_t * canvas_coord_frame,
+							   const realpoint_t canvas_corner,
+							   const realpoint_t canvas_voxel_size) {
+
+
 
   voxelpoint_t i_voxel;
   voxelpoint_t roi_vp;
@@ -185,32 +200,33 @@ volume_t * roi_`'m4_Variable_Type`'_get_slice(const roi_t * roi, const volume_t 
 
   if (roi_undrawn(roi)) return NULL;
 
-  /* figure out the intersections */
-  roi_subset_of_volume(roi, view_slice, 0, &start, &dim);
+
+  /* figure out the intersection between the canvas slice and the roi */
+  roi_subset_of_space(roi, canvas_coord_frame, canvas_corner, canvas_voxel_size, &start, &dim);
 
   if (VOXELPOINT_EQUAL(dim, zero_vp)) return NULL;
   intersection = volume_init();
   intersection->data_set = data_set_UBYTE_2D_init(0, dim.y, dim.x);
 
   /* get the corners of the view slice in view coordinate space */
-  slice_corner[0] = realspace_base_coord_to_alt(rs_offset(view_slice->coord_frame), 
-						view_slice->coord_frame);
-  slice_corner[1] = view_slice->corner;
+  slice_corner[0] = realspace_base_coord_to_alt(rs_offset(canvas_coord_frame), 
+						canvas_coord_frame);
+  slice_corner[1] = canvas_corner;
 
   i_voxel.z = i_voxel.t = 0;
   view_rp.z = (slice_corner[0].z+slice_corner[1].z)/2.0;
-  view_rp.y = slice_corner[0].y+((double) start.y + 0.5)*view_slice->voxel_size.y;
+  view_rp.y = slice_corner[0].y+((double) start.y + 0.5)*canvas_voxel_size.y;
 
   for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) {
-    view_rp.x = slice_corner[0].x+((double)start.x+0.5)*view_slice->voxel_size.x;
+    view_rp.x = slice_corner[0].x+((double)start.x+0.5)*canvas_voxel_size.x;
 #ifdef ROI_ISOCONTOUR_2D_TYPE
     if ((i_voxel.y == 0) || (i_voxel.y == (dim.y-1))) y_edge = TRUE;
     else y_edge = FALSE;
 #endif
 
     for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) {
-      roi_rp = realspace_alt_coord_to_alt(view_rp, view_slice->coord_frame, roi->coord_frame);
-      ROI_REALPOINT_TO_VOXEL(roi, roi_rp, roi_vp);
+      roi_rp = realspace_alt_coord_to_alt(view_rp, canvas_coord_frame, roi->coord_frame);
+     REALPOINT_TO_VOXEL(roi_rp, roi->voxel_size, 0, roi_vp);
 
       if (data_set_includes_voxel(roi->isocontour, roi_vp)) {
 	value = *DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp);
@@ -222,17 +238,17 @@ volume_t * roi_`'m4_Variable_Type`'_get_slice(const roi_t * roi, const volume_t 
 #endif
       }
 
-      view_rp.x += view_slice->voxel_size.x;
+      view_rp.x += canvas_voxel_size.x;
     }
-    view_rp.y += view_slice->voxel_size.y;
+    view_rp.y += canvas_voxel_size.y;
   }
 
-  intersection->coord_frame = view_slice->coord_frame;
-  intersection->voxel_size = view_slice->voxel_size;
+  intersection->coord_frame = rs_copy(canvas_coord_frame);
+  intersection->voxel_size = canvas_voxel_size;
 
   REALPOINT_MULT(start, intersection->voxel_size, temp_rp);
-  rs_set_offset(&(intersection->coord_frame), 
-		realspace_alt_coord_to_base(temp_rp, view_slice->coord_frame));
+  rs_set_offset(intersection->coord_frame, 
+		realspace_alt_coord_to_base(temp_rp, canvas_coord_frame));
 
   temp_rp = rs_offset(intersection->coord_frame);
 
@@ -323,54 +339,58 @@ static data_set_UBYTE_t isocontour_edge(data_set_t * isocontour_ds, voxelpoint_t
   return edge_value;
 }
 
-static void isocontour_consider(volume_t * volume, 
-				data_set_t * temp_ds, 
-				voxelpoint_t volume_vp, 
-				amide_data_t iso_value) {
+/* note, using pointers for volume_vp and iso_value to try to reduce
+   stack size */
+static void isocontour_consider(const volume_t * volume, 
+				const data_set_t * temp_ds, 
+				voxelpoint_t * p_volume_vp, 
+				const amide_data_t * p_iso_value) {
 #ifdef ROI_ISOCONTOUR_3D_TYPE
   gint z;
 #endif
-  voxelpoint_t roi_vp;
-  voxelpoint_t new_vp;
 
-  roi_vp = volume_vp;
-  roi_vp.t = 0;
-  if (!data_set_includes_voxel(temp_ds, roi_vp))
-    return; /* make sure we're still in the data set */
+  { /* don't want roi_vp allocated on the stack */
+    voxelpoint_t roi_vp;
 
-  if (*DATA_SET_UBYTE_POINTER(temp_ds,roi_vp) == 1)
-    return; /* have we already considered this voxel */
+    roi_vp = *p_volume_vp;
+    roi_vp.t = 0;
+    if (!data_set_includes_voxel(temp_ds, roi_vp))
+      return; /* make sure we're still in the data set */
+
+    if (*DATA_SET_UBYTE_POINTER(temp_ds,roi_vp) == 1)
+      return; /* have we already considered this voxel */
   
-  if (!(volume_value(volume, volume_vp) >= iso_value)) return;
-  else DATA_SET_UBYTE_SET_CONTENT(temp_ds,roi_vp)=1; /* it's in */
+    if (!(volume_value(volume, *p_volume_vp) >= *p_iso_value)) return;
+    else DATA_SET_UBYTE_SET_CONTENT(temp_ds,roi_vp)=1; /* it's in */
+  }
 
   /* consider the 8 adjoining voxels, or 26 in the case of 3D */
 #ifdef ROI_ISOCONTOUR_3D_TYPE
-  for (z=-1; z<=1; z++) {
+  for (z=-1; z<=1; z++) { 
+    p_volume_vp->z += z;
+    if (z != 0) /* don't reconsider the original point */
+      isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
 #endif
-    new_vp = volume_vp;
+    p_volume_vp->x--;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->y--;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->x++;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->x++;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->y++;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->y++;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->x--;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->x--;
+    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    p_volume_vp->y--;
+    p_volume_vp->x++;
 #ifdef ROI_ISOCONTOUR_3D_TYPE
-    new_vp.z += z;
-    if (z != 0) /* don't reconsider the original poit */
-      isocontour_consider(volume, temp_ds, new_vp, iso_value); 
-#endif
-    new_vp.x--;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.y--;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.x++;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.x++;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.y++;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.y++;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.x--;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-    new_vp.x--;
-    isocontour_consider(volume, temp_ds, new_vp, iso_value);
-#ifdef ROI_ISOCONTOUR_3D_TYPE
+    p_volume_vp->z -= z;
   }
 #endif
 
@@ -384,6 +404,7 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
   voxelpoint_t min_vp, max_vp, i_voxel;
   rlim_t prev_stack_limit;
   struct rlimit rlim;
+  amide_data_t isocontour_value;
 
   g_return_if_fail(roi->type == `'m4_Variable_Type`');
 
@@ -406,7 +427,8 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
   }
 
   /* fill in the data set */
-  isocontour_consider(vol, temp_ds, iso_vp, roi->isocontour_value-CLOSE);
+  isocontour_value = roi->isocontour_value-CLOSE;
+  isocontour_consider(vol, temp_ds, &iso_vp, &isocontour_value);
 
   /* figure out the min and max dimensions */
   min_vp = max_vp = iso_vp;
@@ -430,7 +452,7 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
   }
 
   /* transfer the subset of the data set that contains positive information */
-  roi->isocontour = data_set_free(roi->isocontour); 
+  roi->isocontour = data_set_unref(roi->isocontour); 
   g_return_if_fail(roi->isocontour == NULL); /* sanity check */
 #if defined(ROI_ISOCONTOUR_2D_TYPE)
   roi->isocontour = data_set_UBYTE_2D_init(0, max_vp.y-min_vp.y+1, max_vp.x-min_vp.x+1);
@@ -453,7 +475,7 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
 #endif
       }
 
-  temp_ds = data_set_free(temp_ds);
+  temp_ds = data_set_unref(temp_ds);
 
   /* mark the edges as such */
   i_voxel.t = 0;
@@ -465,12 +487,12 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
 	    isocontour_edge(roi->isocontour, i_voxel);
 
   /* and set the rest of the important info for the data set */
-  roi->coord_frame = vol->coord_frame;
+  roi->coord_frame = rs_copy(vol->coord_frame);
   roi->voxel_size = vol->voxel_size;
 
   REALPOINT_MULT(min_vp, vol->voxel_size, temp_rp);
   temp_rp = realspace_alt_coord_to_base(temp_rp, vol->coord_frame);
-  rs_set_offset(&(roi->coord_frame), temp_rp);
+  rs_set_offset(roi->coord_frame, temp_rp);
 
   REALPOINT_MULT(roi->isocontour->dim, roi->voxel_size, roi->corner);
 

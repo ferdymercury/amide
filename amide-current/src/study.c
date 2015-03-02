@@ -32,32 +32,27 @@
 #include "study.h"
 
 
-/* external variables */
-gchar * scaling_names[] = {"per slice", "global"};
-gchar * scaling_explanations[] = {
-  "scale the images based on the max and min values in the current slice",
-  "scale the images based on the max and min values of the entire data set",
-};
-
 /* functions */
 
 
 
-study_t * study_free(study_t * study) {
+study_t * study_unref(study_t * study) {
 
   if (study == NULL)
     return study;
   
   /* sanity checks */
-  g_return_val_if_fail(study->reference_count > 0, NULL);
+  g_return_val_if_fail(study->ref_count > 0, NULL);
 
   /* remove a reference count */
-  study->reference_count--;
+  study->ref_count--;
 
   /* if we've removed all reference's, free the study */
-  if (study->reference_count == 0) {
-    study->volumes = volume_list_free(study->volumes); /*  free volumes */
-    study->rois = roi_list_free(study->rois); /* free rois */
+  if (study->ref_count == 0) {
+    g_print("freeing study %s\n",study->name);
+    study->volumes = volumes_unref(study->volumes); /*  free volumes */
+    study->rois = rois_unref(study->rois); /* free rois */
+    study->coord_frame = rs_unref(study->coord_frame);
     g_free(study->filename);
     g_free(study->creation_date);
     g_free(study->name);
@@ -73,7 +68,6 @@ study_t * study_free(study_t * study) {
 study_t * study_init(void) {
   
   study_t * study;
-  realpoint_t init;
   time_t current_time;
 
   /* alloc space for the data structure for passing ui info */
@@ -81,24 +75,21 @@ study_t * study_init(void) {
     g_warning("%s: couldn't allocate space for study_t",PACKAGE);
     return NULL;
   }
-  study->reference_count = 1;
+  study->ref_count = 1;
 
   study->name = NULL;
   study->filename = NULL;
-  rs_set_offset(&study->coord_frame,zero_rp);
-  rs_set_axis(&study->coord_frame, default_axis);
+  study->coord_frame = NULL;
   study->volumes = NULL;
   study->rois = NULL;
 
   /* view parameters */
-  init.x = init.y = init.z = -1.0;
-  study_set_view_center(study, init);
+  study_set_view_center(study, rp_neg(one_rp));
   study_set_view_thickness(study, -1.0);
   study_set_view_time(study, 0.0+CLOSE);
   study_set_view_duration(study, 1.0-CLOSE);
   study_set_zoom(study, 1.0);
   study_set_interpolation(study, NEAREST_NEIGHBOR);
-  study_set_scaling(study, SCALING_GLOBAL);
 
   /* set the creation date as today */
   study->creation_date = NULL;
@@ -146,11 +137,11 @@ gboolean study_write_xml(study_t * study, gchar * study_directory) {
 
   /* put in our volume info */
   volume_nodes = xmlNewChild(doc->children, NULL, "Volumes", NULL);
-  volume_list_write_xml(study_volumes(study), volume_nodes, study_directory);
+  volumes_write_xml(study_volumes(study), volume_nodes, study_directory);
 
   /* put in our roi info */
   roi_nodes = xmlNewChild(doc->children, NULL, "ROIs", NULL);
-  roi_list_write_xml(study_rois(study), roi_nodes, study_directory);
+  rois_write_xml(study_rois(study), roi_nodes, study_directory);
 
   /* record our viewing parameters */
   xml_save_realpoint(doc->children, "view_center", study_view_center(study));
@@ -159,7 +150,6 @@ gboolean study_write_xml(study_t * study, gchar * study_directory) {
   xml_save_time(doc->children, "view_duration", study_view_duration(study));
   xml_save_string(doc->children, "interpolation", interpolation_names[study_interpolation(study)]);  
   xml_save_floatpoint(doc->children, "zoom", study_zoom(study));
-  xml_save_string(doc->children, "scaling", scaling_names[study_scaling(study)]);
 
 
   /* and save */
@@ -192,12 +182,10 @@ study_t * study_load_xml(const gchar * study_directory) {
   gchar * file_version;
   gchar * creation_date;
   study_t * new_study;
-  volume_list_t * new_volumes;
-  roi_list_t * new_rois;
+  volumes_t * new_volumes;
+  rois_t * new_rois;
   interpolation_t i_interpolation;
-  scaling_t i_scaling;
   time_t modification_time;
-  realspace_t study_coord_frame;
   struct stat file_info;
   
   new_study = study_init();
@@ -206,7 +194,7 @@ study_t * study_load_xml(const gchar * study_directory) {
   old_dir = g_get_current_dir();
   if (chdir(study_directory) != 0) {
     g_warning("%s: Couldn't change directories in loading study",PACKAGE);
-    study_free(new_study);
+    study_unref(new_study);
     return new_study;
   }
 
@@ -219,7 +207,7 @@ study_t * study_load_xml(const gchar * study_directory) {
       g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
       g_free(old_dir);
     }
-    study_free(new_study);
+    study_unref(new_study);
     return new_study;
   }
 
@@ -232,7 +220,7 @@ study_t * study_load_xml(const gchar * study_directory) {
       g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
       g_free(old_dir);
     }
-    study_free(new_study);
+    study_unref(new_study);
     return new_study;
   }
 
@@ -275,23 +263,22 @@ study_t * study_load_xml(const gchar * study_directory) {
 
 
   /* get our study parameters */
-  study_coord_frame = xml_get_realspace(nodes, "coord_frame");
-  study_set_coord_frame(new_study, study_coord_frame);
+  new_study->coord_frame=xml_get_realspace(nodes, "coord_frame");
 
 
   /* load in the volumes */
   volume_nodes = xml_get_node(nodes, "Volumes");
   volume_nodes = volume_nodes->children;
-  new_volumes = volume_list_load_xml(volume_nodes, study_directory);
+  new_volumes = volumes_load_xml(volume_nodes, study_directory);
   study_add_volumes(new_study, new_volumes);
-  volume_list_free(new_volumes);
+  new_volumes = volumes_unref(new_volumes);
   
   /* load in the rois */
   roi_nodes = xml_get_node(nodes, "ROIs");
   roi_nodes = roi_nodes->children;
-  new_rois = roi_list_load_xml(roi_nodes, study_directory);
+  new_rois = rois_load_xml(roi_nodes, study_directory);
   study_add_rois(new_study, new_rois);
-  roi_list_free(new_rois);
+  new_rois = rois_unref(new_rois);
 
   /* get our view parameters */
   study_set_view_center(new_study, xml_get_realpoint(nodes, "view_center"));
@@ -314,23 +301,15 @@ study_t * study_load_xml(const gchar * study_directory) {
 	study_set_interpolation(new_study, i_interpolation);
   g_free(temp_string);
 
-  /* figure out the scaling */
-  temp_string = xml_get_string(nodes, "scaling");
-  if (temp_string != NULL)
-    for (i_scaling=0; i_scaling < NUM_SCALINGS; i_scaling++) 
-      if (g_strcasecmp(temp_string, scaling_names[i_scaling]) == 0)
-	study_set_scaling(new_study, i_scaling);
-  g_free(temp_string);
-
   /* and we're done */
   xmlFreeDoc(doc);
     
   /* legacy cruft, rip out at some point in the future */
   /* compensate for errors in old versions of amide */
   if (g_strcasecmp(file_version, "1.3") < 0) {
-    volume_list_t * volumes;
+    volumes_t * volumes;
     volume_t * volume;
-    roi_list_t * rois;
+    rois_t * rois;
     roi_t * roi;
     realpoint_t view_center;
     realpoint_t new_axis[NUM_AXIS];
@@ -353,11 +332,11 @@ study_t * study_load_xml(const gchar * study_directory) {
       new_axis[XAXIS].y = -new_axis[XAXIS].y;
       new_axis[YAXIS].y = -new_axis[YAXIS].y;
       new_axis[ZAXIS].y = -new_axis[ZAXIS].y;
-      rs_set_axis(&volume->coord_frame, new_axis);
+      rs_set_axis(volume->coord_frame, new_axis);
 
       new_offset = rs_offset(volume->coord_frame);
       new_offset.y = -new_offset.y;
-      rs_set_offset(&volume->coord_frame, new_offset);
+      rs_set_offset(volume->coord_frame, new_offset);
 
       volumes = volumes->next;
     }
@@ -371,11 +350,11 @@ study_t * study_load_xml(const gchar * study_directory) {
       new_axis[XAXIS].y = -new_axis[XAXIS].y;
       new_axis[YAXIS].y = -new_axis[YAXIS].y;
       new_axis[ZAXIS].y = -new_axis[ZAXIS].y;
-      rs_set_axis(&roi->coord_frame, new_axis);
+      rs_set_axis(roi->coord_frame, new_axis);
 
       new_offset = rs_offset(roi->coord_frame);
       new_offset.y = -new_offset.y;
-      rs_set_offset(&roi->coord_frame, new_offset);
+      rs_set_offset(roi->coord_frame, new_offset);
 
       rois = rois->next;
     }
@@ -388,7 +367,7 @@ study_t * study_load_xml(const gchar * study_directory) {
   if (chdir(old_dir) != 0) {
     g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
     g_free(old_dir);
-    study_free(new_study);
+    study_unref(new_study);
     return new_study;
   }
   g_free(old_dir);
@@ -412,7 +391,7 @@ study_t * study_copy(study_t * src_study) {
   dest_study = study_init();
 
   /* copy the data elements */
-  study_set_coord_frame(dest_study, study_coord_frame(src_study));
+  dest_study->coord_frame = rs_copy(study_coord_frame(src_study));
 
   /* copy the view information */
   study_set_view_center(dest_study, study_view_center(src_study));
@@ -421,13 +400,12 @@ study_t * study_copy(study_t * src_study) {
   study_set_view_duration(dest_study, study_view_duration(src_study));
   study_set_zoom(dest_study, study_zoom(src_study));
   study_set_interpolation(dest_study, study_interpolation(src_study));
-  study_set_scaling(dest_study, study_scaling(src_study));
 
   /* make a copy of the study's ROIs and volumes */
   if (study_rois(src_study) != NULL)
-    dest_study->rois = roi_list_copy(study_rois(src_study));
+    dest_study->rois = rois_copy(study_rois(src_study));
   if (study_volumes(src_study) != NULL)
-    dest_study->volumes = volume_list_copy(study_volumes(src_study));
+    dest_study->volumes = volumes_copy(study_volumes(src_study));
 
   /* make a separate copy in memory of the study's name and filename */
   study_set_name(dest_study, study_name(src_study));
@@ -439,21 +417,30 @@ study_t * study_copy(study_t * src_study) {
 
 
 /* adds one to the reference count of a study */
-study_t * study_add_reference(study_t * study) {
+study_t * study_ref(study_t * study) {
 
   /* sanity checks */
   g_return_val_if_fail(study != NULL, NULL);
 
-  study->reference_count++;
-  
+  study->ref_count++;
 
   return study;
 }
 
 /* add a volume to a study */
 void study_add_volume(study_t * study, volume_t * volume) {
+  realpoint_t temp_rp;
 
-  study->volumes = volume_list_add_volume(study->volumes, volume);
+  study->volumes = volumes_add_volume(study->volumes, volume);
+
+  /* reset the view center if needed */
+  if (volumes_count(study->volumes) == 1) {
+    temp_rp = realspace_alt_coord_to_alt(study_view_center(study),study_coord_frame(study),volume->coord_frame);
+    if ((temp_rp.x < 0.0) || (temp_rp.y < 0.0) ||(temp_rp.z < 0.0) ||
+	(temp_rp.x > volume->corner.x) || (temp_rp.y > volume->corner.y) || (temp_rp.z > volume->corner.z))
+      study_set_view_center(study, realspace_base_coord_to_alt(volume_center(volume),study_coord_frame(study)));
+    study_set_view_thickness(study,volumes_min_voxel_size(study->volumes));
+  }
 
   return;
 }
@@ -461,13 +448,13 @@ void study_add_volume(study_t * study, volume_t * volume) {
 /* remove a volume from a study */
 void study_remove_volume(study_t * study, volume_t * volume) {
 
-  study->volumes = volume_list_remove_volume(study->volumes, volume);
+  study->volumes = volumes_remove_volume(study->volumes, volume);
 
   return;
 }
 
 /* add a list of volumes to a study */
-void study_add_volumes(study_t * study, volume_list_t * volumes) {
+void study_add_volumes(study_t * study, volumes_t * volumes) {
 
   while (volumes != NULL) {
     study_add_volume(study, volumes->volume);
@@ -480,7 +467,7 @@ void study_add_volumes(study_t * study, volume_list_t * volumes) {
 /* add an roi to a study */
 void study_add_roi(study_t * study, roi_t * roi) {
 
-  study->rois = roi_list_add_roi(study->rois, roi);
+  study->rois = rois_add_roi(study->rois, roi);
 
   return;
 }
@@ -489,14 +476,14 @@ void study_add_roi(study_t * study, roi_t * roi) {
 /* remove an roi from a study */
 void study_remove_roi(study_t * study, roi_t * roi) {
 
-  study->rois = roi_list_remove_roi(study->rois, roi);
+  study->rois = rois_remove_roi(study->rois, roi);
 
   return;
 }
 
 
 /* add a list of rois to a study */
-void study_add_rois(study_t * study, roi_list_t * rois) {
+void study_add_rois(study_t * study, rois_t * rois) {
 
   while (rois != NULL) {
     study_add_roi(study, rois->roi);
@@ -553,3 +540,26 @@ void study_set_creation_date(study_t * study, const gchar * new_date) {
   return;
 }
 
+void study_set_coord_frame(study_t * study, const realspace_t * new_rs) {
+
+  rs_set_coord_frame(study->coord_frame, new_rs);
+
+  return;
+}
+
+/* refuses bad choices for thickness */
+void study_set_view_thickness(study_t * study, floatpoint_t new_thickness) {
+  floatpoint_t min_voxel_size;
+
+  if (study_volumes(study) != NULL)
+    min_voxel_size = volumes_min_voxel_size(study_volumes(study));
+  else
+    min_voxel_size = 0;
+
+  if (new_thickness < min_voxel_size)
+    study->view_thickness = min_voxel_size;
+  else
+    study->view_thickness = new_thickness;
+
+  return;
+}

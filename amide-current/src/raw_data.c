@@ -26,7 +26,6 @@
 
 #include "config.h"
 #include <gnome.h>
-#include <matrix.h>
 #include "raw_data.h"
 #include <sys/stat.h>
  
@@ -146,7 +145,7 @@ data_format_t raw_data_format_data(raw_data_format_t raw_data_format) {
 
 
 
-/* take in one of the data formats, and return the corresponding raw data format's */
+/* tells you what raw data format corresponds to the given data format */
 raw_data_format_t raw_data_format_raw(data_format_t data_format) {
 
   raw_data_format_t raw_data_format;
@@ -245,13 +244,11 @@ guint raw_data_calc_num_bytes(voxelpoint_t dim, raw_data_format_t raw_data_forma
 
 
 /* reads the contents of a raw data file into an amide data_set structure,
-   note: raw_data_set should be pre initialized with the appropriate dim
-         and conversion,  but format will be filled in 
    note: file_offset is bytes for a binary file, lines for an ascii file
 */
 data_set_t * raw_data_read_file(const gchar * file_name, 
-				data_set_t * raw_data_set,
 				raw_data_format_t raw_data_format,
+				voxelpoint_t dim,
 				guint file_offset) {
 
   FILE * file_pointer;
@@ -260,37 +257,38 @@ data_set_t * raw_data_read_file(const gchar * file_name,
   size_t bytes_to_read;
   voxelpoint_t i;
   gint error, j;
-
-  if (raw_data_set == NULL) {
-    g_warning("%s: raw_data_read called with NULL data_set",PACKAGE);
-    return raw_data_set;
-  }
+  data_set_t * raw_data_set;
 
   if (file_name == NULL) {
     g_warning("%s: raw_data_read called with no filename",PACKAGE);
-    return data_set_free(raw_data_set);
+    return NULL;
+  }
+
+  if ((raw_data_set = data_set_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the raw data set structure", PACKAGE);
+    return NULL;
   }
 
   /* figure out what internal data format we should be using */
   raw_data_set->format =  raw_data_format_data(raw_data_format);
   
   /* malloc the space for the data set */
-  g_free(raw_data_set->data); /* just in case */
+  raw_data_set->dim = dim;
   if ((raw_data_set->data = data_set_get_data_mem(raw_data_set)) == NULL) {
     g_warning("%s: couldn't allocate space for the raw data",PACKAGE);
-    return data_set_free(raw_data_set);
+    return data_set_unref(raw_data_set);
   }
 
   /* open the raw data file for reading */
   if (raw_data_format == ASCII_NE) {
     if ((file_pointer = fopen(file_name, "r")) == NULL) {
       g_warning("%s: couldn't open raw data file %s", PACKAGE,file_name);
-      return data_set_free(raw_data_set);
+      return data_set_unref(raw_data_set);
     }
   } else { /* note, rb==r on any POSIX compliant system (i.e. Linux). */
     if ((file_pointer = fopen(file_name, "rb")) == NULL) {
       g_warning("%s: couldn't open raw data file %s", PACKAGE,file_name);
-      return data_set_free(raw_data_set);
+      return data_set_unref(raw_data_set);
     }
   }
   
@@ -301,14 +299,14 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	g_warning("%s: could not step forward %d elements in raw data file:\n\t%s\n\treturned error: %d",
 		  PACKAGE, j+1, file_name, error);
 	fclose(file_pointer);
-	return data_set_free(raw_data_set);
+	return data_set_unref(raw_data_set);
     }
   } else { /* binary */
     if (fseek(file_pointer, file_offset, SEEK_SET) != 0) {
       g_warning("%s: could not seek forward %d bytes in raw data file:\n\t%s",
 		PACKAGE, file_offset, file_name);
       fclose(file_pointer);
-      return data_set_free(raw_data_set);
+      return data_set_unref(raw_data_set);
     }
   }
     
@@ -324,7 +322,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 		PACKAGE,file_name, bytes_to_read, bytes_read);
       g_free(file_buffer);
       fclose(file_pointer);
-      return data_set_free(raw_data_set);
+      return data_set_unref(raw_data_set);
     }
     fclose(file_pointer);
   }
@@ -666,7 +664,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
       }
       break;
     }   
-  }      
+  }
 
   /* garbage collection */
   g_free(file_buffer);
@@ -680,50 +678,54 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 
 
 /* reads the contents of a raw data file into an amide volume data structure,
-   note: raw_data_volume->data_set should be pre initialized with the appropriate dim 
-   note: conversion factors should also be appropriately pre-initialized if needed
-   note: if raw_data_volume->frame_duration is null, fake values will be entered
+   note: returned volume will have 1 second frame durations entered
+   note: returned volume will have a voxel size of 1x1x1 mm
    note: file_offset is bytes for a binary file, lines for an ascii file
 */
 volume_t * raw_data_read_volume(const gchar * file_name, 
-				volume_t * raw_data_volume,
 				raw_data_format_t raw_data_format,
+				voxelpoint_t data_dim,
 				guint file_offset) {
 
   guint t;
+  volume_t * raw_data_volume;
 
-  if (raw_data_volume == NULL) {
-    g_warning("%s: raw_data_read called with NULL volume",PACKAGE);
-    return raw_data_volume;
+  /* acquire space for the volume structure */
+  if ((raw_data_volume = volume_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the volume structure to hold data", PACKAGE);
+    return NULL;
+  }
+
+  if ((raw_data_volume->coord_frame = rs_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the volume's coordinate frame structure", PACKAGE);
+    return volume_unref(raw_data_volume);
   }
 
   /* read in the data set */
-  raw_data_volume->data_set = 
-    raw_data_read_file(file_name, raw_data_volume->data_set, raw_data_format, file_offset);
+  raw_data_volume->data_set =  raw_data_read_file(file_name, raw_data_format, data_dim, file_offset);
   if (raw_data_volume->data_set == NULL) {
     g_warning("%s: raw_data_read_file failed returning NULL data set",PACKAGE);
-    return raw_data_volume;
+    return volume_unref(raw_data_volume);
   }
 
-
-  /* put in fake frame durations if needed */
-  if (raw_data_volume->frame_duration == NULL) {
-  
-    /* allocate space for the array containing info on the duration of the frames */
-    if ((raw_data_volume->frame_duration = 
-	 volume_get_frame_duration_mem(raw_data_volume)) == NULL) {
-      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
-      raw_data_volume = volume_free(raw_data_volume);
-      return raw_data_volume;
-    }
-
-    /* iterate over the # of frames */
-    for (t = 0; t < raw_data_volume->data_set->dim.t; t++)
-      raw_data_volume->frame_duration[t] = 1.0;
+  /* allocate space for the array containing info on the duration of the frames */
+  if ((raw_data_volume->frame_duration = volume_get_frame_duration_mem(raw_data_volume)) == NULL) {
+    g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
+    return volume_unref(raw_data_volume);
   }
+  for (t=0; t < raw_data_volume->data_set->dim.t; t++)
+    raw_data_volume->frame_duration[t] = 1.0; /* put in fake frame durations */
+
+  /* calc max/min values */
+  volume_calc_frame_max_min(raw_data_volume);
+  volume_calc_global_max_min(raw_data_volume);
+
+  /* put in fake voxel size values and set the far corner appropriately */
+  raw_data_volume->modality = CT; /* guess CT... */
+  raw_data_volume->voxel_size = one_rp;
+  volume_recalc_far_corner(raw_data_volume);
 
   /* set any remaining parameters */
-  volume_recalc_max_min(raw_data_volume);
   volume_set_center(raw_data_volume, zero_rp);
 
   return raw_data_volume;

@@ -43,7 +43,7 @@ static void ui_series_slices_free(ui_series_t * ui_series) {
   guint i;
 
   for (i=0; i < ui_series->num_slices; i++) {
-    ui_series->slices[i] = volume_list_free(ui_series->slices[i]);
+    ui_series->slices[i] = volumes_unref(ui_series->slices[i]);
     if (ui_series->rgb_images[i] != NULL)
       gdk_pixbuf_unref(ui_series->rgb_images[i]);
   }
@@ -71,7 +71,8 @@ ui_series_t * ui_series_free(ui_series_t * ui_series) {
     g_print("freeing ui_series\n");
 #endif
     ui_series_slices_free(ui_series);
-    ui_series->volumes = volume_list_free(ui_series->volumes);
+    ui_series->volumes = volumes_unref(ui_series->volumes);
+    ui_series->coord_frame = rs_unref(ui_series->coord_frame);
     g_free(ui_series->rgb_images);
     g_free(ui_series->images);
     g_free(ui_series->captions);
@@ -109,6 +110,7 @@ static ui_series_t * ui_series_init(void) {
   ui_series->voxel_dim = 1.0;
   ui_series->thickness = -1.0;
   ui_series->view_point = zero_rp;
+  ui_series->coord_frame = NULL;
   ui_series->view_time = 0.0;
   ui_series->type = PLANES;
   ui_series->thresholds_dialog = NULL;
@@ -153,7 +155,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
   gint width, height;
   gdouble x, y;
   GtkRequisition requisition;
-  realspace_t view_coord_frame;
+  realspace_t * view_coord_frame;
   gint image_width, image_height;
   gchar * temp_string;
 
@@ -165,7 +167,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
   /* allocate space for pointers to our slices if needed */
   if (ui_series->slices == NULL) {
     if ((ui_series->slices = 
-	 (volume_list_t **) g_malloc(sizeof(volume_list_t *) *ui_series->num_slices)) == NULL) {
+	 (volumes_t **) g_malloc(sizeof(volumes_t *) *ui_series->num_slices)) == NULL) {
       g_warning("%s: couldn't allocate space for pointers to amide_volume_t's", PACKAGE);
       return;
     }
@@ -198,8 +200,8 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     temp_time = ui_series->start_time;
     temp_duration = ui_series->frame_durations[0];
   }
-  view_coord_frame = ui_series->coord_frame;
-  rs_set_offset(&view_coord_frame, realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
+  view_coord_frame = rs_copy(ui_series->coord_frame);
+  rs_set_offset(view_coord_frame, realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
   ui_series->rgb_images[0] = image_from_volumes(&(ui_series->slices[0]),
 						ui_series->volumes,
 						temp_time+CLOSE,
@@ -207,8 +209,8 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 						ui_series->thickness,
 						ui_series->voxel_dim,
 						view_coord_frame,
-						ui_series->scaling,
 						ui_series->interpolation);
+  view_coord_frame = rs_unref(view_coord_frame);
   image_width = gdk_pixbuf_get_width(ui_series->rgb_images[0]) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
   image_height = gdk_pixbuf_get_height(ui_series->rgb_images[0]) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
 
@@ -279,8 +281,8 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
       temp_time += temp_duration; /* duration from last time through the loop */
       temp_duration = ui_series->frame_durations[i];
     }
-    view_coord_frame = ui_series->coord_frame;
-    rs_set_offset(&view_coord_frame,  realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
+    view_coord_frame = rs_copy(ui_series->coord_frame);
+    rs_set_offset(view_coord_frame,  realspace_alt_coord_to_base(temp_point, ui_series->coord_frame));
     
     if (i != 0) /* we've already done image 0 */
       if (ui_series->rgb_images[i] != NULL)
@@ -294,8 +296,8 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 						    ui_series->thickness,
 						    ui_series->voxel_dim,
 						    view_coord_frame,
-						    ui_series->scaling,
 						    ui_series->interpolation);
+    view_coord_frame = rs_unref(view_coord_frame);
     
     /* figure out the next x,y spot to put this guy */
     y = floor((i-start_i)/ui_series->columns)*image_height;
@@ -352,7 +354,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, 
+void ui_series_create(study_t * study, volumes_t * volumes, view_t view, 
 		      layout_t layout, series_t series_type) {
  
   ui_series_t * ui_series;
@@ -384,7 +386,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view,
   gtk_window_set_policy (GTK_WINDOW(ui_series->app), TRUE, TRUE, TRUE);
 
   /* make a copy of the volumes sent to this series */
-  ui_series->volumes = volume_list_copy(volumes);
+  ui_series->volumes = volumes_copy(volumes);
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "realize", GTK_SIGNAL_FUNC(ui_common_window_realize_cb), NULL);
@@ -400,11 +402,10 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view,
   ui_series->thickness = study_view_thickness(study);
   ui_series->interpolation = study_interpolation(study);
   ui_series->view_time = study_view_time(study);
-  min_duration = volume_list_min_frame_duration(ui_series->volumes);
+  min_duration = volumes_min_frame_duration(ui_series->volumes);
   ui_series->view_duration =  
     (min_duration > study_view_duration(study)) ?  min_duration : study_view_duration(study);
   ui_series->voxel_dim = (1/study_zoom(study)) * volumes_max_min_voxel_size(study_volumes(study));
-  ui_series->scaling = study_scaling(study);
 
 
   /* do some initial calculations */
@@ -424,7 +425,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view,
     guint i;
     guint total_volume_frames=0;
     guint series_frame = 0;
-    volume_list_t * temp_volumes;
+    volumes_t * temp_volumes;
     gboolean done;
     gboolean valid;
 

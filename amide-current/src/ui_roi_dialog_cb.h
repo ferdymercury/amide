@@ -30,8 +30,7 @@
 void ui_roi_dialog_cb_change_name(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_cb_change_type(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data);
-void ui_roi_dialog_cb_change_axis(GtkAdjustment * adjustment, gpointer data);
-void ui_roi_dialog_cb_reset_axis(GtkWidget* widget, gpointer data);
+void ui_roi_dialog_cb_coord_frame_changed(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_roi_dialog_cb_help(GnomePropertyBox *roi_dialog, gint page_number, gpointer data);
 gboolean ui_roi_dialog_cb_close(GtkWidget* widget, gpointer data);

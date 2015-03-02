@@ -26,7 +26,7 @@
 
 /* external functions */
 void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog);
-void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi);
+GtkWidget * ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi);
 
 
 

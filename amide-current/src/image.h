@@ -34,14 +34,18 @@
 #define IMAGE_DISTRIBUTION_WIDTH 100
 
 /* external functions */
-GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, rgba_t color,
-				     realspace_t * return_frame,
+GdkPixbuf * image_slice_intersection(const roi_t * roi,
+				     const realspace_t * canvas_coord_frame,
+				     const realpoint_t canvas_corner,
+				     const realpoint_t canvas_voxel_size,
+				     rgba_t color,
+				     realspace_t ** return_frame,
 				     realpoint_t * return_corner);
 GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t image_color);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
 			    const color_table_t color_table);
-GdkPixbuf * image_from_contexts(rendering_list_t * contexts, 
+GdkPixbuf * image_from_contexts(renderings_t * contexts, 
 				gint16 image_width, gint16 image_height,
 				eye_t eyes, 
 				gdouble eye_angle, 
@@ -56,14 +60,13 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
 				  const amide_data_t volume_min,
 				  const amide_data_t volume_max,
 				  const gboolean horizontal);
-GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
-			       volume_list_t * volumes,
+GdkPixbuf * image_from_volumes(volumes_t ** pslices,
+			       volumes_t * volumes,
 			       const amide_time_t start,
 			       const amide_time_t duration,
 			       const floatpoint_t thickness,
 			       const floatpoint_t voxel_dim,
-			       const realspace_t view_coord_frame,
-			       const scaling_t scaling,
+			       const realspace_t * view_coord_frame,
 			       const interpolation_t interpolation);
 GdkPixmap * image_get_volume_pixmap(volume_t * volume, 
 				    GdkWindow * window, 

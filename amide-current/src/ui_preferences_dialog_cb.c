@@ -30,6 +30,7 @@
 #include "ui_study.h"
 #include "ui_preferences_dialog.h"
 #include "ui_preferences_dialog_cb.h"
+#include "amitk_canvas.h"
 
 
 /* function called when the roi width has been changed */
@@ -104,38 +105,53 @@ void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointe
   gint new_roi_width;
   GdkLineStyle new_line_style;
   layout_t new_layout;
+  view_t i_view;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)  return;
 
+  gnome_config_push_prefix("/"PACKAGE"/");
+
+
 
   new_roi_width = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
 						      "new_roi_width"));
-  new_line_style = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
-						       "new_line_style"));
-  new_layout = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
-						   "new_layout"));
-
   /* sanity checks */
   if (new_roi_width < UI_STUDY_MIN_ROI_WIDTH) new_roi_width = UI_STUDY_MIN_ROI_WIDTH;
   if (new_roi_width > UI_STUDY_MAX_ROI_WIDTH) new_roi_width = UI_STUDY_MAX_ROI_WIDTH;
 
-  /* copy the new info on over */
-  ui_study->roi_width = new_roi_width;
-  ui_study->line_style = new_line_style;
-  ui_study->canvas_layout = new_layout;
+  if (ui_study->roi_width != new_roi_width) {
+    ui_study->roi_width = new_roi_width;
+    gnome_config_set_int("ROI/Width",ui_study->roi_width);
+    for (i_view=0; i_view<NUM_VIEWS; i_view++)
+      amitk_canvas_set_roi_width(AMITK_CANVAS(ui_study->canvas[i_view]), ui_study->roi_width, TRUE);
+  }
 
-  /* and save user preferences */
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("ROI/Width",ui_study->roi_width);
-  gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
-  gnome_config_set_int("CANVAS/Layout",ui_study->canvas_layout);
+
+
+
+  new_line_style = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
+						       "new_line_style"));
+  if (ui_study->line_style != new_line_style) {
+    ui_study->line_style = new_line_style;
+    gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
+    for (i_view=0; i_view<NUM_VIEWS; i_view++)
+      amitk_canvas_set_line_style(AMITK_CANVAS(ui_study->canvas[i_view]), ui_study->line_style, TRUE);
+
+  }
+
+
+
+  new_layout = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
+						   "new_layout"));
+  if (ui_study->canvas_layout != new_layout) {
+    ui_study->canvas_layout = new_layout;
+    gnome_config_set_int("CANVAS/Layout",ui_study->canvas_layout);
+    ui_study_setup_canvas(ui_study);
+  }
+
   gnome_config_pop_prefix();
   gnome_config_sync();
-
-  ui_study_setup_canvas(ui_study);
-  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
-  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALIGN_PTS);
   return;
 }
 

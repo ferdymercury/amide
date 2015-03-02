@@ -35,8 +35,6 @@
 #include "ui_study_menus.h"
 #include "ui_study_toolbar.h"
 #include "../pixmaps/icon_threshold.xpm"
-#include "../pixmaps/icon_scaling_per_slice.xpm"
-#include "../pixmaps/icon_scaling_global.xpm"
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
 
@@ -46,24 +44,18 @@
 /* function to setup the toolbar for the study ui */
 void ui_study_toolbar_create(ui_study_t * ui_study) {
 
-  scaling_t i_scaling;
   interpolation_t i_interpolation;
   GtkWidget * label;
   GtkWidget * toolbar;
   GtkObject * adjustment;
   GtkWidget * spin_button;
-  gchar ** icon_scaling[NUM_SCALINGS] = {icon_scaling_per_slice_xpm,
-					icon_scaling_global_xpm};
-
   gchar ** icon_interpolation[NUM_INTERPOLATIONS] = {icon_interpolation_nearest_neighbor_xpm,
 						    icon_interpolation_trilinear_xpm};
 
   /* the toolbar definitions */
-  GnomeUIInfo scaling_list[NUM_SCALINGS+1];
   GnomeUIInfo interpolation_list[NUM_INTERPOLATIONS+1];
 
   GnomeUIInfo study_main_toolbar[] = {
-    GNOMEUIINFO_RADIOLIST(scaling_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(interpolation_list),
     GNOMEUIINFO_SEPARATOR,
@@ -80,16 +72,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
 
   
-  /* start make the scaling toolbar items*/
-  for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++)
-    ui_study_menus_fill_in_radioitem(&(scaling_list[i_scaling]),
-				     (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
-				     scaling_explanations[i_scaling],
-				     ui_study_cb_scaling,
-				     ui_study, 
-				     icon_scaling[i_scaling]);
-  ui_study_menus_fill_in_end(&(scaling_list[NUM_SCALINGS]));
-
   /* start make the interpolation toolbar items*/
   for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
     ui_study_menus_fill_in_radioitem(&(interpolation_list[i_interpolation]),
@@ -109,20 +91,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
 
 
-
-  /* finish setting up the scaling  items */
-  for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++) {
-    gtk_object_set_data(GTK_OBJECT(scaling_list[i_scaling].widget), "scaling", GINT_TO_POINTER(i_scaling));
-    gtk_signal_handler_block_by_func(GTK_OBJECT(scaling_list[i_scaling].widget),
-				     GTK_SIGNAL_FUNC(ui_study_cb_scaling),
-				     ui_study);
-  }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(scaling_list[study_scaling(ui_study->study)].widget),
-			       TRUE);
-  for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++)
-    gtk_signal_handler_unblock_by_func(GTK_OBJECT(scaling_list[i_scaling].widget),
-  				       GTK_SIGNAL_FUNC(ui_study_cb_scaling),
-  				       ui_study);
 
   /* finish setting up the interpolation items */
   for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++) {

@@ -41,20 +41,19 @@ typedef enum {PLANES, FRAMES} series_t;
 /* ui_series data structures */
 typedef struct ui_series_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
-  volume_list_t ** slices;
-  volume_list_t * volumes;
+  volumes_t ** slices;
+  volumes_t * volumes;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
   GnomeCanvasItem ** captions;
   GdkPixbuf ** rgb_images;
   GtkWidget * thresholds_dialog;
   guint num_slices, rows, columns;
-  realspace_t coord_frame;
+  realspace_t * coord_frame;
   realpoint_t view_point;
   amide_time_t view_time;
   floatpoint_t thickness;
   interpolation_t interpolation;
-  scaling_t scaling;
   floatpoint_t voxel_dim;
   series_t type;
   guint reference_count;
@@ -74,7 +73,7 @@ typedef struct ui_series_t {
 /* external functions */
 ui_series_t * ui_series_free(ui_series_t * ui_series);
 void ui_series_update_canvas(ui_series_t * ui_series);
-void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, 
+void ui_series_create(study_t * study, volumes_t * volumes, view_t view, 
 		      layout_t layout, series_t series_type);
 
 /* external variables */

@@ -116,16 +116,31 @@ cxxflags_set = @cxxflags_set@
 
 amide_helpdir = $(datadir)/gnome/help/amide/C
 
-amide_help_DATA =  	amide.html		topic.dat
+amide_help_DATA = \
+	amide.html	\
+	topic.dat
 
 
-SGML_FILES =  	amide.sgml			basics.sgml			file-handling.sgml		importing.sgml			rendering.sgml			rois.sgml			volumes.sgml			alignment.sgml 		
+SGML_FILES = \
+	amide.sgml		\
+	basics.sgml		\
+	file-handling.sgml	\
+	importing.sgml		\
+	rendering.sgml		\
+	rois.sgml		\
+	volumes.sgml		\
+	alignment.sgml 		
 
 
-PERL_FILES =  	make-index.pl			make-docbook.pl	
+PERL_FILES = \
+	make-index.pl		\
+	make-docbook.pl	
 
 
-EXTRA_DIST =  	$(SGML_FILES)			$(PERL_FILES)			topic.dat
+EXTRA_DIST = \
+	$(SGML_FILES)		\
+	$(PERL_FILES)		\
+	topic.dat
 
 
 DISTCLEANFILES = *~

@@ -59,7 +59,7 @@ gchar * xml_get_string(xmlNodePtr nodes, gchar * descriptor) {
 realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
-  realpoint_t return_point;
+  realpoint_t return_rp;
   gint error;
 
   temp_string = xml_get_string(nodes, descriptor);
@@ -67,10 +67,10 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
   if (temp_string != NULL) {
 #if (SIZE_OF_FLOATPOINT_T == 8)
     /* convert to doubles */
-    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_point.x), &(return_point.y), &(return_point.z));
+    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
 #elif (SIZE_OF_FLOATPOINT_T == 4)
     /* convert to float */
-    error = sscanf(temp_string, "%f\t%f\t%f", &(return_point.x), &(return_point.y), &(return_point.z));
+    error = sscanf(temp_string, "%f\t%f\t%f", &(return_rp.x), &(return_rp.y), &(return_rp.z));
 #else
 #error "Unknown size for SIZE_OF_FLOATPOINT_T"
 #endif
@@ -78,11 +78,12 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
   }
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    return_point = zero_rp;
+    return_rp = zero_rp;
+    g_warning("%s: Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",PACKAGE, descriptor,
+	      return_rp.x, return_rp.y, return_rp.z);
   }
 
-  return return_point;
+  return return_rp;
 
 }
 
@@ -94,7 +95,7 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
 voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
-  voxelpoint_t return_point;
+  voxelpoint_t return_vp;
   gint x,y,z,t;
   gint error=0;
 
@@ -106,24 +107,26 @@ voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
     error = sscanf(temp_string,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
     g_free(temp_string);
     
-    return_point.x = x;
-    return_point.y = y;
-    return_point.z = z;
-    return_point.t = t;
+    return_vp.x = x;
+    return_vp.y = y;
+    return_vp.z = z;
+    return_vp.t = t;
 
   } 
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    return_point.x = return_point.y = return_point.z = return_point.t = 0;
+    return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
+    g_warning("%s: Couldn't read value for %s, substituting [%d %d %d %d]",PACKAGE, descriptor,
+	      return_vp.x, return_vp.y, return_vp.z, return_vp.z);
   }
 
   if (error < 4) {
-    g_warning("%s: Couldn't read frame value for %s, substituting null",PACKAGE, descriptor);
-    return_point.t = 0;
+    return_vp.t = 0;
+    g_warning("%s: Couldn't read frame value for %s, substituting %d",PACKAGE, descriptor,
+	      return_vp.t);
   }
 
-  return return_point;
+  return return_vp;
 }
 
 
@@ -152,8 +155,9 @@ amide_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
   
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
     return_time = 0.0;
+    g_warning("%s: Couldn't read time value for %s, substituting %5.3f",PACKAGE, descriptor,
+	      return_time);
   }
 
   return return_time;
@@ -202,7 +206,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_tim
   }
 
   if (temp_string == NULL) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    g_warning("%s: Couldn't read value for %s, substituting zero",PACKAGE, descriptor);
     if ((return_times = (amide_time_t * ) g_malloc(1*sizeof(amide_time_t))) == NULL) {
       g_warning("%s: Couldn't allocate space for time data",PACKAGE);
       return return_times;
@@ -240,8 +244,8 @@ amide_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
   }
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
     return_data = 0.0;
+    g_warning("%s: Couldn't read value for %s, substituting %5.3f",PACKAGE, descriptor, return_data);
   }
 
   return return_data;
@@ -291,8 +295,8 @@ gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
   } 
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
     return_int = 0;
+    g_warning("%s: Couldn't read value for %s, substituting %d",PACKAGE, descriptor, return_int);
   }
 
   return return_int;
@@ -301,15 +305,17 @@ gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
+realspace_t * xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
   axis_t i_axis;
-  realspace_t new_space;
+  realspace_t * new_space;
   realpoint_t new_axis[NUM_AXIS];
 
+  new_space = rs_init();
+
   temp_string = g_strdup_printf("%s_offset", descriptor);
-  rs_set_offset(&new_space, xml_get_realpoint(nodes,temp_string));
+  rs_set_offset(new_space, xml_get_realpoint(nodes,temp_string));
   g_free(temp_string);
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
@@ -319,7 +325,7 @@ realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
 	new_axis[i_axis] = default_axis[i_axis];
     g_free(temp_string);
   }
-  rs_set_axis(&new_space, new_axis);
+  rs_set_axis(new_space, new_axis);
 
   return new_space;
 }
@@ -438,7 +444,7 @@ void xml_save_int(xmlNodePtr node, gchar * descriptor, int num) {
 
 
 
-void xml_save_realspace(xmlNodePtr node, gchar * descriptor, realspace_t coord_frame) {
+void xml_save_realspace(xmlNodePtr node, gchar * descriptor, const realspace_t * coord_frame) {
 
   gchar * temp_string;
   axis_t i_axis;
@@ -469,7 +475,7 @@ void xml_save_realspace(xmlNodePtr node, gchar * descriptor, realspace_t coord_f
 voxelpoint_t xml_get_voxelpoint3D(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
-  voxelpoint_t return_point;
+  voxelpoint_t return_vp;
   gint x,y,z;
   gint error;
 
@@ -481,17 +487,18 @@ voxelpoint_t xml_get_voxelpoint3D(xmlNodePtr nodes, gchar * descriptor) {
     error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
     g_free(temp_string);
     
-    return_point.x = x;
-    return_point.y = y;
-    return_point.z = z;
-    return_point.t = 1;
+    return_vp.x = x;
+    return_vp.y = y;
+    return_vp.z = z;
+    return_vp.t = 1;
 
   } 
 
   if ((temp_string == NULL) || (error == EOF)) {
-    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    return_point.x = return_point.y = return_point.z = return_point.t = 0;
+    return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
+    g_warning("%s: Couldn't read value for %s, substituting [%d %d %d %d]",PACKAGE, descriptor,
+	      return_vp.x, return_vp.y, return_vp.z, return_vp.t);
   }
 
-  return return_point;
+  return return_vp;
 }

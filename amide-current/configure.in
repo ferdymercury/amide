@@ -4,11 +4,9 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.5.0)
+AM_INIT_AUTOMAKE(amide, 0.6.0)
 
 AM_MAINTAINER_MODE
-AM_ACLOCAL_INCLUDE(macros)
-
 
 GNOME_INIT
 AM_PATH_GTK(1.2.0)
@@ -35,7 +33,7 @@ if test $CC = "gcc"; then
 		echo "******************************************************************"
 		echo "This version of gcc is a beta compiler and often incorrectly"
 		echo "compiles this program.  Please upgrade to the current version of"
-		echo "gcc (3.0.2 as of this writing) or downgrade to 2.95.3"
+		echo "gcc (3.0.4 as of this writing) or downgrade to 2.95.3"
 		echo "******************************************************************"
 		echo -n "continue anyway? (y/n) "
 		read continue_with_bad_gcc
@@ -45,7 +43,7 @@ if test $CC = "gcc"; then
 		else
 			exit 1
 		fi
-	elif test $CC_VERSION = "3.0.2"; then
+	elif test $CC_VERSION = "3.0.4"; then
 		echo "$CC_VERSION, good"
 	else
 		echo $CC_VERSION
@@ -107,7 +105,7 @@ AC_ARG_ENABLE(
 
 if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
 	echo "Compiling with GNU Scientific Library support"
-	AMIDE_LIBGSL_LIBS="-lgsl"
+	AMIDE_LIBGSL_LIBS="-lgsl -lgslcblas"
 	AC_SUBST(AMIDE_LIBGSL_LIBS)
 	AC_DEFINE(AMIDE_LIBGSL_SUPPORT)
 else

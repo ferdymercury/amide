@@ -59,27 +59,6 @@ void ui_series_cb_export(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function to switch to normalizing per slice */
-void ui_series_cb_scaling(GtkWidget * widget, gpointer data) {
-
-  ui_series_t * ui_series = data;
-  scaling_t i_scaling;
-
-  /* figure out which scaling menu item called me */
-  i_scaling = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"scaling"));
-
-  /* check if we actually changed vapplues */
-  if (ui_series->scaling != i_scaling) {
-    /* and inact the changes */
-    ui_series->scaling = i_scaling;
-
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
-    ui_series_update_canvas(ui_series);
-    ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
-  }
-  
-  return;
-}
 
 /* function called when the threshold is changed */
 static void ui_series_cb_threshold_changed(GtkWidget * widget, gpointer data) {

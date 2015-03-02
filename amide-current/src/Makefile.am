@@ -1,6 +1,6 @@
 
 INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
-CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS) $(GNOME_XML2_CFLAGS)
 
 bin_PROGRAMS = amide
 
@@ -13,7 +13,6 @@ amide_LDADD = \
 	$(AMIDE_LIBMDC_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(EXTRA_GNOME_LIBS) \
-	-lgsl -lgslcblas \
 	-L/usr/local/lib 
 
 amide_SOURCES = \
@@ -21,14 +20,14 @@ amide_SOURCES = \
 	gtkdial.h \
 	gtkdirsel.c \
 	gtkdirsel.h \
-	$(DATA_SET_VARIABLE_C) \
 	$(DATA_SET_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
+	$(DATA_SET_VARIABLE_C) \
 	$(VOLUME_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
+	$(VOLUME_VARIABLE_C) \
 	$(ROI_VARIABLE_H) \
-	$(ANALYSIS_VARIABLE_C) \
+	$(ROI_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
+	$(ANALYSIS_VARIABLE_C) \
 	amide.c \
 	amide.h \
 	align_pt.c \
@@ -37,6 +36,14 @@ amide_SOURCES = \
 	alignment.h \
 	analysis.c \
 	analysis.h \
+	amitk_canvas.c \
+	amitk_canvas.h \
+	amitk_coord_frame_edit.c \
+	amitk_coord_frame_edit.h \
+	amitk_tree.c \
+	amitk_tree.h \
+	amitk_tree_item.c \
+	amitk_tree_item.h \
 	amitk_threshold.c \
 	amitk_threshold.h \
 	color_table.c \
@@ -67,8 +74,6 @@ amide_SOURCES = \
 	roi.h \
 	study.c \
 	study.h \
-	ui_align_pt.c \
-	ui_align_pt.h \
 	ui_align_pt_dialog.c \
 	ui_align_pt_dialog.h \
 	ui_align_pt_dialog_cb.c \
@@ -99,8 +104,6 @@ amide_SOURCES = \
 	ui_rendering_movie_dialog.h \
 	ui_rendering_movie_dialog_cb.c \
 	ui_rendering_movie_dialog_cb.h \
-	ui_roi.c \
-	ui_roi.h \
 	ui_roi_dialog.c \
 	ui_roi_dialog.h \
 	ui_roi_dialog_cb.c \
@@ -133,8 +136,6 @@ amide_SOURCES = \
 	ui_time_dialog.h \
 	ui_time_dialog_cb.c \
 	ui_time_dialog_cb.h \
-	ui_volume.c \
-	ui_volume.h \
 	ui_volume_dialog.c \
 	ui_volume_dialog.h \
 	ui_volume_dialog_cb.c \
@@ -259,7 +260,7 @@ DATA_SET_VARIABLE_H_SRC = data_set_variable_type.h
 VOLUME_VARIABLE_C_SRC = volume_variable_type.c 
 VOLUME_VARIABLE_H_SRC = volume_variable_type.h 
 
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H_SRC)
+$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
 	@for i in $(ANALYSIS_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -277,7 +278,7 @@ $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H_SRC)
+$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
 	@for i in $(ROI_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -295,7 +296,7 @@ $(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H_SRC)
+$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H)
 	@for i in $(DATA_SET_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -314,7 +315,7 @@ $(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
             done
 
 
-$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H_SRC)
+$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H)
 	@for i in $(VOLUME_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -334,7 +335,7 @@ $(VOLUME_VARIABLE_H): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_H_SRC)
 
 
 
-CLEANFILES = 
+CLEANFILES = \
 	$(ANALYSIS_VARIABLE_C) \
 	$(ANALYSIS_VARIABLE_H) \
 	$(ROI_VARIABLE_C) \

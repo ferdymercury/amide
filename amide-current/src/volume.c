@@ -1,7 +1,7 @@
 /* volume.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2000-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -79,39 +79,42 @@ gchar * import_menu_explanations[] = {
 
 
 /* removes a reference to a volume, frees up the volume if no more references */
-volume_t * volume_free(volume_t * volume) {
+volume_t * volume_unref(volume_t * volume) {
 
   if (volume == NULL) return volume;
 
   /* sanity checks */
-  g_return_val_if_fail(volume->reference_count > 0, NULL);
+  g_return_val_if_fail(volume->ref_count > 0, NULL);
   
-  volume->reference_count--;
+  volume->ref_count--;
 
   /* if we've removed all reference's, free remaining data structures */
-  if (volume->reference_count == 0) {
+  if (volume->ref_count == 0) {
 #ifdef AMIDE_DEBUG
     //    g_print("freeing volume: %s\n",volume->name);
     //    g_print("freeing volume: %s\n\tdata:\t",volume->name);
 #endif
-    volume->data_set = data_set_free(volume->data_set);
+    volume->data_set = data_set_unref(volume->data_set);
 #ifdef AMIDE_DEBUG
-    //    if (volume->internal_scaling->reference_count == 1)
+    //    if (volume->internal_scaling->ref_count == 1)
     //      g_print("\tinternal scaling:\t");
 #endif
-    volume->internal_scaling = data_set_free(volume->internal_scaling);
+    volume->internal_scaling = data_set_unref(volume->internal_scaling);
 #ifdef AMIDE_DEBUG
-    //    if (volume->current_scaling->reference_count == 1)
+    //    if (volume->current_scaling->ref_count == 1)
     //      g_print("\tcurrent scaling:\t");
 #endif
-    volume->current_scaling = data_set_free(volume->current_scaling);
+    volume->current_scaling = data_set_unref(volume->current_scaling);
 #ifdef AMIDE_DEBUG
     //    if (volume->distribution != NULL)
-    //      if (volume->distribution->reference_count == 1)
+    //      if (volume->distribution->ref_count == 1)
     //	g_print("\tdistribution:\t");
 #endif
-    volume->distribution = data_set_free(volume->distribution);
+    volume->coord_frame = rs_unref(volume->coord_frame);
+    volume->distribution = data_set_unref(volume->distribution);
     g_free(volume->frame_duration);
+    g_free(volume->frame_max);
+    g_free(volume->frame_min);
     g_free(volume->scan_date);
     g_free(volume->name);
     g_free(volume);
@@ -131,7 +134,7 @@ volume_t * volume_init(void) {
     g_warning("%s: Couldn't allocate memory for the volume structure",PACKAGE);
     return temp_volume;
   }
-  temp_volume->reference_count = 1;
+  temp_volume->ref_count = 1;
 
   /* put in some sensable values */
   temp_volume->name = NULL;
@@ -139,17 +142,24 @@ volume_t * volume_init(void) {
   temp_volume->data_set = NULL;
   temp_volume->current_scaling = NULL;
   temp_volume->frame_duration = NULL;
+  temp_volume->frame_max = NULL;
+  temp_volume->frame_min = NULL;
+  temp_volume->global_max = 0.0;
+  temp_volume->global_min = 0.0;
+  temp_volume->threshold_type = THRESHOLD_GLOBAL;
+  temp_volume->threshold_ref_frame[0]=0;
+  temp_volume->threshold_ref_frame[1]=0;
   temp_volume->distribution = NULL;
   temp_volume->modality = PET;
   temp_volume->voxel_size = zero_rp;
   if ((temp_volume->internal_scaling = data_set_FLOAT_0D_SCALING_init(1.0)) == NULL) {
     g_warning("%s: Couldn't allocate memory for internal scaling structure", PACKAGE);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
   volume_set_scaling(temp_volume, 1.0);
   temp_volume->scan_start = 0.0;
   temp_volume->color_table = BW_LINEAR;
-  temp_volume->coord_frame = default_coord_frame;
+  temp_volume->coord_frame = NULL;
   temp_volume->corner = zero_rp;
   temp_volume->align_pts = NULL;
 
@@ -202,9 +212,14 @@ gchar * volume_write_xml(volume_t * volume, gchar * study_directory) {
   xml_save_realpoint(doc->children, "voxel_size", volume->voxel_size);
   xml_save_time(doc->children, "scan_start", volume->scan_start);
   xml_save_times(doc->children, "frame_duration", volume->frame_duration, volume->data_set->dim.t);
+  xml_save_string(doc->children, "threshold_type", threshold_type_names[volume->threshold_type]);
   xml_save_string(doc->children, "color_table", color_table_names[volume->color_table]);
-  xml_save_data(doc->children, "threshold_max", volume->threshold_max);
-  xml_save_data(doc->children, "threshold_min", volume->threshold_min);
+  xml_save_data(doc->children, "threshold_max", volume->threshold_max[0]);
+  xml_save_data(doc->children, "threshold_min", volume->threshold_min[0]);
+  xml_save_data(doc->children, "threshold_max_1", volume->threshold_max[1]);
+  xml_save_data(doc->children, "threshold_min_1", volume->threshold_min[1]);
+  xml_save_int(doc->children, "threshold_ref_frame_0", volume->threshold_ref_frame[0]);
+  xml_save_int(doc->children, "threshold_ref_frame_1", volume->threshold_ref_frame[1]);
   xml_save_realspace(doc->children, "coord_frame", volume->coord_frame);
 
   data_set_name = g_strdup_printf("Data_set_%s",volume->name);
@@ -242,6 +257,7 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   xmlNodePtr pts_nodes;
   modality_t i_modality;
   color_table_t i_color_table;
+  threshold_t i_threshold_type;
   gchar * temp_string;
   gchar * scan_date;
   time_t modification_time;
@@ -254,14 +270,14 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   /* parse the xml file */
   if ((doc = xmlParseFile(volume_xml_filename)) == NULL) {
     g_warning("%s: Couldn't Parse AMIDE volume xml file %s/%s",PACKAGE, study_directory,volume_xml_filename);
-    return volume_free(new_volume);
+    return volume_unref(new_volume);
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE volume xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, study_directory,volume_xml_filename);
-    return volume_free(new_volume);
+    return volume_unref(new_volume);
   }
 
   /* get the volume name */
@@ -319,7 +335,7 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
     new_volume->data_set = data_set_load_xml(data_set_xml_filename,study_directory);
     new_volume->internal_scaling = data_set_load_xml(internal_scaling_xml_filename,study_directory);
 
-    /* parameters that aren't in older versions */
+    /* parameters that aren't in older versions and default values aren't good enough*/
     volume_set_scaling(new_volume, xml_get_data(nodes, "external_scaling"));
 
   } else {
@@ -327,6 +343,7 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
 
     gchar * raw_data_filename;
     raw_data_format_t i_raw_data_format, raw_data_format;
+    voxelpoint_t temp_dim;
 
     g_warning("%s: no data_set file, will continue with the assumption of a .xif format previous to 1.4", 
 	      PACKAGE);
@@ -347,17 +364,15 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
 	  raw_data_format = i_raw_data_format;
     g_free(temp_string);
 
-    new_volume->data_set = data_set_init();
-    new_volume->data_set->format = raw_data_format_data(raw_data_format);
-    new_volume->data_set->dim = xml_get_voxelpoint3D(nodes, "dim");
-    new_volume->data_set->dim.t = xml_get_int(nodes, "num_frames");
+    temp_dim = xml_get_voxelpoint3D(nodes, "dim");
+    temp_dim.t = xml_get_int(nodes, "num_frames");
     volume_set_scaling(new_volume,  xml_get_data(nodes, "conversion"));
     
     /* now load in the raw data */
 #ifdef AMIDE_DEBUG
     g_print("reading volume %s from file %s\n", new_volume->name, raw_data_filename);
 #endif
-    new_volume = raw_data_read_volume(raw_data_filename, new_volume, raw_data_format, 0);
+    new_volume->data_set = raw_data_read_file(raw_data_filename, raw_data_format, temp_dim, 0);
     
     g_free(raw_data_filename);
     /* -------- end legacy cruft -------- */
@@ -375,13 +390,27 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   new_volume->voxel_size = xml_get_realpoint(nodes, "voxel_size");
   new_volume->scan_start = xml_get_time(nodes, "scan_start");
   new_volume->frame_duration = xml_get_times(nodes, "frame_duration", new_volume->data_set->dim.t);
-  new_volume->threshold_max =  xml_get_data(nodes, "threshold_max");
-  new_volume->threshold_min =  xml_get_data(nodes, "threshold_min");
+  new_volume->threshold_max[0] =  xml_get_data(nodes, "threshold_max");
+  new_volume->threshold_min[0] =  xml_get_data(nodes, "threshold_min");
+  new_volume->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1");
+  new_volume->threshold_min[1] =  xml_get_data(nodes, "threshold_min_1");
+  new_volume->threshold_ref_frame[0] = xml_get_int(nodes,"threshold_ref_frame_0");
+  new_volume->threshold_ref_frame[1] = xml_get_int(nodes,"threshold_ref_frame_1");
   new_volume->coord_frame = xml_get_realspace(nodes, "coord_frame");
+
+  /* figure out the thresholding */
+  temp_string = xml_get_string(nodes, "threshold_type");
+  if (temp_string != NULL)
+    for (i_threshold_type=0; i_threshold_type < NUM_THRESHOLD_TYPES; i_threshold_type++) 
+      if (g_strcasecmp(temp_string, threshold_type_names[i_threshold_type]) == 0)
+	new_volume->threshold_type = i_threshold_type;
+  g_free(temp_string);
+
 
   /* recalc the temporary parameters */
   volume_recalc_far_corner(new_volume);
-  volume_recalc_max_min(new_volume);
+  volume_calc_frame_max_min(new_volume);
+  volume_calc_global_max_min(new_volume);
 
   /* and we're done */
   xmlFreeDoc(doc);
@@ -476,8 +505,10 @@ volume_t * volume_import_file(import_method_t import_method, int submethod,
 
   if (import_volume != NULL) {
     /* set the thresholds */
-    import_volume->threshold_max = import_volume->max;
-    import_volume->threshold_min = (import_volume->min >=0) ? import_volume->min : 0;
+    import_volume->threshold_max[0] = import_volume->threshold_max[1] = import_volume->global_max;
+    import_volume->threshold_min[0] = import_volume->threshold_min[1] =
+      (import_volume->global_min > 0.0) ? import_volume->global_min : 0.0;
+    import_volume->threshold_ref_frame[1] = import_volume->data_set->dim.t-1;
   }
 
   /* freeup our strings, note, the other two are just pointers into these strings */
@@ -502,42 +533,54 @@ volume_t * volume_copy(volume_t * src_volume) {
   dest_volume = volume_init();
 
   /* copy the data elements */
-  dest_volume->data_set = data_set_add_reference(src_volume->data_set);
-  dest_volume->distribution = data_set_add_reference(src_volume->distribution);
-  dest_volume->internal_scaling = data_set_add_reference(src_volume->internal_scaling);
+  dest_volume->data_set = data_set_ref(src_volume->data_set);
+  dest_volume->distribution = data_set_ref(src_volume->distribution);
+  dest_volume->internal_scaling = data_set_ref(src_volume->internal_scaling);
   dest_volume->current_scaling = NULL;
   dest_volume->modality = src_volume->modality;
   dest_volume->voxel_size = src_volume->voxel_size;
   volume_set_scaling(dest_volume, src_volume->external_scaling);
-  dest_volume->max = src_volume->max;
-  dest_volume->min = src_volume->min;
+  dest_volume->global_max = src_volume->global_max;
+  dest_volume->global_min = src_volume->global_min;
   dest_volume->color_table= src_volume->color_table;
-  dest_volume->threshold_max = src_volume->threshold_max;
-  dest_volume->threshold_min = src_volume->threshold_min;
-  dest_volume->coord_frame = src_volume->coord_frame;
+  dest_volume->threshold_type = src_volume->threshold_type;
+  dest_volume->threshold_max[0] = src_volume->threshold_max[0];
+  dest_volume->threshold_max[1] = src_volume->threshold_max[1];
+  dest_volume->threshold_min[0] = src_volume->threshold_min[0];
+  dest_volume->threshold_min[1] = src_volume->threshold_min[1];
+  dest_volume->threshold_ref_frame[0] = src_volume->threshold_ref_frame[0];
+  dest_volume->threshold_ref_frame[1] = src_volume->threshold_ref_frame[1];
+  dest_volume->coord_frame = rs_copy(src_volume->coord_frame);
   dest_volume->corner = src_volume->corner;
 
   /* make a separate copy in memory of the volume's name and scan date */
   volume_set_name(dest_volume, src_volume->name);
   volume_set_scan_date(dest_volume, src_volume->scan_date);
 
-  /* make a separate copy in memory of the volume's frame durations */
+  /* make a separate copy in memory of the volume's frame durations and max/min values */
   dest_volume->frame_duration = volume_get_frame_duration_mem(dest_volume);
-  if (dest_volume->frame_duration == NULL) {
-    g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
-    dest_volume = volume_free(dest_volume);
+  dest_volume->frame_max = volume_get_frame_max_min_mem(dest_volume);
+  dest_volume->frame_min = volume_get_frame_max_min_mem(dest_volume);
+  if ((dest_volume->frame_duration == NULL) || 
+      (dest_volume->frame_max == NULL) || 
+      (dest_volume->frame_min == NULL)) {
+    g_warning("%s: couldn't allocate space for the frame duration/max/or min info",PACKAGE);
+    dest_volume = volume_unref(dest_volume);
     return dest_volume;
   }
-  for (i=0;i<dest_volume->data_set->dim.t;i++)
+  for (i=0;i<dest_volume->data_set->dim.t;i++) {
     dest_volume->frame_duration[i] = src_volume->frame_duration[i];
+    dest_volume->frame_max[i] = src_volume->frame_max[i];
+    dest_volume->frame_min[i] = src_volume->frame_min[i];
+  }
 
   return dest_volume;
 }
 
 /* adds one to the reference count of a volume */
-volume_t * volume_add_reference(volume_t * volume) {
+volume_t * volume_ref(volume_t * volume) {
   g_return_val_if_fail(volume != NULL, NULL);   /* sanity checks */
-  volume->reference_count++;
+  volume->ref_count++;
   return volume;
 }
 
@@ -583,7 +626,7 @@ void volume_set_scaling(volume_t * volume, amide_data_t new_external_scaling) {
 	(volume->current_scaling->dim.y != volume->internal_scaling->dim.y) ||
 	(volume->current_scaling->dim.z != volume->internal_scaling->dim.z) ||
 	(volume->current_scaling->dim.t != volume->internal_scaling->dim.t))
-      volume->current_scaling = data_set_free(volume->current_scaling);
+      volume->current_scaling = data_set_unref(volume->current_scaling);
   
   if (volume->current_scaling == NULL) {
     if ((volume->current_scaling = data_set_init()) == NULL) {
@@ -634,7 +677,7 @@ void volume_set_center(volume_t * volume, realpoint_t center) {
   offset = rp_sub(center, rp_cmult(0.5, volume->corner));
   offset = realspace_alt_coord_to_base(offset, volume->coord_frame);
 
-  rs_set_offset(&volume->coord_frame, offset);
+  rs_set_offset(volume->coord_frame, offset);
 
   return;
 }
@@ -709,87 +752,209 @@ void volume_recalc_far_corner(volume_t * volume) {
   return;
 }
 
-/* function to recalculation the max and min values of a volume */
-void volume_recalc_max_min(volume_t * volume) {
+/* function to calculate the global max and min, the frame max and mins need to already be calculated */
+void volume_calc_global_max_min(volume_t * volume) {
+
+  guint i;
+
+  volume->global_max = volume->frame_max[0];
+  volume->global_min = volume->frame_min[0];
+  for (i=1; i<volume->data_set->dim.t; i++) {
+    if (volume->global_max < volume->frame_max[i]) 
+      volume->global_max = volume->frame_max[i];
+    if (volume->global_min > volume->frame_min[i])
+      volume->global_min = volume->frame_min[i];
+  }
+
+#ifdef AMIDE_DEBUG
+  g_print("\tglobal max %5.3f global min %5.3f\n",volume->global_max,volume->global_min);
+#endif
+   
+  return;
+}
+
+/* function to calculate the max and min over the data frames */
+void volume_calc_frame_max_min(volume_t * volume) {
 
   /* sanity checks */
-  if (volume->data_set == NULL) {
-    volume->max = volume->min = 0.0;
-    return;
+  g_return_if_fail(volume->data_set != NULL);
+
+  /* malloc the arrays if we haven't already */
+  if (volume->frame_max == NULL) {
+    if ((volume->frame_max = volume_get_frame_max_min_mem(volume)) == NULL) {
+      g_warning("%s: couldn't allocate space for the frame max info",PACKAGE);
+      return;
+    }
+    if ((volume->frame_min = volume_get_frame_max_min_mem(volume)) == NULL) {
+      g_warning("%s: couldn't allocate space for the frame min info",PACKAGE);
+      return;
+    }
   }
+
+  g_return_if_fail(volume->frame_max != NULL);
+  g_return_if_fail(volume->frame_min != NULL);
 
   /* hand everything off to the data type specific function */
   switch(volume->data_set->format) {
   case UBYTE:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_UBYTE_2D_SCALING_recalc_max_min(volume);
+      volume_UBYTE_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_UBYTE_1D_SCALING_recalc_max_min(volume);
+      volume_UBYTE_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_UBYTE_0D_SCALING_recalc_max_min(volume);
+      volume_UBYTE_0D_SCALING_calc_frame_max_min(volume);
     break;
   case SBYTE:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_SBYTE_2D_SCALING_recalc_max_min(volume);
+      volume_SBYTE_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_SBYTE_1D_SCALING_recalc_max_min(volume);
+      volume_SBYTE_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_SBYTE_0D_SCALING_recalc_max_min(volume);
+      volume_SBYTE_0D_SCALING_calc_frame_max_min(volume);
     break;
   case USHORT:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_USHORT_2D_SCALING_recalc_max_min(volume);
+      volume_USHORT_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_USHORT_1D_SCALING_recalc_max_min(volume);
+      volume_USHORT_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_USHORT_0D_SCALING_recalc_max_min(volume);
+      volume_USHORT_0D_SCALING_calc_frame_max_min(volume);
     break;
   case SSHORT:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_SSHORT_2D_SCALING_recalc_max_min(volume);
+      volume_SSHORT_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_SSHORT_1D_SCALING_recalc_max_min(volume);
+      volume_SSHORT_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_SSHORT_0D_SCALING_recalc_max_min(volume);
+      volume_SSHORT_0D_SCALING_calc_frame_max_min(volume);
     break;
   case UINT:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_UINT_2D_SCALING_recalc_max_min(volume);
+      volume_UINT_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_UINT_1D_SCALING_recalc_max_min(volume);
+      volume_UINT_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_UINT_0D_SCALING_recalc_max_min(volume);
+      volume_UINT_0D_SCALING_calc_frame_max_min(volume);
     break;
   case SINT:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_SINT_2D_SCALING_recalc_max_min(volume);
+      volume_SINT_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_SINT_1D_SCALING_recalc_max_min(volume);
+      volume_SINT_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_SINT_0D_SCALING_recalc_max_min(volume);
+      volume_SINT_0D_SCALING_calc_frame_max_min(volume);
     break;
   case FLOAT:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_FLOAT_2D_SCALING_recalc_max_min(volume);
+      volume_FLOAT_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_FLOAT_1D_SCALING_recalc_max_min(volume);
+      volume_FLOAT_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_FLOAT_0D_SCALING_recalc_max_min(volume);
+      volume_FLOAT_0D_SCALING_calc_frame_max_min(volume);
     break;
   case DOUBLE:
     if (volume->internal_scaling->dim.z > 1) 
-      volume_DOUBLE_2D_SCALING_recalc_max_min(volume);
+      volume_DOUBLE_2D_SCALING_calc_frame_max_min(volume);
     else if (volume->internal_scaling->dim.t > 1)
-      volume_DOUBLE_1D_SCALING_recalc_max_min(volume);
+      volume_DOUBLE_1D_SCALING_calc_frame_max_min(volume);
     else 
-      volume_DOUBLE_0D_SCALING_recalc_max_min(volume);
+      volume_DOUBLE_0D_SCALING_calc_frame_max_min(volume);
     break;
   default:
-    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
+    g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
   return;
+}
+
+amide_data_t volume_max(volume_t * volume, amide_time_t start, amide_time_t duration) {
+
+  guint start_frame;
+  guint end_frame;
+  guint i_frame;
+  amide_time_t used_start, used_end;
+  amide_time_t volume_start, volume_end;
+  amide_data_t max;
+  amide_data_t time_weight;
+
+  /* figure out what frames of this volume to use */
+  used_start = start;
+  start_frame = volume_frame(volume, used_start);
+  volume_start = volume_start_time(volume, start_frame);
+
+  used_end = start+duration;
+  end_frame = volume_frame(volume, used_end);
+  volume_end = volume_end_time(volume, end_frame);
+
+  if (start_frame == end_frame) {
+    max = volume->frame_max[start_frame];
+  } else {
+    if (volume_end < used_end)
+      used_end = volume_end;
+    if (volume_start > used_start)
+      used_start = volume_start;
+
+    max = 0;
+    for (i_frame=start_frame; i_frame <= end_frame; i_frame++) {
+
+      if (i_frame == start_frame)
+	time_weight = (volume_end_time(volume, start_frame)-used_start)/(used_end-used_start);
+      else if (i_frame == end_frame)
+	time_weight = (used_end-volume_start_time(volume, end_frame))/(used_end-used_start);
+      else
+	time_weight = volume->frame_duration[i_frame]/(used_end-used_start);
+
+      max += time_weight*volume->frame_max[i_frame];
+    }
+  }
+
+  return max;
+}
+
+amide_data_t volume_min(volume_t * volume, amide_time_t start, amide_time_t duration) {
+
+
+  guint start_frame;
+  guint end_frame;
+  guint i_frame;
+  amide_time_t used_start, used_end;
+  amide_time_t volume_start, volume_end;
+  amide_data_t min;
+  amide_data_t time_weight;
+
+  /* figure out what frames of this volume to use */
+  used_start = start;
+  start_frame = volume_frame(volume, used_start);
+  volume_start = volume_start_time(volume, start_frame);
+
+  used_end = start+duration;
+  end_frame = volume_frame(volume, used_end);
+  volume_end = volume_end_time(volume, end_frame);
+
+  if (start_frame == end_frame) {
+    min = volume->frame_min[start_frame];
+  } else {
+    if (volume_end < used_end)
+      used_end = volume_end;
+    if (volume_start > used_start)
+      used_start = volume_start;
+
+    min = 0;
+    for (i_frame=start_frame; i_frame <= end_frame; i_frame++) {
+
+      if (i_frame == start_frame)
+	time_weight = (volume_end_time(volume, start_frame)-used_start)/(used_end-used_start);
+      else if (i_frame == end_frame)
+	time_weight = (used_end-volume_start_time(volume, end_frame))/(used_end-used_start);
+      else
+	time_weight = volume->frame_duration[i_frame]/(used_end-used_start);
+
+      min += time_weight*volume->frame_min[i_frame];
+    }
+  }
+
+  return min;
 }
 
 
@@ -864,7 +1029,7 @@ void volume_generate_distribution(volume_t * volume) {
       volume_DOUBLE_0D_SCALING_generate_distribution(volume);
     break;
   default:
-    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
+    g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
@@ -944,7 +1109,7 @@ amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i) {
       return VOLUME_DOUBLE_0D_SCALING_CONTENTS(volume,i);
     break;
   default:
-    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
+    g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     return 0.0;
     break;
   }
@@ -952,61 +1117,61 @@ amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i) {
 
 
 /* free up a list of volumes */
-volume_list_t * volume_list_free(volume_list_t * volume_list) {
+volumes_t * volumes_unref(volumes_t * volumes) {
   
-  volume_list_t * return_list;
+  volumes_t * return_list;
 
-  if (volume_list == NULL) return volume_list;
+  if (volumes == NULL) return volumes;
 
   /* sanity check */
-  g_return_val_if_fail(volume_list->reference_count > 0, NULL);
+  g_return_val_if_fail(volumes->ref_count > 0, NULL);
 
   /* remove a reference count */
-  volume_list->reference_count--;
+  volumes->ref_count--;
 
 
   /* things to do if our reference count is zero */
-  if (volume_list->reference_count == 0) {
+  if (volumes->ref_count == 0) {
     /* recursively delete rest of list */
-    return_list = volume_list_free(volume_list->next); 
-    volume_list->next = NULL;
+    return_list = volumes_unref(volumes->next); 
+    volumes->next = NULL;
 
-    volume_list->volume = volume_free(volume_list->volume);
-    g_free(volume_list);
-    volume_list = NULL;
+    volumes->volume = volume_unref(volumes->volume);
+    g_free(volumes);
+    volumes = NULL;
   } else
-    return_list = volume_list;
+    return_list = volumes;
 
   return return_list;
 }
 
 /* returns an initialized volume list node structure */
-volume_list_t * volume_list_init(volume_t * volume) {
+volumes_t * volumes_init(volume_t * volume) {
   
-  volume_list_t * temp_volume_list;
+  volumes_t * temp_volumes;
   
-  if ((temp_volume_list = (volume_list_t *) g_malloc(sizeof(volume_list_t))) == NULL) {
+  if ((temp_volumes = (volumes_t *) g_malloc(sizeof(volumes_t))) == NULL) {
     g_warning("%s: Couldn't allocate memory for the volume list",PACKAGE);
-    return temp_volume_list;
+    return temp_volumes;
   }
-  temp_volume_list->reference_count = 1;
+  temp_volumes->ref_count = 1;
   
-  temp_volume_list->volume = volume_add_reference(volume);
-  temp_volume_list->next = NULL;
+  temp_volumes->volume = volume_ref(volume);
+  temp_volumes->next = NULL;
   
-  return temp_volume_list;
+  return temp_volumes;
 }
 
 /* count the number of volumes in a volume list */
-guint volume_list_count(volume_list_t * list) {
+guint volumes_count(volumes_t * list) {
   if (list == NULL) return 0;
-  else return (1+volume_list_count(list->next));
+  else return (1+volumes_count(list->next));
 }
 
 /* function to write a list of volumes as xml data.  Function calls
    volume_write_xml to writeout each volume, and adds information about the
    volume file to the node_list. */
-void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * study_directory) {
+void volumes_write_xml(volumes_t *list, xmlNodePtr node_list, gchar * study_directory) {
 
   gchar * volume_xml_filename;
 
@@ -1016,7 +1181,7 @@ void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * st
     g_free(volume_xml_filename);
     
     /* and recurse */
-    volume_list_write_xml(list->next, node_list, study_directory);
+    volumes_write_xml(list->next, node_list, study_directory);
   }
 
   return;
@@ -1024,79 +1189,79 @@ void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * st
 
 
 /* function to load in a list of volume xml nodes */
-volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * study_directory) {
+volumes_t * volumes_load_xml(xmlNodePtr node_list, const gchar * study_directory) {
 
   gchar * file_name;
-  volume_list_t * new_volume_list;
+  volumes_t * new_volumes;
   volume_t * new_volume;
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_volume_list = volume_list_load_xml(node_list->next, study_directory);
+    new_volumes = volumes_load_xml(node_list->next, study_directory);
 
     /* load in this node */
     file_name = xml_get_string(node_list->children, "text");
     new_volume = volume_load_xml(file_name,study_directory);
-    new_volume_list = volume_list_add_volume_first(new_volume_list, new_volume);
-    new_volume = volume_free(new_volume);
+    new_volumes = volumes_add_volume_first(new_volumes, new_volume);
+    new_volume = volume_unref(new_volume);
     g_free(file_name);
 
   } else
-    new_volume_list = NULL;
+    new_volumes = NULL;
 
-  return new_volume_list;
+  return new_volumes;
 }
 
-/* makes a new volume_list which is a copy of a previous volume_list */
-volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
+/* makes a new volumes which is a copy of a previous volumes */
+volumes_t * volumes_copy(volumes_t * src_volumes) {
 
-  volume_list_t * dest_volume_list;
+  volumes_t * dest_volumes;
   volume_t * temp_volume;
 
   /* sanity check */
-  g_return_val_if_fail(src_volume_list != NULL, NULL);
+  g_return_val_if_fail(src_volumes != NULL, NULL);
 
   /* make a separate copy in memory of the volume this list item points to */
-  temp_volume = volume_copy(src_volume_list->volume); 
+  temp_volume = volume_copy(src_volumes->volume); 
 
-  dest_volume_list = volume_list_init(temp_volume); 
-  temp_volume = volume_free(temp_volume); /* no longer need a reference outside of the list's reference */
+  dest_volumes = volumes_init(temp_volume); 
+  temp_volume = volume_unref(temp_volume); /* no longer need a reference outside of the list's reference */
 
   /* and make copies of the rest of the elements in this list */
-  if (src_volume_list->next != NULL)
-    dest_volume_list->next = volume_list_copy(src_volume_list->next);
+  if (src_volumes->next != NULL)
+    dest_volumes->next = volumes_copy(src_volumes->next);
   
-  return dest_volume_list;
+  return dest_volumes;
 }
 
 /* adds one to the reference count of a volume list element*/
-volume_list_t * volume_list_add_reference(volume_list_t * volume_list) {
-  g_return_val_if_fail(volume_list != NULL, NULL);
-  volume_list->reference_count++;
-  return volume_list;
+volumes_t * volumes_ref(volumes_t * volumes) {
+  g_return_val_if_fail(volumes != NULL, NULL);
+  volumes->ref_count++;
+  return volumes;
 }
 
 
 /* function to check that a volume is in a volume list */
-gboolean volume_list_includes_volume(volume_list_t * volume_list,  volume_t * volume) {
+gboolean volumes_includes_volume(volumes_t * volumes,  volume_t * volume) {
 
-  while (volume_list != NULL)
-    if (volume_list->volume == volume)
+  while (volumes != NULL)
+    if (volumes->volume == volume)
       return TRUE;
     else
-      volume_list = volume_list->next;
+      volumes = volumes->next;
 
   return FALSE;
 }
 
 
 /* function to add a volume to the end of a volume list */
-volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * vol) {
+volumes_t * volumes_add_volume(volumes_t * volumes, volume_t * vol) {
 
-  volume_list_t * temp_list = volume_list;
-  volume_list_t * prev_list = NULL;
+  volumes_t * temp_list = volumes;
+  volumes_t * prev_list = NULL;
 
-  g_return_val_if_fail(vol != NULL, volume_list);
+  g_return_val_if_fail(vol != NULL, volumes);
 
   /* get to the end of the list */
   while (temp_list != NULL) {
@@ -1104,66 +1269,66 @@ volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * v
     temp_list = temp_list->next;
   }
   
-  /* get a new volume_list data structure */
-  temp_list = volume_list_init(vol);
+  /* get a new volumes data structure */
+  temp_list = volumes_init(vol);
 
-  if (volume_list == NULL)
+  if (volumes == NULL)
     return temp_list;
   else {
     prev_list->next = temp_list;
-    return volume_list;
+    return volumes;
   }
 }
 
 
 /* function to add a volume onto a volume list as the first item*/
-volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol) {
+volumes_t * volumes_add_volume_first(volumes_t * volumes, volume_t * vol) {
 
-  volume_list_t * temp_list;
+  volumes_t * temp_list;
 
-  g_return_val_if_fail(vol != NULL, volume_list);
+  g_return_val_if_fail(vol != NULL, volumes);
 
-  temp_list = volume_list_add_volume(NULL,vol);
-  temp_list->next = volume_list;
+  temp_list = volumes_add_volume(NULL,vol);
+  temp_list->next = volumes;
 
   return temp_list;
 }
 
 
 /* function to remove a volume list item from a volume list */
-volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t * vol) {
+volumes_t * volumes_remove_volume(volumes_t * volumes, volume_t * vol) {
 
-  volume_list_t * temp_list = volume_list;
-  volume_list_t * prev_list = NULL;
+  volumes_t * temp_list = volumes;
+  volumes_t * prev_list = NULL;
 
   while (temp_list != NULL) {
     if (temp_list->volume == vol) {
       if (prev_list == NULL)
-	volume_list = temp_list->next;
+	volumes = temp_list->next;
       else
 	prev_list->next = temp_list->next;
       temp_list->next = NULL;
-      temp_list = volume_list_free(temp_list);
+      temp_list = volumes_unref(temp_list);
     } else {
       prev_list = temp_list;
       temp_list = temp_list->next;
     }
   }
 
-  return volume_list;
+  return volumes;
 }
 
 
 /* function to get the earliest time in a list of volumes */
-amide_time_t volume_list_start_time(volume_list_t * volume_list) {
+amide_time_t volumes_start_time(volumes_t * volumes) {
   amide_time_t start, temp;
 
   /* sanity check */
-  g_return_val_if_fail(volume_list != NULL, 0.0);
+  g_return_val_if_fail(volumes != NULL, 0.0);
 
-  start = volume_start_time(volume_list->volume,0);
-  if (volume_list->next != NULL) {
-    temp = volume_list_start_time(volume_list->next);
+  start = volume_start_time(volumes->volume,0);
+  if (volumes->next != NULL) {
+    temp = volumes_start_time(volumes->next);
     if (temp < start)
       start = temp;
   }
@@ -1172,15 +1337,15 @@ amide_time_t volume_list_start_time(volume_list_t * volume_list) {
 }
 
 /* function to get the latest time in a list of volumes */
-amide_time_t volume_list_end_time(volume_list_t * volume_list) {
+amide_time_t volumes_end_time(volumes_t * volumes) {
   amide_time_t end, temp;
 
   /* sanity check */
-  g_return_val_if_fail(volume_list != NULL, 0.0);
+  g_return_val_if_fail(volumes != NULL, 0.0);
 
-  end = volume_end_time(volume_list->volume,volume_list->volume->data_set->dim.t-1);
-  if (volume_list->next != NULL) {
-    temp = volume_list_end_time(volume_list->next);
+  end = volume_end_time(volumes->volume,volumes->volume->data_set->dim.t-1);
+  if (volumes->next != NULL) {
+    temp = volumes_end_time(volumes->next);
     if (temp > end)
       end = temp;
   }
@@ -1189,15 +1354,15 @@ amide_time_t volume_list_end_time(volume_list_t * volume_list) {
 }
 
 /* function to return the minimum frame duration of a list of volumes */
-amide_time_t volume_list_min_frame_duration(volume_list_t * volume_list) {
+amide_time_t volumes_min_frame_duration(volumes_t * volumes) {
   amide_time_t min_duration, temp;
 
   /* sanity check */
-  g_return_val_if_fail(volume_list != NULL, 0.0);
+  g_return_val_if_fail(volumes != NULL, 0.0);
 
-  min_duration = volume_min_frame_duration(volume_list->volume);
-  if (volume_list->next != NULL) {
-    temp = volume_list_min_frame_duration(volume_list->next);
+  min_duration = volume_min_frame_duration(volumes->volume);
+  if (volumes->next != NULL) {
+    temp = volumes_min_frame_duration(volumes->next);
     if (temp < min_duration)
       min_duration = temp;
   }
@@ -1209,7 +1374,7 @@ amide_time_t volume_list_min_frame_duration(volume_list_t * volume_list) {
 /* takes a volume and a view_axis, and gives the corners necessary for 
    the view to totally encompass the volume in the view coord frame */
 void volume_get_view_corners(const volume_t * volume,
-			     const realspace_t view_coord_frame,
+			     const realspace_t * view_coord_frame,
 			     realpoint_t view_corner[]) {
 
   realpoint_t volume_corner[2];
@@ -1229,11 +1394,11 @@ void volume_get_view_corners(const volume_t * volume,
 
 /* takes a list of volumes and a view axis, and give the corners
    necessary to totally encompass the volume in the view coord frame */
-void volumes_get_view_corners(volume_list_t * volumes,
-			      const realspace_t view_coord_frame,
+void volumes_get_view_corners(volumes_t * volumes,
+			      const realspace_t * view_coord_frame,
 			      realpoint_t view_corner[]) {
 
-  volume_list_t * temp_volumes;
+  volumes_t * temp_volumes;
   realpoint_t temp_corner[2];
 
   g_assert(volumes!=NULL);
@@ -1258,7 +1423,7 @@ void volumes_get_view_corners(volume_list_t * volumes,
 
 
 /* returns the minimum voxel dimensions of the list of volumes */
-floatpoint_t volumes_min_voxel_size(volume_list_t * volumes) {
+floatpoint_t volumes_min_voxel_size(volumes_t * volumes) {
 
   floatpoint_t min_voxel_size, temp;
 
@@ -1276,7 +1441,7 @@ floatpoint_t volumes_min_voxel_size(volume_list_t * volumes) {
 }
 
 /* returns the maximal dimensional size of a list of volumes */
-floatpoint_t volumes_max_size(volume_list_t * volumes) {
+floatpoint_t volumes_max_size(volumes_t * volumes) {
 
   floatpoint_t temp, max_dim;
 
@@ -1294,7 +1459,7 @@ floatpoint_t volumes_max_size(volume_list_t * volumes) {
 
 
 /* returns the minimum dimensional width of the volumes with the largest voxel size */
-floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes) {
+floatpoint_t volumes_max_min_voxel_size(volumes_t * volumes) {
 
   floatpoint_t min_voxel_size, temp;
 
@@ -1319,7 +1484,7 @@ floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes) {
 
 
 /* returns the maximum dimension of the given volumes (in voxels) */
-intpoint_t volumes_max_dim(volume_list_t * volumes) {
+intpoint_t volumes_max_dim(volumes_t * volumes) {
 
   intpoint_t max_dim, temp;
 
@@ -1352,7 +1517,7 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 //  }
 //  if ((axis_volume->data_set = data_set_init()) == NULL) {
 //    g_warning("%s: couldn't allocate space for the axis data set structure", PACKAGE);
-//    return volume_free(axis_volume);
+//    return volume_unref(axis_volume);
 //  }
 //
 //  /* initialize what variables we want */
@@ -1368,13 +1533,13 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 //  
 //  if ((axis_volume->frame_duration = volume_get_frame_duration_mem(axis_volume)) == NULL) {
 //    g_warning("%s: couldn't allocate space for the axis volume frame duration array",PACKAGE);
-//    return volume_free(axis_volume);
+//    return volume_unref(axis_volume);
 //  }
 //  axis_volume->frame_duration[0]=1.0;
 //
 //  if ((axis_volume->data_set->data = data_set_get_data_mem(axis_volume->data_set)) == NULL) {
 //    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
-//    return volume_free(axis_volume);
+//    return volume_unref(axis_volume);
 //  }
 //
 //  /* initialize our data set */
@@ -1438,7 +1603,7 @@ volume_t * volume_get_slice(const volume_t * volume,
 			    const amide_time_t start,
 			    const amide_time_t duration,
 			    const realpoint_t  requested_voxel_size,
-			    const realspace_t slice_coord_frame,
+			    realspace_t * slice_coord_frame,
 			    const realpoint_t far_corner,
 			    const interpolation_t interpolation,
 			    const gboolean need_calc_max_min) {
@@ -1542,7 +1707,7 @@ volume_t * volume_get_slice(const volume_t * volume,
     break;
   default:
     slice = NULL;
-    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
+    g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
@@ -1556,21 +1721,21 @@ volume_t * volume_get_slice(const volume_t * volume,
 /* give a list ov volumes, returns a list of slices of equal size and orientation
    intersecting these volumes */
 /* thickness (of slice) in mm, negative indicates set this value according to voxel size */
-volume_list_t * volumes_get_slices(volume_list_t * volumes,
-				   const amide_time_t start,
-				   const amide_time_t duration,
-				   const floatpoint_t thickness,
-				   const floatpoint_t voxel_dim,
-				   const realspace_t view_coord_frame,
-				   const interpolation_t interpolation,
-				   const gboolean need_calc_max_min) {
+volumes_t * volumes_get_slices(volumes_t * volumes,
+			       const amide_time_t start,
+			       const amide_time_t duration,
+			       const floatpoint_t thickness,
+			       const floatpoint_t voxel_dim,
+			       const realspace_t * view_coord_frame,
+			       const interpolation_t interpolation,
+			       const gboolean need_calc_max_min) {
 
 
   realpoint_t voxel_size;
-  realspace_t slice_coord_frame;
+  realspace_t * slice_coord_frame;
   realpoint_t view_corner[2];
   realpoint_t slice_corner;
-  volume_list_t * slices=NULL;
+  volumes_t * slices=NULL;
   volume_t * temp_slice;
 #ifdef AMIDE_DEBUG
   struct timeval tv1;
@@ -1600,18 +1765,20 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   view_corner[1].z=voxel_size.z;
 
   /* figure out the coordinate frame for the slices based on the corners returned */
-  rs_set_axis(&slice_coord_frame, rs_all_axis(view_coord_frame));
-  rs_set_offset(&slice_coord_frame, realspace_alt_coord_to_base(view_corner[0],view_coord_frame));
+  slice_coord_frame = rs_init();
+  rs_set_axis(slice_coord_frame, rs_all_axis(view_coord_frame));
+  rs_set_offset(slice_coord_frame, realspace_alt_coord_to_base(view_corner[0],view_coord_frame));
   slice_corner = realspace_alt_coord_to_alt(view_corner[1],view_coord_frame, slice_coord_frame);
 
   /* and get the slices */
   while (volumes != NULL) {
     temp_slice = volume_get_slice(volumes->volume, start, duration, voxel_size, 
 				  slice_coord_frame, slice_corner, interpolation, need_calc_max_min);
-    slices = volume_list_add_volume(slices,temp_slice);
-    temp_slice = volume_free(temp_slice);
+    slices = volumes_add_volume(slices,temp_slice);
+    temp_slice = volume_unref(temp_slice);
     volumes = volumes->next;
   }
+  slice_coord_frame = rs_unref(slice_coord_frame);
 
 #ifdef AMIDE_DEBUG
   /* and wrapup our timing */

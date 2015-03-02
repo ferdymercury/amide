@@ -151,7 +151,7 @@ gboolean ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data) {
   analysis_roi_t * roi_analyses = data;
 
   /* free the associated data structure */
-  roi_analyses = analysis_roi_free(roi_analyses);
+  roi_analyses = analysis_roi_unref(roi_analyses);
 
   return FALSE;
 }

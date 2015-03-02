@@ -52,7 +52,7 @@ ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
 
   /* things to do if we've removed all reference's */
   if (ui_rendering->reference_count == 0) {
-    ui_rendering->contexts = rendering_list_free(ui_rendering->contexts);
+    ui_rendering->contexts = renderings_unref(ui_rendering->contexts);
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_rendering\n");
 #endif
@@ -69,8 +69,8 @@ ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
 
 
 /* malloc and initialize a ui_rendering data structure */
-ui_rendering_t * ui_rendering_init(volume_list_t * volumes, roi_list_t * rois,
-				   realspace_t coord_frame, amide_time_t start, 
+ui_rendering_t * ui_rendering_init(volumes_t * volumes, rois_t * rois,
+				   realspace_t * coord_frame, amide_time_t start, 
 				   amide_time_t duration, interpolation_t interpolation) {
 
   ui_rendering_t * ui_rendering;
@@ -118,8 +118,8 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, roi_list_t * rois,
   gnome_config_pop_prefix();
 
   /* initialize the rendering contexts */
-  ui_rendering->contexts = rendering_list_init(volumes, rois, coord_frame, start, duration,
-					       ui_rendering->interpolation);
+  ui_rendering->contexts = renderings_init(volumes, rois, coord_frame, start, duration,
+					   ui_rendering->interpolation);
 
   return ui_rendering;
 }
@@ -145,8 +145,8 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
   /* reload the objects (volumes)  if the time's changed */
   if (ui_rendering->contexts != NULL)
-    rendering_list_reload_objects(ui_rendering->contexts, ui_rendering->start,
-				  ui_rendering->duration, ui_rendering->interpolation);
+    renderings_reload_objects(ui_rendering->contexts, ui_rendering->start,
+			      ui_rendering->duration, ui_rendering->interpolation);
 
   /* -------- render our volumes ------------ */
 
@@ -198,7 +198,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
 
 /* function that sets up the rendering dialog */
-void ui_rendering_create(volume_list_t * volumes, roi_list_t * rois, realspace_t coord_frame, 
+void ui_rendering_create(volumes_t * volumes, rois_t * rois, realspace_t * coord_frame, 
 			 amide_time_t start, amide_time_t duration,  interpolation_t interpolation) {
   
   GtkWidget * packing_table;

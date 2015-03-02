@@ -33,7 +33,7 @@
 typedef enum {ELLIPSOID, CYLINDER, BOX, ISOCONTOUR_2D, ISOCONTOUR_3D, NUM_ROI_TYPES} roi_type_t;
 
 typedef struct _roi_t roi_t;
-typedef struct _roi_list_t roi_list_t;
+typedef struct _rois_t rois_t;
 
      
 
@@ -41,10 +41,10 @@ typedef struct _roi_list_t roi_list_t;
 struct _roi_t {
   gchar * name;
   roi_type_t type;
-  realspace_t coord_frame;
+  realspace_t * coord_frame;
   realpoint_t corner; /*far corner,near corner is always 0,0,0 in roi coord frame*/
   roi_t * parent;
-  roi_list_t * children;
+  rois_t * children;
 
   /* isocontour specific stuff */
   data_set_t * isocontour;
@@ -52,53 +52,61 @@ struct _roi_t {
   amide_data_t isocontour_value;
 
   /* stuff that doesn't need to be saved */
-  guint reference_count;
+  guint ref_count;
 };
 
 /* used to make a linked list of roi_t's */
-struct _roi_list_t {
+struct _rois_t {
   roi_t * roi;
-  guint reference_count;
-  roi_list_t * next;
+  guint ref_count;
+  rois_t * next;
 };
 
-/* macros */
-#define ROI_REALPOINT_TO_VOXEL(roi, real, vox) (((vox).x = floor((real).x/(roi)->voxel_size.x)), \
-						((vox).y = floor((real).y/(roi)->voxel_size.y)), \
-						((vox).z = floor((real).z/(roi)->voxel_size.z)), \
-						((vox).t = (0)))
 
 /* external functions */
-roi_t * roi_free(roi_t * roi);
+roi_t * roi_unref(roi_t * roi);
 roi_t * roi_init(void);
 gchar * roi_write_xml(roi_t * roi, gchar * study_directory);
 roi_t * roi_load_xml(gchar * roi_xml_file_name, const gchar * study_directory);
 roi_t * roi_copy(roi_t * src_roi);
-roi_t * roi_add_reference(roi_t * roi);
+roi_t * roi_ref(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
 realpoint_t roi_calculate_center(const roi_t * roi);
 void roi_get_view_corners(const roi_t * roi,
-			  const realspace_t view_coord_frame,
+			  const realspace_t * view_coord_frame,
 			  realpoint_t view_corner[]);
-roi_list_t * roi_list_free(roi_list_t *roi_list);
-roi_list_t * roi_list_init(roi_t * roi);
-guint roi_list_count(roi_list_t * list);
-void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * study_directory);
-roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
-gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
-roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
-roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
-roi_list_t * roi_list_remove_roi(roi_list_t * list, roi_t * roi);
-roi_list_t * roi_list_copy(roi_list_t * src_roi_list);
-roi_list_t * roi_list_add_reference(roi_list_t * rois);
-void rois_get_view_corners(roi_list_t * rois,
-			   const realspace_t view_coord_frame,
+rois_t * rois_unref(rois_t *rois);
+rois_t * rois_init(roi_t * roi);
+guint rois_count(rois_t * list);
+void rois_write_xml(rois_t *list, xmlNodePtr node_list, gchar * study_directory);
+rois_t * rois_load_xml(xmlNodePtr node_list, const gchar * study_directory);
+gboolean rois_includes_roi(rois_t *list, roi_t * roi);
+rois_t * rois_add_roi(rois_t * list, roi_t * roi);
+rois_t * rois_add_roi_first(rois_t * list, roi_t * roi);
+rois_t * rois_remove_roi(rois_t * list, roi_t * roi);
+rois_t * rois_copy(rois_t * src_roi_list);
+rois_t * rois_ref(rois_t * rois);
+void rois_get_view_corners(rois_t * rois,
+			   const realspace_t * view_coord_frame,
 			   realpoint_t view_corner[]);
 GSList * roi_free_points_list(GSList * list);
 gboolean roi_undrawn(const roi_t * roi);
-floatpoint_t rois_max_min_voxel_size(roi_list_t * rois);
-GSList * roi_get_intersection_line(const roi_t * roi, const volume_t * view_slice);
-volume_t * roi_get_slice(const roi_t * roi, const volume_t * view_slice);
+roi_t * rois_undrawn_roi(const rois_t * rois);
+floatpoint_t rois_max_min_voxel_size(rois_t * rois);
+GSList * roi_get_intersection_line(const roi_t * roi, 
+				   const realpoint_t canvas_voxel_size,
+				   const realspace_t * canvas_coord_frame,
+				   const realpoint_t canvas_corner);
+volume_t * roi_get_intersection_slice(const roi_t * roi, 
+				      const realspace_t * canvas_coord_frame,
+				      const realpoint_t canvas_corner,
+				      const realpoint_t canvas_voxel_size);
+void roi_subset_of_space(const roi_t * roi,
+			 const realspace_t * coord_frame,
+			 const realpoint_t corner,
+			 const realpoint_t voxel_size,
+			 voxelpoint_t * subset_start,
+			 voxelpoint_t * subset_dim);
 void roi_subset_of_volume(const roi_t * roi,
 			  const volume_t * volume,
 			  intpoint_t frame,

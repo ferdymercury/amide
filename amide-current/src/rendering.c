@@ -42,7 +42,7 @@ gchar * pixel_type_names[] = {"Opacity",
 			      "Grayscale"};
 			      
 
-rendering_t * rendering_context_free(rendering_t * context) {
+rendering_t * rendering_context_unref(rendering_t * context) {
   
   classification_t i_class;
 
@@ -50,21 +50,21 @@ rendering_t * rendering_context_free(rendering_t * context) {
     return context;
 
   /* sanity checks */
-  g_return_val_if_fail(context->reference_count > 0, NULL);
+  g_return_val_if_fail(context->ref_count > 0, NULL);
 
-  context->reference_count--; 
+  context->ref_count--; 
 
 #ifdef AMIDE_DEBUG
-  if (context->reference_count == 0)
+  if (context->ref_count == 0)
     g_print("freeing rendering context of %s\n",context->name);
 #endif
 
   /* if we've removed all reference's, free the context */
-  if (context->reference_count == 0) {
+  if (context->ref_count == 0) {
     if (context->type == VOLUME)
-      context->volume = volume_free(context->volume);
+      context->volume = volume_unref(context->volume);
     else
-      context->roi = roi_free(context->roi);
+      context->roi = roi_unref(context->roi);
     g_free(context->rendering_vol);
     g_free(context->name);
     if (context->vpc != NULL)
@@ -74,6 +74,8 @@ rendering_t * rendering_context_free(rendering_t * context) {
       g_free(context->ramp_x[i_class]);
       g_free(context->ramp_y[i_class]);
     }
+    context->current_coord_frame = rs_unref(context->current_coord_frame);
+    context->current_coord_frame = rs_unref(context->initial_coord_frame);
     g_free(context);
     context = NULL;
   }
@@ -87,7 +89,7 @@ rendering_t * rendering_context_free(rendering_t * context) {
 /* either volume or roi must be NULL */
 rendering_t * rendering_context_init(volume_t * volume, 
 				     roi_t * roi,
-				     const realspace_t render_coord_frame, 
+				     realspace_t * render_coord_frame, 
 				     const realpoint_t render_far_corner, 
 				     const floatpoint_t voxel_size, 
 				     const amide_time_t start, 
@@ -107,7 +109,7 @@ rendering_t * rendering_context_init(volume_t * volume,
     g_warning("%s: couldn't allocate space for rendering context",PACKAGE);
     return NULL;
   }
-  new_context->reference_count = 1;
+  new_context->ref_count = 1;
   
   /* start initializing what we can */
   new_context->vpc = vpCreateContext();
@@ -129,7 +131,8 @@ rendering_t * rendering_context_init(volume_t * volume,
   new_context->rendering_vol = NULL;
   new_context->curve_type[DENSITY_CLASSIFICATION] = CURVE_LINEAR;
   new_context->curve_type[GRADIENT_CLASSIFICATION] = CURVE_LINEAR;
-  new_context->initial_coord_frame = new_context->current_coord_frame = render_coord_frame;
+  new_context->initial_coord_frame = rs_ref(render_coord_frame);
+  new_context->current_coord_frame = rs_copy(render_coord_frame);
   new_context->start = start;
   new_context->duration = duration;
 
@@ -188,7 +191,7 @@ rendering_t * rendering_context_init(volume_t * volume,
 	     new_context->ramp_x[DENSITY_CLASSIFICATION], 
 	     new_context->ramp_y[DENSITY_CLASSIFICATION]) != VP_OK){
     g_warning("%s: Error Setting the Rendering Density Ramp", PACKAGE);
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -198,7 +201,7 @@ rendering_t * rendering_context_init(volume_t * volume,
 	     new_context->ramp_x[GRADIENT_CLASSIFICATION], 
 	     new_context->ramp_y[GRADIENT_CLASSIFICATION]) != VP_OK) {
     g_warning("%s: Error Setting the Rendering Gradient Ramp", PACKAGE);
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -207,7 +210,7 @@ rendering_t * rendering_context_init(volume_t * volume,
 		     RENDERING_SHADE_FIELDS, RENDERING_CLSFY_FIELDS) != VP_OK) {
     g_warning("%s: Error Setting the Rendering Voxel Size (%s): %s", 
 	      PACKAGE, new_context->name, vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -217,21 +220,21 @@ rendering_t * rendering_context_init(volume_t * volume,
 		       RENDERING_NORMAL_OFFSET, RENDERING_NORMAL_MAX) != VP_OK) {
     g_warning("%s: Error Specifying the Rendering Voxel Fields (%s, NORMAL): %s", 
 	      PACKAGE, new_context->name, vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
   if (vpSetVoxelField (new_context->vpc,RENDERING_DENSITY_FIELD, RENDERING_DENSITY_SIZE, 
 		       RENDERING_DENSITY_OFFSET, RENDERING_DENSITY_MAX) != VP_OK) {
     g_warning("%s: Error Specifying the Rendering Voxel Fields (%s, DENSITY): %s", 
 	      PACKAGE, new_context->name, vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
   if (vpSetVoxelField (new_context->vpc,RENDERING_GRADIENT_FIELD, RENDERING_GRADIENT_SIZE, 
 		       RENDERING_GRADIENT_OFFSET, RENDERING_GRADIENT_MAX) != VP_OK) {
     g_warning("%s: Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s",
 	      PACKAGE, new_context->name, vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -241,7 +244,7 @@ rendering_t * rendering_context_init(volume_t * volume,
 			   sizeof(new_context->density_ramp)) != VP_OK){
     g_warning("%s: Error Setting the Rendering Classifier Table (%s, DENSITY): %s",
 	      PACKAGE, new_context->name, vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -251,7 +254,7 @@ rendering_t * rendering_context_init(volume_t * volume,
 			   sizeof(new_context->gradient_ramp)) != VP_OK){
     g_warning("%s: Error Setting the Classifier Table (%s, GRADIENT): %s",
 	      PACKAGE, new_context->name,  vpGetErrorString(vpGetError(new_context->vpc)));
-    new_context = rendering_context_free(new_context);
+    new_context = rendering_context_unref(new_context);
     return new_context;
   }
 
@@ -267,10 +270,10 @@ rendering_t * rendering_context_init(volume_t * volume,
 
 /* function to reload the context's concept of a volume when necessary */
 void rendering_context_reload_objects(rendering_t * rendering_context, 
-				     const amide_time_t new_start,
-				     const amide_time_t new_duration, 
-				     const interpolation_t interpolation) {
-
+				      const amide_time_t new_start,
+				      const amide_time_t new_duration, 
+				      const interpolation_t interpolation) {
+  
   amide_time_t old_start, old_duration;
 
   old_start = rendering_context->start;
@@ -379,7 +382,7 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	    switch(rendering_context->roi->type) {
 	    case ISOCONTOUR_2D:
 	    case ISOCONTOUR_3D:
-	      ROI_REALPOINT_TO_VOXEL(rendering_context->roi, temp_rp, j_voxel);
+	      REALPOINT_TO_VOXEL(temp_rp, rendering_context->roi->voxel_size, 0, j_voxel);
 	      if (data_set_includes_voxel(rendering_context->roi->isocontour, j_voxel)) {
 		temp_int = *DATA_SET_UBYTE_POINTER(rendering_context->roi->isocontour, j_voxel);
 		if (temp_int == 2)
@@ -421,14 +424,55 @@ void rendering_context_load_object(rendering_t * rendering_context,
     break;
   case VOLUME:
     {
-      realspace_t slice_coord_frame;
+      realspace_t * slice_coord_frame;
       realpoint_t slice_far_corner;
       volume_t * slice;
       realpoint_t new_offset;
       amide_data_t temp_val, scale;
+      amide_data_t max, min;
+      amide_data_t frame_max, frame_min;
+      guint middle_frame;
+      volume_t * volume;
 
-      scale = ((gdouble) RENDERING_DENSITY_MAX) / 
-	(rendering_context->volume->threshold_max-rendering_context->volume->threshold_min);
+      volume = rendering_context->volume;
+
+      switch(volume->threshold_type) {
+      case THRESHOLD_PER_FRAME:
+	frame_max = volume_max(volume, rendering_context->start, rendering_context->duration);
+	frame_min = volume_min(volume, rendering_context->start, rendering_context->duration);
+	max = volume->threshold_max[0]*(frame_max-frame_min)/(volume->global_max-volume->global_min);
+	min = volume->threshold_min[0]*(frame_max-frame_min)/(volume->global_max-volume->global_min);
+	break;
+      case THRESHOLD_INTERPOLATE_FRAMES:
+	if (volume->threshold_ref_frame[1]==volume->threshold_ref_frame[0]) {
+	  max = volume->threshold_max[0];
+	  min = volume->threshold_min[0];
+	} else {
+
+	  middle_frame = volume_frame(volume, rendering_context->start+rendering_context->duration/2.0);
+	  if (middle_frame <= volume->threshold_ref_frame[0])
+	    middle_frame = volume->threshold_ref_frame[0];
+	  else if (middle_frame >= volume->threshold_ref_frame[1])
+	    middle_frame = volume->threshold_ref_frame[1];
+	
+	  max=
+	    (((volume->threshold_ref_frame[1]-middle_frame)*volume->threshold_max[0]+
+	      (middle_frame-volume->threshold_ref_frame[0])*volume->threshold_max[1])
+	     /(volume->threshold_ref_frame[1]-volume->threshold_ref_frame[0]));
+	  min=
+	    (((volume->threshold_ref_frame[1]-middle_frame)*volume->threshold_min[0]+
+	      (middle_frame-volume->threshold_ref_frame[0])*volume->threshold_min[1])
+	     /(volume->threshold_ref_frame[1]-volume->threshold_ref_frame[0]));
+	}
+	
+	break;
+      case THRESHOLD_GLOBAL:
+      default:
+	max = volume->threshold_max[0];
+	min = volume->threshold_min[0];
+	break;
+      }
+      scale = ((gdouble) RENDERING_DENSITY_MAX) / (max-min);
       
       /* define the slice that we're trying to pull out of the data set */
       slice_far_corner.x = rendering_context->dim.x * rendering_context->voxel_size.x;
@@ -436,7 +480,7 @@ void rendering_context_load_object(rendering_t * rendering_context,
       slice_far_corner.z = 0.0;
       new_offset = realspace_base_coord_to_alt(rs_offset(rendering_context->initial_coord_frame),
 					       rendering_context->current_coord_frame);
-      slice_coord_frame = rendering_context->initial_coord_frame;
+      slice_coord_frame = rs_copy(rendering_context->initial_coord_frame);
       new_offset.z -= rendering_context->voxel_size.z;
       
       /* copy the info from a volume structure into our rendering_volume structure */
@@ -449,9 +493,9 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	
 	slice_far_corner.z += rendering_context->voxel_size.z;
 	new_offset.z += rendering_context->voxel_size.z; 
-	rs_set_offset(&(slice_coord_frame), 
+	rs_set_offset(slice_coord_frame, 
 		      realspace_alt_coord_to_base(new_offset, rendering_context->initial_coord_frame));
-	slice = volume_get_slice(rendering_context->volume, 
+	slice = volume_get_slice(volume, 
 				 rendering_context->start, 
 				 rendering_context->duration, 
 				 rendering_context->voxel_size, 
@@ -461,8 +505,7 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	/* note, I think volpack's z direction is off.... hence the reversal */
 	for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering_context->dim.y; j_voxel.y++, i_voxel.y++)
 	  for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  rendering_context->dim.x; j_voxel.x++, i_voxel.x++) {
-	    temp_val = scale * (VOLUME_FLOAT_0D_SCALING_CONTENTS(slice,j_voxel)
-				-rendering_context->volume->threshold_min);
+	    temp_val = scale * (VOLUME_FLOAT_0D_SCALING_CONTENTS(slice,j_voxel)-min);
 	    if (temp_val > RENDERING_DENSITY_MAX) temp_val = RENDERING_DENSITY_MAX;
 	    if (temp_val < 0.0) temp_val = 0.0;
 	    density[i_voxel.x+
@@ -471,8 +514,9 @@ void rendering_context_load_object(rendering_t * rendering_context,
 		   rendering_context->dim.y*
 		   rendering_context->dim.x] = temp_val;
 	  }
-	slice = volume_free(slice);
+	slice = volume_unref(slice);
       }
+      slice_coord_frame = rs_unref(slice_coord_frame);
     }
     break;
   default: 
@@ -593,7 +637,7 @@ void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble r
   realpoint_t axis;
 
   /* rotate the axis */
-  realspace_rotate_on_axis(&context->current_coord_frame,
+  realspace_rotate_on_axis(context->current_coord_frame,
 			   rs_specific_axis(context->current_coord_frame, dir),
 			   rotation);
 
@@ -625,7 +669,7 @@ void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble r
 void rendering_context_reset_rotation(rendering_t * context) {
 
   /* reset the coord frame */
-  context->current_coord_frame = context->initial_coord_frame;
+  rs_set_coord_frame(context->current_coord_frame, context->initial_coord_frame);
 
   /* reset the rotation */
   rendering_context_set_rotation(context, XAXIS, 0.0);
@@ -756,76 +800,76 @@ void rendering_context_render(rendering_t * context)
 
 
 /* free up a list of rendering contexts */
-rendering_list_t * rendering_list_free(rendering_list_t * rendering_list) {
+renderings_t * renderings_unref(renderings_t * renderings) {
   
-  if (rendering_list == NULL)
-    return rendering_list;
+  if (renderings == NULL)
+    return renderings;
 
   /* sanity check */
-  g_return_val_if_fail(rendering_list->reference_count > 0, NULL);
+  g_return_val_if_fail(renderings->ref_count > 0, NULL);
 
-  rendering_list->reference_count--;
+  renderings->ref_count--;
 
 
 
-  /* things to do if our reference count is zero */
-  if (rendering_list->reference_count == 0) {
+  /* things to do if our ref count is zero */
+  if (renderings->ref_count == 0) {
     /* recursively delete rest of list */
-    rendering_list->next = rendering_list_free(rendering_list->next); 
+    renderings->next = renderings_unref(renderings->next); 
 
-    rendering_list->rendering_context = rendering_context_free(rendering_list->rendering_context);
-    g_free(rendering_list);
-    rendering_list = NULL;
+    renderings->rendering_context = rendering_context_unref(renderings->rendering_context);
+    g_free(renderings);
+    renderings = NULL;
   }
 
-  return rendering_list;
+  return renderings;
 }
 
 
-/* the recursive part of rendering_list_init */
-static rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, 
-						      roi_list_t * rois,
-						      const realspace_t render_coord_frame,
-						      const realpoint_t render_far_corner, 
-						      const floatpoint_t voxel_size, 
-						      const amide_time_t start, 
-						      const amide_time_t duration,
-						      const interpolation_t interpolation) {
+/* the recursive part of renderings_init */
+static renderings_t * renderings_init_recurse(volumes_t * volumes, 
+					      rois_t * rois,
+					      realspace_t * render_coord_frame,
+					      const realpoint_t render_far_corner, 
+					      const floatpoint_t voxel_size, 
+					      const amide_time_t start, 
+					      const amide_time_t duration,
+					      const interpolation_t interpolation) {
 
-  rendering_list_t * temp_rendering_list = NULL;
+  renderings_t * temp_renderings = NULL;
 
-  if ((volumes == NULL) && (rois == NULL)) return temp_rendering_list;
+  if ((volumes == NULL) && (rois == NULL)) return temp_renderings;
 
-  if ((temp_rendering_list = (rendering_list_t *) g_malloc(sizeof(rendering_list_t))) == NULL) {
-    return temp_rendering_list;
+  if ((temp_renderings = (renderings_t *) g_malloc(sizeof(renderings_t))) == NULL) {
+    return temp_renderings;
   }
-  temp_rendering_list->reference_count = 1;
+  temp_renderings->ref_count = 1;
   
   if (volumes != NULL) {
-    temp_rendering_list->rendering_context = 
+    temp_renderings->rendering_context = 
       rendering_context_init(volumes->volume, NULL, render_coord_frame, render_far_corner,
 			     voxel_size, start, duration, interpolation);
-    temp_rendering_list->next = 
-      rendering_list_init_recurse(volumes->next, rois, render_coord_frame, render_far_corner,
-				  voxel_size, start, duration, interpolation);
+    temp_renderings->next = 
+      renderings_init_recurse(volumes->next, rois, render_coord_frame, render_far_corner,
+			      voxel_size, start, duration, interpolation);
   } else { /* rois != NULL */
-    temp_rendering_list->rendering_context = 
+    temp_renderings->rendering_context = 
       rendering_context_init(NULL, rois->roi, render_coord_frame, render_far_corner,
 			     voxel_size, start, duration, interpolation);
-    temp_rendering_list->next = 
-      rendering_list_init_recurse(volumes, rois->next, render_coord_frame, render_far_corner,
-				  voxel_size, start, duration, interpolation);
+    temp_renderings->next = 
+      renderings_init_recurse(volumes, rois->next, render_coord_frame, render_far_corner,
+			      voxel_size, start, duration, interpolation);
   }
   
-  return temp_rendering_list;
+  return temp_renderings;
 }
 					      
 					      
 
 /* returns an initialized rendering list */
-rendering_list_t * rendering_list_init(volume_list_t * volumes, roi_list_t * rois,
-				       realspace_t render_coord_frame, const amide_time_t start, 
-				       const amide_time_t duration,const interpolation_t interpolation) {
+renderings_t * renderings_init(volumes_t * volumes, rois_t * rois,
+			       realspace_t * render_coord_frame, const amide_time_t start, 
+			       const amide_time_t duration,const interpolation_t interpolation) {
   
   realpoint_t render_corner[2];
   realpoint_t render_far_corner;
@@ -842,7 +886,7 @@ rendering_list_t * rendering_list_init(volume_list_t * volumes, roi_list_t * roi
   render_corner[0] = realspace_alt_coord_to_base(render_corner[0], render_coord_frame);
   render_corner[1] = realspace_alt_coord_to_base(render_corner[1], render_coord_frame);
   size = rp_sub(render_corner[1], render_corner[0]);
-  rs_set_offset(&render_coord_frame, render_corner[0]);
+  rs_set_offset(render_coord_frame, render_corner[0]);
   render_far_corner = realspace_base_coord_to_alt(render_corner[1], render_coord_frame);
 
   /* figure out what size our rendering voxels will be */
@@ -855,20 +899,20 @@ rendering_list_t * rendering_list_init(volume_list_t * volumes, roi_list_t * roi
   if (FLOATPOINT_EQUAL(voxel_size, 0.0)) voxel_size = 1.0; /* make sure voxel size is sane */
 
   /* and generate our rendering list */
-  return  rendering_list_init_recurse(volumes, rois, render_coord_frame, render_far_corner,
-				      voxel_size, start, duration, interpolation);
+  return  renderings_init_recurse(volumes, rois, render_coord_frame, render_far_corner,
+				  voxel_size, start, duration, interpolation);
 }
 
 
 /* reloads the rendering list when needed */
-void rendering_list_reload_objects(rendering_list_t * rendering_list, const amide_time_t start, 
-				   const amide_time_t duration, const interpolation_t interpolation) {
+void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
+			       const amide_time_t duration, const interpolation_t interpolation) {
 
-  if (rendering_list != NULL) {
+  if (renderings != NULL) {
     /* reload this context */
-    rendering_context_reload_objects(rendering_list->rendering_context, start, duration, interpolation);
+    rendering_context_reload_objects(renderings->rendering_context, start, duration, interpolation);
     /* and do the next */
-    rendering_list_reload_objects(rendering_list->next, start, duration, interpolation);
+    renderings_reload_objects(renderings->next, start, duration, interpolation);
   }
 
   return;
@@ -877,57 +921,57 @@ void rendering_list_reload_objects(rendering_list_t * rendering_list, const amid
 
 
 /* sets the rotation transform for a list of rendering context */
-void rendering_list_set_rotation(rendering_list_t * rendering_list, axis_t dir, gdouble rotation) {
+void renderings_set_rotation(renderings_t * renderings, axis_t dir, gdouble rotation) {
 
 
-  while (rendering_list != NULL) {
-    rendering_context_set_rotation(rendering_list->rendering_context, dir, rotation);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_set_rotation(renderings->rendering_context, dir, rotation);
+    renderings = renderings->next;
   }
 
   return;
 }
 
 /* resets the rotation transform for a list of rendering context */
-void rendering_list_reset_rotation(rendering_list_t * rendering_list) {
+void renderings_reset_rotation(renderings_t * renderings) {
 
 
-  while (rendering_list != NULL) {
-    rendering_context_reset_rotation(rendering_list->rendering_context);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_reset_rotation(renderings->rendering_context);
+    renderings = renderings->next;
   }
 
   return;
 }
 
 /* to set the quality on a list of contexts */
-void rendering_list_set_quality(rendering_list_t * rendering_list, rendering_quality_t quality) {
+void renderings_set_quality(renderings_t * renderings, rendering_quality_t quality) {
 
-  while (rendering_list != NULL) {
-    rendering_context_set_quality(rendering_list->rendering_context, quality);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_set_quality(renderings->rendering_context, quality);
+    renderings = renderings->next;
   }
 
   return;
 }
 
 /* set the return image parameters  for a list of contexts */
-void rendering_list_set_image(rendering_list_t * rendering_list, pixel_type_t pixel_type, gdouble zoom) {
+void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gdouble zoom) {
 
-  while (rendering_list != NULL) {
-    rendering_context_set_image(rendering_list->rendering_context, pixel_type, zoom);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_set_image(renderings->rendering_context, pixel_type, zoom);
+    renderings = renderings->next;
   }
 
   return;
 }
 
 /* turn depth cueing on/off for a list of contexts */
-void rendering_list_set_depth_cueing(rendering_list_t * rendering_list, gboolean state) {
+void renderings_set_depth_cueing(renderings_t * renderings, gboolean state) {
 
-  while (rendering_list != NULL) {
-    rendering_context_set_depth_cueing(rendering_list->rendering_context, state);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_set_depth_cueing(renderings->rendering_context, state);
+    renderings = renderings->next;
   }
 
   return;
@@ -935,13 +979,13 @@ void rendering_list_set_depth_cueing(rendering_list_t * rendering_list, gboolean
 
 
 /* sets the depth cueing parameters for alist of contexts */
-void rendering_list_set_depth_cueing_parameters(rendering_list_t * rendering_list, 
-						gdouble front_factor, gdouble density) {
+void renderings_set_depth_cueing_parameters(renderings_t * renderings, 
+					    gdouble front_factor, gdouble density) {
 
-  while (rendering_list != NULL) {
-    rendering_context_set_depth_cueing_parameters(rendering_list->rendering_context, 
+  while (renderings != NULL) {
+    rendering_context_set_depth_cueing_parameters(renderings->rendering_context, 
 						  front_factor, density);
-    rendering_list = rendering_list->next;
+    renderings = renderings->next;
   }
 
   return;
@@ -949,21 +993,21 @@ void rendering_list_set_depth_cueing_parameters(rendering_list_t * rendering_lis
 
 
 /* to render a list of contexts... */
-void rendering_list_render(rendering_list_t * rendering_list)
+void renderings_render(renderings_t * renderings)
 {
 
-  while (rendering_list != NULL) {
-    rendering_context_render(rendering_list->rendering_context);
-    rendering_list = rendering_list->next;
+  while (renderings != NULL) {
+    rendering_context_render(renderings->rendering_context);
+    renderings = renderings->next;
   }
 
   return;
 }
 
 /* count the rendering lists */
-guint rendering_list_count(rendering_list_t * rendering_list) {
-  if (rendering_list != NULL)
-    return (1+rendering_list_count(rendering_list->next));
+guint renderings_count(renderings_t * renderings) {
+  if (renderings != NULL)
+    return (1+renderings_count(renderings->next));
   else
     return 0;
 }

@@ -1,7 +1,7 @@
 /* volume_variable_type.h - used to generate the different volume_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -40,13 +40,13 @@
 
 
 /* function declarations */
-void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume);
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(volume_t * volume);
 void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t * volume);
 volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
-								  const amide_time_t start,
-								  const amide_time_t duration,
+								  const amide_time_t requested_start,
+								  const amide_time_t requested_duration,
 								  const realpoint_t  requested_voxel_size,
-								  const realspace_t slice_coord_frame,
+								  realspace_t * slice_coord_frame,
 								  const realpoint_t far_corner,
 								  const interpolation_t interpolation,
 								  const gboolean need_calc_max_min);

@@ -31,16 +31,30 @@
 
 #define MOVIE_DEFAULT_FRAMES 300
 
+typedef enum {OVER_TIME, OVER_FRAMES, DYNAMIC_TYPES} dynamic_t;
+
 /* data structures */
 typedef struct ui_rendering_movie_t {
   GtkWidget * dialog;
   GtkWidget * progress;
   guint num_frames;
   gdouble rotation[NUM_AXIS];
-  amide_time_t start;
-  amide_time_t duration;
+  dynamic_t type;
+  amide_time_t start_time;
+  amide_time_t end_time;
+  guint start_frame;
+  guint end_frame;
   ui_rendering_t * ui_rendering; /* a pointer back to the main rendering ui */
   guint reference_count;
+
+  GtkWidget * start_time_label;
+  GtkWidget * end_time_label;
+  GtkWidget * start_frame_label;
+  GtkWidget * end_frame_label;
+  GtkWidget * start_time_entry;
+  GtkWidget * end_time_entry;
+  GtkWidget * start_frame_entry;
+  GtkWidget * end_frame_entry;
 } ui_rendering_movie_t;
 
 

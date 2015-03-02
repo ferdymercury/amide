@@ -33,7 +33,7 @@
 
 
 /* external functions */
-realspace_t alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts);
+realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts);
 
 
 #endif /* __ALIGNMENT_H__ */

@@ -114,50 +114,265 @@ ZVT_LIBS = @ZVT_LIBS@
 cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 
-SUBDIRS =  	lib_src
+SUBDIRS = \
+	lib_src
 
 
-@BUILD_LIBAMIDE_TRUE@INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
-@BUILD_LIBAMIDE_TRUE@CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
-@BUILD_LIBAMIDE_TRUE@lib_LTLIBRARIES = libamide.la
-@BUILD_LIBAMIDE_TRUE@libamideincludedir = $(includedir)/amide
+@BUILD_LIBAMIDE_TRUE@INCLUDES = @BUILD_LIBAMIDE_TRUE@-DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+@BUILD_LIBAMIDE_TRUE@CFLAGS = @BUILD_LIBAMIDE_TRUE@@CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS) $(GNOME_XML2_CFLAGS)
+@BUILD_LIBAMIDE_TRUE@lib_LTLIBRARIES = @BUILD_LIBAMIDE_TRUE@libamide.la
+@BUILD_LIBAMIDE_TRUE@libamideincludedir = @BUILD_LIBAMIDE_TRUE@$(includedir)/amide
+
+@BUILD_LIBAMIDE_TRUE@libamideinclude_HEADERS = @BUILD_LIBAMIDE_TRUE@\
+@BUILD_LIBAMIDE_TRUE@	amide_export.h
+
+@BUILD_LIBAMIDE_TRUE@libamide_la_SOURCES = @BUILD_LIBAMIDE_TRUE@\
+@BUILD_LIBAMIDE_TRUE@	$(amide_SOURCES) \
+@BUILD_LIBAMIDE_TRUE@	amide_export.c 
 
 libamide_la_LDFLAGS = -version-info 1:0:0
 
-libamideinclude_HEADERS =  	amide_export.h
+amide_SOURCES = \
+	gtkdial.c \
+	gtkdial.h \
+	gtkdirsel.c \
+	gtkdirsel.h \
+	$(DATA_SET_VARIABLE_H) \
+	$(DATA_SET_VARIABLE_C) \
+	$(VOLUME_VARIABLE_H) \
+	$(VOLUME_VARIABLE_C) \
+	$(ROI_VARIABLE_H) \
+	$(ROI_VARIABLE_C) \
+	$(ANALYSIS_VARIABLE_H) \
+	$(ANALYSIS_VARIABLE_C) \
+	amide.c \
+	amide.h \
+	align_pt.c \
+	align_pt.h \
+	alignment.c \
+	alignment.h \
+	analysis.c \
+	analysis.h \
+	amitk_canvas.c \
+	amitk_canvas.h \
+	amitk_coord_frame_edit.c \
+	amitk_coord_frame_edit.h \
+	amitk_tree.c \
+	amitk_tree.h \
+	amitk_tree_item.c \
+	amitk_tree_item.h \
+	amitk_threshold.c \
+	amitk_threshold.h \
+	color_table.c \
+	color_table.h \
+	cti_import.c \
+	cti_import.h \
+	data_set.c \
+	data_set.h \
+	idl_data_import.c \
+	idl_data_import.h \
+	image.c \
+	image.h \
+	medcon_import.c \
+	medcon_import.h \
+	pem_data_import.c \
+	pem_data_import.h \
+	raw_data.c \
+	raw_data.h \
+	raw_data_import.c \
+	raw_data_import.h \
+	raw_data_import_cb.c \
+	raw_data_import_cb.h \
+	realspace.c \
+	realspace.h \
+	rendering.c \
+	rendering.h \
+	roi.c \
+	roi.h \
+	study.c \
+	study.h \
+	ui_align_pt_dialog.c \
+	ui_align_pt_dialog.h \
+	ui_align_pt_dialog_cb.c \
+	ui_align_pt_dialog_cb.h \
+	ui_alignment_dialog.c \
+	ui_alignment_dialog.h \
+	ui_alignment_dialog_cb.c \
+	ui_alignment_dialog_cb.h \
+	ui_common.c \
+	ui_common.h \
+	ui_common_cb.c \
+	ui_common_cb.h \
+	ui_preferences_dialog.c \
+	ui_preferences_dialog.h \
+	ui_preferences_dialog_cb.c \
+	ui_preferences_dialog_cb.h \
+	ui_rendering.c \
+	ui_rendering.h \
+	ui_rendering_cb.c \
+	ui_rendering_cb.h \
+	ui_rendering_dialog.c \
+	ui_rendering_dialog.h \
+	ui_rendering_dialog_cb.c \
+	ui_rendering_dialog_cb.h \
+	ui_rendering_menus.c \
+	ui_rendering_menus.h \
+	ui_rendering_movie_dialog.c \
+	ui_rendering_movie_dialog.h \
+	ui_rendering_movie_dialog_cb.c \
+	ui_rendering_movie_dialog_cb.h \
+	ui_roi_dialog.c \
+	ui_roi_dialog.h \
+	ui_roi_dialog_cb.c \
+	ui_roi_dialog_cb.h \
+	ui_roi_analysis_dialog.c \
+	ui_roi_analysis_dialog.h \
+	ui_roi_analysis_dialog_cb.c \
+	ui_roi_analysis_dialog_cb.h \
+	ui_series.c \
+	ui_series.h \
+	ui_series_cb.c \
+	ui_series_cb.h \
+	ui_series_menus.c \
+	ui_series_menus.h \
+	ui_series_toolbar.c \
+	ui_series_toolbar.h \
+	ui_study.c \
+	ui_study.h \
+	ui_study_cb.c \
+	ui_study_cb.h \
+	ui_study_dialog.c \
+	ui_study_dialog.h \
+	ui_study_dialog_cb.c \
+	ui_study_dialog_cb.h \
+	ui_study_menus.c \
+	ui_study_menus.h \
+	ui_study_toolbar.c \
+	ui_study_toolbar.h \
+	ui_time_dialog.c \
+	ui_time_dialog.h \
+	ui_time_dialog_cb.c \
+	ui_time_dialog_cb.h \
+	ui_volume_dialog.c \
+	ui_volume_dialog.h \
+	ui_volume_dialog_cb.c \
+	ui_volume_dialog_cb.h \
+	volume.c \
+	volume.h \
+	xml.c \
+	xml.h
 
 
-libamide_la_SOURCES =  	$(amide_SOURCES) 	amide_export.c 
+ANALYSIS_VARIABLE_C = \
+	analysis_ELLIPSOID.c \
+	analysis_CYLINDER.c \
+	analysis_BOX.c \
+	analysis_ISOCONTOUR_2D.c \
+	analysis_ISOCONTOUR_3D.c 
 
 
-amide_SOURCES =  	gtkdial.c 	gtkdial.h 	gtkdirsel.c 	gtkdirsel.h 	$(DATA_SET_VARIABLE_C) 	$(DATA_SET_VARIABLE_H) 	$(VOLUME_VARIABLE_C) 	$(VOLUME_VARIABLE_H) 	$(ROI_VARIABLE_C) 	$(ROI_VARIABLE_H) 	$(ANALYSIS_VARIABLE_C) 	$(ANALYSIS_VARIABLE_H) 	amide.c 	amide.h 	align_pt.c 	align_pt.h 	alignment.c 	alignment.h 	analysis.c 	analysis.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_align_pt.c 	ui_align_pt.h 	ui_align_pt_dialog.c 	ui_align_pt_dialog.h 	ui_align_pt_dialog_cb.c 	ui_align_pt_dialog_cb.h 	ui_alignment_dialog.c 	ui_alignment_dialog.h 	ui_alignment_dialog_cb.c 	ui_alignment_dialog_cb.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_preferences_dialog.c 	ui_preferences_dialog.h 	ui_preferences_dialog_cb.c 	ui_preferences_dialog_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_roi_analysis_dialog.c 	ui_roi_analysis_dialog.h 	ui_roi_analysis_dialog_cb.c 	ui_roi_analysis_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
+ANALYSIS_VARIABLE_H = \
+	analysis_ELLIPSOID.h \
+	analysis_CYLINDER.h \
+	analysis_BOX.h \
+	analysis_ISOCONTOUR_2D.h \
+	analysis_ISOCONTOUR_3D.h
 
 
-ANALYSIS_VARIABLE_C =  	analysis_ELLIPSOID.c 	analysis_CYLINDER.c 	analysis_BOX.c 	analysis_ISOCONTOUR_2D.c 	analysis_ISOCONTOUR_3D.c 
+ROI_VARIABLE_C = \
+	roi_ELLIPSOID.c \
+	roi_CYLINDER.c \
+	roi_BOX.c \
+	roi_ISOCONTOUR_2D.c \
+	roi_ISOCONTOUR_3D.c 
 
 
-ANALYSIS_VARIABLE_H =  	analysis_ELLIPSOID.h 	analysis_CYLINDER.h 	analysis_BOX.h 	analysis_ISOCONTOUR_2D.h 	analysis_ISOCONTOUR_3D.h
+ROI_VARIABLE_H = \
+	roi_ELLIPSOID.h \
+	roi_CYLINDER.h \
+	roi_BOX.h \
+	roi_ISOCONTOUR_2D.h \
+	roi_ISOCONTOUR_3D.h
 
 
-ROI_VARIABLE_C =  	roi_ELLIPSOID.c 	roi_CYLINDER.c 	roi_BOX.c 	roi_ISOCONTOUR_2D.c 	roi_ISOCONTOUR_3D.c 
+DATA_SET_VARIABLE_C = \
+	data_set_UBYTE.c \
+	data_set_SBYTE.c \
+	data_set_USHORT.c \
+	data_set_SSHORT.c \
+	data_set_UINT.c \
+	data_set_SINT.c \
+	data_set_FLOAT.c \
+	data_set_DOUBLE.c 
 
 
-ROI_VARIABLE_H =  	roi_ELLIPSOID.h 	roi_CYLINDER.h 	roi_BOX.h 	roi_ISOCONTOUR_2D.h 	roi_ISOCONTOUR_3D.h
+DATA_SET_VARIABLE_H = \
+	data_set_UBYTE.h \
+	data_set_SBYTE.h \
+	data_set_USHORT.h \
+	data_set_SSHORT.h \
+	data_set_UINT.h \
+	data_set_SINT.h \
+	data_set_FLOAT.h \
+	data_set_DOUBLE.h 
 
 
-DATA_SET_VARIABLE_C =  	data_set_UBYTE.c 	data_set_SBYTE.c 	data_set_USHORT.c 	data_set_SSHORT.c 	data_set_UINT.c 	data_set_SINT.c 	data_set_FLOAT.c 	data_set_DOUBLE.c 
+VOLUME_VARIABLE_C = \
+	volume_UBYTE_0D_SCALING.c \
+	volume_UBYTE_1D_SCALING.c \
+	volume_UBYTE_2D_SCALING.c \
+	volume_SBYTE_0D_SCALING.c \
+	volume_SBYTE_1D_SCALING.c \
+	volume_SBYTE_2D_SCALING.c \
+	volume_USHORT_0D_SCALING.c \
+	volume_USHORT_1D_SCALING.c \
+	volume_USHORT_2D_SCALING.c \
+	volume_SSHORT_0D_SCALING.c \
+	volume_SSHORT_1D_SCALING.c \
+	volume_SSHORT_2D_SCALING.c \
+	volume_UINT_0D_SCALING.c \
+	volume_UINT_1D_SCALING.c \
+	volume_UINT_2D_SCALING.c \
+	volume_SINT_0D_SCALING.c \
+	volume_SINT_1D_SCALING.c \
+	volume_SINT_2D_SCALING.c \
+	volume_FLOAT_0D_SCALING.c \
+	volume_FLOAT_1D_SCALING.c \
+	volume_FLOAT_2D_SCALING.c \
+	volume_DOUBLE_0D_SCALING.c \
+	volume_DOUBLE_1D_SCALING.c \
+	volume_DOUBLE_2D_SCALING.c 
 
 
-DATA_SET_VARIABLE_H =  	data_set_UBYTE.h 	data_set_SBYTE.h 	data_set_USHORT.h 	data_set_SSHORT.h 	data_set_UINT.h 	data_set_SINT.h 	data_set_FLOAT.h 	data_set_DOUBLE.h 
+VOLUME_VARIABLE_H = \
+	volume_UBYTE_0D_SCALING.h \
+	volume_UBYTE_1D_SCALING.h \
+	volume_UBYTE_2D_SCALING.h \
+	volume_SBYTE_0D_SCALING.h \
+	volume_SBYTE_1D_SCALING.h \
+	volume_SBYTE_2D_SCALING.h \
+	volume_USHORT_0D_SCALING.h \
+	volume_USHORT_1D_SCALING.h \
+	volume_USHORT_2D_SCALING.h \
+	volume_SSHORT_0D_SCALING.h \
+	volume_SSHORT_1D_SCALING.h \
+	volume_SSHORT_2D_SCALING.h \
+	volume_UINT_0D_SCALING.h \
+	volume_UINT_1D_SCALING.h \
+	volume_UINT_2D_SCALING.h \
+	volume_SINT_0D_SCALING.h \
+	volume_SINT_1D_SCALING.h \
+	volume_SINT_2D_SCALING.h \
+	volume_FLOAT_0D_SCALING.h \
+	volume_FLOAT_1D_SCALING.h \
+	volume_FLOAT_2D_SCALING.h \
+	volume_DOUBLE_0D_SCALING.h \
+	volume_DOUBLE_1D_SCALING.h \
+	volume_DOUBLE_2D_SCALING.h 
 
 
-VOLUME_VARIABLE_C =  	volume_UBYTE_0D_SCALING.c 	volume_UBYTE_1D_SCALING.c 	volume_UBYTE_2D_SCALING.c 	volume_SBYTE_0D_SCALING.c 	volume_SBYTE_1D_SCALING.c 	volume_SBYTE_2D_SCALING.c 	volume_USHORT_0D_SCALING.c 	volume_USHORT_1D_SCALING.c 	volume_USHORT_2D_SCALING.c 	volume_SSHORT_0D_SCALING.c 	volume_SSHORT_1D_SCALING.c 	volume_SSHORT_2D_SCALING.c 	volume_UINT_0D_SCALING.c 	volume_UINT_1D_SCALING.c 	volume_UINT_2D_SCALING.c 	volume_SINT_0D_SCALING.c 	volume_SINT_1D_SCALING.c 	volume_SINT_2D_SCALING.c 	volume_FLOAT_0D_SCALING.c 	volume_FLOAT_1D_SCALING.c 	volume_FLOAT_2D_SCALING.c 	volume_DOUBLE_0D_SCALING.c 	volume_DOUBLE_1D_SCALING.c 	volume_DOUBLE_2D_SCALING.c 
-
-
-VOLUME_VARIABLE_H =  	volume_UBYTE_0D_SCALING.h 	volume_UBYTE_1D_SCALING.h 	volume_UBYTE_2D_SCALING.h 	volume_SBYTE_0D_SCALING.h 	volume_SBYTE_1D_SCALING.h 	volume_SBYTE_2D_SCALING.h 	volume_USHORT_0D_SCALING.h 	volume_USHORT_1D_SCALING.h 	volume_USHORT_2D_SCALING.h 	volume_SSHORT_0D_SCALING.h 	volume_SSHORT_1D_SCALING.h 	volume_SSHORT_2D_SCALING.h 	volume_UINT_0D_SCALING.h 	volume_UINT_1D_SCALING.h 	volume_UINT_2D_SCALING.h 	volume_SINT_0D_SCALING.h 	volume_SINT_1D_SCALING.h 	volume_SINT_2D_SCALING.h 	volume_FLOAT_0D_SCALING.h 	volume_FLOAT_1D_SCALING.h 	volume_FLOAT_2D_SCALING.h 	volume_DOUBLE_0D_SCALING.h 	volume_DOUBLE_1D_SCALING.h 	volume_DOUBLE_2D_SCALING.h 
-
-
-VARIABLE_INPUT =  	variable_type.m4
+VARIABLE_INPUT = \
+	variable_type.m4
 
 
 ANALYSIS_VARIABLE_C_SRC = analysis_variable_type.c 
@@ -172,9 +387,30 @@ DATA_SET_VARIABLE_H_SRC = data_set_variable_type.h
 VOLUME_VARIABLE_C_SRC = volume_variable_type.c 
 VOLUME_VARIABLE_H_SRC = volume_variable_type.h 
 
-CLEANFILES = 
+CLEANFILES = \
+	$(ANALYSIS_VARIABLE_C) \
+	$(ANALYSIS_VARIABLE_H) \
+	$(ROI_VARIABLE_C) \
+	$(ROI_VARIABLE_H) \
+	$(VOLUME_VARIABLE_C) \
+	$(VOLUME_VARIABLE_H) \
+	$(DATA_SET_VARIABLE_C) \
+	$(DATA_SET_VARIABLE_H)
 
-DISTCLEANFILES =          $(libamide_la_SOURCES)         $(libamideinclude_HEADERS)         $(VARIABLE_INPUT) 	$(ANALYSIS_VARIABLE_C_SRC) 	$(ANALYSIS_VARIABLE_H_SRC) 	$(ROI_VARIABLE_C_SRC) 	$(ROI_VARIABLE_H_SRC) 	$(VOLUME_VARIABLE_C_SRC) 	$(VOLUME_VARIABLE_H_SRC) 	$(DATA_SET_VARIABLE_C_SRC) 	$(DATA_SET_VARIABLE_H_SRC)         *~
+
+DISTCLEANFILES = \
+        $(libamide_la_SOURCES) \
+        $(libamideinclude_HEADERS) \
+        $(VARIABLE_INPUT) \
+	$(ANALYSIS_VARIABLE_C_SRC) \
+	$(ANALYSIS_VARIABLE_H_SRC) \
+	$(ROI_VARIABLE_C_SRC) \
+	$(ROI_VARIABLE_H_SRC) \
+	$(VOLUME_VARIABLE_C_SRC) \
+	$(VOLUME_VARIABLE_H_SRC) \
+	$(DATA_SET_VARIABLE_C_SRC) \
+	$(DATA_SET_VARIABLE_H_SRC) \
+        *~
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -185,41 +421,65 @@ LTLIBRARIES =  $(lib_LTLIBRARIES)
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
 libamide_la_LIBADD = 
-libamide_la_OBJECTS =  gtkdial.lo gtkdirsel.lo data_set_UBYTE.lo \
-data_set_SBYTE.lo data_set_USHORT.lo data_set_SSHORT.lo \
-data_set_UINT.lo data_set_SINT.lo data_set_FLOAT.lo data_set_DOUBLE.lo \
-volume_UBYTE_0D_SCALING.lo volume_UBYTE_1D_SCALING.lo \
-volume_UBYTE_2D_SCALING.lo volume_SBYTE_0D_SCALING.lo \
-volume_SBYTE_1D_SCALING.lo volume_SBYTE_2D_SCALING.lo \
-volume_USHORT_0D_SCALING.lo volume_USHORT_1D_SCALING.lo \
-volume_USHORT_2D_SCALING.lo volume_SSHORT_0D_SCALING.lo \
-volume_SSHORT_1D_SCALING.lo volume_SSHORT_2D_SCALING.lo \
-volume_UINT_0D_SCALING.lo volume_UINT_1D_SCALING.lo \
-volume_UINT_2D_SCALING.lo volume_SINT_0D_SCALING.lo \
-volume_SINT_1D_SCALING.lo volume_SINT_2D_SCALING.lo \
-volume_FLOAT_0D_SCALING.lo volume_FLOAT_1D_SCALING.lo \
-volume_FLOAT_2D_SCALING.lo volume_DOUBLE_0D_SCALING.lo \
-volume_DOUBLE_1D_SCALING.lo volume_DOUBLE_2D_SCALING.lo \
-roi_ELLIPSOID.lo roi_CYLINDER.lo roi_BOX.lo roi_ISOCONTOUR_2D.lo \
-roi_ISOCONTOUR_3D.lo analysis_ELLIPSOID.lo analysis_CYLINDER.lo \
-analysis_BOX.lo analysis_ISOCONTOUR_2D.lo analysis_ISOCONTOUR_3D.lo \
-amide.lo align_pt.lo alignment.lo analysis.lo amitk_threshold.lo \
-color_table.lo cti_import.lo data_set.lo idl_data_import.lo image.lo \
-medcon_import.lo pem_data_import.lo raw_data.lo raw_data_import.lo \
-raw_data_import_cb.lo realspace.lo rendering.lo roi.lo study.lo \
-ui_align_pt.lo ui_align_pt_dialog.lo ui_align_pt_dialog_cb.lo \
-ui_alignment_dialog.lo ui_alignment_dialog_cb.lo ui_common.lo \
-ui_common_cb.lo ui_preferences_dialog.lo ui_preferences_dialog_cb.lo \
-ui_rendering.lo ui_rendering_cb.lo ui_rendering_dialog.lo \
-ui_rendering_dialog_cb.lo ui_rendering_menus.lo \
-ui_rendering_movie_dialog.lo ui_rendering_movie_dialog_cb.lo ui_roi.lo \
-ui_roi_dialog.lo ui_roi_dialog_cb.lo ui_roi_analysis_dialog.lo \
-ui_roi_analysis_dialog_cb.lo ui_series.lo ui_series_cb.lo \
-ui_series_menus.lo ui_series_toolbar.lo ui_study.lo ui_study_cb.lo \
-ui_study_dialog.lo ui_study_dialog_cb.lo ui_study_menus.lo \
-ui_study_toolbar.lo ui_time_dialog.lo ui_time_dialog_cb.lo ui_volume.lo \
-ui_volume_dialog.lo ui_volume_dialog_cb.lo volume.lo xml.lo \
-amide_export.lo
+@BUILD_LIBAMIDE_TRUE@libamide_la_OBJECTS =  gtkdial.lo gtkdirsel.lo \
+@BUILD_LIBAMIDE_TRUE@data_set_UBYTE.lo data_set_SBYTE.lo \
+@BUILD_LIBAMIDE_TRUE@data_set_USHORT.lo data_set_SSHORT.lo \
+@BUILD_LIBAMIDE_TRUE@data_set_UINT.lo data_set_SINT.lo \
+@BUILD_LIBAMIDE_TRUE@data_set_FLOAT.lo data_set_DOUBLE.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UBYTE_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UBYTE_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UBYTE_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SBYTE_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SBYTE_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SBYTE_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_USHORT_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_USHORT_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_USHORT_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SSHORT_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SSHORT_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SSHORT_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UINT_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UINT_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_UINT_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SINT_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SINT_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_SINT_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_FLOAT_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_FLOAT_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_FLOAT_2D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_DOUBLE_0D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_DOUBLE_1D_SCALING.lo \
+@BUILD_LIBAMIDE_TRUE@volume_DOUBLE_2D_SCALING.lo roi_ELLIPSOID.lo \
+@BUILD_LIBAMIDE_TRUE@roi_CYLINDER.lo roi_BOX.lo roi_ISOCONTOUR_2D.lo \
+@BUILD_LIBAMIDE_TRUE@roi_ISOCONTOUR_3D.lo analysis_ELLIPSOID.lo \
+@BUILD_LIBAMIDE_TRUE@analysis_CYLINDER.lo analysis_BOX.lo \
+@BUILD_LIBAMIDE_TRUE@analysis_ISOCONTOUR_2D.lo \
+@BUILD_LIBAMIDE_TRUE@analysis_ISOCONTOUR_3D.lo amide.lo align_pt.lo \
+@BUILD_LIBAMIDE_TRUE@alignment.lo analysis.lo amitk_canvas.lo \
+@BUILD_LIBAMIDE_TRUE@amitk_coord_frame_edit.lo amitk_tree.lo \
+@BUILD_LIBAMIDE_TRUE@amitk_tree_item.lo amitk_threshold.lo \
+@BUILD_LIBAMIDE_TRUE@color_table.lo cti_import.lo data_set.lo \
+@BUILD_LIBAMIDE_TRUE@idl_data_import.lo image.lo medcon_import.lo \
+@BUILD_LIBAMIDE_TRUE@pem_data_import.lo raw_data.lo raw_data_import.lo \
+@BUILD_LIBAMIDE_TRUE@raw_data_import_cb.lo realspace.lo rendering.lo \
+@BUILD_LIBAMIDE_TRUE@roi.lo study.lo ui_align_pt_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_align_pt_dialog_cb.lo ui_alignment_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_alignment_dialog_cb.lo ui_common.lo \
+@BUILD_LIBAMIDE_TRUE@ui_common_cb.lo ui_preferences_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_preferences_dialog_cb.lo ui_rendering.lo \
+@BUILD_LIBAMIDE_TRUE@ui_rendering_cb.lo ui_rendering_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_rendering_dialog_cb.lo ui_rendering_menus.lo \
+@BUILD_LIBAMIDE_TRUE@ui_rendering_movie_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_rendering_movie_dialog_cb.lo ui_roi_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_roi_dialog_cb.lo ui_roi_analysis_dialog.lo \
+@BUILD_LIBAMIDE_TRUE@ui_roi_analysis_dialog_cb.lo ui_series.lo \
+@BUILD_LIBAMIDE_TRUE@ui_series_cb.lo ui_series_menus.lo \
+@BUILD_LIBAMIDE_TRUE@ui_series_toolbar.lo ui_study.lo ui_study_cb.lo \
+@BUILD_LIBAMIDE_TRUE@ui_study_dialog.lo ui_study_dialog_cb.lo \
+@BUILD_LIBAMIDE_TRUE@ui_study_menus.lo ui_study_toolbar.lo \
+@BUILD_LIBAMIDE_TRUE@ui_time_dialog.lo ui_time_dialog_cb.lo \
+@BUILD_LIBAMIDE_TRUE@ui_volume_dialog.lo ui_volume_dialog_cb.lo \
+@BUILD_LIBAMIDE_TRUE@volume.lo xml.lo amide_export.lo
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -234,7 +494,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/align_pt.P .deps/alignment.P .deps/amide.P \
-.deps/amide_export.P .deps/amitk_threshold.P .deps/analysis.P \
+.deps/amide_export.P .deps/amitk_canvas.P \
+.deps/amitk_coord_frame_edit.P .deps/amitk_threshold.P \
+.deps/amitk_tree.P .deps/amitk_tree_item.P .deps/analysis.P \
 .deps/analysis_BOX.P .deps/analysis_CYLINDER.P \
 .deps/analysis_ELLIPSOID.P .deps/analysis_ISOCONTOUR_2D.P \
 .deps/analysis_ISOCONTOUR_3D.P .deps/color_table.P .deps/cti_import.P \
@@ -246,21 +508,20 @@ DEP_FILES =  .deps/align_pt.P .deps/alignment.P .deps/amide.P \
 .deps/raw_data_import.P .deps/raw_data_import_cb.P .deps/realspace.P \
 .deps/rendering.P .deps/roi.P .deps/roi_BOX.P .deps/roi_CYLINDER.P \
 .deps/roi_ELLIPSOID.P .deps/roi_ISOCONTOUR_2D.P \
-.deps/roi_ISOCONTOUR_3D.P .deps/study.P .deps/ui_align_pt.P \
-.deps/ui_align_pt_dialog.P .deps/ui_align_pt_dialog_cb.P \
-.deps/ui_alignment_dialog.P .deps/ui_alignment_dialog_cb.P \
-.deps/ui_common.P .deps/ui_common_cb.P .deps/ui_preferences_dialog.P \
-.deps/ui_preferences_dialog_cb.P .deps/ui_rendering.P \
-.deps/ui_rendering_cb.P .deps/ui_rendering_dialog.P \
-.deps/ui_rendering_dialog_cb.P .deps/ui_rendering_menus.P \
-.deps/ui_rendering_movie_dialog.P .deps/ui_rendering_movie_dialog_cb.P \
-.deps/ui_roi.P .deps/ui_roi_analysis_dialog.P \
+.deps/roi_ISOCONTOUR_3D.P .deps/study.P .deps/ui_align_pt_dialog.P \
+.deps/ui_align_pt_dialog_cb.P .deps/ui_alignment_dialog.P \
+.deps/ui_alignment_dialog_cb.P .deps/ui_common.P .deps/ui_common_cb.P \
+.deps/ui_preferences_dialog.P .deps/ui_preferences_dialog_cb.P \
+.deps/ui_rendering.P .deps/ui_rendering_cb.P \
+.deps/ui_rendering_dialog.P .deps/ui_rendering_dialog_cb.P \
+.deps/ui_rendering_menus.P .deps/ui_rendering_movie_dialog.P \
+.deps/ui_rendering_movie_dialog_cb.P .deps/ui_roi_analysis_dialog.P \
 .deps/ui_roi_analysis_dialog_cb.P .deps/ui_roi_dialog.P \
 .deps/ui_roi_dialog_cb.P .deps/ui_series.P .deps/ui_series_cb.P \
 .deps/ui_series_menus.P .deps/ui_series_toolbar.P .deps/ui_study.P \
 .deps/ui_study_cb.P .deps/ui_study_dialog.P .deps/ui_study_dialog_cb.P \
 .deps/ui_study_menus.P .deps/ui_study_toolbar.P .deps/ui_time_dialog.P \
-.deps/ui_time_dialog_cb.P .deps/ui_volume.P .deps/ui_volume_dialog.P \
+.deps/ui_time_dialog_cb.P .deps/ui_volume_dialog.P \
 .deps/ui_volume_dialog_cb.P .deps/volume.P \
 .deps/volume_DOUBLE_0D_SCALING.P .deps/volume_DOUBLE_1D_SCALING.P \
 .deps/volume_DOUBLE_2D_SCALING.P .deps/volume_FLOAT_0D_SCALING.P \
@@ -609,7 +870,7 @@ distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
 
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H_SRC)
+$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
 	@for i in $(ANALYSIS_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -627,7 +888,7 @@ $(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H_SRC)
+$(ROI_VARIABLE_C): $(VARIABLE_INPUT) $(ROI_VARIABLE_C_SRC) $(ROI_VARIABLE_H)
 	@for i in $(ROI_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -645,7 +906,7 @@ $(ROI_VARIABLE_H): $(VARIABLE_INPUT) $(ROI_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H_SRC)
+$(DATA_SET_VARIABLE_C): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_C_SRC) $(DATA_SET_VARIABLE_H)
 	@for i in $(DATA_SET_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -663,7 +924,7 @@ $(DATA_SET_VARIABLE_H): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_H_SRC)
                 chmod -w $$i; \
             done
 
-$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H_SRC)
+$(VOLUME_VARIABLE_C): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_C_SRC) $(VOLUME_VARIABLE_H)
 	@for i in $(VOLUME_VARIABLE_C) ; \
             do \
                 rm -f $$i ;\
@@ -680,14 +941,6 @@ $(VOLUME_VARIABLE_H): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_H_SRC)
                 $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
                 chmod -w $$i; \
             done
-	$(ANALYSIS_VARIABLE_C) \
-	$(ANALYSIS_VARIABLE_H) \
-	$(ROI_VARIABLE_C) \
-	$(ROI_VARIABLE_H) \
-	$(VOLUME_VARIABLE_C) \
-	$(VOLUME_VARIABLE_H) \
-	$(DATA_SET_VARIABLE_C) \
-	$(DATA_SET_VARIABLE_H)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

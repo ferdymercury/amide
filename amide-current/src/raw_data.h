@@ -63,12 +63,12 @@ raw_data_format_t raw_data_format_raw(data_format_t data_format);
 guint raw_data_calc_num_bytes(voxelpoint_t dim, 
 			      raw_data_format_t raw_data_format);
 data_set_t * raw_data_read_file(const gchar * file_name, 
-				data_set_t * raw_data_set,
 				raw_data_format_t raw_data_format,
+				voxelpoint_t dim,
 				guint file_offset);
 volume_t * raw_data_read_volume(const gchar * file_name, 
-				volume_t * raw_data_volume,
 				raw_data_format_t raw_data_format,
+				voxelpoint_t data_dim,
 				guint file_offset);
 
 /* external variables */

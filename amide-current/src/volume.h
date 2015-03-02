@@ -1,7 +1,7 @@
 /* volume.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2000-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -32,7 +32,7 @@
 #include "data_set.h"
 #include "align_pt.h"
 
-#define VOLUME_DISTRIBUTION_SIZE 300
+#define VOLUME_DISTRIBUTION_SIZE 256
 
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
 typedef enum {NEAREST_NEIGHBOR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
@@ -64,18 +64,23 @@ typedef struct volume_t {
   amide_time_t scan_start;
   amide_time_t * frame_duration; /* array of the duration of each frame */
   color_table_t color_table; /* the color table to draw this volume in */
-  amide_data_t threshold_max; /* the thresholds to use for this volume */
-  amide_data_t threshold_min; 
-  realspace_t coord_frame;
+  realspace_t * coord_frame;
   align_pts_t * align_pts;
+
+  threshold_t threshold_type; /* what sort of thresholding we're using (per slice, global, etc.) */
+  amide_data_t threshold_max[2]; /* the thresholds to use for this volume */
+  amide_data_t threshold_min[2]; 
+  guint threshold_ref_frame[2];
   
   /* parameters calculated at run time */
-  guint reference_count;
+  guint ref_count;
   data_set_t * distribution; /* 1D array of data distribution, used in thresholding */
 
-  /* can be recalculated, but used enough we'll store... */
-  amide_data_t max; 
-  amide_data_t min;
+  /* can be recalculated on the fly, but used enough we'll store... */
+  amide_data_t global_max;
+  amide_data_t global_min;
+  amide_data_t * frame_max; 
+  amide_data_t * frame_min;
   data_set_t * current_scaling; /* external_scaling * internal_scaling */
   realpoint_t corner; /* far corner, near corner is 0,0,0 in volume coord space*/ 
 
@@ -83,11 +88,11 @@ typedef struct volume_t {
 
 
 /* a list of volumes */
-typedef struct _volume_list_t volume_list_t;
-struct _volume_list_t {
+typedef struct _volumes_t volumes_t;
+struct _volumes_t {
   volume_t * volume;
-  guint reference_count;
-  volume_list_t * next;
+  guint ref_count;
+  volumes_t * next;
 };
 
 
@@ -95,29 +100,25 @@ struct _volume_list_t {
 
 /* -------- defines ----------- */
 
-/* figure out the voxel point that corresponds to the real coordinates */
-#define VOLUME_REALPOINT_TO_VOXEL(vol, real, frame, vox) (((vox).x = floor((real).x/(vol)->voxel_size.x)), \
-							  ((vox).y = floor((real).y/(vol)->voxel_size.y)), \
-							  ((vox).z = floor((real).z/(vol)->voxel_size.z)), \
-							  ((vox).t = (frame)))
-     
-
 
 #define volume_size_frame_duration_mem(vol) ((vol)->data_set->dim.t*sizeof(amide_time_t))
 #define volume_get_frame_duration_mem(vol) ((amide_time_t * ) g_malloc(volume_size_frame_duration_mem(vol)))
+#define volume_size_frame_max_min_mem(vol) ((vol)->data_set->dim.t*sizeof(amide_data_t))
+#define volume_get_frame_max_min_mem(vol) ((amide_data_t * ) g_malloc(volume_size_frame_max_min_mem(vol)))
+#define volume_dynamic(vol) ((vol)->data_set->dim.t > 1)
 
 #define EMPTY 0.0
 //#define AXIS_VOLUME_DENSITY 0.1
 
 /* ------------ external functions ---------- */
-volume_t * volume_free(volume_t * volume);
+volume_t * volume_unref(volume_t * volume);
 volume_t * volume_init(void);
 gchar * volume_write_xml(volume_t * volume, gchar * study_directory);
 volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_directory);
 volume_t * volume_import_file(import_method_t import_method, int submethod,
 			      const gchar * import_filename, gchar * model_filename);
 volume_t * volume_copy(volume_t * src_volume);
-volume_t * volume_add_reference(volume_t * volume);
+volume_t * volume_ref(volume_t * volume);
 void volume_add_align_pt(volume_t * volume, align_pt_t * new_pt);
 void volume_set_name(volume_t * volume, gchar * new_name);
 void volume_set_scan_date(volume_t * volume, gchar * new_date);
@@ -129,49 +130,52 @@ amide_time_t volume_end_time(const volume_t * volume, guint frame);
 guint volume_frame(const volume_t * volume, const amide_time_t time);
 amide_time_t volume_min_frame_duration(const volume_t * volume);
 void volume_recalc_far_corner(volume_t * volume);
-void volume_recalc_max_min(volume_t * volume);
+void volume_calc_global_max_min(volume_t * volume);
+void volume_calc_frame_max_min(volume_t * volume);
+amide_data_t volume_max(volume_t * volume, amide_time_t start, amide_time_t duration);
+amide_data_t volume_min(volume_t * volume, amide_time_t start, amide_time_t duration);
 void volume_generate_distribution(volume_t * volume);
 amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i);
-volume_list_t * volume_list_free(volume_list_t * volume_list);
-volume_list_t * volume_list_init(volume_t * volume);
-guint volume_list_count(volume_list_t * list);
-void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * study_directory);
-volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
-volume_list_t * volume_list_copy(volume_list_t * src_volume_list);
-volume_list_t * volume_list_add_reference(volume_list_t * volume_list);
-gboolean volume_list_includes_volume(volume_list_t *list, volume_t * vol);
-volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vol);
-volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol);
-volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t * vol);
-amide_time_t volume_list_start_time(volume_list_t * volume_list);
-amide_time_t volume_list_end_time(volume_list_t * volume_list);
-amide_time_t volume_list_min_frame_duration(volume_list_t * volume_list);
+volumes_t * volumes_unref(volumes_t * volumes);
+volumes_t * volumes_init(volume_t * volume);
+guint volumes_count(volumes_t * list);
+void volumes_write_xml(volumes_t *list, xmlNodePtr node_list, gchar * study_directory);
+volumes_t * volumes_load_xml(xmlNodePtr node_list, const gchar * study_directory);
+volumes_t * volumes_copy(volumes_t * src_volumes);
+volumes_t * volumes_ref(volumes_t * volumes);
+gboolean volumes_includes_volume(volumes_t *list, volume_t * vol);
+volumes_t * volumes_add_volume(volumes_t *volumes, volume_t * vol);
+volumes_t * volumes_add_volume_first(volumes_t * volumes, volume_t * vol);
+volumes_t * volumes_remove_volume(volumes_t * volumes, volume_t * vol);
+amide_time_t volumes_start_time(volumes_t * volumes);
+amide_time_t volumes_end_time(volumes_t * volumes);
+amide_time_t volumes_min_frame_duration(volumes_t * volumes);
 void volume_get_view_corners(const volume_t * volume,
-			     const realspace_t view_coord_frame,
+			     const realspace_t * view_coord_frame,
 			     realpoint_t corner[]);
-void volumes_get_view_corners(volume_list_t * volumes,
-			      const realspace_t view_coord_frame,
+void volumes_get_view_corners(volumes_t * volumes,
+			      const realspace_t * view_coord_frame,
 			      realpoint_t view_corner[]);
-floatpoint_t volumes_min_voxel_size(volume_list_t * volumes);
-floatpoint_t volumes_max_size(volume_list_t * volumes);
-floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes);
-intpoint_t volumes_max_dim(volume_list_t * volumes);
+floatpoint_t volumes_min_voxel_size(volumes_t * volumes);
+floatpoint_t volumes_max_size(volumes_t * volumes);
+floatpoint_t volumes_max_min_voxel_size(volumes_t * volumes);
+intpoint_t volumes_max_dim(volumes_t * volumes);
 volume_t * volume_get_slice(const volume_t * volume,
 			    const amide_time_t start,
 			    const amide_time_t duration,
 			    const realpoint_t  requested_voxel_size,
-			    const realspace_t slice_coord_frame,
+			    realspace_t * slice_coord_frame,
 			    const realpoint_t far_corner,
 			    const interpolation_t interpolation,
 			    const gboolean need_calc_max_min);
-volume_list_t * volumes_get_slices(volume_list_t * volumes,
-				   const amide_time_t start,
-				   const amide_time_t duration,
-				   const floatpoint_t thickness,
-				   const floatpoint_t voxel_dim,
-				   const realspace_t view_coord_frame,
-				   const interpolation_t interpolation,
-				   const gboolean need_calc_max_min);
+volumes_t * volumes_get_slices(volumes_t * volumes,
+			       const amide_time_t start,
+			       const amide_time_t duration,
+			       const floatpoint_t thickness,
+			       const floatpoint_t voxel_dim,
+			       const realspace_t * view_coord_frame,
+			       const interpolation_t interpolation,
+			       const gboolean need_calc_max_min);
 
 /* variable type function declarations */
 #include "volume_UBYTE_0D_SCALING.h"

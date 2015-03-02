@@ -96,7 +96,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   rendering_quality_t i_quality;
   pixel_type_t i_pixel_type;
   guint table_row = 0;
-  rendering_list_t * temp_list;
+  renderings_t * temp_list;
   color_table_t i_color_table;
   
   if (ui_rendering->parameter_dialog != NULL)

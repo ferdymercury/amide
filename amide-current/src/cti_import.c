@@ -134,11 +134,13 @@ volume_t * cti_import(const gchar * cti_filename) {
     free_matrix_data(cti_subheader);
     return temp_volume;
   }
-  if ((temp_volume->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the data set structure to hold CTI data", PACKAGE);
+  temp_volume->data_set = data_set_init();
+  temp_volume->coord_frame = rs_init();
+  if ((temp_volume->data_set == NULL) ||(temp_volume->coord_frame == NULL)) {
+    g_warning("%s: couldn't allocate space for the data set structure/coord_frame to hold CTI data", PACKAGE);
     matrix_close(cti_file);
     free_matrix_data(cti_subheader);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
 
   /* start acquiring some useful information */
@@ -169,7 +171,7 @@ volume_t * cti_import(const gchar * cti_filename) {
     g_warning("%s: couldn't allocate space for the scaling factors for the CTI data",PACKAGE);
     matrix_close(cti_file);
     free_matrix_data(cti_subheader);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
   
   /* malloc the space for the volume */
@@ -177,7 +179,7 @@ volume_t * cti_import(const gchar * cti_filename) {
     g_warning("%s: couldn't allocate space for the data set to hold CTI data",PACKAGE);
     matrix_close(cti_file);
     free_matrix_data(cti_subheader);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
 
 
@@ -218,28 +220,25 @@ volume_t * cti_import(const gchar * cti_filename) {
   temp_rp.x = 10*cti_subheader->pixel_size;
   temp_rp.y = 10*cti_subheader->y_size;
   temp_rp.z = 10*cti_subheader->z_size;
-  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) /*handle corrupted cti files */
+  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) {/*handle corrupted cti files */ 
     g_warning("%s: dectected corrupted CTI file, will try to continue by guessing voxel_size", PACKAGE);
-  else if (FLOATPOINT_EQUAL(temp_rp.x, 0.0) || 
-	   FLOATPOINT_EQUAL(temp_rp.y, 0.0) || 
-	   FLOATPOINT_EQUAL(temp_rp.z, 0.0))
+    temp_volume->voxel_size = one_rp;
+  } else if (FLOATPOINT_EQUAL(temp_rp.x, 0.0) || 
+	     FLOATPOINT_EQUAL(temp_rp.y, 0.0) || 
+	     FLOATPOINT_EQUAL(temp_rp.z, 0.0)) {
     g_warning("%s: detected zero voxel size in CTI file, will try to continue by guessing voxel_size", PACKAGE);
-  if (isnan(temp_rp.x) || FLOATPOINT_EQUAL(temp_rp.x, 0.0)) temp_rp.x = 1.0;
-  if (isnan(temp_rp.y) || FLOATPOINT_EQUAL(temp_rp.y, 0.0)) temp_rp.y = temp_rp.x;
-  if (isnan(temp_rp.z) || FLOATPOINT_EQUAL(temp_rp.z, 0.0)) temp_rp.z = temp_rp.y;
-  temp_volume->voxel_size = temp_rp;
+    temp_volume->voxel_size = one_rp;
+  } else
+    temp_volume->voxel_size = temp_rp;
 
-  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
-  
-  /* get the origin of the data */
-  temp_rp.x = 10*cti_subheader->x_origin;
-  temp_rp.y = 10*cti_subheader->y_origin;
-  temp_rp.z = 10*cti_subheader->z_origin;
-  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z))    /*handle corrupted cti files */
+  /* get the offset */
+  temp_rp.x = 10*(((Image_subheader*)cti_subheader->shptr)->x_offset);
+  temp_rp.y = 10*(((Image_subheader*)cti_subheader->shptr)->y_offset);
+  temp_rp.z = 10*(((Image_subheader*)cti_subheader->shptr)->z_offset);
+  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) {    /*handle corrupted cti files */ 
     g_warning("%s: detected corrupted CTI file, will try to continue by guessing offset", PACKAGE);
-  if (isnan(temp_rp.x)) temp_rp.x = 0.0;
-  if (isnan(temp_rp.y)) temp_rp.y = 0.0;
-  if (isnan(temp_rp.z)) temp_rp.z = 0.0;
+    temp_rp = zero_rp;
+  }
   volume_set_center(temp_volume, temp_rp);
 
   /* guess the start of the scan is the same as the start of the first frame of data */
@@ -269,7 +268,7 @@ volume_t * cti_import(const gchar * cti_filename) {
   if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
     matrix_close(cti_file);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
   
   /* and load in the data */
@@ -285,7 +284,7 @@ volume_t * cti_import(const gchar * cti_filename) {
 	g_warning("%s: can't get image matrix %x in file %s",\
 		  PACKAGE, matnum, cti_filename);
 	matrix_close(cti_file);
-	return volume_free(temp_volume);
+	return volume_unref(temp_volume);
       }
       
       /* set the frame duration, note, CTI files specify time as integers in msecs */
@@ -364,9 +363,12 @@ volume_t * cti_import(const gchar * cti_filename) {
   /* garbage collection */
   matrix_close(cti_file);
 
+
   /* setup remaining volume parameters */
   volume_set_scaling(temp_volume, 1.0); /* set the external scaling factor */
-  volume_recalc_max_min(temp_volume); /* set the max/min values in the volume */
+  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
+  volume_calc_frame_max_min(temp_volume);
+  volume_calc_global_max_min(temp_volume); 
 
   return temp_volume;
 }

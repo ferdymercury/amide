@@ -33,33 +33,33 @@
 /* an alignment point */
 typedef struct align_pt_t {
   gchar * name;
-  realpoint_t point;
+  realpoint_t point; /* wrt the parent volume's coord frame */
 
   /* parameters calculated at run time */
-  guint reference_count;
+  guint ref_count;
 } align_pt_t;
 
 /* a list of alignment points */
 typedef struct _align_pts_t align_pts_t;
 struct _align_pts_t {
   align_pt_t * align_pt;
-  guint reference_count;
+  guint ref_count;
   align_pts_t * next;
 };
 
 
 /* functions */
-align_pt_t * align_pt_free(align_pt_t * align_pt);
+align_pt_t * align_pt_unref(align_pt_t * align_pt);
 align_pt_t * align_pt_init(void);
-align_pt_t * align_pt_add_reference(align_pt_t * align_pt);
+align_pt_t * align_pt_ref(align_pt_t * align_pt);
 gchar * align_pt_write_xml(align_pt_t * pt, gchar * study_directory, 
 			   gchar *volume_name);
 align_pt_t * align_pt_load_xml(gchar * pt_xml_filename, const gchar * study_directory);
 void align_pt_set_name(align_pt_t * align_pt, gchar * new_name);
 align_pt_t * align_pt_copy(align_pt_t * src_align_pt);
-align_pts_t * align_pts_free(align_pts_t * alignt_pts);
+align_pts_t * align_pts_unref(align_pts_t * alignt_pts);
 align_pts_t * align_pts_init(align_pt_t * align_pt);
-align_pts_t * align_pts_add_reference(align_pts_t * align_pts);
+align_pts_t * align_pts_add_ref(align_pts_t * align_pts);
 void align_pts_write_xml(align_pts_t * pts, xmlNodePtr node_list, 
 			 gchar * study_directory, gchar * volume_name);
 align_pts_t * align_pts_load_xml(xmlNodePtr node_list, const gchar * study_directory);

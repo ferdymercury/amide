@@ -51,13 +51,13 @@ struct _analysis_frame_t {
   amide_data_t min;
   amide_data_t max;
   analysis_frame_t * next_frame_analysis;
-  guint reference_count;
+  guint ref_count;
 };
 
 struct _analysis_volume_t {
   volume_t * volume;
   analysis_frame_t * frame_analyses;
-  guint reference_count;
+  guint ref_count;
   analysis_volume_t * next_volume_analysis;
 };
 
@@ -65,19 +65,19 @@ struct _analysis_roi_t {
   roi_t * roi;
   study_t * study;
   analysis_volume_t * volume_analyses;
-  guint reference_count;
+  guint ref_count;
   analysis_roi_t * next_roi_analysis;
 };
 
 /* external functions */
-analysis_frame_t * analysis_frame_free(analysis_frame_t * frame_analysis);
+analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
 analysis_frame_t * analysis_frame_init(roi_t * roi, volume_t * volume);
 
-analysis_volume_t * analysis_volume_free(analysis_volume_t *volume_analysis);
-analysis_volume_t * analysis_volume_init(roi_t * roi, volume_list_t * volumes);
+analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
+analysis_volume_t * analysis_volume_init(roi_t * roi, volumes_t * volumes);
 
-analysis_roi_t * analysis_roi_free(analysis_roi_t *roi_analysis);
-analysis_roi_t * analysis_roi_init(study_t * study, roi_list_t * rois, volume_list_t * volumes);
+analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
+analysis_roi_t * analysis_roi_init(study_t * study, rois_t * rois, volumes_t * volumes);
 
 /* variable type function declarations */
 #include "analysis_ELLIPSOID.h"

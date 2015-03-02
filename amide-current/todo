@@ -3,27 +3,27 @@ misc list of things todo:
 
 for next release?
 -----------------
-* rlim_t screws up MacOsX compile
        
 big things:
 -----------
-* aligning of data using automated registration?
+* multi-step undo/redo
 * guppi interface for drawing graphs of ROI statistics
 * allow looking at only a subset of the data (i.e. cropping)
+* add drag-n-drop capabilities between study windows
+* widgetize object modification dialogs
+* add linked mode
                        
 small things:
 -------------
+* widgetize the help_info 
+* rewrite isocontour determining algorithm so it's not recursive,
 * preset thresholds (bone window, fat window, etc.)
-* rotation thingie in dialogs could be widgetized
-  -rotation thingie should allow inverting an axis
-* add more of the volpack rendering options
 * add thickness/line style for isocontours?
 * figure out a better way of determining which slice we're drawning a 2D isocontour on
 * gamma curve drawing still crashes program under MacX... don't use MacX for now
 * change realpoint to 4D?
 * figure out what to do with the extraneous study if you start
 	amide, and then load in a file...
-* add drag-n-drop capabilities between study windows
 * put the canvases in a scrolled widget?
 * make caching of slices smarter.  
 	We don't need to regenerate all slices when removing one slice from the list
@@ -48,11 +48,9 @@ probably before 1.0 things:
 * rewrite documentation
 * add quad-linear interpolation for short time periods?
 	would be especially useful for dynamic rendering movies
-* all windows should have an exit menu item in addition to close
 
 probably post 1.0 things:
 ----------------
-* widgetization and changing of data types to glib style (i.e. amitk, and amilib)
 * add corba/CIAS support
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.
@@ -68,13 +66,16 @@ probably post 1.0 things:
 * change mpeg_encode to a library? 
 	would allow lose of "system" command, and proper progress reports, in ui_rendering_movie_dialog
 * cardiac shaped ROI?
+* aligning of data using automated registration?
 
 
 things dependent on other things: 
 -------------- 
-* figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
-	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities
-	- I believe this will be added in GTK 2.0
+* GTK 2.0 Changes
+	- when threshold or popup button hit, and dialog already up, bring to front
+	- changing of data types so that they're g_objects
+	- figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
+		files of any type).  
 * gtk_spin_button -> multiple value_changed are emitted when the callback takes
 	to long.  This is a gtk+ bug.
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,

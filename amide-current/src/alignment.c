@@ -81,9 +81,9 @@ static realpoint_t matrix_mult_rp(gsl_matrix * matrix, realpoint_t rp) {
    Hill, Batchelor, Holden, and Hawkes Phys. Med. Biol 46 (2001) R1-R45
 */
 
-realspace_t alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts) {
+realspace_t * alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, align_pts_t * pts) {
 
-  realspace_t coord_frame = default_coord_frame;
+  realspace_t * coord_frame;
   guint count = 0;
   align_pts_t * moving_pts = NULL;
   align_pts_t * fixed_pts = NULL;
@@ -106,6 +106,8 @@ realspace_t alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, ali
   gint i;
   gint signum;
   gdouble det;
+
+  coord_frame = rs_init();
 
   g_return_val_if_fail(moving_vol != NULL, coord_frame);
   g_return_val_if_fail(fixed_vol != NULL, coord_frame);
@@ -137,8 +139,8 @@ realspace_t alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, ali
   /* sanity check */
   if (count < 3) {
     g_warning("%s: Cannot perform an alignment with %d points, need at least 3",PACKAGE, count);
-    moving_pts = align_pts_free(moving_pts);
-    fixed_pts = align_pts_free(fixed_pts);
+    moving_pts = align_pts_unref(moving_pts);
+    fixed_pts = align_pts_unref(fixed_pts);
   }
 
   /* translate the points into data structures that GSL can handle */
@@ -228,13 +230,13 @@ realspace_t alignment_calculate(volume_t * moving_vol, volume_t * fixed_vol, ali
   /* figure out the new coordinate frame */
   for (i=0;i<NUM_AXIS;i++)
     axis[i]=matrix_mult_rp(matrix_r, rs_specific_axis(moving_vol->coord_frame, i));
-  rs_set_axis(&coord_frame, axis);
+  rs_set_axis(coord_frame, axis);
 
   /* and compute the new offset */
   translation_rp = rp_sub(fixed_centroid, matrix_mult_rp(matrix_r, moving_centroid));
   offset_rp = matrix_mult_rp(matrix_r, rs_offset(moving_vol->coord_frame));
   offset_rp = rp_add(offset_rp, translation_rp);
-  rs_set_offset(&coord_frame, offset_rp);
+  rs_set_offset(coord_frame, offset_rp);
   
 #if AMIDE_DEBUG		     
   rs_print("old coord frame", moving_vol->coord_frame);

@@ -86,10 +86,11 @@ ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment) {
     g_print("freeing ui_alignment\n");
 #endif
 
-    ui_alignment->volumes = volume_list_free(ui_alignment->volumes);
-    ui_alignment->volume_moving = volume_free(ui_alignment->volume_moving);
-    ui_alignment->volume_fixed = volume_free(ui_alignment->volume_fixed);
-    ui_alignment->align_pts = align_pts_free(ui_alignment->align_pts);
+    ui_alignment->volumes = volumes_unref(ui_alignment->volumes);
+    ui_alignment->volume_moving = volume_unref(ui_alignment->volume_moving);
+    ui_alignment->volume_fixed = volume_unref(ui_alignment->volume_fixed);
+    ui_alignment->align_pts = align_pts_unref(ui_alignment->align_pts);
+    ui_alignment->coord_frame = rs_unref(ui_alignment->coord_frame);
 
     gdk_imlib_kill_image(ui_alignment->logo);
 
@@ -118,7 +119,7 @@ static ui_alignment_t * ui_alignment_init(void) {
   ui_alignment->volume_moving = NULL;
   ui_alignment->volume_fixed = NULL;
   ui_alignment->align_pts = NULL;
-  ui_alignment->coord_frame = default_coord_frame;
+  ui_alignment->coord_frame = NULL;
 
   /* set any needed parameters */
   ui_alignment->logo = NULL;
@@ -135,12 +136,12 @@ void ui_alignment_dialog_create(ui_study_t * ui_study) {
   GtkWidget * table;
   GtkWidget * vseparator;
   GtkWidget * vbox;
-  volume_list_t * volumes;
+  volumes_t * volumes;
   gchar * temp_strings[1];
   
 
   ui_alignment = ui_alignment_init();
-  ui_alignment->volumes = volume_list_add_reference(study_volumes(ui_study->study));
+  ui_alignment->volumes = volumes_ref(study_volumes(ui_study->study));
 
   ui_alignment->dialog = gtk_window_new(GTK_WINDOW_DIALOG);
   gtk_signal_connect(GTK_OBJECT(ui_alignment->dialog), "delete_event",
@@ -157,7 +158,7 @@ void ui_alignment_dialog_create(ui_study_t * ui_study) {
 
 
   /* figure out how many volumes there are */
-  count = volume_list_count(ui_alignment->volumes);
+  count = volumes_count(ui_alignment->volumes);
 
 
   /* --------------- initial page ------------------ */

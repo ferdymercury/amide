@@ -118,7 +118,9 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   gint counter;
 #endif
   roi_type_t i_roi_type;
+#if AMIDE_LIBVOLPACK_SUPPORT
   interpolation_t i_interpolation;
+#endif
   object_t i_object;
 
 
@@ -378,9 +380,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   }
 #endif
 
+#if AMIDE_LIBVOLPACK_SUPPORT
   for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
     gtk_object_set_data(GTK_OBJECT(rendering_type_menu[i_interpolation].widget), 
 			"interpolation", GINT_TO_POINTER(i_interpolation));
+#endif
 
   for (i_object = 0; i_object < NUM_OBJECTS; i_object++)
     gtk_object_set_data(GTK_OBJECT(edit_item_menu[i_object].widget), "type",

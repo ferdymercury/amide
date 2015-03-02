@@ -29,7 +29,7 @@
 #include <math.h>
 #include "ui_roi_analysis_dialog.h"
 #include "ui_roi_analysis_dialog_cb.h"
-
+#include "amitk_tree.h"
 
 
 /* internal defines */
@@ -69,25 +69,25 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
 
   /* intro information */
   time(&current_time);
-  fprintf(file_pointer, "%s: ROI Analysis File - generated on %s", PACKAGE, ctime(&current_time));
-  fprintf(file_pointer, "\n");
-  fprintf(file_pointer, "Study:\t%s\n",study_name(roi_analyses->study));
-  fprintf(file_pointer, "\n");
+  fprintf(file_pointer, "# %s: ROI Analysis File - generated on %s", PACKAGE, ctime(&current_time));
+  fprintf(file_pointer, "#\n");
+  fprintf(file_pointer, "# Study:\t%s\n",study_name(roi_analyses->study));
+  fprintf(file_pointer, "#\n");
   
   while (roi_analyses != NULL) {
-    fprintf(file_pointer, "ROI:\t%s\tType:\t%s\n",
+    fprintf(file_pointer, "# ROI:\t%s\tType:\t%s\n",
 	    roi_analyses->roi->name,
 	    roi_type_names[roi_analyses->roi->type]);
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
-      fprintf(file_pointer, "\tVolume:\t%s\tscaling factor:\t%g\n",
+      fprintf(file_pointer, "#\tVolume:\t%s\tscaling factor:\t%g\n",
 	      volume_analyses->volume->name,
 	      volume_analyses->volume->external_scaling);
 
       if (!title_printed) {
-	fprintf(file_pointer, "\t\t%s", analysis_titles[1]);
+	fprintf(file_pointer, "#\t\t%s", analysis_titles[1]);
 	for (i=2;i<NUM_ANALYSIS_COLUMNS;i++)
 	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
 	fprintf(file_pointer, "\n");
@@ -119,7 +119,7 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
       }
       volume_analyses = volume_analyses->next_volume_analysis;
     }
-    fprintf(file_pointer, "\n");
+    fprintf(file_pointer, "#\n");
     roi_analyses = roi_analyses->next_roi_analysis;
   }
 
@@ -231,31 +231,33 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
   return;
 }
 
-/* function that sets up the roi dialog */
+
 void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
 
   GtkWidget * dialog;
   GtkWidget * notebook;
   gchar * title;
-  roi_list_t * rois;
-  volume_list_t * volumes;
+  rois_t * rois;
+  volumes_t * volumes;
   analysis_roi_t * roi_analyses;
   analysis_roi_t * temp_analyses;
   guint button_num;
 
   /* figure out which volume we're dealing with */
-  volumes = ui_volume_list_return_volume_list(ui_study->current_volumes);
+  volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree);
+  if (volumes == NULL) {
+    g_warning("%s: No Data Sets selected for calculating analyses",PACKAGE);
+    return;
+  }
 
   /* get the list of roi's we're going to be calculating over */
   if (all)
-    rois = roi_list_add_reference(study_rois(ui_study->study));
+    rois = study_rois(ui_study->study);
   else 
-    rois = ui_roi_list_return_roi_list(ui_study->current_rois);
+    rois = AMITK_TREE_SELECTED_ROIS(ui_study->tree);
 
   if (rois == NULL) {
     g_warning("%s: No ROI's selected for calculating analyses",PACKAGE);
-    rois = roi_list_free(rois);
-    volumes = volume_list_free(volumes);
     return;
   }
 
@@ -296,10 +298,6 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
 				    temp_analyses->roi, temp_analyses->volume_analyses);
     temp_analyses=temp_analyses->next_roi_analysis;
   }
-
-  /* deallocate our lists we created */
-  rois = roi_list_free(rois);
-  volumes = volume_list_free(volumes);
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

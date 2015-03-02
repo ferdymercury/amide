@@ -30,22 +30,27 @@
 #include "ui_study.h"
 #include "ui_study_dialog.h"
 #include "ui_study_dialog_cb.h"
+#include "amitk_canvas.h"
+#include "amitk_tree.h"
+#include "amitk_tree_item.h"
 
 /* function called when the name of the study has been changed */
 void ui_study_dialog_cb_change_name(GtkWidget * widget, gpointer data) {
 
-  study_t * study_new_info = data;
+  study_t * new_info;
   gchar * new_name;
-  GtkWidget * study_dialog;
+  GtkWidget * dialog=data;
+
+  new_info = gtk_object_get_data(GTK_OBJECT(dialog), "new_info");
+  g_return_if_fail(new_info != NULL);
 
   /* get the contents of the name entry box and save it */
   new_name = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
-  study_set_name(study_new_info, new_name);
+  study_set_name(new_info, new_name);
   g_free(new_name);
 
   /* tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "study_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(study_dialog));
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(dialog));
 
   return;
 }
@@ -53,175 +58,84 @@ void ui_study_dialog_cb_change_name(GtkWidget * widget, gpointer data) {
 /* function called when the creation date of the study has been changed */
 void ui_study_dialog_cb_change_creation_date(GtkWidget * widget, gpointer data) {
 
-  study_t * study_new_info = data;
+  study_t * new_info;
   gchar * new_date;
-  GtkWidget * study_dialog;
+  GtkWidget * dialog=data;
+
+  new_info = gtk_object_get_data(GTK_OBJECT(dialog), "new_info");
+  g_return_if_fail(new_info != NULL);
 
   /* get the contents of the name entry box and save it */
   new_date = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
-  study_set_creation_date(study_new_info, new_date);
+  study_set_creation_date(new_info, new_date);
   g_free(new_date);
 
   /* tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "study_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(study_dialog));
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(dialog));
 
   return;
 }
 
-
-
-/* function called when rotating the study around an axis */
-void ui_study_dialog_cb_change_axis(GtkAdjustment * adjustment, gpointer data) {
-
-  ui_study_t * ui_study;
-  study_t * study_new_info = data;
-  view_t i_view;
-  floatpoint_t rotation;
-  GtkWidget * study_dialog;
-  realpoint_t center, temp;
-
-  /* now tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(adjustment), "study_dialog");
-  /* we need the current view_axis so that we know what we're rotating around */
-  ui_study = gtk_object_get_data(GTK_OBJECT(study_dialog), "ui_study"); 
-
-  /* saving the center, as we're rotating the study around it's own center */
-  center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
-				       study_new_info->coord_frame);
-
-  /* figure out which scale widget called me */
-  i_view= GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"view"));
-
-  rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
-
-  /* compensate for sagittal being a left-handed coordinate frame */
-  if (i_view == SAGITTAL)
-    rotation = -rotation; 
-
-  /* rotate the axis */
-  realspace_rotate_on_axis(&study_coord_frame(study_new_info),
-			   realspace_get_view_normal(study_coord_frame_axis(study_new_info), i_view),
-			   rotation);
-  
-  /* recalculate the offset of this study based on the center we stored */
-  study_set_coord_frame_offset(study_new_info, center);
-  temp = realspace_alt_coord_to_base(study_view_center(ui_study->study), study_new_info->coord_frame);
-  study_set_coord_frame_offset(study_new_info, temp);
-			       
-
-  /* return adjustment back to normal */
-  adjustment->value = 0.0;
-  gtk_adjustment_changed(adjustment);
-
-
-  /* now tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(adjustment), "study_dialog");
-  ui_study_dialog_set_axis_display(study_dialog);
-  gtk_object_set_data(GTK_OBJECT(study_dialog), "axis_changed", GINT_TO_POINTER(TRUE));
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(study_dialog));
-
+/* function called when the coord frame has been changed */
+void ui_study_dialog_cb_coord_frame_changed(GtkWidget * widget, gpointer data) {
+  GtkWidget * dialog = data;
+  gtk_object_set_data(GTK_OBJECT(dialog), "axis_changed", GINT_TO_POINTER(TRUE));
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(dialog)); /* tell the dialog that we've changed */
   return;
 }
-
-/* function to reset the study's axis back to the default coords */
-void ui_study_dialog_cb_reset_axis(GtkWidget* widget, gpointer data) {
-
-  ui_study_t * ui_study;
-  study_t * study_new_info = data;
-  GtkWidget * study_dialog;
-  realpoint_t center, temp;
-
-  /* now tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "study_dialog");
-  /* we need the current view_axis so that we know what we're rotating around */
-  ui_study = gtk_object_get_data(GTK_OBJECT(study_dialog), "ui_study"); 
-  center = study_view_center(ui_study->study);
-
-  /* reset the axis */
-  rs_set_axis(&study_new_info->coord_frame, default_axis);
-
-  /* recalculate the offset of this study based on the center we stored */
-  study_set_coord_frame_offset(study_new_info, center);
-  temp = realspace_alt_coord_to_base(study_view_center(ui_study->study), study_new_info->coord_frame);
-  study_set_coord_frame_offset(study_new_info, temp);
-
-  ui_study_dialog_set_axis_display(study_dialog);
-  gtk_object_set_data(GTK_OBJECT(study_dialog), "axis_changed", GINT_TO_POINTER(TRUE));
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(study_dialog));
-  
-  return;
-}
-
-
-
 
 
 /* function called when we hit the apply button */
-void ui_study_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) {
+void ui_study_dialog_cb_apply(GtkWidget* dialog, gint page_number, gpointer data) {
   
   ui_study_t * ui_study = data;
-  study_t * study_new_info;
+  study_t * new_info;
   realpoint_t center;
-  GtkWidget * label;
-  GtkWidget * study_leaf;
+  view_t i_view;
   
   /* we'll apply all page changes at once */
-  if (page_number != -1)
-    return;
+  if (page_number != -1)  return;
 
-  /* get the new info for the study */
-  study_new_info = gtk_object_get_data(GTK_OBJECT(ui_study->study_dialog),"study_new_info");
+  ui_study = gtk_object_get_data(GTK_OBJECT(dialog), "ui_study"); 
+  g_return_if_fail(ui_study != NULL);
+  new_info = gtk_object_get_data(GTK_OBJECT(dialog),"new_info");
+  g_return_if_fail(new_info != NULL);
 
   /* save the old center so that we can rotate around it */
   center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
 				       study_coord_frame(ui_study->study));
 
-  /* sanity check */
-  if (study_new_info == NULL) {
-    g_warning("%s: study_new_info inappropriately null....", PACKAGE);
-    return;
-  }
-
   /* copy the new info on over */
-  study_set_name(ui_study->study, study_name(study_new_info));
-  study_set_coord_frame(ui_study->study, study_coord_frame(study_new_info));
+  study_set_name(ui_study->study, study_name(new_info));
+  study_set_coord_frame(ui_study->study, study_coord_frame(new_info));
 
   /* copy the view information */
-  study_set_view_center(ui_study->study, study_view_center(study_new_info));
-  study_set_view_thickness(ui_study->study, study_view_thickness(study_new_info));
-  study_set_view_time(ui_study->study, study_view_time(study_new_info));
-  study_set_view_duration(ui_study->study, study_view_duration(study_new_info));
-  study_set_zoom(ui_study->study, study_zoom(study_new_info));
-  study_set_interpolation(ui_study->study, study_interpolation(study_new_info));
-  study_set_scaling(ui_study->study, study_scaling(study_new_info));
+  study_set_view_center(ui_study->study, study_view_center(new_info));
+  study_set_view_thickness(ui_study->study, study_view_thickness(new_info));
+  study_set_view_time(ui_study->study, study_view_time(new_info));
+  study_set_view_duration(ui_study->study, study_view_duration(new_info));
+  study_set_zoom(ui_study->study, study_zoom(new_info));
+  study_set_interpolation(ui_study->study, study_interpolation(new_info));
 
 
   /* apply any changes to the name of the widget */
-  study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
-  label = gtk_object_get_data(GTK_OBJECT(study_leaf), "text_label");
-  gtk_label_set_text(GTK_LABEL(label), study_name(ui_study->study));
-
-  /* get the current pixmap and spacing in the line of the tree corresponding to the study */
-  //  gtk_ctree_node_get_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
-  //			     UI_STUDY_TREE_TEXT_COLUMN, NULL, &spacing, &pixmap, NULL);
-
-  /* reset the text in that tree line */
-  //  gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
-  //			     UI_STUDY_TREE_TEXT_COLUMN, study_name(ui_study->study), spacing, pixmap, NULL);
-
+  amitk_tree_update_object(AMITK_TREE(ui_study->tree), ui_study->study, STUDY);
 
   /* redraw the canvas if needed*/
-  if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->study_dialog), "axis_changed"))) {
-    gtk_object_set_data(GTK_OBJECT(ui_study->study_dialog), "axis_changed", GINT_TO_POINTER(FALSE));
+  if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(dialog), "axis_changed"))) {
+    gtk_object_set_data(GTK_OBJECT(dialog), "axis_changed", GINT_TO_POINTER(FALSE));
 
     /* recalculate the view center */
     study_set_view_center(ui_study->study,
 			  realspace_base_coord_to_alt(center, study_coord_frame(ui_study->study)));
 
-    ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+    for (i_view=0; i_view<NUM_VIEWS; i_view++) {
+      amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view]), center, FALSE);
+      amitk_canvas_set_coord_frame(AMITK_CANVAS(ui_study->canvas[i_view]), 
+				   study_coord_frame(ui_study->study), TRUE);
+    }
   }
-
+    
   return;
 }
 
@@ -260,17 +174,21 @@ void ui_study_dialog_cb_help(GnomePropertyBox *study_dialog, gint page_number, g
 }
 
 /* function called to destroy the study dialog */
-gboolean ui_study_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_study_dialog_cb_close(GtkWidget* dialog, gpointer data) {
 
   ui_study_t * ui_study = data;
-  study_t * study_new_info;
+  study_t * new_info;
+  GtkWidget * tree_item;
 
   /* trash collection */
-  study_new_info = gtk_object_get_data(GTK_OBJECT(widget), "study_new_info");
-  study_new_info = study_free(study_new_info);
+  new_info = gtk_object_get_data(GTK_OBJECT(dialog), "new_info");
+  g_return_val_if_fail(new_info != NULL, FALSE);
+  new_info = study_unref(new_info);
 
-  /* make sure the pointer in the roi_list_item is nulled */
-  ui_study->study_dialog = NULL;
+  /* record that the dialog is no longer up */
+  tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree), ui_study->study,STUDY);
+  g_return_val_if_fail(AMITK_IS_TREE_ITEM(tree_item), FALSE);
+  AMITK_TREE_ITEM_DIALOG(tree_item) = NULL;
 
   return FALSE;
 }

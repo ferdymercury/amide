@@ -119,8 +119,8 @@ typedef struct _rendering_t {
   color_table_t color_table;
   amide_time_t start;
   amide_time_t duration;
-  realspace_t current_coord_frame;
-  realspace_t initial_coord_frame;
+  realspace_t * current_coord_frame;
+  realspace_t * initial_coord_frame;
   rendering_voxel_t * rendering_vol;
   realpoint_t voxel_size;
   voxelpoint_t dim; /* dimensions of our rendering_vol and image */
@@ -133,25 +133,25 @@ typedef struct _rendering_t {
   gfloat * ramp_y[NUM_CLASSIFICATIONS];
   guint num_points[NUM_CLASSIFICATIONS];
   curve_type_t curve_type[NUM_CLASSIFICATIONS];
-  guint reference_count;
+  guint ref_count;
 } rendering_t;
 
 
 /* a list of rendering contexts */
-typedef struct _rendering_list_t rendering_list_t;
-struct _rendering_list_t {
+typedef struct _renderings_t renderings_t;
+struct _renderings_t {
   rendering_t * rendering_context;
-  guint reference_count;
-  rendering_list_t * next;
+  guint ref_count;
+  renderings_t * next;
 };
 
 
 
 
 /* external functions */
-rendering_t * rendering_context_free(rendering_t * context);
+rendering_t * rendering_context_unref(rendering_t * context);
 rendering_t * rendering_context_volume_init(volume_t * volume, 
-					    const realspace_t render_coord_frame, 
+					    realspace_t * render_coord_frame, 
 					    const realpoint_t render_far_corner, 
 					    const floatpoint_t min_voxel_size, 
 					    const amide_time_t start, 
@@ -171,21 +171,21 @@ void rendering_context_set_depth_cueing(rendering_t * context, gboolean state);
 void rendering_context_set_depth_cueing_parameters(rendering_t * context, 
 						   gdouble front_factor, gdouble density);
 void rendering_context_render(rendering_t * context);
-rendering_list_t * rendering_list_free(rendering_list_t * rendering_list);
-rendering_list_t * rendering_list_init(volume_list_t * volumes, roi_list_t * rois,
-				       realspace_t render_coord_frame, const amide_time_t start, 
-				       const amide_time_t duration, const interpolation_t interpolation);
-void rendering_list_reload_objects(rendering_list_t * rendering_list, const amide_time_t start, 
-				   const amide_time_t duration, const interpolation_t interpolation);
-void rendering_list_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);
-void rendering_list_reset_rotation(rendering_list_t * contexts);
-void rendering_list_set_quality(rendering_list_t * renderling_list, rendering_quality_t quality);
-void rendering_list_set_image(rendering_list_t * rendering_list, pixel_type_t pixel_type, gdouble zoom);
-void rendering_list_set_depth_cueing(rendering_list_t * rendering_list, gboolean state);
-void rendering_list_set_depth_cueing_parameters(rendering_list_t * rendering_list, 
-						gdouble front_factor, gdouble density);
-void rendering_list_render(rendering_list_t * rendering_list);
-guint rendering_list_count(rendering_list_t * rendering_list);
+renderings_t * renderings_unref(renderings_t * renderings);
+renderings_t * renderings_init(volumes_t * volumes, rois_t * rois,
+			       realspace_t * render_coord_frame, const amide_time_t start, 
+			       const amide_time_t duration, const interpolation_t interpolation);
+void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
+			       const amide_time_t duration, const interpolation_t interpolation);
+void renderings_set_rotation(renderings_t * contexts, axis_t dir, gdouble rotation);
+void renderings_reset_rotation(renderings_t * contexts);
+void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);
+void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gdouble zoom);
+void renderings_set_depth_cueing(renderings_t * renderings, gboolean state);
+void renderings_set_depth_cueing_parameters(renderings_t * renderings, 
+					    gdouble front_factor, gdouble density);
+void renderings_render(renderings_t * renderings);
+guint renderings_count(renderings_t * renderings);
 
 /* external variables */
 extern gchar * rendering_quality_names[];

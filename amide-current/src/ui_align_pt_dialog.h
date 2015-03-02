@@ -25,7 +25,7 @@
 
 
 /* external functions */
-void ui_align_pt_dialog_create(ui_study_t * ui_study, align_pt_t * align_pt, volume_t * volume);
+GtkWidget * ui_align_pt_dialog_create(ui_study_t * ui_study, align_pt_t * align_pt, volume_t * volume);
 
 
 

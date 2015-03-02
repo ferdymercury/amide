@@ -40,7 +40,7 @@ data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(data_set_`'m4_Variabl
   temp_data_set->dim.x = temp_data_set->dim.y = temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';
   temp_data_set->data = data_set_get_data_mem(temp_data_set);
-  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_unref(temp_data_set));
   (*DATA_SET_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_data_set, i)) = init_value;
 
   return temp_data_set;
@@ -60,7 +60,7 @@ data_set_t * data_set_`'m4_Variable_Type`'_2D_init(data_set_`'m4_Variable_Type`'
   temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';
   temp_data_set->data = data_set_get_data_mem(temp_data_set);
-  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_unref(temp_data_set));
 
   data_set_`'m4_Variable_Type`'_initialize_data(temp_data_set, init_value);
 
@@ -83,7 +83,7 @@ data_set_t * data_set_`'m4_Variable_Type`'_3D_init(data_set_`'m4_Variable_Type`'
   temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';
   temp_data_set->data = data_set_get_data_mem(temp_data_set);
-  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_unref(temp_data_set));
 
   data_set_`'m4_Variable_Type`'_initialize_data(temp_data_set, init_value);
 

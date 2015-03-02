@@ -48,19 +48,20 @@ extern "C" {
 typedef struct _AmitkThreshold             AmitkThreshold;
 typedef struct _AmitkThresholdClass        AmitkThresholdClass;
 
-typedef enum {
-  THRESHOLD_FULL_MAX_ARROW, 
-  THRESHOLD_FULL_MIN_ARROW,  
-  THRESHOLD_SCALED_MAX_ARROW, 
-  THRESHOLD_SCALED_MIN_ARROW,
-  NUM_THRESHOLD_ARROWS
-} which_threshold_arrow_t;
 
 typedef enum {
   THRESHOLD_FULL, 
   THRESHOLD_SCALED, 
   NUM_THRESHOLD_SCALES
 } which_threshold_scale_t;
+
+typedef enum {
+  THRESHOLD_FULL_MIN_ARROW,  
+  THRESHOLD_FULL_MAX_ARROW, 
+  THRESHOLD_SCALED_MIN_ARROW,
+  THRESHOLD_SCALED_MAX_ARROW, 
+  NUM_THRESHOLD_ARROWS
+} which_threshold_arrow_t;
 
 typedef enum {
   MAX_ABSOLUTE, MAX_PERCENT, MIN_ABSOLUTE, MIN_PERCENT, NUM_THRESHOLD_ENTRIES
@@ -72,24 +73,40 @@ typedef enum {
   NUM_THRESHOLD_LINES
 } which_threshold_line_t;
 
+typedef enum {
+    AMITK_THRESHOLD_BOX_LAYOUT,
+    AMITK_THRESHOLD_LINEAR_LAYOUT,
+    NUM_AMITK_THRESHOLD_LAYOUTS
+} amitk_threshold_layout_t;
+
+
+
 struct _AmitkThreshold
 {
   GtkVBox vbox;
 
-  GtkWidget * color_scales;
+  GtkWidget * color_scales[2];
   GtkWidget * histogram;
-  GnomeCanvasItem * color_scale_image[NUM_THRESHOLD_SCALES];
+  GnomeCanvasItem * color_scale_image[2][NUM_THRESHOLD_SCALES];
   GnomeCanvasItem * histogram_image;
-  GnomeCanvasItem * arrow[NUM_THRESHOLD_ARROWS];
-  GnomeCanvasItem * connector_line[NUM_THRESHOLD_LINES];
-  GdkPixbuf * color_scale_rgb[NUM_THRESHOLD_SCALES];
+  GnomeCanvasItem * arrow[2][NUM_THRESHOLD_ARROWS];
+  GnomeCanvasItem * connector_line[2][NUM_THRESHOLD_LINES];
+  GdkPixbuf * color_scale_rgb[2][NUM_THRESHOLD_SCALES];
   GdkPixbuf * histogram_rgb;
-  GtkWidget * entry[NUM_THRESHOLD_ENTRIES];
+  GtkWidget * entry[2][NUM_THRESHOLD_ENTRIES];
   GtkWidget * color_table_menu;
+  GtkWidget * threshold_ref_frame_menu[2];
+  GtkWidget * percent_label[2];
+  GtkWidget * absolute_label[2];
+  GtkWidget * ref_frame_label[2];
+  GtkWidget * full_label[2];
+  GtkWidget * scaled_label[2];
+  GtkWidget * type_button[NUM_THRESHOLD_TYPES];
 
-  gdouble initial_y;
-  amide_data_t initial_min;
-  amide_data_t initial_max;
+  gdouble initial_y[2];
+  amide_data_t initial_min[2];
+  amide_data_t initial_max[2];
+  guint visible_refs;
 
   volume_t * volume; /* what volume this threshold corresponds to */
 };
@@ -104,7 +121,8 @@ struct _AmitkThresholdClass
 
 
 GtkType    amitk_threshold_get_type          (void);
-GtkWidget* amitk_threshold_new               (volume_t * volume);
+GtkWidget* amitk_threshold_new               (volume_t * volume, 
+					      amitk_threshold_layout_t layout);
 void       amitk_threshold_new_volume        (AmitkThreshold * threshold, volume_t * new_volume);
 void       amitk_threshold_update            (AmitkThreshold * threshold);
 
@@ -124,7 +142,7 @@ struct _AmitkThresholdDialog
   GnomeDialog dialog;
 
   GtkWidget *volume_label;
-  GtkWidget *frame;
+  GtkWidget *vbox;
   GtkWidget *threshold;
 };
 
@@ -173,7 +191,7 @@ struct _AmitkThresholdsDialogClass
 
 
 GtkType    amitk_thresholds_dialog_get_type   (void);
-GtkWidget* amitk_thresholds_dialog_new        (volume_list_t * volumes);
+GtkWidget* amitk_thresholds_dialog_new        (volumes_t * volumes);
 
 #ifdef __cplusplus
 }

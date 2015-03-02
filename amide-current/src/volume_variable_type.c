@@ -1,7 +1,7 @@
 /* volume_variable_type.c - used to generate the different volume_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -33,28 +33,20 @@
 
 
 /* function to recalcule the max and min values of a volume */
-void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volume) {
+void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(volume_t * volume) {
 
   voxelpoint_t i;
   amide_data_t max, min, temp;
+  voxelpoint_t initial_vp;
 
-#ifdef AMIDE_DEBUG
-  div_t x;
-  gint divider;
-  divider = ((volume->data_set->dim.t/20.0) < 1) ? 1 : (volume->data_set->dim.t/20.0);
-  g_print("\tcalculating max & min\t");
-#endif
+  
+  initial_vp = zero_vp;
+  for (i.t = 0; i.t < volume->data_set->dim.t; i.t++) {
+    initial_vp.t = i.t;
+    temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, initial_vp);
+    if (finite(temp)) max = min = temp;   
+    else max = min = 0.0; /* just throw in zero */
 
-  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, zero_vp);
-  if (finite(temp)) max = min = temp;
-  else max = min = 0.0; /* just throw in zero */
-
-  for(i.t = 0; i.t < volume->data_set->dim.t; i.t++) {
-#if AMIDE_DEBUG
-    x = div(i.t,divider);
-    if (x.rem == 0)
-      g_print(".");
-#endif
     for (i.z = 0; i.z < volume->data_set->dim.z; i.z++) 
       for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
@@ -64,14 +56,15 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volu
 	    else if (temp < min) min = temp;
 	  }
 	}
-  }
-  volume->max = max;
-  volume->min = min;
-
+    
+    volume->frame_max[i.t] = max;
+    volume->frame_min[i.t] = min;
+    
 #ifdef AMIDE_DEBUG
-  g_print("\tmax %5.3f min %5.3f\n",max,min);
+    g_print("\tframe %d max %5.3f frame min %5.3f\n",i.t, volume->frame_max[i.t],volume->frame_min[i.t]);
 #endif
-
+  }
+  
   return;
 }
 
@@ -87,7 +80,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
 #if AMIDE_DEBUG
   g_print("Generating distribution data for volume %s",volume->name);
 #endif
-  scale = (VOLUME_DISTRIBUTION_SIZE-1)/(volume->max - volume->min);
+  scale = (VOLUME_DISTRIBUTION_SIZE-1)/(volume->global_max - volume->global_min);
   
   if ((volume->distribution = data_set_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the data set structure to hold distribution data", PACKAGE);
@@ -100,7 +93,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
   volume->distribution->format = FLOAT;
   if ((volume->distribution->data = data_set_get_data_mem(volume->distribution)) == NULL) {
     g_warning("%s: couldn't allocate memory for data distribution for bar_graph",PACKAGE);
-    volume->distribution = data_set_free(volume->distribution);
+    volume->distribution = data_set_unref(volume->distribution);
     return;
   }
   
@@ -124,7 +117,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
 #endif
 	for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	  for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
-	    j.x = scale*(VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->min);
+	    j.x = scale*(VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->global_min);
 	    DATA_SET_FLOAT_SET_CONTENT(volume->distribution,j) += 1.0;
 	  }
     }
@@ -146,10 +139,10 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
 
 /* returns a slice  with the appropriate data from the volume */
 volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t * volume,
-								  const amide_time_t start,
-								  const amide_time_t duration,
+								  const amide_time_t requested_start,
+								  const amide_time_t requested_duration,
 								  const realpoint_t  requested_voxel_size,
-								  const realspace_t slice_coord_frame,
+								  realspace_t * slice_coord_frame,
 								  const realpoint_t far_corner,
 								  const interpolation_t interpolation,
 								  const gboolean need_calc_max_min) {
@@ -166,7 +159,8 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   axis_t i_axis;
   guint l;
   amide_data_t weight;
-  intpoint_t start_frame, num_frames, i_frame;
+  amide_data_t time_weight;
+  intpoint_t start_frame, end_frame, i_frame;
   amide_time_t volume_start, volume_end;
   gchar * temp_string;
   realpoint_t box_rp[8];
@@ -175,33 +169,26 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   realpoint_t slice_rp, volume_rp,diff, nearest_rp;
   voxelpoint_t volume_vp;
   amide_data_t weight1, weight2;
+  amide_time_t start, end;
 
   /* ----- figure out what frames of this volume to include ----*/
-
-  /* figure out what frame to start at */
-  start_frame = 0; 
-  i_frame = 0;
-  while (i_frame < volume->data_set->dim.t) {
-    volume_start = volume_start_time(volume,i_frame);
-    if (start > volume_start-CLOSE)
-      start_frame = i_frame;
-    i_frame++;
-  }
+  start = requested_start;
+  start_frame = volume_frame(volume, start);
   volume_start = volume_start_time(volume, start_frame);
 
-  /* and figure out what frame to end at */
-  num_frames = volume->data_set->dim.t + 1;
-  i_frame = start_frame;
-  while ((i_frame < volume->data_set->dim.t) && (num_frames > volume->data_set->dim.t)) {
-    volume_end = volume_start_time(volume,i_frame)+volume->frame_duration[i_frame];
-    if ((start+duration) < volume_end+CLOSE)
-      num_frames = i_frame-start_frame+1;
-    i_frame++;
+  end = requested_start+requested_duration;
+  end_frame = volume_frame(volume, end);
+  volume_end = volume_end_time(volume, end_frame);
+
+  if (start_frame == end_frame) {
+    start = volume_start;
+    end = volume_end;
+  } else {
+    if (volume_end < end)
+      end = volume_end;
+    if (volume_start > start)
+      start = volume_start;
   }
-  if (num_frames+start_frame > volume->data_set->dim.t)
-    num_frames = volume->data_set->dim.t-start_frame;
-  volume_end = volume_start_time(volume,start_frame+num_frames-1) + 
-    volume->frame_duration[start_frame+num_frames-1];
 
   /* ------------------------- */
 
@@ -213,7 +200,7 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   }
   if ((slice->data_set = data_set_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the slice data set structure", PACKAGE);
-    return volume_free(slice);
+    return volume_unref(slice);
   }
   slice->data_set->dim.x = ceil(fabs(far_corner.x)/requested_voxel_size.x);
   slice->data_set->dim.y = ceil(fabs(far_corner.y)/requested_voxel_size.y);
@@ -221,50 +208,51 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   slice->data_set->dim.t = 1;
   slice->data_set->format = FLOAT;
   slice->voxel_size = requested_voxel_size;
-  slice->coord_frame = slice_coord_frame;
+  slice->coord_frame = rs_ref(slice_coord_frame);
   volume_recalc_far_corner(slice);
-  slice->scan_start = volume_start;
+  slice->scan_start = start;
   temp_string =  g_strdup_printf("slice from volume %s: size x %5.3f y %5.3f z %5.3f", 
 				 volume->name, slice->corner.x, 
 				 slice->corner.y, slice->corner.z);
-  volume_set_name(slice,temp_string);
-  volume_set_scan_date(slice, volume->scan_date);
+  volume_set_name(slice,temp_string); /* useful for debugging purposes */
+  //  volume_set_scan_date(slice, volume->scan_date);
+  slice->threshold_type = volume->threshold_type;
   g_free(temp_string);
 
   if ((slice->frame_duration = volume_get_frame_duration_mem(slice)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice frame duration array",PACKAGE);
-    return volume_free(slice);
+    return volume_unref(slice);
   }
-  slice->frame_duration[0] = volume_end-volume_start;
+  slice->frame_duration[0] = end-start;
   if ((slice->data_set->data = data_set_get_data_mem(slice->data_set)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice, wanted %dx%dx%dx%d elements",PACKAGE, 
 	      slice->data_set->dim.x, slice->data_set->dim.y, 
 	      slice->data_set->dim.z, slice->data_set->dim.t );
-    return volume_free(slice);
+    return volume_unref(slice);
   }
 
   /* ----------------------- */
 
 
 
-#ifdef AMIDE_DEBUG
+#ifdef AMIDE_DEBUG_COMMENT_OUT
   {
     realpoint_t real_corner[2];
     /* convert to real space */
     real_corner[0] = rs_offset(slice->coord_frame);
     real_corner[1] = realspace_alt_coord_to_base(slice->corner,
 						 slice->coord_frame);
-    //    g_print("new slice from volume %s\t---------------------\n",volume->name);
-    //    g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
-    //	    slice->data_set->dim.x, slice->data_set->dim.y, slice->data_set->dim.z);
-    //    g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-    //	    real_corner[0].x,real_corner[0].y,real_corner[0].z);
-    //    g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-    //	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
-    //    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
-    //	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
-    //    g_print("new_slice from volume %s, frames %d to %d, z offset %5.3f\n",volume->name,
-    //    	    start_frame, start_frame+num_frames-1, real_corner[0].z);
+    g_print("new slice from volume %s\t---------------------\n",volume->name);
+    g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
+    	    slice->data_set->dim.x, slice->data_set->dim.y, slice->data_set->dim.z);
+    g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+    	    real_corner[0].x,real_corner[0].y,real_corner[0].z);
+    g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+    	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
+    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
+    	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
+    g_print("new_slice from volume %s, frames %d to %d, z offset %5.3f\n",volume->name,
+	    start_frame, start_frame+num_frames-1, real_corner[0].z);
   }
 #endif
 
@@ -286,7 +274,19 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   case TRILINEAR:
     i.t = i.z = 0;
     /* iterate over the frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++) {
+    for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
+      //start_frame+num_frames;i_frame++) {
+      
+      /* averaging over more then one frame */
+      if (end_frame-start_frame > 0) {
+	if (i_frame == start_frame)
+	  time_weight = (volume_end_time(volume, start_frame)-start)/(end-start);
+	else if (i_frame == end_frame)
+	  time_weight = (end-volume_start_time(volume, end_frame))/(end-start);
+	else
+	  time_weight = volume->frame_duration[i_frame]/(end-start);
+      } else
+	time_weight = 1.0;
 
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) {
@@ -294,12 +294,11 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 	/* the slices z_coordinate for this iteration's slice voxel */
 	slice_rp.z = z*voxel_length+voxel_length/2.0;
 
-	/* weight is between 0 and 1, this is used to weight the last voxel 
-	   in the slice's z direction, and in averaging frames */
+	/* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
 	if (floor(z_steps) > z)
-	  weight = 1.0/(num_frames * z_steps);
+	  weight = time_weight/z_steps;
 	else
-	  weight = (z_steps-floor(z_steps)) / (num_frames * z_steps);
+	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 
 	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->data_set->dim.y; i.y++) {
@@ -319,7 +318,7 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 						   volume->coord_frame);
 
 	    /* get the nearest neighbor in the volume to this slice voxel */
-	    VOLUME_REALPOINT_TO_VOXEL(volume, volume_rp, i_frame, volume_vp);
+	    REALPOINT_TO_VOXEL(volume_rp, volume->voxel_size, i_frame, volume_vp);
 	    VOXEL_TO_REALPOINT(volume_vp, volume->voxel_size, nearest_rp);
 
 	    /* figure out which way to go to get the nearest voxels to our slice voxel*/
@@ -403,18 +402,29 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 
     i.t = i.z = 0;
     /* iterate over the number of frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++) {
+    for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
+      //start_frame+num_frames;i_frame++) {
+
+      /* averaging over more then one frame */
+      if (end_frame-start_frame > 0) {
+	if (i_frame == start_frame)
+	  time_weight = (volume_end_time(volume, start_frame)-start)/(end-start);
+	else if (i_frame == end_frame)
+	  time_weight = (end-volume_start_time(volume, end_frame))/(end-start);
+	else
+	  time_weight = volume->frame_duration[i_frame]/(end-start);
+      } else
+	time_weight = 1.0;
 
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
 	last[ZAXIS] = volume_rp;
 
-	/* weight is between 0 and 1, this is used to weight the last voxel 
-	   in the slice's z direction, and in averaging frames */
+	/* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
 	if (floor(z_steps) > z)
-	  weight = 1.0/(num_frames * z_steps);
+	  weight = time_weight/z_steps;
 	else
-	  weight = (z_steps-floor(z_steps)) / (num_frames * z_steps);
+	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 	
 	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->data_set->dim.y; i.y++) {
@@ -422,7 +432,7 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 
 	  /* and iteratate over x */
 	  for (i.x = 0; i.x < slice->data_set->dim.x; i.x++) {
-	    VOLUME_REALPOINT_TO_VOXEL(volume, volume_rp, i_frame, j);
+	    REALPOINT_TO_VOXEL(volume_rp, volume->voxel_size, i_frame, j);
 	    if (!data_set_includes_voxel(volume->data_set,j))
 	      DATA_SET_FLOAT_SET_CONTENT(slice->data_set,i) += weight*EMPTY;
 	    else
@@ -438,10 +448,12 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
     break;
   }
 
-  /* figure out the max and min */
-  if (need_calc_max_min)
-    volume_recalc_max_min(slice);
+  if (need_calc_max_min) {
+    volume_calc_frame_max_min(slice);
+    volume_calc_global_max_min(slice);
+  }
 
   return slice;
 }
+
 

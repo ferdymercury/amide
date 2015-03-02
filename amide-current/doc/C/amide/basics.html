@@ -1,10 +1,12 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <HTML
 ><HEAD
 ><TITLE
 >AMIDE Basics</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
 REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
@@ -16,6 +18,11 @@ TITLE="Saving/Loading Files"
 HREF="file-handling.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
 ><DIV
 CLASS="NAVHEADER"
 ><TABLE
@@ -36,7 +43,7 @@ ALIGN="left"
 VALIGN="bottom"
 ><A
 HREF="amide.html"
->Prev</A
+>&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
 WIDTH="80%"
@@ -49,7 +56,7 @@ ALIGN="right"
 VALIGN="bottom"
 ><A
 HREF="file-handling.html"
->Next</A
+>Next &#62;&#62;&#62;</A
 ></TD
 ></TR
 ></TABLE
@@ -61,7 +68,7 @@ CLASS="CHAPTER"
 ><H1
 ><A
 NAME="BASICS"
->Chapter 1. AMIDE Basics</A
+>AMIDE Basics</A
 ></H1
 ><P
 > 
@@ -253,22 +260,6 @@ CLASS="SECT4"
 CLASS="SECT4"
 ><A
 NAME="AEN53"
->Scaling</A
-></H4
-><P
->	  The user has the option of specifying whether each slice
-	  should be scaled individually by the maximum and minimum
-	  values in that slice, or if the slices should be scaled to
-	  the maximum and minium values in their respective data
-	  sets.
-	</P
-></DIV
-><DIV
-CLASS="SECT4"
-><H4
-CLASS="SECT4"
-><A
-NAME="AEN56"
 >Interpolation</A
 ></H4
 ><P
@@ -283,7 +274,7 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN59"
+NAME="AEN56"
 >Threshold</A
 ></H4
 ><P
@@ -300,7 +291,7 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN62"
+NAME="AEN59"
 >Zoom</A
 ></H4
 ><P
@@ -315,7 +306,7 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN65"
+NAME="AEN62"
 >Thickness</A
 ></H4
 ><P
@@ -328,7 +319,7 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN68"
+NAME="AEN65"
 >Time Pop-up</A
 ></H4
 ><P
@@ -344,27 +335,88 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN71"
+NAME="AEN68"
 >Threshold Dialog</A
 ></H2
 ><P
 >      The threshold dialog allows the threshold and colormap of the
-      currently focused data set to be altered.  On the left are entry
+      currently focused data set to be altered.  On top are entry
       boxes where the maximum and minimum thresholds can be entered,
       either in percent of the data set's maximum and minimum levels
-      or as absolute values.  On the right is a bar graph showing the
-      distribution of the data set's values.  On the far right is a
-      color scale from which the thresholds can also be altered.  The
-      color table of the data set can also be altered from this
-      dialog.
-    </P
+      or as absolute values.  On the bottom left is a bar graph
+      showing the distribution of the data set's values.  On the
+      bottom right is a color scale from which the thresholds can also
+      be altered.  In the middle are selectors for picking the color
+      table and threshold type (described below).
+   </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN71"
+>Threshold Types</A
+></H3
+><P
+> Several different ways can be used for interpreting how
+	the max and min threshold values are applied to the data set.
+	</P
+><P
+></P
+><DIV
+CLASS="VARIABLELIST"
+><DL
+><DT
+>Per Slice</DT
+><DD
+><P
+>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the current slice of data</P
+></DD
+><DT
+>Per Frame</DT
+><DD
+><P
+>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the current frame of the data set</P
+></DD
+><DT
+>Interpolate Between Frames</DT
+><DD
+><P
+>This threshold mode only makes sense
+		for dynamic studies.  In this mode, to sets of max and
+		min threshold values are specified, along with which
+		frame of data each of these sets corresponds to.  For
+		data frames before and include the first reference
+		frame, the first set of threshold values are used.
+		For data frames after and including the second
+		reference frame, the second set of threshold values
+		are used.  For data frames between the two reference
+		frames, the max and min threshold values are derived
+		by interpolating (as a function of time) between the
+		two sets of thresholding values.</P
+></DD
+><DT
+>Global</DT
+><DD
+><P
+>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the entire data set</P
+></DD
+></DL
+></DIV
+></DIV
 ></DIV
 ><DIV
 CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN74"
+NAME="AEN91"
 >Series View Window</A
 ></H2
 ><P
@@ -677,7 +729,7 @@ ALIGN="left"
 VALIGN="top"
 ><A
 HREF="amide.html"
->Prev</A
+>&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
 WIDTH="34%"
@@ -693,7 +745,7 @@ ALIGN="right"
 VALIGN="top"
 ><A
 HREF="file-handling.html"
->Next</A
+>Next &#62;&#62;&#62;</A
 ></TD
 ></TR
 ><TR

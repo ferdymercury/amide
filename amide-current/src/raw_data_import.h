@@ -30,14 +30,18 @@
 /* raw_data information structure */
 typedef struct raw_data_info_t {
   gchar * filename;
+  gchar * volume_name;
   guint total_file_size;
   raw_data_format_t raw_data_format;
+  voxelpoint_t data_dim;
+  realpoint_t voxel_size;
+  modality_t modality;
+  amide_data_t external_scaling;
   guint offset;
   GtkWidget * num_bytes_label1;
   GtkWidget * num_bytes_label2;
   GtkWidget * read_offset_label;
   GtkWidget * dialog;
-  volume_t * volume;
 } raw_data_info_t;
 
 /* internal functions */

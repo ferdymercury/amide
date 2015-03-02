@@ -114,7 +114,12 @@ ZVT_LIBS = @ZVT_LIBS@
 cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 
-SUBDIRS =  	src 	lib 	doc 	pixmaps 	etc
+SUBDIRS = \
+	src \
+	lib \
+	doc \
+	pixmaps \
+	etc
 
 
 DISTCLEANFILES = *~

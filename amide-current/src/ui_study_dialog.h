@@ -26,7 +26,7 @@
 
 /* external functions */
 void ui_study_dialog_set_axis_display(GtkWidget * study_dialog);
-void ui_study_dialog_create(ui_study_t * ui_study);
+GtkWidget * ui_study_dialog_create(ui_study_t * ui_study);
 
 
 

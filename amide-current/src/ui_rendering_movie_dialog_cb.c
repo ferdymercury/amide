@@ -150,14 +150,46 @@ void ui_rendering_movie_dialog_cb_change_rotation(GtkWidget * widget, gpointer d
   return;
 }
 
+void ui_rendering_movie_dialog_cb_dynamic_type(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  dynamic_t type;
+
+  type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "dynamic_type"));
+
+  if (type != ui_rendering_movie->type) {
+    ui_rendering_movie->type = type;
+    if (type == OVER_TIME) {
+      gtk_widget_show(ui_rendering_movie->start_time_label);
+      gtk_widget_show(ui_rendering_movie->start_time_entry);
+      gtk_widget_show(ui_rendering_movie->end_time_label);
+      gtk_widget_show(ui_rendering_movie->end_time_entry);
+      gtk_widget_hide(ui_rendering_movie->start_frame_label);
+      gtk_widget_hide(ui_rendering_movie->start_frame_entry);
+      gtk_widget_hide(ui_rendering_movie->end_frame_label);
+      gtk_widget_hide(ui_rendering_movie->end_frame_entry);
+    } else {
+      gtk_widget_hide(ui_rendering_movie->start_time_label);
+      gtk_widget_hide(ui_rendering_movie->start_time_entry);
+      gtk_widget_hide(ui_rendering_movie->end_time_label);
+      gtk_widget_hide(ui_rendering_movie->end_time_entry);
+      gtk_widget_show(ui_rendering_movie->start_frame_label);
+      gtk_widget_show(ui_rendering_movie->start_frame_entry);
+      gtk_widget_show(ui_rendering_movie->end_frame_label);
+      gtk_widget_show(ui_rendering_movie->end_frame_entry);
+    }
+  }
+  return;
+}
+
+
 /* function to change the start time */
-void ui_rendering_movie_dialog_cb_change_start(GtkWidget * widget, gpointer data) {
+void ui_rendering_movie_dialog_cb_change_start_time(GtkWidget * widget, gpointer data) {
 
   ui_rendering_movie_t * ui_rendering_movie = data;
   gchar * str;
   gint error;
   gdouble temp_val;
-  amide_time_t end;
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -169,10 +201,35 @@ void ui_rendering_movie_dialog_cb_change_start(GtkWidget * widget, gpointer data
   if (error == EOF)  /* make sure it's a valid number */
     return;
 
-  /* set the time and duration */
-  end = ui_rendering_movie->start+ui_rendering_movie->duration;
-  ui_rendering_movie->start = temp_val;
-  ui_rendering_movie->duration = end-ui_rendering_movie->start;
+  ui_rendering_movie->start_time = temp_val;
+
+  /* tell the dialog we've changed */
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));
+
+  return;
+}
+
+/* function to change the start frame */
+void ui_rendering_movie_dialog_cb_change_start_frame(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gint temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%d", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  /* set the start frame */
+  if (temp_val >= 0)
+    ui_rendering_movie->start_frame = temp_val;
 
   /* tell the dialog we've changed */
   gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));
@@ -181,13 +238,12 @@ void ui_rendering_movie_dialog_cb_change_start(GtkWidget * widget, gpointer data
 }
 
 /* function to change the end time */
-void ui_rendering_movie_dialog_cb_change_end(GtkWidget * widget, gpointer data) {
+void ui_rendering_movie_dialog_cb_change_end_time(GtkWidget * widget, gpointer data) {
 
   ui_rendering_movie_t * ui_rendering_movie = data;
   gchar * str;
   gint error;
   gdouble temp_val;
-  amide_time_t duration;
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -199,12 +255,7 @@ void ui_rendering_movie_dialog_cb_change_end(GtkWidget * widget, gpointer data) 
   if (error == EOF)  /* make sure it's a valid number */
     return;
 
-  /* check the time */
-  duration = temp_val-ui_rendering_movie->start;
-  if (duration < CLOSE)
-    return;
-  /* set the time */
-  ui_rendering_movie->duration = duration;
+  ui_rendering_movie->end_time = temp_val;
 
   /* tell the dialog we've changed */
   gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));
@@ -212,12 +263,38 @@ void ui_rendering_movie_dialog_cb_change_end(GtkWidget * widget, gpointer data) 
   return;
 }
 
+/* function to change the end frame */
+void ui_rendering_movie_dialog_cb_change_end_frame(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_movie_t * ui_rendering_movie = data;
+  gchar * str;
+  gint error;
+  gint temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a decimal */
+  error = sscanf(str, "%d", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+
+  /* set the end frame */
+  ui_rendering_movie->end_frame = temp_val;
+
+  /* tell the dialog we've changed */
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_rendering_movie->dialog));
+
+  return;
+}
 
 /* function called when we hit the apply button */
 void ui_rendering_movie_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
   ui_rendering_movie_t * ui_rendering_movie = data;
-  rendering_list_t * temp_contexts;
+  renderings_t * temp_contexts;
   GtkWidget * file_selection;
   gchar * temp_string;
   gchar * data_set_names = NULL;

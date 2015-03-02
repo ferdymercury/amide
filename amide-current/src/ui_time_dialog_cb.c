@@ -30,6 +30,7 @@
 #include "ui_study.h"
 #include "ui_time_dialog.h"
 #include "ui_time_dialog_cb.h"
+#include "amitk_canvas.h"
 
 
 /* we've selected a row in the list of times */
@@ -183,7 +184,8 @@ void ui_time_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data)
   
   ui_study_t * ui_study = data;
   ui_time_dialog_t * new_time;
-  
+  view_t i_view;
+ 
   /* we'll apply all page changes at once */
   if (page_number != -1)
     return;
@@ -197,8 +199,13 @@ void ui_time_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data)
   ui_study_update_time_button(ui_study);
 
   /* redraw the volumes */
-  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
-
+  for (i_view=0; i_view<NUM_VIEWS; i_view++) {
+    amitk_canvas_set_start_time(AMITK_CANVAS(ui_study->canvas[i_view]), 
+				study_view_time(ui_study->study), FALSE);
+    amitk_canvas_set_duration(AMITK_CANVAS(ui_study->canvas[i_view]), 
+			      study_view_duration(ui_study->study), TRUE);
+  }
+  
   return;
 }
 

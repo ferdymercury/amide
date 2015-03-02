@@ -49,17 +49,10 @@ guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
   guint num_bytes, num_entries;
   gchar * temp_string;
   
-  /* sanity checks */
-  if (raw_data_info->volume->data_set == NULL) {
-    g_warning("%s: called raw_data_update_num_bytes with no data_set", PACKAGE);
-    return 0;
-  }
-    
-
   /* how many bytes we're currently reading from the file */
   if (raw_data_info->raw_data_format == ASCII_NE) {
-    num_entries = 
-      raw_data_info->offset + data_set_num_voxels(raw_data_info->volume->data_set);
+    num_entries = raw_data_info->offset + 
+      raw_data_info->data_dim.x*raw_data_info->data_dim.y*raw_data_info->data_dim.z*raw_data_info->data_dim.t;
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
 		       "total entries to read through:");
     temp_string = g_strdup_printf("%d",num_entries);
@@ -73,7 +66,7 @@ guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
   } else {
     num_bytes = 
       raw_data_info->offset +
-      raw_data_calc_num_bytes(raw_data_info->volume->data_set->dim, 
+      raw_data_calc_num_bytes(raw_data_info->data_dim, 
 			      raw_data_info->raw_data_format);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
 		       "total bytes to read through:");
@@ -100,7 +93,6 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   raw_data_format_t i_raw_data_format;
   axis_t i_axis;
   gchar * temp_string = NULL;
-  gchar * volume_name;
   gchar ** frags;
   GtkWidget * raw_data_dialog;
   GtkWidget * packing_table;
@@ -141,19 +133,20 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 		   X_PADDING, Y_PADDING);
 
   /* figure out an initial name for the data */
-  volume_name = g_strdup(g_basename(raw_data_info->filename));
+  temp_string = g_strdup(g_basename(raw_data_info->filename));
   /* remove the extension of the file */
-  g_strreverse(volume_name);
-  frags = g_strsplit(volume_name, ".", 2);
-  g_free(volume_name);
-  volume_name = frags[1];
-  g_strreverse(volume_name);
+  g_strreverse(temp_string);
+  frags = g_strsplit(temp_string, ".", 2);
+  g_free(temp_string);
+  if (frags[1] != NULL)
+    raw_data_info->volume_name = strdup(frags[1]);
+  else /* no extension on filename */
+    raw_data_info->volume_name = strdup(frags[0]);
+  g_strfreev(frags); 
+  g_strreverse(raw_data_info->volume_name);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), volume_name);
-  volume_set_name(raw_data_info->volume,volume_name);
-
-  g_strfreev(frags); /* free up now unused strings */
+  gtk_entry_set_text(GTK_ENTRY(entry), raw_data_info->volume_name);
 
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
@@ -192,7 +185,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
   gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), PET);
-  raw_data_info->volume->modality = PET;
+  raw_data_info->modality = PET;
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(option_menu), 1,2, 
 		   table_row,table_row+1,
@@ -297,10 +290,10 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
-  raw_data_info->volume->data_set->dim.x = 
-    raw_data_info->volume->data_set->dim.y = 
-    raw_data_info->volume->data_set->dim.z = 
-    raw_data_info->volume->data_set->dim.t = 1;
+  raw_data_info->data_dim.x = 
+    raw_data_info->data_dim.y = 
+    raw_data_info->data_dim.z = 
+    raw_data_info->data_dim.t = 1;
   for (i_dim=0; i_dim<NUM_DIMS; i_dim++) {
     entry = gtk_entry_new();
     temp_string = g_strdup_printf("%d", 1);
@@ -322,9 +315,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
-  raw_data_info->volume->voxel_size.x = 
-    raw_data_info->volume->voxel_size.y = 
-    raw_data_info->volume->voxel_size.z=1;
+  raw_data_info->voxel_size.x = raw_data_info->voxel_size.y = raw_data_info->voxel_size.z=1;
   for (i_axis=0; i_axis<NUM_AXIS; i_axis++) {
     entry = gtk_entry_new();
     temp_string = g_strdup_printf("%d", 1);
@@ -347,7 +338,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%5.3f", raw_data_info->volume->external_scaling);
+  temp_string = g_strdup_printf("%5.3f", raw_data_info->external_scaling);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
@@ -378,7 +369,7 @@ volume_t * raw_data_import(const gchar * raw_data_filename) {
     g_warning("%s: couldn't allocate space for raw_data_info structure to load in RAW file", PACKAGE);
     return NULL;
   }
-  raw_data_info->volume = NULL;
+  raw_data_info->external_scaling = 1.0;
   raw_data_info->filename = g_strdup(raw_data_filename);
 
   /* figure out the file size in bytes (file_info.st_size) */
@@ -389,23 +380,6 @@ volume_t * raw_data_import(const gchar * raw_data_filename) {
   }
   raw_data_info->total_file_size = file_info.st_size;
 
-  /* acquire space for the volume structure */
-  if ((raw_data_info->volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure to hold RAW data", PACKAGE);
-    g_free(raw_data_info->filename);
-    g_free(raw_data_info);
-    return NULL;
-  }
-  /* acquire space for the data structure */
-  if ((raw_data_info->volume->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the data set structure to hold RAW data", PACKAGE);
-    g_free(raw_data_info->filename);
-    raw_data_info->volume = volume_free(raw_data_info->volume);
-    g_free(raw_data_info);
-    return NULL;
-  }
-
-
   /* create and run the raw_data_import_dialog to acquire needed info from the user */
   raw_data_import_dialog(raw_data_info);
 
@@ -414,17 +388,24 @@ volume_t * raw_data_import(const gchar * raw_data_filename) {
   
   /* and start loading in the file if we hit ok*/
   if (dialog_reply == 0) {
-    volume_recalc_far_corner(raw_data_info->volume);
     temp_volume = raw_data_read_volume(raw_data_info->filename,
-				       raw_data_info->volume, 
 				       raw_data_info->raw_data_format,
+				       raw_data_info->data_dim,
 				       raw_data_info->offset);
+
+    /* set remaining parameters */
+    volume_set_name(temp_volume,raw_data_info->volume_name);
+    temp_volume->voxel_size = raw_data_info->voxel_size;
+    volume_recalc_far_corner(temp_volume);
+    temp_volume->modality = raw_data_info->modality;
+    volume_set_scaling(temp_volume, raw_data_info->external_scaling);
   } else /* we hit the cancel button */
-    temp_volume = volume_free(raw_data_info->volume);
+    temp_volume = NULL;
 
   g_free(raw_data_info->filename);
-  g_free(raw_data_info); /* note, we've saved a pointer to raw_data_info->volume in temp_volume */
-  return temp_volume; /* and return the new volume structure (it's NULL if we cancelled) */
+  g_free(raw_data_info->volume_name);
+  g_free(raw_data_info); 
+  return temp_volume; /* NULL if we hit cancel */
 
 }
 

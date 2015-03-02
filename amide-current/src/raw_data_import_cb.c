@@ -39,8 +39,8 @@ void raw_data_import_cb_change_name(GtkWidget * widget, gpointer data) {
 
   /* get the contents of the name entry box and save it */
   new_name = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
-  volume_set_name(raw_data_info->volume, new_name);
-  g_free(new_name);
+  g_free(raw_data_info->volume_name);
+  raw_data_info->volume_name = new_name;
 
   return;
 }
@@ -63,7 +63,7 @@ void raw_data_import_cb_change_scaling(GtkWidget * widget, gpointer data) {
   g_free(str);
 
   /* and save the value */
-  volume_set_scaling(raw_data_info->volume, temp_real);
+  raw_data_info->external_scaling = temp_real;
 
   return;
 }
@@ -106,25 +106,25 @@ void raw_data_import_cb_change_entry(GtkWidget * widget, gpointer data) {
   /* and save the value in our temporary volume structure */
   switch(which_widget) {
   case XDIM:
-    raw_data_info->volume->data_set->dim.x = temp_int;
+    raw_data_info->data_dim.x = temp_int;
     break;
   case YDIM:
-    raw_data_info->volume->data_set->dim.y = temp_int;
+    raw_data_info->data_dim.y = temp_int;
     break;
   case ZDIM:
-    raw_data_info->volume->data_set->dim.z = temp_int;
+    raw_data_info->data_dim.z = temp_int;
     break;
   case TDIM:
-    raw_data_info->volume->data_set->dim.t = temp_int;
+    raw_data_info->data_dim.t = temp_int;
     break;
   case (NUM_DIMS+XAXIS):
-    raw_data_info->volume->voxel_size.x = temp_real;
+    raw_data_info->voxel_size.x = temp_real;
     break;
   case (NUM_DIMS+YAXIS):
-    raw_data_info->volume->voxel_size.y = temp_real;
+    raw_data_info->voxel_size.y = temp_real;
     break;
   case (NUM_DIMS+ZAXIS):
-    raw_data_info->volume->voxel_size.z = temp_real;
+    raw_data_info->voxel_size.z = temp_real;
     break;
   case (NUM_DIMS+NUM_AXIS):
     raw_data_info->offset = temp_int;
@@ -150,7 +150,7 @@ void raw_data_import_cb_change_modality(GtkWidget * widget, gpointer data) {
   /* figure out which menu item called me */
   for (i_modality=0;i_modality<NUM_MODALITIES;i_modality++)       
     if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"modality")) == i_modality)
-      raw_data_info->volume->modality = i_modality;  /* save the new modality */
+      raw_data_info->modality = i_modality;  /* save the new modality */
 
   return;
 }

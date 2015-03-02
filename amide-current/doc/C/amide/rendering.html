@@ -1,10 +1,12 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <HTML
 ><HEAD
 ><TITLE
 >Rendering Data</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
 REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
@@ -16,6 +18,11 @@ TITLE="Rendering Parameters Dialog"
 HREF="rendering-dialog-help.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
 ><DIV
 CLASS="NAVHEADER"
 ><TABLE
@@ -36,7 +43,7 @@ ALIGN="left"
 VALIGN="bottom"
 ><A
 HREF="align-pt.html"
->Prev</A
+>&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
 WIDTH="80%"
@@ -49,7 +56,7 @@ ALIGN="right"
 VALIGN="bottom"
 ><A
 HREF="rendering-dialog-help.html"
->Next</A
+>Next &#62;&#62;&#62;</A
 ></TD
 ></TR
 ></TABLE
@@ -61,32 +68,8 @@ CLASS="CHAPTER"
 ><H1
 ><A
 NAME="RENDERING"
->Chapter 7. Rendering Data</A
+>Rendering Data</A
 ></H1
-><DIV
-CLASS="TOC"
-><DL
-><DT
-><B
->Table of Contents</B
-></DT
-><DT
-><A
-HREF="rendering.html#AEN254"
->Rendering Dialog</A
-></DT
-><DT
-><A
-HREF="rendering-dialog-help.html"
->Rendering Parameters Dialog</A
-></DT
-><DT
-><A
-HREF="rendering-movie-dialog-help.html"
->Rendering Movie Dialog</A
-></DT
-></DL
-></DIV
 ><P
 > 
 
@@ -107,7 +90,11 @@ HREF="rendering-movie-dialog-help.html"
   the data is scaled between the current minimum and maximum
   threshold, with all data above the current maximum threshold set to
   the maximum threshold value, and all data below the current minimum
-  threshold set to the minimum threshold value.&#13;</P
+  threshold set to the minimum threshold value.  This scaling can be
+  either relative to the data set's "Global" maximum and minimum, or
+  to the "Per Frame" maximum and minimum.  "Per slice" scaling does
+  not make sense in the context of volume rendering, and is
+  interpreted as "Global" scaling.&#13;</P
 ><P
 >&#13;  When this is completed, the rendering dialog should pop-up.  It's
   use is described below.&#13;</P
@@ -116,7 +103,7 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN254"
+NAME="AEN271"
 >Rendering Dialog</A
 ></H1
 ><DIV
@@ -124,7 +111,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN256"
+NAME="AEN273"
 >Main Rendering Canvas</A
 ></H2
 ><P
@@ -140,7 +127,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN259"
+NAME="AEN276"
 >Spin Sliders</A
 ></H2
 ><P
@@ -158,7 +145,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN262"
+NAME="AEN279"
 >Axis Drawing</A
 ></H2
 ><P
@@ -171,7 +158,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN265"
+NAME="AEN282"
 >Reset Axis</A
 ></H2
 ><P
@@ -184,7 +171,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN268"
+NAME="AEN285"
 >"Render" Button</A
 ></H2
 ><P
@@ -197,7 +184,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN271"
+NAME="AEN288"
 >"On Change" Checkbox</A
 ></H2
 ><P
@@ -211,7 +198,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN274"
+NAME="AEN291"
 >"Steroscopic" Checkbox</A
 ></H2
 ><P
@@ -231,7 +218,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN277"
+NAME="AEN294"
 >Rendering Menus</A
 ></H2
 ><DIV
@@ -239,7 +226,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN279"
+NAME="AEN296"
 >File-&#62;Export Rendering</A
 ></H3
 ><P
@@ -255,7 +242,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN282"
+NAME="AEN299"
 >File-&#62;Create Movie</A
 ></H3
 ><P
@@ -268,7 +255,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN285"
+NAME="AEN302"
 >"Edit-&#62;Rendering Parameters</A
 ></H3
 ><P
@@ -295,7 +282,7 @@ ALIGN="left"
 VALIGN="top"
 ><A
 HREF="align-pt.html"
->Prev</A
+>&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
 WIDTH="34%"
@@ -311,7 +298,7 @@ ALIGN="right"
 VALIGN="top"
 ><A
 HREF="rendering-dialog-help.html"
->Next</A
+>Next &#62;&#62;&#62;</A
 ></TD
 ></TR
 ><TR

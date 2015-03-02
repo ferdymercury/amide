@@ -30,15 +30,12 @@
 #include "volume.h"
 #include "roi.h"
 
-/* typedef's */
-typedef enum {SCALING_PER_SLICE, SCALING_GLOBAL, NUM_SCALINGS} scaling_t;
-
 typedef struct study_t {
   gchar * name; /* name of the study */
   gchar * creation_date; /* when this study was created */
-  realspace_t coord_frame;
-  volume_list_t * volumes; 
-  roi_list_t * rois;
+  realspace_t * coord_frame;
+  volumes_t * volumes; 
+  rois_t * rois;
 
   /* view parameters */
   realpoint_t view_center; /* wrt the study coord_frame */
@@ -47,10 +44,9 @@ typedef struct study_t {
   amide_time_t view_duration;
   floatpoint_t zoom;
   interpolation_t interpolation;
-  scaling_t scaling; /* scale on a slice or the whole volume */
 
   /* stuff that doesn't need to be saved */
-  guint reference_count;
+  guint ref_count;
   gchar * filename; /* file name of the study */
 
 } study_t;
@@ -71,41 +67,33 @@ typedef struct study_t {
 #define study_view_duration(study) ((study)->view_duration)
 #define study_zoom(study) ((study)->zoom)
 #define study_interpolation(study) ((study)->interpolation)
-#define study_scaling(study) ((study)->scaling)
 #define study_coord_frame(study) ((study)->coord_frame)
 #define study_coord_frame_axis(study) (rs_all_axis((study)->coord_frame))
-#define study_set_coord_frame(study, new) ((study)->coord_frame = (new))
-#define study_set_coord_frame_offset(study, new) (rs_set_offset(&((study)->coord_frame),(new)))
+#define study_set_coord_frame_offset(study, new) (rs_set_offset(((study)->coord_frame),(new)))
 #define study_set_view_center(study, new) ((study)->view_center = (new))
-#define study_set_view_thickness(study, new) ((study)->view_thickness = (new))
 #define study_set_view_time(study, new) ((study)->view_time = (new))
 #define study_set_view_duration(study, new) ((study)->view_duration = (new))
 #define study_set_zoom(study, new) ((study)->zoom = (new))
 #define study_set_interpolation(study, new) ((study)->interpolation = (new))
-#define study_set_scaling(study, new) ((study)->scaling = (new))
 
 /* external functions */
-study_t * study_free(study_t * study);
+study_t * study_unref(study_t * study);
 study_t * study_init(void);
 gboolean study_write_xml(study_t * study, gchar * study_directory);
 study_t * study_load_xml(const gchar * study_directory);
 study_t * study_copy(study_t * src_study);
-study_t * study_add_reference(study_t * study);
+study_t * study_ref(study_t * study);
 void study_add_volume(study_t * study, volume_t * volume);
 void study_remove_volume(study_t * study, volume_t * volume);
-void study_add_volumes(study_t * study, volume_list_t * volumes);
+void study_add_volumes(study_t * study, volumes_t * volumes);
 void study_add_roi(study_t * study, roi_t * roi);
 void study_remove_roi(study_t * study, roi_t * roi);
-void study_add_rois(study_t * study, roi_list_t * rois);
+void study_add_rois(study_t * study, rois_t * rois);
 void study_set_name(study_t * study, const gchar * new_name);
 void study_set_filename(study_t * study, const gchar * new_filename);
 void study_set_creation_date(study_t * study, const gchar * new_date);
-
-/* external variables */
-extern gchar * scaling_names[];
-extern gchar * scaling_explanations[];
-
-
+void study_set_coord_frame(study_t * study, const realspace_t * new_rs);
+void study_set_view_thickness(study_t * study, const floatpoint_t new_thickness);
 #endif /*__STUDY_H__ */
 
 

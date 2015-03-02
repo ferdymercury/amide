@@ -1,7 +1,7 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2000-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -47,8 +47,12 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 
 
 
-GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, rgba_t color,
-				     realspace_t * return_frame,
+GdkPixbuf * image_slice_intersection(const roi_t * roi,
+				     const realspace_t * canvas_coord_frame,
+				     const realpoint_t canvas_corner,
+				     const realpoint_t canvas_voxel_size,
+				     rgba_t color,
+				     realspace_t ** return_frame,
 				     realpoint_t * return_corner) {
 
   GdkPixbuf * temp_image;
@@ -58,7 +62,8 @@ GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, 
   voxelpoint_t dim;
 
   
-  if ((intersection = roi_get_slice(roi, slice)) == NULL) return NULL;
+  intersection = roi_get_intersection_slice(roi, canvas_coord_frame,canvas_corner, canvas_voxel_size);
+  if (intersection == NULL) return NULL;
 
   dim = intersection->data_set->dim;
 
@@ -67,7 +72,7 @@ GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, 
     return NULL;
   }
 
-  *return_frame = intersection->coord_frame;
+  *return_frame = rs_ref(intersection->coord_frame);
   *return_corner = intersection->corner;
 
   i.z = i.t = 0;
@@ -90,7 +95,7 @@ GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, 
 					image_free_rgb_data, 
 					NULL);
 
-  intersection = volume_free(intersection);
+  intersection = volume_unref(intersection);
 
   return temp_image;
 }
@@ -161,7 +166,7 @@ GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const 
 }
 
 /* function returns a GdkPixbuf from a rendering context */
-GdkPixbuf * image_from_contexts(rendering_list_t * contexts, 
+GdkPixbuf * image_from_contexts(renderings_t * contexts, 
 				gint16 image_width, gint16 image_height,
 				eye_t eyes, 
 				gdouble eye_angle, 
@@ -396,14 +401,13 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
 }
 
 
-GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
-			       volume_list_t * volumes,
+GdkPixbuf * image_from_volumes(volumes_t ** pslices,
+			       volumes_t * volumes,
 			       const amide_time_t start,
 			       const amide_time_t duration,
 			       const floatpoint_t thickness,
 			       const floatpoint_t voxel_dim,
-			       const realspace_t view_coord_frame,
-			       const scaling_t scaling,
+			       const realspace_t * view_coord_frame,
 			       const interpolation_t interpolation) {
 
   gint slice_num;
@@ -414,11 +418,14 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
   voxelpoint_t i;
   voxelpoint_t dim;
   amide_data_t max,min;
+  amide_data_t slice_max,slice_min;
+  amide_data_t frame_max,frame_min;
+  guint middle_frame;
   GdkPixbuf * temp_image;
   rgba_t rgba_temp;
-  volume_list_t * slices;
-  volume_list_t * temp_slices;
-  volume_list_t * temp_volumes;
+  volumes_t * slices;
+  volumes_t * temp_slices;
+  volumes_t * temp_volumes;
 
   /* sanity checks */
   g_return_val_if_fail(volumes != NULL, NULL);
@@ -476,21 +483,60 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
   while (temp_slices != NULL) {
     slice_num++;
 
-    /* get the max/min values for scaling */
-    if (scaling == SCALING_GLOBAL) {
-      max = temp_volumes->volume->threshold_max;
-      min = temp_volumes->volume->threshold_min;
-    } else {
+    /* get the max/min values for thresholding */
+    switch(temp_volumes->volume->threshold_type) {
+    case THRESHOLD_PER_SLICE:
       /* find the slice's max and min, and then adjust these values to
        * correspond to the current threshold values */
-      max = temp_slices->volume->max;
-      min = temp_slices->volume->min;
-      max = temp_volumes->volume->threshold_max*(max-min)/
-	(temp_volumes->volume->max-temp_volumes->volume->min);
-      min = temp_volumes->volume->threshold_min*(max-min)/
-	(temp_volumes->volume->max-temp_volumes->volume->min);
-    }
+      slice_max = temp_slices->volume->global_max;
+      slice_min = temp_slices->volume->global_min;
+      max = temp_volumes->volume->threshold_max[0]*(slice_max-slice_min)/
+	(temp_volumes->volume->global_max-temp_volumes->volume->global_min);
+      min = temp_volumes->volume->threshold_min[0]*(slice_max-slice_min)/
+	(temp_volumes->volume->global_max-temp_volumes->volume->global_min);
+      break;
+    case THRESHOLD_PER_FRAME:
+      frame_max = volume_max(temp_volumes->volume, start,duration);
+      frame_min = volume_min(temp_volumes->volume, start,duration);
+      max = temp_volumes->volume->threshold_max[0]*(frame_max-frame_min)/
+	(temp_volumes->volume->global_max-temp_volumes->volume->global_min);
+      min = temp_volumes->volume->threshold_min[0]*(frame_max-frame_min)/
+	(temp_volumes->volume->global_max-temp_volumes->volume->global_min);
+      break;
+    case THRESHOLD_INTERPOLATE_FRAMES:
 
+
+      if (temp_volumes->volume->threshold_ref_frame[1]==temp_volumes->volume->threshold_ref_frame[0]) {
+	max = temp_volumes->volume->threshold_max[0];
+	min = temp_volumes->volume->threshold_min[0];
+      } else {
+
+	middle_frame = volume_frame(temp_volumes->volume, start+duration/2.0);
+	if (middle_frame <= temp_volumes->volume->threshold_ref_frame[0])
+	  middle_frame = temp_volumes->volume->threshold_ref_frame[0];
+	else if (middle_frame >= temp_volumes->volume->threshold_ref_frame[1])
+	  middle_frame = temp_volumes->volume->threshold_ref_frame[1];
+
+	max=
+	  (((temp_volumes->volume->threshold_ref_frame[1]-middle_frame)*temp_volumes->volume->threshold_max[0]+
+	    (middle_frame-temp_volumes->volume->threshold_ref_frame[0])*temp_volumes->volume->threshold_max[1])
+	   /(temp_volumes->volume->threshold_ref_frame[1]-temp_volumes->volume->threshold_ref_frame[0]));
+	min=
+	  (((temp_volumes->volume->threshold_ref_frame[1]-middle_frame)*temp_volumes->volume->threshold_min[0]+
+	    (middle_frame-temp_volumes->volume->threshold_ref_frame[0])*temp_volumes->volume->threshold_min[1])
+	   /(temp_volumes->volume->threshold_ref_frame[1]-temp_volumes->volume->threshold_ref_frame[0]));
+      }
+      break;
+    case THRESHOLD_GLOBAL:
+      max = temp_volumes->volume->threshold_max[0];
+      min = temp_volumes->volume->threshold_min[0];
+      break;
+    default:
+      max = min = 0.0;
+      g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
+      break;
+    }
+    
     /* now add this slice into the rgba16 data */
     i.t = i.z = 0;
     for (i.y = 0; i.y < dim.y; i.y++) 

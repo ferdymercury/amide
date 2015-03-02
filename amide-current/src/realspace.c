@@ -189,6 +189,16 @@ inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2) {
   return temp;
 }
 
+/* returns vp1-vp2 for voxelpoint structures */
+inline voxelpoint_t vp_sub(const voxelpoint_t vp1,const voxelpoint_t vp2) {
+  voxelpoint_t temp;
+  temp.x = vp1.x-vp2.x;
+  temp.y = vp1.y-vp2.y;
+  temp.z = vp1.z-vp2.z;
+  temp.t = vp1.t-vp2.t;
+  return temp;
+}
+
 /* returns vp1 == vp2 for voxelpoint structures */
 inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2) {
 
@@ -264,18 +274,80 @@ void rp_print(gchar * message, const realpoint_t rp) {
 }
 
 /* little utility function for debugging */
-void rs_print(gchar * message, const realspace_t coord_frame) {
+void rs_print(gchar * message, const realspace_t * coord_frame) {
 
   g_print("%s\toffset:\t%5.3f\t%5.3f\t%5.3f\n", message, 
-	  coord_frame.offset.x, coord_frame.offset.y, coord_frame.offset.z);
+	  coord_frame->offset.x, coord_frame->offset.y, coord_frame->offset.z);
   g_print("\taxis x:\t%5.3f\t%5.3f\t%5.3f\n",
-	  coord_frame.axis[XAXIS].x,coord_frame.axis[XAXIS].y, coord_frame.axis[XAXIS].z);
+	  coord_frame->axis[XAXIS].x,coord_frame->axis[XAXIS].y, coord_frame->axis[XAXIS].z);
   g_print("\taxis y:\t%5.3f\t%5.3f\t%5.3f\n",
-	  coord_frame.axis[YAXIS].x,coord_frame.axis[YAXIS].y, coord_frame.axis[YAXIS].z);
+	  coord_frame->axis[YAXIS].x,coord_frame->axis[YAXIS].y, coord_frame->axis[YAXIS].z);
   g_print("\taxis z:\t%5.3f\t%5.3f\t%5.3f\n",
-	  coord_frame.axis[ZAXIS].x,coord_frame.axis[ZAXIS].y, coord_frame.axis[ZAXIS].z);
+	  coord_frame->axis[ZAXIS].x,coord_frame->axis[ZAXIS].y, coord_frame->axis[ZAXIS].z);
   return;
 }
+
+/* removes a reference to a coordinate frame struct, frees up the struct if no more references */
+realspace_t * rs_unref(realspace_t * rs) {
+
+  if (rs == NULL) return rs;
+
+  /* sanity checks */
+  g_return_val_if_fail(rs->ref_count > 0, NULL);
+  
+  rs->ref_count--;
+
+  /* if we've removed all reference's, free remaining data structures */
+  if (rs->ref_count == 0) {
+    g_free(rs);
+    rs = NULL;
+  }
+
+  return rs;
+}
+
+realspace_t * rs_init(void) {
+
+  realspace_t * temp_rs;
+  axis_t i_axis;
+
+  if ((temp_rs = (realspace_t *) g_malloc(sizeof(realspace_t))) == NULL) {
+    g_warning("%s: Couldn't allocate memory for the realspace structure",PACKAGE);
+    return temp_rs;
+  }
+  temp_rs->ref_count = 1;
+
+  /* put in some sensable values */
+  temp_rs->offset = zero_rp;
+  for (i_axis=0; i_axis<NUM_AXIS; i_axis++)
+    temp_rs->axis[i_axis] = default_axis[i_axis];
+
+  return temp_rs;
+}
+
+/* adds one to the reference count of a realspace */
+realspace_t * rs_ref(realspace_t * src_rs) {
+  g_return_val_if_fail(src_rs != NULL, NULL);   /* sanity checks */
+  src_rs->ref_count++;
+  return src_rs;
+}
+
+realspace_t * rs_copy(const realspace_t * src_rs) {
+
+  realspace_t * dest_rs;
+  axis_t i_axis;
+
+  /* sanity checks */
+  g_return_val_if_fail(src_rs != NULL, NULL);
+
+  dest_rs = rs_init();
+  dest_rs->offset = src_rs->offset;
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    dest_rs->axis[i_axis] = src_rs->axis[i_axis];
+
+  return dest_rs;
+}
+
 
 /* adjusts the given axis into an orthogonal set */
 static void make_orthogonal(realpoint_t axis[]) {
@@ -368,14 +440,33 @@ void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]) {
   return;
 }
 
+/* change the settings of a coord frame */
+void rs_set_coord_frame(realspace_t * dest_rs, const realspace_t * src_rs) {
+
+  g_assert(dest_rs != NULL);
+  g_assert(src_rs != NULL);
+  
+  rs_set_axis(dest_rs, src_rs->axis);
+  rs_set_offset(dest_rs, src_rs->offset);
+
+  return;
+}
+
+/* invert an axis in the coord frame */
+void rs_invert_axis(realspace_t * rs, const axis_t which_axis) {
+
+  rs->axis[which_axis] = rp_neg(rs->axis[which_axis]);
+
+  return;
+}
 
 /* given the ordered corners[] (i.e corner[0].x < corner[1].x, etc.)
    and the coord_space of those corners, this function will return an
    ordered set of corners in a new coord space that completely enclose
    the given corners */
 
-void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const realpoint_t in_corner[], 
-				     const realspace_t out_coord_frame, realpoint_t out_corner[] ) {
+void realspace_get_enclosing_corners(const realspace_t * in_coord_frame, const realpoint_t in_corner[], 
+				     const realspace_t * out_coord_frame, realpoint_t out_corner[] ) {
 
   realpoint_t temp;
   guint corner;
@@ -438,13 +529,13 @@ void realspace_rotate_on_axis(realspace_t * rs,
   realpoint_t new_axis[NUM_AXIS];
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    new_axis[i_axis] = realpoint_rotate_on_axis(rs_specific_axis(*rs, i_axis), axis, theta);
+    new_axis[i_axis] = realpoint_rotate_on_axis(rs_specific_axis(rs, i_axis), axis, theta);
 
   /* make sure the result is orthonomal */
   make_orthonormal(new_axis);
 
   /* and setup the returned coordinate frame */
-  rs_set_offset(rs, rs_offset(*rs));
+  rs_set_offset(rs, rs_offset(rs));
   rs_set_axis(rs, new_axis);
 
   return;
@@ -455,23 +546,23 @@ void realspace_rotate_on_axis(realspace_t * rs,
 /* returns an axis vector which corresponds to the orthogonal axis (specified
    by ax) in the given view (i.e. coronal, sagittal, etc.) given the current
    axis */
-realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
-					       const view_t view,
-					       const layout_t layout,
-					       const axis_t ax) {
+realpoint_t rs_get_orthogonal_view_axis(const realspace_t * rs,
+					const view_t view,
+					const layout_t layout,
+					const axis_t ax) {
   
   switch(view) {
   case CORONAL:
     switch (ax) {
     case XAXIS:
-      return axis[XAXIS];
+      return rs->axis[XAXIS];
       break;
     case YAXIS:
-      return rp_neg(axis[ZAXIS]);
+      return rp_neg(rs->axis[ZAXIS]);
       break;
     case ZAXIS:
     default:
-      return axis[YAXIS];
+      return rs->axis[YAXIS];
       break;
     }
     break;
@@ -479,33 +570,33 @@ realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
     switch (ax) {
     case XAXIS:
       if (layout == ORTHOGONAL_LAYOUT)
-	return axis[ZAXIS];
+	return rs->axis[ZAXIS];
       else /* LINEAR_LAYOUT */
-	return axis[YAXIS];
+	return rs->axis[YAXIS];
       break;
     case YAXIS:
       if (layout == ORTHOGONAL_LAYOUT)
-	return axis[YAXIS];
+	return rs->axis[YAXIS];
       else /* LINEAR_LAYOUT */
-	return rp_neg(axis[ZAXIS]);
+	return rp_neg(rs->axis[ZAXIS]);
       break;
     case ZAXIS:
     default:
-      return axis[XAXIS];
+      return rs->axis[XAXIS];
       break;
     }
   case TRANSVERSE:
   default:
     switch (ax) {
     case XAXIS:
-      return axis[XAXIS];
+      return rs->axis[XAXIS];
       break;
     case YAXIS:
-      return axis[YAXIS];
+      return rs->axis[YAXIS];
       break;
     case ZAXIS:
     default:
-      return axis[ZAXIS];
+      return rs->axis[ZAXIS];
       break;
     }
     break;
@@ -513,28 +604,29 @@ realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
 }
 
 /* returns the normal axis vector for the given view */
-realpoint_t realspace_get_view_normal(const realpoint_t axis[],
-				      const view_t view) {
+realpoint_t rs_get_view_normal(const realspace_t * rs,
+			       const view_t view) {
 
   /* don't need layout here, as the ZAXIS isn't determined by the layout */
-  return realspace_get_orthogonal_view_axis(axis, view, LINEAR_LAYOUT, ZAXIS);
+  return rs_get_orthogonal_view_axis(rs, view, LINEAR_LAYOUT, ZAXIS);
 }
 
 /* given a coordinate frame, and a view, and the layout, return the appropriate coordinate frame */
-realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
-					   const view_t view,
-					   const layout_t layout) {
+realspace_t * realspace_get_view_coord_frame(const realspace_t * in_coord_frame,
+					     const view_t view,
+					     const layout_t layout) {
 
-  realspace_t return_coord_frame;
+  realspace_t * return_coord_frame;
   axis_t i_axis;
-  realpoint_t new_axis[NUM_AXIS];
+
+  return_coord_frame = rs_init();
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    new_axis[i_axis] =  realspace_get_orthogonal_view_axis(rs_all_axis(in_coord_frame),view,layout,i_axis);
+    return_coord_frame->axis[i_axis] = 
+      rs_get_orthogonal_view_axis(in_coord_frame,view,layout,i_axis);
 
   /* the offset of the coord frame stays the same */
-  rs_set_offset(&return_coord_frame, rs_offset(in_coord_frame));
-  rs_set_axis(&return_coord_frame, new_axis);
+  rs_set_offset(return_coord_frame, rs_offset(in_coord_frame));
 
   return return_coord_frame;
 }
@@ -542,32 +634,32 @@ realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
 /* convert a point in an alternative coordinate frame to the base
    coordinate frame */
 inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
-					       const realspace_t in_alt_coord_frame) {
+					       const realspace_t * in_alt_coord_frame) {
 
   realpoint_t return_point;
 
   return_point.x = 
-    in.x * in_alt_coord_frame.axis[XAXIS].x +
-    in.y * in_alt_coord_frame.axis[YAXIS].x +
-    in.z * in_alt_coord_frame.axis[ZAXIS].x +
-    in_alt_coord_frame.offset.x;
+    in.x * in_alt_coord_frame->axis[XAXIS].x +
+    in.y * in_alt_coord_frame->axis[YAXIS].x +
+    in.z * in_alt_coord_frame->axis[ZAXIS].x +
+    in_alt_coord_frame->offset.x;
   return_point.y = 
-    in.x * in_alt_coord_frame.axis[XAXIS].y +
-    in.y * in_alt_coord_frame.axis[YAXIS].y +
-    in.z * in_alt_coord_frame.axis[ZAXIS].y +
-    in_alt_coord_frame.offset.y;
+    in.x * in_alt_coord_frame->axis[XAXIS].y +
+    in.y * in_alt_coord_frame->axis[YAXIS].y +
+    in.z * in_alt_coord_frame->axis[ZAXIS].y +
+    in_alt_coord_frame->offset.y;
   return_point.z = 
-    in.x * in_alt_coord_frame.axis[XAXIS].z +
-    in.y * in_alt_coord_frame.axis[YAXIS].z +
-    in.z * in_alt_coord_frame.axis[ZAXIS].z +
-    in_alt_coord_frame.offset.z;
+    in.x * in_alt_coord_frame->axis[XAXIS].z +
+    in.y * in_alt_coord_frame->axis[YAXIS].z +
+    in.z * in_alt_coord_frame->axis[ZAXIS].z +
+    in_alt_coord_frame->offset.z;
 
   return return_point;
 }
 
 /* convert a point from the base coordinates to the given alternative coordinate frame */
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
-					       const realspace_t out_alt_coord_frame) {
+					       const realspace_t * out_alt_coord_frame) {
   realpoint_t return_point;
 
   /* compensate the inpoint for the offset of the new coordinate frame */
@@ -576,17 +668,17 @@ inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
   /* instead of multiplying by inv(A), we multiple by transpose(A),
      this is the same thing, as A is orthogonal */
   return_point.x = 
-    in.x * out_alt_coord_frame.axis[XAXIS].x +
-    in.y * out_alt_coord_frame.axis[XAXIS].y +
-    in.z * out_alt_coord_frame.axis[XAXIS].z;
+    in.x * out_alt_coord_frame->axis[XAXIS].x +
+    in.y * out_alt_coord_frame->axis[XAXIS].y +
+    in.z * out_alt_coord_frame->axis[XAXIS].z;
   return_point.y = 
-    in.x * out_alt_coord_frame.axis[YAXIS].x +
-    in.y * out_alt_coord_frame.axis[YAXIS].y +
-    in.z * out_alt_coord_frame.axis[YAXIS].z;
+    in.x * out_alt_coord_frame->axis[YAXIS].x +
+    in.y * out_alt_coord_frame->axis[YAXIS].y +
+    in.z * out_alt_coord_frame->axis[YAXIS].z;
   return_point.z = 
-    in.x * out_alt_coord_frame.axis[ZAXIS].x +
-    in.y * out_alt_coord_frame.axis[ZAXIS].y +
-    in.z * out_alt_coord_frame.axis[ZAXIS].z;
+    in.x * out_alt_coord_frame->axis[ZAXIS].x +
+    in.y * out_alt_coord_frame->axis[ZAXIS].y +
+    in.z * out_alt_coord_frame->axis[ZAXIS].z;
 
   return return_point;
 }
@@ -594,7 +686,7 @@ inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a
    given coordinate system to the base coordinate system */
 inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
-					     const realspace_t in_alt_coord_frame) {
+					     const realspace_t * in_alt_coord_frame) {
 
   realpoint_t return_point;
   realpoint_t temp[NUM_AXIS];
@@ -604,15 +696,15 @@ inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
   temp_rp.x = fabs(in.x); 
   temp_rp.y = temp_rp.z = 0.0;
   temp[XAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
-			      in_alt_coord_frame.offset));
+			      in_alt_coord_frame->offset));
   temp_rp.y = fabs(in.y); 
   temp_rp.x = temp_rp.z = 0.0;
   temp[YAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
-			      in_alt_coord_frame.offset));
+			      in_alt_coord_frame->offset));
   temp_rp.z = fabs(in.z); 
   temp_rp.x = temp_rp.y = 0.0;
   temp[ZAXIS] = rp_abs(rp_sub(realspace_alt_coord_to_base(temp_rp, in_alt_coord_frame),
-			      in_alt_coord_frame.offset));
+			      in_alt_coord_frame->offset));
 
   return_point.x = temp[XAXIS].x+temp[YAXIS].x+temp[ZAXIS].x;
   return_point.y = temp[XAXIS].y+temp[YAXIS].y+temp[ZAXIS].y;
@@ -624,7 +716,7 @@ inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from the
    base coordinate system to a given coordinate system */
 inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
-					     const realspace_t out_alt_coord_frame) {
+					     const realspace_t * out_alt_coord_frame) {
 
   realpoint_t return_point;
   realpoint_t temp[NUM_AXIS];
@@ -633,15 +725,15 @@ inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
   /* all the fabs/rp_abs are 'cause dim's should always be positive */
   temp_rp.x = fabs(in.x); 
   temp_rp.y = temp_rp.z = 0.0;
-  temp[XAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+  temp[XAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame->offset),
 						 out_alt_coord_frame));
   temp_rp.y = fabs(in.y); 
   temp_rp.x = temp_rp.z = 0.0;
-  temp[YAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+  temp[YAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame->offset),
 						 out_alt_coord_frame));
   temp_rp.z = fabs(in.z); 
   temp_rp.x = temp_rp.y = 0.0;
-  temp[ZAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame.offset),
+  temp[ZAXIS]=rp_abs(realspace_base_coord_to_alt(rp_add(temp_rp, out_alt_coord_frame->offset),
 						 out_alt_coord_frame));
 
   return_point.x = temp[XAXIS].x+temp[YAXIS].x+temp[ZAXIS].x;
@@ -655,8 +747,8 @@ inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a given
    coordinate system to another coordinate system */
 inline realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
-					    const realspace_t in_alt_coord_frame,
-					    const realspace_t out_alt_coord_frame) {
+					    const realspace_t * in_alt_coord_frame,
+					    const realspace_t * out_alt_coord_frame) {
 
   realpoint_t return_point;
   

@@ -129,16 +129,6 @@
 	currently has the active focus.
       </para>
       
-      <sect4><title>Scaling</title>
-	<para>
-	  The user has the option of specifying whether each slice
-	  should be scaled individually by the maximum and minimum
-	  values in that slice, or if the slices should be scaled to
-	  the maximum and minium values in their respective data
-	  sets.
-	</para>
-      </sect4>
-      
       <sect4><title>Interpolation</title>
 	<para>
 	  The user can specify what type of interpolation to use for
@@ -193,15 +183,61 @@
     <sect2><title>Threshold Dialog</title>
     <para>
       The threshold dialog allows the threshold and colormap of the
-      currently focused data set to be altered.  On the left are entry
+      currently focused data set to be altered.  On top are entry
       boxes where the maximum and minimum thresholds can be entered,
       either in percent of the data set's maximum and minimum levels
-      or as absolute values.  On the right is a bar graph showing the
-      distribution of the data set's values.  On the far right is a
-      color scale from which the thresholds can also be altered.  The
-      color table of the data set can also be altered from this
-      dialog.
-    </para>
+      or as absolute values.  On the bottom left is a bar graph
+      showing the distribution of the data set's values.  On the
+      bottom right is a color scale from which the thresholds can also
+      be altered.  In the middle are selectors for picking the color
+      table and threshold type (described below).
+   </para>
+
+	<sect3><title>Threshold Types</title> 
+
+	<para> Several different ways can be used for interpreting how
+	the max and min threshold values are applied to the data set.
+	</para>
+
+	<variablelist> 
+
+		<varlistentry><term>Per Slice</term>
+		<listitem><para>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the current slice of data</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>Per Frame</term>
+		<listitem><para>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the current frame of the data set</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>Interpolate Between Frames</term>
+		<listitem><para>This threshold mode only makes sense
+		for dynamic studies.  In this mode, to sets of max and
+		min threshold values are specified, along with which
+		frame of data each of these sets corresponds to.  For
+		data frames before and include the first reference
+		frame, the first set of threshold values are used.
+		For data frames after and including the second
+		reference frame, the second set of threshold values
+		are used.  For data frames between the two reference
+		frames, the max and min threshold values are derived
+		by interpolating (as a function of time) between the
+		two sets of thresholding values.</para></listitem>
+		</varlistentry>
+
+		<varlistentry><term>Global</term>
+		<listitem><para>The max and min threshold values will
+		be applied in proportion to the max and min values in
+		the entire data set</para></listitem>
+		</varlistentry>
+
+	</variablelist>
+
+      </sect3>
+      
   </sect2>
   
   <sect2><title>Series View Window</title>

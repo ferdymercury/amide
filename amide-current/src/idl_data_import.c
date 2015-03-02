@@ -49,20 +49,10 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
   guint file_offset = 35; /* the idl header is 35 bytes */
   realpoint_t new_axis[NUM_AXIS];
 
-  /* acquire space for the volume structure */
-  if ((idl_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure to hold IDL data", PACKAGE);
-    return idl_volume;
-  }
-  if ((idl_volume->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the data set structure to hold IDL data", PACKAGE);
-    return volume_free(idl_volume);
-  }
-
   /* we need to read in the first 35 bytes of the IDL data file (the header) */
   if ((file_pointer = fopen(idl_data_filename, "r")) == NULL) {
     g_warning("%s: couldn't open idl data file %s", PACKAGE,idl_data_filename);
-    return volume_free(idl_volume);
+    return NULL;
   }
     
   /* read in the header of the file */
@@ -74,7 +64,7 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
 	      PACKAGE,idl_data_filename, bytes_to_read, bytes_read);
     g_free(file_buffer);
     fclose(file_pointer);
-    return volume_free(idl_volume);
+    return NULL;
   }
   fclose(file_pointer);
 
@@ -107,14 +97,13 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
   g_print("\tdim\tx %d\ty %d\tz %d\tframes %d\n",dim.x,dim.y,dim.z, dim.t);
 #endif
 
-  /* set the parameters of the volume structure */
-  idl_volume->modality = CT; /* guess CT... */
-  idl_volume->data_set->dim = dim;
-  idl_volume->voxel_size.x = 1.0;
-  idl_volume->voxel_size.y = 1.0;
-  idl_volume->voxel_size.z = 1.0;
-  volume_recalc_far_corner(idl_volume);
-  
+  /* now that we've figured out the header info, read in the rest of the idl data file as raw data*/
+  idl_volume = raw_data_read_volume(idl_data_filename, IDL_RAW_DATA_FORMAT,dim, file_offset);
+  if (idl_volume == NULL) {
+    g_warning("%s: couldn't read in idl data set", PACKAGE);
+    return NULL;
+  }
+
   /* figure out an initial name for the data */
   volume_name = g_strdup(g_basename(idl_data_filename));
   /* remove the extension of the file */
@@ -127,24 +116,19 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
   g_strfreev(frags); /* free up now unused strings */
   g_free(volume_name);
 
-  /* now that we've figured out the header info, read in the rest of the idl data file */
-  idl_volume = raw_data_read_volume(idl_data_filename, idl_volume, IDL_RAW_DATA_FORMAT, file_offset);
-
   /* set the axis such that transverse/coronal/sagittal match up correctly */
   /* this is all derived empirically */
-  if (idl_volume != NULL) {
-    new_axis[0].x = -1.0;
-    new_axis[0].y = 0.0;
-    new_axis[0].z = 0.0;
-    new_axis[1].x = 0.0;
-    new_axis[1].y = 0.0;
-    new_axis[1].z = 1.0;
-    new_axis[2].x = 0.0;
-    new_axis[2].y = 1.0;
-    new_axis[2].z = 0.0;
-    rs_set_axis(&(idl_volume->coord_frame), new_axis); 
-    volume_set_center(idl_volume, zero_rp); /* reset the center, needed as we've reset the axis */
-  }
+  new_axis[0].x = -1.0;
+  new_axis[0].y = 0.0;
+  new_axis[0].z = 0.0;
+  new_axis[1].x = 0.0;
+  new_axis[1].y = 0.0;
+  new_axis[1].z = 1.0;
+  new_axis[2].x = 0.0;
+  new_axis[2].y = 1.0;
+  new_axis[2].z = 0.0;
+  rs_set_axis((idl_volume->coord_frame), new_axis); 
+  volume_set_center(idl_volume, zero_rp); /* reset the center, needed as we've reset the axis */
 
   /* garbage collection */
   g_free(file_buffer);

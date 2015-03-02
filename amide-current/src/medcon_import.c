@@ -123,8 +123,8 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
-  MDC_CALIBRATE=MDC_YES; /* want quantified, calibrated data */
-  MDC_QUANTIFY=MDC_YES;
+  MDC_MAKE_GRAY=MDC_YES;
+  MDC_QUANTIFY=MDC_YES; /* want quantified data */
 
   /* figure out the fallback format */
   MDC_FALLBACK_FRMT = MDC_FRMT_NONE;
@@ -189,10 +189,11 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
     MdcCleanUpFI(&medcon_file_info);
     return temp_volume;
   }
-  if ((temp_volume->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the data set structure to hold medcon data", PACKAGE);
+  if (((temp_volume->data_set = data_set_init()) == NULL) ||
+      ((temp_volume->coord_frame = rs_init()) == NULL)) {
+    g_warning("%s: couldn't allocate space for the data set/coord_frame structure to hold medcon data", PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
 
   /* start figuring out information */
@@ -224,7 +225,6 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   case BIT8_U: /* 3 */
     temp_volume->data_set->format = UBYTE;
     MDC_QUANTIFY = MDC_NO; 
-    MDC_CALIBRATE = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   case BIT16_U: /*  5 */
@@ -233,7 +233,6 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   case BIT16_S: /* 4 */
     temp_volume->data_set->format = SSHORT;
     MDC_QUANTIFY = MDC_NO;
-    MDC_CALIBRATE = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   case BIT32_U: /* 7 */
@@ -242,7 +241,6 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   case BIT32_S: /* 6 */
     temp_volume->data_set->format = SINT;
     MDC_QUANTIFY = MDC_NO;
-    MDC_CALIBRATE = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   default:
@@ -256,7 +254,6 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   case FLT32: /* 10 */
     temp_volume->data_set->format = FLOAT;
     MDC_QUANTIFY = MDC_YES;
-    MDC_CALIBRATE = MDC_YES;
     MDC_NORM_OVER_FRAMES = MDC_YES;
     break;
   }
@@ -322,14 +319,14 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
 
   /* malloc the space for the volume */
   if ((temp_volume->data_set->data = data_set_get_data_mem(temp_volume->data_set)) == NULL) {
     g_warning("%s: couldn't allocate space for the volume",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    return volume_free(temp_volume);
+    return volume_unref(temp_volume);
   }
 
   /* setup the internal scaling factor array for integer types */
@@ -341,9 +338,13 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
     if ((temp_volume->internal_scaling->data = data_set_get_data_mem(temp_volume->internal_scaling)) == NULL) {
       g_warning("%s: couldn't allocate space for the scaling factors for the (X)medcon data",PACKAGE);
       MdcCleanUpFI(&medcon_file_info);
-      return volume_free(temp_volume);
+      return volume_unref(temp_volume);
     }
   }
+
+  /* complain if xmedcon is using an affine transformation, this only checks the first image.... */
+  if (!EQUAL_ZERO(medcon_file_info.image[0].rescale_intercept))
+    g_warning("%s: XmedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off\n", PACKAGE);
 
   /* and load in the data */
   for (i.t = 0; i.t < temp_volume->data_set->dim.t; i.t++) {
@@ -354,6 +355,9 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
     /* set the frame duration, note, medcon/libMDC specifies time as float in msecs */
     temp_volume->frame_duration[i.t] = 
       medcon_file_info.image[i.t*temp_volume->data_set->dim.z].frame_duration/1000.0;
+
+    /* make sure it's not zero */
+    if (temp_volume->frame_duration[i.t] < CLOSE) temp_volume->frame_duration[i.t] = CLOSE;
 
     /* copy the data into the volume */
     for (i.z = 0 ; i.z < temp_volume->data_set->dim.z; i.z++) {
@@ -366,7 +370,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 	  /* store the scaling factor... I think this is the right scaling factor... */
 	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
 	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
-	    * medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+	    * medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].rescale_slope;
 
 	  /* convert the image to a 8 bit unsigned int to begin with */
 	  if ((medcon_buffer = 
@@ -375,7 +379,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 	    g_warning("%s: medcon couldn't convert to an unsigned byte... out of memory?",PACKAGE);
 	    MdcCleanUpFI(&medcon_file_info);
 	    g_free(medcon_buffer);
-	    return volume_free(temp_volume);
+	    return volume_unref(temp_volume);
 	  }
 	  
 	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -394,8 +398,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 
 	  /* store the scaling factor... I think this is the right scaling factor... */
 	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
-	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
-	    *medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].rescale_slope;
 
 	  /* convert the image to a 16 bit signed int to begin with */
 	  if ((medcon_buffer = 
@@ -404,7 +407,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 	    g_warning("%s: medcon couldn't convert to a signed short... out of memory?",PACKAGE);
 	    MdcCleanUpFI(&medcon_file_info);
 	    g_free(medcon_buffer);
-	    return volume_free(temp_volume);
+	    return volume_unref(temp_volume);
 	  }
 	  
 	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -423,8 +426,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 
 	  /* store the scaling factor... I think this is the right scaling factor... */
 	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
-	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
-	    *medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].rescale_slope;
 
 	  /* convert the image to a 32 bit signed int to begin with */
 	  if ((medcon_buffer = 
@@ -433,7 +435,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 	    g_warning("%s: medcon couldn't convert to a signed int... out of memory?",PACKAGE);
 	    MdcCleanUpFI(&medcon_file_info);
 	    g_free(medcon_buffer);
-	    return volume_free(temp_volume);
+	    return volume_unref(temp_volume);
 	  }
 	  
 	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -457,7 +459,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 	    g_warning("%s: medcon couldn't convert to a float... out of memory?",PACKAGE);
 	    MdcCleanUpFI(&medcon_file_info);
 	    g_free(medcon_buffer);
-	    return volume_free(temp_volume);
+	    return volume_unref(temp_volume);
 	  }
 	  
 	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -473,7 +475,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
       default:
 	g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
 	MdcCleanUpFI(&medcon_file_info);
-	return volume_free(temp_volume);
+	return volume_unref(temp_volume);
 	break;
       }
     }
@@ -491,7 +493,8 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   /* setup remaining volume parameters */
   volume_set_scaling(temp_volume, 1.0); /* set the external scaling factor */
   volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
-  volume_recalc_max_min(temp_volume); /* set the max/min values in the volume */
+  volume_calc_frame_max_min(temp_volume);
+  volume_calc_global_max_min(temp_volume); 
   volume_set_center(temp_volume, zero_rp);
 
   return temp_volume;

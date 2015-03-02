@@ -47,7 +47,7 @@ void ui_rendering_dialog_cb_change_quality(GtkWidget * widget, gpointer data) {
   ui_rendering->quality = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"quality"));
 
   /* apply the new quality */
-  rendering_list_set_quality(ui_rendering->contexts, ui_rendering->quality);
+  renderings_set_quality(ui_rendering->contexts, ui_rendering->quality);
 
   /* do updating */
   if (ui_rendering->immediate) {
@@ -73,9 +73,9 @@ void ui_rendering_dialog_cb_change_pixel_type(GtkWidget * widget, gpointer data)
   ui_rendering->pixel_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"pixel_type"));
 
   /* apply the new quality */
-  rendering_list_set_image(ui_rendering->contexts, 
-			   ui_rendering->pixel_type,
-			   ui_rendering->zoom);
+  renderings_set_image(ui_rendering->contexts, 
+		       ui_rendering->pixel_type,
+		       ui_rendering->zoom);
 
   /* do updating */
   if (ui_rendering->immediate) {
@@ -117,9 +117,9 @@ void ui_rendering_dialog_cb_change_zoom(GtkWidget * widget, gpointer data) {
 
   /* set the zoom */
   ui_rendering->zoom = temp_val;
-  rendering_list_set_image(ui_rendering->contexts, 
-			   ui_rendering->pixel_type,
-			   ui_rendering->zoom);
+  renderings_set_image(ui_rendering->contexts, 
+		       ui_rendering->pixel_type,
+		       ui_rendering->zoom);
 
   /* do updating */
   if (ui_rendering->immediate) {
@@ -232,7 +232,7 @@ void ui_rendering_dialog_cb_depth_cueing_toggle(GtkWidget * widget, gpointer dat
   ui_rendering->depth_cueing = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   /* apply the new quality */
-  rendering_list_set_depth_cueing(ui_rendering->contexts, ui_rendering->depth_cueing);
+  renderings_set_depth_cueing(ui_rendering->contexts, ui_rendering->depth_cueing);
 
   /* do updating */
   if (ui_rendering->immediate) {
@@ -271,9 +271,9 @@ void ui_rendering_dialog_cb_change_front_factor(GtkWidget * widget, gpointer dat
 
   /* set the front factor */
   ui_rendering->front_factor = temp_val;
-  rendering_list_set_depth_cueing_parameters(ui_rendering->contexts,
-					     ui_rendering->front_factor,
-					     ui_rendering->density);
+  renderings_set_depth_cueing_parameters(ui_rendering->contexts,
+					 ui_rendering->front_factor,
+					 ui_rendering->density);
 
   /* do updating */
   if (ui_rendering->immediate) {
@@ -311,9 +311,9 @@ void ui_rendering_dialog_cb_change_density(GtkWidget * widget, gpointer data) {
 
   /* set the density */
   ui_rendering->density = temp_val;
-  rendering_list_set_depth_cueing_parameters(ui_rendering->contexts,
-					     ui_rendering->front_factor,
-					     ui_rendering->density);
+  renderings_set_depth_cueing_parameters(ui_rendering->contexts,
+					 ui_rendering->front_factor,
+					 ui_rendering->density);
   
   /* do updating */
   if (ui_rendering->immediate) {

@@ -45,11 +45,11 @@ typedef struct ui_alignment_t {
   GtkWidget * clist_points;
   GdkImlibImage * logo;
 
-  volume_list_t * volumes;
+  volumes_t * volumes;
   volume_t * volume_moving;
   volume_t * volume_fixed;
   align_pts_t * align_pts;
-  realspace_t coord_frame; /* the new coord frame for the moving volume */
+  realspace_t * coord_frame; /* the new coord frame for the moving volume */
 
   guint reference_count;
 } ui_alignment_t;

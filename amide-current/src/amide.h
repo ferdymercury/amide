@@ -38,6 +38,33 @@ typedef enum {LINEAR_LAYOUT, ORTHOGONAL_LAYOUT, NUM_LAYOUTS} layout_t;
 typedef enum {STUDY, VOLUME, ROI, ALIGN_PT, NUM_OBJECTS} object_t;      
 typedef enum {LEFT, RIGHT, NUM_EYES} eye_t;
 
+typedef enum {
+  THRESHOLD_PER_SLICE, 
+  THRESHOLD_PER_FRAME, 
+  THRESHOLD_INTERPOLATE_FRAMES,
+  THRESHOLD_GLOBAL, 
+  NUM_THRESHOLD_TYPES
+} threshold_t;
+
+typedef enum {
+  HELP_INFO_BLANK,
+  HELP_INFO_CANVAS_VOLUME,
+  HELP_INFO_CANVAS_ROI,
+  HELP_INFO_CANVAS_ALIGN_PT,
+  HELP_INFO_CANVAS_ISOCONTOUR_ROI,
+  HELP_INFO_CANVAS_NEW_ROI,
+  HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
+  HELP_INFO_CANVAS_ALIGN,
+  HELP_INFO_TREE_VOLUME,
+  HELP_INFO_TREE_ROI,
+  HELP_INFO_TREE_ALIGN_PT,
+  HELP_INFO_TREE_STUDY,
+  HELP_INFO_TREE_NONE,
+  HELP_INFO_UPDATE_LOCATION,
+  HELP_INFO_UPDATE_VALUE,
+  NUM_HELP_INFOS
+} help_info_t;
+
 /* setup the types for various internal data formats */
 /* note, don't change the amide_data_t unless you want to do a 
    lot of digging through the code, a lot of assumptions are
@@ -58,6 +85,10 @@ extern gchar * view_names[];
 extern gchar * object_menu_names[];
 extern gchar * object_edit_menu_explanation[];
 extern gchar * object_delete_menu_explanation[];
+extern gchar * threshold_type_names[];
+extern gchar * threshold_type_explanations[];
+
+
 
 /* external functions */
 void amide_register_window(gpointer * widget);

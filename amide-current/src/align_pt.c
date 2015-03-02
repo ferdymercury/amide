@@ -31,16 +31,16 @@
 
 
 /* removes a reference to an alignmen tpoint, frees up the point if no more references */
-align_pt_t * align_pt_free(align_pt_t * align_pt) {
+align_pt_t * align_pt_unref(align_pt_t * align_pt) {
 
   if (align_pt == NULL) return align_pt;
 
   /* sanity checks */
-  g_return_val_if_fail(align_pt->reference_count > 0, NULL);
+  g_return_val_if_fail(align_pt->ref_count > 0, NULL);
 
-  align_pt->reference_count--;
+  align_pt->ref_count--;
 
-  if (align_pt->reference_count == 0) {
+  if (align_pt->ref_count == 0) {
 #ifdef AMIDE_DEBUG
     g_print("freeing point: %s\n",align_pt->name);
 #endif
@@ -62,7 +62,7 @@ align_pt_t * align_pt_init(void) {
     g_warning("%s: Couldn't allocate memory for the alignment point",PACKAGE);
     return new_pt;
   }
-  new_pt->reference_count = 1;
+  new_pt->ref_count = 1;
 
   /* put in some sensable values */
   new_pt->name = NULL;
@@ -71,9 +71,9 @@ align_pt_t * align_pt_init(void) {
   return new_pt;
 }
 
-align_pt_t * align_pt_add_reference(align_pt_t * align_pt) {
+align_pt_t * align_pt_ref(align_pt_t * align_pt) {
   g_return_val_if_fail(align_pt != NULL, NULL);
-  align_pt->reference_count++;
+  align_pt->ref_count++;
   return align_pt;
 }
 
@@ -134,14 +134,14 @@ align_pt_t * align_pt_load_xml(gchar * pt_xml_filename, const gchar * study_dire
   if ((doc = xmlParseFile(pt_xml_filename)) == NULL) {
     g_warning("%s: Couldn't Parse AMIDE alignment point xml file %s/%s",
 	      PACKAGE, study_directory,pt_xml_filename);
-    return align_pt_free(new_pt);
+    return align_pt_unref(new_pt);
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE alignment point xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, study_directory,pt_xml_filename);
-    return align_pt_free(new_pt);
+    return align_pt_unref(new_pt);
   }
 
   /* get the name */
@@ -192,22 +192,22 @@ align_pt_t * align_pt_copy(align_pt_t * src_align_pt) {
 
 
 /* free up a list of alignment points */
-align_pts_t * align_pts_free(align_pts_t * align_pts) {
+align_pts_t * align_pts_unref(align_pts_t * align_pts) {
   
   if (align_pts == NULL) return align_pts;
 
   /* sanity check */
-  g_return_val_if_fail(align_pts->reference_count > 0, NULL);
+  g_return_val_if_fail(align_pts->ref_count > 0, NULL);
 
   /* remove a reference count */
-  align_pts->reference_count--;
+  align_pts->ref_count--;
 
   /* things to do if our reference count is zero */
-  if (align_pts->reference_count == 0) {
+  if (align_pts->ref_count == 0) {
     /* recursively delete rest of list */
-    align_pts->next = align_pts_free(align_pts->next); 
+    align_pts->next = align_pts_unref(align_pts->next); 
 
-    align_pts->align_pt = align_pt_free(align_pts->align_pt);
+    align_pts->align_pt = align_pt_unref(align_pts->align_pt);
     g_free(align_pts);
     align_pts = NULL;
   }
@@ -224,18 +224,18 @@ align_pts_t * align_pts_init(align_pt_t * align_pt) {
     g_warning("%s: Couldn't allocate memory for the alignment points list",PACKAGE);
     return new_pts;
   }
-  new_pts->reference_count = 1;
+  new_pts->ref_count = 1;
   
-  new_pts->align_pt = align_pt_add_reference(align_pt);
+  new_pts->align_pt = align_pt_ref(align_pt);
   new_pts->next = NULL;
   
   return new_pts;
 }
 
 /* adds one to the reference count of a alignment points list*/
-align_pts_t * align_pts_add_reference(align_pts_t * align_pts) {
+align_pts_t * align_pts_add_ref(align_pts_t * align_pts) {
   g_return_val_if_fail(align_pts != NULL, NULL);
-  align_pts->reference_count++;
+  align_pts->ref_count++;
   return align_pts;
 }
 
@@ -275,7 +275,7 @@ align_pts_t * align_pts_load_xml(xmlNodePtr node_list, const gchar * study_direc
     file_name = xml_get_string(node_list->children, "text");
     new_pt = align_pt_load_xml(file_name,study_directory);
     new_pts = align_pts_add_pt_first(new_pts, new_pt);
-    new_pt = align_pt_free(new_pt);
+    new_pt = align_pt_unref(new_pt);
     g_free(file_name);
 
   } else
@@ -383,7 +383,7 @@ align_pts_t * align_pts_remove_pt(align_pts_t * align_pts, align_pt_t * pt) {
       else
 	prev_list->next = temp_list->next;
       temp_list->next = NULL;
-      temp_list = align_pts_free(temp_list);
+      temp_list = align_pts_unref(temp_list);
     } else {
       prev_list = temp_list;
       temp_list = temp_list->next;
