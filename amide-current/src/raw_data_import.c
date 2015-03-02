@@ -387,7 +387,7 @@ volume_t * raw_data_import(gchar * raw_data_filename) {
   
   /* and start loading in the file if we hit ok*/
   if (dialog_reply == 0) {
-    REALSPACE_MULT(raw_data_info->volume->dim, 
+    REALPOINT_MULT(raw_data_info->volume->dim, 
 		   raw_data_info->volume->voxel_size, 
 		   raw_data_info->volume->corner);
     temp_volume = raw_data_read_file(raw_data_info->filename,

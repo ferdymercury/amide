@@ -85,7 +85,7 @@ rendering_t * rendering_context_free(rendering_t * context) {
 
 
 rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord_frame, 
-				     realpoint_t render_far_corner, floatpoint_t min_dim, 
+				     realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
 				     intpoint_t max_dim, volume_time_t start, volume_time_t duration) {
 
   rendering_t * temp_context = NULL;
@@ -228,7 +228,7 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
 
   /* now copy the volume data into the rendering context */
   rendering_context_load_volume(temp_context,  render_coord_frame, render_far_corner, 
-				min_dim, start, duration);
+				min_voxel_size, start, duration);
 
   return temp_context;
 }
@@ -238,7 +238,7 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
 
 /* function to update the rendering structure's concept of the volume */
 void rendering_context_load_volume(rendering_t * rendering_context, realspace_t render_coord_frame,
-				   realpoint_t render_far_corner, floatpoint_t min_dim, 
+				   realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
 				   volume_time_t start, volume_time_t duration) {
 
   voxelpoint_t i_voxel, j_voxel;
@@ -252,10 +252,10 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
   realpoint_t slice_far_corner;
 
   /* figure out the size of our volume */
-  rendering_context->dim.x = ceil(render_far_corner.x/min_dim);
-  rendering_context->dim.y = ceil(render_far_corner.y/min_dim);
-  rendering_context->dim.z = ceil(render_far_corner.z/min_dim);
-  voxel_size.x = voxel_size.y = voxel_size.z = min_dim;
+  rendering_context->dim.x = ceil(render_far_corner.x/min_voxel_size);
+  rendering_context->dim.y = ceil(render_far_corner.y/min_voxel_size);
+  rendering_context->dim.z = ceil(render_far_corner.z/min_voxel_size);
+  voxel_size.x = voxel_size.y = voxel_size.z = min_voxel_size;
 
   /* tell the context the dimensions of our rendering volume */
   if (vpSetVolumeSize(rendering_context->vpc, rendering_context->dim.x, 
@@ -312,8 +312,8 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
   slice_far_corner.z = 0.0;
   for (i_voxel.z = 0; i_voxel.z < rendering_context->dim.z; i_voxel.z++) {
     /* use volume_get_slice to slice out our needed data */
-    slice_far_corner.z += min_dim;
-    slice_coord_frame.offset.z += min_dim;
+    slice_far_corner.z += min_voxel_size;
+    slice_coord_frame.offset.z += min_voxel_size;
     slice = volume_get_slice(rendering_context->volume, start, duration, voxel_size, 
 			     slice_coord_frame, slice_far_corner, NEAREST_NEIGHBOR);
     for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering_context->dim.y; j_voxel.y++, i_voxel.y++)
@@ -601,42 +601,62 @@ rendering_list_t * rendering_list_free(rendering_list_t * rendering_list) {
   return rendering_list;
 }
 
-/* returns an initialized rendering list */
-rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
-				       volume_time_t start, volume_time_t duration) {
-  
+
+/* the recursive part of rendering_list_init */
+rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspace_t render_coord_frame,
+					      realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
+					       intpoint_t max_dim, volume_time_t start, volume_time_t duration) {
+
   rendering_list_t * temp_rendering_list = NULL;
-  floatpoint_t min_dim;
-  realpoint_t render_corner[2];
-  realpoint_t render_far_corner;
-  intpoint_t max_dim;
-  
+
   if (volumes == NULL)
     return temp_rendering_list;
 
-  /* figure out what size our rendering voxels will be */
-  min_dim = volumes_min_dim(volumes);
-
-  /* and figure out what our largest dimension could possibly be */
-  max_dim = ceil(volumes_max_dim(volumes));
-
-  /* figure out all encompasing corners for the slices based on our viewing axis */
-  volumes_get_view_corners(volumes, render_coord_frame, render_corner);
-  render_coord_frame.offset = render_corner[0];
-  render_far_corner = realspace_base_coord_to_alt(render_corner[1], render_coord_frame);
-
-  if ((temp_rendering_list = 
-       (rendering_list_t *) g_malloc(sizeof(rendering_list_t))) == NULL) {
+  if ((temp_rendering_list = (rendering_list_t *) g_malloc(sizeof(rendering_list_t))) == NULL) {
     return temp_rendering_list;
   }
   temp_rendering_list->reference_count = 1;
   
   temp_rendering_list->rendering_context = 
     rendering_context_init(volumes->volume, render_coord_frame, render_far_corner,
-			   min_dim, max_dim, start, duration);
-  temp_rendering_list->next = rendering_list_init(volumes->next, render_coord_frame,start,duration);
+			   min_voxel_size, max_dim, start, duration);
+  temp_rendering_list->next = 
+    rendering_list_init_recurse(volumes->next, render_coord_frame, render_far_corner,
+				min_voxel_size, max_dim, start, duration);
 
   return temp_rendering_list;
+}
+					      
+					      
+
+/* returns an initialized rendering list */
+rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
+				       volume_time_t start, volume_time_t duration) {
+  
+  rendering_list_t * temp_rendering_list = NULL;
+  floatpoint_t min_voxel_size;
+  realpoint_t render_corner[2];
+  realpoint_t render_far_corner;
+  realpoint_t size;
+  intpoint_t max_dim;
+  
+  if (volumes == NULL)
+    return temp_rendering_list;
+
+  /* figure out what size our rendering voxels will be */
+  /* probably should adjust this by the current zoom at some point.... */
+  min_voxel_size = volumes_max_min_voxel_size(volumes);
+
+  /* figure out all encompasing corners for the slices based on our viewing axis */
+  volumes_get_view_corners(volumes, render_coord_frame, render_corner);
+  REALPOINT_SUB(render_corner[1], render_corner[0], size);
+  max_dim = ceil(REALPOINT_MAX(size)/min_voxel_size); /* what our largest dimension could possibly be */
+  render_coord_frame.offset = render_corner[0];
+  render_far_corner = realspace_base_coord_to_alt(render_corner[1], render_coord_frame);
+
+  /* and generate our rendering list */
+  return  rendering_list_init_recurse(volumes, render_coord_frame, render_far_corner,
+				      min_voxel_size, max_dim, start, duration);
 }
 
 

@@ -188,7 +188,7 @@ volume_t * cti_import(gchar * cti_filename) {
   }
 
   /* set the far corner of the volume */
-  REALSPACE_MULT(temp_volume->dim, temp_volume->voxel_size, temp_volume->corner);
+  REALPOINT_MULT(temp_volume->dim, temp_volume->voxel_size, temp_volume->corner);
 
   /* set the max/min values in the volume */
 #ifdef AMIDE_DEBUG

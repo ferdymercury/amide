@@ -91,13 +91,12 @@ ui_volume_list_t * ui_volume_list_init(void) {
 /* function to return a pointer to the list element containing the specified volume */
 ui_volume_list_t * ui_volume_list_get_ui_volume(ui_volume_list_t * ui_volume_list, volume_t * volume) {
 
-  while (ui_volume_list != NULL)
-    if (ui_volume_list->volume == volume)
-      return ui_volume_list;
-    else
-      ui_volume_list = ui_volume_list->next;
-
-  return NULL;
+  if (ui_volume_list == NULL)
+    return ui_volume_list;
+  else if (ui_volume_list->volume == volume)
+    return ui_volume_list;
+  else
+    return ui_volume_list_get_ui_volume(ui_volume_list->next, volume);
 }
 
 /* function to check that a volume is in a ui_volume_list */
@@ -194,7 +193,7 @@ volume_list_t * ui_volume_list_return_volume_list(ui_volume_list_t * ui_volume_l
 }
 
 /* returns the minimum dimensional width of the volume with the largest voxel size */
-floatpoint_t ui_volume_list_min_dim(ui_volume_list_t * ui_volume_list) {
+floatpoint_t ui_volume_list_max_min_voxel_size(ui_volume_list_t * ui_volume_list) {
 				      
   volume_list_t * temp_volumes;
   floatpoint_t value;
@@ -204,7 +203,7 @@ floatpoint_t ui_volume_list_min_dim(ui_volume_list_t * ui_volume_list) {
   /* first, generate a volume_list we can pass to volumes_min_dim */
   temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
   
-  value=volumes_min_dim(temp_volumes); /* now calculate the value */
+  value=volumes_max_min_voxel_size(temp_volumes); /* now calculate the value */
   
   temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
 
@@ -213,6 +212,28 @@ floatpoint_t ui_volume_list_min_dim(ui_volume_list_t * ui_volume_list) {
 
 
 
+
+/* returns corners in the view coord frame that completely encompase the volumes */
+void ui_volume_list_get_view_corners(ui_volume_list_t * ui_volume_list,
+				     const realspace_t view_coord_frame,
+				     realpoint_t view_corner[]) {
+
+  volume_list_t * temp_volumes;
+  
+  g_assert(ui_volume_list != NULL);
+
+  /* first, generate a volume_list we can pass to volumes_get_width */
+  temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
+  
+  volumes_get_view_corners(temp_volumes, view_coord_frame, view_corner); 
+  
+  temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
+
+  return;
+}
+
+
+/* returns the width of the assembly of volumes wrt the given axis */
 floatpoint_t ui_volume_list_get_width(ui_volume_list_t * ui_volume_list, 
 				      const realspace_t view_coord_frame) {
 

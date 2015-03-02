@@ -95,9 +95,11 @@ typedef struct ui_study_t {
   GtkWidget * color_table_menu;
   GtkWidget * add_roi_option_menu;
   GtkWidget * tree; /* the tree showing the study data structure info */
-  GtkCTreeNode * tree_studies;
+  GtkCTreeNode * tree_study;
   GtkCTreeNode * tree_volumes;
   GtkCTreeNode * tree_rois;
+  GtkWidget * study_dialog;
+  gboolean study_selected;
   GtkWidget * time_dialog;
   GtkWidget * time_button;
   scaling_t scaling; /* scale on this slice or the whole volume */
@@ -106,7 +108,6 @@ typedef struct ui_study_t {
   roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
-  realspace_t current_view_coord_frame;
   volume_time_t current_time;
   volume_time_t current_duration;
   floatpoint_t current_thickness;

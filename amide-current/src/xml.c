@@ -63,12 +63,14 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
   temp_string = xml_get_string(nodes, descriptor);
 
  /* convert to a floating point */
-  error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_point.x), &(return_point.y), &(return_point.z));
-  g_free(temp_string);
+  if (temp_string != NULL) {
+    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_point.x), &(return_point.y), &(return_point.z));
+    g_free(temp_string);
+    if ((error == EOF)) return_point = realpoint_init;
+    return return_point;
+  } else
+    return realpoint_init;
 
-  if ((error == EOF)) return_point = realpoint_init;
-
-  return return_point;
 }
 
 
@@ -112,7 +114,6 @@ volume_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
 
   /* convert to a float */
   error = sscanf(temp_string, "%lf", &return_time);
-  g_print("get time %s %5.3f\n",temp_string, return_time);
   g_free(temp_string);
   if ((error == EOF)) {
     g_warning("%s: error convertion time\n", PACKAGE);
@@ -145,7 +146,6 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
   for (i=0;i<num_times;i++) {
     /* convert to a float */
     error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
-    g_print("get times %s %5.3f\n",string_chunks[i], return_times[i]);
     if ((error == EOF))  return_times[i] = 0.0;
   }
 
@@ -207,6 +207,8 @@ realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
     temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
     new_space.axis[i_axis] = xml_get_realpoint(nodes,temp_string);
+    if (REALPOINT_EQUAL(new_space.axis[i_axis], realpoint_init))
+	new_space.axis[i_axis] = default_axis[i_axis];
     g_free(temp_string);
   }
 

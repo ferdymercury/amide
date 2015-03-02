@@ -116,7 +116,7 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   idl_volume->voxel_size.x = 1.0;
   idl_volume->voxel_size.y = 1.0;
   idl_volume->voxel_size.z = 1.0;
-  REALSPACE_MULT(idl_volume->dim, idl_volume->voxel_size, idl_volume->corner);
+  REALPOINT_MULT(idl_volume->dim, idl_volume->voxel_size, idl_volume->corner);
   
   /* figure out an initial name for the data */
   volume_name = g_basename(idl_data_filename);

@@ -144,10 +144,10 @@ struct _rendering_list_t {
 /* external functions */
 rendering_t * rendering_context_free(rendering_t * context);
 rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord_frame, 
-				     realpoint_t render_far_corner, floatpoint_t min_dim, 
+				     realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
 				     intpoint_t max_dim, volume_time_t start, volume_time_t duration);
 void rendering_context_load_volume(rendering_t * rendering_context, realspace_t render_coord_frame,
-				   realpoint_t render_far_corner, floatpoint_t min_dim, 
+				   realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
 				   volume_time_t start, volume_time_t duration);
 void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble rotation);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
@@ -157,6 +157,9 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 						   gdouble front_factor, gdouble density);
 void rendering_context_render(rendering_t * context);
 rendering_list_t * rendering_list_free(rendering_list_t * rendering_list);
+rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspace_t render_coord_frame,
+					       realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
+					       intpoint_t max_dim, volume_time_t start, volume_time_t duration);
 rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
 				       volume_time_t start, volume_time_t duration);
 void rendering_lists_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);

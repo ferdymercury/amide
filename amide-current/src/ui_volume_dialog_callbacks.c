@@ -168,10 +168,10 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   }
   
   /* recalculate the volume's offset based on the new center */
-  REALSPACE_SUB(new_center, old_center, shift);
+  REALPOINT_SUB(new_center, old_center, shift);
 
   /* and save any changes to the coord frame */
-  REALSPACE_ADD(volume_new_info->coord_frame.offset, shift, volume_new_info->coord_frame.offset);
+  REALPOINT_ADD(volume_new_info->coord_frame.offset, shift, volume_new_info->coord_frame.offset);
 
   /* update the entry widgets as necessary */
   if (update_size_x) {
@@ -263,6 +263,7 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
   ui_study_t * ui_study;
   volume_t * volume_new_info = data;
   view_t i_view;
+  axis_t which_axis;
   floatpoint_t rotation;
   GtkWidget * volume_dialog;
   realpoint_t center, temp;
@@ -277,60 +278,24 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
   i_view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"view"));
 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
-
-  switch(i_view) {
-  case TRANSVERSE:
-    volume_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  case CORONAL:
-    volume_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  case SAGITTAL:
-    volume_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    volume_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  default:
-    break;
-  }
+  which_axis = realspace_get_orthogonal_which_axis(i_view);
+  volume_new_info->coord_frame.axis[XAXIS] = 
+    realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[XAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  volume_new_info->coord_frame.axis[YAXIS] = 
+    realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[YAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  volume_new_info->coord_frame.axis[ZAXIS] = 
+    realspace_rotate_on_axis(&volume_new_info->coord_frame.axis[ZAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
 
   
   /* recalculate the offset of this volume based on the center we stored */
-  REALSPACE_CMULT(-0.5,volume_new_info->corner,temp);
+  REALPOINT_CMULT(-0.5,volume_new_info->corner,temp);
   volume_new_info->coord_frame.offset = center;
   volume_new_info->coord_frame.offset = 
     realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
@@ -365,7 +330,7 @@ void ui_volume_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   }
 
   /* recalculate the offset of this volume based on the center we stored */
-  REALSPACE_CMULT(-0.5,volume_new_info->corner,temp);
+  REALPOINT_CMULT(-0.5,volume_new_info->corner,temp);
   volume_new_info->coord_frame.offset = center;
   volume_new_info->coord_frame.offset = realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
 
@@ -426,7 +391,7 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   }
 
   /* reset the far corner */
-  REALSPACE_MULT(ui_volume_list_item->volume->dim,ui_volume_list_item->volume->voxel_size,
+  REALPOINT_MULT(ui_volume_list_item->volume->dim,ui_volume_list_item->volume->voxel_size,
 		 ui_volume_list_item->volume->corner);
 
   /* apply any time changes, and recalculate the frame selection

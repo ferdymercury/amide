@@ -27,6 +27,9 @@
 #include <glib.h>
 #include <math.h>
 #include <sys/stat.h>
+#ifdef AMIDE_DEBUG
+#include <sys/timeb.h>
+#endif
 #include "amide.h"
 #include "color_table.h"
 #include "volume.h"
@@ -35,6 +38,8 @@
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", \
+				 "2x2x1 Filter", \
+				 "2x2x2 Filter", \
 				 "Bilinear", \
 				 "Trilinear"};
 
@@ -297,7 +302,6 @@ volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
   /* and we're done */
   xmlFreeDoc(doc);
 
-  g_print("dim %d %d %d\n",new_volume->dim.x,new_volume->dim.y,new_volume->dim.z);
   return new_volume;
 }
 
@@ -378,7 +382,7 @@ realpoint_t volume_calculate_center(const volume_t * volume) {
   corner[1] = volume->corner;
  
   /* the center in volume coords is then just half the far corner */
-  REALSPACE_MADD(0.5,corner[1], 0.5,corner[0], center);
+  REALPOINT_MADD(0.5,corner[1], 0.5,corner[0], center);
   
   /* now, translate that into real coords */
   center = realspace_alt_coord_to_base(center, volume->coord_frame);
@@ -387,13 +391,9 @@ realpoint_t volume_calculate_center(const volume_t * volume) {
 }
 
 /* figure out the real point that corresponds to the voxel coordinates */
-realpoint_t volume_voxel_to_real(const volume_t * volume, const voxelpoint_t i) {
+inline realpoint_t volume_voxel_to_realpoint(const volume_t * volume, const voxelpoint_t i) {
 
   realpoint_t real_p;
-
-  //  real_p.x = (((floatpoint_t )i.x)*volume->corner.x)/volume->dim.x + volume->voxel_size.x/2.0;
-  //  real_p.y = (((floatpoint_t )i.y)*volume->corner.y)/volume->dim.y + volume->voxel_size.y/2.0;
-  //  real_p.z = (((floatpoint_t )i.z)*volume->corner.z)/volume->dim.z + volume->voxel_size.z/2.0;
 
   real_p.x = (((floatpoint_t) i.x) + 0.5) * volume->voxel_size.x;
   real_p.y = (((floatpoint_t) i.y) + 0.5) * volume->voxel_size.y; 
@@ -403,18 +403,29 @@ realpoint_t volume_voxel_to_real(const volume_t * volume, const voxelpoint_t i) 
 }
 
 /* figure out the voxel point that corresponds to the real coordinates */
-voxelpoint_t volume_real_to_voxel(const volume_t * volume, const realpoint_t real) {
+inline voxelpoint_t volume_realpoint_to_voxel(const volume_t * volume, const realpoint_t real) {
   
   voxelpoint_t voxel_p;
 
-  //  voxel_p.x = floor(((real.x)/volume->corner.x)*volume->dim.x);
-  //  voxel_p.y = floor(((real.y)/volume->corner.y)*volume->dim.y);
-  //  voxel_p.z = floor(((real.z)/volume->corner.z)*volume->dim.z);
   voxel_p.x = floor(real.x/volume->voxel_size.x);
   voxel_p.y = floor(real.y/volume->voxel_size.y);
   voxel_p.z = floor(real.z/volume->voxel_size.z);
   
   return voxel_p;
+}
+
+/* check to make sure a given voxel is inside a volume */
+inline gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel) {
+
+  if ( (voxel.x < 0) || 
+       (voxel.y < 0) || 
+       (voxel.z < 0) ||
+       (voxel.x >= volume->dim.x) || 
+       (voxel.y >= volume->dim.y) ||
+       (voxel.z >= volume->dim.z))
+    return FALSE;
+  else
+    return TRUE;
 }
 
 /* returns the start time of the given frame */
@@ -608,15 +619,26 @@ volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t 
   return volume_list;
 }
 
-gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel) {
+/* makes a new volume_list which is a copy of a previous volume_list */
+volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
 
-  if ( (voxel.x < 0) || (voxel.y < 0) || (voxel.z < 0) ||
-       (voxel.x >= volume->dim.x) || (voxel.y >= volume->dim.y) ||
-       (voxel.z >= volume->dim.z))
-    return FALSE;
-  else
-    return TRUE;
+  volume_list_t * dest_volume_list;
+
+  /* sanity check */
+  g_return_val_if_fail(src_volume_list != NULL, NULL);
+
+  dest_volume_list = volume_list_init();
+
+  /* make a separate copy in memory of the volume this list item points to */
+  dest_volume_list->volume = volume_copy(src_volume_list->volume);
+    
+  /* and make copies of the rest of the elements in this list */
+  if (src_volume_list->next != NULL)
+    dest_volume_list->next = volume_list_copy(src_volume_list->next);
+
+  return dest_volume_list;
 }
+
 
 /* takes a volume and a view_axis, and gives the corners necessary for
    the view to totally encompass the volume in the base coord frame */
@@ -677,10 +699,46 @@ void volumes_get_view_corners(volume_list_t * volumes,
 }
 
 
-/* returns the minimum dimensional width of the volume with the largest voxel size */
-floatpoint_t volumes_min_dim(volume_list_t * volumes) {
+/* returns the minimum dimensional width of the list of volumes */
+floatpoint_t volumes_min_voxel_size(volume_list_t * volumes) {
 
-  floatpoint_t min_dim, temp;
+  floatpoint_t min_voxel_size, temp;
+
+  g_assert(volumes!=NULL);
+
+  if (volumes->next == NULL)
+    min_voxel_size = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+  else {
+    min_voxel_size = volumes_min_voxel_size(volumes->next);
+    temp = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+    if (temp < min_voxel_size) min_voxel_size = temp;
+  }
+
+  return min_voxel_size;
+}
+
+/* returns the maximal dimensional size of a list of volumes */
+floatpoint_t volumes_max_size(volume_list_t * volumes) {
+
+  floatpoint_t temp, max_dim;
+
+  if (volumes == NULL)
+    return 0.0;
+  else {
+    max_dim = volumes_max_size(volumes->next);
+    temp = REALPOINT_MAX_DIM(volumes->volume->voxel_size) * REALPOINT_MAX(volumes->volume->dim);
+    if (temp > max_dim)
+      max_dim = temp;
+  }
+
+  return max_dim;
+}
+
+
+/* returns the minimum dimensional width of the volumes with the largest voxel size */
+floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes) {
+
+  floatpoint_t min_voxel_size, temp;
 
   g_assert(volumes!=NULL);
 
@@ -690,15 +748,17 @@ floatpoint_t volumes_min_dim(volume_list_t * volumes) {
      huge image when adding in a study with small voxels (i.e. a CT
      scan).  The user can always increase the zoom later*/
   /* figure out out thickness */
-  min_dim = 0.0;
-  while (volumes != NULL) {
+  if (volumes->next == NULL)
+    min_voxel_size = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+  else {
+    min_voxel_size = volumes_min_voxel_size(volumes->next);
     temp = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
-    if (temp > min_dim) min_dim = temp;
-    volumes = volumes->next;
+    if (temp > min_voxel_size) min_voxel_size = temp;
   }
 
-  return min_dim;
+  return min_voxel_size;
 }
+
 
 /* returns the maximum dimension of the given volumes (in voxels) */
 intpoint_t volumes_max_dim(volume_list_t * volumes) {
@@ -928,19 +988,17 @@ volume_t * volume_get_slice(const volume_t * volume,
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
 
-  floatpoint_t thickness = requested_voxel_size.z;
-  volume_t * return_slice;
+  volume_t * slice;
   voxelpoint_t i,j;
   intpoint_t z;
-  floatpoint_t volume_min_dim, view_min_dim, max_diff, voxel_length;
+  floatpoint_t volume_min_voxel_size, max_diff, voxel_length, z_steps;
   floatpoint_t real_value[8];
-  guint dimx=0, dimy=0, dimz=0;
-  realpoint_t slice_corner;
-  realpoint_t real_corner[2];
-  realpoint_t volume_p,view_p, alt;
+  realpoint_t volume_p,slice_p, alt,temp_p;
   realpoint_t box_corner_view[8], box_corner_real[8];
+  realpoint_t half_size[NUM_AXIS], stride[NUM_AXIS], last[NUM_AXIS];
+  axis_t i_axis;
   guint l;
-  volume_data_t z_weight, max, min, temp;
+  volume_data_t z_weight, max, min, temp, total_weight;
   guint start_frame, num_frames, i_frame;
   volume_time_t volume_start, volume_end;
   gchar * temp_string;
@@ -948,21 +1006,10 @@ volume_t * volume_get_slice(const volume_t * volume,
   /* sanity check */
   g_assert(volume != NULL);
 
-  /* get some important dimensional information */
-  volume_min_dim = REALPOINT_MIN_DIM(volume->voxel_size);
 
-  /* not quite optimal, you may miss voxels in the z direction in special cases (extended thickness
-     slices where thickness is still the minimal dimension ) */
-  alt = requested_voxel_size;
-  alt.z = alt.x; /* we're ignoring the z dimension when getting the minimal voxel size */
-  view_min_dim = REALPOINT_MIN_DIM(alt);
+  /* ----- figure out what frames of this volume to include ----*/
 
-  /* calculate some pertinent values */
-  dimx = ceil(fabs(far_corner.x)/view_min_dim);
-  dimy = ceil(fabs(far_corner.y)/view_min_dim);
-  dimz = 1;
-
-  /* figure out what frames of this volume to include */
+  /* figure out what frame to start at */
   start_frame = volume->num_frames + 1;
   i_frame = 0;
   while (i_frame < volume->num_frames) {
@@ -973,7 +1020,9 @@ volume_t * volume_get_slice(const volume_t * volume,
   }
   if (start_frame >= volume->num_frames)
     start_frame = volume->num_frames-1;
+  volume_start = volume_start_time(volume, start_frame);
 
+  /* and figure out what frame to end at */
   num_frames = volume->num_frames + 1;
   i_frame = start_frame;
   while ((i_frame < volume->num_frames) && (num_frames > volume->num_frames)) {
@@ -984,96 +1033,234 @@ volume_t * volume_get_slice(const volume_t * volume,
   }
   if (num_frames+start_frame > volume->num_frames)
     num_frames = volume->num_frames-start_frame;
+  volume_end = volume_start_time(volume,start_frame+num_frames-1) + 
+    volume->frame_duration[start_frame+num_frames-1];
 
-  volume_start = volume_start_time(volume, start_frame);
-  volume_end = volume_start_time(volume,start_frame+num_frames-1)
-    +volume->frame_duration[start_frame+num_frames-1];
+  /* ------------------------- */
 
-#ifdef AMIDE_DEBUG
-  g_print("new slice from volume %s\t---------------------\n",volume->name);
-  g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",dimx,dimy,dimz);
-#endif
 
-  //  g_print("start %5.3f duration %5.3f\n",start, duration);
 
-  /* make sure the slice thickness is set correctly */
-  slice_corner = far_corner;
-  slice_corner.z = thickness;
 
-  /* convert to real space */
-  real_corner[0] = slice_coord_frame.offset;
-  real_corner[1] = realspace_alt_coord_to_base(slice_corner,
-					       slice_coord_frame);
-  
-#ifdef AMIDE_DEBUG
-  g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-	  real_corner[0].x,real_corner[0].y,real_corner[0].z);
-  g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-	  real_corner[1].x,real_corner[1].y,real_corner[1].z);
-  g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
-	  volume_start, volume_end,start_frame,start_frame+num_frames-1);
-#endif
-  return_slice = volume_init();
-  temp_string = g_strdup_printf("slice from volume %s: size x %5.3f y %5.3f z %5.3f", volume->name,
-				real_corner[1].x-real_corner[0].x,
-				real_corner[1].y-real_corner[0].y,
-				real_corner[1].z-real_corner[0].z);
-  volume_set_name(return_slice,temp_string);
+  /* initialize the return slice */
+  slice = volume_init();
+  slice->num_frames = 1;
+  slice->dim.x = ceil(fabs(far_corner.x)/requested_voxel_size.x);
+  slice->dim.y = ceil(fabs(far_corner.y)/requested_voxel_size.y);
+  slice->dim.z = 1;
+  slice->voxel_size = requested_voxel_size;
+  slice->coord_frame = slice_coord_frame;
+  slice->corner.x = far_corner.x;
+  slice->corner.y = far_corner.y;
+  slice->corner.z = requested_voxel_size.z;
+  slice->scan_start = volume_start;
+  temp_string =  g_strdup_printf("slice from volume %s: size x %5.3f y %5.3f z %5.3f", 
+				 volume->name, slice->corner.x, 
+				 slice->corner.y, slice->corner.z);
+  volume_set_name(slice,temp_string);
   g_free(temp_string);
-  return_slice->num_frames = 1;
-  return_slice->dim.x = dimx;
-  return_slice->dim.y = dimy;
-  return_slice->dim.z = dimz;
-  return_slice->voxel_size = requested_voxel_size;
-  return_slice->coord_frame = slice_coord_frame;
-  return_slice->corner = slice_corner;
-  return_slice->scan_start = volume_start;
-  if ((return_slice->frame_duration = volume_get_frame_duration_mem(return_slice)) == NULL) {
+
+  if ((slice->frame_duration = volume_get_frame_duration_mem(slice)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice frame duration array\n",PACKAGE);
-    return_slice = volume_free(return_slice);
-    return return_slice;
+    slice = volume_free(slice);
+    return slice;
   }
-  return_slice->frame_duration[0] = volume_end-volume_start;
-  if ((return_slice->data = volume_get_data_mem(return_slice)) == NULL) {
+  slice->frame_duration[0] = volume_end-volume_start;
+  if ((slice->data = volume_get_data_mem(slice)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice\n",PACKAGE);
-    return_slice = volume_free(return_slice);
-    return return_slice;
+    slice = volume_free(slice);
+    return slice;
   }
 
-  /* get the length of a voxel for the given view axis*/
+  /* ----------------------- */
+
+
+
+#ifdef AMIDE_DEBUG
+  {
+    realpoint_t real_corner[2];
+    /* convert to real space */
+    real_corner[0] = slice->coord_frame.offset;
+    real_corner[1] = realspace_alt_coord_to_base(slice->corner,
+						 slice->coord_frame);
+    g_print("new slice from volume %s\t---------------------\n",volume->name);
+    g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
+	    slice->dim.x, slice->dim.y, slice->dim.z);
+    g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+	    real_corner[0].x,real_corner[0].y,real_corner[0].z);
+    g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
+    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
+	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
+  }
+#endif
+
+
+  /* voxel_length is the length of a voxel given the coordinate frame of the slice.
+     this is used to figure out how many iterations in the z direction we need to do */
   alt.x = alt.y = 0.0;
   alt.z = 1.0;
-  alt = realspace_alt_dim_to_alt(alt, slice_coord_frame, volume->coord_frame);
-  voxel_length = REALSPACE_DOT_PRODUCT(alt,volume->voxel_size);
+  alt = realspace_alt_dim_to_alt(alt, slice->coord_frame, volume->coord_frame);
+  voxel_length = REALPOINT_DOT_PRODUCT(alt,volume->voxel_size);
+  z_steps = slice->voxel_size.z/voxel_length;
+
+  /* figure out what stepping one voxel in a given direction in our slice
+     cooresponds to in our volume */
+  for (i_axis = 0; i_axis < NUM_AXIS; i_axis++) {
+    alt.x = (i_axis == XAXIS) ? slice->voxel_size.x : 0.0;
+    alt.y = (i_axis == YAXIS) ? slice->voxel_size.y : 0.0;
+    alt.z = (i_axis == ZAXIS) ? voxel_length : 0.0;
+    alt = realspace_alt_coord_to_base(alt, slice->coord_frame);
+    REALPOINT_SUB(alt, slice->coord_frame.offset, alt);
+    REALPOINT_ADD(alt, volume->coord_frame.offset, alt);
+    stride[i_axis] = realspace_base_coord_to_alt(alt, volume->coord_frame);
+  }
+
+  /* figure out what point in the volume we're going to start at */
+  alt.x = slice->voxel_size.x/2.0;
+  alt.y = slice->voxel_size.y/2.0;
+  alt.z = voxel_length/2.0;
+  volume_p = realspace_alt_coord_to_alt(alt, slice->coord_frame, volume->coord_frame);
+
+  /* get some important dimensional information */
+  volume_min_voxel_size = REALPOINT_MIN_DIM(volume->voxel_size);
+
+  /* figure out how to step half a volume voxel's size in a given direction */
+  for (i_axis = 0 ; i_axis < NUM_AXIS ; i_axis++) {
+    alt.x = (i_axis == XAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
+    alt.y = (i_axis == YAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
+    alt.z = (i_axis == ZAXIS) ? (1.0-CLOSE)*(volume_min_voxel_size/2.0) : 0.0;
+    half_size[i_axis] = realspace_alt_dim_to_alt(alt, slice->coord_frame, volume->coord_frame);
+
+    /* correct for non-square voxel sizes */
+    //half_size[i_axis].x = half_size[i_axis].x * volume->voxel_size.x/volume_min_dim;
+    //    half_size[i_axis].y = half_size[i_axis].y * volume->voxel_size.y/volume_min_dim;
+    //    half_size[i_axis].z = half_size[i_axis].z * volume->voxel_size.z/volume_min_dim;
+    // g_print("stride %d \t %5.3f %5.3f %5.3f\n",i_axis, stride[i_axis].x,stride[i_axis].y,stride[i_axis].z);
+    // g_print("1/2       \t %5.3f %5.3f %5.3f\n",half_size[i_axis].x,half_size[i_axis].y,half_size[i_axis].z);
+  }
 
 
   /* initialize our volume */
   i.z = 0;
-  for (i.y = 0; i.y < dimy; i.y++) 
-    for (i.x = 0; i.x < dimx; i.x++) 
-      VOLUME_SET_CONTENT(return_slice,0,i)=0.0;
+  for (i.y = 0; i.y < slice->dim.y; i.y++) 
+    for (i.x = 0; i.x < slice->dim.x; i.x++) 
+      VOLUME_SET_CONTENT(slice,0,i)=0.0;
+
 
   switch(interpolation) {
+
+  case TWO_BY_TWO:
+    /* iterate over the number of frames we'll be incorporating into this slice */
+    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
+      
+      /* iterate over the number of planes we'll be compressing into this slice */
+      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
+	last[ZAXIS] = volume_p;
+	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	z_weight = z_weight/4.0;
+	
+	/* iterate over the y dimension */
+	for (i.y = 0; i.y < slice->dim.y; i.y++) {
+	  last[YAXIS] = volume_p;
+	  /* and iteratate over x */
+	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
+	    
+	    /* get the locations and values of the four voxels in the real volume
+	       which are closest to our view voxel */
+	    total_weight = 0;
+	    
+	    /* find the closest voxels in volume space and their values*/
+	    for (l=0; l<4; l++) {
+	      
+	      if (l & 0x1) REALPOINT_SUB(volume_p, half_size[XAXIS],temp_p);
+	      else REALPOINT_ADD(volume_p, half_size[XAXIS],temp_p);
+	      
+	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
+	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
+
+	      j = volume_realpoint_to_voxel(volume, temp_p);
+	      
+	      /* get the value of the closest voxel in real space */
+	      if (!volume_includes_voxel(volume,j)) real_value[l] = EMPTY;
+	      else real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
+	      
+	      VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[l];
+	    }
+	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
+	  }
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
+	}
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
+      }
+    break;
+
+  case TWO_BY_TWO_BY_TWO:
+    /* iterate over the number of frames we'll be incorporating into this slice */
+    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
+      
+      /* iterate over the number of planes we'll be compressing into this slice */
+      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
+	last[ZAXIS] = volume_p;
+	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	z_weight = z_weight/8.0;
+	
+	/* iterate over the y dimension */
+	for (i.y = 0; i.y < slice->dim.y; i.y++) {
+	  last[YAXIS] = volume_p;
+	  /* and iteratate over x */
+	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
+	    
+	    /* get the locations and values of the four voxels in the real volume
+	       which are closest to our view voxel */
+	    total_weight = 0;
+	    
+	    /* find the closest voxels in volume space and their values*/
+	    for (l=0; l<8; l++) {
+	      
+	      if (l & 0x1) REALPOINT_SUB(volume_p, half_size[XAXIS],temp_p);
+	      else REALPOINT_ADD(volume_p, half_size[XAXIS],temp_p);
+	      
+	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
+	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
+
+	      if (l & 0x4) REALPOINT_SUB(temp_p, half_size[ZAXIS],temp_p);
+	      else REALPOINT_ADD(temp_p, half_size[ZAXIS],temp_p);
+	      
+	      j = volume_realpoint_to_voxel(volume, temp_p);
+	      
+	      /* get the value of the closest voxel in real space */
+	      if (!volume_includes_voxel(volume,j)) real_value[l] = EMPTY;
+	      else real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
+	      
+	      VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[l];
+	    }
+	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
+	  }
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
+	}
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
+      }
+    break;
+
   case BILINEAR:
     for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      for (z = 0; z < ceil(thickness/voxel_length); z++) {
+      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) {
 	
 	/* the view z_coordinate for this iteration's view voxel */
-	view_p.z = z*voxel_length+view_min_dim/2.0;
+	slice_p.z = z*voxel_length+voxel_length/2.0;
 	
 	/* z_weight is between 0 and 1, this is used to weight the last voxel 
 	   in the view z direction */
-	z_weight = floor(thickness/voxel_length) > z*voxel_length ? 1.0 : 
-	  thickness/voxel_length-floor(thickness/voxel_length);
+	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
 	
-	for (i.y = 0; i.y < dimy; i.y++) {
+	for (i.y = 0; i.y < slice->dim.y; i.y++) {
 
 	  /* the view y_coordinate of the center of this iteration's view voxel */
-	  view_p.y = (((floatpoint_t) i.y)/dimy) * slice_corner.y + view_min_dim/2.0;
+	  slice_p.y = (((floatpoint_t) i.y)/slice->dim.y) * slice->corner.y + slice->voxel_size.y/2.0;
 	  
 	  /* the view x coord of the center of the first view voxel in this loop */
-	  view_p.x = view_min_dim/2.0;
-	  for (i.x = 0; i.x < dimx; i.x++) {
+	  slice_p.x = slice->voxel_size.x/2.0;
+	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
 	    
 	    /* get the locations and values of the four voxels in the real volume
 	       which are closest to our view voxel */
@@ -1081,18 +1268,18 @@ volume_t * volume_get_slice(const volume_t * volume,
 	    
 	    /* find the closest voxels in real space and their values*/
 	    for (l=0; l<4; l++) {
-	      box_corner_view[l].x = view_p.x + ((l & 0x1) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
-	      box_corner_view[l].y = view_p.y + ((l & 0x2) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
-	      box_corner_view[l].z = view_p.z;
+	      box_corner_view[l].x = slice_p.x + ((l & 0x1) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
+	      box_corner_view[l].y = slice_p.y + ((l & 0x2) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
+	      box_corner_view[l].z = slice_p.z;
 
 	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
-						   slice_coord_frame,
+						   slice->coord_frame,
 						   volume->coord_frame);
-	      j = volume_real_to_voxel(volume, volume_p);
-	      volume_p = volume_voxel_to_real(volume, j);
+	      j = volume_realpoint_to_voxel(volume, volume_p);
+	      volume_p = volume_voxel_to_realpoint(volume, j);
 	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
 							      volume->coord_frame,
-							      slice_coord_frame);
+							      slice->coord_frame);
 	      /* get the value of the closest voxel in real space */
 	      if (!volume_includes_voxel(volume,j))
 		real_value[l] = EMPTY;
@@ -1102,21 +1289,21 @@ volume_t * volume_get_slice(const volume_t * volume,
 	    
 	    /* do the x direction linear interpolation of the sets of two points */
 	    for (l=0;l<4;l=l+2) {
-	      if ((view_p.x > box_corner_real[l].x) && 
-		  (view_p.x > box_corner_real[l+1].x))
+	      if ((slice_p.x > box_corner_real[l].x) && 
+		  (slice_p.x > box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
-	      else if ((view_p.x<box_corner_real[l].x) && 
-		       (view_p.x<box_corner_real[l+1].x))
+	      else if ((slice_p.x<box_corner_real[l].x) && 
+		       (slice_p.x<box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
 	      else {
 		max_diff = fabs(box_corner_real[l].x-box_corner_real[l+1].x);
 		if (max_diff > 0.0+CLOSE) {
 		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].x-view_p.x))
+		    + (max_diff - fabs(box_corner_real[l].x-slice_p.x))
 		    *real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+1].x-view_p.x))
+		    + (max_diff - fabs(box_corner_real[l+1].x-slice_p.x))
 		    *real_value[l+1];
 		  real_value[l] = real_value[l]/max_diff;
 		}
@@ -1125,73 +1312,72 @@ volume_t * volume_get_slice(const volume_t * volume,
 
 	    /* do the y direction interpolations of the pairs of x interpolations */
 	    for (l=0;l<4;l=l+4) {
-	      if ((view_p.y > box_corner_real[l].y) && 
-		  (view_p.y > box_corner_real[l+2].y))
+	      if ((slice_p.y > box_corner_real[l].y) && 
+		  (slice_p.y > box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
-	      else if ((view_p.y<box_corner_real[l].y) && 
-		       (view_p.y<box_corner_real[l+2].y))
+	      else if ((slice_p.y<box_corner_real[l].y) && 
+		       (slice_p.y<box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
 	      else {
 		max_diff = fabs(box_corner_real[l].y-box_corner_real[l+2].y);
 		if (max_diff > 0.0+CLOSE) {
 		  real_value[l] = 
-		    + (max_diff - fabs(box_corner_real[l].y-view_p.y)) 
+		    + (max_diff - fabs(box_corner_real[l].y-slice_p.y)) 
 		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+2].y-view_p.y))
+		    + (max_diff - fabs(box_corner_real[l+2].y-slice_p.y))
 		    *real_value[l+2];
 		  real_value[l] = real_value[l]/max_diff;
 		}
 	      }
 	    }		
 	    
-	    VOLUME_SET_CONTENT(return_slice,0,i)+=z_weight*real_value[0];
+	    VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[0];
 	    
 	    /* jump forward one voxel in the view x direction*/
-	    view_p.x += return_slice->voxel_size.x; 
+	    slice_p.x += slice->voxel_size.x; 
 	  }
 	}
       }
     break;
   case TRILINEAR:
     for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      for (z = 0; z < ceil(thickness/voxel_length); z++) {
+      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) {
 
 	/* the view z_coordinate for this iteration's view voxel */
-	view_p.z = z*voxel_length + view_min_dim/2.0;
+	slice_p.z = z*voxel_length + voxel_length/2.0;
 
 	/* z_weight is between 0 and 1, this is used to weight the last voxel 
 	   in the view z direction */
-	z_weight = floor(thickness/voxel_length) > z*voxel_length ? 1.0 : 
-	  thickness/voxel_length-floor(thickness/voxel_length);
-
-	for (i.y = 0; i.y < dimy; i.y++) {
+	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	
+	for (i.y = 0; i.y < slice->dim.y; i.y++) {
 
 	  /* the view y_coordinate of the center of this iteration's view voxel */
-	  view_p.y = (((floatpoint_t) i.y)/dimy) * slice_corner.y + view_min_dim/2.0;
+	  slice_p.y = (((floatpoint_t) i.y)/slice->dim.y) * slice->corner.y + slice->voxel_size.y/2.0;
 
 	  /* the view x coord of the center of the first view voxel in this loop */
-	  view_p.x = view_min_dim/2.0;
-	  for (i.x = 0; i.x < dimx; i.x++) {
+	  slice_p.x = slice->voxel_size.x/2.0;
+	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
 
 	    /* get the locations and values of the eight voxels in the real volume
 	       which are closest to our view voxel */
 
 	    /* find the closest voxels in real space and their values*/
 	    for (l=0; l<8; l++) {
-	      box_corner_view[l].x = view_p.x + ((l & 0x1) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
-	      box_corner_view[l].y = view_p.y + ((l & 0x2) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
-	      box_corner_view[l].z = view_p.z + ((l & 0x4) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+	      box_corner_view[l].x = slice_p.x + ((l & 0x1) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
+	      box_corner_view[l].y = slice_p.y + ((l & 0x2) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
+	      box_corner_view[l].z = slice_p.z + ((l & 0x4) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
 
 	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
-						   slice_coord_frame,
+						   slice->coord_frame,
 						   volume->coord_frame);
-	      j = volume_real_to_voxel(volume, volume_p);
-	      volume_p = volume_voxel_to_real(volume, j);
+	      j = volume_realpoint_to_voxel(volume, volume_p);
+	      volume_p = volume_voxel_to_realpoint(volume, j);
 	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
 							      volume->coord_frame,
-							      slice_coord_frame);
+							      slice->coord_frame);
 	      if (!volume_includes_voxel(volume,j))
 		real_value[l] = EMPTY;
 	      else
@@ -1200,21 +1386,21 @@ volume_t * volume_get_slice(const volume_t * volume,
 
 	    /* do the x direction linear interpolation of the sets of two points */
 	    for (l=0;l<8;l=l+2) {
-	      if ((view_p.x > box_corner_real[l].x) 
-		  && (view_p.x > box_corner_real[l+1].x))
+	      if ((slice_p.x > box_corner_real[l].x) 
+		  && (slice_p.x > box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
-	      else if ((view_p.x<box_corner_real[l].x) 
-		       && (view_p.x<box_corner_real[l+1].x))
+	      else if ((slice_p.x<box_corner_real[l].x) 
+		       && (slice_p.x<box_corner_real[l+1].x))
 		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
 		  real_value[l] : real_value[l+1];
 	      else {
 		max_diff = fabs(box_corner_real[l].x-box_corner_real[l+1].x);
 		if (max_diff > 0.0+CLOSE) {
 		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].x-view_p.x)) 
+		    + (max_diff - fabs(box_corner_real[l].x-slice_p.x)) 
 		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+1].x-view_p.x))
+		    + (max_diff - fabs(box_corner_real[l+1].x-slice_p.x))
 		    *real_value[l+1];
 		  real_value[l] = real_value[l]/max_diff;
 		}
@@ -1223,21 +1409,21 @@ volume_t * volume_get_slice(const volume_t * volume,
 
 	    /* do the y direction interpolations of the pairs of x interpolations */
 	    for (l=0;l<8;l=l+4) {
-	      if ((view_p.y > box_corner_real[l].y) 
-		  && (view_p.y > box_corner_real[l+2].y))
+	      if ((slice_p.y > box_corner_real[l].y) 
+		  && (slice_p.y > box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
-	      else if ((view_p.y<box_corner_real[l].y) 
-		       && (view_p.y<box_corner_real[l+2].y))
+	      else if ((slice_p.y<box_corner_real[l].y) 
+		       && (slice_p.y<box_corner_real[l+2].y))
 		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
 		  real_value[l] : real_value[l+2];
 	      else {
 		max_diff = fabs(box_corner_real[l].y-box_corner_real[l+2].y);
 		if (max_diff > 0.0+CLOSE) {
 		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].y-view_p.y)) 
+		    + (max_diff - fabs(box_corner_real[l].y-slice_p.y)) 
 		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+2].y-view_p.y))
+		    + (max_diff - fabs(box_corner_real[l+2].y-slice_p.y))
 		    * real_value[l+2];
 		  real_value[l] = real_value[l]/max_diff;
 		}
@@ -1246,91 +1432,89 @@ volume_t * volume_get_slice(const volume_t * volume,
 
 	    /* do the z direction interpolations of the pairs of y interpolations */
 	    for (l=0;l<8;l=l+8) {
-	      if ((view_p.z > box_corner_real[l].z) 
-		  && (view_p.z > box_corner_real[l+4].z))
+	      if ((slice_p.z > box_corner_real[l].z) 
+		  && (slice_p.z > box_corner_real[l+4].z))
 		real_value[l] = box_corner_real[l].z > box_corner_real[l+4].z ? 
 		  real_value[l] : real_value[l+4];
-	      else if ((view_p.z<box_corner_real[l].z) 
-		       && (view_p.z<box_corner_real[l+4].z))
+	      else if ((slice_p.z<box_corner_real[l].z) 
+		       && (slice_p.z<box_corner_real[l+4].z))
 		real_value[l] = box_corner_real[l].z < box_corner_real[l+4].z ? 
 		  real_value[l] : real_value[l+4];
 	      else {
 		max_diff = fabs(box_corner_real[l].z-box_corner_real[l+4].z);
 		if (max_diff > 0.0+CLOSE) {
 		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].z-view_p.z)) 
+		    + (max_diff - fabs(box_corner_real[l].z-slice_p.z)) 
 		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+4].z-view_p.z))
+		    + (max_diff - fabs(box_corner_real[l+4].z-slice_p.z))
 		    * real_value[l+4];
 		  real_value[l] = real_value[l]/max_diff;
 		}
 	      }
 	    }
 
-	    VOLUME_SET_CONTENT(return_slice,0,i)+=z_weight*real_value[0];
+	    VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[0];
 
 	    /* jump forward one voxel in the view x direction*/
-	    view_p.x += return_slice->voxel_size.x; 
+	    slice_p.x += slice->voxel_size.x; 
 	  }
 	}
       }
     break;
+
   case NEAREST_NEIGHBOR:
-  default:
-    /* nearest neighbor algorithm */
+  default:  
+
+    /* iterate over the number of frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      for (z = 0; z < ceil(thickness/voxel_length); z++) {
 
-	view_p.z = z*voxel_length+view_min_dim/2.0;
-	z_weight = floor(thickness/voxel_length) > z*voxel_length ? 1.0 : 
-	  thickness/voxel_length-floor(thickness/voxel_length);
+      /* iterate over the number of planes we'll be compressing into this slice */
+      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
+	last[ZAXIS] = volume_p;
+	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	
+	/* iterate over the y dimension */
+	for (i.y = 0; i.y < slice->dim.y; i.y++) {
+	  last[YAXIS] = volume_p;
 
-	for (i.y = 0; i.y < dimy; i.y++) {
-
-	  view_p.y = (((floatpoint_t) i.y)/dimy) * slice_corner.y + view_min_dim/2.0;
-	  view_p.x = view_min_dim/2.0;
-
-	  for (i.x = 0; i.x < dimx; i.x++) {
-
-	    volume_p= realspace_alt_coord_to_alt(view_p,
-						 slice_coord_frame,
-						 volume->coord_frame);
-	    j = volume_real_to_voxel(volume, volume_p);
+	  /* and iteratate over x */
+	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
+	    j = volume_realpoint_to_voxel(volume, volume_p);
 	    if (!volume_includes_voxel(volume,j))
-	      VOLUME_SET_CONTENT(return_slice,0,i) += z_weight*EMPTY;
+	      VOLUME_SET_CONTENT(slice,0,i) += z_weight*EMPTY;
 	    else
-	      VOLUME_SET_CONTENT(return_slice,0,i) += 
-		z_weight*VOLUME_CONTENTS(volume,i_frame,j);
-	    view_p.x += view_min_dim; /* jump forward one pixel */
+	      VOLUME_SET_CONTENT(slice,0,i) += z_weight*VOLUME_CONTENTS(volume,i_frame,j);
+	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
 	  }
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
 	}
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
       }
     break;
+
   }
 
   /* correct our volume for it's thickness and the number of frames*/
-  i.z = 0;
-  for (i.y = 0; i.y < dimy; i.y++) 
-    for (i.x = 0; i.x < dimx; i.x++) 
-      VOLUME_SET_CONTENT(return_slice,0,i) /= (num_frames*(thickness/voxel_length));
+  for (i.y = 0; i.y < slice->dim.y; i.y++) 
+    for (i.x = 0; i.x < slice->dim.x; i.x++) 
+      VOLUME_SET_CONTENT(slice,0,i) /= (num_frames*z_steps);
 
 
   /* and figure out the max and min */
   max = 0.0;
   min = 0.0;
-  i.z = 0;
-  for (i.y = 0; i.y < return_slice->dim.y; i.y++) 
-    for (i.x = 0; i.x < return_slice->dim.x; i.x++) {
-      temp = VOLUME_CONTENTS(return_slice, 0, i);
+  for (i.y = 0; i.y < slice->dim.y; i.y++) 
+    for (i.x = 0; i.x < slice->dim.x; i.x++) {
+      temp = VOLUME_CONTENTS(slice, 0, i);
       if (temp > max)
 	max = temp;
       else if (temp < min)
 	min = temp;
     }
-  return_slice->max = max;
-  return_slice->min = min;
+  slice->max = max;
+  slice->min = min;
 
-  return return_slice;
+  return slice;
 }
 
 
@@ -1353,22 +1537,31 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   realpoint_t slice_corner;
   volume_list_t * slices=NULL;
   volume_t * temp_slice;
-  volume_data_t min_dim;
+  floatpoint_t min_voxel_size;
+#ifdef AMIDE_DEBUG
+  struct timeb timing1, timing2;
+  gdouble total_time;
+#endif
 
   /* thickness (of slice) in mm, negative indicates set this value
      according to voxel size */
+
+#ifdef AMIDE_DEBUG
+  /* let's do some timing */
+  ftime(&timing1);
+#endif
 
   /* sanity check */
   g_assert(volumes != NULL);
 
   /* get the minimum voxel dimension of this list of volumes */
-  min_dim = volumes_min_dim(volumes);
-  g_return_val_if_fail(min_dim > 0.0, NULL);
+  min_voxel_size = volumes_max_min_voxel_size(volumes);
+  g_return_val_if_fail(min_voxel_size > 0.0, NULL);
 
   /* compensate for zoom */
-  min_dim = (1/zoom) * min_dim;
-  voxel_size.x = voxel_size.y = min_dim;
-  voxel_size.z = (thickness > 0) ? thickness : min_dim;
+  min_voxel_size = (1/zoom) * min_voxel_size;
+  voxel_size.x = voxel_size.y = min_voxel_size;
+  voxel_size.z = (thickness > 0) ? thickness : min_voxel_size;
 
   /* figure out all encompasing corners for the slices based on our viewing axis */
   volumes_get_view_corners(volumes, view_coord_frame, view_corner);
@@ -1396,6 +1589,14 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
     temp_slice = volume_free(temp_slice);
     volumes = volumes->next;
   }
+
+#ifdef AMIDE_DEBUG
+  /* and wrapup our timing */
+  ftime(&timing2);
+  total_time = (timing2.time*1000.0+timing2.millitm - timing1.time*1000.0 - timing1.millitm)/1000.0;
+  g_print("######## Slice Generating Took %5.3f (s) #########\n",total_time);
+
+#endif
 
   return slices;
 }

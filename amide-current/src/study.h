@@ -27,6 +27,7 @@
 typedef struct study_t {
   gchar * name; /* name of the study */
   gchar * filename; /* file name of the study */
+  realspace_t coord_frame;
   volume_list_t * volumes; 
   roi_list_t * rois;
 
@@ -40,19 +41,27 @@ typedef struct study_t {
 #define study_get_volumes(study) ((study)->volumes)
 #define study_get_rois(study) ((study)->rois)
 #define study_get_name(study) ((study)->name)
+#define study_get_filename(study) ((study)->filename)
 #define study_get_first_volume(study) ((study)->volumes->volume)
+#define study_get_coord_frame(study) ((study)->coord_frame)
+#define study_get_coord_frame_axis(study, which) ((study)->coord_frame.axis[(which)])
+#define study_set_coord_frame(study, new) ((study)->coord_frame = (new))
+#define study_set_coord_frame_offset(study, new) ((study)->coord_frame.offset = (new))
+#define study_set_coord_frame_axis(study, which, new) ((study)->coord_frame.axis[(which)] = (new))
 
 /* external functions */
 study_t * study_free(study_t * study);
 study_t * study_init(void);
 gboolean study_write_xml(study_t * study, gchar * directory);
 study_t * study_load_xml(gchar * directory);
+study_t * study_copy(study_t * src_study);
 study_t * study_add_reference(study_t * study);
 void study_add_volume(study_t * study, volume_t * volume);
 void study_remove_volume(study_t * study, volume_t * volume);
 void study_add_roi(study_t * study, roi_t * roi);
 void study_remove_roi(study_t * study, roi_t * roi);
 void study_set_name(study_t * study, gchar * new_name);
+void study_set_filename(study_t * study, gchar * new_filename);
 
 
 

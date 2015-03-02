@@ -261,7 +261,7 @@ realpoint_t roi_calculate_center(const roi_t * roi) {
   corner[1] = roi->corner;
  
   /* the center in roi coords is then just half the far corner */
-  REALSPACE_MADD(0.5,corner[1], 0.5,corner[0], center);
+  REALPOINT_MADD(0.5,corner[1], 0.5,corner[0], center);
   
   /* now, translate that into real coords */
   center = realspace_alt_coord_to_base(center, roi->coord_frame);
@@ -523,11 +523,11 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
     roi_corner[1] = roi->corner;
 
     /* figure out the center of the object in it's space*/
-    REALSPACE_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);   
+    REALPOINT_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);   
 
     /* figure out the radius in each direction */
-    REALSPACE_DIFF(roi_corner[1],roi_corner[0], radius);
-    REALSPACE_CMULT(0.5,radius, radius);
+    REALPOINT_DIFF(roi_corner[1],roi_corner[0], radius);
+    REALPOINT_CMULT(0.5,radius, radius);
 
     /* figure out the height */
     height = fabs(roi_corner[1].z-roi_corner[0].z);
@@ -664,8 +664,8 @@ void roi_subset_of_volume(roi_t * roi,
 				  
 
   /* and convert the subset_corners into indexes */
-  subset_index[0] = volume_real_to_voxel(volume,subset_corner[0]);
-  subset_index[1] = volume_real_to_voxel(volume,subset_corner[1]);
+  subset_index[0] = volume_realpoint_to_voxel(volume,subset_corner[0]);
+  subset_index[1] = volume_realpoint_to_voxel(volume,subset_corner[1]);
 
   /* sanity checks */
   if (subset_index[0].x < 0) subset_index[0].x = 0;
@@ -683,7 +683,7 @@ void roi_subset_of_volume(roi_t * roi,
 
   /* and calculate the return values */
   *subset_start = subset_index[0];
-  REALSPACE_SUB(subset_index[1],subset_index[0],*subset_dim);
+  REALPOINT_SUB(subset_index[1],subset_index[0],*subset_dim);
 
   return;
 }
@@ -721,11 +721,11 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   roi_corner[1] = roi->corner;
 
   /* figure out the center of the object in it's space*/
-  REALSPACE_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);
+  REALPOINT_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);
   
   /* figure out the radius in each direction */
-  REALSPACE_DIFF(roi_corner[1],roi_corner[0], radius);
-  REALSPACE_CMULT(0.5,radius, radius);
+  REALPOINT_DIFF(roi_corner[1],roi_corner[0], radius);
+  REALPOINT_CMULT(0.5,radius, radius);
   
   /* figure out the height */
   height = fabs(roi_corner[1].z-roi_corner[0].z);
@@ -736,7 +736,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
     realspace_alt_coord_to_alt(center,
 			       roi->coord_frame,
 			       volume->coord_frame);
-  i = volume_real_to_voxel(volume,volume_p);
+  i = volume_realpoint_to_voxel(volume,volume_p);
   temp_data = VOLUME_CONTENTS(volume, frame, i);
   
   analysis.voxels = 1.0; 

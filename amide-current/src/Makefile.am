@@ -63,6 +63,10 @@ amide_SOURCES = \
 	ui_study.h \
 	ui_study_callbacks.c \
 	ui_study_callbacks.h \
+	ui_study_dialog.c \
+	ui_study_dialog.h \
+	ui_study_dialog_callbacks.c \
+	ui_study_dialog_callbacks.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
 	ui_study_rois_callbacks.c \

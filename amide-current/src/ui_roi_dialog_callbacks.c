@@ -149,7 +149,7 @@ void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) {
 
   /* recalculate the roi's offset based on the new dimensions/center/and axis */
   temp = realspace_alt_dim_to_base(temp_dim, temp_coord_frame);
-  REALSPACE_MADD(-0.5,temp,1,temp_center,temp_coord_frame.offset);
+  REALPOINT_MADD(-0.5,temp,1,temp_center,temp_coord_frame.offset);
 
   /* reset the far corner based on the new coord frame */
   roi_new_info->corner = realspace_alt_dim_to_alt(temp_dim, 
@@ -218,6 +218,7 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   ui_study_t * ui_study;
   roi_t * roi_new_info = data;
   view_t i_view;
+  axis_t which_axis;
   floatpoint_t rotation;
   GtkWidget * roi_dialog;
   realpoint_t center, temp;
@@ -231,59 +232,24 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   /* figure out which scale widget called me */
   i_view= GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"view"));
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
-  switch(i_view) {
-  case TRANSVERSE:
-    roi_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[ZAXIS],
-			       rotation);
-    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  case CORONAL:
-    roi_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[YAXIS],
-			       rotation);
-    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  case SAGITTAL:
-    roi_new_info->coord_frame.axis[XAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[YAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    roi_new_info->coord_frame.axis[ZAXIS] = 
-      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-			       &ui_study->current_view_coord_frame.axis[XAXIS],
-			       rotation);
-    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-    break;
-  default:
-    break;
-  }
+  which_axis = realspace_get_orthogonal_which_axis(i_view);
+  roi_new_info->coord_frame.axis[XAXIS] = 
+    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  roi_new_info->coord_frame.axis[YAXIS] = 
+    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  roi_new_info->coord_frame.axis[ZAXIS] = 
+    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     rotation);
+  realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
 
   
   /* recalculate the offset of this roi based on the center we stored */
-  REALSPACE_CMULT(-0.5,roi_new_info->corner,temp);
+  REALPOINT_CMULT(-0.5,roi_new_info->corner,temp);
   roi_new_info->coord_frame.offset = center;
   roi_new_info->coord_frame.offset = 
     realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);
@@ -318,7 +284,7 @@ void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   }
 
   /* recalculate the offset of this roi based on the center we stored */
-  REALSPACE_CMULT(-0.5,roi_new_info->corner,temp);
+  REALPOINT_CMULT(-0.5,roi_new_info->corner,temp);
   roi_new_info->coord_frame.offset = center;
   roi_new_info->coord_frame.offset = 
     realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);

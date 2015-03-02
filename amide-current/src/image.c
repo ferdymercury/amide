@@ -342,6 +342,7 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
     g_assert(temp_slices == NULL);
     g_assert(temp_volumes == NULL);
   }
+
 #endif
 
   /* generate the slices if we need to */

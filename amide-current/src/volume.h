@@ -29,7 +29,7 @@
 #include "color_table.h"
 
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
-typedef enum {NEAREST_NEIGHBOR, BILINEAR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
+typedef enum {NEAREST_NEIGHBOR, TWO_BY_TWO, TWO_BY_TWO_BY_TWO, BILINEAR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
 typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
 
 /* setup the types for various internal data formats */
@@ -106,8 +106,9 @@ volume_t * volume_copy(volume_t * src_volume);
 volume_t * volume_add_reference(volume_t * volume);
 void volume_set_name(volume_t * volume, gchar * new_name);
 realpoint_t volume_calculate_center(const volume_t * volume);
-realpoint_t volume_voxel_to_real(const volume_t * volume, const voxelpoint_t i);
-voxelpoint_t volume_real_to_voxel(const volume_t * volume, const realpoint_t real);
+inline realpoint_t volume_voxel_to_realpoint(const volume_t * volume, const voxelpoint_t i);
+inline voxelpoint_t volume_realpoint_to_voxel(const volume_t * volume, const realpoint_t real);
+inline gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel);
 volume_time_t volume_start_time(const volume_t * volume, guint frame);
 volume_list_t * volume_list_free(volume_list_t * volume_list);
 volume_list_t * volume_list_init(void);
@@ -118,14 +119,16 @@ gboolean volume_list_includes_volume(volume_list_t *list, volume_t * vol);
 volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vol);
 volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol);
 volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t * vol);
-gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel);
+volume_list_t * volume_list_copy(volume_list_t * src_volume_list);
 void volume_get_view_corners(const volume_t * volume,
 			     const realspace_t view_coord_frame,
 			     realpoint_t corner[]);
 void volumes_get_view_corners(volume_list_t * volumes,
 			      const realspace_t view_coord_frame,
 			      realpoint_t view_corner[]);
-floatpoint_t volumes_min_dim(volume_list_t * volumes);
+floatpoint_t volumes_min_voxel_size(volume_list_t * volumes);
+floatpoint_t volumes_max_size(volume_list_t * volumes);
+floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes);
 intpoint_t volumes_max_dim(volume_list_t * volumes);
 floatpoint_t volumes_get_width(volume_list_t * volumes, const realspace_t view_coord_frame);
 floatpoint_t volumes_get_height(volume_list_t * volumes, const realspace_t view_coord_frame);

@@ -30,8 +30,6 @@ void ui_study_callbacks_import(GtkWidget * widget, gpointer data);
 gint ui_study_callbacks_canvas_event(GtkWidget* widget, GdkEvent * event,
 					 gpointer data);
 void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data);
-void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data);
-void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data);
 void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data);

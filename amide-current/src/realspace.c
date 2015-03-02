@@ -148,24 +148,24 @@ void realspace_make_orthogonal(realpoint_t axis[]) {
   /* leave the xaxis as is */
 
   /* make the y axis orthogonal */
-  REALSPACE_MADD(1.0,
+  REALPOINT_MADD(1.0,
 		 axis[YAXIS],
-		 -1.0*REALSPACE_DOT_PRODUCT(axis[XAXIS],axis[YAXIS]) /
-		 REALSPACE_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[YAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
 		 axis[XAXIS],
 		 axis[YAXIS]);
 
   /* and make the z axis orthogonal */
-  REALSPACE_MADD(1.0,
+  REALPOINT_MADD(1.0,
 		 axis[ZAXIS],
-		 -1.0*REALSPACE_DOT_PRODUCT(axis[XAXIS],axis[ZAXIS]) /
-		 REALSPACE_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[ZAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
 		 axis[XAXIS],
 		 temp);
-  REALSPACE_MADD(1.0,
+  REALPOINT_MADD(1.0,
 		 temp,
-		 -1.0*REALSPACE_DOT_PRODUCT(axis[YAXIS],axis[ZAXIS]) /
-		 REALSPACE_DOT_PRODUCT(axis[YAXIS],axis[YAXIS]),
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[ZAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS]),
 		 axis[YAXIS],
 		 temp);
   return;
@@ -178,13 +178,13 @@ void realspace_make_orthonormal(realpoint_t axis[]) {
   realspace_make_orthogonal(axis);
 
   /* now normalize the axis to make it orthonormal */
-  REALSPACE_CMULT(1.0/sqrt(REALSPACE_DOT_PRODUCT(axis[XAXIS],axis[XAXIS])),
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS])),
 		  axis[XAXIS],
 		  axis[XAXIS]);
-  REALSPACE_CMULT(1.0/sqrt(REALSPACE_DOT_PRODUCT(axis[YAXIS],axis[YAXIS])),
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS])),
 		  axis[YAXIS],
 		  axis[YAXIS]);
-  REALSPACE_CMULT(1.0/sqrt(REALSPACE_DOT_PRODUCT(axis[ZAXIS],axis[ZAXIS])),
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[ZAXIS],axis[ZAXIS])),
 		  axis[ZAXIS],
 		  axis[ZAXIS]);
 
@@ -214,22 +214,28 @@ realpoint_t realspace_rotate_on_axis(const realpoint_t * in,
   return return_vector;
 }
 
-/* returns the normal axis for the given view */
-realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
-					    const view_t i) {
+/* returns the axis_t of the orthogonal axis for a given view */
+axis_t realspace_get_orthogonal_which_axis(const view_t view) {
 
-  switch(i) {
+  switch(view) {
   case CORONAL:
-    return axis[YAXIS];
+    return YAXIS;
     break;
   case SAGITTAL:
-    return axis[XAXIS];
+    return XAXIS;
     break;
   case TRANSVERSE:
   default:
-    return axis[ZAXIS];
+    return ZAXIS;
     break;
   }
+}
+
+/* returns the normal axis for the given view */
+realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
+					    const view_t view) {
+
+  return axis[realspace_get_orthogonal_which_axis(view)];
 }
 
 /* returns an axis vector which corresponds to the orthogonal axis (specified
@@ -307,8 +313,8 @@ realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_fram
 
 /* convert a point in an alternative coordinate frame to the base
    coordinate frame */
-realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
-					const realspace_t in_alt_coord_frame) {
+inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
+					       const realspace_t in_alt_coord_frame) {
 
   realpoint_t return_point;
 
@@ -333,14 +339,14 @@ realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 
 /* convert the given point from base coordinates to the given alternate
    coordinate frame */
-realpoint_t realspace_base_coord_to_alt(realpoint_t in,
-					const realspace_t out_alt_coord_frame) {
+inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
+					       const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
   floatpoint_t detA,detBx,detBy,detBz;
 
   /* compensate the inpoint for the offset of the new coordinate frame */
-  REALSPACE_SUB(in, out_alt_coord_frame.offset, in);
+  REALPOINT_SUB(in, out_alt_coord_frame.offset, in);
   
   /* figure out the determinate of the view_axis */
   detA = 0.0
@@ -392,9 +398,9 @@ realpoint_t realspace_base_coord_to_alt(realpoint_t in,
 }
 
 /* converts a point from one coordinate frame to another */
-realpoint_t realspace_alt_coord_to_alt(const realpoint_t in,
-				       const realspace_t in_alt_coord_frame,
-				       const realspace_t out_alt_coord_frame) {
+inline realpoint_t realspace_alt_coord_to_alt(const realpoint_t in,
+					      const realspace_t in_alt_coord_frame,
+					      const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
 
@@ -407,34 +413,34 @@ realpoint_t realspace_alt_coord_to_alt(const realpoint_t in,
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a
    given coordinate system to the base coordinate system */
-realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
-				      const realspace_t in_alt_coord_frame) {
+inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
+					     const realspace_t in_alt_coord_frame) {
 
   realpoint_t return_point;
 
-  REALSPACE_ABS(in, return_point);/* dim's should always be positive */
+  REALPOINT_ABS(in, return_point);/* dim's should always be positive */
 
   return_point = realspace_alt_coord_to_base(return_point,in_alt_coord_frame);
-  REALSPACE_SUB(return_point,in_alt_coord_frame.offset,return_point);
+  REALPOINT_SUB(return_point,in_alt_coord_frame.offset,return_point);
     
-  REALSPACE_ABS(return_point, return_point);/* dim's should always be positive */
+  REALPOINT_ABS(return_point, return_point);/* dim's should always be positive */
 
   return return_point;
 }
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from the
    base coordinate system to a given coordinate system */
-realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
-				      const realspace_t out_alt_coord_frame) {
+inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
+					     const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
   
-  REALSPACE_ABS(in, return_point);/* dim's should always be positive */
+  REALPOINT_ABS(in, return_point);/* dim's should always be positive */
 
-  REALSPACE_ADD(return_point,out_alt_coord_frame.offset,return_point);
+  REALPOINT_ADD(return_point,out_alt_coord_frame.offset,return_point);
   return_point = realspace_base_coord_to_alt(return_point,out_alt_coord_frame);
     
-  REALSPACE_ABS(return_point, return_point);/* dim's should always be positive */
+  REALPOINT_ABS(return_point, return_point);/* dim's should always be positive */
 
   return return_point;
 }
@@ -442,9 +448,9 @@ realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a given
    coordinate system to another coordinate system */
-realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
-				     const realspace_t in_alt_coord_frame,
-				     const realspace_t out_alt_coord_frame) {
+inline realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
+					    const realspace_t in_alt_coord_frame,
+					    const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
   

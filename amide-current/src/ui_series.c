@@ -369,7 +369,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
   /* save the coord_frame of the series */
-  ui_study->series->coord_frame = ui_study->current_view_coord_frame;
+  ui_study->series->coord_frame = study_get_coord_frame(ui_study->study);
   ui_study->series->coord_frame = 
     realspace_get_orthogonal_coord_frame(ui_study->series->coord_frame, view);
   ui_study->series->start = ui_study->current_view_center;

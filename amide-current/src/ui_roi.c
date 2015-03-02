@@ -88,16 +88,24 @@ ui_roi_list_t * ui_roi_list_init(void) {
   return temp_roi_list;
 }
 
+/* function to return a pointer to the list element containing the specified roi */
+ui_roi_list_t * ui_roi_list_get_ui_roi(ui_roi_list_t * ui_roi_list, roi_t * roi) {
+
+  if (ui_roi_list == NULL)
+    return ui_roi_list;
+  else if (ui_roi_list->roi == roi)
+    return ui_roi_list;
+  else
+    return ui_roi_list_get_ui_roi(ui_roi_list->next, roi);
+}
+
 /* function to check that an roi is in a ui_roi_list */
 gboolean ui_roi_list_includes_roi(ui_roi_list_t * ui_roi_list, roi_t * roi) {
 
-  while (ui_roi_list != NULL)
-    if (ui_roi_list->roi == roi)
-      return TRUE;
-    else
-      ui_roi_list = ui_roi_list->next;
-
-  return FALSE;
+  if (ui_roi_list_get_ui_roi(ui_roi_list,roi) == NULL)
+    return FALSE;
+  else
+    return TRUE;
 }
 
 

@@ -62,6 +62,7 @@ study_t * study_free(study_t * study) {
 study_t * study_init(void) {
   
   study_t * study;
+  axis_t i_axis;
 
   /* alloc space for the data structure for passing ui info */
   if ((study = (study_t *) g_malloc(sizeof(study_t))) == NULL) {
@@ -72,6 +73,9 @@ study_t * study_init(void) {
 
   study->name = NULL;
   study->filename = NULL;
+  study->coord_frame.offset=realpoint_init;
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    study->coord_frame.axis[i_axis] = default_axis[i_axis];
   study->volumes = NULL;
   study->rois = NULL;
 
@@ -101,6 +105,9 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
 
   /* record our version */
   xml_save_string(doc->children, "AMIDE_Data_File_Version", "1.0");
+
+  /* put in our coord frame */
+  xml_save_realspace(doc->children, "coord_frame", study->coord_frame);
 
   /* put in our volume info */
   volume_nodes = xmlNewChild(doc->children, NULL, "Volumes", NULL);
@@ -171,6 +178,9 @@ study_t * study_load_xml(gchar * directory) {
   /* get the document tree */
   nodes = nodes->children;
 
+  /* get our study parameters */
+  new_study->coord_frame = xml_get_realspace(nodes, "coord_frame");
+
   /* load in the volumes */
   volume_nodes = xml_get_node(nodes, "Volumes");
   volume_nodes = volume_nodes->children;
@@ -193,8 +203,39 @@ study_t * study_load_xml(gchar * directory) {
   }
   g_free(old_dir);
 
+  /* and remember the name of the directory for convience */
+  study_set_filename(new_study, directory);
+
   return new_study;
 }
+
+
+/* makes a new study item which is a copy of a previous study's information. */
+study_t * study_copy(study_t * src_study) {
+
+  study_t * dest_study;
+
+  /* sanity checks */
+  g_return_val_if_fail(src_study != NULL, NULL);
+
+  dest_study = study_init();
+
+  /* copy the data elements */
+  dest_study->coord_frame = src_study->coord_frame;
+
+  /* make a copy of the study's ROIs and volumes */
+  if (src_study->rois != NULL)
+    dest_study->rois = roi_list_copy(src_study->rois);
+  if (src_study->volumes != NULL)
+    dest_study->volumes = volume_list_copy(src_study->volumes);
+
+  /* make a separate copy in memory of the study's name and filename */
+  study_set_name(dest_study, src_study->name);
+  study_set_filename(dest_study, src_study->filename);
+
+  return dest_study;
+}
+
 
 /* adds one to the reference count of a study */
 study_t * study_add_reference(study_t * study) {
@@ -243,6 +284,16 @@ void study_set_name(study_t * study, gchar * new_name) {
 
   g_free(study->name); /* free up the memory used by the old name */
   study->name = g_strdup(new_name); /* and assign the new name */
+
+  return;
+}
+
+/* sets the filename of a study
+   note: new_filename is copied rather then just being referenced by study */
+void study_set_filename(study_t * study, gchar * new_filename) {
+
+  g_free(study->filename); /* free up the memory used by the old filename */
+  study->filename = g_strdup(new_filename); /* and assign the new name */
 
   return;
 }

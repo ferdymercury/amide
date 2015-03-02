@@ -52,7 +52,10 @@ ui_volume_list_t * ui_volume_list_add_volume_first(ui_volume_list_t * ui_volume_
 						   GtkCTreeNode * tree_node);
 ui_volume_list_t * ui_volume_list_remove_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 volume_list_t * ui_volume_list_return_volume_list(ui_volume_list_t * ui_volume_list);
-floatpoint_t ui_volume_list_min_dim(ui_volume_list_t * ui__volume_list);
+floatpoint_t ui_volume_list_max_min_voxel_size(ui_volume_list_t * ui__volume_list);
+void ui_volume_list_get_view_corners(ui_volume_list_t * ui_volume_list,
+				     const realspace_t view_coord_frame,
+				     realpoint_t view_corner[]);
 floatpoint_t ui_volume_list_get_width(ui_volume_list_t * ui_volume_list, 
 				      const realspace_t view_coord_frame);
 floatpoint_t ui_volume_list_get_height(ui_volume_list_t * ui_volume_list,
