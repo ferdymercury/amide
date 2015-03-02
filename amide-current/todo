@@ -3,20 +3,25 @@ misc list of things todo:
 big things:
 -----------
 
-* gnuplot? interface for drawing graphs of ROI statistics
-	-guppi might be want I want to use
-	-plotutils?
+* guppi? interface for drawing graphs of ROI statistics
+	-plotutils instead?
 * upgrade from gdk_imlib to gdk_pixbuf
 * allow looking at only a subset of the data (i.e. cropping)
-* magnifying glass
 * aligning of data sets by specifying three points in each
-* rotating an image to level by specifying two dots on each view
-* allow scripting of rendering, allow for mpeg? output
 * change color compositing to an alpha based method, so that
 	colormaps with white backgrounds can be composited together
 
 small things:
 -------------
+* work on bilinear interpolation : shown by zooming PEM scan to 5, and
+	tilting
+* core-dump when trying to create movie with a filename entered via a
+	fileselection dialog.... it's a weird interaction with
+	the fileselection dialog.... like the ui_rendering_movie
+	structure is getting overwritten by the fileselection dialog
+	box.... upgrade gtk?  currently all output is pegged to
+	'out.mpeg'
+* gamma_curves still aren't updating correctly
 * put the canvases in a scrolled widget?
 * cardiac shaped ROI?
 * add ability to change material properties, lighting? for rendering

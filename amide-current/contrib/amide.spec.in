@@ -19,6 +19,17 @@ BuildRequires: libecat xmedcon volpack libxml2-devel
 %description 
 AMIDE is a tool for viewing and analyzing medical image data sets.
 
+%package lib
+Summary: exported library interface to AMIDE (not needed by AMIDE)
+Group: Applications/Engineering
+
+%description lib
+Provides a library interface to export the main component of AMIDE as
+a widget.  This package is really only of interest to developers who
+desire to use elements of AMIDE within their program.
+
+
+
 %prep
 %setup -n %{name}-%{version}
 %build
@@ -40,7 +51,12 @@ if [ -d $RPM_BUILD_ROOT ] ; then rm -rf $RPM_BUILD_ROOT; fi
 %{prefix}/bin/amide
 %{prefix}/share/gnome/help/amide/*
 
+%files lib
+%{prefix}/lib/libamide*
+%{prefix}/include/amide/amide_export.h
 
 %changelog
+* Wed Aug 22 2001 Andy Loening <loening@ucla.edu>
+- added the lib package
 * Sun Dec 19 2000 Andy Loening <loening@ucla.edu>
 - wrote this fool thing

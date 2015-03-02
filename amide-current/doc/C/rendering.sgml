@@ -76,6 +76,13 @@
       dialog box is described below.
     </para>
   </sect2>
+
+  <sect2><title>"Create Movie" Button</title>
+    <para>
+      This causes the movie generation dialog box to pop up.  This
+      dialog box is further described below.
+    </para>
+  </sect2>
   
   <sect2><title>Data Set Rendering Window</title>
     <para>
@@ -217,6 +224,32 @@
 
 </sect1>
 
+<sect1 id="rendering-movie-dialog-help"><title>Rendering Movie Dialog</title>
+
+  <sect2 id="rendering-movie-dialog-help-movie"><title>Movie Parameters</title>
+
+    <sect3><title>Frames</title>
+      <para>
+	How many frames should be in the MPEG1 movie.  The MPEG1
+	movies generated will be set to run at 30 frames/second, so
+	the default of 300 frames will give a ten second movie.
+      </para>
+    </sect3>
+
+    <sect3><title>Rotations on [x,y,z] </title>
+      <para>
+	This setting determines how many times the data set will be
+	rotated around the given axis over the course of the movie.
+	Note that the rotations will be done around the initial axis
+	(frame 0), not the axis of the previous frame.  Additionally,
+	the rotation for each frame is done in x->y->z order (rotate
+	on x first, then y, then z).
+      </para>
+    </sect3>
+
+  </sect2>
+
+</sect1>
 
   
   

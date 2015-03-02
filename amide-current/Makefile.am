@@ -1,4 +1,6 @@
-SUBDIRS = src \
+SUBDIRS = \
+	src \
+	lib \
 	doc \
 	po \
 	intl \

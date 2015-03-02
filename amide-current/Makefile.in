@@ -125,7 +125,7 @@ cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 l = @l@
 
-SUBDIRS = src 	doc 	po 	intl 	pixmaps 	contrib
+SUBDIRS =  	src 	lib 	doc 	po 	intl 	pixmaps 	contrib
 
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs

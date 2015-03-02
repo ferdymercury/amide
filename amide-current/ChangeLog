@@ -1,3 +1,15 @@
+0.4.1
+	* MPEG-1 movie generation capabilities added.  Currently, all output
+	  files are saved as "out.mpg", due to an obscure gtk? bug.
+	* added the ability to do horiz. and vert. leveling with the mouse
+	* added an ascii file format for the raw data file input function
+	* added a new menu item, so that users can specify the import method
+	* added the ability to load in studies from the command line
+	* you can now compile and run amide as a library, exported functions
+	  are in amide_export.h
+	* add a creation date to the study data structure
+	* add 'scan_date to the volume structure
+
 0.4.0
 	* moved the functionality in the right column to a toolbar on top
 	* fixed some dumb errors with the mouse-depth change

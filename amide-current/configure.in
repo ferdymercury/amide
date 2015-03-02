@@ -1,7 +1,7 @@
 AC_INIT(src/amide.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.4.0)
+AM_INIT_AUTOMAKE(amide, 0.4.1)
 
 AM_MAINTAINER_MODE
 
@@ -34,7 +34,7 @@ AC_SUBST(LDFLAGS)
 dnl Let people compile without debugging information
 AC_ARG_ENABLE(
 	amide_debug, 
-	[  --enable-amide-debug    Compile with some debugging messages [default=yes]], 
+	[  --enable-amide-debug	Compile with some debugging messages [default=yes]], 
 	enable_amide_debug="$enableval", 
 	enable_amide_debug=yes)
 
@@ -51,7 +51,7 @@ fi
 dnl Let people compile without having libecat (z_matrix_70)
 AC_ARG_ENABLE(
 	libecat, 
-	[  --enable-libecat        Compile with the libecat/CTI library [default=yes]],
+	[  --enable-libecat	Compile with the libecat/CTI library [default=yes]],
 	enable_libecat="$enableval",
 	enable_libecat=yes)
 
@@ -71,7 +71,7 @@ fi
 dnl Let people compile without having libmdc
 AC_ARG_ENABLE(
 	libmdc, 
-	[  --enable-libmdc         Compile with the xmedcon/libmdc library [default=yes]], 
+	[  --enable-libmdc	Compile with the xmedcon/libmdc library [default=yes]], 
 	enable_libmdc="$enableval", 
 	enable_libmdc=yes)
 
@@ -88,7 +88,7 @@ fi
 dnl Let people compile without rendering/libvolpack
 AC_ARG_ENABLE(
 	libvolpack, 
-	[  --enable-libvolpack         Compile with libvolpack rendering support [default=yes]], 
+	[  --enable-libvolpack	Compile with libvolpack rendering support [default=yes]], 
 	enable_libvolpack="$enableval", 
 	enable_libvolpack=yes)
 
@@ -102,6 +102,22 @@ else
 fi
 
 
+dnl Let people compile without mpeg_encode
+AC_ARG_ENABLE(
+	mpeg_encode, 
+	[  --enable-mpeg-encode	Compile with mpeg_encode movie support [default=yes]], 
+	enable_mpeg_encode="$enableval", 
+	enable_mpeg_encode=yes)
+
+if test $enable_mpeg_encode = yes; then
+	echo "Compiling with mpeg_encode movie support "
+	AC_DEFINE_UNQUOTED(AMIDE_MPEG_ENCODE_BIN, "mpeg_encode")
+	AC_DEFINE_UNQUOTED(AMIDE_MPEG_ENCODE_SUPPORT)
+else
+	echo "Compiling without mpeg_encode movie support"
+fi
+
+
 
 AC_OUTPUT([
 Makefile
@@ -109,6 +125,7 @@ pixmaps/Makefile
 doc/Makefile
 doc/C/Makefile
 src/Makefile
+lib/Makefile
 po/Makefile.in
 macros/Makefile
 intl/Makefile

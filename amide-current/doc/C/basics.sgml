@@ -61,13 +61,65 @@
 	  the left side of the screen.  Below the canvases are dials
 	  for selecting where in the data set the displayed slices
 	  should be taken from.  Slice location can also be changed by
-	  directly clicking on the canvases.  The thickness of the
-	  slices can also be changed by clicking the middle mouse
-	  button (which will minimize the thickness) or by
-	  click-n-dragging with the right mouse button (which allows
-	  interactive specification of the thickness).
+	  directly clicking on the canvases.  The various mouse clicks
+	  available are as followings: 
+      </para>
 
-      </para
+      <sect4><title>Left Mouse Button</title>
+
+	  <para>
+	    Change the location in the volume that the slices are
+	    taken from, without changing the thickness of the slices.
+	  </para>
+      </sect4>
+
+      <sect4><title>Middle Mouse Button</title>
+
+	  <para>
+	    Change the location in the volume that the slices are
+	    taken from, along with setting the thickness of the slices
+	    to the minimum reasonable.
+	  </para>
+      </sect4>
+
+      <sect4><title>Right Mouse Button</title>
+
+	  <para>
+	    Changes the thickness of the slices without changing the
+	    location.
+	  </para>
+      </sect4>
+
+      <sect4><title>Shift-Left Mouse Button</title>
+
+	  <para>
+	    This combination allows horizontal leveling of the image.
+	    While holding the shift key, left click and release on a
+	    feature on one of the canvases.  A line should now be
+	    drawn between the initial click position and the current
+	    mouse position.  Draw this line so that it lies along what
+	    should be horizontal in the image.  If the right button is
+	    now clicked, the data set will be rotated so that the
+	    drawn line is truly horizontal.  A left or middle click
+	    will cancel the action without rotating the data set.
+	  </para>
+      </sect4>
+
+      <sect4><title>Shift-Middle Mouse Button</title>
+
+	  <para>
+	    This combination allows vertical leveling of the image.
+	    While holding the shift key, left click and release on a
+	    feature on one of the canvases.  A line should now be
+	    drawn between the initial click position and the current
+	    mouse position.  Draw this line so that it lies along what
+	    should be vertical in the image.  If the right button is
+	    now clicked, the data set will be rotated so that the
+	    drawn line is truly vertical.  A left or middle click
+	    will cancel the action without rotating the data set.
+	  </para>
+      </sect4>
+
     </sect3>
 
       <sect3><title>Toolbar</title>

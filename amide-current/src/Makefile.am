@@ -4,9 +4,11 @@ INCLUDES = \
 
 bin_PROGRAMS = amide
 
+
 amide_SOURCES = \
 	amide.c \
 	amide.h \
+	amide_export.h \
 	color_table.c \
 	color_table.h \
 	color_table2.h \
@@ -20,6 +22,8 @@ amide_SOURCES = \
 	medcon_import.h \
 	objects.c \
 	objects.h \
+	pem_data_import.c \
+	pem_data_import.h \
 	realspace.c \
 	realspace.h \
 	raw_data.c \
@@ -48,6 +52,10 @@ amide_SOURCES = \
 	ui_rendering_dialog.h \
 	ui_rendering_dialog_callbacks.c \
 	ui_rendering_dialog_callbacks.h \
+	ui_rendering_movie_dialog.c \
+	ui_rendering_movie_dialog.h \
+	ui_rendering_movie_dialog_callbacks.c \
+	ui_rendering_movie_dialog_callbacks.h \
 	ui_roi.c \
 	ui_roi.h \
 	ui_roi_dialog.c \
@@ -79,9 +87,9 @@ amide_SOURCES = \
 	ui_threshold_callbacks.c \
 	ui_threshold_callbacks.h \
 	ui_time_dialog.c \
-	ui_time_dialoh.h \
+	ui_time_dialog.h \
 	ui_time_dialog_callbacks.c \
-	ui_time_dialoh_callbacks.h \
+	ui_time_dialog_callbacks.h \
 	ui_volume.c \
 	ui_volume.h \
 	ui_volume_dialog.c \
@@ -103,3 +111,10 @@ amide_LDADD = \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	-L/usr/local/lib 
 
+#lib_LTLIBRARIES = libamide.la
+#libamideincludedir = $(includedir)/amide
+
+#libamide_la_SOURCES = $(amide_SOURCES)
+#libamide_la_LDFLAGS = -version-info 1:0:0
+#libamideinclude_HEADERS = \
+#	amide_export.h
