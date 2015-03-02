@@ -46,6 +46,7 @@
 #include "tb_crop.h"
 #include "tb_fads.h"
 #include "tb_filter.h"
+#include "tb_math.h"
 #include "tb_profile.h"
 #include "tb_roi_analysis.h"
 
@@ -1107,6 +1108,16 @@ void ui_study_cb_profile_selected(GtkWidget * widget, gpointer data) {
 
   return;
 }
+
+/* user wants to run the image math wizard */
+void ui_study_cb_data_set_math_selected(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+
+  tb_math(ui_study->study, GTK_WINDOW(ui_study->app));
+
+  return;
+}
+
 
 static gboolean threshold_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_study_t * ui_study = data;

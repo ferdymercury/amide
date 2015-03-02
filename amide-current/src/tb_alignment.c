@@ -607,7 +607,7 @@ void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
   g_object_unref(store);
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes(_("Data Set to Profile"), renderer,
+  column = gtk_tree_view_column_new_with_attributes(_("Align Data Set: (fixed)"), renderer,
 						    "text", COLUMN_DATA_SET_NAME, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_fixed_ds), column);
 

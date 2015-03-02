@@ -138,6 +138,8 @@ amide_SOURCES = \
 	tb_filter.h \
 	tb_fly_through.c \
 	tb_fly_through.h \
+	tb_math.c \
+	tb_math.h \
 	tb_profile.c \
 	tb_profile.h \
 	tb_roi_analysis.c \

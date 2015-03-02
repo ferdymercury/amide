@@ -5198,6 +5198,159 @@ GList * amitk_data_sets_get_slices(GList * objects,
   return slices;
 }
 
+/* function to perform the given operation between the given data sets */
+AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, AmitkOperation operation) {
+
+  GList * data_sets;
+  AmitkCorners corner;
+  AmitkVolume * volume;
+  amide_real_t voxel_dim;
+  AmitkVoxel dim;
+  AmitkDataSet * output_ds;
+  AmitkVoxel i_voxel, j_voxel;
+  AmitkPoint new_offset;
+  AmitkDataSet * slice1=NULL;
+  AmitkDataSet * slice2=NULL;
+  amitk_format_FLOAT_t value;
+  gdouble op1=1.0;
+  gchar * temp_string;
+  AmitkViewMode i_view_mode;
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds1), NULL);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds2), NULL);
+
+
+  switch(operation) {
+  case AMITK_OPERATION_ADD:
+    op1 = 1.0;
+    break;
+  case AMITK_OPERATION_SUB:
+    op1 = -1.0;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+    break;
+  }
+
+  /* Make a list out of datasets 1 and 2 */
+  data_sets = g_list_append(NULL, ds1);
+  data_sets = g_list_append(data_sets, ds2);
+
+  /* create a volume that's a superset of the volumes of the two data sets */
+  volume = amitk_volume_new();
+  amitk_volumes_get_enclosing_corners(data_sets, AMITK_SPACE(volume), corner);
+  amitk_space_set_offset(AMITK_SPACE(volume), corner[0]);
+  amitk_volume_set_corner(volume, amitk_space_b2s(AMITK_SPACE(volume), corner[1]));
+
+  /* Set up the voxel dimensions for the output data set */
+  voxel_dim =  amitk_data_sets_get_min_voxel_size(data_sets);
+  dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(volume) ) / voxel_dim );
+  dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(volume) ) / voxel_dim );
+  dim.z = ceil(fabs(AMITK_VOLUME_Z_CORNER(volume) ) / voxel_dim );
+  if ((AMITK_DATA_SET_DIM_T(ds1) > 1) ||
+      (AMITK_DATA_SET_DIM_T(ds2) > 1) ||
+      (AMITK_DATA_SET_DIM_G(ds1) > 1) ||
+      (AMITK_DATA_SET_DIM_G(ds2) > 1))
+    g_warning("Can't currently handle multi-frame/multi-gate studies - calculations will be for only the first frame/gate");
+  dim.t = dim.g = 1;
+
+  output_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(ds1), 
+					   AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
+  if (output_ds == NULL) {
+    g_warning(_("couldn't allocate space for the output_ds data set structure"));
+    goto error;
+  }
+
+  /* Start setting up the new dataset */
+  amitk_space_copy_in_place( AMITK_SPACE(output_ds), AMITK_SPACE(volume));
+  amitk_data_set_set_scale_factor(output_ds, 1.0);
+  output_ds->voxel_size.x = output_ds->voxel_size.y = output_ds->voxel_size.z = voxel_dim;
+  amitk_data_set_calc_far_corner(output_ds);
+  amitk_raw_data_FLOAT_initialize_data(AMITK_DATA_SET_RAW_DATA(output_ds),NAN);
+  for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
+    amitk_data_set_set_color_table(output_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(ds1, i_view_mode));
+  for (i_view_mode=AMITK_VIEW_MODE_LINKED_2WAY; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+    amitk_data_set_set_color_table_independent(output_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(ds1, i_view_mode));
+
+  /* set a new name for this guy */
+  temp_string = g_strdup_printf(_("Result: %s %s %s"), AMITK_OBJECT_NAME(ds1),
+				amitk_operation_get_name(operation), AMITK_OBJECT_NAME(ds2));
+  amitk_object_set_name(AMITK_OBJECT(output_ds), temp_string);
+  g_free(temp_string);
+
+
+  /* fill in output_ds by performing the operation on the data sets */
+  corner[0] = AMITK_VOLUME_CORNER(volume);
+  corner[0].z = voxel_dim;
+  amitk_volume_set_corner(volume, corner[0]); /* set the z dim of the slices */
+  j_voxel = zero_voxel;
+  new_offset = zero_point;
+
+  for (i_voxel.t = 0; i_voxel.t < dim.t; i_voxel.t++) {
+    for (i_voxel.g = 0; i_voxel.g < dim.g; i_voxel.g++) {
+      for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++) {
+	new_offset.z = i_voxel.z * voxel_dim;
+
+	/* advance the requested slice volume */
+	amitk_space_set_offset( AMITK_SPACE(volume), amitk_space_s2b(AMITK_SPACE(output_ds), new_offset));
+
+	slice1 = amitk_data_set_get_slice(ds1,
+					  amitk_data_set_get_start_time(ds1, i_voxel.t),
+					  amitk_data_set_get_frame_duration(ds1, i_voxel.t),
+					  i_voxel.g,
+					  voxel_dim,
+					  volume);
+	slice2 = amitk_data_set_get_slice(ds2,
+					  amitk_data_set_get_start_time(ds2, i_voxel.t ),
+					  amitk_data_set_get_frame_duration(ds2, i_voxel.t),
+					  i_voxel.g,
+					  voxel_dim,
+					  volume);
+
+	if ((slice1 == NULL) || (slice2 == NULL)) {
+	  g_warning(_("couldn't generate slices from the data set..."));
+	  goto error;
+	}
+
+	for (i_voxel.y = 0, j_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++, j_voxel.y++) {
+	  for (i_voxel.x = 0, j_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, j_voxel.x++) {
+	    value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), j_voxel ) + op1*AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), j_voxel);
+	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = value;
+	  }
+	}
+	amitk_object_unref(slice1);
+	slice1 = NULL;
+	amitk_object_unref(slice2);
+	slice2 = NULL;
+      }
+    }
+  }
+
+  /* recalc the temporary parameters */
+  amitk_data_set_calc_max_min(output_ds, NULL, NULL);
+
+  /* set some sensible thresholds */
+  output_ds->threshold_max[0] = output_ds->threshold_max[1] = 
+    amitk_data_set_get_global_max(output_ds);
+  output_ds->threshold_min[0] = output_ds->threshold_min[1] =
+    amitk_data_set_get_global_min(output_ds);
+  output_ds->threshold_ref_frame[1] = AMITK_DATA_SET_NUM_FRAMES(output_ds)-1;
+
+  goto exit;
+
+ error:
+  amitk_object_unref(output_ds);
+  output_ds = NULL;
+
+ exit:
+  amitk_object_unref(volume);
+  g_list_free(data_sets);
+  if (slice1 != NULL) amitk_object_unref(slice1);
+  if (slice2 != NULL) amitk_object_unref(slice2);
+
+  return output_ds;
+}
+
 
 
 const gchar * amitk_scaling_type_get_name(const AmitkScalingType scaling_type) {
@@ -5220,6 +5373,18 @@ const gchar * amitk_interpolation_get_name(const AmitkInterpolation interpolatio
 
   enum_class = g_type_class_ref(AMITK_TYPE_INTERPOLATION);
   enum_value = g_enum_get_value(enum_class, interpolation);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_operation_get_name(const AmitkOperation operation) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_OPERATION);
+  enum_value = g_enum_get_value(enum_class, operation);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

@@ -1,4 +1,11 @@
-0.8.16
+0.8.17
+ 	* added toolbox for doing image math between data sets [1]
+ 	* now saves weight/dob/dose/etc. when exporting with xmedcon [1]
+	* fixed bug loading DICOM on windows [2]
+ 	[1] with help from Matthew Leonard
+	[2] found by Martin Rodriguez-Porcel
+
+0.8.16	2006.06.29
 	* wasn't reading in intercepts correctly from .xif files [1]
 	* potential fix for 64 bit check in xml_check_file_32bit_okay [2]
 	* fixed bug with rendering of ROI's [3]

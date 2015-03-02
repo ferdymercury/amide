@@ -638,7 +638,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   
   if (update_func != NULL) 
     continue_work = (*update_func)(update_data, _("Importing File(s) Through DCMTK"), (gdouble) 0.0);
-  divider = (num_files/AMIDE_UPDATE_DIVIDER < 1.0) ? 1 : rint(num_files/AMIDE_UPDATE_DIVIDER);
+  divider = (num_files/AMIDE_UPDATE_DIVIDER < 1.0) ? 1 : (gint) rint(num_files/AMIDE_UPDATE_DIVIDER);
 
   for (image=0; (image < num_files) && (continue_work); image++) {
     
@@ -805,7 +805,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
     amitk_append_str_with_newline(perror_buf, _("Detected discontinous frames in data set %s - frame start times will be incorrect"), AMITK_OBJECT_NAME(ds));
   
   if (screwed_up_thickness)
-    amitk_append_str_with_newline(perror_buf, _("Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"), AMITK_OBJECT_NAME(ds), old_thickness, true_thickness);
+    amitk_append_str_with_newline(perror_buf, _("Slice thickness (%5.3f mm) not equal to slice spacing (%5.3f mm) in data set %s - will use slice spacing for thickness"), old_thickness, true_thickness, AMITK_OBJECT_NAME(ds));
   
   /* detected a dynamic data set, massage the data appropriately */
   //	if (num_frames > 1) {

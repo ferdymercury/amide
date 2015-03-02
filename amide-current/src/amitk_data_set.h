@@ -96,6 +96,13 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
 
 typedef enum {
+  AMITK_OPERATION_ADD,
+  AMITK_OPERATION_SUB,
+  AMITK_OPERATION_NUM
+} AmitkOperation;
+
+
+typedef enum {
   AMITK_INTERPOLATION_NEAREST_NEIGHBOR, 
   AMITK_INTERPOLATION_TRILINEAR, 
   AMITK_INTERPOLATION_NUM
@@ -501,6 +508,7 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 						      const AmitkDataSet * slice_parent);
 GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
 							const AmitkDataSet * slice_parent);
+AmitkDataSet * amitk_data_sets_math                   (AmitkDataSet * ds1, AmitkDataSet * ds2, AmitkOperation operation);
 
 
 
@@ -514,6 +522,7 @@ GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
 
 
 const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling_type);
+const gchar *   amitk_operation_get_name          (const AmitkOperation operation);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_subject_orientation_get_name(const AmitkSubjectOrientation subject_orientation);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);

@@ -307,6 +307,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
 
   /* pick our internal data format */
+  g_print("libmdc type %d\n", libmdc_fi.type);
   switch(libmdc_fi.type) {
   case BIT8_S: /* 2 */
     format = AMITK_FORMAT_SBYTE;
@@ -517,10 +518,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
      if there's only 1 frame, dyndata is NULL! */
   if (libmdc_fi.dyndata != NULL)
     ds->scan_start = libmdc_fi.dyndata[0].time_frame_start/1000.0;
-  else if (libmdc_fi.image[0].sdata != NULL) 
-    ds->scan_start = 0.0;
   else {
-    g_warning(_("(X)MedCon returned no duration information.  Frame durations will be incorrect"));
+    g_warning(_("(X)MedCon returned no dynamic data information.  Frame durations will be incorrect"));
     ds->scan_start = 0.0;
   }
 
@@ -545,8 +544,6 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     /* set the frame duration, note, medcon/libMDC specifies time as float in msecs */
     if (libmdc_fi.dyndata != NULL)
       amitk_data_set_set_frame_duration(ds, i.t, libmdc_fi.dyndata[i.t].time_frame_duration/1000.0);
-    else if (libmdc_fi.image[0].sdata != NULL) 
-      amitk_data_set_set_frame_duration(ds, i.t, libmdc_fi.image[0].sdata->image_duration/1000.0);
     else
       amitk_data_set_set_frame_duration(ds, i.t, 1.0);
 
@@ -851,45 +848,6 @@ void libmdc_export(AmitkDataSet * ds,
 
 
   /* set what we can */
-  if (AMITK_DATA_SET_SUBJECT_NAME(ds) != NULL) 
-    strncpy(fi.patient_name,AMITK_DATA_SET_SUBJECT_NAME(ds), MDC_MAXSTR);
-  if (AMITK_DATA_SET_SUBJECT_ID(ds) != NULL) 
-    strncpy(fi.patient_id,AMITK_DATA_SET_SUBJECT_ID(ds), MDC_MAXSTR);
-  if (AMITK_DATA_SET_SUBJECT_DOB(ds) != NULL) 
-    strncpy(fi.patient_dob,AMITK_DATA_SET_SUBJECT_DOB(ds), MDC_MAXSTR);
-  fi.injected_dose = AMITK_DATA_SET_INJECTED_DOSE(ds);
-  fi.patient_weight= AMITK_DATA_SET_SUBJECT_WEIGHT(ds);
-
-  switch(AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)) {
-  case AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST:
-    fi.pat_slice_orient = MDC_SUPINE_HEADFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST:
-    fi.pat_slice_orient = MDC_SUPINE_FEETFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST:
-    fi.pat_slice_orient = MDC_PRONE_HEADFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST:
-    fi.pat_slice_orient = MDC_PRONE_FEETFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST:
-    fi.pat_slice_orient = MDC_DECUBITUS_RIGHT_HEADFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST:
-    fi.pat_slice_orient = MDC_DECUBITUS_RIGHT_FEETFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST:
-    fi.pat_slice_orient = MDC_DECUBITUS_LEFT_HEADFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST:
-    fi.pat_slice_orient = MDC_DECUBITUS_LEFT_FEETFIRST_TRANSAXIAL;
-    break;
-  case AMITK_SUBJECT_ORIENTATION_UNKNOWN:
-  default:
-    break;
-  }
-
   fi.ifname = strdup(filename);
   fi.iformat = MDC_FRMT_RAW;
   if (resliced) {

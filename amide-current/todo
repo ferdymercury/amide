@@ -3,25 +3,19 @@ misc list of things todo:
 for next release?
 -----------------
 
+* add helper dialog to export
+	- allow selection of resliced/not resliced/all visible data sets
+	- allow selection of output format
+	- allow selection of voxel size
+	- allow selection of interpolation (dataset specified, nearest neighbor, trilinear)
+	- allow selection of "whole image" or "subset"... need better phrasing
+		suggested by Luca Guerrieri
+* add progress bar for image math toolbox
+* add dcmtk export
 * dcmtk shouldn't be required for mac os x install - figure out how to embed
   dicom.dic
 * view_thickness isn't read in from .xif file - gets overridden at some point
-
-* seeing bugs loading old .xif files on Linux/PPC.  Looks like compiler bugs, 
-	seen with gcc 4.0.1-4.fc4
-
-* change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
-	initial popup letting you change which data set will be used
 * Gate picker -> multiple selection still screwed up
-* add drag-n-drop capabilities between study windows
-	don't use treeview reorderable stuff, too limited,
-* ability to import and export AIR .air files
-  -probably from rotate axis page
-  -need object list widget: should update automatically when something is removed somewhere else
-* export ROI's to external file? and allow import?
-* continue implementing progress bars for various functions:
-	-roi analysis
-	-loading in data sets
 
 
 for 0.9.0 release
@@ -70,6 +64,8 @@ factor analysis things:
 
 big things:
 -----------
+* add drag-n-drop capabilities between study windows
+	don't use treeview reorderable stuff, too limited,
 * toolbox dialog for generating polar maps
 * should be able to specify units the image/display info is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
@@ -101,10 +97,19 @@ big things:
          knows to update it's table.
         -function to request stats as an array of structs
         -function to request raw values as array of structs
+* ability to import and export AIR .air files
+  -probably from rotate axis page
+  -need object list widget: should update automatically when something is removed somewhere else
 
                        
 small things:
 -------------
+* change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
+	initial popup letting you change which data set will be used
+* export ROI's to external file? and allow import?
+* continue implementing progress bars for various functions:
+	-roi analysis
+	-loading in data sets
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
 	would allow simplification of amitk_canvas event cruft
 	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement

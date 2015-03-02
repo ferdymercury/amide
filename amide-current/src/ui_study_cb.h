@@ -70,6 +70,7 @@ void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_fads_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_profile_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_data_set_math_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_target_pressed(GtkWidget * button, gpointer data);
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_cb_add_roi(GtkWidget * widget, gpointer data);
