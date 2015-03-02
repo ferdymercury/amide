@@ -141,8 +141,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   frame_analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
 
   /* calculate the time midpoint of the data */
-  frame_analysis->time_midpoint = (amitk_data_set_get_end_time(ds, frame) + 
-				   amitk_data_set_get_start_time(ds, frame))/2.0;
+  frame_analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
 
   /* calculate the #voxels, min max, and total */
   amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, calculate_stats1, frame_analysis);

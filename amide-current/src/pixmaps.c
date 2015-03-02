@@ -45,10 +45,23 @@ const char ** icon_fuse_type[AMITK_FUSE_TYPE_NUM] = {
 
 #include "../pixmaps/icon_view_single.xpm"
 #include "../pixmaps/icon_view_linked.xpm"
+#include "../pixmaps/icon_view_linked3.xpm"
 const char ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {
   icon_view_single_xpm,
-  icon_view_linked_xpm
+  icon_view_linked_xpm,
+  icon_view_linked3_xpm
 };
+
+#include "../pixmaps/icon_view_transverse.xpm"
+#include "../pixmaps/icon_view_coronal.xpm"
+#include "../pixmaps/icon_view_sagittal.xpm"
+
+const char ** icon_view[AMITK_VIEW_NUM] = {
+  icon_view_transverse_xpm,
+  icon_view_coronal_xpm,
+  icon_view_sagittal_xpm,
+};
+
 
 #include "../pixmaps/icon_threshold.xpm"
 #include "../pixmaps/icon_thresholding_per_slice.xpm"

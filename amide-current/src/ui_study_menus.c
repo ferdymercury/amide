@@ -38,9 +38,9 @@
 /* function to fill in a radioitem */
 void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item, 
 				      const gchar * name,
-				      gchar * tooltip,
-				      gpointer callback_func,
-				      gpointer callback_data,
+				      const gchar * tooltip,
+				      gpointer cb_func,
+				      gpointer cb_data,
 				      gpointer xpm_data) {
   
   item->type = GNOME_APP_UI_ITEM;
@@ -49,8 +49,8 @@ void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
   else
     item->label = NULL;
   item->hint = tooltip;
-  item->moreinfo = callback_func;
-  item->user_data = callback_data;
+  item->moreinfo = cb_func;
+  item->user_data = cb_data;
   item->unused_data = NULL;
   item->pixmap_type =  GNOME_APP_PIXMAP_DATA;
   item->pixmap_info = xpm_data;
@@ -61,20 +61,32 @@ void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
   return;
 }
 
+void ui_study_menus_fill_in_toggleitem(GnomeUIInfo * item, 
+				       const gchar * name,
+				       const gchar * tooltip,
+				       gpointer cb_func,
+				       gpointer cb_data,
+				       gpointer xpm_data) {
+  ui_study_menus_fill_in_radioitem(item, name, tooltip, cb_func, cb_data, xpm_data);
+  item->type = GNOME_APP_UI_TOGGLEITEM;
+
+  return;
+}
+
 /* function to fill in a menuitem */
 void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item, 
-				     gchar * name,
-				     gchar * tooltip,
-				     gpointer callback_func,
-				     gpointer callback_data) {
+				     const gchar * name,
+				     const gchar * tooltip,
+				     gpointer cb_func,
+				     gpointer cb_data) {
 
-  ui_study_menus_fill_in_radioitem(item, name, tooltip, callback_func, callback_data, NULL);
+  ui_study_menus_fill_in_radioitem(item, name, tooltip, cb_func, cb_data, NULL);
 
   return;
 }
 void ui_study_menus_fill_in_submenu(GnomeUIInfo * item, 
-				    gchar * name,
-				    gchar * tooltip,
+				    const gchar * name,
+				    const gchar * tooltip,
 				    GnomeUIInfo * submenu) {
   item->type = GNOME_APP_UI_SUBTREE;
   item->label = name;

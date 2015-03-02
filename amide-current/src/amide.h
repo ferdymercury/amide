@@ -46,13 +46,6 @@
 
 /* typedef's */
 typedef enum {
-  AMITK_VIEW_TRANSVERSE, 
-  AMITK_VIEW_CORONAL, 
-  AMITK_VIEW_SAGITTAL, 
-  AMITK_VIEW_NUM
-} AmitkView;
-
-typedef enum {
   AMITK_LAYOUT_LINEAR, 
   AMITK_LAYOUT_ORTHOGONAL,
   AMITK_LAYOUT_NUM
@@ -64,13 +57,6 @@ typedef enum {
   AMITK_EYE_RIGHT, 
   AMITK_EYE_NUM
 } AmitkEye;
-
-
-typedef enum {
-  AMITK_VIEW_MODE_SINGLE,
-  AMITK_VIEW_MODE_LINKED,
-  AMITK_VIEW_MODE_NUM
-} AmitkViewMode;
 
 
 typedef enum {
@@ -122,14 +108,10 @@ typedef gint16 amide_intpoint_t;
 /* external variables */
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
-extern gchar * view_mode_names[];
-extern gchar * view_mode_explanations[];
-
 
 /* external functions */
 void amide_register_window(gpointer * widget);
 void amide_unregister_window(gpointer * widget);
 void amide_unregister_all_windows(void);
-
 
 #endif /* __AMIDE_H__ */

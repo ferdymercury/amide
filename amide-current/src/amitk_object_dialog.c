@@ -833,7 +833,18 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
-      gtk_entry_set_text(GTK_ENTRY(entry), amitk_data_set_scaling_get_name(AMITK_DATA_SET(object)));
+      switch(AMITK_DATA_SET_SCALING_TYPE(object)) {
+      case AMITK_SCALING_TYPE_1D:
+	gtk_entry_set_text(GTK_ENTRY(entry), "Per Frame Scale Factor");
+	break;
+      case AMITK_SCALING_TYPE_2D:
+	gtk_entry_set_text(GTK_ENTRY(entry), "Per Plane Scale Factor");
+	break;
+      default:
+      case AMITK_SCALING_TYPE_0D:
+	gtk_entry_set_text(GTK_ENTRY(entry), "Single Scale Factor");
+	break;
+      }
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
 		       1,3, table_row, table_row+1, 

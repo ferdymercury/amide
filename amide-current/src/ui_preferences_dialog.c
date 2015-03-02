@@ -43,6 +43,7 @@ static void line_style_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void leave_target_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
 
@@ -56,6 +57,8 @@ static void roi_width_cb(GtkWidget * widget, gpointer data) {
   GnomeCanvasItem * roi_item;
   AmitkView i_view;
   AmitkViewMode i_view_mode;
+
+  g_return_if_fail(ui_study->study != NULL);
 
   new_roi_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 
@@ -71,10 +74,11 @@ static void roi_width_cb(GtkWidget * widget, gpointer data) {
     gnome_config_pop_prefix();
     gnome_config_sync();
 
-    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
+    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	amitk_canvas_set_roi_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				   ui_study->roi_width);
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  amitk_canvas_set_roi_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				     ui_study->roi_width);
     
     /* update the roi indicator */
     roi_item = g_object_get_data(G_OBJECT(ui_study->preferences_dialog), "roi_item");
@@ -94,6 +98,8 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   AmitkView i_view;
   AmitkViewMode i_view_mode;
 
+  g_return_if_fail(ui_study->study != NULL);
+
   /* figure out which menu item called me */
   new_line_style = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"line_style"));
 
@@ -105,10 +111,11 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
     gnome_config_pop_prefix();
     gnome_config_sync();
 
-    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
+    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	amitk_canvas_set_line_style(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				    ui_study->line_style);
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  amitk_canvas_set_line_style(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				      ui_study->line_style);
 
     /* update the roi indicator */
     roi_item = g_object_get_data(G_OBJECT(ui_study->preferences_dialog), "roi_item");
@@ -135,8 +142,40 @@ static void layout_cb(GtkWidget * widget, gpointer data) {
     gnome_config_pop_prefix();
     gnome_config_sync();
 
-    ui_study_setup_layout(ui_study);
+    ui_study_update_layout(ui_study);
   }
+
+  return;
+}
+
+static void maintain_size_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gboolean canvas_maintain_size;
+  AmitkView i_view;
+  AmitkViewMode i_view_mode;
+
+  g_return_if_fail(ui_study->study != NULL);
+
+  canvas_maintain_size = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (ui_study->canvas_maintain_size != canvas_maintain_size) {
+    ui_study->canvas_maintain_size = canvas_maintain_size;
+
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("CANVAS/MinimizeSize",
+			 !ui_study->canvas_maintain_size);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+
+    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
+      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  amitk_canvas_set_general_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					      ui_study->canvas_maintain_size);
+  }
+
+
 
   return;
 }
@@ -147,6 +186,8 @@ static void leave_target_cb(GtkWidget * widget, gpointer data) {
   gboolean canvas_leave_target;
   AmitkView i_view;
   AmitkViewMode i_view_mode;
+
+  g_return_if_fail(ui_study->study != NULL);
 
   canvas_leave_target = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
@@ -159,11 +200,12 @@ static void leave_target_cb(GtkWidget * widget, gpointer data) {
     gnome_config_pop_prefix();
     gnome_config_sync();
 
-    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
+    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-					   ui_study->canvas_leave_target,
-					   ui_study->canvas_target_empty_area);
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					     ui_study->canvas_leave_target,
+					     ui_study->canvas_target_empty_area);
   }
 
 
@@ -178,6 +220,8 @@ static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
   gint new_target_empty_area;
   AmitkView i_view;
   AmitkViewMode i_view_mode;
+
+  g_return_if_fail(ui_study->study != NULL);
 
   new_target_empty_area = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
 
@@ -194,11 +238,12 @@ static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
     gnome_config_pop_prefix();
     gnome_config_sync();
 
-    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
+    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-					   ui_study->canvas_leave_target,
-					   ui_study->canvas_target_empty_area);
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					     ui_study->canvas_leave_target,
+					     ui_study->canvas_target_empty_area);
   }
 
   return;
@@ -451,12 +496,31 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
 
+  /* do we want the size of the canvas to not resize */
+  label = gtk_label_new("Maintain canvas size constant:");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  check_button = gtk_check_button_new();
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
+			       ui_study->canvas_maintain_size);
+  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
+		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(maintain_size_cb), ui_study);
+  table_row++;
+
+
   /* do we want the target left on the canvas */
-  check_button = gtk_check_button_new_with_label("Leave target on canvas:");
+  label = gtk_label_new("Leave target on canvas:");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+
+  check_button = gtk_check_button_new();
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       ui_study->canvas_leave_target);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   0,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(leave_target_cb), ui_study);
   table_row++;
 

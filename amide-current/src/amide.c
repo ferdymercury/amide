@@ -45,17 +45,6 @@ gchar * object_menu_names[] = {
   "Selected _Alignment Points"
 };
 
-gchar * view_mode_names[] = {
-  "single view",
-  "linked view"
-};
-
-gchar * view_mode_explanations[] = {
-  "All objects are shown in a single view",
-  "Objects are shown in 1 of 2 linked views"
-};
-
-
 /* internal variables */
 static GList * windows = NULL;
 

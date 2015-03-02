@@ -60,6 +60,8 @@ typedef struct ui_study_t {
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
+  GtkWidget * canvas_visible_button[AMITK_VIEW_NUM];
+  GtkWidget * view_mode_button[AMITK_VIEW_MODE_NUM];
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * time_dialog;
   GtkWidget * time_button;
@@ -83,13 +85,13 @@ typedef struct ui_study_t {
   AmitkLayout canvas_layout;
   gint roi_width;
   GdkLineStyle line_style;
+  gboolean canvas_maintain_size;
   gboolean canvas_leave_target;
   gint canvas_target_empty_area;
   gboolean dont_prompt_for_save_on_exit;
 
   gboolean study_altered;
   gboolean study_virgin;
-  AmitkViewMode view_mode;
 
   guint reference_count;
 } ui_study_t;
@@ -105,12 +107,13 @@ void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study);
 GtkWidget * ui_study_create(AmitkStudy * study);
 void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info, 
 			       AmitkPoint new_point, amide_data_t value);
+void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study);
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
 void ui_study_update_interpolation(ui_study_t * ui_study);
 void ui_study_update_title(ui_study_t * ui_study);
-void ui_study_setup_layout(ui_study_t * ui_study);
+void ui_study_update_layout(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);
 
 

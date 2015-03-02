@@ -32,18 +32,24 @@
 /* external functions */
 void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
 				      const gchar * name,
-				      gchar * tooltip,
-				      gpointer callback_func,
-				      gpointer callback_data,
+				      const gchar * tooltip,
+				      gpointer cb_func,
+				      gpointer cb_data,
 				      gpointer xpm_data);
+void ui_study_menus_fill_in_toggleitem(GnomeUIInfo * item,
+				       const gchar * name,
+				       const gchar * tooltip,
+				       gpointer cb_func,
+				       gpointer cb_data,
+				       gpointer xpm_data);
 void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item, 
-				     gchar * name,
-				     gchar * tooltip,
-				     gpointer callback_func,
-				     gpointer callback_data);
+				     const gchar * name,
+				     const gchar * tooltip,
+				     gpointer cb_func,
+				     gpointer cb_data);
 void ui_study_menus_fill_in_submenu(GnomeUIInfo * item, 
-				    gchar * name,
-				    gchar * tooltip,
+				    const gchar * name,
+				    const gchar * tooltip,
 				    GnomeUIInfo * submenu);
 void ui_study_menus_fill_in_end(GnomeUIInfo * item);
 void ui_study_menus_create(ui_study_t * ui_study);

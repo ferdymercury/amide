@@ -436,6 +436,9 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+
+  if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
+
   canvas_volume = AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume;
   g_return_if_fail(canvas_volume != NULL);
 
@@ -521,14 +524,16 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
   AmitkViewMode i_view_mode;
 
   g_return_if_fail(ui_study->active_ds != NULL);
+  g_return_if_fail(ui_study->study != NULL);
 
   /* update the other canvases accordingly */
   outline_color = amitk_color_table_outline_color(ui_study->active_ds->color_table, FALSE);
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
+  for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view])
-	amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				   AMITK_CANVAS_TARGET_ACTION_SHOW,*position, outline_color, thickness);
+      if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	if (canvas != ui_study->canvas[i_view_mode][i_view])
+	  amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				     AMITK_CANVAS_TARGET_ACTION_SHOW,*position, outline_color, thickness);
 
   ui_study_update_thickness(ui_study, thickness);
 
@@ -542,14 +547,17 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
   AmitkView i_view;
   AmitkViewMode i_view_mode;
 
+  g_return_if_fail(ui_study->study != NULL);
+
   amitk_study_set_view_thickness(ui_study->study, thickness);
   amitk_study_set_view_center(ui_study->study, *position);
 
   /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
+  for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-      amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				 AMITK_CANVAS_TARGET_ACTION_HIDE,*position, rgba_black, thickness);
+      if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				   AMITK_CANVAS_TARGET_ACTION_HIDE,*position, rgba_black, thickness);
   }
 
   return;
@@ -1067,7 +1075,19 @@ void ui_study_cb_study_changed(AmitkStudy * study, gpointer data) {
 
   ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
   ui_study_update_time_button(ui_study->study, ui_study->time_button);
+  ui_study_update_canvas_visible_buttons(ui_study);
+  ui_study_update_layout(ui_study);
+  
+  return;
+}
 
+void ui_study_cb_study_view_mode_changed(AmitkStudy * study, gpointer data) {
+
+  ui_study_t * ui_study = data;
+
+  ui_study_update_layout(ui_study);
+
+  return;
 }
 
 /* function to switch the image fusion type */
@@ -1084,23 +1104,27 @@ void ui_study_cb_fuse_type(GtkWidget * widget, gpointer data) {
   return;
 }
 
+void ui_study_cb_canvas_visible(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  AmitkView view;
+
+  /* figure out which view item called me */
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view"));
+  amitk_study_set_canvas_visible(ui_study->study, view, 
+				 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+  ui_study_update_canvas_visible_buttons(ui_study);
+
+
+  return;
+}
+
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  AmitkViewMode view_mode;
 
-  /* figure out which view_mode menu item called me */
-  view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode"));
-  
-  /* check if we actually changed values */
-  if (ui_study->view_mode != view_mode) {
-    /* and inact the changes */
-    ui_study->view_mode = view_mode;
-    amitk_tree_set_linked_mode_column_visible(AMITK_TREE(ui_study->tree),
-    					      view_mode == AMITK_VIEW_MODE_LINKED);
-    ui_study_setup_layout(ui_study);
-  }
-
+  amitk_study_set_view_mode(ui_study->study, 
+			    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode")));
   return;
 }
 

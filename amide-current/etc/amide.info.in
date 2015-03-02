@@ -1,9 +1,9 @@
 Package: amide
 Version: @VERSION@
 Revision: 1
-Source: http://telia.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
-Depends: libecat7, volpack, xmedcon, mpeg-encode, gnome-libs, libxml2, gdk-pixbuf, imlib, gsl, audiofile
-BuildDepends: 
+Source: http://osdn.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
+Depends: libecat7, volpack, xmedcon, libfame, libxml2, gsl, libgnomecanvas2, libgnomeui2
+BuildDepends: libgnomeui2-dev
 #Patch: %f.patch
 InstallScript: make install PREFIX=%p DESTDIR=%d
 #DocFiles: README COPYING AUTHORS
@@ -14,6 +14,3 @@ AMIDE is a tool for viewing and analyzing medical image data sets.
 License: GPL
 Homepage: http://amide.sf.net/
 Maintainer: Andy Loening <loening@ucla.edu>
-
-
-

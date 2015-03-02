@@ -59,7 +59,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   AmitkPoint temp_point;
   AmitkFormat format;
   AmitkVoxel dim;
-  AmitkScaling scaling;
+  AmitkScalingType scaling_type;
   div_t x;
   gint divider;
   gint t_times_z;
@@ -77,6 +77,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case PetVolume: /* i.e. CTI 7.0 */
   case AttenCor:
   case Sinogram:
+  case InterfileImage:
     break;
   case NoData:
   case Normalization:
@@ -87,7 +88,6 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case Byte3dSinogram: 
   case Norm3d:
   case Float3dSinogram:
-  case InterfileImage:
   case ByteImage:
   case ByteVolume:
   default:
@@ -123,7 +123,8 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ColorData:
   case BitData:
   default:
-    g_warning("no support for importing CTI files with data type of: %s", 
+    g_warning("no support for importing CTI files with data type of: %d (%s)", 
+	      cti_subheader->data_type,
 	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
 			     cti_subheader->data_type : 0]);
     goto error;
@@ -138,17 +139,15 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
 
   /* figure out the size of our factor array */
-  if (format == AMITK_FORMAT_FLOAT) { /* float image, so we don't need scaling factors */
-    scaling = AMITK_SCALING_0D;
-  } else if (cti_subheader->zdim == 1) {
-    /* slice image, non-float data, so we'll need a 2D array of scaling factors */
-    scaling = AMITK_SCALING_2D;
-  } else { /* volume image, so we'll need a 1D array of scaling factors */
-    scaling = AMITK_SCALING_1D;
+  if (cti_subheader->zdim == 1) {
+    /* slice image, non-float data, so we'll need a per/plane (2D) array of scaling factors */
+    scaling_type = AMITK_SCALING_TYPE_2D;
+  } else { /* volume image, so we'll need a per/frame (1D) array of scaling factors */
+    scaling_type = AMITK_SCALING_TYPE_1D;
   }
 
   /* init our data structures */
-  ds = amitk_data_set_new_with_data(format, dim, scaling);
+  ds = amitk_data_set_new_with_data(format, dim, scaling_type);
   if (ds == NULL) {
     g_warning("couldn't allocate space for the data set structure to hold CTI data");
     goto error;
@@ -210,6 +209,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   switch(cti_file->mhptr->file_type) {
   case PetImage: 
   case PetVolume: 
+  case InterfileImage:
     ds->scan_start = (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
     break;
   case AttenCor:
@@ -252,6 +252,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
       switch(cti_file->mhptr->file_type) {
       case PetImage: 
       case PetVolume: 
+      case InterfileImage:
 	ds->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
 	break;
       case AttenCor:
@@ -274,18 +275,17 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 	    continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
 	}
 
+	/* save the scale factor */
+	j.x = j.y = 0;
+	j.z = slice;
+	j.t = i.t;
+	if (scaling_type == AMITK_SCALING_TYPE_2D)
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
+	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+
 	switch (format) {
 	case AMITK_FORMAT_SSHORT:
-	  
-	  /* save the scale factor */
-	  j.x = j.y = 0;
-	  j.z = slice;
-	  j.t = i.t;
-	  if (scaling == AMITK_SCALING_2D)
-	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
-	  else if (slice == 0)
-	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
-	  
 	  /* copy the data into the volume */
 	  /* note, we compensate here for the fact that we define 
 	     our origin as the bottom left, not top left like the CTI file */
@@ -298,8 +298,6 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 		   +i.x));
 	  break;
 	case AMITK_FORMAT_FLOAT:
-	  /* floating point data should use no scale factor */
-	  
 	  /* copy the data into the volume */
 	  /* note, we compensate here for the fact that we define 
 	     our origin as the bottom left, not top left like the CTI file */
@@ -315,6 +313,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 	  goto error;
 	  break; 
 	}
+
       }
 
       free_matrix_data(cti_slice);

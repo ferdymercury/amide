@@ -41,8 +41,8 @@ G_BEGIN_DECLS
 #define AMITK_IS_CANVAS_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_CANVAS))
 
 #define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)->view)
+#define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)
 #define AMITK_CANVAS_PIXBUF(obj)     (AMITK_CANVAS(obj)->pixbuf)
-
 
 
 typedef enum {
@@ -80,6 +80,7 @@ struct _AmitkCanvas
   gint roi_width;
   GdkLineStyle line_style;
   AmitkDataSet * active_ds;
+  gboolean maintain_size;
   gboolean leave_target;
   gint target_empty_area;
 
@@ -139,12 +140,15 @@ GtkWidget *   amitk_canvas_new                  (AmitkView view,
 						 GdkLineStyle line_style,
 						 gint roi_width,
 						 gboolean with_arrows,
+						 gboolean maintain_size,
 						 gboolean leave_target,
 						 gint target_empty_area);
 void          amitk_canvas_set_study            (AmitkCanvas * canvas, 
 						 AmitkStudy * study);
 void          amitk_canvas_set_layout           (AmitkCanvas * canvas, 
 						 AmitkLayout new_layout);
+void          amitk_canvas_set_general_properties(AmitkCanvas * canvas, 
+						  gboolean maintain_size);
 void          amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
 						 gboolean leave_target,
 						 gint target_empty_area);
@@ -160,6 +164,8 @@ void          amitk_canvas_update_target        (AmitkCanvas * canvas,
 						 rgba_t color, 
 						 amide_real_t thickness);
 
+gint          amitk_canvas_get_width            (AmitkCanvas * canvas);
+gint          amitk_canvas_get_height           (AmitkCanvas * canvas);
 
 G_END_DECLS
 

@@ -124,7 +124,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
   gboolean found_name=FALSE;
   AmitkVoxel dim;
   AmitkFormat format;
-  AmitkScaling scaling;
+  AmitkScalingType scaling_type;
   div_t x;
   gint divider;
   gint t_times_z;
@@ -227,7 +227,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     format = AMITK_FORMAT_UBYTE;
     MDC_QUANTIFY = MDC_NO; 
     MDC_NORM_OVER_FRAMES = MDC_NO;
-    scaling = AMITK_SCALING_2D;
+    scaling_type = AMITK_SCALING_TYPE_2D;
     break;
   case BIT16_U: /*  5 */
     g_warning("Importing type %d file through medcon unsupported, trying as signed short",
@@ -236,7 +236,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     format = AMITK_FORMAT_SSHORT;
     MDC_QUANTIFY = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
-    scaling = AMITK_SCALING_2D;
+    scaling_type = AMITK_SCALING_TYPE_2D;
     break;
   case BIT32_U: /* 7 */
     g_warning("Importing type %d file through medcon unsupported, trying as signed int",
@@ -245,7 +245,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     format = AMITK_FORMAT_SINT;
     MDC_QUANTIFY = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
-    scaling = AMITK_SCALING_2D;
+    scaling_type = AMITK_SCALING_TYPE_2D;
     break;
   default:
   case BIT64_U: /* 9 */
@@ -257,13 +257,13 @@ AmitkDataSet * medcon_import(const gchar * filename,
     	      medcon_file_info.type);
   case FLT32: /* 10 */
     format = AMITK_FORMAT_FLOAT;
-    scaling = AMITK_SCALING_0D;
+    scaling_type = AMITK_SCALING_TYPE_0D;
     MDC_QUANTIFY = MDC_YES;
     MDC_NORM_OVER_FRAMES = MDC_YES;
     break;
   }
 
-  ds = amitk_data_set_new_with_data(format, dim, scaling);
+  ds = amitk_data_set_new_with_data(format, dim, scaling_type);
   if (ds == NULL) {
     g_warning("couldn't allocate space for the data set structure to hold medcon data");
     goto error;

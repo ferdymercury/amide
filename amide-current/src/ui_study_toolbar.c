@@ -43,6 +43,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
 
   AmitkInterpolation i_interpolation;
   AmitkFuseType i_fuse_type;
+  AmitkView i_view;
   AmitkViewMode i_view_mode;
   GtkWidget * label;
   GtkWidget * toolbar;
@@ -51,6 +52,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
   /* the toolbar definitions */
   GnomeUIInfo interpolation_list[AMITK_INTERPOLATION_NUM+1];
   GnomeUIInfo fuse_type_list[AMITK_FUSE_TYPE_NUM+1];
+  GnomeUIInfo canvas_visible_list[AMITK_VIEW_NUM+1];
   GnomeUIInfo view_mode_list[AMITK_VIEW_MODE_NUM+1];
 
   GnomeUIInfo study_main_toolbar[] = {
@@ -58,6 +60,8 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
     GNOMEUIINFO_RADIOLIST(interpolation_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(fuse_type_list),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_INCLUDE(canvas_visible_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(view_mode_list),
     GNOMEUIINFO_SEPARATOR,
@@ -95,6 +99,17 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
 				     ui_study, 
 				     icon_fuse_type[i_fuse_type]);
   ui_study_menus_fill_in_end(&(fuse_type_list[AMITK_INTERPOLATION_NUM]));
+
+  /* and the views */
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
+    ui_study_menus_fill_in_toggleitem(&(canvas_visible_list[i_view]),
+				      (icon_view[i_view] == NULL) ? 
+				      amitk_view_get_name(i_view) : NULL,
+				      amitk_view_get_name(i_view),
+				      ui_study_cb_canvas_visible,
+				      ui_study,
+				      icon_view[i_view]);
+  ui_study_menus_fill_in_end(&(canvas_visible_list[AMITK_VIEW_NUM]));
 
   /* and the view modes */
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
@@ -136,19 +151,30 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
     g_signal_handlers_unblock_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
 				      G_CALLBACK(ui_study_cb_fuse_type),  ui_study);
   
+  /* and the view visible buttons */
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    ui_study->canvas_visible_button[i_view] = canvas_visible_list[i_view].widget;
+    g_object_set_data(G_OBJECT(canvas_visible_list[i_view].widget), 
+		      "view", GINT_TO_POINTER(i_view));
+    g_signal_handlers_block_by_func(G_OBJECT(canvas_visible_list[i_view].widget),
+				    G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
+    if (ui_study->study != NULL) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(canvas_visible_list[i_view].widget),
+				   AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view));
+    } else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(canvas_visible_list[i_view].widget), TRUE);
+    }
+    g_signal_handlers_unblock_by_func(G_OBJECT(canvas_visible_list[i_view].widget),
+				      G_CALLBACK(ui_study_cb_canvas_visible),ui_study);
+  }
+  
+
   /* and the view modes */
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
+    ui_study->view_mode_button[i_view_mode] = view_mode_list[i_view_mode].widget;
     g_object_set_data(G_OBJECT(view_mode_list[i_view_mode].widget), 
 		      "view_mode", GINT_TO_POINTER(i_view_mode));
-    g_signal_handlers_block_by_func(G_OBJECT(view_mode_list[i_view_mode].widget),
-				   G_CALLBACK(ui_study_cb_view_mode), ui_study);
   }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(view_mode_list[ui_study->view_mode].widget),
-			       TRUE);
-  for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
-    g_signal_handlers_unblock_by_func(G_OBJECT(view_mode_list[i_view_mode].widget),
-				      G_CALLBACK(ui_study_cb_view_mode),ui_study);
-  
 
   /* add the zoom widget to our toolbar */
   label = gtk_label_new("zoom:");

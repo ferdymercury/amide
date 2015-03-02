@@ -714,7 +714,7 @@ void tb_fly_through(AmitkStudy * study,
 
   /* setup the canvas */
   tb_fly_through->canvas = 
-    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, FALSE, FALSE, 0);
+    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, FALSE, FALSE, FALSE, 0);
   amitk_canvas_set_study(AMITK_CANVAS(tb_fly_through->canvas), tb_fly_through->study);
   g_signal_connect(G_OBJECT(tb_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), tb_fly_through);

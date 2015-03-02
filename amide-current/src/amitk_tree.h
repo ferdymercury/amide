@@ -52,7 +52,8 @@ struct _AmitkTree
   AmitkStudy * study;
   AmitkObject * active_object;
 
-  GtkTreeViewColumn * linked_column;
+  GtkTreeViewColumn * select_column[AMITK_VIEW_MODE_NUM];
+  AmitkViewMode prev_view_mode;
   gint mouse_x; /* the current mouse position */
   gint mouse_y; 
   GtkTreePath * current_path;
@@ -87,9 +88,6 @@ void            amitk_tree_expand_object     (AmitkTree * tree,
 					      AmitkObject * object);
 void            amitk_tree_set_active_object (AmitkTree * tree,
 					      AmitkObject * object);
-void            amitk_tree_set_linked_mode_column_visible (AmitkTree * tree,
-							   gboolean visible);
-
 
 G_END_DECLS
 

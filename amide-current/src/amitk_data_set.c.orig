@@ -370,9 +370,9 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   amitk_data_set_set_interpolation(dest_ds, AMITK_DATA_SET_INTERPOLATION(src_object));
   amitk_data_set_set_thresholding(dest_ds,AMITK_DATA_SET_THRESHOLDING(src_object));
   for (i=0; i<2; i++) {
-    dest_ds->threshold_max[i] = AMITK_DATA_SET_THRESHOLD_MAX(src_object, i);
-    dest_ds->threshold_min[i] = AMITK_DATA_SET_THRESHOLD_MIN(src_object, i);
-    dest_ds->threshold_ref_frame[i] = AMITK_DATA_SET_THRESHOLD_REF_FRAME(src_object, i);
+    amitk_data_set_set_threshold_max(dest_ds, i, AMITK_DATA_SET_THRESHOLD_MAX(src_object, i));
+    amitk_data_set_set_threshold_min(dest_ds, i, AMITK_DATA_SET_THRESHOLD_MIN(src_object, i));
+    amitk_data_set_set_threshold_ref_frame(dest_ds, i, AMITK_DATA_SET_THRESHOLD_REF_FRAME(src_object, i));
   }
   dest_ds->global_max = AMITK_DATA_SET_GLOBAL_MAX(src_object);
   dest_ds->global_min = AMITK_DATA_SET_GLOBAL_MIN(src_object);
@@ -631,7 +631,6 @@ AmitkDataSet * amitk_data_set_new_with_data(const AmitkFormat format,
 
 
   scaling_dim = one_voxel;
-  data_set->scaling_type = scaling_type;
   switch(scaling_type) {
   case AMITK_SCALING_TYPE_2D:
     g_object_unref(data_set->internal_scaling);
@@ -999,8 +998,8 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
     /* adjust all thresholds and other variables so they remain constant 
        relative the change in scale factors */
     for (j=0; j<2; j++) {
-      ds->threshold_max[j] *= scaling;
-      ds->threshold_min[j] *= scaling;
+      amitk_data_set_set_threshold_min(ds, j, scaling*AMITK_DATA_SET_THRESHOLD_MIN(ds, j));
+      amitk_data_set_set_threshold_max(ds, j, scaling*AMITK_DATA_SET_THRESHOLD_MAX(ds, j));
     }
     ds->global_max *= scaling;
     ds->global_min *= scaling;
@@ -1013,7 +1012,6 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
     /* and emit the signal */
     g_signal_emit (G_OBJECT (ds), data_set_signals[SCALE_FACTOR_CHANGED], 0);
     g_signal_emit (G_OBJECT (ds), data_set_signals[DATA_SET_CHANGED], 0);
-    g_signal_emit(G_OBJECT (ds), data_set_signals[THRESHOLDING_CHANGED], 0);
   }
 
   return;

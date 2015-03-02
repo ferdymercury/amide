@@ -24,8 +24,8 @@
 */
 
 /* header files that are always needed with this file */
-#include "amide.h"
 #include <gnome.h>
+#include "amitk_point.h"
 
 #define UI_COMMON_NEW_ROI_MODE_CURSOR GDK_DRAFT_SMALL
 #define UI_COMMON_NEW_ROI_MOTION_CURSOR GDK_PENCIL

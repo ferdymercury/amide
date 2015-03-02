@@ -833,6 +833,17 @@ amide_real_t point_get_component(const AmitkPoint point,
 }
 
 
+const gchar * amitk_view_get_name(const AmitkView view) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_VIEW);
+  enum_value = g_enum_get_value(enum_class, view);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
 
 const gchar * amitk_dim_get_name(const AmitkDim dim) {
 

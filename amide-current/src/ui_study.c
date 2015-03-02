@@ -195,21 +195,26 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     ui_study->study = AMITK_STUDY(object);
     ui_study->study_virgin=FALSE;
 
-    amitk_tree_set_study(AMITK_TREE(ui_study->tree), AMITK_STUDY(object));
-    amitk_tree_expand_object(AMITK_TREE(ui_study->tree), object);
-    for (i_view_mode = 0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
-      for (i_view=0; i_view< AMITK_VIEW_NUM; i_view++)
-	amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), AMITK_STUDY(object));
-
     /* set any settings we can */
     ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(object));
     ui_study_update_zoom(ui_study);
     ui_study_update_title(ui_study);
     ui_study_update_time_button(ui_study->study, ui_study->time_button);
+    ui_study_update_layout(ui_study);
+    ui_study_update_canvas_visible_buttons(ui_study);
+
+    amitk_tree_set_study(AMITK_TREE(ui_study->tree), AMITK_STUDY(object));
+    amitk_tree_expand_object(AMITK_TREE(ui_study->tree), object);
+    for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
+      for (i_view=0; i_view< AMITK_VIEW_NUM; i_view++)
+	if (AMITK_STUDY_CANVAS_VISIBLE(object, i_view))
+	  amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), AMITK_STUDY(object));
 
     g_signal_connect(G_OBJECT(object), "time_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "thickness_changed",  G_CALLBACK(ui_study_cb_study_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(object_name_changed_cb), ui_study);
+    g_signal_connect(G_OBJECT(object), "canvas_visible_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "view_mode_changed", G_CALLBACK(ui_study_cb_study_view_mode_changed), ui_study);
 
   } else if (AMITK_IS_DATA_SET(object)) {
     amitk_tree_expand_object(AMITK_TREE(ui_study->tree), AMITK_OBJECT_PARENT(object));
@@ -252,6 +257,7 @@ static void remove_object(ui_study_t * ui_study, AmitkObject * object) {
   /* disconnect the object's signals */
   if (AMITK_IS_STUDY(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(ui_study_cb_study_changed), ui_study);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(ui_study_cb_study_view_mode_changed), ui_study);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(object_name_changed_cb), ui_study);
   }
 
@@ -319,6 +325,7 @@ ui_study_t * ui_study_init(void) {
 
   ui_study_t * ui_study;
   AmitkViewMode i_view_mode;
+  AmitkView i_view;
   help_info_line_t i_line;
 
   /* alloc space for the data structure for passing ui info */
@@ -337,11 +344,13 @@ ui_study_t * ui_study_init(void) {
   ui_study->active_ds = NULL;
   for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
     ui_study->canvas_table[i_view_mode] = NULL;
+    for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
+      ui_study->canvas[i_view_mode][i_view] = NULL;
+    }
   }
 
   ui_study->study_altered=FALSE;
   ui_study->study_virgin=TRUE;
-  ui_study->view_mode=AMITK_VIEW_MODE_SINGLE;
   
   for (i_line=0 ;i_line < NUM_HELP_INFO_LINES;i_line++) {
     ui_study->help_line[i_line] = NULL;
@@ -358,6 +367,8 @@ ui_study_t * ui_study_init(void) {
     gnome_config_get_int("ROI/LineStyle"); /* 0 is solid */
   ui_study->canvas_layout = 
     gnome_config_get_int("CANVAS/Layout"); /* 0 is AMITK_LAYOUT_LINEAR */
+  ui_study->canvas_maintain_size = 
+    !gnome_config_get_int("CANVAS/MinimizeSize"); /* 0 is FALSE */
   ui_study->canvas_leave_target = 
     gnome_config_get_int("CANVAS/LeaveTarget"); /* 0 is FALSE */
   ui_study->canvas_target_empty_area = 
@@ -379,6 +390,8 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
   GList * temp_objects;
   AmitkViewMode i_view_mode;
 
+  g_return_if_fail(ui_study->study != NULL);
+
   if (ui_study->active_ds != NULL) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(ui_study->active_ds),
 					 G_CALLBACK(ui_study_update_interpolation), ui_study);
@@ -387,38 +400,27 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
   ui_study->active_ds = ds;
 
   if (ds == NULL) {/* make a guess as to what should be the active data set */
-    current_objects = amitk_object_get_selected_children_of_type(AMITK_OBJECT(ui_study->study),
-								 AMITK_OBJECT_TYPE_DATA_SET,
-								 AMITK_VIEW_MODE_SINGLE, TRUE);
-    temp_objects = current_objects;
-    while (temp_objects != NULL) {
-      if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	ui_study->active_ds = AMITK_DATA_SET(temp_objects->data);
-	temp_objects = NULL;
-      } else {
-	temp_objects = temp_objects->next;
-      }
-    }
-    amitk_objects_unref(current_objects);
-								 
-    if (ui_study->active_ds == NULL) /* if still nothing */
-      if (ui_study->view_mode == AMITK_VIEW_MODE_LINKED) { /* go through the second column */
-	current_objects = amitk_object_get_selected_children_of_type(AMITK_OBJECT(ui_study->study),
-								     AMITK_OBJECT_TYPE_DATA_SET,
-								     AMITK_VIEW_MODE_LINKED, TRUE);
-	temp_objects = current_objects;
-	while (temp_objects != NULL) {
-	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	    ui_study->active_ds = AMITK_DATA_SET(temp_objects->data);
-	    temp_objects = NULL;
-	  } else {
-	    temp_objects = temp_objects->next;
-	  }
-	}
-	amitk_objects_unref(current_objects);
-      }
-  }
+    for (i_view_mode = 0; 
+	 (i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study)) && (ui_study->active_ds == NULL); 
+	 i_view_mode++) {
 
+      current_objects = amitk_object_get_selected_children_of_type(AMITK_OBJECT(ui_study->study),
+								   AMITK_OBJECT_TYPE_DATA_SET,
+								   AMITK_VIEW_MODE_SINGLE+i_view_mode, 
+								   TRUE);
+      temp_objects = current_objects;
+      while (temp_objects != NULL) {
+	if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	  ui_study->active_ds = AMITK_DATA_SET(temp_objects->data);
+	  temp_objects = NULL;
+	} else {
+	  temp_objects = temp_objects->next;
+	}
+      }
+      amitk_objects_unref(current_objects);
+    }
+  }
+								 
   /* indicate this is now the active object */
   if (ui_study->active_ds != NULL) {
     amitk_tree_set_active_object(AMITK_TREE(ui_study->tree), 
@@ -433,10 +435,11 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
 
   
 
-  for (i_view_mode = 0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
+  for (i_view_mode = 0; i_view_mode <=  AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
     for (i_view=0; i_view< AMITK_VIEW_NUM; i_view++)
-      amitk_canvas_set_active_data_set(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				       ui_study->active_ds);
+      if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	amitk_canvas_set_active_data_set(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					 ui_study->active_ds);
   
   /* reset the threshold widget based on the current data set */
   if (ui_study->threshold_dialog != NULL) {
@@ -537,6 +540,23 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
   return;
 }
 
+
+void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study) {
+
+  AmitkView i_view;
+
+  for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->canvas_visible_button[i_view]),
+				    G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->canvas_visible_button[i_view]),
+				 AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view));
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->canvas_visible_button[i_view]),
+				      G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
+
+  }
+
+  return;
+}
 
 /* function to update the text in the time dialog popup widget */
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {
@@ -751,6 +771,24 @@ void ui_study_update_interpolation(ui_study_t * ui_study) {
 
 }
 
+void ui_study_update_view_mode(ui_study_t * ui_study) {
+
+  AmitkViewMode i_view_mode;
+
+  g_return_if_fail(ui_study->study != NULL);
+
+  for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->view_mode_button[i_view_mode]),
+				   G_CALLBACK(ui_study_cb_view_mode), ui_study);
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->view_mode_button[AMITK_STUDY_VIEW_MODE(ui_study->study)]),
+			       TRUE);
+  
+  for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->view_mode_button[i_view_mode]),
+				      G_CALLBACK(ui_study_cb_view_mode),ui_study);
+
+}
  
 void ui_study_update_title(ui_study_t * ui_study) {
   
@@ -766,123 +804,219 @@ void ui_study_update_title(ui_study_t * ui_study) {
 }
 
 
-
-void ui_study_setup_layout(ui_study_t * ui_study) {
+void ui_study_update_layout(ui_study_t * ui_study) {
 
   AmitkView i_view;
-  gboolean canvas_first_time;
+  gboolean canvas_table_new;
   AmitkViewMode i_view_mode;
+  gint row, column, table_column = 0, table_row = 0;
+  gint max_width=0, max_height=0, width, height;
   
+  g_return_if_fail(ui_study->study != NULL);
 
-  for (i_view_mode = 0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
-
+  /* get rid of visible canvases that are no longer visible */
+  for (i_view_mode =  AMITK_STUDY_VIEW_MODE(ui_study->study)+1; 
+       i_view_mode < AMITK_VIEW_MODE_NUM; 
+       i_view_mode++) {
     if (ui_study->canvas_table[i_view_mode] != NULL) {
-      canvas_first_time = FALSE;
-      gtk_widget_hide(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]); /* hide, so we get more fluid moving */
-      /* add ref so it's not destroyed when we remove it from the container */
-      for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
-	g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
-	gtk_container_remove(GTK_CONTAINER(ui_study->canvas_table[i_view_mode]), 
-			     ui_study->canvas[i_view_mode][i_view]);
-      }
-      g_object_ref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
-      gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
-			   ui_study->canvas_table[i_view_mode]);
-    } else {/* new canvas */
-      canvas_first_time = TRUE;
-      ui_study->canvas_table[i_view_mode] = gtk_table_new(3, 2,FALSE);
-      
-      for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
-	ui_study->canvas[i_view_mode][i_view] = 
-	  amitk_canvas_new(i_view, i_view_mode,
-			   ui_study->canvas_layout,
-			   ui_study->line_style,
-			   ui_study->roi_width,
-			   TRUE,
-			   ui_study->canvas_leave_target,
-			   ui_study->canvas_target_empty_area);
-	if (ui_study->study != NULL) {
-	  amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), ui_study->study);
-	}
-	amitk_canvas_set_active_data_set(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), ui_study->active_ds);
-	
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "help_event",
-			 G_CALLBACK(ui_study_cb_canvas_help_event), ui_study);
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_changing",
-			 G_CALLBACK(ui_study_cb_canvas_view_changing), ui_study);
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_changed",
-			 G_CALLBACK(ui_study_cb_canvas_view_changed), ui_study);
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "isocontour_3d_changed",
-			 G_CALLBACK(ui_study_cb_canvas_isocontour_3d_changed), ui_study);
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "erase_volume",
-			 G_CALLBACK(ui_study_cb_canvas_erase_volume), ui_study);
-	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "new_object",
-			 G_CALLBACK(ui_study_cb_canvas_new_object), ui_study);
-	
+      gtk_widget_destroy(ui_study->canvas_table[i_view_mode]);
+      ui_study->canvas_table[i_view_mode] = NULL;
+      for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++)
+	ui_study->canvas[i_view_mode][i_view] = NULL;
+    }
+  }
+  for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
+    for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+      if ((!AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view)) &&
+	  (ui_study->canvas[i_view_mode][i_view] != NULL)) {
+	gtk_widget_destroy(ui_study->canvas[i_view_mode][i_view]);
+	ui_study->canvas[i_view_mode][i_view] = NULL;
       }
     }
+  }
 
+
+  for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
+
+    if (ui_study->canvas_table[i_view_mode] == NULL) {
+      ui_study->canvas_table[i_view_mode] = gtk_table_new(3, 2,FALSE);
+      canvas_table_new = TRUE;
+    } else {
+      canvas_table_new = FALSE;
+    }
+
+
+    for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+
+      if (AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view)) {
+	if (ui_study->canvas[i_view_mode][i_view] == NULL) { /* new canvas */
+	  ui_study->canvas[i_view_mode][i_view] = 
+	    amitk_canvas_new(i_view, i_view_mode,
+			     ui_study->canvas_layout,
+			     ui_study->line_style,
+			     ui_study->roi_width,
+			     TRUE,
+			     ui_study->canvas_maintain_size,
+			     ui_study->canvas_leave_target,
+			     ui_study->canvas_target_empty_area);
+	  g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view])); /* will be removed below */
+
+	  amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				 ui_study->study);
+	  amitk_canvas_set_active_data_set(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					   ui_study->active_ds);
+	
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "help_event",
+			   G_CALLBACK(ui_study_cb_canvas_help_event), ui_study);
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_changing",
+			   G_CALLBACK(ui_study_cb_canvas_view_changing), ui_study);
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_changed",
+			   G_CALLBACK(ui_study_cb_canvas_view_changed), ui_study);
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "isocontour_3d_changed",
+			   G_CALLBACK(ui_study_cb_canvas_isocontour_3d_changed), ui_study);
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "erase_volume",
+			   G_CALLBACK(ui_study_cb_canvas_erase_volume), ui_study);
+	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "new_object",
+			   G_CALLBACK(ui_study_cb_canvas_new_object), ui_study);
+	
+	} else { /* not a new canvas */
+	  gtk_widget_hide(ui_study->canvas[i_view_mode][i_view]); /* hide, so we get more fluid moving */
+	  /* add ref so it's not destroyed when we remove it from the container */
+	  g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
+	  gtk_container_remove(GTK_CONTAINER(ui_study->canvas_table[i_view_mode]), 
+			       ui_study->canvas[i_view_mode][i_view]);
+	}
+      }
+    }
+	  
+
+    g_object_ref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
+    if (!canvas_table_new)
+      gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
+			   ui_study->canvas_table[i_view_mode]);
+
+    for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ )
+      if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	amitk_canvas_set_layout(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				ui_study->canvas_layout);
+
+    /* keep an estimate as to how large each set of canvases is in max_width and max_height*/
+    width = height = 0;
+    switch(ui_study->canvas_layout) {
+    case AMITK_LAYOUT_ORTHOGONAL:
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
+	width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]));
+	height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]));
+      } 
+
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] != NULL) {
+	height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL]));
+	if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] == NULL) {
+	  width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL]));
+	}
+      }
+
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL] != NULL) {
+	width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]));
+	if ((ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] == NULL)  &&
+	    (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] == NULL)) {
+	  height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]));
+	}
+      }
+
+      if (width > max_width) max_width = width;
+      if (height > max_height) max_height = height;
+
+      break;
+    case AMITK_LAYOUT_LINEAR:
+    default:
+      for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ ) {
+	if (ui_study->canvas[i_view_mode][i_view] != NULL) {
+	  height = amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
+	  if (height > max_height) max_height = height;
+	  width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
+	}
+      }
+      if (width > max_width) max_width = width;
+      break;
+    }
+  }
+
+
+  height = width = 0;
+  for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
 
     /* put the canvases in the table according to the desired layout */
     switch(ui_study->canvas_layout) {
     case AMITK_LAYOUT_ORTHOGONAL:
-      gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-		       ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE], 
-		       0,1,1,2, FALSE,FALSE, X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-		       ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL], 
-		       0,1,2,3, FALSE,FALSE, X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-		       ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL], 
-		       1,2,1,2, FALSE,FALSE, X_PADDING, Y_PADDING);
-      gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
-		       i_view_mode, i_view_mode+1, 0,1,
-		       X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
-		       X_PADDING, Y_PADDING);
+      row = column = 0;
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
+	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			 ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE], 
+			 column,column+1, row,row+1,FALSE,FALSE, X_PADDING, Y_PADDING);
+	row++;
+      }
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] != NULL) {
+	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			 ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL], 
+			 column, column+1, row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
+      }
+      row = 0;
+      column++;
+      if (ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL] != NULL)
+	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			 ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL], 
+			 column, column+1,row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
+
       break;
     case AMITK_LAYOUT_LINEAR:
     default:
-      for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++) {
-	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-			 ui_study->canvas[i_view_mode][i_view], 
-			 i_view, i_view+1, 0,1, FALSE, FALSE, X_PADDING, Y_PADDING);
-      }
-      gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
-		       0,1,i_view_mode, i_view_mode+1, 
-		       X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
-		       X_PADDING, Y_PADDING);
-
+      for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++)
+	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	  gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			   ui_study->canvas[i_view_mode][i_view], 
+			   i_view, i_view+1, 0,1, FALSE, FALSE, X_PADDING, Y_PADDING);
 
       break;
     }
 
-    for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ ) {
-      amitk_canvas_set_layout(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-			      ui_study->canvas_layout);
-    }
 
-
-
-    if (!canvas_first_time) {
-      /* remove the additional reference */
-      for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
-	g_object_unref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
-      g_object_unref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
-      gtk_widget_show(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]); /* and show */
+    /* figure out where this group of canvases should go */
+    /* this only works for up to 3 sets of canvases */
+    if ((height == 0) && (width == 0)) {
+      /* first iteration */
+      height += max_height;
+      width += max_width;
     } else {
-      gtk_widget_show_all(ui_study->canvas_table[i_view_mode]); /* and show */
+      if (height > width/1.5) { /* the 1.5 is to favour horizontal placement */
+	table_column++;
+	table_row = 0;
+	width += max_width;
+      } else {
+	height += max_height;
+	table_row++;
+	table_column = 0;
+      }
     }
+
+    /* and place them */
+    gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
+		     table_column, table_column+1, table_row, table_row+1,
+		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
+		     X_PADDING, Y_PADDING);
+
+
+
+    /* remove the additional reference */
+    for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
+      if (ui_study->canvas[i_view_mode][i_view] != NULL)
+	g_object_unref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
+    g_object_unref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
+    gtk_widget_show_all(ui_study->canvas_table[i_view_mode]); /* and show */
+
       
   }
 
-
-  /* get rid of stuff we're not looking at */
-  for (i_view_mode = ui_study->view_mode+1; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
-    if (ui_study->canvas_table[i_view_mode] != NULL) {
-      gtk_widget_destroy(ui_study->canvas_table[i_view_mode]);
-      ui_study->canvas_table[i_view_mode] = NULL;
-    }
-  }
 
   return;
 }
@@ -1016,7 +1150,6 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
 
   /* setup the rest of the study window */
   ui_study_setup_widgets(ui_study);
-  ui_study_setup_layout(ui_study);
 
   /* add the study to the ui_study */
   ui_study_set_study(ui_study, study);

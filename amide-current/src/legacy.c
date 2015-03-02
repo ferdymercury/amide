@@ -391,6 +391,13 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 	new_volume->thresholding = i_thresholding;
   g_free(temp_string);
 
+  /* figure out the scaling type */
+  if (new_volume->internal_scaling->dim.z > 1) 
+    new_volume->scaling_type = AMITK_SCALING_TYPE_2D;
+  else if (new_volume->internal_scaling->dim.t > 1)
+    new_volume->scaling_type = AMITK_SCALING_TYPE_1D;
+  else 
+    new_volume->scaling_type = AMITK_SCALING_TYPE_0D;
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(new_volume);

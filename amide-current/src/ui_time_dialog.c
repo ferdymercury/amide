@@ -144,6 +144,13 @@ static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
 static gboolean delete_event_cb(GtkWidget* dialog, GdkEvent * event, gpointer data) {
 
   ui_time_dialog_t * td = data;
+  GtkTreeSelection *selection;
+
+  /* explicitly disconnect signals, sometimes GTK throws some of these on delete (after unref'ing study */
+  g_signal_handlers_disconnect_by_func(G_OBJECT(td->start_spin), G_CALLBACK(change_spin_cb), dialog);
+  g_signal_handlers_disconnect_by_func(G_OBJECT(td->end_spin), G_CALLBACK(change_spin_cb), dialog);
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (td->tree_view));
+  g_signal_handlers_disconnect_by_func(G_OBJECT(selection), G_CALLBACK(selection_changed_cb), dialog);
 
   /* trash collection */
   while(td->data_sets != NULL) 

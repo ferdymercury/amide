@@ -210,7 +210,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
   }
 
 
-  projection = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_0D);
+  projection = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
   if (projection == NULL) {
     g_warning("couldn't allocate space for the projection, wanted %dx%dx%dx%d elements", 
 	      dim.x, dim.y, dim.z, dim.t);
@@ -984,7 +984,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 
 
   /* get the return slice */
-  slice = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_0D);
+  slice = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
   if (slice == NULL) {
     g_warning("couldn't allocate space for the slice, wanted %dx%dx%dx%d elements", 
 	      dim.x, dim.y, dim.z, dim.t);

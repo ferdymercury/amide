@@ -33,6 +33,7 @@
 
 
 #define SPIN_BUTTON_X_SIZE 100
+#define MAX_ITERATIONS 1000000
 static const char * wizard_name = "Factor Analysis Wizard";
 
 
@@ -54,7 +55,8 @@ static const char * finish_page_text =
 static gchar * start_page_text = 
 "Welcome to the factor analysis of dynamic structures wizard."
 "\n"
-"None of this code has been validated, so use at your own risk";
+"None of this code has been validated, and it's probably wrong,"
+"so use at your own risk";
 
 
 #else /* no LIBGSL support */
@@ -338,7 +340,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
-      spin_button =  gtk_spin_button_new_with_range(1, 20000, 1);
+      spin_button =  gtk_spin_button_new_with_range(1, MAX_ITERATIONS, 1);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_fads->num_iterations);
       gtk_widget_set_size_request(spin_button, SPIN_BUTTON_X_SIZE, -1);
@@ -477,7 +479,7 @@ static void svd_pressed_cb(GtkButton * button, gpointer data) {
 
   /* calculate factors */
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
-  fads_svd_factors(tb_fads->data_set, &num_factors, &factors);
+  fads_svd_factors(tb_fads->data_set, &num_factors, &factors, NULL);
   ui_common_remove_cursor(tb_fads->table[PARAMETERS_PAGE]);
 
   for (i=0; i<num_factors; i++) {
@@ -653,6 +655,9 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
     //  case FADS_TYPE_TWO_COMPARTMENT:
+    //    fads_two_comp(tb_fads->data_set, tb_fads->num_iterations,tb_fads->stopping_criteria,
+    //	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
+    //    break;
   default:
     g_warning("fads type %d not defined", tb_fads->fads_type);
     break;
@@ -758,7 +763,7 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->dialog = NULL;
   tb_fads->data_set = NULL;
   tb_fads->num_factors = 3;
-  tb_fads->num_iterations = 500;
+  tb_fads->num_iterations = 20000;
   tb_fads->stopping_criteria = 1e-3;
   tb_fads->fads_type = FADS_TYPE_PLS;
   tb_fads->explanation_buffer = NULL;

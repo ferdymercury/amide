@@ -298,6 +298,7 @@ static void canvas_init (AmitkCanvas *canvas)
   canvas->center = zero_point;
 
   canvas->active_ds = NULL;
+  canvas->maintain_size = FALSE;
   canvas->leave_target = FALSE;
   canvas->target_empty_area = 0;
 
@@ -333,6 +334,7 @@ static void canvas_destroy (GtkObject * object) {
     gtk_idle_remove(canvas->idle_handler_id);
     canvas->idle_handler_id = 0;
   }
+
 
   while (canvas->next_update_objects != NULL) {
     amitk_object = AMITK_OBJECT(canvas->next_update_objects->data);
@@ -1375,7 +1377,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       AmitkCanvasPoint item_center;
       AmitkPoint center;
       
-      center = amitk_space_b2s(AMITK_SPACE(canvas->volume), amitk_volume_get_center(AMITK_VOLUME(object)));
+      center = amitk_space_b2s(AMITK_SPACE(canvas->volume), 
+			       amitk_volume_get_center(AMITK_VOLUME(object)));
       temp_point[0] = point_sub(initial_canvas_point,center);
       temp_point[1] = point_sub(canvas_point,center);
       
@@ -1827,11 +1830,18 @@ static gboolean canvas_recalc_corners(AmitkCanvas * canvas) {
   /* sanity checks */
   if (canvas->study == NULL) return FALSE; 
 
-  /* what volumes are we looking at */
-  volumes = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study), 
-						       AMITK_OBJECT_TYPE_VOLUME,
-						       canvas->view_mode,
-						       TRUE);
+  /* what volumes are we looking at - ignore ROI's */
+  if (canvas->maintain_size) {
+    volumes = amitk_object_get_children_of_type(AMITK_OBJECT(canvas->study), 
+						AMITK_OBJECT_TYPE_DATA_SET,
+						TRUE);
+  } else {
+    volumes = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study), 
+							 AMITK_OBJECT_TYPE_DATA_SET,
+							 canvas->view_mode,
+							 TRUE);
+  }
+
   if (volumes == NULL) return FALSE;
 
   /* figure out the corners */
@@ -2395,6 +2405,10 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 
 static void canvas_add_update(AmitkCanvas * canvas, guint update_type) {
 
+  /* reslicing is slow, put up a wait cursor */
+  if ((update_type & UPDATE_DATA_SETS) && !(canvas->next_update & UPDATE_DATA_SETS)) 
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+
   canvas->next_update = canvas->next_update | update_type;
 
   if (canvas->idle_handler_id == 0)
@@ -2408,7 +2422,6 @@ static gboolean canvas_update_while_idle(gpointer data) {
 
   AmitkCanvas * canvas = data;
 
-
   /* update the coorners */
   if (canvas_recalc_corners(canvas)) /* if corners changed */
     canvas->next_update = canvas->next_update | UPDATE_ALL;
@@ -2417,11 +2430,8 @@ static gboolean canvas_update_while_idle(gpointer data) {
     /* freeing the slices indicates to regenerate them, and fallthrough to refresh */
     amitk_objects_unref(canvas->slices);
     canvas->slices = NULL;
-
-    /* reslicing is slow, put up a wait cursor */
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
   } 
-  
+
   if ((canvas->next_update & REFRESH_DATA_SETS) ||(canvas->next_update & UPDATE_DATA_SETS)) {
     canvas_update_pixbuf(canvas);
   } 
@@ -2444,15 +2454,12 @@ static gboolean canvas_update_while_idle(gpointer data) {
 			 canvas->next_target_color, canvas->next_target_thickness);
   }
 
-  /* remove the cursor on slow updates */
-  if (canvas->next_update & UPDATE_DATA_SETS) {
-    ui_common_remove_cursor(GTK_WIDGET(canvas));
-  }
-
-  canvas->next_update = UPDATE_NONE;
-
   gtk_idle_remove(canvas->idle_handler_id);
   canvas->idle_handler_id=0;
+
+  if (canvas->next_update & UPDATE_DATA_SETS) /* remove the cursor on slow updates */
+    ui_common_remove_cursor(GTK_WIDGET(canvas));
+  canvas->next_update = UPDATE_NONE;
 
   return FALSE;
 }
@@ -2607,6 +2614,7 @@ GtkWidget * amitk_canvas_new(AmitkView view,
 			     GdkLineStyle line_style,
 			     gint roi_width,
 			     gboolean with_arrows,
+			     gboolean maintain_size,
 			     gboolean leave_target,
 			     gint target_empty_area) {
 
@@ -2620,6 +2628,7 @@ GtkWidget * amitk_canvas_new(AmitkView view,
   canvas->line_style = line_style;
   canvas->roi_width = roi_width;
   canvas->with_arrows = with_arrows;
+  canvas->maintain_size = maintain_size;
   canvas->leave_target = leave_target;
   canvas->target_empty_area = target_empty_area;
 
@@ -2652,7 +2661,20 @@ void amitk_canvas_set_layout(AmitkCanvas * canvas, AmitkLayout new_layout) {
 
 }
 
-void amitk_canvas_set_target_properties(AmitkCanvas * canvas, gboolean leave_target,
+void amitk_canvas_set_general_properties(AmitkCanvas * canvas, 
+					 gboolean maintain_size) {
+
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+
+  if (maintain_size != canvas->maintain_size) {
+    canvas->maintain_size = maintain_size;
+    canvas_add_update(canvas, UPDATE_ALL);
+  }
+
+}
+
+void amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
+					gboolean leave_target,
 					gint target_empty_area) {
 
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
@@ -2721,4 +2743,27 @@ void amitk_canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction ac
 }
 
 
- 
+gint amitk_canvas_get_width(AmitkCanvas * canvas) {
+
+  g_return_val_if_fail(AMITK_IS_CANVAS(canvas), 0);
+
+  return canvas->pixbuf_width + 2*CANVAS_TRIANGLE_HEIGHT;
+} 
+
+gint amitk_canvas_get_height(AmitkCanvas * canvas) {
+
+  GtkRequisition size;
+  gint height;
+
+  g_return_val_if_fail(AMITK_IS_CANVAS(canvas), 0);
+
+  height = canvas->pixbuf_height + 2*CANVAS_TRIANGLE_HEIGHT;
+
+  gtk_widget_size_request(canvas->label, &size);
+  height+=size.height;
+
+  gtk_widget_size_request(canvas->scrollbar, &size);
+  height+=size.height;
+
+  return height;
+} 

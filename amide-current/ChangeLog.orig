@@ -1,14 +1,6 @@
 0.7.7
-	* added ability to only look at a subset of the canvases at a time
-	* added new preference - canvas size can now be fixed to the dimensions of all
-	  data sets, not just the visible ones.
-	* now have a 3-way linked view too
-	* view mode is now saved with the study, and is kept with the study object
 	* fixed problem with amitk_data_set_set_scale_factor not always running when needed
 	* added scaling_type to amitk_data_set, to indicate dimensionality of scaling array
- 	* ui_time_dialog won't crash if destroyed while event pending
- 	* on data_set_copy min threshold set was getting ignored
-	* canvas now only uses data sets as bounds.  avoids problems with pathologic ROI's
 
 0.7.6
 	* fixed long standing bug, dealing with slices generated via nearest neighbhor

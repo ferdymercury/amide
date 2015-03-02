@@ -220,8 +220,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       /* the range selectors */
       for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
 	
-	if (voxel_get_dim(tb_crop->range[RANGE_MIN], i_dim) < 
-	    voxel_get_dim(tb_crop->range[RANGE_MAX], i_dim)) {
+	if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
 	  
 	  temp_string = g_strdup_printf("%s range:", amitk_dim_get_name(i_dim));
 	  label = gtk_label_new(temp_string);
@@ -310,8 +309,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     }
 
     for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
-      if (voxel_get_dim(tb_crop->range[RANGE_MIN], i_dim) < 
-	  voxel_get_dim(tb_crop->range[RANGE_MAX], i_dim)) {
+      if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
 	for (i_range=0; i_range<NUM_RANGES; i_range++) {
 	  g_signal_handlers_block_by_func(G_OBJECT(tb_crop->spinner[view][i_dim][i_range]), 
 					  G_CALLBACK(spinner_cb), tb_crop);
@@ -449,7 +447,7 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 			    voxel_get_dim(tb_crop->range[range], dim));
   g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->spinner[view][dim][range]), 
 				    G_CALLBACK(spinner_cb), tb_crop);
-
+  
   update_crop_lines(tb_crop, view);
   
 
@@ -540,6 +538,7 @@ static void update_crop_lines(tb_crop_t * tb_crop, AmitkView view) {
 				"points", points, 
 				"fill_color_rgba", amitk_color_table_rgba_to_uint32(outline_color),
 				"width_units", 1.0,
+				"cap_style", GDK_CAP_PROJECTING,
 				NULL);
 	//g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
 	// g_object_set_data(G_OBJECT(canvas_item), "object", object);

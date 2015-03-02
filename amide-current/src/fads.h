@@ -43,7 +43,8 @@ extern const char ** fads_type_xpm[];
 
 void fads_svd_factors(AmitkDataSet * data_set, 
 		      gint * pnum_factors,
-		      gdouble ** pfactors);
+		      gdouble ** pfactors,
+		      gdouble ** pcomponents);
 void fads_pls(AmitkDataSet * data_set, 
 	      gint num_factors, 
 	      gint num_iterations,
@@ -54,6 +55,15 @@ void fads_pls(AmitkDataSet * data_set,
 	      gdouble * blood_curve_constraint_val,
 	      gboolean (*update_func)(), 
 	      gpointer update_data);
+void fads_two_comp(AmitkDataSet * data_set, 
+		   gint num_iterations,
+		   gdouble stopping_criteria,
+		   gchar * output_filename,
+		   gint num_blood_curve_constraints,
+		   gint * blood_curve_constraint_frame,
+		   gdouble * blood_curve_constraint_val,
+		   gboolean (*update_func)(), 
+		   gpointer update_data);
 
 #endif /* __FADS_H__ */
 #endif /* AMIDE_LIBGSL_SUPPORT */

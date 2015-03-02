@@ -66,6 +66,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
+#define AMITK_DATA_SET_SCALING_TYPE(ds)         (AMITK_DATA_SET(ds)->scaling_type)
 
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
 
@@ -93,11 +94,11 @@ typedef enum {
 } AmitkThresholding;
 
 typedef enum {
-  AMITK_SCALING_0D,
-  AMITK_SCALING_1D,
-  AMITK_SCALING_2D,
-  AMITK_SCALING_NUM
-} AmitkScaling;
+  AMITK_SCALING_TYPE_0D,
+  AMITK_SCALING_TYPE_1D,
+  AMITK_SCALING_TYPE_2D,
+  AMITK_SCALING_TYPE_NUM
+} AmitkScalingType;
 
 /* the skip is for glib-mkenums, it doesn't know how to handle ifdef's */
 typedef enum { /*< skip >*/
@@ -126,6 +127,7 @@ struct _AmitkDataSet
   AmitkPoint voxel_size;  /* in mm */
   AmitkRawData * raw_data;
   amide_data_t scale_factor; /* user specified factor to multiply data set by */
+  AmitkScalingType scaling_type; /*  dimensions of internal scaling */
   AmitkRawData * internal_scaling; /* internally (data set) supplied scaling factor */
   amide_time_t scan_start;
   amide_time_t * frame_duration; /* array of the duration of each frame */
@@ -173,7 +175,7 @@ GType	        amitk_data_set_get_type	         (void);
 AmitkDataSet *  amitk_data_set_new               (void);
 AmitkDataSet *  amitk_data_set_new_with_data     (const AmitkFormat format, 
 						  const AmitkVoxel dim,
-						  const AmitkScaling scaling);
+						  const AmitkScalingType scaling_type);
 AmitkDataSet * amitk_data_set_import_raw_file    (const gchar * file_name, 
 						  AmitkRawFormat raw_format,
 						  AmitkVoxel data_dim,
@@ -216,6 +218,8 @@ void           amitk_data_set_set_scale_factor   (AmitkDataSet * ds,
 amide_time_t   amitk_data_set_get_start_time     (const AmitkDataSet * ds, 
 						  const guint frame);
 amide_time_t   amitk_data_set_get_end_time       (const AmitkDataSet * ds, 
+						  const guint frame);
+amide_time_t   amitk_data_set_get_midpt_time     (const AmitkDataSet *ds,
 						  const guint frame);
 guint          amitk_data_set_get_frame          (const AmitkDataSet * ds, 
 						  const amide_time_t time);
@@ -297,7 +301,7 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 
 
 
-const gchar *   amitk_data_set_scaling_get_name   (const AmitkDataSet * ds);
+const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling);
 const gchar *   amitk_modality_get_name           (const AmitkModality modality);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);

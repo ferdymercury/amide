@@ -36,7 +36,13 @@ extern const char ** icon_fuse_type[];
 
 extern const char * icon_view_single_xpm[];
 extern const char * icon_view_linked_xpm[];
+extern const char * icon_view_linked3_xpm[];
 extern const char ** icon_view_mode[];
+
+extern const char * icon_transverse_xpm[];
+extern const char * icon_coronal_xpm[];
+extern const char * icon_sagittal_xpm[];
+extern const char * icon_view[];
 
 extern const char * icon_threshold_xpm[];
 extern const char * icon_thresholding_per_slice_xpm[];

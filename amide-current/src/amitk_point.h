@@ -35,6 +35,13 @@
 G_BEGIN_DECLS
 
 typedef enum {
+  AMITK_VIEW_TRANSVERSE, 
+  AMITK_VIEW_CORONAL, 
+  AMITK_VIEW_SAGITTAL, 
+  AMITK_VIEW_NUM
+} AmitkView;
+
+typedef enum {
   AMITK_AXIS_X,
   AMITK_AXIS_Y,
   AMITK_AXIS_Z,
@@ -298,6 +305,7 @@ extern const AmitkVoxel one_voxel;
 
 extern const AmitkAxes base_axes;
 
+const gchar * amitk_view_get_name(const AmitkView view);
 const gchar * amitk_dim_get_name(const AmitkDim dim);
 const gchar * amitk_axis_get_name(const AmitkAxis axis);
 

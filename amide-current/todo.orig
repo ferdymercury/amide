@@ -2,10 +2,6 @@ misc list of things todo:
 
 for next release?
 -----------------
-- calculate statistics on a subset of the ROI's voxels
-        (like 20% most maximum)
-- calculate isocontour inside of an ROI.
-
 * chris wants some max locator thing for ROI's
 * make location designator a set of spin buttons
 * finish dnd support:
@@ -14,6 +10,7 @@ for next release?
 	-need to uncomment gtk_tree_view-set_reorderable line
 	-filtered/cropped object should be added right below the
 		predecessor object
+* see if valgrind can find anything
 * continue implementing progress bars for various functions:
 	-roi analysis
 	-loading in data sets
@@ -41,9 +38,6 @@ big things:
                        
 small things:
 -------------
-* need to switch gtk_idle (deprecated) calls to g_source calls
-* reading of 6.4 sinogram (through libecat) from command line causes screw up....
-	waiting for valgrind to be updated to glibc 2.3.2 to find why
 * try to work in the max/min/distribution calculations into the loading loop
 * if the interpolation of a data set is changed in ui_series, the already
 	created slices aren't changed

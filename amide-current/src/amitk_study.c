@@ -43,11 +43,27 @@ gchar * amitk_fuse_type_explanations[] = {
   "overlay active data set on blended data sets"
 };
 
+gchar * view_mode_names[] = {
+  "single view",
+  "linked view, 2 way",
+  "linked view, 3 way"
+};
+
+gchar * view_mode_explanations[] = {
+  "All objects are shown in a single view",
+  "Objects are shown between 2 linked views",
+  "Objects are shown between 3 linked views",
+};
+
+
+
 
 enum {
   STUDY_CHANGED,
   THICKNESS_CHANGED,
   TIME_CHANGED,
+  CANVAS_VISIBLE_CHANGED,
+  VIEW_MODE_CHANGED,
   LAST_SIGNAL
 };
 
@@ -136,6 +152,20 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, time_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
+  study_signals[CANVAS_VISIBLE_CHANGED] =
+    g_signal_new ("canvas_visible_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_visible_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[VIEW_MODE_CHANGED] =
+    g_signal_new ("view_mode_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, view_mode_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
 
 }
 
@@ -143,6 +173,7 @@ static void study_class_init (AmitkStudyClass * class) {
 static void study_init (AmitkStudy * study) {
 
   time_t current_time;
+  AmitkView i_view;
 
   study->filename = NULL;
 
@@ -153,6 +184,9 @@ static void study_init (AmitkStudy * study) {
   study->view_duration = 1.0-SMALL_TIME;
   study->zoom = 1.0;
   study->fuse_type = AMITK_FUSE_TYPE_BLEND;
+  study->view_mode = AMITK_VIEW_MODE_SINGLE;
+  for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+    study->canvas_visible[i_view] = TRUE;
   study->voxel_dim = 1.0;
 
   /* set the creation date as today */
@@ -198,6 +232,7 @@ static AmitkObject * study_copy (const AmitkObject * object) {
 static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_object) {
 
   AmitkStudy * dest_study;
+  AmitkView i_view;
  
   g_return_if_fail(AMITK_IS_STUDY(src_object));
   g_return_if_fail(AMITK_IS_STUDY(dest_object));
@@ -210,7 +245,10 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   dest_study->view_start_time = AMITK_STUDY_VIEW_START_TIME(src_object);
   dest_study->view_duration = AMITK_STUDY_VIEW_DURATION(src_object);
   dest_study->zoom = AMITK_STUDY_ZOOM(src_object);
-  dest_study->fuse_type =AMITK_STUDY_FUSE_TYPE(src_object);
+  dest_study->fuse_type = AMITK_STUDY_FUSE_TYPE(src_object);
+  dest_study->view_mode = AMITK_STUDY_VIEW_MODE(src_object);
+  for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+    dest_study->canvas_visible[i_view] = AMITK_STUDY_CANVAS_VISIBLE(src_object, i_view);
 
   /* make a separate copy in memory of the study's name and filename */
   amitk_study_set_filename(dest_study, AMITK_STUDY_FILENAME(src_object));
@@ -223,6 +261,8 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
 static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
 
   AmitkStudy * study;
+  AmitkView i_view;
+  gchar * temp_string;
 
   AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
 
@@ -235,6 +275,13 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_time(nodes, "view_duration", AMITK_STUDY_VIEW_DURATION(study));
   xml_save_string(nodes, "fuse_type",
 		  amitk_fuse_type_get_name(AMITK_STUDY_FUSE_TYPE(study)));
+  xml_save_string(nodes, "view_mode",
+		  amitk_view_mode_get_name(AMITK_STUDY_VIEW_MODE(study)));
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    temp_string = g_strdup_printf("%s_canvas_visible", amitk_view_get_name(i_view));
+    xml_save_boolean(nodes, temp_string, AMITK_STUDY_CANVAS_VISIBLE(study, i_view));
+    g_free(temp_string);
+  }
   xml_save_real(nodes, "zoom", AMITK_STUDY_ZOOM(study));
 
   return;
@@ -245,7 +292,10 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   AmitkStudy * study;
   gchar * creation_date;
   AmitkFuseType i_fuse_type;
+  AmitkViewMode i_view_mode;
   gchar * temp_string;
+  AmitkView i_view;
+  gboolean all_false;
 
   AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
 
@@ -275,6 +325,33 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
       if (g_strcasecmp(temp_string, amitk_fuse_type_get_name(i_fuse_type)) == 0)
 	amitk_study_set_fuse_type(study, i_fuse_type);
   g_free(temp_string);
+
+  /* figure out the view mode */
+  temp_string = xml_get_string(nodes, "view_mode");
+  if (temp_string != NULL)
+    for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
+      if (g_strcasecmp(temp_string, amitk_view_mode_get_name(i_view_mode)) == 0)
+	amitk_study_set_view_mode(study, i_view_mode);
+  g_free(temp_string);
+
+  /* figure out which canvases are visible */
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    temp_string = g_strdup_printf("%s_canvas_visible", amitk_view_get_name(i_view));
+    study->canvas_visible[i_view] = xml_get_boolean(nodes, temp_string);
+    g_free(temp_string);
+  }
+
+
+  /* ---- legacy cruft ---- */
+  
+  /* canvas_"view"_visible added previous to amide 0.7.7, set all to TRUE if none set */
+  all_false = TRUE;
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    all_false = all_false && !AMITK_STUDY_CANVAS_VISIBLE(study, i_view);
+  }
+  if (all_false)
+    for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) study->canvas_visible[i_view] = TRUE;
+  
 
   return;
 }
@@ -457,6 +534,46 @@ void amitk_study_set_fuse_type(AmitkStudy * study, const AmitkFuseType new_fuse_
   return;
 }
 
+void amitk_study_set_view_mode(AmitkStudy * study, const AmitkViewMode new_view_mode) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (study->view_mode != new_view_mode) {
+    study->view_mode = new_view_mode;
+    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[VIEW_MODE_CHANGED], 0);
+  }
+
+  return;
+}
+
+/* note, at least one canvas has to remain visible at all times, function won't 
+   set visible to FALSE for a canvas if this condition will not be met */
+void amitk_study_set_canvas_visible(AmitkStudy * study, const AmitkView view, const gboolean visible) {
+
+  AmitkView i_view;
+  gboolean one_visible;
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  /* make sure one canvas will remain visible */
+  one_visible = FALSE;
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view ++) {
+    if (i_view == view)
+      one_visible = one_visible || visible;
+    else
+      one_visible = one_visible || AMITK_STUDY_CANVAS_VISIBLE(study, i_view);
+  }
+  if (!one_visible) return; 
+
+  if (AMITK_STUDY_CANVAS_VISIBLE(study, view) != visible) {
+    study->canvas_visible[view] = visible;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_VISIBLE_CHANGED], 0);
+  }
+
+  return;
+}
+
 void amitk_study_set_zoom(AmitkStudy * study, const amide_real_t new_zoom) {
 
   g_return_if_fail(AMITK_IS_STUDY(study));
@@ -565,6 +682,18 @@ const gchar * amitk_fuse_type_get_name(const AmitkFuseType fuse_type) {
 
   enum_class = g_type_class_ref(AMITK_TYPE_FUSE_TYPE);
   enum_value = g_enum_get_value(enum_class, fuse_type);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_view_mode_get_name(const AmitkViewMode view_mode) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_VIEW_MODE);
+  enum_value = g_enum_get_value(enum_class, view_mode);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;
