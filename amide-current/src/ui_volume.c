@@ -85,6 +85,15 @@ ui_volume_list_t * ui_volume_list_init(void) {
   return temp_volume_list;
 }
 
+/* function to return a pointer to the first volume in the ui_volume_list, returns NULL if none */
+volume_t * ui_volume_list_get_first_volume(ui_volume_list_t * ui_volume_list) {
+  if (ui_volume_list == NULL)
+    return NULL;
+  else
+    return ui_volume_list->volume;
+}
+
+
 /* function to return a pointer to the list element containing the specified volume */
 ui_volume_list_t * ui_volume_list_get_ui_volume(ui_volume_list_t * ui_volume_list, volume_t * volume) {
 

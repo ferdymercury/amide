@@ -1,0 +1,32 @@
+0.3.3
+	* added "targets" onto the canvases
+	* can now change thickness by click-n-dragging on canvases
+	* fixed rotating of roi's by mouse-click-n-dragging.  Zooming still doesn't work right
+	* mouse cursors now work correctly
+	* fixed fatal errors in loading in many types of raw data 
+	        (unsigned shorts, unsigned ints, etc.)
+	* fixed a fatal error in referencing a free'd ui_threshold structure
+	* blank images are now background color, not black
+	* the currently active object is now noted in the study tree
+	* code cleanups
+	
+0.3.2
+	* big endian compile fix
+	* additional viewing parameters saved in amide study files
+
+0.3.1
+	* multiple fixes with viewing series of images
+	* multiple fixes with calculating roi statistics
+
+0.3.0
+	* added study parameter modification dialog
+	* accelerated nearest neighbhor reslicing by a factor of 5
+	* massive bug hunt
+
+0.2.4
+	* added loading/saving support in an XML file format
+
+0.2.3
+	* added volume rendering support
+	* numerous bug fixes
+

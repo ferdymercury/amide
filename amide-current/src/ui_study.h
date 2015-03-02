@@ -43,6 +43,10 @@
 #define UI_STUDY_BLANK_WIDTH 128
 #define UI_STUDY_BLANK_HEIGHT 256
 #define UI_STUDY_DEFAULT_ENTRY_WIDTH 75
+#define UI_STUDY_TREE_ACTIVE_COLUMN 0
+#define UI_STUDY_TREE_TREE_COLUMN 1
+#define UI_STUDY_TREE_TEXT_COLUMN 1
+#define UI_STUDY_TREE_NUM_COLUMNS 2
 
 typedef enum {
   VOLUME_MODE, ROI_MODE, NUM_MODES
@@ -72,6 +76,13 @@ typedef enum {
 } ui_study_cursor_t;
 
 typedef enum {
+  TARGET_DELETE,
+  TARGET_CREATE,
+  TARGET_UPDATE,
+  NUM_TARGET_ACTIONS
+} ui_study_target_action_t;
+
+typedef enum {
   DIM_X, DIM_Y, DIM_Z,
   CENTER_X, CENTER_Y, CENTER_Z,
   VOXEL_SIZE_X, VOXEL_SIZE_Y, VOXEL_SIZE_Z,
@@ -85,10 +96,6 @@ typedef enum {
 typedef struct ui_study_t {
   GnomeApp * app; /* pointer to the window managing this study */
   GnomeCanvas * canvas[NUM_VIEWS];
-  GnomeCanvasItem * canvas_image[NUM_VIEWS];
-  GdkImlibImage * rgb_image[NUM_VIEWS];
-  GnomeCanvasItem * canvas_arrow[NUM_VIEWS][4];
-  GtkAdjustment * plane_adjustment[NUM_VIEWS];
   GtkAdjustment * thickness_adjustment;
   GdkCursor * cursor[NUM_CURSORS];
   GSList * cursor_stack;
@@ -108,14 +115,6 @@ typedef struct ui_study_t {
   roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
-  //  scaling_t scaling; /* scale on a slice or the whole volume */
-  //  volume_time_t current_time;
-  //  volume_time_t current_duration;
-  //  floatpoint_t current_thickness;
-  //  floatpoint_t current_zoom;
-  //  interpolation_t current_interpolation;
-  //  realpoint_t current_view_center; /* this is in the current_view coord frame */
-  volume_list_t * current_slices[NUM_VIEWS];
   roi_grain_t default_roi_grain;
   study_t * study; /* pointer to the study data structure */
   ui_threshold_t * threshold; /* pointer to the threshold widget data structure */
@@ -124,27 +123,32 @@ typedef struct ui_study_t {
 } ui_study_t;
 
 /* external functions */
-void ui_study_create(study_t * study);
-realspace_t ui_study_get_coords_current_view(ui_study_t * ui_study, view_t view, 
-					     realpoint_t * pfar_corner);
+GnomeApp * ui_study_create(study_t * study);
+void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
+void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action, 
+			     realpoint_t center, guint32 outline_color);
 GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
-void ui_study_place_wait_cursor(ui_study_t * ui_study);
-void ui_study_remove_wait_cursor(ui_study_t * ui_study);
-GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t i, 
+void ui_study_place_cursor(ui_study_t * ui_study, ui_study_cursor_t which_cursor, GtkWidget * widget);
+void ui_study_remove_cursor(ui_study_t * ui_study, GtkWidget * widget);
+GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t view, 
 					      GnomeCanvasItem * roi_item, roi_t * roi);
-void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t i);
-void ui_study_update_canvas(ui_study_t * ui_study, view_t i, 
+void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view);
+void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, 
 			    ui_study_update_t update);
+void ui_study_tree_update_active_row(ui_study_t * ui_study, gint row);
 void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi);
 void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume);
 
 /* internal functions */
-void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t i);
-void ui_study_update_canvas_image(ui_study_t * ui_study, view_t i);
+void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view);
+void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view);
 void ui_study_update_tree(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);
 ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
 
 
+
+/* external variables */
+extern gchar * ui_study_tree_active_mark;

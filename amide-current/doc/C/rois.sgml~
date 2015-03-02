@@ -71,8 +71,8 @@
       study item list to ensure that this ROI is the currently
       selected item.  You can then directly manipulate the ROI by
       clicking on it in any of the volume view windows.  Mouse button
-      1 is used to shift the ROI.  Mouse button 2 is used to rotate
-      the ROI.  And Mouse button 3 is used for zooming the ROI.
+      1 is used for zooming the ROI.  Mouse button 2 is used to rotate
+      the ROI.  And Mouse button 3 is used to shift the ROI.
 
       You can also edit the ROI size/placement/orientation/name
       etc. by clicking on mouse button 3 while over the ROI's name in

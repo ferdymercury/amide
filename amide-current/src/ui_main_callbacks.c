@@ -80,7 +80,7 @@ static void ui_main_callbacks_open_ok(GtkWidget* widget, gpointer data) {
   /* close the file selection box */
   ui_main_callbacks_open_cancel(widget, file_selection);
 
-  /* and setup the study window */
+  /* setup the study window */
   ui_study_create(study);
 
   return;

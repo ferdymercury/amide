@@ -36,12 +36,19 @@
 gchar * color_table_names[] = {"black/white linear", \
 			       "white/black linear", \
 			       "red temperature", \
+			       "inverse red temp.", \
 			       "blue temperature", \
+			       "inv blue temp.", \
 			       "green temperature", \
+			       "inverse green temp.", \
 			       "hot metal", \
+			       "inverse hot metal", \
 			       "spectrum", \
+			       "inverse spectrum", \
 			       "NIH + white", \
-			       "NIH"};
+			       "inverse NIH + white", \
+			       "NIH", \
+			       "inverse NIH"};
 
 /* this algorithm is derived from "Computer Graphics: principles and practice" */
 /* hue = [0 360], s and v are in [0,1] */
@@ -123,6 +130,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
       rgb.b = temp >= 0.50 ? 2*scale*(datum-min/2.0-max/2.0) : 0;
     }
     break;
+  case INV_RED_TEMPERATURE:
+    rgb = color_table_lookup((max-datum)+min, RED_TEMPERATURE, min, max);
+    break;
   case BLUE_TEMPERATURE:
     /* this may not be exactly right.... */
     scale = 0xFF/(max-min);
@@ -137,6 +147,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
       rgb.b = temp >= 0.70 ? 0xFF : scale*(datum-min)/0.70;
     }
     break;
+  case INV_BLUE_TEMPERATURE:
+    rgb = color_table_lookup((max-datum)+min, BLUE_TEMPERATURE, min, max);
+    break;
   case GREEN_TEMPERATURE:
     /* this may not be exactly right.... */
     scale = 0xFF/(max-min);
@@ -150,6 +163,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
       rgb.g = temp >= 0.70 ? 0xFF : scale*(datum-min)/0.70;
       rgb.b = temp >= 0.50 ? 2*scale*(datum-max/2.0-min/2.0) : 0;
     }
+    break;
+  case INV_GREEN_TEMPERATURE:
+    rgb = color_table_lookup((max-datum)+min, GREEN_TEMPERATURE, min, max);
     break;
   case HOT_METAL:
     /* derived from code in xmedcon (by Erik Nolf) */
@@ -174,6 +190,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
       
     }
     break;
+  case INV_HOT_METAL:
+    rgb = color_table_lookup((max-datum)+min, HOT_METAL, min, max);
+    break;
   case SPECTRUM:
     temp = ((datum-min)/(max-min));
     hsv.s = 1.0;
@@ -187,6 +206,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
       hsv.h = 360.0*temp; 
 
     rgb = color_table_hsv_to_rgb(&hsv);
+    break;
+  case INV_SPECTRUM:
+    rgb = color_table_lookup((max-datum)+min, SPECTRUM, min, max);
     break;
   case NIH:
     /* this algorithm is a complete guess, don't trust it */
@@ -209,6 +231,9 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
 
     rgb = color_table_hsv_to_rgb(&hsv);
     break;
+  case INV_NIH:
+    rgb = color_table_lookup((max-datum)+min, NIH, min, max);
+    break;
   case NIH_WHITE:
     /* this algorithm is a complete guess, don't trust it */
     temp = ((datum-min)/(max-min));
@@ -230,15 +255,22 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
 
     rgb = color_table_hsv_to_rgb(&hsv);
     break;
+  case INV_NIH_WHITE:
+    rgb = color_table_lookup((max-datum)+min, NIH_WHITE, min, max);
+    break;
+    //  case WB_LINEAR:
   case WB_LINEAR:
-    temp = 0xFF-((datum-min) * 0xFF/(max-min));
-    if (temp > 255)
-      temp = 255;
-    else if (temp < 0)
-      temp = 0;
-    rgb.r = temp;
-    rgb.g = temp;
-    rgb.b = temp;
+    rgb = color_table_lookup((max-datum)+min, BW_LINEAR, min, max);
+    break;
+
+    //    temp = 0xFF-((datum-min) * 0xFF/(max-min));
+    //    if (temp > 255)
+    //      temp = 255;
+    //    else if (temp < 0)
+    //      temp = 0;
+    //    rgb.r = temp;
+    //    rgb.g = temp;
+    //    rgb.b = temp;
     break;
   case BW_LINEAR:
   default:
@@ -264,40 +296,47 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
 
   switch(which) {
   case RED_TEMPERATURE:
+  case INV_RED_TEMPERATURE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0x00;
     highlight_color.g = 0xFF;
     highlight_color.b = 0xFF;
     break;
   case BLUE_TEMPERATURE:
+  case INV_BLUE_TEMPERATURE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0xFF;
     highlight_color.g = 0xFF;
     highlight_color.b = 0x00;
     break;
   case GREEN_TEMPERATURE:
+  case INV_GREEN_TEMPERATURE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0xFF;
     highlight_color.g = 0x00;
     highlight_color.b = 0xFF;
     break;
   case HOT_METAL:
+  case INV_HOT_METAL:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0x00;
     highlight_color.g = 0xFF;
     highlight_color.b = 0xFF;
     break;
   case SPECTRUM:
+  case INV_SPECTRUM:
     normal_color.r = normal_color.g = normal_color.b = 0xFF;
     highlight_color.r = highlight_color.g = highlight_color.b = 0x00;
     break;
   case NIH:
+  case INV_NIH:
     normal_color.r = normal_color.g = normal_color.b = 0xFF;
     highlight_color.r = 0xFF;
     highlight_color.g = 0x80;
     highlight_color.b = 0x00;
     break;
   case NIH_WHITE:
+  case INV_NIH_WHITE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0xFF;
     highlight_color.g = 0x80;

@@ -113,6 +113,12 @@ typedef struct realspace_t {
 				     ((rp3).y = (rp1).y*(rp2).y), \
 		                     ((rp3).z = (rp1).z*(rp2).z))
 
+/* does rp3=rp1./rp2 for realpoint structures */
+#define REALPOINT_DIV(rp1,rp2,rp3) (((rp3).x = (rp1).x/(rp2).x), \
+				     ((rp3).y = (rp1).y/(rp2).y), \
+		                     ((rp3).z = (rp1).z/(rp2).z))
+
+
 /* does rp3=fabs(rp1-rp2) for realpoint structures */
 #define REALPOINT_DIFF(rp1,rp2,rp3) (((rp3).x = fabs((rp1).x-(rp2).x)), \
 				     ((rp3).y = fabs((rp1).y-(rp2).y)), \
@@ -140,6 +146,7 @@ inline realpoint_t rp_abs(const realpoint_t rp1);
 inline realpoint_t rp_add(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_sub(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_mult(const realpoint_t rp1, const realpoint_t rp2);
+inline realpoint_t rp_div(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_diff(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
 
@@ -158,8 +165,8 @@ void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const rea
 				     const realspace_t out_coord_frame, realpoint_t out_corner[] );
 void realspace_make_orthogonal(realpoint_t axis[]);
 void realspace_make_orthonormal(realpoint_t axis[]);
-realpoint_t realspace_rotate_on_axis(const realpoint_t * in,
-				     const realpoint_t * axis,
+realpoint_t realspace_rotate_on_axis(const realpoint_t in,
+				     const realpoint_t axis,
 				     const floatpoint_t theta);
 axis_t realspace_get_orthogonal_which_axis(const view_t view);
 realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
@@ -169,6 +176,10 @@ realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
 					  const axis_t ax);
 realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_frame,
 						 const view_t view);
+inline realpoint_t realspace_coord_to_orthogonal_view(const realpoint_t in,
+						      const view_t view);
+inline realpoint_t realspace_coord_from_orthogonal_view(const realpoint_t in,
+						      const view_t view);
 inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 					       const realspace_t in_alt_coord_frame);
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,

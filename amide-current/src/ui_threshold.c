@@ -58,6 +58,7 @@ ui_threshold_t * ui_threshold_free(ui_threshold_t * ui_threshold) {
     g_print("freeing ui_threshold\n");
 #endif
     g_free(ui_threshold);
+    ui_threshold = NULL;
   }
 
   return ui_threshold;
@@ -253,7 +254,6 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 /* function to update the whole dialog */
 void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
-  volume_t * volume;
   gchar * temp_string;
   GdkImlibImage * temp_image;
     
@@ -266,16 +266,19 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
     return;
   }
 
-  /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    volume = study_first_volume(ui_study->study);
-  else
-    volume = ui_study->current_volume;
+  /* remove a reference to the old volume we were pointing to */
   ui_study->threshold->volume = volume_free(ui_study->threshold->volume);
-  ui_study->threshold->volume = volume_add_reference(volume);
+
+  /* figure out which volume we're dealing with, and add a reference */
+  if (ui_study->current_volume == NULL)
+    return;
+  else
+    ui_study->threshold->volume = volume_add_reference(ui_study->current_volume);
+
+  g_print("!!!!!!volume name %s\n",ui_study->threshold->volume->name);
 
   /* reset the label which holds the volume name */
-  temp_string = g_strdup_printf("data set: %s\n",volume->name);
+  temp_string = g_strdup_printf("data set: %s\n",ui_study->threshold->volume->name);
   gtk_label_set_text(GTK_LABEL(ui_study->threshold->name_label), temp_string);
   g_free(temp_string);
 
@@ -284,7 +287,7 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
   ui_threshold_update_canvas(ui_study, ui_study->threshold); 
 
   /* reset the distribution image */
-  temp_image = image_of_distribution(volume,
+  temp_image = image_of_distribution(ui_study->threshold->volume,
 				     UI_THRESHOLD_BAR_GRAPH_WIDTH,
 				     UI_THRESHOLD_COLOR_STRIP_HEIGHT);
   gnome_canvas_item_set(ui_study->threshold->bar_graph_item,
@@ -557,7 +560,7 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
 
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = ui_study->current_volumes->volume;
+    return; 
   else
     volume = ui_study->current_volume;
 

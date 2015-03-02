@@ -103,16 +103,16 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
   which_axis = realspace_get_orthogonal_which_axis(i_view);
   study_set_coord_frame_axis(study_new_info, XAXIS,
-			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, XAXIS),
-						      &study_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, XAXIS),
+						      study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   study_set_coord_frame_axis(study_new_info, YAXIS,
-			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, YAXIS),
-						      &study_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, YAXIS),
+						      study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   study_set_coord_frame_axis(study_new_info, ZAXIS,
-			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, ZAXIS),
-						      &study_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, ZAXIS),
+						      study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   realspace_make_orthonormal(study_new_info->coord_frame.axis); /* orthonormalize*/
   
@@ -215,12 +215,12 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
 
   /* apply any changes to the name of the widget */
   /* get the current pixmap and spacing in the line of the tree corresponding to the study */
-  gtk_ctree_node_get_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 0,
-  			     NULL, &spacing, &pixmap, NULL);
+  gtk_ctree_node_get_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
+			     UI_STUDY_TREE_TEXT_COLUMN, NULL, &spacing, &pixmap, NULL);
 
   /* reset the text in that tree line */
-  gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 0,
-  			     study_name(ui_study->study), spacing, pixmap, NULL);
+  gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
+			     UI_STUDY_TREE_TEXT_COLUMN, study_name(ui_study->study), spacing, pixmap, NULL);
 
 
   /* redraw the canvas if needed*/

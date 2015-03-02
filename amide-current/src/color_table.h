@@ -30,12 +30,19 @@
 typedef enum {BW_LINEAR, \
 	      WB_LINEAR, \
 	      RED_TEMPERATURE, \
+	      INV_RED_TEMPERATURE, \
 	      BLUE_TEMPERATURE, \
+	      INV_BLUE_TEMPERATURE, \
 	      GREEN_TEMPERATURE, \
+	      INV_GREEN_TEMPERATURE, \
 	      HOT_METAL, \
+	      INV_HOT_METAL, \
 	      SPECTRUM, \
+	      INV_SPECTRUM, \
 	      NIH_WHITE, \
+	      INV_NIH_WHITE, \
 	      NIH, \
+	      INV_NIH, \
 	      NUM_COLOR_TABLES} color_table_t;
 
 typedef guint8 color_data_t;

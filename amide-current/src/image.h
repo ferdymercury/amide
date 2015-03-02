@@ -28,7 +28,7 @@
 #include "rendering.h"
 
 /* external functions */
-GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height);
+GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height, color_point_t image_color);
 GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
 				const color_table_t color_table);
 GdkImlibImage * image_from_renderings(

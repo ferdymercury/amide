@@ -373,8 +373,11 @@ void ui_study_callbacks_import(GtkWidget * widget, gpointer data) {
 }
 
 
-/* function called when an event occurs on the image canvas, note, events for 
-   non-new roi's are handled by ui_study_rois_callbacks_roi_event */
+/* function called when an event occurs on the image canvas, 
+   notes:
+   -events for non-new roi's are handled by ui_study_rois_callbacks_roi_event 
+
+*/
 gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
@@ -384,54 +387,60 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
   realpoint_t item, diff;
   volume_t * volume;
   guint32 outline_color;
-  GdkCursor * cursor;
+  realspace_t * canvas_coord_frame[NUM_VIEWS];
+  realpoint_t * canvas_far_corner[NUM_VIEWS];
+  GdkImlibImage * rgb_image;
   GnomeCanvas * canvas;
-  realspace_t view_coord_frame;
-  realpoint_t view_center;
-  realpoint_t far_corner;
+  GnomeCanvasItem * canvas_image;
   static realpoint_t picture_center,picture0,picture1;
   static realpoint_t center, p0,p1;
   static GnomeCanvasItem * new_roi = NULL;
   static gboolean dragging = FALSE;
-  
+  static gboolean depth_change = FALSE;
+  static realpoint_t initial_loc;
+
   /* sanity checks */
   if (study_volumes(ui_study->study) == NULL)
     return TRUE;
-  if (ui_study->current_volumes == NULL)
+  if (ui_study->current_volume == NULL)
     return TRUE;
   if (ui_study->current_mode == ROI_MODE)
     if (ui_study->current_roi == NULL)
-      return TRUE;
+      ui_study->current_mode = VOLUME_MODE; /* switch back to volume mode */
+
+  canvas = GNOME_CANVAS(widget);
 
   /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    volume = ui_study->current_volumes->volume;
-  else
-    volume = ui_study->current_volume;
+  volume = ui_study->current_volume;
 
-  /* get the location of the event, and convert it to the gnome image system 
-     coordinates */
+  /* get the location of the event, and convert it to the gnome image system coordinates */
   item.x = event->button.x;
   item.y = event->button.y;
-  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item.x, &item.y);
+  canvas_image = gtk_object_get_data(GTK_OBJECT(canvas), "canvas_image");
+  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(canvas_image)->parent, &item.x, &item.y);
 
   /* figure out which canvas called this (transverse/coronal/sagittal)*/
-  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
-  canvas = ui_study->canvas[view];
+  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(canvas), "view"));
 
-  /* get the coordinate frame for this view and the far_corner
-     the far_corner is in the view_coord_frame */
-  view_coord_frame = ui_study_get_coords_current_view(ui_study, view, &far_corner);
+  /* get the coordinate frame and the far corner for each of the canvases, 
+     the canvas_corner is in the canvas_coord_frame */
+  for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
+    canvas_coord_frame[i_view] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "coord_frame");
+    canvas_far_corner[i_view] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "far_corner");
+  }
+
+  /* need the heigth and width of the rgb_image */
+  rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
 
   /* convert the event location to view space units */
   temp_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[view]->rgb_width)*far_corner.x;
+		/rgb_image->rgb_width)*(*canvas_far_corner[view]).x;
   temp_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[view]->rgb_height)*far_corner.y;
+		/rgb_image->rgb_height)*(*canvas_far_corner[view]).y;
   temp_loc.z = study_view_thickness(ui_study->study)/2.0;
 
   /* Convert the event location info to real units */
-  real_loc = realspace_alt_coord_to_base(temp_loc, view_coord_frame);
+  real_loc = realspace_alt_coord_to_base(temp_loc, *canvas_coord_frame[view]); 
   view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
 
   /* switch on the event which called this */
@@ -440,50 +449,40 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 
 
     case GDK_ENTER_NOTIFY:
-      
-      if (ui_study->current_mode == ROI_MODE)
+      if (ui_study->current_mode == ROI_MODE) {
 	/* if we're a new roi, using the drawing cursor */
 	if (roi_undrawn(ui_study->current_roi))
-	  cursor = ui_study->cursor[UI_STUDY_NEW_ROI_MODE];
+	  ui_study_place_cursor(ui_study, UI_STUDY_NEW_ROI_MODE, GTK_WIDGET(canvas));
 	else
 	  /* cursor will be this until we're actually positioned on an roi */
-	  cursor = ui_study->cursor[UI_STUDY_NO_ROI_MODE];
-      else  /* VOLUME_MODE */
-	cursor = ui_study->cursor[UI_STUDY_VOLUME_MODE];
+	  ui_study_place_cursor(ui_study, UI_STUDY_NO_ROI_MODE, GTK_WIDGET(canvas));
+      } else  /* VOLUME_MODE */
+	ui_study_place_cursor(ui_study, UI_STUDY_VOLUME_MODE, GTK_WIDGET(canvas));
       
-      /* push our desired cursor onto the cursor stack */
-      ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(canvas)), cursor);
-
       break;
 
 
      case GDK_LEAVE_NOTIFY:
-       /* pop the previous cursor off the stack */
-       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-       ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
-       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-       gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(canvas)), cursor);
+       ui_study_remove_cursor(ui_study, GTK_WIDGET(canvas));
        break;
 
 
 
     case GDK_BUTTON_PRESS:
+      /* figure out the outline color */
+      outline_color = color_table_outline_color(volume->color_table, TRUE);
+
       if (ui_study->current_mode == ROI_MODE) {
 	if ( roi_undrawn(ui_study->current_roi)) {
 	  /* only new roi's handled in this function, old ones handled by
 	     ui_study_rois_callbacks_roi_event */
 	  
 	  dragging = TRUE;
-	  cursor = ui_study->cursor[UI_STUDY_NEW_ROI_MOTION];
-	  ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-	  gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
+	  gnome_canvas_item_grab(GNOME_CANVAS_ITEM(canvas_image),
 				 GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-				 cursor,
+				 ui_study->cursor[UI_STUDY_NEW_ROI_MOTION],
 				 event->button.time);
 	  
-	  /* figure out the outline color */
-	  outline_color = color_table_outline_color(volume->color_table, TRUE);
 	  
 	  /* save the center of our object in static variables for future use */
 	  center = real_loc;
@@ -519,41 +518,19 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	}
       } else { /* VOLUME_MODE */
 
-	switch (view)
-	  {
-	  case TRANSVERSE:
-	    view_center = study_view_center(ui_study->study);
-	    view_center.x = view_loc.x;
-	    view_center.y = view_loc.y;
-	    study_set_view_center(ui_study->study, view_center);
-	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
-	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
-	    break;
-	  case CORONAL:
-	    view_center = study_view_center(ui_study->study);
-	    view_center.x = view_loc.x;
-	    view_center.z = view_loc.z;
-	    study_set_view_center(ui_study->study, view_center);
-	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
-	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
-	    break;
-	  case SAGITTAL:
-	    view_center = study_view_center(ui_study->study);
-	    view_center.y = view_loc.y;
-	    view_center.z = view_loc.z;
-	    study_set_view_center(ui_study->study, view_center);
-	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
-	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
-	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ARROWS);
-	    break;
-	  default:
-	    break;
-	  }
+	dragging = TRUE;
+	initial_loc = view_loc;
+
+	/* if we clicked with button 2, minimize the thickness */
+	if (event->button.button == 2) {
+	  depth_change = TRUE;
+	  study_set_view_thickness(ui_study->study, 0);
+	  ui_study_update_thickness_adjustment(ui_study);
+	}
+
+	/* make them targets */
+	ui_study_update_targets(ui_study, TARGET_CREATE, view_loc, outline_color);
+
       }
       break;
 
@@ -572,9 +549,20 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	  }
 	}
       } else { /* VOLUME_MODE */
-	;
-      }
 
+	if (dragging && (event->motion.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK))) {
+	  /* button one or two indicates we want to slide the target without changing the depth */
+	  /* with button two, the depth should have already been changed back to the minimum */
+	  ui_study_update_targets(ui_study, TARGET_UPDATE, view_loc, 0);
+	} else if (dragging && (event->motion.state & GDK_BUTTON3_MASK)) {
+	  /* button three indicates we want to resize the depth */
+	  depth_change = TRUE;
+	  study_set_view_thickness(ui_study->study,REALPOINT_MAX_DIM(rp_diff(view_loc, initial_loc)));
+	  ui_study_update_thickness_adjustment(ui_study);
+	  ui_study_update_targets(ui_study, TARGET_UPDATE, initial_loc, 0);
+	}
+
+      }
       break;
 
     case GDK_BUTTON_RELEASE:
@@ -582,13 +570,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	if ( roi_undrawn(ui_study->current_roi)) {
 	  /* only new roi's handled in this function, old ones handled by
 	     ui_study_rois_callbacks_roi_event */
-	  gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget),
-				   event->button.time);
-	  /* pop the previous cursor off the stack */
-	  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-	  ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
-	  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-	  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(canvas)), cursor);
+	  gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_image), event->button.time);
 	  dragging = FALSE;
 	  
 	  REALPOINT_DIFF(center, real_loc, diff);
@@ -609,14 +591,15 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	  
 	  REALPOINT_SUB(center, diff, p0);
 	  REALPOINT_ADD(center, diff, p1);
-	  
-	  /* let's save the info */
+
+	  /* get ride of the roi drawn on the canvas */
 	  gtk_object_destroy(GTK_OBJECT(new_roi));
 	  
+	  /* let's save the info */
 	  /* we'll save the coord frame and offset of the roi */
 	  ui_study->current_roi->coord_frame.offset = p0;
 	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-	    ui_study->current_roi->coord_frame.axis[i_axis] = view_coord_frame.axis[i_axis];
+	    ui_study->current_roi->coord_frame.axis[i_axis] = (*canvas_coord_frame[view]).axis[i_axis];
 
 	  /* and set the far corner of the roi */
 	  ui_study->current_roi->corner = 
@@ -637,7 +620,44 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	  }
 	}
       } else { /* VOLUME_MODE */
-	;
+
+	dragging = FALSE;
+
+	/* get rid of the "target" lines */
+	ui_study_update_targets(ui_study, TARGET_DELETE, realpoint_init, 0);
+
+	study_set_view_center(ui_study->study, view_loc);
+
+	/* update the canvases */
+	if (depth_change == TRUE) {
+	  /* need to update all canvases */
+	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+	} else { /* depth_change == FALSE */
+	  /* don't need to update the canvas we're currently over */
+	  switch (view)
+	    {
+	    case TRANSVERSE:
+	      ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
+	      ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
+	      break;
+	    case CORONAL:
+	      ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
+	      ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
+	      break;
+	    case SAGITTAL:
+	      ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
+	      ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
+	      ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ARROWS);
+	      break;
+	    default:
+	      break;
+	    }
+	}
       }
       break;
     default:
@@ -807,7 +827,7 @@ void ui_study_callbacks_scaling(GtkWidget * widget, gpointer data) {
   /* figure out which scaling menu item called me */
   i_scaling = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"scaling"));
 
-  /* check if we actually changed values */
+  /* check if we actually changed vapplues */
   if (study_scaling(ui_study->study) != i_scaling) {
     /* and inact the changes */
     study_set_scaling(ui_study->study, i_scaling);
@@ -835,7 +855,7 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
     volume = ui_threshold->volume;
   else
     if (ui_study->current_volume == NULL)
-      volume = study_first_volume(ui_study->study);
+      return;
     else
       volume = ui_study->current_volume;
 
@@ -975,9 +995,21 @@ void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node,
       /* if it's a volume, do the appropriate volume action */
       if (node_pointer == volume_list->volume) {
 	if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume_list->volume))
-	  ui_study->current_volumes =
-	    ui_volume_list_add_volume(ui_study->current_volumes, volume_list->volume,
-				      ctree, GTK_CTREE_NODE(node));
+	  ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, volume_list->volume,
+								ctree, GTK_CTREE_NODE(node));
+	if (ui_study->current_volume == NULL) {
+	  /* make this the current volume if we don't have one yet */
+	  ui_study->current_volume = volume_list->volume;
+
+	  /* reset the color_table picker based on the current volume */
+	  gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+				      ui_study->current_volume->color_table);
+
+	  /* indicate this is now the active row */
+	  ui_study_tree_update_active_row(ui_study, 
+					  gtk_clist_find_row_from_data(GTK_CLIST(ctree), volume_list->volume));
+	}	  
+
 	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
 	ui_time_dialog_set_times(ui_study);
       }
@@ -1013,10 +1045,15 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
 
       /* if it's an roi, do the appropriate roi action */
       if (node_pointer == roi_list->roi) {
-	if (ui_study->current_roi == roi_list->roi) 
-	  ui_study->current_roi = NULL;
-	ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi_list->roi);
-      }
+        if (ui_study->current_roi == roi_list->roi) {
+          ui_study->current_roi = NULL;
+	  if (ui_study->current_mode == ROI_MODE) {
+	    ui_study->current_mode = VOLUME_MODE;
+	    ui_study_tree_update_active_row(ui_study, -1); 
+	  }
+	}
+        ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi_list->roi);
+      }       
 
       roi_list = roi_list->next;
     }
@@ -1025,8 +1062,27 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
       /* if it's a volume, do the appropriate volume action */
       if (node_pointer == volume_list->volume) {
 
-	ui_study->current_volumes = 
-	  ui_volume_list_remove_volume(ui_study->current_volumes, volume_list->volume);
+	/* if it's the currently active volume... */
+	if (ui_study->current_volume == volume_list->volume) {
+	  /* remove it */
+	  ui_study->current_volumes = 
+	    ui_volume_list_remove_volume(ui_study->current_volumes, volume_list->volume);
+	  /* reset the currently active volume */
+	  ui_study->current_volume = ui_volume_list_get_first_volume(ui_study->current_volumes);
+
+	  /* reset the color_table picker based on the current volume */
+	  if (ui_study->current_volume != NULL)
+	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+					ui_study->current_volume->color_table);
+
+	  /* update which row in the tree has the active symbol */
+	  if (ui_study->current_mode == VOLUME_MODE)
+	    ui_study_tree_update_active_row(ui_study, -1); 
+	} else {
+	  /* just remove it */
+	  ui_study->current_volumes = 
+	    ui_volume_list_remove_volume(ui_study->current_volumes, volume_list->volume);
+	}
       
 	/* destroy the threshold window if it's open and looking at this volume */
 	if (ui_study->threshold != NULL)
@@ -1064,7 +1120,6 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
   volume_list_t * volume_list; 
   roi_list_t * roi_list;
   realpoint_t view_center;
-  realpoint_t temp_p;
   GtkCTree * ctree = GTK_CTREE(widget);
   GtkCTreeNode * node = NULL;
   gint row = -1;
@@ -1079,8 +1134,7 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
       || (event->button == 3) || (event->button ==2)) {
 
     /* do some fancy stuff to figure out what node in the tree just got selected*/
-    gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, 
-				  &row, &col);
+    gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, &row, &col);
     if (row != -1) 
       node = gtk_ctree_node_nth(ctree, (guint)row);
                     
@@ -1102,14 +1156,17 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	    if ( !roi_undrawn(ui_study->current_roi)) {
 	      view_center = roi_calculate_center(ui_study->current_roi);
 	      view_center = realspace_base_coord_to_alt(view_center, study_coord_frame(ui_study->study));
-	      temp_p.x = temp_p.y = temp_p.z = 0.5 * study_view_thickness(ui_study->study);
-	      study_set_view_center(ui_study->study, rp_sub(view_center, temp_p));
+	      study_set_view_center(ui_study->study, view_center);
 	      ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
 	    } else {
 	      /* if this roi hasn't yet been drawn, at least update 
 		 which roi is highlighted */
 	      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
 	    }
+
+	    /* indicate this is now the active row */
+	    ui_study_tree_update_active_row(ui_study, row);
+
 	  } else { /* button 3 clicked */
 	    /* start up the dialog to adjust the roi */
 	    ui_roi_dialog_create(ui_study, node_pointer);
@@ -1129,12 +1186,17 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	  if ((event->button == 1) || (event->button == 2)) {
 	    ui_study->current_mode = VOLUME_MODE;
 	    ui_study->current_volume = node_pointer;
-	    /* reset the color_table picker based on the current volume */
-	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-					ui_study->current_volume->color_table);
+
 	    /* reset the threshold widget based on the current volume */
 	    if (ui_study->threshold != NULL)
 	      ui_threshold_dialog_update(ui_study);
+
+	    /* reset the color_table picker based on the current volume */
+	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+					ui_study->current_volume->color_table);
+
+	    /* indicate this is now the active row */
+	    ui_study_tree_update_active_row(ui_study, row);
 
 	  } else { /* event.button == 3 */
 	    /* start up the volume dialog */

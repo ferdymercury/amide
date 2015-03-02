@@ -51,7 +51,6 @@ void ui_main_create(void) {
   logo = GNOME_PIXMAP(gnome_pixmap_new_from_xpm_d(amide_xpm));
   gnome_app_set_contents(app, GTK_WIDGET(logo));
 
-
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",
 		     GTK_SIGNAL_FUNC(ui_main_callbacks_delete_event),

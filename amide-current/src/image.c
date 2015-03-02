@@ -33,7 +33,7 @@
 #include "color_table2.h"
 
 /* function to return a blank image */
-GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height) {
+GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height, color_point_t image_color) {
   
   GdkImlibImage * temp_image;
   intpoint_t i,j;
@@ -41,20 +41,22 @@ GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height) {
   
   if ((rgb_data = 
        (guchar *) g_malloc(sizeof(guchar) * 3 * width * height)) == NULL) {
-    g_warning("%s: couldn't allocate memory for blank image",PACKAGE);
+    g_warning("%s: couldn't allocate memory for rgb_data for blank image",PACKAGE);
     return NULL;
   }
 
-
   for (i=0 ; i < height; i++)
     for (j=0; j < width; j++) {
-      rgb_data[i*width*3+j*3+0] = 0x00;
-      rgb_data[i*width*3+j*3+1] = 0x00;
-      rgb_data[i*width*3+j*3+2] = 0x00;
+      rgb_data[i*width*3+j*3+0] = image_color.r;
+      rgb_data[i*width*3+j*3+1] = image_color.g;
+      rgb_data[i*width*3+j*3+2] = image_color.b;
     }
   
   temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
   
+  /* no longer need the data */
+  g_free(rgb_data); 
+
   return temp_image;
 }
 
@@ -87,6 +89,9 @@ GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, co
 
   /* generate the GdkImlibImage from the rgb_data */
   temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
+
+  /* no longer need the data */
+  g_free(rgb_data); 
   
   return temp_image;
 }
@@ -297,6 +302,7 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
   
   return temp_image;
 }
+
 
 GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
 				   volume_list_t * volumes,

@@ -124,6 +124,10 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
 /* render our volumes and place into the canvases */
 void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
+  color_point_t blank_color;
+
+  blank_color.r = blank_color.g = blank_color.b = 0;
+
   if (ui_rendering == NULL) {
     g_warning("%s: called ui_rendering_update_canvases with NULL ui_rendering....?",PACKAGE);
     return;
@@ -133,9 +137,9 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
   if (ui_rendering->axis_image != NULL)
     gnome_canvas_destroy_image(ui_rendering->axis_image);
 
-  if (ui_rendering->axis_context == NULL)
-    ui_rendering->axis_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT);
-  else {
+  if (ui_rendering->axis_context == NULL) {
+    ui_rendering->axis_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
+  } else {
     rendering_context_render(ui_rendering->axis_context);
     ui_rendering->axis_image = 
       image_from_8bit(ui_rendering->axis_context->image, 
@@ -183,7 +187,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
     gnome_canvas_destroy_image(ui_rendering->main_image);
 
   if (ui_rendering->contexts == NULL)
-    ui_rendering->main_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT);
+    ui_rendering->main_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
   else {
     rendering_list_render(ui_rendering->contexts);
     /* base the dimensions on the first context in the list.... */

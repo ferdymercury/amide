@@ -231,16 +231,16 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
   which_axis = realspace_get_orthogonal_which_axis(i_view);
   roi_new_info->coord_frame.axis[XAXIS] = 
-    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-			     &study_coord_frame_axis(ui_study->study, which_axis),
+    realspace_rotate_on_axis(roi_new_info->coord_frame.axis[XAXIS],
+			     study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   roi_new_info->coord_frame.axis[YAXIS] = 
-    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-			     &study_coord_frame_axis(ui_study->study, which_axis),
+    realspace_rotate_on_axis(roi_new_info->coord_frame.axis[YAXIS],
+			     study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   roi_new_info->coord_frame.axis[ZAXIS] = 
-    realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-			     &study_coord_frame_axis(ui_study->study, which_axis),
+    realspace_rotate_on_axis(roi_new_info->coord_frame.axis[ZAXIS],
+			     study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
 
@@ -337,10 +337,10 @@ void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer
 
   /* apply any changes to the name of the widget */
   /* get the current pixmap and spacing in the line of the tree corresponding to this roi */
-  gtk_ctree_node_get_pixtext(roi_list_item->tree, roi_list_item->tree_node, 0,
+  gtk_ctree_node_get_pixtext(roi_list_item->tree, roi_list_item->tree_node, UI_STUDY_TREE_TEXT_COLUMN,
 			     NULL, &spacing, &pixmap, NULL);
   /* reset the text in that tree line */
-  gtk_ctree_node_set_pixtext(roi_list_item->tree, roi_list_item->tree_node, 0, 
+  gtk_ctree_node_set_pixtext(roi_list_item->tree, roi_list_item->tree_node, UI_STUDY_TREE_TEXT_COLUMN, 
 			     roi_list_item->roi->name, spacing, pixmap, NULL);
 
 

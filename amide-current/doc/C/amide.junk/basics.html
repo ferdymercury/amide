@@ -211,9 +211,12 @@ NAME="AEN46"
 ><P
 >	    The user can specify what type of interpolation to use for
 	    generating the slices displayed on the canvas.  Nearest
-	    neighbhor is by far the quickest, but bi-linear (4x
-	    slower) and tri-linear (8x slower) interpolations give
-	    better appearing images.
+	    neighbhor is by far the quickest.  2x2x1 does a square
+	    smoothing filter on the data and is 4x slower than nearest
+	    neighbor.  2x2x2 does a box smoothing filter on the data
+	    and is 8x slower than nearest neighbor.  Bi-linear and
+	    Tri-linear interpolations produce the best looking images but
+	    are very slow.
 	  </P
 ></DIV
 ><DIV

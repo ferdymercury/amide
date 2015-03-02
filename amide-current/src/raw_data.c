@@ -49,7 +49,21 @@ gchar * data_format_names[] = {"Unsigned Byte (8 bit)", \
 			       "Float, Big Endian (32 bit)", \
 			       "Double, Big Endian (64 bit)"};
 
-guint data_sizes[] = {1,1,1,2,2,4,4,4,8,2,2,4,4,4,8};
+guint data_sizes[] = {sizeof(guint8),
+		      sizeof(gint8),
+		      sizeof(guint16),
+		      sizeof(gint16),
+		      sizeof(guint32),
+		      sizeof(gint32),
+		      sizeof(gfloat),
+		      sizeof(gdouble),
+		      sizeof(guint16),
+		      sizeof(gint16),
+		      sizeof(guint32),
+		      sizeof(gint32),
+		      sizeof(gfloat),
+		      sizeof(gdouble), 
+		      1};
 
 
 

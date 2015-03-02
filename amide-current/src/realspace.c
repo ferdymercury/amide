@@ -83,6 +83,15 @@ inline realpoint_t rp_mult(const realpoint_t rp1,const realpoint_t rp2) {
   return temp;
 }
 
+/* returns rp1./rp2 for realpoint structures */
+inline realpoint_t rp_div(const realpoint_t rp1,const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = rp1.x/rp2.x;
+  temp.y = rp1.y/rp2.y;
+  temp.z = rp1.z/rp2.z;
+  return temp;
+}
+
 /* returns rp_abs(rp1-rp2) for realpoint structures */
 inline realpoint_t rp_diff(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -246,27 +255,28 @@ void realspace_make_orthonormal(realpoint_t axis[]) {
 }
 
 /* rotate the vector on the given axis by the given rotation */
-realpoint_t realspace_rotate_on_axis(const realpoint_t * in,
-				     const realpoint_t * axis,
+realpoint_t realspace_rotate_on_axis(const realpoint_t in,
+				     const realpoint_t axis,
 				     const floatpoint_t theta) {
 
   realpoint_t return_vector;
 
   return_vector.x = 
-    (pow(axis->x,2.0) + cos(theta) * (1.0 - pow(axis->x,2.0))) * in->x +
-    (axis->x*axis->y*(1.0-cos(theta)) - axis->z * sin(theta)) * in->y +
-    (axis->z*axis->x*(1.0-cos(theta)) + axis->y * sin(theta)) * in->z;
+    (pow(axis.x,2.0) + cos(theta) * (1.0 - pow(axis.x,2.0))) * in.x +
+    (axis.x*axis.y*(1.0-cos(theta)) - axis.z * sin(theta)) * in.y +
+    (axis.z*axis.x*(1.0-cos(theta)) + axis.y * sin(theta)) * in.z;
   return_vector.y = 
-    (axis->x*axis->y*(1.0-cos(theta)) + axis->z * sin(theta)) * in->x +
-    (pow(axis->y,2.0) + cos(theta) * (1.0 - pow(axis->y,2.0))) * in->y +
-    (axis->y*axis->z*(1.0-cos(theta)) - axis->x * sin(theta)) * in->z;
+    (axis.x*axis.y*(1.0-cos(theta)) + axis.z * sin(theta)) * in.x +
+    (pow(axis.y,2.0) + cos(theta) * (1.0 - pow(axis.y,2.0))) * in.y +
+    (axis.y*axis.z*(1.0-cos(theta)) - axis.x * sin(theta)) * in.z;
   return_vector.z = 
-    (axis->z*axis->x*(1.0-cos(theta)) - axis->y * sin(theta)) * in->x +
-    (axis->y*axis->z*(1.0-cos(theta)) + axis->x * sin(theta)) * in->y +
-    (pow(axis->z,2.0) + cos(theta) * (1.0 - pow(axis->z,2.0))) * in->z;
+    (axis.z*axis.x*(1.0-cos(theta)) - axis.y * sin(theta)) * in.x +
+    (axis.y*axis.z*(1.0-cos(theta)) + axis.x * sin(theta)) * in.y +
+    (pow(axis.z,2.0) + cos(theta) * (1.0 - pow(axis.z,2.0))) * in.z;
 
   return return_vector;
 }
+
 
 /* returns the axis_t of the orthogonal axis for a given view */
 axis_t realspace_get_orthogonal_which_axis(const view_t view) {
@@ -364,6 +374,38 @@ realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_fram
   return return_coord_frame;
 }
 
+/* converts a point in a coordinate frame to the point in one of the orthogonal views */
+inline realpoint_t realspace_coord_to_orthogonal_view(const realpoint_t in,
+						      const view_t view) {
+  realpoint_t temp;
+
+  switch(view) {
+  case CORONAL:
+    temp.x = in.x;
+    temp.y = in.z;
+    temp.z = in.y;
+    break;
+  case SAGITTAL:
+    temp.x = in.y;
+    temp.y = in.z;
+    temp.z = in.x;
+    break;
+  case TRANSVERSE:
+  default:
+    temp.x = in.x;
+    temp.y = in.y;
+    temp.z = in.z;
+    break;
+  }
+
+  return temp;
+}
+
+/* converts a point in an orthogonal  coordinate frame to the transverse view */
+inline realpoint_t realspace_coord_from_orthogonal_view(const realpoint_t in,
+						      const view_t view) {
+  return realspace_coord_to_orthogonal_view(in, view);
+}
 
 /* convert a point in an alternative coordinate frame to the base
    coordinate frame */

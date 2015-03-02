@@ -40,6 +40,7 @@ struct _ui_volume_list_t {
 /* external functions */
 ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list);
 ui_volume_list_t * ui_volume_list_init(void);
+volume_t * ui_volume_list_get_first_volume(ui_volume_list_t * ui_volume_list);
 ui_volume_list_t * ui_volume_list_get_ui_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 gboolean ui_volume_list_includes_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list, 
