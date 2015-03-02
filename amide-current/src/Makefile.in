@@ -375,6 +375,10 @@ AM_CFLAGS = \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS)
 
+
+#	-I/usr/local/xmedcon/include 
+#	-DGNOME_DISABLE_DEPRECATED \
+#	-DGTK_DISABLE_DEPRECATED 
 AM_CXXFLAGS = $(AM_CFLAGS)
 amide_LDADD = \
 	$(GSL_LIBS) \

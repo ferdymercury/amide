@@ -1,7 +1,7 @@
 /* amitk_point.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -173,6 +173,7 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 
 
 #define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
+#define CLOSE 0.0001 /* within 0.01% */
 #define EMPTY 0.0
 
 /* convert a gaussian's sigma value to FWHM, FWHM = sigma*2*sqrt(ln 4)*/
@@ -189,7 +190,10 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 
 #define EQUAL_ZERO(fp1) (REAL_EQUAL((fp1), 0.0))
 
-/* returns the boolean value of point1==point2 (within a factor of CLOSE) */
+/* are two things pretty close */
+#define REAL_CLOSE(x,y) (fabs(x-y)/MAX(MAX(fabs(x),fabs(y)),DBL_MIN) < CLOSE)
+
+/* returns the boolean value of point1==point2 (within a factor of EPSILON */
 #define POINT_EQUAL(point1,point2) (REAL_EQUAL(((point1).x),((point2).x)) && \
 		                    REAL_EQUAL(((point1).y),((point2).y)) && \
 			            REAL_EQUAL(((point1).z),((point2).z)))
@@ -255,6 +259,10 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 #define POINT_CMULT(cm,point1,point3) (((point3).x = (cm)*(point1).x), \
 				       ((point3).y = (cm)*(point1).y), \
 				       ((point3).z = (cm)*(point1).z))
+
+#define POINT_CROSS_PRODUCT(point1, point2, point3) (((point3).x = (point1).y*(point2).z-(point1).z*(point2).y), \
+						     ((point3).y = (point1).z*(point2).x-(point1).x*(point2).z), \
+						     ((point3).z = (point1).x*(point2).y-(point1).y*(point2).x))
 
 /* does point3=cm*point1+dm*point2 for realpoint structures */
 #define POINT_MADD(cm,point1,dm,point2,point3) (((point3).x = cm*(point1).x+dm*(point2).x), \

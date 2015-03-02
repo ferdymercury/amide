@@ -1,4 +1,35 @@
-0.8.15
+0.8.16
+	* wasn't reading in intercepts correctly from .xif files [1]
+	* potential fix for 64 bit check in xml_check_file_32bit_okay [2]
+	* fixed bug with rendering of ROI's [3]
+	* in help panel, button "1" now refered to as "m1" for clarity
+	[1] Found by Peter Bloomfield and Marwan Elkoussy
+	[2] Found by Jose Manuel Quesada
+	[3] Found by John Storey-Bishoff
+
+
+0.8.15.3 2006.05
+	* export->series for dynamic data sets led to core dump [1]
+	* now handles DICOM files without scale factors (eg MR)
+	[1] Found by Tove Olafsen
+
+0.8.15.2 2006.04.15
+	* fix to libecat support - includes calibration when possible
+ 	* fixed 64bit/32bit file detection on Mac OS X
+ 	* fixed several glitches with DICOM handling [1]
+ 	  - better guestimation of slice thickness
+ 	  - correctly handles patient orientation
+ 	[1] Found by Andre Manook
+	
+0.8.15.1 2006.04.09
+	* slight xmedcon tweaks - now require xmedcon >= 0.9.9.0
+	* various small fixes for gcc 4.1 (fedora core 5)
+	* fixed independent threshold - menu now gets enabled properly
+ 	* modified libmdc/libecat support, allow reading in truncated data sets
+ 	* fix for exporting data sets
+ 	
+
+0.8.15 2006.02.21
 	* added independent color tables for 2nd and 3rd sets of views [1]
 	* strip NaN's on export->resliced data set to make xmedcon happy
  	* added internal scaling intercept - more compatible with dicom

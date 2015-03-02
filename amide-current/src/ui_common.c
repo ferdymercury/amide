@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -324,7 +324,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 
   logo = gdk_pixbuf_new_from_inline(-1, amide_logo, FALSE, NULL);
   about = gnome_about_new(PACKAGE, VERSION, 
-			  _("Copyright (c) 2000-2005 Andy Loening"),
+			  _("Copyright (c) 2000-2006 Andy Loening"),
 			  contents,
 			  authors, NULL, NULL, logo);
   g_object_unref(logo);

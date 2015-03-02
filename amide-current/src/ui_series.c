@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -261,7 +261,6 @@ static void export_cb(GtkWidget * widget, gpointer data) {
     temp_string = g_strdup_printf("%s_gated.jpg",  data_set_names);
     break;
   case OVER_FRAMES:
-    break;
   case OVER_SPACE:
   default:
     temp_string = g_strdup_printf("%s.jpg", data_set_names);

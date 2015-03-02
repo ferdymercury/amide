@@ -1,7 +1,7 @@
 /* libecat_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -74,6 +74,8 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
   time_t dob;
+  gint num_corrupted_planes = 0;
+  gdouble calibration_factor = 1.0;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -153,6 +155,10 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   dim.g = libecat_file->mhptr->num_gates;
   dim.t = libecat_file->mhptr->num_frames;
   num_slices = libecat_file->mhptr->num_planes/matrix_data->zdim;
+
+  /* should we include the calibration factor in the conversion? */
+  if (libecat_file->mhptr->calibration_units == Calibrated)
+    calibration_factor = libecat_file->mhptr->calibration_factor;
 
   /* figure out the size of our factor array */
   if (matrix_data->zdim == 1) {
@@ -333,90 +339,93 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
       
 	/* read in the corresponding cti slice */
 	if ((matrix_slice = matrix_read(libecat_file, matnum, 0)) == NULL) {
-	  g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, libecat_filename);
-	  goto error;
-	}
+	  num_corrupted_planes+=dim.z/num_slices;
+	  /*	  g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, libecat_filename); */
+	  /* goto error; */
+	} else {
       
-	/* set the frame duration, note, CTI files specify time as integers in msecs */
-	switch(libecat_file->mhptr->file_type) {
-	case PetImage: 
-	case PetVolume: 
-	case InterfileImage:
-	  ish = (Image_subheader *) matrix_slice->shptr;
-	  ds->frame_duration[i.t] = ish->frame_duration/1000.0;
-	  break;
-	case Normalization:
-	case AttenCor:
-	  ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
-	  break;
-	case Sinogram:
-	  ssh = (Scan_subheader *) matrix_slice->shptr;
-	  ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
-	  break;
-	default:
-	  break; /* should never get here */
-	}
-	
-	for (i.z = slice*(dim.z/num_slices); 
-	     i.z < dim.z/num_slices + slice*(dim.z/num_slices); 
-	     i.z++, i_plane++) {
-
-	  if (update_func != NULL) {
-	    x = div(i_plane,divider);
-	    if (x.rem == 0)
-	      continue_work = (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
-	  }
-	  
-	  /* save the scale factor */
-	  j.x = j.y = 0;
-	  j.z = slice;
-	  j.g = i.g;
-	  j.t = i.t;
-	  if (scaling_type == AMITK_SCALING_TYPE_2D) 
-	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, j) = matrix_slice->scale_factor;
-	  else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
-	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling_factor, j) = matrix_slice->scale_factor;
-	  
-	  switch (format) {
-	  case AMITK_FORMAT_SSHORT:
-	    /* copy the data into the volume */
-	    /* note, we compensate here for the fact that we define 
-	       our origin as the bottom left, not top left like the CTI file */
-	    for (i.y = 0; i.y < dim.y; i.y++) 
-	      for (i.x = 0; i.x < dim.x; i.x++)
-		AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
-		  *(((amitk_format_SSHORT_t *) matrix_slice->data_ptr) + 
-		    (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
-		     +dim.x*(dim.y-i.y-1)
-		     +i.x));
+	  /* set the frame duration, note, CTI files specify time as integers in msecs */
+	  switch(libecat_file->mhptr->file_type) {
+	  case PetImage: 
+	  case PetVolume: 
+	  case InterfileImage:
+	    ish = (Image_subheader *) matrix_slice->shptr;
+	    ds->frame_duration[i.t] = ish->frame_duration/1000.0;
 	    break;
-	  case AMITK_FORMAT_FLOAT:
-	    /* copy the data into the volume */
-	    /* note, we compensate here for the fact that we define 
-	       our origin as the bottom left, not top left like the CTI file */
-	    for (i.y = 0; i.y < dim.y; i.y++) 
-	      for (i.x = 0; i.x < dim.x; i.x++)
-		AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
-		  *(((amitk_format_FLOAT_t *) matrix_slice->data_ptr) + 
-		    (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
-		     +dim.x*(dim.y-i.y-1)
-		     +i.x));
+	  case Normalization:
+	  case AttenCor:
+	    ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
+	    break;
+	  case Sinogram:
+	    ssh = (Scan_subheader *) matrix_slice->shptr;
+	    ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
 	    break;
 	  default:
-	    g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
-	    goto error;
-	    break; 
+	    break; /* should never get here */
 	  }
-
-	}
-
-	free_matrix_data(matrix_slice);
-      }
-    }
+	  
+	  for (i.z = slice*(dim.z/num_slices); 
+	       i.z < dim.z/num_slices + slice*(dim.z/num_slices); 
+	       i.z++, i_plane++) {
+	    
+	    if (update_func != NULL) {
+	      x = div(i_plane,divider);
+	      if (x.rem == 0)
+		continue_work = (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
+	    }
+	  
+	    /* save the scale factor */
+	    j.x = j.y = 0;
+	    j.z = slice;
+	    j.g = i.g;
+	    j.t = i.t;
+	    if (scaling_type == AMITK_SCALING_TYPE_2D) 
+	      *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, j) = calibration_factor*matrix_slice->scale_factor;
+	    else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
+	      *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling_factor, j) = calibration_factor*matrix_slice->scale_factor;
+	    
+	    switch (format) {
+	    case AMITK_FORMAT_SSHORT:
+	      /* copy the data into the volume */
+	      /* note, we compensate here for the fact that we define 
+		 our origin as the bottom left, not top left like the CTI file */
+	      for (i.y = 0; i.y < dim.y; i.y++) 
+		for (i.x = 0; i.x < dim.x; i.x++)
+		  AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
+		    *(((amitk_format_SSHORT_t *) matrix_slice->data_ptr) + 
+		      (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		     +dim.x*(dim.y-i.y-1)
+		       +i.x));
+	      break;
+	    case AMITK_FORMAT_FLOAT:
+	      /* copy the data into the volume */
+	      /* note, we compensate here for the fact that we define 
+		 our origin as the bottom left, not top left like the CTI file */
+	      for (i.y = 0; i.y < dim.y; i.y++) 
+		for (i.x = 0; i.x < dim.x; i.x++)
+		  AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
+		    *(((amitk_format_FLOAT_t *) matrix_slice->data_ptr) + 
+		      (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		     +dim.x*(dim.y-i.y-1)
+		       +i.x));
+	      break;
+	    default:
+	      g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
+	      goto error;
+	      break; 
+	    } /* format */
+	  } /* i.z */
+	  free_matrix_data(matrix_slice);
+	} /* matrix_slice != NULL */
+      } /* slice */
+    } /* i.g */
 #ifdef AMIDE_DEBUG
     g_print("\tduration:\t%5.3f\n",ds->frame_duration[i.t]);
 #endif
-  }
+  } /* i.t */
+
+  if (num_corrupted_planes > 0) 
+    g_warning(_("Libecat returned %d blank planes... corrupted data file?  Use data with caution."), num_corrupted_planes);
 
   if (!continue_work) goto error;
 

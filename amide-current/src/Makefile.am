@@ -26,9 +26,10 @@ AM_CFLAGS = \
 	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
 	$(XMEDCON_CFLAGS)
-##	-I/usr/local/xmedcon/include
-##	-DGNOME_DISABLE_DEPRECATED \
-##	-DGTK_DISABLE_DEPRECATED \
+
+#	-I/usr/local/xmedcon/include 
+#	-DGNOME_DISABLE_DEPRECATED \
+#	-DGTK_DISABLE_DEPRECATED 
 
 ## make sure that c++ gets the same includes
 AM_CXXFLAGS = $(AM_CFLAGS)

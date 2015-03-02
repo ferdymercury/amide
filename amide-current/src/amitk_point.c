@@ -1,7 +1,7 @@
 /* amitk_point.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -573,10 +573,7 @@ inline AmitkPoint point_cmult(const amide_real_t cmult,const AmitkPoint point1) 
 /* returns cross product of point1 and point2 for realpoint structures */
 inline AmitkPoint point_cross_product(const AmitkPoint point1, const AmitkPoint point2) {
   AmitkPoint temp;
-  
-  temp.x = point1.y*point2.z-point1.z*point2.y;
-  temp.y = point1.z*point2.x-point1.x*point2.z;
-  temp.z = point1.x*point2.y-point1.y*point2.x;
+  POINT_CROSS_PRODUCT(point1, point2, temp);
   return temp;
 }
 

@@ -1,7 +1,7 @@
 /* rendering.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -190,6 +190,8 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->dim.x = ceil((AMITK_VOLUME_X_CORNER(rendering_volume))/voxel_size);
   new_rendering->dim.y = ceil((AMITK_VOLUME_Y_CORNER(rendering_volume))/voxel_size);
   new_rendering->dim.z = ceil((AMITK_VOLUME_Z_CORNER(rendering_volume))/voxel_size);
+  new_rendering->dim.g = 1;
+  new_rendering->dim.t = 1;
   new_rendering->voxel_size = voxel_size;
 
   /* adjust the thresholding if needed */
@@ -482,8 +484,9 @@ gboolean rendering_load_object(rendering_t * rendering,
       //      intersection_corners[1] = point_cmult(1.0-EPSILON, intersection_corners[1]);
       POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, 0, start);
       POINT_TO_VOXEL(intersection_corners[1], voxel_size, 1, 1, end);
+      end = voxel_sub(end, one_voxel);
     }
-    
+
     g_return_val_if_fail(end.x < rendering->dim.x, FALSE);
     g_return_val_if_fail(end.y < rendering->dim.y, FALSE);
     g_return_val_if_fail(end.z < rendering->dim.z, FALSE);
@@ -1118,7 +1121,6 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start, const a
       render_corner[1].z = view_center.z + max_width/2.0;
     }
   }
-
 
 
   amitk_space_set_offset(AMITK_SPACE(render_volume), render_corner[0]);

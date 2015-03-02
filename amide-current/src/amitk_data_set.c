@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -197,6 +197,7 @@ enum {
   THRESHOLDS_CHANGED,
   WINDOWS_CHANGED,
   COLOR_TABLE_CHANGED,
+  COLOR_TABLE_INDEPENDENT_CHANGED,
   INTERPOLATION_CHANGED,
   SUBJECT_ORIENTATION_CHANGED,
   CONVERSION_CHANGED,
@@ -318,6 +319,14 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, color_table_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__ENUM, G_TYPE_NONE, 1,
+		  AMITK_TYPE_VIEW_MODE);
+  data_set_signals[COLOR_TABLE_INDEPENDENT_CHANGED] =
+    g_signal_new ("color_table_independent_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, color_table_independent_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__ENUM, G_TYPE_NONE, 1,
 		  AMITK_TYPE_VIEW_MODE);
@@ -941,13 +950,13 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   }
   intercept = FALSE;
   if (study_file == NULL) {
-    if (xml_node_exists(nodes, "internal_scaling_intercept_file")) {
-      filename = xml_get_string(nodes, "internal_scaling_intercept_file");
+    if (xml_node_exists(nodes, "internal_scaling_intercepts_file")) {
+      filename = xml_get_string(nodes, "internal_scaling_intercepts_file");
       intercept = TRUE;
     }
   } else {
-    if (xml_node_exists(nodes, "internal_scaling_intercept_location_and_size")) {
-      xml_get_location_and_size(nodes, "internal_scaling_intercept_location_and_size", &location, &size, &error_buf);
+    if (xml_node_exists(nodes, "internal_scaling_intercepts_location_and_size")) {
+      xml_get_location_and_size(nodes, "internal_scaling_intercepts_location_and_size", &location, &size, &error_buf);
       intercept = TRUE;
     }
   }
@@ -1253,6 +1262,7 @@ AmitkDataSet * amitk_data_set_new_with_data(AmitkPreferences * preferences,
   }
 
   data_set->internal_scaling_factor = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
+  amitk_raw_data_DOUBLE_initialize_data(data_set->internal_scaling_factor, 1.0);
   if (data_set->internal_scaling_factor == NULL) {
     amitk_object_unref(data_set);
     g_return_val_if_reached(NULL);
@@ -1943,7 +1953,7 @@ static void data_set_drop_intercept(AmitkDataSet * ds) {
     for (i_voxel.g=0; i_voxel.g < ds->internal_scaling_intercept->dim.g; i_voxel.g++) 
       for (i_voxel.z=0; i_voxel.z < ds->internal_scaling_intercept->dim.z; i_voxel.z++) 
 	/* note, the 2D_SCALING_POINTER macro will work for all SCALING_TYPES */
-	if (!EQUAL_ZERO(*AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i_voxel)))
+	if (*AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i_voxel) != 0.0)
 	  return;
 
   g_object_unref(ds->internal_scaling_intercept);
@@ -1987,7 +1997,7 @@ static void data_set_reduce_scaling_dimension(AmitkDataSet * ds) {
     for (i_voxel.g=0; i_voxel.g < ds->internal_scaling_factor->dim.g; i_voxel.g++) 
       for (i_voxel.z=0; i_voxel.z < ds->internal_scaling_factor->dim.z; i_voxel.z++) 
 	/* note, the 2D_SCALING_POINTER macro will work for all SCALING_TYPES */
-	if (!REAL_EQUAL(initial_scale_factor, *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i_voxel)))
+	if (initial_scale_factor != *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i_voxel))
 	  return;
 
   if (AMITK_DATA_SET_SCALING_HAS_INTERCEPT(ds)) {
@@ -1996,7 +2006,7 @@ static void data_set_reduce_scaling_dimension(AmitkDataSet * ds) {
       for (i_voxel.g=0; i_voxel.g < ds->internal_scaling_intercept->dim.g; i_voxel.g++) 
 	for (i_voxel.z=0; i_voxel.z < ds->internal_scaling_intercept->dim.z; i_voxel.z++) 
 	  /* note, the 2D_SCALING_POINTER macro will work for all SCALING_TYPES */
-	  if (!REAL_EQUAL(initial_scale_intercept, *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i_voxel)))
+	  if (initial_scale_intercept != *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i_voxel))
 	    return;
 
   }
@@ -2242,6 +2252,8 @@ void amitk_data_set_set_color_table_independent(AmitkDataSet * ds, const AmitkVi
 
   if (independent != ds->color_table_independent[view_mode]) {
     ds->color_table_independent[view_mode] = independent;
+
+    g_signal_emit(G_OBJECT (ds), data_set_signals[COLOR_TABLE_INDEPENDENT_CHANGED], 0, view_mode);
 
     if (ds->color_table[view_mode] != ds->color_table[AMITK_VIEW_MODE_SINGLE])
       g_signal_emit(G_OBJECT (ds), data_set_signals[COLOR_TABLE_CHANGED], 0, view_mode);
@@ -2761,7 +2773,7 @@ void amitk_data_set_calc_max_min(AmitkDataSet * ds,
 
 #ifdef AMIDE_DEBUG
   if (AMITK_DATA_SET_DIM_Z(ds) > 1) /* don't print for slices */
-    g_print("\tglobal max %5.3f global min %5.3f\n",ds->global_max,ds->global_min);
+    g_print("\tglobal max %5.3g global min %5.3g\n",ds->global_max,ds->global_min);
 #endif
    
   return;
@@ -3459,6 +3471,9 @@ amide_data_t amitk_data_set_get_internal_scaling_factor(const AmitkDataSet * ds,
 amide_data_t amitk_data_set_get_internal_scaling_intercept(const AmitkDataSet * ds, const AmitkVoxel i) {
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds), EMPTY);
+  
+  if (ds->internal_scaling_intercept == NULL) return 0.0;
+
   g_return_val_if_fail(ds->internal_scaling_intercept->format == AMITK_FORMAT_DOUBLE, EMPTY);
 
   switch(ds->scaling_type) {

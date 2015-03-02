@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -92,7 +92,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_f
     
 #ifdef AMIDE_DEBUG
     if (dim.z > 1) /* don't print for slices */
-      g_print("\tframe %d max %5.3f frame min %5.3f\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
+      g_print("\tframe %d max %5.3g frame min %5.3g\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
 #endif
   }
 

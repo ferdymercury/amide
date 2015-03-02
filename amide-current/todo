@@ -3,6 +3,10 @@ misc list of things todo:
 for next release?
 -----------------
 
+* dcmtk shouldn't be required for mac os x install - figure out how to embed
+  dicom.dic
+* view_thickness isn't read in from .xif file - gets overridden at some point
+
 * seeing bugs loading old .xif files on Linux/PPC.  Looks like compiler bugs, 
 	seen with gcc 4.0.1-4.fc4
 

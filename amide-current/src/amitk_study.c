@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -311,7 +311,7 @@ static void study_finalize (GObject * object) {
   }
 
   if (study->line_profile != NULL) {
-    g_free(study->line_profile);
+    g_object_unref(study->line_profile);
     study->line_profile = NULL;
   }
 

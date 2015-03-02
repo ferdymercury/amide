@@ -1,7 +1,7 @@
 /* ui_study_cb.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -650,7 +650,7 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
 	  amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
 				     AMITK_CANVAS_TARGET_ACTION_SHOW,*position, thickness);
 
-  if (!REAL_EQUAL(AMITK_STUDY_VIEW_THICKNESS(ui_study->study), thickness))
+  if (!REAL_EQUAL(AMITK_STUDY_VIEW_THICKNESS(ui_study->study), thickness)) 
     ui_study_update_thickness(ui_study, thickness);
 
   return;

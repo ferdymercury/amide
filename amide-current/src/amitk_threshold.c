@@ -1,7 +1,7 @@
 /* amitk_threshold.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -637,6 +637,7 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
 
   g_signal_connect(G_OBJECT(ds), "scale_factor_changed", G_CALLBACK(ds_scale_factor_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "color_table_changed", G_CALLBACK(ds_color_table_changed_cb), threshold);
+  g_signal_connect(G_OBJECT(ds), "color_table_independent_changed", G_CALLBACK(ds_color_table_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "thresholding_changed", G_CALLBACK(ds_thresholding_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "threshold_style_changed", G_CALLBACK(ds_threshold_style_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "thresholds_changed", G_CALLBACK(ds_thresholds_changed_cb), threshold);
@@ -1532,7 +1533,7 @@ static void ds_color_table_changed_cb(AmitkDataSet * ds, AmitkViewMode view_mode
 
   threshold_update_color_table(threshold, view_mode);
   threshold_update_color_scales(threshold);
-  
+
   return;
 }
 

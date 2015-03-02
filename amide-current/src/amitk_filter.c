@@ -1,7 +1,7 @@
 /* amitk_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -27,7 +27,9 @@
 #include <math.h>
 #include "amitk_filter.h"
 #include "amitk_type_builtins.h"
+#ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_complex_math.h>
+#endif
 
 inline amide_real_t gaussian(amide_real_t x, amide_real_t sigma) {
   

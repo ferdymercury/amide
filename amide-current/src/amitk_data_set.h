@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -273,6 +273,8 @@ struct _AmitkDataSetClass
   void (* windows_changed)              (AmitkDataSet * ds);
   void (* color_table_changed)          (AmitkDataSet * ds,
 					 AmitkViewMode * view_mode);
+  void (* color_table_independent_changed)(AmitkDataSet * ds,
+					   AmitkViewMode * view_mode);
   void (* interpolation_changed)        (AmitkDataSet * ds);
   void (* subject_orientation_changed)  (AmitkDataSet * ds);
   void (* conversion_changed)           (AmitkDataSet * ds);

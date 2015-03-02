@@ -1,7 +1,7 @@
 /* amitk_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1051,7 +1051,7 @@ GList * amitk_objects_unref(GList * objects) {
   g_return_val_if_fail(AMITK_IS_OBJECT(objects->data), NULL);
 
   object = objects->data;
-  g_list_remove(objects, object);
+  objects = g_list_remove(objects, object);
   amitk_object_unref(object);
 
   return NULL;

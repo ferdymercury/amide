@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -46,9 +46,9 @@
 static gchar * blank_name = N_("new");
 
 static gchar * help_info_legends[NUM_HELP_INFO_LINES] = {
-  N_("1"), N_("shift-1"),
-  N_("2"), N_("shift-2"),
-  N_("3"), N_("shift-3"), N_("ctrl-3"),
+  N_("m1"), N_("shift-m1"),
+  N_("m2"), N_("shift-m2"),
+  N_("m3"), N_("shift-m3"), N_("ctrl-m3"),
   "variable_place_holder"
 };
 
@@ -60,7 +60,7 @@ enum {
 
 static gchar * help_info_variable_legend[NUM_HELP_INFO_VARIABLE_LINES] = {
   N_("ctrl-x"),
-  N_("shift-ctrl-3")
+  N_("shift-ctrl-m3")
 };
 
 static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {

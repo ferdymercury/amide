@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -240,6 +240,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gchar * msg;
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
+  gint num_corrupted_planes = 0;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -489,18 +490,18 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   case MDC_PRONE_FEETFIRST_TRANSAXIAL:
     amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
     break;
-    //  case MDC_DECUBITUS_RIGHT_HEADFIRST_TRANSAXIAL:
-    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
-    //    break;
-    //  case MDC_DECUBITUS_RIGHT_FEETFIRST_TRANSAXIAL:
-    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
-    //    break;
-    //  case MDC_DECUBITUS_LEFT_HEADFIRST_TRANSAXIAL:
-    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
-    //    break;
-    //  case MDC_DECUBITUS_LEFT_FEETFIRST_TRANSAXIAL:
-    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
-    //    break;
+  case MDC_DECUBITUS_RIGHT_HEADFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+    break;
+  case MDC_DECUBITUS_RIGHT_FEETFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+    break;
+  case MDC_DECUBITUS_LEFT_HEADFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+    break;
+  case MDC_DECUBITUS_LEFT_FEETFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    break;
   default:
     amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
     break;
@@ -581,151 +582,158 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept,i) =
 	    libmdc_fi.image[image_num].intercept;
 	}
-	
 
-	switch(ds->raw_data->format) {
-	case AMITK_FORMAT_SBYTE:
-	  {
-	    amitk_format_SBYTE_t * libmdc_buffer;
-	    libmdc_buffer = (amitk_format_SBYTE_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_SBYTE_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_UBYTE:
-	  {
-	    amitk_format_UBYTE_t * libmdc_buffer;
-	    libmdc_buffer = (amitk_format_UBYTE_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++) 
-		AMITK_RAW_DATA_UBYTE_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_SSHORT:
-	  {
-	    amitk_format_SSHORT_t * libmdc_buffer;
-	    if (MdcDoSwap()) {
-	      k=0;
+	/* sanity check */
+	if (libmdc_fi.image[image_num].buf == NULL) {
+	  num_corrupted_planes++;
+	} else {
+	  switch(ds->raw_data->format) {
+	  case AMITK_FORMAT_SBYTE:
+	    {
+	      amitk_format_SBYTE_t * libmdc_buffer;
+	      libmdc_buffer = (amitk_format_SBYTE_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
-		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_SBYTE_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
 	    }
-	    libmdc_buffer = (amitk_format_SSHORT_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_USHORT:
-	  {
-	    amitk_format_USHORT_t * libmdc_buffer;
-	    if (MdcDoSwap()) {
-	      k=0;
+	    break;
+	  case AMITK_FORMAT_UBYTE:
+	    {
+	      amitk_format_UBYTE_t * libmdc_buffer;
+	      libmdc_buffer = (amitk_format_UBYTE_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
-		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++) 
+		  AMITK_RAW_DATA_UBYTE_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
 	    }
-	    libmdc_buffer = (amitk_format_USHORT_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_USHORT_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_SINT:
-	  {
-	    amitk_format_SINT_t * libmdc_buffer;
-	    if (MdcDoSwap()) {
-	      k=0;
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	    }
-	    libmdc_buffer = (amitk_format_SINT_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_SINT_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_UINT:
-	  {
-	    amitk_format_UINT_t * libmdc_buffer;
-	    if (MdcDoSwap()) {
-	      k=0;
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	    }
-	    libmdc_buffer = (amitk_format_UINT_t *) (libmdc_fi.image[image_num].buf);
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_UINT_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	  }
-	  break;
-	case AMITK_FORMAT_FLOAT: 
-	  {
-	    amitk_format_FLOAT_t * libmdc_buffer;
-	    if (MdcDoSwap()) {
-	      k=0;
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		  MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	    }
-
-	    if (salvage) {
-	      /* convert the image to a 32 bit float to begin with */
-	      if ((libmdc_buffer = (amitk_format_FLOAT_t *) MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
-		g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
-		g_free(libmdc_buffer);
-		goto error;
+	    break;
+	  case AMITK_FORMAT_SSHORT:
+	    {
+	      amitk_format_SSHORT_t * libmdc_buffer;
+	      if (MdcDoSwap()) {
+		k=0;
+		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
+		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
 	      }
-	    } else {
-	      libmdc_buffer = (amitk_format_FLOAT_t *) (libmdc_fi.image[image_num].buf);
+	      libmdc_buffer = (amitk_format_SSHORT_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
 	    }
-	    
-	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
-		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-
-	    /* done with the temporary float buffer */
-	    if (salvage) g_free(libmdc_buffer);
+	    break;
+	  case AMITK_FORMAT_USHORT:
+	    {
+	      amitk_format_USHORT_t * libmdc_buffer;
+	      if (MdcDoSwap()) {
+		k=0;
+		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
+		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
+	      }
+	      libmdc_buffer = (amitk_format_USHORT_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_USHORT_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
+	    }
+	    break;
+	  case AMITK_FORMAT_SINT:
+	    {
+	      amitk_format_SINT_t * libmdc_buffer;
+	      if (MdcDoSwap()) {
+		k=0;
+		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	      }
+	      libmdc_buffer = (amitk_format_SINT_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_SINT_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
+	    }
+	    break;
+	  case AMITK_FORMAT_UINT:
+	    {
+	      amitk_format_UINT_t * libmdc_buffer;
+	      if (MdcDoSwap()) {
+		k=0;
+		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	      }
+	      libmdc_buffer = (amitk_format_UINT_t *) (libmdc_fi.image[image_num].buf);
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_UINT_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
+	    }
+	    break;
+	  case AMITK_FORMAT_FLOAT: 
+	    {
+	      amitk_format_FLOAT_t * libmdc_buffer;
+	      if (MdcDoSwap()) {
+		k=0;
+		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
+		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
+	      }
+	      
+	      if (salvage) {
+		/* convert the image to a 32 bit float to begin with */
+		if ((libmdc_buffer = (amitk_format_FLOAT_t *) MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
+		  g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
+		  g_free(libmdc_buffer);
+		  goto error;
+		}
+	      } else {
+		libmdc_buffer = (amitk_format_FLOAT_t *) (libmdc_fi.image[image_num].buf);
+	      }
+	      
+	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
+		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+		  AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
+		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
+	      
+	      /* done with the temporary float buffer */
+	      if (salvage) g_free(libmdc_buffer);
+	    }
+	    break;
+	  default:
+	    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+	    goto error;
+	    break;
 	  }
-	  break;
-	default:
-	  g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-	  goto error;
-	  break;
-	}
 
-	/* free up the buffer data */
-	MdcFree(libmdc_fi.image[image_num].buf);
+	  /* free up the buffer data */
+	  MdcFree(libmdc_fi.image[image_num].buf);
+	} /* .buf != NULL */
       } /* i.z */
     }
       
 #ifdef AMIDE_DEBUG
     g_print("\tduration %5.3f\n", amitk_data_set_get_frame_duration(ds, i.t));
 #endif
-  }    
+  } /* i.t */    
+
+  if (num_corrupted_planes > 0) 
+    g_warning(_("(X)MedCon returned %d blank planes... corrupted data file?  Use data with caution."), num_corrupted_planes);
 
   /* setup remaining parameters */
   amitk_data_set_set_injected_dose(ds, libmdc_fi.injected_dose); /* should be in MBq */

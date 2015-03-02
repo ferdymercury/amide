@@ -1,7 +1,7 @@
 /* xml.c - convience functions for working with xml files 
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2005 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -38,14 +38,14 @@ static char * false_string = "false";
 /* returns FALSE if we'll have problems reading this file on a 32bit system */
 gboolean xml_check_file_32bit_okay(guint64 value) {
 
-#if !defined (G_PLATFORM_WIN32)
-  /* for some reason, 64bit calculations on windows returns garbage */
+  //#if !defined (G_PLATFORM_WIN32)
+  //  /* for some reason, 64bit calculations on windows returns garbage */
   if (sizeof(long) < sizeof(guint64)) {
-    guint64 check = value-G_MAXLONG;
+    guint64 check = ((guint64) value) >> ((guint64) 31); /* long is signed, so 31 bits */
     if (check > 0) 
       return FALSE;
   }
-#endif
+  //#endif
 
   return TRUE;
 }
