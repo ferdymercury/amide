@@ -368,12 +368,7 @@ static void p_response_cb (GtkDialog * dialog, gint response_id, gpointer data) 
 
   switch(response_id) {
   case GTK_RESPONSE_HELP:
-#ifndef AMIDE_WIN32_HACKS
-    if (!gnome_help_display("amide.xml", "rendering-dialog", NULL)) 
-      g_warning("Failed to load help");
-#else
-    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
-#endif
+    amide_call_help("rendering-dialog");
     break;
 
   case GTK_RESPONSE_CLOSE:
@@ -394,12 +389,7 @@ static void tf_response_cb (GtkDialog * dialog, gint response_id, gpointer data)
 
   switch(response_id) {
   case GTK_RESPONSE_HELP:
-#ifndef AMIDE_WIN32_HACKS
-    if (!gnome_help_display("amide.xml", "transfer-function-dialog", NULL)) 
-      g_warning("Failed to load help");
-#else
-    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
-#endif
+    amide_call_help("transfer-function-dialog");
     break;
 
   case GTK_RESPONSE_CLOSE:

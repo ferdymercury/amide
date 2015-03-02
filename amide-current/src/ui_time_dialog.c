@@ -26,6 +26,7 @@
 #include "amide_config.h"
 #include <gtk/gtk.h>
 #include "ui_time_dialog.h"
+#include "ui_common.h"
 
 
 
@@ -39,6 +40,14 @@ typedef enum {
   COLUMN_DATA_SET,
   NUM_COLUMNS
 } column_type_t;
+
+static gboolean column_use_my_renderer[NUM_COLUMNS] = {
+  TRUE,
+  TRUE,
+  FALSE,
+  FALSE,
+  FALSE
+};
 
 enum {
   ENTRY_START,
@@ -278,7 +287,7 @@ static void update_model(GtkListStore * store, GtkTreeSelection *selection,
     gtk_list_store_append (store, &iter);  /* Acquire an iterator */
     gtk_list_store_set (store, &iter,
 			COLUMN_START, min,
-			COLUMN_END, min+min_ds->frame_duration[frames[min_ds_num]],
+			COLUMN_END, min+amitk_data_set_get_frame_duration(min_ds,frames[min_ds_num]),
 			COLUMN_FRAME,frames[min_ds_num],
 			COLUMN_NAME,AMITK_OBJECT_NAME(min_ds), 
 			COLUMN_DATA_SET, min_ds,-1);
@@ -552,6 +561,10 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes(column_names[i_column], renderer,
 						      "text", i_column, NULL);
+    if (column_use_my_renderer[i_column]) 
+      gtk_tree_view_column_set_cell_data_func(column, renderer,
+					      amitk_real_cell_data_func,
+					      GINT_TO_POINTER(i_column),NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (td->tree_view), column);
   }
 

@@ -235,7 +235,7 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
   POINT_TO_VOXEL(intersection_corners[1], canvas_voxel_size, 0, end);
   dim = voxel_add(voxel_sub(end, start), one_voxel);
 
-  intersection = amitk_data_set_new();
+  intersection = amitk_data_set_new(NULL, -1);
   intersection->raw_data = amitk_raw_data_UBYTE_2D_init(0, dim.y, dim.x);
 
   /* get the corners of the view slice in view coordinate space */

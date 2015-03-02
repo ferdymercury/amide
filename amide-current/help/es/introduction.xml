@@ -1,0 +1,85 @@
+
+
+<para> AMIDE (Amide's a Medical Image Data Examiner). Este programa es
+una herramienta para ver y analizar datos multidimensionales m&eacute;dicos ,
+y ha sido dise&ntilde;ado en el terreno de la imagen multimodalidad.
+</para>
+  
+
+<sect2><title>Licensing</title>
+
+  <para>AMIDE se ha liberado bajo los t&eacute;rminos de <ulink type="http"
+  url="http://www.gnu.org/copyleft/gpl.html">GNU General Public
+  Library (GPL).</ulink></para>
+
+  <para>El texto de la licencia es el siguiente:
+  </para>
+
+  <orderedlist>
+   <listitem>
+    <para>
+    Usted es libre de usar este programa para cualquier prop&oacute;sito. Por
+    favor note que, aunque la GPL no hace restricci&oacute;nes sobre el uso
+    del programa, su gobierno probablablemte s&iacute;. Por ejemplo, en
+    Estados Unidos, AMIDE no est&aacute; aprovado por la FDA y no puede darse
+    uso cl&iacute;nico all&iacute; .
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Usted es libre de estudiar el c&oacute;digo fuente y adaptarlo a sus necesidades.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Usted es libre de redistribuir el programa.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Usted es libre de sacar versiones modificadas del programa,
+     siempre que tambi&eacute;n redistribuya el c&oacute;digo fuente del programa
+     modificado, y etiquete apropiadamente la versi&oacute;n como modificada.
+    </para>
+   </listitem>
+  </orderedlist> 
+
+
+
+
+</sect2>
+
+<sect2><title>Disponibilidad del C&oacute;digo Fuente</title>
+
+  <para> El C&oacute;digo Fuente de AMIDE est&aacute; disponble en <ulink
+    type="http" url="http://amide.sourceforge.net">el sitio web de
+    AMIDE</ulink>.
+  </para>
+
+
+</sect2>
+
+
+<sect2><title>Platformas soportadas</title>
+
+  <para> Adem&aacute;s del C&oacute;digo Fuente, las versiones binarias de AMIDE
+    junto con instruciones de instalacion se pueden encontar <ulink
+    type="http" url="http://amide.sourceforge.net">en el sitio web de
+    AMIDE web</ulink>. Los sistemas soportados actualmente son
+    Linux/i386, Microsoft Windows, y Macintosh OS X (logrado mediante
+    el uso del paquete complementario <ulink type="http"
+    url="http://fink.sourceforge.net">fink</ulink>).  </para>
+
+</sect2>
+
+  
+<sect2><title>Informaci&oacute;n de Contacto</title>
+
+    <para> Pueden dirigir sus preguntas a lista de usuarios AMIDE
+    <email> amide-users@lists.sourceforge.net </email>. La informacion
+    para unirse a la lista y/o ver mensajes archivados se puede
+    encontrar <ulink type="http"
+    url="http://sourceforge.net/mail/?group_id=9464">aqu&iacute;</ulink>.
+    </para> 
+
+</sect2>

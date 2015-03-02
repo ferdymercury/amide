@@ -82,8 +82,8 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_rp = zero_point;
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]"),
-		     descriptor, return_rp.x, return_rp.y, return_rp.z);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]"),
+				  descriptor, return_rp.x, return_rp.y, return_rp.z);
   }
 
   return return_rp;
@@ -152,14 +152,14 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     voxel = zero_voxel;
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting [%d %d %d %d]"),
-		     descriptor, voxel.x, voxel.y,voxel.z,voxel.z);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting [%d %d %d %d]"),
+				  descriptor, voxel.x, voxel.y,voxel.z,voxel.z);
   }
 
   if (error < 4) {
     voxel.t = 0;
-    amitk_append_str(perror_buf,_("Couldn't read frame value for %s, substituting %d"),
-		     descriptor, voxel.t);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read frame value for %s, substituting %d"),
+				  descriptor, voxel.t);
   }
 
   return voxel;

@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include "amide.h"
 #include "xml.h"
 #include <errno.h>
 
@@ -108,8 +109,8 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   
   if ((temp_str == NULL) || (error == EOF)) {
     return_time = 0.0;
-    amitk_append_str(perror_buf,_("Couldn't read time value for %s, substituting %5.3f"),
-		     descriptor, return_time);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read time value for %s, substituting %5.3f"),
+				  descriptor, return_time);
   }
 
   return return_time;
@@ -130,7 +131,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   if (temp_str != NULL) {
 
     if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
-      amitk_append_str(perror_buf, _("Couldn't allocate space for time data"));
+      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate space for time data"));
       return return_times;
     }
     
@@ -158,9 +159,9 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   }
 
   if (temp_str == NULL) {
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting zero"),descriptor);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting zero"),descriptor);
     if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
-      amitk_append_str(perror_buf, _("Couldn't allocate space for time data"));
+      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate space for time data"));
       return return_times;
     }
     return_times[0] = 0.0;
@@ -197,12 +198,21 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_data = 0.0;
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting %5.3f"),
-		     descriptor, return_data);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting %5.3f"),
+				  descriptor, return_data);
   }
 
   return return_data;
 }
+
+amide_data_t xml_get_data_with_default(xmlNodePtr nodes, const gchar * descriptor, amide_data_t default_data) {
+
+  if (xml_node_exists(nodes, descriptor))
+    return xml_get_data(nodes, descriptor, NULL);
+  else
+    return default_data;
+}
+
 
 amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
 
@@ -240,7 +250,7 @@ gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **per
   temp_str = xml_get_string(nodes, descriptor);
 
   if (temp_str == NULL) {
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting FALSE"),descriptor);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting FALSE"),descriptor);
     return FALSE;
   }
   if (g_ascii_strncasecmp(temp_str, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
@@ -250,6 +260,14 @@ gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **per
   g_free(temp_str);
 
   return value;
+}
+
+gboolean xml_get_boolean_with_default(xmlNodePtr nodes, const gchar * descriptor, gboolean default_boolean) {
+
+  if (xml_node_exists(nodes, descriptor))
+    return xml_get_boolean(nodes, descriptor, NULL);
+  else
+    return default_boolean;
 }
 
 gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
@@ -268,11 +286,22 @@ gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf)
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_int = 0;
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting %d"),descriptor, return_int);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting %d"),
+				  descriptor, return_int);
   }
 
   return return_int;
 }
+
+
+gint xml_get_int_with_default(xmlNodePtr nodes, const gchar * descriptor, gint default_int) {
+
+  if (xml_node_exists(nodes, descriptor))
+    return xml_get_int(nodes, descriptor, NULL);
+  else
+    return default_int;
+}
+
 
 void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor, 
 			       guint64 * location, guint64 * size, gchar **perror_buf) {
@@ -290,7 +319,8 @@ void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor,
   if ((temp_str == NULL) || (error == EOF)) {
     *location = 0x0;
     *size = 0x0;
-    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting 0x%llx 0x%llx"),descriptor, *location, *size);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting 0x%llx 0x%llx"),
+				  descriptor, *location, *size);
   }
 
   return;
@@ -423,7 +453,7 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
   
   if (study_file == NULL) { /* directory format */
     if ((doc = xmlParseFile(xml_filename)) == NULL) {
-      amitk_append_str(perror_buf,_("Couldn't Parse AMIDE xml file %s"),xml_filename);
+      amitk_append_str_with_newline(perror_buf,_("Couldn't Parse AMIDE xml file %s"),xml_filename);
       return NULL;
     }
 
@@ -434,7 +464,7 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
 #ifndef AMIDE_WIN32_HACKS
     if (sizeof(long) < sizeof(guint64))
       if ((location>>32) > 0) {
-	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
+	amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
 	return NULL;
       }
 #endif
@@ -444,7 +474,7 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
 #ifndef AMIDE_WIN32_HACKS
     if (sizeof(size_t) < sizeof(guint64))
       if ((size>>32) > 0) {
-	amitk_append_str(perror_buf,_("File to large to read on 32bit platform.")); 
+	amitk_append_str_with_newline(perror_buf,_("File to large to read on 32bit platform.")); 
 	return NULL;
       }
 #endif
@@ -455,13 +485,13 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
     g_return_val_if_fail(xml_buffer != NULL, NULL);
 
     if (fseek(study_file, location_long,SEEK_SET) != 0) {
-      amitk_append_str(perror_buf, _("Could not seek to location %lx in file."), location_long);
+      amitk_append_str_with_newline(perror_buf, _("Could not seek to location %lx in file."), location_long);
       return NULL;
     }
 
     bytes_read = fread(xml_buffer, sizeof(gchar), size_size, study_file);
     if (bytes_read != size_size) {
-      amitk_append_str(perror_buf, _("Only read %x bytes from file, expected %x"), bytes_read, size_size);
+      amitk_append_str_with_newline(perror_buf, _("Only read %x bytes from file, expected %x"), bytes_read, size_size);
       return NULL;
     }
 

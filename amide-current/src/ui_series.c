@@ -52,7 +52,7 @@ typedef struct ui_series_t {
   gint max_slice_cache_size;
   GList * objects;
   AmitkDataSet * active_ds;
-  GnomeCanvas * canvas;
+  GtkWidget * canvas;
   GnomeCanvasItem ** images;
   GnomeCanvasItem ** captions;
   GList ** items;
@@ -178,7 +178,7 @@ static void threshold_cb(GtkWidget * widget, gpointer data) {
     return;
   }
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_series->canvas);
 
   ui_series->thresholds_dialog = 
     amitk_thresholds_dialog_new(ui_series->objects, GTK_WINDOW(ui_series->app));
@@ -186,7 +186,7 @@ static void threshold_cb(GtkWidget * widget, gpointer data) {
 		   G_CALLBACK(thresholds_delete_event), ui_series);
   gtk_widget_show(ui_series->thresholds_dialog);
 
-  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+  ui_common_remove_wait_cursor(ui_series->canvas);
 
   return;
 }
@@ -505,7 +505,7 @@ static gboolean update_immediate(gpointer data) {
   rgba_t outline_color;
 
   ui_series->in_generation=TRUE;
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_series->canvas);
 
   temp_string = g_strdup_printf(_("Slicing for series"));
   amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), temp_string);
@@ -620,12 +620,13 @@ static gboolean update_immediate(gpointer data) {
 				    ui_series->fuse_type);
     
       if (ui_series->images[i-start_i] == NULL) 
-	ui_series->images[i-start_i] = gnome_canvas_item_new(gnome_canvas_root(ui_series->canvas),
-							     gnome_canvas_pixbuf_get_type(),
-							     "pixbuf", pixbuf,
-							     "x", x+UI_SERIES_L_MARGIN,
-							     "y", y+UI_SERIES_TOP_MARGIN,
-							     NULL);
+	ui_series->images[i-start_i] = 
+	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_series->canvas)),
+				gnome_canvas_pixbuf_get_type(),
+				"pixbuf", pixbuf,
+				"x", x+UI_SERIES_L_MARGIN,
+				"y", y+UI_SERIES_TOP_MARGIN,
+				NULL);
       else
 	gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
       g_object_unref(pixbuf);
@@ -648,13 +649,14 @@ static gboolean update_immediate(gpointer data) {
 	else
 	  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
 
-	item = amitk_canvas_object_draw(ui_series->canvas, view_volume, objects->data, NULL,
+	item = amitk_canvas_object_draw(GNOME_CANVAS(ui_series->canvas), 
+					view_volume, objects->data, NULL,
 					ui_series->pixel_dim,
 					ui_series->pixbuf_width, 
 					ui_series->pixbuf_height,
 					x+UI_SERIES_L_MARGIN, y+UI_SERIES_TOP_MARGIN,
-					outline_color, ui_series->roi_width,
-					ui_series->line_style);
+					outline_color, 
+					ui_series->roi_width,ui_series->line_style);
 	if (item != NULL)
 	  ui_series->items[i-start_i] = g_list_append(ui_series->items[i-start_i], item);
       }
@@ -669,7 +671,7 @@ static gboolean update_immediate(gpointer data) {
       temp_string = g_strdup_printf("%2.1f-%2.1f s", temp_time, temp_time+temp_duration);
     if (ui_series->captions[i-start_i] == NULL) 
       ui_series->captions[i-start_i] =
-	gnome_canvas_item_new(gnome_canvas_root(ui_series->canvas),
+	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_series->canvas)),
 			      gnome_canvas_text_get_type(),
 			      "justification", GTK_JUSTIFY_LEFT,
 			      "anchor", GTK_ANCHOR_NORTH_WEST,
@@ -695,20 +697,20 @@ static gboolean update_immediate(gpointer data) {
   height =ui_series->rows   *image_height;
 
   /* reset the min size of the widget */
-  gnome_canvas_set_scroll_region(ui_series->canvas, 0.0, 0.0, 
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_series->canvas), 0.0, 0.0, 
 				 (double) width, (double) height);
 
   requisition.width = width;
   requisition.height = height;
-  gtk_widget_size_request(GTK_WIDGET(ui_series->canvas), &requisition);
-  gtk_widget_set_size_request(GTK_WIDGET(ui_series->canvas), width, height);
+  gtk_widget_size_request(ui_series->canvas, &requisition);
+  gtk_widget_set_size_request(ui_series->canvas, width, height);
   /* the requisition thing should work.... I'll use this for now for now... */
 
 
  exit_update:
 
   amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), 2.0); /* hide progress dialog */
-  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
+  ui_common_remove_wait_cursor(ui_series->canvas);
 
   ui_series->next_update = UPDATE_NONE;
   if (ui_series->idle_handler_id != 0) {
@@ -725,7 +727,7 @@ static gboolean update_immediate(gpointer data) {
 /* function that sets up the series dialog */
 void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 		      AmitkView view, AmitkVolume * canvas_view, 
-		      gint roi_width, GdkLineStyle line_style, series_t series_type) {
+		      series_t series_type) {
  
   ui_series_t * ui_series;
   GnomeApp * app;
@@ -749,10 +751,10 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 
   ui_series = ui_series_init(app);
   ui_series->type = series_type;
-  ui_series->line_style = line_style;
-  ui_series->roi_width = roi_width;
+  ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
+  ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
-  ui_series->objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
+  ui_series->objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_SELECTION_SELECTED_0, TRUE);
   if (ui_series->objects == NULL) {
     g_warning(_("Need selected objects to create a series"));
     ui_series_unref(ui_series);
@@ -971,6 +973,8 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
     if (AMITK_IS_DATA_SET(temp_objects->data)) {
       g_signal_connect(G_OBJECT(temp_objects->data), "thresholding_changed",
 		       G_CALLBACK(changed_cb), ui_series);
+      g_signal_connect(G_OBJECT(temp_objects->data), "thresholds_changed",
+		       G_CALLBACK(changed_cb), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "color_table_changed",
 		       G_CALLBACK(changed_cb), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "invalidate_slice_cache",
@@ -992,14 +996,14 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
   /* setup the canvas */
-#ifdef AMIDE_LIBGNOMECANVAS_OLD
-  ui_series->canvas = GNOME_CANVAS(gnome_canvas_new());
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  ui_series->canvas = gnome_canvas_new_aa();
 #else
-  ui_series->canvas = GNOME_CANVAS(gnome_canvas_new_aa());
+  ui_series->canvas = gnome_canvas_new();
 #endif
   update_immediate(ui_series); /* fill in the canvas */
   gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(ui_series->canvas), 0,1,1,2,
+		   ui_series->canvas, 0,1,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);

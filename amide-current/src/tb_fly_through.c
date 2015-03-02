@@ -608,7 +608,6 @@ static tb_fly_through_t * tb_fly_through_init(void) {
 
 void tb_fly_through(AmitkStudy * study,
 		    AmitkView view, 
-		    AmitkLayout layout,
 		    GtkWindow * parent) {
  
   tb_fly_through_t * tb_fly_through;
@@ -634,12 +633,12 @@ void tb_fly_through(AmitkStudy * study,
 
   /* sanity checks */
   g_return_if_fail(AMITK_IS_STUDY(study));
-  objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
+  objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_SELECTION_SELECTED_0, TRUE);
   if (amitk_data_sets_count(objects, FALSE) == 0) return;
 
   tb_fly_through = tb_fly_through_init();
   tb_fly_through->study = AMITK_STUDY(amitk_object_copy(AMITK_OBJECT(study)));
-  tb_fly_through->space = amitk_space_get_view_space(view, layout);
+  tb_fly_through->space = amitk_space_get_view_space(view, AMITK_STUDY_CANVAS_LAYOUT(study));
 
   tb_fly_through->dialog = 
     gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,
@@ -723,10 +722,8 @@ void tb_fly_through(AmitkStudy * study,
 				 _("Fly through movie generation"));
 
   /* setup the canvas */
-  tb_fly_through->canvas = 
-    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, 
-		     AMITK_CANVAS_TYPE_FLY_THROUGH, FALSE, 0);
-  amitk_canvas_set_study(AMITK_CANVAS(tb_fly_through->canvas), tb_fly_through->study);
+  tb_fly_through->canvas = amitk_canvas_new(tb_fly_through->study, view, 
+					    AMITK_VIEW_MODE_SINGLE, AMITK_CANVAS_TYPE_FLY_THROUGH);
   g_signal_connect(G_OBJECT(tb_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), tb_fly_through);
   gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->canvas, 0,2,0,1,

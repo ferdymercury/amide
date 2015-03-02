@@ -30,9 +30,6 @@
 
 #include <sys/stat.h>
 #include <string.h>
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
 #include "ui_common.h"
 #include "ui_render_movie.h"
 #include "amitk_type_builtins.h"
@@ -278,12 +275,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     break;
 
   case GTK_RESPONSE_HELP:
-#ifndef AMIDE_WIN32_HACKS
-    if (!gnome_help_display("amide.xml", "rendering-movie-dialog", NULL)) 
-      g_warning("Failed to load help");
-#else
-    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
-#endif
+    amide_call_help("rendering-movie-dialog");
     break;
 
 

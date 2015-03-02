@@ -10,6 +10,7 @@
 <!ENTITY data_sets      SYSTEM "data_sets.xml">
 <!ENTITY rois           SYSTEM "rois.xml">
 <!ENTITY series         SYSTEM "series.xml">
+<!ENTITY study          SYSTEM "study.xml">
 <!ENTITY rendering      SYSTEM "rendering.xml">
 <!ENTITY tools          SYSTEM "tools.xml">
 <!ENTITY manrevision "0.3">
@@ -29,7 +30,7 @@
 	<firstname>Andy</firstname> <surname>Loening</surname>
 	<affiliation>
 	  <address>
-	    <email>loening@alum.mit.edu</email>
+	    <email>loening at alum dot mit dot edu</email>
 	  </address>
 	</affiliation>
       </author>
@@ -110,6 +111,11 @@
   <sect1 id="rois">
     <title>Using Regions of Interest (ROI's)</title>
     &rois;
+  </sect1>
+
+  <sect1 id="study">
+   <title>The Study</title>
+   &study;
   </sect1>
 
   <sect1 id="series">

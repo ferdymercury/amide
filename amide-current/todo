@@ -3,26 +3,23 @@ misc list of things todo:
 for next release?
 -----------------
 
-* checking that file can be read on 32bit system doesn't
-	currently work on windows... work around is define
-	out at the moment. not the right thing to do.
-	files: xml.c and amitk_raw_data.c
+* in import function, do better check to see if it's a concorde file.
+	add something to libmdc_interface for checking file types?
 
+* add key combination-> set pixel to max threshold/set pixel to min threshold
+                                                                                
+* ability to import and export AIR .air files
+  -probably from rotate axis page
+  -need object list widget: should update automatically when something is removed somewhere else
+
+* add free hand ROI drawing (2D and 3D)
+                                                                                
+* ui_series needs to be updated, to update on study changes (roi_width, line_style, etc.)
 
 * add drag-n-drop capabilities between study windows
 	don't use treeview reorderable stuff, too limited,
 
-* preset thresholds for CT (bone window, fat window, etc.)
-
 * export ROI's to external file? and allow import?
-
-* finish profile tool.  allow doing 2D ROI through all planes.
-   show planar view -> allow switching transverse/coronal/sagittal
-   allow picking point, box, or circle, and moving/resizing on screen
-   also, can request line profile between 2 arbitrary fiducial marks
-
-
-* ability to import and export AIR .air files
 
 * histogram for roi's
   - probably an option on the ROI stat's pop-up
@@ -34,15 +31,15 @@ for next release?
 
 windows todo
 ------------
-* will have to figure out how to get libfame's m4 file working
-* preferences aren't currently saved between amide sessions
+* checking that file can be read on 32bit system doesn't
+	currently work on windows... files: xml.c and amitk_raw_data.c
+	work around is define out at the moment.  Seems to be some
+	problem with mingw32 gcc and long comparisons
+* zdial on rendering doesn't work
 * get popt working, then can have file associations with .xif files
 	-specify icon for .xif files
-* zdial on rendering doesn't work
-* figure out how to lose the black text window 
-* configuration:
-	gsl: need to edit gsl-config program so it doesn't have -lgslcblas
-	xmedcon: need to correct xmedcon-config generation so it doesn't include -glib if not needed
+* preferences aren't currently saved between amide sessions
+* figure out how to set the application icon
 
 
 factor analysis things:
@@ -59,12 +56,13 @@ factor analysis things:
 
 big things:
 -----------
-* should be able to specify units the image is in, and request different output units.
+* should be able to specify units the image/display info is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 	-study would have an output units variable
 	-each data set, can specify it's original units, and (if needed), a scaling factor to output unit
 	-ui_preferences would change default units
 	-need gobject based approach, so widgets can listen for change
+	-> start with mm/cm/m
 * add a data sets list item,
 	-would allow reading in multi-bed data sets
 	-raw_data type could have amitk_space made its parent, so it has its own space...
@@ -74,16 +72,18 @@ big things:
 * multi-step undo/redo, look into how other GTK apps do it
 	-once this is done, drop the enact/cancel bit of shifting data sets and study's
 	  as we can now just undo such a change
- 
+* add image calculator
+	-you pick data set, then subtract/divide/etc. another data set from
+	 picked data set, with slices grabbed via amitk_data_set_get_slice to
+	 be in the coordinate set of the picked data set.
 
 
                        
 small things:
 -------------
+* get rid of amitk_canvas view_changed signal, should just listen to
+	study's version of it.  Also, canvas->center is redundant.
 * should have option to use rigid body registration with scaling
-* need to check that the stderr is being calculated correctly. 
-	it's currently using the unweighted voxel value
-	if changed, need to update rois.xml appropriately
 * sliders don't work currently under Xwin32, stopped working 
 	after 0.7.6 (addition of optional transverse/coronal/etc. buttons).
 * need to switch gtk_idle (deprecated) calls to g_source calls
@@ -92,9 +92,12 @@ small things:
 * fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
         -would mean creating roi canvas object as pixmap, similar to isocontour
+* roi analysis dialog should probably be updated for any change of the roi's
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
-* ui_series, should add popup dialog asking for # columns and rows
+* ui_series, should add popup dialog allowing # columns and rows to
+	be specified (best guess would be default).
+	also, switch between putting time or frame number on display
 * default color table -> doesn't work for data sets loaded from command line
 * fly through's don't output ROI's, fiducial marks.
 * ui_series, should be able to export 
@@ -135,6 +138,15 @@ probably post 1.0 things:
 things dependent on other things: 
 -------------- 
 
+* combine open and import menu items onto same file dialog.
+	There's no reason this can't currently be done on the AMIDE side.  There's a function
+	for detecting if a file/directory is a XIF, and if it's not, we just hand it off to
+	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4?) that allows
+	specifying our own filters for figuring out what goes in the lists... XIF 
+	directories need to go on the "files" side.  And also would need a drop down for 
+	switching from "guess" to "import particular", like in gimp.
+
+
 * antialiased canvases have been disabled again, due to instabilities with ROI resizing
 	starts spewing "*** attempt to put segment in horiz list twice" errors
 	and eventually core dumps.  Either a libart or libgnomecanvas bug.  Uncomment
@@ -144,6 +156,8 @@ things dependent on other things:
 		libart_lgpl-2.3.14-1
 		libgnomecanvas-2.3.6-1
 
+	make sure to check that lines in tb_crop are placed correctly
+
 
 * AMIDE_OSX_HACKS, on OS X we currently
 	1- Disable interaction with ESD (enlightenment sound daemon).
@@ -152,8 +166,9 @@ things dependent on other things:
 
 
 * anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
-        -ui_preferences_dialog, and amitk_object_dialog have commented out code for
-	 implementing this as a user choice, once anti-aliased canvases support line styles
+        -ui_preferences_dialog, and amitk_object_dialog define out the appropriate code 
+	when antialiasing support is cmopiled in.  Add back in once anti-aliased
+	canvases support line styles.
 
 * ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of
 	AMITK_TYPE_OBJECT when setting up gtk_list_store - this is due
@@ -195,13 +210,6 @@ things dependent on other things:
 	(as of 2003.04.30) does not handle multi-threaded program.... so will
 	have to wait for that.
 
-* Problem with guessing Concorde .dat files.  If the data_file entry
-       	in a concorde file is incorrect, (X)MedCon (0.8.12 at this writing) attempts 
-	to guess the name by dropping the .hdr off the header file name.  For
-	some reason, you get a truncated file read error from both AMIDE and
-	xmedcon if a file is loaded in this way.  However, loading in the same
-	file by specifying it on the command line works....
-
 * libmdc currently links against glib1.  When (X)MedCon switches to
 	GTK2/GLib2, remove the line in configure.in that overwrites
 	the XMEDCON_LIBS entry.  Also, XMEDCON_CFLAGS can probably
@@ -211,5 +219,7 @@ things dependent on other things:
 	Can't use Guppi, it's unmaintained and deprecated.  Hopefully the 
 	gnumeric project will come out with a library for drawing charts/etc 
 	at some point in the future.
+
+	
 
 

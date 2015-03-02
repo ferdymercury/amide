@@ -44,7 +44,7 @@ typedef enum {
 /* external functions */
 void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 		      AmitkView view, AmitkVolume * canvas_view, 
-		      gint roi_width, GdkLineStyle line_style, series_t series_type);
+		      series_t series_type);
 
 
 #endif /* UI_SERIES_H */

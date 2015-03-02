@@ -1,4 +1,4 @@
-/* cti_import.h
+/* libecat_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000-2003 Andy Loening
@@ -26,18 +26,19 @@
 
 #ifdef AMIDE_LIBECAT_SUPPORT
 
-#ifndef __CTI_IMPORT_H__
-#define __CTI_IMPORT_H__
+#ifndef __LIBECAT_INTERFACE_H__
+#define __LIBECAT_INTERFACE_H__
 
 /* headers always needed with this guy */
 #include "amitk_data_set.h"
 
 /* external functions */
-AmitkDataSet * cti_import(const gchar * filename,
-			  gboolean (*update_func)(),
-			  gpointer update_data);
+AmitkDataSet * libecat_import(const gchar * filename,
+			      AmitkPreferences * preferences,
+			      gboolean (*update_func)(),
+			      gpointer update_data);
 
-#endif /* __CTI_IMPORT_H__ */
+#endif /* __LIBECAT_INTERFACE_H__ */
 
 #endif /* AMIDE_LIBECAT_SUPPORT */
 

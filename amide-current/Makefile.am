@@ -1,3 +1,7 @@
+ACLOCAL_AMFLAGS = \
+	-I /usr/local/share/aclocal \
+	-I macros
+
 SUBDIRS = \
 	src \
 	doc \

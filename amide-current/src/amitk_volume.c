@@ -249,6 +249,58 @@ AmitkVolume * amitk_volume_new (void) {
 }
 
 
+/* point should be in the base coordinate frame */
+gboolean amitk_volume_point_in_bounds(const AmitkVolume * volume,
+				      const AmitkPoint base_point) {
+
+  AmitkPoint point;
+
+  g_return_val_if_fail(AMITK_IS_VOLUME(volume), FALSE);
+  g_return_val_if_fail(AMITK_VOLUME_VALID(volume), FALSE);
+
+  point = amitk_space_b2s(AMITK_SPACE(volume), base_point);
+
+  if ((point.x < 0.0) || (point.y < 0.0) || (point.z < 0.0) ||
+      (point.x > AMITK_VOLUME_X_CORNER(volume)) ||
+      (point.y > AMITK_VOLUME_Y_CORNER(volume)) ||
+      (point.z > AMITK_VOLUME_Z_CORNER(volume)))
+    return FALSE;
+  else
+    return TRUE;
+}
+
+AmitkPoint amitk_volume_place_in_bounds(const AmitkVolume * volume,
+					const AmitkPoint base_point) {
+
+  AmitkPoint point;
+
+  g_return_val_if_fail(AMITK_IS_VOLUME(volume), zero_point);
+  g_return_val_if_fail(AMITK_VOLUME_VALID(volume), zero_point);
+
+  point = amitk_space_b2s(AMITK_SPACE(volume), base_point);
+
+  if (point.x < 0.0)
+    point.x = 0.0;
+  else if (point.x > AMITK_VOLUME_X_CORNER(volume))
+    point.x = AMITK_VOLUME_X_CORNER(volume);
+
+  if (point.y < 0.0)
+    point.y = 0.0;
+  else if (point.y > AMITK_VOLUME_Y_CORNER(volume))
+    point.y = AMITK_VOLUME_Y_CORNER(volume);
+
+  if (point.z < 0.0)
+    point.z = 0.0;
+  else if (point.z > AMITK_VOLUME_Z_CORNER(volume))
+    point.z = AMITK_VOLUME_Z_CORNER(volume);
+
+  point = amitk_space_s2b(AMITK_SPACE(volume), point);
+
+  return point;
+}
+
+
+
 
 AmitkPoint amitk_volume_get_center(const AmitkVolume * volume) {
 

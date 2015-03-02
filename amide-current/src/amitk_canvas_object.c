@@ -61,10 +61,10 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
   if (item != NULL) {
     /* make sure to reset any affine translations we've done */
-    gnome_canvas_item_i2w_affine(GNOME_CANVAS_ITEM(item),affine);
+    gnome_canvas_item_i2w_affine(item,affine);
     affine[0] = affine[3] = 1.0;
     affine[1] = affine[2] = affine[4] = affine[5] = affine[6] = 0.0;
-    gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(item),affine);
+    gnome_canvas_item_affine_absolute(item,affine);
   }
 
   if (AMITK_IS_FIDUCIAL_MARK(object)) {
@@ -106,8 +106,11 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
       item = gnome_canvas_item_new(gnome_canvas_root(canvas),
 				   gnome_canvas_line_get_type(), "points", points,
 				   "fill_color_rgba", fill_color_rgba,
-				   "width_pixels", FIDUCIAL_MARK_WIDTH_PIXELS, NULL); 
-    //				   "line_style", FIDUCIAL_MARK_LINE_STYLE, NULL);
+				   "width_pixels", FIDUCIAL_MARK_WIDTH_PIXELS, 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+    				   "line_style", FIDUCIAL_MARK_LINE_STYLE, 
+#endif
+				   NULL); 
     else
       gnome_canvas_item_set(item, "points", points,"fill_color_rgba", fill_color_rgba, NULL);
     gnome_canvas_points_unref(points);
@@ -212,13 +215,19 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 	item =  gnome_canvas_item_new(gnome_canvas_root(canvas),
 				      gnome_canvas_line_get_type(), "points", points,
 				      "fill_color_rgba",fill_color_rgba,
-				      "width_pixels", roi_width, NULL);
-	// "line_style", line_style, NULL);
+				      "width_pixels", roi_width, 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+				      "line_style", line_style, 
+#endif
+				      NULL);
       } else {
 	/* and reset the line points */
 	gnome_canvas_item_set(item, "points", points, "fill_color_rgba", fill_color_rgba,
-			      "width_pixels", roi_width, NULL);
-	// "line_style", line_style,  NULL);
+			      "width_pixels", roi_width, 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+			      "line_style", line_style,  
+#endif
+			      NULL);
       }
       gnome_canvas_points_unref(points);
       break;

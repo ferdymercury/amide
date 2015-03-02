@@ -27,11 +27,6 @@
 
 
 #include "amide_config.h"
-
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
-
 #include "amitk_marshal.h"
 #include "amitk_object_dialog.h"
 #include "amitk_study.h"
@@ -59,12 +54,12 @@ static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer d
 static void dialog_response_cb        (GtkDialog * dialog,
 				       gint        response_id,
 				       gpointer    data);
-static void dialog_interpolation_cb   (GtkWidget * widget, gpointer data);
-static void dialog_conversion_cb      (GtkWidget * widget, gpointer data);
-static void dialog_aspect_ratio_cb    (GtkWidget * widget, gpointer data);
-static void dialog_change_name_cb     (GtkWidget * widget, gpointer data);
-static void dialog_change_creation_date_cb(GtkWidget * widget, gpointer data);
-static void dialog_change_scan_date_cb(GtkWidget * widget, gpointer data);
+static void dialog_interpolation_cb          (GtkWidget * widget, gpointer data);
+static void dialog_conversion_cb             (GtkWidget * widget, gpointer data);
+static void dialog_aspect_ratio_cb           (GtkWidget * widget, gpointer data);
+static void dialog_change_name_cb            (GtkWidget * widget, gpointer data);
+static void dialog_change_creation_date_cb   (GtkWidget * widget, gpointer data);
+static void dialog_change_scan_date_cb       (GtkWidget * widget, gpointer data);
 static void dialog_change_center_cb          (GtkWidget * widget, gpointer data);
 static void dialog_change_dim_cb             (GtkWidget * widget, gpointer data);
 static void dialog_change_voxel_size_cb      (GtkWidget * widget, gpointer data);
@@ -80,6 +75,15 @@ static void dialog_change_dose_unit_cb     (GtkWidget * widget, gpointer data);
 static void dialog_change_weight_unit_cb   (GtkWidget * widget, gpointer data);
 static void dialog_change_cylinder_unit_cb (GtkWidget * widget, gpointer data);
 
+static void dialog_change_roi_width_cb           (GtkWidget * widget, gpointer data);
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+static void dialog_change_line_style_cb          (GtkWidget * widget, gpointer data);
+#endif
+static void dialog_change_layout_cb              (GtkWidget * widget, gpointer data);
+static void dialog_change_maintain_size_cb       (GtkWidget * widget, gpointer data);
+static void dialog_change_target_empty_area_cb   (GtkWidget * widget, gpointer data);
+static void dialog_change_threshold_window_cb    (GtkWidget * widget, gpointer data);
+static void dialog_change_window_level_cb        (GtkWidget * widget, gpointer data);
 
 static GtkDialogClass *object_dialog_parent_class;
 
@@ -189,6 +193,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * space_edit;
   GtkWidget * hbox;
   GtkWidget * pix_box;
+  GtkWidget * button;
   GtkTooltips * radio_button_tips;
   gint table_row;
   gint inner_table_row;
@@ -229,7 +234,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   gtk_widget_show(packing_table);
 
   /* widgets to change the object's name */
-  label = gtk_label_new(_("name:"));
+  label = gtk_label_new(_("Name:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, 
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
@@ -249,7 +254,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     AmitkRoiType type_start, type_end;
 
     /* widgets to change the object's type */
-    label = gtk_label_new(_("type:"));
+    label = gtk_label_new(_("Type:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -299,7 +304,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* widgets to change the date of the scan name */
-    label = gtk_label_new(_("scan date:"));
+    label = gtk_label_new(_("Scan Date:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -313,7 +318,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     table_row++;
 
     /* widgets to change the object's modality */
-    label = gtk_label_new(_("modality:"));
+    label = gtk_label_new(_("Modality:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -568,7 +573,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   } else if (AMITK_IS_STUDY(object)) {
     /* widgets to change the study's creation date */
-    label = gtk_label_new(_("creation date:"));
+    label = gtk_label_new(_("Creation Date:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -782,8 +787,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     label = gtk_label_new(_("Rotate"));
     space_edit = amitk_space_edit_new(object);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), space_edit, label);
-    gtk_widget_show(label);
     gtk_widget_show(space_edit);
+    gtk_widget_show(label);
+
   }
 
   /* ----------------------------------------
@@ -902,6 +908,76 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   }
 
   /* ----------------------------------------
+     Misc. Preferences Page
+     ---------------------------------------- */
+  if (AMITK_IS_STUDY(object) || AMITK_IS_DATA_SET(object)) {
+
+    packing_table = gtk_table_new(4,2,FALSE);
+    if (AMITK_IS_STUDY(object))
+      label = gtk_label_new(_("ROI/View Preferences"));
+    else /* AMITK_IS_DATA_SET */
+      label = gtk_label_new(_("Windowing Preferences"));
+    table_row=0;
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
+    gtk_widget_show(label);
+
+    if (AMITK_IS_STUDY(object)) {
+
+      ui_common_study_preferences_widgets(packing_table, table_row,
+					  &(dialog->roi_width_spin),
+					  &(dialog->roi_item), 
+					  &(dialog->line_style_menu),
+					  &(dialog->layout_button1), 
+					  &(dialog->layout_button2), 
+					  &(dialog->maintain_size_button),
+					  &(dialog->target_size_spin));
+
+
+      g_signal_connect(G_OBJECT(dialog->roi_width_spin), "value_changed",  
+		       G_CALLBACK(dialog_change_roi_width_cb), dialog);
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+      g_signal_connect(G_OBJECT(dialog->line_style_menu), "changed", 
+		       G_CALLBACK(dialog_change_line_style_cb), dialog);
+#endif
+      g_signal_connect(G_OBJECT(dialog->layout_button1), "clicked", 
+		       G_CALLBACK(dialog_change_layout_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->layout_button2), "clicked", 
+		       G_CALLBACK(dialog_change_layout_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->maintain_size_button), "toggled", 
+		       G_CALLBACK(dialog_change_maintain_size_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->target_size_spin), "value_changed",  
+		       G_CALLBACK(dialog_change_target_empty_area_cb), dialog);
+
+
+    } else if (AMITK_IS_DATA_SET(object)) {
+      AmitkWindow i_window;
+      AmitkLimit i_limit;
+
+      ui_common_data_set_preferences_widgets(packing_table, table_row,
+					     dialog->window_spins);
+      table_row++;
+
+      for (i_window=0; i_window < AMITK_WINDOW_NUM; i_window++) {
+	for (i_limit=0; i_limit < AMITK_LIMIT_NUM; i_limit++) 
+	  g_signal_connect(G_OBJECT(dialog->window_spins[i_window][i_limit]), "value_changed",
+			   G_CALLBACK(dialog_change_threshold_window_cb), dialog);
+
+	button = gtk_button_new_with_label("Insert Current Thresholds");
+	gtk_table_attach(GTK_TABLE(packing_table), button, 3,4,
+			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+	g_object_set_data(G_OBJECT(button), "which_window", GINT_TO_POINTER(i_window));
+	g_signal_connect(G_OBJECT(button), "clicked", 
+			 G_CALLBACK(dialog_change_window_level_cb), dialog);
+	table_row++;
+	gtk_widget_show(button);
+      }
+    }
+    
+    gtk_widget_show(packing_table);
+  }
+
+
+  /* ----------------------------------------
      Immutables Page:
      ---------------------------------------- */
 
@@ -924,7 +1000,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_widget_show(label);
     
     if (AMITK_IS_STUDY(object)) {
-      label = gtk_label_new(_("voxel dim"));
+      label = gtk_label_new(_("Max-Min Voxel Dim"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
@@ -940,7 +1016,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     } else if (AMITK_IS_ROI(object)) {
       if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
-	label = gtk_label_new(_("isocontour value"));
+	label = gtk_label_new(_("Isocontour Value"));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	gtk_widget_show(label);
@@ -1212,6 +1288,56 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 	}
       }
     }
+  }
+
+
+  /* Preferences Page */
+  if (AMITK_IS_STUDY(dialog->object)) {
+
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->roi_width_spin),  G_CALLBACK(dialog_change_roi_width_cb), dialog);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->roi_width_spin), AMITK_STUDY_CANVAS_ROI_WIDTH(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->roi_width_spin),  G_CALLBACK(dialog_change_roi_width_cb), dialog);
+      gnome_canvas_item_set(dialog->roi_item, 
+			    "width_pixels", AMITK_STUDY_CANVAS_ROI_WIDTH(dialog->object),
+			    "line_style", AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object),
+			    NULL);
+
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
+      gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->line_style_menu), AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
+#endif
+
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button2),  G_CALLBACK(dialog_change_layout_cb), dialog);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->layout_button1), 
+				   (AMITK_STUDY_CANVAS_LAYOUT(dialog->object) == AMITK_LAYOUT_LINEAR));
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->layout_button2), 
+				   (AMITK_STUDY_CANVAS_LAYOUT(dialog->object) == AMITK_LAYOUT_ORTHOGONAL));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->layout_button2),  G_CALLBACK(dialog_change_layout_cb), dialog);
+
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->maintain_size_button), G_CALLBACK(dialog_change_maintain_size_cb), dialog);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->maintain_size_button), 
+				   AMITK_STUDY_CANVAS_MAINTAIN_SIZE(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->maintain_size_button), G_CALLBACK(dialog_change_maintain_size_cb), dialog);
+      
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->target_size_spin), G_CALLBACK(dialog_change_target_empty_area_cb), dialog);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->target_size_spin), 
+				AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->target_size_spin), G_CALLBACK(dialog_change_target_empty_area_cb), dialog);
+
+  } else if AMITK_IS_DATA_SET(dialog->object) {
+    AmitkWindow i_window;
+    AmitkLimit i_limit;
+
+    for (i_window=0; i_window < AMITK_WINDOW_NUM; i_window++) 
+      for (i_limit=0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
+	g_signal_handlers_block_by_func(G_OBJECT(dialog->window_spins[i_window][i_limit]), G_CALLBACK(dialog_change_threshold_window_cb), dialog);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->window_spins[i_window][i_limit]),
+				  AMITK_DATA_SET_THRESHOLD_WINDOW(dialog->object, i_window, i_limit));
+	g_signal_handlers_unblock_by_func(G_OBJECT(dialog->window_spins[i_window][i_limit]), G_CALLBACK(dialog_change_threshold_window_cb), dialog);
+      }
   }
 
   /* Immutables Page */
@@ -1775,12 +1901,87 @@ static void dialog_change_cylinder_unit_cb(GtkWidget * widget, gpointer data) {
 }
 
 
+static void dialog_change_roi_width_cb(GtkWidget * widget, gpointer data){
+  AmitkObjectDialog * dialog = data;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  amitk_study_set_canvas_roi_width(AMITK_STUDY(dialog->object),
+				   gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)));
+
+  return;
+}
+
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+static void dialog_change_line_style_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
+				    gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
+  return;
+}
+#endif
+
+static void dialog_change_layout_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  AmitkLayout new_layout;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  new_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "layout"));
+  amitk_study_set_canvas_layout(AMITK_STUDY(dialog->object),new_layout);
+  return;
+}
+
+static void dialog_change_maintain_size_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  amitk_study_set_canvas_maintain_size(AMITK_STUDY(dialog->object),
+				       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+  return;
+}
+
+static void dialog_change_target_empty_area_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  amitk_study_set_canvas_target_empty_area(AMITK_STUDY(dialog->object),
+					   gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)));
+  return;
+}
+
+static void dialog_change_threshold_window_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  AmitkWindow window;
+  AmitkLimit limit;
+
+  g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
+  window = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_window"));
+  limit = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_limit"));
+  amitk_data_set_set_threshold_window(AMITK_DATA_SET(dialog->object), window, limit,
+				      gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget)));
+  return;
+}
+
+static void dialog_change_window_level_cb  (GtkWidget * widget, gpointer data) {
+  
+  AmitkObjectDialog * dialog = data;
+  AmitkWindow window;
+
+  g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
+
+  window = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_window"));
+
+  amitk_data_set_set_threshold_window(AMITK_DATA_SET(dialog->object), window, 
+				      AMITK_LIMIT_MIN, 
+				      AMITK_DATA_SET_THRESHOLD_MIN(dialog->object, 0));
+  amitk_data_set_set_threshold_window(AMITK_DATA_SET(dialog->object), window, 
+				      AMITK_LIMIT_MAX, 
+				      AMITK_DATA_SET_THRESHOLD_MAX(dialog->object, 0));
+
+}
+
+
 
 /* function called when we hit the apply button */
 static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer data) {
 
   gboolean return_val;
-  GError *err=NULL;
 
   g_return_if_fail(AMITK_IS_OBJECT_DIALOG(dialog));
 
@@ -1793,23 +1994,14 @@ static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer dat
   break;
 
   case GTK_RESPONSE_HELP:
-#ifndef AMIDE_WIN32_HACKS
     if (AMITK_IS_DATA_SET(AMITK_OBJECT_DIALOG(dialog)->object))
-      gnome_help_display ("amide.xml","data-set-dialog", &err);
+      amide_call_help("data-set-dialog");
     else if (AMITK_IS_ROI(AMITK_OBJECT_DIALOG(dialog)->object))
-      gnome_help_display ("amide.xml","roi-dialog", &err);
+      amide_call_help("roi-dialog");
     else if (AMITK_IS_FIDUCIAL_MARK(AMITK_OBJECT_DIALOG(dialog)->object))
-      gnome_help_display ("amide.xml","fiducial-marker-dialog", &err);
+      amide_call_help("fiducial-marker-dialog");
     else if (AMITK_IS_STUDY(AMITK_OBJECT_DIALOG(dialog)->object))
-      gnome_help_display ("amide.xml","study-dialog", &err);
-    if (err != NULL) {
-      g_warning("couldn't open help file, error: %s", err->message);
-      g_error_free(err);
-    }
-
-#else
-    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
-#endif
+      amide_call_help("study-dialog");
     break;
 
   case GTK_RESPONSE_CLOSE:
@@ -1826,12 +2018,21 @@ static void dialog_response_cb(GtkDialog* dialog, gint response_id, gpointer dat
 
 
 
-GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
+GtkWidget* amitk_object_dialog_new (AmitkObject * object) {
+
   AmitkObjectDialog *dialog;
   gchar * temp_string;
+  AmitkObject * study;
 
   g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
   
+  /* find study - use for the layout */
+  if (AMITK_IS_STUDY(object))
+    study = object;
+  else
+    study = amitk_object_get_parent_of_type(object, AMITK_OBJECT_TYPE_STUDY); /* unreferenced pointer */
+  g_return_val_if_fail(AMITK_IS_STUDY(study), NULL);
+
   if (object->dialog != NULL) {
     if (AMITK_IS_OBJECT_DIALOG(object->dialog))
 	return NULL; /* already modifying */
@@ -1841,9 +2042,10 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
       g_return_val_if_reached(NULL);
   }
 
+
   dialog = g_object_new (AMITK_TYPE_OBJECT_DIALOG, NULL);
   object->dialog = G_OBJECT(dialog);
-  object_dialog_construct(dialog, object, layout);
+  object_dialog_construct(dialog, object, AMITK_STUDY_CANVAS_LAYOUT(study));
 
   g_signal_connect_swapped(G_OBJECT(object), "space_changed", 
 			   G_CALLBACK(dialog_update_entries), dialog);
@@ -1852,6 +2054,14 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
     g_signal_connect_swapped(G_OBJECT(object), "voxel_dim_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
     g_signal_connect_swapped(G_OBJECT(object), "view_center_changed", 
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "canvas_roi_preference_changed",
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "canvas_general_preference_changed",
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "canvas_target_preference_changed",
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "canvas_layout_preference_changed",
 			     G_CALLBACK(dialog_update_entries), dialog);
   }
 

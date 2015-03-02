@@ -30,12 +30,14 @@
 #include <pango/pango.h>
 #include "amide_intl.h"
 
+
 /* define a macro glib should have */
 #define g_try_new(struct_type, n_structs)           \
     ((struct_type *) g_try_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
 
 #define AMITK_RESPONSE_EXECUTE 1
-
+#define AMITK_RESPONSE_COPY 2
+#define AMITK_RESPONSE_SAVE_AS 3
 
 /* defines how many times we want the progress bar to be updated over the course of an action */
 #define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
@@ -66,7 +68,6 @@ typedef enum {
   AMITK_EYE_NUM
 } AmitkEye;
 
-
 typedef enum {
   AMITK_HELP_INFO_BLANK,
   AMITK_HELP_INFO_CANVAS_DATA_SET,
@@ -74,58 +75,65 @@ typedef enum {
   AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK,
   AMITK_HELP_INFO_CANVAS_STUDY,
   AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_LINE_PROFILE,
   AMITK_HELP_INFO_CANVAS_NEW_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
   AMITK_HELP_INFO_CANVAS_SHIFT_OBJECT,
   AMITK_HELP_INFO_CANVAS_ROTATE_OBJECT,
-  AMITK_HELP_INFO_TREE_DATA_SET,
-  AMITK_HELP_INFO_TREE_ROI,
-  AMITK_HELP_INFO_TREE_FIDUCIAL_MARK,
-  AMITK_HELP_INFO_TREE_STUDY,
-  AMITK_HELP_INFO_TREE_NONE,
+  AMITK_HELP_INFO_TREE_VIEW_DATA_SET,
+  AMITK_HELP_INFO_TREE_VIEW_ROI,
+  AMITK_HELP_INFO_TREE_VIEW_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_TREE_VIEW_STUDY,
+  AMITK_HELP_INFO_TREE_VIEW_NONE,
   AMITK_HELP_INFO_UPDATE_LOCATION,
   AMITK_HELP_INFO_UPDATE_THETA,
   AMITK_HELP_INFO_UPDATE_SHIFT,
   AMITK_HELP_INFO_NUM
 } AmitkHelpInfo;
 
-/* setup the types for various internal data formats */
-/* note, don't change these unless you want to go digging through the
-   code for locations where the signal marshallers expect the type
-   to be DOUBLE.  Would also need to update the REAL_EQUAL type
-   functions in amitk_point.h
-*/
 
-typedef gdouble amide_data_t;
-#define SIZE_OF_AMIDE_DATA_T 8
-#define AMITK_TYPE_DATA G_TYPE_DOUBLE
+typedef enum {
+  AMITK_MODALITY_PET, 
+  AMITK_MODALITY_SPECT, 
+  AMITK_MODALITY_CT, 
+  AMITK_MODALITY_MRI, 
+  AMITK_MODALITY_OTHER, 
+  AMITK_MODALITY_NUM
+} AmitkModality;
 
-typedef gdouble amide_time_t;
-#define SIZE_OF_AMIDE_TIME_T 8
-#define AMITK_TYPE_TIME G_TYPE_DOUBLE
+typedef enum {
+  AMITK_LIMIT_MIN,
+  AMITK_LIMIT_MAX,
+  AMITK_LIMIT_NUM
+} AmitkLimit;
 
-typedef gdouble amide_real_t;
-#define SIZE_OF_AMIDE_REAL_T 8
-#define AMITK_TYPE_REAL G_TYPE_DOUBLE
-
-/* size of a point in integer space */
-typedef gint16 amide_intpoint_t;
-#define SIZE_OF_AMIDE_INTPOINT_T 2;
-
-
+typedef enum {
+  AMITK_WINDOW_BONE,
+  AMITK_WINDOW_SOFT_TISSUE,
+  AMITK_WINDOW_NUM
+} AmitkWindow;
 
 /* external variables */
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
 extern PangoFontDescription * amitk_fixed_font_desc;
+extern gchar * limit_names[];
+extern gchar * window_names[];
 
 /* external functions */
-
+void amide_call_help(const gchar * link_id);
 gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy, gchar ** pxml_filename);
 gboolean amide_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, guint64 *psize_le);
+void amitk_append_str_with_newline(gchar ** pstr, const gchar * format, ...);
 void amitk_append_str(gchar ** pstr, const gchar * format, ...);
 void amide_register_window(gpointer * widget);
 void amide_unregister_window(gpointer * widget);
 void amide_unregister_all_windows(void);
+
+/* built in type functions */
+const gchar *   amitk_layout_get_name             (const AmitkLayout layout);
+const gchar *   amitk_limit_get_name              (const AmitkLimit limit);
+const gchar *   amitk_window_get_name             (const AmitkWindow window);
+const gchar *   amitk_modality_get_name           (const AmitkModality modality);
 
 #endif /* __AMIDE_H__ */

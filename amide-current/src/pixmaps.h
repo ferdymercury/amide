@@ -45,7 +45,7 @@ extern const char * icon_target_xpm[];
 extern const char * icon_transverse_xpm[];
 extern const char * icon_coronal_xpm[];
 extern const char * icon_sagittal_xpm[];
-extern const char * icon_view[];
+extern const char ** icon_view[];
 
 extern const char * icon_threshold_xpm[];
 extern const char * icon_thresholding_per_slice_xpm[];
@@ -53,6 +53,10 @@ extern const char * icon_thresholding_per_frame_xpm[];
 extern const char * icon_thresholding_interpolate_frames_xpm[];
 extern const char * icon_thresholding_global_xpm[];
 extern const char ** icon_thresholding[];
+
+extern const char * icon_window_bone[];
+extern const char * icon_window_soft_tissue[];
+extern const char ** icon_windowing[];
 
 extern const char * CYLINDER_xpm[];
 extern const char * BOX_xpm[];

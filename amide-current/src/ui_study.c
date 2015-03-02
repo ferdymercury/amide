@@ -25,9 +25,6 @@
 
 #include "amide_config.h"
 #include <libgnomeui/libgnomeui.h>
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
 #include <string.h>
 #include "image.h"
 #include "ui_common.h"
@@ -35,16 +32,16 @@
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
 #include "ui_time_dialog.h"
-#include "amitk_tree.h"
+#include "amitk_tree_view.h"
 #include "amitk_canvas.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 
-/* external variables */
+
+#define HELP_INFO_LINE_HEIGHT 13
+#define LEFT_COLUMN_WIDTH 250
 
 /* internal variables */
-#define HELP_INFO_LINE_HEIGHT 13
-
 static gchar * blank_name = N_("new");
 
 static gchar * help_info_legends[NUM_HELP_INFO_LINES] = {
@@ -90,6 +87,10 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    N_("erase isocontour point"), N_("erase large point"), 
    N_("start isocontour change"), "", N_("set data set inside roi to zero"),
    N_("set data set outside roi to zero")}, /*CANVAS_ISOCONTOUR_ROI */
+  {N_("move line"), "",
+   N_("rotate line"), "", 
+   "", "", "",
+   ""}, /* CANVAS_LINE_PROFILE */
   {N_("draw - edge-to-edge"), "", 
    N_("draw - center out"), "", 
    "", "", "",
@@ -212,8 +213,8 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     ui_study_update_fuse_type(ui_study);
     ui_study_update_view_mode(ui_study);
 
-    amitk_tree_set_study(AMITK_TREE(ui_study->tree), AMITK_STUDY(object));
-    amitk_tree_expand_object(AMITK_TREE(ui_study->tree), object);
+    amitk_tree_view_set_study(AMITK_TREE_VIEW(ui_study->tree_view), AMITK_STUDY(object));
+    amitk_tree_view_expand_object(AMITK_TREE_VIEW(ui_study->tree_view), object);
     for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
       for (i_view=0; i_view< AMITK_VIEW_NUM; i_view++)
 	if (AMITK_STUDY_CANVAS_VISIBLE(object, i_view))
@@ -225,9 +226,10 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "canvas_visible_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "view_mode_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_target_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "canvas_layout_preference_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
 
   } else if (AMITK_IS_DATA_SET(object)) {
-    amitk_tree_expand_object(AMITK_TREE(ui_study->tree), AMITK_OBJECT_PARENT(object));
+    amitk_tree_view_expand_object(AMITK_TREE_VIEW(ui_study->tree_view), AMITK_OBJECT_PARENT(object));
     vox_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
     amitk_study_set_view_thickness(ui_study->study, vox_size);
 
@@ -329,6 +331,11 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
       ui_study->progress_dialog = NULL;
     }
 
+    if (ui_study->preferences != NULL) {
+      g_object_unref(ui_study->preferences);
+      ui_study->preferences = NULL;
+    }
+
     g_free(ui_study);
     ui_study = NULL;
   }
@@ -337,18 +344,12 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
 }
 
 /* allocate and initialize a ui_study data structure */
-ui_study_t * ui_study_init(void) {
+ui_study_t * ui_study_init(AmitkPreferences * preferences) {
 
   ui_study_t * ui_study;
   AmitkViewMode i_view_mode;
   AmitkView i_view;
   help_info_line_t i_line;
-  AmitkModality i_modality;
-#ifndef AMIDE_WIN32_HACKS
-  gchar * temp_string;
-  gint default_value;
-#endif
-  AmitkColorTable color_table;
 
   /* alloc space for the data structure for passing ui info */
   ui_study = g_try_new(ui_study_t,1);
@@ -358,7 +359,6 @@ ui_study_t * ui_study_init(void) {
 
   ui_study->study = NULL;
   ui_study->threshold_dialog = NULL;
-  ui_study->preferences_dialog = NULL;
   ui_study->time_dialog = NULL;
   ui_study->thickness_spin = NULL;
 
@@ -378,54 +378,7 @@ ui_study_t * ui_study_init(void) {
     ui_study->help_legend[i_line] = NULL;
   }
 
-  /* load in saved preferences */
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  ui_study->roi_width = 
-    gnome_config_get_int("ROI/Width");
-  if (ui_study->roi_width == 0) 
-    ui_study->roi_width = 2; /* if no config file, put in sane value */
-  ui_study->line_style = 
-    gnome_config_get_int("ROI/LineStyle"); /* 0 is solid */
-  ui_study->canvas_layout = 
-    gnome_config_get_int("CANVAS/Layout"); /* 0 is AMITK_LAYOUT_LINEAR */
-  ui_study->canvas_maintain_size = 
-    !gnome_config_get_int("CANVAS/MinimizeSize"); /* 0 is FALSE */
-  ui_study->canvas_target_empty_area = 
-    gnome_config_get_int("CANVAS/TargetEmptyArea"); /* in pixels */
-  ui_study->dont_prompt_for_save_on_exit = 
-    gnome_config_get_int("MISC/DontPromptForSaveOnExit"); /* 0 is FALSE, so we prompt */
-  ui_study->save_xif_as_directory =
-    gnome_config_get_int("MISC/SaveXifAsDirectory"); /* 0 is FALSE, so we save as flat file */
-
-  for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", 
-				  amitk_modality_get_name(i_modality));
-
-    color_table = gnome_config_get_int_with_default(temp_string, &default_value);
-    if (default_value)
-      color_table = amitk_modality_default_color_table[i_modality];
-    ui_study->default_color_table[i_modality] = color_table;
-					
-    g_free(temp_string);
-  }
-
-  gnome_config_pop_prefix();
-#else
-  ui_study->roi_width = 2;
-  ui_study->line_style = 0;
-  ui_study->canvas_layout = AMITK_LAYOUT_LINEAR;
-  ui_study->canvas_maintain_size = TRUE;
-  ui_study->canvas_target_empty_area = 5; /* in pixels */
-  ui_study->dont_prompt_for_save_on_exit = FALSE;
-  ui_study->save_xif_as_directory = FALSE;
-
-  for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    color_table = amitk_modality_default_color_table[i_modality];
-    ui_study->default_color_table[i_modality] = color_table;
-  }
-
-#endif
+  ui_study->preferences = g_object_ref(preferences);
 
   return ui_study;
 }
@@ -470,7 +423,7 @@ void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object) {
   }
 
   /* indicate this is now the active object */
-  amitk_tree_set_active_object(AMITK_TREE(ui_study->tree), ui_study->active_object);
+  amitk_tree_view_set_active_object(AMITK_TREE_VIEW(ui_study->tree_view), ui_study->active_object);
 
   /* connect any needed signals */
   if (AMITK_IS_DATA_SET(ui_study->active_object)) {
@@ -527,7 +480,7 @@ void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_obje
     amitk_fiducial_mark_set(new_pt, position);
     amitk_object_set_name(AMITK_OBJECT(new_pt), return_str);
     amitk_object_add_child(AMITK_OBJECT(parent_object), AMITK_OBJECT(new_pt));
-    amitk_tree_expand_object(AMITK_TREE(ui_study->tree), AMITK_OBJECT(parent_object));
+    amitk_tree_view_expand_object(AMITK_TREE_VIEW(ui_study->tree_view), AMITK_OBJECT(parent_object));
     amitk_object_unref(new_pt); /* don't want an extra ref */
 
     if (selected)
@@ -616,7 +569,7 @@ void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {
   
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  temp_string = g_strdup_printf(_("%5.1f-%5.1f s"),
+  temp_string = g_strdup_printf(_("%g-%g s"),
 				AMITK_STUDY_VIEW_START_TIME(study),
 				AMITK_STUDY_VIEW_START_TIME(study)+
 				AMITK_STUDY_VIEW_DURATION(study));
@@ -638,12 +591,12 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
   AmitkPoint location_p;
 
   if (which_info == AMITK_HELP_INFO_UPDATE_LOCATION) {
-    location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] (mm)"), 
+    location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] mm"), 
 				       point.x, point.y, point.z);
     location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
   } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
     location_text[0] = g_strdup_printf(_("shift (x,y,z) ="));
-    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] (mm)"), 
+    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 
 				     point.x, point.y, point.z);
   } else if (which_info == AMITK_HELP_INFO_UPDATE_THETA) {
     location_text[0] = g_strdup("");
@@ -675,7 +628,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 				"justification", GTK_JUSTIFY_RIGHT,
 				"anchor", GTK_ANCHOR_NORTH_EAST,
 				"text", legend,
-				"x", (gdouble) 20.0,
+				"x", (gdouble) 40.0,
 				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
 				"fill_color", "black", 
 				"font_desc", amitk_fixed_font_desc, NULL);
@@ -690,7 +643,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 				"justification", GTK_JUSTIFY_LEFT,
 				"anchor", GTK_ANCHOR_NORTH_WEST,
 				"text", help_info_lines[which_info][i_line],
-				"x", (gdouble) 30.0,
+				"x", (gdouble) 50.0,
 				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
 				"fill_color", "black", 
 				"font_desc", amitk_fixed_font_desc, NULL);
@@ -701,8 +654,8 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 
     location_p = AMITK_STUDY_VIEW_CENTER(ui_study->study);
     location_text[0] = g_strdup_printf(_("view center (x,y,z) ="));
-    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] (mm)"), 
-				     point.x, point.y, point.z);
+    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 
+				       location_p.x, location_p.y, location_p.z);
   }
 
   /* update the location display */
@@ -714,7 +667,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 			      "justification", GTK_JUSTIFY_LEFT,
 			      "anchor", GTK_ANCHOR_NORTH_WEST,
 			      "text", location_text[i_line-HELP_INFO_LINE_LOCATION1],
-			      "x", (gdouble) 0.0,
+			      "x", (gdouble) 2.0,
 			      "y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
 			      "fill_color", "black",
 			      "font_desc", amitk_fixed_font_desc, NULL);
@@ -935,17 +888,9 @@ void ui_study_update_layout(ui_study_t * ui_study) {
       if (AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view)) {
 	if (ui_study->canvas[i_view_mode][i_view] == NULL) { /* new canvas */
 	  ui_study->canvas[i_view_mode][i_view] = 
-	    amitk_canvas_new(i_view, i_view_mode,
-			     ui_study->canvas_layout,
-			     ui_study->line_style,
-			     ui_study->roi_width,
-			     AMITK_CANVAS_TYPE_NORMAL,
-			     ui_study->canvas_maintain_size,
-			     ui_study->canvas_target_empty_area);
+	    amitk_canvas_new(ui_study->study, i_view, i_view_mode, AMITK_CANVAS_TYPE_NORMAL);
 	  g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view])); /* will be removed below */
 
-	  amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				 ui_study->study);
 	  amitk_canvas_set_active_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
 					 ui_study->active_object);
 	
@@ -976,14 +921,9 @@ void ui_study_update_layout(ui_study_t * ui_study) {
       gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
     			   ui_study->canvas_table[i_view_mode]);
 
-    for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ )
-      if (ui_study->canvas[i_view_mode][i_view] != NULL)
-	amitk_canvas_set_layout(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				ui_study->canvas_layout);
-
     /* keep an estimate as to how large each set of canvases is in max_width and max_height*/
     width = height = 0;
-    switch(ui_study->canvas_layout) {
+    switch(AMITK_STUDY_CANVAS_LAYOUT(ui_study->study)) {
     case AMITK_LAYOUT_ORTHOGONAL:
       if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
 	width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]));
@@ -1028,7 +968,7 @@ void ui_study_update_layout(ui_study_t * ui_study) {
   for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
 
     /* put the canvases in the table according to the desired layout */
-    switch(ui_study->canvas_layout) {
+    switch(AMITK_STUDY_CANVAS_LAYOUT(ui_study->study)) {
     case AMITK_LAYOUT_ORTHOGONAL:
       row = column = 0;
       if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
@@ -1118,26 +1058,27 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(ui_study->app), "enter_notify_event",
 		   G_CALLBACK(ui_study_cb_update_help_info), ui_study);
 
-  ui_study->tree = amitk_tree_new();
+  ui_study->tree_view = amitk_tree_view_new(ui_study->preferences,
+					    ui_study->progress_dialog);
 
-  g_signal_connect(G_OBJECT(ui_study->tree), "help_event",
-		   G_CALLBACK(ui_study_cb_tree_help_event), ui_study);
-  g_signal_connect(G_OBJECT(ui_study->tree), "activate_object", 
-		   G_CALLBACK(ui_study_cb_tree_activate_object), ui_study);
-  g_signal_connect(G_OBJECT(ui_study->tree), "popup_object", 
-		   G_CALLBACK(ui_study_cb_tree_popup_object), ui_study);
-  g_signal_connect(G_OBJECT(ui_study->tree), "add_object", 
-		   G_CALLBACK(ui_study_cb_tree_add_object), ui_study);
-  g_signal_connect(G_OBJECT(ui_study->tree), "delete_object", 
-		   G_CALLBACK(ui_study_cb_tree_delete_object), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->tree_view), "help_event",
+		   G_CALLBACK(ui_study_cb_tree_view_help_event), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->tree_view), "activate_object", 
+		   G_CALLBACK(ui_study_cb_tree_view_activate_object), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->tree_view), "popup_object", 
+		   G_CALLBACK(ui_study_cb_tree_view_popup_object), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->tree_view), "add_object", 
+		   G_CALLBACK(ui_study_cb_tree_view_add_object), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->tree_view), "delete_object", 
+		   G_CALLBACK(ui_study_cb_tree_view_delete_object), ui_study);
       
   /* make a scrolled area for the tree */
   scrolled = gtk_scrolled_window_new(NULL,NULL);  
-  gtk_widget_set_size_request(scrolled,250,250);
+  gtk_widget_set_size_request(scrolled,LEFT_COLUMN_WIDTH,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
-					ui_study->tree);
+					ui_study->tree_view);
   gtk_table_attach(GTK_TABLE(ui_study->main_table), scrolled, 
 		   main_table_column, main_table_column+1, main_table_row, main_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
@@ -1147,14 +1088,18 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
 
   /* the help information canvas */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
   ui_study->help_info = GNOME_CANVAS(gnome_canvas_new_aa());
+#else
+  ui_study->help_info = GNOME_CANVAS(gnome_canvas_new());
+#endif
   gtk_table_attach(GTK_TABLE(ui_study->main_table), GTK_WIDGET(ui_study->help_info), 
 		   main_table_column, main_table_column+1, main_table_row, main_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_widget_set_size_request(GTK_WIDGET(ui_study->help_info), 150,
-			      HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
-  gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, 150.0, 
-				 HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
+  gtk_widget_set_size_request(GTK_WIDGET(ui_study->help_info), LEFT_COLUMN_WIDTH,
+			      HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES+2);
+  gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, LEFT_COLUMN_WIDTH, 
+				 HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES+2.0);
   main_table_column++;
   main_table_row=0;
 
@@ -1184,11 +1129,13 @@ void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study) {
 
 
 /* procedure to set up the study window */
-GtkWidget * ui_study_create(AmitkStudy * study) {
+GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences) {
 
   ui_study_t * ui_study;
 
-  ui_study = ui_study_init();
+  g_return_val_if_fail(preferences != NULL, NULL);
+
+  ui_study = ui_study_init(preferences);
 
   /* setup the study window */
   ui_study->app=gnome_app_new(PACKAGE, NULL);
@@ -1219,7 +1166,7 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
   /* add the study to the ui_study */
   if (study == NULL) {
 
-    study = amitk_study_new();
+    study = amitk_study_new(preferences);
     amitk_object_set_name(AMITK_OBJECT(study), blank_name);
 
     ui_study_set_study(ui_study, study);

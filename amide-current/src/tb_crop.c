@@ -35,6 +35,7 @@
 
 #define AXIS_WIDTH 120
 #define AXIS_HEIGHT 120
+#define CURSOR_SIZE 1
 
 static const char * wizard_name = N_("Data Set Cropping Wizard");
 
@@ -77,8 +78,8 @@ typedef struct tb_crop_t {
   AmitkDataSet * projections[AMITK_VIEW_NUM];
   GtkWidget * canvas[AMITK_VIEW_NUM];
   GnomeCanvasItem * image[AMITK_VIEW_NUM];
-  gint image_width[AMITK_VIEW_NUM];
-  gint image_height[AMITK_VIEW_NUM];
+  gint canvas_width[AMITK_VIEW_NUM];
+  gint canvas_height[AMITK_VIEW_NUM];
   GnomeCanvasItem * line[AMITK_VIEW_NUM][2][NUM_RANGES];
   GtkWidget * threshold[AMITK_VIEW_NUM];
 
@@ -107,7 +108,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
 static void zoom_spinner_cb(GtkSpinButton * button, gpointer data);
 static void frame_spinner_cb(GtkSpinButton * button, gpointer data);
 static void spinner_cb(GtkSpinButton * button, gpointer data);
-static void projection_threshold_changed_cb(AmitkDataSet * projection, gpointer data);
+static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer data);
 static void change_format_cb(GtkWidget * widget, gpointer data);
 static void change_scaling_type_cb(GtkWidget * widget, gpointer data);
 
@@ -211,7 +212,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       }
       
       /* the projection */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
       tb_crop->canvas[view] = gnome_canvas_new_aa();
+#else
+      tb_crop->canvas[view] = gnome_canvas_new();
+#endif
       gtk_table_attach(GTK_TABLE(tb_crop->table[view]), tb_crop->canvas[view], 
 		       table_column,table_column+2,table_row,table_row+4, 
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -265,7 +270,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       }
 
       /* the axis display */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
       axis_canvas = gnome_canvas_new_aa();
+#else
+      axis_canvas = gnome_canvas_new();
+#endif
       ui_common_draw_view_axis(GNOME_CANVAS(axis_canvas), 0, 0, view, 
 			       AMITK_LAYOUT_LINEAR, AXIS_WIDTH, AXIS_HEIGHT);
       gtk_widget_set_size_request(axis_canvas, AXIS_WIDTH, AXIS_HEIGHT);
@@ -289,7 +298,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       table_row=0;
       table_column += 1;
       /* the threshold */
-      tb_crop->threshold[view] = amitk_threshold_new(tb_crop->projections[view], AMITK_THRESHOLD_LINEAR_LAYOUT,
+      tb_crop->threshold[view] = amitk_threshold_new(tb_crop->projections[view], 
+						     AMITK_THRESHOLD_LINEAR_LAYOUT,
 						     GTK_WINDOW(tb_crop->dialog), TRUE);
       gtk_table_attach(GTK_TABLE(tb_crop->table[view]), tb_crop->threshold[view],
 		       table_column,table_column+1,table_row,table_row+5, 
@@ -419,8 +429,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(tb_crop->canvas[view]), 
 				     tb_crop->zoom);
     gtk_widget_set_size_request(tb_crop->canvas[view], 
-				tb_crop->zoom*tb_crop->image_width[view],
-				tb_crop->zoom*tb_crop->image_height[view]);
+				tb_crop->zoom*tb_crop->canvas_width[view],
+				tb_crop->zoom*tb_crop->canvas_height[view]);
 
     add_canvas_update(tb_crop, view);
     update_crop_lines(tb_crop, view);
@@ -457,8 +467,8 @@ static void zoom_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   
   gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(tb_crop->canvas[view]), tb_crop->zoom);
   gtk_widget_set_size_request(tb_crop->canvas[view], 
-			      tb_crop->zoom*tb_crop->image_width[view],
-			      tb_crop->zoom*tb_crop->image_height[view]);
+			      tb_crop->zoom*tb_crop->canvas_width[view],
+			      tb_crop->zoom*tb_crop->canvas_height[view]);
 
   return;
 }
@@ -551,7 +561,7 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 
 
 
-static void projection_threshold_changed_cb(AmitkDataSet * projection, gpointer data) {
+static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer data) {
 
   tb_crop_t * tb_crop = data;
   AmitkView view;
@@ -625,21 +635,37 @@ static void update_crop_lines(tb_crop_t * tb_crop, AmitkView view) {
 
       /* the 0.5 is because the points specify the middle of the line, not the northwest corner */
       if (j==0) {/* x direction */
-	points->coords[0]=points->coords[2] = x_range[i_range]+0.5;
+
+	if (i_range == RANGE_MIN)
+	  points->coords[0]=points->coords[2] = x_range[i_range]+0.5;
+	else
+	  points->coords[0]=points->coords[2] = x_range[i_range]+0.5+2*CURSOR_SIZE;
+
 	if (view == AMITK_VIEW_TRANSVERSE) {
-	  points->coords[1] = tb_crop->image_height[view]-y_range[RANGE_MIN]-1+0.5;
-	  points->coords[3] = tb_crop->image_height[view]-y_range[RANGE_MAX]-1+0.5;
+	  points->coords[1] = tb_crop->canvas_height[view]-y_range[RANGE_MIN]-1+0.5-CURSOR_SIZE;
+	  points->coords[3] = tb_crop->canvas_height[view]-y_range[RANGE_MAX]-1+0.5-CURSOR_SIZE;
 	} else { /* our z direction points down */
 	  points->coords[1] = y_range[RANGE_MIN]+0.5;
-	  points->coords[3] = y_range[RANGE_MAX]+0.5;
+	  points->coords[3] = y_range[RANGE_MAX]+0.5+2*CURSOR_SIZE;
 	}
+
+
       } else { /* y direction, compensate for X Window's coordinate axis */
-	if (view == AMITK_VIEW_TRANSVERSE)
-	  points->coords[1]=points->coords[3] = tb_crop->image_height[view]-y_range[i_range]-1+0.5;
-	else /* our z direction points down */
-	  points->coords[1]=points->coords[3] = y_range[i_range]+0.5;
+
+	if (i_range == RANGE_MIN) {
+	  if (view == AMITK_VIEW_TRANSVERSE)
+	    points->coords[1]=points->coords[3] = tb_crop->canvas_height[view]-y_range[i_range]+0.5-CURSOR_SIZE;
+	  else /* our z direction points down */
+	    points->coords[1]=points->coords[3] = y_range[i_range]+0.5;
+	} else {
+	  if (view == AMITK_VIEW_TRANSVERSE)
+	    points->coords[1]=points->coords[3] = tb_crop->canvas_height[view]-y_range[i_range]-1+0.5-2*CURSOR_SIZE;
+	  else /* our z direction points down */
+	    points->coords[1]=points->coords[3] = y_range[i_range]+0.5+2*CURSOR_SIZE;
+	}
+
 	points->coords[0] = x_range[RANGE_MIN]+0.5;
-	points->coords[2] = x_range[RANGE_MAX]+0.5;
+	points->coords[2] = x_range[RANGE_MAX]+0.5+2*CURSOR_SIZE;
       }
       
       if (tb_crop->line[view][j][i_range] == NULL) {
@@ -701,10 +727,10 @@ static gboolean update_canvas_while_idle(gpointer data) {
 	  amitk_data_set_set_threshold_min(tb_crop->projections[i_view], 0, tb_crop->threshold_min);
 	}
 	g_object_set_data(G_OBJECT(tb_crop->projections[i_view]), "which_view", GINT_TO_POINTER(i_view));
-	g_signal_connect(G_OBJECT(tb_crop->projections[i_view]), "thresholding_changed",
-			 G_CALLBACK(projection_threshold_changed_cb), tb_crop);
+	g_signal_connect(G_OBJECT(tb_crop->projections[i_view]), "thresholds_changed",
+			 G_CALLBACK(projection_thresholds_changed_cb), tb_crop);
 	g_signal_connect(G_OBJECT(tb_crop->projections[i_view]), "color_table_changed",
-			 G_CALLBACK(projection_threshold_changed_cb), tb_crop);
+			 G_CALLBACK(projection_thresholds_changed_cb), tb_crop);
 	//	if (tb_crop->threshold[i_view] != NULL)
 	//	  amitk_threshold_new_data_set(AMITK_THRESHOLD(tb_crop->threshold[i_view]), 
 	//				       tb_crop->projections[i_view]);
@@ -719,16 +745,19 @@ static gboolean update_canvas_while_idle(gpointer data) {
       if (tb_crop->image[view] == NULL) {/* create the canvas image if we don't have it */
 	tb_crop->image[view] = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_crop->canvas[view])),
 						     gnome_canvas_pixbuf_get_type(),
-						     "pixbuf", pixbuf, "x", 0, "y", 0, NULL);
-	tb_crop->image_width[view] =gdk_pixbuf_get_width(pixbuf);
-	tb_crop->image_height[view] = gdk_pixbuf_get_height(pixbuf);
+						     "pixbuf", pixbuf, 
+						     "x", (gdouble) CURSOR_SIZE, 
+						     "y", (gdouble) CURSOR_SIZE, 
+						     NULL);
+	tb_crop->canvas_width[view] =gdk_pixbuf_get_width(pixbuf)+2*CURSOR_SIZE;
+	tb_crop->canvas_height[view] = gdk_pixbuf_get_height(pixbuf)+2*CURSOR_SIZE;
 	gtk_widget_set_size_request(tb_crop->canvas[view], 
-				    tb_crop->image_width[view],
-				    tb_crop->image_height[view]);
+				    tb_crop->canvas_width[view],
+				    tb_crop->canvas_height[view]);
 	
-	gnome_canvas_set_scroll_region(GNOME_CANVAS(tb_crop->canvas[view]), 0.0, 0.0, 
-				       tb_crop->image_width[view]-1,
-				       tb_crop->image_height[view]-1);
+	gnome_canvas_set_scroll_region(GNOME_CANVAS(tb_crop->canvas[view]), 0,0,
+				       tb_crop->canvas_width[view],
+				       tb_crop->canvas_height[view]);
       } else {
 	gnome_canvas_item_set(tb_crop->image[view], "pixbuf", pixbuf, NULL);
       }

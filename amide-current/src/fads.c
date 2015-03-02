@@ -390,11 +390,13 @@ void fads_pca(AmitkDataSet * data_set,
   /* copy the data on over */
   for (f=0; f<num_factors; f++) {
 
-    new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
+    new_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set),
+					  AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
+    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
 
     i=0;
     i_voxel.t = 0;
@@ -691,7 +693,7 @@ static void pls_calc_derivative(pls_params_t * p, const gsl_vector *v, gsl_vecto
   gdouble orth_answer;
   gdouble blood_answer=0.0;
   gdouble factor, alpha, lambda;
-  gint i, j, k, l, f, q;
+  gint i, j, k, l, q; //f
 
 
   /* calculate first for the factor variables */
@@ -1192,11 +1194,13 @@ void fads_pls(AmitkDataSet * data_set,
   dim.t = 1;
   i_voxel.t = 0;
   for (f=0; f<p.num_factors; f++) {
-    new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
+    new_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set),
+					  AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
+    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
     for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 
@@ -2157,11 +2161,13 @@ void fads_two_comp(AmitkDataSet * data_set,
   dim.t = 1;
   i_voxel.t = 0;
   for (f=0; f < p.num_factors; f++) {
-    new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
+    new_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set),
+					  AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
+    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
     for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 

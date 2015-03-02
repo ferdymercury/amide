@@ -39,10 +39,11 @@
 #define DEFAULT_CANVAS_TRIANGLE_HEIGHT 8.0
 
 
-#define UPDATE_NONE 0
-#define UPDATE_VIEW 0x1
-#define UPDATE_ARROWS 0x2
-#define UPDATE_DATA_SETS 0x8
+#define UPDATE_NONE 0x00
+#define UPDATE_VIEW 0x01
+#define UPDATE_ARROWS 0x02
+#define UPDATE_LINE_PROFILE 0x04
+#define UPDATE_DATA_SETS 0x08
 #define UPDATE_SCROLLBAR 0x10
 #define UPDATE_OBJECT 0x20
 #define UPDATE_OBJECTS 0x40
@@ -83,8 +84,8 @@ typedef enum {
   CANVAS_EVENT_PRESS_SHIFT_OBJECT, /* currently data set only */
   CANVAS_EVENT_PRESS_ROTATE_OBJECT, /* currently study or data set only */
   CANVAS_EVENT_PRESS_NEW_ROI,
-  CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE,  /* currently roi/fiducial only */
-  CANVAS_EVENT_PRESS_ROTATE_ROI, /* 10 */
+  CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE,  /* currently roi/line_profile/fiducial only */
+  CANVAS_EVENT_PRESS_ROTATE_OBJECT_IMMEDIATE, /* currently roi/line_profile only */ /* 10 */
   CANVAS_EVENT_PRESS_RESIZE_ROI,
   CANVAS_EVENT_PRESS_ERASE_ISOCONTOUR,
   CANVAS_EVENT_PRESS_LARGE_ERASE_ISOCONTOUR, 
@@ -99,23 +100,22 @@ typedef enum {
   CANVAS_EVENT_MOTION_SHIFT_OBJECT,
   CANVAS_EVENT_MOTION_ROTATE_OBJECT,
   CANVAS_EVENT_MOTION_NEW_ROI,
-  CANVAS_EVENT_MOTION_ROTATE_ROI, 
   CANVAS_EVENT_MOTION_RESIZE_ROI, 
   CANVAS_EVENT_MOTION_ERASE_ISOCONTOUR, 
   CANVAS_EVENT_MOTION_LARGE_ERASE_ISOCONTOUR, 
   CANVAS_EVENT_MOTION_CHANGE_ISOCONTOUR,  
-  CANVAS_EVENT_RELEASE_MOVE_VIEW,  /* 30 */
-  CANVAS_EVENT_RELEASE_MINIMIZE_VIEW, 
+  CANVAS_EVENT_RELEASE_MOVE_VIEW,  
+  CANVAS_EVENT_RELEASE_MINIMIZE_VIEW, /* 30 */
   CANVAS_EVENT_RELEASE_RESIZE_VIEW, 
   CANVAS_EVENT_RELEASE_SHIFT_OBJECT,
   CANVAS_EVENT_RELEASE_ROTATE_OBJECT,
   CANVAS_EVENT_RELEASE_NEW_ROI,
-  CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE, /* currently roi/fiducial only */
-  CANVAS_EVENT_RELEASE_ROTATE_ROI, 
+  CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE, /* currently roi/line_profie/fiducial only */
+  CANVAS_EVENT_RELEASE_ROTATE_OBJECT_IMMEDIATE, 
   CANVAS_EVENT_RELEASE_RESIZE_ROI, 
-  CANVAS_EVENT_RELEASE_ERASE_ISOCONTOUR, 
-  CANVAS_EVENT_RELEASE_LARGE_ERASE_ISOCONTOUR,  /* 40 */
-  CANVAS_EVENT_RELEASE_CHANGE_ISOCONTOUR,
+  CANVAS_EVENT_RELEASE_ERASE_ISOCONTOUR,
+  CANVAS_EVENT_RELEASE_LARGE_ERASE_ISOCONTOUR,  
+  CANVAS_EVENT_RELEASE_CHANGE_ISOCONTOUR,  /* 40 */
   CANVAS_EVENT_CANCEL_SHIFT_OBJECT, 
   CANVAS_EVENT_CANCEL_ROTATE_OBJECT,
   CANVAS_EVENT_ENACT_SHIFT_OBJECT,
@@ -134,6 +134,11 @@ static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer ca
 static void canvas_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer data);
 static void canvas_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer data);
 static void canvas_view_changed_cb(AmitkStudy * study, gpointer canvas);
+static void canvas_roi_preference_changed_cb(AmitkStudy * study, gpointer canvas);
+static void canvas_general_preference_changed_cb(AmitkStudy * study, gpointer canvas);
+static void canvas_line_profile_changed_cb(AmitkLineProfile * line_profile, gpointer data);
+static void canvas_target_preference_changed_cb(AmitkStudy * study, gpointer canvas);
+static void canvas_layout_preference_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_study_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_target_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_time_changed_cb(AmitkStudy * study, gpointer canvas);
@@ -153,7 +158,8 @@ static gboolean canvas_recalc_corners(AmitkCanvas * canvas);
 static void canvas_update_scrollbar(AmitkCanvas * canvas, AmitkPoint center, amide_real_t thickness);
 static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction action, 
 				 AmitkPoint center, amide_real_t thickness);
-static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_real_t thickness);
+static void canvas_update_arrows(AmitkCanvas * canvas);
+static void canvas_update_line_profile(AmitkCanvas * canvas);
 static void canvas_update_pixbuf(AmitkCanvas * canvas);
 static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object);
 static void canvas_update_objects(AmitkCanvas * canvas, gboolean all);
@@ -273,6 +279,7 @@ static void canvas_init (AmitkCanvas *canvas)
   /* initialize some critical stuff */
   for (i=0;i<4;i++) canvas->arrows[i]=NULL;
   for (i=0;i<8;i++) canvas->target[i]=NULL;
+  canvas->line_profile_item = NULL;
   canvas->type = AMITK_CANVAS_TYPE_NORMAL;
 
   canvas->volume = amitk_volume_new();
@@ -281,8 +288,6 @@ static void canvas_init (AmitkCanvas *canvas)
   canvas->center = zero_point;
 
   canvas->active_object = NULL;
-  canvas->maintain_size = FALSE;
-  canvas->target_empty_area = 0;
 
   canvas->canvas = NULL;
   canvas->slice_cache = NULL;
@@ -297,8 +302,6 @@ static void canvas_init (AmitkCanvas *canvas)
   canvas->study = NULL;
   canvas->undrawn_rois = NULL;
   canvas->object_items=NULL;
-
-  canvas->cursor_stack = NULL;
 
   canvas->next_update = 0;
   canvas->idle_handler_id = 0;
@@ -512,8 +515,42 @@ static void canvas_view_changed_cb(AmitkStudy * study, gpointer data) {
   } else if (coords_changed) {
     canvas_add_update(canvas, UPDATE_ARROWS);
     canvas_add_update(canvas, UPDATE_TARGET);
+    canvas_add_update(canvas, UPDATE_LINE_PROFILE);
   }
 
+  return;
+}
+
+static void canvas_roi_preference_changed_cb(AmitkStudy * study, gpointer data) {
+  AmitkCanvas * canvas = data;
+  canvas_add_update(canvas, UPDATE_OBJECTS); /* line_style, roi_width */
+  return;
+}
+
+static void canvas_general_preference_changed_cb(AmitkStudy * study, gpointer data) {
+  AmitkCanvas * canvas = data;
+  canvas_add_update(canvas, UPDATE_ALL); /* maintain_size */
+  return;
+}
+
+static void canvas_target_preference_changed_cb(AmitkStudy * study, gpointer data) {
+  AmitkCanvas * canvas = data;
+  canvas_add_update(canvas, UPDATE_TARGET); /* target_empty_area */
+  return;
+}
+
+static void canvas_layout_preference_changed_cb(AmitkStudy * study, gpointer data) {
+  AmitkCanvas * canvas = data;
+  amitk_space_set_view_space(AMITK_SPACE(canvas->volume), canvas->view, 
+			     AMITK_STUDY_CANVAS_LAYOUT(canvas->study));
+  canvas_recalc_corners(canvas); /* make sure everything's specified correctly */
+  canvas_update_setup(canvas);
+  return;
+}
+
+static void canvas_line_profile_changed_cb(AmitkLineProfile * line_profile, gpointer data) {
+  AmitkCanvas * canvas = data;
+  canvas_add_update(canvas, UPDATE_LINE_PROFILE);
   return;
 }
 
@@ -593,7 +630,6 @@ static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer data) {
 
   return;
 }
-
 
 
 static void canvas_thresholding_changed_cb(AmitkDataSet * ds, gpointer data) {
@@ -763,7 +799,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
   amitk_roi_set_isocontour(roi, AMITK_DATA_SET(draw_on_ds), temp_voxel);
-  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+  ui_common_remove_wait_cursor(GTK_WIDGET(canvas));
 
   return;
 }
@@ -779,7 +815,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   rgba_t outline_color;
   GnomeCanvasPoints * points;
   canvas_event_t canvas_event_type;
-  AmitkObject * object=NULL;
+  GObject * object=NULL;
   AmitkCanvasPoint temp_cpoint[2];
   AmitkPoint temp_point[2];
   AmitkPoint shift;
@@ -824,7 +860,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     object = g_object_get_data(G_OBJECT(widget), "object");
   
   if (object == NULL) 
-    object = canvas->active_object; /* try the active object */
+    object = G_OBJECT(canvas->active_object); /* try the active object */
 
   g_return_val_if_fail(object != NULL, FALSE);
 
@@ -888,7 +924,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       
     } else if ((!grab_on) && (AMITK_IS_ROI(object)) && (event->button.button == 2)) {
       if (!AMITK_ROI_TYPE_ISOCONTOUR(object))
-	canvas_event_type = CANVAS_EVENT_PRESS_ROTATE_ROI;
+	canvas_event_type = CANVAS_EVENT_PRESS_ROTATE_OBJECT_IMMEDIATE;
       else if (event->button.state & GDK_SHIFT_MASK)
 	canvas_event_type = CANVAS_EVENT_PRESS_LARGE_ERASE_ISOCONTOUR;
       else
@@ -906,6 +942,12 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       
     } else if ((!grab_on) && (AMITK_IS_FIDUCIAL_MARK(object)) && (event->button.button == 1)) {
       canvas_event_type = CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE;
+
+    } else if ((!grab_on) && (AMITK_IS_LINE_PROFILE(object)) && (event->button.button == 1)) {
+      canvas_event_type = CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE;
+
+    } else if ((!grab_on) && (AMITK_IS_LINE_PROFILE(object)) && (event->button.button == 2)) {
+      canvas_event_type = CANVAS_EVENT_PRESS_ROTATE_OBJECT_IMMEDIATE;
 
     } else 
       canvas_event_type = CANVAS_EVENT_NONE;
@@ -943,7 +985,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       
     } else if (grab_on && (AMITK_IS_ROI(object)) && (event->motion.state & GDK_BUTTON2_MASK)) {
       if (!AMITK_ROI_TYPE_ISOCONTOUR(object))
-	canvas_event_type = CANVAS_EVENT_MOTION_ROTATE_ROI;
+	canvas_event_type = CANVAS_EVENT_MOTION_ROTATE_OBJECT;
       else if (event->motion.state & GDK_SHIFT_MASK)
 	canvas_event_type = CANVAS_EVENT_MOTION_LARGE_ERASE_ISOCONTOUR;
       else
@@ -956,6 +998,12 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
     } else if (grab_on && (AMITK_IS_FIDUCIAL_MARK(object)) && (event->motion.state & GDK_BUTTON1_MASK)) {
       canvas_event_type = CANVAS_EVENT_MOTION_SHIFT_OBJECT;
+
+    } else if (grab_on && (AMITK_IS_LINE_PROFILE(object)) && (event->motion.state & GDK_BUTTON1_MASK)) {
+      canvas_event_type = CANVAS_EVENT_MOTION_SHIFT_OBJECT;
+
+    } else if (grab_on && (AMITK_IS_LINE_PROFILE(object)) && (event->motion.state & GDK_BUTTON2_MASK)) {
+      canvas_event_type = CANVAS_EVENT_MOTION_ROTATE_OBJECT;
 
     } else 
       canvas_event_type = CANVAS_EVENT_MOTION;
@@ -1015,7 +1063,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       
     } else if ((AMITK_IS_ROI(object)) && (event->button.button == 2)) {
       if (!AMITK_ROI_TYPE_ISOCONTOUR(object))
-	canvas_event_type = CANVAS_EVENT_RELEASE_ROTATE_ROI;
+	canvas_event_type = CANVAS_EVENT_RELEASE_ROTATE_OBJECT_IMMEDIATE;
       else if (event->button.state & GDK_SHIFT_MASK)
 	canvas_event_type = CANVAS_EVENT_RELEASE_LARGE_ERASE_ISOCONTOUR;
       else 
@@ -1028,6 +1076,12 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
     } else if ((AMITK_IS_FIDUCIAL_MARK(object)) && (event->button.button == 1)) {      
       canvas_event_type = CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE;
+
+    } else if ((AMITK_IS_LINE_PROFILE(object)) && (event->button.button == 1)) {      
+      canvas_event_type = CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE;
+
+    } else if ((AMITK_IS_LINE_PROFILE(object)) && (event->button.button == 2)) {      
+      canvas_event_type = CANVAS_EVENT_RELEASE_ROTATE_OBJECT_IMMEDIATE;
 
     } else 
       canvas_event_type = CANVAS_EVENT_NONE;
@@ -1042,12 +1096,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     
   }
 
-  //  if ((canvas_event_type != CANVAS_EVENT_NONE) &&
-  //      (canvas_event_type != CANVAS_EVENT_MOTION))
-  //    g_print("event %d grab %d gdk %d\n", canvas_event_type, grab_on, event->type);
+  //    if ((canvas_event_type != CANVAS_EVENT_NONE) &&
+  //        (canvas_event_type != CANVAS_EVENT_MOTION))
+  //      g_print("%s event %d grab %d gdk %d\n", AMITK_IS_OBJECT(object) ? AMITK_OBJECT_NAME(object) : "line_profile", 
+  //  	    canvas_event_type, grab_on, event->type);
 
   /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_w2c_d(GNOME_CANVAS(canvas->canvas), event_cpoint.x, event_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  gnome_canvas_window_to_world(GNOME_CANVAS(canvas->canvas), event_cpoint.x, event_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  gnome_canvas_w2c_d(GNOME_CANVAS(canvas->canvas), canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
 
   /* Convert the event location info to real units */
   canvas_point = cp_2_p(canvas, canvas_cpoint);
@@ -1084,9 +1140,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       help_info = AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK;
       cursor_type =UI_CURSOR_FIDUCIAL_MARK_MODE;
       
-      
-    } else { /* ROI */
-      g_return_val_if_fail(AMITK_IS_ROI(object), FALSE);
+    } else if (AMITK_IS_ROI(object)) { 
       in_object = TRUE;
       cursor_type = UI_CURSOR_ROI_MODE;
       
@@ -1103,6 +1157,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	else
 	  help_info = AMITK_HELP_INFO_CANVAS_ROI;
       }
+
+    } else if (AMITK_IS_LINE_PROFILE(object)) {
+      in_object = TRUE;
+      help_info = AMITK_HELP_INFO_CANVAS_LINE_PROFILE;
+      cursor_type = UI_CURSOR_FIDUCIAL_MARK_MODE;
+
+    } else {
+      g_return_val_if_reached(FALSE);
     }
     
 
@@ -1117,36 +1179,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(cursor_type, GTK_WIDGET(canvas));
-    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, GINT_TO_POINTER(cursor_type));
     break;
 
     
     
  case CANVAS_EVENT_LEAVE:
-    if (canvas->cursor_stack != NULL) {
-      ui_common_remove_cursor(GPOINTER_TO_INT(canvas->cursor_stack->data), GTK_WIDGET(canvas)); 
-      canvas->cursor_stack = g_list_delete_link(canvas->cursor_stack, 
-						canvas->cursor_stack);
-    }
-
-    /* yes, do it twice if we're leaving the canvas, there's a bug where if the canvas gets 
-       covered by a menu, no GDK_LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
-    if ((AMITK_IS_DATA_SET(object) || (AMITK_IS_STUDY(object))) && (canvas->cursor_stack != NULL)) {
-      ui_common_remove_cursor(GPOINTER_TO_INT(canvas->cursor_stack->data), GTK_WIDGET(canvas)); 
-      canvas->cursor_stack = g_list_delete_link(canvas->cursor_stack, 
-						canvas->cursor_stack);
-    }
-
-    /* yep, we don't seem to get an EVENT_ENTER corresponding to the EVENT_LEAVE for a canvas_item */
-    if (in_object) {
-      if (AMITK_IS_STUDY(object))
-	help_info = AMITK_HELP_INFO_CANVAS_STUDY;
-      else /* DATA_SET */
-	help_info = AMITK_HELP_INFO_CANVAS_DATA_SET;
-      g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0, help_info, &base_point, 0.0);
-    }
-    in_object = FALSE;
-    break;
+   ui_common_place_cursor(UI_CURSOR_DEFAULT, GTK_WIDGET(canvas));
+   in_object = FALSE;
+   break;
 
   case CANVAS_EVENT_PRESS_MINIMIZE_VIEW:
   case CANVAS_EVENT_PRESS_RESIZE_VIEW:
@@ -1226,11 +1266,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 			      "x2", canvas_cpoint.x, "y2", canvas_cpoint.y,
 			      "fill_color", NULL,
 			      "outline_color_rgba", amitk_color_table_rgba_to_uint32(outline_color),
-			      "width_pixels", canvas->roi_width,
+			      "width_pixels", AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
 			      NULL);
       g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
       grab_on = TRUE;
-      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(canvas_item),
+      gnome_canvas_item_grab(canvas_item,
 			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
 			     ui_common_cursor[UI_CURSOR_ROI_MODE],
 			     event->button.time);
@@ -1250,10 +1290,12 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
   case CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE:
     previous_cpoint = canvas_cpoint;
-  case CANVAS_EVENT_PRESS_ROTATE_ROI:
+  case CANVAS_EVENT_PRESS_ROTATE_OBJECT_IMMEDIATE:
   case CANVAS_EVENT_PRESS_RESIZE_ROI:
 
-    if (AMITK_IS_FIDUCIAL_MARK(object)) 
+    if (AMITK_IS_LINE_PROFILE(object)) 
+      help_info = AMITK_HELP_INFO_CANVAS_LINE_PROFILE;
+    else if (AMITK_IS_FIDUCIAL_MARK(object)) 
       help_info = AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK;
     else if (AMITK_ROI_TYPE_ISOCONTOUR(object)) 
       help_info = AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI;
@@ -1262,7 +1304,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
     if (canvas_event_type == CANVAS_EVENT_PRESS_SHIFT_OBJECT_IMMEDIATE)
       cursor_type = UI_CURSOR_OBJECT_SHIFT;
-    else if (canvas_event_type == CANVAS_EVENT_PRESS_ROTATE_ROI)
+    else if (canvas_event_type == CANVAS_EVENT_PRESS_ROTATE_OBJECT_IMMEDIATE)
       cursor_type = UI_CURSOR_ROI_ROTATE;
     else /* CANVAS_EVENT_PRESS_RESIZE_ROI */
       cursor_type = UI_CURSOR_ROI_RESIZE;
@@ -1297,7 +1339,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     outline_color = amitk_color_table_outline_color(canvas_get_color_table(canvas), TRUE);
     canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)), 
 					gnome_canvas_line_get_type(),
-					"points", points, "width_pixels", canvas->roi_width,
+					"points", points, 
+					"width_pixels", AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
 					"fill_color_rgba", amitk_color_table_rgba_to_uint32(outline_color),
 					NULL);
     g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
@@ -1422,14 +1465,13 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		    AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
 
     diff_cpoint = canvas_point_sub(canvas_cpoint, previous_cpoint);
-    gnome_canvas_item_i2w(GNOME_CANVAS_ITEM(canvas_item)->parent, &diff_cpoint.x, &diff_cpoint.y);
-    gnome_canvas_item_move(GNOME_CANVAS_ITEM(canvas_item),diff_cpoint.x,diff_cpoint.y); 
+    gnome_canvas_item_i2w(canvas_item->parent, &diff_cpoint.x, &diff_cpoint.y);
+    gnome_canvas_item_move(canvas_item,diff_cpoint.x,diff_cpoint.y); 
     previous_cpoint = canvas_cpoint;
     break;
 
 
   case CANVAS_EVENT_MOTION_ROTATE_OBJECT:
-  case CANVAS_EVENT_MOTION_ROTATE_ROI: 
     {
       /* rotate button Pressed, we're rotating the object */
       /* note, I'd like to use the function "gnome_canvas_item_rotate"
@@ -1462,7 +1504,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       affine[3] = affine[0];
       affine[4] = (1.0-affine[0])*item_center.x+affine[1]*item_center.y;
       affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
-      gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(canvas_item),affine);
+      gnome_canvas_item_affine_absolute(canvas_item,affine);
     }
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_THETA, &base_point, theta*180.0/M_PI);
@@ -1521,7 +1563,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       axis[AMITK_AXIS_X]=AMITK_AXIS_X;
       temp_point[0] = 
 	amitk_axes_get_orthogonal_axis(AMITK_SPACE_AXES(canvas->volume), 
-				       canvas->view, canvas->layout, AMITK_AXIS_X);
+				       canvas->view, 
+				       AMITK_STUDY_CANVAS_LAYOUT(canvas->study), 
+				       AMITK_AXIS_X);
       for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
 	temp = fabs(point_dot_product(temp_point[0], amitk_space_get_axis(AMITK_SPACE(object), i_axis)));
 	if (temp > max) {
@@ -1534,7 +1578,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       max = 0.0;
       axis[AMITK_AXIS_Y]= (axis[AMITK_AXIS_X]+1 < AMITK_AXIS_NUM) ? axis[AMITK_AXIS_X]+1 : AMITK_AXIS_X;
       temp_point[0] = amitk_axes_get_orthogonal_axis(AMITK_SPACE_AXES(canvas->volume), 
-						     canvas->view, canvas->layout, AMITK_AXIS_Y);
+						     canvas->view, 
+						     AMITK_STUDY_CANVAS_LAYOUT(canvas->study), 
+						     AMITK_AXIS_Y);
       for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
 	temp = fabs(point_dot_product(temp_point[0], amitk_space_get_axis(AMITK_SPACE(object), i_axis)));
 	if (temp > max) {
@@ -1558,7 +1604,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	temp_point[0] = amitk_space_b2s(AMITK_SPACE(canvas->volume), temp_point[0]);
 	temp_point[0].z = 0.0;
 	temp_point[1] = amitk_axes_get_orthogonal_axis(AMITK_SPACE_AXES(canvas->volume),
-						       canvas->view, canvas->layout, i_axis);
+						       canvas->view, 
+						       AMITK_STUDY_CANVAS_LAYOUT(canvas->study), 
+						       i_axis);
 	temp_point[1] = amitk_space_b2s(AMITK_SPACE(canvas->volume), temp_point[1]);
 	temp_point[1].z = 0.0;
 	  
@@ -1589,7 +1637,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	- item_center.x*canvas_zoom.y*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.y*cos_r*sin_r;
       affine[5] = item_center.y - item_center.y*canvas_zoom.y*cos_r*cos_r 
 	- item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
-      gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(canvas_item),affine);
+      gnome_canvas_item_affine_absolute(canvas_item,affine);
     }
     break;
 
@@ -1599,7 +1647,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
     grab_on = FALSE;
-    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas->image), event->button.time);
+    gnome_canvas_item_ungrab(canvas->image, event->button.time);
     /* queue target cross redraw */
     amitk_canvas_update_target(canvas, AMITK_CANVAS_TARGET_ACTION_HIDE, base_point, 0.0);
 
@@ -1615,8 +1663,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     else
       corner = AMITK_VOLUME_Z_CORNER(canvas->volume);
 
-    g_signal_emit(G_OBJECT (canvas), canvas_signals[VIEW_CHANGED], 0,
-		  &center, corner);
+    g_signal_emit(G_OBJECT (canvas), canvas_signals[VIEW_CHANGED], 0, &center, corner);
     break;
 
   case CANVAS_EVENT_RELEASE_SHIFT_OBJECT:
@@ -1679,7 +1726,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     case AMITK_ROI_TYPE_CYLINDER:
     case AMITK_ROI_TYPE_BOX:
     case AMITK_ROI_TYPE_ELLIPSOID:  
-      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_item), event->button.time);
+      gnome_canvas_item_ungrab(canvas_item, event->button.time);
 
       diff_point = point_diff(initial_canvas_point, canvas_point);
       diff_point.z = canvas_check_z_dimension(canvas, AMITK_VOLUME_Z_CORNER(canvas->volume));
@@ -1722,7 +1769,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     }
 
     
-    canvas_add_object_update(canvas, object); /* add this object for updating */
+    canvas_add_object_update(canvas, AMITK_OBJECT(object)); /* add this object for updating */
 
     break;
 
@@ -1730,47 +1777,47 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
   case CANVAS_EVENT_RELEASE_SHIFT_OBJECT_IMMEDIATE:
-    {
-      gboolean changed = FALSE;
-
-      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
-      grab_on = FALSE;
-      shift = point_sub(base_point, initial_base_point);
-      
-      /* ------------- apply any shift done -------------- */
-      center = base_point; 
+    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    grab_on = FALSE;
+    shift = point_sub(base_point, initial_base_point);
+    
+    /* ------------- apply any shift done -------------- */
+    if (!POINT_EQUAL(shift, zero_point)) {
       if (AMITK_IS_FIDUCIAL_MARK(object)) {
-	if (!POINT_EQUAL(AMITK_FIDUCIAL_MARK_GET(object), base_point)) {
-	  amitk_fiducial_mark_set(AMITK_FIDUCIAL_MARK(object), 
-				  point_add(shift, AMITK_FIDUCIAL_MARK_GET(object)));
-	  changed = TRUE;
-	  center = AMITK_FIDUCIAL_MARK_GET(object);
-	}
-      } else {
-	if (!POINT_EQUAL(shift, zero_point)) {
-	  amitk_space_shift_offset(AMITK_SPACE(object), shift);
-	  changed = TRUE;
-	  center = amitk_volume_get_center(AMITK_VOLUME(object));
-	}
-      }
-
-      /* if we did the move, reset the view center to where the point is */
-      if (changed)
-	g_signal_emit(G_OBJECT (canvas), canvas_signals[VIEW_CHANGED], 0,
-		      &center, AMITK_VOLUME_Z_CORNER(canvas->volume));
+	amitk_fiducial_mark_set(AMITK_FIDUCIAL_MARK(object), 
+				point_add(shift, AMITK_FIDUCIAL_MARK_GET(object)));
+	center = AMITK_FIDUCIAL_MARK_GET(object);
+      } else if (AMITK_IS_ROI(object)) {
+	amitk_space_shift_offset(AMITK_SPACE(object), shift);
+	center = amitk_volume_get_center(AMITK_VOLUME(object));
+      } else if (AMITK_IS_LINE_PROFILE(object)) {
+	center = point_add(shift, canvas->center);
+	/* make sure it stays in bounds */
+	center = amitk_volume_place_in_bounds(canvas->volume, center);
+      } else
+	g_return_val_if_reached(FALSE);
+      
+      g_signal_emit(G_OBJECT (canvas), canvas_signals[VIEW_CHANGED], 0,
+		    &center, AMITK_VOLUME_Z_CORNER(canvas->volume));
     }
     break;
 
 
-  case CANVAS_EVENT_RELEASE_ROTATE_ROI:
+  case CANVAS_EVENT_RELEASE_ROTATE_OBJECT_IMMEDIATE:
     gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
     grab_on = FALSE;
-    if (canvas->view == AMITK_VIEW_SAGITTAL) theta = -theta; /* compensate for sagittal being left-handed coord frame */
+    if (canvas->view == AMITK_VIEW_SAGITTAL) theta = -theta; /* sagittal is a left-handed coord frame */
     
     /* now rotate the roi coordinate space axis */
-    amitk_space_rotate_on_vector(AMITK_SPACE(object), 
-				 amitk_space_get_axis(AMITK_SPACE(canvas->volume), AMITK_AXIS_Z), 
-				 theta, amitk_volume_get_center(AMITK_VOLUME(object)));
+    if (AMITK_IS_ROI(object)) {
+      amitk_space_rotate_on_vector(AMITK_SPACE(object), 
+				   amitk_space_get_axis(AMITK_SPACE(canvas->volume), AMITK_AXIS_Z), 
+				   theta, amitk_volume_get_center(AMITK_VOLUME(object)));
+    } else if (AMITK_IS_LINE_PROFILE(object)) {
+      amitk_line_profile_set_angle(AMITK_LINE_PROFILE(object), theta+AMITK_LINE_PROFILE_ANGLE(object));
+
+    } else
+      g_return_val_if_reached(FALSE); /* shouldn't get here */
     break;
 
 
@@ -1852,7 +1899,7 @@ static gboolean canvas_recalc_corners(AmitkCanvas * canvas) {
   if (canvas->study == NULL) return FALSE; 
 
   /* what volumes are we looking at - ignore ROI's */
-  if (canvas->maintain_size) {
+  if (AMITK_STUDY_CANVAS_MAINTAIN_SIZE(canvas->study)) {
     volumes = amitk_object_get_children_of_type(AMITK_OBJECT(canvas->study), 
 						AMITK_OBJECT_TYPE_DATA_SET,
 						TRUE);
@@ -2005,8 +2052,8 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   point1 = p_2_cp(canvas, end);
 
   separation = (point1.x - point0.x)/2.0;
-  if (separation < canvas->target_empty_area)
-    separation = canvas->target_empty_area-separation;
+  if (separation < AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(canvas->study))
+    separation = AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(canvas->study)-separation;
   else
     separation = 0.0;
     
@@ -2097,12 +2144,13 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
 
 
 /* function to update the arrows on the canvas */
-static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_real_t thickness) {
+static void canvas_update_arrows(AmitkCanvas * canvas) {
 
   GnomeCanvasPoints * points[4];
   AmitkCanvasPoint point0, point1;
   AmitkPoint start, end;
   gint i;
+  amide_real_t thickness;
 
   if (canvas->type == AMITK_CANVAS_TYPE_FLY_THROUGH) return;
 
@@ -2114,10 +2162,11 @@ static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_
   }
 
   /* figure out the dimensions of the view "box" */
-  start = amitk_space_b2s(AMITK_SPACE(canvas->volume), center);
+  thickness= AMITK_VOLUME_Z_CORNER(canvas->volume);
+  start = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
   start.x -= thickness/2.0;
   start.y -= thickness/2.0;
-  end = amitk_space_b2s(AMITK_SPACE(canvas->volume), center);
+  end = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
   end.x += thickness/2.0;
   end.y += thickness/2.0;
   
@@ -2194,6 +2243,160 @@ static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_
 }
 
 
+/* function to update the line profile on the canvas */
+static void canvas_update_line_profile(AmitkCanvas * canvas) {
+
+  GnomeCanvasPoints * points;
+  AmitkCanvasPoint point0, point1;
+  AmitkPoint start, end;
+  amide_real_t temp;
+  amide_real_t profile_angle;
+  gint roi_width;
+  GdkLineStyle line_style;
+  guint32 fill_color_rgba;
+  rgba_t outline_color;
+  AmitkLineProfile * line_profile;
+  gdouble affine[6];
+  AmitkPoint initial;
+  
+
+  if (canvas->type == AMITK_CANVAS_TYPE_FLY_THROUGH) return;
+  line_profile = AMITK_STUDY_LINE_PROFILE(canvas->study);
+
+  /* figure out if we need to hide it */
+  if ((canvas->view != AMITK_LINE_PROFILE_VIEW(line_profile)) ||
+      (!AMITK_LINE_PROFILE_VISIBLE(line_profile))) {
+    if (canvas->line_profile_item != NULL)
+      gnome_canvas_item_hide(canvas->line_profile_item);
+    return;
+  }
+
+  /* sanity check */
+  g_return_if_fail(amitk_volume_point_in_bounds(canvas->volume, canvas->center));
+
+
+  initial = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
+
+  profile_angle = AMITK_LINE_PROFILE_ANGLE(line_profile);
+  if (canvas->view == AMITK_VIEW_SAGITTAL) profile_angle = -profile_angle; /* sagittal is a left-handed coord frame */
+
+  /* z location's easy */
+  start.z = end.z = initial.z; 
+
+  /* x locations */
+  if (REAL_EQUAL(profile_angle, M_PI/2.0)) { /* 90 degrees */
+    start.x = end.x = initial.x;
+  } else if (REAL_EQUAL(profile_angle, 0) || REAL_EQUAL(profile_angle, M_PI)) { /* 0, 180 degrees */
+    start.x = 0;
+    end.x = AMITK_VOLUME_X_CORNER(canvas->volume);
+  } else { /* everything else */
+    start.x = initial.x - initial.y/tan(profile_angle);
+    end.x = initial.x + (AMITK_VOLUME_Y_CORNER(canvas->volume)-initial.y)/tan(profile_angle);
+  }
+  if (start.x < 0.0) 
+    start.x = 0.0;
+  else if (start.x > AMITK_VOLUME_X_CORNER(canvas->volume)) 
+    start.x = AMITK_VOLUME_X_CORNER(canvas->volume);
+  if (end.x < 0.0) 
+    end.x = 0.0;
+  else if (end.x > AMITK_VOLUME_X_CORNER(canvas->volume)) 
+    end.x = AMITK_VOLUME_X_CORNER(canvas->volume);
+  if (profile_angle < 0.0) {
+    temp = start.x;
+    start.x = end.x;
+    end.x = temp;
+  }
+
+  /* y locations */
+  if (REAL_EQUAL(profile_angle, M_PI/2.0)) { /* 90 degrees */
+    start.y = 0;
+    end.y = AMITK_VOLUME_Y_CORNER(canvas->volume);
+  } else if (REAL_EQUAL(profile_angle, 0) || REAL_EQUAL(profile_angle, M_PI)) { /* 0, 180 degrees */
+    start.y = end.y = initial.y;
+  } else { /* everything else */
+    start.y = initial.y - initial.x*tan(profile_angle);
+    end.y = initial.y + (AMITK_VOLUME_X_CORNER(canvas->volume)-initial.x)*tan(profile_angle);
+  }
+  if (start.y < 0.0) 
+    start.y = 0.0;
+  else if (start.y > AMITK_VOLUME_Y_CORNER(canvas->volume)) 
+    start.y = AMITK_VOLUME_Y_CORNER(canvas->volume);
+  if (end.y < 0.0) 
+    end.y = 0.0;
+  else if (end.y > AMITK_VOLUME_Y_CORNER(canvas->volume)) 
+    end.y = AMITK_VOLUME_Y_CORNER(canvas->volume);
+  if (fabs(profile_angle) > M_PI/2) {
+    temp = start.y;
+    start.y = end.y;
+    end.y = temp;
+  }
+    
+
+  /* get the canvas locations corresponding to the start and end coordinates */
+  point0 = p_2_cp(canvas, start);
+  point1 = p_2_cp(canvas, end);
+
+  /* record our start and end */
+  start = amitk_space_s2b(AMITK_SPACE(canvas->volume), start);
+  amitk_line_profile_set_start_point(AMITK_STUDY_LINE_PROFILE(canvas->study), start);
+  end = amitk_space_s2b(AMITK_SPACE(canvas->volume), end);
+  amitk_line_profile_set_end_point(AMITK_STUDY_LINE_PROFILE(canvas->study), end);
+
+  /* calculate the line */
+  points = gnome_canvas_points_new(2);
+  points->coords[0] = point0.x;
+  points->coords[1] = point0.y;
+  points->coords[2] = point1.x;
+  points->coords[3] = point1.y;
+
+
+  roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study);
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+  line_style = AMITK_STUDY_CANVAS_LINE_STYLE(canvas->study);
+#endif
+  outline_color = amitk_color_table_outline_color(canvas_get_color_table(canvas), TRUE);
+  fill_color_rgba = amitk_color_table_rgba_to_uint32(outline_color);
+
+  if (canvas->line_profile_item != NULL ) {
+    /* make sure to reset any affine translations we've done */
+    gnome_canvas_item_i2w_affine(canvas->line_profile_item,affine);
+    affine[0] = affine[3] = 1.0;
+    affine[1] = affine[2] = affine[4] = affine[5] = affine[6] = 0.0;
+    gnome_canvas_item_affine_absolute(canvas->line_profile_item,affine);
+
+    gnome_canvas_item_set(canvas->line_profile_item,
+			  "points",points, 
+			  "fill_color_rgba", fill_color_rgba,
+			  "width_pixels", roi_width, 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+			  "line_style", line_style,  
+#endif
+			  NULL);
+  } else {
+    canvas->line_profile_item = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
+			    gnome_canvas_line_get_type(),
+			    "points", points,
+			    "fill_color_rgba", fill_color_rgba,
+			    "width_pixels", roi_width,
+			    "last_arrowhead", TRUE,
+			    "arrow_shape_a", (gdouble) 6.0,
+			    "arrow_shape_b", (gdouble) 5.0,
+			    "arrow_shape_c", (gdouble) 4.0,
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+			    "line_style", line_style,
+#endif
+			    NULL);
+    g_object_set_data(G_OBJECT(canvas->line_profile_item), "object", line_profile);
+    g_signal_connect(G_OBJECT(canvas->line_profile_item), "event", G_CALLBACK(canvas_event_cb), canvas);
+  }
+
+  
+  gnome_canvas_item_show(canvas->line_profile_item);
+  gnome_canvas_points_unref(points);
+
+  return;
+}
 
 
 
@@ -2316,6 +2519,7 @@ static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
   amide_real_t pixel_dim;
 
   g_return_if_fail(object != NULL);
+  g_return_if_fail(canvas->study != NULL);
 
   item = canvas_find_item(canvas, object);
 
@@ -2332,8 +2536,9 @@ static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
 				      canvas->volume, object, item, pixel_dim,
 				      canvas->pixbuf_width, canvas->pixbuf_height,
 				      canvas->triangle_height,canvas->triangle_height,
-				      outline_color, canvas->roi_width,
-				      canvas->line_style);
+				      outline_color, 
+				      AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
+				      AMITK_STUDY_CANVAS_LINE_STYLE(canvas->study));
 
 
   if ((item == NULL) && (new_item != NULL)) {
@@ -2386,10 +2591,10 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 
     canvas->label = gtk_label_new(view_names[canvas->view]);
 
-#ifdef AMIDE_LIBGNOMECANVAS_OLD
-    canvas->canvas = gnome_canvas_new();
-#else
+#ifdef AMIDE_LIBGNOMECANVAS_AA
     canvas->canvas = gnome_canvas_new_aa();
+#else
+    canvas->canvas = gnome_canvas_new();
 #endif
 
     canvas->scrollbar_adjustment = gtk_adjustment_new(0.5, 0, 1, 1, 1, 1); /* junk values */
@@ -2401,7 +2606,7 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
   }
 
   /* pack it in based on what the layout is */
-  switch(canvas->layout) {
+  switch(AMITK_STUDY_CANVAS_LAYOUT(canvas->study)) {
 
 
   case AMITK_LAYOUT_ORTHOGONAL:
@@ -2468,7 +2673,7 @@ static void canvas_add_update(AmitkCanvas * canvas, guint update_type) {
   /* reslicing is slow, put up a wait cursor */
   /* don't use ui_common_place_cursor, as this has a gtk_main_iteration call... */
   if ((update_type & UPDATE_DATA_SETS) && !(canvas->next_update & UPDATE_DATA_SETS)) 
-    ui_common_place_cursor_no_wait(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+    ui_common_place_cursor_no_wait(UI_CURSOR_WAIT,GTK_WIDGET(canvas));
 
   canvas->next_update = canvas->next_update | update_type;
 
@@ -2493,7 +2698,7 @@ static gboolean canvas_update_while_idle(gpointer data) {
   } 
   
   if (canvas->next_update & UPDATE_ARROWS) {
-    canvas_update_arrows(canvas, canvas->center, AMITK_VOLUME_Z_CORNER(canvas->volume));
+    canvas_update_arrows(canvas);
   }
   
   if (canvas->next_update & UPDATE_SCROLLBAR) {
@@ -2503,6 +2708,10 @@ static gboolean canvas_update_while_idle(gpointer data) {
   if (canvas->next_update & (UPDATE_OBJECTS | UPDATE_OBJECT)) {
     canvas_update_objects(canvas, (canvas->next_update & UPDATE_OBJECTS));
   } 
+
+  if (canvas->next_update & UPDATE_LINE_PROFILE) {
+    canvas_update_line_profile(canvas);
+  }
 
 
   if (canvas->next_update & UPDATE_TARGET) {
@@ -2514,7 +2723,7 @@ static gboolean canvas_update_while_idle(gpointer data) {
   canvas->idle_handler_id=0;
 
   if (canvas->next_update & UPDATE_DATA_SETS) /* remove the cursor on slow updates */
-    ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+    ui_common_remove_wait_cursor(GTK_WIDGET(canvas));
   canvas->next_update = UPDATE_NONE;
 
   return FALSE;
@@ -2555,6 +2764,12 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "voxel_dim_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "fuse_type_changed", G_CALLBACK(canvas_study_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "view_center_changed", G_CALLBACK(canvas_view_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "canvas_roi_preference_changed", G_CALLBACK(canvas_roi_preference_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "canvas_general_preference_changed", G_CALLBACK(canvas_general_preference_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "canvas_target_preference_changed", G_CALLBACK(canvas_target_preference_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "canvas_layout_preference_changed", G_CALLBACK(canvas_layout_preference_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(AMITK_STUDY_LINE_PROFILE(object)), 
+		     "line_profile_changed", G_CALLBACK(canvas_line_profile_changed_cb), canvas);
   } 
   if (AMITK_IS_VOLUME(object)) {
     g_signal_connect(G_OBJECT(object), "volume_changed", G_CALLBACK(canvas_volume_changed_cb), canvas);
@@ -2567,6 +2782,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "invalidate_slice_cache", G_CALLBACK(canvas_data_set_invalidate_slice_cache), canvas);
     g_signal_connect(G_OBJECT(object), "interpolation_changed", G_CALLBACK(canvas_data_set_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholding_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "thresholds_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(canvas_color_table_changed_cb), canvas);
     canvas->max_slice_cache_size += 3;
   }
@@ -2624,6 +2840,12 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_view_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_target_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_time_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_roi_preference_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_general_preference_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_target_preference_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_layout_preference_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(AMITK_STUDY_LINE_PROFILE(object)), 
+					 canvas_line_profile_changed_cb, canvas);
   }
   if (AMITK_IS_VOLUME(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_volume_changed_cb, canvas);
@@ -2659,26 +2881,19 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
 
 
 
-GtkWidget * amitk_canvas_new(AmitkView view, 
+GtkWidget * amitk_canvas_new(AmitkStudy * study,
+			     AmitkView view, 
 			     AmitkViewMode view_mode,
-			     AmitkLayout layout, 
-			     GdkLineStyle line_style,
-			     gint roi_width,
-			     AmitkCanvasType type,
-			     gboolean maintain_size,
-			     gint target_empty_area) {
+			     AmitkCanvasType type) {
 
   AmitkCanvas * canvas;
+
+  g_return_val_if_fail(AMITK_IS_STUDY(study), NULL);
 
   canvas = g_object_new(amitk_canvas_get_type(), NULL);
 
   canvas->view = view;
   canvas->view_mode = view_mode;
-  canvas->layout = layout;
-  canvas->line_style = line_style;
-  canvas->roi_width = roi_width;
-  canvas->maintain_size = maintain_size;
-  canvas->target_empty_area = target_empty_area;
 
   canvas->type = type;
   switch(type) {
@@ -2693,8 +2908,10 @@ GtkWidget * amitk_canvas_new(AmitkView view,
     break;
   }
 
-  amitk_space_set_view_space(AMITK_SPACE(canvas->volume), canvas->view, canvas->layout);
+  amitk_space_set_view_space(AMITK_SPACE(canvas->volume), canvas->view, 
+			     AMITK_STUDY_CANVAS_LAYOUT(study));
   
+  amitk_canvas_set_study(canvas, study);
   canvas_update_setup(canvas);
 
   return GTK_WIDGET (canvas);
@@ -2710,45 +2927,6 @@ void amitk_canvas_set_study(AmitkCanvas * canvas, AmitkStudy * study) {
   return;
 }
 
-void amitk_canvas_set_layout(AmitkCanvas * canvas, AmitkLayout new_layout) {
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-
-  canvas->layout = new_layout;
-
-  /* update the coord frame accordingly */
-  amitk_space_set_view_space(AMITK_SPACE(canvas->volume), canvas->view, canvas->layout);
-  canvas_recalc_corners(canvas); /* make sure everything's specified correctly */
-  canvas_update_setup(canvas);
-
-  return;
-}
-
-void amitk_canvas_set_general_properties(AmitkCanvas * canvas, 
-					 gboolean maintain_size) {
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-
-  if (maintain_size != canvas->maintain_size) {
-    canvas->maintain_size = maintain_size;
-    canvas_add_update(canvas, UPDATE_ALL);
-  }
-
-  return;
-}
-
-void amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
-					gint target_empty_area) {
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  canvas->target_empty_area = target_empty_area;
-  canvas_add_update(canvas, UPDATE_TARGET);
-
-  return;
-}
-
-
-
 void amitk_canvas_set_active_object(AmitkCanvas * canvas, 
 				    AmitkObject * active_object) {
 
@@ -2763,37 +2941,11 @@ void amitk_canvas_set_active_object(AmitkCanvas * canvas,
       canvas_add_update(canvas, UPDATE_DATA_SETS);
 
     canvas_add_update(canvas, UPDATE_TARGET);
+    canvas_add_update(canvas, UPDATE_LINE_PROFILE);
   }
 
   return;
 }
-
-void amitk_canvas_set_line_style(AmitkCanvas * canvas, 
-				 GdkLineStyle new_line_style) {
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-
-  if (canvas->line_style != new_line_style) {
-    canvas->line_style = new_line_style;
-    canvas_add_update(canvas, UPDATE_OBJECTS);
-  }
-
-  return;
-}
-
-void amitk_canvas_set_roi_width(AmitkCanvas * canvas, 
-				gint new_roi_width) {
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-
-  if (canvas->roi_width != new_roi_width) {
-    canvas->roi_width = new_roi_width;
-    canvas_add_update(canvas, UPDATE_OBJECTS);
-  }
-
-  return;
-}
-
 
 
 void amitk_canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction action, 

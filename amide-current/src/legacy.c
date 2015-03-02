@@ -107,8 +107,8 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar *
 
   if ((temp_string == NULL) || (error == EOF)) {
     return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
-		     descriptor, return_vp.x, return_vp.y, return_vp.z, return_vp.t);
+    amitk_append_str_with_newline(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
+				  descriptor, return_vp.x, return_vp.y, return_vp.z, return_vp.t);
   }
 
   return return_vp;
@@ -128,13 +128,15 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename, gchar **p
 
   /* parse the xml file */
   if ((doc = xmlParseFile(data_set_xml_filename)) == NULL) {
-    amitk_append_str(perror_buf,"Couldn't Parse AMIDE data_set xml file %s",data_set_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"Couldn't Parse AMIDE data_set xml file %s",
+				  data_set_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"Data Set xml file doesn't appear to have a root: %s", data_set_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"Data Set xml file doesn't appear to have a root: %s", 
+				  data_set_xml_filename);
     return NULL;
   }
 
@@ -186,13 +188,15 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **pe
 
   /* parse the xml file */
   if ((doc = xmlParseFile(pt_xml_filename)) == NULL) {
-    amitk_append_str(perror_buf, "Couldn't Parse AMIDE alignment point xml file %s",pt_xml_filename);
+    amitk_append_str_with_newline(perror_buf, "Couldn't Parse AMIDE alignment point xml file %s",
+				  pt_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"AMIDE alignment point xml file doesn't appear to have a root: %s",pt_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"AMIDE alignment point xml file doesn't appear to have a root: %s",
+				  pt_xml_filename);
     return NULL;
   }
 
@@ -270,17 +274,19 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 
   /* parse the xml file */
   if ((doc = xmlParseFile(volume_xml_filename)) == NULL) {
-    amitk_append_str(perror_buf,"Couldn't Parse AMIDE volume xml file %s",volume_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"Couldn't Parse AMIDE volume xml file %s",
+				  volume_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"AMIDE volume xml file doesn't appear to have a root: %s", volume_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"AMIDE volume xml file doesn't appear to have a root: %s", 
+				  volume_xml_filename);
     return NULL;
   }
 
-  new_volume = amitk_data_set_new();
+  new_volume = amitk_data_set_new(NULL, -1);
   new_volume->interpolation = interpolation;
 
   /* get the volume name */
@@ -327,12 +333,12 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
       AmitkRawData * old_scaling;
       AmitkVoxel i;
 
-      amitk_append_str(perror_buf,"wrong type found on internal scaling, converting to double");
+      amitk_append_str_with_newline(perror_buf,"wrong type found on internal scaling, converting to double");
       old_scaling = new_volume->internal_scaling;
 
       new_volume->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
       if (new_volume->internal_scaling == NULL) {
-	amitk_append_str(perror_buf,"couldn't allocate space for the new scaling structure");
+	amitk_append_str_with_newline(perror_buf,"couldn't allocate space for the new scaling structure");
 	amitk_object_unref(new_volume);
 	return NULL;
       }
@@ -357,7 +363,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     AmitkRawFormat i_raw_data_format, raw_data_format;
     AmitkVoxel temp_dim;
 
-    amitk_append_str(perror_buf,"no data_set file, will continue with the assumption of a .xif format previous to 1.4");
+    amitk_append_str_with_newline(perror_buf,"no data_set file, will continue with the assumption of a .xif format previous to 1.4");
 
     /* get the name of our associated data file */
     raw_data_filename = xml_get_string(nodes, "raw_data");
@@ -480,13 +486,13 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(roi_xml_filename)) == NULL) {
-    amitk_append_str(perror_buf,"Couldn't Parse AMIDE ROI xml file %s",roi_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"Couldn't Parse AMIDE ROI xml file %s",roi_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"AMIDE ROI xml file doesn't appear to have a root: %s", roi_xml_filename);
+    amitk_append_str_with_newline(perror_buf,"AMIDE ROI xml file doesn't appear to have a root: %s", roi_xml_filename);
     return NULL;
   }
   
@@ -584,23 +590,23 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
   
 
   /* warn that this is an old file version */
-  amitk_append_str(perror_buf,"A .xif file previous to file version 2.0 found.\n"
-		   "Invoking legacy loader, please resave file as soon as possible");
+  amitk_append_str_with_newline(perror_buf,"A .xif file previous to file version 2.0 found.\n"
+				"Invoking legacy loader, please resave file as soon as possible");
 
 
   /* parse the xml file */
   if ((doc = xmlParseFile("Study.xml")) == NULL) {
-    amitk_append_str(perror_buf,"Couldn't Parse AMIDE xml file:\n\tStudy.xml");
+    amitk_append_str_with_newline(perror_buf,"Couldn't Parse AMIDE xml file:\n\tStudy.xml");
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"AMIDE xml file doesn't appear to have a root:\n\tStudy.xml");
+    amitk_append_str_with_newline(perror_buf,"AMIDE xml file doesn't appear to have a root:\n\tStudy.xml");
     return NULL;
   }
 
-  study = amitk_study_new();
+  study = amitk_study_new(NULL);
 
   /* get the study name */
   temp_string = xml_get_string(nodes->children, "text");
@@ -658,7 +664,8 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
  
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
-    amitk_append_str(perror_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
+    amitk_append_str_with_newline(perror_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",
+				  AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
 
@@ -674,7 +681,7 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
     AmitkPoint new_offset;
     AmitkAxis i_axis;
 
-    amitk_append_str(perror_buf,"detected file version previous to 1.3, compensating for coordinate errors");
+    amitk_append_str_with_newline(perror_buf,"detected file version previous to 1.3, compensating for coordinate errors");
 
     view_center = AMITK_STUDY_VIEW_CENTER(study);
     view_center.y = -view_center.y;

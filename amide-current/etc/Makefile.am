@@ -12,7 +12,7 @@ Applications_DATA = $(Applications_in_files:.desktop.in=.desktop)
 @INTLTOOL_DESKTOP_RULE@
 
 DISTCLEANFILES = \
-	$(Applications_DATA)
+	$(Applications_DATA) \
 	*~ 	\
 	amide-*.info \
 	amide-*.iss

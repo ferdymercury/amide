@@ -33,7 +33,7 @@
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
-#include "medcon_import.h"
+#include "libmdc_interface.h"
 #include "pixmaps.h"
 #include "amide_limits.h"
 
@@ -42,22 +42,23 @@ static void fill_in_radioitem(GnomeUIInfo * item,
 			      const gchar * tooltip,
 			      gpointer cb_func,
 			      gpointer cb_data,
-			      gpointer xpm_data);
+			      const gpointer xpm_data);
 static void fill_in_toggleitem(GnomeUIInfo * item,
 			       const gchar * name,
 			       const gchar * tooltip,
 			       gpointer cb_func,
 			       gpointer cb_data,
-			       gpointer xpm_data);
+			       const gpointer xpm_data);
 static void fill_in_menuitem(GnomeUIInfo * item, 
 			     const gchar * name,
 			     const gchar * tooltip,
 			     gpointer cb_func,
 			     gpointer cb_data);
-static void fill_in_submenu(GnomeUIInfo * item, 
+/* static void fill_in_submenu(GnomeUIInfo * item, 
 			    const gchar * name,
 			    const gchar * tooltip,
 			    GnomeUIInfo * submenu);
+*/
 static void fill_in_end(GnomeUIInfo * item);
 
 /* function to fill in a radioitem */
@@ -66,7 +67,7 @@ static void fill_in_radioitem(GnomeUIInfo * item,
 			      const gchar * tooltip,
 			      gpointer cb_func,
 			      gpointer cb_data,
-			      gpointer xpm_data) {
+			      const gpointer xpm_data) {
   
   item->type = GNOME_APP_UI_ITEM;
   if (name != NULL)
@@ -91,7 +92,7 @@ static void fill_in_toggleitem(GnomeUIInfo * item,
 			       const gchar * tooltip,
 			       gpointer cb_func,
 			       gpointer cb_data,
-			       gpointer xpm_data) {
+			       const gpointer xpm_data) {
   fill_in_radioitem(item, name, tooltip, cb_func, cb_data, xpm_data);
   item->type = GNOME_APP_UI_TOGGLEITEM;
 
@@ -110,6 +111,7 @@ static void fill_in_menuitem(GnomeUIInfo * item,
   return;
 }
 
+/*not currently used
 static void fill_in_submenu(GnomeUIInfo * item, 
 			    const gchar * name,
 			    const gchar * tooltip,
@@ -128,6 +130,7 @@ static void fill_in_submenu(GnomeUIInfo * item,
 
   return;
 }
+*/
 
 /* functionto fill in the end of a menu */
 static void fill_in_end(GnomeUIInfo * item) {
@@ -151,30 +154,34 @@ static void fill_in_end(GnomeUIInfo * item) {
 void ui_study_menus_create(ui_study_t * ui_study) {
 
   AmitkView i_view;
-  AmitkImportMethod i_method;
+  AmitkImportMethod i_import_method;
+  AmitkImportMethod i_export_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
-  libmdc_import_method_t i_libmdc;
+  libmdc_import_t i_libmdc_import;
+  libmdc_export_t i_libmdc_export;
 #endif
   gint counter;
   AmitkRoiType i_roi_type;
 
 
 #ifdef AMIDE_LIBMDC_SUPPORT
-  GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS];
+  GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS+1];
+  GnomeUIInfo export_data_set_menu[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
 #else
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
+  GnomeUIInfo export_data_set_menu[AMITK_EXPORT_METHOD_NUM+1];
 #endif
 
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export, ui_study, NULL),
+			  ui_study_cb_export_view, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export, ui_study, NULL),
+			  ui_study_cb_export_view, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export, ui_study, NULL),
+			  ui_study_cb_export_view, ui_study, NULL),
     GNOMEUIINFO_END
   };
   
@@ -182,7 +189,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo file_menu[] = {
     GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Study"), 
 			      N_("Create a new study viewer window"),
-			      ui_study_cb_new_study, NULL),
+			      ui_study_cb_new_study, ui_study),
     GNOMEUIINFO_MENU_OPEN_ITEM(ui_study_cb_open_study, ui_study),
     GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_cb_save_as, ui_study),
     GNOMEUIINFO_SEPARATOR,
@@ -200,8 +207,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     //			  ui_study,NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_SUBTREE_HINT(N_("_Export View"),
-			     N_("Export one of the views to a data file"),
+			     N_("Export one of the views to a picture file"),
 			     export_view_menu),
+    GNOMEUIINFO_SUBTREE_HINT(N_("Export _Data Set"),
+			     N_("Export the active data set to the specified format"),
+			     export_data_set_menu),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
     GNOMEUIINFO_MENU_EXIT_ITEM(ui_study_cb_exit, ui_study),
@@ -313,10 +323,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("generate an mpeg fly through of the data sets"), 
 			     fly_through_menu),
 #endif
-    //    GNOMEUIINFO_ITEM_DATA(N_("Generate Line _Profile"),
-    //			  N_("allows generating a line profile between two fiducial marks"),
-    //			  ui_study_cb_profile_selected,
-    //			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("Generate Line _Profile"),
+    			  N_("allows generating a line profile between two fiducial marks"),
+    			  ui_study_cb_profile_selected,
+    			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("Calculate _ROI Statistics"),
 			  N_("caculate ROI statistics"),
 			  ui_study_cb_roi_statistics, ui_study, NULL),
@@ -347,30 +357,45 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   fill_in_end(&(add_roi_menu[AMITK_ROI_TYPE_NUM]));
 
   counter = 0;
-  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) {
+  for (i_import_method = AMITK_IMPORT_METHOD_RAW; i_import_method < AMITK_IMPORT_METHOD_NUM; i_import_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) {
-      for (i_libmdc = LIBMDC_GIF; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
-	if (medcon_import_supports(i_libmdc)) {
-	  fill_in_menuitem(&(import_specific_menu[counter]),
-			   libmdc_menu_names[i_libmdc],
-			   libmdc_menu_explanations[i_libmdc],
+    if (i_import_method == AMITK_IMPORT_METHOD_LIBMDC) {
+      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) 
+	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) 
+	  fill_in_menuitem(&(import_specific_menu[counter++]),
+			   libmdc_import_menu_names[i_libmdc_import],
+			   libmdc_import_menu_explanations[i_libmdc_import],
 			   ui_study_cb_import, ui_study);
-	  counter++;
-	}
-      }
     } else 
 #endif
-      {
-	fill_in_menuitem(&(import_specific_menu[counter]),
-			 amitk_import_menu_names[i_method],
-			 amitk_import_menu_explanations[i_method],
-			 ui_study_cb_import, ui_study);
-	counter++;
-      }
+      fill_in_menuitem(&(import_specific_menu[counter++]),
+		       amitk_import_menu_names[i_import_method],
+		       amitk_import_menu_explanations[i_import_method],
+		       ui_study_cb_import, ui_study);
+    
   }
   fill_in_end(&(import_specific_menu[counter]));
 
+  counter = 0;
+  for (i_export_method = AMITK_EXPORT_METHOD_RAW; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
+      for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) 
+	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) 
+	  fill_in_menuitem(&(export_data_set_menu[counter++]),
+			   libmdc_export_menu_names[i_libmdc_export],
+			   libmdc_export_menu_explanations[i_libmdc_export],
+			   ui_study_cb_export_data_set, ui_study);
+    
+    } else 
+#endif
+      fill_in_menuitem(&(export_data_set_menu[counter++]),
+		       amitk_export_menu_names[i_export_method],
+		       amitk_export_menu_explanations[i_export_method],
+		       ui_study_cb_export_data_set, ui_study);
+    
+  }
+  fill_in_end(&(export_data_set_menu[counter]));
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
@@ -378,25 +403,36 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   /* add some info to some of the menus 
      note: the "Importing guess" widget doesn't have data set, NULL == AMIDE_GUESS */ 
   counter = 0;
-  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) {
+  for (i_import_method = AMITK_IMPORT_METHOD_RAW; i_import_method < AMITK_IMPORT_METHOD_NUM; i_import_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) {
-      for (i_libmdc = LIBMDC_GIF; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
-	if (medcon_import_supports(i_libmdc)) {
+    if (i_import_method == AMITK_IMPORT_METHOD_LIBMDC) {
+      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) 
+	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) 
 	  g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
-			    "method", GINT_TO_POINTER(i_method));
-	  g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
-			    "submethod", GINT_TO_POINTER(i_libmdc));
-	  counter++;
-	}
-      }
+			    "method", GINT_TO_POINTER(i_import_method));
+	  g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
+			    "submethod", GINT_TO_POINTER(libmdc_import_to_format[i_libmdc_import]));
     } else 
 #endif
-      {
-	g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
-			  "method", GINT_TO_POINTER(i_method));
-	counter++;
-      }
+      g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
+			"method", GINT_TO_POINTER(i_import_method));
+  }
+
+  counter = 0;
+  for (i_export_method = 0; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
+      for (i_libmdc_export = 0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) 
+	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
+	  g_object_set_data(G_OBJECT(export_data_set_menu[counter].widget),
+			    "method", GINT_TO_POINTER(i_export_method));
+	  g_object_set_data(G_OBJECT(export_data_set_menu[counter++].widget),
+			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
+	}
+    } else
+#endif
+      g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
+			"method", GINT_TO_POINTER(i_export_method));
   }
   
   for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)
@@ -477,8 +513,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   /* start make the interpolation toolbar items*/
   for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
     fill_in_radioitem(&(interpolation_list[i_interpolation]),
-		      (icon_interpolation[i_interpolation] == NULL) ? 
-		      amitk_interpolation_get_name(i_interpolation) : NULL,
+		      (icon_interpolation[i_interpolation] == NULL) ? amitk_interpolation_get_name(i_interpolation) : NULL,
 		      amitk_interpolation_explanations[i_interpolation],
 		      ui_study_cb_interpolation,
 		      ui_study, 
@@ -499,8 +534,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   /* and the views */
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
     fill_in_toggleitem(&(canvas_visible_list[i_view]),
-		       (icon_view[i_view] == NULL) ? 
-		       amitk_view_get_name(i_view) : NULL,
+		       (icon_view[i_view] == NULL) ? amitk_view_get_name(i_view) : NULL,
 		       amitk_view_get_name(i_view),
 		       ui_study_cb_canvas_visible,
 		       ui_study,
@@ -510,8 +544,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   /* and the view modes */
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
     fill_in_radioitem(&(view_mode_list[i_view_mode]),
-		      (icon_view_mode[i_view_mode] == NULL) ? 
-		      view_mode_names[i_view_mode] : NULL,
+		      (icon_view_mode[i_view_mode] == NULL) ? view_mode_names[i_view_mode] : NULL,
 		      view_mode_explanations[i_view_mode],
 		      ui_study_cb_view_mode,
 		      ui_study, 

@@ -68,6 +68,10 @@ enum {
   VOXEL_DIM_CHANGED,
   FUSE_TYPE_CHANGED,
   VIEW_CENTER_CHANGED,
+  CANVAS_ROI_PREFERENCE_CHANGED,
+  CANVAS_GENERAL_PREFERENCE_CHANGED,
+  CANVAS_TARGET_PREFERENCE_CHANGED,
+  CANVAS_LAYOUT_PREFERENCE_CHANGED,
   LAST_SIGNAL
 };
 
@@ -201,6 +205,34 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, view_center_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
+  study_signals[CANVAS_ROI_PREFERENCE_CHANGED] =
+    g_signal_new ("canvas_roi_preference_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_roi_preference_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[CANVAS_GENERAL_PREFERENCE_CHANGED] =
+    g_signal_new ("canvas_general_preference_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_general_preference_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[CANVAS_TARGET_PREFERENCE_CHANGED] =
+    g_signal_new ("canvas_target_preference_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_target_preference_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[CANVAS_LAYOUT_PREFERENCE_CHANGED] =
+    g_signal_new ("canvas_layout_preference_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_layout_preference_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
 }
 
 
@@ -219,10 +251,20 @@ static void study_init (AmitkStudy * study) {
   study->zoom = 1.0;
   study->fuse_type = AMITK_FUSE_TYPE_BLEND;
   study->view_mode = AMITK_VIEW_MODE_SINGLE;
+  study->voxel_dim = 1.0;
   for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
     study->canvas_visible[i_view] = TRUE;
-  study->voxel_dim = 1.0;
   study->canvas_target = FALSE;
+
+  /* preferences for the canvas */
+  study->canvas_roi_width = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH;
+  study->canvas_line_style = AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE;
+  study->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
+  study->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
+  study->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
+
+  /* line profile stuff */
+  study->line_profile = amitk_line_profile_new();
 
   /* set the creation date as today */
   study->creation_date = NULL;
@@ -248,6 +290,11 @@ static void study_finalize (GObject * object) {
     study->filename = NULL;
   }
 
+  if (study->line_profile != NULL) {
+    g_free(study->line_profile);
+    study->line_profile = NULL;
+  }
+
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -258,7 +305,7 @@ static AmitkObject * study_copy (const AmitkObject * object) {
 
   g_return_val_if_fail(AMITK_IS_STUDY(object), NULL);
 
-  copy = amitk_study_new();
+  copy = amitk_study_new(NULL);
   amitk_object_copy_in_place(AMITK_OBJECT(copy), object);
 
   return AMITK_OBJECT(copy);
@@ -285,6 +332,16 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   dest_study->canvas_target = AMITK_STUDY_CANVAS_TARGET(src_object);
   for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
     dest_study->canvas_visible[i_view] = AMITK_STUDY_CANVAS_VISIBLE(src_object, i_view);
+
+  /* preferences */
+  dest_study->canvas_roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(src_object);
+  dest_study->canvas_line_style = AMITK_STUDY_CANVAS_LINE_STYLE(src_object);
+  dest_study->canvas_layout = AMITK_STUDY_CANVAS_LAYOUT(src_object);
+  dest_study->canvas_maintain_size = AMITK_STUDY_CANVAS_MAINTAIN_SIZE(src_object);
+  dest_study->canvas_target_empty_area = AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(src_object);
+
+  /* line profile */
+  amitk_line_profile_copy_in_place(dest_study->line_profile, AMITK_STUDY_LINE_PROFILE(src_object));
 
   /* make a separate copy in memory of the study's name and filename */
   amitk_study_set_filename(dest_study, AMITK_STUDY_FILENAME(src_object));
@@ -320,6 +377,13 @@ static void study_write_xml(const AmitkObject * object,xmlNodePtr nodes,  FILE *
   }
   xml_save_boolean(nodes, "canvas_target", AMITK_STUDY_CANVAS_TARGET(study));
 
+  /* preferences */
+  xml_save_int(nodes, "canvas_roi_width", AMITK_STUDY_CANVAS_ROI_WIDTH(study));
+  xml_save_int(nodes, "canvas_line_style", AMITK_STUDY_CANVAS_LINE_STYLE(study));
+  xml_save_string(nodes, "canvas_layout", amitk_layout_get_name(AMITK_STUDY_CANVAS_LAYOUT(study)));
+  xml_save_boolean(nodes, "canvas_maintain_size", AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study));
+  xml_save_int(nodes, "canvas_target_empty_area", AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(study));
+
   return;
 }
 
@@ -332,6 +396,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
   AmitkViewMode i_view_mode;
   gchar * temp_string;
   AmitkView i_view;
+  AmitkLayout i_layout;
   gboolean all_false;
 
   error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
@@ -349,28 +414,54 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
   amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration", &error_buf));
   amitk_study_set_zoom(study, xml_get_real(nodes, "zoom", &error_buf));
   amitk_study_set_canvas_target(study, xml_get_boolean(nodes, "canvas_target", &error_buf));
- 
+
+  /* preferences */
+  amitk_study_set_canvas_roi_width(study, 
+				   xml_get_int_with_default(nodes, "canvas_roi_width", 
+							    AMITK_STUDY_CANVAS_ROI_WIDTH(study)));  
+  amitk_study_set_canvas_line_style(study, 
+				    xml_get_int_with_default(nodes, "canvas_line_style",
+							     AMITK_STUDY_CANVAS_LINE_STYLE(study)));  
+  amitk_study_set_canvas_maintain_size(study, 
+				       xml_get_boolean_with_default(nodes, "canvas_maintain_size",
+								AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study)));  
+  amitk_study_set_canvas_target_empty_area(study,
+					   xml_get_int_with_default(nodes, "canvas_target_empty_area",
+								    AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(study)));
+
+  /* get layout */
+  temp_string = xml_get_string(nodes, "canvas_layout");
+  if (temp_string != NULL) {
+    for (i_layout=0; i_layout < AMITK_LAYOUT_NUM; i_layout++)
+      if (g_ascii_strcasecmp(temp_string, amitk_layout_get_name(i_layout)) == 0)
+	amitk_study_set_canvas_layout(study, i_layout);
+    g_free(temp_string);
+  }
+
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
-    amitk_append_str(&error_buf,_("inappropriate zoom (%5.3f) for study, reseting to 1.0"),AMITK_STUDY_ZOOM(study));
+    amitk_append_str_with_newline(&error_buf,_("inappropriate zoom (%5.3f) for study, reseting to 1.0"),
+				  AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
 
   /* figure out the fuse type */
   temp_string = xml_get_string(nodes, "fuse_type");
-  if (temp_string != NULL)
+  if (temp_string != NULL) {
     for (i_fuse_type=0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) 
       if (g_ascii_strcasecmp(temp_string, amitk_fuse_type_get_name(i_fuse_type)) == 0)
 	amitk_study_set_fuse_type(study, i_fuse_type);
-  g_free(temp_string);
+    g_free(temp_string);
+  }
 
   /* figure out the view mode */
   temp_string = xml_get_string(nodes, "view_mode");
-  if (temp_string != NULL)
+  if (temp_string != NULL) {
     for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
       if (g_ascii_strcasecmp(temp_string, amitk_view_mode_get_name(i_view_mode)) == 0)
 	amitk_study_set_view_mode(study, i_view_mode);
-  g_free(temp_string);
+    g_free(temp_string);
+  }
 
   /* figure out which canvases are visible */
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
@@ -439,11 +530,19 @@ static void study_remove_child(AmitkObject *object, AmitkObject *child) {
 
 
 
-AmitkStudy * amitk_study_new (void) {
+AmitkStudy * amitk_study_new (AmitkPreferences * preferences) {
 
   AmitkStudy * study;
 
   study = g_object_new(amitk_study_get_type(), NULL);
+
+  if (preferences != NULL) {
+    study->canvas_roi_width = AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences);
+    study->canvas_line_style = AMITK_PREFERENCES_CANVAS_LINE_STYLE(preferences);
+    study->canvas_layout = AMITK_PREFERENCES_CANVAS_LAYOUT(preferences);
+    study->canvas_maintain_size = AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(preferences);
+    study->canvas_target_empty_area = AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences);
+  }
 
   return study;
 }
@@ -634,7 +733,76 @@ void amitk_study_set_canvas_target(AmitkStudy * study, const gboolean always_on)
 
 }
 
+void amitk_study_set_canvas_roi_width(AmitkStudy * study, gint roi_width) {
 
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (roi_width < AMITK_PREFERENCES_MIN_ROI_WIDTH) 
+    roi_width = AMITK_PREFERENCES_MIN_ROI_WIDTH;
+  if (roi_width > AMITK_PREFERENCES_MAX_ROI_WIDTH) 
+    roi_width = AMITK_PREFERENCES_MAX_ROI_WIDTH;
+
+  if (AMITK_STUDY_CANVAS_ROI_WIDTH(study) != roi_width) {
+    study->canvas_roi_width = roi_width;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_ROI_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
+
+void amitk_study_set_canvas_line_style(AmitkStudy * study, const GdkLineStyle line_style){
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (AMITK_STUDY_CANVAS_LINE_STYLE(study) != line_style) {
+    study->canvas_line_style = line_style;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_ROI_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
+
+void amitk_study_set_canvas_layout(AmitkStudy * study, const AmitkLayout layout) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (AMITK_STUDY_CANVAS_LAYOUT(study) != layout) {
+    study->canvas_layout = layout;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_LAYOUT_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
+
+void amitk_study_set_canvas_maintain_size(AmitkStudy * study, const gboolean maintain_size){
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study) != maintain_size) {
+    study->canvas_maintain_size = maintain_size;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_GENERAL_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
+
+void amitk_study_set_canvas_target_empty_area(AmitkStudy * study, gint target_empty_area){
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  /* sanity checks */
+  if (target_empty_area < AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA) 
+    target_empty_area = AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA;
+  if (target_empty_area > AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA) 
+    target_empty_area = AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA;
+
+  if (AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(study) != target_empty_area) {
+    study->canvas_target_empty_area = target_empty_area;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_TARGET_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
 
 /* function to load in a study from disk in xml format */
 AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {

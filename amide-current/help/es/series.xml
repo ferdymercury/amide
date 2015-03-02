@@ -1,0 +1,16 @@
+
+<para>
+ En vez de examinar las vistas ortogonales , se pueden observar series
+ de cortes (todos en la misma orientaci&oacute;n). Seleccione:
+ "View->Series->Space->[view]" del men&uacute; para para extraer la serie de
+ cortes de una misma orientaci&oacute;n. Alternativamente, seleccione:
+ "View->Series->Time->[view]" desde el men&uacute; para ver un mismo corte a
+ lo largo del tiempo en un estudio din&aacute;mico. El grosor de los cortes
+ es el que hab&iacute;a antes de deplegar el menu. Una barra de desplazmiento
+ aparecera encima de la imagen para moverse por el volumen de
+ datos. Notese que una vez vistos los cortes quedan en la memoria lo
+ que hace que su revisi&oacute;n sea mucho m&aacute;s r&aacute;pida.
+</para>
+
+
+

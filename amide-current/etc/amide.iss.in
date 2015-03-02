@@ -4,8 +4,9 @@
 [Setup]
 AppName=@PACKAGE@
 AppVerName=@PACKAGE@-@VERSION@-1
-AppPublisher=@BUG-REPORT@
+AppPublisher=@PACKAGE_BUGREPORT@
 AppPublisherURL=http://amide.sourceforge.net
+AppCopyright=Copyright (C) 2004 Andreas Loening
 AppSupportURL=http://amide.sourceforge.net
 AppUpdatesURL=http://amide.sourceforge.net
 DefaultDirName={pf}\@PACKAGE@
@@ -18,8 +19,16 @@ OutputDir=Inno_Output
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
 
+[Registry]
+; This adds the GTK+ libraries to amide.exe's path
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; Flags: uninsdeletekeyifempty
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueData: "{app}\@PACKAGE@.exe"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app};{app}\bin;{code:GetGtkPath}\lib"; Flags: uninsdeletevalue
+
+
+
 [Files]
-Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\amide.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\amide.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\etc\*"; DestDir: "{app}\etc\"; Flags: ignoreversion recursesubdirs
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
@@ -27,7 +36,38 @@ Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\share\*";
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{app}\amide"; Filename: "{app}\bin\amide.exe"; IconFileName: "{app}\etc\amide.ico"
-Name: "{group}\amide"; Filename: "{app}\bin\amide.exe"; IconFileName: "{app}\etc\amide.ico"
-Name: "{userdesktop}\amide"; Filename: "{app}\bin\amide.exe"; IconFileName: "{app}\etc\amide.ico"; Tasks: desktopicon
+Name: "{app}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"
+Name: "{group}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"
+Name: "{userdesktop}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"; Tasks: desktopicon
 
+
+
+
+; CODE is taken from the example on the dropline page
+[Code]
+
+var
+  Exists: Boolean;
+  GtkPath: String;
+
+function GetGtkInstalled (): Boolean;
+begin
+  Exists := RegQueryStringValue (HKLM, 'Software\GTK\2.0', 'Path', GtkPath);
+  if not Exists then begin
+    Exists := RegQueryStringValue (HKCU, 'Software\GTK\2.0', 'Path', GtkPath);
+  end;
+   Result := Exists
+end;
+
+function GetGtkPath (S: String): String;
+begin
+    Result := GtkPath;
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := GetGtkInstalled ();
+  if not Result then begin
+    MsgBox ('Please install the GTK+ 2.0 Runtime Environment before installing AMIDE.  You can obtain GTK+ from http://www.dropline.net/gtk.', mbError, MB_OK);
+  end;
+end;

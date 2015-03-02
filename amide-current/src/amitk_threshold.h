@@ -43,6 +43,8 @@ G_BEGIN_DECLS
 #define AMITK_IS_THRESHOLD(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLD))
 #define AMITK_IS_THRESHOLD_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD))
 
+#define AMITK_THRESHOLD_SPIN_BUTTON_DIGITS 4 /* how many digits after the decimal point */
+
 typedef struct _AmitkThreshold             AmitkThreshold;
 typedef struct _AmitkThresholdClass        AmitkThresholdClass;
 
@@ -80,8 +82,6 @@ typedef enum {
     AMITK_THRESHOLD_LINEAR_LAYOUT
 } AmitkThresholdLayout;
 
-
-
 struct _AmitkThreshold
 {
   GtkVBox vbox;
@@ -102,11 +102,12 @@ struct _AmitkThreshold
   GtkWidget * full_label[2];
   GtkWidget * scaled_label[2];
   GtkWidget * type_button[AMITK_THRESHOLDING_NUM];
+  GtkWidget * window_label;
+  GtkWidget * window_hbox;
 
   gdouble initial_y[2];
   amide_data_t initial_min[2];
   amide_data_t initial_max[2];
-  guint visible_refs;
 
   amide_data_t threshold_max[2]; 
   amide_data_t threshold_min[2]; 
@@ -193,6 +194,7 @@ struct _AmitkThresholdsDialogClass
 
 GType      amitk_thresholds_dialog_get_type   (void);
 GtkWidget* amitk_thresholds_dialog_new        (GList * objects, GtkWindow * parent);
+
 
 
 G_END_DECLS

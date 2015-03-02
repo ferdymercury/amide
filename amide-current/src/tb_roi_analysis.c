@@ -41,12 +41,11 @@
 #include "tb_roi_analysis.h"
 
 
-#define AMITK_RESPONSE_SAVE_AS 3
-#define ROI_STATISTICS_WIDTH 1100
+#define ROI_STATISTICS_WIDTH 950
 
+/* keep in sync with array below */
 typedef enum {
   COLUMN_ROI_NAME,
-  COLUMN_ROI_TYPE,
   COLUMN_DATA_SET_NAME,
   COLUMN_FRAME,
   COLUMN_DURATION,
@@ -56,7 +55,6 @@ typedef enum {
   COLUMN_MEAN,
   COLUMN_VAR,
   COLUMN_STD_DEV,
-  COLUMN_STD_ERR,
   COLUMN_MIN,
   COLUMN_MAX,
   COLUMN_SIZE,
@@ -65,19 +63,35 @@ typedef enum {
   NUM_ANALYSIS_COLUMNS,
 } column_t;
 
+static gboolean column_use_my_renderer[NUM_ANALYSIS_COLUMNS] = {
+  FALSE,
+  FALSE,
+  FALSE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  TRUE,
+  FALSE,
+};
+
 static gchar * analysis_titles[] = {
   N_("ROI"),
-  N_("Type"),
   N_("Data Set"),
   N_("Frame"),
   N_("Duration (s)"),
-  N_("Time Midpt (s)"),
+  N_("Midpt (s)"),
   N_("Total"),
   N_("Median"),
   N_("Mean"),
   N_("Var"),
   N_("Std Dev"),
-  N_("Std Err"),
   N_("Min"),
   N_("Max"),
   N_("Size (mm^3)"),
@@ -89,6 +103,7 @@ static gchar * analysis_titles[] = {
 static void export_ok_cb(GtkWidget* widget, gpointer data);
 static void export_data(analysis_roi_t * roi_analyses);
 static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses);
+static gchar * analyses_as_string(analysis_roi_t * roi_analyses);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void add_pages(GtkWidget * notebook, AmitkStudy * study,
@@ -145,7 +160,7 @@ static void export_data(analysis_roi_t * roi_analyses) {
     analysis_name = temp_string;
     temp_analyses= temp_analyses->next_roi_analysis;
   }
-  temp_string = g_strdup_printf("%s}.csv",analysis_name);
+  temp_string = g_strdup_printf("%s}.tsv",analysis_name);
   g_free(analysis_name);
   analysis_name = temp_string;
   ui_common_file_selection_set_filename(file_selection, analysis_name);
@@ -173,7 +188,6 @@ static void export_data(analysis_roi_t * roi_analyses) {
 
   return;
 }
-
 
 static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses) {
 
@@ -204,28 +218,28 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
     if (roi_analyses->subfraction < 1.0)
-      fprintf(file_pointer, _("#\tCalculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction);
+      fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction);
     else
-      fprintf(file_pointer, _("#\tCalculation done with all voxels in ROI\n"));
+      fprintf(file_pointer, _("#   Calculation done with all voxels in ROI\n"));
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
 
-      fprintf(file_pointer, _("#\tData Set:\t%s\tScaling Factor:\t%g\n"),
+      fprintf(file_pointer, _("#   Data Set:\t%s\tScaling Factor:\t%g\n"),
 	      AMITK_OBJECT_NAME(volume_analyses->data_set),
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
 
       switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
       case AMITK_CONVERSION_PERCENT_ID_PER_G:
       case AMITK_CONVERSION_SUV:
-	fprintf(file_pointer, _("#\t\tOutput Data Units: %s\n"),
+	fprintf(file_pointer, _("#      Output Data Units: %s\n"),
 		amitk_conversion_names[AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)]);
-	fprintf(file_pointer, _("#\t\t\tInjected Dose: %g [%s]\n"),
+	fprintf(file_pointer, _("#         Injected Dose: %g [%s]\n"),
 		amitk_dose_unit_convert_to(AMITK_DATA_SET_INJECTED_DOSE(volume_analyses->data_set),
 					   AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)),
 		amitk_dose_unit_names[AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)]);
-	fprintf(file_pointer, _("#\t\t\tCylinder Factor: %g [%s]\n"),
+	fprintf(file_pointer, _("#         Cylinder Factor: %g [%s]\n"),
  		amitk_cylinder_unit_convert_to(AMITK_DATA_SET_CYLINDER_FACTOR(volume_analyses->data_set),
 					       AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)),
 		amitk_cylinder_unit_names[AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)]);
@@ -236,7 +250,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 
       switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
       case AMITK_CONVERSION_SUV:
-	fprintf(file_pointer, _("#\t\t\tSubject Weight: %g [%s]\n"),
+	fprintf(file_pointer, _("#         Subject Weight: %g [%s]\n"),
  		amitk_weight_unit_convert_to(AMITK_DATA_SET_SUBJECT_WEIGHT(volume_analyses->data_set),
 					       AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)),
 		amitk_weight_unit_names[AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)]);
@@ -246,7 +260,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       }
 
       if (!title_printed) {
-	fprintf(file_pointer, "#\t\t%s", analysis_titles[COLUMN_FRAME]);
+	fprintf(file_pointer, "#   %s", analysis_titles[COLUMN_FRAME]);
 	for (i=COLUMN_FRAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
 	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
 	fprintf(file_pointer, "\n");
@@ -259,7 +273,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
       while (frame_analyses != NULL) {
-	fprintf(file_pointer, "\t\t%d", frame);
+	fprintf(file_pointer, "    %5d", frame);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->duration);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->time_midpoint);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->total);
@@ -267,12 +281,11 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	fprintf(file_pointer, "\t% 12g", frame_analyses->mean);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->var);
 	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var));
-	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var/frame_analyses->voxels));
 	fprintf(file_pointer, "\t% 12g", frame_analyses->min);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->max);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->fractional_voxels*voxel_volume);
 	fprintf(file_pointer, "\t% 12.2f", frame_analyses->fractional_voxels);
-	fprintf(file_pointer, "\t% d", frame_analyses->voxels);
+	fprintf(file_pointer, "\t% 12d", frame_analyses->voxels);
 	fprintf(file_pointer, "\n");
 
 	frame_analyses = frame_analyses->next_frame_analysis;
@@ -285,30 +298,104 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   }
 
 
-    
-
   fclose(file_pointer);
 
   return;
+}
+
+static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
+
+  gchar * roi_stats;
+  time_t current_time;
+  analysis_volume_t * volume_analyses;
+  analysis_frame_t * frame_analyses;
+  guint frame;
+  guint i;
+  amide_real_t voxel_volume;
+  AmitkPoint voxel_size;
+
+  /* intro information */
+  time(&current_time);
+  roi_stats = g_strdup_printf(_("# Stats for Study: %s\tGenerated on: %s"),
+			      AMITK_OBJECT_NAME(roi_analyses->study), ctime(&current_time));
+  
+  /* print the titles */
+  amitk_append_str(&roi_stats,"%12s", analysis_titles[COLUMN_ROI_NAME]);
+  for (i=COLUMN_ROI_NAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
+    amitk_append_str(&roi_stats,"\t%12s", analysis_titles[i]);
+  amitk_append_str(&roi_stats,"\n");
+
+  /* print the stats */
+  while (roi_analyses != NULL) {
+    volume_analyses = roi_analyses->volume_analyses;
+
+    while (volume_analyses != NULL) {
+
+      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
+      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
+
+      frame_analyses = volume_analyses->frame_analyses;
+      frame = 0;
+
+      while (frame_analyses != NULL) {
+	amitk_append_str(&roi_stats, "%12s\t%12s",
+			 AMITK_OBJECT_NAME(roi_analyses->roi),
+			 AMITK_OBJECT_NAME(volume_analyses->data_set));
+
+	amitk_append_str(&roi_stats, "\t% 12d", frame);
+	amitk_append_str(&roi_stats, "\t% 12.3f", frame_analyses->duration);
+	amitk_append_str(&roi_stats, "\t% 12.3f", frame_analyses->time_midpoint);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->total);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->median);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->mean);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->var);
+	amitk_append_str(&roi_stats, "\t% 12g", sqrt(frame_analyses->var));
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->min);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->max);
+	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->fractional_voxels*voxel_volume);
+	amitk_append_str(&roi_stats, "\t% 12.2f", frame_analyses->fractional_voxels);
+	amitk_append_str(&roi_stats, "\t% 12d\n", frame_analyses->voxels);
+
+	frame_analyses = frame_analyses->next_frame_analysis;
+	frame++;
+      }
+      volume_analyses = volume_analyses->next_volume_analysis;
+    }
+    roi_analyses = roi_analyses->next_roi_analysis;
+  }
+
+
+  return roi_stats;
 }
 
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
   analysis_roi_t * roi_analyses = data;
   gint return_val;
+  GtkClipboard * clipboard;
+  gchar * roi_stats;
 
   switch(response_id) {
   case AMITK_RESPONSE_SAVE_AS:
     export_data(roi_analyses);
     break;
 
+  case AMITK_RESPONSE_COPY:
+    roi_stats = analyses_as_string(roi_analyses);
+
+    /* fill in select/button2 clipboard (X11) */
+    clipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+    gtk_clipboard_set_text(clipboard, roi_stats, -1);
+
+   /* fill in copy/paste clipboard (Win32 and Gnome) */
+    clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    gtk_clipboard_set_text(clipboard, roi_stats, -1);
+
+    g_free(roi_stats);
+    break;
+
   case GTK_RESPONSE_HELP:
-#ifndef AMIDE_WIN32_HACKS
-    if (!gnome_help_display("amide.xml", "roi-terms", NULL)) 
-      g_warning("Failed to load help");
-#else
-    g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
-#endif
+    amide_call_help("roi-terms");
     break;
 
   case GTK_RESPONSE_CLOSE:
@@ -398,7 +485,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       gtk_widget_show(hbox);
 
       if (dynamic_data) {
-	/* tell use the type */
+	/* tell us the type */
 	label = gtk_label_new(_("type:"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	
@@ -431,11 +518,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       store = gtk_list_store_new(NUM_ANALYSIS_COLUMNS, 
 				 G_TYPE_STRING,
 				 G_TYPE_STRING,
-				 G_TYPE_STRING,
 				 G_TYPE_INT,
 				 AMITK_TYPE_TIME,
 				 AMITK_TYPE_TIME,
-				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
@@ -452,8 +537,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS; i_column++) {
 	display=TRUE;
 	if (dynamic_data) {
-	  if ((i_column == COLUMN_ROI_NAME) || 
-	      (i_column == COLUMN_ROI_TYPE))
+	  if (i_column == COLUMN_ROI_NAME)
 	    display = FALSE;
 	} else {
 	  if ((i_column == COLUMN_FRAME) || 
@@ -466,6 +550,10 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 	  renderer = gtk_cell_renderer_text_new ();
 	  column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
 							    "text", i_column, NULL);
+	  if (column_use_my_renderer[i_column]) 
+	    gtk_tree_view_column_set_cell_data_func(column, renderer,
+						    amitk_real_cell_data_func,
+						    GINT_TO_POINTER(i_column),NULL);
 	  gtk_tree_view_append_column (GTK_TREE_VIEW (list), column);
 	}
       }
@@ -480,12 +568,17 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
       
       /* iterate over the frames */
+      /* note, use to also include:
+   	                    COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels) 
+         but I'm pretty sure this is not strictly corrected for a weighted standard  error...  
+	 And most people won't (and shouldn't) be using this value anyway, as it's
+	 not the experimental standard error.
+      */
       frame = 0;
       while (frame_analyses != NULL) {
 	gtk_list_store_append (store, &iter);  /* Acquire an iterator */
 	gtk_list_store_set (store, &iter,
 			    COLUMN_ROI_NAME, AMITK_OBJECT_NAME(roi_analyses->roi),
-			    COLUMN_ROI_TYPE, amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)),
 			    COLUMN_DATA_SET_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
 			    COLUMN_FRAME, frame,
 			    COLUMN_DURATION, frame_analyses->duration,
@@ -495,7 +588,6 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 			    COLUMN_MEAN, frame_analyses->mean,
 			    COLUMN_VAR, frame_analyses->var,
 			    COLUMN_STD_DEV, sqrt(frame_analyses->var),
-			    COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels),
 			    COLUMN_MIN,frame_analyses->min,
 			    COLUMN_MAX,frame_analyses->max,
 			    COLUMN_SIZE,frame_analyses->fractional_voxels*voxel_volume,
@@ -605,6 +697,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
 				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
+				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
 				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
 				       NULL);

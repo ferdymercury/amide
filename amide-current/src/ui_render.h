@@ -48,7 +48,7 @@ typedef struct ui_render_t {
 #endif
   amide_time_t start;
   amide_time_t duration;
-  GnomeCanvas * canvas;
+  GtkWidget * canvas;
   GnomeCanvasItem * canvas_image;
   GdkPixbuf * pixbuf;
   renderings_t * renderings;

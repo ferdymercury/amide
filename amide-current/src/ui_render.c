@@ -101,7 +101,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   canvas = GNOME_CANVAS(widget);
 
   /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  gnome_canvas_window_to_world(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  gnome_canvas_w2c_d(canvas, canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
   height = gdk_pixbuf_get_height(ui_render->pixbuf);
   width = gdk_pixbuf_get_width(ui_render->pixbuf);
   dim = MIN(width, height);
@@ -112,8 +113,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
   /* switch on the event which called this */
-  switch (event->type)
-    {
+  switch (event->type) {
 
 
     case GDK_ENTER_NOTIFY:
@@ -122,7 +122,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
      case GDK_LEAVE_NOTIFY:
-       ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+       ui_common_place_cursor(UI_CURSOR_DEFAULT, GTK_WIDGET(canvas));
        break;
 
 
@@ -161,7 +161,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	  color = 
 	    amitk_color_table_outline_color(ui_render->renderings->rendering->color_table, TRUE);
 	  rotation_box[i] = 
-	    gnome_canvas_item_new(gnome_canvas_root(ui_render->canvas), gnome_canvas_line_get_type(),
+	    gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_render->canvas)), 
+				  gnome_canvas_line_get_type(),
 				  "points", line_points, 
 				  "fill_color_rgba", amitk_color_table_rgba_to_uint32(color),
 				  "width_units", 1.0, NULL);
@@ -741,7 +742,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 #endif
 
   /* initialize the rendering contexts */
-  visible_objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
+  visible_objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_SELECTION_SELECTED_0, TRUE);
   ui_render->renderings = renderings_init(visible_objects, 
 					  ui_render->start, 
 					  ui_render->duration, 
@@ -778,7 +779,7 @@ gboolean ui_render_update_immediate(gpointer data) {
   g_return_val_if_fail(ui_render != NULL, FALSE);
   g_return_val_if_fail(ui_render->renderings != NULL, FALSE);
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_render->canvas));
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_render->canvas);
 
   if (!renderings_reload_objects(ui_render->renderings, ui_render->start,
 				 ui_render->duration,
@@ -813,7 +814,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 			  "pixbuf", ui_render->pixbuf, NULL);
   else /* time to make a new image */
     ui_render->canvas_image = 
-      gnome_canvas_item_new(gnome_canvas_root(ui_render->canvas),
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_render->canvas)),
 			    gnome_canvas_pixbuf_get_type(),
 			    "pixbuf", ui_render->pixbuf,
 			    "x", (double) 0.0,
@@ -824,12 +825,12 @@ gboolean ui_render_update_immediate(gpointer data) {
   height = gdk_pixbuf_get_height(ui_render->pixbuf);  
 
   /* reset the min size of the widget */
-  gnome_canvas_set_scroll_region(ui_render->canvas, 0.0, 0.0, width, height);
-  gtk_widget_set_size_request(GTK_WIDGET(ui_render->canvas), width, height);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_render->canvas), 0.0, 0.0, width, height);
+  gtk_widget_set_size_request(ui_render->canvas, width, height);
 
  function_end:
 
-  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_render->canvas));
+  ui_common_remove_wait_cursor(ui_render->canvas);
   ui_render->next_update = UPDATE_NONE;
 
   if (ui_render->idle_handler_id != 0) {
@@ -888,9 +889,13 @@ void ui_render_create(AmitkStudy * study) {
   gnome_app_set_contents(ui_render->app, packing_table);
 
   /* setup the main canvas */
-  ui_render->canvas = GNOME_CANVAS(gnome_canvas_new_aa());
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  ui_render->canvas = gnome_canvas_new_aa();
+#else
+  ui_render->canvas = gnome_canvas_new();
+#endif
   gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(ui_render->canvas), 1,2,1,2,
+		   ui_render->canvas, 1,2,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL,
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);

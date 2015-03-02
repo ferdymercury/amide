@@ -2,7 +2,7 @@
 <sect2 id="importing_data_sets"><title>Importation of Data Sets</title>
 
  <para> AMIDE uses its own format (described below: <xref
-  linkend="xif_files" />) for saving data between session.  To get new
+  linkend="xif-files" />) for saving data between session.  To get new
   data into AMIDE, it needs to be imported (located under the file
   menu).  You can either let AMIDE try to guess the file format (which
   works for most data types) or tell AMIDE explicitly which format the
@@ -88,7 +88,7 @@
 </sect2>
 
 
-<sect2 id="xif_files"><title>XIF Files</title>
+<sect2 id="xif-files"><title>XIF Files</title>
 
  <para> AMIDE saves studies in an extensible XML based format called
   XIF (Xml Image Format).  This format can be stored as either a

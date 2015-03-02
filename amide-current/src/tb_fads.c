@@ -186,7 +186,7 @@ static gchar * get_filename(tb_fads_t * tb_fads) {
   fs = gtk_file_selection_new(_("Filename for Factor Data"));
 
   /* take a guess at the filename */
-  analysis_name = g_strdup_printf("%s_fads_analysis.csv",AMITK_OBJECT_NAME(tb_fads->data_set));
+  analysis_name = g_strdup_printf("%s_fads_analysis.tsv",AMITK_OBJECT_NAME(tb_fads->data_set));
   ui_common_file_selection_set_filename(fs, analysis_name);
   g_free(analysis_name);
 
@@ -598,7 +598,7 @@ static void svd_pressed_cb(GtkButton * button, gpointer data) {
   /* calculate factors */
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
   fads_svd_factors(tb_fads->data_set, &num_factors, &factors);
-  ui_common_remove_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
+  ui_common_remove_wait_cursor(tb_fads->table[PARAMETERS_PAGE]);
 
   for (i=0; i<num_factors; i++) {
     gtk_list_store_append (GTK_LIST_STORE(model), &iter);  /* Acquire an iterator */
@@ -804,13 +804,14 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   case FADS_TYPE_TWO_COMPARTMENT:
     fads_two_comp(tb_fads->data_set, tb_fads->algorithm, tb_fads->max_iterations, 
 		  tb_fads->num_factors-1, tb_fads->k12, tb_fads->k21, tb_fads->stopping_criteria,
-		  output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
+		  output_filename, num, frames, vals, 
+		  amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
   default:
     g_error("fads type %d not defined", tb_fads->fads_type);
     break;
   }
-  ui_common_remove_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
+  ui_common_remove_wait_cursor(tb_fads->table[PARAMETERS_PAGE]);
 
   if (frames != NULL) {
     g_free(frames);

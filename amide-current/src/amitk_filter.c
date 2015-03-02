@@ -79,7 +79,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
       for (i_voxel.x = 0; i_voxel.x < kernel->dim.x; i_voxel.x++) 
 	AMITK_RAW_DATA_DOUBLE_SET_CONTENT(kernel, i_voxel) = 0.0;
 
-  sigma = fwhm/sqrt(log(4));
+  sigma = fwhm/SIGMA_TO_FWHM;
   half.t = 0;
   half.z = kernel_size.z>>1;
   half.y = kernel_size.y>>1;

@@ -568,7 +568,7 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, FILE * study_file, gui
 
   /* get the root of our document */
   if ((doc_nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf, _("AMIDE xml file doesn't appear to have a root."));
+    amitk_append_str_with_newline(perror_buf, _("AMIDE xml file doesn't appear to have a root."));
     return NULL;
   }
   version_node = doc_nodes->children;
@@ -591,13 +591,13 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, FILE * study_file, gui
 
   switch(type) {
   case AMITK_OBJECT_TYPE_STUDY:
-    new_object = AMITK_OBJECT(amitk_study_new());
+    new_object = AMITK_OBJECT(amitk_study_new(NULL));
     break;
   case AMITK_OBJECT_TYPE_FIDUCIAL_MARK:
     new_object = AMITK_OBJECT(amitk_fiducial_mark_new());
     break;
   case AMITK_OBJECT_TYPE_DATA_SET:
-    new_object = AMITK_OBJECT(amitk_data_set_new());
+    new_object = AMITK_OBJECT(amitk_data_set_new(NULL, -1));
     break;
   case AMITK_OBJECT_TYPE_ROI:
     new_object = AMITK_OBJECT(amitk_roi_new(0));

@@ -41,6 +41,10 @@ static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data);
 static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * message);
 static void space_edit_reset_axis(GtkWidget * button, gpointer data);
 static void space_edit_invert_axis(GtkWidget * button, gpointer data);
+#if 0
+static void space_edit_apply_air(GtkWidget * button, gpointer data);
+static void space_edit_export_air(GtkWidget * button, gpointer data);
+#endif
 
 static GtkVBoxClass *parent_class;
 
@@ -103,8 +107,10 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   space_edit->object = NULL;
 
   /* we're using two tables packed into a horizontal box */
-  table = gtk_table_new(9,5, FALSE);
+  table = gtk_table_new(12,5, FALSE);
   gtk_container_add(GTK_CONTAINER(space_edit), table);
+  gtk_widget_show(table);
+
 
   /* the sliders to spin on a view */
   for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++) {
@@ -190,8 +196,35 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   gtk_widget_show(button);
   row++;
 
-  gtk_widget_show(table);
+#if 0
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(table), hseparator, 0, 5, row, row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  row++;
+  gtk_widget_show(hseparator);
 
+  /* our AIR buttons */
+  label = gtk_label_new(_("AIR Files:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+  
+  button = gtk_button_new_with_label(_("Apply .AIR"));
+  gtk_table_attach(GTK_TABLE(table), button, 1,2, 
+		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(button), "pressed",
+		   G_CALLBACK(space_edit_apply_air), space_edit);
+  gtk_widget_show(button);
+
+  button = gtk_button_new_with_label(_("Export .AIR"));
+  gtk_table_attach(GTK_TABLE(table), button, 2,3, 
+		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(button), "pressed",
+		   G_CALLBACK(space_edit_export_air), space_edit);
+  gtk_widget_show(button);
+
+  row++;
+#endif
 }
 
 static void space_edit_destroy (GtkObject * gtkobject) {
@@ -359,6 +392,29 @@ static void space_edit_invert_axis(GtkWidget * button, gpointer data) {
 
   return;
 }
+
+#if 0
+static void space_edit_apply_air(GtkWidget * button, gpointer data) {
+
+  AmitkSpaceEdit * space_edit = data;
+
+  g_warning("not yet implemented\n");
+
+  return;
+}
+
+
+static void space_edit_export_air(GtkWidget * button, gpointer data) {
+
+  AmitkSpaceEdit * space_edit = data;
+
+  g_warning("not yet implemented\n");
+
+  return;
+}
+#endif
+
+
 
 
 GtkWidget * amitk_space_edit_new(AmitkObject * object) {

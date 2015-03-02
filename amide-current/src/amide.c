@@ -29,22 +29,36 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <string.h>
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 #include "amide.h"
+#include "amitk_type_builtins.h"
 #include "amitk_study.h"
 #include "ui_study.h"
 
 /* external variables */
 gchar * view_names[] = {
-  "transverse", 
-  "coronal", 
-  "sagittal"
+  N_("transverse"), 
+  N_("coronal"), 
+  N_("sagittal")
 };
 
 gchar * object_menu_names[] = {
-  "_Study",
-  "Selected _Data Sets",
-  "Selected _ROIs",
-  "Selected _Alignment Points"
+  N_("_Study"),
+  N_("Selected _Data Sets"),
+  N_("Selected _ROIs"),
+  N_("Selected _Alignment Points")
+};
+
+gchar * limit_names[] = {
+  N_("Min"),
+  N_("Max")
+};
+
+gchar * window_names[] = {
+  N_("Bone"),
+  N_("Soft Tissue")
 };
 
 PangoFontDescription * amitk_fixed_font_desc;
@@ -52,6 +66,23 @@ PangoFontDescription * amitk_fixed_font_desc;
 /* internal variables */
 static GList * windows = NULL;
 
+
+void amide_call_help(const gchar * link_id) {
+
+#ifndef AMIDE_WIN32_HACKS
+  GError *err=NULL;
+  gnome_help_display("amide.xml", link_id, &err);
+  if (err != NULL) {
+    g_warning("couldn't open help file, error: %s", err->message);
+    g_error_free(err);
+  }
+
+#else
+  g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+#endif
+
+  return;
+}
 
 gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gchar ** pxml_filename) {
 
@@ -147,27 +178,23 @@ void amide_log_handler(const gchar *log_domain,
 		       gpointer user_data) {
 
   gchar * temp_string;
-#ifndef AMIDE_DEBUG
+  AmitkPreferences * preferences = user_data;
   GtkWidget * dialog;
-#endif
-
 
   temp_string = g_strdup_printf("AMIDE WARNING: %s\n", message);
-#ifdef AMIDE_DEBUG
-  g_print(temp_string);
-#else
-  dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-				  GTK_MESSAGE_WARNING,
-				  GTK_BUTTONS_OK,
-				  temp_string);
-#endif
+
+  if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
+    g_print(temp_string);
+  } else {
+    dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_WARNING,
+				    GTK_BUTTONS_OK,
+				    temp_string);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+  }
   g_free(temp_string);
 
-#ifndef AMIDE_DEBUG
-  gtk_dialog_run(GTK_DIALOG(dialog));
-  gtk_widget_destroy(dialog);
-#endif
-  
   return;
 }
 
@@ -175,7 +202,7 @@ void amide_log_handler(const gchar *log_domain,
 
 /* little utility function, appends str to pstr,
    handles case of pstr pointing to NULL */
-void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
+void amitk_append_str_with_newline(gchar ** pstr, const gchar * format, ...) {
 
   va_list args;
   gchar * temp_str;
@@ -197,8 +224,31 @@ void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
   g_free(error_str);
 }
 
+void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
 
-void font_init(void) {
+  va_list args;
+  gchar * temp_str;
+  gchar * error_str;
+
+  if (pstr == NULL) return;
+
+  va_start (args, format);
+  error_str = g_strdup_vprintf(format, args);
+  va_end (args);
+
+  if (*pstr != NULL) {
+    temp_str = g_strdup_printf("%s%s", *pstr, error_str);
+    g_free(*pstr);
+    *pstr = temp_str;
+  } else {
+    *pstr = g_strdup(error_str);
+  }
+  g_free(error_str);
+}
+
+
+
+static void font_init(void) {
 #ifdef AMIDE_WIN32_HACKS
   amitk_fixed_font_desc = pango_font_description_from_string("Sans 10");
 #else
@@ -212,6 +262,7 @@ void font_init(void) {
 int main (int argc, char *argv []) {
 
   gint studies_launched=0;
+  AmitkPreferences * preferences;
 #ifndef AMIDE_WIN32_HACKS
   struct stat file_info;
   AmitkStudy * study = NULL;
@@ -225,10 +276,11 @@ int main (int argc, char *argv []) {
 #endif
 
   /* setup i18n */
-  setlocale (LC_ALL, "");
-  bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
-  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
-  textdomain (GETTEXT_PACKAGE);
+  setlocale(LC_ALL, "");
+  setlocale(LC_NUMERIC, "C"); /* don't switch radix sign (it's a period not a comma dammit */
+  bindtextdomain(GETTEXT_PACKAGE, GNOMELOCALEDIR);
+  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
+  textdomain(GETTEXT_PACKAGE);
 
 
 #ifndef AMIDE_WIN32_HACKS
@@ -253,15 +305,19 @@ int main (int argc, char *argv []) {
   signal(SIGSEGV, SIG_DFL);
 #endif
 
+  /* load in the default preferences */
+  preferences = amitk_preferences_new();
+
   /* specify my own error handler */
-  g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
+  g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
 
   /* and tell gnome-ui to pump it's errors similarly */
-  g_log_set_handler ("GnomeUI", G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
+  g_log_set_handler ("GnomeUI", G_LOG_LEVEL_WARNING, amide_log_handler, preferences);
 
 
   /* startup initializations */
   font_init();
+
 
 #ifndef AMIDE_WIN32_HACKS
   /* figure out if there was anything else on the command line */
@@ -282,10 +338,10 @@ int main (int argc, char *argv []) {
 	  g_warning(_("Failed to load in as XIF file: %s"), input_filenames[i]);
       } else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
-	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0,
-						 input_filenames[i], NULL, NULL)) != NULL) {
+	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filenames[i], 
+						 preferences, NULL, NULL)) != NULL) {
 	  if (imported_study == NULL) {
-	    imported_study = amitk_study_new();
+	    imported_study = amitk_study_new(preferences);
 	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
 	    amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
 	  }
@@ -301,7 +357,7 @@ int main (int argc, char *argv []) {
 
       if (study != NULL) {
 	/* each whole study gets it's own window */
-	ui_study_create(study);
+	ui_study_create(study, preferences);
 	studies_launched++;
 	study = amitk_object_unref(study);
       } 
@@ -311,7 +367,7 @@ int main (int argc, char *argv []) {
 
   if (imported_study != NULL) {
     /* all imported data sets go into one study */
-    ui_study_create(imported_study);
+    ui_study_create(imported_study, preferences);
     studies_launched++;
     imported_study = amitk_object_unref(imported_study);
   }
@@ -320,7 +376,10 @@ int main (int argc, char *argv []) {
 #endif 
 
   /* start up an empty study if we haven't loaded in anything */
-  if (studies_launched < 1) ui_study_create(NULL);
+  if (studies_launched < 1) ui_study_create(NULL, preferences);
+
+  /* remove any left over references */
+  g_object_unref(preferences);
 
   /* the main event loop */
   gtk_main();
@@ -367,3 +426,56 @@ void amide_unregister_all_windows(void) {
 
   return;
 }
+
+
+
+
+
+const gchar * amitk_layout_get_name(const AmitkLayout layout) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_LAYOUT);
+  enum_value = g_enum_get_value(enum_class, layout);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_limit_get_name(const AmitkLimit limit) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_LIMIT);
+  enum_value = g_enum_get_value(enum_class, limit);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_window_get_name (const AmitkWindow window) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_WINDOW);
+  enum_value = g_enum_get_value(enum_class, window);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_modality_get_name(const AmitkModality modality) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_MODALITY);
+  enum_value = g_enum_get_value(enum_class, modality);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+

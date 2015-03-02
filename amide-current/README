@@ -19,7 +19,7 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-3.2.  The 2.95 versions should also work well.
+I currently use gcc-3.3.  The 2.95 versions should also work well.
 Versions of gcc between these two versions will quite likely generate
 compilation errors (and make AMIDE unstable) if optimizations are used
 when compiling.  The 2.96 versions of gcc (which are not official
@@ -29,18 +29,22 @@ releases!) are particularly notorious.
 
 2) Gtk+/Gnome:
 
-The current development series of AMIDE requires Gtk+-2 and GNOME-2.
-I'm currently developing on a vanilla Redhat 8.0 system, although
-other distributions of Linux with equivalent library support should
-work also (i.e. Mandrake 9.0).  Any previous version of Redhat (and
-many distributions) will require extensive modification to get the
-current version of AMIDE to compile and run on it.  If you want to run
-AMIDE on such a system, I'd suggest going with the AMIDE 0.6.* series,
-which only needs Gtk+-1.2/Gnome-1.4.
+The current series of AMIDE requires Gtk+-2 and GNOME-2.  I'm
+currently developing on a Fedora Core 1.0 system, although other
+distributions of Linux with equivalent library support should work
+also (e.g.. Mandrake 9.0, Redhat 9).  
+
+Old versions of Redhat (<= 7.2) and some other distributions with old
+libraries (most notably the "stable" release of Debian) will require a
+large number of new packages to be installed to get the current
+version of AMIDE to compile and run.  If you want to run AMIDE on such
+a system, you might try the (ancient) AMIDE 0.6.* series, which only
+needs Gtk+-1.2/Gnome-1.4.
 
 
 Optional Packages
 -----------------
+
 
 1) (X)medcon/libmdc
 
@@ -50,6 +54,7 @@ DICOM 3.0, ECAT/Matrix 6/7, InterFile3.3 and Gif87a/89a.
 
 (X)medcon can be obtained from: 
 	http://xmedcon.sourceforge.net
+
 
 
 2) z_matrix_70/libecat
@@ -80,6 +85,8 @@ The original version can be found at:
 The version available on the AMIDE web site is preferable, as it's
 been updated to compile cleanly under Linux.  RPM packages are also
 available.
+
+
 
 4) libfame
 

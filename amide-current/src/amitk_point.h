@@ -30,6 +30,7 @@
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
 #include <math.h>
 #include "amide.h"
+#include "amitk_type.h"
 #include "xml.h"
 
 G_BEGIN_DECLS
@@ -168,6 +169,12 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 
 #define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
 #define EMPTY 0.0
+
+/* convert a gaussian's sigma value to FWHM, FWHM = sigma*2*sqrt(ln 4)*/
+#define SIGMA_TO_FWHM 2.354820045 
+
+/* convert a guassian's sigma value to FWTM, FWTM = sigma*2*sqrt(ln 100)*/
+#define SIGMA_TO_FWTM 4.291932053
 
 
 /* Macros */

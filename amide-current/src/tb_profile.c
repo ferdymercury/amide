@@ -1,7 +1,7 @@
 /* tb_profile.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2003-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -25,478 +25,1182 @@
 
 
 #include "amide_config.h"
+#include <libgnomecanvas/libgnomecanvas.h>
 #include <libgnomeui/libgnomeui.h>
 #include "amitk_study.h"
-#include "amitk_progress_dialog.h"
 #include "tb_profile.h"
-#include "pixmaps.h"
+#include "ui_common.h"
+#ifdef AMIDE_LIBGSL_SUPPORT
+#include <gsl/gsl_multifit_nlin.h>
+#endif
 
 
-static const char * wizard_name = N_("Line Profile Wizard");
+#define CANVAS_WIDTH 400
+#define CANVAS_HEIGHT 300
+#define TEXT_HEIGHT 12.0
+#define EDGE_SPACING 2.0
 
-static const char * error_page_text =
-N_("You need at least one data set, and at least"
-   "two fiducial marks in the study in order to"
-   "generate a line profile");
-
-typedef enum {
-  DATA_SET_PAGE,
-  FIDUCIAL_MARKS_PAGE,
-  OUTPUT_PAGE,
-  NUM_PAGES
-} which_page_t;
-
-
-typedef enum {
-  COLUMN_DATA_SET_NAME,
-  COLUMN_DATA_SET_POINTER,
-  NUM_DATA_SET_COLUMNS
-} data_set_column_t;
-
-typedef enum {
-  COLUMN_FIDUCIAL_MARK_NAME,
-  COLUMN_FIDUCIAL_MARK_POINTER,
-  NUM_POINT_COLUMNS
-} point_column_t;
-
+#define NUM_COLOR_ROTATIONS 6
+guint32 color_rotation[NUM_COLOR_ROTATIONS] = {
+  0x00FFFFFF,
+  0xFFFF00FF,
+  0xFF00FFFF,
+  0xFF0000FF,
+  0x00FF00FF,
+  0x0000FFFF,
+};
 
 /* data structures */
 typedef struct tb_profile_t {
+
   GtkWidget * dialog;
-  GtkWidget * druid;
-  GtkWidget * pages[NUM_PAGES];
-  GtkWidget * list_pt1;
-  GtkWidget * list_pt2;
-  GtkWidget * list_ds;
+  AmitkStudy * study;
+  GtkWidget * angle_spin;
+  guint idle_handler_id;
+  GtkWidget * canvas;
+  GtkWidget * text;
+  gdouble min_x, max_x;
+  gdouble scale_x;
+  gboolean calc_gaussian_fit;
+  gdouble initial_x;
+  gboolean fix_x;
+  gboolean fix_dc_zero;
 
-  AmitkFiducialMark * pt1;
-  AmitkFiducialMark * pt2;
-  AmitkDataSet * ds;
-
-  GList * data_sets;
-  GList * fiducial_marks;
+  GPtrArray * results;
+  GnomeCanvasItem * x_label[2];
 
   guint reference_count;
 } tb_profile_t;
 
 
-static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
-static tb_profile_t * tb_profile_free(tb_profile_t * profile);
-static tb_profile_t * tb_profile_init(void);
+typedef struct result_t {
+  gchar * name;
+  GPtrArray * line;
+  GnomeCanvasItem * line_item;
+  amide_data_t min_y, max_y, peak_location;
+  gdouble scale_y;
+  GnomeCanvasItem * y_label[2];
+  GnomeCanvasItem * legend;
+
+  /* gaussian fit stuff */
+  gdouble b_fit, b_err;
+  gdouble p_fit, p_err;
+  gdouble c_fit, c_err;
+  gdouble s_fit, s_err;
+  gint iterations;
+  gint status;
+  GnomeCanvasItem * fit_item;
+
+} result_t;
 
 
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
-static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data);
-static void point_selection_changed_cb(GtkTreeSelection * selection, gpointer data);
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
+static GPtrArray * results_free(GPtrArray * results);
+static tb_profile_t * profile_free(tb_profile_t * tb_profile);
+static tb_profile_t * profile_init(void);
+#ifdef AMIDE_LIBGSL_SUPPORT
+static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
+static void calc_gaussian_fit_cb(GtkWidget * button, gpointer data);
+static void fix_x_cb(GtkWidget * widget, gpointer data);
+static void fix_dc_zero_cb(GtkWidget * widget, gpointer data);
+static double calc_gaussian(double b, double p, double c, double s, double loc);
+static int gaussian_f(const gsl_vector * func_p, void *params, gsl_vector * f);
+static int gaussian_df (const gsl_vector * func_p, void *params,  gsl_matrix * J);
+static int gaussian_fdf (const gsl_vector * func_p, void *params, gsl_vector * f, gsl_matrix * J);
+static void fit_gaussian(tb_profile_t * tb_profile);
+static void display_gaussian_fit(tb_profile_t * tb_profile);
+#endif
+static void export_ok_cb(GtkWidget* widget, gpointer data);
+static void export_profiles(tb_profile_t * tb_profile);
+static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile);
+static void recalc_profiles(tb_profile_t * tb_profile);
+static gboolean update_while_idle(gpointer data);
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
+static void view_center_changed_cb(AmitkStudy * study, gpointer data);
+static void profile_changed_cb(AmitkLineProfile * line_profile, gpointer data);
+static void profile_switch_view_cb(GtkWidget * widget, gpointer data);
+static void profile_angle_cb(GtkWidget * widget, gpointer data);
+static void profile_update_entries(tb_profile_t * tb_profile);
 
 
 
+static GPtrArray * results_free(GPtrArray * results) {
+
+  gint i;
+  result_t * result;
+
+  if (results == NULL) return NULL;
+
+  for (i=0; i < results->len; i++) {
+    result = g_ptr_array_index(results, i);
+    g_ptr_array_free(result->line, TRUE);
+    if (result->name != NULL)
+      g_free(result->name);
+    if (result->line_item != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->line_item));
+    if (result->y_label[0] != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->y_label[0]));
+    if (result->y_label[1] != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->y_label[1]));
+    if (result->legend != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->legend));
+    if (result->fit_item != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->fit_item));
+  }
+  g_ptr_array_free(results, TRUE);
+
+  return NULL;
+}
+
+static tb_profile_t * profile_free(tb_profile_t * tb_profile) {
+
+  /* sanity checks */
+  g_return_val_if_fail(tb_profile != NULL, NULL);
+  g_return_val_if_fail(tb_profile->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  tb_profile->reference_count--;
+
+  /* things to do if we've removed all reference's */
+  if (tb_profile->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing tb_profile\n");
+#endif
+
+    if (tb_profile->study != NULL) {
+      amitk_object_unref(tb_profile->study);
+      tb_profile->study = NULL;
+    }
+
+    if (tb_profile->idle_handler_id != 0) {
+      gtk_idle_remove(tb_profile->idle_handler_id);
+      tb_profile->idle_handler_id = 0;
+    }
+
+    if (tb_profile->results != NULL){
+      tb_profile->results = results_free(tb_profile->results);
+    }
+
+    g_free(tb_profile);
+    tb_profile = NULL;
+  }
+
+  return tb_profile;
+
+}
+
+static tb_profile_t * profile_init(void) {
+
+  tb_profile_t * tb_profile;
+
+  if ((tb_profile = g_try_new(tb_profile_t,1)) == NULL) {
+    g_warning(_("couldn't allocate space for tb_profile_t"));
+    return NULL;
+  }
+
+  tb_profile->reference_count = 1;
+  tb_profile->study = NULL;
+  tb_profile->dialog = NULL;
+  tb_profile->idle_handler_id = 0;
+  tb_profile->results = NULL;
+  tb_profile->x_label[0] = NULL;
+  tb_profile->x_label[1] = NULL;
+  tb_profile->calc_gaussian_fit = TRUE;
+  tb_profile->initial_x = -1.0;
+  tb_profile->fix_x = FALSE;
+  tb_profile->fix_dc_zero=FALSE;
 
 
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
- 
-  tb_profile_t * profile = data;
-  which_page_t which_page;
+  return tb_profile;
+}
+
+
+static gchar * results_as_string(tb_profile_t * tb_profile) {
+
+  gchar * results;
+  result_t * result;
+  AmitkLineProfileDataElement * element;
+  gint i,j;
+  time_t current_time;
+  
+  /* intro information */
+  time(&current_time);
+  results = g_strdup_printf(_("# Profiles on Study: %s\tGenerated on: %s"),
+			    AMITK_OBJECT_NAME(tb_profile->study), ctime(&current_time));
+  
+  for (i=0; i < tb_profile->results->len; i++) {
+    result = g_ptr_array_index(tb_profile->results, i);
+    amitk_append_str(&results, _("#\n# Profile on: %s\n"), result->name);
+  
+#ifdef AMIDE_LIBGSL_SUPPORT
+    if (tb_profile->calc_gaussian_fit) {
+      amitk_append_str(&results, _("# Gaussian Fit: b + p * e^(-0.5*(x-c)^2/s^2)\n"));
+      amitk_append_str(&results,_("#\titerations used %d, status %s\n"),
+		       result->iterations, gsl_strerror(result->status));
+      if (tb_profile->fix_dc_zero)
+	amitk_append_str(&results,"#\tb    = 0 %s\n",_("(fixed)"));
+      else
+	amitk_append_str(&results,"#\tb    = %.5g +/- %.5g\n",result->b_fit, result->b_err);
+      amitk_append_str(&results,"#\tp    = %.5g +/- %.5g\n",result->p_fit, result->p_err);
+      if (tb_profile->fix_x)
+	amitk_append_str(&results,"#\tc    = %.5g mm %s\n",result->c_fit,_("(fixed)"));
+      else
+	amitk_append_str(&results,"#\tc    = %.5g +/- %.5g mm\n",result->c_fit, result->c_err);
+      amitk_append_str(&results,"#\ts    = %.5g +/- %.5g\n",result->s_fit, result->s_err);
+      amitk_append_str(&results,"#\tfwhm = %.5g +/- %.5g mm\n",
+		       SIGMA_TO_FWHM*(result->s_fit), SIGMA_TO_FWHM*(result->s_err));
+      amitk_append_str(&results,"#\tfwtm = %.5g +/- %.5g mm\n",
+		       SIGMA_TO_FWTM*(result->s_fit), SIGMA_TO_FWTM*(result->s_err));
+      amitk_append_str(&results,"#\n");
+    }
+#endif
+    amitk_append_str(&results,_("# x\tvalue\n"));
+    for (j=0; j<result->line->len; j++) {
+      element = g_ptr_array_index(result->line, j);
+      amitk_append_str(&results,"%g\t%g\n", element->location, element->value);
+    }  
+  }
+  
+  return results;
+}
+
+
+/* function to handle exporting the profile */
+static void export_ok_cb(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  tb_profile_t * tb_profile;
+  const gchar * save_filename;
+
+  tb_profile = g_object_get_data(G_OBJECT(file_selection), "tb_profile");
+
+  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
+
+  /* allright, save the data */
+  save_profiles(save_filename, tb_profile);
+
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
+  return;
+}
+
+/* function to save the generated profile */
+static void export_profiles(tb_profile_t * tb_profile) {
+  
+  GtkWidget * file_selection;
   gchar * temp_string;
+  GList * data_sets;
+  GList * temp_data_sets;
+  gchar * profile_name;
 
-  which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
+  /* sanity checks */
+  g_return_if_fail(tb_profile != NULL);
+  data_sets = 
+    amitk_object_get_selected_children_of_type(AMITK_OBJECT(tb_profile->study),
+					       AMITK_OBJECT_TYPE_DATA_SET, AMITK_SELECTION_ANY, TRUE);
+  g_return_if_fail(data_sets != NULL);
 
-  switch(which_page) {
-  case DATA_SET_PAGE:
-  case FIDUCIAL_MARKS_PAGE:
-    break;
-  case OUTPUT_PAGE:
-    /* calculate the profile */
-    // profile->transform_space = amitk_data_set_get_profile(profile->ds,profile->pt1, profile->pt2);
+  file_selection = gtk_file_selection_new(_("Export Profile"));
 
-    temp_string = g_strdup_printf(_("Blah blah")); 
-    gnome_druid_page_edge_set_text(GNOME_DRUID_PAGE_EDGE(page), temp_string);
-    g_free(temp_string);
-    gnome_druid_set_show_finish(GNOME_DRUID(druid), TRUE);
+  /* take a guess at the filename */
+  profile_name = g_strdup_printf("%s_profile_{%s",
+				  AMITK_OBJECT_NAME(tb_profile->study),
+				  AMITK_OBJECT_NAME(data_sets->data));
+  temp_data_sets = data_sets->next;
+  while (temp_data_sets != NULL) {
+    temp_string = g_strdup_printf("%s+%s",profile_name,AMITK_OBJECT_NAME(temp_data_sets->data));
+    g_free(profile_name);
+    profile_name = temp_string;
+    temp_data_sets = temp_data_sets->next;
+  }
+  temp_string = g_strdup_printf("%s}.tsv",profile_name);
+  g_free(profile_name);
+  profile_name = temp_string;
+  amitk_objects_unref(data_sets);
+
+  ui_common_file_selection_set_filename(file_selection, profile_name);
+  g_free(profile_name);
+
+  /* save a pointer to the analyses */
+  g_object_set_data(G_OBJECT(file_selection), "tb_profile", tb_profile);
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
+		   G_CALLBACK(export_ok_cb), file_selection);
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(file_selection);
+
+  return;
+}
+
+static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile) {
+
+  FILE * file_pointer;
+  gchar * results;
+
+  if ((file_pointer = fopen(save_filename, "w")) == NULL) {
+    g_warning(_("couldn't open: %s for writing profiles"), save_filename);
+    return;
+  }
+
+  results = results_as_string(tb_profile);
+  fprintf(file_pointer, results);
+  g_free(results);
+
+  fclose(file_pointer);
+
+  return;
+}
+
+
+#ifdef AMIDE_LIBGSL_SUPPORT
+
+static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data) {
+  tb_profile_t * tb_profile = data;
+  AmitkCanvasPoint canvas_cpoint;
+  GnomeCanvas * canvas;
+
+  canvas = GNOME_CANVAS(widget);
+  gnome_canvas_window_to_world(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  gnome_canvas_w2c_d(canvas, canvas_cpoint.x, canvas_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
+  switch (event->type) {
+  case GDK_BUTTON_RELEASE:
+    tb_profile->initial_x = ((canvas_cpoint.x-EDGE_SPACING)/tb_profile->scale_x)+tb_profile->min_x;
+    if (tb_profile->calc_gaussian_fit)
+      display_gaussian_fit(tb_profile);
     break;
   default:
-    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     break;
   }
 
+  return FALSE;
+}
+
+static void calc_gaussian_fit_cb(GtkWidget * widget, gpointer data) {
+  tb_profile_t * tb_profile = data;
+
+  tb_profile->calc_gaussian_fit = 
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (tb_profile->calc_gaussian_fit)
+    display_gaussian_fit(tb_profile);
+  else
+    recalc_profiles(tb_profile); /* removes old gaussian fit */
+
   return;
 }
 
-static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data) {
+static void fix_x_cb(GtkWidget * widget, gpointer data) {
+  tb_profile_t * tb_profile = data;
 
-  tb_profile_t * profile = data;
-  AmitkDataSet * ds;
-  GtkTreeIter iter;
-  GtkTreeModel * model;
+  tb_profile->fix_x =
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-  g_print("data set selection cb\n");
-  if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+  if (tb_profile->calc_gaussian_fit)
+    display_gaussian_fit(tb_profile);
 
-    gtk_tree_model_get(model, &iter, COLUMN_DATA_SET_POINTER, &ds, -1);
-    g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  return;
+}
 
-    if (profile->ds != NULL) 
-      g_object_unref(profile->ds);
-    profile->ds = amitk_object_ref(ds);
-  } else {
-    g_print("no pick !\n");
+static void fix_dc_zero_cb(GtkWidget * widget, gpointer data) {
+  tb_profile_t * tb_profile = data;
+
+  tb_profile->fix_dc_zero =
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (tb_profile->calc_gaussian_fit)
+    display_gaussian_fit(tb_profile);
+
+  return;
+}
+
+
+
+static double calc_gaussian(double s, double p, double c, double b, double loc) {
+
+  double diff;
+  diff = loc-c;
+
+  return b + p * (exp(-0.5*diff*diff/(s*s)));
+}
+
+typedef struct params_t {
+  GPtrArray * line;
+  gboolean fix_x;
+  gdouble x;
+  gboolean fix_dc_zero;
+} params_t;
+
+static int gaussian_f(const gsl_vector * func_p, void * data, gsl_vector * f) {
+
+  params_t * params = data;
+
+  double b;
+  double p;
+  double c;
+  double s;
+  gint i;
+  AmitkLineProfileDataElement * element;
+
+  /* get the parameters */
+  i = 0;
+  s = gsl_vector_get(func_p, i++);
+  p = gsl_vector_get(func_p, i++);
+  if (params->fix_x) c = params->x;
+  else c = gsl_vector_get(func_p, i++);
+  if (params->fix_dc_zero) b = 0.0;
+  else b = gsl_vector_get(func_p, i++);
+
+  for (i = 0; i < params->line->len; i++) {
+    element = g_ptr_array_index(params->line, i);
+    gsl_vector_set(f, i, calc_gaussian(s,p,c,b,element->location) - element->value);
   }
 
-  return;
+  return GSL_SUCCESS;
 }
 
-static void point_selection_changed_cb(GtkTreeSelection * selection, gpointer data) {
+static int gaussian_df (const gsl_vector * func_p, void *data,  gsl_matrix * J) {
 
-  tb_profile_t * profile = data;
-  AmitkFiducialMark * pt;
-  GtkTreeIter iter;
-  GtkTreeModel * model;
-  gboolean point1;
+  params_t * params = data;
+  double p;
+  double c;
+  double s;
+  gint i,j;
+  AmitkLineProfileDataElement * element;
+  double diff;
+  double inner;
 
-  point1 = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(selection), "pt1"));
+  /* get the parameters */
+  i = 0;
+  s = gsl_vector_get(func_p, i++);
+  p = gsl_vector_get(func_p, i++);
+  if (params->fix_x) c = params->x;
+  else c = gsl_vector_get(func_p, i++);
 
-  if (gtk_tree_selection_get_selected (selection, &model, &iter)) {
+  for (i = 0; i < params->line->len; i++) {
+    element = g_ptr_array_index(params->line, i);
+    diff = element->location-c;
+    inner = exp(-0.5*(diff)*(diff)/(s*s));
 
-    gtk_tree_model_get(model, &iter, COLUMN_FIDUCIAL_MARK_POINTER, &pt, -1);
-    g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(pt));
+    j = 0;
+    gsl_matrix_set (J, i, j++, p*inner*diff*diff/(s*s*s));
+    gsl_matrix_set (J, i, j++, inner);
+    if (!params->fix_x)
+      gsl_matrix_set (J, i, j++, p*inner*diff/(s*s));
+    if (!params->fix_dc_zero)
+      gsl_matrix_set (J, i, j++, 1);
+  }
 
-    if (point1) {
-      if (profile->pt1 != NULL) amitk_object_unref(profile->pt1);
-      profile->pt1 = amitk_object_ref(pt);
-    } else { /* point2 */
-      if (profile->pt2 != NULL) amitk_object_unref(profile->pt2);
-      profile->pt1 = amitk_object_ref(pt);
+  return GSL_SUCCESS;
+}
+
+
+static int gaussian_fdf (const gsl_vector * func_p, void *params, gsl_vector * f, gsl_matrix * J) {
+  gaussian_f (func_p, params, f);
+  gaussian_df (func_p, params, J);
+  return GSL_SUCCESS;
+}
+
+
+/* we're fitting the following function 
+   b + p * exp(-0.5 * ((x-c)/s)^2)
+*/
+static void fit_gaussian(tb_profile_t * tb_profile) {
+
+  gint i,j;
+  result_t * result;
+  gsl_multifit_fdfsolver * solver;
+  gsl_matrix *covar;
+  gsl_multifit_function_fdf fdf;
+  gsl_vector * init_p;
+  gint iter;
+  gint status;
+  gint num_p;
+  params_t params;
+  gdouble initial_x;
+
+  num_p = 2;
+  if (!tb_profile->fix_x) num_p++;
+  if (!tb_profile->fix_dc_zero) num_p++;
+
+  covar = gsl_matrix_alloc (num_p, num_p);
+  g_return_if_fail(covar != NULL);
+
+  init_p = gsl_vector_alloc(num_p);
+  fdf.f = &gaussian_f;
+  fdf.df = &gaussian_df;
+  fdf.fdf = &gaussian_fdf;
+  fdf.p = num_p;
+
+  /* fit each profile */
+  for (i=0; i < tb_profile->results->len; i++) {
+    result = g_ptr_array_index(tb_profile->results, i);
+    g_return_if_fail(result != NULL);
+
+    /* figure out where we'd like to start along x*/
+    initial_x = (tb_profile->initial_x >= 0.0) ? tb_profile->initial_x : result->peak_location;
+      
+    /* initialize parameters */
+    j=0;
+    gsl_vector_set(init_p, j++, 1.0); /* s - sigma argument, proportional to width */
+    gsl_vector_set(init_p, j++, result->max_y); /* peak val */
+    if (!tb_profile->fix_x)
+      gsl_vector_set(init_p, j++, initial_x); /* x offset val */
+    if (!tb_profile->fix_dc_zero)
+      gsl_vector_set(init_p, j++, result->min_y); /* b - DC val */
+
+    /* alloc the solver */
+    solver = gsl_multifit_fdfsolver_alloc (gsl_multifit_fdfsolver_lmder,result->line->len, num_p);
+    g_return_if_fail(solver != NULL);
+
+    /* assign the data we're fitting */
+    params.line = result->line;
+    params.fix_x = tb_profile->fix_x;
+    params.x = initial_x;
+    params.fix_dc_zero = tb_profile->fix_dc_zero;
+    fdf.params = &params;
+    fdf.n = result->line->len;
+    gsl_multifit_fdfsolver_set (solver, &fdf, init_p);
+
+    /* and iterate */
+    iter = 0;
+    do {
+      iter++;
+      status = gsl_multifit_fdfsolver_iterate (solver);
+      if (status) break;
+      status = gsl_multifit_test_delta (solver->dx, solver->x, 1e-4, 1e-4);
     }
+    while ((status == GSL_CONTINUE) && (iter < 100));
+
+    gsl_multifit_covar (solver->J, 0.0, covar);
+
+    j=0;
+    result->s_fit = gsl_vector_get(solver->x, j++);
+    result->p_fit = gsl_vector_get(solver->x, j++);
+    if (tb_profile->fix_x)
+      result->c_fit = initial_x;
+    else
+      result->c_fit = gsl_vector_get(solver->x, j++);
+    if (tb_profile->fix_dc_zero)
+      result->b_fit = 0.0;
+    else
+      result->b_fit = gsl_vector_get(solver->x, j++);
+
+
+    j=0;
+    result->s_err = sqrt(gsl_matrix_get(covar,j,j));
+    j++;
+    result->p_err = sqrt(gsl_matrix_get(covar,j,j));
+    j++;
+    if (tb_profile->fix_x)
+      result->c_err = 0.0;
+    else {
+      result->c_err = sqrt(gsl_matrix_get(covar,j,j));
+      j++;
+    }
+    if (tb_profile->fix_dc_zero) 
+      result->b_err = 0.0;
+    else {
+      result->b_err = sqrt(gsl_matrix_get(covar,j,j));
+      j++;
+    }
+
+    result->iterations = iter;
+    result->status = status;
+
+    /* cleanup */
+    gsl_multifit_fdfsolver_free(solver);
   }
 
-  return;
-}
-
-
-/* function called when the finish button is hit */
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
-  tb_profile_t * profile = data;
-
-  /* sanity check */
-  //  g_return_if_fail(profile->transform_space != NULL);
-
-  /* apply the profile transform */
-  //  amitk_space_transform(AMITK_SPACE(profile->moving_ds),profile->transform_space);
-
-  /* close the dialog box */
-  cancel_cb(widget, data);
+  gsl_matrix_free(covar);
+  gsl_vector_free(init_p);
 
   return;
 }
 
 
+static void display_gaussian_fit(tb_profile_t * tb_profile) {
 
-/* function called to cancel the dialog */
-static void cancel_cb(GtkWidget* widget, gpointer data) {
+  gint i, j;
+  GtkTextBuffer *buffer;
+  GtkTextIter start_iter, end_iter;
+  gchar * results_str;
+  gdouble value;
+  GnomeCanvasPoints * points;
+  div_t x;
+  guint color;
+  result_t * result;
+  double loc;
 
-  tb_profile_t * profile = data;
-  GtkWidget * dialog = profile->dialog;
-  gboolean return_val;
+  /* perform gaussian fits */
+  fit_gaussian(tb_profile);
+  tb_profile->initial_x = -1.0;
 
-  /* run the delete event function */
-  g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-  if (!return_val) gtk_widget_destroy(dialog);
+  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tb_profile->text));
+
+  /* delete any text in the buffer */
+  gtk_text_buffer_get_start_iter(buffer, &start_iter);
+  gtk_text_buffer_get_end_iter(buffer, &end_iter);
+  gtk_text_buffer_delete(buffer, &start_iter, &end_iter);
+
+  /* write out the gaussian equation */
+  gtk_text_buffer_set_text (buffer, _("fit = b + p * e^(-0.5*(x-c)^2/s^2)"), -1);
+
+
+  for (i=0; i < tb_profile->results->len; i++) {
+    result = g_ptr_array_index(tb_profile->results, i);
+
+    points = gnome_canvas_points_new(CANVAS_WIDTH);
+    for (j=0; j<CANVAS_WIDTH; j++) {
+      loc = ((((gdouble) j)-EDGE_SPACING)/tb_profile->scale_x)+tb_profile->min_x;
+      value = calc_gaussian(result->s_fit, result->p_fit, result->c_fit,result->b_fit, loc);
+      points->coords[2*j+0] = (gdouble) j;
+      points->coords[2*j+1] = CANVAS_HEIGHT-EDGE_SPACING-result->scale_y*(value-result->min_y);
+    }
+
+    /* figure ou the color we'll use */
+    x = div(i, NUM_COLOR_ROTATIONS);
+    color = tb_profile->results->len < 2 ? 0xFFFFFFFF : color_rotation[x.rem];
+
+    /* make sure it's destroyed */
+    if (result->fit_item != NULL)
+      gtk_object_destroy(GTK_OBJECT(result->fit_item));
+
+    /* and (re)create it */
+    result->fit_item = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
+			    gnome_canvas_line_get_type(),
+			    "points", points,
+			    "fill_color_rgba", color,
+			    "line_style", GDK_LINE_ON_OFF_DASH,
+			    "width_units", 1.0,
+			    NULL);
+    gnome_canvas_points_unref(points);
+
+    results_str = 
+      g_strdup_printf(_("\n\ngaussian fit on: %s\n"
+			"iterations used %d, status %s\n"
+			"b    = %.5g +/- %.5g %s\n"
+			"p    = %.5g +/- %.5g\n"
+			"c    = %.5g +/- %.5g mm %s\n"
+			"s    = %.5g +/- %.5g\n"
+			"fwhm = %.5g +/- %.5g mm\n"
+			"fwtm = %.5g +/- %.5g mm"),
+		      result->name,
+		      result->iterations, gsl_strerror (result->status),
+		      result->b_fit, result->b_err,
+		      tb_profile->fix_dc_zero ? _("(fixed)"): "",
+		      result->p_fit, result->p_err,
+		      result->c_fit, result->c_err,
+		      tb_profile->fix_x ? _("(fixed)") : "",
+		      result->s_fit, result->s_err,
+		      SIGMA_TO_FWHM*(result->s_fit), SIGMA_TO_FWHM*(result->s_err),
+		      SIGMA_TO_FWTM*(result->s_fit), SIGMA_TO_FWTM*(result->s_err));
+    gtk_text_buffer_insert_at_cursor(buffer, results_str, -1);
+    g_free(results_str);
+  }
+    
+  return;
+}
+#endif
+
+
+
+static void recalc_profiles(tb_profile_t * tb_profile) {
+  
+  profile_update_entries(tb_profile);
+
+  if (tb_profile->idle_handler_id == 0)
+    tb_profile->idle_handler_id = 
+      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,update_while_idle, tb_profile);
+
 
   return;
 }
 
-/* function called on a delete event */
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
 
-  tb_profile_t * profile = data;
+static gboolean update_while_idle(gpointer data) {
+  
+  tb_profile_t * tb_profile = data;
+  gboolean initialized=FALSE;
+  GList * data_sets;
+  GList * temp_data_sets;
+  GPtrArray * one_line;
+  gint i,j;
+  AmitkLineProfileDataElement * element;
+  GnomeCanvasPoints * points;
+  result_t * result;
+  div_t x;
+  gchar * label;
 
-  /* trash collection */
-  profile = tb_profile_free(profile);
+  ui_common_place_cursor(UI_CURSOR_WAIT, tb_profile->canvas);
+  data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(tb_profile->study), 
+							 AMITK_OBJECT_TYPE_DATA_SET, 
+							 AMITK_SELECTION_ANY, TRUE);
+
+  /* discard the old results... this also erases them from canvas */
+  tb_profile->results = results_free(tb_profile->results);
+  tb_profile->results = g_ptr_array_new();
+
+  /* recalc profiles */
+  tb_profile->max_x = tb_profile->min_x = 0.0;
+  temp_data_sets = data_sets;
+  while (temp_data_sets != NULL) {
+    amitk_data_set_get_line_profile(AMITK_DATA_SET(temp_data_sets->data),
+				    AMITK_STUDY_VIEW_START_TIME(tb_profile->study),
+				    AMITK_STUDY_VIEW_DURATION(tb_profile->study),
+				    AMITK_LINE_PROFILE_START_POINT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)),
+				    AMITK_LINE_PROFILE_END_POINT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)),
+				    &one_line);
+
+    if (one_line->len > 1) { /* need at least two points for a valid line */
+
+      result = g_malloc(sizeof(result_t));
+      g_return_val_if_fail(result != NULL, FALSE);
+      result->name = g_strdup(AMITK_OBJECT_NAME(temp_data_sets->data));
+      result->line_item = NULL;
+      result->y_label[0] = NULL;
+      result->y_label[1] = NULL;
+      result->legend = NULL;
+      result->line = one_line;
+      result->fit_item = NULL;
+
+      /* get max/min y values */
+
+      /* get max/min values */
+      element = g_ptr_array_index(one_line, 0);
+      result->max_y = result->min_y = element->value;
+      result->peak_location = element->location;
+      if (!initialized) {
+	tb_profile->min_x = tb_profile->max_x = element->location;
+	initialized = TRUE;
+      }
+      for (j=0; j<one_line->len; j++) {
+	element = g_ptr_array_index(one_line, j);
+	if (element->location < tb_profile->min_x) tb_profile->min_x = element->location;
+	if (element->location > tb_profile->max_x) tb_profile->max_x = element->location;
+	if (element->value < result->min_y) result->min_y = element->value;
+	if (element->value > result->max_y) {
+	  result->max_y = element->value;
+	  result->peak_location = element->location;
+	}
+      }
+
+      g_ptr_array_add(tb_profile->results, result);
+    } else
+      g_ptr_array_free(one_line, TRUE);
+    
+    temp_data_sets = temp_data_sets->next;
+    
+  }
+
+  label = g_strdup_printf("%g", tb_profile->min_x);
+  if (tb_profile->x_label[0] != NULL) {
+    gnome_canvas_item_set(tb_profile->x_label[0], "text", label, NULL);
+  } else {
+    tb_profile->x_label[0] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
+			    gnome_canvas_text_get_type(),
+			    "anchor", GTK_ANCHOR_SOUTH_WEST, "text", label,
+			    "x", (gdouble) EDGE_SPACING+5.0,
+			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
+			    "fill_color", "white", 
+			    "font_desc", amitk_fixed_font_desc, NULL);
+  }
+  g_free(label);
+
+  label = g_strdup_printf("%g", tb_profile->max_x);
+  if (tb_profile->x_label[1] != NULL) {
+    gnome_canvas_item_set(tb_profile->x_label[1], "text", label, NULL);
+  } else {
+    tb_profile->x_label[1] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
+			    gnome_canvas_text_get_type(),
+			    "anchor", GTK_ANCHOR_SOUTH_EAST, "text", label,
+			    "x", (gdouble) CANVAS_WIDTH-EDGE_SPACING,
+			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
+			    "fill_color", "white", 
+			    "font_desc", amitk_fixed_font_desc, NULL);
+  }
+  g_free(label);
+
+
+
+  tb_profile->scale_x = (CANVAS_WIDTH-2*EDGE_SPACING)/(tb_profile->max_x-tb_profile->min_x);
+  /* generate new lines */
+  for (i=0; i < tb_profile->results->len; i++) {
+    result = g_ptr_array_index(tb_profile->results, i);
+
+    points = gnome_canvas_points_new(result->line->len);
+
+    result->scale_y = (CANVAS_HEIGHT-2*EDGE_SPACING)/(result->max_y-result->min_y);
+    for (j=0; j<result->line->len; j++) {
+      element = g_ptr_array_index(result->line, j);
+      points->coords[2*j+0] = tb_profile->scale_x*(element->location-tb_profile->min_x)+EDGE_SPACING;
+      points->coords[2*j+1] = CANVAS_HEIGHT-EDGE_SPACING-result->scale_y*(element->value-result->min_y);
+    }
+
+    x = div(i, NUM_COLOR_ROTATIONS);
+    result->line_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
+					      gnome_canvas_line_get_type(),
+					      "points", points,
+					      "fill_color_rgba", color_rotation[x.rem],
+					      "width_units", 1.0,
+					      NULL);
+    gnome_canvas_points_unref(points);
+
+    label = g_strdup_printf("%g", result->min_y);
+    result->y_label[0] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
+			    gnome_canvas_text_get_type(),
+			    "anchor", GTK_ANCHOR_SOUTH_WEST, "text", label,
+			    "x", (gdouble) EDGE_SPACING,
+			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING-TEXT_HEIGHT-(tb_profile->results->len-i-1)*TEXT_HEIGHT,
+			    "fill_color_rgba", color_rotation[x.rem],
+			    "font_desc", amitk_fixed_font_desc, NULL);
+    g_free(label);
+    
+    label = g_strdup_printf("%g", result->max_y);
+    result->y_label[1] = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
+			    gnome_canvas_text_get_type(),
+			    "anchor", GTK_ANCHOR_NORTH_WEST, "text", label,
+			    "x", (gdouble) EDGE_SPACING,
+			    "y", (gdouble) EDGE_SPACING+i*TEXT_HEIGHT,
+			    "fill_color_rgba", color_rotation[x.rem],
+			    "font_desc", amitk_fixed_font_desc, NULL);
+    g_free(label);
+
+    result->legend = 
+      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)), 
+			    gnome_canvas_text_get_type(),
+			    "anchor", GTK_ANCHOR_NORTH_EAST, 
+			    "text", result->name,
+			    "x", (gdouble) CANVAS_WIDTH-EDGE_SPACING,
+			    "y", (gdouble) EDGE_SPACING+i*TEXT_HEIGHT,
+			    "fill_color_rgba", color_rotation[x.rem],
+			    "font_desc", amitk_fixed_font_desc, NULL);
+
+#ifdef AMIDE_LIBGSL_SUPPORT
+    if (tb_profile->calc_gaussian_fit)
+      display_gaussian_fit(tb_profile);
+#endif
+  }
+
+
+  /* and we're done */
+  ui_common_remove_wait_cursor(tb_profile->canvas);
+  data_sets = amitk_objects_unref(data_sets);
+
+  gtk_idle_remove(tb_profile->idle_handler_id);
+  tb_profile->idle_handler_id=0;
 
   return FALSE;
 }
 
 
+static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  tb_profile_t * tb_profile = data;
+  gint return_val;
+  GtkClipboard * clipboard;
+  gchar * results;
 
+  switch(response_id) {
+  case AMITK_RESPONSE_SAVE_AS:
+    export_profiles(tb_profile);
+    break;
 
+  case AMITK_RESPONSE_COPY:
+    results = results_as_string(tb_profile);
 
+    /* fill in select/button2 clipboard (X11) */
+    clipboard = gtk_clipboard_get(GDK_SELECTION_PRIMARY);
+    gtk_clipboard_set_text(clipboard, results, -1);
 
-/* destroy a profile data structure */
-static tb_profile_t * tb_profile_free(tb_profile_t * profile) {
+    /* fill in copy/paste clipboard (Win32 and Gnome) */
+    clipboard = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    gtk_clipboard_set_text(clipboard, results, -1);
 
-  g_return_val_if_fail(profile != NULL, NULL);
+    g_free(results);
+    break;
 
-  /* sanity checks */
-  g_return_val_if_fail(profile->reference_count > 0, NULL);
+  case GTK_RESPONSE_HELP:
+    amide_call_help("profile-dialog");
+    break;
 
-  /* remove a reference count */
-  profile->reference_count--;
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
 
-  /* things to do if we've removed all reference's */
-  if (profile->reference_count == 0) {
-#ifdef AMIDE_DEBUG
-    g_print("freeing profile\n");
-#endif
-    
-    if (profile->data_sets != NULL)
-      profile->data_sets = amitk_objects_unref(profile->data_sets);
-
-    if (profile->fiducial_marks != NULL)
-      profile->fiducial_marks = amitk_objects_unref(profile->fiducial_marks);
-
-    if (profile->ds != NULL) {
-      amitk_object_unref(profile->ds);
-      profile->ds = NULL;
-    }
-
-    if (profile->pt1 != NULL) {
-      amitk_object_unref(profile->pt1);
-      profile->pt1 = NULL;
-    }
-
-    if (profile->pt2 != NULL) {
-      amitk_object_unref(profile->pt2);
-      profile->pt2 = NULL;
-    }
-
-    g_free(profile);
-    profile = NULL;
+  default:
+    break;
   }
 
-  return profile;
-
-}
-
-/* allocate and initialize a profile data structure */
-static tb_profile_t * tb_profile_init(void) {
-
-  tb_profile_t * profile;
-
-  /* alloc space for the data structure for passing ui info */
-  if ((profile = g_try_new(tb_profile_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for tb_profile_t"));
-    return NULL;
-  }
-
-  profile->reference_count = 1;
-  profile->dialog = NULL;
-  profile->druid = NULL;
-  profile->ds = NULL;
-  profile->pt1 = NULL;
-  profile->pt2 = NULL;
-  profile->data_sets=NULL;
-  profile->fiducial_marks=NULL;
-
-  return profile;
+  return;
 }
 
 
-/* function that sets up an align point dialog */
-void tb_profile(AmitkStudy * study) {
+/* function called to destroy the dialog */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
-  tb_profile_t * profile;
-  GdkPixbuf * logo;
+  tb_profile_t * tb_profile = data;
+
+  /* make the line profile invisible */
+  amitk_line_profile_set_visible(AMITK_STUDY_LINE_PROFILE(tb_profile->study), FALSE);
+
+  /* disconnect any signal handlers */
+  g_signal_handlers_disconnect_by_func(G_OBJECT(tb_profile->study), view_center_changed_cb, tb_profile);
+  g_signal_handlers_disconnect_by_func(G_OBJECT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)), profile_changed_cb, tb_profile);
+
+  /* free the associated data structure */
+  tb_profile = profile_free(tb_profile);
+
+  return FALSE;
+}
+
+
+static void view_center_changed_cb(AmitkStudy * study, gpointer data) {
+  tb_profile_t * tb_profile=data;
+  recalc_profiles(tb_profile);
+  return;
+}
+
+static void profile_changed_cb(AmitkLineProfile * line_profile, gpointer data) {
+  tb_profile_t * tb_profile=data;
+  recalc_profiles(tb_profile);
+  return;
+}
+
+static void profile_switch_view_cb(GtkWidget * widget, gpointer data) {
+  tb_profile_t * tb_profile=data;
+  AmitkView view;
+
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+  amitk_line_profile_set_view(AMITK_STUDY_LINE_PROFILE(tb_profile->study), view);
+
+  return;
+}
+
+static void profile_angle_cb(GtkWidget * widget, gpointer data) {
+
+  gdouble temp_val;
+  tb_profile_t * tb_profile = data;
+
+  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+
+  temp_val *= M_PI/180.0; /* convert to radians */
+  amitk_line_profile_set_angle(AMITK_STUDY_LINE_PROFILE(tb_profile->study), temp_val);
+
+  profile_update_entries(tb_profile);
+  return;
+}
+
+static void profile_update_entries(tb_profile_t * tb_profile) {
+  amide_real_t angle;
+
+  g_signal_handlers_block_by_func(G_OBJECT(tb_profile->angle_spin),
+				  G_CALLBACK(profile_angle_cb), tb_profile);
+  angle = AMITK_LINE_PROFILE_ANGLE(AMITK_STUDY_LINE_PROFILE(tb_profile->study));
+  angle *= 180.0/M_PI;
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_profile->angle_spin),angle);
+			    
+  g_signal_handlers_unblock_by_func(G_OBJECT(tb_profile->angle_spin),
+				    G_CALLBACK(profile_angle_cb), tb_profile);
+
+  return;
+}
+
+
+void tb_profile(AmitkStudy * study, GtkWindow * parent) {
+
+  GtkWidget * dialog;
+  gchar * title;
   GtkWidget * table;
-  GtkWidget * vseparator;
-  GtkListStore * store;
-  GtkCellRenderer *renderer;
-  GtkTreeViewColumn *column;
-  GtkTreeSelection *selection;
-  GtkTreeIter iter;
-  GtkTreeModel * model1;
-  GtkTreeModel * model2;
-  GList * data_sets;
-  GList * fiducial_marks;
-  gchar * temp_string;
-
+  gint table_row;
+  tb_profile_t * tb_profile;
+  AmitkView i_view;
+  GtkWidget * radio_button[3];
+  GtkWidget * hbox;
+  GtkWidget * label;
+  GtkWidget * check_button;
+  GdkColor color;
   
-  g_return_if_fail(AMITK_IS_STUDY(study));
+  tb_profile = profile_init();
+  tb_profile->study = g_object_ref(study);
+
+  /* make the line profile visible */
+  amitk_line_profile_set_visible(AMITK_STUDY_LINE_PROFILE(tb_profile->study), TRUE);
+
+  /* start setting up the widget we'll display the info from */
+  title = g_strdup_printf(_("%s Profile Tool: Study %s"), PACKAGE, 
+			  AMITK_OBJECT_NAME(tb_profile->study));
+  dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
+				       GTK_DIALOG_DESTROY_WITH_PARENT,
+				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
+				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
+				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
+				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+				       NULL);
+  g_free(title);
+  gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
+
+  /* setup the callbacks for app */
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), tb_profile);
+  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_profile);
+
+  /* setup the callbacks for detecting if the line profile has changed */
+  g_signal_connect(G_OBJECT(tb_profile->study), "view_center_changed", 
+		   G_CALLBACK(view_center_changed_cb), tb_profile);
+  g_signal_connect(G_OBJECT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)), "line_profile_changed", 
+		   G_CALLBACK(profile_changed_cb), tb_profile);
+
+
+  /* make the widgets for this dialog box */
+  table = gtk_table_new(5,3,FALSE);
+  table_row=0;
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_widget_show(table);
   
-  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
-
-  profile = tb_profile_init();
-  profile->data_sets = 
-    amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
-
-  profile->fiducial_marks = 
-    amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_FIDUCIAL_MARK, TRUE);
-
-  profile->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(profile->dialog), "delete_event",
-		   G_CALLBACK(delete_event), profile);
-
-  profile->druid = gnome_druid_new();
-  gtk_container_add(GTK_CONTAINER(profile->dialog), profile->druid);
-  g_signal_connect(G_OBJECT(profile->druid), "cancel", 
-		   G_CALLBACK(cancel_cb), profile);
-
-
-  /* --------------- initial page ------------------ */
-  if ((profile->data_sets == NULL) || (profile->fiducial_marks == NULL)) {
-
-    profile->pages[DATA_SET_PAGE]= 
-      gnome_druid_page_edge_new_with_vals(GNOME_EDGE_START,TRUE, 
-					  wizard_name,
-					  error_page_text,
-					  logo, NULL, NULL);
-    gnome_druid_append_page(GNOME_DRUID(profile->druid), 
-			    GNOME_DRUID_PAGE(profile->pages[DATA_SET_PAGE]));
-    gnome_druid_set_buttons_sensitive(GNOME_DRUID(profile->druid), FALSE, FALSE, TRUE, TRUE);
-
-  } else {
-
-    /*------------------ pick your data set page ------------------ */
-    profile->pages[DATA_SET_PAGE] = 
-      gnome_druid_page_standard_new_with_vals("Data Set Selection",logo, NULL);
-    gnome_druid_append_page(GNOME_DRUID(profile->druid), 
-			    GNOME_DRUID_PAGE(profile->pages[DATA_SET_PAGE]));
-    g_object_set_data(G_OBJECT(profile->pages[DATA_SET_PAGE]), 
-		      "which_page", GINT_TO_POINTER(DATA_SET_PAGE));
-    g_signal_connect(G_OBJECT(profile->pages[DATA_SET_PAGE]), "prepare", 
-		     G_CALLBACK(prepare_page_cb), profile);
-
-    table = gtk_table_new(2,2,FALSE);
-    gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(profile->pages[DATA_SET_PAGE])->vbox), 
-		       table, TRUE, TRUE, 5);
+  
+  /* which view do we want the profile on */
+  label = gtk_label_new(_("Line Profile on:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
     
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_table_attach(GTK_TABLE(table), hbox,1,3,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(hbox);
     
-    /* tree for picking the data set */
-    store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
-    profile->list_ds = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-    g_object_unref(store);
-    
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(_("Align Data Set: (moving)"), renderer,
-						      "text", COLUMN_DATA_SET_NAME, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (profile->list_ds), column);
-    
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (profile->list_ds));
-    gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
-    g_object_set_data(G_OBJECT(selection), "fixed", GINT_TO_POINTER(FALSE));
-    g_signal_connect(G_OBJECT(selection), "changed",
-		     G_CALLBACK(data_set_selection_changed_cb), profile);
-    
-    gtk_table_attach(GTK_TABLE(table),profile->list_ds, 0,1,0,1,
-		     GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
-    
-    
-    /* fill in the table */
-    model1 = gtk_tree_view_get_model(GTK_TREE_VIEW(profile->list_ds));
-    
-    data_sets = profile->data_sets;
-    while (data_sets != NULL) {
-      gtk_list_store_append (GTK_LIST_STORE(model1), &iter);  /* Acquire an iterator */
-      gtk_list_store_set (GTK_LIST_STORE(model1), &iter,
-			  COLUMN_DATA_SET_NAME, AMITK_OBJECT_NAME(data_sets->data),
-			  COLUMN_DATA_SET_POINTER, data_sets->data, -1);
-      data_sets = data_sets->next;
-    }
-    
-    
-    
-    /*------------------ pick your fiducial marks page ------------------ */
-    profile->pages[FIDUCIAL_MARKS_PAGE] = 
-      gnome_druid_page_standard_new_with_vals(_("Fiducial Marks Selection"), logo, NULL);
-    g_object_set_data(G_OBJECT(profile->pages[FIDUCIAL_MARKS_PAGE]), 
-		      "which_page", GINT_TO_POINTER(FIDUCIAL_MARKS_PAGE));
-    gnome_druid_append_page(GNOME_DRUID(profile->druid), 
-			    GNOME_DRUID_PAGE(profile->pages[FIDUCIAL_MARKS_PAGE]));
-    g_signal_connect(G_OBJECT(profile->pages[FIDUCIAL_MARKS_PAGE]), "prepare", 
-		     G_CALLBACK(prepare_page_cb), profile);
-    
-    table = gtk_table_new(3,3,FALSE);
-    gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(profile->pages[FIDUCIAL_MARKS_PAGE])->vbox), 
-		       table, TRUE, TRUE, 5);
-
-    /* pt1 list */
-    store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
-    profile->list_pt1 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-    g_object_unref(store);
-
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(_("Point 1"), renderer,
-						      "text", COLUMN_FIDUCIAL_MARK_NAME, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (profile->list_pt1), column);
-
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (profile->list_pt1));
-    gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
-    g_object_set_data(G_OBJECT(selection), "pt1", GINT_TO_POINTER(TRUE));
-    g_signal_connect(G_OBJECT(selection), "changed",
-		     G_CALLBACK(point_selection_changed_cb), profile);
-
-    gtk_table_attach(GTK_TABLE(table),profile->list_pt1, 0,1,0,1,
-		     GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
-    
-    vseparator = gtk_vseparator_new();
-    gtk_table_attach(GTK_TABLE(table), vseparator, 1,2,0,2, 0, GTK_FILL, X_PADDING, Y_PADDING);
-
-    /* pt2 list */
-    store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
-    profile->list_pt2 = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-    g_object_unref(store);
-
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(_("Point 2"), renderer,
-						      "text", COLUMN_FIDUCIAL_MARK_NAME, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (profile->list_pt2), column);
-
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (profile->list_pt2));
-    gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
-    g_object_set_data(G_OBJECT(selection), "pt1", GINT_TO_POINTER(FALSE));
-    g_signal_connect(G_OBJECT(selection), "changed",
-		     G_CALLBACK(point_selection_changed_cb), profile);
-
-    gtk_table_attach(GTK_TABLE(table),profile->list_pt2, 2,3,0,1,
-		     GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
-
-
-    /* fill in the lists */
-    fiducial_marks = profile->fiducial_marks;
-    model1 = gtk_tree_view_get_model(GTK_TREE_VIEW(profile->list_pt1));
-    model2 = gtk_tree_view_get_model(GTK_TREE_VIEW(profile->list_pt1));
-
-    while (fiducial_marks != NULL) {
-      if (!AMITK_IS_STUDY(AMITK_OBJECT_PARENT(fiducial_marks->data)))
-	temp_string = g_strdup_printf("%s::%s",
-				      AMITK_OBJECT_NAME(AMITK_OBJECT_PARENT(fiducial_marks->data)),
-				      AMITK_OBJECT_NAME(fiducial_marks->data));
-      else 
-	temp_string = g_strdup_printf("%s", AMITK_OBJECT_NAME(fiducial_marks->data));
-      
-      gtk_list_store_append (GTK_LIST_STORE(model1), &iter);  /* Acquire an iterator */
-      gtk_list_store_set(GTK_LIST_STORE(model1), &iter,
-			 COLUMN_FIDUCIAL_MARK_NAME, temp_string,
-			 COLUMN_FIDUCIAL_MARK_POINTER, fiducial_marks->data, -1);
-      gtk_list_store_append (GTK_LIST_STORE(model2), &iter);  /* Acquire an iterator */
-      gtk_list_store_set(GTK_LIST_STORE(model2), &iter,
-			 COLUMN_FIDUCIAL_MARK_NAME, temp_string,
-			 COLUMN_FIDUCIAL_MARK_POINTER, fiducial_marks->data, -1);
-      g_free(temp_string);
-      
-      fiducial_marks = fiducial_marks->next;
-    }
-
-
-    
-    /* ----------------  conclusion page ---------------------------------- */
-    profile->pages[OUTPUT_PAGE] = 
-      gnome_druid_page_edge_new_with_vals(GNOME_EDGE_FINISH, TRUE,
-					  _("Conclusion"), NULL,logo, NULL, NULL);
-    g_object_set_data(G_OBJECT(profile->pages[OUTPUT_PAGE]), 
-		      "which_page", GINT_TO_POINTER(OUTPUT_PAGE));
-    g_signal_connect(G_OBJECT(profile->pages[OUTPUT_PAGE]), "prepare", 
-		     G_CALLBACK(prepare_page_cb), profile);
-    g_signal_connect(G_OBJECT(profile->pages[OUTPUT_PAGE]), "finish",
-		     G_CALLBACK(finish_cb), profile);
-    gnome_druid_append_page(GNOME_DRUID(profile->druid), 
-			    GNOME_DRUID_PAGE(profile->pages[OUTPUT_PAGE]));
-    
+  /* the radio buttons */
+  for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
+    if (i_view == 0)
+      radio_button[i_view] = 
+	gtk_radio_button_new_with_label(NULL,amitk_view_get_name(i_view));
+    else
+      radio_button[i_view] = 
+	gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]),
+						    amitk_view_get_name(i_view));
+    gtk_box_pack_start(GTK_BOX(hbox), radio_button[i_view], FALSE, FALSE, 3);
+    g_object_set_data(G_OBJECT(radio_button[i_view]), "view", GINT_TO_POINTER(i_view));
+    gtk_widget_show(radio_button[i_view]);
   }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[AMITK_LINE_PROFILE_VIEW(AMITK_STUDY_LINE_PROFILE(tb_profile->study))]), TRUE);
+  for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) 
+    g_signal_connect(G_OBJECT(radio_button[i_view]), "clicked", G_CALLBACK(profile_switch_view_cb), tb_profile);
+    
+  table_row++;
 
-  g_object_unref(logo);
-  gtk_widget_show_all(profile->dialog);
+
+  /* changing the angle */
+  label = gtk_label_new(_("Angle (degrees):"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+
+  tb_profile->angle_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_profile->angle_spin), FALSE);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_profile->angle_spin),3);
+  g_signal_connect(G_OBJECT(tb_profile->angle_spin), "value_changed", 
+		   G_CALLBACK(profile_angle_cb), tb_profile);
+  gtk_table_attach(GTK_TABLE(table),tb_profile->angle_spin,1,3, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(tb_profile->angle_spin);
+  table_row++;
+
+
+  /* the canvas */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  tb_profile->canvas = gnome_canvas_new_aa();
+#else
+  tb_profile->canvas = gnome_canvas_new();
+#endif
+  gtk_table_attach(GTK_TABLE(table), tb_profile->canvas, 0, 3, table_row, table_row+1, 
+		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
+		   X_PADDING, Y_PADDING);
+#ifdef AMIDE_LIBGSL_SUPPORT
+  g_signal_connect(G_OBJECT(tb_profile->canvas), "event",
+		   G_CALLBACK(canvas_event_cb), tb_profile);
+#endif
+  gtk_widget_set_size_request(tb_profile->canvas, CANVAS_WIDTH+1, CANVAS_HEIGHT+1);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(tb_profile->canvas), 0.0, 0.0,
+				 CANVAS_WIDTH, CANVAS_HEIGHT);
+  gtk_widget_show(tb_profile->canvas);
+  table_row++;
+
+  /* draw a black background on the canvas */
+  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(tb_profile->canvas)),
+			gnome_canvas_rect_get_type(),
+			"x1",0.0, "y1", 0.0, 
+			"x2", (gdouble) CANVAS_WIDTH, "y2", (gdouble) CANVAS_HEIGHT,
+			"fill_color_rgba", 0x00000000,
+			NULL);
+
+  
+  /* the fit results */
+#ifdef AMIDE_LIBGSL_SUPPORT
+  check_button = gtk_check_button_new_with_label ("calculate gaussian fit");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->calc_gaussian_fit);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(calc_gaussian_fit_cb), tb_profile);
+  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(check_button);
+  table_row++;
+
+  check_button = gtk_check_button_new_with_label ("fix x location (c)");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_x);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_x_cb), tb_profile);
+  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(check_button);
+  table_row++;
+
+  check_button = gtk_check_button_new_with_label ("fix dc value to zero (b)");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), tb_profile->fix_dc_zero);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(fix_dc_zero_cb), tb_profile);
+  gtk_table_attach(GTK_TABLE(table), check_button,0,3,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(check_button);
+  table_row++;
+
+  tb_profile->text = gtk_text_view_new ();
+  gtk_table_attach(GTK_TABLE(table), tb_profile->text, 0, 3, table_row, table_row+1, 
+		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
+		   X_PADDING, Y_PADDING);
+  gtk_widget_modify_font (tb_profile->text, amitk_fixed_font_desc);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(tb_profile->text), FALSE);
+  gtk_widget_show(tb_profile->text);
+  table_row++;
+
+  /* set it to black */
+  gdk_color_parse ("black", &color);
+  gtk_widget_modify_base(tb_profile->text, GTK_STATE_NORMAL, &color);
+  gdk_color_parse ("white", &color);
+  gtk_widget_modify_text (tb_profile->text, GTK_STATE_NORMAL, &color);
+#endif
+
+  /* and show all our widgets */
+  gtk_widget_show(dialog);
+
+  /* and make sure they have the right stuff in them */
+  recalc_profiles(tb_profile);
+
   return;
 }
 

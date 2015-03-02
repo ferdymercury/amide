@@ -1,15 +1,21 @@
 if AMIDE_WIN32_HACKS
-AMIDE_WIN32_HACK_LIBS = \
-	-lwsock32
+
+AMIDE_WIN32_LDADD = -lwsock32
+
+AMIDE_WIN32_LDFLAGS = -mwindows
+
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
+
 else
+
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 	-DPREFIX=\""$(prefix)"\"			        \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"		        \
 	-DDATADIR=\""$(datadir)"\"			        \
 	-DLIBDIR=\""$(libdir)"\"			
+
 endif
 
 AM_CFLAGS = \
@@ -32,9 +38,12 @@ amide_LDADD = \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
-	$(AMIDE_WIN32_HACK_LIBS) \
+	$(AMIDE_WIN32_LDADD) \
 	-L/usr/local/lib \
 	-lmdc
+
+amide_LDFLAGS = \
+	$(AMIDE_WIN32_LDFLAGS)
 
 
 
@@ -64,9 +73,12 @@ amide_SOURCES = \
 	amitk_xif_sel.c \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
-	amitk_point.c \
+	amitk_line_profile.c \
+	amitk_list_view.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
+	amitk_point.c \
+	amitk_preferences.c \
 	amitk_progress_dialog.c \
 	amitk_raw_data.c \
 	amitk_roi.c \
@@ -74,18 +86,18 @@ amide_SOURCES = \
 	amitk_space_edit.c \
 	amitk_study.c \
 	amitk_threshold.c \
-	amitk_tree.c \
+	amitk_tree_view.c \
 	amitk_volume.c \
-	cti_import.c \
-	cti_import.h \
 	fads.c \
 	fads.h \
 	image.c \
 	image.h \
 	legacy.c \
 	legacy.h \
-	medcon_import.c \
-	medcon_import.h \
+	libecat_interface.c \
+	libecat_interface.h \
+	libmdc_interface.c \
+	libmdc_interface.h \
 	mpeg_encode.c \
 	mpeg_encode.h \
 	pixmaps.c \
@@ -142,17 +154,21 @@ AMITK_H_SOURCES = \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \
 	amitk_filter.h \
+	amitk_line_profile.h \
+	amitk_list_view.h \
 	amitk_object.h \
 	amitk_object_dialog.h \
-	amitk_progress_dialog.h \
 	amitk_point.h \
+	amitk_preferences.h \
+	amitk_progress_dialog.h \
 	amitk_raw_data.h \
 	amitk_roi.h \
 	amitk_space_edit.h \
 	amitk_space.h \
 	amitk_study.h \
 	amitk_threshold.h \
-	amitk_tree.h \
+	amitk_tree_view.h \
+	amitk_type.h \
 	amitk_volume.h 
 
 AMITK_ROI_VARIABLE_C = \
@@ -359,7 +375,7 @@ $(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
 	@true
 stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	( cd $(srcdir) && glib-mkenums \
-		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amide.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
 		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \

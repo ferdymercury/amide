@@ -235,7 +235,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 
 
   /* get the return slice */
-  slice = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
+  slice = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(data_set), 
+				       AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_TYPE_0D);
   if (slice == NULL) {
     g_warning(_("couldn't allocate space for the slice, wanted %dx%dx%dx%d elements"), 
 	      dim.x, dim.y, dim.z, dim.t);
@@ -357,7 +358,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	else if (i_frame == end_frame)
 	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
 	else
-	  time_weight = data_set->frame_duration[i_frame]/duration;
+	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/duration;
       } else
 	time_weight = 1.0;
 
@@ -481,7 +482,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	else if (i_frame == end_frame)
 	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
 	else
-	  time_weight = data_set->frame_duration[i_frame]/duration;
+	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/duration;
       } else
 	time_weight = 1.0;
 

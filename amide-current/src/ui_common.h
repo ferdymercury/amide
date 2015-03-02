@@ -29,16 +29,6 @@
 #include <libgnomeui/libgnomeui.h>
 #include "amitk_point.h"
 
-#define UI_COMMON_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_ROI_RESIZE_CURSOR GDK_SIZING
-#define UI_COMMON_ROTATE_CURSOR GDK_EXCHANGE
-#define UI_COMMON_SHIFT_CURSOR GDK_FLEUR
-#define UI_COMMON_ROI_ISOCONTOUR_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_ROI_ERASE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_DATA_SET_MODE_CURSOR GDK_CROSSHAIR
-#define UI_COMMON_FIDUCIAL_MARK_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_WAIT_CURSOR GDK_WATCH
-
 typedef enum {
   UI_CURSOR_DEFAULT,
   UI_CURSOR_ROI_MODE,
@@ -55,6 +45,8 @@ typedef enum {
   NUM_CURSORS
 } ui_common_cursor_t;
 
+void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
+			       GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 
 /* external functions */
 gboolean ui_common_check_filename(const gchar * filename);
@@ -70,11 +62,23 @@ void ui_common_about_cb(GtkWidget * button, gpointer data);
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height);
+void ui_common_data_set_preferences_widgets(GtkWidget * packing_table,
+					    gint table_row,
+					    GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM]);
+void ui_common_study_preferences_widgets(GtkWidget * packing_table,
+					 gint table_row,
+					 GtkWidget ** pspin_button,
+					 GnomeCanvasItem ** proi_item,
+					 GtkWidget ** pline_style_menu,
+					 GtkWidget ** playout_button1,
+					 GtkWidget ** playout_button2,
+					 GtkWidget ** pmaintain_size_button,
+					 GtkWidget ** ptarget_size_spin);
 GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout);
 void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget);
+void ui_common_remove_wait_cursor(GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
-void ui_common_remove_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr);
 
 

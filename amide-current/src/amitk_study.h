@@ -31,6 +31,8 @@
 #include "amitk_data_set.h"
 #include "amitk_roi.h"
 #include "amitk_fiducial_mark.h"
+#include "amitk_preferences.h"
+#include "amitk_line_profile.h"
 
 G_BEGIN_DECLS
 
@@ -53,6 +55,14 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_VIEW_MODE(stu)                (AMITK_STUDY(stu)->view_mode)
 #define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)->canvas_visible[canvas])
 #define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)->canvas_target)
+
+#define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)->canvas_roi_width)
+#define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)->canvas_line_style)
+#define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)->canvas_layout)
+#define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)->canvas_maintain_size)
+#define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)->canvas_target_empty_area)
+
+#define AMITK_STUDY_LINE_PROFILE(stu)             (AMITK_STUDY(stu)->line_profile)
 
 typedef enum {
   AMITK_FUSE_TYPE_BLEND,
@@ -78,7 +88,7 @@ struct _AmitkStudy
 
   gchar * creation_date; /* when this study was created */
 
-  /* view parameters */
+  /* canvas view parameters */
   AmitkPoint view_center; /* wrt the study coordinate space */
   amide_real_t view_thickness;
   amide_time_t view_start_time;
@@ -87,12 +97,20 @@ struct _AmitkStudy
   AmitkFuseType fuse_type;
   AmitkViewMode view_mode;
   gboolean canvas_visible[AMITK_VIEW_NUM];
-  gboolean canvas_target;
+  gboolean canvas_target; /* target on/off */
+
+  /* canvas preferences */
+  gint canvas_roi_width;
+  GdkLineStyle canvas_line_style;
+  AmitkLayout canvas_layout;
+  gboolean canvas_maintain_size;
+  gint canvas_target_empty_area; /* in pixels */
 
   /* stuff calculated when file is loaded and stored */
   amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
 
   /* stuff that doesn't need to be saved */
+  AmitkLineProfile * line_profile;
   gchar * filename; /* file name of the study */
 };
 
@@ -100,7 +118,6 @@ struct _AmitkStudyClass
 {
   AmitkObjectClass parent_class;
 
-  void (* study_changed) (AmitkStudy * study);
   void (* thickness_changed) (AmitkStudy * study);
   void (* time_changed) (AmitkStudy * study);
   void (* canvas_visible_changed) (AmitkStudy * study);
@@ -110,6 +127,10 @@ struct _AmitkStudyClass
   void (* voxel_dim_changed) (AmitkStudy * study);
   void (* fuse_type_changed) (AmitkStudy * study);
   void (* view_center_changed) (AmitkStudy * study);
+  void (* canvas_roi_preference_changed) (AmitkStudy * study);
+  void (* canvas_general_preference_changed) (AmitkStudy * study);
+  void (* canvas_target_preference_changed) (AmitkStudy * study);
+  void (* canvas_layout_preference_changed) (AmitkStudy * study);
 
 };
 
@@ -118,7 +139,7 @@ struct _AmitkStudyClass
 /* Application-level methods */
 
 GType	        amitk_study_get_type	             (void);
-AmitkStudy *    amitk_study_new                     (void);
+AmitkStudy *    amitk_study_new                     (AmitkPreferences * preferences);
 void            amitk_study_set_filename            (AmitkStudy * study, 
 						     const gchar * new_filename);
 void            amitk_study_set_creation_date       (AmitkStudy * study, 
@@ -142,6 +163,16 @@ void            amitk_study_set_zoom                (AmitkStudy * study,
 						     const amide_real_t new_zoom);
 void            amitk_study_set_canvas_target       (AmitkStudy * study,
 						     const gboolean always_on);
+void            amitk_study_set_canvas_roi_width    (AmitkStudy * study,
+						     gint roi_width);
+void            amitk_study_set_canvas_line_style   (AmitkStudy * study,
+						     const GdkLineStyle line_style);
+void            amitk_study_set_canvas_layout       (AmitkStudy * study,
+						     const AmitkLayout layout);
+void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,
+						     const gboolean maintain_size);
+void            amitk_study_set_canvas_target_empty_area(AmitkStudy * study,
+							 gint target_empty_area);
 AmitkStudy *    amitk_study_load_xml                (const gchar * study_filename);
 gboolean        amitk_study_save_xml                (AmitkStudy * study, 
 						     const gchar * study_filename,

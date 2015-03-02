@@ -134,21 +134,25 @@
 
   <para>
    After hitting execute, the program will crank for a while, and then
-   show the calculated values.  Hitting "save as" allows saving these
-   values as a comma separated values (CSV) file.  This file should be
-   easily imported into most spreadsheet applications (Excel's a
-   little stupid, you'll have to explicitly tell it you're importing a
-   CSV file).
+   show the calculated values in a new dialog window.  Hitting "Save
+   as" button allows saving these values as a comma separated values
+   (CSV) file.  This file should be easily imported into most
+   spreadsheet applications (Excel's a little stupid, you'll have to
+   explicitly tell it you're importing a CSV file).  Pressing the
+   "Copy" button copies the information into the operating systems
+   clipboard, allowing pasting of the results into other programs.
   </para>
+
+  
 
 
 
  <sect3><title>Gotcha's to ROI calculations </title>
   
-  <sect4><title>Variance/Std. Dev./Std. Err. Fallacies</title>
+  <sect4><title>Variance and Standard Deviation Fallacies</title>
     
     <para>
-      Currently, AMIDE generates variance/std. dev./std. error values
+      Currently, AMIDE generates variance and standard deviation values
       that may occasionally be of interest to imaging physicists.  It
       is very important to remember, that these numbers represent the
       noise in the data set, NOT the noise in your experiment.
@@ -215,7 +219,7 @@
 
    <varlistentry><term>Variance</term>
    <listitem><para>The variance of the voxels in the ROI.  This is
-   infact a weighted variance calculation so that voxels that are
+   a weighted variance calculation so that voxels that are
    partially enclosed within the ROI are correctly
    handled.</para></listitem>
    </varlistentry>

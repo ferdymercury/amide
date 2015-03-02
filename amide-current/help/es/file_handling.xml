@@ -1,0 +1,192 @@
+
+<sect2 id="importing_data_sets"><title>Importaci&oacute;n de Conjuntos de Datos</title>
+
+ <para> AMIDE usa propio formato (descrito abajo: <xref
+   linkend="xif-files" />) para guardar datos entre sesiones. Para
+   cargar datos al AMIDE, es necesario importarlos (localizado bajo el
+   men&uacute; "File" ). Puede optar entre que AMIDE adivine el formato (
+   funciona para la mayor&iacute;a de los tipos) o decir a AMIDE
+   expl&iacute;citamente que formato de fichero debe importar. Importando
+   todos los tipos de datos excepto datos crudos(raw) se hace a trav&eacute;s
+   de la librer&iacute;a de conversi&oacute;n medica de Erik Nolf's <ulink
+   type="http" url="http://xmedcon.sourceforge.net">(X)medcon</ulink>.
+ </para>
+
+  <sect3><title>Ficheros de datos crudos (raw data)</title>
+
+    <para> AMIDE intentar&aacute; cargar cualquier fichero que tenga el
+    sufijo ".dat" or ".raw" como fichero de datos crudos. Al usuario
+    se le pedir&aacute;n las dimensiones , los bits que existen desde el
+    pricipio del fichero hasta los datos, y el tipo y formato de
+    datos. Ficheros en big endian, little endian, y PDP pueden ser
+    cargados (endian se refiere al orden en que los bits son
+    dispuestos en la memoria).</para>
+
+    <para> Los siguientes formatos de datos son soportados: enteros
+    con o sin signo de 8 bit , 16 , enteros con o sin signo de 32 bit
+    , coma flotante de 32 bit IEEE , coma flotante de 64 bit IEEE , y
+    datos ASCII .</para>
+
+  </sect3>
+
+  <sect3><title>ECAT Files</title>
+
+   <para> Ficheros ECAT 6.4 y 7.2 , tanto est&aacute;ticos como din&aacute;micos se
+   soportan a trav&eacute;s de (X)MedCon. AMIDE intentar&aacute; cargar cualquier
+   fichero que tenga el sufijo ".img" como el ECAT 6.4, y cualquier
+   fichero con sufijo ".v" como el ECAT 7. Por favor n&oacute;tese que los
+   ficheros ECAT 6.4 son muy dif&iacute;ciles de autodetectar , as&iacute; si el
+   fichero no acaba en .img tendr&aacute; que comunicar expl&iacute;citamente a
+   AMIDE para que importe el fichero como ECAT 6.4.</para>
+
+  <para> Aunque no se compila por defecto, AMIDE se puede configurar
+  para usar la librer&iacute;a z_matrix_7/libecat para el manejo de ficheros
+  ECAT en vez de (X)MedCon.</para>
+
+ </sect3>
+
+
+ <sect3><title>Ficheros DICOM</title>
+  
+  <para> DICOM 3.0 se soporta con (X)MedCon, el cual tiene una
+  librer&iacute;a ligeramente modificada de Tony Voet's VT-DICOM . El nivel
+  de soporte de DICOM 3.0 viene enteramente determinado por
+  (X)MedCon/VT-DICOM.
+  </para>
+
+  <para> Los datos DICOM normalmente aparecen distribuidos en un grupo
+   de ficheros. Para que los lea AMIDE como un conjunto &uacute;nico de
+   datos, necesitar&aacute; agrupar esos ficheros en un &uacute;nico fichero de todo
+   el volumen. Notas de c&oacute;mo hacer esto se encuentran en <ulink
+   type="http" url="http://xmedcon.sourceforge.net/faq/stack.html">el
+   website de (X)medcon.  </ulink>.</para>
+  
+ </sect3>
+
+
+ <sect3><title>Concorde microPET files</title>
+  
+  <para> Los ficheros Concorde son generados por los tom&oacute;grafos de
+  microPET de la compa&ntilde;&iacute;a Concorde. Es un formato con dos ficheros
+  (uno de datos y otro de encabezamiento), con el de encabezamiento
+  f&aacute;cilmente le&iacute;ble en ASCII. Usted tendr&aacute; que decir al AMIDE que abra
+  el fichero de encabezamiento (.img.hdr), no el fichero de datos
+  (.img).</para>
+
+ </sect3>
+
+ <sect3><title>Acr/Nema 2.0, Analyze (SPM), InterFile3.3, Gif87a/89a</title>
+
+  <para> Una variedad de formatos adicionales pueden ser soportados a
+  trav&eacute;s de (X)MedCon, incluyendo: Acr/Nema 2.0, Analyze (SPM),
+  InterFile3.3, y Gif87a/89a. Para mas informaci&oacute;n , por favor
+  refi&eacute;rase a la documentaci&oacute;n de (X)MedCon <ulink type="http"
+  url="http://xmedcon.sourceforge.net">sitio web
+  (http://xmedcon.sf.net)</ulink>. </para>
+  
+  
+ </sect3>
+  
+
+</sect2>
+
+
+<sect2 id="xif-files"><title>Ficheros XIF</title>
+
+ <para> AMIDE guarda los estudios en un formato extensible XIF (Xml
+ Image Format). Este formato puede guardarse como fichero (formato
+ plano XIF) o como un directorio XIF . El formato por defecto es el
+ plano, lo que simplifica el manejo y movimiento de los ficheros. Por
+ otro lado el formato en directorio permite el f&aacute;cil acceso a los
+ datos del estudio AMIDE por parte de otros programas, lo que ser&aacute; de
+ inter&eacute;s para los desarrolladores. En el di&aacute;logo de preferencias puede
+ elegir cual de los dos formatos XIF usar.</para>
+
+ <para> En cualquier caso los ficheros o directorios tendr&aacute;n el sufijo
+ ".xif", y ser&aacute;n tratados id&eacute;nticamente por el programa AMIDE .</para>
+
+ <sect3><title>Abriendo Estudios</title>
+  
+  <para> De la ventana principal, selecci&oacute;nar "File->Open", y se
+  abrir&aacute; un di&aacute;logo de selecci&oacute;n. Seleccione un nombre de fichero XIF
+  en la columna de la derecha, y pulse el boton "OK" (o haga click
+  doble en el nombre del fichero).</para>
+
+ </sect3>
+
+ <sect3><title>Guardando Estudios</title>
+
+  <para> Para guardar un estudio, de la ventana de selecci&oacute;n de
+    estudios "File->Save As" y un di&aacute;logo de selcci&oacute;n de ficheros
+    aparecer&aacute;. Mire la l&iacute;nea "selection:" cerca del pie de la ventana,
+    si este es el fichero XIF deseado , pulse "OK" y el fichero sera
+    guradado. Si no fuera el fichero XIF deseado , seleccione o entre
+    el nombre correcto de estudio XIF, y pulse el boton "OK" .</para>
+
+  <para> Note que los ficheros de datos originales ya no son
+    necesraios para AMIDE, ya que toda la informaci&oacute;n que AMIDE
+    necesita esta guardada en el fichero .XIF . De todas las maneras
+    deber&iacute;a guardar los ficheros originales, ya que AMIDE solamente
+    lee la informaci&oacute;n que necesita del encabezamiento.  
+  </para>
+
+ </sect3>
+
+
+ <sect3><title>Formato XIF en Directorio</title>
+
+  <para> Aunque desde le punto de vista de tranferecia es bastante
+  engorroso, usando la estructura de directorio para guardarlos tiene
+  la ventaja decisiva de hacer la informaci&oacute;n mas f&aacute;cilmente
+  accessible usando linea de comandos y herramientas estandar de
+  texto.</para>
+
+  <para> Cada directorio XIF contiene un fichero llamado "study_*.xml"
+  el cual guarda los paramnetros b&aacute;sicos del estudio. Ficheros
+  adicionales se encuentran en el directorio XIF como los ficheros
+  ROI_*.xml que guardan ROI's, y data-set_*.xml con sus
+  correspondientes conjuntos de datos, data-set_*_raw-data files, que
+  contienen los par&aacute;metros de imagen y los datos crudos
+  respectivamente. El fichero crudo (raw) (double/float/int,
+  64/32/16/8 bit, little or big endian, por plano/por segmento de
+  tiempo(frame)/factor simple de escala), y est&aacute; determinado por el
+  formato original de los datos.
+  </para>
+ </sect3>
+
+ <sect3><title>Formato Plano XIF</title>
+
+  <para> El formato palno XIF es una concatenaci&oacute;n de la informaci&oacute;n
+  encerrada en el directorio XIF. No es de ninguna manera para ser
+  editado o f&aacute;cil para los desarrolladores. En cambio, facilita el
+  manejo para los usuarios. Si desea acceder al al informaci&oacute;n a un
+  fichero palno XIF por un programa externo, mejor vu&eacute;lvalo a guardar
+  como formato XIF en directorio.</para>
+
+  <para> El formato es el siguiente: Los primeros 64 bits contienen
+  una cadena m&aacute;gica de identificaci&oacute;n del formato. Los siguientes 16
+  bits contienen 2 enteros de 64 bit little endian, el primero siendo
+  la localizaci&oacute;n del estudio xml en el fichero, y el segundo
+  correspondiendo al tama&ntilde;o de los datos xml. Dentro de los datos xml
+  esta inclu&iacute;da la informaci&oacute;n de donde se hallan ubicados los hijos
+  de los datos xml, y dentro de los datos xml de los hijos se
+  encuentra la localizaci&oacute;n de los datos de los subhijos.
+  </para>
+
+ </sect3>
+
+</sect2>
+
+
+
+<sect2><title>Exportando una Vista a JPEG</title>
+
+  <para> Para exportar una de las vistas (transversa/coronal/sagital)
+  a un fichero externo de imagen, seleccione "File->Export
+  View->[view]" desde el men&uacute;. . La vista ser&aacute; guardada como jpeg.
+  </para>
+
+</sect2>
+  
+  
+  

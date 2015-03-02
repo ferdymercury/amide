@@ -1,15 +1,15 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.7.14
+Version: 	0.8.0
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering
 Source: 	%{name}-%{version}.tgz
 URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
-Packager: 	Andy Loening <loening@alum.mit.edu>
+Packager: 	Andy Loening <loening at alum dot mit dot edu>
 
-BuildRequires: 	xmedcon >= 0.8.13
+BuildRequires: 	xmedcon >= 0.8.14
 BuildRequires:  volpack 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gtk-doc 
@@ -65,7 +65,7 @@ scrollkeeper-update
 
 
 %changelog
-* Tue Nov 05 2002 Andy Loening <loening@alum.mit.edu>
+* Tue Nov 05 2002 Andy Loening <loening at alum dot mit dot edu>
 - get it to work with scrollkeeper
-* Sun Dec 19 2000 Andy Loening <loening@alum.mit.edu>
+* Sun Dec 19 2000 Andy Loening <loening at alum dot mit dot edu>
 - wrote this fool thing

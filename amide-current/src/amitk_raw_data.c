@@ -723,7 +723,12 @@ void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name,
   xmlDocPtr doc;
   FILE * file_pointer;
   guint64 location, size;
-
+  size_t num_wrote;
+  size_t num_to_write;
+  size_t num_to_write_this_time;
+  size_t bytes_per_unit;
+  size_t total_to_write;
+  size_t total_wrote = 0;
 
   if (study_file == NULL) {
     /* make a guess as to our filename */
@@ -758,21 +763,38 @@ void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name,
   
   /* write it on out.  */
   location = ftell(file_pointer);
-  if (fwrite(raw_data->data, 
-	     amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)],
-	     amitk_raw_data_num_voxels(raw_data), 
-	     file_pointer) != amitk_raw_data_num_voxels(raw_data)) {
-    g_warning(_("incomplete save of raw data file: %s"),raw_filename);
-    g_free(xml_filename);
-    g_free(raw_filename);
-    if (study_file == NULL) fclose(file_pointer);
-    return;
+  num_to_write = amitk_raw_data_num_voxels(raw_data);
+  bytes_per_unit = amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)]; 
+  total_to_write = num_to_write;
+   
+  /* write in small chunks (<=16MB) to get around a bad samba/cygwin interaction */
+  while(num_to_write > 0) {
+    if (num_to_write*bytes_per_unit > 0x1000000) 
+      num_to_write_this_time = 0x1000000/bytes_per_unit;
+    else
+      num_to_write_this_time = num_to_write;
+    num_to_write -= num_to_write_this_time;
+    
+    num_wrote = fwrite((raw_data->data + total_wrote*bytes_per_unit),
+		       bytes_per_unit, num_to_write_this_time, file_pointer);
+    total_wrote += num_wrote;
+    
+    if (num_wrote != num_to_write_this_time) {
+      g_warning(_("incomplete save of raw data, wrote %d (bytes), needed %d (bytes), file: %s"),
+		total_wrote*bytes_per_unit, 
+		total_to_write*bytes_per_unit,
+		raw_filename);
+      g_free(xml_filename);
+      g_free(raw_filename);
+      if (study_file == NULL) fclose(file_pointer);
+      return;
+    }
   }
+ 
+  
   size = ftell(file_pointer)-location;
   if (study_file == NULL) fclose(file_pointer);
-
-
-
+    
   /* write the xml portion */
   doc = xmlNewDoc("1.0");
   doc->children = xmlNewDocNode(doc, NULL, "raw_data", name);
@@ -832,7 +854,8 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,_("Raw data xml file doesn't appear to have a root: %s"), xml_filename);
+    amitk_append_str_with_newline(perror_buf,_("Raw data xml file doesn't appear to have a root: %s"), 
+				  xml_filename);
     return NULL;
   }
 
@@ -874,7 +897,7 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
     /* check for file size problems */
     if (sizeof(long) < sizeof(guint64))
       if ((offset>>32) > 0) {
-	amitk_append_str(perror_buf, _("File to large to read on 32bit platform."));
+	amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
 	return NULL;
       }
 #endif

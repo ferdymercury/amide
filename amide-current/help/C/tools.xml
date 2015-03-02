@@ -56,8 +56,11 @@
 </sect2>
 
 
-<sect2><title>Crop Wizard</title>
-   <para>Coming soon </para>
+<sect2><title>Crop Wizard</title> 
+
+  <para>Coming soon.  Note that only what is strictly inside the
+   cursor lines is saved.  What's underneath and outside the cursor
+   lines is cropped away. </para>
 </sect2>
 
 
@@ -69,21 +72,22 @@
 </sect2>
 
 
-<sect2><title>Crop Wizard</title>
-   <para>Coming soon </para>
-</sect2>
-
-
 <sect2><title>Filter Wizard</title>
-   <para>Coming soon </para>
+   <para>Nothing written yet...</para>
 </sect2>
 
 
 <sect2><title>Fly Through Wizard</title>
-   <para> Coming Soon</para>
+   <para>Nothing written yet...</para>
    <para> Note, will generally get much better results for fly through
    if using trilinear interpolation.</para>
 </sect2>
+
+
+<sect2 id="profile-dialog"><title>Profile Tool</title>
+ <para>Nothing written yet...</para>
+</sect2>
+
 
 <sect2><title>ROI Statistics</title>
    <para>A description of the ROI statistics tool can be found at:

@@ -1,0 +1,207 @@
+  <para> Despues de ser cargados los datos m&eacute;dicos pueden ser
+   manipulados de varias maneras en AMIDE. Es importante recordar que
+   AMIDE trabaja con vol&uacute;menes de datos 3D y 4D. Mientras que los
+   cortes 2D son representados en la pantalla del ordenador , AMIDE
+   maneja siempre datos tridimensionales.</para>
+
+
+
+
+<sect2><title>Manipulando Vol&uacute;menes en la Pantalla</title>
+
+  <sect3><title>Viendo Vol&uacute;menes</title>
+
+  <para> Cuando inicialmente se carga un conjunto de datos en el
+    programa este no es visualizado. En vez de esto el nombre del
+    conjunto de datos aparece en la lista del estudio, y el usuario
+    debe seleccionar este conjunto de la lista para
+    visualizarlo.</para>
+  
+  <para> Ver m&uacute;ltiple conjuntos de datos es tan simple como importar
+    mas de un conjunto de datos, y entonces selecionar que conjuntos
+    queremos ver de la lista del estudio.</para>
+
+  <para> El periodo de tiempo se selecciona del di&aacute;logo de tiempo y se
+    describe en mas detalle en <xref linkend="frame-dialog" /> </para>
+
+  </sect3>
+
+  <sect3><title>Manejo del Rat&oacute;n</title>
+
+   <para> Las siguientes acciones del rat&oacute;n puden ser usadas sobre los
+   datos de las vistas ortogonales</para>
+
+   <variablelist>
+
+     <varlistentry><term>MAYUSC+Bot&oacute;n 1</term> 
+     <listitem><para> 
+       Esta combinaci&oacute;n permite desplazar el volumen en el espacio
+       (normalmente usado para alinear vol&uacute;menes de datos). Mientras
+       se aprieta MAYUSC, al pulsar el el bot&oacute;n 1 en la imagen, se
+       cojer&aacute; el volumen activo. Ahora puede desplazarlo alrededor del
+       marco. Cuado el volumen se halla en la posici&oacute;n deseada para
+       soltarlo pulsar el bot&oacute;n 3. Cualquier otro bot&oacute;n del rat&oacute;n
+       cancelar&aacute; el desplazamiento.  </para></listitem>
+     </varlistentry>
+
+     <varlistentry><term>MAYUSC+Bot&oacute;n 2</term> 
+     <listitem><para> 
+      Esta combinaci&oacute;n rota el volumen en el espacio (normalmente
+      usado para alinear vol&uacute;menes de datos). Mientras se mantiene
+      pulsada MAYUSC, pulsar (y soltar) con el bot&oacute;n 2 en la imagen,
+      se cojera al volumen. Ahora puede rotar el volumen activo. En
+      este punto para soltar el volumen, pulsar el bot&oacute;n 3. Cualquier
+      otro bot&oacute;n cancelar&aacute; la rotaci&oacute;n.
+	</para></listitem>
+     </varlistentry>
+
+     <varlistentry><term>Ctrl+Bot&oacute;n 3</term>
+     <listitem><para> Esta combinaci&oacute;n situa un punto de alineaci&oacute;n en
+      la posici&oacute;n donde este el cursor. Un di&aacute;logo pedir&aacute; el nombre
+      del punto.  </para></listitem>
+     </varlistentry>
+
+   </variablelist>
+
+
+  </sect3>
+  
+
+</sect2>
+
+<sect2 id="manual_alignment"><title>Alineaci&oacute;n Manual de Vol&uacute;menes</title>
+
+  <para> Lo que sigue es una gu&iacute;a r&aacute;pida para alinear manualmente
+  vol&uacute;menes en AMIDE</para>
+
+  <procedure>
+    <step>
+      <para>
+       Primero rotar los vol&uacute;menes para que esten a nivel respecto a
+       las vista axiales, coronales, and sagitales . Esto se hace
+       f&aacute;cilmente con la combinaci&oacute;n MAYUSC+2 bot&oacute;n , pero tambi&eacute;n
+       pude hacerse desde el di&aacute;logo de modificaci&oacute;n de los conjuntos
+       de datos.  </para>
+    </step>
+    <step>
+      <para>
+        Elija un volumen como activo, este se mover&aacute;. El otro permanecer&aacute; "fijo" .
+      </para>
+    </step>
+    <step>
+      <para>
+       Desplace el volumen activo hasta alinearlo con el fijo. Esto se
+       hace f&aacute;cilmente con la combinaci&oacute;n MAYUSC+Bot&oacute;n 1 , pero
+       tambi&eacute;n puede hacerse desde el di&aacute;logo de modificaci&oacute;n de los
+       conjuntos de datos.
+      </para>
+    </step>
+    <step>
+      <para>
+       Los ajustes finos es mejor llevarlos a cabo desde el di&aacute;logo de
+       modificaci&oacute;n de los conjuntos de datos.
+      </para>
+    </step>
+  </procedure>          
+  
+</sect2>
+
+
+<sect2 id="data-set-dialog"><title>Di&aacute;logo de Modificaci&oacute;n de Conjuntos de Datos</title>
+
+    <para> Para modificar los Parametros de un volumen, pulsar con el
+    bot&oacute;n 3 en le volumen del arbol del estudio para que aparezca el
+    di&aacute;logo de modificaci&oacute;n. Los par&aacute;metros modificables se dividen en
+    las siguientes p&aacute;ginas.</para>
+
+   <variablelist>    
+
+    <varlistentry><term>Informacion B&aacute;sica</term>
+      <listitem><para>
+       En esta p&aacute;gina hay opciones para modificar el nombre, tipo de
+       modalidad, factor de conversi&oacute;n, y tipo de interpolaci&oacute;n usado
+       en este volumen de datos (descrito en <xref
+       linkend="interpolation" />). El factor de conversi&oacute;n es el
+       par&aacute;mentro por el que se multipilican el volumen de datos antes
+       de verlo o cuantificarlo. Al estar los datos en una escala
+       arbitraria de valores ECAT/MAP, el factor de conversi&oacute;n se
+       puede utilizar para analizar los datos con otro tipo de unidad
+       d e referencia(p.e. Porcentaje de Dosis Inyectada
+       [%ID]). Tambi&eacute;n hay una calculadora incluida, donde se pueden
+       meter los par&aacute;metros como el peso del sujeto y la dosis
+       inyectada, generandos el factor de conversi&oacute;n.
+
+      </para></listitem>
+    </varlistentry>
+    
+    <varlistentry><term>Center</term>
+      <listitem><para>
+	Se puede desplazar el volumen de datos con respecto al origen
+	de coordenadas. Las dimensiones xyz son en mil&iacute;metros.
+	</para></listitem>
+    </varlistentry>
+
+    <varlistentry><term>Tama&ntilde;o del Voxel</term>
+      <listitem><para>
+        El Tama&ntilde;o del voxel de los datos (tambi&eacute;n en mil&iacute;metros) pude
+	ser alterado en esta p&aacute;gina. El bot&oacute;n "keep aspect ratio"
+	especifica que cuando se altera cualquier dimensi&oacute;n del voxel
+	(x, y, or z), las dem&aacute;s dimensiones se alteraran en la misma
+	proporci&oacute;n.  </para></listitem>
+    </varlistentry>
+
+    <varlistentry><term>Rotar</term>
+      <listitem><para>
+       El volumen de datos puede ser rotado sobre su cento en esta
+       p&aacute;gina. Hay una ruedecita por cada plano. La ruedecita axial
+       rotar&aacute; el volumen en el plano transversal (rota sobrel el eje
+       z). La ruedecita coronal rotar&aacute; el volumen en el plano coronal
+       (rota sobrel el eje y). Y la rudecita sagital lo har&aacute; sobre el
+       plano sagital (rota sobrel el eje x). El bot&oacute;n "reset to
+       default" deshace las rotaciones dejando el volumen como al
+       principio. Al pie de p&aacute;gina existe una matriz con las
+       tranformaciones de las coordenadas del volumen con respecto al
+       las coordenadas de origen.
+	</para></listitem>
+    </varlistentry>
+    
+    <varlistentry><term>Mapa de Color/Umbral(Threshold)</term>
+      <listitem><para>
+       Esta p&aacute;gina es an&aacute;loga al del di&aacute;logo de Umbral (descrita en
+       <xref linkend="threshold_dialog" />).
+      </para></listitem>
+    </varlistentry>
+
+   <varlistentry><term>Tiempo</term>
+      <listitem><para>
+     Desde esta p&aacute;gina se puede alterar la informaci&oacute;n respecto al los
+     tiempos de los datos. El tiempo de comienzo del scan puede
+     cambiarse con respecto al tiempo de otros scans. Tambi&eacute;n pueden
+     hacerse correciones en la duraci&oacute;n de cada marco de tiempo(Frame
+     Time) .  </para></listitem>
+    </varlistentry>
+
+   <varlistentry><term>Windowing Preferences</term>
+    <listitem><para>
+      The max and min threshold levels used for the bone and soft
+      tissue CT window buttons can be explicitly set here.  The
+      "Insert Current Thresholds" button will reset the max and min
+      values with the data set's currently used threshold levels.  
+     </para></listitem>
+    </varlistentry>
+    
+    <varlistentry><term>Immutables</term>
+      <listitem><para>
+       Este panel lista la informaci&oacute;n que no puede ser alterada. El
+       formato interno subyaccente y las dimensiones del voxel se
+       muestran en esta p&aacute;gina.
+	</para></listitem>
+    </varlistentry>
+
+    </variablelist>
+</sect2>
+
+
+  
+
+

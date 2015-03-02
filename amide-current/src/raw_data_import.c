@@ -483,7 +483,6 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
-  raw_data_info->voxel_size.x = raw_data_info->voxel_size.y = raw_data_info->voxel_size.z=1;
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
     entry = gtk_entry_new();
     temp_string = g_strdup_printf("%d", 1);
@@ -522,7 +521,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
+AmitkDataSet * raw_data_import(const gchar * raw_data_filename, AmitkPreferences * preferences) {
 
   struct stat file_info;
   raw_data_info_t * raw_data_info;
@@ -537,8 +536,11 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
     g_warning(_("Couldn't allocate space for raw_data_info structure for raw data import"));
     return NULL;
   }
+
+  /* some initializations */
   raw_data_info->scale_factor = 1.0;
   raw_data_info->filename = g_strdup(raw_data_filename);
+  raw_data_info->voxel_size = one_point;
 
   /* figure out the file size in bytes (file_info.st_size) */
   if (stat(raw_data_info->filename, &file_info) != 0) {
@@ -564,17 +566,14 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 					raw_data_info->raw_format,
 					raw_data_info->data_dim,
 					raw_data_info->offset,
+					preferences,
+					raw_data_info->modality,
+					raw_data_info->name,
+					raw_data_info->voxel_size,
+					raw_data_info->scale_factor,
 					amitk_progress_dialog_update,
 					progress_dialog);
     
-    /* set remaining parameters */
-    if (ds != NULL) {
-      amitk_object_set_name(AMITK_OBJECT(ds),raw_data_info->name);
-      ds->voxel_size = raw_data_info->voxel_size;
-      amitk_data_set_calc_far_corner(ds);
-      ds->modality = raw_data_info->modality;
-      amitk_data_set_set_scale_factor(ds, raw_data_info->scale_factor);
-    }
   } else /* we hit the cancel button */
     ds = NULL;
 

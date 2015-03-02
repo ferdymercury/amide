@@ -1,0 +1,100 @@
+
+
+<sect2><title>Herramienta de Alineamiento(Alignment Wizard)</title>
+
+  <para>En adici&oacute;n al alineamiento manual (descrito en <xref
+  linkend="manual_alignment" />), los vol&uacute;menes tambien pueden
+  alinearse con el "alignement wizard". El proceso es
+  b&aacute;sicamente:</para>
+
+  <procedure>
+    <step>
+      <para>
+        Dibujar al menos 3 pares de puntos fiduciales en los vol&uacute;menes
+        que desee alinear. El dibujo de puntos fiduciales se describe
+        debajo como <xref linkend="fiducial-marker" />.
+      </para>
+    </step>
+    <step>
+      <para>
+        Corra el "alignment wizard" (bajo tools->alignment
+        wizard). para que el "alignment wizard" reconozca 2 marcadores
+        fiduciales como par, deben de tener exactamente el mismo
+        nombre. As&iacute; si tiene un marcador llamado "1" en el primer
+        volumen, tendr&aacute; que tener un marcador, tambi&eacute;n llamado "1", en
+        el segundo volumen.
+      </para>
+    </step>
+  </procedure>          
+  
+
+  <sect3 id="fiducial-marker"><title>Dibujando Marcadores Fiduciales</title>
+
+   <para>
+    Se pueden a&ntilde;adir marcadores fiduciales de varias maneras. Para el
+    volumen activo, seleccionar el item del menu "Edit->Add fiducial
+    mark" y a&ntilde;adir&aacute; una marca fiducial en la vista seleccionada. Las
+    marcas fiduciales se pueden a&ntilde;adir directamente a la vista activa
+    pulsando CTRL+bot&oacute;n 3 del raton, que dispondr&aacute; una marca fiducial
+    en el lugar que apunte el rat&oacute;n. Finalmente, los marcadores
+    fiduciales se pueden a&ntilde;adir a vol&uacute;menes inactivos pulsando
+    CTRL+bot&oacute;n 3 del rat&oacute;n mientras se selecciona el volumen de la
+    lista del estudio.</para>
+
+   <para>Despu&eacute;s de crear, el marcador fiducial puede ser movido
+   pulsando el punto de marcaje en cualquiera de las tres vistas.
+   </para>
+ </sect3>
+
+ <sect3 id="fiducial-marker-dialog"><title>Caja de Di&aacute;logo de Modificaci&oacute;n de Marcadores Fiduciales</title>
+  <para>
+    Para modificar los par&aacute;metros de una marca fiducial, pulse el
+    bot&oacute;n 3 en la lista del estudio para desplegar la Caja de Di&aacute;logo
+    de Modificaci&oacute;n de Marcadores Fiduciales. Desde este di&aacute;logo, se
+    pueden modificar el nombre y localizaci&oacute;n del marcador fiducial.
+    </para>
+    
+ </sect3>
+
+</sect2>
+
+
+<sect2><title>Herramienta de Recorte(Crop Wizard)</title> 
+
+  <para>Permite recortar los vol&uacute;menes quitando de ellos las partes
+    carentes de inter&eacute;s. Se abrir&aacute; un di&aacute;logo con el MIP del plano
+    axial, existiendo unos modificadores de dimensi&oacute;n que dibujar&aacute;n
+    una caja en el MIP, una vez seleccionado pulsar Next y aparecer&aacute;
+    el MIP coronal, ajustarlo y pulsar Next de nuevo aparecer&aacute; el MIP
+    sagital, recortando as&iacute;, el volumen desde los 2 planos.
+</para>
+</sect2>
+
+
+<sect2><title>Herramienta de Filtrado</title>
+   <para>Permite aplicar filtros de Mediana lineal y 3D, y Gaussiano al volumen activo.</para>
+</sect2>
+
+
+<sect2><title>Creaci&oacute;n de video en una Orientaci&oacute;n(Fly Through Wizard)</title>
+
+   <para> Crea un video de los cortes extraidos e cualquiera de los
+   planos, axial, coronal o sagital, determinando el corte de inicio y
+   el corte final.</para>
+
+   <para>Nota, los resultados son mejores si se usa interpolaci&oacute;n trilineal.</para>
+
+</sect2>
+
+
+<sect2><title>ROI Estad&iacute;sticas</title> <para>La descripci&oacute;n de la
+   estad&iacute;sticas del ROI en: <xref linkend="roi_statistics" />.</para>
+</sect2>
+
+<sect2><title>Nota del traductor:</title><para>Los apartados de Crop
+  Wizard, Filtrado y Fly Through Wizard, figuran como pendientes de
+  escribir en el Manual original de AMIDE, por lo que han sido
+  a&ntilde;adidos a discrecci&oacute;n del traductor.</para>
+</sect2>
+
+

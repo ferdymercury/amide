@@ -76,12 +76,8 @@ struct _AmitkCanvas
 
   AmitkView view;
   AmitkViewMode view_mode;
-  AmitkLayout layout;
   gint roi_width;
-  GdkLineStyle line_style;
   AmitkObject * active_object;
-  gboolean maintain_size;
-  gint target_empty_area;
 
   GList * slices;
   GList * slice_cache;
@@ -95,11 +91,12 @@ struct _AmitkCanvas
   GList * undrawn_rois;
   GList * object_items;
 
-  GList * cursor_stack;
-
   guint next_update;
   guint idle_handler_id;
   GList * next_update_objects;
+
+  /* profile stuff */
+  GnomeCanvasItem * line_profile_item;
 
   /* target stuff */
   GnomeCanvasItem * target[8];
@@ -134,28 +131,14 @@ struct _AmitkCanvasClass
 
 
 GType         amitk_canvas_get_type             (void);
-GtkWidget *   amitk_canvas_new                  (AmitkView view, 
+GtkWidget *   amitk_canvas_new                  (AmitkStudy * study,
+						 AmitkView view, 
 						 AmitkViewMode view_mode,
-						 AmitkLayout layout, 
-						 GdkLineStyle line_style,
-						 gint roi_width,
-						 AmitkCanvasType type,
-						 gboolean maintain_size,
-						 gint target_empty_area);
+						 AmitkCanvasType type);
 void          amitk_canvas_set_study            (AmitkCanvas * canvas, 
 						 AmitkStudy * study);
-void          amitk_canvas_set_layout           (AmitkCanvas * canvas, 
-						 AmitkLayout new_layout);
-void          amitk_canvas_set_general_properties(AmitkCanvas * canvas, 
-						  gboolean maintain_size);
-void          amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
-						 gint target_empty_area);
 void          amitk_canvas_set_active_object    (AmitkCanvas * canvas, 
 						 AmitkObject * active_object);
-void          amitk_canvas_set_line_style       (AmitkCanvas * canvas, 
-						 GdkLineStyle new_line_style);
-void          amitk_canvas_set_roi_width        (AmitkCanvas * canvas, 
-						 gint new_roi_width);
 void          amitk_canvas_update_target        (AmitkCanvas * canvas, 
 						 AmitkCanvasTargetAction action, 
 						 AmitkPoint center, 

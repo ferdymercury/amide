@@ -172,7 +172,7 @@
 	(described at <xref linkend="threshold_dialog" />) above).  
       </para></listitem>
     </varlistentry>
-    
+
    <varlistentry><term>Time</term>
       <listitem><para>
 	From this page, the timing information of the data set can be
@@ -182,6 +182,15 @@
 	page. </para></listitem>
     </varlistentry>
 
+   <varlistentry><term>Windowing Preferences</term>
+    <listitem><para>
+      The max and min threshold levels used for the bone and soft
+      tissue CT window buttons can be explicitly set here.  The
+      "Insert Current Thresholds" button will reset the max and min
+      values with the data set's currently used threshold levels.  
+     </para></listitem>
+    </varlistentry>
+    
     <varlistentry><term>Immutables</term>
       <listitem><para>
 	This panel lists information about the data set that cannot be

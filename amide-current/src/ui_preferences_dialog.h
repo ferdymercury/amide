@@ -25,7 +25,7 @@
 
 
 /* external functions */
-GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study);
+void ui_preferences_dialog_create(ui_study_t * ui_study);
 
 
 

@@ -79,6 +79,13 @@ const char ** icon_thresholding[AMITK_THRESHOLDING_NUM] = {
   icon_thresholding_global_xpm
 };
 
+#include "../pixmaps/icon_window_bone.xpm"
+#include "../pixmaps/icon_window_soft_tissue.xpm"
+const char ** icon_windowing[AMITK_WINDOW_NUM] = {
+  icon_window_bone_xpm,
+  icon_window_soft_tissue_xpm
+};
+
 #include "../pixmaps/CYLINDER.xpm"
 #include "../pixmaps/BOX.xpm"
 #include "../pixmaps/ELLIPSOID.xpm"

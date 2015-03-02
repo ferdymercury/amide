@@ -1,4 +1,4 @@
-/* cti_import.c
+/* libecat_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000-2003 Andy Loening
@@ -28,9 +28,9 @@
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <time.h>
 #include <matrix.h>
-#include "cti_import.h"
+#include "libecat_interface.h"
 
-static char * cti_data_types[] = {
+static char * libecat_data_types[] = {
   N_("Unknown Data Type"),  /* UnknownMatDataType */
   N_("Byte"), /* ByteData */
   N_("Short (16 bit), Little Endian"), /* VAX_Ix2 */
@@ -41,13 +41,14 @@ static char * cti_data_types[] = {
   N_("Integer (32 bit), Big Endian") /* SunLong */
 }; /* NumMatrixDataTypes */
 
-AmitkDataSet * cti_import(const gchar * cti_filename, 
-			  gboolean (*update_func)(),
-			  gpointer update_data) {
+AmitkDataSet * libecat_import(const gchar * libecat_filename, 
+			      AmitkPreferences * preferences,
+			      gboolean (*update_func)(),
+			      gpointer update_data) {
 
-  MatrixFile * cti_file=NULL;
-  MatrixData * cti_subheader=NULL;
-  MatrixData * cti_slice=NULL;
+  MatrixFile * libecat_file=NULL;
+  MatrixData * matrix_data=NULL;
+  MatrixData * matrix_slice=NULL;
   AmitkVoxel i, j;
   gint matnum;
   AmitkDataSet * ds=NULL;
@@ -56,6 +57,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   gchar ** frags=NULL;
   time_t scan_time;
   AmitkPoint temp_point;
+  AmitkPoint offset_rp;
   AmitkFormat format;
   AmitkVoxel dim;
   AmitkScalingType scaling_type;
@@ -68,21 +70,21 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   Scan_subheader * ssh;
   Attn_subheader * ash;
 
-  if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
-    g_warning(_("Can't open file %s using libecat"), cti_filename);
+  if (!(libecat_file = matrix_open(libecat_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
+    g_warning(_("Can't open file %s using libecat"), libecat_filename);
     goto error;
   }
 
   /* check if we can handle the file type */
-  switch(cti_file->mhptr->file_type) {
+  switch(libecat_file->mhptr->file_type) {
   case PetImage: /* i.e. CTI 6.4 */
   case PetVolume: /* i.e. CTI 7.0 */
   case AttenCor:
   case Sinogram:
+  case Normalization:
   case InterfileImage:
     break;
   case NoData:
-  case Normalization:
   case PolarMap:
   case ByteProjection:
   case PetProjection: 
@@ -93,23 +95,23 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ByteImage:
   case ByteVolume:
   default:
-    g_warning(_("Can't open this CTI file type: %d"), cti_file->mhptr->file_type);
+    g_warning(_("Can't open this CTI file type: %d"), libecat_file->mhptr->file_type);
     goto error;
     break;
   }
 
   /* we always start at the first iamge */
   //  matnum = mat_numcod(1,1,1,0,0); /* frame, plane, gate, data, bed */
-  matnum = cti_file->dirlist->first->matnum;
+  matnum = libecat_file->dirlist->first->matnum;
 
-  if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
-    g_warning(_("Libecat can't get header info at matrix %x in file %s"), matnum, cti_filename);
+  if (!(matrix_data = matrix_read(libecat_file, matnum, MAT_SUB_HEADER))) {
+    g_warning(_("Libecat can't get header info at matrix %x in file %s"), matnum, libecat_filename);
     goto error;
   }
 
   /* make sure we know how to process the data type */
   /* note that the libecat library handles endian issues */
-  switch (cti_subheader->data_type) {
+  switch (matrix_data->data_type) {
   case VAX_Ix2:  /* little endian short */
   case SunShort: /* big endian short */
     format = AMITK_FORMAT_SSHORT;
@@ -126,45 +128,43 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case BitData:
   default:
     g_warning(_("No support for importing CTI files with data type of: %d (%s)"), 
-	      cti_subheader->data_type,
-	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
-			     cti_subheader->data_type : 0]);
+	      matrix_data->data_type,
+	      libecat_data_types[((matrix_data->data_type) < NumMatrixDataTypes) ? 
+				 matrix_data->data_type : 0]);
     goto error;
     break;
   }
 
   /* start acquiring some useful information */
-  dim.x = cti_subheader->xdim;
-  dim.y = cti_subheader->ydim;
-  dim.z = (cti_subheader->zdim == 1) ? cti_file->mhptr->num_planes : cti_subheader->zdim;
-  dim.t = cti_file->mhptr->num_frames;
-  num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
+  dim.x = matrix_data->xdim;
+  dim.y = matrix_data->ydim;
+  dim.z = (matrix_data->zdim == 1) ? libecat_file->mhptr->num_planes : matrix_data->zdim;
+  dim.t = libecat_file->mhptr->num_frames;
+  num_slices = libecat_file->mhptr->num_planes/matrix_data->zdim;
 
   /* figure out the size of our factor array */
-  if (cti_subheader->zdim == 1) {
+  if (matrix_data->zdim == 1) {
     /* slice image, non-float data, so we'll need a per/plane (2D) array of scaling factors */
     scaling_type = AMITK_SCALING_TYPE_2D;
   } else { /* volume image, so we'll need a per/frame (1D) array of scaling factors */
     scaling_type = AMITK_SCALING_TYPE_1D;
   }
 
-  /* init our data structures */
-  ds = amitk_data_set_new_with_data(format, dim, scaling_type);
+  /* init our data structures, it's a CTI File, we'll guess it's PET data */
+  ds = amitk_data_set_new_with_data(preferences, AMITK_MODALITY_PET,
+				    format, dim, scaling_type);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate space for the data set structure to hold CTI data"));
     goto error;
   }
   
-  /* it's a CTI File, we'll guess it's PET data */
-  ds->modality = AMITK_MODALITY_PET;
-
   /* try figuring out the name */
-  if (cti_file->mhptr->study_name[0] != '\0')
-    name = g_strdup(cti_file->mhptr->study_name);
-  else if (cti_file->mhptr->original_file_name[0] != '\0')
-    name = g_strdup(cti_file->mhptr->original_file_name);
+  if (libecat_file->mhptr->study_name[0] != '\0')
+    name = g_strdup(libecat_file->mhptr->study_name);
+  else if (libecat_file->mhptr->original_file_name[0] != '\0')
+    name = g_strdup(libecat_file->mhptr->original_file_name);
   else {/* no original filename? */
-    temp_string = g_path_get_basename(cti_filename);
+    temp_string = g_path_get_basename(libecat_filename);
     /* remove the extension of the file */
     g_strreverse(temp_string);
     frags = g_strsplit(temp_string, ".", 2);
@@ -174,11 +174,11 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
     g_strfreev(frags); /* free up now unused strings */
   }
   /* try adding on the reconstruction method */
-  switch(cti_file->mhptr->file_type) {
+  switch(libecat_file->mhptr->file_type) {
   case PetImage: 
   case PetVolume: 
   case InterfileImage:
-    ish = (Image_subheader *) cti_subheader->shptr;
+    ish = (Image_subheader *) matrix_data->shptr;
     temp_string = name;
     if (ish->annotation[0] != '\0')
       name = g_strdup_printf("%s - %s", temp_string, ish->annotation);
@@ -187,7 +187,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
     g_free(temp_string);
     break;
   case AttenCor:
-    ash = (Attn_subheader *) cti_subheader->shptr;
+    ash = (Attn_subheader *) matrix_data->shptr;
     temp_string = name;
     name = g_strdup_printf("%s,%d", temp_string, ash->attenuation_type);
     g_free(temp_string);
@@ -207,13 +207,13 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 #endif
   
   /* try to enter in a scan date */
-  scan_time = cti_file->mhptr->scan_start_time;
+  scan_time = libecat_file->mhptr->scan_start_time;
   amitk_data_set_set_scan_date(ds, ctime(&scan_time));
 
   /* get the voxel size */
-  temp_point.x = 10*cti_subheader->pixel_size;
-  temp_point.y = 10*cti_subheader->y_size;
-  temp_point.z = 10*cti_subheader->z_size;
+  temp_point.x = 10*matrix_data->pixel_size;
+  temp_point.y = 10*matrix_data->y_size;
+  temp_point.z = 10*matrix_data->z_size;
   if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {/*handle corrupted cti files */ 
     g_warning(_("Detected corrupted CTI file, will try to continue by guessing voxel_size"));
     ds->voxel_size = one_point;
@@ -223,31 +223,30 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   } else
     ds->voxel_size = temp_point;
 
-  temp_point.x = 10*cti_subheader->x_origin;
-  temp_point.y = 10*cti_subheader->y_origin;
-  temp_point.z = 10*cti_subheader->z_origin;
+  offset_rp.x = 10*matrix_data->x_origin;
+  offset_rp.y = 10*matrix_data->y_origin;
+  offset_rp.z = 10*matrix_data->z_origin;
 
-  if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {    /*handle corrupted cti files */ 
+  if (isnan(offset_rp.x) || isnan(offset_rp.y) || isnan(offset_rp.z)) {    /*handle corrupted cti files */ 
     g_warning(_("Detected corrupted CTI file, will try to continue by guessing offset"));
-    temp_point = zero_point;
+    offset_rp = zero_point;
   }
-  amitk_space_set_offset(AMITK_SPACE(ds), temp_point);
 
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, CTI files specify time as integers in msecs */
   /* check if we can handle the file type */
-  switch(cti_file->mhptr->file_type) {
+  switch(libecat_file->mhptr->file_type) {
   case PetImage: 
   case PetVolume: 
   case InterfileImage:
-    ish =  (Image_subheader *) cti_subheader->shptr;
+    ish =  (Image_subheader *) matrix_data->shptr;
     ds->scan_start = ish->frame_start_time/1000.0;
     break;
   case AttenCor:
     ds->scan_start = 0.0; /* doesn't mean anything */
     break;
   case Sinogram:
-    ssh = (Scan_subheader *) cti_subheader->shptr;
+    ssh = (Scan_subheader *) matrix_data->shptr;
     ds->scan_start = ssh->frame_start_time/1000.0;
     break;
   default:
@@ -258,7 +257,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 #endif
   
   if (update_func != NULL) {
-    temp_string = g_strdup_printf(_("Importing CTI File:\n   %s"), cti_filename);
+    temp_string = g_strdup_printf(_("Importing CTI File:\n   %s"), libecat_filename);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -275,24 +274,24 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
       matnum=mat_numcod(i.t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
       
       /* read in the corresponding cti slice */
-      if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, cti_filename);
+      if ((matrix_slice = matrix_read(libecat_file, matnum, 0)) == NULL) {
+	g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, libecat_filename);
 	goto error;
       }
       
       /* set the frame duration, note, CTI files specify time as integers in msecs */
-      switch(cti_file->mhptr->file_type) {
+      switch(libecat_file->mhptr->file_type) {
       case PetImage: 
       case PetVolume: 
       case InterfileImage:
-	ish = (Image_subheader *) cti_subheader->shptr;
+	ish = (Image_subheader *) matrix_data->shptr;
 	ds->frame_duration[i.t] = ish->frame_duration/1000.0;
 	break;
       case AttenCor:
 	ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
 	break;
       case Sinogram:
-	ssh = (Scan_subheader *) cti_subheader->shptr;
+	ssh = (Scan_subheader *) matrix_data->shptr;
 	ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
 	break;
       default:
@@ -314,9 +313,9 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 	j.z = slice;
 	j.t = i.t;
 	if (scaling_type == AMITK_SCALING_TYPE_2D)
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
 	else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
-	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
 
 	switch (format) {
 	case AMITK_FORMAT_SSHORT:
@@ -326,7 +325,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 	  for (i.y = 0; i.y < dim.y; i.y++) 
 	    for (i.x = 0; i.x < dim.x; i.x++)
 	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
-		*(((amitk_format_SSHORT_t *) cti_slice->data_ptr) + 
+		*(((amitk_format_SSHORT_t *) matrix_slice->data_ptr) + 
 		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
 		   +dim.x*(dim.y-i.y-1)
 		   +i.x));
@@ -338,10 +337,11 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 	  for (i.y = 0; i.y < dim.y; i.y++) 
 	    for (i.x = 0; i.x < dim.x; i.x++)
 	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
-		*(((amitk_format_FLOAT_t *) cti_slice->data_ptr) + 
+		*(((amitk_format_FLOAT_t *) matrix_slice->data_ptr) + 
 		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
 		   +dim.x*(dim.y-i.y-1)
 		   +i.x));
+	  break;
 	default:
 	  g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
 	  goto error;
@@ -350,7 +350,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 
       }
 
-      free_matrix_data(cti_slice);
+      free_matrix_data(matrix_slice);
     }
 #ifdef AMIDE_DEBUG
     g_print("\tduration:\t%5.3f\n",ds->frame_duration[i.t]);
@@ -360,12 +360,13 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   if (!continue_work) goto error;
 
   /* setup remaining volume parameters */
-  amitk_data_set_set_injected_dose(ds, amitk_dose_unit_convert_from(cti_file->mhptr->dosage, 
+  amitk_data_set_set_injected_dose(ds, amitk_dose_unit_convert_from(libecat_file->mhptr->dosage, 
 								    AMITK_DOSE_UNIT_MILLICURIE));
-  amitk_data_set_set_subject_weight(ds, cti_file->mhptr->patient_weight);
+  amitk_data_set_set_subject_weight(ds, libecat_file->mhptr->patient_weight);
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);
+  amitk_volume_set_center(AMITK_VOLUME(ds), offset_rp);
   goto function_end;
 
 
@@ -382,11 +383,11 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   if (update_func != NULL) /* remove progress bar */
     (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
-  if (cti_file != NULL)
-    matrix_close(cti_file);
+  if (libecat_file != NULL)
+    matrix_close(libecat_file);
 
-  if (cti_subheader != NULL)
-    free_matrix_data(cti_subheader);
+  if (matrix_data != NULL)
+    free_matrix_data(matrix_data);
 
 
 

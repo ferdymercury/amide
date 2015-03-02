@@ -30,6 +30,7 @@
 
 /* includes we always need with this widget */
 #include <gtk/gtk.h>
+#include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_object.h"
 #include "amitk_data_set.h"
 
@@ -80,6 +81,19 @@ struct _AmitkObjectDialog
 
   GtkWidget * isocontour_value_entry;
   GtkWidget * voxel_dim_entry;
+
+  /* study preferences */
+  GtkWidget * roi_width_spin;
+  GnomeCanvasItem * roi_item;
+  GtkWidget * line_style_menu;
+  GtkWidget * layout_button1;
+  GtkWidget * layout_button2;
+  GtkWidget * maintain_size_button;
+  GtkWidget * target_size_spin;
+
+  /* data set preferences */
+  GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
+
 };
 
 struct _AmitkObjectDialogClass
@@ -91,8 +105,7 @@ struct _AmitkObjectDialogClass
 
 
 GType      amitk_object_dialog_get_type   (void);
-GtkWidget* amitk_object_dialog_new        (AmitkObject * object,
-					   AmitkLayout layout);
+GtkWidget* amitk_object_dialog_new        (AmitkObject * object);
 
 
 G_END_DECLS

@@ -27,7 +27,7 @@
 #define __XML_H__
 
 /* header files that are always associated with this header file */
-#include <amide.h>
+#include "amitk_type.h"
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
@@ -40,9 +40,12 @@ gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor);
 amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
 amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times, gchar **perror_buf);
 amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+amide_data_t xml_get_data_with_default(xmlNodePtr nodes, const gchar * descriptor, amide_data_t default_data);
 amide_real_t xml_get_real(xmlNodePtr node, const gchar * descriptor, gchar **perror_buf);
 gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+gboolean xml_get_boolean_with_default(xmlNodePtr nodes, const gchar * descriptor, gboolean default_boolean);
 gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+gint xml_get_int_with_default(xmlNodePtr nodes, const gchar * descriptor, gint default_int);
 void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor, 
 			       guint64 * location, guint64 * size, gchar **perror_buf);
 void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string);

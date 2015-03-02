@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.14],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.0],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -83,9 +83,10 @@ PKG_CHECK_MODULES(dummy,
 	 enable_antialiasing=yes, enable_antialiasing=no)
 dnl if test $enable_antialiasing = yes; then
 dnl	echo "Compiling with libgnomecanvas antialiasing support"
+dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
 dnl else
 	echo "Compiling without libgnomecanvas antialiasing support"
-	AC_DEFINE(AMIDE_LIBGNOMECANVAS_OLD, 1, Define to 1 to compile AMIDE without antialiasing)
+dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
 dnl fi
 
 
@@ -151,7 +152,7 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
-AM_PATH_XMEDCON(0.8.13, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+AM_PATH_XMEDCON(0.9.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 
@@ -159,7 +160,7 @@ dnl add the -no-cpp-precomp for macintosh os x
 case "$host_os" in
 darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
 		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" 
-	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to 1 to compile with hacks for OS X)
+	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to compile with hacks for OS X)
 		;;
 esac
 
@@ -174,9 +175,9 @@ AC_ARG_ENABLE(
 
 if test $enable_amide_debug = yes; then
 	echo "Compiling with AMIDE debugging messages"
-	AMIDE_DEBUG_CFLAGS="-g"
+	AMIDE_DEBUG_CFLAGS="-ggdb"
 	AC_SUBST(AMIDE_DEBUG_CFLAGS)
-	AC_DEFINE(AMIDE_DEBUG, 1, Define to 1 to compile AMIDE with debugging information)
+	AC_DEFINE(AMIDE_DEBUG, 1, Define to compile AMIDE with debugging information)
 else
 	echo "Compiling without AMIDE debugging messages"
 fi
@@ -191,7 +192,7 @@ AC_ARG_ENABLE(
 
 if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
 	echo "Compiling with GNU Scientific Library support"
-	AC_DEFINE(AMIDE_LIBGSL_SUPPORT, 1, Define to 1 to compile with the GNU Scientific Library)
+	AC_DEFINE(AMIDE_LIBGSL_SUPPORT, 1, Define to compile with the GNU Scientific Library)
 else
 	echo "Compiling without the GNU Scientific Library"
 fi
@@ -208,7 +209,7 @@ if (test $enable_libecat = yes) && (test $FOUND_LIBECAT = yes); then
 	echo "Compiling with libecat/CTI file support"
 	AMIDE_LIBECAT_LIBS="-lecat"
 	AC_SUBST(AMIDE_LIBECAT_LIBS)
-	AC_DEFINE(AMIDE_LIBECAT_SUPPORT, 1, Define to 1 to compile with libecat)
+	AC_DEFINE(AMIDE_LIBECAT_SUPPORT, 1, Define to compile with libecat)
 else
 	echo "Compiling without libecat/CTI file support"
 fi
@@ -226,7 +227,7 @@ AC_ARG_ENABLE(
 
 if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	echo "Compiling with xmedcon/libmdc file support"
-	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to 1 to compile with (X)MedCon)
+	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to compile with (X)MedCon)
 
 	dnl redefine the xmedcon libs line, as otherwise we'll get errors from linking to glib1
 	XMEDCON_LIBS="-L/usr/local/lib -lmdc"
@@ -247,7 +248,7 @@ if (test $enable_libvolpack = yes) && (test $FOUND_VOLPACK = yes); then
 	echo "Compiling with libvolpack rendering support "
 	AMIDE_LIBVOLPACK_LIBS="-lvolpack"
 	AC_SUBST(AMIDE_LIBVOLPACK_LIBS)
-	AC_DEFINE(AMIDE_LIBVOLPACK_SUPPORT, 1, Define to 1 to compile with VolPack)
+	AC_DEFINE(AMIDE_LIBVOLPACK_SUPPORT, 1, Define to compile with VolPack)
 else
 	echo "Compiling without libvolpack rendering support"
 fi
@@ -262,7 +263,7 @@ AC_ARG_ENABLE(
 
 if (test $enable_libfame = yes) && (test $FOUND_LIBFAME = yes); then
 	echo "Compiling with libfame mpeg encoding support "
-	AC_DEFINE(AMIDE_LIBFAME_SUPPORT, 1, Define to 1 to compile with Libfame)
+	AC_DEFINE(AMIDE_LIBFAME_SUPPORT, 1, Define to compile with Libfame)
 else
 	echo "Compiling without libfame mpeg encoding support"
 fi
@@ -276,7 +277,7 @@ AC_ARG_ENABLE(
 
 if (test $mswin_hacks = yes); then
 	echo "Enabling hacks to support MS Windows compilation"
-	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to 1 to compile with Win32 Hacks)
+	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
 fi
 AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
 
@@ -292,6 +293,7 @@ Makefile
 pixmaps/Makefile
 help/Makefile
 help/C/Makefile
+help/es/Makefile
 doc/Makefile
 doc/reference/Makefile
 doc/reference/sgml/Makefile

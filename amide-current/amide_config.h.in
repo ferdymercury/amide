@@ -1,30 +1,27 @@
 /* amide_config.h.in.  Generated from configure.in by autoheader.  */
 
-/* Define to 1 to compile AMIDE with debugging information */
+/* Define to compile AMIDE with debugging information */
 #undef AMIDE_DEBUG
 
-/* Define to 1 to compile with libecat */
+/* Define to compile with libecat */
 #undef AMIDE_LIBECAT_SUPPORT
 
-/* Define to 1 to compile with Libfame */
+/* Define to compile with Libfame */
 #undef AMIDE_LIBFAME_SUPPORT
 
-/* Define to 1 to compile AMIDE without antialiasing */
-#undef AMIDE_LIBGNOMECANVAS_OLD
-
-/* Define to 1 to compile with the GNU Scientific Library */
+/* Define to compile with the GNU Scientific Library */
 #undef AMIDE_LIBGSL_SUPPORT
 
-/* Define to 1 to compile with (X)MedCon */
+/* Define to compile with (X)MedCon */
 #undef AMIDE_LIBMDC_SUPPORT
 
-/* Define to 1 to compile with VolPack */
+/* Define to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 
-/* Define to 1 to compile with hacks for OS X */
+/* Define to compile with hacks for OS X */
 #undef AMIDE_OSX_HACKS
 
-/* Define to 1 to compile with Win32 Hacks */
+/* Define to compile with Win32 Hacks */
 #undef AMIDE_WIN32_HACKS
 
 /* always defined to indicate that i18n is enabled */

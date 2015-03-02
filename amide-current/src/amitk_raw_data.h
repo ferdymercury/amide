@@ -131,12 +131,12 @@ struct _AmitkRawDataClass
 
 
 /* -------- defines ----------- */
-#define amitk_raw_data_includes_voxel(ds, vox) (!(((vox).x < 0) ||  ((vox).y < 0) ||   \
+#define amitk_raw_data_includes_voxel(rd, vox) (!(((vox).x < 0) ||  ((vox).y < 0) ||   \
 						  ((vox).z < 0) ||  ((vox).t < 0) ||  \
-						  ((vox).x >= (ds)->dim.x) ||  \
-						  ((vox).y >= (ds)->dim.y) ||  \
-						  ((vox).z >= (ds)->dim.z) ||  \
-						  ((vox).t >= (ds)->dim.t)))
+						  ((vox).x >= (rd)->dim.x) ||  \
+						  ((vox).y >= (rd)->dim.y) ||  \
+						  ((vox).z >= (rd)->dim.z) ||  \
+						  ((vox).t >= (rd)->dim.t)))
 #define amitk_raw_data_num_voxels(rd) ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.t)
 #define amitk_raw_data_size_data_mem(rd) (amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format])
 #define amitk_raw_data_get_data_mem(rd) (g_try_malloc(amitk_raw_data_size_data_mem(rd)))

@@ -141,7 +141,8 @@ rendering_t * rendering_init(const AmitkObject * object,
   gint init_gradient_ramp_x[] = RENDERING_GRADIENT_RAMP_X;
   gfloat init_gradient_ramp_y[] = RENDERING_GRADIENT_RAMP_Y;
 
-  g_return_val_if_fail((AMITK_IS_DATA_SET(object) || AMITK_IS_ROI(object)), NULL);
+  if (!(AMITK_IS_DATA_SET(object) || AMITK_IS_ROI(object)))
+    return NULL;
 
   if ((new_rendering =  g_try_new(rendering_t,1)) == NULL) {
     g_warning(_("couldn't allocate space for rendering context"));

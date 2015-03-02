@@ -27,7 +27,7 @@
 #define __COLOR_TABLE_H__
 
 /* header files that are always associated with this header file */
-#include "amide.h"
+#include "amitk_type.h"
 
 /* typedef's */
 typedef enum {

@@ -26,11 +26,12 @@
 
 
 /* external functions */
-void ui_study_cb_new_study(GtkWidget * button, gpointer data);
-void ui_study_cb_open_study(GtkWidget * button, gpointer data);
+void ui_study_cb_new_study(GtkWidget * button, gpointer ui_study);
+void ui_study_cb_open_study(GtkWidget * button, gpointer ui_study);
 void ui_study_cb_save_as(GtkWidget * widget, gpointer data);
 void ui_study_cb_import(GtkWidget * widget, gpointer data);
-void ui_study_cb_export(GtkWidget * widget, gpointer data);
+void ui_study_cb_export_view(GtkWidget * widget, gpointer data);
+void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
 void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
 				   AmitkPoint *location, amide_data_t value, gpointer ui_study);
@@ -42,14 +43,14 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
 				     gboolean outside, gpointer ui_study);
 void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type, 
 				   AmitkPoint *position, gpointer ui_study);
-void ui_study_cb_tree_activate_object(GtkWidget * tree, 
-				      AmitkObject * object, 
-				      gpointer ui_study);
-void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpointer ui_study);
-void ui_study_cb_tree_add_object(GtkWidget * tree, AmitkObject * parent, 
-				 AmitkObjectType object_type, AmitkRoiType roi_type, gpointer ui_study);
-void ui_study_cb_tree_delete_object(GtkWidget * tree,AmitkObject * object, gpointer ui_study);
-void ui_study_cb_tree_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer ui_study);
+void ui_study_cb_tree_view_activate_object(GtkWidget * tree_view, 
+					   AmitkObject * object, 
+					   gpointer ui_study);
+void ui_study_cb_tree_view_popup_object(GtkWidget * tree_view, AmitkObject * object, gpointer ui_study);
+void ui_study_cb_tree_view_add_object(GtkWidget * tree_view, AmitkObject * parent, 
+				      AmitkObjectType object_type, AmitkRoiType roi_type, gpointer ui_study);
+void ui_study_cb_tree_view_delete_object(GtkWidget * tree_view,AmitkObject * object, gpointer ui_study);
+void ui_study_cb_tree_view_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer ui_study);
 void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);

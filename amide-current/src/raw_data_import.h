@@ -28,7 +28,7 @@
 #include "amitk_data_set.h"
 
 /* external functions */
-AmitkDataSet * raw_data_import(const gchar * filename);
+AmitkDataSet * raw_data_import(const gchar * filename, AmitkPreferences * preferences);
 
 
 

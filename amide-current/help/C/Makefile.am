@@ -12,6 +12,7 @@ entities = 			\
 	introduction.xml        \
 	rendering.xml 		\
 	rois.xml 		\
+	study.xml               \
 	series.xml              \
 	tools.xml 		
 
