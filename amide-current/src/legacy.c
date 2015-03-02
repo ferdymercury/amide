@@ -274,6 +274,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   gchar * internal_scaling_xml_filename;
   GList * align_pts;
   AmitkSpace * space;
+  AmitkViewMode i_view_mode;
 
   /* parse the xml file */
   if ((doc = xmlParseFile(volume_xml_filename)) == NULL) {
@@ -320,7 +321,8 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   if (temp_string != NULL)
     for (i_color_table=0; i_color_table < AMITK_COLOR_TABLE_NUM; i_color_table++) 
       if (g_ascii_strcasecmp(temp_string, color_table_legacy_names[i_color_table]) == 0)
-	new_volume->color_table = i_color_table;
+	for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+	  new_volume->color_table[i_view_mode] = i_color_table;
   g_free(temp_string);
 
   /* load in our data set */
@@ -328,34 +330,40 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   internal_scaling_xml_filename = xml_get_string(nodes, "internal_scaling_file");
   if ((data_set_xml_filename != NULL) && (internal_scaling_xml_filename != NULL)) {
     new_volume->raw_data = data_set_load_xml(data_set_xml_filename, perror_buf);
-    new_volume->internal_scaling = data_set_load_xml(internal_scaling_xml_filename, perror_buf);
+
+    if (new_volume->internal_scaling_factor != NULL) {
+      g_object_unref(new_volume->internal_scaling_factor);
+      new_volume->internal_scaling_factor = NULL;
+    }
+    new_volume->internal_scaling_factor = data_set_load_xml(internal_scaling_xml_filename, perror_buf);
 
     /* the type of internal_scaling has been changed to double
        as of amide 0.7.1 */
-    if (new_volume->internal_scaling->format != AMITK_FORMAT_DOUBLE) {
+    if (new_volume->internal_scaling_factor->format != AMITK_FORMAT_DOUBLE) {
       AmitkRawData * old_scaling;
       AmitkVoxel i;
 
       amitk_append_str_with_newline(perror_buf,"wrong type found on internal scaling, converting to double");
-      old_scaling = new_volume->internal_scaling;
+      old_scaling = new_volume->internal_scaling_factor;
 
-      new_volume->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
-      if (new_volume->internal_scaling == NULL) {
+      new_volume->internal_scaling_factor = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
+      if (new_volume->internal_scaling_factor == NULL) {
 	amitk_append_str_with_newline(perror_buf,"couldn't allocate space for the new scaling structure");
 	amitk_object_unref(new_volume);
 	return NULL;
       }
       
-      for (i.t=0; i.t<new_volume->internal_scaling->dim.t; i.t++)
-	for (i.g=0; i.g<new_volume->internal_scaling->dim.g; i.g++)
-	  for (i.z=0; i.z<new_volume->internal_scaling->dim.z; i.z++)
-	    for (i.y=0; i.y<new_volume->internal_scaling->dim.y; i.y++)
-	      for (i.x=0; i.x<new_volume->internal_scaling->dim.x; i.x++)
-		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
+      for (i.t=0; i.t<new_volume->internal_scaling_factor->dim.t; i.t++)
+	for (i.g=0; i.g<new_volume->internal_scaling_factor->dim.g; i.g++)
+	  for (i.z=0; i.z<new_volume->internal_scaling_factor->dim.z; i.z++)
+	    for (i.y=0; i.y<new_volume->internal_scaling_factor->dim.y; i.y++)
+	      for (i.x=0; i.x<new_volume->internal_scaling_factor->dim.x; i.x++)
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling_factor,i) = 
 		  amitk_raw_data_get_value(old_scaling, i);
       
       g_object_unref(old_scaling);
     }
+
 
     /* parameters that aren't in older versions and default values aren't good enough*/
     amitk_data_set_set_scale_factor(new_volume, xml_get_data(nodes, "external_scaling", perror_buf));
@@ -423,9 +431,9 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   g_free(temp_string);
 
   /* figure out the scaling type */
-  if (new_volume->internal_scaling->dim.z > 1) 
+  if (new_volume->internal_scaling_factor->dim.z > 1) 
     new_volume->scaling_type = AMITK_SCALING_TYPE_2D;
-  else if (new_volume->internal_scaling->dim.t > 1)
+  else if (new_volume->internal_scaling_factor->dim.t > 1)
     new_volume->scaling_type = AMITK_SCALING_TYPE_1D;
   else 
     new_volume->scaling_type = AMITK_SCALING_TYPE_0D;

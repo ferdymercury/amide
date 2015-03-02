@@ -35,7 +35,20 @@
 static char * true_string = "true";
 static char * false_string = "false";
 
+/* returns FALSE if we'll have problems reading this file on a 32bit system */
+gboolean xml_check_file_32bit_okay(guint64 value) {
 
+#if !defined (G_PLATFORM_WIN32)
+  /* for some reason, 64bit calculations on windows returns garbage */
+  if (sizeof(long) < sizeof(guint64)) {
+    guint64 check = value-G_MAXLONG;
+    if (check > 0) 
+      return FALSE;
+  }
+#endif
+
+  return TRUE;
+}
 
 /* utility functions */
 gboolean xml_node_exists(xmlNodePtr nodes, const gchar * descriptor) {
@@ -607,23 +620,16 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
   } else { /* flat file format */
 
     /* check for file size problems */
-#ifndef AMIDE_WIN32_HACKS
-    if (sizeof(long) < sizeof(guint64))
-      if ((location>>32) > 0) {
-	amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
-	return NULL;
-      }
-#endif
+    if (!xml_check_file_32bit_okay(location)) {
+      amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
+      return NULL;
+    }
     location_long = location;
 
-
-#ifndef AMIDE_WIN32_HACKS
-    if (sizeof(size_t) < sizeof(guint64))
-      if ((size>>32) > 0) {
-	amitk_append_str_with_newline(perror_buf,_("File to large to read on 32bit platform.")); 
-	return NULL;
-      }
-#endif
+    if (!xml_check_file_32bit_okay(size)) {
+      amitk_append_str_with_newline(perror_buf,_("File to large to read on 32bit platform.")); 
+      return NULL;
+    }
     size_size = size;
 
     xml_buffer = g_try_new(gchar, size_size);

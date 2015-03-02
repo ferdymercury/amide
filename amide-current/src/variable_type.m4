@@ -54,8 +54,17 @@ m4_ifelse(m4_regexp(m4_Temp_Variable_Type, `_[^-]*_'), `-1',`
 	m4_define(m4_Variable_Type, m4_Temp_Variable_Type)
 	m4_define(m4_Scale_Dim, `')
 	',`
-	m4_define(m4_Scale_Dim, `m4_substr(m4_Temp_Variable_Type,
-		m4_eval(m4_regexp(m4_Temp_Variable_Type, `_')+1))')
+	m4_ifelse(m4_regexp(m4_Temp_Variable_Type, `_INTERCEPT'), `-1',`
+		m4_define(m4_Scale_Dim, `m4_substr(m4_Temp_Variable_Type,
+			m4_eval(m4_regexp(m4_Temp_Variable_Type, `_')+1))')
+		m4_define(m4_Intercept, `')
+		',`
+		m4_define(m4_Scale_Dim, `m4_substr(m4_Temp_Variable_Type,
+			m4_eval(m4_regexp(m4_Temp_Variable_Type, `_')+1),
+			m4_eval(m4_regexp(m4_Temp_Variable_Type, `_INTERCEPT')-
+				m4_regexp(m4_Temp_Variable_Type, `_')-1))')
+		m4_define(m4_Intercept, `INTERCEPT_')
+		')
 	m4_define(m4_Variable_Type, `m4_substr(m4_Temp_Variable_Type,
 		0,
 		m4_regexp(m4_Temp_Variable_Type, `_'))')

@@ -46,6 +46,7 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_VIEW_CENTER(stu)              (amitk_space_s2b(AMITK_SPACE(stu), AMITK_STUDY(stu)->view_center))
 #define AMITK_STUDY_VIEW_THICKNESS(stu)           (AMITK_STUDY(stu)->view_thickness)
 #define AMITK_STUDY_ZOOM(stu)                     (AMITK_STUDY(stu)->zoom)
+#define AMITK_STUDY_FOV(stu)                      (AMITK_STUDY(stu)->fov)
 #define AMITK_STUDY_VIEW_START_TIME(stu)          (AMITK_STUDY(stu)->view_start_time)
 #define AMITK_STUDY_VIEW_DURATION(stu)            (AMITK_STUDY(stu)->view_duration)
 #define AMITK_STUDY_CREATION_DATE(stu)            (AMITK_STUDY(stu)->creation_date)
@@ -63,6 +64,7 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)->canvas_layout)
 #define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)->canvas_maintain_size)
 #define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)->canvas_target_empty_area)
+#define AMITK_STUDY_PANEL_LAYOUT(stu)             (AMITK_STUDY(stu)->panel_layout)
 
 #define AMITK_STUDY_LINE_PROFILE(stu)             (AMITK_STUDY(stu)->line_profile)
 
@@ -72,12 +74,6 @@ typedef enum {
   AMITK_FUSE_TYPE_NUM
 } AmitkFuseType;
 
-typedef enum {
-  AMITK_VIEW_MODE_SINGLE,
-  AMITK_VIEW_MODE_LINKED_2WAY,
-  AMITK_VIEW_MODE_LINKED_3WAY,
-  AMITK_VIEW_MODE_NUM
-} AmitkViewMode;
 
 
 typedef struct _AmitkStudyClass AmitkStudyClass;
@@ -96,6 +92,7 @@ struct _AmitkStudy
   amide_time_t view_start_time;
   amide_time_t view_duration;
   amide_real_t zoom;
+  amide_real_t fov; /* field of view, in percent */
   AmitkFuseType fuse_type;
   AmitkViewMode view_mode;
   gboolean canvas_visible[AMITK_VIEW_NUM];
@@ -108,6 +105,7 @@ struct _AmitkStudy
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
+  AmitkPanelLayout panel_layout;
 
   /* stuff calculated when file is loaded and stored */
   amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
@@ -129,12 +127,14 @@ struct _AmitkStudyClass
   void (* view_mode_changed) (AmitkStudy * study);
   void (* canvas_target_changed) (AmitkStudy * study);
   void (* voxel_dim_or_zoom_changed) (AmitkStudy * study);
+  void (* fov_changed) (AmitkStudy * study);
   void (* fuse_type_changed) (AmitkStudy * study);
   void (* view_center_changed) (AmitkStudy * study);
   void (* canvas_roi_preference_changed) (AmitkStudy * study);
   void (* canvas_general_preference_changed) (AmitkStudy * study);
   void (* canvas_target_preference_changed) (AmitkStudy * study);
   void (* canvas_layout_preference_changed) (AmitkStudy * study);
+  void (* panel_layout_preference_changed) (AmitkStudy * study);
 
 };
 
@@ -165,6 +165,8 @@ void            amitk_study_set_canvas_visible      (AmitkStudy * study,
 						     const gboolean visible);
 void            amitk_study_set_zoom                (AmitkStudy * study,
 						     const amide_real_t new_zoom);
+void            amitk_study_set_fov                 (AmitkStudy * study,
+						     const amide_real_t new_fov);
 void            amitk_study_set_canvas_target       (AmitkStudy * study,
 						     const gboolean always_on);
 void            amitk_study_set_canvas_roi_width    (AmitkStudy * study,
@@ -179,6 +181,8 @@ void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,
 						     const gboolean maintain_size);
 void            amitk_study_set_canvas_target_empty_area(AmitkStudy * study,
 							 gint target_empty_area);
+void            amitk_study_set_panel_layout        (AmitkStudy * study,
+						     const AmitkPanelLayout panel_layout);
 AmitkStudy *    amitk_study_recover_xml             (const gchar * study_filename, 
 						     AmitkPreferences * preferences);
 AmitkStudy *    amitk_study_load_xml                (const gchar * study_filename);

@@ -100,6 +100,7 @@ gboolean       amitk_volumes_calc_display_volume      (const GList * volumes,
 						       const AmitkSpace * space, 
 						       const AmitkPoint view_center,
 						       const amide_real_t thickness,
+						       const amide_real_t fov,
 						       AmitkVolume * volume);
 
 

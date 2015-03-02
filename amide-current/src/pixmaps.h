@@ -61,3 +61,7 @@ extern const guint8 align_pt_icon[];
 extern const char * linear_layout_xpm[];
 extern const char * orthogonal_layout_xpm[];
 
+extern const guint8 panels_mixed[];
+extern const guint8 panels_linear_x[];
+extern const guint8 panels_linear_y[];
+

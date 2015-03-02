@@ -729,6 +729,8 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->zoom = RENDERING_DEFAULT_ZOOM;
   ui_render->start = AMITK_STUDY_VIEW_START_TIME(study);
   ui_render->duration = AMITK_STUDY_VIEW_DURATION(study);
+  ui_render->fov = AMITK_STUDY_FOV(study);
+  ui_render->view_center = AMITK_STUDY_VIEW_CENTER(study);
   ui_render->box_space = amitk_space_new();
   ui_render->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render->app));
   ui_render->disable_progress_dialog=FALSE;
@@ -762,6 +764,8 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 					  ui_render->start, 
 					  ui_render->duration, 
 					  strip_highs, optimize_rendering, initially_no_gradient_opacity,
+					  ui_render->fov,
+					  ui_render->view_center,
 					  ui_render->disable_progress_dialog ? NULL : amitk_progress_dialog_update,
 					  ui_render->disable_progress_dialog ? NULL : ui_render->progress_dialog);
 

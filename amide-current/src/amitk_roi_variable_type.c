@@ -28,9 +28,6 @@
 #include "amide_config.h"
 #include <sys/types.h>
 #include <sys/time.h>
-#ifndef AMIDE_WIN32_HACKS
-#include <sys/resource.h>
-#endif
 #include <glib.h>
 #include "amitk_roi_`'m4_Variable_Type`'.h"
 

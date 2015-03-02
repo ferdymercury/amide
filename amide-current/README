@@ -49,18 +49,24 @@ Optional Packages
 -----------------
 
 
-1) (X)medcon/libmdc
+1) (X)MedCon/libmdc
 
-(X)medcon includes a library (libmdc) which allows AMIDE to import the
+(X)MedCon includes a library (libmdc) which allows AMIDE to import the
 following formats; Acr/Nema 2.0, Analyze (SPM), Concorde microPET,
 DICOM 3.0, ECAT/Matrix 6/7, InterFile3.3 and Gif87a/89a. 
 
-(X)medcon can be obtained from: 
+(X)MedCon can be obtained from: 
 	http://xmedcon.sourceforge.net
 
+2) DCMTK - DICOM Toolkit
+
+DCMTK provides expanded support for DICOM files, allowing the reading
+in of many clinical format datasets that (X)MedCon doesn't support.
+It can be downloaded at:
+	http://dicom.offis.de/dcmtk.php.en
 
 
-2) z_matrix_70/libecat
+3) z_matrix_70/libecat
 
 This library can be used as an alternative for importing ECAT 6/7
 files, and is released under a fairly restrictive license.  It can be
@@ -77,7 +83,7 @@ library.  RPM packages are also available off the AMIDE web site.
 
 
 
-3) volpack/libvolpack
+4) volpack/libvolpack
 
 Volpack includes a library (libvolpack) which is used for the optional
 volume rendering component of AMIDE.  
@@ -91,7 +97,7 @@ available.
 
 
 
-4) libfame
+5) libfame
 
 Another optional package, the fame library is used for generating
 MPEG-1 movies from series of rendered images and for generating

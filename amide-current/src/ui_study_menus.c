@@ -1,7 +1,7 @@
 /* ui_study_menus.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -655,15 +655,41 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_study->zoom_spin), 2);
-  gtk_widget_set_size_request (ui_study->zoom_spin, 60, -1);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->zoom_spin), GTK_UPDATE_ALWAYS);
 
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "value_changed",  
 		   G_CALLBACK(ui_study_cb_zoom), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->zoom_spin), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), ui_study->zoom_spin, 
   			    _("specify how much to magnify the images"), NULL);
   gtk_widget_show(ui_study->zoom_spin);
+			      
+  gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
+
+
+  /* add the field of view widget to our toolbar */
+  label = gtk_label_new(_("fov (%):"));
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
+  gtk_widget_show(label);
+
+  adjustment = gtk_adjustment_new(1.0,
+				  AMIDE_LIMIT_FOV_LOWER,
+				  AMIDE_LIMIT_FOV_UPPER,
+				  AMIDE_LIMIT_FOV_STEP, 
+				  AMIDE_LIMIT_FOV_PAGE,
+				  AMIDE_LIMIT_FOV_PAGE);
+  ui_study->fov_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->fov_spin),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->fov_spin), GTK_UPDATE_ALWAYS);
+
+  g_signal_connect(G_OBJECT(ui_study->fov_spin), "value_changed",  
+		   G_CALLBACK(ui_study_cb_fov), ui_study);
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), ui_study->fov_spin, 
+  			    _("specify how much of the image field of view to display"), NULL);
+  gtk_widget_show(ui_study->fov_spin);
 			      
   gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
 

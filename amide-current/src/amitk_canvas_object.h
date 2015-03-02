@@ -39,6 +39,7 @@ G_BEGIN_DECLS
 GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas, 
 					   AmitkVolume * canvas_volume,
 					   AmitkObject * object,
+					   AmitkViewMode view_mode,
 					   GnomeCanvasItem * item,
 					   amide_real_t pixel_dim,
 					   gint width, 

@@ -55,7 +55,7 @@ typedef enum {
 } AmitkObjectType;
 
 
-/* note that the numbered entries need to correspond to the entires in AmitkViewMode */
+/* note that the numbered entries need to correspond to the enteries in AmitkViewMode */
 typedef enum {
   AMITK_SELECTION_SELECTED_0,
   AMITK_SELECTION_SELECTED_1,

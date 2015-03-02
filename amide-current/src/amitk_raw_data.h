@@ -168,7 +168,7 @@ AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name,
 						     AmitkRawFormat raw_format,
 						     AmitkVoxel dim,
 						     long file_offset,
-						     gboolean (*update_func)(),
+						     AmitkUpdateFunc update_func,
 						     gpointer update_data);
 void            amitk_raw_data_write_xml            (AmitkRawData  * raw_data, const gchar * name,
 						     FILE * study_file, gchar ** output_filename, 
@@ -178,7 +178,7 @@ AmitkRawData *  amitk_raw_data_read_xml             (gchar * xml_filename,
 						     guint64 location,
 						     guint64 size,
 						     gchar ** perror_buf,
-						     gboolean (*update_func)(),
+						     AmitkUpdateFunc update_func,
 						     gpointer update_data);
 amide_data_t    amitk_raw_data_get_value            (const AmitkRawData * rd, 
 						     const AmitkVoxel i);
@@ -213,5 +213,6 @@ extern gchar * amitk_raw_format_legacy_names[];
 #include "amitk_raw_data_FLOAT.h"
 #include "amitk_raw_data_DOUBLE.h"
 
+G_END_DECLS
 #endif /* __AMITK_RAW_DATA_H__ */
 

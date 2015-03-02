@@ -404,7 +404,8 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 
 /* function to make the bar graph to put next to the color_strip image */
 GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
-				  gboolean (*update_func)(), gpointer update_data) {
+				  AmitkUpdateFunc update_func,
+				  gpointer update_data) {
 
   GdkPixbuf * temp_image;
   guchar * rgba_data;
@@ -563,7 +564,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
 					  amitk_data_set_get_frame_duration(projection,0),
 					  &max, &min);
       
-  color_table = AMITK_DATA_SET_COLOR_TABLE(projection);
+  color_table = AMITK_DATA_SET_COLOR_TABLE(projection, AMITK_VIEW_MODE_SINGLE);
 
   i.t = i.g = i.z = 0;
   for (i.y = 0; i.y < dim.y; i.y++) 
@@ -587,7 +588,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
 }
 
 
-GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
+GdkPixbuf * image_from_slice(AmitkDataSet * slice, AmitkViewMode view_mode) {
 
   guchar * rgba_data;
   AmitkVoxel i;
@@ -615,7 +616,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
 					  amitk_data_set_get_frame_duration(slice,0),
 					  &max, &min);
       
-  color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
+  color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(slice), view_mode);
 
   i.t = i.g = i.z = 0;
   index=0;
@@ -652,7 +653,8 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const amide_intpoint_t gate,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
-				 const AmitkFuseType fuse_type) {
+				 const AmitkFuseType fuse_type,
+				 const AmitkViewMode view_mode) {
 
   gint slice_num;
   guint32 total_alpha;
@@ -709,7 +711,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 					      start, duration, &max, &min);
       
       
-      color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
+      color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(slice), view_mode);
       /* now add this slice into the rgba16 data */
       i.t = i.g = i.z = 0;
       location=0;
@@ -772,7 +774,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 					      AMITK_DATA_SET(overlay_slice),
 					      start, duration, &max, &min);
       
-      color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(overlay_slice));
+      color_table = amitk_data_set_get_color_table_to_use(AMITK_DATA_SET_SLICE_PARENT(overlay_slice), view_mode);
 
       i.t = i.g = i.z = 0;
       for (i.y = 0; i.y < dim.y; i.y++) 
@@ -848,7 +850,7 @@ GdkPixbuf * image_get_object_pixbuf(AmitkObject * object) {
     }
     pixbuf = image_from_8bit(object_icon_data, 
 			     OBJECT_ICON_XSIZE,OBJECT_ICON_YSIZE,
-			     AMITK_DATA_SET_COLOR_TABLE(object));
+			     AMITK_DATA_SET_COLOR_TABLE(object, AMITK_VIEW_MODE_SINGLE));
 
   } else if (AMITK_IS_STUDY(object)) {
     pixbuf = gdk_pixbuf_new_from_inline(-1, study_icon, FALSE, NULL);

@@ -513,11 +513,11 @@ void amitk_corners_free (AmitkCorners * corners) {
 
 
 const AmitkPoint zero_point = {0.0,0.0,0.0};
-const AmitkPoint one_point = {1.0,1.0,1.0};
+const AmitkPoint one_point = ONE_POINT;
 const AmitkPoint ten_point = {10.0,10.0,10.0};
 
 const AmitkVoxel zero_voxel = {0,0,0,0,0};
-const AmitkVoxel one_voxel = {1,1,1,1,1};
+const AmitkVoxel one_voxel = ONE_VOXEL;
 
 /* returns abs(point1) for realpoint structures */
 inline AmitkPoint point_abs(const AmitkPoint point1) {

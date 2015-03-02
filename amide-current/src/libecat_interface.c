@@ -44,7 +44,7 @@ static char * libecat_data_types[] = {
 
 AmitkDataSet * libecat_import(const gchar * libecat_filename, 
 			      AmitkPreferences * preferences,
-			      gboolean (*update_func)(),
+			      AmitkUpdateFunc update_func,
 			      gpointer update_data) {
 
   MatrixFile * libecat_file=NULL;
@@ -67,7 +67,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   gint total_planes, i_plane;
   gboolean continue_work=TRUE;
   gchar * temp_string;
-  gchar * invalid_point;
+  const gchar * bad_char;
   Image_subheader * ish;
   Scan_subheader * ssh;
   Attn_subheader * ash;
@@ -187,9 +187,11 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   }
 
   /* validate the name to utf8 */
-  if (!g_utf8_validate(name, -1, &invalid_point)) {
-    invalid_point[0] = '\0';
+  if (!g_utf8_validate(name, -1, &bad_char)) {
+    gsize invalid_point = bad_char-name;
+    name[invalid_point] = '\0';
   }
+
 
   /* try adding on the reconstruction method */
   switch(libecat_file->mhptr->file_type) {
@@ -232,7 +234,6 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   amitk_data_set_set_subject_name(ds, libecat_file->mhptr->patient_name);
   amitk_data_set_set_subject_id(ds, libecat_file->mhptr->patient_id);
   dob = libecat_file->mhptr->patient_birth_date;
-  g_print("dob %d\n", dob);
   amitk_data_set_set_subject_dob(ds, ctime(&(dob)));
 
   switch(libecat_file->mhptr->patient_orientation) {
@@ -371,10 +372,10 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
 	  j.z = slice;
 	  j.g = i.g;
 	  j.t = i.t;
-	  if (scaling_type == AMITK_SCALING_TYPE_2D)
-	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
+	  if (scaling_type == AMITK_SCALING_TYPE_2D) 
+	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, j) = matrix_slice->scale_factor;
 	  else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
-	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
+	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling_factor, j) = matrix_slice->scale_factor;
 	  
 	  switch (format) {
 	  case AMITK_FORMAT_SSHORT:

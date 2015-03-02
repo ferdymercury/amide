@@ -168,15 +168,15 @@ rendering_t * rendering_init(const AmitkObject * object,
 			     const gboolean zero_fill,
 			     const gboolean optimize_rendering,
 			     const gboolean no_gradient_opacity,
-			     gboolean (* update_func)(), 
+			     AmitkUpdateFunc update_func,
 			     gpointer update_data);
 gboolean rendering_reload_object(rendering_t * rendering, 
 				 const amide_time_t new_start,
 				 const amide_time_t new_duration,
-				 gboolean (* update_func)(), 
+				 AmitkUpdateFunc update_func,
 				 gpointer update_data);
 gboolean rendering_load_object(rendering_t * rendering, 
-			       gboolean (* update_func)(), 
+			       AmitkUpdateFunc update_func,
 			       gpointer update_data);
 void rendering_set_space(rendering_t * rendering, AmitkSpace * space);
 void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rotation);
@@ -194,12 +194,14 @@ renderings_t * renderings_init(GList * objects,
 			       const gboolean zero_fill,
 			       const gboolean optimize_rendering,
 			       const gboolean no_gradient_opacity,
-			       gboolean (* update_func)(),
+			       const amide_real_t fov,
+			       const AmitkPoint view_center,
+			       AmitkUpdateFunc update_func,
 			       gpointer update_data);
 gboolean renderings_reload_objects(renderings_t * renderings, 
 				   const amide_time_t start, 
 				   const amide_time_t duration,
-				   gboolean (* update_func)(), 
+				   AmitkUpdateFunc update_func,
 				   gpointer update_data);
 void renderings_set_space(renderings_t * renderings, AmitkSpace * space);
 void renderings_set_rotation(renderings_t * renderings, AmitkAxis dir, gdouble rotation);

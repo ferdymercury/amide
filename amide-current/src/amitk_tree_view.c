@@ -145,6 +145,7 @@ static void     tree_view_drag_data_received (GtkWidget        *widget,
 #endif
 
 static void tree_view_object_update_cb(AmitkObject * object, gpointer tree_view);
+static void tree_view_data_set_color_table_cb(AmitkDataSet * data_set, AmitkViewMode view_mode, gpointer tree_view);
 static void tree_view_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree_view);
 static void tree_view_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree_view);
 static gboolean tree_view_find_recurse(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer data);
@@ -1135,6 +1136,15 @@ static void tree_view_object_update_cb(AmitkObject * object, gpointer data) {
   return;
 }
 
+static void tree_view_data_set_color_table_cb(AmitkDataSet * data_set, AmitkViewMode view_mode, gpointer data) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(data_set));
+  if (view_mode == AMITK_VIEW_MODE_SINGLE)
+    tree_view_object_update_cb(AMITK_OBJECT(data_set), data);
+
+}
+
+
 static void tree_view_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer data) {
 
   AmitkTreeView * tree_view = data;
@@ -1143,6 +1153,7 @@ static void tree_view_object_add_child_cb(AmitkObject * parent, AmitkObject * ch
   g_return_if_fail(AMITK_IS_OBJECT(child));
 
   tree_view_add_object(AMITK_TREE_VIEW(tree_view), child);
+  
 
   return;
 }
@@ -1243,7 +1254,7 @@ static void tree_view_add_object(AmitkTreeView * tree_view, AmitkObject * object
   g_signal_connect(G_OBJECT(object), "object_selection_changed", G_CALLBACK(tree_view_object_update_cb), tree_view);
   if (AMITK_IS_DATA_SET(object)) {
     g_signal_connect(G_OBJECT(object), "modality_changed", G_CALLBACK(tree_view_object_update_cb), tree_view);
-    g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(tree_view_object_update_cb), tree_view);
+    g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(tree_view_data_set_color_table_cb), tree_view);
   } else if (AMITK_IS_ROI(object)) {
     g_signal_connect(G_OBJECT(object), "roi_type_changed", G_CALLBACK(tree_view_object_update_cb), tree_view);
   } else if (AMITK_IS_STUDY(object)) {
@@ -1289,6 +1300,9 @@ static void tree_view_remove_object(AmitkTreeView * tree_view, AmitkObject * obj
 
   if (AMITK_IS_STUDY(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_view_study_view_mode_cb), tree_view);
+  }
+  if (AMITK_IS_DATA_SET(object)) {
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_view_data_set_color_table_cb), tree_view);
   }
   
   /* remove the object */

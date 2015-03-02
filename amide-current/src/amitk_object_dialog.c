@@ -86,6 +86,7 @@ static void dialog_change_line_style_cb          (GtkWidget * widget, gpointer d
 #endif
 static void dialog_change_fill_roi_cb            (GtkWidget * widget, gpointer data);
 static void dialog_change_layout_cb              (GtkWidget * widget, gpointer data);
+static void dialog_change_panel_layout_cb        (GtkWidget * widget, gpointer data);
 static void dialog_change_maintain_size_cb       (GtkWidget * widget, gpointer data);
 static void dialog_change_target_empty_area_cb   (GtkWidget * widget, gpointer data);
 
@@ -1064,6 +1065,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 					  &(dialog->fill_roi_button),
 					  &(dialog->layout_button1), 
 					  &(dialog->layout_button2), 
+					  &(dialog->panel_layout_button1), 
+					  &(dialog->panel_layout_button2), 
+					  &(dialog->panel_layout_button3), 
 					  &(dialog->maintain_size_button),
 					  &(dialog->target_size_spin));
 
@@ -1080,6 +1084,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button2), "clicked", 
 		       G_CALLBACK(dialog_change_layout_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->panel_layout_button1), "clicked", 
+		       G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->panel_layout_button2), "clicked", 
+		       G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->panel_layout_button3), "clicked", 
+		       G_CALLBACK(dialog_change_panel_layout_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->maintain_size_button), "toggled", 
 		       G_CALLBACK(dialog_change_maintain_size_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->target_size_spin), "value_changed",  
@@ -1527,6 +1537,19 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 				   (AMITK_STUDY_CANVAS_LAYOUT(dialog->object) == AMITK_LAYOUT_ORTHOGONAL));
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->layout_button2),  G_CALLBACK(dialog_change_layout_cb), dialog);
+
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->panel_layout_button1), G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->panel_layout_button2),  G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->panel_layout_button3),  G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->panel_layout_button1), 
+				   (AMITK_STUDY_PANEL_LAYOUT(dialog->object) == AMITK_PANEL_LAYOUT_MIXED));
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->panel_layout_button2), 
+				   (AMITK_STUDY_PANEL_LAYOUT(dialog->object) == AMITK_PANEL_LAYOUT_LINEAR_X));
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->panel_layout_button3), 
+				   (AMITK_STUDY_PANEL_LAYOUT(dialog->object) == AMITK_PANEL_LAYOUT_LINEAR_Y));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->panel_layout_button1), G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->panel_layout_button2), G_CALLBACK(dialog_change_panel_layout_cb), dialog);
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->panel_layout_button3), G_CALLBACK(dialog_change_panel_layout_cb), dialog);
 
       g_signal_handlers_block_by_func(G_OBJECT(dialog->maintain_size_button), G_CALLBACK(dialog_change_maintain_size_cb), dialog);
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->maintain_size_button), 
@@ -2239,6 +2262,15 @@ static void dialog_change_layout_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+static void dialog_change_panel_layout_cb(GtkWidget * widget, gpointer data) {
+  AmitkObjectDialog * dialog = data;
+  AmitkPanelLayout new_panel_layout;
+  g_return_if_fail(AMITK_IS_STUDY(dialog->object));
+  new_panel_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "panel_layout"));
+  amitk_study_set_panel_layout(AMITK_STUDY(dialog->object),new_panel_layout);
+  return;
+}
+
 static void dialog_change_maintain_size_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
   g_return_if_fail(AMITK_IS_STUDY(dialog->object));
@@ -2342,6 +2374,8 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object) {
     g_signal_connect_swapped(G_OBJECT(object), "canvas_target_preference_changed",
 			     G_CALLBACK(dialog_update_entries), dialog);
     g_signal_connect_swapped(G_OBJECT(object), "canvas_layout_preference_changed",
+			     G_CALLBACK(dialog_update_entries), dialog);
+    g_signal_connect_swapped(G_OBJECT(object), "panel_layout_preference_changed",
 			     G_CALLBACK(dialog_update_entries), dialog);
   }
 

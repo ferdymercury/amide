@@ -28,20 +28,20 @@
 #include <gtk/gtk.h>
 #include <sys/stat.h>
 #include <string.h>
+#include "raw_data_import.h"
+#include "amitk_progress_dialog.h"
 
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
 #else
 static AmitkModality last_modality = AMITK_MODALITY_PET;
 static AmitkRawFormat last_raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
-static AmitkVoxel last_data_dim;
-static AmitkPoint last_voxel_size = one_point;
+static AmitkVoxel last_data_dim=ONE_VOXEL;
+static AmitkPoint last_voxel_size = ONE_POINT;
 static guint last_offset = 0;
-static amide_data_t scale_factor;
+static amide_data_t last_scale_factor=1.0;
 #endif
 
-#include "raw_data_import.h"
-#include "amitk_progress_dialog.h"
 
 
 /* raw_data information structure */
@@ -339,7 +339,14 @@ static void read_last_values(AmitkModality * plast_modality,
 			     AmitkPoint * plast_voxel_size,
 			     guint * plast_offset,
 			     amide_data_t *plast_scale_factor) {
-#ifndef AMIDE_WIN32_HACKS
+#ifdef AMIDE_WIN32_HACKS
+  *plast_modality = last_modality;
+  *plast_raw_format = last_raw_format;
+  *plast_data_dim = last_data_dim;
+  *plast_voxel_size = last_voxel_size;
+  *plast_offset = last_offset;
+  *plast_scale_factor = last_scale_factor;
+#else
   gint default_value;
   gint temp_int;
   gfloat temp_float;
@@ -370,11 +377,13 @@ static void read_last_values(AmitkModality * plast_modality,
 
   *plast_offset = gnome_config_get_int("RAWDATAIMPORT/LastOffset");
 
-  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastScaleFormat",&default_value);
+  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastScaleFactor",&default_value);
   *plast_scale_factor =  default_value ? 1.0 : temp_float;
 
   gnome_config_pop_prefix();
 #endif
+
+  return;
 }
 
 /* function to bring up the dialog widget to direct our importing of raw data */
@@ -676,18 +685,9 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename, AmitkPreferences
 
   /* initialize */
   raw_data_info->filename = g_strdup(raw_data_filename);
-#ifndef AMIDE_WIN32_HACKS
   read_last_values(&(raw_data_info->modality), &(raw_data_info->raw_format), 
 		   &(raw_data_info->data_dim), &(raw_data_info->voxel_size),
 		   &(raw_data_info->offset), &(raw_data_info->scale_factor));
-#else
-  raw_data_info->modality = last_modality;
-  raw_data_info->raw_format = last_raw_format;
-  raw_data_info->data_dim = last_data_dim;
-  raw_data_info->voxel_size = last_voxel_size;
-  raw_data_info->offset = last_offset;
-  raw_data_info->scale_factor = last_scale_factor;
-#endif
 
   /* figure out the file size in bytes (file_info.st_size) */
   if (stat(raw_data_info->filename, &file_info) != 0) {

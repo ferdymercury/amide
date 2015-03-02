@@ -69,6 +69,7 @@ static gchar * threshold_style_explanations[] = {
   N_("theshold by setting a window center and width - Radiology Style")
 };
 
+
 static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
 static void threshold_destroy (GtkObject *object);
@@ -92,16 +93,19 @@ static void threshold_update_type(AmitkThreshold * threshold);
 static void threshold_update_absolute_label(AmitkThreshold * threshold);
 static void threshold_update_windowing(AmitkThreshold * threshold);
 static void threshold_update_ref_frames(AmitkThreshold * threshold);
-static void threshold_update_color_table(AmitkThreshold * threshold);
+static void threshold_update_color_table(AmitkThreshold * threshold, AmitkViewMode view_mode);
+static void threshold_update_color_tables(AmitkThreshold * threshold);
 static void ds_scale_factor_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
-static void ds_color_table_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
+static void ds_color_table_changed_cb(AmitkDataSet * ds, AmitkViewMode view_mode, AmitkThreshold* threshold);
 static void ds_thresholding_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void ds_threshold_style_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void ds_thresholds_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void ds_conversion_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
 static void ds_modality_changed_cb(AmitkDataSet * ds, AmitkThreshold* threshold);
-static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static void study_view_mode_changed_cb(AmitkStudy * study, AmitkThreshold * threshold);
+static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer AmitkThreshold);
 static void color_table_cb(GtkWidget * widget, gpointer data);
+static void color_table_independent_cb(GtkWidget * widget, gpointer AmitkThreshold);
 static void threshold_ref_frame_cb(GtkWidget* widget, gpointer data);
 static void threshold_spin_button_cb(GtkWidget* widget, gpointer data);
 static void thresholding_cb(GtkWidget * widget, gpointer data);
@@ -261,8 +265,8 @@ static void threshold_construct(AmitkThreshold * threshold,
   GtkWidget * hbox;
   guint right_row;
   guint left_row;
+  gchar * temp_string;
   GtkWidget * label;
-  GtkWidget * menu;
   GtkWidget * pix_box;
   GtkWidget * button;
   AmitkThresholding i_thresholding;
@@ -272,7 +276,10 @@ static void threshold_construct(AmitkThreshold * threshold,
   GtkTooltips * tips=NULL;
   AmitkThresholdStyle i_threshold_style;
   AmitkLimit i_limit;
+  AmitkViewMode i_view_mode;
   div_t x;
+
+  tips = gtk_tooltips_new();
 
   /* we're using two tables packed into a box */
   if (layout == AMITK_THRESHOLD_BOX_LAYOUT)
@@ -352,20 +359,45 @@ static void threshold_construct(AmitkThreshold * threshold,
     left_row+=2;
   }
 
-  /* color table selector */
-  label = gtk_label_new(_("Color Table:"));
-  gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row,left_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(label);
+  /* color table selectors */
+  for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
+    
+    if (i_view_mode == AMITK_VIEW_MODE_SINGLE) 
+      threshold->color_table_label[i_view_mode] = gtk_label_new(_("Color Table:"));
+    else {
+      temp_string = g_strdup_printf(_("Color Table %d:"), i_view_mode+1);
+      threshold->color_table_label[i_view_mode] = gtk_label_new(temp_string);
+      g_free(temp_string);
+    }
+    gtk_table_attach(GTK_TABLE(left_table), threshold->color_table_label[i_view_mode], 
+		     0,1, left_row,left_row+1, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  menu = amitk_color_table_menu_new();
-  g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(color_table_cb), threshold);
-  gtk_table_attach(GTK_TABLE(left_table), menu, 1,5, left_row,left_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(menu);
-  threshold->color_table_menu = menu;
+    threshold->color_table_hbox[i_view_mode] = gtk_hbox_new(FALSE, 0);
+    gtk_table_attach(GTK_TABLE(left_table), threshold->color_table_hbox[i_view_mode], 
+		     1,5, left_row,left_row+1, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  left_row++;
+    if (i_view_mode == AMITK_VIEW_MODE_SINGLE) {
+      threshold->color_table_independent[i_view_mode] = NULL;
+    } else {
+      threshold->color_table_independent[i_view_mode] = gtk_check_button_new();
+      g_object_set_data(G_OBJECT(threshold->color_table_independent[i_view_mode]), "view_mode", GINT_TO_POINTER(i_view_mode));
+      g_signal_connect(G_OBJECT(threshold->color_table_independent[i_view_mode]), "toggled", G_CALLBACK(color_table_independent_cb), threshold);
+      gtk_box_pack_start(GTK_BOX(threshold->color_table_hbox[i_view_mode]), 
+			 threshold->color_table_independent[i_view_mode], FALSE, FALSE, 0);
+      gtk_tooltips_set_tip(tips, threshold->color_table_independent[i_view_mode],
+			   _("enable color table"),
+			   _("if not enabled, the primary color table will be used for this set of views"));
+      gtk_widget_show(threshold->color_table_independent[i_view_mode]);
+    } 
+
+    threshold->color_table_menu[i_view_mode] = amitk_color_table_menu_new();
+    g_object_set_data(G_OBJECT(threshold->color_table_menu[i_view_mode]), "view_mode", GINT_TO_POINTER(i_view_mode));
+    g_signal_connect(G_OBJECT(threshold->color_table_menu[i_view_mode]), "changed", G_CALLBACK(color_table_cb), threshold);
+    gtk_box_pack_start(GTK_BOX(threshold->color_table_hbox[i_view_mode]), 
+		       threshold->color_table_menu[i_view_mode], TRUE, TRUE, 0);
+    gtk_widget_show(threshold->color_table_menu[i_view_mode]);
+    left_row++;
+  }
 
   if (!threshold->minimal) {
     /* threshold type selection */
@@ -379,8 +411,6 @@ static void threshold_construct(AmitkThreshold * threshold,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(hbox);
     left_row++;
-
-    tips = gtk_tooltips_new();
 
     for (i_thresholding = 0; i_thresholding < AMITK_THRESHOLDING_NUM; i_thresholding++) {
       
@@ -587,6 +617,7 @@ static void threshold_construct(AmitkThreshold * threshold,
 static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds) {
 
   gint i;
+  AmitkStudy * study;
 
   g_return_if_fail(threshold->data_set == NULL);
 
@@ -597,6 +628,13 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
     threshold->threshold_min[i] = AMITK_DATA_SET_THRESHOLD_MIN(ds, i);
   }
 
+  study = AMITK_STUDY(amitk_object_get_parent_of_type(AMITK_OBJECT(ds), AMITK_OBJECT_TYPE_STUDY)); /* unreferenced pointer */
+  if (study != NULL)
+    threshold->view_mode = AMITK_STUDY_VIEW_MODE(study);
+  else
+    threshold->view_mode = AMITK_VIEW_MODE_SINGLE;
+
+
   g_signal_connect(G_OBJECT(ds), "scale_factor_changed", G_CALLBACK(ds_scale_factor_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "color_table_changed", G_CALLBACK(ds_color_table_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "thresholding_changed", G_CALLBACK(ds_thresholding_changed_cb), threshold);
@@ -604,13 +642,18 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
   g_signal_connect(G_OBJECT(ds), "thresholds_changed", G_CALLBACK(ds_thresholds_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "conversion_changed", G_CALLBACK(ds_conversion_changed_cb), threshold);
   g_signal_connect(G_OBJECT(ds), "modality_changed", G_CALLBACK(ds_modality_changed_cb), threshold);
+  if (study != NULL)
+    g_signal_connect(G_OBJECT(study), "view_mode_changed", G_CALLBACK(study_view_mode_changed_cb), threshold);
 
   return;
 }
 
 static void threshold_remove_data_set(AmitkThreshold * threshold) {
 
+  AmitkStudy * study;
+
   if (threshold->data_set == NULL) return;
+  study = AMITK_STUDY(amitk_object_get_parent_of_type(AMITK_OBJECT(threshold->data_set), AMITK_OBJECT_TYPE_STUDY)); /* unreferenced pointer */
 
   AMITK_OBJECT(threshold->data_set)->dialog = NULL;
   g_signal_handlers_disconnect_by_func(G_OBJECT(threshold->data_set), ds_scale_factor_changed_cb, threshold);
@@ -620,6 +663,8 @@ static void threshold_remove_data_set(AmitkThreshold * threshold) {
   g_signal_handlers_disconnect_by_func(G_OBJECT(threshold->data_set), ds_thresholds_changed_cb, threshold);
   g_signal_handlers_disconnect_by_func(G_OBJECT(threshold->data_set), ds_conversion_changed_cb, threshold);
   g_signal_handlers_disconnect_by_func(G_OBJECT(threshold->data_set), ds_modality_changed_cb, threshold);
+  if (study != NULL)
+    g_signal_handlers_disconnect_by_func(G_OBJECT(study), study_view_mode_changed_cb, threshold);
   threshold->data_set = amitk_object_unref(threshold->data_set);
 
   return;
@@ -1012,7 +1057,7 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
       
     case AMITK_THRESHOLD_SCALE_FULL:
       pixbuf = 
-	image_from_colortable(AMITK_DATA_SET_COLOR_TABLE(threshold->data_set),
+	image_from_colortable(AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, AMITK_VIEW_MODE_SINGLE),
 			      THRESHOLD_COLOR_SCALE_WIDTH,
 			      THRESHOLD_COLOR_SCALE_HEIGHT,
 			      threshold->threshold_min[i_ref],
@@ -1026,7 +1071,7 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, AmitkThresh
       
     case AMITK_THRESHOLD_SCALE_SCALED:
       pixbuf = 
-	image_from_colortable(AMITK_DATA_SET_COLOR_TABLE(threshold->data_set),
+	image_from_colortable(AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, AMITK_VIEW_MODE_SINGLE),
 			      THRESHOLD_COLOR_SCALE_WIDTH,
 			      THRESHOLD_COLOR_SCALE_HEIGHT,
 			      threshold->threshold_min[i_ref],
@@ -1410,19 +1455,53 @@ static void threshold_update_ref_frames(AmitkThreshold * threshold) {
   return;
 }
 
-static void threshold_update_color_table(AmitkThreshold * threshold) {
-
+static void threshold_update_color_table(AmitkThreshold * threshold, AmitkViewMode view_mode) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(threshold->data_set));
 
+
+  g_signal_handlers_block_by_func(G_OBJECT(threshold->color_table_menu[view_mode]), G_CALLBACK(color_table_cb), threshold);
 #if 1
-  gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu), 
-			      AMITK_DATA_SET_COLOR_TABLE(threshold->data_set));
+  gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu[view_mode]), 
+			      AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, view_mode));
 #else
-  gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->color_table_menu), 
-			   AMITK_DATA_SET_COLOR_TABLE(threshold->data_set));
+  gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->color_table_menu[view_mode]), 
+			   AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, view_mode));
 #endif
-  threshold_update_color_scales(threshold);
+  g_signal_handlers_unblock_by_func(G_OBJECT(threshold->color_table_menu[view_mode]), G_CALLBACK(color_table_cb), threshold);
+
+  if (view_mode == AMITK_VIEW_MODE_SINGLE) {
+  } else {
+    g_signal_handlers_block_by_func(G_OBJECT(threshold->color_table_independent[view_mode]), G_CALLBACK(color_table_independent_cb), threshold);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(threshold->color_table_independent[view_mode]),
+				 AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(threshold->data_set, view_mode));
+    g_signal_handlers_unblock_by_func(G_OBJECT(threshold->color_table_independent[view_mode]), G_CALLBACK(color_table_independent_cb), threshold);
+
+    gtk_widget_set_sensitive(threshold->color_table_menu[view_mode],
+			     AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(threshold->data_set, view_mode));
+  }
+
+  return;
+}
+
+static void threshold_update_color_tables(AmitkThreshold * threshold) {
+
+  AmitkViewMode i_view_mode;
+
+  for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
+
+    if (i_view_mode <= threshold->view_mode) {
+      gtk_widget_show(threshold->color_table_label[i_view_mode]);
+      gtk_widget_show(threshold->color_table_hbox[i_view_mode]);
+    } else {
+      /* never reached for AMITK_VIEW_MODE_SINGLE */
+      gtk_widget_hide(threshold->color_table_label[i_view_mode]);
+      gtk_widget_hide(threshold->color_table_hbox[i_view_mode]);
+    }
+
+    threshold_update_color_table(threshold, i_view_mode);
+  }
+
 
   return;
 }
@@ -1446,12 +1525,13 @@ static void ds_scale_factor_changed_cb(AmitkDataSet * ds, AmitkThreshold * thres
   return;
 }
 
-static void ds_color_table_changed_cb(AmitkDataSet * ds, AmitkThreshold * threshold) {
+static void ds_color_table_changed_cb(AmitkDataSet * ds, AmitkViewMode view_mode, AmitkThreshold * threshold) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   g_return_if_fail(AMITK_IS_THRESHOLD(threshold));
 
-  threshold_update_color_table(threshold);
+  threshold_update_color_table(threshold, view_mode);
+  threshold_update_color_scales(threshold);
   
   return;
 }
@@ -1533,6 +1613,16 @@ static void ds_modality_changed_cb(AmitkDataSet * ds, AmitkThreshold * threshold
   return;
 }
 
+static void study_view_mode_changed_cb(AmitkStudy * study, AmitkThreshold * threshold) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+  g_return_if_fail(AMITK_IS_THRESHOLD(threshold));
+
+  threshold->view_mode = AMITK_STUDY_VIEW_MODE(study);
+  threshold_update_color_tables(threshold);
+
+  return;
+}
 
 
 /* function called when the max or min triangle is moved 
@@ -1755,17 +1845,36 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
 
   AmitkColorTable i_color_table;
   AmitkThreshold * threshold = data;
+  AmitkViewMode view_mode;
 
 #if 1
   i_color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
 #else
   i_color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 #endif
+  view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view_mode"));
 
   /* check if we actually changed values */
-  if (AMITK_DATA_SET_COLOR_TABLE(threshold->data_set) != i_color_table) 
-    amitk_data_set_set_color_table(AMITK_DATA_SET(threshold->data_set), i_color_table);
+  if (AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, view_mode) != i_color_table) 
+    amitk_data_set_set_color_table(AMITK_DATA_SET(threshold->data_set), view_mode, i_color_table);
   
+  return;
+}
+
+static void color_table_independent_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkThreshold * threshold = data;
+  AmitkViewMode view_mode;
+  gboolean state;
+
+  view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view_mode"));
+
+  /* get the state of the button */
+  state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(threshold->data_set, view_mode) != state)
+    amitk_data_set_set_color_table_independent(AMITK_DATA_SET(threshold->data_set), view_mode, state);
+
   return;
 }
 
@@ -1951,7 +2060,8 @@ void amitk_threshold_new_data_set(AmitkThreshold * threshold, AmitkDataSet * new
 
   threshold_update_histogram(threshold);
   threshold_update_layout(threshold);
-  threshold_update_color_table(threshold);
+  threshold_update_color_tables(threshold);
+  threshold_update_color_scales(threshold);
   threshold_update_spin_buttons(threshold);
   threshold_update_type(threshold);
   threshold_update_style(threshold);

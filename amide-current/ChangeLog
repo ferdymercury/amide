@@ -1,3 +1,17 @@
+0.8.15
+	* added independent color tables for 2nd and 3rd sets of views [1]
+	* strip NaN's on export->resliced data set to make xmedcon happy
+ 	* added internal scaling intercept - more compatible with dicom
+	  - intercept gets removed if all are zero
+ 	* added additional support for DICOM through the DCMTK library
+ 	  - has support for reading in DICOMDIR files
+ 	* updates for MinGW build
+	* added a field of view parameter - to look at only a subset of data
+	* now reduces scale factor dimension of imported data when possible
+	* can now specify how multiple canvases are layed out (panel_layout option)
+	[1] Suggested by Freimut Juengling
+	[2] Suggested by Kris Thielemans 
+
 0.8.14 2005.11.17
 	* faster functions for initialized amitk_raw_data structures [1]
  	* fast roi quantitation now gives more accurate median value

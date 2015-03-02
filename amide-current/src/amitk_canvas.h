@@ -83,7 +83,7 @@ struct _AmitkCanvas
   GList * slice_cache;
   gint max_slice_cache_size;
   gint pixbuf_width, pixbuf_height;
-  gdouble triangle_width, triangle_height;
+  gdouble border_width;
   GnomeCanvasItem * image;
   GdkPixbuf * pixbuf;
 

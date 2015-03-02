@@ -30,6 +30,8 @@ for 0.9.0 release
 
 windows todo
 ------------
+* gate and time dialog buttons are not beveled when using the GTK ms-windows
+	theme... makes them hard to discover
 * icons still look like crap....
 	may need better program than png2ico
 	may need more sizes
@@ -38,12 +40,16 @@ windows todo
 	work around is define out at the moment.  Seems to be some
 	problem with mingw32 gcc and long comparisons
 * zdial on rendering doesn't work
-* preferences aren't currently saved between amide sessions
+* preferences aren't currently saved between amide sessions -
+	will be fixed with gtk2.8 and gnome2.12 (runs on windows)
 * help buttons don't work.
 * clicking and dragging roi off canvas yields bad behavior
 	(program interaction is frozen until same roi is clicked and released)
 	doesn't occur under linux
+	looks like gtk2.8 has a new event - need to upgrade and
+	  see if still needed
 * calculate over highest % of voxels crashes if the value is 100%
+	has this been fixed?
 
 
 factor analysis things:
@@ -142,6 +148,10 @@ probably post 1.0 things:
 things dependent on other things: 
 -------------- 
 
+* not currently implemented in gtk:
+	handle_box's don't get minimized with the main window...
+	but no way to minimize them independently...
+
 * dependent on requring glib >= 2.8 
 	remove g_try_malloc0 and g_try_new definitions in amide.h/amide.c
 
@@ -164,6 +174,13 @@ things dependent on other things:
 	uncomment the relevant code.  GtkComboBox is not avaliable in gtk 2.2
 4. Add -DGTK_DISABLE_DEPRECATED back into src/Makefile.am
 5. analysis.c use of g_ptr_array_foreach is disabled, as this isn't in glib 2.2
+
+* when switching to gnome 2.12 stuff on windows
+  can rip out all of the WIN32_HACKS stuff - only need the one G_PLATFORM_WIN32 thing in xml.c
+
+* dependent on upgrading to gtk 2.6
+1. update about dialog in ui_common.c to GtkAboutDialog
+   documentation on switching available in gtk api documentation on www.gtk.org
 
 
 * I'd like to change the icons on the toolbar to pixbuf data structures generated from
@@ -232,10 +249,12 @@ things dependent on other things:
 	(as of 2003.04.30) does not handle multi-threaded program.... so will
 	have to wait for that.
 
+
 * libmdc currently links against glib1.  When (X)MedCon switches to
 	GTK2/GLib2, remove the line in configure.in that overwrites
 	the XMEDCON_LIBS entry.  Also, XMEDCON_CFLAGS can probably
 	be includes in src/Makefile.am
+	-2005.11.19 renabled these, doesn't seem to be a problem right now
 
 * drawing graphics of ROI statistics, etc.
 	Can't use Guppi, it's unmaintained and deprecated.  Hopefully the 

@@ -126,6 +126,7 @@ static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation
 static void export_series_ok_cb(GtkWidget* widget, gpointer data);
 static void export_cb(GtkWidget * widget, gpointer data);
 static void changed_cb(gpointer dummy, gpointer ui_series);
+static void color_table_changed_cb(gpointer dummy, AmitkViewMode view_mode, gpointer ui_series);
 static void data_set_invalidate_slice_cache(AmitkDataSet *ds, gpointer ui_series);
 static void threshold_cb(GtkWidget * widget, gpointer data);
 static void close_cb(GtkWidget* widget, gpointer data);
@@ -298,6 +299,12 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 static void changed_cb(gpointer dummy, gpointer data) {
   ui_series_t * ui_series=data;
   add_update(ui_series);
+  return;
+}
+
+static void color_table_changed_cb(gpointer dummy, AmitkViewMode view_mode, gpointer ui_series) {
+  g_return_if_fail(view_mode == AMITK_VIEW_MODE_SINGLE);
+  changed_cb(dummy, ui_series);
   return;
 }
 
@@ -495,6 +502,8 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
 	if (AMITK_IS_DATA_SET(temp_objects->data)) {
 	  g_signal_handlers_disconnect_by_func(G_OBJECT(temp_objects->data),
 					       G_CALLBACK(data_set_invalidate_slice_cache), ui_series);
+	  g_signal_handlers_disconnect_by_func(G_OBJECT(temp_objects->data),
+					       G_CALLBACK(color_table_changed_cb), ui_series);
 	}
 	g_signal_handlers_disconnect_by_func(G_OBJECT(temp_objects->data),
 					     G_CALLBACK(changed_cb), ui_series);
@@ -835,7 +844,8 @@ static gboolean update_immediate(gpointer data) {
 				    temp_gate,
 				    ui_series->pixel_dim,
 				    view_volume,
-				    ui_series->fuse_type);
+				    ui_series->fuse_type,
+				    AMITK_VIEW_MODE_SINGLE);
     
       if (ui_series->images[i-start_i] == NULL) 
 	ui_series->images[i-start_i] = 
@@ -863,12 +873,13 @@ static gboolean update_immediate(gpointer data) {
       if (AMITK_IS_FIDUCIAL_MARK(objects->data) || AMITK_IS_ROI(objects->data)) {
 	if (AMITK_IS_DATA_SET(AMITK_OBJECT_PARENT(objects->data)))
 	  outline_color = 
-	    amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(AMITK_OBJECT_PARENT(objects->data)), TRUE);
+	    amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(AMITK_OBJECT_PARENT(objects->data), AMITK_VIEW_MODE_SINGLE), TRUE);
 	else
 	  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
 
 	item = amitk_canvas_object_draw(GNOME_CANVAS(ui_series->canvas), 
-					view_volume, objects->data, NULL,
+					view_volume, objects->data,
+					AMITK_VIEW_MODE_SINGLE, NULL,
 					ui_series->pixel_dim,
 					ui_series->pixbuf_width, 
 					ui_series->pixbuf_height,
@@ -1014,6 +1025,7 @@ void ui_series_create(AmitkStudy * study,
   amitk_volumes_calc_display_volume(selected_objects, AMITK_SPACE(ui_series->volume), 
 				    AMITK_STUDY_VIEW_CENTER(study),
 				    AMITK_STUDY_VIEW_THICKNESS(study),
+				    AMITK_STUDY_FOV(study),
 				    ui_series->volume);
   
   ui_series->fuse_type = AMITK_STUDY_FUSE_TYPE(study);
@@ -1242,7 +1254,7 @@ void ui_series_create(AmitkStudy * study,
       g_signal_connect(G_OBJECT(temp_objects->data), "thresholds_changed",
 		       G_CALLBACK(changed_cb), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "color_table_changed",
-		       G_CALLBACK(changed_cb), ui_series);
+		       G_CALLBACK(color_table_changed_cb), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "invalidate_slice_cache",
 		       G_CALLBACK(data_set_invalidate_slice_cache), ui_series);
       g_signal_connect(G_OBJECT(temp_objects->data), "interpolation_changed", 

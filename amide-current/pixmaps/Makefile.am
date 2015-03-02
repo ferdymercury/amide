@@ -13,6 +13,9 @@ pixbuf_csource=$(GDK_PIXBUF_CSOURCE)
 BUILT_SOURCES = \
 	amide_logo.h \
 	amide_logo_small.h \
+	panels_linear_x.h \
+	panels_linear_y.h \
+	panels_mixed.h \
 	thresholding_per_slice_icon.h \
 	thresholding_per_frame_icon.h \
 	thresholding_interpolate_frames_icon.h \

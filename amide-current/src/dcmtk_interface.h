@@ -1,7 +1,7 @@
-/* libecat_interface.h
+/* dcmtk_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2005 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -23,23 +23,28 @@
   02111-1307, USA.
 */
 
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
 
-#ifdef AMIDE_LIBECAT_SUPPORT
+#ifndef __DCMTK_INTERFACE_H__
+#define __DCMTK_INTERFACE_H__
 
-#ifndef __LIBECAT_INTERFACE_H__
-#define __LIBECAT_INTERFACE_H__
-
-/* headers always needed with this guy */
+/* includes always needed with this file */
 #include "amitk_data_set.h"
 
+G_BEGIN_DECLS
+
+extern const gchar * dcmtk_version;
+
 /* external functions */
-AmitkDataSet * libecat_import(const gchar * filename,
-			      AmitkPreferences * preferences,
-			      AmitkUpdateFunc update_func,
-			      gpointer update_data);
+gboolean dcmtk_test_dicom(const gchar * filename);
+GList * dcmtk_import(const gchar * filename, 
+		     AmitkPreferences * preferences,
+		     AmitkUpdateFunc update_func,
+		     gpointer update_data);
 
-#endif /* __LIBECAT_INTERFACE_H__ */
+G_END_DECLS
 
-#endif /* AMIDE_LIBECAT_SUPPORT */
+#endif /* __DCMTK_INTERFACE_H__ */
+#endif /* AMIDE_LIBDCMDATA_SUPPORT */
 
 

@@ -30,6 +30,7 @@
 #include <pango/pango.h>
 #include "amide_intl.h"
 
+G_BEGIN_DECLS
 
 /* stuff that isn't in earlier version of glib but that are handy */
 #if ((GLIB_MAJOR_VERSION <= 2) && (GLIB_MINOR_VERSION < 8))
@@ -62,12 +63,27 @@ gpointer g_try_malloc0    (gulong        n_bytes);
 
 
 /* typedef's */
+/* layout of the three views in a canvas */
 typedef enum {
   AMITK_LAYOUT_LINEAR, 
   AMITK_LAYOUT_ORTHOGONAL,
   AMITK_LAYOUT_NUM
 } AmitkLayout;
 
+/* layout of multiple canvases */
+typedef enum {
+  AMITK_PANEL_LAYOUT_MIXED,
+  AMITK_PANEL_LAYOUT_LINEAR_X,
+  AMITK_PANEL_LAYOUT_LINEAR_Y,
+  AMITK_PANEL_LAYOUT_NUM
+} AmitkPanelLayout;
+
+typedef enum {
+  AMITK_VIEW_MODE_SINGLE,
+  AMITK_VIEW_MODE_LINKED_2WAY,
+  AMITK_VIEW_MODE_LINKED_3WAY,
+  AMITK_VIEW_MODE_NUM
+} AmitkViewMode;
 
 typedef enum {
   AMITK_EYE_LEFT, 
@@ -144,7 +160,6 @@ typedef enum {
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
 extern PangoFontDescription * amitk_fixed_font_desc;
-extern PangoFontDescription * amitk_small_fixed_font_desc;
 extern gchar * limit_names[AMITK_THRESHOLD_STYLE_NUM][AMITK_LIMIT_NUM];
 extern gchar * window_names[];
 
@@ -160,8 +175,11 @@ void amide_unregister_all_windows(void);
 
 /* built in type functions */
 const gchar *   amitk_layout_get_name             (const AmitkLayout layout);
+const gchar *   amitk_panel_layout_get_name       (const AmitkPanelLayout panel_layout);
 const gchar *   amitk_limit_get_name              (const AmitkLimit limit);
 const gchar *   amitk_window_get_name             (const AmitkWindow window);
 const gchar *   amitk_modality_get_name           (const AmitkModality modality);
+
+G_END_DECLS
 
 #endif /* __AMIDE_H__ */

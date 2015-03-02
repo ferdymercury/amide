@@ -36,9 +36,9 @@
 
 
 /* function to recalcule the max and min values of a data set */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set,
-									     gboolean (*update_func)(),
-									     gpointer update_data) {
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_frame_max_min(AmitkDataSet * data_set,
+											     AmitkUpdateFunc update_func,
+											     gpointer update_data) {
 
   AmitkVoxel i;
   amide_data_t max, min, temp;
@@ -65,7 +65,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
 
   for (i.t = 0; i.t < dim.t; i.t++) {
     i.x = i.y = i.z = i.g = 0;
-    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
+    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
     if (finite(temp)) max = min = temp;   
     else max = min = 0.0; /* just throw in zero */
 
@@ -78,7 +78,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
 	}
 	for (i.y = 0; i.y < dim.y; i.y++) 
 	  for (i.x = 0; i.x < dim.x; i.x++) {
-	    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
+	    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, i);
 	    if (finite(temp)) {
 	      if (temp > max) max = temp;
 	      else if (temp < min) min = temp;
@@ -103,8 +103,8 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
 }
 
 /* generate the distribution array for a data_set */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
-									    gboolean (*update_func)(),
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_distribution(AmitkDataSet * data_set,
+									    AmitkUpdateFunc update_func,
 									    gpointer update_data) {
 
   AmitkVoxel i,j;
@@ -162,7 +162,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 
 	for (i.y = 0; i.y < data_set_dim.y; i.y++) 
 	  for (i.x = 0; i.x < data_set_dim.x; i.x++) {
-	    j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-amitk_data_set_get_global_min(data_set));
+	    j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,i)-amitk_data_set_get_global_min(data_set));
 	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) += 1.0;
 	  }
       }
@@ -192,7 +192,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 
 
 /* returns a slice  with the appropriate data from the data_set */
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
+AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'get_slice(AmitkDataSet * data_set,
 									      const amide_time_t start_time,
 									      const amide_time_t duration,
 									      const amide_intpoint_t gate,
@@ -451,7 +451,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 		
 		/* get the value of the point on the box */
 		if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
-		  box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, box_voxel[l]);
+		  box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, box_voxel[l]);
 		else
 		  box_value[l] = empty;
 	      }
@@ -557,7 +557,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
 	      else
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
-		  weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,ds_voxel);
+		  weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set,ds_voxel);
 	      POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
 	    }
 	    POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);

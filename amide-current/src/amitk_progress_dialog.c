@@ -89,6 +89,7 @@ static void dialog_init (AmitkProgressDialog * dialog)
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), dialog->message_label, FALSE, FALSE, 0);
 
   dialog->progress_bar = gtk_progress_bar_new();
+  gtk_progress_bar_set_pulse_step(GTK_PROGRESS_BAR(dialog->progress_bar), 0.01);
   gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(dialog->progress_bar), 
 				   GTK_PROGRESS_LEFT_TO_RIGHT);
   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), dialog->progress_bar, FALSE, FALSE, 0);
@@ -108,12 +109,14 @@ static void dialog_response(GtkDialog * dialog, gint response_id) {
   return;
 }
 
-gboolean amitk_progress_dialog_update(AmitkProgressDialog * dialog, char * message, gdouble fraction) {
+gboolean amitk_progress_dialog_update(gpointer dialog_pointer, char * message, gdouble fraction) {
+
+  AmitkProgressDialog * dialog = AMITK_PROGRESS_DIALOG(dialog_pointer);
 
   if (message != NULL)
     amitk_progress_dialog_set_text(dialog, message);
 
-  if (fraction >= 0.0)
+  if ((fraction >= 0.0) || (fraction < -0.5))
     return amitk_progress_dialog_set_fraction(dialog, fraction);
   else
     return AMITK_PROGRESS_DIALOG_CAN_CONTINUE(dialog);
@@ -138,6 +141,14 @@ gboolean amitk_progress_dialog_set_fraction(AmitkProgressDialog * dialog, gdoubl
       dialog->can_continue = TRUE;
     }
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(dialog->progress_bar), fraction);
+
+  } else if (fraction < -0.5) {
+    if (!GTK_WIDGET_VISIBLE(dialog)) {
+      gtk_widget_show_all(GTK_WIDGET(dialog));
+      dialog->can_continue = TRUE;
+    }
+    gtk_progress_bar_pulse(GTK_PROGRESS_BAR(dialog->progress_bar));
+
   }
 
   /* let spin while events are pending, this allows cancel to happen */

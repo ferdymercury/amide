@@ -31,9 +31,10 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
+G_BEGIN_DECLS
 
 /* functions */
-
+gboolean xml_check_file_32bit_okay(guint64 value);
 gboolean xml_node_exists(xmlNodePtr nodes, const gchar * descriptor);
 xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor);
 gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor);
@@ -59,5 +60,6 @@ void xml_save_location_and_size(xmlNodePtr node, const gchar * descriptor,
 				const guint64 location, const guint64 size);
 xmlDocPtr xml_open_doc(gchar * filename, FILE * study_file, guint64 location, guint64 size, gchar ** perror_buf);
 
+G_END_DECLS
 #endif /* __XML_H__ */
 

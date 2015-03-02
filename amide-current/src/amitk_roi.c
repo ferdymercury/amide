@@ -769,7 +769,7 @@ static void erase_volume(AmitkVoxel voxel,
 void amitk_roi_erase_volume(const AmitkRoi * roi, 
 			    AmitkDataSet * ds, 
 			    const gboolean outside,
-			    gboolean (*update_func)(),
+			    AmitkUpdateFunc update_func,
 			    gpointer update_data) {
 
   guint i_frame;

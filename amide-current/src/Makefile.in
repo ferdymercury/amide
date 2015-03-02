@@ -83,7 +83,31 @@ am__objects_5 = amitk_data_set_UBYTE_0D_SCALING.$(OBJEXT) \
 	amitk_data_set_FLOAT_2D_SCALING.$(OBJEXT) \
 	amitk_data_set_DOUBLE_0D_SCALING.$(OBJEXT) \
 	amitk_data_set_DOUBLE_1D_SCALING.$(OBJEXT) \
-	amitk_data_set_DOUBLE_2D_SCALING.$(OBJEXT)
+	amitk_data_set_DOUBLE_2D_SCALING.$(OBJEXT) \
+	amitk_data_set_UBYTE_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_UBYTE_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_UBYTE_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SBYTE_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SBYTE_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SBYTE_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_USHORT_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_USHORT_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_USHORT_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SSHORT_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SSHORT_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SSHORT_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_UINT_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_UINT_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_UINT_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SINT_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SINT_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_SINT_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_FLOAT_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_FLOAT_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_FLOAT_2D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT.$(OBJEXT) \
+	amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.$(OBJEXT)
 am__objects_6 = amitk_roi_ELLIPSOID.$(OBJEXT) \
 	amitk_roi_CYLINDER.$(OBJEXT) amitk_roi_BOX.$(OBJEXT) \
 	amitk_roi_ISOCONTOUR_2D.$(OBJEXT) \
@@ -106,10 +130,11 @@ am_amide_OBJECTS = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	amitk_space.$(OBJEXT) amitk_space_edit.$(OBJEXT) \
 	amitk_study.$(OBJEXT) amitk_threshold.$(OBJEXT) \
 	amitk_tree_view.$(OBJEXT) amitk_volume.$(OBJEXT) \
-	amitk_window_edit.$(OBJEXT) fads.$(OBJEXT) image.$(OBJEXT) \
-	legacy.$(OBJEXT) libecat_interface.$(OBJEXT) \
-	libmdc_interface.$(OBJEXT) mpeg_encode.$(OBJEXT) \
-	pixmaps.$(OBJEXT) raw_data_import.$(OBJEXT) render.$(OBJEXT) \
+	amitk_window_edit.$(OBJEXT) dcmtk_interface.$(OBJEXT) \
+	fads.$(OBJEXT) image.$(OBJEXT) legacy.$(OBJEXT) \
+	libecat_interface.$(OBJEXT) libmdc_interface.$(OBJEXT) \
+	mpeg_encode.$(OBJEXT) pixmaps.$(OBJEXT) \
+	raw_data_import.$(OBJEXT) render.$(OBJEXT) \
 	tb_alignment.$(OBJEXT) tb_crop.$(OBJEXT) tb_fads.$(OBJEXT) \
 	tb_filter.$(OBJEXT) tb_fly_through.$(OBJEXT) \
 	tb_profile.$(OBJEXT) tb_roi_analysis.$(OBJEXT) \
@@ -125,7 +150,7 @@ am__DEPENDENCIES_1 =
 amide_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -137,6 +162,14 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(amide_SOURCES)
 DIST_SOURCES = $(amide_SOURCES)
 ETAGS = etags
@@ -148,6 +181,8 @@ AMDEP_TRUE = @AMDEP_TRUE@
 AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_GNOME_CFLAGS = @AMIDE_GNOME_CFLAGS@
 AMIDE_GNOME_LIBS = @AMIDE_GNOME_LIBS@
+AMIDE_LIBDCMDATA_CFLAGS = @AMIDE_LIBDCMDATA_CFLAGS@
+AMIDE_LIBDCMDATA_LIBS = @AMIDE_LIBDCMDATA_LIBS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AMIDE_WIN32_HACKS_FALSE = @AMIDE_WIN32_HACKS_FALSE@
@@ -336,9 +371,11 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
+	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
-	-I/usr/local/xmedcon/include
+	$(XMEDCON_CFLAGS)
 
+AM_CXXFLAGS = $(AM_CFLAGS)
 amide_LDADD = \
 	$(GSL_LIBS) \
 	$(LIBFAME_LIBS) \
@@ -346,7 +383,8 @@ amide_LDADD = \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
 	$(AMIDE_LDADD_WIN32) \
-	$(XMEDCON_LIBS) 
+	$(XMEDCON_LIBS) \
+	$(AMIDE_LIBDCMDATA_LIBS) 
 
 amide_LDFLAGS = \
 	$(AMIDE_LDFLAGS_WIN32)
@@ -394,6 +432,8 @@ amide_SOURCES = \
 	amitk_tree_view.c \
 	amitk_volume.c \
 	amitk_window_edit.c \
+	dcmtk_interface.cc \
+	dcmtk_interface.h \
 	fads.c \
 	fads.h \
 	image.c \
@@ -541,7 +581,31 @@ AMITK_DATA_SET_VARIABLE_C = \
 	amitk_data_set_FLOAT_2D_SCALING.c \
 	amitk_data_set_DOUBLE_0D_SCALING.c \
 	amitk_data_set_DOUBLE_1D_SCALING.c \
-	amitk_data_set_DOUBLE_2D_SCALING.c 
+	amitk_data_set_DOUBLE_2D_SCALING.c \
+	amitk_data_set_UBYTE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_UBYTE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_UBYTE_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.c 
 
 AMITK_DATA_SET_VARIABLE_H = \
 	amitk_data_set_UBYTE_0D_SCALING.h \
@@ -610,7 +674,7 @@ DISTCLEANFILES = *~
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cc .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -670,7 +734,7 @@ clean-binPROGRAMS:
 	done
 amide$(EXEEXT): $(amide_OBJECTS) $(amide_DEPENDENCIES) 
 	@rm -f amide$(EXEEXT)
-	$(LINK) $(amide_LDFLAGS) $(amide_OBJECTS) $(amide_LDADD) $(LIBS)
+	$(CXXLINK) $(amide_LDFLAGS) $(amide_OBJECTS) $(amide_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -687,29 +751,53 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_FLOAT_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SBYTE_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SINT_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_SSHORT_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UBYTE_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_UINT_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_0D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_0D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_1D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_1D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING_INTERCEPT.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_dial.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_fiducial_mark.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_filter.Po@am__quote@
@@ -747,6 +835,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_window_edit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_xif_sel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcmtk_interface.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fads.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/legacy.Po@am__quote@
@@ -796,6 +885,27 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+.cc.o:
+@am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
+
+.cc.obj:
+@am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ `$(CYGPATH_W) '$<'`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Po"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cc.lo:
+@am__fastdepCXX_TRUE@	if $(LTCXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

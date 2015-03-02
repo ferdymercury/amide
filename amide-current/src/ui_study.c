@@ -81,8 +81,8 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    "", "", "",
    ""}, /*CANVAS_FIDUCIAL_MARK */
   {N_("move view"), "",
-   N_("move view, min. depth"), N_("rotate study"), 
-   N_("change depth"), "",  "",
+   N_("move view, min. depth"), "", 
+   N_("change depth"), N_("rotate study"), "",
    ""}, /* STUDY  */
   {N_("shift"), "", 
    N_("enter draw mode"), "",
@@ -222,6 +222,7 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     /* set any settings we can */
     ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(object));
     ui_study_update_zoom(ui_study);
+    ui_study_update_fov(ui_study);
     ui_study_update_canvas_target(ui_study);
     ui_study_update_title(ui_study);
     ui_study_update_time_button(ui_study->study, ui_study->time_button);
@@ -245,7 +246,9 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "view_mode_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_target_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_layout_preference_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "panel_layout_preference_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "voxel_dim_or_zoom_changed", G_CALLBACK(ui_study_cb_voxel_dim_or_zoom_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "fov_changed", G_CALLBACK(ui_study_cb_fov_changed), ui_study);
 
   } else if (AMITK_IS_DATA_SET(object)) {
     amitk_tree_view_expand_object(AMITK_TREE_VIEW(ui_study->tree_view), AMITK_OBJECT_PARENT(object));
@@ -802,6 +805,26 @@ void ui_study_update_zoom(ui_study_t * ui_study) {
   return;
 }
 
+/* updates the settings of the fov spinbutton, will not change anything about the canvas */
+void ui_study_update_fov(ui_study_t * ui_study) {
+
+  /* block signals to the fov spin button, as we only want to
+     change the value of the spin button, it's up to the caller of this
+     function to change anything on the actual canvases... we'll 
+     unblock at the end of this function */
+  g_signal_handlers_block_by_func(G_OBJECT(ui_study->fov_spin),
+				  G_CALLBACK(ui_study_cb_fov), ui_study);
+  
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->fov_spin), 
+			    AMITK_STUDY_FOV(ui_study->study));
+  
+  /* and now, reconnect the signal */
+  g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->fov_spin),
+				    G_CALLBACK(ui_study_cb_fov), ui_study);
+
+  return;
+}
+
 /* updates the settings of the canvas target button */
 void ui_study_update_canvas_target(ui_study_t * ui_study) {
 
@@ -909,13 +932,29 @@ void ui_study_update_title(ui_study_t * ui_study) {
 
 }
 
+/* taken/modified from gtkhandlebox.c - note, no reattach signal gets called when this is used */
+static void handle_box_reattach (GtkHandleBox *hb) {
+  GtkWidget *widget = GTK_WIDGET (hb);
+  
+  if (hb->child_detached) {
+    hb->child_detached = FALSE;
+    if (GTK_WIDGET_REALIZED (hb)) {
+      gdk_window_hide (hb->float_window);
+      gdk_window_reparent (hb->bin_window, widget->window, 0, 0);
+
+    }
+    hb->float_window_mapped = FALSE;
+  }
+  gtk_widget_queue_resize (GTK_WIDGET (hb));
+}
+
 
 void ui_study_update_layout(ui_study_t * ui_study) {
 
   AmitkView i_view;
-  gboolean canvas_table_new;
   AmitkViewMode i_view_mode;
-  gint row, column, table_column = 0, table_row = 0;
+  gint row, column, table_column, table_row;
+  // GtkWidget * scrolled;
   
   g_return_if_fail(ui_study->study != NULL);
 
@@ -947,14 +986,38 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 
     if (ui_study->canvas_table[i_view_mode] == NULL) {
       ui_study->canvas_table[i_view_mode] = gtk_table_new(3, 2,FALSE);
+      
+      // scrolled = gtk_scrolled_window_new(NULL, NULL);
+      // gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+      // gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), ui_study->canvas_table[i_view_mode]);
+
       ui_study->canvas_handle[i_view_mode] = gtk_handle_box_new();
+      g_object_ref(G_OBJECT(ui_study->canvas_handle[i_view_mode])); /* gets removed below */
       gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(ui_study->canvas_handle[i_view_mode]), GTK_SHADOW_NONE);
       gtk_handle_box_set_handle_position(GTK_HANDLE_BOX(ui_study->canvas_handle[i_view_mode]), GTK_POS_TOP);
       gtk_container_add(GTK_CONTAINER(ui_study->canvas_handle[i_view_mode]), ui_study->canvas_table[i_view_mode]);
-      canvas_table_new = TRUE;
+      //      gtk_container_add(GTK_CONTAINER(ui_study->canvas_handle[i_view_mode]), scrolled);
+
     } else {
-      canvas_table_new = FALSE;
+      g_return_if_fail(ui_study->canvas_handle[i_view_mode] != NULL);
+
+      /* extra ref so widget not destroyed on container_remove  - gets removed below */
+      g_object_ref(G_OBJECT(ui_study->canvas_handle[i_view_mode])); 
+
+      /* note, ui_study->panel_layout doesn't get set till end of function, but first time
+	 through this function we never hit this condition */
+      if (ui_study->panel_layout != AMITK_STUDY_PANEL_LAYOUT(ui_study->study)) {
+
+	/* hack! to force handle box to reattach.  If we don't force a reattach,
+	   the widget doesn't get enough size allocated to it on the gtk_table_attach
+	   that follows */
+	handle_box_reattach(GTK_HANDLE_BOX(ui_study->canvas_handle[i_view_mode])); 
+
+	gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
+			     ui_study->canvas_handle[i_view_mode]);
+      }
     }
+
 
 
     for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
@@ -980,11 +1043,16 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 			   G_CALLBACK(ui_study_cb_canvas_new_object), ui_study);
 	
 	} else { /* not a new canvas */
-	  gtk_widget_hide(ui_study->canvas[i_view_mode][i_view]); /* hide, so we get more fluid moving */
 	  /* add ref so it's not destroyed when we remove it from the container */
 	  g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
-	  gtk_container_remove(GTK_CONTAINER(ui_study->canvas_table[i_view_mode]), 
-			       ui_study->canvas[i_view_mode][i_view]);
+
+	  /* note, ui_study->canvas_layout doesn't get set till end of function, but first time
+	     through this function we never hit this condition */
+	  if (ui_study->canvas_layout != AMITK_STUDY_CANVAS_LAYOUT(ui_study->study)) {
+		gtk_widget_hide(ui_study->canvas[i_view_mode][i_view]); /* hide, so we get more fluid moving */
+		gtk_container_remove(GTK_CONTAINER(ui_study->canvas_table[i_view_mode]), 
+				     ui_study->canvas[i_view_mode][i_view]);
+	  }
 	}
       }
     }
@@ -992,58 +1060,84 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 
   for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
 
-    /* put the canvases in the table according to the desired layout */
+    /* put the canvases in each table/handlebox according to the desired layout */
     switch(AMITK_STUDY_CANVAS_LAYOUT(ui_study->study)) {
     case AMITK_LAYOUT_ORTHOGONAL:
       row = column = 0;
       if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
-	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-			 ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE], 
-			 column,column+1, row,row+1,FALSE,FALSE, X_PADDING, Y_PADDING);
+	if (gtk_widget_get_parent(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]) == NULL)
+	  gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			   ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE], 
+			   column,column+1, row,row+1,FALSE,FALSE, X_PADDING, Y_PADDING);
 	row++;
       }
       if (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] != NULL) {
-	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-			 ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL], 
-			 column, column+1, row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
+	if (gtk_widget_get_parent(ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL]) == NULL)
+	  gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			   ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL], 
+			   column, column+1, row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
       }
       row = 0;
       column++;
       if (ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL] != NULL)
-	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-			 ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL], 
-			 column, column+1,row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
+	if (gtk_widget_get_parent(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]) == NULL)
+	  gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			   ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL], 
+			   column, column+1,row, row+1, FALSE,FALSE, X_PADDING, Y_PADDING);
 
       break;
     case AMITK_LAYOUT_LINEAR:
     default:
       for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++)
 	if (ui_study->canvas[i_view_mode][i_view] != NULL)
-	  gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
-			   ui_study->canvas[i_view_mode][i_view], 
-			   i_view, i_view+1, 0,1, FALSE, FALSE, X_PADDING, Y_PADDING);
+	  if (gtk_widget_get_parent(ui_study->canvas[i_view_mode][i_view]) == NULL)
+	    gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
+			     ui_study->canvas[i_view_mode][i_view], 
+			     i_view, i_view+1, 0,1, FALSE, FALSE, X_PADDING, Y_PADDING);
 
       break;
     }
 
 
-    /* and place them */
-    if (gtk_widget_get_parent(ui_study->canvas_handle[i_view_mode]) == NULL) 
+    /* place the handleboxes */
+    if (gtk_widget_get_parent(ui_study->canvas_handle[i_view_mode]) == NULL) {
+
+      switch(AMITK_STUDY_PANEL_LAYOUT(ui_study->study)) {
+      case AMITK_PANEL_LAYOUT_LINEAR_X:
+	table_column=i_view_mode;
+	table_row=0;
+	break;
+      case AMITK_PANEL_LAYOUT_LINEAR_Y:
+	table_row=i_view_mode;
+	table_column=0;
+	break;
+      case AMITK_PANEL_LAYOUT_MIXED:
+      default:
+	table_column = (i_view_mode % 2);
+	table_row = floor((i_view_mode)/2);
+	break;
+      }
+
       gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_handle[i_view_mode],
 		       table_column, table_column+1, table_row, table_row+1,
 		       X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
 		       X_PADDING, Y_PADDING);
-    table_column++;
 
+    }
 
     /* remove the additional reference */
     for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
       if (ui_study->canvas[i_view_mode][i_view] != NULL)
 	g_object_unref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
+    g_object_unref(ui_study->canvas_handle[i_view_mode]);
+
     gtk_widget_show_all(ui_study->canvas_handle[i_view_mode]); /* and show */
       
   }
 
+  /* record the layout */
+  ui_study->panel_layout = AMITK_STUDY_PANEL_LAYOUT(ui_study->study); 
+  ui_study->canvas_layout = AMITK_STUDY_CANVAS_LAYOUT(ui_study->study);
 
   return;
 }
@@ -1142,8 +1236,6 @@ GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences) 
 
   /* setup the study window */
   ui_study->app=gnome_app_new(PACKAGE, NULL);
-
-  //  gtk_window_set_policy (GTK_WINDOW(ui_study->app), TRUE, TRUE, TRUE);
 
   /* disable user resizability, this allows the window to autoshrink */
   gtk_window_set_resizable(GTK_WINDOW(ui_study->app), FALSE);

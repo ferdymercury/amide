@@ -57,6 +57,7 @@ static void line_style_cb(GtkWidget * widget, gpointer data);
 #endif
 static void fill_roi_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
+static void panel_layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
 static void threshold_style_cb(GtkWidget * widget, gpointer data);
@@ -138,6 +139,18 @@ static void layout_cb(GtkWidget * widget, gpointer data) {
 
   new_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "layout"));
   amitk_preferences_set_canvas_layout(ui_study->preferences, new_layout);
+
+  return;
+}
+
+/* function called to change the panel layout */
+static void panel_layout_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  AmitkPanelLayout new_panel_layout;
+
+  new_panel_layout = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "panel_layout"));
+  amitk_preferences_set_panel_layout(ui_study->preferences, new_panel_layout);
 
   return;
 }
@@ -289,6 +302,9 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * fill_roi_button;
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
+  GtkWidget * panel_layout_button1;
+  GtkWidget * panel_layout_button2;
+  GtkWidget * panel_layout_button3;
   GtkWidget * hseparator;
   GtkWidget * menu;
   GtkWidget * windows_widget;
@@ -361,7 +377,9 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   ui_common_study_preferences_widgets(packing_table, table_row,
 				      &roi_width_spin, &roi_item, &line_style_menu, &fill_roi_button,
-				      &layout_button1, &layout_button2, &maintain_size_button,
+				      &layout_button1, &layout_button2, 
+				      &panel_layout_button1,&panel_layout_button2,&panel_layout_button3,
+				      &maintain_size_button,
 				      &target_size_spin);
 
 
@@ -397,6 +415,16 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 			       (AMITK_PREFERENCES_CANVAS_LAYOUT(ui_study->preferences) == AMITK_LAYOUT_ORTHOGONAL));
   g_signal_connect(G_OBJECT(layout_button1), "clicked", G_CALLBACK(layout_cb), ui_study);
   g_signal_connect(G_OBJECT(layout_button2), "clicked", G_CALLBACK(layout_cb), ui_study);
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(panel_layout_button1), 
+			       (AMITK_PREFERENCES_PANEL_LAYOUT(ui_study->preferences) == AMITK_PANEL_LAYOUT_MIXED));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(panel_layout_button2), 
+			       (AMITK_PREFERENCES_PANEL_LAYOUT(ui_study->preferences) == AMITK_PANEL_LAYOUT_LINEAR_X));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(panel_layout_button3), 
+			       (AMITK_PREFERENCES_PANEL_LAYOUT(ui_study->preferences) == AMITK_PANEL_LAYOUT_LINEAR_Y));
+  g_signal_connect(G_OBJECT(panel_layout_button1), "clicked", G_CALLBACK(panel_layout_cb), ui_study);
+  g_signal_connect(G_OBJECT(panel_layout_button2), "clicked", G_CALLBACK(panel_layout_cb), ui_study);
+  g_signal_connect(G_OBJECT(panel_layout_button3), "clicked", G_CALLBACK(panel_layout_cb), ui_study);
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(maintain_size_button), 
 			       AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(ui_study->preferences));

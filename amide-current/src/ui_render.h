@@ -48,6 +48,8 @@ typedef struct ui_render_t {
 #endif
   amide_time_t start;
   amide_time_t duration;
+  amide_real_t fov;
+  AmitkPoint view_center;
   GtkWidget * canvas;
   GnomeCanvasItem * canvas_image;
   GnomeCanvasItem * canvas_time_label;

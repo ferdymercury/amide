@@ -47,6 +47,9 @@
 #ifdef AMIDE_LIBFAME_SUPPORT
 #include <fame_version.h>
 #endif
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+#include <dcmtk_interface.h>
+#endif
 
 
 
@@ -224,7 +227,7 @@ static gchar * set_filename_common(gchar * suggested_name) {
   if (last_path_used != NULL)
     dir_string = g_path_get_dirname(last_path_used);
   else
-    dir_string = NULL;
+    dir_string = g_strdup(".");;
 
   if (suggested_name != NULL) {
     base_string = g_path_get_basename(suggested_name);
@@ -234,7 +237,7 @@ static gchar * set_filename_common(gchar * suggested_name) {
     return_string = g_strdup_printf("%s%s",dir_string, G_DIR_SEPARATOR_S);
   }
 
-  if (dir_string != NULL) g_free(dir_string);
+  g_free(dir_string);
 
   return return_string;
 }
@@ -256,7 +259,7 @@ void ui_common_file_selection_set_filename(GtkWidget * file_selection, gchar * s
 void ui_common_xif_selection_set_filename(GtkWidget * xif_selection, gchar * suggested_name) {
   gchar * temp_string;
   temp_string = set_filename_common(suggested_name);
-    
+
   if (temp_string != NULL) {
     amitk_xif_selection_set_filename(AMITK_XIF_SELECTION(xif_selection), temp_string);
     g_free(temp_string); 
@@ -307,6 +310,9 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
 		       _("libmdc: Medical Imaging File library by Erik Nolf (version "),MDC_VERSION,")\n",
+#endif
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+		       _("libdcmdata: OFFIS DICOM Toolkit DCMTK (C) 1993-2004, OFFIS e.V. (version "),dcmtk_version,")\n",
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
@@ -503,6 +509,9 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** pfill_roi_button,
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
+					 GtkWidget ** ppanel_layout_button1,
+					 GtkWidget ** ppanel_layout_button2,
+					 GtkWidget ** ppanel_layout_button3,
 					 GtkWidget ** pmaintain_size_button,
 					 GtkWidget ** ptarget_size_spin) {
 
@@ -663,6 +672,56 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   		   0, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(*playout_button2), "layout", GINT_TO_POINTER(AMITK_LAYOUT_ORTHOGONAL));
   gtk_widget_show(*playout_button2);
+
+  table_row++;
+
+
+  label = gtk_label_new(_("Multiple Canvases Layout:"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+
+  /* the radio buttons */
+  *ppanel_layout_button1 = gtk_radio_button_new(NULL);
+  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_mixed, FALSE, NULL);
+  image = gtk_image_new_from_pixbuf(pixbuf);
+  g_object_unref(pixbuf);
+  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button1), image);
+  gtk_widget_show(image);
+  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button1,
+  		   1,2, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(*ppanel_layout_button1), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_MIXED));
+  gtk_widget_show(*ppanel_layout_button1);
+
+  *ppanel_layout_button2 = gtk_radio_button_new(NULL);
+  gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button2), 
+			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
+  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_linear_x, FALSE, NULL);
+  image = gtk_image_new_from_pixbuf(pixbuf);
+  g_object_unref(pixbuf);
+  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button2), image);
+  gtk_widget_show(image);
+  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button2,
+  		   2,3, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(*ppanel_layout_button2), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_LINEAR_X));
+  gtk_widget_show(*ppanel_layout_button2);
+
+  *ppanel_layout_button3 = gtk_radio_button_new(NULL);
+  gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button3), 
+			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
+  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_linear_y, FALSE, NULL);
+  image = gtk_image_new_from_pixbuf(pixbuf);
+  g_object_unref(pixbuf);
+  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button3), image);
+  gtk_widget_show(image);
+  gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button3,
+  		   3,4, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(*ppanel_layout_button3), "panel_layout", GINT_TO_POINTER(AMITK_PANEL_LAYOUT_LINEAR_Y));
+  gtk_widget_show(*ppanel_layout_button3);
 
   table_row++;
 

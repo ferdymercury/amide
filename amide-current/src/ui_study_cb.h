@@ -53,6 +53,7 @@ void ui_study_cb_tree_view_add_object(GtkWidget * tree_view, AmitkObject * paren
 void ui_study_cb_tree_view_delete_object(GtkWidget * tree_view,AmitkObject * object, gpointer ui_study);
 void ui_study_cb_tree_view_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer ui_study);
 void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
+void ui_study_cb_fov(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_gate_pressed(GtkWidget * combo, gpointer data);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
@@ -78,6 +79,7 @@ void ui_study_cb_interpolation(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_study_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_voxel_dim_or_zoom_changed(AmitkStudy * study, gpointer ui_study);
+void ui_study_cb_fov_changed(AmitkStudy * study, gpointer ui_study);
 void ui_study_cb_fuse_type(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_canvas_visible(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer ui_study);

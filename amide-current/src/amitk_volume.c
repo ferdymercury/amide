@@ -1,7 +1,7 @@
 /* amitk_volume.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2005 Andy Loening
+ * Copyright (C) 2000-2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -516,17 +516,21 @@ amide_real_t amitk_volumes_get_max_size(GList * objects) {
    specified volumes will be containted.  Returns true if the given
    volume structure is changed. view_center should be in the base
    reference frame.  */
-
+/* field of view is in percent */
 gboolean amitk_volumes_calc_display_volume(const GList * volumes, 
 					   const AmitkSpace * space, 
 					   const AmitkPoint view_center,
 					   const amide_real_t thickness,
+					   const amide_real_t fov,
 					   AmitkVolume * volume) {
 
   AmitkCorners temp_corner;
   AmitkPoint temp_point;
   gboolean changed = FALSE;
   gboolean valid;
+  AmitkPoint width;
+  amide_real_t max_width;
+  AmitkCorners old_corner;
 
   if (volumes == NULL) return FALSE;
 
@@ -538,10 +542,40 @@ gboolean amitk_volumes_calc_display_volume(const GList * volumes,
 
   /* figure out the corners */
   valid = amitk_volumes_get_enclosing_corners(volumes,space, temp_corner);
-  
+
   /* update the corners appropriately */
   if (valid) {
+
     temp_point = amitk_space_b2s(space, view_center);
+
+    /* compensate for field of view */
+    width = point_sub(temp_corner[1], temp_corner[0]);
+    max_width = (fov/100.0)*POINT_MAX(width);
+    old_corner[0] = amitk_space_b2s(space, AMITK_SPACE_OFFSET(volume));
+    old_corner[1] = amitk_space_b2s(space, AMITK_VOLUME_CORNER(volume));
+
+    if (width.x > max_width) { /* bigger than FOV */
+      if ((temp_point.x-max_width/2.0) < temp_corner[0].x)
+	temp_corner[1].x = temp_corner[0].x+max_width;
+      else if ((temp_point.x+max_width/2.0) > temp_corner[1].x)
+	temp_corner[0].x = temp_corner[1].x-max_width;
+      else {
+	temp_corner[0].x = temp_point.x - max_width/2.0;
+	temp_corner[1].x = temp_point.x + max_width/2.0;
+      }
+    }
+
+    if (width.y > max_width) { 
+      if ((temp_point.y-max_width/2.0) < temp_corner[0].y)
+	temp_corner[1].y = temp_corner[0].y+max_width;
+      else if ((temp_point.y+max_width/2.0) > temp_corner[1].y)
+	temp_corner[0].y = temp_corner[1].y-max_width;
+      else {
+	temp_corner[0].y = temp_point.y - max_width/2.0;
+	temp_corner[1].y = temp_point.y + max_width/2.0;
+      }
+    }
+
     temp_corner[0].z = temp_point.z - thickness/2.0;
     temp_corner[1].z = temp_point.z + thickness/2.0;
     

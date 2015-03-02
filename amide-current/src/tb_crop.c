@@ -113,6 +113,7 @@ static void frame_spinner_cb(GtkSpinButton * button, gpointer data);
 static void gate_spinner_cb(GtkSpinButton * button, gpointer data);
 static void spinner_cb(GtkSpinButton * button, gpointer data);
 static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer data);
+static void projection_color_table_changed_cb(AmitkDataSet * projection, AmitkViewMode view_mode, gpointer data);
 static void change_format_cb(GtkWidget * widget, gpointer data);
 static void change_scaling_type_cb(GtkWidget * widget, gpointer data);
 
@@ -491,7 +492,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     add_canvas_update(tb_crop, view);
     update_crop_lines(tb_crop, view);
 
-    amitk_data_set_set_color_table(tb_crop->projections[view], tb_crop->color_table);
+    amitk_data_set_set_color_table(tb_crop->projections[view], AMITK_VIEW_MODE_SINGLE, tb_crop->color_table);
     amitk_data_set_set_threshold_min(tb_crop->projections[view], 0, tb_crop->threshold_min);
     amitk_data_set_set_threshold_max(tb_crop->projections[view], 0, tb_crop->threshold_max);
 
@@ -663,12 +664,28 @@ static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer
 
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(projection), "which_view"));
 
-  tb_crop->color_table = AMITK_DATA_SET_COLOR_TABLE(projection);
   tb_crop->threshold_max = AMITK_DATA_SET_THRESHOLD_MAX(projection, 0);
   tb_crop->threshold_min = AMITK_DATA_SET_THRESHOLD_MIN(projection, 0);
 
   add_canvas_update(tb_crop, view);
   update_crop_lines(tb_crop, view);
+
+  return;
+}
+
+static void projection_color_table_changed_cb(AmitkDataSet * projection, AmitkViewMode view_mode, gpointer data) {
+
+  tb_crop_t * tb_crop = data;
+  AmitkView view;
+
+  if (view_mode == AMITK_VIEW_MODE_SINGLE) {
+    view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(projection), "which_view"));
+
+    tb_crop->color_table = AMITK_DATA_SET_COLOR_TABLE(projection, AMITK_VIEW_MODE_SINGLE);
+    
+    add_canvas_update(tb_crop, view);
+    update_crop_lines(tb_crop, view);
+  }
 
   return;
 }
@@ -709,7 +726,7 @@ static void update_crop_lines(tb_crop_t * tb_crop, AmitkView view) {
 
   points = gnome_canvas_points_new(2);
   outline_color = 
-    amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(tb_crop->projections[view]), FALSE);
+    amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(tb_crop->projections[view], AMITK_VIEW_MODE_SINGLE), FALSE);
 
   switch(view) {
   case AMITK_VIEW_CORONAL:
@@ -822,11 +839,11 @@ static gboolean update_canvas_while_idle(gpointer data) {
       if (tb_crop->projections[i_view] != NULL) {
 	if (!tb_crop->threshold_info_set) {
 	  tb_crop->threshold_info_set = TRUE;
-	  tb_crop->color_table = AMITK_DATA_SET_COLOR_TABLE(tb_crop->projections[i_view]);
+	  tb_crop->color_table = AMITK_DATA_SET_COLOR_TABLE(tb_crop->projections[i_view], AMITK_VIEW_MODE_SINGLE);
 	  tb_crop->threshold_max = AMITK_DATA_SET_THRESHOLD_MAX(tb_crop->projections[i_view], 0);
 	  tb_crop->threshold_min = AMITK_DATA_SET_THRESHOLD_MIN(tb_crop->projections[i_view], 0);
 	} else {
-	  amitk_data_set_set_color_table(tb_crop->projections[i_view], tb_crop->color_table);
+	  amitk_data_set_set_color_table(tb_crop->projections[i_view], AMITK_VIEW_MODE_SINGLE, tb_crop->color_table );
 	  amitk_data_set_set_threshold_max(tb_crop->projections[i_view], 0, tb_crop->threshold_max);
 	  amitk_data_set_set_threshold_min(tb_crop->projections[i_view], 0, tb_crop->threshold_min);
 	}
@@ -834,7 +851,7 @@ static gboolean update_canvas_while_idle(gpointer data) {
 	g_signal_connect(G_OBJECT(tb_crop->projections[i_view]), "thresholds_changed",
 			 G_CALLBACK(projection_thresholds_changed_cb), tb_crop);
 	g_signal_connect(G_OBJECT(tb_crop->projections[i_view]), "color_table_changed",
-			 G_CALLBACK(projection_thresholds_changed_cb), tb_crop);
+			 G_CALLBACK(projection_color_table_changed_cb), tb_crop);
 	//	if (tb_crop->threshold[i_view] != NULL)
 	//	  amitk_threshold_new_data_set(AMITK_THRESHOLD(tb_crop->threshold[i_view]), 
 	//				       tb_crop->projections[i_view]);

@@ -41,6 +41,7 @@
 GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas, 
 					   AmitkVolume * canvas_volume,
 					   AmitkObject * object,
+					   AmitkViewMode view_mode,
 					   GnomeCanvasItem * item,
 					   amide_real_t pixel_dim,
 					   gint width, gint height,
@@ -76,7 +77,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
     if (AMITK_IS_DATA_SET(AMITK_OBJECT_PARENT(object)))
       outline_color = 
-	amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(AMITK_OBJECT_PARENT(object)), TRUE);
+	amitk_color_table_outline_color(amitk_data_set_get_color_table_to_use(AMITK_DATA_SET(AMITK_OBJECT_PARENT(object)), view_mode), TRUE);
     else
       outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
     fill_color_rgba = amitk_color_table_rgba_to_uint32(outline_color);

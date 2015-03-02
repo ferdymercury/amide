@@ -23,12 +23,18 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
+	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
-	-I/usr/local/xmedcon/include
+	$(XMEDCON_CFLAGS)
+##	-I/usr/local/xmedcon/include
 ##	-DGNOME_DISABLE_DEPRECATED \
 ##	-DGTK_DISABLE_DEPRECATED \
 
+## make sure that c++ gets the same includes
+AM_CXXFLAGS = $(AM_CFLAGS)
 
+
+# -- the below doesn't seem to be a problem as of 2005.11.19
 # following are "toxic", as they drag in Gtk1 stuff
 #	$(XMEDCON_CFLAGS) 
 # added -I/usr/local/include and -I/usr/local/xmedcon/include 
@@ -43,7 +49,8 @@ amide_LDADD = \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
 	$(AMIDE_LDADD_WIN32) \
-	$(XMEDCON_LIBS) 
+	$(XMEDCON_LIBS) \
+	$(AMIDE_LIBDCMDATA_LIBS) 
 
 ## note, for some reason, if XMEDCON_LIBS is before AMIDE_GNOME_LIBS,
 ## an executable is made that dumps core on startup....
@@ -55,8 +62,8 @@ amide_LDADD = \
 amide_LDFLAGS = \
 	$(AMIDE_LDFLAGS_WIN32)
 
-
-
+## note - c++ files have to go first, or else (for whatever reasons) automake/make just
+## uses gcc for everything and never calls g++
 amide_SOURCES = \
 	$(MARSHAL_SOURCES) \
 	$(TYPE_BUILTINS_SOURCES) \
@@ -100,6 +107,8 @@ amide_SOURCES = \
 	amitk_tree_view.c \
 	amitk_volume.c \
 	amitk_window_edit.c \
+	dcmtk_interface.cc \
+	dcmtk_interface.h \
 	fads.c \
 	fads.h \
 	image.c \
@@ -247,7 +256,31 @@ AMITK_DATA_SET_VARIABLE_C = \
 	amitk_data_set_FLOAT_2D_SCALING.c \
 	amitk_data_set_DOUBLE_0D_SCALING.c \
 	amitk_data_set_DOUBLE_1D_SCALING.c \
-	amitk_data_set_DOUBLE_2D_SCALING.c 
+	amitk_data_set_DOUBLE_2D_SCALING.c \
+	amitk_data_set_UBYTE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_UBYTE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_UBYTE_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SBYTE_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_USHORT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SSHORT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_UINT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_SINT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_FLOAT_2D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_0D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_1D_SCALING_INTERCEPT.c \
+	amitk_data_set_DOUBLE_2D_SCALING_INTERCEPT.c 
 
 AMITK_DATA_SET_VARIABLE_H = \
 	amitk_data_set_UBYTE_0D_SCALING.h \
@@ -370,9 +403,7 @@ STAMP_FILES = \
 	stamp-amitk_type_builtins.h \
 	stamp-amitk_type_builtins.c
 
-
 ## fancy rebuild rules stolen from the Makefile.am from gtk-2.0
-
 $(srcdir)/amitk_type_builtins.h: stamp-amitk_type_builtins.h $(AMITK_DATA_SET_VARIABLE_H) $(AMITK_RAW_DATA_VARIABLE_H)
 	@true
 stamp-amitk_type_builtins.h: $(AMITK_H_SOURCES) Makefile

@@ -58,7 +58,7 @@ void fads_svd_factors(AmitkDataSet * data_set,
 void fads_pca(AmitkDataSet * data_set, 
 	      gint num_factors,
 	      gchar * output_filename,
-	      gboolean (*update_func)(),
+	      AmitkUpdateFunc update_func,
 	      gpointer update_data);
 void fads_pls(AmitkDataSet * data_set, 
 	      gint num_factors, 
@@ -70,7 +70,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      gint num_blood_curve_constraints,
 	      gint * blood_curve_constraint_frame,
 	      gdouble * blood_curve_constraint_val,
-	      gboolean (*update_func)(), 
+	      AmitkUpdateFunc update_func,
 	      gpointer update_data);
 void fads_two_comp(AmitkDataSet * data_set, 
 		   fads_minimizer_algorithm_t minimizer_algorithm,
@@ -83,7 +83,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 		   gint num_blood_curve_constraints,
 		   gint * blood_curve_constraint_frame,
 		   gdouble * blood_curve_constraint_val,
-		   gboolean (*update_func)(), 
+		   AmitkUpdateFunc update_func,
 		   gpointer update_data);
 
 #endif /* __FADS_H__ */

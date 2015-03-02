@@ -60,7 +60,8 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_NUM_FRAMES(ds)              (AMITK_DATA_SET_DIM_T(ds))
 #define AMITK_DATA_SET_TOTAL_PLANES(ds)            (AMITK_DATA_SET_DIM_Z(ds)*AMITK_DATA_SET_DIM_G(ds)*AMITK_DATA_SET_DIM_T(ds))
 #define AMITK_DATA_SET_DISTRIBUTION(ds)            (AMITK_DATA_SET(ds)->distribution)
-#define AMITK_DATA_SET_COLOR_TABLE(ds)             (AMITK_DATA_SET(ds)->color_table)
+#define AMITK_DATA_SET_COLOR_TABLE(ds, view_mode)  (AMITK_DATA_SET(ds)->color_table[view_mode])
+#define AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT(ds, view_mode) (AMITK_DATA_SET(ds)->color_table_independent[view_mode])
 #define AMITK_DATA_SET_INTERPOLATION(ds)           (AMITK_DATA_SET(ds)->interpolation)
 #define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET_NUM_FRAMES(ds) > 1)
 #define AMITK_DATA_SET_GATED(ds)                   (AMITK_DATA_SET_NUM_GATES(ds) > 1)
@@ -76,6 +77,7 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
 #define AMITK_DATA_SET_SCALING_TYPE(ds)            (AMITK_DATA_SET(ds)->scaling_type)
+#define AMITK_DATA_SET_SCALING_HAS_INTERCEPT(ds)   ((AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_0D_WITH_INTERCEPT) || (AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_1D_WITH_INTERCEPT) || (AMITK_DATA_SET(ds)->scaling_type == AMITK_SCALING_TYPE_2D_WITH_INTERCEPT)) 
 #define AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)     (AMITK_DATA_SET(ds)->subject_orientation)
 
 #define AMITK_DATA_SET_CONVERSION(ds)              (AMITK_DATA_SET(ds)->conversion)
@@ -107,10 +109,16 @@ typedef enum {
   AMITK_THRESHOLDING_NUM
 } AmitkThresholding;
 
+/* 2D is per plane scaling */
+/* 1D is per frame/gate scaling */
+/* 0D is global scaling */
 typedef enum {
   AMITK_SCALING_TYPE_0D,
   AMITK_SCALING_TYPE_1D,
   AMITK_SCALING_TYPE_2D,
+  AMITK_SCALING_TYPE_0D_WITH_INTERCEPT,
+  AMITK_SCALING_TYPE_1D_WITH_INTERCEPT,
+  AMITK_SCALING_TYPE_2D_WITH_INTERCEPT,
   AMITK_SCALING_TYPE_NUM
 } AmitkScalingType;
 
@@ -167,6 +175,9 @@ typedef enum {
 typedef enum { /*< skip >*/
   AMITK_IMPORT_METHOD_GUESS, 
   AMITK_IMPORT_METHOD_RAW, 
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  AMITK_IMPORT_METHOD_DCMTK,
+#endif
 #ifdef AMIDE_LIBECAT_SUPPORT
   AMITK_IMPORT_METHOD_LIBECAT,
 #endif
@@ -202,10 +213,12 @@ struct _AmitkDataSet
   AmitkPoint voxel_size;  /* in mm */
   AmitkRawData * raw_data;
   AmitkScalingType scaling_type; /*  dimensions of internal scaling */
-  AmitkRawData * internal_scaling; /* internally (data set) supplied scaling factor */
+  AmitkRawData * internal_scaling_factor; /* internally (data set) supplied scaling factor */
+  AmitkRawData * internal_scaling_intercept; /* internally (data set) supplied scaling intercept */
   amide_time_t scan_start;
   amide_time_t * frame_duration; /* array of the duration of each frame */
-  AmitkColorTable color_table; /* the color table to draw this volume in */
+  AmitkColorTable color_table[AMITK_VIEW_MODE_NUM]; /* the color table to draw this volume in */
+  gboolean color_table_independent[AMITK_VIEW_MODE_NUM]; /* whether to use the independent color tables for 2-way or 3-way linked modes*/
   AmitkInterpolation interpolation;
   AmitkSubjectOrientation subject_orientation; /* orientation of subject in scanner */
 
@@ -238,7 +251,7 @@ struct _AmitkDataSet
   amide_data_t global_min;
   amide_data_t * frame_max; 
   amide_data_t * frame_min;
-  AmitkRawData * current_scaling; /* external_scaling * internal_scaling[] */
+  AmitkRawData * current_scaling_factor; /* external_scaling * internal_scaling_factor[] */
   amide_intpoint_t num_view_gates;
 
   GList * slice_cache;
@@ -258,7 +271,8 @@ struct _AmitkDataSetClass
   void (* threshold_style_changed)      (AmitkDataSet * ds);
   void (* thresholds_changed)           (AmitkDataSet * ds);
   void (* windows_changed)              (AmitkDataSet * ds);
-  void (* color_table_changed)          (AmitkDataSet * ds);
+  void (* color_table_changed)          (AmitkDataSet * ds,
+					 AmitkViewMode * view_mode);
   void (* interpolation_changed)        (AmitkDataSet * ds);
   void (* subject_orientation_changed)  (AmitkDataSet * ds);
   void (* conversion_changed)           (AmitkDataSet * ds);
@@ -291,26 +305,26 @@ AmitkDataSet * amitk_data_set_import_raw_file    (const gchar * file_name,
 						  const gchar * data_set_name,
 						  const AmitkPoint voxel_size,
 						  const amide_data_t scale_factor,
-						  gboolean (*update_func)(), 
+						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
-AmitkDataSet * amitk_data_set_import_file        (AmitkImportMethod method, 
+GList *        amitk_data_set_import_file        (AmitkImportMethod method, 
 						  int submethod,
 						  const gchar * filename,
 						  AmitkPreferences * preferences,
-						  gboolean (*update_func)(),
+						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 void           amitk_data_set_export_to_file     (AmitkDataSet * ds,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
 						  const gboolean resliced,
-						  gboolean (*update_func)(),
+						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 void           amitk_data_sets_export_to_file    (GList * data_sets,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
-						  gboolean (*update_func)(),
+						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 amide_data_t   amitk_data_set_get_global_max     (AmitkDataSet * ds);
 amide_data_t   amitk_data_set_get_global_min     (AmitkDataSet * ds);
@@ -318,6 +332,8 @@ amide_data_t   amitk_data_set_get_frame_max      (AmitkDataSet * ds,
 						  const guint frame);
 amide_data_t   amitk_data_set_get_frame_min      (AmitkDataSet * ds,
 						  const guint frame);
+AmitkColorTable amitk_data_set_get_color_table_to_use(AmitkDataSet * ds, 
+						      const AmitkViewMode view_mode);
 void           amitk_data_set_set_modality       (AmitkDataSet * ds,
 						  const AmitkModality modality);
 void           amitk_data_set_set_scan_start     (AmitkDataSet * ds,
@@ -341,7 +357,11 @@ void           amitk_data_set_set_threshold_ref_frame  (AmitkDataSet * ds,
 							guint which_reference,
 							guint frame);
 void           amitk_data_set_set_color_table    (AmitkDataSet * ds, 
+						  const AmitkViewMode view_mode,
 						  const AmitkColorTable new_color_table);
+void           amitk_data_set_set_color_table_independent(AmitkDataSet * ds,
+							  const AmitkViewMode view_mode,
+							  const gboolean independent);
 void           amitk_data_set_set_interpolation  (AmitkDataSet * ds,
 						  const AmitkInterpolation new_interpolation);
 void           amitk_data_set_set_subject_orientation    (AmitkDataSet * ds,
@@ -396,7 +416,7 @@ void           amitk_data_set_calc_far_corner    (AmitkDataSet * ds);
    is if you know it'll be needed later, and you'd like to put up a progress 
    dialog. */
 void           amitk_data_set_calc_max_min       (AmitkDataSet * ds,
-						  gboolean (*update_func)(),
+						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 amide_data_t   amitk_data_set_get_max            (AmitkDataSet * ds, 
 						  const amide_time_t start, 
@@ -410,14 +430,16 @@ void           amitk_data_set_get_thresholding_max_min(AmitkDataSet * ds,
 						       const amide_time_t duration,
 						       amide_data_t * max, amide_data_t * min);
 void           amitk_data_set_calc_distribution   (AmitkDataSet * ds, 
-						   gboolean (*update_func)(), 
+						   AmitkUpdateFunc update_func,
 						   gpointer update_data);
 amide_data_t   amitk_data_set_get_internal_value  (const AmitkDataSet * ds, 
 						   const AmitkVoxel i);
 amide_data_t   amitk_data_set_get_value           (const AmitkDataSet * ds, 
 						   const AmitkVoxel i);
-amide_data_t   amitk_data_set_get_internal_scaling(const AmitkDataSet * ds, 
-						   const AmitkVoxel i);
+amide_data_t   amitk_data_set_get_internal_scaling_factor(const AmitkDataSet * ds, 
+							  const AmitkVoxel i);
+amide_data_t   amitk_data_set_get_internal_scaling_intercept(const AmitkDataSet * ds, 
+							     const AmitkVoxel i);
 void           amitk_data_set_set_value           (AmitkDataSet *ds,
 						   const AmitkVoxel i,
 						   const amide_data_t value,
@@ -430,20 +452,20 @@ void           amitk_data_set_get_projections     (AmitkDataSet * ds,
 						   const guint frame,
 						   const guint gate,
 						   AmitkDataSet ** projections,
-						   gboolean (*update_func)(),
+						   AmitkUpdateFunc update_func,
 						   gpointer update_data);
 AmitkDataSet * amitk_data_set_get_cropped         (const AmitkDataSet * ds,
 						   const AmitkVoxel start,
 						   const AmitkVoxel end,
 						   const AmitkFormat format,
 						   const AmitkScalingType scaling_type,
-						   gboolean (*update_func)(),
+						   AmitkUpdateFunc update_func,
 						   gpointer update_data);
 AmitkDataSet * amitk_data_set_get_filtered        (const AmitkDataSet * ds,
 						   const AmitkFilter filter_type,
 						   const gint kernel_size,
 						   const amide_real_t fwhm,
-						    gboolean (*update_func)(),
+						   AmitkUpdateFunc update_func,
 						   gpointer update_data);
 AmitkDataSet * amitk_data_set_get_slice           (AmitkDataSet * ds,
 						   const amide_time_t start,

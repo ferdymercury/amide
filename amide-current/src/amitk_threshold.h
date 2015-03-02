@@ -32,6 +32,7 @@
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_data_set.h"
+#include "amitk_study.h"
 
 G_BEGIN_DECLS
 
@@ -88,6 +89,7 @@ struct _AmitkThreshold
   GtkVBox vbox;
 
   gboolean minimal; /* true if we just want the color table menu and the color scale */
+  AmitkViewMode view_mode;
   GtkWidget * color_scales[2];
   GtkWidget * histogram;
   GtkWidget * histogram_label;
@@ -96,7 +98,10 @@ struct _AmitkThreshold
   GnomeCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
   GnomeCanvasItem * connector_line[2][AMITK_THRESHOLD_LINE_NUM_LINES];
   GtkWidget * spin_button[2][AMITK_THRESHOLD_ENTRY_NUM_ENTRIES];
-  GtkWidget * color_table_menu;
+  GtkWidget * color_table_label[AMITK_VIEW_MODE_NUM];
+  GtkWidget * color_table_hbox[AMITK_VIEW_MODE_NUM];
+  GtkWidget * color_table_menu[AMITK_VIEW_MODE_NUM];
+  GtkWidget * color_table_independent[AMITK_VIEW_MODE_NUM];
   GtkWidget * threshold_ref_frame_menu[2];
   GtkWidget * percent_label[2];
   GtkWidget * absolute_label[2];

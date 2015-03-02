@@ -94,6 +94,9 @@ struct _AmitkObjectDialog
   GtkWidget * fill_roi_button;
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
+  GtkWidget * panel_layout_button1;
+  GtkWidget * panel_layout_button2;
+  GtkWidget * panel_layout_button3;
   GtkWidget * maintain_size_button;
   GtkWidget * target_size_spin;
 

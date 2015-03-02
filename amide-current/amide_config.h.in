@@ -3,6 +3,9 @@
 /* Define to compile AMIDE with debugging information */
 #undef AMIDE_DEBUG
 
+/* Define to compile with DCMTK */
+#undef AMIDE_LIBDCMDATA_SUPPORT
+
 /* Define to compile with libecat */
 #undef AMIDE_LIBECAT_SUPPORT
 

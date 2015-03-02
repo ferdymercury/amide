@@ -370,7 +370,7 @@ static void perform_pca(AmitkDataSet * data_set,
 void fads_pca(AmitkDataSet * data_set, 
 	      gint num_factors,
 	      gchar * output_filename,
-	      gboolean (*update_func)(),
+	      AmitkUpdateFunc update_func,
 	      gpointer update_data) {
 
   gsl_matrix * u=NULL;
@@ -383,6 +383,7 @@ void fads_pca(AmitkDataSet * data_set,
   gchar * temp_string;
   FILE * file_pointer=NULL;
   amide_time_t frame_midpoint, frame_duration;
+  AmitkViewMode i_view_mode;
 
   dim = AMITK_DATA_SET_DIM(data_set);
   num_frames = dim.t;
@@ -399,7 +400,8 @@ void fads_pca(AmitkDataSet * data_set,
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
-    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
+    for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+      amitk_data_set_set_color_table(new_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(data_set, i_view_mode));
 
     i=0;
     i_voxel.t = 0;
@@ -870,7 +872,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      gint num_blood_curve_constraints,
 	      gint * blood_curve_constraint_frame,
 	      gdouble * blood_curve_constraint_val,
-	      gboolean (*update_func)(), 
+	      AmitkUpdateFunc update_func,
 	      gpointer update_data) {
 
   gsl_multimin_fdfminimizer * multimin_minimizer = NULL;
@@ -898,6 +900,7 @@ void fads_pls(AmitkDataSet * data_set,
   gsl_vector * s;
   gsl_matrix * u;
   gsl_matrix * v;
+  AmitkViewMode i_view_mode;
   
 
   g_return_if_fail(AMITK_IS_DATA_SET(data_set));
@@ -1206,7 +1209,8 @@ void fads_pls(AmitkDataSet * data_set,
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
-    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
+    for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+      amitk_data_set_set_color_table(new_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(data_set, i_view_mode));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
     for (i_voxel.g=0; i_voxel.g<p.dim.g; i_voxel.g++) 
@@ -1815,7 +1819,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 		   gint num_blood_curve_constraints,
 		   gint * blood_curve_constraint_frame,
 		   gdouble * blood_curve_constraint_val,
-		   gboolean (*update_func)(), 
+		   AmitkUpdateFunc update_func,
 		   gpointer update_data) {
 
   gsl_multimin_fdfminimizer * multimin_minimizer = NULL;
@@ -1838,6 +1842,7 @@ void fads_two_comp(AmitkDataSet * data_set,
   AmitkVoxel i_voxel;
   gdouble magnitude, k12, k21;
   gdouble init_value, alpha;
+  AmitkViewMode i_view_mode;
 
   g_return_if_fail(AMITK_IS_DATA_SET(data_set));
   dim = AMITK_DATA_SET_DIM(data_set);
@@ -2175,7 +2180,9 @@ void fads_two_comp(AmitkDataSet * data_set,
       g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
-    amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
+
+    for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
+      amitk_data_set_set_color_table(new_ds, i_view_mode, AMITK_DATA_SET_COLOR_TABLE(data_set, i_view_mode));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
     for (i_voxel.g=0; i_voxel.g<p.dim.g; i_voxel.g++) 

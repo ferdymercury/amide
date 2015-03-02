@@ -27,7 +27,9 @@
 #define __AMITK_FILTER_H__
 
 #include <glib-object.h>
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
+#endif
 #include <math.h>
 #include "amide.h"
 #include "amitk_raw_data.h"

@@ -98,6 +98,6 @@ void                amitk_line_profile_set_start_point(AmitkLineProfile * line_p
 void                amitk_line_profile_set_end_point  (AmitkLineProfile * line_profile,
 						       const AmitkPoint end_point);
 
-
+G_END_DECLS
 #endif /* __AMITK_LINE_PROFILE_H__ */
 

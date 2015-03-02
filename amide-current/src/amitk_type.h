@@ -55,6 +55,8 @@ typedef gint16 amide_intpoint_t;
 #define SIZE_OF_AMIDE_INTPOINT_T 2;
 
 
+typedef gboolean (*AmitkUpdateFunc)      (gpointer, char *, gdouble);
+
 
 G_END_DECLS
 

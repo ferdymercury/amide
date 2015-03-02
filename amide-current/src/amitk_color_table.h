@@ -29,6 +29,8 @@
 /* header files that are always associated with this header file */
 #include "amitk_type.h"
 
+G_BEGIN_DECLS
+
 /* typedef's */
 typedef enum {
   AMITK_COLOR_TABLE_BW_LINEAR, 
@@ -99,5 +101,6 @@ const gchar * amitk_color_table_get_name(const AmitkColorTable which);
 /* external variables */
 extern gchar * color_table_menu_names[];
 
+G_END_DECLS
 
 #endif /* __COLOR_TABLE_H__ */

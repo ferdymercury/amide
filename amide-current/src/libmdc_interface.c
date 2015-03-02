@@ -57,7 +57,7 @@ gchar * libmdc_import_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("ECAT _7 via (X)MedCon"),
   N_("_InterFile 3.3"),
   N_("_Analyze (SPM)"),
-  N_("_DICOM 3.0"),
+  N_("_DICOM 3.0 via (X)MedCon"),
 };
   
 gchar * libmdc_import_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
@@ -69,7 +69,7 @@ gchar * libmdc_import_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
   N_("Import a CTI/ECAT 7 file through (X)MedCon"),
   N_("Import a InterFile 3.3 file"),
   N_("Import an Analyze file"),
-  N_("Import a DICOM 3.0 file")
+  N_("Import a DICOM 3.0 file through (X)MedCon")
 };
 
 libmdc_format_t libmdc_export_to_format[LIBMDC_NUM_EXPORT_METHODS] = {
@@ -212,7 +212,7 @@ static gint libmdc_type_number(AmitkFormat format) {
 AmitkDataSet * libmdc_import(const gchar * filename, 
 			     libmdc_format_t libmdc_format,
 			     AmitkPreferences * preferences,
-			     gboolean (*update_func)(),
+			     AmitkUpdateFunc update_func,
 			     gpointer update_data) {
 
   FILEINFO libmdc_fi;
@@ -392,7 +392,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     break;
   }
 
-  ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D);
+  ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D_WITH_INTERCEPT);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate space for the data set structure to hold (X)MedCon data"));
     goto error;
@@ -525,10 +525,6 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
 
-  /* complain if xmedcon is using an affine transformation, this only checks the first image.... */
-  if (!EQUAL_ZERO(libmdc_fi.image[0].rescale_intercept))
-    g_warning(_("(X)MedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off"));
-
   if (update_func != NULL) {
     temp_string = g_strdup_printf(_("Importing File Through (X)MedCon:\n   %s"), filename);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
@@ -577,11 +573,15 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
 	/* store the scaling factor... I think this is the right scaling factor... */
 	if (salvage)
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 1.0;
-	else
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = 1.0;
+	else {
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = 
 	    libmdc_fi.image[image_num].quant_scale*
 	    libmdc_fi.image[image_num].calibr_fctr;
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept,i) =
+	    libmdc_fi.image[image_num].intercept;
+	}
+	
 
 	switch(ds->raw_data->format) {
 	case AMITK_FORMAT_SBYTE:
@@ -772,7 +772,7 @@ void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
 		   gboolean resliced,
-		   gboolean (*update_func)(),
+		   AmitkUpdateFunc update_func,
 		   gpointer update_data) {
 
 
@@ -804,6 +804,7 @@ void libmdc_export(AmitkDataSet * ds,
   gfloat * row_data;
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
+  amide_data_t value;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -814,7 +815,7 @@ void libmdc_export(AmitkDataSet * ds,
   /* setup some defaults */
   MDC_INFO=MDC_NO;       /* don't print stuff */
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
-  MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
+  MDC_ANLZ_SPM=MDC_YES; /* if analyze format, try using SPM style */
   fi.map = MDC_MAP_GRAY; /*default color map*/
   MDC_MAKE_GRAY=MDC_YES;
   MDC_QUANTIFY=MDC_YES; /* want quantified data */
@@ -974,12 +975,16 @@ void libmdc_export(AmitkDataSet * ds,
 	plane->pixel_xsize = fi.pixdim[1];
 	plane->pixel_ysize = fi.pixdim[2];
 	plane->slice_width = fi.pixdim[3];
-	if (resliced)
+	if (resliced) {
 	  plane->quant_scale = 1.0;
-	else
+	  plane->intercept = 0.0;
+	} else {
 	  plane->quant_scale = 
 	    AMITK_DATA_SET_SCALE_FACTOR(ds)*
-	    amitk_data_set_get_internal_scaling(ds, i);
+	    amitk_data_set_get_internal_scaling_factor(ds, i);
+	  plane->intercept = 
+	    amitk_data_set_get_internal_scaling_intercept(ds,i);
+	}
 	plane->calibr_fctr = 1.0;
 	
 	if ((plane->buf = MdcGetImgBuffer(bytes_per_plane)) == NULL) {
@@ -1008,8 +1013,14 @@ void libmdc_export(AmitkDataSet * ds,
 	for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {
 	  if (resliced) {
 	    row_data = (gfloat *) (plane->buf+bytes_per_row*(dim.y-i.y-1));
-	    for (j.x = 0; j.x < dim.x; j.x++) 
-	      row_data[j.x] = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j);
+	    for (j.x = 0; j.x < dim.x; j.x++) {
+	      /* clean - libmdc handles infinities, etc. badly */
+	      value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j);
+	      if (finite(value))
+		row_data[j.x] = value;
+	      else
+		row_data[j.x] = 0.0;
+	    }
 	  } else {
 	    memcpy(plane->buf+bytes_per_row*(dim.y-i.y-1), data_ptr, bytes_per_row);
 	    data_ptr += bytes_per_row;

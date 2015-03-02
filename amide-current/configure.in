@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.14],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.15],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -12,6 +12,7 @@ AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 AM_MAINTAINER_MODE
 
 AC_PROG_CC
+AC_PROG_CXX
 AM_PROG_LIBTOOL
 AC_FUNC_MKDIR
 
@@ -139,9 +140,14 @@ AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
 dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
-AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
+AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
 AM_PATH_XMEDCON(0.9.8, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
+
+dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
+AC_LANG_CPLUSPLUS
+AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
+AC_CHECK_LIB(dcmdata, main, FOUND_DCMDATA=yes, FOUND_DCMDATA=no, -lofstd  -lz -L/usr/local/dicom/lib $THREAD_LIBS)
 
 
 dnl add the -no-cpp-precomp for macintosh os x
@@ -169,6 +175,19 @@ if test $enable_amide_debug = yes; then
 else
 	echo "Compiling without AMIDE debugging messages"
 fi
+
+dnl Enable stripped down version for Windows
+AC_ARG_ENABLE(
+	mswin-hacks,
+	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
+	mswin_hacks="$enableval", 
+	mswin_hacks=no)
+
+if (test $mswin_hacks = yes); then
+	echo "Enabling hacks to support MS Windows compilation"
+	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
+fi
+AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
 
 
 dnl let people compile without the GNU Scientific Library
@@ -218,8 +237,9 @@ if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to compile with (X)MedCon)
 
 	dnl redefine the xmedcon libs line, as otherwise we'll get errors from linking to glib1
-	XMEDCON_LIBS="-L/usr/local/lib -lmdc"
-	AC_SUBST(XMEDCON_LIBS)
+	dnl 2005.11.19 - doesn't seem to be a problem anymore
+	dnl XMEDCON_LIBS="-L/usr/local/lib -lmdc"
+	dnl AC_SUBST(XMEDCON_LIBS)
 else
 	echo "Compiling without xmedcon/libmdc file support"
 fi
@@ -256,18 +276,24 @@ else
 	echo "Compiling without libfame mpeg encoding support"
 fi
 
-dnl Enable stripped down version for Windows
+dnl Let people compile without the DCMTK library
 AC_ARG_ENABLE(
-	mswin-hacks,
-	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
-	mswin_hacks="$enableval", 
-	mswin_hacks=no)
+	libdcmdata,
+	[  --enable-dcmtk	Compile with DCMTK support for DICOM files [default=yes]], 
+	enable_libdcmdata="$enableval", 
+	enable_libdcmdata=yes)
 
-if (test $mswin_hacks = yes); then
-	echo "Enabling hacks to support MS Windows compilation"
-	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
+if (test $enable_libdcmdata = yes) && (test $FOUND_DCMDATA = yes); then
+	echo "Compiling with DCMTK support for DICOM files"
+	AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -ldcmdata -lofstd -lz $THREAD_LIBS"
+	AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include/dcmtk/dcmdata -I/usr/local/dicom/include/dcmtk/ofstd -I/usr/local/dicom/include -I/usr/include/dcmtk/dcmdata -I/usr/local/include/dcmtk/ofstd"
+	AC_SUBST(AMIDE_LIBDCMDATA_LIBS)
+	AC_SUBST(AMIDE_LIBDCMDATA_CFLAGS)
+	AC_DEFINE(AMIDE_LIBDCMDATA_SUPPORT, 1, Define to compile with DCMTK)
+else
+	echo "Compiling without DCMTK support for DICOM files"
 fi
-AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
+
 
 
 

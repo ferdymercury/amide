@@ -26,7 +26,9 @@
 #ifndef __AMITK_POINT_H__
 #define __AMITK_POINT_H__
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
+#endif
 #include <math.h>
 
 #include <glib-object.h>
@@ -322,9 +324,11 @@ void point_set_component(AmitkPoint * point,
 			 const amide_real_t value);
 
 extern const AmitkPoint zero_point;
+#define ONE_POINT {1.0,1.0,1.0}
 extern const AmitkPoint one_point;
 extern const AmitkPoint ten_point;
 extern const AmitkVoxel zero_voxel;
+#define ONE_VOXEL {1,1,1,1,1}
 extern const AmitkVoxel one_voxel;
 
 extern const AmitkAxes base_axes;

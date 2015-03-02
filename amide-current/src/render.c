@@ -132,7 +132,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 			     const gboolean zero_fill,
 			     const gboolean optimize_rendering,
 			     const gboolean no_gradient_opacity,
-			     gboolean (* update_func)(), 
+			     AmitkUpdateFunc update_func,
 			     gpointer update_data) {
 
   rendering_t * new_rendering = NULL;
@@ -159,7 +159,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->object = amitk_object_copy(object);
   new_rendering->name = g_strdup(AMITK_OBJECT_NAME(object));
   if (AMITK_IS_DATA_SET(object))
-    new_rendering->color_table = AMITK_DATA_SET_COLOR_TABLE(object);
+    new_rendering->color_table = AMITK_DATA_SET_COLOR_TABLE(object, AMITK_VIEW_MODE_SINGLE);
   else 
     new_rendering->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
   if (no_gradient_opacity)
@@ -335,7 +335,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 gboolean rendering_reload_object(rendering_t * rendering, 
 				 const amide_time_t new_start,
 				 const amide_time_t new_duration,
-				 gboolean (* update_func)(),
+				 AmitkUpdateFunc update_func,
 				 gpointer update_data) {
   
   amide_time_t old_start, old_duration;
@@ -385,7 +385,8 @@ gboolean rendering_reload_object(rendering_t * rendering,
 
 /* function to update the rendering structure's concept of the object */
 gboolean rendering_load_object(rendering_t * rendering, 
-			       gboolean (* update_func)(), gpointer update_data) {
+			       AmitkUpdateFunc update_func,
+			       gpointer update_data) {
 
   AmitkVoxel i_voxel, j_voxel;
   rendering_density_t * density; /* buffer for density data */
@@ -1027,7 +1028,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
 					      const gboolean zero_fill,
 					      const gboolean optimize_rendering,
 					      const gboolean no_gradient_opacity,
-					      gboolean (* update_func)(), 
+					      AmitkUpdateFunc update_func,
 					      gpointer update_data) {
 
   renderings_t * temp_renderings;
@@ -1064,18 +1065,62 @@ static renderings_t * renderings_init_recurse(GList * objects,
 renderings_t * renderings_init(GList * objects,const amide_time_t start, const amide_time_t duration,
 			       const gboolean zero_fill, const gboolean optimize_rendering, 
 			       const gboolean no_gradient_opacity,
-			       gboolean (* update_func)(), gpointer update_data) {
+			       const amide_real_t fov,
+			       const AmitkPoint view_center,
+			       AmitkUpdateFunc update_func,
+			       gpointer update_data) {
   
   AmitkCorners render_corner;
   amide_real_t voxel_size;
   AmitkVolume * render_volume;
   renderings_t * return_list;
+  AmitkPoint width;
+  amide_real_t max_width;
   
   if (objects == NULL) return NULL;
 
   /* figure out all encompasing corners for the slices based on our viewing axis */
   render_volume = amitk_volume_new(); /* base coordinate frame */
   amitk_volumes_get_enclosing_corners(objects, AMITK_SPACE(render_volume), render_corner);
+
+  /* compensate for field of view */
+  width = point_sub(render_corner[1], render_corner[0]);
+  max_width = (fov/100.0)*POINT_MAX(width);
+  if (width.x > max_width) {
+    if ((view_center.x-max_width/2.0) < render_corner[0].x)
+      render_corner[1].x = render_corner[0].x+max_width;
+    else if ((view_center.x+max_width/2.0) > render_corner[1].x)
+      render_corner[0].x = render_corner[1].x-max_width;
+    else {
+      render_corner[0].x = view_center.x - max_width/2.0;
+      render_corner[1].x = view_center.x + max_width/2.0;
+    }
+  }
+
+  if (width.y > max_width) {
+    if ((view_center.y-max_width/2.0) < render_corner[0].y)
+      render_corner[1].y = render_corner[0].y+max_width;
+    else if ((view_center.y+max_width/2.0) > render_corner[1].y)
+      render_corner[0].y = render_corner[1].y-max_width;
+    else {
+      render_corner[0].y = view_center.y - max_width/2.0;
+      render_corner[1].y = view_center.y + max_width/2.0;
+    }
+  }
+
+  if (width.z > max_width) {
+    if ((view_center.z-max_width/2.0) < render_corner[0].z)
+      render_corner[1].z = render_corner[0].z+max_width;
+    else if ((view_center.z+max_width/2.0) > render_corner[1].z)
+      render_corner[0].z = render_corner[1].z-max_width;
+    else {
+      render_corner[0].z = view_center.z - max_width/2.0;
+      render_corner[1].z = view_center.z + max_width/2.0;
+    }
+  }
+
+
+
   amitk_space_set_offset(AMITK_SPACE(render_volume), render_corner[0]);
   amitk_volume_set_corner(render_volume, amitk_space_b2s(AMITK_SPACE(render_volume), render_corner[1]));
 
@@ -1099,7 +1144,7 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start, const a
 gboolean renderings_reload_objects(renderings_t * renderings, 
 				   const amide_time_t start, 
 				   const amide_time_t duration,
-				   gboolean (* update_func)(), 
+				   AmitkUpdateFunc update_func,
 				   gpointer update_data) {
   
   gboolean correct=TRUE;

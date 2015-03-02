@@ -57,7 +57,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 				  gint16 eye_width);
 #endif
 GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
-				  gboolean (*update_func)(), 
+				  AmitkUpdateFunc update_func,
 				  gpointer update_data);
 GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const amide_intpoint_t width, 
@@ -68,7 +68,8 @@ GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const amide_data_t data_set_max,
 				  const gboolean horizontal);
 GdkPixbuf * image_from_projection(AmitkDataSet * projection);
-GdkPixbuf * image_from_slice(AmitkDataSet * slice);
+GdkPixbuf * image_from_slice(AmitkDataSet * slice,
+			     AmitkViewMode view_mode);
 GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 GList ** pslice_cache,
 				 const gint max_slice_cache_size,
@@ -79,7 +80,8 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const amide_intpoint_t gate,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
-				 const AmitkFuseType fuse_type);
+				 const AmitkFuseType fuse_type,
+				 const AmitkViewMode view_mode);
 GdkPixbuf * image_get_object_pixbuf(AmitkObject * object);
 
 #endif /*  __IMAGE_H__ */

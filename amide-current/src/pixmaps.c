@@ -136,3 +136,7 @@ const guint8 * roi_icons[AMITK_ROI_TYPE_NUM] = {
 
 #include "../pixmaps/linear_layout.xpm"
 #include "../pixmaps/orthogonal_layout.xpm"
+
+#include "../pixmaps/panels_mixed.h"
+#include "../pixmaps/panels_linear_x.h"
+#include "../pixmaps/panels_linear_y.h"

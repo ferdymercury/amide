@@ -62,9 +62,8 @@ struct _AmitkProgressDialogClass
   GtkDialogClass parent_class;
 };  
 
-
 GType      amitk_progress_dialog_get_type          (void);
-gboolean   amitk_progress_dialog_update            (AmitkProgressDialog * dialog, 
+gboolean   amitk_progress_dialog_update            (gpointer dialog, 
 						    char * message, 
 						    gdouble fraction);
 void       amitk_progress_dialog_set_text          (AmitkProgressDialog * dialog, 

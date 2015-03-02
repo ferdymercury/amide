@@ -143,6 +143,9 @@ static void preferences_init (AmitkPreferences * preferences) {
   temp_int = gnome_config_get_int_with_default("CANVAS/TargetEmptyArea", &default_value); 
   preferences->canvas_target_empty_area = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA : temp_int;
 
+  temp_int = gnome_config_get_int_with_default("CANVAS/PanelLayout", &default_value);
+  preferences->panel_layout = default_value ? AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT : temp_int;
+
   temp_int = gnome_config_get_int_with_default("MISC/WarningsToConsole", &default_value); 
   preferences->warnings_to_console = default_value ? AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE : temp_int;
 
@@ -184,6 +187,7 @@ static void preferences_init (AmitkPreferences * preferences) {
   preferences->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   preferences->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   preferences->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
+  preferences->panel_layout = AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT;
 
   /* debug preferences */
   preferences->warnings_to_console = AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE;
@@ -352,6 +356,25 @@ if (AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences) != target_empty_area
   return;
 }
 
+
+void amitk_preferences_set_panel_layout(AmitkPreferences * preferences, 
+					 AmitkPanelLayout panel_layout) {
+
+  g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
+
+  if (AMITK_PREFERENCES_PANEL_LAYOUT(preferences) != panel_layout) {
+    preferences->panel_layout = panel_layout;
+#ifndef AMIDE_WIN32_HACKS
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("CANVAS/PanelLayout", panel_layout);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+#endif
+    g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
+  }
+
+  return;
+}
 
 
 

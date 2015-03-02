@@ -68,6 +68,9 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** fill_roi_button,
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
+					 GtkWidget ** ppanel_layout_button1,
+					 GtkWidget ** ppanel_layout_button2,
+					 GtkWidget ** ppanel_layout_button3,
 					 GtkWidget ** pmaintain_size_button,
 					 GtkWidget ** ptarget_size_spin);
 GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout);

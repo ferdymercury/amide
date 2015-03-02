@@ -74,13 +74,13 @@ gboolean libmdc_supports(libmdc_format_t format);
 AmitkDataSet * libmdc_import(const gchar * filename, 
 			     libmdc_format_t libmdc_format,
 			     AmitkPreferences * preferences,
-			     gboolean (*update_func)(),
+			     AmitkUpdateFunc update_func,
 			     gpointer update_data);
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
 		   gboolean resliced,
-		   gboolean (*update_func)(),
+		   AmitkUpdateFunc update_func,
 		   gpointer update_data);
 
 extern libmdc_format_t libmdc_import_to_format[];

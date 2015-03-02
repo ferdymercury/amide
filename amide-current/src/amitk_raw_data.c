@@ -326,7 +326,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 					      AmitkRawFormat raw_format,
 					      AmitkVoxel dim,
 					      long file_offset,
-					      gboolean (*update_func)(),
+					      AmitkUpdateFunc update_func,
 					      gpointer update_data) {
 
   FILE * new_file_pointer=NULL;
@@ -893,7 +893,7 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 				       guint64 location,
 				       guint64 size,
 				       gchar ** perror_buf,
-				       gboolean (*update_func)(),
+				       AmitkUpdateFunc update_func,
 				       gpointer update_data) {
 
   xmlDocPtr doc;
@@ -951,14 +951,11 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
   } else {
     xml_get_location_and_size(nodes, "raw_data_location_and_size", &offset, &dummy, perror_buf);
 
-#ifndef AMIDE_WIN32_HACKS
     /* check for file size problems */
-    if (sizeof(long) < sizeof(guint64))
-      if ((offset>>32) > 0) {
-	amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
-	return NULL;
-      }
-#endif
+    if (!xml_check_file_32bit_okay(offset)) {
+      amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
+      return NULL;
+    }
     offset_long = offset;
   }
 

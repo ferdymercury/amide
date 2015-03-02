@@ -54,6 +54,7 @@ typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
+  GtkWidget * fov_spin;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
   GtkWidget * canvas_target_button;
   GtkWidget * canvas_visible_button[AMITK_VIEW_NUM];
@@ -74,6 +75,8 @@ typedef struct ui_study_t {
   GtkWidget * canvas_table[AMITK_VIEW_MODE_NUM];
   GtkWidget * canvas_handle[AMITK_VIEW_MODE_NUM];
   GtkWidget * canvas[AMITK_VIEW_MODE_NUM][AMITK_VIEW_NUM];
+  AmitkPanelLayout panel_layout;
+  AmitkLayout  canvas_layout;
 
   /* help canvas info */
   GnomeCanvas * help_info;
@@ -105,6 +108,7 @@ void ui_study_update_gate_button(ui_study_t * ui_study);
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
+void ui_study_update_fov(ui_study_t * ui_study);
 void ui_study_update_canvas_target(ui_study_t * ui_study);
 void ui_study_update_interpolation(ui_study_t * ui_study);
 void ui_study_update_fuse_type(ui_study_t * ui_study);

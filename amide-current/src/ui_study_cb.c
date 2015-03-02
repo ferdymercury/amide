@@ -212,6 +212,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   gchar * filename;
   AmitkImportMethod method;
   int submethod;
+  GList * import_data_sets;
   AmitkDataSet * import_ds;
 
 
@@ -237,17 +238,25 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
   /* now, what we need to do if we've successfully gotten an image filename */
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  if ((import_ds = amitk_data_set_import_file(method, submethod, filename,
-					      ui_study->preferences, amitk_progress_dialog_update, 
-					      ui_study->progress_dialog)) != NULL) {
-#ifdef AMIDE_DEBUG
-    g_print("imported data set name %s\n",AMITK_OBJECT_NAME(import_ds));
-#endif
+  if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename,
+						     ui_study->preferences, amitk_progress_dialog_update, 
+						     ui_study->progress_dialog)) != NULL) {
 
-    amitk_object_add_child(AMITK_OBJECT(ui_study->study), 
-			   AMITK_OBJECT(import_ds)); /* this adds a reference to the data set*/
-    amitk_object_unref(import_ds); /* so remove a reference */
+    while (import_data_sets != NULL) {
+      import_ds = import_data_sets->data;
+#ifdef AMIDE_DEBUG
+      g_print("imported data set name %s\n",AMITK_OBJECT_NAME(import_ds));
+#endif
+      
+      amitk_object_add_child(AMITK_OBJECT(ui_study->study), 
+			     AMITK_OBJECT(import_ds)); /* this adds a reference to the data set*/
+      import_data_sets = g_list_remove(import_data_sets, import_ds);
+      amitk_object_unref(import_ds); /* so remove a reference */
+    }
+  } else {
+    g_warning(_("Could not import data sets from file %s\n"), filename);
   }
+
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* close the file selection box */
@@ -846,6 +855,19 @@ void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer data) {
   return;
 }
 
+void ui_study_cb_fov(GtkSpinButton * spin_button, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  amide_real_t fov;
+
+  if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
+
+  fov = gtk_spin_button_get_value(spin_button);
+  amitk_study_set_fov(ui_study->study, fov);
+    
+  return;
+}
+
 
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
 
@@ -1203,6 +1225,12 @@ void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer data) {
 void ui_study_cb_voxel_dim_or_zoom_changed(AmitkStudy * study, gpointer data) {
   ui_study_t * ui_study = data;
   ui_study_update_zoom(ui_study);
+  return;
+}
+
+void ui_study_cb_fov_changed(AmitkStudy * study, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_study_update_fov(ui_study);
   return;
 }
 

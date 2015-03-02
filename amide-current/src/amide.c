@@ -309,10 +309,8 @@ static void font_init(void) {
   /* actually, these fonts aren't fixed width... but it's what I've been using */
 #ifdef AMIDE_WIN32_HACKS
   amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
-  amitk_small_fixed_font_desc = pango_font_description_from_string("Sans 7");
 #else
   amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
-  amitk_small_fixed_font_desc = pango_font_description_from_string("Sans 7");
   //  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
 #endif
 
@@ -333,6 +331,7 @@ int main (int argc, char *argv []) {
   AmitkStudy * imported_study = NULL;
   AmitkStudy * study = NULL;
   const gchar * input_filename;
+  GList * new_data_sets;
   AmitkDataSet * new_ds;
   amide_real_t min_voxel_size;
   poptContext amide_ctx;
@@ -398,17 +397,21 @@ int main (int argc, char *argv []) {
  	g_warning(_("Failed to load in as XIF file: %s"), input_filename);
     } else if (!S_ISDIR(file_info.st_mode)) {
       /* not a directory... maybe an import file? */
-      if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filename, 
+      if ((new_data_sets = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0, input_filename, 
  					       preferences, NULL, NULL)) != NULL) {
- 	if (imported_study == NULL) {
- 	  imported_study = amitk_study_new(preferences);
- 	  amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
- 	  amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
- 	}
- 	amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
- 	min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
- 	amitk_study_set_view_thickness(imported_study, min_voxel_size);
-	new_ds = amitk_object_unref(new_ds);
+	while (new_data_sets != NULL) {
+	  new_ds = new_data_sets->data;
+	  if (imported_study == NULL) {
+	    imported_study = amitk_study_new(preferences);
+	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
+	    amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
+	  }
+	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
+	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
+	  amitk_study_set_view_thickness(imported_study, min_voxel_size);
+	  new_data_sets = g_list_remove(new_data_sets, new_ds);
+	  new_ds = amitk_object_unref(new_ds);
+	}
       } else 
  	g_warning(_("%s is not an AMIDE study or importable file type"), input_filename);
     } else {
@@ -497,6 +500,18 @@ const gchar * amitk_layout_get_name(const AmitkLayout layout) {
 
   enum_class = g_type_class_ref(AMITK_TYPE_LAYOUT);
   enum_value = g_enum_get_value(enum_class, layout);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_panel_layout_get_name(const AmitkPanelLayout panel_layout) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_PANEL_LAYOUT);
+  enum_value = g_enum_get_value(enum_class, panel_layout);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

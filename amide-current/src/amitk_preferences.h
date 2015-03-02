@@ -51,6 +51,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_CANVAS_LAYOUT(pref)                   (AMITK_PREFERENCES(pref)->canvas_layout)
 #define AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(pref)            (AMITK_PREFERENCES(pref)->canvas_maintain_size)
 #define AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(pref)        (AMITK_PREFERENCES(pref)->canvas_target_empty_area)
+#define AMITK_PREFERENCES_PANEL_LAYOUT(pref)                    (AMITK_PREFERENCES(pref)->panel_layout)
 #define AMITK_PREFERENCES_COLOR_TABLE(pref, modality)           (AMITK_PREFERENCES(pref)->color_table[modality])
 #define AMITK_PREFERENCES_WINDOW(pref, which_window, limit)     (AMITK_PREFERENCES(pref)->window[which_window][limit])
 #define AMITK_PREFERENCES_THRESHOLD_STYLE(pref)                 (AMITK_PREFERENCES(pref)->threshold_style)
@@ -62,6 +63,7 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT AMITK_LAYOUT_LINEAR
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE TRUE
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA 5
+#define AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT AMITK_PANEL_LAYOUT_MIXED
 #define AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE FALSE
 #define AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT TRUE
 #define AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY FALSE
@@ -94,6 +96,7 @@ struct _AmitkPreferences {
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
+  AmitkPanelLayout panel_layout;
 
   /* data set preferences */
   AmitkColorTable color_table[AMITK_MODALITY_NUM];
@@ -132,6 +135,8 @@ void                amitk_preferences_set_canvas_maintain_size   (AmitkPreferenc
 							          gboolean maintain_size);
 void                amitk_preferences_set_canvas_target_empty_area(AmitkPreferences * preferences, 
 								   gint target_empty_area);
+void                amitk_preferences_set_panel_layout           (AmitkPreferences * preferences, 
+							          AmitkPanelLayout panel_layout);
 void                amitk_preferences_set_warnings_to_console    (AmitkPreferences * preferences, 
 								  gboolean new_value);
 void                amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferences * preferences,
@@ -150,6 +155,6 @@ void                amitk_preferences_set_threshold_style        (AmitkPreferenc
 void                amitk_preferences_set_dialog                 (AmitkPreferences * preferences,
 								  GtkWidget * dialog);
 
-
+G_END_DECLS
 #endif /* __AMITK_PREFERENCES_H__ */
 
