@@ -3,8 +3,8 @@ misc list of things todo:
 for next release?
 -----------------
 
-* locale isn't working on windows.... foreign .xif files have comma's in them...
-
+* freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [1]
+ [1] noticed by Mark Huisman
 * look careful at use of amitk_space_transform, and see if this function is
 	really needed/used correctly - as I don't think this operation 
 	propogates correctly to an object's children

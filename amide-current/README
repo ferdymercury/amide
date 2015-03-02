@@ -19,27 +19,25 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-3.3.  The 2.95 versions should also work well.
-Versions of gcc between these two versions will quite likely generate
-compilation errors (and make AMIDE unstable) if optimizations are used
-when compiling.  The 2.96 versions of gcc (which are not official
-releases!) are particularly notorious.
+I currently use gcc-4.1.  The later 3.* series (e.g. 3.3) should work
+as well, along with version 2.95.  Early 3.* Versions of gcc will
+quite likely generate compilation errors (and make AMIDE unstable) if
+optimizations are used when compiling.  The 2.96 versions of gcc
+(which are not official releases!) are particularly notorious.
 
 
 
 2) Gtk+/Gnome:
 
 The current series of AMIDE requires Gtk+-2 and GNOME-2.  I'm
-currently developing on a Fedora Core 3.0 system, although other
-distributions of Linux with equivalent library support should work
-also (e.g.. Mandrake 9.0, Redhat 9).  
+currently developing on a Fedora Core 6.0 system, although other
+distributions of Linux with equivalent library support should work.
 
-Old versions of Redhat (<= 7.2) and some other distributions with old
-libraries (most notably the "stable" release of Debian) will require a
-large number of new packages to be installed to get the current
-version of AMIDE to compile and run.  If you want to run AMIDE on such
-a system, you might try the (ancient) AMIDE 0.6.* series, which only
-needs Gtk+-1.2/Gnome-1.4.
+Very old distributions (e.g. Redhat <= 7.2, the previous Debian
+release) will require a large number of new packages to be installed
+to get the current version of AMIDE to compile and run.  If you want
+to run AMIDE on such a system, you might try the (ancient) AMIDE 0.6.*
+series, which only needs Gtk+-1.2/Gnome-1.4.
 
 Scrollkeeper is required for generating the help documentation.  If
 you don't care about that, it's not needed.
@@ -53,7 +51,11 @@ Optional Packages
 
 (X)MedCon includes a library (libmdc) which allows AMIDE to import the
 following formats; Acr/Nema 2.0, Analyze (SPM), Concorde microPET,
-DICOM 3.0, ECAT/Matrix 6/7, InterFile3.3 and Gif87a/89a. 
+DICOM 3.0, ECAT/Matrix 6/7, InterFile3.3 and Gif87a/89a. Note that the
+default compile of XMedCon is reliant on GLib/GTK 1.2, which very few
+programs use anymore so it may not be installed on your system. It is
+possible to compile XMedCon without GUI support and thereby not need
+GLib/GTK 1.2 for compilation.
 
 (X)MedCon can be obtained from: 
 	http://xmedcon.sourceforge.net

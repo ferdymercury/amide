@@ -1,3 +1,11 @@
+0.8.21
+        * switched index to strchr in xml.c, amitk_point.c
+	* man page fix [1]
+	* freehand roi's now initially line up with the voxels of the dataset
+	* hopefully finally now have a true radix sign fix,  as mingw can't
+	  really use setlocale
+	[1] From Dominique Belhachemi
+	
 0.8.20 2007.06.29
 	* message popup for export raw data dimensions
 	* init allocated density memory to 0 in render.c

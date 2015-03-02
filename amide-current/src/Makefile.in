@@ -148,8 +148,8 @@ am__DEPENDENCIES_1 =
 @AMIDE_WIN32_HACKS_TRUE@am__DEPENDENCIES_2 = ../win32/amiderc.o
 amide_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -381,15 +381,18 @@ AM_CFLAGS = \
 #	-DGNOME_DISABLE_DEPRECATED \
 #	-DGTK_DISABLE_DEPRECATED 
 AM_CXXFLAGS = $(AM_CFLAGS)
+
+# for some reason, the -wsock32 added by AMIDE_LDADD_WIN32 on windows has
+# to be behind the DCMTK stuff
 amide_LDADD = \
 	$(GSL_LIBS) \
 	$(LIBFAME_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
-	$(AMIDE_LDADD_WIN32) \
 	$(XMEDCON_LIBS) \
-	$(AMIDE_LIBDCMDATA_LIBS) 
+	$(AMIDE_LIBDCMDATA_LIBS) \
+	$(AMIDE_LDADD_WIN32) 
 
 amide_LDFLAGS = \
 	$(AMIDE_LDFLAGS_WIN32)

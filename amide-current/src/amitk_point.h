@@ -215,6 +215,12 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 							  ((vox).g = (gate)), \
 						          ((vox).t = (frame)))
 
+/* corner of the voxel in real coordinates */
+#define VOXEL_CORNER(vox, vox_size, corner) (((corner).x = (((amide_real_t) (vox).x)) * (vox_size).x), \
+					     ((corner).y = (((amide_real_t) (vox).y)) * (vox_size).y), \
+					     ((corner).z = (((amide_real_t) (vox).z)) * (vox_size).z))
+
+
 /* returned the maximum of point1 */
 #define POINT_MAX(point1) (MAX( MAX((point1).x, (point1).y), (point1).z))
 

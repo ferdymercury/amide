@@ -255,6 +255,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gint num_corrupted_planes = 0;
   const gchar * bad_char;
   gsize invalid_point;
+  AmitkAxis i_axis;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -785,6 +786,12 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);
   amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
+
+  /* if NIFTI format, try to get in the right orientation */
+  if (libmdc_fi.iformat == MDC_FRMT_NIFTI) {
+    for (i_axis = 0; i_axis < AMITK_AXIS_NUM; i_axis++)
+      amitk_space_invert_axis(AMITK_SPACE(ds), i_axis, zero_point);
+  }
 
   goto function_end;
 

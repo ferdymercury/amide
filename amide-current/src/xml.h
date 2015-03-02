@@ -34,6 +34,7 @@
 G_BEGIN_DECLS
 
 /* functions */
+void xml_convert_radix_to_local(gchar * string);
 gboolean xml_check_file_32bit_okay(guint64 value);
 gboolean xml_node_exists(xmlNodePtr nodes, const gchar * descriptor);
 xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor);

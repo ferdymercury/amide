@@ -1125,6 +1125,12 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   if (return_val != GTK_RESPONSE_OK)
     return FALSE; /* cancel */
 
+  /* ensure that the position lines up with the voxels in the data set */
+  position = amitk_space_b2s(AMITK_SPACE(draw_on_ds), position);
+  POINT_TO_VOXEL(position, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds), 0,0,temp_voxel);
+  VOXEL_CORNER(temp_voxel, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds), position);
+  
+
   amitk_roi_set_voxel_size(roi, voxel_size);
   amitk_space_copy_in_place(AMITK_SPACE(roi), AMITK_SPACE(draw_on_ds));
   amitk_space_set_offset(AMITK_SPACE(roi), position);

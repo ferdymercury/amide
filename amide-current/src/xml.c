@@ -35,6 +35,30 @@
 static char * true_string = "true";
 static char * false_string = "false";
 
+/* automagically converts the string to having the right radix for the current locale */
+/* this crap needs to be used because on windows, setlocale isn't implemented on mingw */
+void xml_convert_radix_to_local(gchar * conv_str) {
+
+  gboolean period=TRUE;
+  gdouble temp_float;
+  gchar * radix_ptr;
+
+  /* mingw doesn't really support setlocale, so use the following to figure out if we're using
+     a period or comma for the radix */
+  sscanf("1,9", "%lf", &temp_float);
+  if (temp_float > 1.1) period=FALSE;
+
+  if (period == FALSE) { /* using comma's */
+    while ((radix_ptr = strchr(conv_str, '.')) != NULL)
+      *radix_ptr = ',';
+  } else { /* using period */
+    while ((radix_ptr = strchr(conv_str, ',')) != NULL)
+      *radix_ptr = '.';
+  }
+
+  return;
+}
+
 /* returns FALSE if we'll have problems reading this file on a 32bit system */
 gboolean xml_check_file_32bit_okay(guint64 value) {
 
@@ -123,19 +147,13 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   temp_str = xml_get_string(nodes, descriptor);
 
-  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
-  if (index(temp_str, ',') != NULL)
-    setlocale(LC_NUMERIC,"de_DE");
-
   if (temp_str != NULL) {
+
+    xml_convert_radix_to_local(temp_str);
 
 #if (SIZE_OF_AMIDE_TIME_T == 8)
     /* convert to double */
@@ -173,17 +191,9 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   gboolean corrupted=FALSE;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   temp_str = xml_get_string(nodes, descriptor);
-
-  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
-  if (index(temp_str, ',') != NULL)
-    setlocale(LC_NUMERIC,"de_DE");
 
   if (temp_str != NULL) {
 
@@ -201,6 +211,9 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
       if (string_chunks[i] == NULL) 
 	  corrupted = TRUE;
       else {
+
+	xml_convert_radix_to_local(string_chunks[i]);
+
 #if (SIZE_OF_AMIDE_TIME_T == 8)
 	/* convert to doubles */
 	error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
@@ -247,19 +260,13 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   temp_str = xml_get_string(nodes, descriptor);
 
-  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
-  if (index(temp_str, ',') != NULL)
-    setlocale(LC_NUMERIC,"de_DE");
-
   if (temp_str != NULL) {
+
+    xml_convert_radix_to_local(temp_str);
 
 #if (SIZE_OF_AMIDE_DATA_T == 8)
     /* convert to doubles */
@@ -303,19 +310,13 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   temp_str = xml_get_string(nodes, descriptor);
   
-  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
-  if (index(temp_str, ',') != NULL)
-    setlocale(LC_NUMERIC,"de_DE");
-
   if (temp_str != NULL) {
+
+    xml_convert_radix_to_local(temp_str);
 
 #if (SIZE_OF_AMIDE_REAL_T == 8)
     /* convert to doubles */
@@ -460,11 +461,7 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
@@ -491,11 +488,7 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); 
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
@@ -523,11 +516,7 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
@@ -567,11 +556,7 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
@@ -598,11 +583,7 @@ void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);

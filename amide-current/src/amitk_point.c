@@ -65,19 +65,14 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   gchar * saved_locale;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
   temp_str = xml_get_string(nodes, descriptor);
 
-  /* hack to fix if the radix accidently got saved as a comma (i.e. european format) */
-  if (index(temp_str, ',') != NULL)
-    setlocale(LC_NUMERIC,"de_DE");
-
   if (temp_str != NULL) {
+
+    xml_convert_radix_to_local(temp_str);
+
 #if (SIZE_OF_AMIDE_REAL_T == 8)
     /* convert to doubles */
     error = sscanf(temp_str, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
@@ -112,11 +107,7 @@ void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point
   gchar * saved_locale;
 
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
-#ifdef AMIDE_WIN32_HACKS  
-  setlocale(LC_NUMERIC,"en_US"); /* mingw/windows doesn't seem to understand posix...  */
-#else
   setlocale(LC_NUMERIC,"POSIX");
-#endif
 
 #ifdef AMIDE_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f\t%10.9f\t%10.9f", point.x,point.y,point.z);
