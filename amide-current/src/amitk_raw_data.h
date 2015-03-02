@@ -180,7 +180,7 @@ AmitkFormat    amitk_raw_format_to_format(AmitkRawFormat raw_format);
 AmitkRawFormat amitk_format_to_raw_format(AmitkFormat data_format);
 
 #define amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format) ((dim).x*(dim).y*amitk_raw_format_sizes[raw_format])
-#define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).z*(dim).t*amitk_raw_format_calc_num_bytes_per_slice(dim,raw_format))
+#define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).z*(dim).g*(dim).t*amitk_raw_format_calc_num_bytes_per_slice(dim,raw_format))
 
 const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format);
 

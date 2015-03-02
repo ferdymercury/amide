@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.5],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.6],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -13,7 +13,6 @@ AM_MAINTAINER_MODE
 
 AC_PROG_CC
 AM_PROG_LIBTOOL
-AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
 AC_FUNC_MKDIR
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
@@ -28,6 +27,12 @@ ALL_LINGUAS="zh_CN"
 AM_GLIB_GNU_GETTEXT
 AC_PROG_INTLTOOL
 
+dnl m4 required for compiling
+AC_PATH_PROGS(M4, gnum4 gm4 m4, NOT_FOUND)
+if test $M4 = "NOT_FOUND"; then
+   echo "Could not find m4 on this system, please install to compile AMIDE"
+   exit 1
+fi
 
 dnl ===============================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6

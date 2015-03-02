@@ -507,10 +507,12 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
 
  
     /* render the contexts */
-    return_val = ui_render_update_immediate(ui_render);
+    ui_render_update_immediate(ui_render);
     
-    if (return_val) /* if we rendered correct, encode the mpeg frame */
+    if (ui_render->rendered_successfully) /* if we rendered correct, encode the mpeg frame */
       return_val = mpeg_encode_frame(mpeg_encode_context, ui_render->pixbuf);
+    else
+      return_val = FALSE;
       
     /* do any events pending, this allows the canvas to get displayed */
     while (gtk_events_pending()) 

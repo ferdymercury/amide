@@ -3,12 +3,8 @@ misc list of things todo:
 for next release?
 -----------------
 
-* gtk-doc isn't working
-
-touch tmpl-build.stamp
-make[2]: *** No rule to make target `tmpl/*.sgml', needed by `sgml-build.stamp'.  Stop.
-
-check doc/reference/Makefile.am, and doc/reference/Makefile very careful, compare to those with gtk
+* add free hand ROI drawing (2D and 3D)
+	2D for now?
 
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used
@@ -19,7 +15,6 @@ check doc/reference/Makefile.am, and doc/reference/Makefile very careful, compar
 * ability to import and export AIR .air files
   -probably from rotate axis page
   -need object list widget: should update automatically when something is removed somewhere else
-* add free hand ROI drawing (2D and 3D)
 * export ROI's to external file? and allow import?
 * continue implementing progress bars for various functions:
 	-roi analysis

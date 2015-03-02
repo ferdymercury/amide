@@ -218,6 +218,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gint error;
   struct tm time_structure;
   AmitkVoxel i;
+  gint j;
   AmitkDataSet * ds=NULL;
   gchar * name;
   gchar * import_filename;
@@ -268,6 +269,11 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     g_warning(_("Can't read file %s with libmdc/(X)MedCon"),filename);
     goto error;
   }
+
+  /* make sure libmdc returned all dim's as >0 */
+  for (j=0; j<MDC_MAX_DIMS; j++) 
+    if (libmdc_fi.dim[j] <= 0) 
+      libmdc_fi.dim[j] = 1;
 
   /* start figuring out information */
   dim.x = libmdc_fi.image[0].width;

@@ -720,6 +720,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render->app));
   ui_render->next_update= UPDATE_NONE;
   ui_render->idle_handler_id = 0;
+  ui_render->rendered_successfully=FALSE;
 
   /* load in saved preferences */
 #ifndef AMIDE_WIN32_HACKS
@@ -781,6 +782,7 @@ gboolean ui_render_update_immediate(gpointer data) {
   g_return_val_if_fail(ui_render != NULL, FALSE);
   g_return_val_if_fail(ui_render->renderings != NULL, FALSE);
 
+  ui_render->rendered_successfully=FALSE;
   if (!renderings_reload_objects(ui_render->renderings, ui_render->start,
 				 ui_render->duration,
 				 amitk_progress_dialog_update, 
@@ -827,6 +829,7 @@ gboolean ui_render_update_immediate(gpointer data) {
   /* reset the min size of the widget */
   gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_render->canvas), 0.0, 0.0, width, height);
   gtk_widget_set_size_request(ui_render->canvas, width, height);
+  ui_render->rendered_successfully = TRUE;
   return_val = FALSE;
 
  function_end:

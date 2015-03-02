@@ -1,4 +1,17 @@
-0.8.5 
+0.8.6
+	* raw data import dialog didn't take gates into account for calculating bytes
+	* fixed rendered movie generation
+	* can now calculate inside ROI for values greater than specific value
+	* amitk_xif_sel crashed when browsing "/" directory [1]
+	* fixed importing of analyze files [2]
+	* get configure script to end if m4 not found [3]
+	* rpm now builds correctly on FC2
+	[1] Found by Peter Bloomfield
+	[2] Found by Charles Henri Malbert
+	[3] Found by Emily Heath
+
+	
+0.8.5 2004.06.07
 	* fixed fopen binary versus text bug on windows [1]
 	* export view function now includes roi's, etc. [1]
 	* fly through mpeg's now include roi's, etc.
@@ -14,6 +27,7 @@
 	* switched to libmdc progressive loader
 	* values read through libmdc are now quantified & calibrated,
 	  they had only been quantified before (branching factor hadn't been added)
+	* updates to gtk-doc reference doc generation process
 	[1] Found/Requested by Steve Jones
 	[2] Requested by Jayashree Kanchana
 	[3] Found by Vania Kenanova

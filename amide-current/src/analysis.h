@@ -37,6 +37,7 @@ typedef enum {
   ALL_VOXELS,
   HIGHEST_FRACTION_VOXELS,
   VOXELS_NEAR_MAX,
+  VOXELS_GREATER_THAN_VALUE,
   NUM_CALCULATION_TYPES
 } analysis_calculation_t;
 
@@ -86,6 +87,7 @@ struct _analysis_roi_t {
   AmitkStudy * study;
   analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_percentage;
   gdouble threshold_value;
   analysis_volume_t * volume_analyses;
   guint ref_count;
@@ -96,10 +98,15 @@ struct _analysis_roi_t {
 analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
 
 /* note, subfraction is only used for calculation_type == HIGHEST_FRACTION_VOXELS,
-   threshold_value is only used for calculation_type == VOXELS_NEAR_MAX */
-analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
-				   GList * volumes, analysis_calculation_t calculation_type,
-				   gdouble subfraction, gdouble threshold_value);
+   threshold_percentage is only used for calculation_type == VOXELS_NEAR_MAX
+   threshold_value is only used for calculation_type == HIGHER_THAN_VALUE */
+analysis_roi_t * analysis_roi_init(AmitkStudy * study, 
+				   GList * rois, 
+				   GList * volumes, 
+				   analysis_calculation_t calculation_type,
+				   gdouble subfraction, 
+				   gdouble threshold_percentage, 
+				   gdouble threshold_value);
 
 #endif /* __ANALYSIS_H__ */
 

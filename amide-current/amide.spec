@@ -1,6 +1,6 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.8.5
+Version: 	0.8.6
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering
@@ -8,6 +8,8 @@ Source: 	%{name}-%{version}.tgz
 URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
 Packager: 	Andy Loening <loening at alum dot mit dot edu>
+
+PreReq:		scrollkeeper >= 0.1.4
 
 BuildRequires: 	xmedcon >= 0.9.6
 BuildRequires:  volpack 
@@ -41,8 +43,8 @@ alignments.
 
 %prep
 %setup -n %{name}-%{version}
-%build
 
+%build
 %configure --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
 make
 

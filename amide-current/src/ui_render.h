@@ -65,6 +65,7 @@ typedef struct ui_render_t {
 
   guint next_update;
   guint idle_handler_id;
+  gboolean rendered_successfully;
 
   GtkWidget * progress_dialog;
   guint reference_count;

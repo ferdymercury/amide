@@ -40,6 +40,7 @@ static gboolean all_data_sets=FALSE;
 static gboolean all_rois=FALSE;
 static analysis_calculation_t calculation_type=ALL_VOXELS;
 static gdouble subfraction=50.0;
+static gdouble threshold_percentage=50.0;
 static gdouble threshold_value=50.0;
 #endif
 
@@ -119,6 +120,7 @@ static void read_preferences(gboolean * all_data_sets,
 			     gboolean * all_rois, 
 			     analysis_calculation_t * calculation_type,
 			     gdouble * subfraction,
+			     gdouble * threshold_percentage,
 			     gdouble * threshold_value);
 
 
@@ -235,7 +237,10 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction*100);
       break;
     case VOXELS_NEAR_MAX:
-      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_value*100);
+      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_percentage);
+      break;
+    case VOXELS_GREATER_THAN_VALUE:
+      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f in ROI\n"), roi_analyses->threshold_value);
       break;
     default:
       g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
@@ -684,6 +689,7 @@ static void read_preferences(gboolean * all_data_sets,
 			     gboolean * all_rois, 
 			     analysis_calculation_t * calculation_type,
 			     gdouble * subfraction,
+			     gdouble * threshold_percentage,
 			     gdouble * threshold_value) {
 
 #ifndef AMIDE_WIN32_HACKS
@@ -693,6 +699,7 @@ static void read_preferences(gboolean * all_data_sets,
   *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
   *calculation_type = gnome_config_get_int("ANALYSIS/CalculationType");
   *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
+  *threshold_percentage = gnome_config_get_float("ANALYSIS/ThresholdPercentage");
   *threshold_value = gnome_config_get_float("ANALYSIS/ThresholdValue");
 
   gnome_config_pop_prefix();
@@ -717,9 +724,11 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   gboolean all_rois;
   analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_percentage;
   gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_value);
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, 
+		   &threshold_percentage, &threshold_value);
 #endif
 
   /* figure out which data sets we're dealing with */
@@ -749,7 +758,8 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, subfraction, threshold_value);
+  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, subfraction, 
+				   threshold_percentage, threshold_value);
 
   rois = amitk_objects_unref(rois);
   data_sets = amitk_objects_unref(data_sets);
@@ -794,6 +804,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 static void radio_buttons_cb(GtkWidget * widget, gpointer data);
 static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data);
+static void threshold_percentage_cb(GtkWidget * widget, gpointer data);
 static void threshold_value_cb(GtkWidget * widget, gpointer data);
 
 
@@ -824,13 +835,15 @@ static void calculation_type_cb(GtkWidget * widget, gpointer data) {
 #ifndef AMIDE_WIN32_HACKS
   analysis_calculation_t calculation_type;
 #endif
-  GtkWidget * spin_buttons[2];
+  GtkWidget * spin_buttons[3];
 
   calculation_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "calculation_type"));
   spin_buttons[0] = g_object_get_data(G_OBJECT(widget), "spin_button_0");
   spin_buttons[1] = g_object_get_data(G_OBJECT(widget), "spin_button_1");
+  spin_buttons[2] = g_object_get_data(G_OBJECT(widget), "spin_button_2");
   gtk_widget_set_sensitive(spin_buttons[0], calculation_type == HIGHEST_FRACTION_VOXELS);
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
+  gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
 
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
@@ -860,13 +873,32 @@ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+static void threshold_percentage_cb(GtkWidget * widget, gpointer data) {
+
+#ifndef AMIDE_WIN32_HACKS
+  gdouble threshold_percentage;
+#endif
+
+  threshold_percentage = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_float("ANALYSIS/ThresholdPercentage", threshold_percentage);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+
+  return;
+}
+
+
 static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 
 #ifndef AMIDE_WIN32_HACKS
   gdouble threshold_value;
 #endif
 
-  threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
+  threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
@@ -909,16 +941,17 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   GtkWidget * radio_button[4];
   GtkWidget * hseparator;
   GtkObject * adjustment;
-  GtkWidget * spin_buttons[2];
+  GtkWidget * spin_buttons[3];
   analysis_calculation_t i_calculation_type;
 #ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_percentage;
   gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_value);
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_percentage, &threshold_value);
 #endif
 
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
@@ -1032,7 +1065,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   spin_buttons[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[0]),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[0]), TRUE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[0]), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_buttons[0]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
@@ -1052,18 +1085,42 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(radio_button[2]), "calculation_type", GINT_TO_POINTER(VOXELS_NEAR_MAX));
 
-  adjustment = gtk_adjustment_new(100.0*threshold_value, 0.0, 100.0,1.0, 1.0, 1.0);
+  adjustment = gtk_adjustment_new(threshold_percentage, 0.0, 100.0,1.0, 1.0, 1.0);
   spin_buttons[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[1]),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[1]), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[1]), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[1]), TRUE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[1]), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_buttons[1]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-  g_signal_connect(G_OBJECT(spin_buttons[1]), "value_changed",  G_CALLBACK(threshold_value_cb), NULL);
+  g_signal_connect(G_OBJECT(spin_buttons[1]), "value_changed",  G_CALLBACK(threshold_percentage_cb), NULL);
   gtk_table_attach(GTK_TABLE(table), spin_buttons[1], 2,3, 
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
+  table_row++;
+
+  /* do we want to calculate over a percentage of max */
+  label = gtk_label_new(_("Calculate for voxels >= Value:"));
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  radio_button[3] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[3], 1,2,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[3]), "calculation_type", GINT_TO_POINTER(VOXELS_GREATER_THAN_VALUE));
+
+  adjustment = gtk_adjustment_new(threshold_value, 0.0, 100.0,1.0, 1.0, 1.0);
+  spin_buttons[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[2]),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[2]), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[2]), TRUE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[2]), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(spin_buttons[2]), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  g_signal_connect(G_OBJECT(spin_buttons[2]), "value_changed",  G_CALLBACK(threshold_value_cb), NULL);
+  gtk_table_attach(GTK_TABLE(table), spin_buttons[2], 2,3, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
   table_row++;
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[calculation_type]), TRUE);
@@ -1071,6 +1128,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   for (i_calculation_type=0; i_calculation_type < NUM_CALCULATION_TYPES; i_calculation_type++) {
     g_object_set_data(G_OBJECT(radio_button[i_calculation_type]), "spin_button_0", spin_buttons[0]);
     g_object_set_data(G_OBJECT(radio_button[i_calculation_type]), "spin_button_1", spin_buttons[1]);
+    g_object_set_data(G_OBJECT(radio_button[i_calculation_type]), "spin_button_2", spin_buttons[2]);
     g_signal_connect(G_OBJECT(radio_button[i_calculation_type]), "clicked", 
 		     G_CALLBACK(calculation_type_cb), NULL);
   }

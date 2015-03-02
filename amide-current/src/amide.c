@@ -124,14 +124,16 @@ gboolean amide_is_xif_directory(const gchar * filename, gboolean * plegacy1, gch
   directory = opendir(xifname);
       
   /* currently, only looks at the first study_*.xml file... there should be only one anyway */
-  while (((directory_entry = readdir(directory)) != NULL))
-    if (g_pattern_match_simple("study_*.xml", directory_entry->d_name)) {
-      if (plegacy1 != NULL) *plegacy1 = FALSE;
-      if (pxml_filename != NULL) *pxml_filename = g_strdup(directory_entry->d_name);
-      closedir(directory);
-
-      return TRUE;
-    }
+  if (directory != NULL) {
+    while (((directory_entry = readdir(directory)) != NULL))
+      if (g_pattern_match_simple("study_*.xml", directory_entry->d_name)) {
+	if (plegacy1 != NULL) *plegacy1 = FALSE;
+	if (pxml_filename != NULL) *pxml_filename = g_strdup(directory_entry->d_name);
+	closedir(directory);
+	
+	return TRUE;
+      }
+  }
     
   closedir(directory);
 

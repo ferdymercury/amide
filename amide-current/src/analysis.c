@@ -45,15 +45,21 @@
 static analysis_gate_t * analysis_gate_unref(analysis_gate_t *gate_analysis);
 static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet *ds,guint frame, 
 					    analysis_calculation_t calculation_type,
-					    gdouble subfraction, gdouble threshold_value);
+					    gdouble subfraction, 
+					    gdouble threshold_percentage, 
+					    gdouble threshold_value);
 static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
 static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
 					      analysis_calculation_t calculation_type,
-					      gdouble subfraction, gdouble threshold_value);
+					      gdouble subfraction, 
+					      gdouble threshold_percentage,
+					      gdouble threshold_value);
 static analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
 static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes, 
 						analysis_calculation_t calculation_type,
-						gdouble subfraction, gdouble threshold_value);
+						gdouble subfraction, 
+						gdouble threshold_percentage, 
+						gdouble threshold_value);
 
 
 static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
@@ -170,6 +176,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
 						    guint gate,
 						    analysis_calculation_t calculation_type,
 						    gdouble subfraction,
+						    gdouble threshold_percentage,
 						    gdouble threshold_value) {
   analysis_gate_t * analysis;
   GPtrArray * data_array;
@@ -213,6 +220,10 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
     break;
   case HIGHEST_FRACTION_VOXELS:
     subfraction_voxels = ceil(subfraction*data_array->len);
+
+    if ((subfraction_voxels == 0) && (data_array->len > 0))
+      subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
+
     break;
   case VOXELS_NEAR_MAX:
     subfraction_voxels = 0;
@@ -223,7 +234,27 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
       done = FALSE;
       for (i=0; i<data_array->len && !done; i++) {
 	element = g_ptr_array_index(data_array, i);
-	if (element->value >= threshold_value*max)
+	if (element->value >= max*threshold_percentage/100.0)
+	  subfraction_voxels++;
+	else
+	  done = TRUE;
+      }
+    }
+
+    if ((subfraction_voxels == 0) && (data_array->len > 0))
+      subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
+
+    break;
+  case VOXELS_GREATER_THAN_VALUE:
+    subfraction_voxels = 0;
+
+    if (data_array->len > 0) {
+      element = g_ptr_array_index(data_array, 0);
+      max = element->value;
+      done = FALSE;
+      for (i=0; i<data_array->len && !done; i++) {
+	element = g_ptr_array_index(data_array, i);
+	if (element->value >= threshold_value)
 	  subfraction_voxels++;
 	else
 	  done = TRUE;
@@ -234,10 +265,6 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
     subfraction_voxels=0;
     g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
   }
-
-  if ((subfraction_voxels == 0) && (data_array->len > 0))
-    subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
-
 
   /* fill in our gate_analysis structure */
   if ((analysis =  g_try_new(analysis_gate_t,1)) == NULL) {
@@ -314,7 +341,8 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
 
   /* now let's recurse  */
   analysis->next_gate_analysis = 
-    analysis_gate_init_recurse(roi, ds, frame, gate+1, calculation_type, subfraction, threshold_value);
+    analysis_gate_init_recurse(roi, ds, frame, gate+1, calculation_type, subfraction, 
+			       threshold_percentage, threshold_value);
 
   return analysis;
 }
@@ -325,10 +353,11 @@ static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet * ds,
 					    guint frame, 
 					    analysis_calculation_t calculation_type,
 					    gdouble subfraction,
+					    gdouble threshold_percentage,
 					    gdouble threshold_value) {
 
   return analysis_gate_init_recurse(roi, ds, frame, 0, calculation_type,
-				    subfraction, threshold_value);
+				    subfraction, threshold_percentage, threshold_value);
 }
 
 
@@ -365,6 +394,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 						      guint frame,
 						      analysis_calculation_t calculation_type,
 						      gdouble subfraction,
+						      gdouble threshold_percentage,
 						      gdouble threshold_value) {
   
   analysis_frame_t * temp_frame_analysis;
@@ -380,11 +410,13 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 
   /* calculate this one */
   temp_frame_analysis->gate_analyses = 
-    analysis_gate_init(roi, ds, frame, calculation_type, subfraction, threshold_value);
+    analysis_gate_init(roi, ds, frame, calculation_type, subfraction, 
+		       threshold_percentage, threshold_value);
 
   /* recurse */
   temp_frame_analysis->next_frame_analysis = 
-    analysis_frame_init_recurse(roi, ds, frame+1, calculation_type, subfraction, threshold_value);
+    analysis_frame_init_recurse(roi, ds, frame+1, calculation_type, subfraction, 
+				threshold_percentage, threshold_value);
 
   return temp_frame_analysis;
 }
@@ -393,6 +425,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
 					      analysis_calculation_t calculation_type,
 					      gdouble subfraction,
+					      gdouble threshold_percentage,
 					      gdouble threshold_value) {
 
   /* sanity checks */
@@ -403,7 +436,8 @@ static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds,
     return NULL;
   }
 
-  return analysis_frame_init_recurse(roi, ds, 0, calculation_type, subfraction, threshold_value);
+  return analysis_frame_init_recurse(roi, ds, 0, calculation_type, subfraction, 
+				     threshold_percentage, threshold_value);
 }
 
 
@@ -442,6 +476,7 @@ static analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_anal
 static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets, 
 						analysis_calculation_t calculation_type,
 						gdouble subfraction,
+						gdouble threshold_percentage,
 						gdouble threshold_value) {
   
   analysis_volume_t * temp_volume_analysis;
@@ -461,11 +496,13 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_set
 
   /* calculate this one */
   temp_volume_analysis->frame_analyses = 
-    analysis_frame_init(roi, temp_volume_analysis->data_set, calculation_type, subfraction, threshold_value);
+    analysis_frame_init(roi, temp_volume_analysis->data_set, calculation_type, subfraction, 
+			threshold_percentage, threshold_value);
 
   /* recurse */
   temp_volume_analysis->next_volume_analysis = 
-    analysis_volume_init(roi, data_sets->next, calculation_type, subfraction, threshold_value);
+    analysis_volume_init(roi, data_sets->next, calculation_type, subfraction, 
+			 threshold_percentage, threshold_value);
 
   
   return temp_volume_analysis;
@@ -508,7 +545,9 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
 /* returns an initialized list of roi analyses */
 analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
 				   GList * data_sets, analysis_calculation_t calculation_type,
-				   gdouble subfraction, gdouble threshold_value) {
+				   gdouble subfraction, 
+				   gdouble threshold_percentage,
+				   gdouble threshold_value) {
   
   analysis_roi_t * temp_roi_analysis;
   
@@ -524,15 +563,18 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois,
   temp_roi_analysis->study = amitk_object_ref(study);
   temp_roi_analysis->calculation_type = calculation_type;
   temp_roi_analysis->subfraction = subfraction;
+  temp_roi_analysis->threshold_percentage = threshold_percentage;
   temp_roi_analysis->threshold_value = threshold_value;
 
   /* calculate this one */
   temp_roi_analysis->volume_analyses = 
-    analysis_volume_init(temp_roi_analysis->roi, data_sets, calculation_type, subfraction, threshold_value);
+    analysis_volume_init(temp_roi_analysis->roi, data_sets, calculation_type, subfraction, 
+			 threshold_percentage, threshold_value);
 
   /* recurse */
   temp_roi_analysis->next_roi_analysis = 
-    analysis_roi_init(study, rois->next, data_sets, calculation_type, subfraction, threshold_value);
+    analysis_roi_init(study, rois->next, data_sets, calculation_type, subfraction, 
+		      threshold_percentage, threshold_value);
 
   
   return temp_roi_analysis;

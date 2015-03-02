@@ -5,8 +5,7 @@ _Name=Amide
 _Comment=A Medical Image Data Examiner
 Exec=amide
 Icon=amide_logo.png
-Terminal=0
-Icon=amide_logo.png
+Terminal=false
 Type=Application
 Categories=Application;Graphics;
 
