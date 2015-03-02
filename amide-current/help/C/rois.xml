@@ -40,8 +40,9 @@
       There are two types, 2D and 3D isocontours.  Additionally, both
       these ROI types can be defined so that they encompass all
       neighboring values either above a certain minimum value, below a
-      certain maximum value, or between a minimum and maximum
-      value.</para>
+      certain maximum value, or between a minimum and maximum value.
+      After drawing of these ROI's, they can be modified by using
+      manual drawing or erasing operations. </para>
     
    <variablelist> 
 
@@ -55,6 +56,29 @@
     <varlistentry><term>3D Isocontour</term>
     <listitem><para>A 3D isocontour is derived by considering a value
 	on the current frame of the active data set.</para></listitem>
+    </varlistentry>
+  
+   </variablelist>
+
+ </sect3>
+  
+  <sect3><title>Freehand ROI's</title>
+
+    <para> Freehand ROI's are regions of interest that are drawn
+    manually.  </para>
+    
+   <variablelist> 
+
+    <varlistentry><term>2D Freehand</term>
+
+    <listitem><para>A 2D Freehand ROI is similar to a 3D Freehand,
+         except that it is constrained to be only one voxel thick.  By
+         default, the depth is the current slice thickness, although
+         this can be changed by the user.</para></listitem>
+    </varlistentry>
+  
+    <varlistentry><term>3D Freehand</term>
+    <listitem><para>An ROI that can be drawn freely in all 3 dimensions..</para></listitem>
     </varlistentry>
   
    </variablelist>
@@ -96,21 +120,33 @@
     For isocontour's, the value of the data set at the clicked upon
     location will be used to derive the isocontour.
   </para>
-    
+
+  <para>
+   For freehand's, the point on the screen that is clicked upon will
+   be included in the ROI.
+  </para>    
 
 </sect2>
 
 <sect2><title>Manipulating ROI's</title>
 
   <para>
-    After an ROI is drawn, it can be further manipulated to adjust
-    its size, placement, and orientation.  You can directly
-    manipulate the ROI by clicking on it in any of the viewing
-    windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
+    After an ROI is drawn, it can be further manipulated to adjust its
+    size, placement, and orientation.  You can directly manipulate the
+    ROI by clicking on it in any of the viewing windows.  Mouse button
+    1 is used to shift ROIs.  Mouse button 2 is used for zooming
+    ellipsoid, elliptic cylinder and box ROI, and is used for entering
+    drawing mode for isocontour and freehand ROI's.  Mouse button 3 is
     used to rotate ellipsoid, elliptic cylinder, and box ROIs, and for
-    erasing points from isocontour ROI's.  Mouse button 3 is used for
-    zooming ellipsoid, elliptic cylinder and box ROI, and is used for
-    redefining the isocontour value for isocontour ROI's.
+    redefining the isocontour value for isocontour ROI's.  </para>
+
+  <para> For isocontour and freehand ROI's, drawing mode can be
+     entered by using thie middle mouse button (button 2).  Once
+     entered, points can be added or removed from the ROI by using the
+     left (button 1) or right (button 3) mouse buttons, respectively.
+     Holding down the shift key while using these buttons increases
+     the size of the action.  The middle button (button 2) allows the
+     user to leave drawing mode.
   </para>
 
   <para>

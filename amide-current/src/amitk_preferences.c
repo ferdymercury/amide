@@ -132,7 +132,7 @@ static void preferences_init (AmitkPreferences * preferences) {
   preferences->canvas_line_style = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE : temp_int;
 
   temp_int = gnome_config_get_int_with_default("ROI/FillIsocontour", &default_value); 
-  preferences->canvas_fill_isocontour = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ISOCONTOUR : temp_int;
+  preferences->canvas_fill_roi = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI : temp_int;
 
   temp_int = gnome_config_get_int_with_default("CANVAS/Layout", &default_value);
   preferences->canvas_layout = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT : temp_int;
@@ -177,7 +177,7 @@ static void preferences_init (AmitkPreferences * preferences) {
   /* canvas preferences */
   preferences->canvas_roi_width = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH;
   preferences->canvas_line_style = AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE;
-  preferences->canvas_fill_isocontour = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ISOCONTOUR;
+  preferences->canvas_fill_roi = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI;
   preferences->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   preferences->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   preferences->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
@@ -265,15 +265,15 @@ void amitk_preferences_set_canvas_line_style(AmitkPreferences * preferences, Gdk
   return;
 }
 
-void amitk_preferences_set_canvas_fill_isocontour(AmitkPreferences * preferences, gboolean fill_isocontour) {
+void amitk_preferences_set_canvas_fill_roi(AmitkPreferences * preferences, gboolean fill_roi) {
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
 
-  if (AMITK_PREFERENCES_CANVAS_FILL_ISOCONTOUR(preferences) != fill_isocontour) {
-    preferences->canvas_fill_isocontour = fill_isocontour;
+  if (AMITK_PREFERENCES_CANVAS_FILL_ROI(preferences) != fill_roi) {
+    preferences->canvas_fill_roi = fill_roi;
 #ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("ROI/FillIsocontour",fill_isocontour);
+    gnome_config_set_int("ROI/FillIsocontour",fill_roi);
     gnome_config_pop_prefix();
     gnome_config_sync();
 #endif

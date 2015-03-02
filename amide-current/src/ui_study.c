@@ -69,12 +69,12 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    "",  "", "",
    ""}, /* BLANK */
   {N_("move view"), N_("shift data set"),
-   N_("move view, min. depth"), N_("rotate data set"), 
-   N_("change depth"), "",  N_("add fiducial mark"),
+   N_("move view, min. depth"), "", 
+   N_("change depth"), N_("rotate data set"),  N_("add fiducial mark"),
    ""}, /* DATA SET */
   {N_("shift"), "", 
-   N_("rotate"), "", 
-   N_("scale"), "", N_("set data set inside roi to zero"),
+   N_("scale"), "", 
+   N_("rotate"), "", N_("set data set inside roi to zero"),
    N_("set data set outside roi to zero")}, /*CANVAS_ROI */
   {N_("shift"),  "", 
    "", "", 
@@ -85,21 +85,33 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    N_("change depth"), "",  "",
    ""}, /* STUDY  */
   {N_("shift"), "", 
-   N_("erase isocontour point"), N_("erase large point"), 
+   N_("enter draw mode"), "",
    N_("start isocontour change"), "", N_("set data set inside roi to zero"),
    N_("set data set outside roi to zero")}, /*CANVAS_ISOCONTOUR_ROI */
+  {N_("shift"), "", 
+   N_("enter draw mode"), "",
+   "", "", N_("set data set inside roi to zero"),
+   N_("set data set outside roi to zero")}, /*CANVAS_FREEHAND_ROI */
+  {N_("draw point"),N_("draw large point"),
+   N_("leave draw mode"), "",
+   N_("erase point"), N_("erase large point"), "",
+   ""}, /* CANVAS_DRAWING_MODE */
   {N_("move line"), "",
-   N_("rotate line"), "", 
-   "", "", "",
+   "", "", 
+   N_("rotate line"), "", "",
    ""}, /* CANVAS_LINE_PROFILE */
   {N_("draw - edge-to-edge"), "", 
    N_("draw - center out"), "", 
    "", "", "",
    ""}, /* CANVAS_NEW_ROI */
-  {N_("pick isocontour value"), "", 
+  {N_("pick isocontour start point"), "", 
    "", "", 
    "", "", "",
    ""}, /* CANVAS_NEW_ISOCONTOUR_ROI */
+  {N_("pick freehand drawing start point"), "", 
+   "", "", 
+   "", "", "",
+   ""}, /* CANVAS_NEW_FREEHAND_ROI */
   {N_("cancel"), "", 
    "", "", 
    N_("pick new isocontour"), "", "",
@@ -632,20 +644,11 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
   gchar * legend;
   AmitkPoint location_p;
 
-  if (which_info == AMITK_HELP_INFO_UPDATE_LOCATION) {
-    location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] mm"), 
-				       point.x, point.y, point.z);
-    location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
-  } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
-    location_text[0] = g_strdup_printf(_("shift (x,y,z) ="));
-    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 
-				     point.x, point.y, point.z);
-  } else if (which_info == AMITK_HELP_INFO_UPDATE_THETA) {
-    location_text[0] = g_strdup("");
-    location_text[1] = g_strdup_printf(_("theta = % 5.3f degrees"), value);
-
-  } else {
-
+  /* put up the help lines... except for the given info types, in which case
+     we leave the last one displayed up */
+  if ((which_info != AMITK_HELP_INFO_UPDATE_LOCATION) &&
+      (which_info != AMITK_HELP_INFO_UPDATE_SHIFT) &&
+      (which_info != AMITK_HELP_INFO_UPDATE_THETA)) {
     for (i_line=0; i_line < HELP_INFO_LINE_BLANK;i_line++) {
 
       /* the line's legend */
@@ -693,7 +696,25 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 	gnome_canvas_item_set(ui_study->help_line[i_line], "text", 
 			      help_info_lines[which_info][i_line], NULL);
     }
+  }
 
+
+
+  /* update the location information */
+  if ((which_info == AMITK_HELP_INFO_UPDATE_LOCATION) || 
+      (which_info == AMITK_HELP_INFO_CANVAS_DRAWING_MODE)) {
+    location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] mm"), 
+				       point.x, point.y, point.z);
+    location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
+  } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
+    location_text[0] = g_strdup_printf(_("shift (x,y,z) ="));
+    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 
+				     point.x, point.y, point.z);
+  } else if (which_info == AMITK_HELP_INFO_UPDATE_THETA) {
+    location_text[0] = g_strdup("");
+    location_text[1] = g_strdup_printf(_("theta = % 5.3f degrees"), value);
+
+  } else {
     location_p = AMITK_STUDY_VIEW_CENTER(ui_study->study);
     location_text[0] = g_strdup_printf(_("view center (x,y,z) ="));
     location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] mm"), 

@@ -79,7 +79,7 @@ static void dialog_change_roi_width_cb           (GtkWidget * widget, gpointer d
 #ifndef AMIDE_LIBGNOMECANVAS_AA
 static void dialog_change_line_style_cb          (GtkWidget * widget, gpointer data);
 #endif
-static void dialog_change_fill_isocontour_cb     (GtkWidget * widget, gpointer data);
+static void dialog_change_fill_roi_cb            (GtkWidget * widget, gpointer data);
 static void dialog_change_layout_cb              (GtkWidget * widget, gpointer data);
 static void dialog_change_maintain_size_cb       (GtkWidget * widget, gpointer data);
 static void dialog_change_target_empty_area_cb   (GtkWidget * widget, gpointer data);
@@ -278,8 +278,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    default:
+    case AMITK_ROI_TYPE_FREEHAND_2D:
+    case AMITK_ROI_TYPE_FREEHAND_3D:
       type_start = type_end = AMITK_ROI_TYPE(object);
+      break;
+    default:
+      type_start = type_end = 0;
+      g_error("unexpected case in %s at line %d\n", __FILE__, __LINE__);
       break;
     }
 
@@ -766,12 +771,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
      Dimension adjustment page for ROI's
 
      notes:
-     3D Isocontours have no adjustable dimensions
-     2D Isocontours can have their z dimension adjusted
+     3D Isocontours/Freehands have no adjustable dimensions
+     2D Isocontours/Freehands can have their z dimension adjusted
      --------------------------- */
   
   if (AMITK_IS_ROI(object)) {
-    if (AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) {
+    if ((AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) &&
+	(AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_FREEHAND_3D)) {
       
       /* the next page of options */
       packing_table = gtk_table_new(4,2,FALSE);
@@ -788,7 +794,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       table_row++;
       
       for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
-	if ((AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) || (i_axis == AMITK_AXIS_Z)) {
+	if (((AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) &&
+	     (AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_FREEHAND_2D)) || 
+	    (i_axis == AMITK_AXIS_Z)) {
 	
 	  /**************/
 	  label = gtk_label_new(amitk_axis_get_name(i_axis));
@@ -967,7 +975,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 					  &(dialog->roi_width_spin),
 					  &(dialog->roi_item), 
 					  &(dialog->line_style_menu),
-					  &(dialog->fill_isocontour_button),
+					  &(dialog->fill_roi_button),
 					  &(dialog->layout_button1), 
 					  &(dialog->layout_button2), 
 					  &(dialog->maintain_size_button),
@@ -980,8 +988,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       g_signal_connect(G_OBJECT(dialog->line_style_menu), "changed", 
 		       G_CALLBACK(dialog_change_line_style_cb), dialog);
 #endif
-      g_signal_connect(G_OBJECT(dialog->fill_isocontour_button), "toggled", 
-		       G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
+      g_signal_connect(G_OBJECT(dialog->fill_roi_button), "toggled", 
+		       G_CALLBACK(dialog_change_fill_roi_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button1), "clicked", 
 		       G_CALLBACK(dialog_change_layout_cb), dialog);
       g_signal_connect(G_OBJECT(dialog->layout_button2), "clicked", 
@@ -1059,7 +1067,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     } else if (AMITK_IS_ROI(object)) {
       if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
-	label = gtk_label_new(_("Isocontour Min Value"));
+	label = gtk_label_new(_("Isocontour Min Specified Value"));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	gtk_widget_show(label);
@@ -1072,7 +1080,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	
 	table_row++;
 
-	label = gtk_label_new(_("Isocontour Max Value"));
+	label = gtk_label_new(_("Isocontour Max Specified Value"));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	gtk_widget_show(label);
@@ -1367,9 +1375,12 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   }
 
   if (AMITK_IS_ROI(dialog->object)) {
-    if (AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) {
+    if ((AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) &&
+	(AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_FREEHAND_3D)) {
       for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
-	if ((AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) || (i_axis == AMITK_AXIS_Z)) {
+	if (((AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) &&
+	     (AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_FREEHAND_2D)) || 
+	    (i_axis == AMITK_AXIS_Z)) {
 	  g_signal_handlers_block_by_func(G_OBJECT(dialog->dimension_spin[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
 	  gtk_widget_set_sensitive(GTK_WIDGET(dialog->dimension_spin[i_axis]), center_valid);
 	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->dimension_spin[i_axis]), 
@@ -1401,10 +1412,10 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 #endif
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
 #endif
-      g_signal_handlers_block_by_func(G_OBJECT(dialog->fill_isocontour_button), G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->fill_isocontour_button), 
-				   AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(dialog->object));
-      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->fill_isocontour_button), G_CALLBACK(dialog_change_fill_isocontour_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->fill_roi_button), G_CALLBACK(dialog_change_fill_roi_cb), dialog);
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->fill_roi_button), 
+				   AMITK_STUDY_CANVAS_FILL_ROI(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->fill_roi_button), G_CALLBACK(dialog_change_fill_roi_cb), dialog);
       
 
       g_signal_handlers_block_by_func(G_OBJECT(dialog->layout_button1), G_CALLBACK(dialog_change_layout_cb), dialog);
@@ -1533,7 +1544,6 @@ static void dialog_update_conversion(AmitkObjectDialog * dialog) {
   for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->conversion_button[i_conversion]),
 				      G_CALLBACK(dialog_conversion_cb), dialog);
-
 
   switch (conversion) {
   case AMITK_CONVERSION_PERCENT_ID_PER_G:
@@ -1734,10 +1744,11 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
   if (AMITK_IS_ROI(dialog->object)) {
     amitk_volume_set_corner(AMITK_VOLUME(dialog->object), new_corner);
     
-    if (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
+    if ((AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
+	(AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_FREEHAND_2D)) {
       AmitkPoint new_voxel_size = AMITK_ROI_VOXEL_SIZE(dialog->object);
       new_voxel_size.z = new_corner.z;
-      amitk_roi_isocontour_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
+      amitk_roi_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
     }
   }
 
@@ -2054,11 +2065,11 @@ static void dialog_change_line_style_cb(GtkWidget * widget, gpointer data) {
 }
 #endif
 
-static void dialog_change_fill_isocontour_cb(GtkWidget * widget, gpointer data) {
+static void dialog_change_fill_roi_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
   g_return_if_fail(AMITK_IS_STUDY(dialog->object));
-  amitk_study_set_canvas_fill_isocontour(AMITK_STUDY(dialog->object),
-					 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+  amitk_study_set_canvas_fill_roi(AMITK_STUDY(dialog->object),
+				  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 

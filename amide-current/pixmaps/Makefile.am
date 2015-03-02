@@ -27,7 +27,9 @@ BUILT_SOURCES = \
 	cylinder_icon.h \
 	ellipsoid_icon.h \
 	isocontour_2d_icon.h \
-	isocontour_3d_icon.h 
+	isocontour_3d_icon.h \
+	freehand_2d_icon.h \
+	freehand_3d_icon.h 
 
 
 

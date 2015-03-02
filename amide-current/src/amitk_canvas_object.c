@@ -49,7 +49,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   rgba_t roi_color,
 					   gint roi_width,
 					   GdkLineStyle line_style,
-					   gboolean fill_isocontour) {
+					   gboolean fill_roi) {
 
   guint32 fill_color_rgba;
   gdouble affine[6];
@@ -143,10 +143,12 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     switch(AMITK_ROI_TYPE(roi)) {
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+    case AMITK_ROI_TYPE_FREEHAND_2D:
+    case AMITK_ROI_TYPE_FREEHAND_3D:
 
       offset = zero_point;
       corner = one_point;
-      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim, fill_isocontour,
+      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim, fill_roi,
 					roi_color,&offset, &corner);
       
       offset_cpoint= point_2_canvas_point(AMITK_VOLUME_CORNER(canvas_volume),
@@ -176,7 +178,6 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     case AMITK_ROI_TYPE_ELLIPSOID:
     case AMITK_ROI_TYPE_CYLINDER:
     case AMITK_ROI_TYPE_BOX:
-    default:
       roi_points =  
 	amitk_roi_get_intersection_line(roi, canvas_volume, pixel_dim);
     
@@ -231,6 +232,9 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 			      NULL);
       }
       gnome_canvas_points_unref(points);
+      break;
+    default:
+      g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
       break;
     }
   }

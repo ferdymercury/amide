@@ -87,7 +87,7 @@ struct _AmitkObjectDialog
   GtkWidget * roi_width_spin;
   GnomeCanvasItem * roi_item;
   GtkWidget * line_style_menu;
-  GtkWidget * fill_isocontour_button;
+  GtkWidget * fill_roi_button;
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * maintain_size_button;

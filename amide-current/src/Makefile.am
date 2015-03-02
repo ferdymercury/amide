@@ -23,9 +23,9 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
-	-DGNOME_DISABLE_DEPRECATED \
 	-I/usr/local/include \
 	-I/usr/local/xmedcon/include
+##	-DGNOME_DISABLE_DEPRECATED \
 ##	-DGTK_DISABLE_DEPRECATED \
 
 
@@ -188,14 +188,18 @@ AMITK_ROI_VARIABLE_C = \
 	amitk_roi_CYLINDER.c \
 	amitk_roi_BOX.c \
 	amitk_roi_ISOCONTOUR_2D.c \
-	amitk_roi_ISOCONTOUR_3D.c 
+	amitk_roi_ISOCONTOUR_3D.c \
+	amitk_roi_FREEHAND_2D.c \
+	amitk_roi_FREEHAND_3D.c
 
 AMITK_ROI_VARIABLE_H = \
 	amitk_roi_ELLIPSOID.h \
 	amitk_roi_CYLINDER.h \
 	amitk_roi_BOX.h \
 	amitk_roi_ISOCONTOUR_2D.h \
-	amitk_roi_ISOCONTOUR_3D.h
+	amitk_roi_ISOCONTOUR_3D.h \
+	amitk_roi_FREEHAND_2D.h \
+	amitk_roi_FREEHAND_3D.h
 
 AMITK_RAW_DATA_VARIABLE_C = \
 	amitk_raw_data_UBYTE.c \

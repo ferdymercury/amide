@@ -51,6 +51,7 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_CREATION_DATE(stu)            (AMITK_STUDY(stu)->creation_date)
 #define AMITK_STUDY_FILENAME(stu)                 (AMITK_STUDY(stu)->filename)
 #define AMITK_STUDY_VOXEL_DIM(stu)                (AMITK_STUDY(stu)->voxel_dim)
+#define AMITK_STUDY_VOXEL_DIM_VALID(stu)          (AMITK_STUDY(stu)->voxel_dim_valid)
 #define AMITK_STUDY_FUSE_TYPE(stu)                (AMITK_STUDY(stu)->fuse_type)
 #define AMITK_STUDY_VIEW_MODE(stu)                (AMITK_STUDY(stu)->view_mode)
 #define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)->canvas_visible[canvas])
@@ -58,7 +59,7 @@ G_BEGIN_DECLS
 
 #define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)->canvas_roi_width)
 #define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)->canvas_line_style)
-#define AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(stu)   (AMITK_STUDY(stu)->canvas_fill_isocontour)
+#define AMITK_STUDY_CANVAS_FILL_ROI(stu)          (AMITK_STUDY(stu)->canvas_fill_roi)
 #define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)->canvas_layout)
 #define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)->canvas_maintain_size)
 #define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)->canvas_target_empty_area)
@@ -103,13 +104,14 @@ struct _AmitkStudy
   /* canvas preferences */
   gint canvas_roi_width;
   GdkLineStyle canvas_line_style;
-  gboolean canvas_fill_isocontour;
+  gboolean canvas_fill_roi;
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
 
   /* stuff calculated when file is loaded and stored */
   amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
+  gboolean voxel_dim_valid;
 
   /* stuff that doesn't need to be saved */
   AmitkLineProfile * line_profile;
@@ -169,8 +171,8 @@ void            amitk_study_set_canvas_roi_width    (AmitkStudy * study,
 						     gint roi_width);
 void            amitk_study_set_canvas_line_style   (AmitkStudy * study,
 						     const GdkLineStyle line_style);
-void            amitk_study_set_canvas_fill_isocontour (AmitkStudy * study,
-							const gboolean fill_isocontour);
+void            amitk_study_set_canvas_fill_roi     (AmitkStudy * study,
+						     const gboolean fill_roi);
 void            amitk_study_set_canvas_layout       (AmitkStudy * study,
 						     const AmitkLayout layout);
 void            amitk_study_set_canvas_maintain_size(AmitkStudy * study,

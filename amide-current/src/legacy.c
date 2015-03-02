@@ -533,14 +533,14 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
 
     isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
     if (isocontour_xml_filename != NULL)
-      new_roi->isocontour = data_set_load_xml(isocontour_xml_filename, perror_buf);
+      new_roi->map_data = data_set_load_xml(isocontour_xml_filename, perror_buf);
   }
 
   /* children were never used */
 
   /* make sure to mark the roi as undrawn if needed */
   if (AMITK_ROI_TYPE_ISOCONTOUR(new_roi)) {
-    if (new_roi->isocontour == NULL) 
+    if (new_roi->map_data == NULL) 
       AMITK_VOLUME(new_roi)->valid = FALSE;
   } else {
     if (POINT_EQUAL(AMITK_VOLUME_CORNER(new_roi), zero_point)) {

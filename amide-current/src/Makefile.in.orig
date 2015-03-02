@@ -331,6 +331,7 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
+	-DGNOME_DISABLE_DEPRECATED \
 	-I/usr/local/include \
 	-I/usr/local/xmedcon/include
 

@@ -252,6 +252,7 @@ static void study_init (AmitkStudy * study) {
   study->fuse_type = AMITK_FUSE_TYPE_BLEND;
   study->view_mode = AMITK_VIEW_MODE_SINGLE;
   study->voxel_dim = 1.0;
+  study->voxel_dim_valid=FALSE;
   for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
     study->canvas_visible[i_view] = TRUE;
   study->canvas_target = FALSE;
@@ -259,7 +260,7 @@ static void study_init (AmitkStudy * study) {
   /* preferences for the canvas */
   study->canvas_roi_width = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH;
   study->canvas_line_style = AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE;
-  study->canvas_fill_isocontour = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ISOCONTOUR;
+  study->canvas_fill_roi = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI;
   study->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   study->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   study->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
@@ -337,7 +338,7 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   /* preferences */
   dest_study->canvas_roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(src_object);
   dest_study->canvas_line_style = AMITK_STUDY_CANVAS_LINE_STYLE(src_object);
-  dest_study->canvas_fill_isocontour = AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(src_object);
+  dest_study->canvas_fill_roi = AMITK_STUDY_CANVAS_FILL_ROI(src_object);
   dest_study->canvas_layout = AMITK_STUDY_CANVAS_LAYOUT(src_object);
   dest_study->canvas_maintain_size = AMITK_STUDY_CANVAS_MAINTAIN_SIZE(src_object);
   dest_study->canvas_target_empty_area = AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(src_object);
@@ -382,7 +383,7 @@ static void study_write_xml(const AmitkObject * object,xmlNodePtr nodes,  FILE *
   /* preferences */
   xml_save_int(nodes, "canvas_roi_width", AMITK_STUDY_CANVAS_ROI_WIDTH(study));
   xml_save_int(nodes, "canvas_line_style", AMITK_STUDY_CANVAS_LINE_STYLE(study));
-  xml_save_int(nodes, "canvas_fill_isocontour", AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(study));
+  xml_save_int(nodes, "canvas_fill_roi", AMITK_STUDY_CANVAS_FILL_ROI(study));
   xml_save_string(nodes, "canvas_layout", amitk_layout_get_name(AMITK_STUDY_CANVAS_LAYOUT(study)));
   xml_save_boolean(nodes, "canvas_maintain_size", AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study));
   xml_save_int(nodes, "canvas_target_empty_area", AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(study));
@@ -425,9 +426,14 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
   amitk_study_set_canvas_line_style(study, 
 				    xml_get_int_with_default(nodes, "canvas_line_style",
 							     AMITK_STUDY_CANVAS_LINE_STYLE(study)));  
-  amitk_study_set_canvas_fill_isocontour(study, 
-					 xml_get_int_with_default(nodes, "canvas_fill_isocontour",
-								  AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(study)));  
+  if (xml_node_exists(nodes, "canvas_fill_isocontour")) /* legacy */
+    amitk_study_set_canvas_fill_roi(study, 
+				    xml_get_int_with_default(nodes, "canvas_fill_isocontour",
+							     AMITK_STUDY_CANVAS_FILL_ROI(study)));  
+  else
+    amitk_study_set_canvas_fill_roi(study, 
+				    xml_get_int_with_default(nodes, "canvas_fill_roi",
+							     AMITK_STUDY_CANVAS_FILL_ROI(study)));  
   amitk_study_set_canvas_maintain_size(study, 
 				       xml_get_boolean_with_default(nodes, "canvas_maintain_size",
 								AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study)));  
@@ -497,6 +503,7 @@ static void set_voxel_dim_and_zoom(AmitkStudy * study, amide_real_t voxel_dim, a
 
   study->zoom = zoom;
   study->voxel_dim = voxel_dim;
+  study->voxel_dim_valid=TRUE;
   g_signal_emit(G_OBJECT(study), study_signals[VOXEL_DIM_OR_ZOOM_CHANGED], 0);
 }
 
@@ -507,10 +514,15 @@ static void study_recalc_voxel_dim(AmitkStudy * study) {
 
   voxel_dim = amitk_data_sets_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(study));
 
-  if (!REAL_EQUAL(voxel_dim,AMITK_STUDY_VOXEL_DIM(study))) {
-    /* update the zoom as well, so the canvas size stays equal */
-    zoom = AMITK_STUDY_ZOOM(study)*voxel_dim/AMITK_STUDY_VOXEL_DIM(study);
+  if (AMITK_STUDY_VOXEL_DIM_VALID(study) && !REAL_EQUAL(voxel_dim,AMITK_STUDY_VOXEL_DIM(study))) {
+    /* update the zoom conservatively, so the canvas pixel size stays equal or gets smaller */
+    if (voxel_dim < AMITK_STUDY_VOXEL_DIM(study))
+      zoom = AMITK_STUDY_ZOOM(study)*voxel_dim/AMITK_STUDY_VOXEL_DIM(study);
+    else
+      zoom = AMITK_STUDY_ZOOM(study);
     set_voxel_dim_and_zoom(study, voxel_dim, zoom);
+  } else {
+    set_voxel_dim_and_zoom(study, voxel_dim,AMITK_STUDY_ZOOM(study));
   }
 
   return;
@@ -556,7 +568,7 @@ AmitkStudy * amitk_study_new (AmitkPreferences * preferences) {
   if (preferences != NULL) {
     study->canvas_roi_width = AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences);
     study->canvas_line_style = AMITK_PREFERENCES_CANVAS_LINE_STYLE(preferences);
-    study->canvas_fill_isocontour = AMITK_PREFERENCES_CANVAS_FILL_ISOCONTOUR(preferences);
+    study->canvas_fill_roi = AMITK_PREFERENCES_CANVAS_FILL_ROI(preferences);
     study->canvas_layout = AMITK_PREFERENCES_CANVAS_LAYOUT(preferences);
     study->canvas_maintain_size = AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(preferences);
     study->canvas_target_empty_area = AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences);
@@ -776,12 +788,12 @@ void amitk_study_set_canvas_line_style(AmitkStudy * study, const GdkLineStyle li
   return;
 }
 
-void amitk_study_set_canvas_fill_isocontour(AmitkStudy * study, const gboolean fill_isocontour){
+void amitk_study_set_canvas_fill_roi(AmitkStudy * study, const gboolean fill_roi){
 
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  if (AMITK_STUDY_CANVAS_FILL_ISOCONTOUR(study) != fill_isocontour) {
-    study->canvas_fill_isocontour = fill_isocontour;
+  if (AMITK_STUDY_CANVAS_FILL_ROI(study) != fill_roi) {
+    study->canvas_fill_roi = fill_roi;
     g_signal_emit(G_OBJECT(study), study_signals[CANVAS_ROI_PREFERENCE_CHANGED], 0);
   }
 

@@ -493,9 +493,11 @@ gboolean rendering_load_object(rendering_t * rendering,
 	  switch(AMITK_ROI_TYPE(rendering->object)) {
 	  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
 	  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+	  case AMITK_ROI_TYPE_FREEHAND_2D:
+	  case AMITK_ROI_TYPE_FREEHAND_3D:
 	    POINT_TO_VOXEL(temp_point, AMITK_ROI(rendering->object)->voxel_size, 0, 0, j_voxel);
-	    if (amitk_raw_data_includes_voxel(AMITK_ROI(rendering->object)->isocontour, j_voxel)) {
-	      temp_int = *AMITK_RAW_DATA_UBYTE_POINTER(AMITK_ROI(rendering->object)->isocontour, j_voxel);
+	    if (amitk_raw_data_includes_voxel(AMITK_ROI(rendering->object)->map_data, j_voxel)) {
+	      temp_int = *AMITK_RAW_DATA_UBYTE_POINTER(AMITK_ROI(rendering->object)->map_data, j_voxel);
 	      if (temp_int == 2)
 		temp_int = RENDERING_DENSITY_MAX;
 	      else if (temp_int == 1)

@@ -35,6 +35,8 @@
 #include "amitk_roi_BOX.h"
 #include "amitk_roi_ISOCONTOUR_2D.h"
 #include "amitk_roi_ISOCONTOUR_3D.h"
+#include "amitk_roi_FREEHAND_2D.h"
+#include "amitk_roi_FREEHAND_3D.h"
 
 
 
@@ -44,6 +46,8 @@ gchar * amitk_roi_menu_names[] = {
   N_("_Box"),
   N_("_2D Isocontour"),
   N_("_3D Isocontour"),
+  N_("_2D Freehand"),
+  N_("_3D Freehand")
 };
 
 gchar * amitk_roi_menu_explanation[] = {
@@ -52,6 +56,8 @@ gchar * amitk_roi_menu_explanation[] = {
   N_("Add a new box shaped ROI"),
   N_("Add a new 2D Isocontour ROI"),
   N_("Add a new 3D Isocontour ROI"),
+  N_("Add a new 2D Freehand ROI"),
+  N_("Add a new 3D Freehand ROI")
 };
 
 
@@ -78,8 +84,8 @@ static gchar *       roi_read_xml            (AmitkObject        *object,
 					      gchar              *error_buf);
 static void          roi_get_center          (const AmitkVolume *volume,
 					      AmitkPoint        *center);
-static void          roi_isocontour_set_voxel_size(AmitkRoi * roi, 
-						   AmitkPoint voxel_size);
+static void          roi_set_voxel_size      (AmitkRoi * roi, 
+					      AmitkPoint voxel_size);
 
 static AmitkVolumeClass * parent_class;
 static guint        roi_signals[LAST_SIGNAL];
@@ -153,13 +159,14 @@ static void roi_class_init (AmitkRoiClass * class) {
 
 static void roi_init (AmitkRoi * roi) {
 
-  roi->isocontour = NULL;
   roi->voxel_size = zero_point;
+  roi->map_data = NULL;
+  roi->center_of_mass_calculated=FALSE;
+  roi->center_of_mass=zero_point;
+
   roi->isocontour_min_value = 0.0;
   roi->isocontour_max_value = 0.0;
   roi->isocontour_range = AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN;
-  roi->isocontour_center_of_mass_calculated=FALSE;
-  roi->isocontour_center_of_mass=zero_point;
 }
 
 
@@ -167,9 +174,9 @@ static void roi_finalize (GObject *object)
 {
   AmitkRoi * roi = AMITK_ROI(object);
 
-  if (roi->isocontour != NULL) {
-    g_object_unref(roi->isocontour);
-    roi->isocontour = NULL;
+  if (roi->map_data != NULL) {
+    g_object_unref(roi->map_data);
+    roi->map_data = NULL;
   }
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -188,13 +195,13 @@ static void roi_scale(AmitkSpace *space, AmitkPoint *ref_point, AmitkPoint *scal
 
   /* and readjust the voxel size based on the new corner */
   if (AMITK_VOLUME_VALID(roi)) {
-    if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
+    if (AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi)) {
 
       voxel_size = AMITK_VOLUME_CORNER(roi);
-      voxel_size.x /= roi->isocontour->dim.x;
-      voxel_size.y /= roi->isocontour->dim.y;
-      voxel_size.z /= roi->isocontour->dim.z;
-      roi_isocontour_set_voxel_size(roi, voxel_size);
+      voxel_size.x /= roi->map_data->dim.x;
+      voxel_size.y /= roi->map_data->dim.y;
+      voxel_size.z /= roi->map_data->dim.z;
+      roi_set_voxel_size(roi, voxel_size);
     }
   }
 }
@@ -212,7 +219,7 @@ static AmitkObject * roi_copy (const AmitkObject * object) {
   return AMITK_OBJECT(copy);
 }
 
-/* doesn't copy the data set used by isocontours, just adds a reference... */
+/* doesn't copy the data set used by isocontours and freehands, just adds a reference... */
 static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * src_object) {
 
   AmitkRoi * src_roi;
@@ -226,18 +233,19 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 
   amitk_roi_set_type(dest_roi, AMITK_ROI_TYPE(src_object));
 
-  if (src_roi->isocontour != NULL) {
-    if (dest_roi->isocontour != NULL)
-      g_object_unref(dest_roi->isocontour);
-    dest_roi->isocontour = g_object_ref(src_roi->isocontour);
+  if (src_roi->map_data != NULL) {
+    if (dest_roi->map_data != NULL)
+      g_object_unref(dest_roi->map_data);
+    dest_roi->map_data = g_object_ref(src_roi->map_data);
   }
 
-  roi_isocontour_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
+  dest_roi->center_of_mass_calculated = src_roi->center_of_mass_calculated;
+  dest_roi->center_of_mass = src_roi->center_of_mass;
+  roi_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
+
   dest_roi->isocontour_min_value = AMITK_ROI_ISOCONTOUR_MIN_VALUE(src_object);
   dest_roi->isocontour_max_value = AMITK_ROI_ISOCONTOUR_MAX_VALUE(src_object);
   dest_roi->isocontour_range = AMITK_ROI_ISOCONTOUR_RANGE(src_object);
-  dest_roi->isocontour_center_of_mass_calculated = src_roi->isocontour_center_of_mass_calculated;
-  dest_roi->isocontour_center_of_mass = src_roi->isocontour_center_of_mass;
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -256,25 +264,27 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * 
 
   xml_save_string(nodes, "type", amitk_roi_type_get_name(AMITK_ROI_TYPE(roi)));
 
-  /* isocontour specific stuff */
+  /* freehand and isocontour specific stuff */
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
+  xml_save_boolean(nodes, "center_of_mass_calculated", AMITK_ROI(roi)->center_of_mass_calculated);
+  amitk_point_write_xml(nodes, "center_of_mass", AMITK_ROI(roi)->center_of_mass);
+
+  if (AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi)) {
+    name = g_strdup_printf("roi_%s_map_data", AMITK_OBJECT_NAME(roi));
+    amitk_raw_data_write_xml(roi->map_data, name, study_file, &filename, &location, &size);
+    g_free(name);
+    if (study_file == NULL) {
+      xml_save_string(nodes,"map_file", filename);
+      g_free(filename);
+    } else {
+      xml_save_location_and_size(nodes, "map_location_and_size", location, size);
+    }
+  }
+
+  /* isocontour specific stuff */
   xml_save_real(nodes, "isocontour_min_value", AMITK_ROI_ISOCONTOUR_MIN_VALUE(roi));
   xml_save_real(nodes, "isocontour_max_value", AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi));
   xml_save_int(nodes, "isocontour_range", AMITK_ROI_ISOCONTOUR_RANGE(roi));
-  xml_save_boolean(nodes, "isocontour_center_of_mass_calculated", AMITK_ROI(roi)->isocontour_center_of_mass_calculated);
-  amitk_point_write_xml(nodes, "isocontour_center_of_mass", AMITK_ROI(roi)->isocontour_center_of_mass);
-
-  if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
-    name = g_strdup_printf("roi_%s_isocontour", AMITK_OBJECT_NAME(roi));
-    amitk_raw_data_write_xml(roi->isocontour, name, study_file, &filename, &location, &size);
-    g_free(name);
-    if (study_file == NULL) {
-      xml_save_string(nodes,"isocontour_file", filename);
-      g_free(filename);
-    } else {
-      xml_save_location_and_size(nodes, "isocontour_location_and_size", location, size);
-    }
-  }
 
   return;
 }
@@ -285,7 +295,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
   AmitkRoi * roi;
   AmitkRoiType i_roi_type;
   gchar * temp_string;
-  gchar * isocontour_xml_filename=NULL;
+  gchar * map_xml_filename=NULL;
   guint64 location, size;
 
   error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
@@ -300,12 +310,49 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
 	roi->type = i_roi_type;
   g_free(temp_string);
 
+  /* freehand and isocontour specific stuff */
+  if (AMITK_ROI_TYPE_ISOCONTOUR(roi) | AMITK_ROI_TYPE_FREEHAND(roi)) {
+    roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
+
+    /* check for old style entries */
+    if (xml_node_exists(nodes, "isocontour_center_of_mass_calculated"))
+	roi->center_of_mass_calculated = xml_get_boolean(nodes, "isocontour_center_of_mass_calculated", &error_buf);
+    else
+	roi->center_of_mass_calculated = xml_get_boolean(nodes, "center_of_mass_calculated", &error_buf);
+
+    /* check for old style entries */
+    if (xml_node_exists(nodes, "isocontour_center_of_mass"))
+      roi->center_of_mass = amitk_point_read_xml(nodes, "isocontour_center_of_mass", &error_buf);
+    else
+      roi->center_of_mass = amitk_point_read_xml(nodes, "center_of_mass", &error_buf);
+
+    /* check for old style entries */
+    if (xml_node_exists(nodes, "isocontour_file") || 
+	xml_node_exists(nodes, "isocontour_location_and_size")) {
+      if (study_file == NULL) 
+	map_xml_filename = xml_get_string(nodes, "isocontour_file");
+      else
+	xml_get_location_and_size(nodes, "isocontour_location_and_size", &location, &size, &error_buf);
+      roi->map_data = amitk_raw_data_read_xml(map_xml_filename, study_file, location, 
+						size,&error_buf, NULL, NULL);
+
+      /* if the ROI's never been drawn, it's possible for this not to exist */
+    } else if (xml_node_exists(nodes, "map_file") || 
+	       xml_node_exists(nodes, "map_location_and_size")) {
+
+      if (study_file == NULL) 
+	map_xml_filename = xml_get_string(nodes, "map_file");
+      else
+	xml_get_location_and_size(nodes, "map_location_and_size", &location, &size, &error_buf);
+      roi->map_data = amitk_raw_data_read_xml(map_xml_filename, study_file, location, 
+					      size,&error_buf, NULL, NULL);
+    }
+
+    if (map_xml_filename != NULL) g_free(map_xml_filename);
+  }
+
   /* isocontour specific stuff */
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
-    roi_isocontour_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
-    roi->isocontour_center_of_mass_calculated = xml_get_boolean(nodes, "isocontour_center_of_mass_calculated", &error_buf);
-    roi->isocontour_center_of_mass = amitk_point_read_xml(nodes, "isocontour_center_of_mass", &error_buf);
-
     /* check first if we're using the old isocontour_value and isocontour_inverse entries */
     if (xml_node_exists(nodes, "isocontour_value")) {
       /* works, cause inverse=TRUE=1=AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX */
@@ -320,23 +367,11 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
       roi->isocontour_min_value = xml_get_real(nodes, "isocontour_min_value", &error_buf);
       roi->isocontour_max_value = xml_get_real(nodes, "isocontour_max_value", &error_buf);
     }
-
-    /* if the ROI's never been drawn, it's possible for this not to exist */
-    if (xml_node_exists(nodes, "isocontour_file") || 
-	xml_node_exists(nodes, "isocontour_location_and_size")) {
-      if (study_file == NULL) 
-	isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
-      else
-	xml_get_location_and_size(nodes, "isocontour_location_and_size", &location, &size, &error_buf);
-      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, study_file, location, 
-						size,&error_buf, NULL, NULL);
-      if (isocontour_xml_filename != NULL) g_free(isocontour_xml_filename);
-    }
   }
 
   /* make sure to mark the roi as undrawn if needed */
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
-    if (roi->isocontour == NULL) 
+    if (roi->map_data == NULL) 
       AMITK_VOLUME(roi)->valid = FALSE;
   } else {
     if (POINT_EQUAL(AMITK_VOLUME_CORNER(roi), zero_point)) {
@@ -350,8 +385,8 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
 
 static void roi_get_center(const AmitkVolume *volume, AmitkPoint * pcenter) {
 
-  if (AMITK_ROI_TYPE_ISOCONTOUR(volume)) {
-    *pcenter = amitk_roi_isocontour_get_center_of_mass(AMITK_ROI(volume));
+  if (AMITK_ROI_TYPE_ISOCONTOUR(volume) || AMITK_ROI_TYPE_FREEHAND(volume)) {
+    *pcenter = amitk_roi_get_center_of_mass(AMITK_ROI(volume));
 
   } else {   /* if geometric, just use the standard volume function */
     AMITK_VOLUME_CLASS(parent_class)->volume_get_center(volume,pcenter);
@@ -399,7 +434,7 @@ GSList * amitk_roi_get_intersection_line(const AmitkRoi * roi,
     return_points = amitk_roi_BOX_get_intersection_line(roi, canvas_slice, pixel_dim);
     break;
   default: 
-    g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
+    g_error("roi type %d not implemented! file %s line %d", AMITK_ROI_TYPE(roi), __FILE__, __LINE__);
     break;
   }
 
@@ -426,16 +461,17 @@ GSList * amitk_roi_free_points_list(GSList * list) {
 
 
 /* this does not recalc the far corner, needs to be done separately */
-static void roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
+static void roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
 
   if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
     roi->voxel_size = voxel_size;
-    roi->isocontour_center_of_mass_calculated = FALSE;
+    roi->center_of_mass_calculated = FALSE;
     g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
   }
 }
 
-void amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
+/* only for isocontour and freehand roi's */
+void amitk_roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
 
   GList * children;
   AmitkPoint ref_point;
@@ -443,12 +479,13 @@ void amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) 
   AmitkPoint old_corner;
 
   g_return_if_fail(AMITK_IS_ROI(roi));
-  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi));
 
   if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
     old_corner = AMITK_VOLUME_CORNER(roi);
-    roi_isocontour_set_voxel_size(roi, voxel_size);
-    amitk_roi_isocontour_calc_far_corner(roi);
+    roi_set_voxel_size(roi, voxel_size);
+    if (roi->map_data != NULL)
+      amitk_roi_calc_far_corner(roi);
 
     scaling = point_div(AMITK_VOLUME_CORNER(roi), old_corner);
     scaling = amitk_space_s2b_dim(AMITK_SPACE(roi), scaling);
@@ -466,14 +503,15 @@ void amitk_roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) 
 
 
 /* function to recalculate the far corner of an isocontour roi */
-void amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi) {
+/* only for isocontour and freehand rois */
+void amitk_roi_calc_far_corner(AmitkRoi * roi) {
 
   AmitkPoint new_point;
 
   g_return_if_fail(AMITK_IS_ROI(roi));
-  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi));
 
-  POINT_MULT(roi->isocontour->dim, roi->voxel_size, new_point);
+  POINT_MULT(roi->map_data->dim, roi->voxel_size, new_point);
   amitk_volume_set_corner(AMITK_VOLUME(roi), new_point);
 
   return;
@@ -487,7 +525,7 @@ void amitk_roi_isocontour_calc_far_corner(AmitkRoi * roi) {
 AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi, 
 						const AmitkVolume * canvas_volume,
 						const amide_real_t pixel_dim,
-						const gboolean fill_isocontour) {
+						const gboolean fill_map_roi) {
   
   AmitkDataSet * intersection = NULL;
 
@@ -498,14 +536,22 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     intersection = 
-      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_isocontour);
+      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
     intersection = 
-      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_isocontour);
+      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+    break;
+  case AMITK_ROI_TYPE_FREEHAND_2D:
+    intersection =
+      amitk_roi_FREEHAND_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+    break;
+  case AMITK_ROI_TYPE_FREEHAND_3D:
+    intersection =
+      amitk_roi_FREEHAND_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
     break;
   default: 
-    g_error("roi type %d not implemented!", AMITK_ROI_TYPE(roi));
+    g_error("roi type %d not implemented! file %s line %d",AMITK_ROI_TYPE(roi), __FILE__, __LINE__);
     break;
   }
 
@@ -516,7 +562,7 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
 
 
 /* sets/resets the isocontour value of an isocontour ROI based on the given volume and voxel 
-   note: vol should be a slice for the case of ISOCONTOUR_2D */
+   note: vol should be a slice for the case of ISOCONTOUR_2D/FREEHAND_2D */
 void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel start_voxel, 
 			      amide_data_t isocontour_min_value, amide_data_t isocontour_max_value,
 			      AmitkRoiIsocontourRange isocontour_range) {
@@ -532,53 +578,88 @@ void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel star
     amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, start_voxel, isocontour_min_value, isocontour_max_value, isocontour_range);
     break;
   }
-  roi->isocontour_center_of_mass_calculated = FALSE;
+  roi->center_of_mass_calculated = FALSE;
   
   g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
 
   return;
 }
 
-/* sets an area in the roi to zero (not in the roi) */
-void amitk_roi_isocontour_erase_area(AmitkRoi * roi, AmitkVoxel erase_voxel, gint area_size) {
+/* sets an area in the roi to zero (if erase is TRUE) or in (if erase if FALSE) */
+/* only works for isocontour and freehand roi's */
+void amitk_roi_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size) {
 
-  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi));
   
+  /* if we're drawing a single point, do a quick check to see if we're already done */
+  if (!AMITK_ROI_UNDRAWN(roi) && (area_size == 0)) {
+    if (erase) {
+      if (amitk_raw_data_includes_voxel(roi->map_data, voxel)) {
+	if (AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->map_data, voxel)==0) {
+	  return;
+	}
+      }
+    } else {
+      if (amitk_raw_data_includes_voxel(roi->map_data, voxel)) {
+	if (AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->map_data, voxel)) {
+	  return;
+	}
+      }
+    }
+  }
+
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_erase_area(roi, erase_voxel, area_size);
+    amitk_roi_ISOCONTOUR_2D_manipulate_area(roi, erase, voxel, area_size);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+    amitk_roi_ISOCONTOUR_3D_manipulate_area(roi, erase, voxel, area_size);
+    break;
+  case AMITK_ROI_TYPE_FREEHAND_2D:
+    amitk_roi_FREEHAND_2D_manipulate_area(roi, erase, voxel, area_size);
+    break;
+  case AMITK_ROI_TYPE_FREEHAND_3D:
+    amitk_roi_FREEHAND_3D_manipulate_area(roi, erase, voxel, area_size);
+    break;
   default:
-    amitk_roi_ISOCONTOUR_3D_erase_area(roi, erase_voxel, area_size);
+    g_error("unexpected case in %s at line %d\n", __FILE__, __LINE__);
     break;
   }
-  roi->isocontour_center_of_mass_calculated = FALSE;
+  roi->center_of_mass_calculated = FALSE;
 
   g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
 
   return;
 }
 
-AmitkPoint amitk_roi_isocontour_get_center_of_mass (AmitkRoi * roi) {
+/* only for isocontour and freehand rois */
+AmitkPoint amitk_roi_get_center_of_mass (AmitkRoi * roi) {
 
   g_return_val_if_fail(AMITK_IS_ROI(roi), zero_point);
-  g_return_val_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi), zero_point);
+  g_return_val_if_fail((AMITK_ROI_TYPE_ISOCONTOUR(roi) || AMITK_ROI_TYPE_FREEHAND(roi)), zero_point);
 
-  if (!roi->isocontour_center_of_mass_calculated) {
+  if (!roi->center_of_mass_calculated) {
     switch(AMITK_ROI_TYPE(roi)) {
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
       amitk_roi_ISOCONTOUR_2D_calc_center_of_mass(roi);
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    default:
       amitk_roi_ISOCONTOUR_3D_calc_center_of_mass(roi);
+      break;
+    case AMITK_ROI_TYPE_FREEHAND_2D:
+      amitk_roi_FREEHAND_2D_calc_center_of_mass(roi);
+      break;
+    case AMITK_ROI_TYPE_FREEHAND_3D:
+      amitk_roi_FREEHAND_3D_calc_center_of_mass(roi);
+      break;
+    default:
+      g_error("unexpected case in %s at line %d\n", __FILE__, __LINE__);
       break;
     }
   }
 
   
-  return amitk_space_s2b(AMITK_SPACE(roi), roi->isocontour_center_of_mass);
+  return amitk_space_s2b(AMITK_SPACE(roi), roi->center_of_mass);
 }
 
 void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
@@ -586,7 +667,10 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
   g_return_if_fail(AMITK_IS_ROI(roi));
   if ((new_type == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
       (new_type == AMITK_ROI_TYPE_ISOCONTOUR_3D) ||
-      AMITK_ROI_TYPE_ISOCONTOUR(roi))
+      AMITK_ROI_TYPE_ISOCONTOUR(roi) ||
+      (new_type == AMITK_ROI_TYPE_FREEHAND_2D) ||
+      (new_type == AMITK_ROI_TYPE_FREEHAND_3D) ||
+      AMITK_ROI_TYPE_FREEHAND(roi))
     g_return_if_fail(new_type == AMITK_ROI_TYPE(roi));
 
   if (AMITK_ROI_TYPE(roi) != new_type) {
@@ -648,8 +732,20 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
     else
       amitk_roi_ISOCONTOUR_3D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
+  case AMITK_ROI_TYPE_FREEHAND_2D:
+    if (accurate)
+      amitk_roi_FREEHAND_2D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_FREEHAND_2D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+    break;
+  case AMITK_ROI_TYPE_FREEHAND_3D:
+    if (accurate)
+      amitk_roi_FREEHAND_3D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_FREEHAND_3D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+    break;
   default: 
-    g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
+    g_error("roi type %d not implemented! file %s line %d",AMITK_ROI_TYPE(roi), __FILE__, __LINE__);
     break;
   }
 
@@ -735,7 +831,7 @@ amide_real_t amitk_rois_get_max_min_voxel_size(GList * objects) {
 
   /* and process this guy */
   if (AMITK_IS_ROI(objects->data))
-    if (AMITK_ROI_TYPE_ISOCONTOUR(objects->data)) {
+    if (AMITK_ROI_TYPE_ISOCONTOUR(objects->data) || AMITK_ROI_TYPE_FREEHAND(objects->data)) {
       temp = point_min_dim(AMITK_ROI_VOXEL_SIZE(objects->data));
       if (min_voxel_size < 0.0) min_voxel_size = temp;
       else if (temp > min_voxel_size) min_voxel_size = temp;

@@ -41,18 +41,18 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
 							      const amide_real_t pixel_dim);
 #endif
 
-#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
+#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D) || defined(ROI_TYPE_FREEHAND_2D) || defined(ROI_TYPE_FREEHAND_3D)
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim,
-								     const gboolean fill_isocontour);
+								     const gboolean fill_roi);
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, 
 						   AmitkDataSet * ds, 
 						   AmitkVoxel iso_vp,
 						   amide_data_t iso_min_value,
 						   amide_data_t iso_max_value,
 						   AmitkRoiIsocontourRange iso_range);
-void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
+void amitk_roi_`'m4_Variable_Type`'_manipulate_area(AmitkRoi * roi, gboolean erase, AmitkVoxel voxel, gint area_size);
 void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi);
 #endif
 

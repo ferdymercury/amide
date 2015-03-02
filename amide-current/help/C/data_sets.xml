@@ -45,7 +45,7 @@
        button will cancel the shift action.  </para></listitem>
      </varlistentry>
 
-     <varlistentry><term>Shift-Middle Mouse Button</term> 
+     <varlistentry><term>Shift-Right Mouse Button</term> 
      <listitem><para> This combination allows rotating of the active
 	data set in space (usually used for aligning two data sets).
 	While holding the shift key, middle click (and release) on the

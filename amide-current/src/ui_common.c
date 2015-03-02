@@ -542,7 +542,7 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** pspin_button,
 					 GnomeCanvasItem ** proi_item,
 					 GtkWidget ** pline_style_menu,
-					 GtkWidget ** pfill_isocontour_button,
+					 GtkWidget ** pfill_roi_button,
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** pmaintain_size_button,
@@ -654,15 +654,15 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 #endif
 
   /* do we want to fill in isocontour roi's */
-  label = gtk_label_new(_("Draw Isocontours as Filled:"));
+  label = gtk_label_new(_("Draw Isocontours/Freehands Filled:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
 
-  *pfill_isocontour_button = gtk_check_button_new();
-  gtk_table_attach(GTK_TABLE(packing_table), *pfill_isocontour_button,
+  *pfill_roi_button = gtk_check_button_new();
+  gtk_table_attach(GTK_TABLE(packing_table), *pfill_roi_button,
 		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(*pfill_isocontour_button);
+  gtk_widget_show(*pfill_roi_button);
   table_row++;
 
 
@@ -811,6 +811,7 @@ static void ui_common_cursor_init(void) {
   ui_common_cursor[UI_CURSOR_ROI_MODE] =  gdk_cursor_new(GDK_DRAFT_SMALL);
   ui_common_cursor[UI_CURSOR_ROI_RESIZE] = small_dot; /* was GDK_SIZING */
   ui_common_cursor[UI_CURSOR_ROI_ROTATE] = small_dot; /* was GDK_EXCHANGE */
+  ui_common_cursor[UI_CURSOR_ROI_DRAW] = gdk_cursor_new(GDK_PENCIL);
   ui_common_cursor[UI_CURSOR_OBJECT_SHIFT] = small_dot; /* was GDK_FLEUR */
   ui_common_cursor[UI_CURSOR_ROI_ISOCONTOUR] = gdk_cursor_new(GDK_DRAFT_SMALL);
   ui_common_cursor[UI_CURSOR_ROI_ERASE] = gdk_cursor_new(GDK_DRAFT_SMALL);

@@ -47,7 +47,7 @@ G_BEGIN_DECLS
 
 #define AMITK_PREFERENCES_CANVAS_ROI_WIDTH(pref)                (AMITK_PREFERENCES(pref)->canvas_roi_width)
 #define AMITK_PREFERENCES_CANVAS_LINE_STYLE(pref)               (AMITK_PREFERENCES(pref)->canvas_line_style)
-#define AMITK_PREFERENCES_CANVAS_FILL_ISOCONTOUR(pref)          (AMITK_PREFERENCES(pref)->canvas_fill_isocontour)
+#define AMITK_PREFERENCES_CANVAS_FILL_ROI(pref)                 (AMITK_PREFERENCES(pref)->canvas_fill_roi)
 #define AMITK_PREFERENCES_CANVAS_LAYOUT(pref)                   (AMITK_PREFERENCES(pref)->canvas_layout)
 #define AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(pref)            (AMITK_PREFERENCES(pref)->canvas_maintain_size)
 #define AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(pref)        (AMITK_PREFERENCES(pref)->canvas_target_empty_area)
@@ -57,7 +57,7 @@ G_BEGIN_DECLS
 
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH 2
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE GDK_LINE_SOLID
-#define AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ISOCONTOUR TRUE
+#define AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI TRUE
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT AMITK_LAYOUT_LINEAR
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE TRUE
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA 5
@@ -89,7 +89,7 @@ struct _AmitkPreferences {
   /* canvas preferences -> study preferences */
   gint canvas_roi_width;
   GdkLineStyle canvas_line_style;
-  gboolean canvas_fill_isocontour;
+  gboolean canvas_fill_roi;
   AmitkLayout canvas_layout;
   gboolean canvas_maintain_size;
   gint canvas_target_empty_area; /* in pixels */
@@ -122,8 +122,8 @@ void                amitk_preferences_set_canvas_roi_width       (AmitkPreferenc
 							          gint roi_width);
 void                amitk_preferences_set_canvas_line_style      (AmitkPreferences * preferences, 
 							          GdkLineStyle line_style);
-void                amitk_preferences_set_canvas_fill_isocontour (AmitkPreferences * preferences, 
-							          gboolean fill_isocontour);
+void                amitk_preferences_set_canvas_fill_roi        (AmitkPreferences * preferences, 
+							          gboolean fill_roi);
 void                amitk_preferences_set_canvas_layout          (AmitkPreferences * preferences, 
 							          AmitkLayout layout);
 void                amitk_preferences_set_canvas_maintain_size   (AmitkPreferences * preferences, 

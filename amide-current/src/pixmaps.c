@@ -93,12 +93,16 @@ const guint8 * windowing_icons[AMITK_WINDOW_NUM] = {
 #include "../pixmaps/ellipsoid_icon.h"
 #include "../pixmaps/isocontour_2d_icon.h"
 #include "../pixmaps/isocontour_3d_icon.h"
+#include "../pixmaps/freehand_2d_icon.h"
+#include "../pixmaps/freehand_3d_icon.h"
 const guint8 * roi_icons[AMITK_ROI_TYPE_NUM] = {
   ellipsoid_icon,
   cylinder_icon,
   box_icon,
   isocontour_2d_icon,
-  isocontour_3d_icon
+  isocontour_3d_icon,
+  freehand_2d_icon,
+  freehand_3d_icon
 };
 #include "../pixmaps/align_pt_icon.h"
 #include "../pixmaps/study_icon.h"

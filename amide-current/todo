@@ -3,8 +3,6 @@ misc list of things todo:
 for next release?
 -----------------
 
-* add free hand ROI drawing (2D and 3D)
-	2D for now?
 * Windows compile: get popt/libgnomecanvas/etc. to be able to find
 	libintl like gtk can.
 
@@ -20,6 +18,14 @@ for next release?
 * continue implementing progress bars for various functions:
 	-roi analysis
 	-loading in data sets
+
+
+for 0.9.0 release
+-----------------
+* had to disable -DGNOME_DEPRECATED - gnome_config is now deprecated.
+	replace with gconf system
+* switch from libfame to ffmpeg for mpeg encoding
+
 
 
 windows todo
