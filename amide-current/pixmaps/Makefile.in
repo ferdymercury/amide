@@ -73,15 +73,22 @@ AMIDE_LIBGSL_LIBS = @AMIDE_LIBGSL_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AMTAR = @AMTAR@
+AR = @AR@
 AS = @AS@
 AWK = @AWK@
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
 DEPDIR = @DEPDIR@
 DLLTOOL = @DLLTOOL@
 ECHO = @ECHO@
+EGREP = @EGREP@
 EXTRA_GNOME_CFLAGS = @EXTRA_GNOME_CFLAGS@
 EXTRA_GNOME_LIBS = @EXTRA_GNOME_LIBS@
+F77 = @F77@
+GCJ = @GCJ@
+GCJFLAGS = @GCJFLAGS@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
@@ -93,6 +100,7 @@ OBJDUMP = @OBJDUMP@
 PACKAGE = @PACKAGE@
 PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
+RC = @RC@
 STRIP = @STRIP@
 VERSION = @VERSION@
 am__include = @am__include@
@@ -110,18 +118,12 @@ BITMAPS = \
 	study.xpm 
 
 
-pixmap_DATA = $(BITMAPS)
-
-EXTRA_DIST = $(BITMAPS) 
-
 DISTCLEANFILES = *~
 subdir = pixmaps
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 DIST_SOURCES =
-DATA = $(pixmap_DATA)
-
 DIST_COMMON = Makefile.am Makefile.in
 all: all-am
 
@@ -141,24 +143,6 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
-pixmapDATA_INSTALL = $(INSTALL_DATA)
-install-pixmapDATA: $(pixmap_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(pixmapdir)
-	@list='$(pixmap_DATA)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " $(pixmapDATA_INSTALL) $$d$$p $(DESTDIR)$(pixmapdir)/$$f"; \
-	  $(pixmapDATA_INSTALL) $$d$$p $(DESTDIR)$(pixmapdir)/$$f; \
-	done
-
-uninstall-pixmapDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pixmap_DATA)'; for p in $$list; do \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(DESTDIR)$(pixmapdir)/$$f"; \
-	  rm -f $(DESTDIR)$(pixmapdir)/$$f; \
-	done
 tags: TAGS
 TAGS:
 
@@ -190,10 +174,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(DATA)
+all-am: Makefile
 
 installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(pixmapdir)
 
 install: install-am
 install-exec: install-exec-am
@@ -236,7 +219,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-pixmapDATA
+install-data-am:
 
 install-exec-am:
 
@@ -254,17 +237,16 @@ mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
-uninstall-am: uninstall-info-am uninstall-pixmapDATA
+uninstall-am: uninstall-info-am
 
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	distclean distclean-generic distclean-libtool distdir dvi \
 	dvi-am info info-am install install-am install-data \
 	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-pixmapDATA install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	install-info-am install-man install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool uninstall uninstall-am uninstall-info-am \
-	uninstall-pixmapDATA
+	mostlyclean-libtool uninstall uninstall-am uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

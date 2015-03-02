@@ -9,9 +9,7 @@ BITMAPS     = \
 	SPECT.xpm \
 	study.xpm 
 
-pixmap_DATA = $(BITMAPS)
-
-EXTRA_DIST  = $(BITMAPS) 
+## pixmap_DATA = $(BITMAPS)
 
 
 

@@ -19,14 +19,14 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-3.1.  AMIDE is fairly unstable when compiled with
-versions of the gcc compiler previous to 3.0.2 when optimizations are
-used.
+I currently use gcc-4.0.  gcc-3.1 should work fine as well.  AMIDE is
+fairly unstable when compiled with versions of the gcc compiler
+previous to 3.0.2 when optimizations are used.
 
 
 2) Gtk+/Gnome:
 
-I'm developing on Gtk+-1.2.10/Gnome 1.4 at the moment (i.e. default
+This program was developed on Gtk+-1.2.10/Gnome 1.4 (i.e. default
 Redhat 7.2 install with updates)
 
 
@@ -54,10 +54,11 @@ libecat if available (see below).
 
 2) z_matrix_70/libecat
 
-You will need this library if you want to import CTI 6.4 and 7.0 files
-[(X)medcon only can handle CTI 6.4].  This library is released under a
-non-free license (which is why it's not incuded with AMIDE).  It can
-be found on the AMIDE sourceforge website, or at it's original site:
+This library can be used for importing CTI 6.4 and 7.0 files, although
+(X)MedCon now has support for these files as well.  This library is
+released under a non-free license (which is why it's not incuded with
+AMIDE).  It can be found on the AMIDE sourceforge website, or at it's
+original site:
 
 	ftp://dormeur.topo.ucl.ac.be/pub/ecat/z_matrix_70/ecat.tar.gz
 

@@ -10,7 +10,7 @@ Name: %{name}
 Version: %{version}
 Release: %{release}
 Prefix: %{prefix}
-Copyright: GPL
+License: GPL
 URL: http://amide.sourceforge.net
 Source: %{name}-%{version}.tgz
 Buildroot: /tmp/%{name}-%{version}

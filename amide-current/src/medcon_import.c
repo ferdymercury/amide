@@ -1,7 +1,7 @@
 /* medcon_import.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2006 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -127,7 +127,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   gboolean found_name=FALSE;
   
   /* setup some defaults */
-  XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
+  //  XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
   MDC_INFO=MDC_NO;       /* don't print stuff */
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
@@ -189,7 +189,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   g_free(import_filename);
 
   /* read the file */
-  if ((error = MdcReadFile(&medcon_file_info, 1)) != MDC_OK) {
+  if ((error = MdcReadFile(&medcon_file_info, 1, NULL)) != MDC_OK) {
     g_warning("can't read file %s with libmdc (medcon)",filename);
     MdcCleanUpFI(&medcon_file_info);
     return NULL;
@@ -276,17 +276,20 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 
 
   /* guess the modality */
-  if (g_strcasecmp(medcon_file_info.image[0].image_mod,"PT") == 0)
+  switch (medcon_file_info.modality) {
+  case M_PT:
     temp_volume->modality = PET;
-  else
+    break;
+  default:
     temp_volume->modality = CT;
-
+    break;
+  }
 
   /* try figuring out the name, start with the study name */
   name = NULL;
-  if (strlen(medcon_file_info.study_name) > 0) 
-    if (g_strcasecmp(medcon_file_info.study_name, medcon_unknown) != 0)
-      name = g_strdup(medcon_file_info.study_name);
+  if (strlen(medcon_file_info.study_id) > 0) 
+    if (g_strcasecmp(medcon_file_info.study_id, medcon_unknown) != 0)
+      name = g_strdup(medcon_file_info.study_id);
 
   if (name == NULL)
     if (strlen(medcon_file_info.patient_name) > 0)
@@ -340,7 +343,10 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, CTI files specify time as integers in msecs */
-  temp_volume->scan_start = medcon_file_info.image[0].frame_start/1000.0;
+  if (medcon_file_info.dyndata != NULL) 
+    temp_volume->scan_start = medcon_file_info.dyndata[0].time_frame_start/1000.0;
+  else
+    temp_volume->scan_start = 0.0;
 
 #ifdef AMIDE_DEBUG
   g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
@@ -385,8 +391,11 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
 #endif
 
     /* set the frame duration, note, medcon/libMDC specifies time as float in msecs */
-    temp_volume->frame_duration[i.t] = 
-      medcon_file_info.image[i.t*temp_volume->data_set->dim.z].frame_duration/1000.0;
+    if (medcon_file_info.dyndata != NULL)
+      temp_volume->frame_duration[i.t] = 
+	medcon_file_info.dyndata[i.t].time_frame_duration/1000.0;
+    else
+      temp_volume->frame_duration[i.t] = 0.0;
 
     /* make sure it's not zero */
     if (temp_volume->frame_duration[i.t] < CLOSE) temp_volume->frame_duration[i.t] = CLOSE;
