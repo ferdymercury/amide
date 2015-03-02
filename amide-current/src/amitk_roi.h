@@ -40,6 +40,8 @@ G_BEGIN_DECLS
 #define	AMITK_ROI_GET_CLASS(object)	(G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_ROI, AmitkRoiClass))
 
 #define AMITK_ROI_TYPE(roi)                  (AMITK_ROI(roi)->type)
+#define AMITK_ROI_SPECIFY_COLOR(roi)         (AMITK_ROI(roi)->specify_color)
+#define AMITK_ROI_COLOR(roi)                 (AMITK_ROI(roi)->color)
 #define AMITK_ROI_ISOCONTOUR_MIN_VALUE(roi)  (AMITK_ROI(roi)->isocontour_min_value)
 #define AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi)  (AMITK_ROI(roi)->isocontour_max_value)
 #define AMITK_ROI_ISOCONTOUR_RANGE(roi)      (AMITK_ROI(roi)->isocontour_range)
@@ -83,6 +85,9 @@ struct _AmitkRoi
 
   AmitkRoiType type;
 
+  gboolean specify_color; /* if false, program guesses a good color to use */
+  rgba_t color;
+
   /* isocontour and freehand specific stuff */
   AmitkPoint voxel_size;
   AmitkRawData * map_data; /* raw data */
@@ -117,8 +122,15 @@ GSList *        amitk_roi_get_intersection_line   (const AmitkRoi * roi,
 GSList *        amitk_roi_free_points_list        (GSList * list);
 AmitkDataSet *  amitk_roi_get_intersection_slice  (const AmitkRoi * roi, 
 						   const AmitkVolume * canvas_slice,
-						   const amide_real_t pixel_dim,
-						   const gboolean fill_map_roi);
+						   const amide_real_t pixel_dim
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						   , const gboolean fill_map_roi
+#endif
+						   );
+void            amitk_roi_set_specify_color       (AmitkRoi * roi,
+						   gboolean specify_color);
+void            amitk_roi_set_color               (AmitkRoi * roi,
+						   rgba_t color);
 void            amitk_roi_set_voxel_size          (AmitkRoi * roi, 
 						   AmitkPoint voxel_size);
 void            amitk_roi_calc_far_corner         (AmitkRoi * roi);

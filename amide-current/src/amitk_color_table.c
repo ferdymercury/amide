@@ -382,6 +382,17 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
   return rgba;
 }
 
+rgba_t amitk_color_table_uint32_to_rgba(guint32 color_uint32) {
+  rgba_t rgba;
+
+  rgba.r = (color_uint32 >> 24) & 0x000000FF;
+  rgba.g = (color_uint32 >> 16) & 0x000000FF;
+  rgba.b = (color_uint32 >> 8) & 0x000000FF;
+  rgba.a = (color_uint32 >> 0) & 0x000000FF;
+
+  return rgba;
+}
+
 
 rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight) {
 

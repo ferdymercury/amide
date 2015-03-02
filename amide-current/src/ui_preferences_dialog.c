@@ -46,12 +46,14 @@ N_("These preferences are used only for new data sets.  \n"
    "parameters for the current data set.");
 
 
-
+static void update_roi_sample_item(ui_study_t * ui_study);
 static void roi_width_cb(GtkWidget * widget, gpointer data);
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+static void roi_transparency_cb(GtkWidget * widget, gpointer data);
+#else
 static void line_style_cb(GtkWidget * widget, gpointer data);
-#endif
 static void fill_roi_cb(GtkWidget * widget, gpointer data);
+#endif
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void panel_layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
@@ -66,30 +68,56 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer preferences);
 
 
+/* function called to update the roi sampe item */
+static void update_roi_sample_item(ui_study_t * ui_study) {
+  GnomeCanvasItem * roi_item;
+
+  roi_item = g_object_get_data(G_OBJECT(ui_study->preferences->dialog), "roi_item");
+  ui_common_update_sample_roi_item(roi_item,
+				   AMITK_PREFERENCES_CANVAS_ROI_WIDTH(ui_study->preferences),
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				   AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(ui_study->preferences)
+#else
+				   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences)
+#endif
+				   );
+
+  return;
+}
 
 /* function called when the roi width has been changed */
 static void roi_width_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   gint new_roi_width;
-  GnomeCanvasItem * roi_item;
 
   g_return_if_fail(ui_study->study != NULL);
 
   new_roi_width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
   amitk_preferences_set_canvas_roi_width(ui_study->preferences, new_roi_width);
-
-  /* update the roi indicator, don't use new_roi_width, as value may be
-     rejected by amitk_preferences_set_canvas_roi_width */
-  roi_item = g_object_get_data(G_OBJECT(ui_study->preferences->dialog), "roi_item");
-  gnome_canvas_item_set(roi_item, "width_pixels", 
-			AMITK_PREFERENCES_CANVAS_ROI_WIDTH(ui_study->preferences), NULL);
+  update_roi_sample_item(ui_study);
 
   return;
 }
 
 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+/* function to change the roi internal transparency */
+static void roi_transparency_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study=data;
+  gdouble new_transparency;
+
+  g_return_if_fail(ui_study->study != NULL);
+
+  new_transparency = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  amitk_preferences_set_canvas_roi_transparency(ui_study->preferences, new_transparency);
+  update_roi_sample_item(ui_study);
+
+  return;
+}
+
+#else
 /* function to change the line style */
 static void line_style_cb(GtkWidget * widget, gpointer data) {
 
@@ -102,14 +130,10 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   /* figure out which menu item called me */
   new_line_style = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
   amitk_preferences_set_canvas_line_style(ui_study->preferences, new_line_style);
-
-  /* update the roi indicator */
-  roi_item = g_object_get_data(G_OBJECT(ui_study->preferences->dialog), "roi_item");
-  gnome_canvas_item_set(roi_item, "line_style", new_line_style, NULL);
+  update_roi_sample_item(ui_study);
 
   return;
 }
-#endif
 
 static void fill_roi_cb(GtkWidget * widget, gpointer data) {
 
@@ -119,6 +143,7 @@ static void fill_roi_cb(GtkWidget * widget, gpointer data) {
 
   return;
 }
+#endif
 
 /* function called to change the layout */
 static void layout_cb(GtkWidget * widget, gpointer data) {
@@ -270,8 +295,12 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * maintain_size_button;
   GtkWidget * roi_width_spin;
   GtkWidget * target_size_spin;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  GtkWidget * roi_transparency_spin;
+#else
   GtkWidget * line_style_menu;
   GtkWidget * fill_roi_button;
+#endif
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * panel_layout_button1;
@@ -345,7 +374,12 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   ui_common_study_preferences_widgets(packing_table, table_row,
-				      &roi_width_spin, &roi_item, &line_style_menu, &fill_roi_button,
+				      &roi_width_spin, &roi_item, 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      &roi_transparency_spin,
+#else
+				      &line_style_menu, &fill_roi_button,
+#endif
 				      &layout_button1, &layout_button2, 
 				      &panel_layout_button1,&panel_layout_button2,&panel_layout_button3,
 				      &maintain_size_button,
@@ -356,21 +390,23 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 			    AMITK_PREFERENCES_CANVAS_ROI_WIDTH(ui_study->preferences));
   g_signal_connect(G_OBJECT(roi_width_spin), "value_changed",  G_CALLBACK(roi_width_cb), ui_study);
 
-  gnome_canvas_item_set(roi_item, 
-			"width_pixels", AMITK_PREFERENCES_CANVAS_ROI_WIDTH(ui_study->preferences),
-			"line_style", AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences),
-			NULL);
+  /* update the sample roi display */
   g_object_set_data(G_OBJECT(dialog), "roi_item", roi_item);
+  update_roi_sample_item(ui_study);
 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(roi_transparency_spin),
+			    AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(ui_study->preferences));
+  g_signal_connect(G_OBJECT(roi_transparency_spin), "value_changed",  G_CALLBACK(roi_transparency_cb), ui_study);
+#else
   gtk_combo_box_set_active(GTK_COMBO_BOX(line_style_menu),
 			   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
   g_signal_connect(G_OBJECT(line_style_menu), "changed", G_CALLBACK(line_style_cb), ui_study);
-#endif
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fill_roi_button), 
 			       AMITK_PREFERENCES_CANVAS_FILL_ROI(ui_study->preferences));
   g_signal_connect(G_OBJECT(fill_roi_button), "toggled", G_CALLBACK(fill_roi_cb), ui_study);
+#endif
 
 
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(layout_button1), 

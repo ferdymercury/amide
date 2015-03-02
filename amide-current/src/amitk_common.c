@@ -64,13 +64,14 @@ gchar * amitk_window_names[] = {
 
 /* external variables */
 PangoFontDescription * amitk_fixed_font_desc;
-PangoFontDescription * amitk_small_fixed_font_desc;
 
 
 void amitk_common_font_init(void) {
 
+  
+  amitk_fixed_font_desc = pango_font_description_from_string("Monospace 9");
   /* actually, these fonts aren't fixed width... but it's what I've been using */
-  amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
+  //  amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
   //  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
 
   return;

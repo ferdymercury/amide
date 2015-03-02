@@ -130,11 +130,17 @@ static void preferences_init (AmitkPreferences * preferences) {
   preferences->canvas_roi_width = 
     amide_gconf_get_int_with_default(GCONF_AMIDE_ROI,"Width", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH);
 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  preferences->canvas_roi_transparency = 
+    amide_gconf_get_float_with_default(GCONF_AMIDE_ROI,"Transparency", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY);
+
+#else
   preferences->canvas_line_style = 
     amide_gconf_get_int_with_default(GCONF_AMIDE_ROI,"LineStyle",AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE);
 
   preferences->canvas_fill_roi = 
     amide_gconf_get_bool_with_default(GCONF_AMIDE_ROI,"FillIsocontour", AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI);
+#endif
 
   preferences->canvas_layout = 
     amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS,"Layout", AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT);
@@ -219,6 +225,25 @@ void amitk_preferences_set_canvas_roi_width(AmitkPreferences * preferences,
   return;
 }
 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+void amitk_preferences_set_canvas_roi_transparency(AmitkPreferences * preferences, 
+						   gdouble roi_transparency) {
+
+  g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
+  g_return_if_fail(roi_transparency >= 0.0);
+  g_return_if_fail(roi_transparency <= 1.0);
+
+  if (AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(preferences) != roi_transparency) {
+    preferences->canvas_roi_transparency = roi_transparency;
+    amide_gconf_set_float(GCONF_AMIDE_ROI,"Transparency", roi_transparency);
+    g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
+  }
+
+
+  return;
+}
+
+#else
 void amitk_preferences_set_canvas_line_style(AmitkPreferences * preferences, GdkLineStyle line_style) {
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
@@ -244,6 +269,7 @@ void amitk_preferences_set_canvas_fill_roi(AmitkPreferences * preferences, gbool
 
   return;
 }
+#endif
 
 void amitk_preferences_set_canvas_layout(AmitkPreferences * preferences, 
 					 AmitkLayout layout) {

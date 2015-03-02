@@ -48,8 +48,13 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   gdouble y_offset,
 					   rgba_t roi_color,
 					   gint roi_width,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					   gdouble transparency
+#else
 					   GdkLineStyle line_style,
-					   gboolean fill_roi);
+					   gboolean fill_roi
+#endif
+					   );
 
 
 

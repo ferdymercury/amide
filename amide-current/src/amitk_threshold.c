@@ -625,6 +625,12 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
 
   threshold->data_set = amitk_object_ref(ds);
 
+  /* explicitly make sure the min/max values have been calculated on the new data set, 
+   this is to make sure a progress box gets pushed up if these haven't been calculated eyt */
+  amitk_data_set_calc_min_max_if_needed(threshold->data_set,
+					amitk_progress_dialog_update,
+					threshold->progress_dialog);
+
   for (i=0; i<2; i++) {
     threshold->threshold_max[i] = AMITK_DATA_SET_THRESHOLD_MAX(ds, i);
     threshold->threshold_min[i] = AMITK_DATA_SET_THRESHOLD_MIN(ds, i);

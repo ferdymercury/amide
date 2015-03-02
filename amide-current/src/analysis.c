@@ -293,6 +293,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
   analysis->data_array = data_array;
   analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
   analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
+  analysis->gate_time = amitk_data_set_get_gate_time(ds, gate);
   analysis->total = 0.0;
   analysis->median = 0.0;
   analysis->total = 0.0;

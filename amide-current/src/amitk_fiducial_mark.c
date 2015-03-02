@@ -30,6 +30,7 @@
 #include "amitk_type_builtins.h"
 
 enum {
+  FIDUCIAL_MARK_CHANGED,
   LAST_SIGNAL
 };
 
@@ -48,7 +49,7 @@ static gchar *       fiducial_mark_read_xml            (AmitkObject         *obj
 							gchar               *error_buf);
 
 static AmitkObjectClass * parent_class;
-/* static guint        fiducial_mark_signals[LAST_SIGNAL]; */
+static guint        fiducial_mark_signals[LAST_SIGNAL];
 
 
 GType amitk_fiducial_mark_get_type(void) {
@@ -92,12 +93,23 @@ static void fiducial_mark_class_init (AmitkFiducialMarkClass * class) {
 
   gobject_class->finalize = fiducial_mark_finalize;
 
+  fiducial_mark_signals[FIDUCIAL_MARK_CHANGED] =
+    g_signal_new ("fiducial_mark_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkFiducialMarkClass, fiducial_mark_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+
 }
 
 
 static void fiducial_mark_init (AmitkFiducialMark * fiducial_mark) {
 
- return; 
+  fiducial_mark->specify_color = FALSE;
+  fiducial_mark->color = amitk_color_table_uint32_to_rgba(AMITK_OBJECT_DEFAULT_COLOR);
+
+  return; 
 }
 
 
@@ -119,9 +131,18 @@ static AmitkObject * fiducial_mark_copy (const AmitkObject * object ) {
 }
 
 static void fiducial_mark_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_object) {
+
+  AmitkFiducialMark * src_fm;
+  AmitkFiducialMark * dest_fm;
  
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(src_object));
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(dest_object));
+
+  src_fm = AMITK_FIDUCIAL_MARK(src_object);
+  dest_fm = AMITK_FIDUCIAL_MARK(dest_object);
+
+  dest_fm->specify_color = AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(src_fm);
+  dest_fm->color = AMITK_FIDUCIAL_MARK_COLOR(src_fm);
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -129,7 +150,14 @@ static void fiducial_mark_copy_in_place(AmitkObject * dest_object, const AmitkOb
 
 static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes, FILE *study_file) {
 
+  AmitkFiducialMark * fm;
+
   AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes, study_file);
+
+  fm = AMITK_FIDUCIAL_MARK(object);
+
+  xml_save_boolean(nodes, "specify_color", AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(fm));
+  xml_save_uint(nodes, "color", amitk_color_table_rgba_to_uint32(AMITK_FIDUCIAL_MARK_COLOR(fm)));
 
   return;
 }
@@ -137,19 +165,23 @@ static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes
 static gchar * fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes, 
 				      FILE * study_file, gchar * error_buf ) {
 
-  AmitkFiducialMark * mark;
+  AmitkFiducialMark * fm;
   AmitkPoint point;
 
-  mark = AMITK_FIDUCIAL_MARK(object);
+  fm = AMITK_FIDUCIAL_MARK(object);
 
   error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, study_file, error_buf);
+
+  amitk_fiducial_mark_set_specify_color(fm, xml_get_boolean_with_default(nodes, "specify_color",
+									 AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(fm)));
+  amitk_fiducial_mark_set_color(fm, amitk_color_table_uint32_to_rgba(xml_get_uint_with_default(nodes, "color", AMITK_OBJECT_DEFAULT_COLOR)));
 
   /* legacy cruft.  the "point" option was eliminated in version 0.7.11, just 
      using the space's offset instead */
   if (xml_node_exists(nodes, "point")) {
     point = amitk_point_read_xml(nodes, "point", &error_buf);
-    point = amitk_space_s2b(AMITK_SPACE(mark), point);
-    amitk_space_set_offset(AMITK_SPACE(mark), point);
+    point = amitk_space_s2b(AMITK_SPACE(fm), point);
+    amitk_space_set_offset(AMITK_SPACE(fm), point);
   }
 
   return error_buf;
@@ -177,6 +209,38 @@ void amitk_fiducial_mark_set(AmitkFiducialMark * fiducial_mark, AmitkPoint new_p
   }
   return;
 }
+
+
+/* whether we want to use the specified color or have the program choose a decent color */
+void amitk_fiducial_mark_set_specify_color(AmitkFiducialMark * fiducial_mark, gboolean specify_color) {
+
+  g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(fiducial_mark));
+
+  if (specify_color != AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(fiducial_mark)) {
+    fiducial_mark->specify_color = specify_color;
+    g_signal_emit(G_OBJECT(fiducial_mark), fiducial_mark_signals[FIDUCIAL_MARK_CHANGED], 0);
+  }
+  return;
+}
+
+/* color to draw the fiducial_mark in, if we choose specify_color */
+void amitk_fiducial_mark_set_color(AmitkFiducialMark * fiducial_mark, rgba_t new_color) {
+
+  rgba_t old_color;
+
+  g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(fiducial_mark));
+  old_color = AMITK_FIDUCIAL_MARK_COLOR(fiducial_mark);
+
+  if ((old_color.r != new_color.r) ||
+      (old_color.g != new_color.g) ||
+      (old_color.b != new_color.b) ||
+      (old_color.a != new_color.a)) {
+    fiducial_mark->color = new_color;
+    g_signal_emit(G_OBJECT(fiducial_mark), fiducial_mark_signals[FIDUCIAL_MARK_CHANGED], 0);
+  }
+  return;
+}
+
 
 
 

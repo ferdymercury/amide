@@ -421,10 +421,11 @@ static const GtkActionEntry normal_items[] = {
   /* ToolsMenu */
   { "AlignmentWizard",NULL,N_("_Alignment Wizard"),NULL,N_("guides you throw the processing of alignment"),G_CALLBACK(ui_study_cb_alignment_selected)},
   { "CropWizard",NULL,N_("_Crop Active Data Set"),NULL,N_("allows you to crop the active data set"),G_CALLBACK(ui_study_cb_crop_selected)},
+  { "DistanceWizard",NULL,N_("Distance Measurements"),NULL,N_("calculate distances between fiducial marks and ROIs"),G_CALLBACK(ui_study_cb_distance_selected)},
   { "FactorAnalysisWizard", NULL,N_("_Factor Analysis"),NULL,N_("allows you to do factor analysis of dynamic data on the active data set"),G_CALLBACK(ui_study_cb_fads_selected)},
   { "FilterWizard",NULL,N_("_Filter Active Data Set"),NULL,N_("allows you to filter the active data set"),G_CALLBACK(ui_study_cb_filter_selected)},
   { "LineProfile",NULL,N_("Generate Line _Profile"),NULL,N_("allows generating a line profile between two fiducial marks"),G_CALLBACK(ui_study_cb_profile_selected)},
-  { "MathWizard",NULL,N_("Perform _Math on Data Sets"),NULL,N_("allows doing simple math operations between data sets"),G_CALLBACK(ui_study_cb_data_set_math_selected)},
+  { "MathWizard",NULL,N_("Perform _Math on Data Set(s)"),NULL,N_("perform simple math operations on a data set or between data sets"),G_CALLBACK(ui_study_cb_data_set_math_selected)},
   { "RoiStats",NULL,N_("Calculate _ROI Statistics"),NULL,N_("caculate ROI statistics"),G_CALLBACK(ui_study_cb_roi_statistics)},
 
   /* Flythrough Submenu */
@@ -510,6 +511,7 @@ static const char *ui_description =
 "    <menu action='ToolsMenu'>"
 "       <menuitem action='AlignmentWizard'/>"
 "       <menuitem action='CropWizard'/>"
+"       <menuitem action='DistanceWizard'/>"
 "       <menuitem action='FactorAnalysisWizard'/>"
 "       <menuitem action='FilterWizard'/>"
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)

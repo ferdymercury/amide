@@ -219,10 +219,18 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gint num_corrupted_planes = 0;
   const gchar * bad_char;
   gsize invalid_point;
-  AmitkAxis i_axis;
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
   gboolean use_pixdim_duration = FALSE;
+  AmitkPoint new_offset;
+  AmitkPoint shift;
+  AmitkAxes new_axes;
+  void * ds_pointer;
+  Uint8 * conv_pointer;
+  gint format_size;
+  gint bytes_per_plane;
+  gint bytes_per_row;
+  gboolean center_data_set = FALSE;
 
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -401,16 +409,28 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     break;
   }
 
+  format_size = amitk_format_sizes[format];
   ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D_WITH_INTERCEPT);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate memory space for the data set structure to hold (X)MedCon data"));
     goto error;
   }
-
+  bytes_per_row = format_size * dim.x;
+  bytes_per_plane = bytes_per_row * dim.y;
 
   ds->voxel_size.x = libmdc_fi.pixdim[1];
   ds->voxel_size.y = libmdc_fi.pixdim[2];
   ds->voxel_size.z = libmdc_fi.pixdim[3];
+
+  /* double check voxel size z */
+  if (libmdc_fi.image[0].slice_spacing > 0.0)
+    if (libmdc_fi.image[0].slice_spacing != libmdc_fi.pixdim[3]) {
+      g_warning(_("Pixel z dimension (%5.3f mm) not equal to slice spacing (%5.3f mm) - will use slice spacing for thickness"), 
+		libmdc_fi.pixdim[3], libmdc_fi.image[0].slice_spacing);
+      ds->voxel_size.z = libmdc_fi.image[0].slice_spacing;
+    }
+
+
   if (EQUAL_ZERO(ds->voxel_size.x)) {
     g_warning(_("Voxel size X was read as 0, setting to 1 mm.  This may be an internationalization error."));
     ds->voxel_size.x = 1.0;
@@ -544,15 +564,115 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     ds->scan_start = 0.0;
   }
 
-  /* figure out the image orientation */
-#if NOT_DONE_YET
-  /* Note, XMedCon is like DICOM, it uses a right-handed space, that is LPH+: meaning 
+  new_axes[AMITK_AXIS_X] = base_axes[AMITK_AXIS_X];
+  new_axes[AMITK_AXIS_Y] = base_axes[AMITK_AXIS_Y];
+  new_axes[AMITK_AXIS_Z] = base_axes[AMITK_AXIS_Z];
+  new_offset = zero_point;
+
+  /* figure out the image orientation, below code added in version 1.0.3 */
+  /* Note, XMedCon is suppose to be like DICOM, it uses a right-handed space, that is LPH+: meaning 
      x increases towards patient left, y increases toward patient posterior, and z increases 
      toward patient head. In terms of how it stores data in memory though, it's actually LPF+.
      AMIDE uses a right-handed space that is LAF+ in both space and memory */
-  /* to do this, should try to use libmdc_fi.image[0].image_orient_pat */
-  /* probably most important for NIFTI format */
-#endif /* NOT_DONE_YET */
+
+  /* in practice, xmedcon seems to be inconsistent between different file types....
+     hence the logic below.  */
+  switch (libmdc_fi.iformat) {
+  case MDC_FRMT_DICM:
+    if (((fabs(libmdc_fi.image[0].image_orient_pat[0]) + 
+	  fabs(libmdc_fi.image[0].image_orient_pat[1]) + 
+	  fabs(libmdc_fi.image[0].image_orient_pat[2])) > 0.9)
+	&&
+	((fabs(libmdc_fi.image[0].image_orient_pat[3]) + 
+	  fabs(libmdc_fi.image[0].image_orient_pat[4]) + 
+	  fabs(libmdc_fi.image[0].image_orient_pat[5])) > 0.9)) {
+      new_axes[AMITK_AXIS_X].x = libmdc_fi.image[0].image_orient_pat[0];
+      new_axes[AMITK_AXIS_X].y = libmdc_fi.image[0].image_orient_pat[1];
+      new_axes[AMITK_AXIS_X].z = libmdc_fi.image[0].image_orient_pat[2];
+      new_axes[AMITK_AXIS_Y].x = libmdc_fi.image[0].image_orient_pat[3];
+      new_axes[AMITK_AXIS_Y].y = libmdc_fi.image[0].image_orient_pat[4];
+      new_axes[AMITK_AXIS_Y].z = libmdc_fi.image[0].image_orient_pat[5];
+    }
+    /* Can skip these two lines, as we flip data manually when loading */
+    new_axes[AMITK_AXIS_X].y *= -1.0;
+    new_axes[AMITK_AXIS_X].z *= -1.0; 
+    new_axes[AMITK_AXIS_Y].y *= 1.0;
+    new_axes[AMITK_AXIS_Y].z *= 1.0;
+    POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
+
+    new_offset.x = libmdc_fi.image[0].image_pos_pat[0];
+    new_offset.y = -1.0 * libmdc_fi.image[0].image_pos_pat[1];
+    new_offset.z = -1.0 * libmdc_fi.image[0].image_pos_pat[2];
+
+    /* figure out the shift, as we're switching the y-axis */
+    {
+      AmitkSpace * temp_space;
+      temp_space = amitk_space_new();
+      amitk_space_set_axes(temp_space, new_axes, zero_point);
+      shift.x= 0;
+      shift.y = dim.y * ds->voxel_size.y;
+      shift.z = dim.z * ds->voxel_size.z;
+      shift = amitk_space_s2b(temp_space, shift);
+      POINT_SUB(new_offset, shift, new_offset);
+      temp_space = amitk_object_unref(temp_space);
+    }
+
+    break;
+
+  case MDC_FRMT_ECAT6:
+  case MDC_FRMT_ECAT7:
+    if (((fabs(libmdc_fi.image[0].image_orient_dev[0]) + 
+	  fabs(libmdc_fi.image[0].image_orient_dev[1]) + 
+	  fabs(libmdc_fi.image[0].image_orient_dev[2])) > 0.9)
+	&&
+	((fabs(libmdc_fi.image[0].image_orient_dev[3]) + 
+	  fabs(libmdc_fi.image[0].image_orient_dev[4]) + 
+	  fabs(libmdc_fi.image[0].image_orient_dev[5])) > 0.9)) {
+      new_axes[AMITK_AXIS_X].x = libmdc_fi.image[0].image_orient_dev[0];
+      new_axes[AMITK_AXIS_X].y = libmdc_fi.image[0].image_orient_dev[1];
+      new_axes[AMITK_AXIS_X].z = libmdc_fi.image[0].image_orient_dev[2];
+      new_axes[AMITK_AXIS_Y].x = libmdc_fi.image[0].image_orient_dev[3];
+      new_axes[AMITK_AXIS_Y].y = libmdc_fi.image[0].image_orient_dev[4];
+      new_axes[AMITK_AXIS_Y].z = libmdc_fi.image[0].image_orient_dev[5];
+    }
+    POINT_CROSS_PRODUCT(new_axes[AMITK_AXIS_X], new_axes[AMITK_AXIS_Y], new_axes[AMITK_AXIS_Z]);
+
+    /* the offset data seems to be garbage, at least on the test data sets I have, just center the data set */
+    center_data_set = TRUE;
+    /*    new_offset.x = libmdc_fi.image[0].image_pos_dev[0];
+	  new_offset.y = libmdc_fi.image[0].image_pos_dev[1];
+	  new_offset.z = libmdc_fi.image[0].image_pos_dev[2];
+    */
+
+    break;
+
+  case MDC_FRMT_NIFTI:
+    /* no idea whether this is right, but keeps compatibile with
+       what was done prior to 1.0.3 */
+    new_axes[AMITK_AXIS_X].x *= -1.0;
+    new_axes[AMITK_AXIS_X].y *= -1.0;
+    new_axes[AMITK_AXIS_X].z *= -1.0;
+    new_axes[AMITK_AXIS_Y].x *= -1.0;
+    new_axes[AMITK_AXIS_Y].y *= -1.0;
+    new_axes[AMITK_AXIS_Y].z *= -1.0;
+    new_axes[AMITK_AXIS_Z].x *= -1.0;
+    new_axes[AMITK_AXIS_Z].y *= -1.0;
+    new_axes[AMITK_AXIS_Z].z *= -1.0;
+    center_data_set = TRUE;
+    break;
+
+  case MDC_FRMT_CONC: 
+    /* libmdc concorde support doesn't currently import offset/rotation info */
+  default: 
+    /* all other formats, consistent with what was done prior to 1.0.3 */
+    /* don't try to read in offset/rotation info */
+    center_data_set = TRUE;
+    break;
+  }
+
+
+  amitk_space_set_axes(AMITK_SPACE(ds), new_axes, zero_point);
+  amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
 
 
 #ifdef AMIDE_DEBUG
@@ -568,6 +688,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
   /* and load in the data */
+  i = zero_voxel;
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
 #ifdef AMIDE_DEBUG
     g_print("\tloading frame %d",i.t);
@@ -624,133 +745,24 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	if (libmdc_fi.image[image_num].buf == NULL) {
 	  num_corrupted_planes++;
 	} else {
+
+	  /* handle endian issues */
 	  switch(ds->raw_data->format) {
 	  case AMITK_FORMAT_SBYTE:
-	    {
-	      amitk_format_SBYTE_t * libmdc_buffer;
-	      libmdc_buffer = (amitk_format_SBYTE_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_SBYTE_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
-	    break;
 	  case AMITK_FORMAT_UBYTE:
-	    {
-	      amitk_format_UBYTE_t * libmdc_buffer;
-	      libmdc_buffer = (amitk_format_UBYTE_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++) 
-		  AMITK_RAW_DATA_UBYTE_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
 	    break;
 	  case AMITK_FORMAT_SSHORT:
-	    {
-	      amitk_format_SSHORT_t * libmdc_buffer;
-	      if (MdcDoSwap()) {
-		k=0;
-		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
-		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
-	      }
-	      libmdc_buffer = (amitk_format_SSHORT_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
-	    break;
 	  case AMITK_FORMAT_USHORT:
-	    {
-	      amitk_format_USHORT_t * libmdc_buffer;
-	      if (MdcDoSwap()) {
-		k=0;
-		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
-		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
-	      }
-	      libmdc_buffer = (amitk_format_USHORT_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_USHORT_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
+	    if (MdcDoSwap()) 
+	      for (k=0; k < bytes_per_plane; k+=2)
+		MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 2);
 	    break;
 	  case AMITK_FORMAT_SINT:
-	    {
-	      amitk_format_SINT_t * libmdc_buffer;
-	      if (MdcDoSwap()) {
-		k=0;
-		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	      }
-	      libmdc_buffer = (amitk_format_SINT_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_SINT_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
-	    break;
 	  case AMITK_FORMAT_UINT:
-	    {
-	      amitk_format_UINT_t * libmdc_buffer;
-	      if (MdcDoSwap()) {
-		k=0;
-		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	      }
-	      libmdc_buffer = (amitk_format_UINT_t *) (libmdc_fi.image[image_num].buf);
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_UINT_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    }
-	    break;
 	  case AMITK_FORMAT_FLOAT: 
-	    {
-	      amitk_format_FLOAT_t * libmdc_buffer;
-	      if (MdcDoSwap()) {
-		k=0;
-		for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		  for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
-		    MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
-	      }
-	      
-	      if (salvage) {
-		/* convert the image to a 32 bit float to begin with */
-		if ((libmdc_buffer = (amitk_format_FLOAT_t *) MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
-		  g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
-		  g_free(libmdc_buffer);
-		  goto error;
-		}
-	      } else {
-		libmdc_buffer = (amitk_format_FLOAT_t *) (libmdc_fi.image[image_num].buf);
-	      }
-	      
-	      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
-		  AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
-		    libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	      
-	      /* done with the temporary float buffer */
-	      if (salvage) g_free(libmdc_buffer);
-	    }
+	    if (MdcDoSwap()) 
+	      for (k=0; k < bytes_per_plane; k+=4)
+		MdcSwapBytes(libmdc_fi.image[image_num].buf+k, 4);
 	    break;
 	  default:
 	    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
@@ -758,7 +770,24 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	    break;
 	  }
 
+	  if (salvage) {
+	    /* convert the image to a 32 bit float to begin with */
+	    if ((conv_pointer = MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
+	      g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
+	      goto error;
+	    }
+	  } else {
+	    conv_pointer = libmdc_fi.image[image_num].buf;
+	  }
+
+	  /* flip as (X)MedCon stores data from anterior to posterior (top to bottom) */
+	  for (i.y=0; i.y < dim.y; i.y++) {
+	    ds_pointer = amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i);
+	    memcpy(ds_pointer, conv_pointer+bytes_per_row*(dim.y-i.y-1), format_size*ds->raw_data->dim.x);
+	  }
+
 	  /* free up the buffer data */
+	  if (salvage) g_free(conv_pointer);
 	  MdcFree(libmdc_fi.image[image_num].buf);
 	} /* .buf != NULL */
       } /* i.z */
@@ -780,19 +809,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_min_max(ds, update_func, update_data);
-  amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
-
-  /* if NIFTI format, try to get in the right orientation */
-#if NOT_DONE_YET
-  /* the below is not commpletely correct, see comments above under the
-     other NOT_DONE_YET section.
-  */
-#endif /* NOT_DONE_YET */
-  if (libmdc_fi.iformat == MDC_FRMT_NIFTI) {
-    for (i_axis = 0; i_axis < AMITK_AXIS_NUM; i_axis++)
-      amitk_space_invert_axis(AMITK_SPACE(ds), i_axis, zero_point);
-  }
-
+  if (center_data_set)
+    amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
 
   goto function_end;
 
@@ -1095,6 +1113,7 @@ gboolean libmdc_export(AmitkDataSet * ds,
 	plane->pixel_xsize = fi.pixdim[1];
 	plane->pixel_ysize = fi.pixdim[2];
 	plane->slice_width = fi.pixdim[3];
+	plane->slice_spacing = fi.pixdim[3];
 	if (resliced) {
 	  plane->quant_scale = 1.0;
 	  plane->intercept = 0.0;
@@ -1128,6 +1147,14 @@ gboolean libmdc_export(AmitkDataSet * ds,
 	  new_offset.z += voxel_size.z;
 	  amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
 	}
+
+	/* ideally, I'd put in the orientation and offset into the exported
+	   files... For simplicity sake I'm not doing that at the moment, and just
+	   flipping the data on the y-axis manually as below. I'm not sure how 
+	   consistent (X)Medcon's treatment of the image.image_orient_pat and image_pos_pat
+	   parameters is.... and setting these parameters is likely more confusing then
+	   it's worth...
+	 */
 
 	/* flip for (X)MedCon's axis */
 	for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {

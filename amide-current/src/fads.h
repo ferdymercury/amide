@@ -70,6 +70,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      gint num_blood_curve_constraints,
 	      gint * blood_curve_constraint_frame,
 	      gdouble * blood_curve_constraint_val,
+	      GArray * initial_curves,
 	      AmitkUpdateFunc update_func,
 	      gpointer update_data);
 void fads_two_comp(AmitkDataSet * data_set, 

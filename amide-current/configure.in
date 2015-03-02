@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.59)
-AC_INIT([amide],[1.0.2],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[1.0.3],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -373,18 +373,22 @@ test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
 ])
 
 
-dnl libgnomecanvas anti-aliasing is buggy, and looks like it's never going to be fixed
+dnl libgnomecanvas anti-aliasing has been buggy in the past. I originally thought
+dnl this never would be fixed. Was unclear if the issues were in libgnomecanvas
+dnl or libart. In any case, as of libgnomecanvas 2.30.3 things seem stable, 
+dnl so I'm re-enabling support for now
+dnl
 dnl record if our version of libgnomecanvas can handle anti-aliasing
-dnl PKG_CHECK_MODULES(dummy, 
-dnl	[libgnomecanvas-2.0 >= 2.2.0], 
-dnl	 enable_antialiasing=yes, enable_antialiasing=no)
-dnl if test $enable_antialiasing = yes; then
-dnl	echo "compiling with libgnomecanvas antialiasing support"
-dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
-dnl else
-dnl	echo "compiling without libgnomecanvas antialiasing support"
-dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
-dnl fi
+PKG_CHECK_MODULES(libgnomecanvas_greater_than_230, 
+		[libgnomecanvas-2.0 >= 2.3.0], 
+		enable_antialiasing=yes, enable_antialiasing=no)
+if test $enable_antialiasing = yes; then
+   echo "compiling with libgnomecanvas antialiasing support"
+   AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
+else
+   echo "compiling without libgnomecanvas antialiasing support"
+   AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
+fi
 
 
 ################################################################

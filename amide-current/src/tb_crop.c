@@ -315,7 +315,7 @@ static GtkWidget * create_projection_page(tb_crop_t * tb_crop, AmitkView view) {
       }
       m_table_row++;
       
-      if (i_dim < AMITK_AXIS_NUM) {
+      if (i_dim <= AMITK_DIM_Z) {
 	label = gtk_label_new(_("(mm)"));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	gtk_table_attach(GTK_TABLE(middle_table), label, 
@@ -323,7 +323,7 @@ static GtkWidget * create_projection_page(tb_crop_t * tb_crop, AmitkView view) {
 			 GTK_FILL|GTK_EXPAND,FALSE, X_PADDING, 0);
 	
 	for (i_range=0; i_range<NUM_RANGES; i_range++) {
-	  g_assert(i_dim < AMITK_AXIS_NUM);
+	  g_assert(i_dim <= AMITK_DIM_Z);
 	  tb_crop->mm_label[view][i_dim][i_range] = gtk_label_new("");
 	  gtk_table_attach(GTK_TABLE(middle_table), tb_crop->mm_label[view][i_dim][i_range],
 			   1+i_range,2+i_range, m_table_row,m_table_row+1,
@@ -726,16 +726,18 @@ static void change_scaling_type_cb(GtkWidget * widget, gpointer data) {
 static void update_mm_labels(tb_crop_t * tb_crop, AmitkView view) {
   AmitkPoint temp_rp;
   range_t i_range;
-  AmitkAxis i_axis;
+  AmitkDim i_dim;
   gchar * temp_string;
 
   for (i_range=0; i_range<NUM_RANGES; i_range++) {
     VOXEL_TO_POINT(tb_crop->range[i_range], AMITK_DATA_SET_VOXEL_SIZE(tb_crop->data_set), temp_rp);
     temp_rp = amitk_space_s2b(AMITK_SPACE(tb_crop->data_set), temp_rp);
-    for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
-      temp_string = g_strdup_printf("%g", point_get_component(temp_rp, i_axis));
-      gtk_label_set_text(GTK_LABEL(tb_crop->mm_label[view][i_axis][i_range]), temp_string);
-      g_free(temp_string);
+    for (i_dim=0; i_dim<=AMITK_DIM_Z; i_dim++) {
+      if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
+	temp_string = g_strdup_printf("%g", point_get_component(temp_rp, i_dim));
+	gtk_label_set_text(GTK_LABEL(tb_crop->mm_label[view][i_dim][i_range]), temp_string);
+	g_free(temp_string);
+      }
     }
   }
   return;

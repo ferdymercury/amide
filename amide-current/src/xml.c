@@ -195,13 +195,12 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_str != NULL) {
+  if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
+    amitk_append_str_with_newline(perror_buf, _("Couldn't allocate memory space for time data"));
+    return return_times;
+  }
 
-    if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
-      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate memory space for time data"));
-      return return_times;
-    }
-    
+  if (temp_str != NULL) {
     /* split-up the string so we can process it */
     string_chunks = g_strsplit(temp_str, "\t", num_times);
     g_free(temp_str);
@@ -230,7 +229,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
     if (corrupted) {
       for (i=0; i<num_times; i++) return_times[i]=1.0;
-      amitk_append_str_with_newline(perror_buf, _("XIF File appears corrupted, setting frame durations to 1"));
+      amitk_append_str_with_newline(perror_buf, _("XIF File appears corrupted, setting frame/gate time to 1"));
     }
 
     g_strfreev(string_chunks);
@@ -238,11 +237,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   if (temp_str == NULL) {
     amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting 1"),descriptor);
-    if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
-      amitk_append_str_with_newline(perror_buf, _("Couldn't allocate memory space for time data"));
-      return return_times;
-    }
-    return_times[0] = 1.0;
+    for (i=0; i<num_times; i++) return_times[i]=1.0;
   }
 
   setlocale(LC_NUMERIC, saved_locale);
@@ -338,6 +333,14 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   return return_data;
 }
 
+amide_real_t xml_get_real_with_default(xmlNodePtr nodes, const gchar * descriptor, amide_real_t default_real) {
+
+  if (xml_node_exists(nodes, descriptor))
+    return xml_get_data(nodes, descriptor, NULL);
+  else
+    return default_real;
+}
+
 gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
 
   gchar * temp_str;
@@ -396,6 +399,38 @@ gint xml_get_int_with_default(xmlNodePtr nodes, const gchar * descriptor, gint d
     return xml_get_int(nodes, descriptor, NULL);
   else
     return default_int;
+}
+
+guint xml_get_uint(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
+
+  gchar * temp_str;
+  guint return_uint;
+  gint error=0;
+
+  temp_str = xml_get_string(nodes, descriptor);
+
+  if (temp_str != NULL) {
+    /* convert to an int */
+    error = sscanf(temp_str, "%u", &return_uint);
+    g_free(temp_str);
+  } 
+
+  if ((temp_str == NULL) || (error == EOF)) {
+    return_uint = 0;
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting %u"),
+				  descriptor, return_uint);
+  }
+
+  return return_uint;
+}
+
+
+guint xml_get_uint_with_default(xmlNodePtr nodes, const gchar * descriptor, guint default_uint) {
+
+  if (xml_node_exists(nodes, descriptor))
+    return xml_get_uint(nodes, descriptor, NULL);
+  else
+    return default_uint;
 }
 
 
@@ -609,11 +644,22 @@ void xml_save_boolean(xmlNodePtr node, const gchar * descriptor, const gboolean 
     xml_save_string(node, descriptor, false_string);
 }
 
-void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num) {
+void xml_save_int(xmlNodePtr node, const gchar * descriptor, const gint num) {
 
   gchar * temp_str;
 
   temp_str = g_strdup_printf("%d", num);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+void xml_save_uint(xmlNodePtr node, const gchar * descriptor, const guint num) {
+
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%u", num);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 

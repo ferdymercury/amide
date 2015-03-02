@@ -81,6 +81,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 				      AmitkPreferences * preferences,
 				      gint *pnum_frames,
 				      gint *pnum_gates,
+				      gint *pnum_slices,
 				      AmitkUpdateFunc update_func,
 				      gpointer update_data,
 				      gchar **perror_buf) {
@@ -91,6 +92,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   OFCondition result;
   Uint16 return_uint16=0;
   Sint32 return_sint32=0;
+  Sint16 return_sint16=0;
   Float64 return_float64=0.0;
   Uint16 bits_allocated;
   Uint16 pixel_representation;
@@ -233,6 +235,19 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       if (strstr(return_str, "GATED\\IMAGE") != NULL)
 	if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlots, return_uint16).good()) 
 	  *pnum_gates = return_uint16;
+
+  /* some files use NumberOfTemporalPositions */
+  if (*pnum_gates == 1)
+    if (dcm_dataset->findAndGetSint32(DCM_NumberOfTemporalPositions, return_sint32).good()) 
+      if (return_sint32 > 0)
+	*pnum_gates = return_sint32;
+
+  /* record how many slices in each volume. Used if there is an inconsistent between the 
+     number of gates and total number of images */
+  /* 0x0021,0x104f corresponds to LocationsInAcquisition */
+  if (dcm_dataset->findAndGetSint16(DcmTagKey(0x0021, 0x104f), return_sint16).good())
+    if (return_sint16 > 0)
+      *pnum_slices = return_sint16;
 
   if (dcm_dataset->findAndGetUint16(DCM_BitsAllocated, return_uint16).bad()) {
     g_warning(_("could not find # of bits allocated - Failed to load file %s\n"), filename);
@@ -430,11 +445,17 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   amitk_data_set_set_diffusion_direction(ds, direction);
   
-  /* store the gate time if possible */
-  if (dcm_dataset->findAndGetFloat64(DCM_TriggerTime, return_float64).good()) 
-    ds->gate_time = return_float64;
+  /* store the gate time if possible, DICOM stores this as milliseconds */
+  if (dcm_dataset->findAndGetFloat64(DCM_TriggerTime, return_float64).good())
+    amitk_data_set_set_gate_time(ds, 0, return_float64/1000.0);
   else
-    ds->gate_time = 0.0;
+    amitk_data_set_set_gate_time(ds, 0, 0.0);
+
+  /* and get the Temporal position, DICOM uses this with gated MR images */
+  if (dcm_dataset->findAndGetSint32(DCM_TemporalPositionIdentifier, return_sint32).good())
+    ds->gate_num=return_sint32;
+  else
+    ds->gate_num=-1;
 
   /* find the most relevant start time */
   return_str = NULL;
@@ -764,16 +785,25 @@ static gint sort_slices_func_with_time(gconstpointer a, gconstpointer b) {
 static gint sort_slices_func_with_gate(gconstpointer a, gconstpointer b) {
   AmitkDataSet * slice_a = (AmitkDataSet *) a;
   AmitkDataSet * slice_b = (AmitkDataSet *) b;
-  gdouble gate_a, gate_b;
+  amide_time_t gate_time_a, gate_time_b;
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(slice_a), -1);
   g_return_val_if_fail(AMITK_IS_DATA_SET(slice_b), 1);
 
-  /* first sort by time */
-  gate_a = AMITK_DATA_SET(slice_a)->gate_time;
-  gate_b = AMITK_DATA_SET(slice_b)->gate_time;
-  if (!REAL_EQUAL(gate_a, gate_b)) {
-    if (gate_a < gate_b)
+  /* first sort by gate if we can. Note, we set gate_num to -1 if
+     there's no entry for it in the DICOM file */
+  if ((slice_a->gate_num >= 0) && (slice_b->gate_num >=0)) {
+    if (slice_a->gate_num < slice_b->gate_num)
+      return -1;
+    else if (slice_a->gate_num > slice_b->gate_num)
+      return 1;
+  }
+
+  /* if we don't have gate_num entries, sort by gate time */
+  gate_time_a = amitk_data_set_get_gate_time(slice_a, 0);
+  gate_time_b = amitk_data_set_get_gate_time(slice_b, 0);
+  if (!REAL_EQUAL(gate_time_a, gate_time_b)) {
+    if (gate_time_a < gate_time_b)
       return -1;
     else
       return 1;
@@ -814,6 +844,10 @@ static GList * find_slices_that_match(GList ** pslices) {
        are coming from character strings in the DICOM header, and may be a little imprecise. */
     if (match)
       match = amitk_space_axes_close(AMITK_SPACE(initial_ds), AMITK_SPACE(comparison_ds));
+
+    /* check that the image type tags are the same. g_strcmp0 handles NULL pointers */
+    if (match)
+      match = (g_strcmp0(AMITK_DATA_SET_DICOM_IMAGE_TYPE(initial_ds), AMITK_DATA_SET_DICOM_IMAGE_TYPE(comparison_ds)) == 0);
 
     /* if MRI, check inversion, echo times, and b-value are equal */
     if (AMITK_DATA_SET_MODALITY(initial_ds) == AMITK_MODALITY_MRI)  {
@@ -863,20 +897,23 @@ static GList * separate_duplicate_slices(GList * slices_to_combine, GList ** pre
   current_slices = current_slices->next;
   while (current_slices != NULL) {
     current_ds = AMITK_DATA_SET(current_slices->data);
+    current_slices = current_slices->next;
 
     if (POINT_EQUAL(AMITK_SPACE_OFFSET(previous_ds),
 		    AMITK_SPACE_OFFSET(current_ds))) {
-      if (current_ds->instance_number < previous_ds->instance_number) 
+      if (current_ds->instance_number < previous_ds->instance_number) {
 	discard_ds = previous_ds;
-      else
+	previous_ds = current_ds; /* for next iteration */
+      } else {
 	discard_ds = current_ds;
+	/* previous_ds stays the same */
+      }
 
       *premaining_slices = g_list_append(*premaining_slices, discard_ds);
       slices_to_combine = g_list_remove(slices_to_combine, discard_ds);
-    } 
-
-    previous_ds = current_ds;
-    current_slices = current_slices->next;
+    } else {
+      previous_ds = current_ds;
+    }
   }
 
   return slices_to_combine;
@@ -885,6 +922,7 @@ static GList * separate_duplicate_slices(GList * slices_to_combine, GList ** pre
 static AmitkDataSet * import_slices_as_dataset(GList * slices, 
 					       gint num_frames, 
 					       gint num_gates,
+					       gint num_slices,
 					       AmitkUpdateFunc update_func,
 					       gpointer update_data,
 					       gchar **perror_buf) {
@@ -923,25 +961,61 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   if (dim.z == 1) 
     dim.z = num_files;
 
-  if (num_frames > 1) {
-    x = div(dim.z, num_frames);
-    if (x.rem != 0) {
-      amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), AMITK_OBJECT_NAME(slice_ds));
-      dim.t = num_frames=1;
-    } else {
-      dim.t = num_frames;
+  /* dealing with dynamic or gated data */
+  if ((num_frames > 1) || (num_gates > 1)) {
+
+    if (num_frames > 1) 
+      x = div(dim.z, num_frames);
+    else /* (num_gates > 1) */
+      x = div(dim.z, num_gates);
+
+    if (x.rem == 0) {
       dim.z = x.quot;
-    }
-  } else if (num_gates > 1) {
-    x = div(dim.z, num_gates);
-    if (x.rem != 0) {
-      amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), AMITK_OBJECT_NAME(slice_ds));
-      dim.g = num_gates=1;
+      if (num_frames > 1) 
+	dim.t = num_frames;
+      else /* (num_gates > 1) */
+	dim.g = num_gates;
+
     } else {
-      dim.g = num_gates;
-      dim.z = x.quot;
+
+      /* inconsistency in our data set.... */
+      if (num_slices > 1)  
+	x = div(dim.z, num_slices);
+
+      if ((num_slices > 1) && (x.rem == 0)) {
+	/* try to recover based on what the DICOM file thinks is the number of slices per frame */
+	amitk_append_str_with_newline(perror_buf, 
+				      _("Cannot evenly divide the number of slices (%d) by the number of reported %s (%d) for data set %s - will try with %d %s"), 
+				      dim.z,
+				      num_frames > 1 ? _("frames") : _("gates"), 
+				      num_frames > 1 ? num_frames : num_gates,
+				      AMITK_OBJECT_NAME(slice_ds),
+				      x.quot,
+				      num_frames > 1 ? _("frames") : _("gates"));
+	if (num_frames > 1) 
+	  dim.t = x.quot;
+	else /* (num_gates > 1) */
+	  dim.g = x.quot;
+	dim.z = num_slices;
+
+      } else {
+	/* failure */
+	amitk_append_str_with_newline(perror_buf, 
+				      _("Cannot evenly divide the number of slices (%d) by the number of %s (%d) for data set %s - will load first %d slices"), 
+				      dim.z,
+				      num_frames > 1 ? _("frames") : _("gates"), 
+				      num_frames > 1 ? num_frames : num_gates,
+				      AMITK_OBJECT_NAME(slice_ds),
+				      x.quot);
+	if (num_frames > 1) 
+	  dim.t = num_frames = 1;
+	else /* (num_gates > 1) */
+	  dim.g = num_gates = 1;
+	dim.z = num_slices;
+	dim.z = x.quot;
+      }
     }
-  }
+  } /* dynamic/gated data */
 
   ds = AMITK_DATA_SET(amitk_object_copy(AMITK_OBJECT(slice_ds)));
       
@@ -984,6 +1058,14 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
     g_warning(_("couldn't allocate space for the frame duration info"));
     goto error;
   }
+
+  if (ds->gate_time != NULL)
+    g_free(ds->gate_time);
+  if ((ds->gate_time = amitk_data_set_get_gate_time_mem(ds)) == NULL) {
+    g_warning(_("couldn't allocate space for the gate time info"));
+    goto error;
+  }
+  
       
   initial_offset = AMITK_SPACE_OFFSET(slice_ds);
 
@@ -1000,9 +1082,11 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
     i.z = x.rem;
     transfer_slice(ds, slice_ds, i);
 
-    /* record frame duration if needed */
-    if (i.z == 0)
+    /* record frame/gate duration if needed */
+    if (i.z == 0) {
       amitk_data_set_set_frame_duration(ds, i.t, amitk_data_set_get_frame_duration(slice_ds, 0));
+      amitk_data_set_set_gate_time(ds, i.g, amitk_data_set_get_gate_time(slice_ds, 0));
+    }
 
 
     if (i_file != 0) {
@@ -1192,6 +1276,7 @@ static GList * free_slices(GList * slices) {
 static GList * organize_and_import_slices_as_datasets(GList ** premaining_slices, 
 						      gint num_frames, 
 						      gint num_gates,
+						      gint num_slices,
 						      AmitkUpdateFunc update_func,
 						      gpointer update_data,
 						      gchar **perror_buf) {
@@ -1216,14 +1301,14 @@ static GList * organize_and_import_slices_as_datasets(GList ** premaining_slices
   slices_to_combine = separate_duplicate_slices(slices_to_combine, premaining_slices);
 
   /* load in the primary data set */
-  ds = import_slices_as_dataset(slices_to_combine, num_frames, num_gates, update_func, update_data, perror_buf);
+  ds = import_slices_as_dataset(slices_to_combine, num_frames, num_gates, num_slices, update_func, update_data, perror_buf);
   if (ds != NULL)
     returned_sets = g_list_append(returned_sets, ds);
   free_slices(slices_to_combine);
   
   /* and recurse to try loading in any remaining data sets */
   if (*premaining_slices != NULL) {
-    additional_sets = organize_and_import_slices_as_datasets(premaining_slices, num_frames, num_gates, update_func, update_data, perror_buf);
+    additional_sets = organize_and_import_slices_as_datasets(premaining_slices, num_frames, num_gates, num_slices, update_func, update_data, perror_buf);
     if (additional_sets != NULL)
       returned_sets = g_list_concat(returned_sets, additional_sets);
   }
@@ -1246,6 +1331,7 @@ static GList * import_files_as_datasets(GList * image_files,
   gint image;
   gint num_frames=1;
   gint num_gates=1;
+  gint num_slices=-1;
   gint num_files;
   GList * slices=NULL;
   gboolean continue_work=TRUE;
@@ -1270,7 +1356,7 @@ static GList * import_files_as_datasets(GList * image_files,
     slice_name = (gchar *) g_list_nth_data(image_files,image);
 
     slice_ds = read_dicom_file(slice_name, pstudyname,preferences, 
-			       &num_frames, &num_gates, NULL, NULL, perror_buf);
+			       &num_frames, &num_gates, &num_slices, NULL, NULL, perror_buf);
     if (slice_ds == NULL) {
       goto cleanup;
     } else if ((AMITK_DATA_SET_DIM_Z(slice_ds) != 1) && (num_files > 1)) {
@@ -1289,7 +1375,7 @@ static GList * import_files_as_datasets(GList * image_files,
     g_warning("Don't know how to deal with multi-gate and multi-frame data, results will be undefined");
 
 
-  returned_sets = organize_and_import_slices_as_datasets(&slices, num_frames, num_gates, update_func, update_data, perror_buf);
+  returned_sets = organize_and_import_slices_as_datasets(&slices, num_frames, num_gates, num_slices, update_func, update_data, perror_buf);
 
 
  cleanup:
@@ -2371,11 +2457,11 @@ gboolean dcmtk_export(AmitkDataSet * ds,
     break;
   case AMITK_MODALITY_MRI:
     if (!isnan(AMITK_DATA_SET_INVERSION_TIME(ds))) 
-      insert_double_str(dcm_item, DCM_InversionTime, AMITK_DATA_SET_INVERSION_TIME(ds));
+      insert_double_str(dcm_ds, DCM_InversionTime, AMITK_DATA_SET_INVERSION_TIME(ds));
     if (!isnan(AMITK_DATA_SET_ECHO_TIME(ds))) 
-      insert_double_str(dcm_item, DCM_EchoTime, AMITK_DATA_SET_ECHO_TIME(ds));
+      insert_double_str(dcm_ds, DCM_EchoTime, AMITK_DATA_SET_ECHO_TIME(ds));
     if (!isnan(AMITK_DATA_SET_DIFFUSION_B_VALUE(ds))) {
-      insert_double_str(dcm_item, DCM_DiffusionBValue, AMITK_DATA_SET_DIFFUSION_B_VALUE(ds));
+      insert_double_str(dcm_ds, DCM_DiffusionBValue, AMITK_DATA_SET_DIFFUSION_B_VALUE(ds));
       dcm_ds->putAndInsertFloat64(DCM_DiffusionGradientOrientation, 
 				  AMITK_DATA_SET_DIFFUSION_DIRECTION(ds).x, 0, OFTrue);
       dcm_ds->putAndInsertFloat64(DCM_DiffusionGradientOrientation, 
@@ -2410,9 +2496,12 @@ gboolean dcmtk_export(AmitkDataSet * ds,
   dcm_ds->putAndInsertString(DCM_PhotometricInterpretation, "MONOCHROME2");
   dcm_ds->putAndInsertUint16(DCM_SamplesPerPixel, 1); /* all our data is monochrome, 3 would be rgb */
 
-  if (AMITK_DATA_SET_DIM_G(ds) > 1) 
+  /* if gated study, put in the gate information */
+  if (AMITK_DATA_SET_DIM_G(ds) > 1) {
     insert_str(dcm_ds,DCM_SeriesType, "GATED\\IMAGE");
-  dcm_ds->putAndInsertUint16(DCM_NumberOfTimeSlots, AMITK_DATA_SET_DIM_G(ds));
+    dcm_ds->putAndInsertUint16(DCM_NumberOfTimeSlots, AMITK_DATA_SET_DIM_G(ds)); /* used for PET */
+    dcm_ds->putAndInsertSint32(DCM_NumberOfTemporalPositions, AMITK_DATA_SET_DIM_G(ds)); /* used for MR */
+  }
   
   if (AMITK_DATA_SET_DIM_T(ds) > 1)
     insert_str(dcm_ds,DCM_SeriesType, "DYNAMIC");
@@ -2528,6 +2617,13 @@ gboolean dcmtk_export(AmitkDataSet * ds,
     g_free(time_str);
 
     for (i_voxel.g = 0 ; (i_voxel.g < dim.g) && (continue_work); i_voxel.g++) {
+
+      /* if gated study, write in gate info */
+      if (AMITK_DATA_SET_DIM_G(ds) > 1) {
+	insert_int_str(dcm_ds, DCM_TemporalPositionIdentifier, i_voxel.g+1); /* starts at 1, not 0 */
+	insert_double_str(dcm_ds,DCM_TriggerTime,
+			  1000.0*amitk_data_set_get_gate_time(ds,i_voxel.g)); /* into ms */
+      }
 
       /* reset the output slice */
       amitk_space_set_offset(AMITK_SPACE(output_volume), output_start_pt);

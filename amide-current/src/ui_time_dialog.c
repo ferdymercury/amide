@@ -117,6 +117,7 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
   return;
 }
 
+
 /* reset out start and duration based on what just got selected */
 static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
 

@@ -747,7 +747,9 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 			  gnome_canvas_line_get_type(),
 			  "points", points,
 			  "fill_color", "white",
+#ifndef AMIDE_LIBGNOMECANVAS_AA
 			  "line_style", GDK_LINE_ON_OFF_DASH,
+#endif
 			  "width_units", 1.0,
 			  NULL);
   gnome_canvas_points_unref(points);
@@ -762,7 +764,9 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 			  gnome_canvas_line_get_type(),
 			  "points", points,
 			  "fill_color", "white",
+#ifndef AMIDE_LIBGNOMECANVAS_AA
 			  "line_style", GDK_LINE_ON_OFF_DASH,
+#endif
 			  "width_units", 1.0,
 			  NULL);
   gnome_canvas_points_unref(points);
@@ -789,9 +793,14 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
       points->coords[2*j+1] = CANVAS_HEIGHT-EDGE_SPACING-result->scale_y*(value-result->min_y);
     }
 
-    /* figure ou the color we'll use */
+    /* figure out the color we'll use */
     x = div(i, NUM_COLOR_ROTATIONS);
-    color = tb_profile->results->len < 2 ? 0xFFFFFFFF : color_rotation[x.rem];
+    if (tb_profile->results->len < 2) {
+      color = 0xFFFFFFFF;
+    } else {
+      color = color_rotation[x.rem];
+    }
+
 
     /* make sure it's destroyed */
     if (result->fit_item != NULL)
@@ -803,7 +812,9 @@ static void display_gaussian_fit(tb_profile_t * tb_profile) {
 			    gnome_canvas_line_get_type(),
 			    "points", points,
 			    "fill_color_rgba", color,
+#ifndef AMIDE_LIBGNOMECANVAS_AA
 			    "line_style", GDK_LINE_ON_OFF_DASH,
+#endif
 			    "width_units", 1.0,
 			    NULL);
     gnome_canvas_points_unref(points);
@@ -935,7 +946,7 @@ static gboolean update_while_idle(gpointer data) {
 			    "anchor", GTK_ANCHOR_SOUTH_WEST, "text", label,
 			    "x", (gdouble) EDGE_SPACING+5.0,
 			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
-			    "fill_color", "white", 
+			    "fill_color", "white",
 			    "font_desc", amitk_fixed_font_desc, NULL);
   }
   g_free(label);
@@ -950,7 +961,7 @@ static gboolean update_while_idle(gpointer data) {
 			    "anchor", GTK_ANCHOR_SOUTH_EAST, "text", label,
 			    "x", (gdouble) CANVAS_WIDTH-EDGE_SPACING,
 			    "y", (gdouble) CANVAS_HEIGHT-EDGE_SPACING,
-			    "fill_color", "white", 
+			    "fill_color", "white",
 			    "font_desc", amitk_fixed_font_desc, NULL);
   }
   g_free(label);
@@ -1283,7 +1294,7 @@ void tb_profile(AmitkStudy * study, AmitkPreferences * preferences, GtkWindow * 
 			gnome_canvas_rect_get_type(),
 			"x1",0.0, "y1", 0.0, 
 			"x2", (gdouble) CANVAS_WIDTH, "y2", (gdouble) CANVAS_HEIGHT,
-			"fill_color_rgba", 0x00000000,
+			"fill_color_rgba", 0x000000FF,
 			NULL);
 
   

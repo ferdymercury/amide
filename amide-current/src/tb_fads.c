@@ -32,7 +32,6 @@
 #include "ui_common.h"
 
 
-
 #ifdef AMIDE_LIBGSL_SUPPORT
 
 #define LABEL_WIDTH 400
@@ -63,9 +62,18 @@ N_("Welcome to the factor analysis of dynamic structures wizard. "
 
 
 static gchar * not_enough_frames_text =
-N_("Welcome to the factor analysis of dynamic structures wizard. "
-   "\n\n"
-   "This wizard only works with dynamic studies");
+  N_("Welcome to the factor analysis of dynamic structures wizard. "
+     "\n\n"
+     "This wizard only works with dynamic studies");
+
+
+static gchar * curve_explanation_text =
+  N_("You can select a text file to set the initial starting point for the fitted curves."
+     "\n\n"
+     "The file should have one line per time point, with one column for each parameter");
+
+static gchar * no_curve_explanation_text =
+  N_("Selected factor analysis method does not utilize initial curves");
 
 
 typedef enum {
@@ -73,6 +81,7 @@ typedef enum {
   SVD_PAGE,
   FACTOR_CHOICE_PAGE,
   PARAMETERS_PAGE,
+  CURVES_PAGE,
   CONCLUSION_PAGE,
   NUM_PAGES
 } which_page_t;
@@ -93,6 +102,7 @@ typedef struct tb_fads_t {
   gdouble k32;
   fads_type_t fads_type;
   fads_minimizer_algorithm_t algorithm;
+  GArray * initial_curves; 
 
   GtkWidget * page[NUM_PAGES];
   GtkWidget * progress_dialog;
@@ -107,6 +117,10 @@ typedef struct tb_fads_t {
   GtkWidget * blood_add_button;
   GtkWidget * blood_remove_button;
   GtkWidget * blood_tree;
+  GtkWidget * curve_add_button;
+  GtkWidget * curve_remove_button;
+  GtkWidget * curve_view;
+  GtkTextBuffer * curve_text;
   GtkTextBuffer * explanation_buffer;
 
   guint reference_count;
@@ -115,6 +129,7 @@ typedef struct tb_fads_t {
 
 
 static void set_text(tb_fads_t * tb_fads);
+static void update_curve_text(tb_fads_t * tb_fads, gboolean allow_curve_entries);
 static gchar * get_filename(tb_fads_t * tb_fads);
 
 static void fads_type_cb(GtkWidget * widget, gpointer data);
@@ -124,6 +139,9 @@ static void blood_cell_edited(GtkCellRendererText *cellrenderertext,
 			      gchar *arg1, gchar *arg2,gpointer data);
 static void add_blood_pressed_cb(GtkButton * button, gpointer data);
 static void remove_blood_pressed_cb(GtkButton * button, gpointer data);
+static void read_in_curve_file(tb_fads_t * tb_fads, gchar * filename);
+static void add_curve_pressed_cb(GtkButton * button, gpointer data);
+static void remove_curve_pressed_cb(GtkButton * button, gpointer data);
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer data);
@@ -175,6 +193,48 @@ static void set_text(tb_fads_t * tb_fads) {
 
   return;
 }
+
+static void update_curve_text(tb_fads_t * tb_fads, gboolean allow_curve_entries) {
+  gint i;
+  gint j;
+  gint k;
+  GString * text_str;
+
+  if (!allow_curve_entries) { /* using a method that doesn't use initial curves */
+    gtk_text_buffer_set_text(tb_fads->curve_text, _(no_curve_explanation_text), -1);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tb_fads->curve_view), GTK_WRAP_WORD);
+  } else if (tb_fads->initial_curves == NULL) {
+    gtk_text_buffer_set_text(tb_fads->curve_text, _(curve_explanation_text), -1);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tb_fads->curve_view), GTK_WRAP_WORD);
+  } else {
+    text_str = g_string_new("frame/curve:");
+    for (j=0; j < tb_fads->num_factors; j++) 
+      g_string_append_printf(text_str, " %10d", j);
+    g_string_append(text_str, "\n");
+
+    for (i=0,j=0,k=0; i < tb_fads->initial_curves->len; i++,j++) {
+      if (j >= tb_fads->num_factors) {
+	g_string_append(text_str, "\n");
+	j=0;
+      }
+      if (j==0) { /* new row, first column */
+	g_string_append_printf(text_str, "%12d", k);
+	k++;
+      } 
+      g_string_append_printf(text_str, " %10.9g", 
+			     g_array_index(tb_fads->initial_curves, gdouble, i));
+    }
+    g_string_append(text_str, "\n");
+
+    gtk_text_buffer_set_text(tb_fads->curve_text, text_str->str, -1);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(tb_fads->curve_view), GTK_WRAP_NONE);
+    g_string_free(text_str, TRUE);
+  }
+
+  return;
+}
+
+
 
 /* function to get a name to save the output as: 
    returned string will need to be free'd if not NULL */
@@ -311,6 +371,111 @@ static void remove_blood_pressed_cb(GtkButton * button, gpointer data) {
 }
 
 
+ 
+static void read_in_curve_file(tb_fads_t * tb_fads, gchar * filename) {
+
+  FILE * file;
+  gdouble return_val;
+  gchar line[1024];
+  gchar **  string_chunks;
+  gint i;
+
+
+  if ((file = fopen(filename, "r")) == NULL) {
+    g_warning(_("Could not open file: %s"), filename);
+    return;
+  }
+
+  if (tb_fads->initial_curves != NULL) 
+    g_array_free(tb_fads->initial_curves, TRUE);
+  tb_fads->initial_curves = g_array_new(FALSE, TRUE, sizeof(gdouble));
+
+  while(fgets(line, 1024, file) != NULL) {
+    if (line[0] != '#') {/* skip comment lines */
+      /* split the line by tabs */
+      string_chunks = g_strsplit(line, "\t", -1);
+      i=0;
+      while (string_chunks[i] != NULL) {
+	if (sscanf(string_chunks[i], "%lf", &return_val) == 1)
+	  tb_fads->initial_curves = g_array_append_val(tb_fads->initial_curves, return_val);
+	i++;
+      }
+      g_strfreev(string_chunks);
+    }
+  }
+
+  if (tb_fads->initial_curves->len == 0) {
+    g_warning(_("Could not find any numerical values in file: %s\n"), filename);
+    g_array_free(tb_fads->initial_curves, TRUE);
+    tb_fads->initial_curves = NULL;
+  }
+
+
+  update_curve_text(tb_fads, TRUE);
+
+  fclose(file);
+
+
+  return;
+}
+
+
+static void add_curve_pressed_cb(GtkButton * button, gpointer data) {
+
+  tb_fads_t * tb_fads = data;
+  GtkWidget * file_chooser;
+  gchar * filename;
+
+  /* get the name of the file to import */
+  file_chooser = gtk_file_chooser_dialog_new (_("Import Curve File"),
+					      GTK_WINDOW(tb_fads->dialog), /* parent window */
+					      GTK_FILE_CHOOSER_ACTION_OPEN,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					      NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  amitk_preferences_set_file_chooser_directory(tb_fads->preferences, file_chooser); 
+
+  if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
+  else
+    filename = NULL;
+  gtk_widget_destroy (file_chooser);
+
+  if (filename == NULL) return;
+  if (!ui_common_check_filename(filename)) {
+    g_warning(_("Inappropriate Filename: %s"), filename);
+    g_free(filename);
+    return;
+  }
+
+#ifdef AMIDE_DEBUG
+  g_print("Curve file to import: %s\n",filename);
+#endif
+
+  read_in_curve_file(tb_fads, filename);
+
+  g_free(filename);
+  return;
+}
+
+static void remove_curve_pressed_cb(GtkButton * button, gpointer data) {
+
+  tb_fads_t * tb_fads = data;
+
+  if (tb_fads->initial_curves != NULL) {
+    g_array_free(tb_fads->initial_curves, TRUE);
+    tb_fads->initial_curves = NULL;
+  }
+
+  /* and reset the explanation text */
+  gtk_text_buffer_set_text(tb_fads->curve_text,
+			   _(curve_explanation_text), -1);
+
+  return;
+}
+
+
 
 static void fads_type_cb(GtkWidget * widget, gpointer data) {
   tb_fads_t * tb_fads = data;
@@ -329,6 +494,7 @@ static void algorithm_cb(GtkWidget * widget, gpointer data) {
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_fads_t * tb_fads = data;
   tb_fads->num_factors = gtk_spin_button_get_value_as_int(spin_button);
+  
   return;
 }
 
@@ -416,7 +582,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
 #endif
   }
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->page[PARAMETERS_PAGE]);
+  ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->page[CONCLUSION_PAGE]);
   switch(tb_fads->fads_type) {
   case FADS_TYPE_PCA:
     fads_pca(tb_fads->data_set, tb_fads->num_factors, output_filename,
@@ -425,7 +591,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
   case FADS_TYPE_PLS:
     fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->algorithm, tb_fads->max_iterations,
 	     tb_fads->stopping_criteria,
-	     tb_fads->beta, output_filename, num, frames, vals, 
+	     tb_fads->beta, output_filename, num, frames, vals, tb_fads->initial_curves,
 	     amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
   case FADS_TYPE_TWO_COMPARTMENT:
@@ -438,7 +604,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
     g_error("fads type %d not defined", tb_fads->fads_type);
     break;
   }
-  ui_common_remove_wait_cursor(tb_fads->page[PARAMETERS_PAGE]);
+  ui_common_remove_wait_cursor(tb_fads->page[CONCLUSION_PAGE]);
 
   if (frames != NULL) {
     g_free(frames);
@@ -492,6 +658,11 @@ static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads) {
     g_print("freeing tb_fads\n");
 #endif
 
+    if (tb_fads->initial_curves != NULL) {
+      g_array_free(tb_fads->initial_curves, TRUE);
+      tb_fads->initial_curves = NULL;
+    }
+
     if (tb_fads->data_set != NULL) {
       amitk_object_unref(tb_fads->data_set);
       tb_fads->data_set = NULL;
@@ -539,6 +710,7 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->fads_type = FADS_TYPE_PCA;
   //  tb_fads->algorithm = FADS_MINIMIZER_VECTOR_BFGS;
   tb_fads->algorithm = FADS_MINIMIZER_CONJUGATE_PR;
+  tb_fads->initial_curves = NULL;
   tb_fads->explanation_buffer = NULL;
   tb_fads->progress_dialog = NULL;
 
@@ -553,41 +725,49 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
   which_page_t which_page;
   gboolean num_factors;
   gboolean blood_entries;
+  gboolean curve_entries;
   gboolean num_iterations;
   gboolean k_values;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
 
+  switch(tb_fads->fads_type) {
+  case FADS_TYPE_PCA:
+    k_values = FALSE;
+    blood_entries = FALSE;
+    curve_entries = FALSE;
+    num_factors = TRUE;
+    num_iterations = FALSE;
+    break;
+  case FADS_TYPE_TWO_COMPARTMENT:
+    k_values = TRUE;
+    blood_entries = TRUE;
+    curve_entries = FALSE;
+    num_factors = TRUE;
+    num_iterations = TRUE;
+    break;
+  case FADS_TYPE_PLS:
+    k_values = FALSE;
+    blood_entries = TRUE;
+    curve_entries = TRUE;
+    num_factors = TRUE;
+    num_iterations = TRUE;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    k_values = FALSE;
+    blood_entries = TRUE;
+    curve_entries = TRUE;
+    num_factors = TRUE;
+    num_iterations = TRUE;
+    break;
+  }
+
   switch(which_page) {
   case PARAMETERS_PAGE:
-    
-    switch(tb_fads->fads_type) {
-    case FADS_TYPE_PCA:
-      k_values = FALSE;
-      blood_entries = FALSE;
-      num_factors = TRUE;
-      num_iterations = FALSE;
-      break;
-    case FADS_TYPE_TWO_COMPARTMENT:
-      k_values = TRUE;
-      blood_entries = TRUE;
-      num_factors = TRUE;
-      num_iterations = TRUE;
-      break;
-    case FADS_TYPE_PLS:
-      k_values = FALSE;
-      blood_entries = TRUE;
-      num_factors = TRUE;
-      num_iterations = TRUE;
-      break;
-    default:
-      g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-      k_values = FALSE;
-      blood_entries = TRUE;
-      num_factors = TRUE;
-      num_iterations = TRUE;
-      break;
-    }
+    /* fill in the proper text for the option to add initial curves */
+    gtk_text_buffer_set_text(tb_fads->curve_text,
+			     curve_entries ? _(curve_explanation_text) : "", -1);
 
     /* hide options we don't need */
     gtk_widget_set_sensitive(tb_fads->blood_tree, blood_entries);
@@ -600,6 +780,13 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
     gtk_widget_set_sensitive(tb_fads->beta_spin, num_iterations);
     gtk_widget_set_sensitive(tb_fads->k12_spin, k_values);
     gtk_widget_set_sensitive(tb_fads->k21_spin, k_values);
+    break;
+
+  case CURVES_PAGE:
+    /* hide options we don't need */
+    gtk_widget_set_sensitive(tb_fads->curve_remove_button, curve_entries);
+    gtk_widget_set_sensitive(tb_fads->curve_add_button, curve_entries);
+    update_curve_text(tb_fads, curve_entries);
 
   default:
     break;
@@ -619,7 +806,6 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
   GtkTreeSelection *selection;
   GtkListStore * store;
   gint table_row;
-  gint max_table_row;
   GtkWidget * table;
   GtkWidget * scrolled;
   GtkWidget * menu;
@@ -827,7 +1013,6 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
     // table_row++;
 
-    max_table_row = table_row;
     table_row = 0;
     /* a separator for clarity */
     vseparator = gtk_vseparator_new();
@@ -847,8 +1032,9 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
-    gtk_table_attach(GTK_TABLE(table), scrolled, 3, 4, table_row, max_table_row, 
+    gtk_table_attach(GTK_TABLE(table), scrolled, 3, 4, table_row, table_row+4, 
 		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    table_row+=4;
     
     /* the table itself */
     store = gtk_list_store_new(2, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
@@ -872,14 +1058,48 @@ static GtkWidget * create_page(tb_fads_t * tb_fads, which_page_t i_page) {
     selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tb_fads->blood_tree));
     gtk_tree_selection_set_mode (selection, GTK_SELECTION_SINGLE);
     gtk_container_add(GTK_CONTAINER(scrolled),tb_fads->blood_tree);
-    table_row+=4;
     
     tb_fads->blood_remove_button = gtk_button_new_with_label(_("Remove Blood Sample"));
     g_signal_connect(G_OBJECT(tb_fads->blood_remove_button), "pressed", 
 		     G_CALLBACK(remove_blood_pressed_cb), tb_fads);
     gtk_table_attach(GTK_TABLE(table), tb_fads->blood_remove_button, 3,4, table_row,table_row+1,
 		     FALSE,FALSE, X_PADDING, Y_PADDING);
+
+    break;
+  case CURVES_PAGE:
+    /* A button to add initial curves */
+    tb_fads->curve_add_button = gtk_button_new_with_label(_("Add Initial Curves"));
+    g_signal_connect(G_OBJECT(tb_fads->curve_add_button), "pressed", 
+		     G_CALLBACK(add_curve_pressed_cb), tb_fads);
+    gtk_table_attach(GTK_TABLE(table), tb_fads->curve_add_button, 0,1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
     table_row++;
+
+    /* the scroll widget which the list will go into */
+    scrolled = gtk_scrolled_window_new(NULL,NULL);
+    gtk_widget_set_size_request(scrolled,200,200);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_table_attach(GTK_TABLE(table), scrolled, 0, 1, table_row, table_row+4,
+		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
+    table_row+=4;
+    
+    /* the curve text area */
+    tb_fads->curve_view = gtk_text_view_new();
+    tb_fads->curve_text = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tb_fads->curve_view));
+    gtk_widget_modify_font(tb_fads->curve_view, amitk_fixed_font_desc);
+
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(tb_fads->curve_view), FALSE);
+    gtk_container_add(GTK_CONTAINER(scrolled),tb_fads->curve_view);
+    
+    tb_fads->curve_remove_button = gtk_button_new_with_label(_("Remove Initial Curves"));
+    g_signal_connect(G_OBJECT(tb_fads->curve_remove_button), "pressed", 
+		     G_CALLBACK(remove_curve_pressed_cb), tb_fads);
+    gtk_table_attach(GTK_TABLE(table), tb_fads->curve_remove_button, 0,1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+
 
     break;
   default:

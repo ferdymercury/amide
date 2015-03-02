@@ -43,6 +43,7 @@
 #include "ui_gate_dialog.h"
 #include "ui_time_dialog.h"
 #include "tb_export_data_set.h"
+#include "tb_distance.h"
 #include "tb_fly_through.h"
 #include "tb_alignment.h"
 #include "tb_crop.h"
@@ -318,7 +319,7 @@ void save_xif(ui_study_t * ui_study, gboolean as_directory) {
   gchar * final_filename;
   gchar * temp_str;
 
-  /* get the name of the file to import */
+  /* get the name of the file to save */
   file_chooser = gtk_file_chooser_dialog_new (_("Save AMIDE XIF File"),
 					      GTK_WINDOW(ui_study->window), /* parent window */
 					      as_directory ? GTK_FILE_CHOOSER_ACTION_CREATE_FOLDER : GTK_FILE_CHOOSER_ACTION_SAVE, 
@@ -1077,6 +1078,15 @@ void ui_study_cb_crop_selected(GtkAction * action, gpointer data) {
   return;
 }
 
+/* user wants to run the distance wizard */
+void ui_study_cb_distance_selected(GtkAction * action, gpointer data) {
+  ui_study_t * ui_study = data;
+
+  tb_distance(ui_study->study, ui_study->window);
+
+  return;
+}
+
 /* user wants to run the fads wizard */
 void ui_study_cb_fads_selected(GtkAction * action, gpointer data) {
   ui_study_t * ui_study = data;
@@ -1113,6 +1123,7 @@ void ui_study_cb_profile_selected(GtkAction * action, gpointer data) {
 
   return;
 }
+
 
 /* user wants to run the image math wizard */
 void ui_study_cb_data_set_math_selected(GtkAction * action, gpointer data) {

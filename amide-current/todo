@@ -2,13 +2,15 @@ misc list of things todo:
 
 for next release?
 -----------------
-* exporting gated studies via DICOM and reloading doesn't work. May be an error in exporting, or an error in importing gated DICOM
+* scroll wheel doesn't work on windows... may need to update
+  underlying GTK. Appears to be a bug in libgnomecanvas-2.30.1 that is
+  fixed in libgnomecanvas-2.30.3
+* exporting gated studies via DICOM and reloading doesn't work. May be
+  an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
 * help works in cygwin setup, but not in installed package. Seems to know the
   right place to look, just isn't doing something correctly....
 * revert on dialogs doesn't work correctly... children get readded
-* some sort of way to easily measure distances between fiducials [1]
- [x] suggested by Michael Braden, A. Mehranian
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
  [x] noticed by Mark Huisman
 
@@ -72,7 +74,7 @@ big things:
 small things:
 -------------
 * boolean operators between ROI's, would allow subtracting one from another (requested by A. Mehranian)
-* be able to export the color scale (with appropriate numerical values) to a image file (requested by Frezghi Habte)
+* be able to export the color scale (with appropriate numerical values) to an image file (requested by Frezghi Habte)
 * pop-up widget allowing value underneath cursor to be shown for all data sets (not just active). (requested by Axel Moeller)
 * hot key to cycle through time frames (requested by Michael Braden)
 * allow direct entry of transformation matrix in amitk_space_edit
@@ -93,11 +95,7 @@ small things:
 * should have option to use rigid body registration with scaling
 * try to work in the max/min/distribution calculations into the loading loop
 * fix zooming of off angle roi's on the canvas
-* should all voxel's that an roi edge passes through be displayed?
-        -would mean creating roi canvas object as pixmap, similar to isocontour
 * roi analysis dialog should probably be updated for any change of the roi's
-* rendering movie generation should allow rotating around one axis, then another, then another
-	maybe an ability to script the movie?
 * add key combination that sets current pixel value to max/min threshold
 * rendered movies aren't smooth when looping in an external player, this happened when switching to ffmpeg
 
@@ -134,27 +132,32 @@ libgnomecanvas/pixbuf issues
 
 these problems will probably never be rectified, as libgnomecanvas is
 now deprecated. More likely course of action will be likely to rewrite
-the parts that use libgnomecanvas to use a new canvas system, but a
-new canvas system has not yet been agreed on for gtk (as of 2.14 at
+the parts that use libgnomecanvas to use a new canvas system (Cairo?).
+A new canvas system has not yet been agreed on for gtk (as of 2.14 at
 least).
 
-* antialiased canvases have been disabled again, due to instabilities with ROI resizing
-	starts spewing "*** attempt to put segment in horiz list twice" errors
-	and eventually core dumps.  Either a libart or libgnomecanvas bug.  Uncomment
-	appropriate lines in configure.in to reenable
+* antialiased canvases have been unstable in the past, due to
+	instabilities with ROI resizing starts spewing "*** attempt to
+	put segment in horiz list twice" errors and eventually core
+	dumps.  Either a libart or libgnomecanvas bug.  At the current
+	time (amide 1.0.3) things seem to be working, so the appropriate
+	lines in configure.in have been reenabled to allow building in
+	support for antialiased canvases. To disable antialiasing, disable
+	these lines again.
 
 	last tested versions:
-		libart_lgpl-2.3.14-1
-		libgnomecanvas-2.3.6-1
+		libart_lgpl-2.3.21
+		libgnomecanvas-2.30.3
 
 	-make sure to check that lines in tb_crop are placed correctly
 	-need to check that the export jpeg functions work, they have not been tested
 
 
-* anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
-        -ui_preferences_dialog, and amitk_object_dialog define out the appropriate code 
-	when antialiasing support is cmopiled in.  Add back in once anti-aliased
-	canvases support line styles.
+* anti-aliased canvases doesn't support GDK line styles (as of
+         libgnomecanvas 2.2.0) -ui_preferences_dialog, and
+         amitk_object_dialog define out the appropriate code when
+         antialiasing support is compiled in.  Add back in once (if
+         ever) anti-aliased canvases support line styles.
 
 * currently, alpha blending is done inside of image.c, a single pixbuf is generated,
 	and this is handed to gnome_canvas.  It'd be nice to use separate pixbuf's but 

@@ -44,8 +44,11 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D) || defined(ROI_TYPE_FREEHAND_2D) || defined(ROI_TYPE_FREEHAND_3D)
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
-								     const amide_real_t pixel_dim,
-								     const gboolean fill_roi);
+								     const amide_real_t pixel_dim
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+								     ,const gboolean fill_roi
+#endif
+								     );
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, 
 						   AmitkDataSet * ds, 
 						   AmitkVoxel iso_vp,

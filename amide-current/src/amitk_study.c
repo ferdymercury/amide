@@ -259,8 +259,12 @@ static void study_init (AmitkStudy * study) {
 
   /* preferences for the canvas */
   study->canvas_roi_width = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  study->canvas_roi_transparency = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY;
+#else
   study->canvas_line_style = AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE;
   study->canvas_fill_roi = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI;
+#endif
   study->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   study->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
   study->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
@@ -339,8 +343,12 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
 
   /* preferences */
   dest_study->canvas_roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(src_object);
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  dest_study->canvas_roi_transparency = AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(src_object);
+#else
   dest_study->canvas_line_style = AMITK_STUDY_CANVAS_LINE_STYLE(src_object);
   dest_study->canvas_fill_roi = AMITK_STUDY_CANVAS_FILL_ROI(src_object);
+#endif
   dest_study->canvas_layout = AMITK_STUDY_CANVAS_LAYOUT(src_object);
   dest_study->canvas_maintain_size = AMITK_STUDY_CANVAS_MAINTAIN_SIZE(src_object);
   dest_study->canvas_target_empty_area = AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(src_object);
@@ -386,8 +394,12 @@ static void study_write_xml(const AmitkObject * object,xmlNodePtr nodes,  FILE *
 
   /* preferences */
   xml_save_int(nodes, "canvas_roi_width", AMITK_STUDY_CANVAS_ROI_WIDTH(study));
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  xml_save_real(nodes, "canvas_roi_transparency", AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(study));
+#else
   xml_save_int(nodes, "canvas_line_style", AMITK_STUDY_CANVAS_LINE_STYLE(study));
   xml_save_int(nodes, "canvas_fill_roi", AMITK_STUDY_CANVAS_FILL_ROI(study));
+#endif
   xml_save_string(nodes, "canvas_layout", amitk_layout_get_name(AMITK_STUDY_CANVAS_LAYOUT(study)));
   xml_save_boolean(nodes, "canvas_maintain_size", AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study));
   xml_save_int(nodes, "canvas_target_empty_area", AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(study));
@@ -431,6 +443,12 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
   amitk_study_set_canvas_roi_width(study, 
 				   xml_get_int_with_default(nodes, "canvas_roi_width", 
 							    AMITK_STUDY_CANVAS_ROI_WIDTH(study)));  
+
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  amitk_study_set_canvas_roi_transparency(study,
+					  xml_get_real_with_default(nodes, "canvas_roi_transparency",
+								    AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(study)));
+#else
   amitk_study_set_canvas_line_style(study, 
 				    xml_get_int_with_default(nodes, "canvas_line_style",
 							     AMITK_STUDY_CANVAS_LINE_STYLE(study)));  
@@ -442,6 +460,8 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes,
     amitk_study_set_canvas_fill_roi(study, 
 				    xml_get_int_with_default(nodes, "canvas_fill_roi",
 							     AMITK_STUDY_CANVAS_FILL_ROI(study)));  
+#endif
+
   amitk_study_set_canvas_maintain_size(study, 
 				       xml_get_boolean_with_default(nodes, "canvas_maintain_size",
 								AMITK_STUDY_CANVAS_MAINTAIN_SIZE(study)));  
@@ -550,12 +570,22 @@ static void study_recalc_voxel_dim(AmitkStudy * study) {
 
 static void study_add_child(AmitkObject *object, AmitkObject *child) {
 
+  if (AMITK_IS_DATA_SET(child)) {
+    /* if this is for the first dataset added, get a reasonable view center */
+    if (!amitk_objects_has_type(AMITK_OBJECT_CHILDREN(object), AMITK_OBJECT_TYPE_DATA_SET, TRUE)) 
+      amitk_study_set_view_center(AMITK_STUDY(object), amitk_volume_get_center(AMITK_VOLUME(child)));
+  }
+
+  /* run the parent class function so added child is in the object's child list */
   AMITK_OBJECT_CLASS(parent_class)->object_add_child (object, child);
 
+  /* keep the minimum voxel dimension accurate */
   if (AMITK_IS_DATA_SET(child)) {
     study_recalc_voxel_dim(AMITK_STUDY(object));
     g_signal_connect_swapped(G_OBJECT(child), "voxel_size_changed", G_CALLBACK(study_recalc_voxel_dim), object);
+
   }
+
 
   return;
 }
@@ -588,8 +618,12 @@ AmitkStudy * amitk_study_new (AmitkPreferences * preferences) {
 
   if (preferences != NULL) {
     study->canvas_roi_width = AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences);
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+    study->canvas_roi_transparency = AMITK_PREFERENCES_CANVAS_ROI_TRANSPARENCY(preferences);
+#else
     study->canvas_line_style = AMITK_PREFERENCES_CANVAS_LINE_STYLE(preferences);
     study->canvas_fill_roi = AMITK_PREFERENCES_CANVAS_FILL_ROI(preferences);
+#endif
     study->canvas_layout = AMITK_PREFERENCES_CANVAS_LAYOUT(preferences);
     study->canvas_maintain_size = AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(preferences);
     study->canvas_target_empty_area = AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences);
@@ -830,6 +864,23 @@ void amitk_study_set_canvas_roi_width(AmitkStudy * study, gint roi_width) {
   return;
 }
 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+void amitk_study_set_canvas_roi_transparency(AmitkStudy * study, const gdouble transparency) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+  g_return_if_fail(transparency >= 0.0);
+  g_return_if_fail(transparency <= 1.0);
+
+  if (AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(study) != transparency) {
+    study->canvas_roi_transparency = transparency;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_ROI_PREFERENCE_CHANGED], 0);
+  }
+
+  return;
+}
+
+
+#else
 void amitk_study_set_canvas_line_style(AmitkStudy * study, const GdkLineStyle line_style){
 
   g_return_if_fail(AMITK_IS_STUDY(study));
@@ -853,6 +904,7 @@ void amitk_study_set_canvas_fill_roi(AmitkStudy * study, const gboolean fill_roi
 
   return;
 }
+#endif
 
 void amitk_study_set_canvas_layout(AmitkStudy * study, const AmitkLayout layout) {
 

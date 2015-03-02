@@ -71,6 +71,9 @@ void amide_log_handler(const gchar *log_domain,
 
   AmitkPreferences * preferences = user_data;
   GtkWidget * dialog;
+  GtkWidget * message_area;
+  GtkWidget * scrolled;
+  GtkWidget * label;
 
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences)) {
     if (log_level == G_LOG_LEVEL_MESSAGE) 
@@ -79,16 +82,28 @@ void amide_log_handler(const gchar *log_domain,
       g_print("AMIDE WARNING: %s\n", message);
 
   } else {
-    if (log_level == G_LOG_LEVEL_MESSAGE) 
-      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_INFO,
-				      GTK_BUTTONS_OK,
-				      "AMIDE_MESSAGE: %s", message);
-    else
-      dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_WARNING,
-				      GTK_BUTTONS_OK,
-				      "AMIDE_WARNING: %s",message);
+
+    dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+				    (log_level == G_LOG_LEVEL_MESSAGE) ? GTK_MESSAGE_INFO : GTK_MESSAGE_WARNING,
+				    GTK_BUTTONS_OK,
+				    "AMIDE %s", 
+				    (log_level == G_LOG_LEVEL_MESSAGE) ? _("MESSAGE") : _("WARNING"));
+
+    message_area = gtk_message_dialog_get_message_area(GTK_MESSAGE_DIALOG(dialog));
+
+    scrolled = gtk_scrolled_window_new(NULL, NULL);
+    gtk_widget_set_size_request(scrolled, -1, 75);
+
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
+				   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_box_pack_start(GTK_BOX(message_area), scrolled, TRUE, TRUE, Y_PADDING);
+
+    label = gtk_label_new(message);
+    gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
+    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), label);
+
+    gtk_widget_show_all(message_area);
+
     gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
   }
@@ -265,7 +280,6 @@ int main (int argc, char *argv []) {
 	      else
 		amitk_study_suggest_name(imported_study, AMITK_OBJECT_NAME(new_ds)); 
 
-	      amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
 	    }
 
 

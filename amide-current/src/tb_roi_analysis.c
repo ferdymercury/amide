@@ -47,6 +47,7 @@ typedef enum {
   COLUMN_DURATION,
   COLUMN_TIME_MIDPT,
   COLUMN_GATE,
+  COLUMN_GATE_TIME,
   /*  COLUMN_TOTAL, */
   COLUMN_MEDIAN,
   COLUMN_MEAN,
@@ -67,6 +68,7 @@ static gboolean column_use_my_renderer[NUM_ANALYSIS_COLUMNS] = {
   TRUE,
   TRUE,
   FALSE,
+  TRUE,
   /*  TRUE, */
   TRUE,
   TRUE,
@@ -86,6 +88,7 @@ static gchar * analysis_titles[] = {
   N_("Duration (s)"),
   N_("Midpt (s)"),
   N_("Gate"),
+  N_("Gate Time (s)"),
   /*  N_("Total"), */
   N_("Median"),
   N_("Mean"),
@@ -300,6 +303,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	    fprintf(file_pointer, "\t% 12.3f", gate_analyses->duration);
 	    fprintf(file_pointer, "\t% 12.3f", gate_analyses->time_midpoint);
 	    fprintf(file_pointer, "\t% 12d", gate);
+	    fprintf(file_pointer, "\t% 12.3f", gate_analyses->gate_time);
 	    /*	  fprintf(file_pointer, "\t% 12g", gate_analyses->total); */
 	    fprintf(file_pointer, "\t% 12g", gate_analyses->median);
 	    fprintf(file_pointer, "\t% 12g", gate_analyses->mean);
@@ -312,7 +316,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	    fprintf(file_pointer, "\t% 12d", gate_analyses->voxels);
 	    fprintf(file_pointer, "\n");
 	  } else { /* raw data */
-	    fprintf(file_pointer, "#   Frame %d, Gate %d\n", frame, gate);
+	    fprintf(file_pointer, "#   Frame %d, Gate %d, Gate Time %5.3f\n", frame, gate,gate_analyses->gate_time);
 	    fprintf(file_pointer, "#      Value\t      Weight\t      X (mm)\t      Y (mm)\t      Z (mm)\n");
 	    for (i=0; i < gate_analyses->data_array->len; i++) {
 	      element = g_ptr_array_index(gate_analyses->data_array, i);
@@ -390,6 +394,7 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
 	  amitk_append_str(&roi_stats, "\t% 12.3f", gate_analyses->duration);
 	  amitk_append_str(&roi_stats, "\t% 12.3f", gate_analyses->time_midpoint);
 	  amitk_append_str(&roi_stats, "\t% 12d", gate);
+	  amitk_append_str(&roi_stats, "\t% 12.3f", gate_analyses->gate_time);
 	  /*	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->total); */
 	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->median);
 	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->mean);
@@ -580,6 +585,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 				 AMITK_TYPE_TIME,
 				 AMITK_TYPE_TIME,
 				 G_TYPE_INT,
+				 AMITK_TYPE_TIME,
 				 /*				 AMITK_TYPE_DATA, */
 				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
@@ -607,7 +613,8 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 	    display = FALSE;
 
 	if (!gated_data) 
-	  if (i_column == COLUMN_GATE)
+	  if ((i_column == COLUMN_GATE) ||
+	      (i_column == COLUMN_GATE_TIME))
 	    display = FALSE;
 
 	if (display) {
@@ -651,6 +658,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study, analysis_roi_t *
 			      COLUMN_DURATION, gate_analyses->duration,
 			      COLUMN_TIME_MIDPT, gate_analyses->time_midpoint,
 			      COLUMN_GATE, gate,
+			      COLUMN_GATE_TIME, gate_analyses->gate_time,
 			      /*			      COLUMN_TOTAL, gate_analyses->total, */
 			      COLUMN_MEDIAN, gate_analyses->median,
 			      COLUMN_MEAN, gate_analyses->mean,

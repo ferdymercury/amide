@@ -102,14 +102,19 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_NUM_VIEW_GATES(ds)          (AMITK_DATA_SET(ds)->num_view_gates)
 
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
-#define AMITK_DATA_SET_MAX_LOCAL_CACHE_SIZE 6
-#define AMITK_DATA_SET_MIN_LOCAL_CACHE_SIZE 3
 
 typedef enum {
-  AMITK_OPERATION_ADD,
-  AMITK_OPERATION_SUB,
-  AMITK_OPERATION_NUM
-} AmitkOperation;
+  AMITK_OPERATION_UNARY_THRESHOLD,
+  AMITK_OPERATION_UNARY_NUM
+} AmitkOperationUnary;
+
+typedef enum {
+  AMITK_OPERATION_BINARY_ADD,
+  AMITK_OPERATION_BINARY_SUB,
+  AMITK_OPERATION_BINARY_MULTIPLY,
+  AMITK_OPERATION_BINARY_DIVISION,
+  AMITK_OPERATION_BINARY_NUM
+} AmitkOperationBinary;
 
 
 typedef enum {
@@ -250,6 +255,7 @@ struct _AmitkDataSet
   AmitkScalingType scaling_type; /*  dimensions of internal scaling */
   AmitkRawData * internal_scaling_factor; /* internally (data set) supplied scaling factor */
   AmitkRawData * internal_scaling_intercept; /* internally (data set) supplied scaling intercept */
+  amide_time_t * gate_time; /* array of the trigger times of each gate */
   amide_time_t scan_start;
   amide_time_t * frame_duration; /* array of the duration of each frame */
   AmitkColorTable color_table[AMITK_VIEW_MODE_NUM]; /* the color table to draw this volume in */
@@ -297,15 +303,15 @@ struct _AmitkDataSet
   AmitkRawData * current_scaling_factor; /* external_scaling * internal_scaling_factor[] */
   amide_intpoint_t num_view_gates;
 
-  GList * slice_cache; /* size limited by AMITK_DATA_SET_MAX_LOCAL_CACHE_SIZE */
+  GList * slice_cache;
 
   /* only used by derived data sets (slices and projections)  */
   /* this is a weak pointer, it should be NULL'ed automatically by gtk on the parent's destruction */
   AmitkDataSet * slice_parent; 
 
   /* misc data items - not saved in .xif file */
-  gdouble gate_time; /* used by dcmtk_interface.cc for sorting by gate */
   gint instance_number; /* used by dcmtk_interface.cc occasionally for sorting */
+  gint gate_num; /* used by dcmtk_interface.cc occasionally for sorting */
 
 };
 
@@ -471,6 +477,11 @@ void           amitk_data_set_set_view_start_gate(AmitkDataSet * ds,
 						  amide_intpoint_t start_gate);
 void           amitk_data_set_set_view_end_gate  (AmitkDataSet * ds,
 						  amide_intpoint_t end_gate);
+void           amitk_data_set_set_gate_time      (AmitkDataSet * ds,
+						  const guint gate,
+						  amide_time_t time);
+amide_time_t   amitk_data_set_get_gate_time      (const AmitkDataSet * ds,
+						  const guint gate);
 amide_time_t   amitk_data_set_get_start_time     (const AmitkDataSet * ds, 
 						  const guint frame);
 amide_time_t   amitk_data_set_get_end_time       (const AmitkDataSet * ds, 
@@ -486,11 +497,14 @@ void           amitk_data_set_calc_far_corner    (AmitkDataSet * ds);
 
 /* note: calling any of the get_*_max or get_*_min functions will automatically
    call calc_min_max if needed.  The main reason to call this function independently
-   is if you know it'll be needed later, and you'd like to put up a progress 
-   dialog. */
+   is if you know the min/max values will be needed later, and you'd like to put up a 
+   progress dialog. */
 void           amitk_data_set_calc_min_max       (AmitkDataSet * ds,
 						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
+void           amitk_data_set_calc_min_max_if_needed(AmitkDataSet * ds,
+						     AmitkUpdateFunc update_func,
+						     gpointer update_data);
 void           amitk_data_set_slice_calc_min_max (AmitkDataSet * ds,
 						  const amide_intpoint_t frame,
 						  const amide_intpoint_t gate,
@@ -580,10 +594,18 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 						      const AmitkDataSet * slice_parent);
 GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
 							const AmitkDataSet * slice_parent);
-AmitkDataSet * amitk_data_sets_math                  (AmitkDataSet * ds1, 
+AmitkDataSet * amitk_data_sets_math_unary            (AmitkDataSet * ds1, 
+						      AmitkOperationUnary operation,
+						      amide_data_t parameter0,
+						      amide_data_t parameter1,
+						      AmitkUpdateFunc update_func,
+						      gpointer update_data);
+AmitkDataSet * amitk_data_sets_math_binary           (AmitkDataSet * ds1, 
 						      AmitkDataSet * ds2, 
-						      AmitkOperation operation,
+						      AmitkOperationBinary operation,
+						      amide_data_t parameter0,
 						      gboolean by_frame,
+						      gboolean maintain_ds1_dim,
 						      AmitkUpdateFunc update_func,
 						      gpointer update_data);
 
@@ -591,15 +613,14 @@ AmitkDataSet * amitk_data_sets_math                  (AmitkDataSet * ds1,
 
 
 /* -------- defines ----------- */
+#define amitk_data_set_get_gate_time_mem(ds) (g_try_new0(amide_time_t,(ds)->raw_data->dim.g))
 #define amitk_data_set_get_frame_duration_mem(ds) (g_try_new0(amide_time_t,(ds)->raw_data->dim.t))
 #define amitk_data_set_get_frame_min_max_mem(ds) (g_try_new0(amide_data_t,(ds)->raw_data->dim.t))
-#define amitk_data_set_dynamic(ds) ((ds)->data_set->dim.t > 1)
-
-
 
 
 const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scaling_type);
-const gchar *   amitk_operation_get_name          (const AmitkOperation operation);
+const gchar *   amitk_operation_unary_get_name    (const AmitkOperationUnary operation);
+const gchar *   amitk_operation_binary_get_name   (const AmitkOperationBinary operation);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_rendering_get_name          (const AmitkRendering rendering);
 const gchar *   amitk_subject_orientation_get_name(const AmitkSubjectOrientation subject_orientation);

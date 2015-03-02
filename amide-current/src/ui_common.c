@@ -368,12 +368,48 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 }
 
 
+void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
+				      gint roi_width,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      gdouble transparency
+#else
+				      GdkLineStyle line_style
+#endif
+				      ) {
+
+  rgba_t outline_color;
+  rgba_t fill_color;
+
+  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
+  fill_color = outline_color;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  fill_color.a *= transparency;
+#endif
+
+  gnome_canvas_item_set(roi_item, 
+			"width_pixels", roi_width,
+			"fill_color_rgba", amitk_color_table_rgba_to_uint32(fill_color), 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+			"outline_color_rgba", amitk_color_table_rgba_to_uint32(outline_color), 
+#else
+			"line_style", line_style,
+#endif
+			NULL);
+
+  return;
+}
+
+
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
-					 GtkWidget ** pspin_button,
+					 GtkWidget ** proi_width_spin,
 					 GnomeCanvasItem ** proi_item,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					 GtkWidget ** proi_transparency_spin,
+#else
 					 GtkWidget ** pline_style_menu,
 					 GtkWidget ** pfill_roi_button,
+#endif
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** ppanel_layout_button1,
@@ -386,7 +422,6 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   GtkObject * adjustment;
   GtkWidget * roi_canvas;
   GnomeCanvasPoints * roi_line_points;
-  rgba_t outline_color;
   GtkWidget * image;
   GtkWidget * hseparator;
 #ifndef AMIDE_LIBGNOMECANVAS_AA
@@ -404,14 +439,14 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   adjustment = gtk_adjustment_new(AMITK_PREFERENCES_MIN_ROI_WIDTH,
 				  AMITK_PREFERENCES_MIN_ROI_WIDTH,
 				  AMITK_PREFERENCES_MAX_ROI_WIDTH,1.0, 1.0, 0.0);
-  *pspin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(*pspin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(*pspin_button), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*pspin_button), TRUE);
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(*pspin_button), GTK_UPDATE_ALWAYS);
-  gtk_table_attach(GTK_TABLE(packing_table), *pspin_button, 1,2, 
+  *proi_width_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(*proi_width_spin),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(*proi_width_spin), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*proi_width_spin), TRUE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(*proi_width_spin), GTK_UPDATE_ALWAYS);
+  gtk_table_attach(GTK_TABLE(packing_table), *proi_width_spin, 1,2, 
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_widget_show(*pspin_button);
+  gtk_widget_show(*proi_width_spin);
 
   /* a little canvas indicator thingie to show the user who the new preferences will look */
 #ifdef AMIDE_LIBGNOMECANVAS_AA
@@ -438,20 +473,41 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   roi_line_points->coords[8] = 25.0; /* x4 */
   roi_line_points->coords[9] = 25.0; /* y4 */
 
-  outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
+  
   *proi_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(roi_canvas)), 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				     gnome_canvas_polygon_get_type(),
+#else
 				     gnome_canvas_line_get_type(),
+#endif
 				     "points", roi_line_points, 
-				     "fill_color_rgba", amitk_color_table_rgba_to_uint32(outline_color), 
 				     NULL);
   gnome_canvas_points_unref(roi_line_points);
   table_row++;
 
 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  /* widget to change the transparency level */
+  /* only works for anti-aliased canvases */
+  /* widgets to change the roi's size */
+
+  label = gtk_label_new(_("ROI Transparency"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0, 1, table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+
+  *proi_transparency_spin = gtk_spin_button_new_with_range(0.0,1.0,AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_TRANSPARENCY);
+  gtk_spin_button_set_increments(GTK_SPIN_BUTTON(*proi_transparency_spin),0.1,0.1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(*proi_transparency_spin),FALSE);
+  gtk_table_attach(GTK_TABLE(packing_table), *proi_transparency_spin, 1,2, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(*proi_transparency_spin);
+  table_row++;
+#else
   /* widgets to change the roi's line style */
   /* Anti-aliased canvas doesn't yet support this */
-  /* also need to remove #ifndef for relevant lines in amitk_canvas_object.c */
+  /* also need to remove #ifndef for relevant lines in amitk_canvas_object.c and other locations  */
   label = gtk_label_new(_("ROI Line Style:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
   		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
@@ -466,7 +522,6 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
   gtk_widget_show(*pline_style_menu);
   table_row++;
-#endif
 
   /* do we want to fill in isocontour roi's */
   label = gtk_label_new(_("Draw Isocontours/Freehands Filled:"));
@@ -479,7 +534,7 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(*pfill_roi_button);
   table_row++;
-
+#endif
 
   hseparator = gtk_hseparator_new();
   gtk_table_attach(GTK_TABLE(packing_table), hseparator, 

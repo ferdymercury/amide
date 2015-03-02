@@ -136,6 +136,8 @@ amide_SOURCES = \
 	tb_alignment.h \
 	tb_crop.c \
 	tb_crop.h \
+	tb_distance.c \
+	tb_distance.h \
 	tb_export_data_set.c \
 	tb_export_data_set.h \
 	tb_fads.c \

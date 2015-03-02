@@ -62,12 +62,26 @@ void ui_common_about_cb(GtkWidget * button, gpointer data);
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height);
+
+void ui_common_update_sample_roi_item(GnomeCanvasItem * roi_item,
+				      gint roi_width,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      gdouble transparency
+#else
+				      GdkLineStyle line_style
+#endif
+				      );
+
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
-					 GtkWidget ** pspin_button,
+					 GtkWidget ** proi_width_spin,
 					 GnomeCanvasItem ** proi_item,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					 GtkWidget ** proi_transparency_spin,
+#else
 					 GtkWidget ** pline_style_menu,
 					 GtkWidget ** fill_roi_button,
+#endif
 					 GtkWidget ** playout_button1,
 					 GtkWidget ** playout_button2,
 					 GtkWidget ** ppanel_layout_button1,

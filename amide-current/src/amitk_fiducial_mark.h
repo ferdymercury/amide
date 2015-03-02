@@ -28,18 +28,20 @@
 
 
 #include "amitk_object.h"
+#include "amitk_color_table.h"
 
 G_BEGIN_DECLS
 
 #define	AMITK_TYPE_FIDUCIAL_MARK		     (amitk_fiducial_mark_get_type ())
-#define AMITK_FIDUCIAL_MARK(fiducial_mark)	     (G_TYPE_CHECK_INSTANCE_CAST ((fiducial_mark), AMITK_TYPE_FIDUCIAL_MARK, AmitkFiducialMark))
+#define AMITK_FIDUCIAL_MARK(object)     	     (G_TYPE_CHECK_INSTANCE_CAST ((object), AMITK_TYPE_FIDUCIAL_MARK, AmitkFiducialMark))
 #define AMITK_FIDUCIAL_MARK_CLASS(klass)	     (G_TYPE_CHECK_CLASS_CAST ((klass), AMITK_TYPE_FIDUCIAL_MARK, AmitkFiducialMarkClass))
-#define AMITK_IS_FIDUCIAL_MARK(fiducial_mark)	     (G_TYPE_CHECK_INSTANCE_TYPE ((fiducial_mark), AMITK_TYPE_FIDUCIAL_MARK))
+#define AMITK_IS_FIDUCIAL_MARK(object)  	     (G_TYPE_CHECK_INSTANCE_TYPE ((object), AMITK_TYPE_FIDUCIAL_MARK))
 #define AMITK_IS_FIDUCIAL_MARK_CLASS(klass)	     (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_FIDUCIAL_MARK))
 #define	AMITK_FIDUCIAL_MARK_GET_CLASS(fiducial_mark) (G_TYPE_CHECK_GET_CLASS ((fiducial_mark), AMITK_TYPE_FIDUCIAL_MARK, AmitkFiducialMarkClass))
 
 #define AMITK_FIDUCIAL_MARK_GET(mark)                (AMITK_SPACE_OFFSET(mark))
-
+#define AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(mark)      (AMITK_FIDUCIAL_MARK(mark)->specify_color)
+#define AMITK_FIDUCIAL_MARK_COLOR(mark)              (AMITK_FIDUCIAL_MARK(mark)->color)
 
 
 typedef struct _AmitkFiducialMarkClass AmitkFiducialMarkClass;
@@ -49,6 +51,8 @@ typedef struct _AmitkFiducialMark AmitkFiducialMark;
 struct _AmitkFiducialMark
 {
   AmitkObject parent;
+  gboolean specify_color; /* if false, program guesses a good color to use */
+  rgba_t color;
 
 };
 
@@ -56,6 +60,7 @@ struct _AmitkFiducialMarkClass
 {
   AmitkObjectClass parent_class;
 
+  void (* fiducial_mark_changed)   (AmitkFiducialMark * fiducial_mark);
 };
 
 
@@ -66,6 +71,10 @@ GType	            amitk_fiducial_mark_get_type	     (void);
 AmitkFiducialMark * amitk_fiducial_mark_new                  (void);
 void                amitk_fiducial_mark_set                  (AmitkFiducialMark * fiducial_mark,
 							      AmitkPoint new_point);
+void                amitk_fiducial_mark_set_specify_color    (AmitkFiducialMark * fiducial_mark,
+							      gboolean specify_color);
+void                amitk_fiducial_mark_set_color            (AmitkFiducialMark * fiducial_mark,
+							      rgba_t color);
 
 
 G_END_DECLS

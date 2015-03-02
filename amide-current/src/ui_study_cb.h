@@ -70,6 +70,7 @@ void ui_study_cb_render(GtkAction * action, gpointer data);
 void ui_study_cb_roi_statistics(GtkAction * action, gpointer data);
 void ui_study_cb_alignment_selected(GtkAction * action, gpointer data);
 void ui_study_cb_crop_selected(GtkAction * action, gpointer data);
+void ui_study_cb_distance_selected(GtkAction * action, gpointer data);
 void ui_study_cb_fads_selected(GtkAction * action, gpointer data);
 void ui_study_cb_filter_selected(GtkAction * action, gpointer data);
 void ui_study_cb_profile_selected(GtkAction * action, gpointer data);

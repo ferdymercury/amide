@@ -594,7 +594,13 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 	  tree_view_popup_roi_menu(tree_view, object, event->button, event->time);
 	break;
 
-
+      case AMITK_TREE_VIEW_MODE_SINGLE_SELECTION:
+	switch (event->button) {
+	case 1: /* left button */
+	  g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT],0,object);
+	  break;
+	}
+	break;
 
       case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
 	switch (event->button) {
@@ -1423,6 +1429,8 @@ GtkWidget* amitk_tree_view_new (AmitkTreeViewMode tree_mode,
     /* by default, only first select column is shown */
     gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), tree_view->select_column[AMITK_VIEW_MODE_SINGLE]);
     break;
+  case AMITK_TREE_VIEW_MODE_SINGLE_SELECTION:
+    break;
   case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
     gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
     break;
@@ -1451,6 +1459,7 @@ GtkWidget* amitk_tree_view_new (AmitkTreeViewMode tree_mode,
   selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
   switch (tree_view->mode) {
   case AMITK_TREE_VIEW_MODE_MAIN:
+  case AMITK_TREE_VIEW_MODE_SINGLE_SELECTION:
     gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
     break;
   case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
@@ -1493,6 +1502,12 @@ void amitk_tree_view_expand_object(AmitkTreeView * tree_view, AmitkObject * obje
   return;
 }
 
+/* this function can return NULL */
+AmitkObject * amitk_tree_view_get_active_object(AmitkTreeView * tree_view) {
+
+  g_return_val_if_fail(AMITK_IS_TREE_VIEW(tree_view), NULL);
+  return tree_view->active_object;
+}
 
 void amitk_tree_view_set_active_object(AmitkTreeView * tree_view, AmitkObject * object) {
 
@@ -1500,7 +1515,8 @@ void amitk_tree_view_set_active_object(AmitkTreeView * tree_view, AmitkObject * 
   GtkTreeIter iter;
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(tree_view));
-  g_return_if_fail(tree_view->mode == AMITK_TREE_VIEW_MODE_MAIN);
+  g_return_if_fail((tree_view->mode == AMITK_TREE_VIEW_MODE_MAIN) ||
+		   (tree_view->mode == AMITK_TREE_VIEW_MODE_SINGLE_SELECTION));
 
   if (tree_view->active_object != NULL) {
     amitk_object_unref(tree_view->active_object);

@@ -74,6 +74,7 @@ struct _analysis_gate_t {
   /* info */
   amide_time_t duration;
   amide_time_t time_midpoint;
+  amide_time_t gate_time;
 
   /* internal */
   amide_data_t correction;

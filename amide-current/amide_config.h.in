@@ -18,6 +18,9 @@
 /* Define to compile with Libfame */
 #undef AMIDE_LIBFAME_SUPPORT
 
+/* Define to compile AMIDE with an antialiased canvas */
+#undef AMIDE_LIBGNOMECANVAS_AA
+
 /* Define to compile with the GNU Scientific Library */
 #undef AMIDE_LIBGSL_SUPPORT
 

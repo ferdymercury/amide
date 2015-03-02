@@ -1,4 +1,23 @@
-1.0.2
+1.0.3
+	* reinabling gnomecanvas antialiased support, hopefully now stable
+	  - roi's now filled in, alpha of fill can be customized
+	* resets view center if initial dataset loaded
+	* error message dialog now scrollable, so won't cover entire screen
+	* added "threshold" and "multiple" math operations
+	* autoplay feature for flipping between gates on gated study
+	* reexpanded the local slice cache size, now 3 * # frames or gates
+	* now keeps track of gate times (dicom trigger time)
+	* when reading in xmedcon, tries to use orientation/offset
+	  provided for DICM data, and orientation for ECAT.
+	* fixed scroll wheel on win32 (requires libgnomecanvas-2.30.3)
+	* now able to specify colors of ROIs and fiducial marks [1]
+	* added a tool for measuring distances between fiducials/ROIs [2]
+	* ffmpeg library fix, switch avcodec_init to avcodec_register_all [3]
+	[1] Requested by Ajay Kumar and Janet O'Sullivan
+	[2] Requested by Josef Vizkelety, Michael Braden, A. Mehranian, etc.
+	[3] Contributed by Peter Bloomfield
+	
+1.0.2 2012.04.27
 	* Added MIP and MINIP rendering methods for thick slices
 	* mac bundle now is able to export JPEG images [1]
 	* will now separate diffusion data into two volumes

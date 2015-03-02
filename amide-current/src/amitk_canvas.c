@@ -173,6 +173,7 @@ static void canvas_target_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_time_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_volume_changed_cb(AmitkVolume * vol, gpointer canvas);
 static void canvas_roi_changed_cb(AmitkRoi * roi, gpointer canvas);
+static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * fm, gpointer canvas);
 static void canvas_data_set_invalidate_slice_cache(AmitkDataSet * ds, gpointer data);
 static void data_set_changed_cb(AmitkDataSet * ds, gpointer canvas);
 static void data_set_subject_orientation_changed_cb(AmitkDataSet * ds, gpointer canvas);
@@ -561,7 +562,7 @@ static void canvas_view_changed_cb(AmitkStudy * study, gpointer data) {
 
 static void canvas_roi_preference_changed_cb(AmitkStudy * study, gpointer data) {
   AmitkCanvas * canvas = data;
-  canvas_add_update(canvas, UPDATE_OBJECTS); /* line_style, roi_width, fill_roi */
+  canvas_add_update(canvas, UPDATE_OBJECTS); /* line_style, transparency, roi_width, fill_roi */
   return;
 }
 
@@ -642,6 +643,17 @@ static void canvas_roi_changed_cb(AmitkRoi * roi, gpointer data) {
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_ROI(roi));
   canvas_add_object_update(canvas, AMITK_OBJECT(roi));
+
+  return;
+}
+
+static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * fm, gpointer data) {
+
+  AmitkCanvas * canvas = data;  
+
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+  g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(fm));
+  canvas_add_object_update(canvas, AMITK_OBJECT(fm));
 
   return;
 }
@@ -1182,6 +1194,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   static gboolean ignore_next_event=FALSE;
   static gboolean enter_drawing_mode=FALSE; /* we want to enter drawing mode */
 
+  //          g_print("event %d widget %p grab_on %d %p\n", event->type, widget, grab_on, 
+  //      	    (GNOME_CANVAS(canvas->canvas)->grabbed_item));
   //      if ((event->type == GDK_BUTTON_PRESS) ||
   //          (event->type == GDK_BUTTON_RELEASE) ||
   //          (event->type == GDK_2BUTTON_PRESS))
@@ -2771,7 +2785,9 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
   amide_real_t temp;
   amide_real_t profile_angle;
   gint roi_width;
+#ifndef AMIDE_LIBGNOMECANVAS_AA
   GdkLineStyle line_style;
+#endif
   guint32 fill_color_rgba;
   rgba_t outline_color;
   AmitkLineProfile * line_profile;
@@ -3347,8 +3363,13 @@ static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
 				      canvas->border_width,canvas->border_width,
 				      outline_color, 
 				      AMITK_STUDY_CANVAS_ROI_WIDTH(canvas->study),
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(canvas->study)
+#else
 				      AMITK_STUDY_CANVAS_LINE_STYLE(canvas->study),
-				      AMITK_STUDY_CANVAS_FILL_ROI(canvas->study));
+				      AMITK_STUDY_CANVAS_FILL_ROI(canvas->study)
+#endif
+);
 
 
   if ((item == NULL) && (new_item != NULL)) {
@@ -3502,7 +3523,7 @@ static gboolean canvas_update_while_idle(gpointer data) {
 
   AmitkCanvas * canvas = data;
 
-  /* update the coorners */
+  /* update the corners */
   if (canvas_recalc_corners(canvas)) /* if corners changed */
     canvas->next_update = canvas->next_update | UPDATE_ALL;
 
@@ -3597,6 +3618,9 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
   if (AMITK_IS_ROI(object)) {
     g_signal_connect(G_OBJECT(object), "roi_changed", G_CALLBACK(canvas_roi_changed_cb), canvas);
   }
+  if (AMITK_IS_FIDUCIAL_MARK(object)) {
+    g_signal_connect(G_OBJECT(object), "fiducial_mark_changed", G_CALLBACK(canvas_fiducial_mark_changed_cb), canvas);
+  }
   if (AMITK_IS_DATA_SET(object)) {
     g_signal_connect(G_OBJECT(object), "data_set_changed", G_CALLBACK(data_set_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "invalidate_slice_cache", G_CALLBACK(canvas_data_set_invalidate_slice_cache), canvas);
@@ -3674,6 +3698,9 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
   }
   if (AMITK_IS_ROI(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_roi_changed_cb, canvas);
+  }
+  if (AMITK_IS_FIDUCIAL_MARK(object)) {
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_fiducial_mark_changed_cb, canvas);
   }
   if (AMITK_IS_DATA_SET(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), data_set_changed_cb, canvas);

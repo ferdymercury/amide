@@ -30,8 +30,14 @@
 
 typedef enum {
   COLUMN_GATE,
+  COLUMN_GATE_TIME,
   NUM_COLUMNS
 } column_type_t;
+
+static gboolean column_use_my_renderer[NUM_COLUMNS] = {
+  FALSE,
+  TRUE
+};
 
 enum {
   ENTRY_START,
@@ -41,6 +47,7 @@ enum {
  
 static gchar * column_names[] =  {
   N_("Gate #"), 
+  N_("Gate Time (s)")
 };
 
 typedef struct ui_gate_dialog_t {
@@ -48,7 +55,9 @@ typedef struct ui_gate_dialog_t {
   GtkWidget * tree_view;
   GtkWidget * start_spin;
   GtkWidget * end_spin;
+  GtkWidget * autoplay_check_button;
 
+  guint idle_handler_id;
   gboolean valid;
   gint start_gate;
   gint end_gate;
@@ -57,6 +66,8 @@ typedef struct ui_gate_dialog_t {
 
 static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, gpointer data);
+static void autoplay_cb(GtkWidget * widget, gpointer data);
+static gboolean autoplay_update_while_idle(gpointer data);
 static void selection_changed_cb (GtkTreeSelection *selection, gpointer data);
 static gboolean delete_event_cb(GtkWidget* dialog, GdkEvent * event, gpointer data);
 static void change_spin_cb(GtkSpinButton * spin_button, gpointer data);
@@ -94,6 +105,52 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
   return;
 }
 
+
+static void autoplay_cb(GtkWidget * widget, gpointer data) {
+  ui_gate_dialog_t * gd=data;
+  guint interval;
+  gboolean autoplay;
+
+
+  autoplay = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(gd->autoplay_check_button));
+  if (gd->ds == NULL) {
+    autoplay = FALSE;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gd->autoplay_check_button), FALSE);
+  }
+
+  if (autoplay) {
+    interval = 1000.0 / AMITK_DATA_SET_NUM_GATES(gd->ds); /* try to cycle through in 1000 ms */
+    if (interval < 200) interval= 200; /* set 200 ms as lowest repetition rate) */
+    if (gd->idle_handler_id == 0)
+      gd->idle_handler_id = g_timeout_add_full(G_PRIORITY_DEFAULT_IDLE,interval,autoplay_update_while_idle, gd, NULL);
+  } else {
+    if (gd->idle_handler_id != 0) {
+      g_source_remove(gd->idle_handler_id);
+      gd->idle_handler_id=0;
+    }
+  }
+
+  return;
+}
+
+static gboolean autoplay_update_while_idle(gpointer data) {
+  ui_gate_dialog_t * gd=data;
+
+  if (gd->ds == NULL) {
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gd->autoplay_check_button), FALSE);
+    return FALSE;
+  }
+
+  gd->start_gate = 1 + AMITK_DATA_SET_VIEW_START_GATE(gd->ds);
+  if (gd->start_gate >= AMITK_DATA_SET_NUM_GATES(gd->ds))
+    gd->start_gate = 0;
+  gd->end_gate = gd->start_gate; 
+  amitk_data_set_set_view_start_gate(gd->ds, gd->start_gate);
+  amitk_data_set_set_view_end_gate(gd->ds, gd->end_gate);
+
+  return TRUE;
+}
+
 /* reset out start and duration based on what just got selected */
 static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
 
@@ -127,6 +184,11 @@ static gboolean delete_event_cb(GtkWidget* dialog, GdkEvent * event, gpointer da
   g_signal_handlers_disconnect_by_func(G_OBJECT(selection), G_CALLBACK(selection_changed_cb), dialog);
 
   /* trash collection */
+  if (gd->idle_handler_id != 0) {
+    g_source_remove(gd->idle_handler_id);
+    gd->idle_handler_id=0;
+  }
+
   remove_data_set(dialog);
   g_free(gd);
 
@@ -185,7 +247,9 @@ static void update_model(GtkListStore * store, GtkTreeSelection *selection,
   for (i_gate=0; i_gate < AMITK_DATA_SET_NUM_GATES(ds); i_gate++) {
     /* setup the corresponding list entry */
     gtk_list_store_append (store, &iter);  /* Acquire an iterator */
-    gtk_list_store_set(store, &iter, COLUMN_GATE, i_gate, -1);
+    gtk_list_store_set(store, &iter, 
+		       COLUMN_GATE, i_gate, 
+		       COLUMN_GATE_TIME, amitk_data_set_get_gate_time(ds,i_gate), -1);
   }
 
   return;
@@ -348,13 +412,14 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   g_return_val_if_fail(gd != NULL, NULL);
   gd->ds = NULL;
   gd->ds = amitk_object_ref(ds);
+  gd->idle_handler_id=0;
   g_object_set_data(G_OBJECT(dialog), "gd", gd);
   
   /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), gd);
 
   /* start making the widgets for this dialog box */
-  packing_table = gtk_table_new(4,4,FALSE);
+  packing_table = gtk_table_new(5,4,FALSE);
   table_row=0;
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
 
@@ -413,7 +478,7 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
 
 
   /* and the list itself */
-  store = gtk_list_store_new(NUM_COLUMNS, G_TYPE_INT);
+  store = gtk_list_store_new(NUM_COLUMNS, G_TYPE_INT, AMITK_TYPE_TIME);
   gd->tree_view = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
   g_object_unref(store);
 
@@ -421,6 +486,10 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes(_(column_names[i_column]), renderer,
 						      "text", i_column, NULL);
+    if (column_use_my_renderer[i_column]) 
+      gtk_tree_view_column_set_cell_data_func(column, renderer,
+					      amitk_real_cell_data_func,
+					      GINT_TO_POINTER(i_column),NULL);
     gtk_tree_view_append_column (GTK_TREE_VIEW (gd->tree_view), column);
   }
 
@@ -429,6 +498,15 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   g_signal_connect (G_OBJECT (selection), "changed",
 		    G_CALLBACK (selection_changed_cb), dialog);
   gtk_container_add(GTK_CONTAINER(scrolled),gd->tree_view);
+
+  /* check button for autoplay */
+  gd->autoplay_check_button = gtk_check_button_new_with_label (_("Auto play"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(gd->autoplay_check_button), FALSE);
+  g_signal_connect(G_OBJECT(gd->autoplay_check_button), "toggled", G_CALLBACK(autoplay_cb),gd);
+  gtk_table_attach(GTK_TABLE(packing_table), gd->autoplay_check_button,0,2,table_row,table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
 
   /* fill in the list/update entries */
   ui_gate_dialog_set_active_data_set(dialog, ds);

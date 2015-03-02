@@ -60,6 +60,8 @@ typedef enum {
   AMITK_COLOR_TABLE_NUM
 } AmitkColorTable; 
 
+#define AMITK_OBJECT_DEFAULT_COLOR 0x808000FF
+
 
 typedef guint8 color_data_t;
 typedef guint16 color_data16_t;
@@ -96,6 +98,7 @@ typedef struct hsv_t {
 #define amitk_color_table_rgba_to_uint32(rgba) (((rgba).r<<24) | ((rgba).g<<16) | ((rgba).b<<8) | ((rgba).a<<0))
 
 /* external functions */
+rgba_t amitk_color_table_uint32_to_rgba(guint32 color_uint32);
 rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight);
 rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
 				amide_data_t min, amide_data_t max);

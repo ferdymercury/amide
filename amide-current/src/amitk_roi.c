@@ -159,6 +159,9 @@ static void roi_class_init (AmitkRoiClass * class) {
 
 static void roi_init (AmitkRoi * roi) {
 
+  roi->specify_color = FALSE;
+  roi->color = amitk_color_table_uint32_to_rgba(AMITK_OBJECT_DEFAULT_COLOR);
+
   roi->voxel_size = zero_point;
   roi->map_data = NULL;
   roi->center_of_mass_calculated=FALSE;
@@ -233,6 +236,9 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 
   amitk_roi_set_type(dest_roi, AMITK_ROI_TYPE(src_object));
 
+  dest_roi->specify_color = AMITK_ROI_SPECIFY_COLOR(src_roi);
+  dest_roi->color = AMITK_ROI_COLOR(src_roi);
+
   if (src_roi->map_data != NULL) {
     if (dest_roi->map_data != NULL)
       g_object_unref(dest_roi->map_data);
@@ -263,6 +269,9 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * 
   roi = AMITK_ROI(object);
 
   xml_save_string(nodes, "type", amitk_roi_type_get_name(AMITK_ROI_TYPE(roi)));
+
+  xml_save_boolean(nodes, "specify_color", AMITK_ROI_SPECIFY_COLOR(roi));
+  xml_save_uint(nodes, "color", amitk_color_table_rgba_to_uint32(AMITK_ROI_COLOR(roi)));
 
   /* freehand and isocontour specific stuff */
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
@@ -309,6 +318,10 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
       if (g_ascii_strcasecmp(temp_string, amitk_roi_type_get_name(i_roi_type)) == 0)
 	roi->type = i_roi_type;
   g_free(temp_string);
+
+  amitk_roi_set_specify_color(roi, xml_get_boolean_with_default(nodes, "specify_color",
+								AMITK_ROI_SPECIFY_COLOR(roi)));
+  amitk_roi_set_color(roi, amitk_color_table_uint32_to_rgba(xml_get_uint_with_default(nodes, "color", AMITK_OBJECT_DEFAULT_COLOR)));
 
   /* freehand and isocontour specific stuff */
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi) | AMITK_ROI_TYPE_FREEHAND(roi)) {
@@ -459,6 +472,36 @@ GSList * amitk_roi_free_points_list(GSList * list) {
   return list;
 }
 
+/* whether we want to use the specified color or have the program choose a decent color */
+void amitk_roi_set_specify_color(AmitkRoi * roi, gboolean specify_color) {
+
+  g_return_if_fail(AMITK_IS_ROI(roi));
+
+  if (specify_color != AMITK_ROI_SPECIFY_COLOR(roi)) {
+    roi->specify_color = specify_color;
+    g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
+  }
+  return;
+}
+
+/* color to draw the roi in, if we choose specify_color */
+void amitk_roi_set_color(AmitkRoi * roi, rgba_t new_color) {
+
+  rgba_t old_color;
+
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  old_color = AMITK_ROI_COLOR(roi);
+
+  if ((old_color.r != new_color.r) ||
+      (old_color.g != new_color.g) ||
+      (old_color.b != new_color.b) ||
+      (old_color.a != new_color.a)) {
+    roi->color = new_color;
+    g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
+  }
+  return;
+}
+
 
 /* this does not recalc the far corner, needs to be done separately */
 static void roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
@@ -524,8 +567,11 @@ void amitk_roi_calc_far_corner(AmitkRoi * roi) {
 */
 AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi, 
 						const AmitkVolume * canvas_volume,
-						const amide_real_t pixel_dim,
-						const gboolean fill_map_roi) {
+						const amide_real_t pixel_dim
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						,const gboolean fill_map_roi
+#endif
+						) {
   
   AmitkDataSet * intersection = NULL;
 
@@ -536,19 +582,35 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     intersection = 
-      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+      amitk_roi_ISOCONTOUR_2D_get_intersection_slice(roi, canvas_volume, pixel_dim 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						     , fill_map_roi
+#endif
+						     );
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
     intersection = 
-      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+      amitk_roi_ISOCONTOUR_3D_get_intersection_slice(roi, canvas_volume, pixel_dim 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						     , fill_map_roi
+#endif
+						     );
     break;
   case AMITK_ROI_TYPE_FREEHAND_2D:
     intersection =
-      amitk_roi_FREEHAND_2D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+      amitk_roi_FREEHAND_2D_get_intersection_slice(roi, canvas_volume, pixel_dim 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						   , fill_map_roi
+#endif
+						   );
     break;
   case AMITK_ROI_TYPE_FREEHAND_3D:
     intersection =
-      amitk_roi_FREEHAND_3D_get_intersection_slice(roi, canvas_volume, pixel_dim, fill_map_roi);
+      amitk_roi_FREEHAND_3D_get_intersection_slice(roi, canvas_volume, pixel_dim 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
+						   , fill_map_roi
+#endif
+						   );
     break;
   default: 
     g_error("roi type %d not implemented! file %s line %d",AMITK_ROI_TYPE(roi), __FILE__, __LINE__);

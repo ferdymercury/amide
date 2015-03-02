@@ -387,7 +387,20 @@ void fads_pca(AmitkDataSet * data_set,
   dim = AMITK_DATA_SET_DIM(data_set);
   dim.t = 1;
 
+
+  /* note, since we're using a gsl function for the bulk of the calculation (in perform_pca), 
+     there's no way to update the progress bar as we're going along. We'll still throw up the
+     dialog so people will at least know we're thinking */
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf(_("Calculating Principle Component Analysis on:\n   %s"), 
+				  AMITK_OBJECT_NAME(data_set));
+    (*update_func)(update_data, temp_string, (gdouble) 0.1); /* can't cancel this */
+    g_free(temp_string);
+  }
+
   perform_pca(data_set, num_factors, &u, &s, &v);
+
+
 
   /* copy the data on over */
   for (f=0; f<num_factors; f++) {
@@ -451,6 +464,9 @@ void fads_pca(AmitkDataSet * data_set,
   }
 
  ending:
+
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
   if (file_pointer != NULL) {
     fclose(file_pointer);
@@ -870,6 +886,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      gint num_blood_curve_constraints,
 	      gint * blood_curve_constraint_frame,
 	      gdouble * blood_curve_constraint_val,
+	      GArray * initial_curves,
 	      AmitkUpdateFunc update_func,
 	      gpointer update_data) {
 
@@ -885,21 +902,19 @@ void fads_pls(AmitkDataSet * data_set,
   FILE * file_pointer=NULL;
   gchar * temp_string;
   gboolean continue_work=TRUE;
-  gdouble temp1, temp2, mult;
   gdouble alpha, factor;
   amide_time_t frame_midpoint, frame_duration;
   gdouble init_value;
-  gdouble time_constant;
-  gdouble time_start;
   gdouble magnitude;
   AmitkDataSet * new_ds;
   AmitkVoxel i_voxel;
   gdouble current_beta=0.0;
-  gsl_vector * s;
-  gsl_matrix * u;
-  gsl_matrix * v;
   AmitkViewMode i_view_mode;
-  
+  GTimer * timer=NULL;
+  gboolean new_outer;
+#if AMIDE_DEBUG
+  div_t x;
+#endif
 
   g_return_if_fail(AMITK_IS_DATA_SET(data_set));
   dim = AMITK_DATA_SET_DIM(data_set);
@@ -934,6 +949,14 @@ void fads_pls(AmitkDataSet * data_set,
   /* more sanity checks */
   for (i=0; i<p.num_blood_curve_constraints; i++) {
     g_return_if_fail(p.blood_curve_constraint_frame[i] < p.dim.t);
+  }
+
+  if (initial_curves != NULL) {
+    if (initial_curves->len < p.num_frames*p.num_factors) {
+      g_warning(_("Supplied initial curves have %d elements, need %d x %d = %d elements"), 
+		initial_curves->len, p.num_frames, p.num_factors, p.num_frames*p.num_factors);
+      goto ending;
+    }
   }
 
   p.forward_error = g_try_new(gdouble, p.num_frames*p.num_voxels);
@@ -1014,78 +1037,119 @@ void fads_pls(AmitkDataSet * data_set,
   /* Starting point */
   initial = gsl_vector_alloc (p.num_variables);
   
-  /* setting the factors to the principle components */
-  perform_pca(p.data_set, p.num_factors, &u, &s, &v);
+    /* we've been passed a GArray with the initial curves */
+  if (initial_curves != NULL) {
 
-  /* need to initialize the factors, picking some quasi-exponential curves */
-  /* use a time constant of 100th of the study length, as a guess */
-  time_constant = amitk_data_set_get_end_time(p.data_set, AMITK_DATA_SET_NUM_FRAMES(p.data_set)-1);
-  time_constant /= 100.0;
-
-  /* gotta reference from somewhere */
-  time_start = amitk_data_set_get_midpt_time(p.data_set, 0); 
-
-
-
-#if 0
-  time_constant = 1.0;
-  for (f=0; f<p.num_factors; f++) {
-    if (f & 0x1) /* odd */
-      for (j=0; j<p.num_frames; j++) 
-	gsl_vector_set(initial, f*p.num_frames+j, (j/((gdouble)p.num_frames*time_constant)));
-    else
-      for (j=0; j<p.num_frames; j++) 
-	gsl_vector_set(initial, f*p.num_frames+j, ((gdouble) p.num_frames-j-1)/((gdouble)p.num_frames*time_constant));
-    if (f & 0x1) /* double every other iteration */
-      time_constant *=2.0;
-  }
-
-  for (j=0; j<p.num_frames; j++) {
-    gsl_vector_set(initial, j, (j/((gdouble)p.num_frames)));
-    gsl_vector_set(initial, p.num_frames+j, ((gdouble) p.num_frames-j-1)/((gdouble)p.num_frames));
-  }
-#endif
-
-  for (f=0; f<p.num_factors; f+=2) {
-    for (j=0; j<p.num_frames; j++) {
-      frame_midpoint = amitk_data_set_get_midpt_time(p.data_set, j); 
-
-      mult = exp(-(frame_midpoint-time_start)/time_constant); 
-
-      temp1 = fabs(gsl_vector_get(s, f)*gsl_matrix_get(v, j, f));
-      if (f+1 < p.num_factors) {
-	temp2 = gsl_vector_get(s, f+1)*fabs(gsl_matrix_get(v, j, f+1));
-	gsl_vector_set(initial, f*p.num_frames+j, 
-		       temp1*mult+temp2*(1-mult));
-	gsl_vector_set(initial, (f+1)*p.num_frames+j,
-		       temp1*(1-mult)+temp2*mult);
-      } else {
-	gsl_vector_set(initial, f*p.num_frames+j,temp1*mult);
+    for (f=0; f < p.num_factors; f++) {
+      for (j=0; j < p.num_frames; j++) {
+	gsl_vector_set(initial, f*p.num_frames+j,
+		       g_array_index(initial_curves, gdouble, 
+				     j*p.num_factors + f));
       }
     }
-    if (f & 0x1) /* double every other iteration */
-      time_constant *=2.0;
+
+  } else {
+    /* if not given initial curves, try to come up with something reasonable as the initial condition */
+    gdouble time_constant;
+    gdouble time_start;
+    gsl_vector * s;
+    gsl_matrix * u;
+    gsl_matrix * v;
+    gdouble temp1, temp2, mult;
+
+
+    /* setting the factors to the principle components */
+    perform_pca(p.data_set, p.num_factors, &u, &s, &v);
+    
+    /* need to initialize the factors, picking some quasi-exponential curves */
+    /* use a time constant of 100th of the study length, as a guess */
+    time_constant = amitk_data_set_get_end_time(p.data_set, AMITK_DATA_SET_NUM_FRAMES(p.data_set)-1);
+    time_constant /= 100.0;
+
+    /* gotta reference from somewhere */
+    time_start = amitk_data_set_get_midpt_time(p.data_set, 0); 
+
+#if 0
+    time_constant = 1.0;
+    for (f=0; f<p.num_factors; f++) {
+      if (f & 0x1) /* odd */
+	for (j=0; j<p.num_frames; j++) 
+	  gsl_vector_set(initial, f*p.num_frames+j, (j/((gdouble)p.num_frames*time_constant)));
+      else
+	for (j=0; j<p.num_frames; j++) 
+	  gsl_vector_set(initial, f*p.num_frames+j, ((gdouble) p.num_frames-j-1)/((gdouble)p.num_frames*time_constant));
+      if (f & 0x1) /* double every other iteration */
+	time_constant *=2.0;
+    }
+    
+    for (j=0; j<p.num_frames; j++) {
+      gsl_vector_set(initial, j, (j/((gdouble)p.num_frames)));
+      gsl_vector_set(initial, p.num_frames+j, ((gdouble) p.num_frames-j-1)/((gdouble)p.num_frames));
+    }
+#endif
+
+    for (f=0; f<p.num_factors; f+=2) {
+      for (j=0; j<p.num_frames; j++) {
+	frame_midpoint = amitk_data_set_get_midpt_time(p.data_set, j); 
+	
+	mult = exp(-(frame_midpoint-time_start)/time_constant); 
+	
+	temp1 = fabs(gsl_vector_get(s, f)*gsl_matrix_get(v, j, f));
+	if (f+1 < p.num_factors) {
+	  temp2 = gsl_vector_get(s, f+1)*fabs(gsl_matrix_get(v, j, f+1));
+	  gsl_vector_set(initial, f*p.num_frames+j, 
+			 temp1*mult+temp2*(1-mult));
+	  gsl_vector_set(initial, (f+1)*p.num_frames+j,
+			 temp1*(1-mult)+temp2*mult);
+	} else {
+	  gsl_vector_set(initial, f*p.num_frames+j,temp1*mult);
+	}
+      }
+      if (f & 0x1) /* double every other iteration */
+	time_constant *=2.0;
+    }
+    gsl_vector_free(s);
+    gsl_matrix_free(u);
+    gsl_matrix_free(v);
+
+  
   }
+
+
+#if AMIDE_DEBUG
+  g_print("frame\tinitial curves\n");
+  for (j=0; j<p.num_frames; j++) {
+    g_print("%d",j);
+    for (f=0; f<p.num_factors; f++) 
+      g_print("\t%5.3f",gsl_vector_get(initial,f*p.num_frames+j));
+    g_print("\n");
+  }
+#endif
+  
 
   /* and just set the coefficients to something logical */
   init_value = 1.0/num_factors;
   for (f=0; f<p.num_factors; f++) 
     for (i=p.alpha_offset; i<p.num_variables; i+=p.num_factors)
       gsl_vector_set(initial, i+f, init_value);
-  gsl_vector_free(s);
-  gsl_matrix_free(u);
-  gsl_matrix_free(v);
 
   if (update_func != NULL) {
+    timer = g_timer_new();
     temp_string = g_strdup_printf(_("Calculating Penalized Least Squares Factor Analysis:\n   %s"), 
 				  AMITK_OBJECT_NAME(data_set));
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
 
+#if AMIDE_DEBUG
+  if (timer != NULL)
+    timer = g_timer_new();
+#endif
+
 
   do { /* outer loop */
     outer_iter++;
+    new_outer=TRUE;
 
     /* (re)set the minimizer */
     gsl_multimin_fdfminimizer_set(multimin_minimizer, &multimin_func, 
@@ -1098,10 +1162,35 @@ void fads_pls(AmitkDataSet * data_set,
       
       if (!status) 
 	status = gsl_multimin_test_gradient (multimin_minimizer->gradient, stopping_criteria);
+
       
-      if (update_func != NULL) 
-	continue_work = (*update_func)(update_data, NULL, (gdouble) inner_iter/max_iterations);
+      if (timer != NULL) {
+	/* we only update things if at least 1 second has passed or we're at the start of a new loop */
+	if ((g_timer_elapsed(timer,NULL) > 1.0) || (new_outer)) {
+	  new_outer = FALSE;
+
+	  if (update_func != NULL) 
+	    continue_work = (*update_func)(update_data, NULL, (gdouble) inner_iter/max_iterations);
       
+	  g_timer_start(timer); /* reset the timer */
+#if AMIDE_DEBUG  
+	  g_print("iter %d %d   %10.9g = %5.3g + %5.3g + %5.3g + %5.3g   mu=%g beta %g     \r",
+		  outer_iter, inner_iter, 
+		  100.0*gsl_multimin_fdfminimizer_minimum(multimin_minimizer)/magnitude,
+		  100.0*p.ls/magnitude,
+		  100.0*p.neg/magnitude,
+		  100.0*p.b*p.orth/magnitude,
+		  100.0*p.blood/magnitude,
+		  p.mu, (beta > 0) ? 100*(current_beta/beta) : 0.0);
+#endif /* AMIDE_DEBUG */
+	}
+#if AMIDE_DEBUG
+	x = div(inner_iter,1000);
+	if (x.rem == 0)
+	  g_print("\n");
+#endif /* AMIDE_DEBUG */
+      }
+
       if (inner_iter >= max_iterations)
 	  status = GSL_EMAXITER;
 
@@ -1109,17 +1198,6 @@ void fads_pls(AmitkDataSet * data_set,
 	status = GSL_ERUNAWAY;
       else
 	gsl_vector_memcpy(initial, multimin_minimizer->x);
-
-#if AMIDE_DEBUG  
-      g_print("iter %d %d   %10.9g=%5.3g+%5.3g+%5.3g+%5.3g   mu=%g beta %g     \r",
-	      outer_iter, inner_iter, 
-	      100.0*gsl_multimin_fdfminimizer_minimum(multimin_minimizer)/magnitude,
-	      100.0*p.ls/magnitude,
-	      100.0*p.neg/magnitude,
-	      100.0*p.b*p.orth/magnitude,
-	      100.0*p.blood/magnitude,
-	      p.mu, (beta > 0) ? 100*(current_beta/beta) : 0.0);
-#endif /* AMIDE_DEBUG */
       
     } while ((status == GSL_CONTINUE) && continue_work); /* inner loop */
 
@@ -1255,9 +1333,9 @@ void fads_pls(AmitkDataSet * data_set,
     frame_duration = amitk_data_set_get_frame_duration(p.data_set, j);
 
     fprintf(file_pointer, "  %d", j);
-    fprintf(file_pointer, "\t%g\t%g\t", frame_duration, frame_midpoint);
+    fprintf(file_pointer, "\t%12.3f\t%12.3f\t", frame_duration, frame_midpoint);
     for (f=0; f<p.num_factors; f++) {
-      fprintf(file_pointer, "\t%g", gsl_vector_get(initial, f*p.num_frames+j));
+      fprintf(file_pointer, "\t% 12g", gsl_vector_get(initial, f*p.num_frames+j));
     }
     fprintf(file_pointer,"\n");
   }
@@ -1320,6 +1398,10 @@ void fads_pls(AmitkDataSet * data_set,
     p.lmi_f = NULL;
   }
 
+  if (timer != NULL) {
+    g_timer_destroy(timer);
+    timer = NULL;
+  }
 };
 
 
@@ -1841,6 +1923,11 @@ void fads_two_comp(AmitkDataSet * data_set,
   gdouble magnitude, k12, k21;
   gdouble init_value, alpha;
   AmitkViewMode i_view_mode;
+  GTimer * timer=NULL;
+  gboolean new_outer;
+#if AMIDE_DEBUG
+  div_t x;
+#endif
 
   g_return_if_fail(AMITK_IS_DATA_SET(data_set));
   dim = AMITK_DATA_SET_DIM(data_set);
@@ -2036,13 +2123,20 @@ void fads_two_comp(AmitkDataSet * data_set,
       gsl_vector_set(initial, i+f, init_value);
 
   if (update_func != NULL) {
+    timer = g_timer_new();
     temp_string = g_strdup_printf(_("Calculating Two Compartment Factor Analysis:\n   %s"), AMITK_OBJECT_NAME(data_set));
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
 
+#if AMIDE_DEBUG
+  if (timer != NULL)
+    timer = g_timer_new();
+#endif
+
   do { /* outer loop */
     outer_iter++;
+    new_outer=TRUE;
 
     /* (re)set the minimizer */
     gsl_multimin_fdfminimizer_set(multimin_minimizer, &multimin_func, 
@@ -2056,8 +2150,40 @@ void fads_two_comp(AmitkDataSet * data_set,
       if (!status) 
       	status = gsl_multimin_test_gradient (multimin_minimizer->gradient, stopping_criteria);
 
-      if (update_func != NULL) 
-	continue_work = (*update_func)(update_data, NULL, (gdouble) inner_iter/max_iterations);
+      if (timer != NULL) {
+	/* we only update things if at least 1 second has passed or we're at the start of a new loop */
+	if ((g_timer_elapsed(timer,NULL) > 1.0) || (new_outer)) {
+	  new_outer = FALSE;
+
+	  if (update_func != NULL) 
+	    continue_work = (*update_func)(update_data, NULL, (gdouble) inner_iter/max_iterations);
+
+	  g_timer_start(timer); /* reset the timer */
+#if AMIDE_DEBUG  
+	  g_print("iter %d %d   %10.9g=%5.3g+%5.3g+%5.3g   mu=%g k12=%g k21=%g     \r",
+		  outer_iter, inner_iter,
+		  100.0*gsl_multimin_fdfminimizer_minimum(multimin_minimizer)/magnitude,
+		  100.0*p.ls/magnitude,
+		  100.0*p.neg/magnitude,
+		  100.0*p.blood/magnitude, 
+		  p.mu, 
+		  gsl_vector_get(multimin_minimizer->x, p.k12_offset),
+		  gsl_vector_get(multimin_minimizer->x, p.k21_offset));
+	  //      g_print("bc %g %g   tc %g %g      alpha %g %g\n", 
+	  //	      gsl_vector_get(multimin_minimizer->x, p.bc_offset),
+	  //	      gsl_vector_get(multimin_minimizer->x, p.bc_offset+1),
+	  //	      p.tc_unscaled[0], p.tc_unscaled[1],
+	  //	      gsl_vector_get(multimin_minimizer->x, p.alpha_offset),
+	  //	      gsl_vector_get(multimin_minimizer->x, p.alpha_offset+1));
+#endif /* AMIDE_DEBUG */
+	}
+#if AMIDE_DEBUG
+	x = div(inner_iter,1000);
+	if (x.rem == 0)
+	  g_print("\n");
+#endif /* AMIDE_DEBUG */
+      }
+
 
       if (inner_iter >= max_iterations)
 	  status = GSL_EMAXITER;
@@ -2067,24 +2193,6 @@ void fads_two_comp(AmitkDataSet * data_set,
       else
 	gsl_vector_memcpy(initial, multimin_minimizer->x);
 
-#if AMIDE_DEBUG  
-      g_print("iter %d %d   %10.9g=%5.3g+%5.3g+%5.3g   mu=%g k12=%g k21=%g     \r",
-	      outer_iter, inner_iter,
-	      100.0*gsl_multimin_fdfminimizer_minimum(multimin_minimizer)/magnitude,
-	      100.0*p.ls/magnitude,
-	      100.0*p.neg/magnitude,
-	      100.0*p.blood/magnitude, 
-	      p.mu, 
-	      gsl_vector_get(multimin_minimizer->x, p.k12_offset),
-	      gsl_vector_get(multimin_minimizer->x, p.k21_offset));
-      //      g_print("bc %g %g   tc %g %g      alpha %g %g\n", 
-      //	      gsl_vector_get(multimin_minimizer->x, p.bc_offset),
-      //	      gsl_vector_get(multimin_minimizer->x, p.bc_offset+1),
-      //	      p.tc_unscaled[0], p.tc_unscaled[1],
-      //	      gsl_vector_get(multimin_minimizer->x, p.alpha_offset),
-      //	      gsl_vector_get(multimin_minimizer->x, p.alpha_offset+1));
-
-#endif /* AMIDE_DEBUG */
 
     } while ((status == GSL_CONTINUE) && continue_work); /* inner loop */
 
@@ -2336,7 +2444,10 @@ void fads_two_comp(AmitkDataSet * data_set,
     p.lmi_k21 = NULL;
   }
 
-
+  if (timer != NULL) {
+    g_timer_destroy(timer);
+    timer = NULL;
+  }
 
 };
 

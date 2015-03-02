@@ -33,7 +33,10 @@
 
 #define FIDUCIAL_MARK_WIDTH 4.0
 #define FIDUCIAL_MARK_WIDTH_PIXELS 2
+
+#ifndef AMIDE_LIBGNOMECANVAS_AA
 #define FIDUCIAL_MARK_LINE_STYLE GDK_LINE_SOLID
+#endif
 
 /* draws the given object on the given canvas.  */
 /* if item is NULL, a new canvas item will be created */
@@ -49,10 +52,16 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 					   gdouble y_offset,
 					   rgba_t roi_color,
 					   gint roi_width,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					   gdouble transparency
+#else
 					   GdkLineStyle line_style,
-					   gboolean fill_roi) {
+					   gboolean fill_roi
+#endif
+					   ) {
 
   guint32 fill_color_rgba;
+  guint32 outline_color_rgba;
   gdouble affine[6];
   gboolean hide_object = FALSE;
   GnomeCanvasPoints * points;
@@ -60,6 +69,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
   g_return_val_if_fail(GNOME_IS_CANVAS(canvas), item);
   g_return_val_if_fail(AMITK_IS_VOLUME(canvas_volume), item);
   g_return_val_if_fail(object != NULL, item);
+
 
   if (item != NULL) {
     /* make sure to reset any affine translations we've done */
@@ -75,12 +85,14 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     AmitkCanvasPoint center_cpoint;
     rgba_t outline_color;
 
-    if (AMITK_IS_DATA_SET(AMITK_OBJECT_PARENT(object)))
+    if (AMITK_FIDUCIAL_MARK_SPECIFY_COLOR(object)) 
+      outline_color = AMITK_IS_ROI(object) ? AMITK_ROI_COLOR(object) : AMITK_FIDUCIAL_MARK_COLOR(object);
+    else if (AMITK_IS_DATA_SET(AMITK_OBJECT_PARENT(object)))
       outline_color = 
 	amitk_color_table_outline_color(amitk_data_set_get_color_table_to_use(AMITK_DATA_SET(AMITK_OBJECT_PARENT(object)), view_mode), TRUE);
     else
       outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
-    fill_color_rgba = amitk_color_table_rgba_to_uint32(outline_color);
+    outline_color_rgba = amitk_color_table_rgba_to_uint32(outline_color);
 
     center_point = amitk_space_b2s(AMITK_SPACE(canvas_volume), 
 				   AMITK_FIDUCIAL_MARK_GET(object));
@@ -107,14 +119,14 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     if (item == NULL)
       item = gnome_canvas_item_new(gnome_canvas_root(canvas),
 				   gnome_canvas_line_get_type(), "points", points,
-				   "fill_color_rgba", fill_color_rgba,
+				   "fill_color_rgba", outline_color_rgba,
 				   "width_pixels", FIDUCIAL_MARK_WIDTH_PIXELS, 
 #ifndef AMIDE_LIBGNOMECANVAS_AA
     				   "line_style", FIDUCIAL_MARK_LINE_STYLE, 
 #endif
 				   NULL); 
     else
-      gnome_canvas_item_set(item, "points", points,"fill_color_rgba", fill_color_rgba, NULL);
+      gnome_canvas_item_set(item, "points", points,"fill_color_rgba", outline_color_rgba, NULL);
     gnome_canvas_points_unref(points);
 
     /* make sure the point is on this slice */
@@ -141,6 +153,10 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
     if (AMITK_ROI_UNDRAWN(object)) return item;
 
+    /* overwrite the passed in color if desired */
+    if (AMITK_ROI_SPECIFY_COLOR(object))
+      roi_color = AMITK_IS_ROI(object) ? AMITK_ROI_COLOR(object) : AMITK_FIDUCIAL_MARK_COLOR(object);
+
     switch(AMITK_ROI_TYPE(roi)) {
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
@@ -149,7 +165,12 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 
       offset = zero_point;
       corner = one_point;
-      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim, fill_roi,
+      pixbuf = image_slice_intersection(roi, canvas_volume, pixel_dim, 
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					transparency,
+#else
+					fill_roi,
+#endif
 					roi_color,&offset, &corner);
       
       offset_cpoint= point_2_canvas_point(AMITK_VOLUME_CORNER(canvas_volume),
@@ -207,27 +228,43 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
       } else {
 	/* throw in junk we'll hide*/
 	hide_object = TRUE;
-	points = gnome_canvas_points_new(4);
+	points = gnome_canvas_points_new(3);
 	points->coords[0] = points->coords[1] = 0;
 	points->coords[2] = points->coords[3] = 1;
+	points->coords[4] = 0;
+	points->coords[5] = 1;
       }
       roi_points = amitk_roi_free_points_list(roi_points);
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+      outline_color_rgba = amitk_color_table_rgba_to_uint32(roi_color);
+      roi_color.a = transparency * 0xFF;
+#endif
       fill_color_rgba = amitk_color_table_rgba_to_uint32(roi_color);
 
-      if (item == NULL) {   /* create the item */ 
+      if ((item == NULL)) {   /* create the item */ 
 	item =  gnome_canvas_item_new(gnome_canvas_root(canvas),
-				      gnome_canvas_line_get_type(), "points", points,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      gnome_canvas_polygon_get_type(), 
+#else
+				      gnome_canvas_line_get_type(), 
+#endif
+				      "points", points,
 				      "fill_color_rgba",fill_color_rgba,
 				      "width_pixels", roi_width, 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+				      "outline_color_rgba", outline_color_rgba,
+#else
 				      "line_style", line_style, 
 #endif
 				      NULL);
       } else {
 	/* and reset the line points */
-	gnome_canvas_item_set(item, "points", points, "fill_color_rgba", fill_color_rgba,
+	gnome_canvas_item_set(item, "points", points, 
+			      "fill_color_rgba", fill_color_rgba,
 			      "width_pixels", roi_width, 
-#ifndef AMIDE_LIBGNOMECANVAS_AA
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+			      "outline_color_rgba", outline_color_rgba,
+#else
 			      "line_style", line_style,  
 #endif
 			      NULL);
@@ -243,7 +280,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
   /* make sure the point is on this canvas */
   if (hide_object)
     gnome_canvas_item_hide(item);
-  else
+  else if (item)
     gnome_canvas_item_show(item);
 
   return item;

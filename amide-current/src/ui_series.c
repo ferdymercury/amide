@@ -87,8 +87,12 @@ typedef struct ui_series_t {
   gboolean in_generation;
   gboolean quit_generation;
   gint roi_width;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  gdouble roi_transparency;
+#else
   GdkLineStyle line_style;
   gboolean fill_roi;
+#endif
   gint pixbuf_width;
   gint pixbuf_height;
 
@@ -585,8 +589,12 @@ static ui_series_t * ui_series_init(GtkWindow * window, GtkWidget * window_vbox)
   ui_series->in_generation=FALSE;
   ui_series->quit_generation=FALSE;
   ui_series->roi_width = 1.0;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  ui_series->roi_transparency = 0.5;
+#else
   ui_series->line_style = 0;
   ui_series->fill_roi = TRUE;
+#endif
   ui_series->pixbuf_width = 0;
   ui_series->pixbuf_height = 0;
 
@@ -867,8 +875,13 @@ static gboolean update_immediate(gpointer data) {
 					x+UI_SERIES_L_MARGIN, y+UI_SERIES_TOP_MARGIN,
 					outline_color, 
 					ui_series->roi_width,
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+					ui_series->roi_transparency
+#else
 					ui_series->line_style,
-					ui_series->fill_roi);
+					ui_series->fill_roi
+#endif
+					);
 	if (item != NULL)
 	  ui_series->items[i-start_i] = g_list_append(ui_series->items[i-start_i], item);
       }
@@ -979,8 +992,12 @@ void ui_series_create(AmitkStudy * study,
   ui_series = ui_series_init(window, window_vbox);
   ui_series->preferences = g_object_ref(preferences);
   ui_series->series_type = series_type;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  ui_series->roi_transparency = AMITK_STUDY_CANVAS_ROI_TRANSPARENCY(study);
+#else
   ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
   ui_series->fill_roi = AMITK_STUDY_CANVAS_FILL_ROI(study);
+#endif
   ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
   ui_series->objects = amitk_objects_ref(selected_objects);

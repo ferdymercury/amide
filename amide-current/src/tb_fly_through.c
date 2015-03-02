@@ -690,6 +690,11 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->space = amitk_space_get_view_space(view, AMITK_STUDY_CANVAS_LAYOUT(study));
   tb_fly_through->preferences = g_object_ref(preferences);
 
+  /* need to reset the view center, as this gets overwritten in
+     amitk_object_copy because study_add_child gets called */
+  amitk_study_set_view_center(tb_fly_through->study, AMITK_STUDY_VIEW_CENTER(study));
+
+
   tb_fly_through->dialog = 
     gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,
 				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,

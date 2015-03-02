@@ -84,6 +84,7 @@ struct _AmitkObjectDialog
 
   GtkWidget * start_spin;
   GtkWidget * * duration_spins;
+  GtkWidget * * gate_spins;
 
   GtkWidget * isocontour_min_value_entry;
   GtkWidget * isocontour_max_value_entry;
@@ -92,8 +93,12 @@ struct _AmitkObjectDialog
   /* study preferences */
   GtkWidget * roi_width_spin;
   GnomeCanvasItem * roi_item;
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  GtkWidget * roi_transparency_spin;
+#else
   GtkWidget * line_style_menu;
   GtkWidget * fill_roi_button;
+#endif
   GtkWidget * layout_button1;
   GtkWidget * layout_button2;
   GtkWidget * panel_layout_button1;
