@@ -1,0 +1,251 @@
+<HTML
+><HEAD
+><TITLE
+>Using ROI's </TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+REL="HOME"
+TITLE="Amide's user manual"
+HREF="amide.html"><LINK
+REL="PREVIOUS"
+TITLE="Importing Data "
+HREF="importing.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Amide's user manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="importing.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+>&nbsp;</TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="ROIS"
+>Chapter 2. Using ROI's </A
+></H1
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN39"
+>Using ROI's</A
+></H1
+><P
+> 
+
+    ROI stands for Region of Interest.  ROI's designate a volume on
+    the object over which statistics should be calculated.
+
+  </P
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN42"
+>ROI Types</A
+></H2
+><P
+>      The following ROI types are currently supported.
+    </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN45"
+>Ellipsoid</A
+></H3
+><P
+>	An ellipsoid is similar to a sphere, but with a radius
+	specified for each direction [x,y,z].  In the case of x=y=z,
+	the ellipsoid is a sphere.
+      </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN48"
+>Elliptic Cylinder</A
+></H3
+><P
+>	An elliptic cylinder is similar to a regular cylinder, except
+	it has an ellipse as it's base instead of a circle.
+      </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN51"
+>Box</A
+></H3
+><P
+>	Exactly what it says, a 3D box.
+      </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN54"
+>Group</A
+></H3
+><P
+>	Not currently implemented.  This will someday allow ROI's to
+	be defined in groups, so that ROI's can be manipulated both in
+	groups and individually.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN57"
+>Drawing ROI's</A
+></H2
+><P
+>      To draw an roi, first select the ROI desired under the "add
+      roi:" pull down menu.  Amide will request a name for this ROI
+      and add it to the study item list, but no roi will be drawn.  To
+      draw this new roi, you need to first double click on the roi in
+      the study item list, and then draw the ROI on the desired view.
+      The x and y dimensions of the ROI will be as drawn.  The z
+      dimension ("depth") of the newly drawn ROI will be the same as
+      the current image thickness.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN60"
+>Manipulating ROI's</A
+></H2
+><P
+>      After an ROI is drawn, it can be further manipulated to adjust
+      it's size, placement, and orientation.  First double click the
+      ROI in the study item list to ensure that this ROI is the
+      currently selected item.  You can then directly manipulate the
+      ROI by clicking on it in any of the volume view windows.  Mouse
+      button 1 is used for zooming the ROI.  Mouse button 2 is used to
+      rotate the ROI.  And Mouse button 3 is used to shift the ROI.
+
+      You can also edit the ROI size/placement/orientation/name
+      etc. by clicking on mouse button 3 while over the ROI's name in
+      the study item list.  This brings up the edit ROI dialog, which
+      allows keyboard entry of the ROI's parameters.
+
+
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN63"
+>Calculating Statistics over ROI's</A
+></H2
+><P
+>      DICOM
+    </P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="importing.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="amide.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Importing Data</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>&nbsp;</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

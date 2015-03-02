@@ -1,0 +1,61 @@
+=====
+AMIDE
+=====
+
+AMIDE stands for: AMIDE's a Medical Image Data Examiner
+
+AMIDE is intended for viewing and analyzing 3D medical imaging data
+sets.  For more information on AMIDE, check out the AMIDE web page at:
+	http://amide.sourceforge.net
+
+AMIDE is licensed under the terms of the GNU GPL included in the file
+COPYING.
+
+
+
+Requirements
+------------
+
+
+Optional Packages
+-----------------
+
+
+1) libecat (also called z_matrix_70)
+
+You will need this library if you want to import CTI files.  This
+library is released under a non-free license (which is why it's not
+incuded with amide).  It can be found on the amide sourceforge
+website, or at it's original site:
+	ftp://dormeur.topo.ucl.ac.be/pub/ecat/z_matrix_70/ecat.tar.gz
+
+The source file off of amide.sourceforge.net is preferable, as it
+includes a Makefile which will make a shared library, and a small
+patch.  Since the license for libecat is non-GPL compatible, you
+really should only link to it as a shared library.
+
+To build:
+	download the tarball
+	tar -xvzf libecat_amide_2000.8.29.tgz
+	cd z_matrix_70
+	patch -p1 < amide_patch
+	make
+	cp libecat.so.1.0 /usr/local/lib
+	cp matrix.h /usr/local/include
+	/sbin/ldconfig (make sure /etc/ld.so.conf includes /usr/local/lib)
+	cd /usr/local/lib
+	ln -s libecat.so.1.0 libecat.so
+
+And that should do it.
+
+
+
+Building
+--------
+
+see the file INSTALL for info on compiling and installing.  If you
+don't feel like reading that, try:
+
+	./configure
+	make 
+	make install

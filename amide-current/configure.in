@@ -1,0 +1,68 @@
+AC_INIT(src/amide.c)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(amide, 0.1)
+
+AM_MAINTAINER_MODE
+
+AM_ACLOCAL_INCLUDE(macros)
+
+GNOME_INIT
+
+AC_ISC_POSIX
+AC_PROG_CC
+AC_STDC_HEADERS
+AC_ARG_PROGRAM
+AM_PROG_LIBTOOL
+
+
+GNOME_COMPILE_WARNINGS
+
+
+ALL_LINGUAS=
+AM_GNU_GETTEXT
+
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+
+
+AC_OUTPUT([
+Makefile
+pixmaps/Makefile
+doc/Makefile
+doc/C/Makefile
+src/Makefile
+po/Makefile.in
+macros/Makefile
+intl/Makefile
+contrib/Makefile
+contrib/amide.spec]) 
+
+
+dnl Let people compile without debugging information
+AC_ARG_ENABLE(gtk-doc, [  --enable-debug-mesg     Compile with some debugging messages [default=yes]], enable_debug_mesg="$enableval", enable_debug_mesg=yes)
+
+if test $enable_debug_mesg = yes; then
+	cat >> config.h << EOF
+
+#define AMIDE_DEBUG
+EOF
+
+fi
+
+
+dnl Let people compile without having libecat (z_matrix_70)
+AC_ARG_ENABLE(libecat, [  --enable-cti-import     Compile with the CTI library [default=yes]], enable_cti_import="$enableval", enable_cti_import=yes)
+
+
+
+if test $enable_cti_import = yes; then
+	cat >> config.h << EOF
+
+#define AMIDE_CTI_SUPPORT 
+EOF
+
+fi
+
+
