@@ -49,7 +49,7 @@ typedef struct _AmitkSpace AmitkSpace;
 
 /* The AmitkSpace structure is the base of the Amitk objects hierarchy.
  * It describes an euclidean reference frame with respect to the 
- * base coordinate space.  Offse is in the base coordinate frame.
+ * base coordinate space.  Offset is in the base coordinate frame.
  */
 struct _AmitkSpace
 {
@@ -57,7 +57,7 @@ struct _AmitkSpace
 
 
   /* private info */
-  AmitkPoint offset;
+  AmitkPoint offset; /* with respect to the base coordinate frame */
   AmitkAxes axes;
 
 };

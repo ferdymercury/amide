@@ -1545,7 +1545,9 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     import_ds->threshold_max[0] = import_ds->threshold_max[1] = 
       amitk_data_set_get_global_max(import_ds);
     import_ds->threshold_min[0] = import_ds->threshold_min[1] =
-      (amitk_data_set_get_global_min(import_ds) > 0.0) ? amitk_data_set_get_global_min(import_ds) : 0.0;
+      ((amitk_data_set_get_global_min(import_ds) > 0.0) ||
+       (import_ds->threshold_max[0] <= 0.0)) ?
+      amitk_data_set_get_global_min(import_ds) : 0.0;
     import_ds->threshold_ref_frame[1] = AMITK_DATA_SET_NUM_FRAMES(import_ds)-1;
 
     /* set some sensible thresholds for CT */
@@ -1604,6 +1606,7 @@ static void export_raw(AmitkDataSet *ds,
   amide_time_t frame_start, frame_duration;
   AmitkPoint corner;
   AmitkVolume * output_volume=NULL;
+  AmitkPoint output_start_pt;
   AmitkDataSet * slice = NULL;
   AmitkPoint new_offset;
   AmitkCanvasPoint pixel_size;
@@ -1614,17 +1617,22 @@ static void export_raw(AmitkDataSet *ds,
   dim = AMITK_DATA_SET_DIM(ds);
 
   if (resliced) {
-    if (bounding_box != NULL) {
+    if (bounding_box != NULL) 
       output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(bounding_box)));
+    else
+      output_volume = amitk_volume_new();
+    if (output_volume == NULL) goto exit_strategy;
+
+    if (bounding_box != NULL) {
       corner = AMITK_VOLUME_CORNER(output_volume);
     } else {
       AmitkCorners corners;
-      output_volume = amitk_volume_new();
       amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
       corner = point_diff(corners[0], corners[1]);
       amitk_space_set_offset(AMITK_SPACE(output_volume), 
 			     amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
     }
+
     pixel_size.x = voxel_size.x;
     pixel_size.y = voxel_size.y;
     dim.x = ceil(corner.x/voxel_size.x);
@@ -1632,6 +1640,7 @@ static void export_raw(AmitkDataSet *ds,
     dim.z = ceil(corner.z/voxel_size.z);
     corner.z = voxel_size.z;
     amitk_volume_set_corner(output_volume, corner);
+    output_start_pt = AMITK_SPACE_OFFSET(output_volume);
   }
 
   g_message("dimensions of output data set will be %dx%dx%dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, dim.g, dim.t, voxel_size.x, voxel_size.y, voxel_size.z);
@@ -1658,9 +1667,13 @@ static void export_raw(AmitkDataSet *ds,
 
   j = zero_voxel;
   for(i.t = 0; i.t < dim.t; i.t++) {
-    frame_start = amitk_data_set_get_start_time(ds, i.t);
-    frame_duration = amitk_data_set_get_frame_duration(ds, i.t);
+    frame_start = amitk_data_set_get_start_time(ds, i.t) + EPSILON;
+    frame_duration = amitk_data_set_get_frame_duration(ds, i.t) - EPSILON;
     for (i.g = 0; i.g < dim.g; i.g++) {
+
+      if (resliced) /* reset the output slice */
+	amitk_space_set_offset(AMITK_SPACE(output_volume), output_start_pt);
+
       for (i.z = 0; (i.z < dim.z) && continue_work; i.z++) {
 	if (update_func != NULL) {
 	  x = div(i.z,divider);
@@ -1684,6 +1697,22 @@ static void export_raw(AmitkDataSet *ds,
 	  new_offset.z += voxel_size.z;
 	  amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
 	}
+
+	if (resliced) {
+	  if (i.z == 0) {
+	    gdouble max=0.0;
+	    gdouble value=0.0;
+	    for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {
+	      for (j.x = 0; j.x < dim.x; j.x++) {
+		value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j);
+		if (value > max)
+		  max = value;
+	      }
+	    }
+	    g_print("slice max %f\tstart-duration %f %f\n", max, frame_start, frame_duration);
+	  }
+	}
+	
 
 	for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {
 
@@ -1901,12 +1930,12 @@ void amitk_data_sets_export_to_file(GList * data_sets,
 	amitk_space_set_offset(AMITK_SPACE(volume), amitk_space_s2b(AMITK_SPACE(export_ds), new_offset));
 
 	slices = amitk_data_sets_get_slices(data_sets, NULL, 0,
-					    amitk_data_set_get_start_time(export_ds, i_voxel.t),
-					    amitk_data_set_get_frame_duration(export_ds, i_voxel.t),
+					    amitk_data_set_get_start_time(export_ds, i_voxel.t)+EPSILON,
+					    amitk_data_set_get_frame_duration(export_ds, i_voxel.t)-EPSILON,
 					    i_voxel.g,
 					    pixel_size,
 					    volume);
-	
+
 	temp_slices = slices;
 	while (temp_slices != NULL) {
 	  

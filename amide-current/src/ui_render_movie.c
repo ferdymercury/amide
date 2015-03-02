@@ -502,7 +502,6 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
     switch (ui_render_movie->type) {
     case OVER_TIME:
       ui_render->start = ui_render_movie->start_time + i_frame*ui_render->duration;
-      g_print("time %f\n", ui_render->start);
       break;
     case OVER_FRAMES_SMOOTHED:
     case OVER_FRAMES:

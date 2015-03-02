@@ -865,6 +865,7 @@ void libmdc_export(AmitkDataSet * ds,
   AmitkCanvasPoint pixel_size;
   AmitkPoint corner;
   AmitkVolume * output_volume=NULL;
+  AmitkPoint output_start_pt;
   AmitkDataSet * slice = NULL;
   AmitkPoint new_offset;
   gfloat * row_data;
@@ -956,22 +957,28 @@ void libmdc_export(AmitkDataSet * ds,
 
   dim = AMITK_DATA_SET_DIM(ds);
   if (resliced) {
-    if (bounding_box != NULL) {
+    if (bounding_box != NULL) 
       output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(bounding_box)));
+    else
+      output_volume = amitk_volume_new();
+    if (output_volume == NULL) goto cleanup;
+
+    if (bounding_box != NULL) {
       corner = AMITK_VOLUME_CORNER(output_volume);
     } else {
       AmitkCorners corners;
-      output_volume = amitk_volume_new();
       amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
       corner = point_diff(corners[0], corners[1]);
       amitk_space_set_offset(AMITK_SPACE(output_volume), 
 			     amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
     }
+
     dim.x = ceil(corner.x/voxel_size.x);
     dim.y = ceil(corner.y/voxel_size.y);
     dim.z = ceil(corner.z/voxel_size.z);
     corner.z = voxel_size.z;
     amitk_volume_set_corner(output_volume, corner);
+    output_start_pt = AMITK_SPACE_OFFSET(output_volume);
 #ifdef AMIDE_DEBUG
     g_print("output dimensions %d %d %d, voxel size %f %f %f\n", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #else
@@ -1069,6 +1076,9 @@ void libmdc_export(AmitkDataSet * ds,
     fi.dyndata[i.t].time_frame_duration = 1000.0*frame_duration;
 
     for (i.g = 0 ; (i.g < dim.g) && (continue_work); i.g++) {
+
+      if (resliced) /* reset the output slice */
+	amitk_space_set_offset(AMITK_SPACE(output_volume), output_start_pt);
 
       for (i.z = 0 ; (i.z < dim.z) && (continue_work); i.z++) {
 

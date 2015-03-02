@@ -282,6 +282,9 @@ void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
 
   gtk_widget_destroy(GTK_WIDGET(file_selection));
 
+  /* do any events pending, this allows the dialog to be removed immediately */
+  while (gtk_events_pending()) gtk_main_iteration();
+
   return;
 }
 

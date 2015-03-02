@@ -146,27 +146,30 @@ static void study_open_ok(GtkWidget* widget, gpointer data) {
   ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
   import_object = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xif_selection), "import_object"));
 
-  /* try loading the study into memory */
-  if ((study=amitk_study_load_xml(returned_filename)) == NULL) {
-    g_warning(_("error loading study: %s"),returned_filename);
-    g_free(returned_filename);
-    return;
-  }
-  g_free(returned_filename);
-
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, xif_selection);
 
-  if (!import_object) {
-    /* setup the study window */
-    if (ui_study->study_virgin)
-      ui_study_set_study(ui_study, study);
-    else
-      ui_study_create(study, ui_study->preferences);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+
+  /* try loading the study into memory */
+  if ((study=amitk_study_load_xml(returned_filename)) == NULL) {
+    g_warning(_("error loading study: %s"),returned_filename);
   } else {
-    object_picker(ui_study, study);
+
+    if (!import_object) {
+      /* setup the study window */
+      if (ui_study->study_virgin)
+	ui_study_set_study(ui_study, study);
+      else
+	ui_study_create(study, ui_study->preferences);
+    } else {
+      object_picker(ui_study, study);
+    }
+    amitk_object_unref(study);
   }
-  amitk_object_unref(study);
+
+  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  g_free(returned_filename);
 
   return;
 }
@@ -244,19 +247,24 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   filename = ui_common_xif_selection_get_save_name(xif_selection);
   if (filename == NULL) return;
 
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, xif_selection);
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+
   /* allright, save our study */
   if (amitk_study_save_xml(ui_study->study, filename,
 			   AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(ui_study->preferences)) == FALSE) {
     g_warning(_("Failure Saving File: %s"),filename);
-    return;
+  } else {
+
+    /* indicate no new changes */
+    ui_study->study_altered=FALSE;
+    ui_study_update_title(ui_study);
   }
 
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, xif_selection);
-
-  /* indicate no new changes */
-  ui_study->study_altered=FALSE;
-  ui_study_update_title(ui_study);
+  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  g_free(filename);
 
   return;
 }
@@ -321,17 +329,20 @@ static void import_ok(GtkWidget* widget, gpointer data) {
   filename = ui_common_file_selection_get_load_name(file_selection);
   if (filename == NULL) return;
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-
   /* figure out how we want to import */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
 
   /* figure out the submethod if we're loading through libmdc */
   submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
 
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
 #ifdef AMIDE_DEBUG
   g_print("file to import: %s\n",filename);
 #endif
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* now, what we need to do if we've successfully gotten an image filename */
   if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename,
@@ -354,9 +365,6 @@ static void import_ok(GtkWidget* widget, gpointer data) {
   }
 
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
   g_free(filename);
   
   return;
@@ -430,6 +438,9 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   filename = ui_common_file_selection_get_save_name(file_selection);
   if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
   /* check if we want a png */
   length = strlen(filename);
   g_print("length %d\n", length);
@@ -446,22 +457,18 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   pixbuf = amitk_canvas_get_pixbuf(AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]));
   if (pixbuf == NULL) {
     g_warning(_("Canvas failed to return a valid image\n"));
-    return;
+  } else {
+
+    if (save_as_png)
+      return_val = gdk_pixbuf_save (pixbuf, filename, "png", NULL, NULL);
+    else
+      return_val = gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, "quality", "100", NULL);
+
+    if (!return_val)
+      g_warning(_("Failure Saving File: %s"),filename);
+
+    g_object_unref(pixbuf);
   }
-
-  if (save_as_png)
-    return_val = gdk_pixbuf_save (pixbuf, filename, "png", NULL, NULL);
-  else
-    return_val = gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, "quality", "100", NULL);
-
-  if (!return_val)
-    g_warning(_("Failure Saving File: %s"),filename);
-
-
-  g_object_unref(pixbuf);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
 
   return;
 }
@@ -578,23 +585,26 @@ static void ui_study_cb_recover_ok(GtkWidget* widget, gpointer data) {
   if (returned_filename == NULL) return;
   ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
 
-  /* try recovering the study */
-  if ((study=amitk_study_recover_xml(returned_filename, ui_study->preferences)) == NULL) {
-    g_warning(_("error recovering study: %s"),returned_filename);
-    g_free(returned_filename);
-    return;
-  }
-  g_free(returned_filename);
-
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, xif_selection);
 
-  /* setup the study window */
-  if (ui_study->study_virgin)
-    ui_study_set_study(ui_study, study);
-  else
-    ui_study_create(study, ui_study->preferences);
-  amitk_object_unref(study);
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+
+  /* try recovering the study */
+  if ((study=amitk_study_recover_xml(returned_filename, ui_study->preferences)) == NULL) {
+    g_warning(_("error recovering study: %s"),returned_filename);
+
+  } else {
+    /* setup the study window */
+    if (ui_study->study_virgin)
+      ui_study_set_study(ui_study, study);
+    else
+      ui_study_create(study, ui_study->preferences);
+    amitk_object_unref(study);
+  }
+
+  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  g_free(returned_filename);
 
   return;
 }

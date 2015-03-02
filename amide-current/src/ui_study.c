@@ -60,7 +60,7 @@ enum {
 
 static gchar * help_info_variable_legend[NUM_HELP_INFO_VARIABLE_LINES] = {
   N_("ctrl-x"),
-  N_("shift-ctrl-m3")
+  N_("shift-m3")
 };
 
 static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
@@ -658,7 +658,8 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
       if (strlen(help_info_lines[which_info][i_line]) > 0) {
 	if (i_line == HELP_INFO_LINE_VARIABLE) {
 	  if ((which_info == AMITK_HELP_INFO_CANVAS_ROI) ||
-	      (which_info == AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI)) {
+	      (which_info == AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI) ||
+	      (which_info == AMITK_HELP_INFO_CANVAS_FREEHAND_ROI)) {
 	    legend = help_info_variable_legend[HELP_INFO_VARIABLE_LINE_SHIFT_CTRL_3];
 	  } else {
 	    legend = help_info_variable_legend[HELP_INFO_VARIABLE_LINE_CTRL_X];

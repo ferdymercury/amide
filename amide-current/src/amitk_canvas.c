@@ -1311,8 +1311,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	canvas_event_type = CANVAS_EVENT_PRESS_ENTER_DRAWING_MODE;
 
     } else if ((!grab_on) && (AMITK_IS_ROI(object)) && (event->button.button == 3)) {
-      if ((event->button.state & GDK_CONTROL_MASK) &&
-	  (event->button.state & GDK_SHIFT_MASK))
+      if (event->button.state & GDK_SHIFT_MASK)
 	canvas_event_type = CANVAS_EVENT_PRESS_ERASE_VOLUME_OUTSIDE_ROI;
       else if (event->button.state & GDK_CONTROL_MASK)
 	canvas_event_type = CANVAS_EVENT_PRESS_ERASE_VOLUME_INSIDE_ROI;

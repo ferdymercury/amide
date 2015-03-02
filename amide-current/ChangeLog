@@ -1,4 +1,14 @@
-0.8.22
+0.8.23
+	* help window incorrect for freehand roi's [1]
+	* changed erase outside roi to shift-m3 from shift-ctrl-m3
+	* incorrect exporting of multi-frame data sets, values zero [2]
+ 	* poor threshold setting on all negative value data sets [3]
+ 	* import file dialog now closed prior to importing
+	[1] Found by Marco Bucci
+	[2] Found by Andre Manook
+ 	[3] Noticed by David Yerushalmi
+
+0.8.22 2007.09.28
 	* fixed bug with drawing 1st voxel of freehand (introduced 0.8.21) [1]
 	* autodetect xmedcon format support (requires xmedcon > 0.9.10)
 	* button to set the view center as origin [2]
