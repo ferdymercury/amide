@@ -160,7 +160,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 
   /* get the view axis to use*/
   width = 0.9*gdk_screen_width();
-  height = 0.9*gdk_screen_height();
+  height = 0.85*gdk_screen_height();
 
   /* allocate space for pointers to our slices if needed */
   if (ui_series->slices == NULL) {
@@ -210,8 +210,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 						ui_series->zoom,
 						ui_series->interpolation);
   image_width = gdk_pixbuf_get_width(ui_series->rgb_images[0]) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
-  image_height = gdk_pixbuf_get_height(ui_series->rgb_images[0]) 
-    + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
+  image_height = gdk_pixbuf_get_height(ui_series->rgb_images[0]) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
 
 
   /* allocate space for pointers to our canvas_images and captions, if needed */
@@ -246,7 +245,7 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
   /* figure out what's the first image we want to display */
   if (ui_series->type == PLANES) 
     start_i = ui_series->num_slices*((ui_series->view_point.z-ui_series->start_z)/
-			       (ui_series->end_z-ui_series->start_z));
+				     (ui_series->end_z-ui_series->start_z));
   else  /* FRAMES */
     start_i = ui_series->view_frame;
 
@@ -255,10 +254,13 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
     start_i=0;
   else if (start_i < (ui_series->columns*ui_series->rows/2.0))
     start_i=0;
-  else if (start_i > (ui_series->num_slices - ui_series->columns*ui_series->rows/2.0))
+  else if (start_i > (ui_series->num_slices - ui_series->columns*ui_series->rows))
     start_i = ui_series->num_slices - ui_series->columns*ui_series->rows;
   else
     start_i = start_i-ui_series->columns*ui_series->rows/2.0;
+
+  g_print("start i %d num slices %d columns %d rows %d\n", start_i, ui_series->num_slices,
+	  ui_series->columns, ui_series->rows);
 
   temp_time = ui_series->start_time;
   temp_point = ui_series->view_point;
@@ -353,7 +355,8 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, series_t series_type) {
+void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, 
+		      layout_t layout, series_t series_type) {
  
   ui_series_t * ui_series;
   GnomeApp * app;
@@ -393,7 +396,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, ser
 		     ui_series);
 
   /* save the coord_frame of the series and some other parameters */
-  ui_series->coord_frame =  realspace_get_view_coord_frame(study_coord_frame(study), view);
+  ui_series->coord_frame =  realspace_get_view_coord_frame(study_coord_frame(study), view, layout);
   ui_series->view_point = realspace_alt_coord_to_alt(study_view_center(study),
 						     study_coord_frame(study),
 						     ui_series->coord_frame);
@@ -412,8 +415,6 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, ser
     realpoint_t view_corner[2];
 
     volumes_get_view_corners(ui_series->volumes, ui_series->coord_frame, view_corner);
-    view_corner[0] = realspace_base_coord_to_alt(view_corner[0], ui_series->coord_frame);
-    view_corner[1] = realspace_base_coord_to_alt(view_corner[1], ui_series->coord_frame);
     ui_series->start_z = view_corner[0].z;
     ui_series->end_z = view_corner[1].z;
     ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/ui_series->thickness);

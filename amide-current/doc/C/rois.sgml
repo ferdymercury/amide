@@ -85,10 +85,10 @@
     it's size, placement, and orientation.  You can directly
     manipulate the ROI by clicking on it in any of the volume view
     windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
-    used to rotate ellipsoid, elliptic cylinder, and box ROIs.  Mouse
-    button 3 is used for zooming ellipsoid, elliptic cylinder and box
-    ROI, and is used for redefining the isocontour value for
-    isocontour ROI's.
+    used to rotate ellipsoid, elliptic cylinder, and box ROIs, and for
+    erasing points from isocontour ROI's.  Mouse button 3 is used for
+    zooming ellipsoid, elliptic cylinder and box ROI, and is used for
+    redefining the isocontour value for isocontour ROI's.
     
     You can also edit the ROI size/placement/orientation/name etc. by
     clicking on mouse button 3 while over the ROI's name in the study

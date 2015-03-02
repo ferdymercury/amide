@@ -660,16 +660,31 @@ void roi_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t value_vp) {
     roi_ISOCONTOUR_2D_set_isocontour(roi, vol, value_vp);
     break;
   case ISOCONTOUR_3D:
-    roi_ISOCONTOUR_3D_set_isocontour(roi, vol, value_vp);
-    break;
   default:
-    g_warning("%s: unexpected case in %s at line %d, roi_type %d", PACKAGE, __FILE__, __LINE__, roi->type);
+    roi_ISOCONTOUR_3D_set_isocontour(roi, vol, value_vp);
     break;
   }
 
   return;
 }
 
+/* sets an area in the roi to zero (not in the roi) */
+void roi_isocontour_erase_area(roi_t * roi, voxelpoint_t erase_vp, gint area_size) {
+
+  g_return_if_fail((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D));
+  
+  switch(roi->type) {
+  case ISOCONTOUR_2D:
+    roi_ISOCONTOUR_2D_erase_area(roi, erase_vp, area_size);
+    break;
+  case ISOCONTOUR_3D:
+  default:
+    roi_ISOCONTOUR_3D_erase_area(roi, erase_vp, area_size);
+    break;
+  }
+
+  return;
+}
 
 
 

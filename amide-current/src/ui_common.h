@@ -23,13 +23,17 @@
   02111-1307, USA.
 */
 
+/* header files that are always needed with this file */
+#include "amide.h"
 
 #define UI_COMMON_NEW_ROI_MODE_CURSOR GDK_DRAFT_SMALL
 #define UI_COMMON_NEW_ROI_MOTION_CURSOR GDK_PENCIL
 #define UI_COMMON_OLD_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_OLD_ROI_RESIZE_CURSOR GDK_X_CURSOR
+#define UI_COMMON_OLD_ROI_RESIZE_CURSOR GDK_SIZING
 #define UI_COMMON_OLD_ROI_ROTATE_CURSOR GDK_EXCHANGE
 #define UI_COMMON_OLD_ROI_SHIFT_CURSOR GDK_FLEUR
+#define UI_COMMON_OLD_ROI_ISOCONTOUR_CURSOR GDK_DRAFT_SMALL
+#define UI_COMMON_OLD_ROI_ERASE_CURSOR GDK_DRAFT_SMALL
 #define UI_COMMON_VOLUME_MODE_CURSOR GDK_CROSSHAIR
 #define UI_COMMON_WAIT_CURSOR GDK_WATCH
 
@@ -41,6 +45,8 @@ typedef enum {
   UI_CURSOR_OLD_ROI_RESIZE,
   UI_CURSOR_OLD_ROI_ROTATE,
   UI_CURSOR_OLD_ROI_SHIFT,
+  UI_CURSOR_OLD_ROI_ISOCONTOUR,
+  UI_CURSOR_OLD_ROI_ERASE,
   UI_CURSOR_VOLUME_MODE, 
   UI_CURSOR_WAIT,
   NUM_CURSORS
@@ -50,7 +56,7 @@ typedef enum {
 #define UI_CURSOR_RENDERING_ROTATE_Z UI_CURSOR_OLD_ROI_ROTATE
 
 /* external functions */
-GtkWidget * ui_common_create_view_axis_indicator(void);
+GtkWidget * ui_common_create_view_axis_indicator(layout_t layout);
 void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_cursor(GtkWidget * widget);

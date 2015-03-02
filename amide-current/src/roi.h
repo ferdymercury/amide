@@ -99,6 +99,7 @@ void roi_subset_of_volume(const roi_t * roi,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim);
 void roi_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t value_vp);
+void roi_isocontour_erase_area(roi_t * roi, voxelpoint_t erase_vp, gint area_size);
 
 /* external variables */
 extern gchar * roi_type_names[];

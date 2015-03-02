@@ -680,6 +680,7 @@ static gint threshold_arrow_cb(GtkWidget* widget, GdkEvent * event, gpointer dat
   /* switch on the event which called this */
   switch (event->type)
     {
+
     case GDK_BUTTON_PRESS:
       threshold->initial_y = item_y;
       threshold->initial_max = threshold->volume->threshold_max;

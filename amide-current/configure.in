@@ -4,7 +4,7 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.4.6)
+AM_INIT_AUTOMAKE(amide, 0.4.7)
 
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
@@ -17,17 +17,43 @@ GNOME_XML2_CHECK
 
 dnl AC_ISC_POSIX
 
-dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
-CFLAGS="-g -O6"
-case "$host_os" in
-darwin*) 	CFLAGS="-g -O2";;
-esac
-
 
 AC_PROG_CC
+AM_PROG_LIBTOOL()
+
+dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
+case "$host_os" in
+darwin*) 	CFLAGS="-g -O2";;
+*)		CFLAGS="-g -O6";;
+esac
+
+if test $CC = "gcc"; then
+	echo -n "checking version of gcc... "
+	CC_VERSION=`$CC --version`
+	if test $CC_VERSION = "2.96"; then
+		echo $CC_VERSION
+		echo "******************************************************************"
+		echo "This version of gcc is a beta compiler and often incorrectly"
+		echo "compiles this program.  Please upgrade to the current version of"
+		echo "gcc (3.0.2 as of this writing) or downgrade to 2.95.3"
+		echo "******************************************************************"
+		echo -n "continue anyway? (y/n) "
+		read continue_with_bad_gcc
+		if test $continue_with_bad_gcc = "y"; then
+			echo "removing optimizations to reduce potential of compiler error"
+			CFLAGS="-g -O0"
+		else
+			exit 1
+		fi
+	elif test $CC_VERSION = "3.0.2"; then
+		echo "$CC_VERSION, good"
+	else
+		echo $CC_VERSION
+	fi
+fi
+
 dnl AC_STDC_HEADERS
 dnl AC_ARG_PROGRAM
-AM_PROG_LIBTOOL()
 AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
 
 GNOME_COMPILE_WARNINGS
@@ -37,6 +63,8 @@ dnl AM_GNU_GETTEXT
 
 EXTRA_GNOME_LIBS=`gnome-config --libs gnomeui gdk_pixbuf gnomecanvaspixbuf`
 EXTRA_GNOME_CFLAGS=`gnome-config --cflags gnomeui gdk_pixbuf gnomecanvaspixbuf`
+
+
 
 dnl add the -no-cpp-precomp for macintosh os x
 case "$host_os" in

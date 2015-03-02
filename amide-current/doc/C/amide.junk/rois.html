@@ -10,10 +10,10 @@ TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="PREVIOUS"
 TITLE="Aligning Data Sets"
-HREF="x175.html"><LINK
+HREF="x178.html"><LINK
 REL="NEXT"
 TITLE="Drawing ROI's"
-HREF="x207.html"></HEAD
+HREF="x216.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
 ><DIV
@@ -35,7 +35,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x175.html"
+HREF="x178.html"
 >Prev</A
 ></TD
 ><TD
@@ -48,7 +48,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x207.html"
+HREF="x216.html"
 >Next</A
 ></TD
 ></TR
@@ -72,75 +72,61 @@ CLASS="TOC"
 ></DT
 ><DT
 ><A
-HREF="rois.html#AEN192"
+HREF="rois.html#AEN195"
 >ROI Types</A
 ></DT
 ><DT
 ><A
-HREF="x207.html"
+HREF="x216.html"
 >Drawing ROI's</A
 ></DT
 ><DT
 ><A
-HREF="x210.html"
+HREF="x219.html"
 >Manipulating ROI's</A
 ></DT
 ><DT
 ><A
-HREF="x213.html"
+HREF="x222.html"
 >Calculating Statistics over ROI's</A
 ></DT
 ><DT
 ><A
-HREF="x216.html"
+HREF="x225.html"
 >Gotcha's to ROI calculations</A
 ></DT
 ></DL
 ></DIV
 ><P
 > 
-
-    ROI stands for Region of Interest.  ROI's designate a volume on
-    the object over which statistics should be calculated.
-
+  
+  ROI stands for Region of Interest.  ROI's designate a volume on
+  the object over which statistics should be calculated.
   </P
 ><DIV
 CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN192"
+NAME="AEN195"
 >ROI Types</A
 ></H1
 ><P
->      The following ROI types are currently supported.
-    </P
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN195"
->Ellipsoid</A
-></H2
-><P
->	An ellipsoid is similar to a sphere, but with a radius
-	specified for each direction [x,y,z].  In the case of x=y=z,
-	the ellipsoid is a sphere.
-      </P
-></DIV
+>    The following ROI types are currently supported.
+  </P
 ><DIV
 CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
 NAME="AEN198"
->Elliptic Cylinder</A
+>Ellipsoid</A
 ></H2
 ><P
->	An elliptic cylinder is similar to a regular cylinder, except
-	it has an ellipse as it's base instead of a circle.
-      </P
+>      An ellipsoid is similar to a sphere, but with a radius
+      specified for each direction [x,y,z].  In the case of x=y=z,
+      the ellipsoid is a sphere.
+    </P
 ></DIV
 ><DIV
 CLASS="SECT2"
@@ -148,11 +134,12 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN201"
->Box</A
+>Elliptic Cylinder</A
 ></H2
 ><P
->	Exactly what it says, a 3D box.
-      </P
+>      An elliptic cylinder is similar to a regular cylinder, except
+      it has an ellipse as it's base instead of a circle.
+    </P
 ></DIV
 ><DIV
 CLASS="SECT2"
@@ -160,13 +147,52 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN204"
->Group</A
+>Box</A
 ></H2
 ><P
->	Not currently implemented.  This will someday allow ROI's to
-	be defined in groups, so that ROI's can be manipulated both in
-	groups and individually.
+>	Exactly what it says, a 3D box.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN207"
+>Isocontours</A
+></H2
+><P
+>      Isocontour ROI's are regions selected from the data set such
+      that the edge values of the ROI are always the same value.
+      There are two types, 2D and 3D isocontours.
+    </P
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN210"
+>2D Isocontour</A
+></H3
+><P
+>	A 2D isocontour is derived by considering a value on one of
+	the displayed 2D slices.  The depth of a 2D isocontour is
+	specified initially by the depth of the viewed slices.
       </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN213"
+>3D Isocontour</A
+></H3
+><P
+>	A 3D isocontour is derived by considering a value on the
+	current frame of the active data set.
+      </P
+></DIV
 ></DIV
 ></DIV
 ></DIV
@@ -185,7 +211,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x175.html"
+HREF="x178.html"
 >Prev</A
 ></TD
 ><TD
@@ -201,7 +227,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x207.html"
+HREF="x216.html"
 >Next</A
 ></TD
 ></TR

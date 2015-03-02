@@ -3,6 +3,7 @@ misc list of things todo:
 
 for next release?
 -----------------
+* rlim_t screws up MacOsX compile
        
 big things:
 -----------
@@ -35,6 +36,7 @@ small things:
 	(rather then having to copy the data).
 * ISOCONTOUR_3D won't work quite right if the user is looking over multiple frames
 	problem is in picking "frame" in ui_study_cb.c
+* isocontour erase function only updates at button release, not during mouse movement
 
 
 probably before 1.0 things:

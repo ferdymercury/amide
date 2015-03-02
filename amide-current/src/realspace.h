@@ -196,10 +196,12 @@ void realspace_rotate_on_axis(realspace_t * rs,
 			      const floatpoint_t theta);
 realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
 					       const view_t view,
+					       const layout_t layout,
 					       const axis_t ax);
 realpoint_t realspace_get_view_normal(const realpoint_t axis[], const view_t view);
 realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
-					   const view_t view);
+					   const view_t view,
+					   const layout_t layout);
 inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 					       const realspace_t in_alt_coord_frame);
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,

@@ -44,6 +44,14 @@
 #define MDC_FRMT_CONC 0
 #endif
 
+/* this line can probably be removed for a release of xmedcon > 0.6.7 */
+#ifndef MDC_INCLUDE_IMTK
+#define MDC_INCLUDE_IMTK 0
+#endif
+#ifndef MDC_FRMT_IMTK
+#define MDC_FRMT_IMTK 0
+#endif
+
 gchar * libmdc_menu_names[] = {
   "(_X)MedCon Guess",
   "_Raw",
@@ -51,8 +59,9 @@ gchar * libmdc_menu_names[] = {
   "_GIF 87a/89a",
   "Acr/_Nema 2.0",
   "IN_W 1.0 (RUG)",
-  "Concorde/_microPET",
+  "_Concorde/microPET",
   "_CTI 6.4",
+  "ImTeK/_microCAT",
   "_InterFile 3.3",
   "_Analyze (SPM)",
   "_DICOM 3.0",
@@ -67,6 +76,7 @@ gchar * libmdc_menu_explanations[] = {
   "Import a INW 1.0 (RUG) File",
   "Import a file from the Concorde microPET",
   "Import a CTI 6.4 file",
+  "Import a file from the ImTeK microCAT",
   "Import a InterFile 3.3 file"
   "Import an Analyze file"
   "Import a DICOM 3.0 file",
@@ -95,6 +105,9 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
     break;
   case LIBMDC_ECAT:
     return_value = MDC_INCLUDE_ECAT;
+    break;
+  case LIBMDC_IMTK:
+    return_value = MDC_INCLUDE_IMTK;
     break;
   case LIBMDC_INTF:
     return_value = MDC_INCLUDE_INTF;
@@ -158,6 +171,9 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
       break;
     case LIBMDC_ECAT:
       MDC_FALLBACK_FRMT = MDC_FRMT_ECAT;
+      break;
+    case LIBMDC_IMTK:
+      MDC_FALLBACK_FRMT = MDC_FRMT_IMTK;
       break;
     case LIBMDC_INTF:
       MDC_FALLBACK_FRMT = MDC_FRMT_INTF;

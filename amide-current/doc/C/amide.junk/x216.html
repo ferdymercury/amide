@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Gotcha's to ROI calculations </TITLE
+>Drawing ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,11 +12,11 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Calculating Statistics over ROI's"
-HREF="x213.html"><LINK
+TITLE="Using ROI's "
+HREF="rois.html"><LINK
 REL="NEXT"
-TITLE="Rendering Data"
-HREF="rendering.html"></HEAD
+TITLE="Manipulating ROI's"
+HREF="x219.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,7 +38,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x213.html"
+HREF="rois.html"
 >Prev</A
 ></TD
 ><TD
@@ -51,7 +51,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="rendering.html"
+HREF="x219.html"
 >Next</A
 ></TD
 ></TR
@@ -65,26 +65,20 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN216"
->Gotcha's to ROI calculations</A
+>Drawing ROI's</A
 ></H1
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN218"
->Variance/Std. Dev./Std. Err. Fallacies</A
-></H2
 ><P
->      A common fallacy is to use the calculated variance (or standard
-      deviation, or standard error) of an ROI as an experiment's variance.
-      The variance of an experiment can only truly be measured by
-      taking multiple samples (i.e. performing multiple scans) and
-      calculating the variance between these different samples.
-      The variance that AMIDE calculates is only a measure of the
-      noise within an ROI in the given data set.
-    </P
-></DIV
+>    To draw an ROI, first select the ROI desired under the "add ROI:"
+    pull down menu.  Amide will request a name for this ROI and add it
+    to the study item list, but no ROI will be drawn.  The next mouse
+    input on the displayed views will be used to draw the new ROI.
+    For ellipsoid, elliptic cylinder, and box ROI's, The x and y
+    dimensions of the ROI are controlled by the size of the drawing.
+    The z dimension ("depth") of the newly drawn ROI is determined by
+    the current image thickness.  For isocontour's, the value of the
+    data set at the clicked upon location will be used to derive the
+    isocontour.
+  </P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -101,7 +95,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x213.html"
+HREF="rois.html"
 >Prev</A
 ></TD
 ><TD
@@ -117,7 +111,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="rendering.html"
+HREF="x219.html"
 >Next</A
 ></TD
 ></TR
@@ -126,7 +120,7 @@ HREF="rendering.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Calculating Statistics over ROI's</TD
+>Using ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -139,7 +133,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Rendering Data</TD
+>Manipulating ROI's</TD
 ></TR
 ></TABLE
 ></DIV

@@ -432,7 +432,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      double_p = (void *) &temp;
 	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_BIG_ENDIAN */
-	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
 #endif
               }
       }

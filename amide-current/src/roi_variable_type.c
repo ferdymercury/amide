@@ -483,7 +483,34 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
 
 }
 
+void roi_`'m4_Variable_Type`'_erase_area(roi_t * roi, voxelpoint_t erase_vp, gint area_size) {
+
+  voxelpoint_t i_voxel;
+
+#ifdef ROI_ISOCONTOUR_3D_TYPE
+  for (i_voxel.z = erase_vp.z-area_size; i_voxel.z <= erase_vp.z+area_size; i_voxel.z++) 
 #endif
+    for (i_voxel.y = erase_vp.y-area_size; i_voxel.y <= erase_vp.y+area_size; i_voxel.y++) 
+      for (i_voxel.x = erase_vp.x-area_size; i_voxel.x <= erase_vp.x+area_size; i_voxel.x++) 
+	if (data_set_includes_voxel(roi->isocontour, i_voxel))
+	  DATA_SET_UBYTE_SET_CONTENT(roi->isocontour,i_voxel)=0;
+
+  /* re edge the neighboring points */
+  i_voxel.t = i_voxel.z = 0;
+#ifdef ROI_ISOCONTOUR_3D_TYPE
+  for (i_voxel.z = erase_vp.z-1-area_size; i_voxel.z <= erase_vp.z+1+area_size; i_voxel.z++) 
+#endif
+    for (i_voxel.y = erase_vp.y-1-area_size; i_voxel.y <= erase_vp.y+1+area_size; i_voxel.y++) 
+      for (i_voxel.x = erase_vp.x-1-area_size; i_voxel.x <= erase_vp.x+1+area_size; i_voxel.x++) 
+	if (data_set_includes_voxel(roi->isocontour, i_voxel)) 
+	  if (*DATA_SET_UBYTE_POINTER(roi->isocontour, i_voxel)) 
+	    DATA_SET_UBYTE_SET_CONTENT(roi->isocontour, i_voxel) =
+	      isocontour_edge(roi->isocontour, i_voxel);
+
+  return;
+}
+#endif
+
 
 
 

@@ -78,12 +78,32 @@ void ui_preferences_dialog_cb_line_style(GtkWidget * widget, gpointer data) {
 }
 
 
+/* function called to change the layout */
+void ui_preferences_dialog_cb_layout(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  layout_t layout;
+
+  layout = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "layout"));
+
+  /* this is where we'll store the new layout */
+  gtk_object_set_data(GTK_OBJECT(ui_study->preferences_dialog), 
+		      "new_layout", GINT_TO_POINTER(layout));
+
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(ui_study->preferences_dialog));
+
+  return;
+}
+
+
+
 /* function called when we hit the apply button */
 void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
   ui_study_t * ui_study = data;
   gint new_roi_width;
   GdkLineStyle new_line_style;
+  layout_t new_layout;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)  return;
@@ -93,6 +113,8 @@ void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointe
 						      "new_roi_width"));
   new_line_style = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
 						       "new_line_style"));
+  new_layout = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->preferences_dialog), 
+						   "new_layout"));
 
   /* sanity checks */
   if (new_roi_width < UI_STUDY_MIN_ROI_WIDTH) new_roi_width = UI_STUDY_MIN_ROI_WIDTH;
@@ -101,14 +123,17 @@ void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointe
   /* copy the new info on over */
   ui_study->roi_width = new_roi_width;
   ui_study->line_style = new_line_style;
+  ui_study->canvas_layout = new_layout;
 
   /* and save user preferences */
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("ROI/Width",ui_study->roi_width);
   gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
+  gnome_config_set_int("CANVAS/Layout",ui_study->canvas_layout);
   gnome_config_pop_prefix();
   gnome_config_sync();
 
+  ui_study_setup_canvas(ui_study);
   ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
   return;
 }
@@ -118,8 +143,12 @@ void ui_preferences_dialog_cb_help(GnomePropertyBox *preferences_dialog, gint pa
 
   GnomeHelpMenuEntry help_ref={PACKAGE,"basics.html#PREFERENCES-DIALOG-HELP"};
   GnomeHelpMenuEntry help_ref_0 = {PACKAGE,"basics.html#PREFERENCES-DIALOG-HELP-ROI"};
+  GnomeHelpMenuEntry help_ref_1 = {PACKAGE,"basics.html#PREFERENCES-DIALOG-HELP-CANVAS"};
 
   switch (page_number) {
+  case 1:
+    gnome_help_display (0, &help_ref_1);
+    break;
   case 0:
     gnome_help_display (0, &help_ref_0);
     break;

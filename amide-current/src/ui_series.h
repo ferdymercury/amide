@@ -74,7 +74,8 @@ typedef struct ui_series_t {
 /* external functions */
 ui_series_t * ui_series_free(ui_series_t * ui_series);
 void ui_series_update_canvas(ui_series_t * ui_series);
-void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, series_t series_type);
+void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, 
+		      layout_t layout, series_t series_type);
 
 /* external variables */
 extern gchar * series_names[];

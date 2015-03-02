@@ -440,6 +440,7 @@ void realspace_rotate_on_axis(realspace_t * rs,
    axis */
 realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
 					       const view_t view,
+					       const layout_t layout,
 					       const axis_t ax) {
   
   switch(view) {
@@ -460,17 +461,22 @@ realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
   case SAGITTAL:
     switch (ax) {
     case XAXIS:
-      return axis[YAXIS];
+      if (layout == ORTHOGONAL_LAYOUT)
+	return axis[ZAXIS];
+      else /* LINEAR_LAYOUT */
+	return axis[YAXIS];
       break;
     case YAXIS:
-      return rp_neg(axis[ZAXIS]);
+      if (layout == ORTHOGONAL_LAYOUT)
+	return axis[YAXIS];
+      else /* LINEAR_LAYOUT */
+	return rp_neg(axis[ZAXIS]);
       break;
     case ZAXIS:
     default:
       return axis[XAXIS];
       break;
     }
-    break;
   case TRANSVERSE:
   default:
     switch (ax) {
@@ -492,19 +498,22 @@ realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
 /* returns the normal axis vector for the given view */
 realpoint_t realspace_get_view_normal(const realpoint_t axis[],
 				      const view_t view) {
-  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS);
+
+  /* don't need layout here, as the ZAXIS isn't determined by the layout */
+  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS, LINEAR_LAYOUT);
 }
 
-/* given a coordinate frame, and a view, return the appropriate coordinate frame */
+/* given a coordinate frame, and a view, and the layout, return the appropriate coordinate frame */
 realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
-					   const view_t view) {
+					   const view_t view,
+					   const layout_t layout) {
 
   realspace_t return_coord_frame;
   axis_t i_axis;
   realpoint_t new_axis[NUM_AXIS];
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    new_axis[i_axis] =  realspace_get_orthogonal_view_axis(rs_all_axis(in_coord_frame),view,i_axis);
+    new_axis[i_axis] =  realspace_get_orthogonal_view_axis(rs_all_axis(in_coord_frame),view,layout,i_axis);
 
   /* the offset of the coord frame stays the same */
   rs_set_offset(&return_coord_frame, rs_offset(in_coord_frame));

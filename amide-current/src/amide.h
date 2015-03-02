@@ -35,6 +35,8 @@
 /* typedef's */
 typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
 
+typedef enum {LINEAR_LAYOUT, ORTHOGONAL_LAYOUT, NUM_LAYOUTS} layout_t;
+      
 
 /* setup the types for various internal data formats */
 /* note, don't change the amide_data_t unless you want to do a 

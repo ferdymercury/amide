@@ -31,6 +31,8 @@
 #include "ui_study.h"
 #include "ui_preferences_dialog_cb.h"
 #include "ui_preferences_dialog.h"
+#include "../pixmaps/linear_layout.xpm"
+#include "../pixmaps/orthogonal_layout.xpm"
 
 
 static gchar * line_style_names[] = {
@@ -52,6 +54,13 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * option_menu;
   GtkWidget * menu;
   GtkWidget * menuitem;
+  GtkWidget * gtkpixmap;
+  GtkWidget * radio_button1;
+  GtkWidget * radio_button2;
+  GdkPixmap * gdkpixmap;
+  GdkBitmap * gdkbitmap;
+  GdkColormap * colormap;
+
   GnomeCanvas * roi_indicator;
   GnomeCanvasItem * roi_item;
   guint table_row;
@@ -83,7 +92,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* ---------------------------
-     Basic info page 
+     ROI Drawing page 
      --------------------------- */
 
 
@@ -166,7 +175,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   if (ui_study->current_volume != NULL)
     outline_color = color_table_outline_color(ui_study->current_volume->color_table, TRUE);
   else
-    outline_color = color_table_outline_color(study_volumes(ui_study->study)->volume->color_table, TRUE);
+    outline_color = color_table_outline_color(BW_LINEAR, TRUE);
   roi_item = gnome_canvas_item_new(gnome_canvas_root(roi_indicator), 
 				   gnome_canvas_line_get_type(),
 				   "points", roi_line_points, 
@@ -175,6 +184,60 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
     				   "line_style", ui_study->line_style, NULL);
   gnome_canvas_points_unref(roi_line_points);
   gtk_object_set_data(GTK_OBJECT(preferences_dialog), "roi_item", roi_item);
+
+  /* ---------------------------
+     Canvas Setup
+     --------------------------- */
+
+
+  /* start making the widgets for this dialog box */
+  packing_table = gtk_table_new(4,5,FALSE);
+  label = gtk_label_new("Canvas Setup");
+  table_row=0;
+  gnome_property_box_append_page(GNOME_PROPERTY_BOX(preferences_dialog), packing_table, label);
+
+  /* widgets to change the roi's size */
+  label = gtk_label_new("Layout:");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1,
+		   0, 0, X_PADDING, Y_PADDING);
+
+  /* the radio buttons */
+  radio_button1 = gtk_radio_button_new(NULL);
+  colormap = gtk_widget_get_colormap(preferences_dialog);
+  gdkpixmap = gdk_pixmap_colormap_create_from_xpm_d(NULL,colormap,&gdkbitmap,NULL,linear_layout_xpm);
+  gtkpixmap = gtk_pixmap_new(gdkpixmap, gdkbitmap);
+  gtk_container_add(GTK_CONTAINER(radio_button1), gtkpixmap);
+  gtk_table_attach(GTK_TABLE(packing_table), radio_button1,
+  		   1,2, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), 
+			       (ui_study->canvas_layout == LINEAR_LAYOUT));
+  gtk_object_set_data(GTK_OBJECT(radio_button1), "layout", GINT_TO_POINTER(LINEAR_LAYOUT));
+  gtk_object_set_data(GTK_OBJECT(preferences_dialog), "new_layout", 
+		      GINT_TO_POINTER(ui_study->canvas_layout));
+
+  radio_button2 = gtk_radio_button_new(NULL);
+  gtk_radio_button_set_group(GTK_RADIO_BUTTON(radio_button2), 
+			     gtk_radio_button_group(GTK_RADIO_BUTTON(radio_button1)));
+  gdkpixmap = gdk_pixmap_colormap_create_from_xpm_d(NULL,colormap,&gdkbitmap,NULL,orthogonal_layout_xpm);
+  gtkpixmap = gtk_pixmap_new(gdkpixmap, gdkbitmap);
+  gtk_container_add(GTK_CONTAINER(radio_button2), gtkpixmap);
+  gtk_table_attach(GTK_TABLE(packing_table), radio_button2,
+  		   2,3, table_row, table_row+1,
+  		   0, 0, X_PADDING, Y_PADDING);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button2), 
+			       (ui_study->canvas_layout == ORTHOGONAL_LAYOUT));
+  gtk_object_set_data(GTK_OBJECT(radio_button2), "layout", GINT_TO_POINTER(ORTHOGONAL_LAYOUT));
+
+  gtk_signal_connect(GTK_OBJECT(radio_button1), "clicked",  
+		     GTK_SIGNAL_FUNC(ui_preferences_dialog_cb_layout), ui_study);
+  gtk_signal_connect(GTK_OBJECT(radio_button2), "clicked",  
+		     GTK_SIGNAL_FUNC(ui_preferences_dialog_cb_layout), ui_study);
+
+  table_row++;
+
+
 
   /* and show all our widgets */
   gtk_widget_show_all(preferences_dialog);

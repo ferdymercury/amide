@@ -40,10 +40,8 @@ GSList * roi_`'m4_Variable_Type`'_get_slice_intersection(const roi_t * roi, cons
 
 #if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
 roi_t * roi_`'m4_Variable_Type`'_get_slice_intersection(const roi_t * roi, const volume_t * view_slice);
-#endif
-
-#if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
 void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t iso_vp);
+void roi_`'m4_Variable_Type`'_erase_area(roi_t * roi, voxelpoint_t erase_vp, gint area_size);
 #endif
 
 #undef ROI_`'m4_Variable_Type`'_TYPE

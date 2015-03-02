@@ -320,7 +320,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   table_row++;
 
   /* a canvas to indicate which way is x, y, and z */
-  axis_indicator = ui_common_create_view_axis_indicator();
+  axis_indicator = ui_common_create_view_axis_indicator(ui_study->canvas_layout);
   gtk_table_attach(GTK_TABLE(packing_table), axis_indicator,0,4,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 

@@ -1,0 +1,4 @@
+MIDE is a tool for viewing and analyzing anatomical and
+functional volumetric medical imaging data sets.
+
+The amide-libs package is not needed to run AMIDE.

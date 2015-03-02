@@ -36,8 +36,6 @@
 #define UI_STUDY_TRIANGLE_HEIGHT 8.0
 #define UI_STUDY_MAIN_TABLE_HEIGHT 1
 #define UI_STUDY_MAIN_TABLE_WIDTH 2
-#define UI_STUDY_MIDDLE_TABLE_HEIGHT 3
-#define UI_STUDY_MIDDLE_TABLE_WIDTH 3
 #define UI_STUDY_SIZE_TREE_PIXMAPS 24
 #define UI_STUDY_BLANK_WIDTH 128
 #define UI_STUDY_BLANK_HEIGHT 128
@@ -47,7 +45,7 @@
 #define UI_STUDY_TREE_TEXT_COLUMN 1
 #define UI_STUDY_TREE_NUM_COLUMNS 2
 #define UI_STUDY_HELP_FONT "fixed"
-#define UI_STUDY_HELP_INFO_LINE_X 20.0
+#define UI_STUDY_HELP_INFO_LINE_X 0.0
 #define UI_STUDY_HELP_INFO_LINE_HEIGHT 13
 
 #define UI_STUDY_MIN_ROI_WIDTH 1
@@ -114,54 +112,9 @@ typedef enum {
 } ui_study_tree_object_t;
 
 typedef enum {
-  UI_STUDY_EVENT_ENTER_VOLUME, /* 0 */
-  UI_STUDY_EVENT_ENTER_NEW_NORMAL_ROI,
-  UI_STUDY_EVENT_ENTER_NEW_ISOCONTOUR_ROI,
-  UI_STUDY_EVENT_ENTER_NORMAL_ROI,
-  UI_STUDY_EVENT_ENTER_ISOCONTOUR_ROI,
-  UI_STUDY_EVENT_LEAVE, /* 5 */
-  UI_STUDY_EVENT_PRESS_MOVE_VIEW,
-  UI_STUDY_EVENT_PRESS_MINIMIZE_VIEW,
-  UI_STUDY_EVENT_PRESS_RESIZE_VIEW,
-  UI_STUDY_EVENT_PRESS_ALIGN_HORIZONTAL,
-  UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL, /* 10 */
-  UI_STUDY_EVENT_PRESS_NEW_ROI,
-  UI_STUDY_EVENT_PRESS_SHIFT_ROI,
-  UI_STUDY_EVENT_PRESS_ROTATE_ROI,
-  UI_STUDY_EVENT_PRESS_RESIZE_ROI,
-  UI_STUDY_EVENT_PRESS_CHANGE_ISOCONTOUR, /* 15 */
-  UI_STUDY_EVENT_MOTION,
-  UI_STUDY_EVENT_MOTION_MOVE_VIEW,
-  UI_STUDY_EVENT_MOTION_MINIMIZE_VIEW,
-  UI_STUDY_EVENT_MOTION_RESIZE_VIEW,
-  UI_STUDY_EVENT_MOTION_ALIGN_HORIZONTAL, /* 20 */
-  UI_STUDY_EVENT_MOTION_ALIGN_VERTICAL, 
-  UI_STUDY_EVENT_MOTION_NEW_ROI,
-  UI_STUDY_EVENT_MOTION_SHIFT_ROI,
-  UI_STUDY_EVENT_MOTION_ROTATE_ROI,
-  UI_STUDY_EVENT_MOTION_RESIZE_ROI,/* 25 */
-  UI_STUDY_EVENT_MOTION_CHANGE_ISOCONTOUR, 
-  UI_STUDY_EVENT_RELEASE_MOVE_VIEW,
-  UI_STUDY_EVENT_RELEASE_MINIMIZE_VIEW,
-  UI_STUDY_EVENT_RELEASE_RESIZE_VIEW,
-  UI_STUDY_EVENT_RELEASE_ALIGN_HORIZONTAL, /* 30 */
-  UI_STUDY_EVENT_RELEASE_ALIGN_VERTICAL, 
-  UI_STUDY_EVENT_RELEASE_NEW_ROI,
-  UI_STUDY_EVENT_RELEASE_SHIFT_ROI,
-  UI_STUDY_EVENT_RELEASE_ROTATE_ROI,
-  UI_STUDY_EVENT_RELEASE_RESIZE_ROI,  /* 35 */
-  UI_STUDY_EVENT_RELEASE_CHANGE_ISOCONTOUR,
-  UI_STUDY_EVENT_CANCEL_ALIGN_HORIZONTAL,
-  UI_STUDY_EVENT_CANCEL_ALIGN_VERTICAL,
-  UI_STUDY_EVENT_ENACT_ALIGN_HORIZONTAL,
-  UI_STUDY_EVENT_ENACT_ALIGN_VERTICAL, /* 40 */
-  UI_STUDY_EVENT_DO_NOTHING
-} ui_study_canvas_event_t;
-
-typedef enum {
   OBJECT_VOLUME_TYPE, OBJECT_ROI_TYPE, NUM_OBJECT_TYPES
 } ui_study_canvas_object_t;
-      
+
 /* ui_study data structures */
 typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
@@ -183,12 +136,19 @@ typedef struct ui_study_t {
   GtkWidget * preferences_dialog; /* pointer to the preferences dialog */
 
   /* canvas specific info */
+  GtkWidget * canvas_table;
+  layout_t canvas_layout;
   GnomeCanvas * canvas[NUM_VIEWS];
   GnomeCanvasItem * canvas_image[NUM_VIEWS];
+  GtkWidget * canvas_label[NUM_VIEWS];
   realspace_t canvas_coord_frame[NUM_VIEWS];
   realpoint_t canvas_corner[NUM_VIEWS];
   GdkPixbuf * canvas_rgb[NUM_VIEWS];
+  GnomeCanvasItem * target_line[NUM_VIEWS][4];
+  GnomeCanvasItem * target_arrow[NUM_VIEWS][4];
   volume_list_t * current_slices[NUM_VIEWS];
+  GtkWidget * canvas_scrollbar[NUM_VIEWS];
+  GtkObject * canvas_adjustment[NUM_VIEWS];
 
   /* stuff changed in the preferences dialog */
   gint roi_width;
@@ -210,7 +170,7 @@ void ui_study_update_time_button(ui_study_t * ui_study);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, rgba_t outline_color);
-GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
+void ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
 GnomeCanvasItem *  ui_study_update_canvas_roi_line(ui_study_t * ui_study, view_t view, 
 						   GnomeCanvasItem * roi_item, roi_t * roi);
@@ -224,10 +184,11 @@ void ui_study_tree_update_active_leaf(ui_study_t * ui_study, GtkWidget * leaf);
 void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi);
 void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume);
 
-/* internal functions */
+
 void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view);
 void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view);
 void ui_study_update_tree(ui_study_t * ui_study);
+void ui_study_setup_canvas(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);
 ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
