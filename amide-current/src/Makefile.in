@@ -156,6 +156,8 @@ amide_SOURCES = \
 	amitk_canvas.h \
 	amitk_coord_frame_edit.c \
 	amitk_coord_frame_edit.h \
+	amitk_spin_button.c \
+	amitk_spin_button.h \
 	amitk_tree.c \
 	amitk_tree.h \
 	amitk_tree_item.c \
@@ -430,20 +432,20 @@ analysis_ELLIPSOID.$(OBJEXT) analysis_CYLINDER.$(OBJEXT) \
 analysis_BOX.$(OBJEXT) analysis_ISOCONTOUR_2D.$(OBJEXT) \
 analysis_ISOCONTOUR_3D.$(OBJEXT) amide.$(OBJEXT) align_pt.$(OBJEXT) \
 alignment.$(OBJEXT) analysis.$(OBJEXT) amitk_canvas.$(OBJEXT) \
-amitk_coord_frame_edit.$(OBJEXT) amitk_tree.$(OBJEXT) \
-amitk_tree_item.$(OBJEXT) amitk_threshold.$(OBJEXT) \
-color_table.$(OBJEXT) cti_import.$(OBJEXT) data_set.$(OBJEXT) \
-idl_data_import.$(OBJEXT) image.$(OBJEXT) medcon_import.$(OBJEXT) \
-pem_data_import.$(OBJEXT) raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
-raw_data_import_cb.$(OBJEXT) realspace.$(OBJEXT) rendering.$(OBJEXT) \
-roi.$(OBJEXT) study.$(OBJEXT) ui_align_pt_dialog.$(OBJEXT) \
-ui_align_pt_dialog_cb.$(OBJEXT) ui_alignment_dialog.$(OBJEXT) \
-ui_alignment_dialog_cb.$(OBJEXT) ui_common.$(OBJEXT) \
-ui_common_cb.$(OBJEXT) ui_preferences_dialog.$(OBJEXT) \
-ui_preferences_dialog_cb.$(OBJEXT) ui_rendering.$(OBJEXT) \
-ui_rendering_cb.$(OBJEXT) ui_rendering_dialog.$(OBJEXT) \
-ui_rendering_dialog_cb.$(OBJEXT) ui_rendering_menus.$(OBJEXT) \
-ui_rendering_movie_dialog.$(OBJEXT) \
+amitk_coord_frame_edit.$(OBJEXT) amitk_spin_button.$(OBJEXT) \
+amitk_tree.$(OBJEXT) amitk_tree_item.$(OBJEXT) \
+amitk_threshold.$(OBJEXT) color_table.$(OBJEXT) cti_import.$(OBJEXT) \
+data_set.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
+medcon_import.$(OBJEXT) pem_data_import.$(OBJEXT) raw_data.$(OBJEXT) \
+raw_data_import.$(OBJEXT) raw_data_import_cb.$(OBJEXT) \
+realspace.$(OBJEXT) rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
+ui_align_pt_dialog.$(OBJEXT) ui_align_pt_dialog_cb.$(OBJEXT) \
+ui_alignment_dialog.$(OBJEXT) ui_alignment_dialog_cb.$(OBJEXT) \
+ui_common.$(OBJEXT) ui_common_cb.$(OBJEXT) \
+ui_preferences_dialog.$(OBJEXT) ui_preferences_dialog_cb.$(OBJEXT) \
+ui_rendering.$(OBJEXT) ui_rendering_cb.$(OBJEXT) \
+ui_rendering_dialog.$(OBJEXT) ui_rendering_dialog_cb.$(OBJEXT) \
+ui_rendering_menus.$(OBJEXT) ui_rendering_movie_dialog.$(OBJEXT) \
 ui_rendering_movie_dialog_cb.$(OBJEXT) ui_roi_dialog.$(OBJEXT) \
 ui_roi_dialog_cb.$(OBJEXT) ui_roi_analysis_dialog.$(OBJEXT) \
 ui_roi_analysis_dialog_cb.$(OBJEXT) ui_series.$(OBJEXT) \
@@ -469,14 +471,15 @@ TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/align_pt.P .deps/alignment.P .deps/amide.P \
 .deps/amitk_canvas.P .deps/amitk_coord_frame_edit.P \
-.deps/amitk_threshold.P .deps/amitk_tree.P .deps/amitk_tree_item.P \
-.deps/analysis.P .deps/analysis_BOX.P .deps/analysis_CYLINDER.P \
-.deps/analysis_ELLIPSOID.P .deps/analysis_ISOCONTOUR_2D.P \
-.deps/analysis_ISOCONTOUR_3D.P .deps/color_table.P .deps/cti_import.P \
-.deps/data_set.P .deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P \
-.deps/data_set_SBYTE.P .deps/data_set_SINT.P .deps/data_set_SSHORT.P \
-.deps/data_set_UBYTE.P .deps/data_set_UINT.P .deps/data_set_USHORT.P \
-.deps/gtkdial.P .deps/gtkdirsel.P .deps/idl_data_import.P .deps/image.P \
+.deps/amitk_spin_button.P .deps/amitk_threshold.P .deps/amitk_tree.P \
+.deps/amitk_tree_item.P .deps/analysis.P .deps/analysis_BOX.P \
+.deps/analysis_CYLINDER.P .deps/analysis_ELLIPSOID.P \
+.deps/analysis_ISOCONTOUR_2D.P .deps/analysis_ISOCONTOUR_3D.P \
+.deps/color_table.P .deps/cti_import.P .deps/data_set.P \
+.deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P .deps/data_set_SBYTE.P \
+.deps/data_set_SINT.P .deps/data_set_SSHORT.P .deps/data_set_UBYTE.P \
+.deps/data_set_UINT.P .deps/data_set_USHORT.P .deps/gtkdial.P \
+.deps/gtkdirsel.P .deps/idl_data_import.P .deps/image.P \
 .deps/medcon_import.P .deps/pem_data_import.P .deps/raw_data.P \
 .deps/raw_data_import.P .deps/raw_data_import_cb.P .deps/realspace.P \
 .deps/rendering.P .deps/roi.P .deps/roi_BOX.P .deps/roi_CYLINDER.P \

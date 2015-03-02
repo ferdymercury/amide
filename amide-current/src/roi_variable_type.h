@@ -1,7 +1,7 @@
 /* roi_variable_type.h - used to generate the different roi_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */

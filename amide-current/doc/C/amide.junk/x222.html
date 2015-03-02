@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Manipulating ROI's</TITLE
+>Drawing ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -14,10 +14,10 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Drawing ROI's"
-HREF="x219.html"><LINK
+TITLE="Using ROI's "
+HREF="rois.html"><LINK
 REL="NEXT"
-TITLE="Calculating Statistics over ROI's"
+TITLE="Manipulating ROI's"
 HREF="x225.html"></HEAD
 ><BODY
 CLASS="SECT1"
@@ -45,7 +45,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x219.html"
+HREF="rois.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
@@ -72,23 +72,19 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN222"
->Manipulating ROI's</A
+>Drawing ROI's</A
 ></H1
 ><P
->    After an ROI is drawn, it can be further manipulated to adjust
-    it's size, placement, and orientation.  You can directly
-    manipulate the ROI by clicking on it in any of the volume view
-    windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
-    used to rotate ellipsoid, elliptic cylinder, and box ROIs, and for
-    erasing points from isocontour ROI's.  Mouse button 3 is used for
-    zooming ellipsoid, elliptic cylinder and box ROI, and is used for
-    redefining the isocontour value for isocontour ROI's.
-    
-    You can also edit the ROI size/placement/orientation/name etc. by
-    clicking on mouse button 3 while over the ROI's name in the study
-    item list.  This brings up the edit ROI dialog, which allows
-    keyboard entry of the ROI's parameters.
-
+>    To draw an ROI, first select the ROI desired under the "add ROI:"
+    pull down menu.  Amide will request a name for this ROI and add it
+    to the study item list, but no ROI will be drawn.  The next mouse
+    input on the displayed views will be used to draw the new ROI.
+    For ellipsoid, elliptic cylinder, and box ROI's, The x and y
+    dimensions of the ROI are controlled by the size of the drawing.
+    The z dimension ("depth") of the newly drawn ROI is determined by
+    the current image thickness.  For isocontour's, the value of the
+    data set at the clicked upon location will be used to derive the
+    isocontour.
   </P
 ></DIV
 ><DIV
@@ -106,7 +102,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x219.html"
+HREF="rois.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
@@ -131,7 +127,7 @@ HREF="x225.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Drawing ROI's</TD
+>Using ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -144,7 +140,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Calculating Statistics over ROI's</TD
+>Manipulating ROI's</TD
 ></TR
 ></TABLE
 ></DIV

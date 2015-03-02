@@ -18,6 +18,7 @@ endif
 libamide_la_LDFLAGS = -version-info 1:0:0
 
 
+
 amide_SOURCES = \
 	gtkdial.c \
 	gtkdial.h \
@@ -43,6 +44,8 @@ amide_SOURCES = \
 	amitk_canvas.h \
 	amitk_coord_frame_edit.c \
 	amitk_coord_frame_edit.h \
+	amitk_spin_button.c \
+	amitk_spin_button.h \
 	amitk_tree.c \
 	amitk_tree.h \
 	amitk_tree_item.c \
@@ -147,7 +150,6 @@ amide_SOURCES = \
 	volume.h \
 	xml.c \
 	xml.h
-
 
 ANALYSIS_VARIABLE_C = \
 	analysis_ELLIPSOID.c \

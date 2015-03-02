@@ -40,6 +40,8 @@ amide_SOURCES = \
 	amitk_canvas.h \
 	amitk_coord_frame_edit.c \
 	amitk_coord_frame_edit.h \
+	amitk_spin_button.c \
+	amitk_spin_button.h \
 	amitk_tree.c \
 	amitk_tree.h \
 	amitk_tree_item.c \

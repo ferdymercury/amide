@@ -3,55 +3,49 @@ misc list of things todo:
 
 for next release?
 -----------------
+* progress bars
+* add .vol file support
+
+comming soon
+------------
+* need to convert to glib/gtk 2.0 for g_object,
+	also rename some objects
+	volume -> data_set
+	data_set -> raw_data
        
 big things:
 -----------
-* multi-step undo/redo
 * guppi interface for drawing graphs of ROI statistics
-* allow looking at only a subset of the data (i.e. cropping)
 * add drag-n-drop capabilities between study windows
-* widgetize object modification dialogs
-* add linked mode
                        
 small things:
 -------------
+* ISOCONTOUR_2D drawing doesn't know the active slice... just using the 1st for now
+* would changing the icons to .png files allow anti-aliasing?
 * widgetize the help_info 
 * rewrite isocontour determining algorithm so it's not recursive,
-* preset thresholds (bone window, fat window, etc.)
 * add thickness/line style for isocontours?
-* figure out a better way of determining which slice we're drawning a 2D isocontour on
 * gamma curve drawing still crashes program under MacX... don't use MacX for now
 * change realpoint to 4D?
-* figure out what to do with the extraneous study if you start
-	amide, and then load in a file...
 * put the canvases in a scrolled widget?
 * make caching of slices smarter.  
 	We don't need to regenerate all slices when removing one slice from the list
 	slices shouldn't have to be the size of the largest dimensions
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
-* when moving roi, should probably update roi dialog, same thing with volumes
 * get libamide compiling correctly under OS X
-* should add unique ID to each data set, This will allow cool things
-	like having multiple volumes using and saving the same data set 
-	(rather then having to copy the data).
-* ISOCONTOUR_3D won't work quite right if the user is looking over multiple frames
-	problem is in picking "frame" in ui_study_cb.c
 * isocontour erase function only updates at button release, not during mouse movement
 
 
-probably before 1.0 things:
+pre 1.0 things:
 --------------
-* if gtk_spin_button hasn't been fixed, fix it myself (check out gtkrange's DISCONTINUOUS mode)
-* progress bars
-* if we're not compiling in debug mode, have warning messages go to popup windows
 * rewrite documentation
-* add quad-linear interpolation for short time periods?
-	would be especially useful for dynamic rendering movies
+
 
 probably post 1.0 things:
 ----------------
-* add corba/CIAS support
+* add in a cropping wizard, to allow looking at only a subset of the data 
+* multi-step undo/redo
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.
 	Would handle multiple images.
@@ -64,9 +58,10 @@ probably post 1.0 things:
 		group's maximum minimal voxel size.  the rendered images should then be scaled
 		and overlapped.  
 * change mpeg_encode to a library? 
-	would allow lose of "system" command, and proper progress reports, in ui_rendering_movie_dialog
-* cardiac shaped ROI?
+	would allow loss of "system" command, and proper 
+	progress reports, in ui_rendering_movie_dialog
 * aligning of data using automated registration?
+* preset thresholds (bone window, fat window, etc.)
 
 
 things dependent on other things: 
@@ -74,10 +69,17 @@ things dependent on other things:
 * GTK 2.0 Changes
 	- when threshold or popup button hit, and dialog already up, bring to front
 	- changing of data types so that they're g_objects
-	- figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
-		files of any type).  
-* gtk_spin_button -> multiple value_changed are emitted when the callback takes
-	to long.  This is a gtk+ bug.
+		all objects should be able to have each other as parents/children
+	  then widgetize object modification dialogs
+	- figure out how to remove the last two uses of imlib (for exporting ppm files, 
+		and exporting files of any type).  
+	- if gtk_spinbutton has a discontinous mode, remove work around (amitk_spin_button)
+	- gtk_tree doesn't like to be removed and attached to containers, 
+		starts displaying multiple trees
+* changing to anti-aliased canvases, check with newer version of gnome canvas ( > 1.4.1.2.90)
+	- all canvases are anti-aliased except for two:
+	  1- amitk_canvas, libart coredumps and misdisplays some stuff
+	  2- ui_preferences, line_style not followed by libart....
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
 	delete the following line from amide.c so we can have bug reporting
 	"signal(SIGSEGV, SIG_DFL);"

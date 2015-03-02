@@ -1,11 +1,30 @@
-0.5.1	
+0.6.1
+	* added a "linked" view mode, so that data sets can be looked at 
+	  simultaneously but not superimposed
+	* spin buttons (zoom, thickness) no longer "go crazy", required a 
+	  cludge widget, amitk_spin_button
+	* when volume/roi/align_pt is changed on canvas, modification 
+	  dialog also changes
+	* when changing layout, canvases now reset coord frame's appropriately
+	* objects no longer get unselected when ok/apply hit in the 
+	  modification dialog
+	* loading a new study replaces the old study if it's empty
+	* deleting objects works again
+	* now confirms quit when unsaved changes exist
+	* cursors now handled better
+	* 3D isocontour's now warn if drawn over multiple data frames
+	* switched all canvases to antialiased 
+	  except for amit_canvas and ui_preferences
+
+0.6.0
 	* realspace_t's are now a referenced object type
 	* widgetized the coord frame rotate panel as amitk_coord_frame_edit
 	* widgetized the canvas as amitk_canvas
-	* widgetized the tree, got rid of ui_volume, ui_roi, ui_align_pt ugliness
-	* raw_data_read_volume/raw_data_read_file no longer require preinitialized structures
+	* widgetized the tree, got rid of ui_volume, ui_roi, ui_align_pt
+	* raw_data_read_volume/read_file no longer requires 
+	  preinitialized structures
 	* added "per frame" scaling ability
-	* added ability to generate movies "over frames" rather than just "over time"
+	* added ability to generate movies "over frames" 
 	* added "interpolate between frames" scaling ability.
 	* changed threshold dialog to a linear layout
 	* threshold types (per slice/global/etc.) are now for each volume

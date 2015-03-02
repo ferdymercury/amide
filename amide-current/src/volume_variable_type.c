@@ -83,7 +83,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
   scale = (VOLUME_DISTRIBUTION_SIZE-1)/(volume->global_max - volume->global_min);
   
   if ((volume->distribution = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the data set structure to hold distribution data", PACKAGE);
+    g_warning("couldn't allocate space for the data set structure to hold distribution data");
     return;
   }
   volume->distribution->dim.x = VOLUME_DISTRIBUTION_SIZE;
@@ -92,7 +92,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
   volume->distribution->dim.t = 1;
   volume->distribution->format = FLOAT;
   if ((volume->distribution->data = data_set_get_data_mem(volume->distribution)) == NULL) {
-    g_warning("%s: couldn't allocate memory for data distribution for bar_graph",PACKAGE);
+    g_warning("couldn't allocate memory for data distribution for bar_graph");
     volume->distribution = data_set_unref(volume->distribution);
     return;
   }
@@ -195,11 +195,11 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 
   /* initialize the return slice */
   if ((slice = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice volume structure", PACKAGE);
+    g_warning("couldn't allocate space for the slice volume structure");
     return slice;
   }
   if ((slice->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice data set structure", PACKAGE);
+    g_warning("couldn't allocate space for the slice data set structure");
     return volume_unref(slice);
   }
   slice->data_set->dim.x = ceil(fabs(far_corner.x)/requested_voxel_size.x);
@@ -220,12 +220,12 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   g_free(temp_string);
 
   if ((slice->frame_duration = volume_get_frame_duration_mem(slice)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice frame duration array",PACKAGE);
+    g_warning("couldn't allocate space for the slice frame duration array");
     return volume_unref(slice);
   }
   slice->frame_duration[0] = end-start;
   if ((slice->data_set->data = data_set_get_data_mem(slice->data_set)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice, wanted %dx%dx%dx%d elements",PACKAGE, 
+    g_warning("couldn't allocate space for the slice, wanted %dx%dx%dx%d elements", 
 	      slice->data_set->dim.x, slice->data_set->dim.y, 
 	      slice->data_set->dim.z, slice->data_set->dim.t );
     return volume_unref(slice);

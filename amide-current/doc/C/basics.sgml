@@ -123,7 +123,7 @@
       <para>
 	On the top of the study window are several widgets used for
 	adjusting the most commonly changed display parameters.
-	Scaling, interpolation, zoom, and thickness are global
+	Interpolation, zoom, and thickness are global
 	options and will affect all displayed data sets.  Color
 	table and threshold only apply to the data set that
 	currently has the active focus.
@@ -135,6 +135,15 @@
 	  generating the slices displayed on the canvas.  Nearest
 	  neighbor is faster.  Tri-linear interpolation produces
 	  betterlooking images but is ~8x slower.
+	</para>
+      </sect4>
+
+      <sect4><title>Viewing Mode</title>
+	<para>
+	  The user can switch between a single set of views
+	  [transverse/coronal/sagittal] on which all data sets are
+	  superimposed, or having a pair of views that are linked
+	  together.
 	</para>
       </sect4>
       

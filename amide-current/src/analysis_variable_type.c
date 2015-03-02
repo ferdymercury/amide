@@ -1,7 +1,7 @@
 /* analysis_variable_type.c - used to generate the different analysis_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001 Andy Loening
+ * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -78,7 +78,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 
   /* get memory first */
   if ((frame_analysis =  (analysis_frame_t *) g_malloc(sizeof(analysis_frame_t))) == NULL) {
-    g_warning("%s: couldn't allocate space for roi analysis of frame %d", PACKAGE, frame);
+    g_warning("couldn't allocate space for roi analysis of frame %d", frame);
     return frame_analysis;
   }
   frame_analysis->ref_count = 1;
@@ -108,8 +108,8 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
   i.z = start.z+dim.z/2;
   i.t = frame;
   if (!data_set_includes_voxel(volume->data_set, i)) {
-    g_warning("%s: Error generating statistics on: %s, frame:%d, min and max values may be incorrect for roi: %s",
-	      PACKAGE, volume->name, frame, roi->name);
+    g_warning("Error generating statistics on: %s, frame:%d, min and max values may be incorrect for roi: %s",
+	      volume->name, frame, roi->name);
     temp_data = EMPTY;
   } else
     temp_data = volume_value(volume,i);
