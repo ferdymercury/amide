@@ -943,11 +943,11 @@ void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
 
 /* user wants to run the alignment wizard */
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data) {
-  ui_study_t * ui_study = data;
 #ifdef AMIDE_LIBGSL_SUPPORT
+  ui_study_t * ui_study = data;
   tb_alignment(ui_study->study);
 #else
-    g_warning(no_gsl);
+  g_warning(no_gsl);
 #endif
   return;
 }

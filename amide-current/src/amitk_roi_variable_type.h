@@ -52,6 +52,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi,
 						   amide_data_t iso_value,
 						   gboolean iso_inverse);
 void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
+void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi);
 #endif
 
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
@@ -68,6 +69,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRo
 								   const gboolean inverse,
 								   void (*calculation)(),
 								   gpointer data);
+
 
 #undef ROI_TYPE_`'m4_Variable_Type`'
 

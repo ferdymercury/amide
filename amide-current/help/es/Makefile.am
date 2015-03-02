@@ -1,6 +1,4 @@
-figs = \
-	figures/amide_main_window.png
-
+figdir = figures
 docname = amide
 lang = es
 locale = es
@@ -17,9 +15,13 @@ entities = 			\
 	tools.xml 		
 
 
+if SCROLLKEEPER_EXISTS
+
 include $(top_srcdir)/help/xmldocs.make
 
 dist-hook: app-dist-hook
+
+endif
 
 DISTCLEANFILES = *~
 

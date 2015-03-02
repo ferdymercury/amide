@@ -64,6 +64,10 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   gchar * temp_str;
   AmitkPoint return_rp;
   gint error=EOF;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -86,6 +90,8 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 				  descriptor, return_rp.x, return_rp.y, return_rp.z);
   }
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return return_rp;
 
 }
@@ -93,11 +99,17 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point) {
 
   gchar * temp_str;
+  gchar * saved_locale;
+
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = g_strdup_printf("%10.9f\t%10.9f\t%10.9f",point.x, point.y,point.z);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return;
 }
 

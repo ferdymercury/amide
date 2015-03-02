@@ -1318,15 +1318,18 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   }
 
   if (AMITK_IS_VOLUME(dialog->object)) {
-    if (AMITK_VOLUME_VALID(dialog->object))
+    if (AMITK_VOLUME_VALID(dialog->object)) 
       center = amitk_volume_get_center(AMITK_VOLUME(dialog->object));
     else
       center_valid = FALSE;
-  } else if (AMITK_IS_STUDY(dialog->object))
+
+  } else if (AMITK_IS_STUDY(dialog->object)) {
     center = AMITK_STUDY_VIEW_CENTER(dialog->object);
-  else if (AMITK_IS_FIDUCIAL_MARK(dialog->object)) 
+
+  } else if (AMITK_IS_FIDUCIAL_MARK(dialog->object)) {
     center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
-  else
+
+  } else
     g_return_if_reached();
 
 

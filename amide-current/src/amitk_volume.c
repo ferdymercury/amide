@@ -33,14 +33,17 @@
 
 enum {
   VOLUME_CORNER_CHANGED,
+  VOLUME_GET_CENTER,
   VOLUME_CHANGED,
   LAST_SIGNAL
 };
 
-static void          volume_class_init       (AmitkVolumeClass *klass);
-static void          volume_init             (AmitkVolume      *volume);
-static void          volume_corner_changed   (AmitkVolume      *volume,
-					      AmitkPoint       *new_corner);
+static void          volume_class_init       (AmitkVolumeClass  *klass);
+static void          volume_init             (AmitkVolume       *volume);
+static void          volume_corner_changed   (AmitkVolume       *volume,
+					      AmitkPoint        *new_corner);
+static void          volume_get_center       (const AmitkVolume *volume,
+					      AmitkPoint        *center);
 static void          volume_scale            (AmitkSpace * space,
 					      AmitkPoint * ref_point,
 					      AmitkPoint * scaling);
@@ -105,6 +108,7 @@ static void volume_class_init (AmitkVolumeClass * class) {
   object_class->object_read_xml = volume_read_xml;
   
   class->volume_corner_changed = volume_corner_changed;
+  class->volume_get_center = volume_get_center;
 
   volume_signals[VOLUME_CORNER_CHANGED] =
     g_signal_new ("volume_corner_changed",
@@ -114,6 +118,14 @@ static void volume_class_init (AmitkVolumeClass * class) {
 		  NULL, NULL, amitk_marshal_NONE__BOXED,
 		  G_TYPE_NONE,1,
 		  AMITK_TYPE_POINT);
+  volume_signals[VOLUME_GET_CENTER] = 
+    g_signal_new ("volume_get_center",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkVolumeClass, volume_get_center),
+		  NULL, NULL, amitk_marshal_NONE__POINTER,
+		  G_TYPE_NONE, 1,
+		  G_TYPE_POINTER);
   volume_signals[VOLUME_CHANGED] =
     g_signal_new ("volume_changed",
 		  G_TYPE_FROM_CLASS(class),
@@ -142,6 +154,24 @@ static void volume_corner_changed(AmitkVolume *volume, AmitkPoint * new_corner) 
 
   return;
 }
+
+static void volume_get_center(const AmitkVolume *volume, AmitkPoint * pcenter) {
+
+  AmitkCorners corners;
+
+  /* get the far corner, corner[0] is currently always zero */
+  corners[0] = amitk_space_b2s(AMITK_SPACE(volume), AMITK_SPACE_OFFSET(volume));  
+  corners[1] = volume->corner;
+ 
+  /* the center in roi coords is then just half the far corner */
+  (*pcenter) = point_add(point_cmult(0.5,corners[1]), point_cmult(0.5,corners[0]));
+
+  /* now, translate that into the base coord frame */
+  (*pcenter) = amitk_space_s2b(AMITK_SPACE(volume), (*pcenter));
+
+  return;
+}
+
 
 
 static void volume_scale(AmitkSpace * space, AmitkPoint * ref_point, AmitkPoint * scaling) {
@@ -305,21 +335,11 @@ AmitkPoint amitk_volume_place_in_bounds(const AmitkVolume * volume,
 AmitkPoint amitk_volume_get_center(const AmitkVolume * volume) {
 
   AmitkPoint center;
-  AmitkCorners corners;
 
   g_return_val_if_fail(AMITK_IS_VOLUME(volume), zero_point);
   g_return_val_if_fail(AMITK_VOLUME_VALID(volume), zero_point);
 
-  /* get the far corner, corner[0] is currently always zero */
-  corners[0] = amitk_space_b2s(AMITK_SPACE(volume), 
-			      AMITK_SPACE_OFFSET(volume));  
-  corners[1] = volume->corner;
- 
-  /* the center in roi coords is then just half the far corner */
-  center = point_add(point_cmult(0.5,corners[1]), point_cmult(0.5,corners[0]));
-
-  /* now, translate that into the base coord frame */
-  center = amitk_space_s2b(AMITK_SPACE(volume), center);
+  g_signal_emit(G_OBJECT(volume), volume_signals[VOLUME_GET_CENTER], 0, &center);
 
   return center;
 }
@@ -328,7 +348,7 @@ void amitk_volume_set_corner(AmitkVolume * volume, AmitkPoint corner) {
 
   g_return_if_fail(AMITK_IS_VOLUME(volume));
 
-  if (!POINT_EQUAL(AMITK_VOLUME_CORNER(volume), corner)) {
+  if (!POINT_EQUAL(AMITK_VOLUME_CORNER(volume), corner) || (!AMITK_VOLUME_VALID(volume))) {
     g_signal_emit(G_OBJECT(volume), volume_signals[VOLUME_CORNER_CHANGED], 0, &corner);
     g_signal_emit(G_OBJECT(volume), volume_signals[VOLUME_CHANGED], 0);
   }

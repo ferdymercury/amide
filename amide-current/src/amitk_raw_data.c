@@ -341,7 +341,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
     bytes_per_slice = amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format);
     if ((file_buffer = (void *) g_try_malloc(bytes_per_slice)) == NULL) {
-      g_warning(_("couldn't malloc %d bytes for file buffer\n"), bytes_per_slice);
+      g_warning(_("couldn't malloc %zd bytes for file buffer\n"), bytes_per_slice);
       goto error_condition;
     }
   }
@@ -364,7 +364,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
 	  bytes_read = fread(file_buffer, 1, bytes_per_slice, file_pointer );
 	  if (bytes_read != bytes_per_slice) {
-	    g_warning(_("read wrong # of elements from raw data, expected %d, got %d"), bytes_per_slice, bytes_read);
+	    g_warning(_("read wrong # of elements from raw data, expected %zd, got %zd"), bytes_per_slice, bytes_read);
 	    goto error_condition;
 	  }
 	}
@@ -782,7 +782,7 @@ void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name,
     total_wrote += num_wrote;
     
     if (num_wrote != num_to_write_this_time) {
-      g_warning(_("incomplete save of raw data, wrote %d (bytes), needed %d (bytes), file: %s"),
+      g_warning(_("incomplete save of raw data, wrote %zd (bytes), needed %zd (bytes), file: %s"),
 		total_wrote*bytes_per_unit, 
 		total_to_write*bytes_per_unit,
 		raw_filename);

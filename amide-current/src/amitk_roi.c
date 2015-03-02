@@ -76,6 +76,8 @@ static gchar *       roi_read_xml            (AmitkObject        *object,
 					      xmlNodePtr          nodes, 
 					      FILE               *study_file, 
 					      gchar              *error_buf);
+static void          roi_get_center          (const AmitkVolume *volume,
+					      AmitkPoint        *center);
 static void          roi_isocontour_set_voxel_size(AmitkRoi * roi, 
 						   AmitkPoint voxel_size);
 
@@ -116,6 +118,7 @@ static void roi_class_init (AmitkRoiClass * class) {
   GObjectClass *gobject_class = G_OBJECT_CLASS (class);
   AmitkObjectClass * object_class = AMITK_OBJECT_CLASS(class);
   AmitkSpaceClass * space_class = AMITK_SPACE_CLASS(class);
+  AmitkVolumeClass * volume_class = AMITK_VOLUME_CLASS(class);
 
   parent_class = g_type_class_peek_parent(class);
 
@@ -125,6 +128,8 @@ static void roi_class_init (AmitkRoiClass * class) {
   object_class->object_copy_in_place = roi_copy_in_place;
   object_class->object_write_xml = roi_write_xml;
   object_class->object_read_xml = roi_read_xml;
+
+  volume_class->volume_get_center = roi_get_center;
 
   gobject_class->finalize = roi_finalize;
 
@@ -152,6 +157,8 @@ static void roi_init (AmitkRoi * roi) {
   roi->voxel_size = zero_point;
   roi->isocontour_value = 0.0;
   roi->isocontour_inverse = FALSE;
+  roi->isocontour_center_of_mass_calculated=FALSE;
+  roi->isocontour_center_of_mass=zero_point;
 }
 
 
@@ -227,6 +234,8 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
   roi_isocontour_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
   dest_roi->isocontour_value = AMITK_ROI_ISOCONTOUR_VALUE(src_object);
   dest_roi->isocontour_inverse = AMITK_ROI_ISOCONTOUR_INVERSE(src_object);
+  dest_roi->isocontour_center_of_mass_calculated = src_roi->isocontour_center_of_mass_calculated;
+  dest_roi->isocontour_center_of_mass = src_roi->isocontour_center_of_mass;
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -249,6 +258,8 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes, FILE * 
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
   xml_save_real(nodes, "isocontour_value", AMITK_ROI_ISOCONTOUR_VALUE(roi));
   xml_save_boolean(nodes, "isocontour_inverse", AMITK_ROI_ISOCONTOUR_INVERSE(roi));
+  xml_save_boolean(nodes, "isocontour_center_of_mass_calculated", AMITK_ROI(roi)->isocontour_center_of_mass_calculated);
+  amitk_point_write_xml(nodes, "isocontour_center_of_mass", AMITK_ROI(roi)->isocontour_center_of_mass);
 
   if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     name = g_strdup_printf("roi_%s_isocontour", AMITK_OBJECT_NAME(roi));
@@ -291,6 +302,8 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
     roi_isocontour_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
     roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
     roi->isocontour_inverse = xml_get_boolean(nodes, "isocontour_inverse", &error_buf);
+    roi->isocontour_center_of_mass_calculated = xml_get_boolean(nodes, "isocontour_center_of_mass_calculated", &error_buf);
+    roi->isocontour_center_of_mass = amitk_point_read_xml(nodes, "isocontour_center_of_mass", &error_buf);
 
     /* if the ROI's never been drawn, it's possible for this not to exist */
     if (xml_node_exists(nodes, "isocontour_file") || 
@@ -316,6 +329,19 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, FILE * stud
   }
 
   return error_buf;
+}
+
+
+static void roi_get_center(const AmitkVolume *volume, AmitkPoint * pcenter) {
+
+  if (AMITK_ROI_TYPE_ISOCONTOUR(volume)) {
+    *pcenter = amitk_roi_isocontour_get_center_of_mass(AMITK_ROI(volume));
+
+  } else {   /* if geometric, just use the standard volume function */
+    AMITK_VOLUME_CLASS(parent_class)->volume_get_center(volume,pcenter);
+  }
+
+  return;
 }
 
 
@@ -388,6 +414,7 @@ static void roi_isocontour_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size)
 
   if (!POINT_EQUAL(AMITK_ROI_VOXEL_SIZE(roi), voxel_size)) {
     roi->voxel_size = voxel_size;
+    roi->isocontour_center_of_mass_calculated = FALSE;
     g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
   }
 }
@@ -488,6 +515,7 @@ void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel star
     amitk_roi_ISOCONTOUR_3D_set_isocontour(roi, ds, start_voxel, isocontour_value, isocontour_inverse);
     break;
   }
+  roi->isocontour_center_of_mass_calculated = FALSE;
   
   g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
 
@@ -508,12 +536,33 @@ void amitk_roi_isocontour_erase_area(AmitkRoi * roi, AmitkVoxel erase_voxel, gin
     amitk_roi_ISOCONTOUR_3D_erase_area(roi, erase_voxel, area_size);
     break;
   }
+  roi->isocontour_center_of_mass_calculated = FALSE;
 
   g_signal_emit(G_OBJECT(roi), roi_signals[ROI_CHANGED], 0);
 
   return;
 }
 
+AmitkPoint amitk_roi_isocontour_get_center_of_mass (AmitkRoi * roi) {
+
+  g_return_val_if_fail(AMITK_IS_ROI(roi), zero_point);
+  g_return_val_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi), zero_point);
+
+  if (!roi->isocontour_center_of_mass_calculated) {
+    switch(AMITK_ROI_TYPE(roi)) {
+    case AMITK_ROI_TYPE_ISOCONTOUR_2D:
+      amitk_roi_ISOCONTOUR_2D_calc_center_of_mass(roi);
+      break;
+    case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+    default:
+      amitk_roi_ISOCONTOUR_3D_calc_center_of_mass(roi);
+      break;
+    }
+  }
+
+  
+  return amitk_space_s2b(AMITK_SPACE(roi), roi->isocontour_center_of_mass);
+}
 
 void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
 

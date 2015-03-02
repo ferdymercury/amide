@@ -63,8 +63,10 @@
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
+#ifndef AMIDE_WIN32_HACKS
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #endif
 #include <fcntl.h>
 #include "raw_data_import.h"
@@ -734,6 +736,19 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   g_free(temp_string);
 
   ds->voxel_size = amitk_point_read_xml(nodes, "voxel_size", &error_buf);
+  if (EQUAL_ZERO(ds->voxel_size.x)) {
+    g_warning(_("Voxel size X was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.x = 1.0;
+  }
+  if (EQUAL_ZERO(ds->voxel_size.y)) {
+    g_warning(_("Voxel size Y was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.y = 1.0;
+  }
+  if (EQUAL_ZERO(ds->voxel_size.z)) {
+    g_warning(_("Voxel size Z was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.z = 1.0;
+  }
+  
 
   if (study_file == NULL) 
     filename = xml_get_string(nodes, "raw_data_file");
@@ -1374,7 +1389,7 @@ static void export_raw(AmitkDataSet *ds,
 	  num_wrote = fwrite(row_data, sizeof(gfloat), dim.x, file_pointer);
 	  total_wrote += num_wrote;
 	  if ( num_wrote != dim.x) {
-	    g_warning(_("incomplete save of raw data, wrote %d (bytes), file: %s"),
+	    g_warning(_("incomplete save of raw data, wrote %z (bytes), file: %s"),
 		      total_wrote*sizeof(gfloat), filename);
 	    goto exit_strategy;
 	  }

@@ -404,8 +404,9 @@ void amitk_preferences_set_xif_as_directory(AmitkPreferences * preferences, gboo
 void amitk_preferences_set_color_table(AmitkPreferences * preferences,
 				       AmitkModality modality,
 				       AmitkColorTable color_table) {
-
+#ifndef AMIDE_WIN32_HACKS
   gchar * temp_string;
+#endif
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
   g_return_if_fail((modality >= 0) && (modality < AMITK_MODALITY_NUM));
@@ -434,7 +435,9 @@ void amitk_preferences_set_default_window(AmitkPreferences * preferences,
 					  const AmitkLimit limit,
 					  const amide_data_t value) {
 
+#ifndef AMIDE_WIN32_HACKS
   gchar * temp_string;
+#endif
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
   g_return_if_fail((window >= 0) && (window < AMITK_WINDOW_NUM));

@@ -50,8 +50,10 @@ N_("When the apply button is hit, a new data set will be created "
    "and placed into the study's tree, consisting of the appropriately "
    "filtered data\n");
 
+#ifdef AMIDE_LIBGSL_SUPPORT
 static const char * gaussian_filter_text = 
 N_("The Gaussian filter is an effective smoothing filter");
+#endif
 
 
 static const char * median_3d_filter_text = 

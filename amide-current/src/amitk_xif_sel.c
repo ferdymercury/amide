@@ -40,8 +40,10 @@
 #include <sys/param.h>
 #endif
 #include <stdlib.h>
+#ifndef AMIDE_WIN32_HACKS
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #endif
 #include <string.h>
 #include <errno.h>

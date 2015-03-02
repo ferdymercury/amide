@@ -1168,8 +1168,10 @@ void tb_profile(AmitkStudy * study, GtkWindow * parent) {
   GtkWidget * radio_button[3];
   GtkWidget * hbox;
   GtkWidget * label;
+#ifdef AMIDE_LIBGSL_SUPPORT
   GtkWidget * check_button;
   GdkColor color;
+#endif
   
   tb_profile = profile_init();
   tb_profile->study = g_object_ref(study);

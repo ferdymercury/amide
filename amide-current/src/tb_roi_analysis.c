@@ -228,9 +228,12 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   fprintf(file_pointer, "#\n");
   
   while (roi_analyses != NULL) {
-    fprintf(file_pointer, _("# ROI:\t%s\tType:\t%s\n"),
+    fprintf(file_pointer, _("# ROI:\t%s\tType:\t%s"),
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
+    if (AMITK_ROI_TYPE_ISOCONTOUR(roi_analyses->roi))
+      fprintf(file_pointer, _("\tIsocontour Value:\t%g"), AMITK_ROI_ISOCONTOUR_VALUE(roi_analyses->roi));
+    fprintf(file_pointer,"\n");
     switch(roi_analyses->calculation_type) {
     case ALL_VOXELS:
       fprintf(file_pointer, _("#   Calculation done with all voxels in ROI\n"));
@@ -242,7 +245,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_percentage);
       break;
     case VOXELS_GREATER_THAN_VALUE:
-      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f in ROI\n"), roi_analyses->threshold_value);
+      fprintf(file_pointer, _("#   Calculation done on voxels >= %g in ROI\n"), roi_analyses->threshold_value);
       break;
     default:
       g_error("unexpected case in %s at line %d",__FILE__, __LINE__);

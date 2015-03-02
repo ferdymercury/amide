@@ -120,6 +120,7 @@ struct _AmitkStudyClass
 {
   AmitkObjectClass parent_class;
 
+  void (* filename_changed) (AmitkStudy * study);
   void (* thickness_changed) (AmitkStudy * study);
   void (* time_changed) (AmitkStudy * study);
   void (* canvas_visible_changed) (AmitkStudy * study);

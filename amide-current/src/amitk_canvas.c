@@ -680,6 +680,7 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+  gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
   table = gtk_table_new(1,3,FALSE);
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
@@ -697,6 +698,7 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+  gtk_entry_set_activates_default(GTK_ENTRY(spin_button), TRUE);
   g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &z);
   g_signal_connect(G_OBJECT(spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(table), spin_button, 2,3, 0,1, GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -821,6 +823,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 					GTK_STOCK_OK, GTK_RESPONSE_OK, 
 					NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+  gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
   table = gtk_table_new(4,3,FALSE);
   table_row=0;
@@ -879,6 +882,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+  gtk_entry_set_activates_default(GTK_ENTRY(spin_button), TRUE);
   g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(value_spin_cb), &isocontour_value);
   g_signal_connect(G_OBJECT(spin_button), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
   gtk_table_attach(GTK_TABLE(table), spin_button, 2,3, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);

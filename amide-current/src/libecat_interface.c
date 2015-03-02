@@ -70,6 +70,14 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   Image_subheader * ish;
   Scan_subheader * ssh;
   Attn_subheader * ash;
+  gchar * saved_time_locale;
+  gchar * saved_numeric_locale;
+  
+  saved_time_locale = g_strdup(setlocale(LC_TIME,""));
+  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_TIME,"C");  
+  setlocale(LC_NUMERIC,"C");  
+
 
   if (!(libecat_file = matrix_open(libecat_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning(_("Can't open file %s using libecat"), libecat_filename);
@@ -402,7 +410,10 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
     free_matrix_data(matrix_data);
 
 
-
+  setlocale(LC_NUMERIC, saved_time_locale);
+  setlocale(LC_NUMERIC, saved_numeric_locale);
+  g_free(saved_time_locale);
+  g_free(saved_numeric_locale);
   return ds;
 
 }

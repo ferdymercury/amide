@@ -138,14 +138,14 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 	moving_fiducial_marks = g_list_append(moving_fiducial_marks, amitk_object_ref(moving_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
 	  moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
-	else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+	else /* (AMITK_IS_VOLUME(moving_fiducial_mark) - maybe someday data sets will be fiducials */
 	  moving_center = amitk_volume_get_center(AMITK_VOLUME(moving_fiducial_mark));
 	moving_centroid = point_add(moving_centroid, moving_center);
 	
 	fixed_fiducial_marks = g_list_append(fixed_fiducial_marks, amitk_object_ref(fixed_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
 	  fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
-	else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) */
+	else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) - maybe someday data sets will be fiducials */
 	  fixed_center = amitk_volume_get_center(AMITK_VOLUME(fixed_fiducial_mark));
 	fixed_centroid = point_add(fixed_centroid, fixed_center);
 
@@ -185,8 +185,9 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
     if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
       moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
-    else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+    else /* (AMITK_IS_VOLUME(moving_fiducial_mark) - maybe someday data sets will be fiducials */
       moving_center = amitk_volume_get_center(AMITK_VOLUME(moving_fiducial_mark));
+
     temp_point = point_sub(moving_center, moving_centroid);
     gsl_matrix_set(moving_matrixt, AMITK_AXIS_X, i, temp_point.x);
     gsl_matrix_set(moving_matrixt, AMITK_AXIS_Y, i, temp_point.y);
@@ -194,8 +195,9 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
     if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
       fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
-    else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+    else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) - maybe someday data sets will be fiducials */
       fixed_center = amitk_volume_get_center(AMITK_VOLUME(fixed_fiducial_mark));
+
     temp_point = point_sub(fixed_center,fixed_centroid);
     gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_X, temp_point.x);
     gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_Y, temp_point.y);
@@ -296,12 +298,12 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
       if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
 	moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
-      else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+      else /* (AMITK_IS_VOLUME(moving_fiducial_mark) - maybe someday data sets will be fiducials */
 	moving_center = amitk_volume_get_center(AMITK_VOLUME(moving_fiducial_mark));
       
       if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
 	fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
-      else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+      else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) - maybe someday data sets will be fiducials */
 	fixed_center = amitk_volume_get_center(AMITK_VOLUME(fixed_fiducial_mark));
 
       moving_center = amitk_space_b2s(AMITK_SPACE(moving_ds), moving_center);

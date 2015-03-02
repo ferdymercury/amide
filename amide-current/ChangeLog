@@ -1,4 +1,21 @@
-0.8.8
+0.8.9 2005.01.08
+	* Makefile.am problems for compiling w/o xmedcon [1]
+	* saving roi statistics records isocontour value [2]
+	* ui_study titlebar includes filename as well as study name[2]
+ 	* internationalization problems [3,4]
+	* set default action on dialogs [3]
+	* center of an isocontour now defined as the center of mass [5]
+
+	[1] Found by Iain
+	[2] Requested by Steve Jones
+ 	[3] Found/Requested by Alien
+ 	[4] Found by Erik Nolf
+	[5] Requested by Steve Jones
+ 	
+0.8.8.1 2004.11.10
+	* updates for x86_64 compilation
+	
+0.8.8 2004.11.02
 	* crash when poping up object dialog of non-viewed data set [1]
 	* accurate roi quantitation algorithm didn't work in inverse mode [2]
 	* isocontour's were overdrawing by one voxel [3]

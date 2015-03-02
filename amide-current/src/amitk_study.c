@@ -59,6 +59,7 @@ gchar * view_mode_explanations[] = {
 
 
 enum {
+  FILENAME_CHANGED,
   THICKNESS_CHANGED,
   TIME_CHANGED,
   CANVAS_VISIBLE_CHANGED,
@@ -142,6 +143,13 @@ static void study_class_init (AmitkStudyClass * class) {
 
   gobject_class->finalize = study_finalize;
 
+  study_signals[FILENAME_CHANGED] =
+    g_signal_new ("filename_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, filename_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
   study_signals[THICKNESS_CHANGED] =
     g_signal_new ("thickness_changed",
 		  G_TYPE_FROM_CLASS(class),
@@ -581,6 +589,7 @@ void amitk_study_set_filename(AmitkStudy * study, const gchar * new_filename) {
     study->filename=temp_string;
   }
   g_strreverse(study->filename);
+  g_signal_emit(G_OBJECT(study), study_signals[FILENAME_CHANGED], 0);
 
   return;
 }

@@ -90,6 +90,10 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   gchar * temp_str;
   amide_time_t return_time;
   gint error=0;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -113,6 +117,8 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
 				  descriptor, return_time);
   }
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return return_time;
 }
 
@@ -125,6 +131,10 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   amide_time_t * return_times=NULL;
   gint error;
   guint i;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -167,6 +177,8 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
     return_times[0] = 0.0;
   }
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return return_times;
 }
 
@@ -177,6 +189,10 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * temp_str;
   amide_data_t return_data;
   gint error=0;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -202,6 +218,8 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 				  descriptor, return_data);
   }
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return return_data;
 }
 
@@ -219,6 +237,10 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gchar * temp_str;
   amide_real_t return_data;
   gint error=0;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
   
@@ -239,6 +261,8 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   } else
     return_data = 0.0;
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return return_data;
 }
 
@@ -312,7 +336,15 @@ void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor,
   temp_str = xml_get_string(nodes, descriptor);
 
   if (temp_str != NULL) {
+#if (SIZEOF_LONG == 8)
+    error = sscanf(temp_str, "0x%lx 0x%lx", location, size);
+#else
+#if (SIZEOF_LONG_LONG == 8)
     error = sscanf(temp_str, "0x%llx 0x%llx", location, size);
+#else
+#error "Either LONG or LONG_LONG needs to by 8 bytes long"
+#endif
+#endif
     g_free(temp_str);
   } 
 
@@ -350,11 +382,17 @@ void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * st
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num) {
 
   gchar * temp_str;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = g_strdup_printf("%10.9f", num);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return;
 }
 
@@ -363,6 +401,10 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
 
   gchar * temp_str;
   int i;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
@@ -375,28 +417,42 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
     g_free(temp_str);
   }
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return;
 }
 
 void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num) {
 
   gchar * temp_str;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = g_strdup_printf("%10.9f", num);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return;
 }
 
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num) {
 
   gchar * temp_str;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_NUMERIC,"C");
 
   temp_str = g_strdup_printf("%10.9f", num);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
   return;
 }
 
@@ -425,7 +481,14 @@ void xml_save_location_and_size(xmlNodePtr node, const gchar * descriptor,
 
   gchar * temp_str;
 
+#if (SIZEOF_LONG == 8)
+  temp_str = g_strdup_printf("0x%lx 0x%lx", location, size);
+#else
+#if (SIZEOF_LONG_LONG == 8)
   temp_str = g_strdup_printf("0x%llx 0x%llx", location, size);
+#endif
+#endif
+
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 

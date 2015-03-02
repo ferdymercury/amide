@@ -10,7 +10,6 @@ SUBDIRS = \
 	doc \
 	man \
 	help \
-	omf-install \
 	po \
 	etc
 

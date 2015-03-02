@@ -215,6 +215,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 			     gpointer update_data) {
 
   FILEINFO libmdc_fi;
+  gboolean libmdc_fi_init=FALSE;
   gint error;
   struct tm time_structure;
   AmitkVoxel i;
@@ -222,7 +223,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   guint64 k;
   AmitkDataSet * ds=NULL;
   gchar * name;
-  gchar * import_filename;
+  gchar * import_filename=NULL;
   gchar ** frags=NULL;
   AmitkVoxel dim;
   AmitkFormat format;
@@ -236,6 +237,14 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gint image_num;
   gboolean salvage = FALSE;
   gchar * msg;
+  gchar * saved_time_locale;
+  gchar * saved_numeric_locale;
+  
+  saved_time_locale = g_strdup(setlocale(LC_TIME,""));
+  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_TIME,"C");  
+  setlocale(LC_NUMERIC,"C");  
+
   
   /* setup some defaults */
   MDC_INFO=MDC_NO;       /* don't print stuff */
@@ -260,10 +269,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   import_filename = g_strdup(filename); /* this gets around the facts that filename is type const */
   if ((error = MdcOpenFile(&libmdc_fi, import_filename)) != MDC_OK) {
     g_warning(_("Can't open file %s with libmdc/(X)MedCon"),filename);
-    g_free(import_filename);
-    return NULL;
+    goto error;
   }
-  g_free(import_filename);
+  libmdc_fi_init=TRUE;
 
   /* read the file */
   if ((error = MdcLoadFile(&libmdc_fi)) != MDC_OK) {
@@ -393,7 +401,19 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   ds->voxel_size.x = libmdc_fi.pixdim[1];
   ds->voxel_size.y = libmdc_fi.pixdim[2];
   ds->voxel_size.z = libmdc_fi.pixdim[3];
-
+  if (EQUAL_ZERO(ds->voxel_size.x)) {
+    g_warning(_("Voxel size X was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.x = 1.0;
+  }
+  if (EQUAL_ZERO(ds->voxel_size.y)) {
+    g_warning(_("Voxel size Y was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.y = 1.0;
+  }
+  if (EQUAL_ZERO(ds->voxel_size.z)) {
+    g_warning(_("Voxel size Z was read as 0, setting to 1 mm.  This may be an internationalization error."));
+    ds->voxel_size.z = 1.0;
+  }
+  
 
   /* try figuring out the name, start with the study name */
   name = NULL;
@@ -555,7 +575,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SSHORT:
 	  {
 	    amitk_format_SSHORT_t * libmdc_buffer;
-	    if (MdcDoSwap) {
+	    if (MdcDoSwap()) {
 	      k=0;
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
 		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
@@ -573,7 +593,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_USHORT:
 	  {
 	    amitk_format_USHORT_t * libmdc_buffer;
-	    if (MdcDoSwap) {
+	    if (MdcDoSwap()) {
 	      k=0;
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
 		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=2)
@@ -591,7 +611,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SINT:
 	  {
 	    amitk_format_SINT_t * libmdc_buffer;
-	    if (MdcDoSwap) {
+	    if (MdcDoSwap()) {
 	      k=0;
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
 		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
@@ -609,7 +629,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_UINT:
 	  {
 	    amitk_format_UINT_t * libmdc_buffer;
-	    if (MdcDoSwap) {
+	    if (MdcDoSwap()) {
 	      k=0;
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
 		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
@@ -627,7 +647,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_FLOAT: 
 	  {
 	    amitk_format_FLOAT_t * libmdc_buffer;
-	    if (MdcDoSwap) {
+	    if (MdcDoSwap()) {
 	      k=0;
 	      for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
 		for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++,k+=4)
@@ -691,15 +711,21 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     ds = amitk_object_unref(ds);
 
 
-
-
  function_end:
 
-  MdcCleanUpFI(&libmdc_fi);
+  if (libmdc_fi_init)
+    MdcCleanUpFI(&libmdc_fi);
+
+  if (import_filename != NULL)
+    g_free(import_filename);
 
   if (update_func != NULL) /* remove progress bar */
     (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
+  setlocale(LC_NUMERIC, saved_time_locale);
+  setlocale(LC_NUMERIC, saved_numeric_locale);
+  g_free(saved_time_locale);
+  g_free(saved_numeric_locale);
   return ds;
 }
 
@@ -716,6 +742,7 @@ void libmdc_export(AmitkDataSet * ds,
 
 
   FILEINFO fi;
+  gboolean fi_init=FALSE;
   IMG_DATA * plane;
   AmitkVoxel i, j;
   AmitkVoxel dim;
@@ -739,6 +766,13 @@ void libmdc_export(AmitkDataSet * ds,
   AmitkDataSet * slice = NULL;
   AmitkPoint new_offset;
   gfloat * row_data;
+  gchar * saved_time_locale;
+  gchar * saved_numeric_locale;
+  
+  saved_time_locale = g_strdup(setlocale(LC_TIME,""));
+  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  setlocale(LC_TIME,"C");  
+  setlocale(LC_NUMERIC,"C");  
 
   
   /* setup some defaults */
@@ -759,12 +793,12 @@ void libmdc_export(AmitkDataSet * ds,
     libmdc_format_num = libmdc_format_number(libmdc_format);
   } else {
     g_warning(_("Unsupported export file format: %d\n"), libmdc_format);
-    return;
+    goto cleanup;
   }
 
   /* initialize the fi info structure */
   MdcInitFI(&fi, "");
-
+  fi_init=TRUE;
 
 
   /* set what we can */
@@ -967,8 +1001,9 @@ void libmdc_export(AmitkDataSet * ds,
 
 
  cleanup:
-  
-  MdcCleanUpFI(&fi); /* clean up FILEINFO struct */
+
+  if (fi_init)
+    MdcCleanUpFI(&fi); /* clean up FILEINFO struct */
 
   if (output_volume != NULL)
     output_volume = amitk_object_unref(output_volume);
@@ -979,6 +1014,10 @@ void libmdc_export(AmitkDataSet * ds,
   if (update_func != NULL) /* remove progress bar */
     (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
+  setlocale(LC_NUMERIC, saved_time_locale);
+  setlocale(LC_NUMERIC, saved_numeric_locale);
+  g_free(saved_time_locale);
+  g_free(saved_numeric_locale);
   return;
 
 }

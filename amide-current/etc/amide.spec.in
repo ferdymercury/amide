@@ -9,15 +9,20 @@ URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
 Packager: 	Andy Loening <loening at alum dot mit dot edu>
 
+Requires:	xmedcon >= 0.9.8
+Requires:	gsl
+Requires:	volpack
+Requires:	libfame >= 0.9.1
+
 PreReq:		scrollkeeper >= 0.1.4
 
-BuildRequires: 	xmedcon >= 0.9.6
-BuildRequires:  volpack 
+BuildRequires:  xmedcon-devel
+BuildRequires:  volpack-devel 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gtk-doc 
 BuildRequires:  libgnomeui-devel 
 BuildRequires:  libgnomecanvas-devel 
-BuildRequires:  libfame-devel
+BuildRequires:  libfame-devel >= 0.9.1 
 BuildRequires:  gsl-devel
 
 %description 
@@ -27,6 +32,34 @@ sets imported from a variety of file formats, image fusion, 3D region
 of interest drawing and analysis, volume rendering, and rigid body
 alignments.
 
+
+%prep
+%setup -q
+
+%build
+%configure --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+%makeinstall
+
+rm -rf $RPM_BUILD_ROOT/var/scrollkeeper
+desktop-file-install --vendor gnome --delete-original                   \
+  --dir $RPM_BUILD_ROOT%{_datadir}/applications                         \
+  --add-category X-Red-Hat-Extra                                        \
+  $RPM_BUILD_ROOT%{_datadir}/applications/*
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%post
+update-desktop-database %{_datadir}/applications
+scrollkeeper-update
+
+%postun
+update-desktop-database %{_datadir}/applications
+scrollkeeper-update
 
 %files
 %defattr(-, root, root)
@@ -40,32 +73,6 @@ alignments.
 %{_datadir}/locale
 %{_mandir}/*
 
-
-%prep
-%setup -n %{name}-%{version}
-
-%build
-%configure --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
-make
-
-%install
-rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT install
-
-./mkinstalldirs $RPM_BUILD_ROOT%{_datadir}/applications
-desktop-file-install --vendor gnome --delete-original                   \
-  --dir $RPM_BUILD_ROOT%{_datadir}/applications                         \
-  --add-category X-Red-Hat-Extra                                        \
-  $RPM_BUILD_ROOT%{_datadir}/applications/*
-
-%clean
-if [ -d $RPM_BUILD_ROOT ] ; then rm -rf $RPM_BUILD_ROOT; fi
-
-%post
-scrollkeeper-update
-
-%postun
-scrollkeeper-update
 
 
 %changelog

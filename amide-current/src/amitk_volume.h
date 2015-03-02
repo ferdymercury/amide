@@ -63,6 +63,8 @@ struct AmitkVolumeClass
 
   void (*volume_corner_changed)         (AmitkVolume * volume,
 					 AmitkPoint * new_corner);
+  void (* volume_get_center)            (const AmitkVolume * volume,
+					 AmitkPoint * center);
   void (* volume_changed)               (AmitkVolume * volume);
 
 };

@@ -76,6 +76,8 @@ struct _AmitkRoi
   AmitkPoint voxel_size;
   amide_data_t isocontour_value;
   gboolean isocontour_inverse;
+  gboolean isocontour_center_of_mass_calculated;
+  AmitkPoint isocontour_center_of_mass;
 
 };
 
@@ -113,6 +115,7 @@ void            amitk_roi_set_isocontour          (AmitkRoi * roi,
 void            amitk_roi_isocontour_erase_area   (AmitkRoi * roi, 
 						   AmitkVoxel erase_voxel, 
 						   gint area_size);
+AmitkPoint      amitk_roi_isocontour_get_center_of_mass (AmitkRoi * roi);
 void            amitk_roi_set_type                (AmitkRoi * roi, AmitkRoiType new_type);
 void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,  
 						   const AmitkDataSet * ds, 

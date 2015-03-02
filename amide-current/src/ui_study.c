@@ -135,7 +135,7 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
 };
 
 static void object_selection_changed_cb(AmitkObject * object, gpointer ui_study);
-static void object_name_changed_cb(AmitkObject * object, gpointer ui_study);
+static void study_name_changed_cb(AmitkObject * object, gpointer ui_study);
 static void object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer ui_study);
 static void object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer ui_study);
 static void add_object(ui_study_t * ui_study, AmitkObject * object);
@@ -158,7 +158,7 @@ static void object_selection_changed_cb(AmitkObject * object, gpointer data) {
   return;
 }
 
-static void object_name_changed_cb(AmitkObject * object, gpointer data) {
+static void study_name_changed_cb(AmitkObject * object, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -226,8 +226,9 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
 	  amitk_canvas_set_study(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), AMITK_STUDY(object));
 
     g_signal_connect(G_OBJECT(object), "time_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
+    g_signal_connect(G_OBJECT(object), "filename_changed", G_CALLBACK(study_name_changed_cb), ui_study);
     g_signal_connect(G_OBJECT(object), "thickness_changed",  G_CALLBACK(ui_study_cb_study_changed), ui_study);
-    g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(object_name_changed_cb), ui_study);
+    g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(study_name_changed_cb), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_visible_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "view_mode_changed", G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
     g_signal_connect(G_OBJECT(object), "canvas_target_changed", G_CALLBACK(ui_study_cb_study_changed), ui_study);
@@ -281,7 +282,7 @@ static void remove_object(ui_study_t * ui_study, AmitkObject * object) {
   if (AMITK_IS_STUDY(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(ui_study_cb_study_changed), ui_study);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(ui_study_cb_canvas_layout_changed), ui_study);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(object_name_changed_cb), ui_study);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(study_name_changed_cb), ui_study);
   }
 
   g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(object_selection_changed_cb), ui_study);
@@ -869,10 +870,10 @@ void ui_study_update_title(ui_study_t * ui_study) {
   
   gchar * title;
 
-  if (ui_study->study_altered) 
-    title = g_strdup_printf(_("Study: %s *"), AMITK_OBJECT_NAME(ui_study->study));
-  else
-    title = g_strdup_printf(_("Study: %s"),AMITK_OBJECT_NAME(ui_study->study));
+  title = g_strdup_printf(_("Study: %s (%s) %s"), 
+			  AMITK_OBJECT_NAME(ui_study->study),
+			  AMITK_STUDY_FILENAME(ui_study->study),
+			  ui_study->study_altered ? "*" : "");
   gtk_window_set_title(GTK_WINDOW(ui_study->app), title);
   g_free(title);
 

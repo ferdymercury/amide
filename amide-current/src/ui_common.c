@@ -935,7 +935,7 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
   gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_OK,FALSE);
-
+  gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
   table = gtk_table_new(3,2,FALSE);
   table_row=0;
@@ -953,6 +953,7 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
 
 
   entry = gtk_entry_new();
+  gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
   gtk_table_attach(GTK_TABLE(table), entry, 
 		   1,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(entry_activate), dialog);

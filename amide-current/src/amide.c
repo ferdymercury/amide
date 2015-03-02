@@ -298,15 +298,12 @@ int main (int argc, char *argv []) {
   amide_real_t min_voxel_size;
   poptContext amide_ctx;
 
+#ifndef AMIDE_WIN32_HACKS
   /* setup i18n */
   setlocale(LC_ALL, "");
-  setlocale(LC_NUMERIC, "C"); /* don't switch radix sign (it's a period not a comma dammit */
+  //  setlocale(LC_NUMERIC, "C"); /* don't switch radix sign (it's a period not a comma dammit */
   bindtextdomain(GETTEXT_PACKAGE, GNOMELOCALEDIR);
-  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
   textdomain(GETTEXT_PACKAGE);
-
-
-#ifndef AMIDE_WIN32_HACKS
   program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
 			       GNOME_PROGRAM_STANDARD_PROPERTIES,
 #ifdef AMIDE_OSX_HACKS
@@ -316,10 +313,12 @@ int main (int argc, char *argv []) {
   g_object_get (G_OBJECT (program),GNOME_PARAM_POPT_CONTEXT,&amide_ctx,NULL);
 
 #else /* AMIDE_WIN32_HACKS */
+  /* gtk_init calls setlocale, etc. */
   gtk_init(&argc, &argv);
   amide_ctx = poptGetContext(NULL, argc, argv, popt_options, 0); //POPT_CONTEXT_NO_EXEC);
   poptGetNextOpt(amide_ctx); /* this is needed for some reason or else poptGetArg will fail */
 #endif
+  bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
 
 #ifdef AMIDE_DEBUG
   /* restore the normal segmentation fault signalling so we can get 

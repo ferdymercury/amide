@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.8],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.9],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -16,6 +16,8 @@ AM_PROG_LIBTOOL
 AC_FUNC_MKDIR
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
+AC_CHECK_SIZEOF(long,8)
+AC_CHECK_SIZEOF(long long,8)
 
 dnl ================= translation =============================================
 
@@ -30,9 +32,16 @@ AC_PROG_INTLTOOL
 dnl m4 required for compiling
 AC_PATH_PROGS(M4, gnum4 gm4 m4, NOT_FOUND)
 if test $M4 = "NOT_FOUND"; then
-   echo "Could not find m4 on this system, please install to compile AMIDE"
+   echo "Could not find m4 on this system, please install to compile AMIDE."
    exit 1
 fi
+
+dnl scrollkeeper-update required for document building
+AC_PATH_PROGS(SCROLLKEEPER, scrollkeeper-update, NOT_FOUND)
+if test $SCROLLKEEPER = "NOT_FOUND"; then
+   echo "Could not find scrollkeeper-update on this system.  Will not compile help files."
+fi
+AM_CONDITIONAL(SCROLLKEEPER_EXISTS, [test "$SCROLLKEEPER" != "NOT_FOUND"])
 
 dnl ===============================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
@@ -131,7 +140,7 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
-AM_PATH_XMEDCON(0.9.6, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+AM_PATH_XMEDCON(0.9.8, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 
@@ -278,7 +287,6 @@ doc/Makefile
 doc/reference/Makefile
 doc/reference/version.xml
 man/Makefile
-omf-install/Makefile
 src/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in

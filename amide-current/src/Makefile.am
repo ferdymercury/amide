@@ -1,14 +1,14 @@
 if AMIDE_WIN32_HACKS
 
-AMIDE_WIN32_LDADD = -lwsock32 ../win32/amiderc.o
-AMIDE_WIN32_LDFLAGS = -mwindows
+AMIDE_LDADD_WIN32 = -lwsock32 ../win32/amiderc.o
+AMIDE_LDFLAGS_WIN32 = -mwindows
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 
 else
 
-AMIDE_WIN32_LDADD = 
-AMIDE_WIN32_LDFLAGS = 
+AMIDE_LDADD_WIN32 = 
+AMIDE_LDFLAGS_WIN32 = 
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 	-DPREFIX=\""$(prefix)"\"			        \
@@ -24,30 +24,36 @@ AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	-DGNOME_DISABLE_DEPRECATED \
-	-I/usr/local/include
+	-I/usr/local/include \
+	-I/usr/local/xmedcon/include
 ##	-DGTK_DISABLE_DEPRECATED \
 
 
 # following are "toxic", as they drag in Gtk1 stuff
 #	$(XMEDCON_CFLAGS) 
-# added -I/usr/local/include above as that's where XMEDCON
-# usually gets installed
+# added -I/usr/local/include and -I/usr/local/xmedcon/include 
+# above as that's where XMEDCON usually gets installed
 
 bin_PROGRAMS = amide
 
 amide_LDADD = \
 	$(GSL_LIBS) \
 	$(LIBFAME_LIBS) \
-	$(XMEDCON_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
-	$(AMIDE_WIN32_LDADD) \
-	-L/usr/local/lib \
-	-lmdc
+	$(AMIDE_LDADD_WIN32) \
+	$(XMEDCON_LIBS) 
+
+## note, for some reason, if XMEDCON_LIBS is before AMIDE_GNOME_LIBS,
+## an executable is made that dumps core on startup....
+## this is probably because xmedcon is linked with glib 1.2... while 
+## amide needs glib 2.*, and something is clashing in name space
+## 2005.01.08, gcc 3.3.3
+
 
 amide_LDFLAGS = \
-	$(AMIDE_WIN32_LDFLAGS)
+	$(AMIDE_LDFLAGS_WIN32)
 
 
 

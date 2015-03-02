@@ -627,6 +627,34 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 
   return;
 }
+
+
+void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi) {
+
+  AmitkVoxel i_voxel;
+  guint voxels=0;
+  AmitkPoint center_of_mass;
+  AmitkPoint roi_voxel_size;
+  AmitkPoint current_point;
+
+  roi_voxel_size = AMITK_ROI_VOXEL_SIZE(roi);
+  center_of_mass = zero_point;
+
+  i_voxel.t = i_voxel.g = 0;
+  for (i_voxel.z=0; i_voxel.z<roi->isocontour->dim.z; i_voxel.z++)
+    for (i_voxel.y=0; i_voxel.y<roi->isocontour->dim.y; i_voxel.y++) 
+      for (i_voxel.x=0; i_voxel.x<roi->isocontour->dim.x; i_voxel.x++) 
+	if (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, i_voxel)) {
+	  voxels++;
+	  VOXEL_TO_POINT(i_voxel, roi_voxel_size, current_point);
+	  POINT_ADD(current_point, center_of_mass, center_of_mass);
+	}
+
+  roi->isocontour_center_of_mass = point_cmult(1.0/((gdouble) voxels), center_of_mass);
+  roi->isocontour_center_of_mass_calculated=TRUE;
+
+}
+
 #endif
 
 
