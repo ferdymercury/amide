@@ -138,6 +138,7 @@ typedef struct realspace_t {
 
 /* note! the equivalent defines above are faster and should be used in any time critical spots */
 inline realpoint_t rp_abs(const realpoint_t rp1);
+inline realpoint_t rp_neg(const realpoint_t rp1);
 inline realpoint_t rp_add(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_sub(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_mult(const realpoint_t rp1, const realpoint_t rp2);
@@ -163,18 +164,13 @@ void realspace_make_orthonormal(realpoint_t axis[]);
 realpoint_t realspace_rotate_on_axis(const realpoint_t in,
 				     const realpoint_t axis,
 				     const floatpoint_t theta);
-axis_t realspace_get_orthogonal_which_axis(const view_t view);
-realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
-					    const view_t view);
-realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
-					  const view_t view,
-					  const axis_t ax);
-realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_frame,
-						 const view_t view);
-inline realpoint_t realspace_coord_to_orthogonal_view(const realpoint_t in,
-						      const view_t view);
-inline realpoint_t realspace_coord_from_orthogonal_view(const realpoint_t in,
-						      const view_t view);
+realpoint_t realspace_get_view_normal(const realpoint_t axis[],
+				      const view_t view);
+realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
+					       const view_t view,
+					       const axis_t ax);
+realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
+					   const view_t view);
 inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 					       const realspace_t in_alt_coord_frame);
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,

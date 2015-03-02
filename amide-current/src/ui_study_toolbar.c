@@ -46,7 +46,7 @@
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
 #include "../pixmaps/icon_interpolation_2x2x1.xpm"
 #include "../pixmaps/icon_interpolation_2x2x2.xpm"
-#include "../pixmaps/icon_interpolation_bilinear.xpm"
+//#include "../pixmaps/icon_interpolation_bilinear.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
 
 
@@ -69,7 +69,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gchar ** icon_interpolation[NUM_INTERPOLATIONS] = {icon_interpolation_nearest_neighbor_xpm,
 						    icon_interpolation_2x2x1_xpm,
 						    icon_interpolation_2x2x2_xpm,
-						    icon_interpolation_bilinear_xpm,
+						     //  icon_interpolation_bilinear_xpm,
 						    icon_interpolation_trilinear_xpm};
 
   /* the toolbar definitions */

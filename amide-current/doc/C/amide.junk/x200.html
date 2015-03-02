@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Gotcha's to ROI calculations </TITLE
+>Grain size</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,11 +12,11 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Grain size"
+TITLE="Calculating Statistics over ROI's"
 HREF="x197.html"><LINK
 REL="NEXT"
-TITLE="Rendering Data"
-HREF="rendering.html"></HEAD
+TITLE="Gotcha's to ROI calculations "
+HREF="x203.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -51,7 +51,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="rendering.html"
+HREF="x203.html"
 >Next</A
 ></TD
 ></TR
@@ -65,40 +65,14 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN200"
->Gotcha's to ROI calculations</A
+>Grain size</A
 ></H1
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN202"
->My ROI statistics are zero</A
-></H2
 ><P
->      This probably means your ROI is very thin in one of its
-      dimensions.  Try either increasing the size of the ROI, or
-      increasing the grain size used when calculation the statistics.
-    </P
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN205"
->Variance/Std. Dev./Std. Err. Fallacies</A
-></H2
-><P
->      A common fallacy is to use the calculated variance (or standard
-      deviation, or standard error) of an ROI as an experiment's variance.
-      The variance of an experiment can only truly be measured by
-      taking multiple samples (i.e. performing multiple scans) and
-      calculating the variance between these different samples.
-      The variance that AMIDE calculates is only a measure of the
-      noise within an ROI in the given data set.
-    </P
-></DIV
+>    The grain size determines how many sub-voxels each voxel will be
+    divided into when calculating an ROI's statistics.  A higher
+    grain (meaning more sub-voxels) will calculate more accurate
+    statistics at the expensive of increased calculation times.
+  </P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -131,7 +105,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="rendering.html"
+HREF="x203.html"
 >Next</A
 ></TD
 ></TR
@@ -140,7 +114,7 @@ HREF="rendering.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Grain size</TD
+>Calculating Statistics over ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -153,7 +127,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Rendering Data</TD
+>Gotcha's to ROI calculations</TD
 ></TR
 ></TABLE
 ></DIV

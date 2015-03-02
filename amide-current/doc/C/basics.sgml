@@ -8,23 +8,13 @@
   
   <sect1><title>Components of the Display</title>
 
-    <sect2><title>Main Window</title>
-      <para>
-	When AMIDE starts up, a small window pops up sporting a cheesy
-	AMIDE logo.  This small window is the launch point for
-	creating new studies and loading in old ones.  Currently,
-	nothing else is done from this window.
-      </para>
-    </sect2>
-    
-
     <sect2><title>Study Window</title>
       <para>
-	After starting a new study or opening an old one, the study
-	window will be displayed.  A study is a collection of related
-	objects (i.e. medical image data sets and regions of interest),
-	and most of the user's actions will take place in this window.
-	There are several elements to this window:
+	After starting up AMIDE, the study window will be displayed.
+	A study is a collection of related objects (i.e. medical image
+	data sets and regions of interest), and most of the user's
+	actions will take place in this window.  There are several
+	elements to this window:
       </para>
 
       <sect3><title>Study List</title>

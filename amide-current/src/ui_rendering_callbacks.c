@@ -154,6 +154,11 @@ void ui_rendering_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gp
   /* free the associated data structure */
   ui_rendering = ui_rendering_free(ui_rendering);
 
+  /* quit our app if we've closed all windows */
+  number_of_windows--;
+  if (number_of_windows == 0)
+    gtk_main_quit();
+
   return;
 }
 

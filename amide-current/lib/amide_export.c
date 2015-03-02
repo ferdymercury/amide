@@ -67,12 +67,20 @@ void amide_study_set_subject_age(GtkWidget * amide_widget, gchar * new_age) {
   return;
 }
 
-/* exported procedure to set the interpolation used for the study to bilinear */
+/* legacy function, just sets things trilinear */
 void amide_study_set_interpolation_bilinear(GtkWidget * amide_widget) {
+
+  g_warning("bilinear no longer supported, switch to trilinear\n");
+  amide_study_set_interpolation_trilinear(amide_widget);
+  return;
+}
+
+/* exported procedure to set the interpolation used for the study to trilinear */
+void amide_study_set_interpolation_trilinear(GtkWidget * amide_widget) {
   ui_study_t * ui_study;
 
   ui_study = gtk_object_get_data(GTK_OBJECT(amide_widget), "ui_study");
-  study_set_interpolation(ui_study->study, BILINEAR);
+  study_set_interpolation(ui_study->study, TRILINEAR);
 
   return;
 }

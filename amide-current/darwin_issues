@@ -1,0 +1,16 @@
+several changes were made to get amide and supporting packages to
+compile correctly under amide, here are the remaining outstanding
+issues:
+
+amide:
+	1- may need to uncomment the gdk_imlib_destroy_image calls in 
+		ui_threshold.c, these were changed from gnome_canvas_image_destroy
+		calls that were definitely wrong, but this hasn't been tested
+		yet (0.4.2)
+
+
+xmedcon:
+	1- needs an updated config.guess and config.sub (at least as of 0.6.1).
+	2- symbol clashing between libmdc and libecat (not seen under linux).
+		work around is to compile amide with either libecat or libmdc
+		support, not both

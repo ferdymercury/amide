@@ -27,7 +27,6 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include <matrix.h>
 #include "volume.h"
 #include <sys/stat.h>
 #include "raw_data_import.h"
@@ -136,13 +135,16 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   /* set the axis such that transverse/coronal/sagittal match up correctly */
   /* this is all derived empirically */
   if (idl_volume != NULL) {
-    idl_volume->coord_frame.axis[0] = default_axis[0];
-    idl_volume->coord_frame.axis[1] = default_axis[2];
-    idl_volume->coord_frame.axis[2] = default_axis[1];
-    idl_volume->coord_frame.axis[2].x = -idl_volume->coord_frame.axis[2].x;
-    idl_volume->coord_frame.axis[2].y = -idl_volume->coord_frame.axis[2].y;
-    idl_volume->coord_frame.axis[2].z = -idl_volume->coord_frame.axis[2].z;
-    idl_volume->coord_frame.offset.y = idl_volume->dim.z*idl_volume->voxel_size.z;
+    idl_volume->coord_frame.axis[0].x = -1.0;
+    idl_volume->coord_frame.axis[0].y = 0.0;
+    idl_volume->coord_frame.axis[0].z = 0.0;
+    idl_volume->coord_frame.axis[1].x = 0.0;
+    idl_volume->coord_frame.axis[1].y = 0.0;
+    idl_volume->coord_frame.axis[1].z = 1.0;
+    idl_volume->coord_frame.axis[2].x = 0.0;
+    idl_volume->coord_frame.axis[2].y = 1.0;
+    idl_volume->coord_frame.axis[2].z = 0.0;
+    idl_volume->coord_frame.offset.x = idl_volume->dim.x*idl_volume->voxel_size.x;
   }
 
   /* garbage collection */

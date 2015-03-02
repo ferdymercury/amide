@@ -28,7 +28,6 @@
 
 /* external functions */
 void ui_study_dialog_callbacks_change_name(GtkWidget * widget, gpointer data);
-void ui_study_dialog_callbacks_change_filename(GtkWidget * widget, gpointer data);
 void ui_study_dialog_callbacks_change_creation_date(GtkWidget * widget, gpointer data);
 void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer data);
 void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data);

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -63,22 +63,16 @@ AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AS = @AS@
-AUDIOFILE_CFLAGS = @AUDIOFILE_CFLAGS@
-AUDIOFILE_CONFIG = @AUDIOFILE_CONFIG@
-AUDIOFILE_LIBS = @AUDIOFILE_LIBS@
-CATALOGS = @CATALOGS@
-CATOBJEXT = @CATOBJEXT@
 CC = @CC@
-CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
-DATADIRNAME = @DATADIRNAME@
 DLLTOOL = @DLLTOOL@
-ESD_CFLAGS = @ESD_CFLAGS@
-ESD_CONFIG = @ESD_CONFIG@
-ESD_LIBS = @ESD_LIBS@
-GENCAT = @GENCAT@
-GMOFILES = @GMOFILES@
-GMSGFMT = @GMSGFMT@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+EXTRA_GNOME_CFLAGS = @EXTRA_GNOME_CFLAGS@
+EXTRA_GNOME_LIBS = @EXTRA_GNOME_LIBS@
+GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
+GDK_PIXBUF_CONFIG = @GDK_PIXBUF_CONFIG@
+GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
 GNOMEUI_LIBS = @GNOMEUI_LIBS@
 GNOME_APPLETS_LIBS = @GNOME_APPLETS_LIBS@
@@ -93,40 +87,31 @@ GNOME_XML2_LIBS = @GNOME_XML2_LIBS@
 GNORBA_CFLAGS = @GNORBA_CFLAGS@
 GNORBA_LIBS = @GNORBA_LIBS@
 GTKXMHTML_LIBS = @GTKXMHTML_LIBS@
-GT_NO = @GT_NO@
-GT_YES = @GT_YES@
-INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
-INSTOBJEXT = @INSTOBJEXT@
-INTLDEPS = @INTLDEPS@
-INTLLIBS = @INTLLIBS@
-INTLOBJS = @INTLOBJS@
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_CONFIG = @GTK_CONFIG@
+GTK_LIBS = @GTK_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
-MKINSTALLDIRS = @MKINSTALLDIRS@
-MSGFMT = @MSGFMT@
 OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
 ORBIT_CFLAGS = @ORBIT_CFLAGS@
 ORBIT_CONFIG = @ORBIT_CONFIG@
 ORBIT_IDL = @ORBIT_IDL@
 ORBIT_LIBS = @ORBIT_LIBS@
 PACKAGE = @PACKAGE@
-POFILES = @POFILES@
-POSUB = @POSUB@
 RANLIB = @RANLIB@
-USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
-USE_NLS = @USE_NLS@
+STRIP = @STRIP@
 VERSION = @VERSION@
 XML2_CONFIG = @XML2_CONFIG@
 ZVT_LIBS = @ZVT_LIBS@
 cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
-l = @l@
 
-INCLUDES =     -DGNOMELOCALEDIR=\""$(datadir)/locale\""  	-I/usr/local/include
-
+INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS)
 
 lib_LTLIBRARIES = libamide.la
 libamideincludedir = $(includedir)/amide
@@ -135,10 +120,10 @@ libamide_la_LDFLAGS = -version-info 1:0:0
 libamideinclude_HEADERS =  	amide_export.h
 
 
-libamide_la_SOURCES =  	amide_export.c 	$(amide_sources)
+libamide_la_SOURCES =  	amide_export.c 	$(amide_SOURCES)
 
 
-amide_sources =  	amide.c 	amide.h 	amide_export.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	realspace.c 	realspace.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_main.c 	ui_main.h 	ui_main_callbacks.c 	ui_main_callbacks.h 	ui_main_menus.c 	ui_main_menus.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	amide.c 	amide.h 	amide_export.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	realspace.c 	realspace.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -152,9 +137,8 @@ libamide_la_LIBADD =
 libamide_la_OBJECTS =  amide_export.lo amide.lo color_table.lo \
 cti_import.lo idl_data_import.lo image.lo medcon_import.lo objects.lo \
 pem_data_import.lo realspace.lo raw_data.lo raw_data_import.lo \
-raw_data_import_callbacks.lo rendering.lo roi.lo study.lo ui_main.lo \
-ui_main_callbacks.lo ui_main_menus.lo ui_rendering.lo \
-ui_rendering_callbacks.lo ui_rendering_dialog.lo \
+raw_data_import_callbacks.lo rendering.lo roi.lo study.lo \
+ui_rendering.lo ui_rendering_callbacks.lo ui_rendering_dialog.lo \
 ui_rendering_dialog_callbacks.lo ui_rendering_movie_dialog.lo \
 ui_rendering_movie_dialog_callbacks.lo ui_roi.lo ui_roi_dialog.lo \
 ui_roi_dialog_callbacks.lo ui_series.lo ui_series_callbacks.lo \
@@ -181,8 +165,7 @@ DEP_FILES =  .deps/amide.P .deps/amide_export.P .deps/color_table.P \
 .deps/medcon_import.P .deps/objects.P .deps/pem_data_import.P \
 .deps/raw_data.P .deps/raw_data_import.P \
 .deps/raw_data_import_callbacks.P .deps/realspace.P .deps/rendering.P \
-.deps/roi.P .deps/study.P .deps/ui_main.P .deps/ui_main_callbacks.P \
-.deps/ui_main_menus.P .deps/ui_rendering.P \
+.deps/roi.P .deps/study.P .deps/ui_rendering.P \
 .deps/ui_rendering_callbacks.P .deps/ui_rendering_dialog.P \
 .deps/ui_rendering_dialog_callbacks.P .deps/ui_rendering_movie_dialog.P \
 .deps/ui_rendering_movie_dialog_callbacks.P .deps/ui_roi.P \
@@ -200,7 +183,7 @@ OBJECTS = $(libamide_la_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .S .c .lo .o .s
+.SUFFIXES: .S .c .lo .o .obj .s
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu lib/Makefile
 
@@ -234,6 +217,11 @@ uninstall-libLTLIBRARIES:
 	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p; \
 	done
 
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
 .s.o:
 	$(COMPILE) -c $<
 
@@ -242,6 +230,7 @@ uninstall-libLTLIBRARIES:
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
 
 clean-compile:
 

@@ -110,11 +110,8 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   struct stat file_info;
   GList * file_list = NULL;
   GList * temp_list;
+  GdkImlibImage * ppm_image;
 
-
-  g_print("4 num_frames %d\n",ui_rendering_movie->num_frames);
-
-  g_print("output filename %s\n",output_file_name);
 
 
   /* figure out what the temp directory is */
@@ -124,6 +121,7 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
   g_get_current_time(&current_time);
 
 #ifdef AMIDE_DEBUG
+  g_print("Total number of frames to do:\t%d\n",ui_rendering_movie->num_frames);
   g_print("Frame:\n");
 #endif
 
@@ -161,8 +159,16 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
 					  temp_dir, current_time.tv_sec, i, i_frame);
       } while (stat(frame_file_name, &file_info) == 0);
       
-      return_val = gdk_imlib_save_image_to_ppm(ui_rendering_movie->ui_rendering->main_image, 
-					       frame_file_name);
+      /* yep, we still need to use imlib to export ppm files, as gdk_pixbuf doesn't seem to have
+	 this capability */
+      ppm_image = 
+	gdk_imlib_create_image_from_data(gdk_pixbuf_get_pixels(ui_rendering_movie->ui_rendering->main_image), 
+					 NULL,
+					 gdk_pixbuf_get_width(ui_rendering_movie->ui_rendering->main_image), 
+					 gdk_pixbuf_get_height(ui_rendering_movie->ui_rendering->main_image));
+
+      return_val = gdk_imlib_save_image_to_ppm(ppm_image, frame_file_name);
+      gdk_imlib_destroy_image(ppm_image);
 
       
       if (return_val != 1) 
@@ -178,7 +184,6 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       /* and unrotate the rendering contexts so that we can properly rerotate
 	 for the next frame */
       for (i_axis = NUM_AXIS; i_axis > 0 ; i_axis--) {
-	g_print("i axis %d\n",i_axis-1);
 	rendering_context_set_rotation(ui_rendering_movie->ui_rendering->axis_context, 
 				       i_axis-1, -rotation_step[i_axis-1]);
 	rendering_lists_set_rotation(ui_rendering_movie->ui_rendering->contexts, 

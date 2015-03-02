@@ -26,8 +26,11 @@
 
 /* external functions */
 void ui_study_callbacks_file_selection_cancel(GtkWidget* widget, gpointer data);
+void ui_study_callbacks_new_study(GtkWidget * button, gpointer data);
+void ui_study_callbacks_open_study(GtkWidget * button, gpointer data);
 void ui_study_callbacks_save_as(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_import(GtkWidget * widget, gpointer data);
+void ui_study_callbacks_export(GtkWidget * widget, gpointer data);
 gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossing * event,
 					     gpointer data);
 gboolean ui_study_callbacks_canvas_event(GtkWidget* widget, GdkEvent * event,
@@ -51,7 +54,6 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_entry_name(gchar * entry_string, gpointer data);
 void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data);
-void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer data);
 void ui_study_callbacks_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data);
 void ui_study_callbacks_new_roi_ellipsoid(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_new_roi_cylinder(GtkWidget * widget, gpointer data);
@@ -59,6 +61,7 @@ void ui_study_callbacks_new_roi_box(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_edit_objects(GtkWidget * button, gpointer data);
 void ui_study_callbacks_delete_objects(GtkWidget * button, gpointer data);
 void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data);
+void ui_study_callbacks_about(GtkWidget * button, gpointer data);
 void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, 
 				     gpointer data);
 void ui_study_callbacks_close_event(GtkWidget* widget, gpointer data);

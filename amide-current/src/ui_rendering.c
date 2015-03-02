@@ -138,7 +138,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
   /* ---------- render our axis volume ------------ */
   if (ui_rendering->axis_image != NULL)
-    gnome_canvas_destroy_image(ui_rendering->axis_image);
+    gdk_pixbuf_unref(ui_rendering->axis_image);
 
   if (ui_rendering->axis_context == NULL) {
     ui_rendering->axis_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
@@ -153,41 +153,36 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
   /* reset the min size of the widget */
   gnome_canvas_set_scroll_region(ui_rendering->axis_canvas, 0.0, 0.0, 
-  				 ui_rendering->axis_image->rgb_width,  
-  				 ui_rendering->axis_image->rgb_height);  
+  				 gdk_pixbuf_get_width(ui_rendering->axis_image),  
+  				 gdk_pixbuf_get_height(ui_rendering->axis_image));  
 
   //  requisition.width = ui_study->rgb_image[view]->rgb_width;
   //  requisition.height = ui_study->rgb_image[view]->rgb_height;
   //  gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
   gtk_widget_set_usize(GTK_WIDGET(ui_rendering->axis_canvas), 
-		       ui_rendering->axis_image->rgb_width ,
-		       ui_rendering->axis_image->rgb_height);  
+		       gdk_pixbuf_get_width(ui_rendering->axis_image),
+		       gdk_pixbuf_get_height(ui_rendering->axis_image));  
   
   /* put up the image */
   if (ui_rendering->axis_canvas_image != NULL) {
     gnome_canvas_item_set(ui_rendering->axis_canvas_image,
-			  "image", ui_rendering->axis_image,
-			  "width", (double) ui_rendering->axis_image->rgb_width ,
-			  "height", (double) ui_rendering->axis_image->rgb_height ,
+			  "pixbuf", ui_rendering->axis_image,
 			  NULL);
   } else {
     /* time to make a new image */
     ui_rendering->axis_canvas_image = 
       gnome_canvas_item_new(gnome_canvas_root(ui_rendering->axis_canvas),
-			    gnome_canvas_image_get_type(),
-			    "image", ui_rendering->axis_image,
+			    gnome_canvas_pixbuf_get_type(),
+			    "pixbuf", ui_rendering->axis_image,
 			    "x", (double) 0.0,
 			    "y", (double) 0.0,
-			    "anchor", GTK_ANCHOR_NORTH_WEST,
-			    "width",(double) ui_rendering->axis_image->rgb_width,
-			    "height",(double) ui_rendering->axis_image->rgb_height,
 			    NULL);
   }
 
 
   /* -------- render our volumes ------------ */
   if (ui_rendering->main_image != NULL)
-    gnome_canvas_destroy_image(ui_rendering->main_image);
+    gdk_pixbuf_unref(ui_rendering->main_image);
 
   if (ui_rendering->contexts == NULL)
     ui_rendering->main_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
@@ -202,34 +197,29 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
   /* reset the min size of the widget */
   gnome_canvas_set_scroll_region(ui_rendering->main_canvas, 0.0, 0.0, 
-  				 ui_rendering->main_image->rgb_width,  
-  				 ui_rendering->main_image->rgb_height);  
+  				 gdk_pixbuf_get_width(ui_rendering->main_image),  
+  				 gdk_pixbuf_get_height(ui_rendering->main_image));  
 
   //  requisition.width = ui_study->rgb_image[view]->rgb_width;
   //  requisition.height = ui_study->rgb_image[view]->rgb_height;
   //  gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
   gtk_widget_set_usize(GTK_WIDGET(ui_rendering->main_canvas), 
-		       ui_rendering->main_image->rgb_width ,
-		       ui_rendering->main_image->rgb_height);  
+		       gdk_pixbuf_get_width(ui_rendering->main_image),
+		       gdk_pixbuf_get_height(ui_rendering->main_image));  
   
   /* put up the image */
   if (ui_rendering->main_canvas_image != NULL) {
     gnome_canvas_item_set(ui_rendering->main_canvas_image,
-			  "image", ui_rendering->main_image,
-			  "width", (double) ui_rendering->main_image->rgb_width ,
-			  "height", (double) ui_rendering->main_image->rgb_height ,
+			  "pixbuf", ui_rendering->main_image,
 			  NULL);
   } else {
     /* time to make a new image */
     ui_rendering->main_canvas_image = 
       gnome_canvas_item_new(gnome_canvas_root(ui_rendering->main_canvas),
-			    gnome_canvas_image_get_type(),
-			    "image", ui_rendering->main_image,
+			    gnome_canvas_pixbuf_get_type(),
+			    "pixbuf", ui_rendering->main_image,
 			    "x", (double) 0.0,
 			    "y", (double) 0.0,
-			    "anchor", GTK_ANCHOR_NORTH_WEST,
-			    "width",(double) ui_rendering->main_image->rgb_width,
-			    "height",(double) ui_rendering->main_image->rgb_height,
 			    NULL);
   }
 
@@ -349,6 +339,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(ui_rendering->app));
+  number_of_windows++;
 
   return;
 }

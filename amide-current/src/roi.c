@@ -141,7 +141,7 @@ gchar * roi_write_xml(roi_t * roi, gchar * directory) {
 }
 
 /* function to load in an ROI xml file */
-roi_t * roi_load_xml(gchar * file_name, gchar * directory) {
+roi_t * roi_load_xml(gchar * file_name, const gchar * directory) {
 
   xmlDocPtr doc;
   roi_t * new_roi;
@@ -344,7 +344,7 @@ void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * director
 }
 
 /* function to load in a list of ROI xml nodes */
-roi_list_t * roi_list_load_xml(xmlNodePtr node_list, gchar * directory) {
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * directory) {
 
   gchar * file_name;
   roi_list_t * new_roi_list;
@@ -720,7 +720,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   gboolean voxel_in;
 
 #ifdef AMIDE_DEBUG
-  g_print("Calculating ROI %s on Volume %s using Grain %s\n",
+  g_print("Calculating ROI: %s on Volume: %s using Grain %s\n",
 	  roi->name, volume->name, roi_grain_names[roi->grain]);
 #endif
   
@@ -730,20 +730,18 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   roi_corner[1] = roi->corner;
 
   /* figure out the center of the object in it's space*/
-  REALPOINT_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);
+  center = rp_add(rp_cmult(0.5,roi_corner[1]), rp_cmult(0.5,roi_corner[0]));
   
   /* figure out the radius in each direction */
-  REALPOINT_DIFF(roi_corner[1],roi_corner[0], radius);
-  REALPOINT_CMULT(0.5,radius, radius);
+  radius = rp_cmult(0.5, rp_diff(roi_corner[1],roi_corner[0]));
   
-  /* figure out the height */
+  /* figure out the height, needed by some roi's */
   height = fabs(roi_corner[1].z-roi_corner[0].z);
   
   /* initialize the analysis data structure based on the center of the roi */
   volume_p =  realspace_alt_coord_to_alt(center, roi->coord_frame, volume->coord_frame);
   i = volume_realpoint_to_voxel(volume,volume_p);
-  if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
-  else temp_data = VOLUME_CONTENTS(volume,frame,i);
+  temp_data = (volume_includes_voxel(volume,i)) ? VOLUME_CONTENTS(volume,frame,i) : EMPTY;
 
   /* initialize values */
   analysis.voxels = 0.0; 
@@ -753,7 +751,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 
   /* sanity checks */
   if (roi_undrawn(roi)) {
-    g_warning("%s: roi appears not to have been drawn",PACKAGE);
+    g_warning("%s: ROI: %s appears not to have been drawn",PACKAGE, roi->name);
     return analysis;
   }
 

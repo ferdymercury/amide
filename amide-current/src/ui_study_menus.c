@@ -40,7 +40,6 @@
 #include "ui_study_callbacks.h"
 #include "ui_study_menus.h"
 #include "ui_study_rois_callbacks.h"
-#include "ui_main_callbacks.h"
 
 
 /* function to fill in a radioitem */
@@ -87,6 +86,9 @@ void ui_study_menu_fill_in_end(GnomeUIInfo * item) {
 /* function to setup the menus for the study ui */
 void ui_study_menus_create(ui_study_t * ui_study) {
 
+  view_t i_view;
+  import_method_t i_method;
+
   /* the submenus under the series_type menu */
   GnomeUIInfo import_specific_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Raw Data"),
@@ -110,9 +112,29 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 #endif
     GNOMEUIINFO_END
   };
+
+  GnomeUIInfo export_view_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
+			  N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),
+			  ui_study_callbacks_export,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
+			  N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),
+			  ui_study_callbacks_export,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
+			  N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),
+			  ui_study_callbacks_export,
+			  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
   
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
+    GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Study"), 
+			      N_("Create a new study viewer window"),
+			      ui_study_callbacks_new_study, NULL),
+    GNOMEUIINFO_MENU_OPEN_ITEM(ui_study_callbacks_open_study, NULL),
     GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_callbacks_save_as, ui_study),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(N_("_Import File (guess)"),
@@ -120,8 +142,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  ui_study_callbacks_import, 
 			  ui_study, NULL),
     GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
-			     N_("Import an image data file into this study, specifying the tye import filter"), 
+			     N_("Import an image data file into this study, specifying the import filter"), 
 			     import_specific_menu),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Export View"),
+			     N_("Export one of the views to a data file"),
+			     export_view_menu),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_callbacks_close_event, ui_study),
     GNOMEUIINFO_END
@@ -161,15 +187,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   /* the submenus under the series_type menu */
   GnomeUIInfo series_space_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a series of transaxial images in a single frame"),
+			  N_("Look at a series of transaxial views in a single frame"),
 			  ui_study_callbacks_transverse_series_planes, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a series of coronal images in a single frame"),
+			  N_("Look at a series of coronal views in a single frame"),
 			  ui_study_callbacks_coronal_series_planes, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a series of sagittal images in a single frame"),
+			  N_("Look at a series of sagittal views in a single frame"),
 			  ui_study_callbacks_sagittal_series_planes, 
 			  ui_study, NULL),
     GNOMEUIINFO_END
@@ -177,15 +203,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   GnomeUIInfo series_time_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a times series of a transaxial plane"),
+			  N_("Look at a times series of a single transaxial view"),
 			  ui_study_callbacks_transverse_series_frames, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a time series of a coronal plane"),
+			  N_("Look at a time series of a single coronal view"),
 			  ui_study_callbacks_coronal_series_frames, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a time series of a sagittal plane"),
+			  N_("Look at a time series of a a signal sagittal view"),
 			  ui_study_callbacks_sagittal_series_frames, 
 			  ui_study, NULL),
     GNOMEUIINFO_END
@@ -242,7 +268,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo study_help_menu[]= {
     GNOMEUIINFO_HELP(PACKAGE),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_ABOUT_ITEM(ui_main_callbacks_about, NULL), 
+    GNOMEUIINFO_MENU_ABOUT_ITEM(ui_study_callbacks_about, NULL), 
     GNOMEUIINFO_END
   };
 
@@ -256,10 +282,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  import_method_t i_method;
 
   /* sanity check */
   g_assert(ui_study!=NULL);
+
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
@@ -269,6 +295,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++)
     gtk_object_set_data(GTK_OBJECT(import_specific_menu[i_method-RAW_DATA].widget),
 			"method", GINT_TO_POINTER(i_method));
+
+  for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
+    gtk_object_set_data(GTK_OBJECT(export_view_menu[i_view].widget),
+			"view", GINT_TO_POINTER(i_view));
+  }
+
   return;
 
 }

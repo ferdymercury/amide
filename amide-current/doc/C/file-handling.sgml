@@ -57,7 +57,18 @@
   </para>
 </sect1>
 
-  
+<sect1><title>Exporting a View</title>
+  <para>
+
+    To export one of the views (transverse/coronal/sagittal) to an
+    external image file, select "File->Export View->[view]" from the
+    menu.  The saved data format is determined by the extension of the
+    filename.  A large variety of image data formats can be saved,
+    including JPEG [.jpg], TIFF [.tiff], Postscript [.ps],
+    Encapsulated Postscript [.eps], and PNG [.png].
+
+  </para>
+</sect1>
   
   
   <!-- Keep this comment at the end of the file

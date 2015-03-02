@@ -131,7 +131,7 @@ volume_t * medcon_import(gchar * filename) {
   time_structure.tm_mday = medcon_file_info.study_date_day;
   time_structure.tm_mon = medcon_file_info.study_date_month;
   time_structure.tm_year = medcon_file_info.study_date_year-1900;
-  time_structure.tm_isdst = daylight;
+  time_structure.tm_isdst = -1; /* "-1" is suppose to let the system figure it out, was "daylight"; */
   if (mktime(&time_structure) == -1) { /* do any corrections needed on the time */
     time_t current_time;
     time(&current_time);
@@ -193,10 +193,11 @@ volume_t * medcon_import(gchar * filename) {
 	return temp_volume;
       }
 
+      /* transfer over the medcon buffer, compensate for our origin being bottom left */
       for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
 	for (i.x = 0; i.x < temp_volume->dim.x; i.x++)
 	  VOLUME_SET_CONTENT(temp_volume,t,i) =
-	    medcon_buffer[(temp_volume->dim.x*i.y+i.x)];
+	    medcon_buffer[(temp_volume->dim.x*(temp_volume->dim.y-i.y-1)+i.x)];
     
       /* done with the temporary float buffer */
       g_free(medcon_buffer);

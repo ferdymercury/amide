@@ -34,7 +34,7 @@ typedef struct ui_series_t {
   volume_list_t * volumes;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
-  GdkImlibImage ** rgb_images;
+  GdkPixbuf ** rgb_images;
   guint num_slices, rows, columns;
   realspace_t coord_frame;
   realpoint_t view_point;

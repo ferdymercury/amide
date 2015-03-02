@@ -58,11 +58,11 @@ void ui_series_callbacks_delete_event(GtkWidget* widget, GdkEvent * event,
 
   ui_study_t * ui_study = data;
 
-  /* destroy the widget */
-  gtk_widget_destroy(widget);
-
   /* free the associated data structure */
   ui_study->series = ui_series_free(ui_study->series);
+
+  /* destroy the widget */
+  gtk_widget_destroy(widget);
 
   return;
 }

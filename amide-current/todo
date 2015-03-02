@@ -2,19 +2,26 @@ misc list of things todo:
 
 big things:
 -----------
-
+* aligning of data sets by specifying three points in each
+* add the ability to generate rendered movies over multiple frames of data
 * guppi? interface for drawing graphs of ROI statistics
 	-plotutils instead?
-* upgrade from gdk_imlib to gdk_pixbuf
 * allow looking at only a subset of the data (i.e. cropping)
-* aligning of data sets by specifying three points in each
 * change color compositing to an alpha based method, so that
 	colormaps with white backgrounds can be composited together
 
 small things:
 -------------
-* work on bilinear interpolation : shown by zooming PEM scan to 5, and
-	tilting
+* work around and remove the whole notion of "grains" for roi's
+* add drag-n-drop capabilities between study windows
+* add more interpolation methods when converting volumes for rendering.  currently only
+	nearest neighbor, which doesn't work well when converting non-isometric voxels
+	to the isometric voxels used by volpack
+* add axis indications somewhere, so user knows which way x,y,z is on each canvas 
+	ask Anna how this should be setup....
+* add to documentation 
+	- how to align
+	- rotating in volume dialog rotates around current view center
 * core-dump when trying to create movie with a filename entered via a
 	fileselection dialog.... it's a weird interaction with
 	the fileselection dialog.... like the ui_rendering_movie
@@ -27,7 +34,6 @@ small things:
 * add ability to change material properties, lighting? for rendering
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
-* ui_main delete events should call ui_study_delete_event
 * re-write realspace functions so that a pregenerated inverse matrix can be used
 	also change realspace_function to rs_function
 * continue header file inclusion cleaning-up
@@ -39,6 +45,8 @@ small things:
 
 future things:
 --------------
+* figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
+	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities....
 
 * gtk_spin_button -> multiple value_changed are emitted when the callback takes
 	to long.  This is a gtk+ bug.

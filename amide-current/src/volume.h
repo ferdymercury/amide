@@ -32,7 +32,12 @@
 #include "color_table.h"
 
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
-typedef enum {NEAREST_NEIGHBOR, TWO_BY_TWO, TWO_BY_TWO_BY_TWO, BILINEAR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
+typedef enum {NEAREST_NEIGHBOR, 
+	      TWO_BY_TWO, 
+	      TWO_BY_TWO_BY_TWO, 
+	      //	      BILINEAR, 
+	      TRILINEAR, 
+	      NUM_INTERPOLATIONS} interpolation_t;
 typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
 
 /* setup the types for various internal data formats */
@@ -120,7 +125,7 @@ volume_time_t volume_min_frame_duration(const volume_t * volume);
 volume_list_t * volume_list_free(volume_list_t * volume_list);
 volume_list_t * volume_list_init(void);
 void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * directory);
-volume_list_t * volume_list_load_xml(xmlNodePtr node_list, gchar * directory);
+volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * directory);
 volume_list_t * volume_list_add_reference(volume_list_t * volume_list_element);
 gboolean volume_list_includes_volume(volume_list_t *list, volume_t * vol);
 volume_list_t * volume_list_add_volume(volume_list_t *volume_list, volume_t * vol);

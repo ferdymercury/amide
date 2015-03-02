@@ -1,3 +1,29 @@
+0.4.2
+	* global scaling is now default for new studies
+	* threshold arrows now move better with relation to the cursor
+	* keeps better track of which directory we're current working/saving in
+	* can now export the views as image files (jpeg/tiff/ps/eps/png/etc.)
+	* fixed endian issues with loading in floats and doubles
+	* now ensures save files end with .xif
+	* numerous build chain bugfixes (now compiles and runs on Mac OS X)
+	* rewrote trilinear interpolation (much faster)
+	* dropped bilinear interpolation 
+	  (doing it correctly would be slower then trilinear)
+	* fixed interpolation bug for slices of depth != volume->voxel_size.z
+	* upgraded almost all the program from using gdk_imlib to gdk_pixbuf
+	* changed the origin of our image volume to the far left bottom corner
+	  - world coordinate system is now right handed (this is a good thing)
+	  - new .xif version (y axis now points in opposite direction)
+	  - medcon, idl, and pem inputs also updated
+	  - many many updates to make this change work
+	* elimination of several unneeded and confusing realspace functions
+	* got rid of the "main" window 
+	* changes with command line parsing, no longer use "-i" to specify the
+	  input file.  Also can specify multiple input files
+	* fixed a long standing problem with destroying already dereferenced
+	  roi_item canvas objects - thanks to awu
+	* updated config.guess, config.sub, libtool, etc.
+	
 0.4.1
 	* MPEG-1 movie generation capabilities added.  Currently, all output
 	  files are saved as "out.mpg", due to an obscure gtk? bug.
@@ -20,8 +46,6 @@
 	* fixed stupid bug in rendering_context_free()
 	* rendering parameters dialog changes now make more sense
 	* did a first-draft of user documentation for rendering 
-	
-	
 	
 0.3.5
 	* added Hot Blue/Hot Green colormaps

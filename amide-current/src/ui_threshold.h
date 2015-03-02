@@ -40,9 +40,11 @@ typedef struct ui_threshold_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
   GnomeCanvas * color_strip;
   GnomeCanvasItem * color_strip_image;
+  GdkPixbuf * color_strip_rgb_image;
   GnomeCanvasItem * min_arrow;
   GnomeCanvasItem * max_arrow;
   GnomeCanvasItem * bar_graph_item;
+  GdkPixbuf * bar_graph_rgb_image;
   GtkWidget * name_label;
   GtkWidget * max_percentage;
   GtkWidget * max_absolute;

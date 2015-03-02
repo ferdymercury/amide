@@ -279,7 +279,7 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
   ui_study_t * ui_study;
   volume_t * volume_new_info = data;
   view_t i_view;
-  axis_t which_axis;
+  axis_t i_axis;
   floatpoint_t rotation;
   GtkWidget * volume_dialog;
   realpoint_t center, temp;
@@ -295,23 +295,15 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
 
-  /* compensate for the fact that our view of coronal is flipped wrt to x,y,z axis */
-  if (i_view == CORONAL)
+  /* compensate for sagittal being a left-handed coordinate frame */
+  if (i_view == SAGITTAL)
     rotation = -rotation; 
 
-  which_axis = realspace_get_orthogonal_which_axis(i_view);
-  volume_new_info->coord_frame.axis[XAXIS] = 
-    realspace_rotate_on_axis(volume_new_info->coord_frame.axis[XAXIS],
-			     study_coord_frame_axis(ui_study->study, which_axis),
-			     rotation);
-  volume_new_info->coord_frame.axis[YAXIS] = 
-    realspace_rotate_on_axis(volume_new_info->coord_frame.axis[YAXIS],
-			     study_coord_frame_axis(ui_study->study, which_axis),
-			     rotation);
-  volume_new_info->coord_frame.axis[ZAXIS] = 
-    realspace_rotate_on_axis(volume_new_info->coord_frame.axis[ZAXIS],
-			     study_coord_frame_axis(ui_study->study, which_axis),
-			     rotation);
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
+    volume_new_info->coord_frame.axis[i_axis] = 
+      realspace_rotate_on_axis(volume_new_info->coord_frame.axis[i_axis],
+			       realspace_get_view_normal(study_coord_frame_axis(ui_study->study), i_view),
+			       rotation);
   realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
 
   

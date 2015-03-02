@@ -168,6 +168,8 @@ volume_t * cti_import(gchar * cti_filename) {
 	  (((Image_subheader*)cti_subheader->shptr)->frame_duration)/1000;
 
 	/* copy the data into the volume */
+	/* note, we compensate here for the fact that we define our origin as the bottom left,
+	   not top left like the CTI file */
 	for (i.z = slice*(temp_volume->dim.z/num_slices); 
 	     i.z < temp_volume->dim.z/num_slices + slice*(temp_volume->dim.z/num_slices) ; 
 	     i.z++)
@@ -177,7 +179,8 @@ volume_t * cti_import(gchar * cti_filename) {
 		cti_slice->scale_factor *
 		*(((gint16 *) cti_slice->data_ptr) + 
 		  (temp_volume->dim.y*temp_volume->dim.x*(i.z-slice*(temp_volume->dim.z/num_slices))
-		   +temp_volume->dim.x*i.y+i.x));
+		   +temp_volume->dim.x*(temp_volume->dim.y-i.y-1)
+		   +i.x));
 	/* that guint16 might have to be changed according to the data.... */
 	free_matrix_data(cti_slice);
       }

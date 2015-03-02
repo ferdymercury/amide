@@ -228,34 +228,72 @@ volume_t * raw_data_read_file(gchar * file_name,
 	
     case DOUBLE_BE: 
       {
-	gdouble * data=file_buffer;
-	  
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+	guint64 * data = file_buffer;
+	guint64 temp;
+	gdouble * double_p;
+#else
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+	gdouble * data = file_buffer;
+#else
+#error "need to specify G_BIG_ENDIAN or G_LITTLE_ENDIAN"	
+#endif
+#endif
+
 	/* copy this frame into the volume */
 	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
-		AMIDE_DOUBLE_FROM_BE(data[i.x + 
+	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+	      temp = 
+		GUINT64_FROM_BE(data[i.x + 
 				    raw_data_volume->dim.x*i.y +
 				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
 				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
-	
-      } 
+	      double_p = (void *) &temp;
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *double_p;
+#else /* G_BIG_ENDIAN */
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+		data[i.x + 
+		    raw_data_volume->dim.x*i.y +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+
+#endif
+              }
+      }
       break;
     case FLOAT_BE:
       {
-	gfloat * data=file_buffer;
-	  
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+	guint32 * data = file_buffer;
+	guint32 temp;
+	gfloat * float_p;
+#else /* (G_BYTE_ORDER == G_BIG_ENDIAN) */
+	gfloat * data = file_buffer;
+#endif
+
 	/* copy this frame into the volume */
 	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
-		AMIDE_FLOAT_FROM_BE(data[i.x + 
+	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+	      temp = 
+		GUINT32_FROM_BE(data[i.x + 
 				    raw_data_volume->dim.x*i.y +
 				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
 				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
-	  
+	      float_p = (void *) &temp;
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *float_p;
+#else /* G_BIG_ENDIAN */
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+		data[i.x + 
+		    raw_data_volume->dim.x*i.y +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+
+#endif
+	    }
       }
       break;
     case SINT_BE:
@@ -322,38 +360,84 @@ volume_t * raw_data_read_file(gchar * file_name,
 
       }
       break;
+
+
+
+
     case DOUBLE_LE:
       {
-	gdouble * data=file_buffer;
-	  
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+	guint64 * data = file_buffer;
+	guint64 temp;
+	gdouble * double_p;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+	gdouble * data = file_buffer;
+#endif
+
 	/* copy this frame into the volume */
 	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
+	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+	      temp = 
+		GUINT64_FROM_LE(data[i.x + 
+				    raw_data_volume->dim.x*i.y +
+				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+	      double_p = (void *) &temp;
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *double_p;
+#else /* G_LITTLE_ENDIAN */
 	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
-		AMIDE_DOUBLE_FROM_LE(data[i.x + 
-					 raw_data_volume->dim.x*i.y +
-					 raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-					 raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+		data[i.x + 
+		    raw_data_volume->dim.x*i.y +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
 
+#endif
+               }
       }
       break;
+
+
+
+
     case FLOAT_LE:
       {
-	gfloat * data=file_buffer;
-	
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+	guint32 * data = file_buffer;
+	guint32 temp;
+	gfloat * float_p;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+	gfloat * data = file_buffer;
+#endif
+
 	/* copy this frame into the volume */
 	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
+	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+	      temp = 
+		GUINT32_FROM_LE(data[i.x + 
+				    raw_data_volume->dim.x*i.y +
+				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+	      float_p = (void *) &temp;
+	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *float_p;
+#else /* G_LITTLE_ENDIAN */
 	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
-		AMIDE_FLOAT_FROM_LE(data[i.x + 
-					raw_data_volume->dim.x*i.y +
-					raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-					raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
-	
+		data[i.x + 
+		    raw_data_volume->dim.x*i.y +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
+		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+
+#endif
+	    }
       }
       break;
+
+
+
+
     case SINT_LE:
       {
 	gint32 * data=file_buffer;

@@ -47,7 +47,10 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
   ui_threshold_t * ui_threshold = data;
   ui_study_t * ui_study;
   gdouble item_x, item_y;
-  GdkCursor * cursor;
+  gdouble delta;
+  static gdouble initial_y;
+  static volume_data_t initial_threshold_min;
+  static volume_data_t initial_threshold_max;
   volume_data_t temp;
   volume_t * volume;
   which_threshold_widget_t which_threshold_widget;
@@ -69,23 +72,29 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
   switch (event->type)
     {
     case GDK_BUTTON_PRESS:
-      cursor = gdk_cursor_new(GDK_SB_V_DOUBLE_ARROW);
-      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
-			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			     cursor,
-			     event->button.time);
-      gdk_cursor_destroy(cursor);
+      initial_y = item_y;
+      switch (which_threshold_widget)
+	{
+	case MAX_ARROW:
+	  initial_threshold_max = volume->threshold_max;
+	  break;
+	case MIN_ARROW:
+	default:
+	  initial_threshold_min = volume->threshold_min;
+	  break;
+	}
       break;
 
     case GDK_MOTION_NOTIFY:
+      delta = initial_y - item_y;
       if (event->motion.state & GDK_BUTTON1_MASK) {
-	temp = ((UI_THRESHOLD_COLOR_STRIP_HEIGHT - item_y) /
-		UI_THRESHOLD_COLOR_STRIP_HEIGHT) *
+	delta = (delta / ((gdouble) UI_THRESHOLD_COLOR_STRIP_HEIGHT)) *
 	  (volume->max - volume->min)+volume->min;
 
 	switch (which_threshold_widget) 
 	  {
 	  case MAX_ARROW:
+	    temp = initial_threshold_max + delta;
 	    if (temp <= volume->threshold_min) 
 	      temp = volume->threshold_min;
 	    if (temp < 0.0)
@@ -94,6 +103,7 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
 	    break;
 	  case MIN_ARROW:
 	  default:
+	    temp = initial_threshold_min + delta;
 	    if (temp < volume->min) 
 	      temp = volume->min;
 	    if (temp >= volume->threshold_max)

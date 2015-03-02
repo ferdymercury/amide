@@ -48,7 +48,7 @@ void ui_series_slices_free(ui_series_t * ui_series) {
   for (i=0; i < ui_series->num_slices; i++) {
     ui_series->slices[i] = volume_list_free(ui_series->slices[i]);
     if (ui_series->rgb_images[i] != NULL)
-      gnome_canvas_destroy_image(ui_series->rgb_images[i]);
+      gdk_pixbuf_unref(ui_series->rgb_images[i]);
   }
   g_free(ui_series->slices);
   ui_series->slices = NULL;
@@ -77,6 +77,7 @@ ui_series_t * ui_series_free(ui_series_t * ui_series) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_series\n");
 #endif
+    g_free(ui_series->rgb_images);
     g_free(ui_series->images);
     g_free(ui_series);
     ui_series = NULL;
@@ -163,6 +164,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   GdkWindow * parent=NULL;
   realspace_t view_coord_frame;
   realpoint_t view_corner[2];
+  gint rgb_width, rgb_height;
 
 
   /* push our desired cursor onto the cursor stack */
@@ -192,8 +194,6 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   view_start = view_corner[0].z;
   time_start = volume_list_start_time(ui_study->series->volumes);
   time_end = volume_list_end_time(ui_study->series->volumes);
-  g_print("temp_start %5.3f time_end %5.3f duration %5.3f\n",time_start, time_end, 
-	  ui_study->series->view_duration);
   if (ui_study->series->type == PLANES)
     ui_study->series->num_slices = ceil((view_end-view_start)/ui_study->series->thickness);
   else /* FRAMES */
@@ -214,9 +214,9 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   /* allocate space for pointers to our rgb_images if needed */
   if (ui_study->series->rgb_images == NULL) {
     if ((ui_study->series->rgb_images = 
-	 (GdkImlibImage **) g_malloc(sizeof(GdkImlibImage *)*ui_study->series->num_slices)) 
+	 (GdkPixbuf **) g_malloc(sizeof(GdkPixbuf *)*ui_study->series->num_slices)) 
 	== NULL) {
-      g_warning("%s: couldn't allocate space for pointers to GdkImlibImage's",
+      g_warning("%s: couldn't allocate space for pointers to GdkPixbuf's",
 		PACKAGE);
       return;
     }
@@ -228,7 +228,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
      of an image (needed for computing the rows and columns portions
      of the ui_series data structure */
   if (ui_study->series->rgb_images[0] != NULL) 
-    gnome_canvas_destroy_image(ui_study->series->rgb_images[0]);
+    gdk_pixbuf_unref(ui_study->series->rgb_images[0]);
 
   temp_point = ui_study->series->view_point;
   temp_time =  ui_study->series->view_time;
@@ -248,16 +248,19 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 		       study_scaling(ui_study->study),
 		       ui_study->series->zoom,
 		       ui_study->series->interpolation);
+  rgb_width = gdk_pixbuf_get_width(ui_study->series->rgb_images[0]);
+  rgb_height = gdk_pixbuf_get_height(ui_study->series->rgb_images[0]);
+
 
   /* allocate space for pointers to our canvas_images if needed */
   if (ui_study->series->images == NULL) {
     /* figure out how many images we can display at once */
     ui_study->series->columns = 
-      floor(width/ui_study->series->rgb_images[0]->rgb_width);
+      floor(width/rgb_width);
     if (ui_study->series->columns < 1)
       ui_study->series->columns = 1;
     ui_study->series->rows = 
-      floor(height/ui_study->series->rgb_images[0]->rgb_height);
+      floor(height/rgb_height);
     if (ui_study->series->rows < 1)
       ui_study->series->rows = 1;
     if ((ui_study->series->images = 
@@ -304,11 +307,9 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
     view_coord_frame = ui_study->series->coord_frame;
     view_coord_frame.offset = realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame);
 
-    g_print("temp time %5.3f duration %5.3f\n",temp_time+CLOSE, ui_study->series->view_duration-CLOSE);
-    
     if (i != 0) /* we've already done image 0 */
       if (ui_study->series->rgb_images[i] != NULL)
-	gnome_canvas_destroy_image(ui_study->series->rgb_images[i]);
+	gdk_pixbuf_unref(ui_study->series->rgb_images[i]);
     
     if (i != 0) /* we've already done image 0 */
       ui_study->series->rgb_images[i] = 
@@ -324,33 +325,28 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
     
     /* figure out the next x,y spot to put this guy */
     y = floor((i-start_i)/ui_study->series->columns)
-      *ui_study->series->rgb_images[i]->rgb_height;
+      *rgb_height;
     x = (i-start_i-ui_study->series->columns
 	 *floor((i-start_i)/ui_study->series->columns))*
-      ui_study->series->rgb_images[i]->rgb_width;
+      rgb_width;
     
     if (ui_study->series->images[i-start_i] == NULL) 
       ui_study->series->images[i-start_i] =
 	gnome_canvas_item_new(gnome_canvas_root(ui_study->series->canvas),
-			      gnome_canvas_image_get_type(),
-			      "image", ui_study->series->rgb_images[i],
+			      gnome_canvas_pixbuf_get_type(),
+			      "pixbuf", ui_study->series->rgb_images[i],
 			      "x", x,
 			      "y", y,
-			      "anchor", GTK_ANCHOR_NORTH_WEST,
-			      "width", 
-			      (double) ui_study->series->rgb_images[i]->rgb_width,
-			      "height", 
-			      (double) ui_study->series->rgb_images[i]->rgb_height,
 			      NULL);
     else
       gnome_canvas_item_set(ui_study->series->images[i-start_i],
-			    "image", ui_study->series->rgb_images[i],
+			    "pixbuf", ui_study->series->rgb_images[i],
 			    NULL);
   }
 
   /* readjust widith and height for what we really used */
-  width = ui_study->series->columns*ui_study->series->rgb_images[0]->rgb_width;
-  height =ui_study->series->rows   *ui_study->series->rgb_images[0]->rgb_height;
+  width = ui_study->series->columns*rgb_width;
+  height =ui_study->series->rows   *rgb_height;
 
 
   /* reset the min size of the widget */
@@ -418,7 +414,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) 
 
   /* save the coord_frame of the series */
   ui_study->series->coord_frame = 
-    realspace_get_orthogonal_coord_frame(study_coord_frame(ui_study->study), view);
+    realspace_get_view_coord_frame(study_coord_frame(ui_study->study), view);
   ui_study->series->view_point = 
     realspace_alt_coord_to_alt(study_view_center(ui_study->study),
 			       study_coord_frame(ui_study->study),

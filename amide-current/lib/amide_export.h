@@ -29,6 +29,7 @@
 void amide_study_set_name(GtkWidget * amide_widget,  gchar * new_name);
 void amide_study_set_subject_age(GtkWidget * amide_widget,  gchar * new_age);
 void amide_study_set_interpolation_bilinear(GtkWidget * amide_widget);
+void amide_study_set_interpolation_trilinear(GtkWidget * amide_widget);
 void amide_study_set_scaling_global(GtkWidget * amide_widget);
 void amide_study_set_zoom(GtkWidget * amide_widget, gfloat zoom);
 void amide_study_save(GtkWidget * amide_widget);

@@ -173,7 +173,7 @@ void ui_rendering_movie_dialog_callbacks_apply(GtkWidget* widget, gint page_numb
   if (page_number != -1)
     return;
 
-  g_print("-1 num_frames %d\n",ui_rendering_movie->num_frames);
+  //  g_print("-1 num_frames %d\n",ui_rendering_movie->num_frames);
 
   /* the rest of this function runs the file selection dialog box */
   file_selection = gtk_file_selection_new(_("Output MPEG As"));
@@ -183,7 +183,7 @@ void ui_rendering_movie_dialog_callbacks_apply(GtkWidget* widget, gint page_numb
     g_strdup_printf("%s.mpg", 
 		    ui_rendering_movie->ui_rendering->contexts->rendering_context->volume->name);
   gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
-  //  g_free(temp_string); 
+  g_free(temp_string); 
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
@@ -192,7 +192,7 @@ void ui_rendering_movie_dialog_callbacks_apply(GtkWidget* widget, gint page_numb
   gtk_object_set_data(GTK_OBJECT(file_selection), "ui_rendering_movie", ui_rendering_movie);
   g_print("pointer %p\n", ui_rendering_movie);
 
-  g_print("0 num_frames %d\n",ui_rendering_movie->num_frames);
+  //  g_print("0 num_frames %d\n",ui_rendering_movie->num_frames);
 
   /* connect the signals */
   gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),

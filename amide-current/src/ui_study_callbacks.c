@@ -60,6 +60,85 @@ void ui_study_callbacks_file_selection_cancel(GtkWidget* widget, gpointer data) 
 }
 
 
+/* function to handle loading in an AMIDE study */
+static void ui_study_callbacks_open_ok(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  gchar * open_filename;
+  struct stat file_info;
+  study_t * study;
+
+  /* get the filename */
+  open_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
+  /* check to see that the filename exists and it's a directory */
+  if (stat(open_filename, &file_info) != 0) {
+    g_warning("%s: AMIDE study %s does not exist",PACKAGE, open_filename);
+    return;
+  }
+  if (!S_ISDIR(file_info.st_mode)) {
+    g_warning("%s: %s is not a directory/AMIDE study",PACKAGE, open_filename);
+    return;
+  }
+
+  /* try loading the study into memory */
+  if ((study=study_load_xml(open_filename)) == NULL) {
+    g_warning("%s: error loading study: %s",PACKAGE, open_filename);
+    return;
+  }
+
+  /* close the file selection box */
+  ui_study_callbacks_file_selection_cancel(widget, file_selection);
+
+  /* setup the study window */
+  ui_study_create(study, NULL);
+
+  return;
+}
+
+
+/* function to load a study into a  study widget w*/
+void ui_study_callbacks_open_study(GtkWidget * button, gpointer data) {
+
+  GtkWidget * file_selection;
+
+  file_selection = gtk_file_selection_new(_("Open AMIDE File"));
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_open_ok),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
+		     "delete_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(file_selection);
+
+  return;
+}
+  
+
+/* function to create a new study widget */
+void ui_study_callbacks_new_study(GtkWidget * button, gpointer data) {
+
+  ui_study_create(NULL, NULL);
+
+  return;
+}
+
 /* function to handle saving */
 static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
 
@@ -67,11 +146,14 @@ static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
   GtkWidget * question;
   ui_study_t * ui_study;
   gchar * save_filename;
+  gchar * prev_filename;
   gchar * temp_string;
   struct stat file_info;
   DIR * directory;
   mode_t mode = 0766;
   struct dirent * directory_entry;
+  gchar ** frags1=NULL;
+  gchar ** frags2=NULL;
 
   /* get a pointer to ui_study */
   ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
@@ -87,6 +169,20 @@ static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
     g_warning("%s: Inappropriate filename: %s",PACKAGE, save_filename);
     return;
   }
+
+  /* make sure the filename ends with .xif */
+  g_strreverse(save_filename);
+  frags1 = g_strsplit(save_filename, ".", 2);
+  g_strreverse(save_filename);
+  g_strreverse(frags1[0]);
+  frags2 = g_strsplit(frags1[0], "/", -1);
+  if (g_strcasecmp(frags2[0], "xif") != 0) {
+    prev_filename = save_filename;
+    save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
+    g_free(prev_filename);
+  }    
+  g_strfreev(frags2);
+  g_strfreev(frags1);
 
   /* see if the filename already exists */
   if (stat(save_filename, &file_info) == 0) {
@@ -305,6 +401,168 @@ void ui_study_callbacks_import(GtkWidget * widget, gpointer data) {
 }
 
 
+/* function to handle exporting a view */
+static void ui_study_callbacks_export_ok(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  GtkWidget * question;
+  ui_study_t * ui_study;
+  gchar * save_filename;
+  gchar * temp_string;
+  struct stat file_info;
+  GdkPixbuf * rgb_image;
+  GdkImlibImage * export_image;
+  guchar * pixels;
+  view_t  view;
+
+  /* get a pointer to ui_study */
+  ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
+
+  /* get the filename */
+  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
+  /* figure out which view we're saving */
+  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(file_selection), "view"));
+
+  /* some sanity checks */
+  if ((strcmp(save_filename, ".") == 0) ||
+      (strcmp(save_filename, "..") == 0) ||
+      (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "/") == 0)) {
+    g_warning("%s: Inappropriate filename: %s",PACKAGE, save_filename);
+    return;
+  }
+
+  /* see if the filename already exists */
+  if (stat(save_filename, &file_info) == 0) {
+    /* check if it's okay to writeover the file */
+    temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
+    if (GNOME_IS_APP(ui_study->app))
+      question = gnome_question_dialog_modal_parented(temp_string, NULL, NULL, 
+						      GTK_WINDOW(ui_study->app));
+    else
+      question = gnome_question_dialog_modal(temp_string, NULL, NULL);
+    g_free(temp_string);
+
+    /* and wait for the question to return */
+    if (gnome_dialog_run_and_close(GNOME_DIALOG(question)) == 1)
+      return; /* we don't want to overwrite the file.... */
+  }
+
+  /* need to get a pointer to the pixels that we're going to save */
+  rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
+  pixels = gdk_pixbuf_get_pixels(rgb_image);
+
+  /* yep, we still need to use imlib for the moment for generating output images,
+     maybe gdk_pixbuf will have this functionality at some point */
+  export_image = gdk_imlib_create_image_from_data(pixels, NULL, 
+						  gdk_pixbuf_get_width(rgb_image),
+						  gdk_pixbuf_get_height(rgb_image));
+  if (export_image == NULL) {
+    g_warning("%s: Failure converting pixbuf to imlib image for exporting image file",PACKAGE);
+    return;
+  }
+
+  /* allright, export the view */
+  if (gdk_imlib_save_image(export_image, save_filename, NULL) == FALSE) {
+    g_warning("%s: Failure Saving File: %s",PACKAGE, save_filename);
+    gdk_imlib_destroy_image(export_image);
+    return;
+  }
+  gdk_imlib_destroy_image(export_image);
+
+  /* close the file selection box */
+  ui_study_callbacks_file_selection_cancel(widget, file_selection);
+
+  return;
+}
+
+/* function to save a view as an external data format */
+void ui_study_callbacks_export(GtkWidget * widget, gpointer data) {
+  
+  ui_study_t * ui_study = data;
+  ui_volume_list_t * current_volumes;
+  GtkFileSelection * file_selection;
+  gchar * temp_string;
+  gchar * data_set_names = NULL;
+  view_t view;
+  floatpoint_t upper, lower;
+  realpoint_t view_center;
+  realpoint_t temp_p;
+  realspace_t * canvas_coord_frame;
+
+  /* sanity checks */
+  if (study_volumes(ui_study->study) == NULL)
+    return;
+  if (ui_study->current_volume == NULL)
+    return;
+  if (ui_study->current_volumes == NULL)
+    return;
+
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
+  canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
+
+  /* get the center */
+  view_center = study_view_center(ui_study->study);
+  /* translate the point so that the z coordinate corresponds to depth in this view */
+  temp_p = realspace_alt_coord_to_alt(view_center,
+				      study_coord_frame(ui_study->study),
+				      *canvas_coord_frame);
+
+  /* figure out the top and bottom of this slice */
+  upper = temp_p.z + study_view_thickness(ui_study->study)/2.0;
+  lower = temp_p.z - study_view_thickness(ui_study->study)/2.0;
+
+  /* take a guess at the filename */
+  current_volumes = ui_study->current_volumes;
+  data_set_names = g_strdup(current_volumes->volume->name);
+  current_volumes = current_volumes->next;
+  while (current_volumes != NULL) {
+    temp_string = g_strdup_printf("%s+%s",data_set_names, current_volumes->volume->name);
+    g_free(data_set_names);
+    data_set_names = temp_string;
+    current_volumes = current_volumes->next;
+  }
+  temp_string = g_strdup_printf("%s_{%s}_%s:%3.1f-%3.1f.jpg", 
+				study_name(ui_study->study),
+				data_set_names,
+				view_names[view],
+				lower,
+				upper);
+  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  g_free(data_set_names);
+  g_free(temp_string); 
+
+  /* save a pointer to ui_study, and record which view we're saving*/
+  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
+  gtk_object_set_data(GTK_OBJECT(file_selection), "view", GINT_TO_POINTER(view));
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_export_ok),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "delete_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(GTK_WIDGET(file_selection));
+
+  return;
+}
 
 /* callback generally attached to the entry_notify_event */
 gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossing * event,
@@ -345,17 +603,18 @@ gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossin
 gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
-  realpoint_t real_loc, view_loc, temp_loc, p0, p1;
+  realpoint_t real_loc, view_loc, canvas_loc, p0, p1;
   view_t i_view, view;
   axis_t i_axis;
   realpoint_t item, diff;
   volume_t * volume;
   guint32 outline_color;
-  realspace_t * canvas_coord_frame[NUM_VIEWS];
-  realpoint_t * canvas_far_corner[NUM_VIEWS];
-  GdkImlibImage * rgb_image;
+  realspace_t * canvas_coord_frame_p;
+  realpoint_t * canvas_far_corner_p;
+  GdkPixbuf * rgb_image;
+  gint rgb_width, rgb_height;
   GnomeCanvas * canvas;
-  GnomeCanvasItem * canvas_image;
+  GnomeCanvasPixbuf * canvas_image;
   GnomeCanvasPoints * align_line_points;
   static realpoint_t picture_center,picture0,picture1;
   static realpoint_t center;
@@ -385,30 +644,29 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
   item.x = event->button.x;
   item.y = event->button.y;
   canvas_image = gtk_object_get_data(GTK_OBJECT(canvas), "canvas_image");
-  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(canvas_image)->parent, &item.x, &item.y);
+  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(canvas_image), &item.x, &item.y);
 
   /* figure out which canvas called this (transverse/coronal/sagittal)*/
   view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(canvas), "view"));
 
-  /* get the coordinate frame and the far corner for each of the canvases, 
-     the canvas_corner is in the canvas_coord_frame */
-  for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
-    canvas_coord_frame[i_view] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "coord_frame");
-    canvas_far_corner[i_view] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "far_corner");
-  }
+  /* get the coordinate frame and the far corner for the canvas */
+  canvas_coord_frame_p = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
+  canvas_far_corner_p = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "far_corner");
 
   /* need the heigth and width of the rgb_image */
   rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
+  rgb_width = gdk_pixbuf_get_width(rgb_image);
+  rgb_height = gdk_pixbuf_get_height(rgb_image);
 
   /* convert the event location to view space units */
-  temp_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)
-		/rgb_image->rgb_width)*(*canvas_far_corner[view]).x;
-  temp_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
-		/rgb_image->rgb_height)*(*canvas_far_corner[view]).y;
-  temp_loc.z = study_view_thickness(ui_study->study)/2.0;
+  canvas_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)
+		/rgb_width)*(*canvas_far_corner_p).x;
+  canvas_loc.y = ((rgb_height - (item.y-UI_STUDY_TRIANGLE_HEIGHT))
+		/rgb_height)*(*canvas_far_corner_p).y;
+  canvas_loc.z = study_view_thickness(ui_study->study)/2.0;
 
   /* Convert the event location info to real units */
-  real_loc = realspace_alt_coord_to_base(temp_loc, *canvas_coord_frame[view]); 
+  real_loc = realspace_alt_coord_to_base(canvas_loc, *canvas_coord_frame_p); 
   view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
 
   /* switch on the event which called this */
@@ -455,7 +713,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 	  
 	  
 	  /* save the center of our object in static variables for future use */
-	  center = real_loc;
+	  center = canvas_loc;
 	  picture_center = picture0 = picture1 = item;
 	  switch(ui_study->current_roi->type) 
 	    {
@@ -543,9 +801,9 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 	  if ( roi_undrawn(ui_study->current_roi)) {
 	    /* only new roi's handled in this function, old ones handled by
 	       ui_study_rois_callbacks_roi_event */
-	    REALPOINT_DIFF(picture_center, item, diff);
-	    REALPOINT_SUB(picture_center, diff, picture0);
-	    REALPOINT_ADD(picture_center, diff, picture1);
+	    diff = rp_diff(picture_center, item);
+	    picture0 = rp_sub(picture_center, diff);
+	    picture1 = rp_add(picture_center, diff);
 	    gnome_canvas_item_set(new_roi, 
 				  "x1", picture0.x, "y1", picture0.y,
 				  "x2", picture1.x, "y2", picture1.y,NULL);
@@ -592,37 +850,26 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 	  gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_image), event->button.time);
 	  dragging = FALSE;
 	  
-	  REALPOINT_DIFF(center, real_loc, diff);
-	  
-	  switch (view)
-	    {
-	    case TRANSVERSE:
-	      diff.z = study_view_thickness(ui_study->study)/2.0;
-	      break;
-	    case CORONAL:
-	      diff.y = study_view_thickness(ui_study->study)/2.0;
-	      break;
-	    case SAGITTAL:
-	    default:
-	      diff.x = study_view_thickness(ui_study->study)/2.0;
-	      break;
-	    }
-	  
-	  REALPOINT_SUB(center, diff, p0);
-	  REALPOINT_ADD(center, diff, p1);
+	  diff = rp_diff(center, canvas_loc);
+	  diff.z = study_view_thickness(ui_study->study)/2.0;
+
+	  p0 = rp_sub(center, diff);
+	  p1 = rp_add(center, diff);
 
 	  /* get ride of the roi drawn on the canvas */
 	  gtk_object_destroy(GTK_OBJECT(new_roi));
 	  
 	  /* let's save the info */
 	  /* we'll save the coord frame and offset of the roi */
-	  ui_study->current_roi->coord_frame.offset = p0;
+	  ui_study->current_roi->coord_frame.offset = realspace_alt_coord_to_base(p0, *canvas_coord_frame_p);
 	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-	    ui_study->current_roi->coord_frame.axis[i_axis] = (*canvas_coord_frame[view]).axis[i_axis];
+	    ui_study->current_roi->coord_frame.axis[i_axis] = (*canvas_coord_frame_p).axis[i_axis];
 
 	  /* and set the far corner of the roi */
+	  p1 = realspace_alt_coord_to_base(p1, *canvas_coord_frame_p);
 	  ui_study->current_roi->corner = 
-	    realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame);
+	    rp_abs(realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame));
+	  
 	  
 	  /* and save any roi type specfic info */
 	  switch(ui_study->current_roi->type) {
@@ -648,18 +895,18 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 	    if (event->button.button == 3) { /* we want to act on our changes */
 	      floatpoint_t rotation;
 	      ui_volume_list_t * temp_list = ui_study->current_volumes;
-	      axis_t which_axis;
+	      axis_t i_axis;
 	      realpoint_t volume_center, real_center;
 
 	      /* figure out how many degrees we've rotated */
 	      diff = rp_sub(picture1, picture0);
 	      if (align_vertical)
-		rotation = atan(diff.x/diff.y);
+		rotation = -atan(diff.x/diff.y);
 	      else
-		rotation = -atan(diff.y/diff.x);
+		rotation = atan(diff.y/diff.x);
 	      
-	      /* compensate for the fact that our view of coronal is flipped wrt to x,y,z axis */
-	      if (view == CORONAL) 
+	      /* compensate for sagittal being a left-handed coordinate frame */
+	      if (view == SAGITTAL) 
 		rotation = -rotation; 
 
 	      /* rotate all the currently displayed volumes */
@@ -672,20 +919,12 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 		volume_center = realspace_base_coord_to_alt(real_center,
 							    temp_list->volume->coord_frame);
 
-		which_axis = realspace_get_orthogonal_which_axis(view);
-
-		temp_list->volume->coord_frame.axis[XAXIS] = 
-		  realspace_rotate_on_axis(temp_list->volume->coord_frame.axis[XAXIS],
-					   study_coord_frame_axis(ui_study->study, which_axis),
-					   rotation);
-		temp_list->volume->coord_frame.axis[YAXIS] = 
-		  realspace_rotate_on_axis(temp_list->volume->coord_frame.axis[YAXIS],
-					   study_coord_frame_axis(ui_study->study, which_axis),
-					   rotation);
-		temp_list->volume->coord_frame.axis[ZAXIS] = 
-		  realspace_rotate_on_axis(temp_list->volume->coord_frame.axis[ZAXIS],
-					   study_coord_frame_axis(ui_study->study, which_axis),
-					   rotation);
+		for (i_axis = 0; i_axis < NUM_AXIS ; i_axis++)
+		  temp_list->volume->coord_frame.axis[i_axis] = 
+		    realspace_rotate_on_axis(temp_list->volume->coord_frame.axis[i_axis],
+					     realspace_get_view_normal(study_coord_frame_axis(ui_study->study),
+								       view),
+					     rotation);
 		realspace_make_orthonormal(temp_list->volume->coord_frame.axis); /* orthonormalize*/
   
 		/* recalculate the offset of this volume based on the center we stored */
@@ -1036,8 +1275,7 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
 }
 
 
-/* callback used when a leaf is clicked on, 
-   this handles double-clicks, middle clicks, and right clicks  */
+/* callback used when a leaf is clicked on, this handles all clicks */
 void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
 
   ui_study_t * ui_study = data;
@@ -1047,130 +1285,93 @@ void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * eve
   GtkWidget * subtree;
   GtkWidget * study_leaf;
   realpoint_t roi_center;
+  gboolean make_active = FALSE;
+  gboolean unselect = FALSE;
+  gboolean select = FALSE;
+  gboolean popup_dialog = FALSE;
+  gboolean popup_study_dialog = FALSE;
+  view_t i_view;
+  GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
 
+  /* do any events pending, this allows the select state of the 
+     leaf to get updated correctly with double clicks*/
+  while (gtk_events_pending()) 
+    gtk_main_iteration();
 
-  if ((event->type == GDK_BUTTON_PRESS) && (event->button == 1))
-    return; /* the select callback handles this case */
+  /* decode the event, and figure out what we gotta do */
+  switch (event->button) {
 
-  object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(leaf), "type"));
-
-  switch(object_type) {
-
-  case UI_STUDY_TREE_VOLUME:
-    volume = gtk_object_get_data(GTK_OBJECT(leaf), "object");
-
-
-    if ((event->button == 1) || (event->button == 2)) {
-      ui_study->current_mode = VOLUME_MODE;
-      ui_study->current_volume = volume;
-
-      /* make sure it's already selected */
-      if ((GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) && (event->type != GDK_2BUTTON_PRESS)) {
-	study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
-	subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
-	gtk_tree_select_child(GTK_TREE(subtree), leaf); 
+  case 1: /* left button */
+    if (event->type == GDK_2BUTTON_PRESS) {
+      make_active = TRUE;
+      if (GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) {
+      	select = TRUE;
+      	study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+      	subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+      	gtk_tree_select_child(GTK_TREE(subtree), leaf); 
       }
-
-      /* reset the threshold widget based on the current volume */
-      if (ui_study->threshold != NULL) 
-	ui_threshold_dialog_update(ui_study);
-
-      /* indicate this is now the active object */
-      ui_study_tree_update_active_leaf(ui_study, leaf);
-
-    } else {/* event.button == 3 */
-      ui_volume_dialog_create(ui_study, volume); /* start up the volume dialog */
-    }
-    break;
-
-
-  case UI_STUDY_TREE_ROI:
-    roi = gtk_object_get_data(GTK_OBJECT(leaf), "object");
-
-    if ((event->button == 1) || (event->button == 2)) {
-      ui_study->current_mode = ROI_MODE;
-      ui_study->current_roi = roi;
-
-      /* make sure it's already selected */
-      if ((GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) && (event->type != GDK_2BUTTON_PRESS)) {
-	study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
-	subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
-	gtk_tree_select_child(GTK_TREE(subtree), leaf); 
-      }
-
-      /* center the view on this roi, check first if the roi has been drawn, and if we're
-	 already centered */
-      roi_center = roi_calculate_center(roi);
-      roi_center = realspace_base_coord_to_alt(roi_center, study_coord_frame(ui_study->study));
-      if ( !roi_undrawn(roi) && !REALPOINT_EQUAL(roi_center, study_view_center(ui_study->study))) {
-	study_set_view_center(ui_study->study, roi_center);
-	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
-      } else {
-	/* if this roi hasn't yet been drawn, at least update 
-	   which roi is highlighted */
-	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
-      }
-
-      /* indicate this is now the active leaf */
-      ui_study_tree_update_active_leaf(ui_study, leaf);
-
-    } else { /* button 3 clicked */
-      /* start up the dialog to adjust the roi */
-      ui_roi_dialog_create(ui_study, roi);
+    } else {
+      if (GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED)
+	select = TRUE;
+      else
+	unselect = TRUE;
     }
 
     break;
 
 
-  case UI_STUDY_TREE_STUDY:
+  case 2: /* middle button */
+    if (GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) {
+      /* next 3 lines are because GTK only allows button 1 to select in the tree, so this works around */
+      study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+      subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+      gtk_tree_select_child(GTK_TREE(subtree), leaf); 
+    }
+    select = TRUE;
+    make_active = TRUE;
+    break;
+
+
+  case 3: /* right button */
   default:
-    if (event->button ==3)
-      ui_study_dialog_create(ui_study);
+    if (GTK_WIDGET_STATE(leaf) == GTK_STATE_SELECTED)
+      popup_dialog = TRUE;
+    else
+      popup_dialog = FALSE;
+    popup_study_dialog = TRUE;
     break;
   }
 
-  return;
-}
+  //    g_print("click event %d %d select %d unselect %d make_active %d popup %d\n",event->type, event->button,
+  //  	  select, unselect, make_active, popup_dialog);
 
-/* callback function used when a  row in the tree is selected */
-void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  ui_study_tree_object_t object_type;
-  volume_t * volume;
-  roi_t * roi;
-  GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
-  view_t i_view;
-
+  /* do the appropriate action for the appropriate object */
   object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(leaf), "type"));
 
   switch(object_type) {
 
-
-
   case UI_STUDY_TREE_VOLUME:
     volume = gtk_object_get_data(GTK_OBJECT(leaf), "object");
 
-    /* --------------------- select ----------------- */
-    if (GTK_WIDGET_STATE(leaf) == GTK_STATE_SELECTED) {
-
+    if (select) {
+      ui_study->current_mode = VOLUME_MODE;
       if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume))
-	ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, 
-							      volume, leaf);
+	ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, volume, leaf);
 
-      if (ui_study->current_volume == NULL) {
-	/* make this the current volume if we don't have one yet */
-	ui_study->current_volume = volume;
-	/* indicate this is now the active if we're not pointing at anything else leaf */
-	if (ui_study->current_mode == VOLUME_MODE)
-	  ui_study_tree_update_active_leaf(ui_study, leaf);
-      }	  
+      /* if no other volume is active, make this guy active */
+      if (ui_study->current_volume == NULL)
+	make_active = TRUE;
+
+      /* we'll need to redraw the canvas */
+      ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+      ui_time_dialog_set_times(ui_study);
+
+    }
 
 
-      /*---------------------- unselect --------------- */
-    } else { 
-      ui_study->current_volumes =  /* remove the volume from the selection list */
-	ui_volume_list_remove_volume(ui_study->current_volumes, volume);
+    if (unselect) {
+      /* remove the volume from the selection list */
+      ui_study->current_volumes =  ui_volume_list_remove_volume(ui_study->current_volumes, volume);
       
       /* if it's the currently active volume... */
       if (ui_study->current_volume == volume) {
@@ -1186,33 +1387,49 @@ void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer d
 	if (ui_study->threshold->volume== volume)
 	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
       
+      /* we'll need to redraw the canvas */
+      ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+      ui_time_dialog_set_times(ui_study);
+      
     }
 
-    /* we'll need to redraw the canvas */
-    ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
-    ui_time_dialog_set_times(ui_study);
+    if (make_active) {
+      ui_study->current_mode = VOLUME_MODE;
+      ui_study->current_volume = volume;
+      
+      /* reset the threshold widget based on the current volume */
+      if (ui_study->threshold != NULL) 
+	ui_threshold_dialog_update(ui_study);
+      
+      /* indicate this is now the active object */
+      ui_study_tree_update_active_leaf(ui_study, leaf);
+      
+    }
+    
+    if (popup_dialog) {
+      ui_volume_dialog_create(ui_study, volume); /* start up the volume dialog */
+    }
+    
     break;
-
-
 
 
   case UI_STUDY_TREE_ROI:
     roi = gtk_object_get_data(GTK_OBJECT(leaf), "object");
 
-    /* --------------------- select ----------------- */
-    if ((GTK_WIDGET_STATE(leaf) == GTK_STATE_SELECTED) && 
-	(!ui_roi_list_includes_roi(ui_study->current_rois, roi))) {
-      /* make the canvas graphics */
-      for (i_view=0;i_view<NUM_VIEWS;i_view++)
-	roi_canvas_item[i_view] = ui_study_update_canvas_roi(ui_study,i_view,NULL, roi);
+
+    if (select) {
+
       /* and add this roi to the current_rois list */
-      ui_study->current_rois =  ui_roi_list_add_roi(ui_study->current_rois, roi,
-						    roi_canvas_item, leaf);
-      
+      if (!ui_roi_list_includes_roi(ui_study->current_rois, roi)) {
+	/* make the canvas graphics */
+	for (i_view=0;i_view<NUM_VIEWS;i_view++)
+	  roi_canvas_item[i_view] = ui_study_update_canvas_roi(ui_study,i_view,NULL, roi);
+	ui_study->current_rois =  ui_roi_list_add_roi(ui_study->current_rois, roi, roi_canvas_item, leaf);
+      }
+    }
 
-      /*---------------------- unselect --------------- */
-    } else { 
 
+    if (unselect) {
       if (ui_study->current_roi == roi) {
 	ui_study->current_roi = NULL;
 	if (ui_study->current_mode == ROI_MODE) {
@@ -1222,23 +1439,46 @@ void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer d
       }
       ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi);
     }
-    break;
 
+
+    if (make_active) {
+      ui_study->current_mode = ROI_MODE;
+      ui_study->current_roi = roi;
+
+      /* center the view on this roi, check first if the roi has been drawn, and if we're
+	 already centered */
+      roi_center = roi_calculate_center(roi);
+      roi_center = realspace_base_coord_to_alt(roi_center, study_coord_frame(ui_study->study));
+      if ( !roi_undrawn(roi) && !REALPOINT_EQUAL(roi_center, study_view_center(ui_study->study))) {
+	study_set_view_center(ui_study->study, roi_center);
+	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
+      } else {
+	/* if this roi hasn't yet been drawn, at least update 
+	   which roi is highlighted */
+	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
+      }
+      /* indicate this is now the active leaf */
+      ui_study_tree_update_active_leaf(ui_study, leaf);
+
+    }
+
+    if (popup_dialog) {
+      ui_roi_dialog_create(ui_study, roi);
+    }
+    break;
 
 
 
 
   case UI_STUDY_TREE_STUDY:
   default:
-    ; 
+    if (popup_study_dialog) 
+      ui_study_dialog_create(ui_study);
     break;
   }
 
   return;
 }
-
-
-
 
 /* callback used when the background of the tree is clicked on */
 void ui_study_callbacks_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
@@ -1440,6 +1680,74 @@ void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data) {
 }
 
 
+/* function which brings up an about box */
+void ui_study_callbacks_about(GtkWidget * button, gpointer data) {
+
+  GtkWidget *about;
+
+  const gchar *authors[] = {
+    "Andy Loening <loening@ucla.edu>",
+    NULL
+  };
+
+  const gchar *contents_base = \
+    _("Amide's a Medical Image Data Examiner\n   \n");
+
+  const gchar * contents_compiled = \
+    _("compiled with support for the following libraries:");
+
+#ifdef AMIDE_LIBECAT_SUPPORT
+  const gchar *contents_libecat = \
+    _("\tlibecat: CTI File library by Merence Sibomona");
+#endif
+
+#ifdef AMIDE_LIBMDC_SUPPORT
+  const gchar *contents_libmdc = \
+    _("\tlibmdc: Medical Imaging File library by Erik Nolf");
+#endif
+
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+  const gchar *contents_libvolpack = \
+    _("\tlibvolpack: Volume Rendering library by Philippe Lacroute");
+#endif
+
+
+  gchar * contents;
+
+
+
+  contents = g_strjoin("\n", 
+		       contents_base,
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
+		       contents_compiled,
+#endif
+#ifdef AMIDE_LIBECAT_SUPPORT
+		       contents_libecat,
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+		       contents_libmdc,
+#endif
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+		       contents_libvolpack,
+#endif
+		       NULL);
+
+
+  about = gnome_about_new(PACKAGE, VERSION, 
+			  "(c) 2001 Andy Loening",
+			  authors,
+			  contents,
+			  "amide.png");
+
+  gtk_window_set_modal(GTK_WINDOW(about), FALSE);
+
+  gtk_widget_show(about);
+
+  g_free(contents);
+
+  return;
+}
+
 /* function to run for a delete_event */
 void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
@@ -1460,11 +1768,16 @@ void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpoint
   if (ui_study->time_dialog != NULL)
     gtk_signal_emit_by_name(GTK_OBJECT(ui_study->time_dialog), "close", ui_study);
 
-  /* destroy the widget */
-  gtk_widget_destroy(widget);
-
   /* free our data structure's */
   ui_study = ui_study_free(ui_study);
+
+  /* destroy the widget last */
+  gtk_widget_destroy(widget);
+
+  /* quit our app if we've closed all windows */
+  number_of_windows--;
+  if (number_of_windows == 0)
+    gtk_main_quit();
 
   return;
 }

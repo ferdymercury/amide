@@ -46,10 +46,10 @@ typedef struct ui_rendering_t {
   volume_time_t duration;
   GnomeCanvas * axis_canvas;
   GnomeCanvasItem * axis_canvas_image;
-  GdkImlibImage * axis_image;
+  GdkPixbuf * axis_image;
   GnomeCanvas * main_canvas;
   GnomeCanvasItem * main_canvas_image;
-  GdkImlibImage * main_image;
+  GdkPixbuf * main_image;
   rendering_t * axis_context;
   rendering_list_t * contexts;
   GtkWidget * render_button;

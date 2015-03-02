@@ -32,17 +32,9 @@
 /* external variables */
 const gchar * axis_names[] = {"x", "y", "z"};
 
-//const realpoint_t default_normal[NUM_AXIS] = {{0.0,0.0,1.0},
-//					      {0.0,1.0,0.0},
-//					      {1.0,0.0,0.0}};
-
 const realpoint_t default_axis[NUM_AXIS] = {{1.0,0.0,0.0},
 					    {0.0,1.0,0.0},
 					    {0.0,0.0,1.0}};
-
-//const realpoint_t default_rotation[NUM_AXIS] = {{0.0,0.0,0.0},
-//						{-M_PI_2,0.0,0.0},
-//						{-M_PI_2,-M_PI_2,-M_PI_2}};
 
 const realpoint_t realpoint_init = {0.0,0.0,0.0};
 
@@ -54,6 +46,15 @@ inline realpoint_t rp_abs(const realpoint_t rp1) {
   temp.x = fabs(rp1.x);
   temp.y = fabs(rp1.y);
   temp.z = fabs(rp1.z);
+  return temp;
+}
+
+/* returns -rp1 for realpoint structures */
+inline realpoint_t rp_neg(const realpoint_t rp1) {
+  realpoint_t temp;
+  temp.x = -rp1.x;
+  temp.y = -rp1.y;
+  temp.z = -rp1.z;
   return temp;
 }
 
@@ -279,36 +280,19 @@ realpoint_t realspace_rotate_on_axis(const realpoint_t in,
 }
 
 
-/* returns the axis_t of the orthogonal axis for a given view */
-axis_t realspace_get_orthogonal_which_axis(const view_t view) {
-
-  switch(view) {
-  case CORONAL:
-    return YAXIS;
-    break;
-  case SAGITTAL:
-    return XAXIS;
-    break;
-  case TRANSVERSE:
-  default:
-    return ZAXIS;
-    break;
-  }
-}
-
-/* returns the normal axis for the given view */
-realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
-					    const view_t view) {
-
-  return axis[realspace_get_orthogonal_which_axis(view)];
+/* returns the normal axis vector for the given view */
+realpoint_t realspace_get_view_normal(const realpoint_t axis[],
+				      const view_t view) {
+  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS);
 }
 
 /* returns an axis vector which corresponds to the orthogonal axis (specified
    by ax) in the given view (i.e. coronal, sagittal, etc.) given the current
    axis */
-realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
-					  const view_t view,
-					  const axis_t ax) {
+realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
+					       const view_t view,
+					       const axis_t ax) {
+
   switch(view) {
   case CORONAL:
     switch (ax) {
@@ -316,7 +300,7 @@ realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
       return axis[XAXIS];
       break;
     case YAXIS:
-      return axis[ZAXIS];
+      return rp_neg(axis[ZAXIS]);
       break;
     case ZAXIS:
     default:
@@ -330,7 +314,7 @@ realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
       return axis[YAXIS];
       break;
     case YAXIS:
-      return axis[ZAXIS];
+      return rp_neg(axis[ZAXIS]);
       break;
     case ZAXIS:
     default:
@@ -356,56 +340,21 @@ realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
   }
 }
 
-/* given a coordinate frame, return an orthogonal coordinate frame */
-realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_frame,
-						 const view_t view) {
+/* given a coordinate frame, and a view, return the appropriate coordinate frame */
+realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
+					   const view_t view) {
 
   realspace_t return_coord_frame;
   axis_t i_axis;
 
-
-  /* getting the axis is easy, just spin the current viewing axis based on which
-     view we want */
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
     return_coord_frame.axis[i_axis] = 
-      realspace_get_orthogonal_axis(in_coord_frame.axis,view,i_axis);
+      realspace_get_orthogonal_view_axis(in_coord_frame.axis,view,i_axis);
 
+  /* the offset of the coord frame stays the same */
   return_coord_frame.offset = in_coord_frame.offset;
 
   return return_coord_frame;
-}
-
-/* converts a point in a coordinate frame to the point in one of the orthogonal views */
-inline realpoint_t realspace_coord_to_orthogonal_view(const realpoint_t in,
-						      const view_t view) {
-  realpoint_t temp;
-
-  switch(view) {
-  case CORONAL:
-    temp.x = in.x;
-    temp.y = in.z;
-    temp.z = in.y;
-    break;
-  case SAGITTAL:
-    temp.x = in.y;
-    temp.y = in.z;
-    temp.z = in.x;
-    break;
-  case TRANSVERSE:
-  default:
-    temp.x = in.x;
-    temp.y = in.y;
-    temp.z = in.z;
-    break;
-  }
-
-  return temp;
-}
-
-/* converts a point in an orthogonal  coordinate frame to the transverse view */
-inline realpoint_t realspace_coord_from_orthogonal_view(const realpoint_t in,
-						      const view_t view) {
-  return realspace_coord_to_orthogonal_view(in, view);
 }
 
 /* convert a point in an alternative coordinate frame to the base

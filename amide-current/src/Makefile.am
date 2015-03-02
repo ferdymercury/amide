@@ -1,14 +1,12 @@
-INCLUDES = \
-   -DGNOMELOCALEDIR=\""$(datadir)/locale\""  \
-	-I/usr/local/include
+
+INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS)
 
 bin_PROGRAMS = amide
-
 
 amide_SOURCES = \
 	amide.c \
 	amide.h \
-	amide_export.h \
 	color_table.c \
 	color_table.h \
 	color_table2.h \
@@ -38,12 +36,6 @@ amide_SOURCES = \
 	roi.h \
 	study.c \
 	study.h \
-	ui_main.c \
-	ui_main.h \
-	ui_main_callbacks.c \
-	ui_main_callbacks.h \
-	ui_main_menus.c \
-	ui_main_menus.h \
 	ui_rendering.c \
 	ui_rendering.h \
 	ui_rendering_callbacks.c \
@@ -105,16 +97,8 @@ amide_LDADD = \
 	$(GNOMEUI_LIBS) \
 	$(GNOME_LIBDIR) \
 	$(GNOME_XML2_LIBS) \
-	$(INTLLIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBMDC_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
+	$(EXTRA_GNOME_LIBS) \
 	-L/usr/local/lib 
-
-#lib_LTLIBRARIES = libamide.la
-#libamideincludedir = $(includedir)/amide
-
-#libamide_la_SOURCES = $(amide_SOURCES)
-#libamide_la_LDFLAGS = -version-info 1:0:0
-#libamideinclude_HEADERS = \
-#	amide_export.h

@@ -69,7 +69,7 @@ typedef struct roi_analysis_t {
 roi_t * roi_free(roi_t * roi);
 roi_t * roi_init(void);
 gchar * roi_write_xml(roi_t * roi, gchar * directory);
-roi_t * roi_load_xml(gchar * file_name, gchar * directory);
+roi_t * roi_load_xml(gchar * file_name, const gchar * directory);
 roi_t * roi_copy(roi_t * src_roi);
 roi_t * roi_add_reference(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
@@ -77,7 +77,7 @@ realpoint_t roi_calculate_center(const roi_t * roi);
 roi_list_t * roi_list_free(roi_list_t *roi_list);
 roi_list_t * roi_list_init(void);
 void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * directory);
-roi_list_t * roi_list_load_xml(xmlNodePtr node_list, gchar * directory);
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * directory);
 gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
 roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);

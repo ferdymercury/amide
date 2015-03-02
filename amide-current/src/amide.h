@@ -64,5 +64,6 @@ typedef gint16 intpoint_t;
 
 /* external variables */
 extern gchar * view_names[];
+extern gint number_of_windows;
 
 

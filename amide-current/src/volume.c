@@ -23,7 +23,7 @@
   02111-1307, USA.
 */
 
-#include <time.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include "config.h"
 #include <glib.h>
@@ -42,15 +42,15 @@
 gchar * interpolation_names[] = {"Nearest Neighbhor", 
 				 "2x2x1 Filter", 
 				 "2x2x2 Filter", 
-				 "Bilinear", 
+				 //				 "Bilinear", 
 				 "Trilinear"};
 
 gchar * interpolation_explanations[] = {
-  "interpolate using nearest neighbhor (very fast)", 
-  "interpolate using a 2x2x1 blurring matrix (fast)",
-  "interpolate using a 2x2x2 blurring matrix (middle)",
-  "interpolate using bilinear interpolation (slow)",
-  "interpolate using trilinear interpolation (very slow)"
+  "interpolate using nearest neighbhor (fast)", 
+  "interpolate using a 2x2x1 blurring matrix (medium)",
+  "interpolate using a 2x2x2 blurring matrix (slow)",
+  //  "interpolate using bilinear interpolation (middle)",
+  "interpolate using trilinear interpolation (slow)"
 };
 
 gchar * modality_names[] = {"PET", \
@@ -141,10 +141,6 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
   xmlDocPtr doc;
   guint num_elements;
   FILE * file_pointer;
-#if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  guint t;
-  voxelpoint_t i;
-#endif
 
   /* make a guess as to our filename */
   count = 1;
@@ -186,7 +182,15 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
 
   /* store the name of our associated data file */
   xml_save_string(doc->children, "raw_data", raw_data_name);
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  xml_save_string(doc->children, "data_format", data_format_names[FLOAT_BE]);
+#else
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
   xml_save_string(doc->children, "data_format", data_format_names[FLOAT_LE]);
+#else
+#error "must specify G_LITTLE_ENDIAN or G_BIG_ENDIAN)"
+#endif
+#endif
 
   /* and save */
   xmlSaveFile(file_name, doc);
@@ -201,16 +205,6 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
 #error "Haven't yet written support for 8 byte (double) volume data in volume_write_xml"
 #endif
   
-#if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  /* first, transform it to little endian */
-  for (t = 0; t < volume->num_frames; t++)
-    for (i.z = 0; i.z < volume->dim.z ; i.z++) 
-      for (i.y = 0; i.y < volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < volume->dim.x; i.x++)
-	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
-	    AMIDE_FLOAT_TO_LE(VOLUME_CONTENTS(volume,t,i));
-#endif
-
   /* write it on out */
   if ((file_pointer = fopen(raw_data_name, "w")) == NULL) {
     g_warning("%s: couldn't save raw data file: %s",PACKAGE, raw_data_name);
@@ -228,24 +222,13 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
   }
   fclose(file_pointer);
 
-#if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  /* and transform it on back */
-  for (t = 0; t < volume->num_frames; t++)
-    for (i.z = 0; i.z < volume->dim.z ; i.z++) 
-      for (i.y = 0; i.y < volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < volume->dim.x; i.x++)
-	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
-	    AMIDE_FLOAT_FROM_LE(VOLUME_CONTENTS(volume,t,i));
-#endif
-
-
   g_free(raw_data_name);
   return file_name;
 }
 
 
 /* function to load in a volume xml file */
-volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
+volume_t * volume_load_xml(gchar * file_name, const gchar * directory) {
 
   xmlDocPtr doc;
   volume_t * new_volume;
@@ -339,7 +322,11 @@ volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
 
   /* and figure out the data format */
   temp_string = xml_get_string(nodes, "data_format");
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  data_format = FLOAT_BE; /* sensible guess in case we don't figure it out from the file */
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
   data_format = FLOAT_LE; /* sensible guess in case we don't figure it out from the file */
+#endif
   if (temp_string != NULL)
     for (i_data_format=0; i_data_format < NUM_DATA_FORMATS; i_data_format++) 
       if (g_strcasecmp(temp_string, data_format_names[i_data_format]) == 0)
@@ -600,7 +587,7 @@ void volume_list_write_xml(volume_list_t *list, xmlNodePtr node_list, gchar * di
 
 
 /* function to load in a list of volume xml nodes */
-volume_list_t * volume_list_load_xml(xmlNodePtr node_list, gchar * directory) {
+volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * directory) {
 
   gchar * file_name;
   volume_list_t * new_volume_list;
@@ -1069,7 +1056,7 @@ volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
   height = (axis_volume->corner.z*3.0/8.0);
   center.x = axis_volume->corner.x/2;
   center.y = axis_volume->corner.y/2;
-  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, TRANSVERSE);
+  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, TRANSVERSE);
   objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
 				  center, radius, height, AXIS_VOLUME_DENSITY);
 
@@ -1079,7 +1066,7 @@ volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
   height = (axis_volume->corner.y*4.0/8.0);
   center.x = axis_volume->corner.x/2;
   center.z = axis_volume->corner.z/2;
-  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, CORONAL);
+  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, CORONAL);
   objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
 				  center, radius, height, AXIS_VOLUME_DENSITY);
 
@@ -1088,7 +1075,7 @@ volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
   height = (axis_volume->corner.x*4.0/8.0);
   center.y = axis_volume->corner.y/2;
   center.z = axis_volume->corner.z/2;
-  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, SAGITTAL);
+  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, SAGITTAL);
   objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
 				  center, radius, height, AXIS_VOLUME_DENSITY);
 
@@ -1138,15 +1125,20 @@ volume_t * volume_get_slice(const volume_t * volume,
   intpoint_t z;
   floatpoint_t volume_min_voxel_size, max_diff, voxel_length, z_steps;
   floatpoint_t real_value[8];
-  realpoint_t volume_p,slice_p, alt,temp_p;
-  realpoint_t box_corner_view[8], box_corner_real[8];
+  realpoint_t alt,temp_p;
   realpoint_t half_size[NUM_AXIS], stride[NUM_AXIS], last[NUM_AXIS];
   axis_t i_axis;
   guint l;
-  volume_data_t z_weight, max, min, temp, total_weight;
+  volume_data_t weight, max, min, temp, total_weight;
   guint start_frame, num_frames, i_frame;
   volume_time_t volume_start, volume_end;
   gchar * temp_string;
+  realpoint_t box_rp[8];
+  voxelpoint_t box_vp[8];
+  volume_data_t box_value[8];
+  realpoint_t slice_rp, volume_rp,diff, nearest_rp;
+  voxelpoint_t volume_vp;
+  volume_data_t weight1, weight2;
 
   /* sanity check */
   g_assert(volume != NULL);
@@ -1245,8 +1237,13 @@ volume_t * volume_get_slice(const volume_t * volume,
   alt.x = alt.y = 0.0;
   alt.z = 1.0;
   alt = realspace_alt_dim_to_alt(alt, slice->coord_frame, volume->coord_frame);
-  voxel_length = REALPOINT_DOT_PRODUCT(alt,volume->voxel_size);
+  alt = rp_mult(alt, volume->voxel_size);
+  voxel_length = REALPOINT_MAGNITUDE(alt);
   z_steps = slice->voxel_size.z/voxel_length;
+
+#ifdef AMIDE_DEBUG
+  //  g_print("\tz steps\t%5.3f\tvoxel length %5.3f (mm)\n",z_steps, voxel_length);
+#endif
 
   /* figure out what stepping one voxel in a given direction in our slice
      cooresponds to in our volume */
@@ -1264,7 +1261,7 @@ volume_t * volume_get_slice(const volume_t * volume,
   alt.x = slice->voxel_size.x/2.0;
   alt.y = slice->voxel_size.y/2.0;
   alt.z = voxel_length/2.0;
-  volume_p = realspace_alt_coord_to_alt(alt, slice->coord_frame, volume->coord_frame);
+  volume_rp = realspace_alt_coord_to_alt(alt, slice->coord_frame, volume->coord_frame);
 
   /* get some important dimensional information */
   volume_min_voxel_size = REALPOINT_MIN_DIM(volume->voxel_size);
@@ -1293,25 +1290,26 @@ volume_t * volume_get_slice(const volume_t * volume,
       
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
-	last[ZAXIS] = volume_p;
-	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
-	z_weight = z_weight/4.0;
+	last[ZAXIS] = volume_rp;
+	weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	weight = weight/4.0;
+	weight /= num_frames * z_steps;
 	
 	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->dim.y; i.y++) {
-	  last[YAXIS] = volume_p;
+	  last[YAXIS] = volume_rp;
 	  /* and iteratate over x */
 	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
 	    
 	    /* get the locations and values of the four voxels in the real volume
-	       which are closest to our view voxel */
+	       which are closest to our slice's voxel */
 	    total_weight = 0;
 	    
 	    /* find the closest voxels in volume space and their values*/
 	    for (l=0; l<4; l++) {
 	      
-	      if (l & 0x1) REALPOINT_SUB(volume_p, half_size[XAXIS],temp_p);
-	      else REALPOINT_ADD(volume_p, half_size[XAXIS],temp_p);
+	      if (l & 0x1) REALPOINT_SUB(volume_rp, half_size[XAXIS],temp_p);
+	      else REALPOINT_ADD(volume_rp, half_size[XAXIS],temp_p);
 	      
 	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
 	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
@@ -1322,13 +1320,13 @@ volume_t * volume_get_slice(const volume_t * volume,
 	      if (!volume_includes_voxel(volume,j)) real_value[l] = EMPTY;
 	      else real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
 	      
-	      VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[l];
+	      VOLUME_SET_CONTENT(slice,0,i)+=weight*real_value[l];
 	    }
-	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
+	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
 	  }
-	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);
 	}
-	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_rp); 
       }
     break;
 
@@ -1338,25 +1336,26 @@ volume_t * volume_get_slice(const volume_t * volume,
       
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
-	last[ZAXIS] = volume_p;
-	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
-	z_weight = z_weight/8.0;
+	last[ZAXIS] = volume_rp;
+	weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	weight = weight/8.0;
+	weight /= num_frames * z_steps;
 	
 	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->dim.y; i.y++) {
-	  last[YAXIS] = volume_p;
+	  last[YAXIS] = volume_rp;
 	  /* and iteratate over x */
 	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
 	    
 	    /* get the locations and values of the four voxels in the real volume
-	       which are closest to our view voxel */
+	       which are closest to our slice's voxel */
 	    total_weight = 0;
 	    
 	    /* find the closest voxels in volume space and their values*/
 	    for (l=0; l<8; l++) {
 	      
-	      if (l & 0x1) REALPOINT_SUB(volume_p, half_size[XAXIS],temp_p);
-	      else REALPOINT_ADD(volume_p, half_size[XAXIS],temp_p);
+	      if (l & 0x1) REALPOINT_SUB(volume_rp, half_size[XAXIS],temp_p);
+	      else REALPOINT_ADD(volume_rp, half_size[XAXIS],temp_p);
 	      
 	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
 	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
@@ -1370,275 +1369,151 @@ volume_t * volume_get_slice(const volume_t * volume,
 	      if (!volume_includes_voxel(volume,j)) real_value[l] = EMPTY;
 	      else real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
 	      
-	      VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[l];
+	      VOLUME_SET_CONTENT(slice,0,i)+=weight*real_value[l];
 	    }
-	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
+	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
 	  }
-	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);
 	}
-	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
-      }
-    break;
-
-  case BILINEAR:
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
-      for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) {
-	
-	/* the view z_coordinate for this iteration's view voxel */
-	slice_p.z = z*voxel_length+voxel_length/2.0;
-	
-	/* z_weight is between 0 and 1, this is used to weight the last voxel 
-	   in the view z direction */
-	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
-	
-	for (i.y = 0; i.y < slice->dim.y; i.y++) {
-
-	  /* the view y_coordinate of the center of this iteration's view voxel */
-	  slice_p.y = (((floatpoint_t) i.y)/slice->dim.y) * slice->corner.y + slice->voxel_size.y/2.0;
-	  
-	  /* the view x coord of the center of the first view voxel in this loop */
-	  slice_p.x = slice->voxel_size.x/2.0;
-	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
-	    
-	    /* get the locations and values of the four voxels in the real volume
-	       which are closest to our view voxel */
-
-	    
-	    /* find the closest voxels in real space and their values*/
-	    for (l=0; l<4; l++) {
-	      box_corner_view[l].x = slice_p.x + ((l & 0x1) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
-	      box_corner_view[l].y = slice_p.y + ((l & 0x2) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
-	      box_corner_view[l].z = slice_p.z;
-
-	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
-						   slice->coord_frame,
-						   volume->coord_frame);
-	      j = volume_realpoint_to_voxel(volume, volume_p);
-	      volume_p = volume_voxel_to_realpoint(volume, j);
-	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
-							      volume->coord_frame,
-							      slice->coord_frame);
-	      /* get the value of the closest voxel in real space */
-	      if (!volume_includes_voxel(volume,j))
-		real_value[l] = EMPTY;
-	      else
-		real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
-	    }
-	    
-	    /* do the x direction linear interpolation of the sets of two points */
-	    for (l=0;l<4;l=l+2) {
-	      if ((slice_p.x > box_corner_real[l].x) && 
-		  (slice_p.x > box_corner_real[l+1].x))
-		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
-		  real_value[l] : real_value[l+1];
-	      else if ((slice_p.x<box_corner_real[l].x) && 
-		       (slice_p.x<box_corner_real[l+1].x))
-		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
-		  real_value[l] : real_value[l+1];
-	      else {
-		max_diff = fabs(box_corner_real[l].x-box_corner_real[l+1].x);
-		if (max_diff > 0.0+CLOSE) {
-		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].x-slice_p.x))
-		    *real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+1].x-slice_p.x))
-		    *real_value[l+1];
-		  real_value[l] = real_value[l]/max_diff;
-		}
-	      }
-	    }
-
-	    /* do the y direction interpolations of the pairs of x interpolations */
-	    for (l=0;l<4;l=l+4) {
-	      if ((slice_p.y > box_corner_real[l].y) && 
-		  (slice_p.y > box_corner_real[l+2].y))
-		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
-		  real_value[l] : real_value[l+2];
-	      else if ((slice_p.y<box_corner_real[l].y) && 
-		       (slice_p.y<box_corner_real[l+2].y))
-		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
-		  real_value[l] : real_value[l+2];
-	      else {
-		max_diff = fabs(box_corner_real[l].y-box_corner_real[l+2].y);
-		if (max_diff > 0.0+CLOSE) {
-		  real_value[l] = 
-		    + (max_diff - fabs(box_corner_real[l].y-slice_p.y)) 
-		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+2].y-slice_p.y))
-		    *real_value[l+2];
-		  real_value[l] = real_value[l]/max_diff;
-		}
-	      }
-	    }		
-	    
-	    VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[0];
-	    
-	    /* jump forward one voxel in the view x direction*/
-	    slice_p.x += slice->voxel_size.x; 
-	  }
-	}
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_rp); 
       }
     break;
   case TRILINEAR:
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
+    /* iterate over the frames we'll be incorporating into this slice */
+    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++) {
+
+      /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) {
-
-	/* the view z_coordinate for this iteration's view voxel */
-	slice_p.z = z*voxel_length + voxel_length/2.0;
-
-	/* z_weight is between 0 and 1, this is used to weight the last voxel 
-	   in the view z direction */
-	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
 	
+	/* the slices z_coordinate for this iteration's slice voxel */
+	slice_rp.z = z*voxel_length+voxel_length/2.0;
+
+	/* weight is between 0 and 1, this is used to weight the last voxel 
+	   in the slice's z direction, and in averaging frames */
+	if (floor(z_steps) > z)
+	  weight = 1.0/(num_frames * z_steps);
+	else
+	  weight = (z_steps-floor(z_steps)) / (num_frames * z_steps);
+
+	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->dim.y; i.y++) {
 
-	  /* the view y_coordinate of the center of this iteration's view voxel */
-	  slice_p.y = (((floatpoint_t) i.y)/slice->dim.y) * slice->corner.y + slice->voxel_size.y/2.0;
+	  /* the slice y_coordinate of the center of this iteration's slice voxel */
+	  slice_rp.y = (((floatpoint_t) i.y)*slice->corner.y/slice->dim.y) + slice->voxel_size.y/2.0;
+	  
+	  /* the slice x coord of the center of the first slice voxel in this loop */
+	  slice_rp.x = slice->voxel_size.x/2.0;
 
-	  /* the view x coord of the center of the first view voxel in this loop */
-	  slice_p.x = slice->voxel_size.x/2.0;
+	  /* iterate over the x dimension */
 	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
 
-	    /* get the locations and values of the eight voxels in the real volume
-	       which are closest to our view voxel */
-
-	    /* find the closest voxels in real space and their values*/
-	    for (l=0; l<8; l++) {
-	      box_corner_view[l].x = slice_p.x + ((l & 0x1) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
-	      box_corner_view[l].y = slice_p.y + ((l & 0x2) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
-	      box_corner_view[l].z = slice_p.z + ((l & 0x4) ? -volume_min_voxel_size/2.0 : volume_min_voxel_size/2.0);
-
-	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
-						   slice->coord_frame,
+	    /* translate the current point in slice space into the volume's coordinate frame */
+	    volume_rp = realspace_alt_coord_to_alt(slice_rp, 
+						   slice->coord_frame, 
 						   volume->coord_frame);
-	      j = volume_realpoint_to_voxel(volume, volume_p);
-	      volume_p = volume_voxel_to_realpoint(volume, j);
-	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
-							      volume->coord_frame,
-							      slice->coord_frame);
-	      if (!volume_includes_voxel(volume,j))
-		real_value[l] = EMPTY;
-	      else
-		real_value[l] = VOLUME_CONTENTS(volume,i_frame,j);
-	    }
 
+	    /* get the nearest neighbor in the volume to this slice voxel */
+	    volume_vp = volume_realpoint_to_voxel(volume, volume_rp);
+	    nearest_rp = volume_voxel_to_realpoint(volume, volume_vp);
+
+	    /* figure out which way to go to get the nearest voxels to our slice voxel*/
+	    REALPOINT_SUB(volume_rp, nearest_rp, diff);
+
+	    /* figure out which voxels to look at */
+	    for (l=0; l<8; l=l+1) {
+	      if (diff.x < 0)
+		box_vp[l].x = (l & 0x1) ? volume_vp.x-1 : volume_vp.x;
+	      else /* diff.x >= 0 */
+		box_vp[l].x = (l & 0x1) ? volume_vp.x : volume_vp.x+1;
+	      if (diff.y < 0)
+		box_vp[l].y = (l & 0x2) ? volume_vp.y-1 : volume_vp.y;
+	      else /* diff.y >= 0 */
+		box_vp[l].y = (l & 0x2) ? volume_vp.y : volume_vp.y+1;
+	      if (diff.z < 0)
+		box_vp[l].z = (l & 0x4) ? volume_vp.z-1 : volume_vp.z;
+	      else /* diff.z >= 0 */
+		box_vp[l].z = (l & 0x4) ? volume_vp.z : volume_vp.z+1;
+
+	      box_rp[l] = volume_voxel_to_realpoint(volume, box_vp[l]);
+
+	      /* get the value of the point on the box */
+	      if (volume_includes_voxel(volume, box_vp[l]))
+		box_value[l] = VOLUME_CONTENTS(volume, i_frame, box_vp[l]);
+	      else
+		box_value[l] = EMPTY;
+	    }
+	    
 	    /* do the x direction linear interpolation of the sets of two points */
 	    for (l=0;l<8;l=l+2) {
-	      if ((slice_p.x > box_corner_real[l].x) 
-		  && (slice_p.x > box_corner_real[l+1].x))
-		real_value[l] = box_corner_real[l].x > box_corner_real[l+1].x ? 
-		  real_value[l] : real_value[l+1];
-	      else if ((slice_p.x<box_corner_real[l].x) 
-		       && (slice_p.x<box_corner_real[l+1].x))
-		real_value[l] = box_corner_real[l].x < box_corner_real[l+1].x ? 
-		  real_value[l] : real_value[l+1];
-	      else {
-		max_diff = fabs(box_corner_real[l].x-box_corner_real[l+1].x);
-		if (max_diff > 0.0+CLOSE) {
-		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].x-slice_p.x)) 
-		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+1].x-slice_p.x))
-		    *real_value[l+1];
-		  real_value[l] = real_value[l]/max_diff;
-		}
-	      }
+	      max_diff = box_rp[l+1].x-box_rp[l].x;
+	      weight1 = ((max_diff - (volume_rp.x - box_rp[l].x))/max_diff);
+	      weight2 = ((max_diff - (box_rp[l+1].x - volume_rp.x))/max_diff);
+	      box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
 	    }
 
-	    /* do the y direction interpolations of the pairs of x interpolations */
+	    /* do the y direction linear interpolation of the sets of two points */
 	    for (l=0;l<8;l=l+4) {
-	      if ((slice_p.y > box_corner_real[l].y) 
-		  && (slice_p.y > box_corner_real[l+2].y))
-		real_value[l] = box_corner_real[l].y > box_corner_real[l+2].y ? 
-		  real_value[l] : real_value[l+2];
-	      else if ((slice_p.y<box_corner_real[l].y) 
-		       && (slice_p.y<box_corner_real[l+2].y))
-		real_value[l] = box_corner_real[l].y < box_corner_real[l+2].y ? 
-		  real_value[l] : real_value[l+2];
-	      else {
-		max_diff = fabs(box_corner_real[l].y-box_corner_real[l+2].y);
-		if (max_diff > 0.0+CLOSE) {
-		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].y-slice_p.y)) 
-		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+2].y-slice_p.y))
-		    * real_value[l+2];
-		  real_value[l] = real_value[l]/max_diff;
-		}
-	      }
+	      max_diff = box_rp[l+2].y-box_rp[l].y;
+	      weight1 = ((max_diff - (volume_rp.y - box_rp[l].y))/max_diff);
+	      weight2 = ((max_diff - (box_rp[l+2].y - volume_rp.y))/max_diff);
+	      box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
 	    }
 
-	    /* do the z direction interpolations of the pairs of y interpolations */
+	    /* do the z direction linear interpolation of the sets of two points */
 	    for (l=0;l<8;l=l+8) {
-	      if ((slice_p.z > box_corner_real[l].z) 
-		  && (slice_p.z > box_corner_real[l+4].z))
-		real_value[l] = box_corner_real[l].z > box_corner_real[l+4].z ? 
-		  real_value[l] : real_value[l+4];
-	      else if ((slice_p.z<box_corner_real[l].z) 
-		       && (slice_p.z<box_corner_real[l+4].z))
-		real_value[l] = box_corner_real[l].z < box_corner_real[l+4].z ? 
-		  real_value[l] : real_value[l+4];
-	      else {
-		max_diff = fabs(box_corner_real[l].z-box_corner_real[l+4].z);
-		if (max_diff > 0.0+CLOSE) {
-		  real_value[l] =
-		    + (max_diff - fabs(box_corner_real[l].z-slice_p.z)) 
-		    * real_value[l]
-		    + (max_diff - fabs(box_corner_real[l+4].z-slice_p.z))
-		    * real_value[l+4];
-		  real_value[l] = real_value[l]/max_diff;
-		}
-	      }
+	      max_diff = box_rp[l+4].z-box_rp[l].z;
+	      weight1 = ((max_diff - (volume_rp.z - box_rp[l].z))/max_diff);
+	      weight2 = ((max_diff - (box_rp[l+4].z - volume_rp.z))/max_diff);
+	      box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
 	    }
 
-	    VOLUME_SET_CONTENT(slice,0,i)+=z_weight*real_value[0];
+	    VOLUME_SET_CONTENT(slice,0,i)+=weight*box_value[0];
 
-	    /* jump forward one voxel in the view x direction*/
-	    slice_p.x += slice->voxel_size.x; 
+	    slice_rp.x += slice->voxel_size.x; 
 	  }
 	}
       }
+    }
     break;
-
   case NEAREST_NEIGHBOR:
   default:  
 
     /* iterate over the number of frames we'll be incorporating into this slice */
-    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++)
+    for (i_frame = start_frame; i_frame < start_frame+num_frames;i_frame++) {
 
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps-SMALL)-SMALL; z++) { 
-	last[ZAXIS] = volume_p;
-	z_weight = ( floor(z_steps) > z) ? 1.0 : z_steps-floor(z_steps);
+	last[ZAXIS] = volume_rp;
+
+	/* weight is between 0 and 1, this is used to weight the last voxel 
+	   in the slice's z direction, and in averaging frames */
+	if (floor(z_steps) > z)
+	  weight = 1.0/(num_frames * z_steps);
+	else
+	  weight = (z_steps-floor(z_steps)) / (num_frames * z_steps);
 	
 	/* iterate over the y dimension */
 	for (i.y = 0; i.y < slice->dim.y; i.y++) {
-	  last[YAXIS] = volume_p;
+	  last[YAXIS] = volume_rp;
 
 	  /* and iteratate over x */
 	  for (i.x = 0; i.x < slice->dim.x; i.x++) {
-	    j = volume_realpoint_to_voxel(volume, volume_p);
+	    j = volume_realpoint_to_voxel(volume, volume_rp);
 	    if (!volume_includes_voxel(volume,j))
-	      VOLUME_SET_CONTENT(slice,0,i) += z_weight*EMPTY;
+	      VOLUME_SET_CONTENT(slice,0,i) += weight*EMPTY;
 	    else
-	      VOLUME_SET_CONTENT(slice,0,i) += z_weight*VOLUME_CONTENTS(volume,i_frame,j);
-	    REALPOINT_ADD(volume_p, stride[XAXIS], volume_p); 
+	      VOLUME_SET_CONTENT(slice,0,i) += weight*VOLUME_CONTENTS(volume,i_frame,j);
+	    REALPOINT_ADD(volume_rp, stride[XAXIS], volume_rp); 
 	  }
-	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_p);
+	  REALPOINT_ADD(last[YAXIS], stride[YAXIS], volume_rp);
 	}
-	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_p); 
+	REALPOINT_ADD(last[ZAXIS], stride[ZAXIS], volume_rp); 
       }
+    }
     break;
-
   }
 
-  /* correct our volume for it's thickness and the number of frames*/
-  for (i.y = 0; i.y < slice->dim.y; i.y++) 
-    for (i.x = 0; i.x < slice->dim.x; i.x++) 
-      VOLUME_SET_CONTENT(slice,0,i) /= (num_frames*z_steps);
-
-
-  /* and figure out the max and min */
+  /* figure out the max and min */
   max = 0.0;
   min = 0.0;
   for (i.y = 0; i.y < slice->dim.y; i.y++) 
@@ -1677,7 +1552,11 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   volume_t * temp_slice;
   floatpoint_t min_voxel_size;
 #ifdef AMIDE_DEBUG
-  struct timeb timing1, timing2;
+  //  struct timeb timing1, timing2;
+  struct timeval tv1;
+  struct timeval tv2;
+  gdouble time1;
+  gdouble time2;
   gdouble total_time;
 #endif
 
@@ -1686,7 +1565,7 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
 
 #ifdef AMIDE_DEBUG
   /* let's do some timing */
-  ftime(&timing1);
+  gettimeofday(&tv1, NULL);
 #endif
 
   /* sanity check */
@@ -1730,14 +1609,19 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
 
 #ifdef AMIDE_DEBUG
   /* and wrapup our timing */
-  ftime(&timing2);
-  total_time = (timing2.time*1000.0+timing2.millitm - timing1.time*1000.0 - timing1.millitm)/1000.0;
+  gettimeofday(&tv2, NULL);
+  time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
+  time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
+  total_time = time2-time1;
   g_print("######## Slice Generating Took %5.3f (s) #########\n",total_time);
 
 #endif
 
   return slices;
 }
+
+
+
 
 
 

@@ -174,30 +174,6 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
  
   table_row++;
 
-  /* widgets to change the study's default filename */
-  label = gtk_label_new("default filename:");
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1,
-		   0, 0,
-		   X_PADDING, Y_PADDING);
-
-  entry = gtk_entry_new();
-  if (study_new_info->filename != NULL)
-    gtk_entry_set_text(GTK_ENTRY(entry), study_filename(study_new_info));
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "study_dialog", study_dialog); 
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_change_filename), 
-		     study_new_info);
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(entry),1,2,
-		   table_row, table_row+1,
-		   GTK_FILL, 0,
-		   X_PADDING, Y_PADDING);
- 
-  table_row++;
-
   /* widgets to change the study's creation date */
   label = gtk_label_new("creation date:");
   gtk_table_attach(GTK_TABLE(packing_table),

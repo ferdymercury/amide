@@ -57,6 +57,10 @@ ui_threshold_t * ui_threshold_free(ui_threshold_t * ui_threshold) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_threshold\n");
 #endif
+    if (ui_threshold->color_strip_rgb_image != NULL)
+      gdk_pixbuf_unref(ui_threshold->color_strip_rgb_image);
+    if (ui_threshold->bar_graph_rgb_image != NULL)
+      gdk_pixbuf_unref(ui_threshold->bar_graph_rgb_image);
     g_free(ui_threshold);
     ui_threshold = NULL;
   }
@@ -79,6 +83,8 @@ ui_threshold_t * ui_threshold_init(void) {
   /* set any needed parameters */
   ui_threshold->color_strip_image = NULL;
   ui_threshold->volume = NULL;
+  ui_threshold->color_strip_rgb_image = NULL;
+  ui_threshold->bar_graph_rgb_image = NULL;
 
  return ui_threshold;
 }
@@ -114,7 +120,6 @@ void ui_threshold_update_entries(ui_threshold_t * ui_threshold) {
 /* function called to update the canvas */
 void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_threshold) {
 
-  GdkImlibImage * temp_image;
   GnomeCanvasPoints * min_points;
   GnomeCanvasPoints * max_points;
   volume_data_t max;
@@ -122,13 +127,17 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 
   volume = ui_threshold->volume;
   
-  temp_image = image_from_colortable(volume->color_table,
-				     UI_THRESHOLD_COLOR_STRIP_WIDTH,
-				     UI_THRESHOLD_COLOR_STRIP_HEIGHT,
-				     volume->threshold_min,
-				     volume->threshold_max,
-				     volume->min,
-				     volume->max);
+  if (ui_threshold->color_strip_rgb_image != NULL)
+    gdk_pixbuf_unref(ui_threshold->color_strip_rgb_image);
+
+  ui_threshold->color_strip_rgb_image =
+    image_from_colortable(volume->color_table,
+			  UI_THRESHOLD_COLOR_STRIP_WIDTH,
+			  UI_THRESHOLD_COLOR_STRIP_HEIGHT,
+			  volume->threshold_min,
+			  volume->threshold_max,
+			  volume->min,
+			  volume->max);
 
 
   /* the min arrow */
@@ -182,19 +191,19 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
   }
   
   gnome_canvas_set_scroll_region(ui_threshold->color_strip, 0.0, 0.0,
-				 temp_image->rgb_width + UI_THRESHOLD_TRIANGLE_WIDTH,
-				 temp_image->rgb_height + UI_THRESHOLD_TRIANGLE_HEIGHT + 1);
+				 gdk_pixbuf_get_width(ui_threshold->color_strip_rgb_image) 
+				 + UI_THRESHOLD_TRIANGLE_WIDTH,
+				 gdk_pixbuf_get_height(ui_threshold->color_strip_rgb_image)
+				 + UI_THRESHOLD_TRIANGLE_HEIGHT + 1);
 
 
   gtk_widget_set_usize(GTK_WIDGET(ui_threshold->color_strip),
-		       temp_image->rgb_width + UI_THRESHOLD_TRIANGLE_WIDTH,
-		       temp_image->rgb_height + UI_THRESHOLD_TRIANGLE_HEIGHT + 1);
+		       gdk_pixbuf_get_width(ui_threshold->color_strip_rgb_image) + UI_THRESHOLD_TRIANGLE_WIDTH,
+		       gdk_pixbuf_get_height(ui_threshold->color_strip_rgb_image) + UI_THRESHOLD_TRIANGLE_HEIGHT + 1);
 
   if (ui_threshold->color_strip_image != NULL) {
     gnome_canvas_item_set(ui_threshold->color_strip_image,
-			  "image", temp_image,
-			  "width", (double) temp_image->rgb_width,
-			  "height", (double) temp_image->rgb_height,
+			  "pixbuf", ui_threshold->color_strip_rgb_image,
 			  NULL);
     gnome_canvas_item_set(ui_threshold->min_arrow,
 			  "points", min_points,
@@ -205,13 +214,10 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
   } else {
     ui_threshold->color_strip_image = 
       gnome_canvas_item_new(gnome_canvas_root(ui_threshold->color_strip),
-			    gnome_canvas_image_get_type(),
-			    "image", temp_image,
+			    gnome_canvas_pixbuf_get_type(),
+			    "pixbuf", ui_threshold->color_strip_rgb_image,
 			    "x", 0.0,
 			    "y", ((double) UI_THRESHOLD_TRIANGLE_HEIGHT/2),
-			    "anchor", GTK_ANCHOR_NORTH_WEST,
-			    "width", (double) temp_image->rgb_width,
-			    "height", (double) temp_image->rgb_height,
 			    NULL);
     ui_threshold->min_arrow = 
       gnome_canvas_item_new(gnome_canvas_root(ui_threshold->color_strip),
@@ -243,9 +249,6 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 
   gnome_canvas_points_unref(min_points);
   gnome_canvas_points_unref(max_points);
-  gnome_canvas_destroy_image(temp_image);
-
-  /* draw the little triangle things representing min and max */
 
   return;
 } 
@@ -255,8 +258,6 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
   gchar * temp_string;
-  GdkImlibImage * temp_image;
-    
 
   /* sanity check */
   if (study_volumes(ui_study->study) == NULL)
@@ -275,8 +276,6 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
   else
     ui_study->threshold->volume = volume_add_reference(ui_study->current_volume);
 
-  g_print("!!!!!!volume name %s\n",ui_study->threshold->volume->name);
-
   /* reset the label which holds the volume name */
   temp_string = g_strdup_printf("data set: %s\n",ui_study->threshold->volume->name);
   gtk_label_set_text(GTK_LABEL(ui_study->threshold->name_label), temp_string);
@@ -287,14 +286,14 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
   ui_threshold_update_canvas(ui_study, ui_study->threshold); 
 
   /* reset the distribution image */
-  temp_image = image_of_distribution(ui_study->threshold->volume,
-				     UI_THRESHOLD_BAR_GRAPH_WIDTH,
-				     UI_THRESHOLD_COLOR_STRIP_HEIGHT);
+  if (ui_study->threshold->bar_graph_rgb_image != NULL)
+    gdk_pixbuf_unref(ui_study->threshold->bar_graph_rgb_image);
+
+  ui_study->threshold->bar_graph_rgb_image = image_of_distribution(ui_study->threshold->volume,
+							    UI_THRESHOLD_BAR_GRAPH_WIDTH,
+							    UI_THRESHOLD_COLOR_STRIP_HEIGHT);
   gnome_canvas_item_set(ui_study->threshold->bar_graph_item,
-			"image", temp_image, NULL);
-  gnome_canvas_destroy_image(temp_image);
-
-
+			"pixbuf", ui_study->threshold->bar_graph_rgb_image, NULL);
 
   /* and update what's in the entry widgets */
   ui_threshold_update_entries(ui_study->threshold);
@@ -313,7 +312,6 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
   guint left_row=0;
   GnomeCanvas * color_strip;
   GnomeCanvas * bar_graph;
-  GdkImlibImage * temp_image;
   GtkWidget * label;
   GtkWidget * entry;
   GtkWidget * option_menu;
@@ -487,31 +485,28 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
 
 
   /* the distribution image */
-  temp_image = image_of_distribution(ui_threshold->volume,
-				     UI_THRESHOLD_BAR_GRAPH_WIDTH,
-				     UI_THRESHOLD_COLOR_STRIP_HEIGHT);
+  ui_threshold->bar_graph_rgb_image = image_of_distribution(ui_threshold->volume,
+							    UI_THRESHOLD_BAR_GRAPH_WIDTH,
+							    UI_THRESHOLD_COLOR_STRIP_HEIGHT);
   bar_graph = GNOME_CANVAS(gnome_canvas_new());
   gnome_canvas_set_scroll_region(bar_graph, 
 				 0.0, UI_THRESHOLD_TRIANGLE_WIDTH/2,
-				 (gdouble) temp_image->rgb_width,
-				 UI_THRESHOLD_TRIANGLE_WIDTH/2.0+ (gdouble) temp_image->rgb_height);
+				 (gdouble) gdk_pixbuf_get_width(ui_threshold->bar_graph_rgb_image),
+				 (UI_THRESHOLD_TRIANGLE_WIDTH/2.0 + 
+				  (gdouble) gdk_pixbuf_get_height(ui_threshold->bar_graph_rgb_image)));
   
   gtk_widget_set_usize(GTK_WIDGET(bar_graph),
-		       temp_image->rgb_width,
-		       temp_image->rgb_height + UI_THRESHOLD_TRIANGLE_HEIGHT/2);
+		       gdk_pixbuf_get_width(ui_threshold->bar_graph_rgb_image),
+		       gdk_pixbuf_get_height(ui_threshold->bar_graph_rgb_image)
+		       + UI_THRESHOLD_TRIANGLE_HEIGHT/2);
 
   ui_threshold->bar_graph_item = 
     gnome_canvas_item_new(gnome_canvas_root(bar_graph),
-			  gnome_canvas_image_get_type(),
-			  "image", temp_image,
+			  gnome_canvas_pixbuf_get_type(),
+			  "pixbuf", ui_threshold->bar_graph_rgb_image,
 			  "x", 0.0,
 			  "y", ((double) UI_THRESHOLD_TRIANGLE_HEIGHT/2),
-			  "anchor", GTK_ANCHOR_NORTH_WEST,
-			  "width", (double) temp_image->rgb_width,
-			  "height", (double) temp_image->rgb_height,
 			  NULL);
-
-  gnome_canvas_destroy_image(temp_image);
 
   gtk_table_attach(GTK_TABLE(right_table), 
 		   GTK_WIDGET(bar_graph), 0,1,right_row,right_row+1,
@@ -577,8 +572,6 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
   g_free(temp_string);
   ui_study->threshold->app = app;
   ui_study->threshold->volume = volume_add_reference(volume);
-
-  g_print("threshold for volume %s\n",volume->name);
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",

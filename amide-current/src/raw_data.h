@@ -39,27 +39,6 @@ typedef enum {UBYTE, SBYTE,
 	      NUM_DATA_FORMATS} data_format_t;
 
 
-/* don't trust that these are going to work... most of them aren't tested */
-#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-#define AMIDE_FLOAT_FROM_LE(val) ((gfloat) (val))
-#define AMIDE_FLOAT_TO_LE(val) (AMIDE_FLOAT_FROM_LE(val))
-#define AMIDE_FLOAT_FROM_BE(val) ((gfloat) GUINT32_SWAP_LE_BE_CONSTANT(val))
-#define AMIDE_FLOAT_TO_BE(val) (AMIDE_FLOAT_FROM_BE(val))
-#define AMIDE_DOUBLE_FROM_LE(val) ((gdouble) (val))
-#define AMIDE_DOUBLE_TO_LE(val) (AMIDE_DOUBLE_FROM_LE(val))
-#define AMIDE_DOUBLE_FROM_BE(val) ((gdouble) GUINT64_SWAP_LE_BE_CONSTANT(val))
-#define AMIDE_DOUBLE_TO_BE(val) (AMIDE_DOUBLE_FROM_BE(val))
-#else /* BIG ENDIAN */
-#define AMIDE_FLOAT_FROM_LE(val) ((gfloat) GUINT32_SWAP_LE_BE_CONSTANT(val))
-#define AMIDE_FLOAT_TO_LE(val) (AMIDE_FLOAT_FROM_LE(val))
-#define AMIDE_FLOAT_FROM_BE(val) ((gfloat) (val))
-#define AMIDE_FLOAT_TO_BE(val) (AMIDE_FLOAT_FROM_BE(val))
-#define AMIDE_DOUBLE_FROM_LE(val) ((gdouble) GUINT64_SWAP_LE_BE_CONSTANT(val))
-#define AMIDE_DOUBLE_TO_LE(val) (AMIDE_DOUBLE_FROM_LE(val))
-#define AMIDE_DOUBLE_FROM_BE(val) ((gdouble) (val))
-#define AMIDE_DOUBLE_TO_BE(val) (AMIDE_DOUBLE_FROM_BE(val))
-#endif
-
 #define raw_data_calc_num_entries(dim, frames) ((dim).x * (dim).y * (dim).z * (frames))
 
 /* external functions */

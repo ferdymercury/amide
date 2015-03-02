@@ -56,25 +56,6 @@ void ui_study_dialog_callbacks_change_name(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function called when the filename of the study has been changed */
-void ui_study_dialog_callbacks_change_filename(GtkWidget * widget, gpointer data) {
-
-  study_t * study_new_info = data;
-  gchar * new_name;
-  GtkWidget * study_dialog;
-
-  /* get the contents of the name entry box and save it */
-  new_name = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
-  study_set_filename(study_new_info, new_name);
-  g_free(new_name);
-
-  /* tell the study_dialog that we've changed */
-  study_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "study_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(study_dialog));
-
-  return;
-}
-
 /* function called when the creation date of the study has been changed */
 void ui_study_dialog_callbacks_change_creation_date(GtkWidget * widget, gpointer data) {
 
@@ -102,7 +83,7 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   ui_study_t * ui_study;
   study_t * study_new_info = data;
   view_t i_view;
-  axis_t which_axis;
+  axis_t i_axis;
   floatpoint_t rotation;
   GtkWidget * study_dialog;
   realpoint_t center, temp;
@@ -121,23 +102,17 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
 
-  /* compensate for the fact that our view of coronal is flipped wrt to x,y,z axis */
-  if (i_view == CORONAL)
+  /* compensate for sagittal being a left-handed coordinate frame */
+  if (i_view == SAGITTAL)
     rotation = -rotation; 
 
- which_axis = realspace_get_orthogonal_which_axis(i_view);
-  study_set_coord_frame_axis(study_new_info, XAXIS,
-			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, XAXIS),
-						      study_coord_frame_axis(study_new_info, which_axis),
-						      rotation));
-  study_set_coord_frame_axis(study_new_info, YAXIS,
-			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, YAXIS),
-						      study_coord_frame_axis(study_new_info, which_axis),
-						      rotation));
-  study_set_coord_frame_axis(study_new_info, ZAXIS,
-			     realspace_rotate_on_axis(study_coord_frame_axis(study_new_info, ZAXIS),
-						      study_coord_frame_axis(study_new_info, which_axis),
-						      rotation));
+
+  for (i_axis=0; i_axis < NUM_AXIS; i_axis++)
+    study_set_coord_frame_axis(study_new_info, i_axis,
+			       realspace_rotate_on_axis(study_coord_frame_axis(study_new_info)[i_axis],
+							realspace_get_view_normal(study_coord_frame_axis(study_new_info),
+										  i_view),
+							rotation));
   realspace_make_orthonormal(study_new_info->coord_frame.axis); /* orthonormalize*/
   
   /* recalculate the offset of this study based on the center we stored */
@@ -224,7 +199,6 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
 
   /* copy the new info on over */
   study_set_name(ui_study->study, study_name(study_new_info));
-  study_set_filename(ui_study->study, study_filename(study_new_info));
   study_set_coord_frame(ui_study->study, study_coord_frame(study_new_info));
 
   /* copy the view information */

@@ -7,7 +7,6 @@ BITMAPS     = \
 	PET.xpm	\
 	ROI.xpm	\
 	SPECT.xpm \
-	amide.xpm \
 	study.xpm 
 
 pixmap_DATA = $(BITMAPS)

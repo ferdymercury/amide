@@ -1,6 +1,5 @@
-INCLUDES = \
-   -DGNOMELOCALEDIR=\""$(datadir)/locale\""  \
-	-I/usr/local/include
+INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS)
 
 lib_LTLIBRARIES = libamide.la
 libamideincludedir = $(includedir)/amide
@@ -11,9 +10,9 @@ libamideinclude_HEADERS = \
 
 libamide_la_SOURCES = \
 	amide_export.c \
-	$(amide_sources)
+	$(amide_SOURCES)
 
-amide_sources = \
+amide_SOURCES = \
 	amide.c \
 	amide.h \
 	amide_export.h \
@@ -46,12 +45,6 @@ amide_sources = \
 	roi.h \
 	study.c \
 	study.h \
-	ui_main.c \
-	ui_main.h \
-	ui_main_callbacks.c \
-	ui_main_callbacks.h \
-	ui_main_menus.c \
-	ui_main_menus.h \
 	ui_rendering.c \
 	ui_rendering.h \
 	ui_rendering_callbacks.c \
@@ -108,4 +101,3 @@ amide_sources = \
 	volume.h \
 	xml.c \
 	xml.h
-

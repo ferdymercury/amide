@@ -25,17 +25,22 @@
 
 #include "config.h"
 #include <gnome.h>
-#include <matrix.h>
 #include <limits.h>
 #include <math.h>
 #include "amide.h"
 #include "image.h"
 #include "color_table2.h"
 
+/* callback function used for freeing the pixel data in a gdkpixbuf */
+void image_free_rgb_data(guchar * pixels, gpointer data) {
+  g_free(pixels);
+  return;
+}
+
 /* function to return a blank image */
-GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height, color_point_t image_color) {
+GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, color_point_t image_color) {
   
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
   intpoint_t i,j;
   guchar * rgb_data;
   
@@ -52,20 +57,20 @@ GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height, col
       rgb_data[i*width*3+j*3+2] = image_color.b;
     }
   
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
-  
-  /* no longer need the data */
-  g_free(rgb_data); 
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,width,height,width*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
 
   return temp_image;
 }
 
 
-/* function returns a GdkImlibImage from 8 bit data */
-GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
-				const color_table_t color_table) {
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+/* function returns a GdkPixbuf from 8 bit data */
+GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
+			    const color_table_t color_table) {
   
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
   intpoint_t i,j;
   guchar * rgb_data;
   color_point_t rgb_temp;
@@ -87,24 +92,23 @@ GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, co
       rgb_data[location+2] = rgb_temp.r;
     }
 
-  /* generate the GdkImlibImage from the rgb_data */
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
-
-  /* no longer need the data */
-  g_free(rgb_data); 
+  /* generate the GdkPixbuf from the rgb_data */
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,width,height,width*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
   
   return temp_image;
 }
 
-/* function returns a GdkImlibImage from a rendering context */
-GdkImlibImage * image_from_renderings(rendering_list_t * contexts, gint16 width, gint16 height) {
+/* function returns a GdkPixbuf from a rendering context */
+GdkPixbuf * image_from_renderings(rendering_list_t * contexts, gint16 width, gint16 height) {
 
   gint16 * temp_data;
   guchar * rgb_data;
   voxelpoint_t i;
   color_point_t rgb_temp;
   guint location;
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
 
   /* malloc space for a temporary storage buffer */
   if ((temp_data = (guint16 *) g_malloc(sizeof(guint16) * 3 * width * height)) == NULL) {
@@ -155,23 +159,25 @@ GdkImlibImage * image_from_renderings(rendering_list_t * contexts, gint16 width,
       rgb_data[location+2] = (temp_data[location+2] < 0xFF) ? temp_data[location+2] : 0xFF;
     }
 
-  /* from the rgb_data, generate a GdkImlibImage */
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
+  /* from the rgb_data, generate a GdkPixbuf */
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,width,height,width*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
 
-  /* no longer need the data */
-  g_free(rgb_data); 
+  /* free up any unneeded allocated memory */
   g_free(temp_data);
 
   return temp_image;
 }
+#endif
 
 /* function to make the bar graph to put next to the color_strip image */
-GdkImlibImage * image_of_distribution(volume_t * volume,
-				      const intpoint_t width, 
-				      const intpoint_t height) {
+GdkPixbuf * image_of_distribution(volume_t * volume,
+				  const intpoint_t width, 
+				  const intpoint_t height) {
 
   voxelpoint_t i;
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
   volume_data_t scale;
   guchar * rgb_data;
   guint frame;
@@ -263,30 +269,29 @@ GdkImlibImage * image_of_distribution(volume_t * volume,
   }
     
     
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,width,height,width*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
   
   if (temp_image == NULL)
     g_error("NULL Distribution Image created\n");
-
-  /* free up the rgb data */
-  g_free(rgb_data);
 
   return temp_image;
 }
 
 
 /* function to make the color_strip image */
-GdkImlibImage * image_from_colortable(const color_table_t color_table,
-				      const intpoint_t width, 
-				      const intpoint_t height,
-				      const volume_data_t min,
-				      const volume_data_t max,
-				      const volume_data_t volume_min,
-				      const volume_data_t volume_max) {
+GdkPixbuf * image_from_colortable(const color_table_t color_table,
+				  const intpoint_t width, 
+				  const intpoint_t height,
+				  const volume_data_t min,
+				  const volume_data_t max,
+				  const volume_data_t volume_min,
+				  const volume_data_t volume_max) {
 
   intpoint_t i,j;
   color_point_t color;
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
   volume_data_t datum;
   guchar * rgb_data;
 
@@ -315,22 +320,23 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
   }
 
   
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
-  g_free(rgb_data); /* no longer need the data */
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,width,height,width*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
   
   return temp_image;
 }
 
 
-GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
-				   volume_list_t * volumes,
-				   const volume_time_t start,
-				   const volume_time_t duration,
-				   const floatpoint_t thickness,
-				   const realspace_t view_coord_frame,
-				   const scaling_t scaling,
-				   const floatpoint_t zoom,
-				   const interpolation_t interpolation) {
+GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
+			       volume_list_t * volumes,
+			       const volume_time_t start,
+			       const volume_time_t duration,
+			       const floatpoint_t thickness,
+			       const realspace_t view_coord_frame,
+			       const scaling_t scaling,
+			       const floatpoint_t zoom,
+			       const interpolation_t interpolation) {
 
   guchar * rgb_data;
   guint16 * temp_data;
@@ -338,7 +344,7 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
   voxelpoint_t i;
   voxelpoint_t dim;
   volume_data_t max,min;
-  GdkImlibImage * temp_image;
+  GdkPixbuf * temp_image;
   color_point_t rgb_temp;
   volume_list_t * slices;
   volume_list_t * temp_slices;
@@ -419,7 +425,8 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
       for (i.x = 0; i.x < dim.x; i.x++) {
 	rgb_temp = color_table_lookup(VOLUME_CONTENTS(temp_slices->volume,0,i), 
 				      temp_volumes->volume->color_table, min, max);
-	location = i.y*dim.x*3+i.x*3;
+	/* compensate for the fact that X defines the origin as top left, not bottom left */
+	location = (dim.y - i.y - 1)*dim.x*3+i.x*3;
 	temp_data[location+0] += rgb_temp.r;
 	temp_data[location+1] += rgb_temp.g;
 	temp_data[location+2] += rgb_temp.b;
@@ -448,11 +455,12 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
 
   
 
-  /* from the rgb_data, generate a GdkImlibImage */
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL,dim.x, dim.y);
+  /* from the rgb_data, generate a GdkPixbuf */
+  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
+					FALSE,8,dim.x,dim.y,dim.x*3*sizeof(guchar),
+					image_free_rgb_data, NULL);
 
-  /* no longer need the data */
-  g_free(rgb_data); 
+  /* cleanup */
   g_free(temp_data);
 
   return temp_image;

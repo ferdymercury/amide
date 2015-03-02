@@ -27,7 +27,6 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include <matrix.h>
 #include "volume.h"
 #include <sys/stat.h>
 #include "raw_data_import.h"
@@ -172,10 +171,11 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
 
   /* and set the coordinate axis empirically */
   if (pem_volume != NULL) {
-    pem_volume->coord_frame.axis[XAXIS].x = -pem_volume->coord_frame.axis[XAXIS].x;
-    pem_volume->coord_frame.axis[YAXIS].y = -pem_volume->coord_frame.axis[YAXIS].y;
+    pem_volume->coord_frame.axis[XAXIS].x = -1.0;
+    pem_volume->coord_frame.axis[XAXIS].y = 0.0;
+    pem_volume->coord_frame.axis[XAXIS].z = 0.0;
+    pem_volume->coord_frame.offset.x = pem_volume->dim.x*pem_volume->voxel_size.x;
   }
-
 
   return pem_volume; 
   /* and return the new volume structure (it's NULL if we cancelled) */

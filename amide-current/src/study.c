@@ -102,7 +102,7 @@ study_t * study_init(void) {
   study_set_view_duration(study, 1.0-CLOSE);
   study_set_zoom(study, 1.0);
   study_set_interpolation(study, NEAREST_NEIGHBOR);
-  study_set_scaling(study, SCALING_PER_SLICE);
+  study_set_scaling(study, SCALING_GLOBAL);
 
   /* set the creation date as today */
   study->creation_date = NULL;
@@ -179,11 +179,14 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
   }
   g_free(old_dir);
 
+  /* remember the name of the directory of this study */
+  study_set_filename(study, directory);
+
   return TRUE;
 }
 
 /* function to load in a study from disk in xml format */
-study_t * study_load_xml(gchar * directory) {
+study_t * study_load_xml(const gchar * directory) {
 
   xmlDocPtr doc;
   xmlNodePtr nodes;
@@ -198,8 +201,8 @@ study_t * study_load_xml(gchar * directory) {
   interpolation_t i_interpolation;
   scaling_t i_scaling;
   time_t modification_time;
+  realspace_t study_coord_frame;
   struct stat file_info;
-  
   
   new_study = study_init();
 
@@ -254,9 +257,8 @@ study_t * study_load_xml(gchar * directory) {
   if (file_version == NULL)
     g_warning("%s: No file version for the data file.... is this an AMIDE data file?",PACKAGE);
   else if (g_strcasecmp(file_version, AMIDE_FILE_VERSION) != 0)
-    g_warning("%s: data file versions don't match (expected %s but got %s).  Will try anyway",
+    g_warning("%s: xif data file versions don't match (expected %s but got %s).  Will try anyway",
 	      PACKAGE, AMIDE_FILE_VERSION, file_version);
-  g_free(file_version);
 
   /* get the creation date of the study */
   creation_date = xml_get_string(nodes, "creation_date");
@@ -277,7 +279,9 @@ study_t * study_load_xml(gchar * directory) {
 
 
   /* get our study parameters */
-  study_set_coord_frame(new_study, xml_get_realspace(nodes, "coord_frame"));
+  study_coord_frame = xml_get_realspace(nodes, "coord_frame");
+  study_set_coord_frame(new_study, study_coord_frame);
+
 
   /* load in the volumes */
   volume_nodes = xml_get_node(nodes, "Volumes");
@@ -292,7 +296,7 @@ study_t * study_load_xml(gchar * directory) {
   new_rois = roi_list_load_xml(roi_nodes, directory);
   study_add_rois(new_study, new_rois);
   roi_list_free(new_rois);
-    
+
   /* get our view parameters */
   study_set_view_center(new_study, xml_get_realpoint(nodes, "view_center"));
   study_set_view_thickness(new_study, xml_get_floatpoint(nodes, "view_thickness"));
@@ -325,6 +329,46 @@ study_t * study_load_xml(gchar * directory) {
   /* and we're done */
   xmlFreeDoc(doc);
     
+  /* legacy cruft, rip out at some point in the future */
+  /* compensate for errors in old versions of amide */
+  if (g_strcasecmp(file_version, "1.3") < 0) {
+    volume_list_t * volumes;
+    volume_t * volume;
+    roi_list_t * rois;
+    roi_t * roi;
+    realpoint_t view_center;
+
+    g_warning("%s: detected file version previous to 1.3, compensating for coordinate errors",
+	      PACKAGE);
+
+    view_center = study_view_center(new_study);
+    view_center.y = -view_center.y;
+    study_set_view_center(new_study,view_center);
+
+    volumes = study_volumes(new_study);
+    while (volumes != NULL) {
+      volume = volumes->volume;
+      volume->coord_frame.axis[XAXIS].y = -volume->coord_frame.axis[XAXIS].y;
+      volume->coord_frame.axis[YAXIS].y = -volume->coord_frame.axis[YAXIS].y;
+      volume->coord_frame.axis[ZAXIS].y = -volume->coord_frame.axis[ZAXIS].y;
+      volume->coord_frame.offset.y = -volume->coord_frame.offset.y;
+      volumes = volumes->next;
+    }
+
+    rois = study_rois(new_study);
+    while (rois != NULL) {
+      roi = rois->roi;
+      roi->coord_frame.axis[XAXIS].y = -roi->coord_frame.axis[XAXIS].y;
+      roi->coord_frame.axis[YAXIS].y = -roi->coord_frame.axis[YAXIS].y;
+      roi->coord_frame.axis[ZAXIS].y = -roi->coord_frame.axis[ZAXIS].y;
+      roi->coord_frame.offset.y = -roi->coord_frame.offset.y;
+      rois = rois->next;
+    }
+  }
+
+  /* freeing up anything we haven't freed yet */
+  g_free(file_version);
+
   /* and return to the old directory */
   if (chdir(old_dir) != 0) {
     g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
@@ -336,6 +380,7 @@ study_t * study_load_xml(gchar * directory) {
 
   /* and remember the name of the directory for convience */
   study_set_filename(new_study, directory);
+
 
   return new_study;
 }
@@ -444,7 +489,7 @@ void study_add_rois(study_t * study, roi_list_t * rois) {
 
 /* sets the name of a study
    note: new_name is copied rather then just being referenced by study */
-void study_set_name(study_t * study, gchar * new_name) {
+void study_set_name(study_t * study, const gchar * new_name) {
 
   g_free(study->name); /* free up the memory used by the old name */
   study->name = g_strdup(new_name); /* and assign the new name */
@@ -454,7 +499,7 @@ void study_set_name(study_t * study, gchar * new_name) {
 
 /* sets the filename of a study
    note: new_filename is copied rather then just being referenced by study */
-void study_set_filename(study_t * study, gchar * new_filename) {
+void study_set_filename(study_t * study, const gchar * new_filename) {
 
   g_free(study->filename); /* free up the memory used by the old filename */
   study->filename = g_strdup(new_filename); /* and assign the new name */
@@ -465,9 +510,9 @@ void study_set_filename(study_t * study, gchar * new_filename) {
 /* sets the date of a study
    note: new_date is copied rather then just being referenced by study,
    note: no error checking of the date is currently done. */
-void study_set_creation_date(study_t * study, gchar * new_date) {
+void study_set_creation_date(study_t * study, const gchar * new_date) {
 
-  g_free(study->creation_date); /* free up the memory used by the old filename */
+  g_free(study->creation_date); /* free up the memory used by the old creation date */
   study->creation_date = g_strdup(new_date); /* and assign the new name */
 
   return;
