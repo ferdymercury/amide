@@ -216,18 +216,18 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gint image_num;
   gboolean salvage = FALSE;
   gchar * msg;
-  gchar * saved_time_locale;
-  gchar * saved_numeric_locale;
   gint num_corrupted_planes = 0;
   const gchar * bad_char;
   gsize invalid_point;
   AmitkAxis i_axis;
-  
+  gchar * saved_time_locale;
+  gchar * saved_numeric_locale;
+
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_TIME,"POSIX");  
   setlocale(LC_NUMERIC,"POSIX");  
-
+  
   
   /* setup some defaults */
   MDC_INFO=MDC_NO;       /* don't print stuff */

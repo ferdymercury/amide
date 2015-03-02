@@ -1,0 +1,2975 @@
+# translation of amide manual to spanish
+#         Pablo Sau <psau@cadpet.es>, 2002
+
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2007-12-16 19:37-0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../C/amide.xml.translate:13(title)
+msgid "The <application>AMIDE</application> User's Manual V0.3"
+msgstr "Manual de Usuario de <application>AMIDE</application> V0.3"
+
+#: ../C/amide.xml.translate:16(para)
+msgid ""
+"AMIDE stands for Amide's a Medical Image Data Examiner. This program is a "
+"tool for viewing and analyzing volumetric medical imaging data sets, and has "
+"been designed from the ground up with support for multi-modality imaging."
+msgstr ""
+"AMIDE (Amide's a Medical Image Data Examiner). Este programa es una "
+"herramienta para ver y analizar datos multidimensionales médicos , y ha sido "
+"diseñado en el terreno de la imagen multimodalidad."
+
+#: ../C/amide.xml.translate:23(year)
+msgid "2000-2005"
+msgstr ""
+
+#: ../C/amide.xml.translate:23(holder) ../C/amide.xml.translate:47(para)
+msgid "Andy Loening"
+msgstr ""
+
+#: ../C/amide.xml.translate:28(firstname)
+msgid "Andy"
+msgstr ""
+
+#: ../C/amide.xml.translate:28(surname)
+msgid "Loening"
+msgstr ""
+
+#: ../C/amide.xml.translate:32(email)
+msgid "loening at alum dot mit dot edu"
+msgstr ""
+
+#: ../C/amide.xml.translate:38(releaseinfo)
+msgid "This is release 0.3 of the AMIDE User's Manual."
+msgstr "Revisión número 0.3 del Manual de AMIDE."
+
+#: ../C/amide.xml.translate:44(revnumber)
+msgid "AMIDE Manual V0.3"
+msgstr ""
+
+#: ../C/amide.xml.translate:45(date)
+msgid "2003-06-09"
+msgstr ""
+
+#: ../C/amide.xml.translate:65(title)
+msgid "Introduction"
+msgstr "Introducción"
+
+#: ../C/amide.xml.translate:67(title)
+msgid "Licensing"
+msgstr ""
+
+#: ../C/amide.xml.translate:69(para)
+msgid ""
+"AMIDE is released under the terms of the <ulink type=\"http\" url=\"http://"
+"www.gnu.org/copyleft/gpl.html\">GNU General Public Library (GPL).</ulink>"
+msgstr ""
+"AMIDE se ha liberado bajo los términos de <ulink type=\"http\" url=\"http://"
+"www.gnu.org/copyleft/gpl.html\">GNU General Public Library (GPL).</ulink>"
+
+#: ../C/amide.xml.translate:73(para)
+msgid "The text of the license is fairly verbose. A quick summary follows:"
+msgstr "El texto de la licencia es el siguiente:"
+
+#: ../C/amide.xml.translate:79(para)
+msgid ""
+"You are free to run the program, for any purpose. Please note that, although "
+"the GPL makes no restrictions on use of the program, your government "
+"probably does. For instance, in the United States, AMIDE is not FDA approved "
+"and cannot be used clinically."
+msgstr ""
+"Usted es libre de usar este programa para cualquier propósito. Por favor "
+"note que, aunque la GPL no hace restricciónes sobre el uso del programa, su "
+"gobierno probablablemte sí. Por ejemplo, en Estados Unidos, AMIDE no está "
+"aprovado por la FDA y no puede darse uso clínico allí ."
+
+#: ../C/amide.xml.translate:88(para)
+msgid ""
+"You are free to study the source code of the program, and adapt it to your "
+"needs."
+msgstr ""
+"Usted es libre de estudiar el código fuente y adaptarlo a sus necesidades."
+
+#: ../C/amide.xml.translate:94(para)
+msgid "You are free to redistribute the program."
+msgstr "Usted es libre de redistribuir el programa."
+
+#: ../C/amide.xml.translate:99(para)
+msgid ""
+"You are free to release modified versions of the program, as long as you "
+"also redistribute the source code to the modified program, and you label "
+"your modified version of the program appropriately."
+msgstr ""
+"Usted es libre de sacar versiones modificadas del programa, siempre que "
+"también redistribuya el código fuente del programa modificado, y etiquete "
+"apropiadamente la versión como modificada."
+
+#: ../C/amide.xml.translate:112(title)
+msgid "Availability of Source Code"
+msgstr "Disponibilidad del Código Fuente"
+
+#: ../C/amide.xml.translate:114(para)
+msgid ""
+"The source code for AMIDE is readily available from the <ulink type=\"http\" "
+"url=\"http://amide.sourceforge.net\">AMIDE web site</ulink>."
+msgstr ""
+"El Código Fuente de AMIDE está disponble en <ulink type=\"http\" url="
+"\"http://amide.sourceforge.net\">el sitio web de AMIDE</ulink>."
+
+#: ../C/amide.xml.translate:122(title)
+msgid "Supported Platforms"
+msgstr "Platformas soportadas"
+
+#: ../C/amide.xml.translate:124(para)
+msgid ""
+"In addition to source code, binary versions of AMIDE along with installation "
+"instructions can be found for several systems on the <ulink type=\"http\" "
+"url=\"http://amide.sourceforge.net\">AMIDE web site</ulink>. The currently "
+"supported systems are Linux/i386, Microsoft Windows, and Macintosh OS X "
+"(achieved through the use of the <ulink type=\"http\" url=\"http://fink."
+"sourceforge.net\">fink</ulink> add-on packages)."
+msgstr ""
+"Además del Código Fuente, las versiones binarias de AMIDE junto con "
+"instruciones de instalacion se pueden encontar <ulink type=\"http\" url="
+"\"http://amide.sourceforge.net\">en el sitio web de AMIDE web</ulink>. Los "
+"sistemas soportados actualmente son Linux/i386, Microsoft Windows, y "
+"Macintosh OS X (logrado mediante el uso del paquete complementario <ulink "
+"type=\"http\" url=\"http://fink.sourceforge.net\">fink</ulink>)."
+
+#: ../C/amide.xml.translate:136(title)
+msgid "Contact Information"
+msgstr "Información de Contacto"
+
+#: ../C/amide.xml.translate:138(para)
+msgid ""
+"Questions and bug reports can be addressed to the AMIDE users list <email> "
+"amide-users@lists.sourceforge.net</email>. Information on joining the list "
+"and/or viewing archived messages can be found <ulink type=\"http\" url="
+"\"http://sourceforge.net/mail/?group_id=9464\">here</ulink>."
+msgstr ""
+"Pueden dirigir sus preguntas a lista de usuarios AMIDE <email> amide-"
+"users@lists.sourceforge.net </email>. La informacion para unirse a la lista "
+"y/o ver mensajes archivados se puede encontrar <ulink type=\"http\" url="
+"\"http://sourceforge.net/mail/?group_id=9464\">aquí</ulink>."
+
+#: ../C/amide.xml.translate:150(title)
+msgid "AMIDE Basics"
+msgstr "Fundamentos del Amide"
+
+#: ../C/amide.xml.translate:152(para)
+msgid ""
+"As the use of AMIDE is bound to be completely intuitive only to the one who "
+"wrote the program (i.e. me), this section provides a brief overview of "
+"operating within the program. It assumes you already have a data set loaded "
+"in. For instructions on getting a data set into AMIDE, see <xref linkend="
+"\"importing_data_sets\"/>"
+msgstr ""
+"Com el uso de AMIDE es completamente intuitivo sólo para el escribió el "
+"programa (es decir yo), este sección proporcióna una breve panorámica de del "
+"uso del programa. se asume que tiene estudios cargados. Para ver "
+"lasinstruciones para cargar estudios en el AMIDE referirse a <xref linkend="
+"\"importing_data_sets\"/>."
+
+#: ../C/amide.xml.translate:163(title)
+msgid "A Quick Theory of Operations"
+msgstr "Teoría Rápida de Operaciones"
+
+#: ../C/amide.xml.translate:165(title)
+msgid "AMIDE Objects"
+msgstr "Objetos AMIDE"
+
+#: ../C/amide.xml.translate:173(term)
+msgid "Data Set"
+msgstr "Volumen de Datos"
+
+#: ../C/amide.xml.translate:175(para)
+msgid ""
+"A data set object contains the raw information from a medical imaging study, "
+"along with the corresponding parameters needed for interpreting that "
+"information (thresholds, colormaps, etc.)."
+msgstr ""
+"Un volumen de datos contiene la información cruda de un estudio de imagen "
+"médica, junto con los parámetros necesarios para su correcta interpretación "
+"con esa información (umbrales, mapas de color, etc.)."
+
+#: ../C/amide.xml.translate:183(term)
+msgid "ROI"
+msgstr ""
+
+#: ../C/amide.xml.translate:185(para)
+msgid ""
+"A region of interest object defines a volume of space over which statistics "
+"can be calculated. All ROI's in AMIDE are volumetric. Currently, AMIDE "
+"implements ellipsoid, cylinderical, rectangular, and isocontour based ROI "
+"geometries."
+msgstr ""
+"Región de Interés(Region Of Interest,ROI), este objeto define un subvolumen "
+"del volumen de datos sobre el cual pueden calcularse estadísticas. Todos los "
+"ROI's en AMIDE son volumétricos. Actualmente, AMIDE implementa las "
+"siguieintes geometrías en los ROI: elipsoide, cilídrico, rectangular, and "
+"isocontornos."
+
+#: ../C/amide.xml.translate:194(term)
+msgid "Fiducial Mark"
+msgstr "Marcador Fiducial"
+
+#: ../C/amide.xml.translate:196(para)
+msgid ""
+"A very simple object, fiducial marks encode only the location of a reference "
+"point in space, and are used for rigid body alignment."
+msgstr ""
+"Es un objeto muy simple , los Marcadores Fiduciales sólo tiene la "
+"información sobre la referencia a un punto del espacio, y son usadas para el "
+"alíneamiento de cuerpos rigidos."
+
+#: ../C/amide.xml.translate:203(term)
+msgid "Study"
+msgstr "Estudio"
+
+#: ../C/amide.xml.translate:205(para)
+msgid ""
+"Each AMIDE session has a single study object, which is used for grouping "
+"together a number of related data sets, ROI's, and fiducial marks."
+msgstr ""
+"Cada sesión de AMIDE tiene un simple objeto de estudio, que se usa para "
+"agrupar un número de volúmenes de datos, ROI's, y marcas fiduciales."
+
+#: ../C/amide.xml.translate:167(para)
+msgid ""
+"AMIDE can work with and display a large number of objects simultaneous "
+"(limited only be available memory). The object types current implemented in "
+"AMIDE are as follows: <placeholder-1/>"
+msgstr ""
+"AMIDE pude trabajar y visualizar multiplicidad de objetos simultáneamente "
+"(limitado sólo por la RAM disponible). Los tipos de objetos actualmente "
+"implementados en AMIDE son los siguientes: <placeholder-1/>"
+
+#: ../C/amide.xml.translate:218(title)
+msgid "Object Tree"
+msgstr "Objeto Arbol"
+
+#: ../C/amide.xml.translate:222(title)
+msgid "Study Tree"
+msgstr "Arbol de Estudio"
+
+#: ../C/amide.xml.translate:229(phrase)
+msgid ""
+"An example of a study's tree structure within AMIDE. The two data sets (FDG "
+"PET and microCT) and 1 ROI (bladder) are children of the study object "
+"(m2862). The remaining ROI's are children of the data sets."
+msgstr ""
+"Un ejemplo de árbol de estudio en AMIDE. Los dos volúmenes de datos (FDG PET "
+"y microCT) y 1 ROI (vegiga) son hijos del objeto estudio (m2862). Los ROI's "
+"restantes son hijos del volumen de datos."
+
+#: ../C/amide.xml.translate:240(para)
+msgid ""
+"In order to facilitate working with a large number of objects "
+"simultaneously, AMIDE conceptually groups all objects into a tree hierarchy, "
+"with the study object as the root of the tree (see <xref linkend=\"studytree-"
+"fig\"/>). Data set objects will generally be primary branches off of the "
+"study object, while ROI's can be branches off of the study object or off of "
+"individual data sets. Why is this important? Because the structure of the "
+"tree determines how movements are mapped within the program. If a data set "
+"is moved relative to the rest of the study, the ROI's that are branches from "
+"that data set object will be correspondingly moved, so that they will "
+"maintain the correct orientation and position with respect to the data set "
+"that is their parent."
+msgstr ""
+"Para facilitar el trabajo con un gran número de objetos simultáneamente, "
+"AMIDE conceptualmente agrupa todos objetos en una jerarquía de árbol, con el "
+"object estudio como raiz del árbol (ver <xref linkend=\"studytree-fig\"/>). "
+"Los objetos de volúmenes de datos serán ramas principales del objeto "
+"estudio, mientras que los ROI's pueden ser ramas del objeto estudio o de los "
+"objetos de volúmenes de datos. Por qué es esto importante. Porque la "
+"estructura del árbol determina como los movimientos son seguidos por el "
+"programa. Si un volumen de datos es movido con respecto al resto del "
+"estudio, los ROI's que son ramas de ese volumen de datos son movidos "
+"acordemente con aquel, así se mantendrá la correcta orientación y posión con "
+"respecto al volumen de datos padre."
+
+#: ../C/amide.xml.translate:255(title)
+msgid "Real World Units"
+msgstr "Unidades del mundo real"
+
+#: ../C/amide.xml.translate:257(para)
+msgid ""
+"An important thing to realize when working with AMIDE is that the program "
+"will try to abstract away the underlying digital format of the data as much "
+"as possible. When you listen to digital audio, the CD player automatically "
+"converts the series of 0's and 1's encoded on the compact disc into an "
+"analog format so that you don't have to worry about the underlying digital "
+"format. Similarly, AMIDE presents the digital data to you in analog form. "
+"When ever possible, units are given in terms of real world units (e.g. mm's, "
+"seconds), and most operations are not constrained by the discrete nature of "
+"the underlying data. For example, data in AMIDE is viewed in terms of "
+"\"slices\", not fixed image planes. These slices can be taken from the data "
+"set at arbitary angles, and can be of any thickness (they are not "
+"constrained to be integer multiples of the underlying voxel size). You may "
+"be used to looking at medical images in terms of voxels and integers, but "
+"remember that the object or subject scanned is an item in the real world, "
+"and AMIDE tries to recreate this \"analog signal\" for you."
+msgstr ""
+"Es importante darse cuenta trabajando con AMIDE que el programa intentará "
+"abstraer el formato de sobreimpresión digital tanto como sea posible. Cuando "
+"eschucha un CD de audio, el reproductor convierte automáticamente una serie "
+"de ceros y unos codificdos en el disco en formato digital, y así usted no "
+"tiene que preocuparse del formato digital subyaccente. De manera similar, "
+"AMIDE presenta los datos digitales de forma analógica. Siempre que sea "
+"posible las unidades empleadas son unidades del mundo real (mm, seg..), y al "
+"mayoría de operaciones no estan limitadas por la la naturaleza discreta de "
+"los datos subyaccentes. Por ejemplo, los datos son vistos en término de "
+"\"cortes\" y no de planos fijos de imágenes. Estos cortes pueden extraerse "
+"del volumen de datos en cualquier ángulo, y con cualquier grosor (no sólo "
+"limitado a múltiplos del tamaño del voxel). Usted pude estar acostumbrado a "
+"mirar las imágenes médicas en términos de de vóxeles y de enteros, pero "
+"recuerde que el sujeto escaneado es parte del mundo real, y AMIDE intentará "
+"recrear esta \"señal analógica\" para usted."
+
+#: ../C/amide.xml.translate:276(para)
+msgid ""
+"The only place the abstraction starts to break down is when dealing with "
+"dynamic data sets. Einstein understood time to be a \"special\" dimension, "
+"and AMIDE agrees. The reason for this, is that trying to represent dynamic "
+"data as anything but separate frames of data becomes overly complex from a "
+"computational standpoint, primarily because dynamic data is generally not "
+"equally spaced. While moving 1 voxel in the x, y, or z directions will "
+"always move you a constant unit of measurement (say 0.4 mm) in the "
+"appropriate direction, moving 1 voxel in the t direction may move you 30 "
+"seconds or 30 minutes in time, depending on what frame you're looking at. "
+"Because of this, AMIDE deals with dynamic data in terms of frames, although "
+"it should always tell you the time that those frames correspond to."
+msgstr ""
+"El único sitio donde la abstracció empieza a romperse y cuando se trabaja "
+"con volúmenes de datos dinámicos. Einstein entendió que el tiempo es una "
+"\"dimensión\" especial, y AMIDE está de acuerdo. La razón de esto es que "
+"intentando representar datos dinámicos pero en segmentos de tiempo separados "
+"resulta complejo desde el punto de vista computacional, primeramente por que "
+"los datos dinánicos no suelen estar igualmente espaciados. Mientras que "
+"moverse en el espacio 1 voxel en las direciones x, y o z siempre equivale a "
+"una unidad constante de medida (por ejemplo 0.4 mm) en la dirección "
+"apropiada, mover un voxel en la dirección t puede ser de 30 segundos o de 30 "
+"minutos, dependiendo que segmento de tiempo este mirando. Por esto, AMIDE "
+"trabaja con el tiempo en términos de segmentos (frames), aunque AMIDE "
+"siempre nos dirá el tiempo al que corresponede cada segmento."
+
+#: ../C/amide.xml.translate:303(title)
+msgid "Components of the Display"
+msgstr "Componentes del Display"
+
+#: ../C/amide.xml.translate:306(title)
+msgid "AMIDE Main Window"
+msgstr "Ventana Principal de AMIDE"
+
+#: ../C/amide.xml.translate:313(phrase)
+msgid "A diagram pointing out the salient features of the main window"
+msgstr "Diagrama señalando lo más destacable de la ventana principal"
+
+#: ../C/amide.xml.translate:320(title)
+msgid "Context Sensitive Help"
+msgstr "Ayuda Sensible al Contexto"
+
+#: ../C/amide.xml.translate:322(para)
+msgid ""
+"Located in the lower left corner of the window, the context sensitive help "
+"window shows what different mouse buttons and key strokes can accomplish "
+"given the current cursor position. Note that mouse buttons are labelled in "
+"UNIX fashion. Buttons 1, 2, and 3 correspond to the left, middle, and right "
+"mouse buttons, respectively. Under Macintosh OS X, the middle and right "
+"buttons are emulated by pressing the option key or the open apple key, "
+"respectively, while pressing the mouse button."
+msgstr ""
+"Localizada en la esquina inferior izquierda de la ventana, la ayuda sensible "
+"al contexto mostrará que lo que sucederá al apretar los diferentes botones "
+"del ratón o las combinaciones de teclas. Los botones estan marcados a la "
+"manera UNIX, correspondiendo el 1, 2 y 3 a izquierdo, medio y derecho "
+"respectivamente. En los ratones con sólo dos botones, el del medio es "
+"emulado apretando los dos botones a la vez."
+
+#: ../C/amide.xml.translate:336(title)
+msgid "Tree View of Study Data"
+msgstr "Vista del Arbol de Datos del Estudio"
+
+#: ../C/amide.xml.translate:338(para)
+msgid ""
+"Located on the left side of the window is a tree listing of all the objects "
+"in the study. The tree structure shows how movements will be propogated to "
+"other objects in the study. For instance, if a data set is rotated, all of "
+"its children will be correspondingly rotated."
+msgstr ""
+"Localizado en la parte izquierda de la ventana esta una árbol que lista "
+"todos los objetos del estudio. La estructura de árbol muestra como los "
+"movimientos serán propagados a los objetos del estudio. Por ejemplo si un "
+"volumen de datos es rotado, todos sus objetos hijos serán rotados "
+"acordemente."
+
+#: ../C/amide.xml.translate:344(para)
+msgid ""
+"Objects in the tree can be selected for display by left clicking on the name "
+"of the object. Middle clicking on a data set will make that data set the "
+"\"active\" data set. The \"active\" data set is designated by being "
+"highlights, and when a function is chosen that can logically apply to only "
+"one data set (e.g. filtering), the active data set is the one chosen."
+msgstr ""
+"Objetos del árbol pueden ser selecionados con pulsación en el botón 1, en el "
+"nombre del objeto. Click en el 2 \"activa\" el objeto. El \"volumen activo "
+"de datos\" aparecerá remarcado, y cuando se una selecciona una función (por "
+"ejemplo un filtro), esta será aplicada sólo al \"volumen activo de datos\"."
+
+#: ../C/amide.xml.translate:351(para)
+msgid ""
+"Object modification dialog boxes can be brought up by right clicking on the "
+"corresponding object. ROI's can be added by right clicking on the blank area "
+"of the tree, or shift-right clicking on one of the objects. These functions "
+"are further described in <xref linkend=\"data_sets\"/> and <xref linkend="
+"\"rois\"/>."
+msgstr ""
+"Al diálogo de modificación de objetos se pude acceder con el botón 3, "
+"haciendo pulsación sobre el objeto, correspondiente. Los ROI's se pueden "
+"añadir haciendo pulsación con el botón 1 en un área desnuda del árbol, o con "
+"MAYUSCULAS+botón 3 en un objeto. . Estas funciónes se describen con mayor "
+"detalle en <xref linkend=\"data_sets\"/> and <xref linkend=\"rois\"/>."
+
+#: ../C/amide.xml.translate:359(title)
+msgid "Orthogonal Views"
+msgstr "Vistas Ortogonales"
+
+#: ../C/amide.xml.translate:361(para)
+msgid ""
+"Most of the main window display consists of the orthogonal views used for "
+"visually displaying the data sets being studied. Data is usually presented "
+"as three orthogonal slices taken from the data sets, but the user can choose "
+"to display fewer of these views if desired by using the view selector "
+"(described below in <xref linkend=\"view_selector\"/>). The three views "
+"shown are the transverse, coronal, and sagittal planes. Note that the views "
+"may be incorrectly labeled for you. This could be because the data in the "
+"file you imported was not in the order that AMIDE expected it to be in. It "
+"could also be because you want to use the transverse/coronal/sagittal "
+"terminology differently then the program does (e.g. a coronal section of a "
+"rat brain is not the same as a coronal section of a rat)."
+msgstr ""
+"La mayoría de la ventana principal corresponde a vistas ortogonales del los "
+"volúmenes de datos a visualizar. Los datos usualmente se presentan como tres "
+"vistas ortogonales, pero el usuario pude decidir usar menos, usando le "
+"selector de vistas (descrito abajo en <xref linkend=\"view_selector\"/>). "
+"Las tres vistas mostradas son los planos axial , coronal, and sagital. "
+"Nótese que las vistas pueden aparecer incorrectamente marcadas. esto puede "
+"ocurrir si si el fichero importado no esta en el orden que AMIDE espera. "
+"Podría ser por que usa una terminología diferente de orientación al la del "
+"programa (por ejemplo la sección coronal del cerebro de una rata no es la "
+"misma orientación coronal de la rata)."
+
+#: ../C/amide.xml.translate:376(para)
+msgid ""
+"Below the views are sliders for adjusting where in the data set the slices "
+"are being taken from. The location can also be changed by directly clicking "
+"on any of the canvases. The appropriate mouse clicks are as follows"
+msgstr ""
+"Bajo las vistas hay barras desplazables para cambiar el lugar de donde las "
+"vistas son tomadas. La localización también puede cambiarse haciendo "
+"pulsación directamente sobre imagen de la vista. Las pulsacións de ratón "
+"apropiadas son:"
+
+#: ../C/amide.xml.translate:384(term)
+msgid "Left Mouse Button"
+msgstr "Boton 1 del ratón"
+
+#: ../C/amide.xml.translate:386(para)
+msgid ""
+"Changes the location in the data set that the slices are taken from, without "
+"changing the thickness of the slices."
+msgstr "Cambia localización de los cortes sin cambiar su grosor."
+
+#: ../C/amide.xml.translate:391(term)
+msgid "Middle Mouse Button"
+msgstr "Boton 2 del ratón"
+
+#: ../C/amide.xml.translate:393(para)
+msgid ""
+"Change the location in the data set that the slices are taken from, along "
+"with setting the thickness of the slices to the minimum reasonable."
+msgstr ""
+"Cambia la localización de los cortes, poniendo el grosor de los cortes a un "
+"mínimo razónable."
+
+#: ../C/amide.xml.translate:400(term)
+msgid "Right Mouse Button"
+msgstr "Boton 3 del ratón"
+
+#: ../C/amide.xml.translate:402(para)
+msgid ""
+"Clicking an dragging with this button changes the thickness of the slices "
+"without changing the location. The thickness of the viewed slices can also "
+"be altered by adjusting the slice thickness setting spin button (see <xref "
+"linkend=\"slice_thickness_setting\"/>)."
+msgstr ""
+"Haciendo pulsación y arrastrando sin soltar cambia el grosor de los cortes "
+"sin cambiar su localización. El grosor de los cortes también puede alterarse "
+"con el botón rotatorio de ajuste de grosor de corte (ver <xref linkend="
+"\"slice_thickness_setting\"/>)."
+
+#: ../C/amide.xml.translate:412(term)
+msgid "Other"
+msgstr "Otras"
+
+#: ../C/amide.xml.translate:414(para)
+msgid ""
+"Additional functionality of the mouse buttons for manipulating data sets and "
+"ROI's is explained in <xref linkend=\"data_sets\"/> and <xref linkend=\"rois"
+"\"/>"
+msgstr ""
+"Funcionalidades Adicionales de los botones del ratón se explican en <xref "
+"linkend=\"data_sets\"/> y <xref linkend=\"rois\"/>."
+
+#: ../C/amide.xml.translate:425(title)
+msgid "View Selector"
+msgstr "Selector de Vistas"
+
+#: ../C/amide.xml.translate:427(para)
+msgid ""
+"Which of the three orthogonal views are shown can be selected by using these "
+"toggle buttons. By default, all three views are shown."
+msgstr ""
+"Cual de las tres vistas ortogonales se puden selecionar usndo esos botones. "
+"Por defecto las tres son mostradas."
+
+#: ../C/amide.xml.translate:434(title)
+msgid "Linked Viewing"
+msgstr "Visión Sincronizada"
+
+#: ../C/amide.xml.translate:436(para)
+msgid ""
+"In addition to the three orthogonal views, AMIDE can display mutiple sets of "
+"these orthogonal views, all looking at the same point (\"linked\") in three "
+"dimension space. This is most often used for looking at fusion images of two "
+"data sets, with one set of views used for the first data set, the next set "
+"of views used for the second data set, and the third set of views used for "
+"the fusion of the two data sets."
+msgstr ""
+"Además de esas tres vistas, AMIDE pude mostrar múltiples conjuntos de vistas "
+"ortogonales, todos mirando al mismo punto (\"sincronizado\") del espacio 3D. "
+"Esto se usa más a menudo para ver la fusión de dos volúmenes de datos, con "
+"un grupo de vistas del primer volumen, y el siguiente usado para el segundo, "
+"y el tercero para la fusión de los dos volúmenes."
+
+#: ../C/amide.xml.translate:447(title)
+msgid "Thresholding Tool"
+msgstr "Herramienta de Cambio de Umbral"
+
+#: ../C/amide.xml.translate:449(para)
+msgid ""
+"This button on the toolbar will pop-up a thresholding and colormap selection "
+"dialog for the currently active data set. In the dialog, the maximum and "
+"minimum thresholding levels can be changed by either directly typing in the "
+"values (in absolute or percentage units), or by using sliders on the color "
+"bar. The color scale can be changed using the corresponding drop-down menu. "
+"A log normalized histogram is shown to give an idea of the distribution of "
+"the data set's value. Finally, the thresholding type can be changed. The "
+"thresholding type determines how the maximum and minimum threshold values "
+"are applied to the data set, and are:"
+msgstr ""
+"Este botón en la barra de herramientas lanza el selector de mapas de color "
+"del volumen de datos activo. En el diálogo, los niveles máximos y mínimos de "
+"umbral pueden cambiarse directamente escribiendo los valores (en unidades "
+"absolutas o porcentage) , o usando las barras de desplazamiento en la brara "
+"de color. La escala de color se puede cambiar usando el correspondiente menú "
+"desplegable. Un histograma normalizado da una idea de la distribución de los "
+"valores del volumen de datos. Finalmente el tipo de umbral se puede cambiar. "
+"El tipo de umbral determina como los valores de umbral mínimos y máximos se "
+"aplican al conjunto de datos, y son:"
+
+#: ../C/amide.xml.translate:464(term)
+msgid "Per Slice"
+msgstr "Por Corte"
+
+#: ../C/amide.xml.translate:465(para)
+msgid ""
+"The max and min threshold values will be applied in proportion to the max "
+"and min values in the current slice of data"
+msgstr ""
+"Los valores mínimos y máximos se aplicarán en proporción al corte "
+"selecionado."
+
+#: ../C/amide.xml.translate:470(term)
+msgid "Per Frame"
+msgstr "Por Marco"
+
+#: ../C/amide.xml.translate:471(para)
+msgid ""
+"The max and min threshold values will be applied in proportion to the max "
+"and min values in the current frame of the data set"
+msgstr ""
+"Los valores mínimos y máximos se aplicarán en proporción al segmento de "
+"tiempo selecionado."
+
+#: ../C/amide.xml.translate:476(term)
+msgid "Interpolate Between Frames"
+msgstr "Interpolación entre Segmentos de Tiempo"
+
+#: ../C/amide.xml.translate:477(para)
+msgid ""
+"This threshold mode only makes sense for dynamic studies. In this mode, two "
+"sets of max and min threshold values are specified, along with which frame "
+"of data each of these sets corresponds to. For data frames before and "
+"including the first reference frame, the first set of threshold values are "
+"used. For data frames after and including the second reference frame, the "
+"second set of threshold values are used. For data frames between the two "
+"reference frames, the max and min threshold values are derived by "
+"interpolating (as a function of time) between the two sets of thresholding "
+"values."
+msgstr ""
+"Este umbral sólo tiene sentido para estudios dinámicos. En este modo dos "
+"pares de valores máximos y mínimos son selecionados para cada segmento de "
+"tiempo. Para cada segmento anterior e incluyendo el primer segmento "
+"seleccionado se usa el primer par de valores. Para el segmento segundo y "
+"subsiguientes se aplica el segundo par de valores. Para los segmentos "
+"incluidos entre el primer y segundo segmentos seleccionados los valores "
+"máximos y mínimos son interpolados como función del tiempo entre los dos "
+"pares de valores establecidos."
+
+#: ../C/amide.xml.translate:491(term)
+msgid "Global"
+msgstr ""
+
+#: ../C/amide.xml.translate:492(para)
+msgid ""
+"The max and min threshold values will be applied in proportion to the max "
+"and min values in the entire data set"
+msgstr ""
+"Los valores mínimo y máximos serán aplicados en proporción al los valores "
+"mínimos y máximos del conjunto total de datos."
+
+#: ../C/amide.xml.translate:499(para)
+msgid ""
+"If the data set's modality is set to CT, buttons will be shown for applying "
+"bone and soft tissue windows as the thresholds."
+msgstr ""
+
+#: ../C/amide.xml.translate:507(title)
+msgid "Zoom Selector"
+msgstr "Selector de Zoom"
+
+#: ../C/amide.xml.translate:509(para)
+msgid ""
+"This specifies how much to enlarge the views. AMIDE tries to make an "
+"educated guess about how large the display of the data should be, by using "
+"the smallest voxel dimension from the data set with the largest voxels to "
+"correspond to a displayed pixel. Zoom can be used in addition to that "
+"guesswork."
+msgstr ""
+"Este especifica cuanto se magnificarán las vistas. AMIDE intenta hacer una "
+"educada adivinanza de cuan grande han de ser las imágenes usando la "
+"dimensión más pequeña con los vóxeles más grandes correspondiendo al pixel "
+"representado. El zoom se pude utilizar en adicció a esto."
+
+#: ../C/amide.xml.translate:519(title)
+msgid "Slice Thickness Setting"
+msgstr "Ajuste del Grosor de Corte"
+
+#: ../C/amide.xml.translate:521(para)
+msgid ""
+"Thickness specifies how deep the slices displayed on the views are. The "
+"minimum slice thickness is determined by the smallest voxel dimension of any "
+"of the data sets in the study."
+msgstr ""
+"El grosor especifica cómo de profundas han de ser la vistas representadas. "
+"El grosor de corte mínimo viene determinado por la dimensión del voxel más "
+"pequeño del conjunto de datos."
+
+#: ../C/amide.xml.translate:530(title)
+msgid "Frame Selector"
+msgstr "Selector de Segmentos de Tiempo(Frames)"
+
+#: ../C/amide.xml.translate:532(para)
+msgid ""
+"This button pops up a dialog for picking which frames of data to show from a "
+"dynamic data set. A frame (i.e. time period) to display can be selected by "
+"clicking on a list element. Multiple frames can be selected by holding down "
+"the shift key and selecting additional frames. Note, that for each data set "
+"selected for view, at least one frame from that data set will be displayed. "
+"If the choosen time period does not encompass a frame from that data set, "
+"the closest appropriate frame will be choosen."
+msgstr ""
+"Este botón abre un diálogo para seleccionar el segmento a mostrar de un "
+"conjunto de datos dinámicos. Un segmento (p.e. periodo de tiempo) para "
+"mostrar puede ser seleccionado haciendo pulsación en una lista de elementos. "
+"Múltiples segmentos puden ser seleccionados a la vez con pulsación y "
+"simultáneamente apretando la tecla MAYUSC para seleccionar segmentos "
+"adicionales. Nótese que por cada conjunto de datos seleccionados al menos un "
+"segmento será visulaizado. Si elige un periodo de tiempo que no incluye un "
+"segmento de tiempo de ese conjunto de datos, el segmento más aproximado será "
+"elegido."
+
+#: ../C/amide.xml.translate:545(title)
+msgid "Gate Selector"
+msgstr ""
+
+#: ../C/amide.xml.translate:547(para)
+msgid ""
+"This button pops up a dialog for picking which gates of data to show from a "
+"gated data set. A gate to display can be selected by clicking on a list "
+"element. Multiple gates can be selected by holding down the shift key and "
+"selecting additional frames. Note that by using the entries, a span of gates "
+"can be choosen that loops around (e.g. gates 8, 0, and 1)."
+msgstr ""
+
+#: ../C/amide.xml.translate:557(title)
+msgid "Target Selector"
+msgstr "Selector de Puntero(Target)"
+
+#: ../C/amide.xml.translate:559(para)
+msgid ""
+"The target cross hairs are generally only displayed when one of the mouse "
+"buttons is depressed. With this toggle button, you can tell the program that "
+"you want the target cross hairs left on the views."
+msgstr ""
+"El puntero en forma de cruz generalmente sólo resulta visible cuando "
+"apretamos un botón del ratón. Con este botón la cruz permanece siempre "
+"visible."
+
+#: ../C/amide.xml.translate:567(title)
+msgid "Interpolation"
+msgstr "Interpolación"
+
+#: ../C/amide.xml.translate:569(para)
+msgid ""
+"Interpolation refers to the method whereby AMIDE extracts data from the "
+"original medical imaging data set in order for it to be viewed on the "
+"screen. The interpolation selection button lets the user specify what type "
+"of interpolation to use when generating slices from the active data set. "
+"Nearest neighbor is faster, while tri-linear interpolation produces better "
+"looking (smoother) images with the penalty of being ~8x slower."
+msgstr ""
+"Interpolación se refiere al método con el que AMIDE extrae datos del "
+"conjunto de datos de imagen médica original para ser representados en "
+"pantalla. El botón que seleciona la interpolación permite al usuario "
+"especificar que tipo de interpolación usar para generar cortes del volumen "
+"activo de datos. \"Nearest neighbor\" es el más rápido, pero tri-línear "
+"produce imágenes de mejor aspecto, con la penalización de que es casi 8 "
+"veces más lento."
+
+#: ../C/amide.xml.translate:581(title)
+msgid "Fusion/Overlay Selector"
+msgstr "Selector Fusión/Sobreimpresión"
+
+#: ../C/amide.xml.translate:583(para)
+msgid ""
+"By default, AMIDE displays multiple data sets as fused images. With the "
+"fused/overlay selector, you can tell AMIDE that you want the active data set "
+"to simply be overlayed on the other data sets, rather than fused."
+msgstr ""
+"Por defecto AMIDE muestra múltiples volúmens de datos como imágenes "
+"fusionadas. Con el selector fusión/sobrimpresión(fused/overlay) usted elige "
+"si quiere mejor los volúmenes sobreimpresiónados mejor que fusionados."
+
+#: ../C/amide.xml.translate:590(title)
+msgid "Preferences Dialog Box"
+msgstr "Diálogo de Preferences"
+
+#: ../C/amide.xml.translate:591(para)
+msgid ""
+"Underneath the edit menu is the preferences menu item. This will pop-up a "
+"dialog box that allows you to change preferences as to how things in AMIDE "
+"are displayed. The preferences will be saved in a configuration file for use "
+"by future AMIDE sessions (note: saved preferences are not currently "
+"supported on MS Windows)."
+msgstr ""
+"Debajo del menú de Edición esta el de preferencias. Este desplegará un menú "
+"de como las cosas deben de ser mostradas por AMIDE. Las preferencias se "
+"guardaran in un fichero de configuración para su futuro uso en AMIDE."
+
+#: ../C/amide.xml.translate:602(term) ../C/amide.xml.translate:1543(term)
+msgid "ROI/View Preferences"
+msgstr "Preferencias de Dibujo de ROI"
+
+#: ../C/amide.xml.translate:603(para)
+msgid ""
+"Here are several preferences for changing how ROI's are the view canvas are "
+"drawn, more thoroughly described in <xref linkend=\"study-dialog\"/>. Note "
+"that these preferences are only used when a new study is created. To change "
+"these preferences for an existing study, you need to use the study "
+"modification"
+msgstr ""
+"El grosor de la línea para dibujar ROIs pude ser cambiado aquí. El grosor "
+"oscila entre 1 y 5 pixel."
+
+#: ../C/amide.xml.translate:612(term)
+msgid "Threshold Windows"
+msgstr "Preferences de la Disposión de las Vistas"
+
+#: ../C/amide.xml.translate:613(para)
+msgid ""
+"The window preferences are more throughly described in <xref linkend=\"data-"
+"set-dialog\"/>. Note that these preferences are only used for new data sets. "
+"To change the window levels for an existing data set, use the data set "
+"modification dialog."
+msgstr ""
+"La primera opción le permite usar tres vistas (axial, coronal y sagital) con "
+"un estilo lineal usualmente usado por los software de PET, y un estilo "
+"ortogonal usado por el software de RNM. La segunda opción le permite fijar "
+"si el tamaño de la vista ha de permenecer constante o no. Si no esta "
+"activada, el tamaño de las vistas mostradas dependerá sólo de los volúmenes "
+"seleccionados. Si esta activada, el tamaño del las vistas dependerá de todos "
+"volúmenes del estudio. La opción final es para ajustar el tamaño del área "
+"vacía en medio del puntero (la cruz mostrada cunado se cambia la "
+"localización de la vista)"
+
+#: ../C/amide.xml.translate:621(term)
+msgid "Default Colortable Preferences"
+msgstr "Preferencias de las Tablas de Color"
+
+#: ../C/amide.xml.translate:622(para)
+msgid ""
+"The program uses the specified color tables by default on a newly imported "
+"data set."
+msgstr ""
+"El programa usa por defecto la Tabla de Color del conjunto de datos más "
+"recientemente importado."
+
+#: ../C/amide.xml.translate:628(term)
+msgid "Misc. Preferences"
+msgstr "Misc. Preferencias."
+
+#: ../C/amide.xml.translate:631(para)
+msgid ""
+"The \"Send Warning Messages to Console\" option does exactly that. This is "
+"useful if enough warning messages are popping up that they're becoming "
+"annoying."
+msgstr ""
+
+#: ../C/amide.xml.translate:635(para)
+msgid ""
+"With the \"Don't Prompt for 'Save Changes' on Exit\" option, you can tell "
+"the program to not prompt you to save changes done on the study when exiting "
+"an AMIDE session."
+msgstr ""
+"Con la opción \"Don't prompt for 'save changes' on exit\" No notificación "
+"para guardar los cambios al salir, evitará que AMIDE le notifique al salir "
+"del programa si quiere gurdar los cambios."
+
+#: ../C/amide.xml.translate:640(para)
+msgid ""
+"The 'Save .XIF file as directory' option allows AMIDE's XIF file's to be "
+"saved in a directory structure, instead of as a single flat file (the "
+"default). This option is of interest mainly to developers"
+msgstr ""
+"La opción segunda 'save .XIF file as directory' (Guarde fichero .XIF como "
+"directorio) permite que el fichero de AMIDE XIF se guarde como una "
+"estructura de directorio y no como un fichero plano (por defecto). Esta "
+"opción intersa sobre todo a los desarrolladores."
+
+#: ../C/amide.xml.translate:659(title)
+msgid "Importing Data and Saving Studies"
+msgstr "Importando Datos y Guardando Estudios"
+
+#: ../C/amide.xml.translate:662(title)
+msgid "Importation of Data Sets"
+msgstr "Importación de Conjuntos de Datos"
+
+#: ../C/amide.xml.translate:664(para)
+msgid ""
+"AMIDE uses its own format (described below: <xref linkend=\"xif-files\"/>) "
+"for saving data between session. To get new data into AMIDE, it needs to be "
+"imported (located under the file menu). You can either let AMIDE try to "
+"guess the file format (which works for most data types) or tell AMIDE "
+"explicitly which format the file to be imported is suppose to be in. "
+"Importing of all data types except for raw data is done using Erik Nolf's "
+"<ulink type=\"http\" url=\"http://xmedcon.sourceforge.net\">(X)medcon</"
+"ulink> medical imaging conversion library."
+msgstr ""
+"AMIDE usa propio formato (descrito abajo: <xref linkend=\"xif-files\"/>) "
+"para guardar datos entre sesiones. Para cargar datos al AMIDE, es necesario "
+"importarlos (localizado bajo el menú \"File\" ). Puede optar entre que AMIDE "
+"adivine el formato ( funciona para la mayoría de los tipos) o decir a AMIDE "
+"explícitamente que formato de fichero debe importar. Importando todos los "
+"tipos de datos excepto datos crudos(raw) se hace a través de la librería de "
+"conversión medica de Erik Nolf's <ulink type=\"http\" url=\"http://xmedcon."
+"sourceforge.net\">(X)medcon</ulink>."
+
+#: ../C/amide.xml.translate:674(title)
+msgid "Raw Data Files"
+msgstr "Ficheros de datos crudos (raw data)"
+
+#: ../C/amide.xml.translate:676(para)
+msgid ""
+"AMIDE will generally attempt to load any file ending in \".dat\" or \".raw\" "
+"as a raw data file. The user will be prompted for the dimensions of the "
+"study, the offset of the data in the file, and the data format of the data "
+"in the file. Both big endian, little endian, and PDP endian files can be "
+"loaded (endian refers to the order in which bytes are arranged in memory)."
+msgstr ""
+"AMIDE intentará cargar cualquier fichero que tenga el sufijo \".dat\" or \"."
+"raw\" como fichero de datos crudos. Al usuario se le pedirán las "
+"dimensiones , los bits que existen desde el pricipio del fichero hasta los "
+"datos, y el tipo y formato de datos. Ficheros en big endian, little endian, "
+"y PDP pueden ser cargados (endian se refiere al orden en que los bits son "
+"dispuestos en la memoria)."
+
+#: ../C/amide.xml.translate:683(para)
+msgid ""
+"The following data formats are supported: 8 bit signed or unsigned integer, "
+"16 bit signed or unsigned integer, 32 bit signed or unsigned integer, 32 bit "
+"IEEE floating point, 64 bit IEEE floating point, and ASCII data."
+msgstr ""
+"Los siguientes formatos de datos son soportados: enteros con o sin signo de "
+"8 bit , 16 , enteros con o sin signo de 32 bit , coma flotante de 32 bit "
+"IEEE , coma flotante de 64 bit IEEE , y datos ASCII ."
+
+#: ../C/amide.xml.translate:690(title)
+msgid "ECAT Files"
+msgstr ""
+
+#: ../C/amide.xml.translate:692(para)
+msgid ""
+"Static and dynamic ECAT 6.4 and 7.2 files are supported through (X)MedCon. "
+"AMIDE will generally try to load any file ending in \".img\" as ECAT 6.4, "
+"and any file ending in \".v\" as ECAT 7. Please note that ECAT 6.4 files are "
+"very difficult to autodetect, so if the file does not end in .img, you will "
+"probably have to tell AMIDE explicitly to import the file as ECAT 6.4."
+msgstr ""
+"Ficheros ECAT 6.4 y 7.2 , tanto estáticos como dinámicos se soportan a "
+"través de (X)MedCon. AMIDE intentará cargar cualquier fichero que tenga el "
+"sufijo \".img\" como el ECAT 6.4, y cualquier fichero con sufijo \".v\" como "
+"el ECAT 7. Por favor nótese que los ficheros ECAT 6.4 son muy difíciles de "
+"autodetectar , así si el fichero no acaba en .img tendrá que comunicar "
+"explícitamente a AMIDE para que importe el fichero como ECAT 6.4."
+
+#: ../C/amide.xml.translate:700(para)
+msgid ""
+"Although not compiled in by default, AMIDE can be configured to use the "
+"z_matrix_7/libecat library for handling ECAT files instead of (X)MedCon."
+msgstr ""
+"Aunque no se compila por defecto, AMIDE se puede configurar para usar la "
+"librería z_matrix_7/libecat para el manejo de ficheros ECAT en vez de (X)"
+"MedCon."
+
+#: ../C/amide.xml.translate:707(title)
+msgid "DICOM Files"
+msgstr "Ficheros DICOM"
+
+#: ../C/amide.xml.translate:709(para)
+msgid ""
+"DICOM 3.0 is supported through (X)MedCon, which actually uses a slightly "
+"modified version of Tony Voet's VT-DICOM library. The level of support for "
+"DICOM 3.0 is entirely determined by (X)MedCon/VT-DICOM."
+msgstr ""
+"DICOM 3.0 se soporta con (X)MedCon, el cual tiene una librería ligeramente "
+"modificada de Tony Voet's VT-DICOM . El nivel de soporte de DICOM 3.0 viene "
+"enteramente determinado por (X)MedCon/VT-DICOM."
+
+#: ../C/amide.xml.translate:715(para)
+msgid ""
+"DICOM data is often distributed as a series of single slice data files. To "
+"read these into AMIDE as a single data set, you will need to stack these "
+"slices into a single, volumetric file. Notes on how to do this can be found "
+"at <ulink type=\"http\" url=\"http://xmedcon.sourceforge.net/faq/stack.html"
+"\">the (X)medcon website</ulink>."
+msgstr ""
+"Los datos DICOM normalmente aparecen distribuidos en un grupo de ficheros. "
+"Para que los lea AMIDE como un conjunto único de datos, necesitará agrupar "
+"esos ficheros en un único fichero de todo el volumen. Notas de cómo hacer "
+"esto se encuentran en <ulink type=\"http\" url=\"http://xmedcon.sourceforge."
+"net/faq/stack.html\">el website de (X)medcon. </ulink>."
+
+#: ../C/amide.xml.translate:725(title)
+msgid "Concorde microPET files"
+msgstr ""
+
+#: ../C/amide.xml.translate:727(para)
+msgid ""
+"Concorde format files are generated by the Concorde company's series of "
+"microPET scanners. It's a two file format (a data file and a header file), "
+"with the header in easily read ASCII format. Please note that you will need "
+"to tell AMIDE to open the header file (.img.hdr), not the raw data file (."
+"img)."
+msgstr ""
+"Los ficheros Concorde son generados por los tomógrafos de microPET de la "
+"compañía Concorde. Es un formato con dos ficheros (uno de datos y otro de "
+"encabezamiento), con el de encabezamiento fácilmente leíble en ASCII. Usted "
+"tendrá que decir al AMIDE que abra el fichero de encabezamiento (.img.hdr), "
+"no el fichero de datos (.img)."
+
+#: ../C/amide.xml.translate:735(title)
+msgid "Acr/Nema 2.0, Analyze (SPM), InterFile3.3, Gif87a/89a"
+msgstr ""
+
+#: ../C/amide.xml.translate:737(para)
+msgid ""
+"A variety of additional file formats are supported through (X)MedCon, "
+"including: Acr/Nema 2.0, Analyze (SPM), InterFile3.3, and Gif87a/89a. For "
+"more information, please see the (X)MedCon documentation, or the "
+"corresponding <ulink type=\"http\" url=\"http://xmedcon.sourceforge.net\"> "
+"webpage (http://xmedcon.sf.net) </ulink>."
+msgstr ""
+"Una variedad de formatos adicionales pueden ser soportados a través de (X)"
+"MedCon, incluyendo: Acr/Nema 2.0, Analyze (SPM), InterFile3.3, y Gif87a/89a. "
+"Para mas información , por favor refiérase a la documentación de (X)MedCon "
+"<ulink type=\"http\" url=\"http://xmedcon.sourceforge.net\">sitio web "
+"(http://xmedcon.sf.net)</ulink>."
+
+#: ../C/amide.xml.translate:751(title)
+msgid "XIF Files"
+msgstr "Ficheros XIF"
+
+#: ../C/amide.xml.translate:753(para)
+msgid ""
+"AMIDE saves studies in an extensible XML based format called XIF (Xml Image "
+"Format). This format can be stored as either a single file (flat file format "
+"XIF) or as a XIF directory. The flat file format is the default, and "
+"simplifies file moving and handling. The directory format on the other hand "
+"allows easy access to the raw study data external to the AMIDE program, and "
+"will be of interest to developers. Which of these two formats you wish to "
+"save in can be selected from the preferences dialog."
+msgstr ""
+"AMIDE guarda los estudios en un formato extensible XIF (Xml Image Format). "
+"Este formato puede guardarse como fichero (formato plano XIF) o como un "
+"directorio XIF . El formato por defecto es el plano, lo que simplifica el "
+"manejo y movimiento de los ficheros. Por otro lado el formato en directorio "
+"permite el fácil acceso a los datos del estudio AMIDE por parte de otros "
+"programas, lo que será de interés para los desarrolladores. En el diálogo de "
+"preferencias puede elegir cual de los dos formatos XIF usar."
+
+#: ../C/amide.xml.translate:762(para)
+msgid ""
+"In any case, these files or directories will characteristically end with \"."
+"xif\", and are treated identically within the AMIDE program."
+msgstr ""
+"En cualquier caso los ficheros o directorios tendrán el sufijo \".xif\", y "
+"serán tratados idénticamente por el programa AMIDE ."
+
+#: ../C/amide.xml.translate:766(title)
+msgid "Opening Studies"
+msgstr "Abriendo Estudios"
+
+#: ../C/amide.xml.translate:768(para)
+msgid ""
+"From the main window, select \"File-&gt;Open\", and a file selection widget "
+"will open up. Select an XIF filename in the right column, and then hit the "
+"\"OK\" button (or double click on the filename)."
+msgstr ""
+"De la ventana principal, selecciónar \"File-&gt;Open\", y se abrirá un "
+"diálogo de selección. Seleccione un nombre de fichero XIF en la columna de "
+"la derecha, y pulse el boton \"OK\" (o haga click doble en el nombre del "
+"fichero)."
+
+#: ../C/amide.xml.translate:775(title)
+msgid "Saving Studies"
+msgstr "Guardando Estudios"
+
+#: ../C/amide.xml.translate:777(para)
+msgid ""
+"To save a study, from the study window select \"File-&gt;Save As\" and a "
+"file selection dialog will appear. Look at the \"selection:\" line near the "
+"bottom of the window, if this is the desired XIF filename, hit \"OK\" and "
+"the file will be saved. If this is not the desired XIF filename, select or "
+"enter in the correct XIF study, and hit the \"OK\" button."
+msgstr ""
+"Para guardar un estudio, de la ventana de selección de estudios \"File-&gt;"
+"Save As\" y un diálogo de selcción de ficheros aparecerá. Mire la línea "
+"\"selection:\" cerca del pie de la ventana, si este es el fichero XIF "
+"deseado , pulse \"OK\" y el fichero sera guradado. Si no fuera el fichero "
+"XIF deseado , seleccione o entre el nombre correcto de estudio XIF, y pulse "
+"el boton \"OK\" ."
+
+#: ../C/amide.xml.translate:784(para)
+msgid ""
+"Note that the original data set files are no longer needed by AMIDE, as all "
+"the information AMIDE needs is saved inside the .XIF file. You should "
+"however still archive the original data files, as AMIDE only reads in and "
+"stores the information from the header that it needs (which is generally not "
+"all the information enclosed within the header)."
+msgstr ""
+"Note que los ficheros de datos originales ya no son necesraios para AMIDE, "
+"ya que toda la información que AMIDE necesita esta guardada en el fichero ."
+"XIF . De todas las maneras debería guardar los ficheros originales, ya que "
+"AMIDE solamente lee la información que necesita del encabezamiento."
+
+#: ../C/amide.xml.translate:795(title)
+msgid "XIF Directory Format"
+msgstr "Formato XIF en Directorio"
+
+#: ../C/amide.xml.translate:797(para)
+msgid ""
+"Although admittedly annoying from a data transfer standpoint, using a "
+"directory structure for saving study information has the decisive advantage "
+"of making the saved information easily accessible using standard command-"
+"line utilities and text-based tools."
+msgstr ""
+"Aunque desde le punto de vista de tranferecia es bastante engorroso, usando "
+"la estructura de directorio para guardarlos tiene la ventaja decisiva de "
+"hacer la información mas fácilmente accessible usando linea de comandos y "
+"herramientas estandar de texto."
+
+#: ../C/amide.xml.translate:803(para)
+msgid ""
+"Each XIF directory contains a file called \"study_*.xml\" which contains the "
+"basic study parameters. Additional files can also be found in the XIF "
+"directory, such as ROI_*.xml files which contain ROI's, and data-set_*.xml "
+"files and their corresponding data-set_*_raw-data files, which contain the "
+"image data set parameters and the raw data respectively. The raw data file "
+"format is arbitrary (double/float/int, 64/32/16/8 bit, little or big endian, "
+"per plane/per frame/single scale factor), and is determined by the format of "
+"the originally imported data."
+msgstr ""
+"Cada directorio XIF contiene un fichero llamado \"study_*.xml\" el cual "
+"guarda los paramnetros básicos del estudio. Ficheros adicionales se "
+"encuentran en el directorio XIF como los ficheros ROI_*.xml que guardan "
+"ROI's, y data-set_*.xml con sus correspondientes conjuntos de datos, data-"
+"set_*_raw-data files, que contienen los parámetros de imagen y los datos "
+"crudos respectivamente. El fichero crudo (raw) (double/float/int, 64/32/16/8 "
+"bit, little or big endian, por plano/por segmento de tiempo(frame)/factor "
+"simple de escala), y está determinado por el formato original de los datos."
+
+#: ../C/amide.xml.translate:814(title)
+msgid "XIF Flat File Format"
+msgstr "Formato Plano XIF"
+
+#: ../C/amide.xml.translate:816(para)
+msgid ""
+"The flat file format is basically a concatenation of the information "
+"enclosed within the directory format. It is not meant to be editable or "
+"developer friendly. Instead, it allows easy manigment of studies for casual "
+"users. If you wish to access the information in a XIF flat file external to "
+"AMIDE, you'll be much better off resaving the data as in XIF directory "
+"format."
+msgstr ""
+"El formato palno XIF es una concatenación de la información encerrada en el "
+"directorio XIF. No es de ninguna manera para ser editado o fácil para los "
+"desarrolladores. En cambio, facilita el manejo para los usuarios. Si desea "
+"acceder al al información a un fichero palno XIF por un programa externo, "
+"mejor vuélvalo a guardar como formato XIF en directorio."
+
+#: ../C/amide.xml.translate:823(para)
+msgid ""
+"The format is as follows: The first 64 bytes of the file contain a magic "
+"string for format identification. The next 16 bytes contain 2 64bit unsigned "
+"little endian integers, the first one being the location of the study xml "
+"data within the file, and the second integer being the size of this xml "
+"data. Within the study xml data, is encased the information as to where in "
+"the file the children's xml data is. And within the children's xml data, is "
+"enclosed the location information of the raw data and subchildren."
+msgstr ""
+"El formato es el siguiente: Los primeros 64 bits contienen una cadena mágica "
+"de identificación del formato. Los siguientes 16 bits contienen 2 enteros de "
+"64 bit little endian, el primero siendo la localización del estudio xml en "
+"el fichero, y el segundo correspondiendo al tamaño de los datos xml. Dentro "
+"de los datos xml esta incluída la información de donde se hallan ubicados "
+"los hijos de los datos xml, y dentro de los datos xml de los hijos se "
+"encuentra la localización de los datos de los subhijos."
+
+#: ../C/amide.xml.translate:839(title)
+msgid "Exporting a View to JPEG/PNG"
+msgstr "Exportando una Vista a JPEG"
+
+#: ../C/amide.xml.translate:841(para)
+msgid ""
+"To export one of the views (transverse/coronal/sagittal) to an external "
+"image file, select \"File-&gt;Export View-&gt;[view]\" from the menu. The "
+"saved data format by default is jpeg. If the saved filename ends in \".png"
+"\", the saved data format will be PNG."
+msgstr ""
+"Para exportar una de las vistas (transversa/coronal/sagital) a un fichero "
+"externo de imagen, seleccione \"File-&gt;Export View-&gt;[view]\" desde el "
+"menú. . La vista será guardada como jpeg."
+
+#: ../C/amide.xml.translate:857(title)
+msgid "Manipulating Medical Data Sets"
+msgstr "Manipulando Conjunto de Datos Médicos"
+
+#: ../C/amide.xml.translate:859(para)
+msgid ""
+"After being loaded in, medical images can be manipulated in a variety of "
+"ways with AMIDE. An important point to remember is that AMIDE deals with all "
+"data sets as 3 or 4 dimensional data sets. While 2D slices extracted from "
+"the the data set are displayed on the computer screen, at no time does AMIDE "
+"handle images as anything less than 3 dimensional data."
+msgstr ""
+"Despues de ser cargados los datos médicos pueden ser manipulados de varias "
+"maneras en AMIDE. Es importante recordar que AMIDE trabaja con volúmenes de "
+"datos 3D y 4D. Mientras que los cortes 2D son representados en la pantalla "
+"del ordenador , AMIDE maneja siempre datos tridimensionales."
+
+#: ../C/amide.xml.translate:869(title)
+msgid "Manipulating Data Sets on Screen"
+msgstr "Manipulando Volúmenes en la Pantalla"
+
+#: ../C/amide.xml.translate:871(title)
+msgid "Displaying Data Sets"
+msgstr "Viendo Volúmenes"
+
+#: ../C/amide.xml.translate:873(para)
+msgid ""
+"When initially loaded into the program, a data set is not displayed on the "
+"canvases. Rather, the name of the data set is contained in the study list, "
+"and the user needs to select the data set in the study list so that it is "
+"displayed on the canvases."
+msgstr ""
+"Cuando inicialmente se carga un conjunto de datos en el programa este no es "
+"visualizado. En vez de esto el nombre del conjunto de datos aparece en la "
+"lista del estudio, y el usuario debe seleccionar este conjunto de la lista "
+"para visualizarlo."
+
+#: ../C/amide.xml.translate:879(para)
+msgid ""
+"Displaying multiple data sets is as simple as importing more than one data "
+"set, and then selecting the data sets that you wish to view from the study "
+"list."
+msgstr ""
+"Ver múltiple conjuntos de datos es tan simple como importar mas de un "
+"conjunto de datos, y entonces selecionar que conjuntos queremos ver de la "
+"lista del estudio."
+
+#: ../C/amide.xml.translate:883(para)
+msgid ""
+"The time period over which the slices are drawn is determined by the time "
+"dialog, described in more detail in <xref linkend=\"frame-dialog\"/>"
+msgstr ""
+"El periodo de tiempo se selecciona del diálogo de tiempo y se describe en "
+"mas detalle en <xref linkend=\"frame-dialog\"/>"
+
+#: ../C/amide.xml.translate:889(title)
+msgid "Pertinent Mouse Actions"
+msgstr "Manejo del Ratón"
+
+#: ../C/amide.xml.translate:891(para)
+msgid ""
+"The following mouse actions can be used when the mouse is hovering over a "
+"data set on any of the orthogonal views"
+msgstr ""
+"Las siguientes acciones del ratón puden ser usadas sobre los datos de las "
+"vistas ortogonales"
+
+#: ../C/amide.xml.translate:896(term)
+msgid "Shift-Left Mouse Button"
+msgstr "MAYUSC+Botón 1"
+
+#: ../C/amide.xml.translate:897(para)
+msgid ""
+"This combination allows shifting of the active data set in space (usually "
+"used for aligning two data sets). While holding the shift key, left click "
+"(and release) on the canvas, and you'll grab the active data set. You can "
+"now shift the active data around on the canvas. At this point, to enact the "
+"shift, click the right button (button 3). Any other mouse button will cancel "
+"the shift action."
+msgstr ""
+"Esta combinación permite desplazar el volumen en el espacio (normalmente "
+"usado para alinear volúmenes de datos). Mientras se aprieta MAYUSC, al "
+"pulsar el el botón 1 en la imagen, se cojerá el volumen activo. Ahora puede "
+"desplazarlo alrededor del marco. Cuado el volumen se halla en la posición "
+"deseada para soltarlo pulsar el botón 3. Cualquier otro botón del ratón "
+"cancelará el desplazamiento."
+
+#: ../C/amide.xml.translate:906(term)
+msgid "Shift-Right Mouse Button"
+msgstr "MAYUSC+Botón 2"
+
+#: ../C/amide.xml.translate:907(para)
+msgid ""
+"This combination allows rotating of the active data set in space (usually "
+"used for aligning two data sets). While holding the shift key, middle click "
+"(and release) on the canvas, and you'll grab the active data set. You can "
+"now rotate the active data around on the canvas. At this point, to enact the "
+"rotation, click the right button (button 3). Any other mouse button will "
+"cancel the rotation."
+msgstr ""
+"Esta combinación rota el volumen en el espacio (normalmente usado para "
+"alinear volúmenes de datos). Mientras se mantiene pulsada MAYUSC, pulsar (y "
+"soltar) con el botón 2 en la imagen, se cojera al volumen. Ahora puede rotar "
+"el volumen activo. En este punto para soltar el volumen, pulsar el botón 3. "
+"Cualquier otro botón cancelará la rotación."
+
+#: ../C/amide.xml.translate:916(term)
+msgid "Ctrl-Right Mouse Button"
+msgstr "Ctrl+Botón 3"
+
+#: ../C/amide.xml.translate:917(para)
+msgid ""
+"This combination will place an alignment point at the current cursor "
+"location. A dialog will popup for entry of the alignment point's name."
+msgstr ""
+"Esta combinación situa un punto de alineación en la posición donde este el "
+"cursor. Un diálogo pedirá el nombre del punto."
+
+#: ../C/amide.xml.translate:930(title)
+msgid "Manually Aligning Data Sets"
+msgstr "Alineación Manual de Volúmenes"
+
+#: ../C/amide.xml.translate:932(para)
+msgid "What follows is a quick guide to manually aligning data sets in AMIDE"
+msgstr ""
+"Lo que sigue es una guía rápida para alinear manualmente volúmenes en AMIDE"
+
+#: ../C/amide.xml.translate:937(para)
+msgid ""
+"First rotate each of the data sets so that they are level with respect to "
+"the transverse, coronal, and sagittal views. This is easily done using the "
+"shift-2 mouse combination, but can also be done from the data set "
+"modification dialog."
+msgstr ""
+"Primero rotar los volúmenes para que esten a nivel respecto a las vista "
+"axiales, coronales, and sagitales . Esto se hace fácilmente con la "
+"combinación MAYUSC+2 botón , pero también pude hacerse desde el diálogo de "
+"modificación de los conjuntos de datos."
+
+#: ../C/amide.xml.translate:945(para)
+msgid ""
+"Choose one of the data sets to be the active data set. The other data set "
+"will be the \"fixed\" data set."
+msgstr ""
+"Elija un volumen como activo, este se moverá. El otro permanecerá \"fijo\" ."
+
+#: ../C/amide.xml.translate:951(para)
+msgid ""
+"Shift the active data set so that the two data sets line up appropriately. "
+"This is easily done using the shift-1 mouse combination, but can also be "
+"done from the data set modification dialog."
+msgstr ""
+"Desplace el volumen activo hasta alinearlo con el fijo. Esto se hace "
+"fácilmente con la combinación MAYUSC+Botón 1 , pero también puede hacerse "
+"desde el diálogo de modificación de los conjuntos de datos."
+
+#: ../C/amide.xml.translate:958(para)
+msgid ""
+"If fine tuning adjustments are needed, these are best done from the data set "
+"modification dialog."
+msgstr ""
+"Los ajustes finos es mejor llevarlos a cabo desde el diálogo de modificación "
+"de los conjuntos de datos."
+
+#: ../C/amide.xml.translate:968(title)
+msgid "Data Set Modification Dialog"
+msgstr "Diálogo de Modificación de Conjuntos de Datos"
+
+#: ../C/amide.xml.translate:970(para)
+msgid ""
+"To modify parameters of a data set, right click on the name of the data set "
+"in the study tree to pop-up the data set modification dialog box. Parameters "
+"that can be modified are divided into the following pages."
+msgstr ""
+"Para modificar los Parametros de un volumen, pulsar con el botón 3 en le "
+"volumen del arbol del estudio para que aparezca el diálogo de modificación. "
+"Los parámetros modificables se dividen en las siguientes páginas."
+
+#: ../C/amide.xml.translate:977(term) ../C/amide.xml.translate:1445(term)
+#: ../C/amide.xml.translate:1513(term)
+#, fuzzy
+msgid "Basic Info"
+msgstr ""
+"#-#-#-#-#  es.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Informacion Básica\n"
+"#-#-#-#-#  es.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Información Básica\n"
+"#-#-#-#-#  es.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Información Básica"
+
+#: ../C/amide.xml.translate:978(para)
+msgid ""
+"On this page are options to alter the data set name, type of modality, "
+"subject name, subject id, subject date of birth (DOB), conversion factor, "
+"and the interpolation type to use for this data set (described at <xref "
+"linkend=\"interpolation\"/>). The conversion factor is a parameter that is "
+"multiplied to the data set before it is used for viewing or quantitation. "
+"Since the data set is in ECAT/MAP/abitrary scale units, the conversion "
+"factor can be used in order to analyze the data set in another type of "
+"reference unit (e.g. Percent Injected Dose [%ID]). There is also a built in "
+"calculator, where parameters such as subject weight and injected dose can be "
+"entered, and the conversion factor will be generated. Note that 1 cc is "
+"assumed to equal 1 g when generating the %ID/g and SUV."
+msgstr ""
+"En esta página hay opciones para modificar el nombre, tipo de modalidad, "
+"factor de conversión, y tipo de interpolación usado en este volumen de datos "
+"(descrito en <xref linkend=\"interpolation\"/>). El factor de conversión es "
+"el parámentro por el que se multipilican el volumen de datos antes de verlo "
+"o cuantificarlo. Al estar los datos en una escala arbitraria de valores ECAT/"
+"MAP, el factor de conversión se puede utilizar para analizar los datos con "
+"otro tipo de unidad d e referencia(p.e. Porcentaje de Dosis Inyectada [%"
+"ID]). También hay una calculadora incluida, donde se pueden meter los "
+"parámetros como el peso del sujeto y la dosis inyectada, generandos el "
+"factor de conversión."
+
+#: ../C/amide.xml.translate:997(term) ../C/amide.xml.translate:1451(term)
+msgid "Center"
+msgstr "Centro"
+
+#: ../C/amide.xml.translate:998(para)
+msgid ""
+"The data set can be shifted by respecifing the center of the data set with "
+"respect to the origin. The x, y, and z dimensions are in millimeters."
+msgstr ""
+"Se puede desplazar el volumen de datos con respecto al origen de "
+"coordenadas. Las dimensiones xyz son en milímetros."
+
+#: ../C/amide.xml.translate:1005(term)
+msgid "Voxel Size"
+msgstr "Tamaño del Voxel"
+
+#: ../C/amide.xml.translate:1006(para)
+msgid ""
+"The size of the data set's voxels (again, in millimeters) can be altered on "
+"this page. The \"keep aspect ratio\" button specifies that when altering the "
+"size of any voxel component (x, y, or z), the relative sizes between the "
+"components should be kept the same."
+msgstr ""
+"El Tamaño del voxel de los datos (también en milímetros) pude ser alterado "
+"en esta página. El botón \"keep aspect ratio\" especifica que cuando se "
+"altera cualquier dimensión del voxel (x, y, or z), las demás dimensiones se "
+"alteraran en la misma proporción."
+
+#: ../C/amide.xml.translate:1015(term) ../C/amide.xml.translate:1466(term)
+#: ../C/amide.xml.translate:1527(term)
+msgid "Rotate"
+msgstr "Rotar"
+
+#: ../C/amide.xml.translate:1016(para)
+msgid ""
+"The data set can be rotated around its center in this page. There is one "
+"dial for each of the three slice planes. The transverse dial will spin the "
+"data set in the transverse plane (i.e. rotate on the z-axis). The coronal "
+"dial will spin the data set in the coronal plane (i.e. rotate on the y-"
+"axis). And the sagittal dial will spin the data set in the sagittal plane (i."
+"e. rotate on the x-axis). The \"reset to default\" button allows the data "
+"set to be rotated back to the default orientation. On the bottom of this "
+"page is a matrix showing the coordinate frame of the data set with respect "
+"to the base coordinate frame."
+msgstr ""
+"El volumen de datos puede ser rotado sobre su cento en esta página. Hay una "
+"ruedecita por cada plano. La ruedecita axial rotará el volumen en el plano "
+"transversal (rota sobrel el eje z). La ruedecita coronal rotará el volumen "
+"en el plano coronal (rota sobrel el eje y). Y la rudecita sagital lo hará "
+"sobre el plano sagital (rota sobrel el eje x). El botón \"reset to default\" "
+"deshace las rotaciones dejando el volumen como al principio. Al pie de "
+"página existe una matriz con las tranformaciones de las coordenadas del "
+"volumen con respecto al las coordenadas de origen."
+
+#: ../C/amide.xml.translate:1031(term)
+msgid "Colormap/Threshold"
+msgstr "Mapa de Color/Umbral(Threshold)"
+
+#: ../C/amide.xml.translate:1032(para)
+msgid ""
+"This page is analogous to the thresholding tool dialog (described at <xref "
+"linkend=\"threshold_dialog\"/>) above)."
+msgstr ""
+"Esta página es análoga al del diálogo de Umbral (descrita en <xref linkend="
+"\"threshold_dialog\"/>)."
+
+#: ../C/amide.xml.translate:1038(term)
+msgid "Time"
+msgstr "Tiempo"
+
+#: ../C/amide.xml.translate:1039(para)
+msgid ""
+"From this page, the timing information of the data set can be altered. Scan "
+"start time can be used for altering the start time of the scan with respect "
+"to other data sets. Corrections in the duration of each data frame can also "
+"be made on this page."
+msgstr ""
+"Desde esta página se puede alterar la información respecto al los tiempos de "
+"los datos. El tiempo de comienzo del scan puede cambiarse con respecto al "
+"tiempo de otros scans. También pueden hacerse correciones en la duración de "
+"cada marco de tiempo(Frame Time) ."
+
+#: ../C/amide.xml.translate:1047(term)
+msgid "Windowing Preferences"
+msgstr ""
+
+#: ../C/amide.xml.translate:1048(para)
+msgid ""
+"The max and min threshold levels used for the bone and soft tissue CT window "
+"buttons can be explicitly set here. The \"Insert Current Thresholds\" button "
+"will reset the max and min values with the data set's currently used "
+"threshold levels."
+msgstr ""
+
+#: ../C/amide.xml.translate:1056(term) ../C/amide.xml.translate:1565(term)
+msgid "Immutables"
+msgstr ""
+
+#: ../C/amide.xml.translate:1057(para)
+msgid ""
+"This panel lists information about the data set that cannot be altered. The "
+"underlying internal data format of the data set and the data set dimensions "
+"in voxels are displayed on this page."
+msgstr ""
+"Este panel lista la información que no puede ser alterada. El formato "
+"interno subyaccente y las dimensiones del voxel se muestran en esta página."
+
+#: ../C/amide.xml.translate:1075(title)
+msgid "Using Regions of Interest (ROI's)"
+msgstr "Usando Regiones de Interés (ROI's)"
+
+#: ../C/amide.xml.translate:1077(para)
+msgid ""
+"ROI stands for Region of Interest. An ROI designated a volume in space over "
+"which statistics should be calculated."
+msgstr ""
+"ROI(Region of Interést) es decir Región de Interés. Un ROI designa un "
+"subvolumen del volumen de datos sobre el que serán calculadas las "
+"estadísticas."
+
+#: ../C/amide.xml.translate:1082(title)
+msgid "ROI Types"
+msgstr ""
+
+#: ../C/amide.xml.translate:1084(para)
+msgid "The following ROI types are currently supported in AMIDE:"
+msgstr "Lo siguientes tipos de ROI son soportados por AMIDE:"
+
+#: ../C/amide.xml.translate:1088(title)
+msgid "Geometric ROI's"
+msgstr ""
+
+#: ../C/amide.xml.translate:1092(term)
+msgid "Ellipsoid"
+msgstr "Elipsoide"
+
+#: ../C/amide.xml.translate:1093(para)
+msgid ""
+"An ellipsoid is similar to a sphere, but with a radius specified for each "
+"direction [x,y,z]. In the case of x=y=z, the ellipsoid is a sphere."
+msgstr ""
+"Un elipsoide es similar a una esfera, pero con un radio que puede ser "
+"diferente en cada dirección [x,y,z]. Si x=y=z el elipsoide se convierte en "
+"una esfera."
+
+#: ../C/amide.xml.translate:1098(term)
+msgid "Elliptic Cylinder"
+msgstr "Cilindro Elíptico"
+
+#: ../C/amide.xml.translate:1099(para)
+msgid ""
+"An elliptic cylinder is similar to a regular cylinder, except it has an "
+"ellipse as its base instead of a circle."
+msgstr ""
+"Similar al cilindro excepto que su base en vez de un círculo es una elipse."
+
+#: ../C/amide.xml.translate:1104(term)
+msgid "Box"
+msgstr ""
+
+#: ../C/amide.xml.translate:1105(para)
+msgid "Exactly what it says, a 3D box."
+msgstr "Caja 3D."
+
+#: ../C/amide.xml.translate:1112(title)
+msgid "Isocontour ROI's"
+msgstr "ROI Isocontorno"
+
+#: ../C/amide.xml.translate:1114(para)
+msgid ""
+"Isocontour ROI's are regions selected from the data set such that the edge "
+"values of the ROI are always the same value. There are two types, 2D and 3D "
+"isocontours. Additionally, both these ROI types can be defined so that they "
+"encompass all neighboring values either above a certain minimum value, below "
+"a certain maximum value, or between a minimum and maximum value. After "
+"drawing of these ROI's, they can be modified by using manual drawing or "
+"erasing operations."
+msgstr ""
+"ROI Isocontorno, son regiones seleccionadas del volumen cuyos límites tienen "
+"el mismo valor. Hay dos tipos, isocontronos 2D y 3D ."
+
+#: ../C/amide.xml.translate:1125(term)
+msgid "2D Isocontour"
+msgstr "Isocontorno 2D"
+
+#: ../C/amide.xml.translate:1126(para)
+msgid ""
+"A 2D isocontour is derived by considering a value on one of the displayed 2D "
+"slices. The depth of a 2D isocontour is specified initially by the depth of "
+"the viewed slices."
+msgstr ""
+"El isocontorno 2D se deriva del dibujado en uno de los cortes. . La "
+"profundidad del isocontorno 2D esta determinada por el grosor del corte "
+"visualizado."
+
+#: ../C/amide.xml.translate:1132(term)
+msgid "3D Isocontour"
+msgstr "Isocontorno 3D"
+
+#: ../C/amide.xml.translate:1133(para)
+msgid ""
+"A 3D isocontour is derived by considering a value on the current frame of "
+"the active data set."
+msgstr ""
+"El isocontorno 3D se deriva considerando un valor del marco de tiempo "
+"selecionado del volumen activo."
+
+#: ../C/amide.xml.translate:1141(title)
+msgid "Freehand ROI's"
+msgstr ""
+
+#: ../C/amide.xml.translate:1143(para)
+msgid "Freehand ROI's are regions of interest that are drawn manually."
+msgstr ""
+
+#: ../C/amide.xml.translate:1148(term)
+msgid "2D Freehand"
+msgstr ""
+
+#: ../C/amide.xml.translate:1150(para)
+msgid ""
+"A 2D Freehand ROI is similar to a 3D Freehand, except that it is constrained "
+"to be only one voxel thick. By default, the depth is the current slice "
+"thickness, although this can be changed by the user."
+msgstr ""
+
+#: ../C/amide.xml.translate:1156(term)
+msgid "3D Freehand"
+msgstr ""
+
+#: ../C/amide.xml.translate:1157(para)
+msgid "An ROI that can be drawn freely in all 3 dimensions.."
+msgstr ""
+
+#: ../C/amide.xml.translate:1167(title)
+msgid "Drawing ROI's"
+msgstr "Dibujando ROI's"
+
+#: ../C/amide.xml.translate:1169(para)
+msgid ""
+"To draw an ROI, you first need to create a new ROI. You can add a new ROI to "
+"either the study, or a particular data set. To add an ROI to the study, you "
+"can either select the ROI desired under the \"Edit-&gt;add ROI:\" menu item, "
+"or right click on the blank area of the study tree. To add an ROI to a data "
+"set, shift-right click on the data set that you'd like to add the ROI to. In "
+"both cases, a dialog box will pop-up for you to enter in the new ROI's name."
+msgstr ""
+"Para dibujar un ROI, primero necesita crear un ROI nuevo. Puede añadir un "
+"ROI a todo el estudio o a un volumen en particular. Para añadirlo al "
+"estudio, puede seleccionar el ROI en el menu item \"Edit-&gt;add ROI:\" , o "
+"hacer pulsar el botón 3 en el área desnuda el árbol del estudio. Para añadir "
+"un ROI a un volumen , hacer SHIF+botón 3 sobre el volumen a añadir. En ambos "
+"casos emergerá una cajita de diálogo para entrar el nombre del ROI."
+
+#: ../C/amide.xml.translate:1179(para)
+msgid ""
+"When first added, the new (undrawn) ROI will be selected in the study tree. "
+"When an undrawn ROI is selected in the study tree, the program will use the "
+"next mouse input on any of the displayed views to begin the process of "
+"drawing this ROI."
+msgstr ""
+"Al añirlo al pricipio , el ROI nuevo (todavía no dibujado) sera seleccionado "
+"en el árbol del estudio. Cuando un ROI todavia no dibujado es seleccionado, "
+"el programa usara el la siguiente acción del ratón sobre una vista para "
+"empezar el proceso de dibujo del ROI."
+
+#: ../C/amide.xml.translate:1186(para)
+msgid ""
+"For ellipsoid, elliptic cylinder, and box ROI's, a click with the left "
+"button will begin an edge-to-edge drawing, while a click with the middle "
+"button will begin a center-out drawing. The x and y dimensions of the ROI "
+"are determined by this process. The z dimension (thickness) of the ROI can "
+"be specified by the pop-up dialog that will appear on the completion of the "
+"mouse movement."
+msgstr ""
+"Para ROI's elipsoide, cilindroide y caja 3D, una pulsación d el botón 1 "
+"empezará un dibujo de borde a borde , mientras que si pulsamos el botón 3 "
+"empezará el dibujo por el centro. Las dimensiones xy del ROI se determinan "
+"con este proceso. La dimensión z (grosor) del ROI se puede especificar en el "
+"diálogo que emergerá al acabar de dibujar el ROI."
+
+#: ../C/amide.xml.translate:1195(para)
+msgid ""
+"For isocontour's, the value of the data set at the clicked upon location "
+"will be used to derive the isocontour."
+msgstr ""
+"Para los isocontornos, el valor de donde este situado el cursor sera usado "
+"para derivar el isocontorno."
+
+#: ../C/amide.xml.translate:1200(para)
+msgid ""
+"For freehand's, the point on the screen that is clicked upon will be "
+"included in the ROI."
+msgstr ""
+
+#: ../C/amide.xml.translate:1207(title)
+msgid "Manipulating ROI's"
+msgstr "Manipulando ROI's"
+
+#: ../C/amide.xml.translate:1209(para)
+msgid ""
+"After an ROI is drawn, it can be further manipulated to adjust its size, "
+"placement, and orientation. You can directly manipulate the ROI by clicking "
+"on it in any of the viewing windows. Mouse button 1 is used to shift ROIs. "
+"Mouse button 2 is used for zooming ellipsoid, elliptic cylinder and box ROI, "
+"and is used for entering drawing mode for isocontour and freehand ROI's. "
+"Mouse button 3 is used to rotate ellipsoid, elliptic cylinder, and box ROIs, "
+"and for redefining the isocontour value for isocontour ROI's."
+msgstr ""
+"Después de haber dibujado un ROI, puede ser manipulado ajustando su volumen, "
+"posición y orientación. Puede manipular directamente el ROI pulsando en "
+"cualquiera de las ventanas. El botón 1 se usa para desplazar los ROIs. El "
+"botón 2 para rotar los ROIs elpisoides, cilindroides y cajas 3D y en el caso "
+"de los ROI de isocontorno para borrar puntos. El botón 3 se usa para hacer "
+"zoom de los ROI's elipsoide, cylindro elíptioco y caja 3D, y redefine le "
+"valor del isocontrono en el caso de esos ROIs."
+
+#: ../C/amide.xml.translate:1219(para)
+msgid ""
+"For isocontour and freehand ROI's, drawing mode can be entered by using thie "
+"middle mouse button (button 2). Once entered, points can be added or removed "
+"from the ROI by using the left (button 1) or right (button 3) mouse buttons, "
+"respectively. Holding down the shift key while using these buttons increases "
+"the size of the action. The middle button (button 2) allows the user to "
+"leave drawing mode."
+msgstr ""
+
+#: ../C/amide.xml.translate:1228(para)
+msgid ""
+"You can also edit the ROI size/placement/orientation/name etc. by clicking "
+"on mouse button 3 while over the ROI's name in the study item list. This "
+"brings up the ROI modification dialog (described at <xref linkend=\"roi-"
+"dialog\"/>)."
+msgstr ""
+"También puede editar el tamaño,situación, orientación, nombre etc.. pulsando "
+"el botón 3 sobre el nombre del ROI en la lista de items del estudio. Esto "
+"hace que aparezca el diálogo de Modificación de ROIs (descrito en en <xref "
+"linkend=\"roi-dialog\"/>)."
+
+#: ../C/amide.xml.translate:1239(title)
+msgid "Calculating Statistics"
+msgstr "Calculando Estadísticas"
+
+#: ../C/amide.xml.translate:1241(para)
+msgid ""
+"Statistics on an ROI can be calculated via the \"Tools-&gt;calulate ROI "
+"statistics\" menu item. Choosing this will pop-up a dialog that lets you "
+"choose which ROI's (selected or all) and which data sets (selected or all) "
+"you'd like to calculate statistics over. You will also have three options as "
+"to how you what the values to be calculated."
+msgstr ""
+"Las estadísticas dentro de un ROI se pueden calcular con el menu item "
+"\"Tools-&gt;calulate ROI statistics\" . Eligiendo este emergerá un diálogo "
+"que le permitirá elegir entre que ROI (o todos) y entre que volúmenes (o "
+"todos) quiere que se calculen las estadísticas. También pude elegir que se "
+"calcule sobre subconjuntos de vóxeles, significando el cálculo sobre el x% "
+"de vóxeles con valor máximo del ROI."
+
+#: ../C/amide.xml.translate:1253(para)
+msgid "Calculate over all voxels."
+msgstr ""
+
+#: ../C/amide.xml.translate:1257(para)
+msgid ""
+"Calculate over highest x percent of voxels. For example, if you choose this "
+"and pick 25% as the number, your ROI will be calculated from the 25% of the "
+"voxels in the ROI that have the highest values."
+msgstr ""
+
+#: ../C/amide.xml.translate:1265(para)
+msgid ""
+"Calculate for voxels &gt;= % of Max. This method is based on Lee, Madsen, "
+"Bushnel, and Menda, Nuc Med Comm 2000, 21:685-690. As an example, if you "
+"choose this and pick 50% as the number, the highest valued voxel in the ROI "
+"will be found, and then the ROI statistics will be calculated for all voxels "
+"that are greater or equal to 50% of the highest valued voxel."
+msgstr ""
+
+#: ../C/amide.xml.translate:1275(para)
+msgid ""
+"Calculate for voxel &gt;= Value. This algorithm only does calculations for "
+"voxels in the ROI that have a value greater than the value specified."
+msgstr ""
+
+#: ../C/amide.xml.translate:1283(para)
+msgid ""
+"There's also a check box to enable \"more accurate quantitation\". The "
+"default algorithm (corresponding to unchecked) makes some approximations in "
+"deciding which voxel are in our out of the ROI. If this check boxed is "
+"checked, the ROI results will be more accurate, but will take much longer to "
+"compute."
+msgstr ""
+
+#: ../C/amide.xml.translate:1290(para)
+msgid ""
+"After hitting execute, the program will crank for a while, and then show the "
+"calculated values in a new dialog window. Hitting \"Save as\" button allows "
+"saving these values as a tab separated values (TSV) file. This file should "
+"be easily imported into most spreadsheet applications (Excel's a little "
+"stupid, you may have to explicitly tell it you're importing a TSV file). "
+"Pressing the \"Copy\" button copies the information into the operating "
+"systems clipboard, allowing pasting of the results into other programs. The "
+"\"Save Raw Values\" button allows you to export the underlying raw data "
+"values for the ROI's in case you wish to do your own statistical analysis."
+msgstr ""
+"Despues de pulse 'execute' , ejecutar, tras unos instantes el programa "
+"mostrará los valores calculados. Seleccionando \"save as\" permite guardarlo "
+"es un fichero con los valores separados por una tab (TSV). Este fichero "
+"debería ser importado fácilmente a cualquier hoja de cálculo (Excel es un "
+"poco estúpido, tiene que expecificarle que esta importando un fichero TSV, "
+"Tab Separated Values)."
+
+#: ../C/amide.xml.translate:1308(title)
+msgid "Gotcha's to ROI calculations"
+msgstr "Facilidades para los Cálculos de los ROI"
+
+#: ../C/amide.xml.translate:1310(title)
+msgid "Variance and Standard Deviation Fallacies"
+msgstr "Varianza/Std. Dev./Std. Err."
+
+#: ../C/amide.xml.translate:1312(para)
+msgid ""
+"Currently, AMIDE generates variance and standard deviation values that may "
+"occasionally be of interest to imaging physicists. It is very important to "
+"remember, that these numbers represent the noise in the data set, NOT the "
+"noise in your experiment."
+msgstr ""
+"A día de hoy, AMIDE genera valores de varianza/std. dev./std. error que "
+"ocasionalmente pueden interesar para los investigadores. Es muy importante "
+"recordar , que esos números representan el ruido en los datos, NO el ruido "
+"en su experiemento."
+
+#: ../C/amide.xml.translate:1319(para)
+msgid ""
+"The variance of an experiment can only truly be measured by taking multiple "
+"samples (i.e. performing multiple scans) and calculating the variance "
+"between these different samples."
+msgstr ""
+"La varianza del experimento solo puede ser tomada repitiendo multiples "
+"muestras (p.e. haciendo multiples scans) y calculando la varianza entre "
+"diferentes muestras."
+
+#: ../C/amide.xml.translate:1326(title)
+msgid "Changing Calculated Volume"
+msgstr "Cambiando el Volumen Calculado"
+
+#: ../C/amide.xml.translate:1328(para)
+msgid ""
+"<emphasis>Short story:</emphasis> The calculated volume shown by the ROI "
+"statistics dialog is correct. Use this value as the volume of the ROI, not "
+"the value you might calculate by hand based on the ROI's dimensions."
+msgstr ""
+"<emphasis>Historia corta:</emphasis> El volumen calculado mostrado por el "
+"diálogo de estadísticas del ROI es correcto. Use este valor como volumen del "
+"ROI, no el que podría calcular a man basándose en las dimensiónes del ROI."
+
+#: ../C/amide.xml.translate:1334(para)
+msgid ""
+"<emphasis>Long story:</emphasis> AMIDE calculates ROI's by translating the "
+"ROI's dimensions into the data set's coordinate space. It then computes "
+"statistics for all the data set voxels that are in the ROI. For voxels that "
+"lie on the edge of the ROI, AMIDE will subdivide the voxel into a finite "
+"number of subvoxels, and calculate over the subvoxels. This approach yields "
+"correct statistics, but it is important to realize that the computed ROI is "
+"a discrete representation of the specified analytical ROI. So while the true "
+"volume of an ellipse is pi*r1*r2*r3, the computed volume of the ellipse in "
+"AMIDE will depend on the number of voxels and subvoxels that were determined "
+"to lie within the ellipse, which in turn can depend on the orientation of "
+"the ROI with respect to the data set in question. Since the computed volume "
+"given by AMIDE represents the volume in the data set that was used for the "
+"ROI calculation, you will want to use that value (not the real ellipse "
+"value)."
+msgstr ""
+"<emphasis>Historia larga:</emphasis> AMIDE calcula el ROI's trasladando las "
+"dimensiónes del ROI al las coordenadas del espacio del volumen de datos. "
+"Entonces calcula las estadísticas de todos los volúmenes de datos que hay en "
+"el ROI. Para los vóxeles que caen en el límite del ROI, AMIDE subdividirá el "
+"voxel en un número finito de subvóxeles, y hace el cálculo sobre los "
+"subvóxeles. Esta aproximación resulta en estadísticas correctas, pero es "
+"importante darse cuenta que el ROI calculado es una representación "
+"discretizada del ROI analítico. Así que mientras el verdadero volumen de un "
+"elipsoide es pi*r1*r2*r3, el volumen calculado por AMIDE dependerá del "
+"número de vóxeles y subvóxeles que se determinan dentro del elipsoide, que a "
+"su vez puede depender de la orientación del ROI respecto al volumen de datos "
+"en cuestión. Como el volumen dado por AMIDE representa el subvolumen en el "
+"volumen de datos para el cálculo del ROI, querrá usar ese valor (no el valor "
+"real elipsoide)."
+
+#: ../C/amide.xml.translate:1353(title)
+msgid "Why isn't a \"total\" statistic calculated for the ROI?"
+msgstr ""
+
+#: ../C/amide.xml.translate:1355(para)
+msgid ""
+"AMIDE doesn't present the \"total\" value in the ROI, as it doesn't "
+"necessarily know what the units of the underlying data are. If you're using "
+"PET or SPECT data, your voxel values are most likely proportional to "
+"activity/volume/time. To calculate the total in your ROI, you should "
+"multiple the mean value of the ROI times the ROI volume and the frame "
+"duration. If you're using CT data, your values are probably proportional to "
+"density, so to calculate the total you would multiple the mean ROI value by "
+"the ROI volume."
+msgstr ""
+
+#: ../C/amide.xml.translate:1369(title)
+msgid "Explanations of ROI Statistical Values"
+msgstr "Explicaciones de los Valores Estadísticos de los ROI's"
+
+#: ../C/amide.xml.translate:1373(term)
+msgid "Median"
+msgstr "Mediana"
+
+#: ../C/amide.xml.translate:1374(para)
+msgid ""
+"This is the median value of all the voxels that are enclosed (partially or "
+"totally) within the ROI. For an even number of voxels, the median is defined "
+"as the average of the center 2 values."
+msgstr ""
+"Es el valor de mediana value de todos los vóxeles que estan total o "
+"parcialmente incluidos en el ROI. Para un numero par de vóxeles , la mediana "
+"se define como el promedio de los 2 valores centrales."
+
+#: ../C/amide.xml.translate:1380(term)
+msgid "Mean"
+msgstr "Media"
+
+#: ../C/amide.xml.translate:1381(para)
+msgid ""
+"The mean value of the voxels in the ROI. Voxels that are partially enclosed "
+"within the ROI are appropriately weighted."
+msgstr ""
+"El valor media de los vóxeles del ROI. Los vóxeles parcialmente incluidos en "
+"el ROI son proporcionalmente sopesados."
+
+#: ../C/amide.xml.translate:1386(term)
+msgid "Variance"
+msgstr "Varianza"
+
+#: ../C/amide.xml.translate:1387(para)
+msgid ""
+"The variance of the voxels in the ROI. This is a weighted variance "
+"calculation so that voxels that are partially enclosed within the ROI are "
+"correctly handled."
+msgstr ""
+"La varianza de los vóxeles en el ROI. Esta es de hecho un cálculo de "
+"varianza sopesada asi los vóxeles parcialmente incluídos en el ROI son "
+"correctamente manejados."
+
+#: ../C/amide.xml.translate:1393(term)
+msgid "Standard Deviation"
+msgstr "Desviación Estandard"
+
+#: ../C/amide.xml.translate:1394(para)
+msgid "The square root of the variance."
+msgstr "La raiz cuadrada de la varianza."
+
+#: ../C/amide.xml.translate:1397(term)
+msgid "Standard Error"
+msgstr "Error Estandard"
+
+#: ../C/amide.xml.translate:1398(para)
+msgid ""
+"The square root of the variance, divided by the square root of the total "
+"number of voxels in (totally or partially) the ROI."
+msgstr ""
+"La raiz cuadrada de la varianza , dividido por la raiz cuadrada del numero "
+"total de vóxeles (total o parcialmente) en el ROI."
+
+#: ../C/amide.xml.translate:1403(term)
+msgid "Minimum/Maximum"
+msgstr "Mínimo/Máximo"
+
+#: ../C/amide.xml.translate:1404(para)
+msgid ""
+"The minimum and maximum values for all voxels enclosed totally or partially "
+"within the ROI."
+msgstr ""
+"El valor mínimo y máximo de todos los vóxeles parcial o totalmente incluidos "
+"en el ROI."
+
+#: ../C/amide.xml.translate:1408(term)
+msgid "Size"
+msgstr "Tamaño"
+
+#: ../C/amide.xml.translate:1409(para)
+msgid ""
+"The volume of an ROI (mm^3). Details as to its calculation are above in: "
+"<xref linkend=\"roi-volume-calculation\"/>."
+msgstr ""
+"El volumen de un ROI (en mm cúbicos). Detalles de este cálculo arriba en: "
+"<xref linkend=\"roi-volume-calculation\"/>."
+
+#: ../C/amide.xml.translate:1414(term)
+msgid "Fractional Voxels"
+msgstr ""
+
+#: ../C/amide.xml.translate:1415(para)
+msgid ""
+"The is the sum of the voxel weights, and gives an indication of how large "
+"the ROI is in voxel space."
+msgstr ""
+"Es la suma del peso de los vóxeles, y da una indicación de cuan grande es el "
+"ROI en el espacio de vóxeles."
+
+#: ../C/amide.xml.translate:1420(term)
+msgid "Voxels"
+msgstr "Vóxeles"
+
+#: ../C/amide.xml.translate:1421(para)
+msgid ""
+"This is the total number of voxels used in calculating the ROI, both partial "
+"and total. In contrast to the \"Fraction Voxels\" measure, the \"Voxels\" "
+"measure gives a better indication of the statistical validity of the mean, "
+"variance, etc."
+msgstr ""
+"Es el número total de vóxeles incluidos calculando el ROI, tanto parcial "
+"como totalmente. En contraste a la medida \"Fraction Voxels\", los \"Vóxeles"
+"\" dan mejor indicación de la valided estadística de la median, varianza, "
+"etc .."
+
+#: ../C/amide.xml.translate:1435(title)
+msgid "ROI Modification Dialog"
+msgstr "Diálogo de Modificación de ROI"
+
+#: ../C/amide.xml.translate:1437(para)
+msgid ""
+"To directly modify parameters of an ROI, right click on the name of the ROI "
+"in the study tree to pop-up the modification dialog. Parameters that can be "
+"modified are divided into the following pages."
+msgstr ""
+"Para modificar directamente los parámetros del ROI, pulsar el botón 3 en el "
+"nombre del ROI en el árbol del estudio, para que emerga el diálogo de "
+"modificación. Los parámetros que se pueden modificar se dividen en dos "
+"páginas. pages."
+
+#: ../C/amide.xml.translate:1446(para)
+msgid "The name and type of ROI can be altered on this page."
+msgstr "El nombre y tipo de ROI se puede alterar en esta página."
+
+#: ../C/amide.xml.translate:1452(para)
+msgid ""
+"The center of the ROI can be shifted with respect to the origin on this "
+"page. The x, y, and z parameters are in millimeters."
+msgstr ""
+"El centro del ROI puede despalzarse en esta página . Los parámetros xyz "
+"estan en milímetros."
+
+#: ../C/amide.xml.translate:1458(term)
+msgid "Dimensions"
+msgstr "Dimensiones"
+
+#: ../C/amide.xml.translate:1459(para)
+msgid ""
+"The size of the ROI can be altered from this page. The x', y', and z' "
+"dimensions are in millimeters and are orientated with respect to the "
+"orientation of the ROI."
+msgstr ""
+"El tamaño del ROI se puede alterar en esta página. Las dimensiónes x, y, y z "
+"estan milímetros y orientadas con respecto a la orientación del ROI."
+
+#: ../C/amide.xml.translate:1467(para)
+msgid ""
+"The ROI can be rotated around its center in this page. There is one dial for "
+"each of the three slice planes. The transverse dial will spin the ROI in the "
+"transverse plane (i.e. rotate on the z-axis). The coronal dial will spin the "
+"ROI in the coronal plane (i.e. rotate on the y-axis). And the sagittal dial "
+"will spin the ROI in the sagittal plane (i.e. rotate on the x-axis). The "
+"\"reset to default\" button allows the ROI to be rotated back to the default "
+"orientation. On the bottom of this page is a matrix showing the coordinate "
+"frame of the ROI with respect to the base coordinate frame."
+msgstr ""
+"El ROI puede rotarse sobre su centro en esta página . Hay una ruedecilla "
+"para cada uno de los tres planos. La ruedecilla transversal rotará el ROIen "
+"el plano transverso (rota sobre el eje z). La rudecilla coronal rotará el "
+"ROI en el plano coronal (rota sobre el eje y). Y la ruedecilla sagital "
+"girará el ROI en el plano sagital (rota sobre el eje x). El botón \"reset to "
+"default\" deshace los giros dejando la orientación original. Al pie de esta "
+"página hay una matriz que muestra las coordinadas del ROI respecto a las "
+"coordenadas de origen."
+
+#: ../C/amide.xml.translate:1490(title)
+msgid "The Study"
+msgstr ""
+
+#: ../C/amide.xml.translate:1492(para)
+msgid ""
+"The \"Study object\" in AMIDE is used for grouping a set of related data "
+"sets and ROI's. Note that the use of the word \"Study\" here diverges from "
+"the traditional nuclear medicine use of the word, in which study generally "
+"connotates a single scan (or occasionally multiple but highly coupled scans) "
+"done on a single patient. A study in AMIDE is often used to group an entire "
+"experiment (several patients, several animals, whatever) into a single file. "
+"The study object itself is used mostly for storing parameters that effect "
+"all other objects stored in the study."
+msgstr ""
+
+#: ../C/amide.xml.translate:1502(title)
+msgid "Study Modification Dialog"
+msgstr "Diálogo de Modificación de Estudio"
+
+#: ../C/amide.xml.translate:1504(para)
+msgid ""
+"Similarly to the data set and ROI modification dialogs, the study "
+"modification dialog can be used to alter parameters relevant to the entire "
+"study. Right click on the name of the study in the study tree to pop-up the "
+"study modification dialog box. Parameters that can be modified are divided "
+"into the following pages."
+msgstr ""
+"Para modificar los parámetros globales del estudio, pulse el botón 3 del "
+"ratón en el nobre del estudio en el árbol del estudio o en la caja de "
+"diálogo de modificación de estudio. Los parámetros pueden dividirse de las "
+"siguientes categorias."
+
+#: ../C/amide.xml.translate:1514(para)
+msgid ""
+"On this page are options to alter the name and creation date of the study."
+msgstr ""
+"En esta página estan las opciónes para alterar el nombre y fecha de creación "
+"del estudio."
+
+#: ../C/amide.xml.translate:1519(term)
+msgid "View Center"
+msgstr "Ver Centro"
+
+#: ../C/amide.xml.translate:1520(para)
+msgid ""
+"From this page, the point that the study is currently viewing can be "
+"explicitly changed. The x, y, and z dimensions are in millimeters."
+msgstr ""
+"Desde esta página se pude cambiar expliícitamente el centro desde el cual el "
+"estudio es visto. Las dimensiónes xyz son en milímetros. También se pueden "
+"cambiar explícitamente. The x, y, and z"
+
+#: ../C/amide.xml.translate:1528(para)
+msgid ""
+"The entire study (including all objects within it) can be rotated around the "
+"view center in this page. There is one dial for each of the three slice "
+"planes. The transverse dial will spin the study in the transverse plane (i."
+"e. rotate on the z-axis). The coronal dial will spin the study in the "
+"coronal plane (i.e. rotate on the y-axis). And the sagittal dial will spin "
+"the study in the sagittal plane (i.e. rotate on the x-axis). The \"reset to "
+"default\" button allows the study to be rotated back to the default "
+"orientation. On the bottom of this page is a matrix showing the coordinate "
+"frame of the study with respect to the base coordinate frame."
+msgstr ""
+"El estudio completo(incluyendo todos su objetos) puede ser rotado sobre el "
+"centro de vista de la imagen. Hay una ruedecilla por cada vista ortogonal. "
+"La ruedecilla axial rota sobre el plano axial (rota sobre el eje z). La "
+"ruedecilla coronal rotará el plano coronal (rota sobre el eje y) . Y la "
+"sagital rotará sobre le plano sagital(rota sobre el eje x). El botón \"reset "
+"to default\" permite volver a la rotación original del estudio. A pie de "
+"página hay una matriz mostrando las coordenadas del estudio con respecto a "
+"las de referencia."
+
+#: ../C/amide.xml.translate:1544(para)
+msgid ""
+"The width of the line used to draw geometric ROIs can be altered here (1-5 "
+"pixels). This parameter is not relevant for isocontour ROI's. For isocontour "
+"ROI's, you can choose to have them draw as filled in or hollow."
+msgstr ""
+"The width of the line used to draw geometric ROIs can be altered here (1-5 "
+"pixels). This parameter is not relevant for isocontour ROI's."
+
+#: ../C/amide.xml.translate:1549(para)
+msgid ""
+"Canvas layout allows you to switch the three views (transverse, coronal, and "
+"sagittal) between a linear style layout more commonly seen in PET software, "
+"and an orthogonal style layout more commonly seen in MRI software. "
+"\"Maintain view size constant\" allows you to pick if you want the size of "
+"the view to remain constant or not. If not checked, the size of the views "
+"shown will depend only on the data sets selected. If the checkbox is "
+"checked, the size of the views will depend on all the data sets in the "
+"study. Finally, \"target empty area\" is for setting the size of the empty "
+"area in the middle of the target (the crosshairs on the views when changing "
+"the view location)."
+msgstr ""
+
+#: ../C/amide.xml.translate:1566(para)
+msgid ""
+"This panel lists information about the study that cannot be altered. \"Voxel "
+"dim\" is the preferred voxel dimension, this is what the canvas will use as "
+"the \"basic\" voxel dimension, from which the zoom factor is relative too."
+msgstr ""
+"Este panel lista las características del estudio que no puden ser alteradas. "
+"\"Voxel dim\" es la dimensión preferida del voxel, este será usado como "
+"dimensión \"básica\" del voxel, a la cual el zoom es relativa."
+
+#: ../C/amide.xml.translate:1585(title)
+msgid "Viewing Series of Slices"
+msgstr "Viendo Series de Cortes"
+
+#: ../C/amide.xml.translate:1586(para)
+msgid ""
+"Instead of looking at three orthogonal slices through the data set, a series "
+"of slices (all of the same orientation) can also be examined. Select: \"View-"
+"&gt;Series\", and a dialog box will come up allowing you to pick which "
+"objects you'd like to display on the series viewer, along with if you'd like "
+"to display the slices over space, time, or gates. The thickness of the "
+"slices are determined at the time the series window is brought up. A slider "
+"appears on the top of the window which allows moving through the data set. "
+"Note that since slices are cached in memory after being displayed, already "
+"displayed slices do not need to be regenerated from the data set and "
+"reviewing these slices is significantly faster."
+msgstr ""
+"En vez de examinar las vistas ortogonales , se pueden observar series de "
+"cortes (todos en la misma orientación). Seleccione: \"View-&gt;Series-&gt;"
+"Space-&gt;[view]\" del menú para para extraer la serie de cortes de una "
+"misma orientación. Alternativamente, seleccione: \"View-&gt;Series-&gt;Time-"
+"&gt;[view]\" desde el menú para ver un mismo corte a lo largo del tiempo en "
+"un estudio dinámico. El grosor de los cortes es el que había antes de "
+"deplegar el menu. Una barra de desplazmiento aparecera encima de la imagen "
+"para moverse por el volumen de datos. Notese que una vez vistos los cortes "
+"quedan en la memoria lo que hace que su revisión sea mucho más rápida."
+
+#: ../C/amide.xml.translate:1608(title)
+msgid "Rendering Data"
+msgstr "Renderizado de Datos"
+
+#: ../C/amide.xml.translate:1610(para)
+msgid ""
+"Rendering in AMIDE is accomplished using the <ulink type=\"http\" url="
+"\"http://graphics.stanford.edu/software/volpack/\"> Volpack volume rendering "
+"library</ulink>. This software library is both portable, and provides for "
+"true volume rendering (as opposed to the surface rendering used by many "
+"other libraries and hardware accelerators)."
+msgstr ""
+"El Renderizado en AMIDE se lleva a cabo usando la librería de renderizado de "
+"volumenes<ulink type=\"http\" url=\"http://graphics.stanford.edu/software/"
+"volpack/\"> Volpack</ulink>. Esta librería de software es portable y , "
+"permite renderizado verdadero del volumen (en oposición al renderiazado de "
+"superficie usado por otras librerías de software para aceleradoras de "
+"hardware)."
+
+#: ../C/amide.xml.translate:1617(para)
+msgid ""
+"To start a rendering window, select the \"View-&gt;Rendering\" menu item. A "
+"small dialog window will pop-up allowing you to select which objects you'd "
+"like rendered, along with some additional options. The first \"Set values "
+"greater than max threshold to zero\" allows you to strip high level voxels "
+"out of the rendering process. In general you won't want this, but it might "
+"be useful if you have high valued areas in your data set that obscures what "
+"you'd like to see. The second option \"Accelerate Rendering\" tells VolPack "
+"to use a faster method for doing the volume rendering. You will in general "
+"want to use this option, as it causes a significance performance enhancement "
+"(around 10 fold). It does, however, require around 3 fold as much rendering "
+"as the non-accelerated option, so if you're running out of memory, you'll "
+"want to try to rendering without the acceleration. The third option "
+"\"Initial opacity functions only density dependent\" sets things such that "
+"the initial gradient opacity function does not contribute to the rendering. "
+"This is useful for data sets (e.g. PET) where one is more interested in "
+"having an accurate view of the data, rather than a view where gradients in "
+"the data set are highlighted."
+msgstr ""
+"Para comenzar la ventana de Renderizado, seleccionar los volumenes y ROI's "
+"que deseara incluir en el rederizado, y pulse el item del menúg \"View-&gt;"
+"Rendering\" . Se desplegará una pequeña ventana de diálogo con dos opciónes. "
+"La primera \"Set values greater than max threshold to zero(Poner los valores "
+"mayores que max a cero)\" permite excluir del proceso los valores máximos. "
+"En general no deseará esto, pero prodría ser útil cuando hay valores muy "
+"altos que obscurecen zonas que quisiera ver. La segunda opción \"Accelerate "
+"Rendering(Acelerear Renderizado)\" hace que VolPack use un método de "
+"aceleración del proceso de renderizado. Obtendrá un aumento de velocidad "
+"(sobre 10 veces). Sin embargo requiere aproximadamente tres veces mas de "
+"memoria RAM, así si dispone de poca RAM no use esta opción."
+
+#: ../C/amide.xml.translate:1637(para)
+msgid ""
+"After hitting \"Execute\" the program will reslice the data sets and ROI's "
+"into a data structure that the volpack library can handle, and then perform "
+"some initial renderin gcalculations. For data sets, the <link linkend="
+"\"interpolation\">interpolation type</link> specified for the data set will "
+"be used. This whole process will take some time, so be patient. Please also "
+"note that, when converting the data set, the data is scaled between the "
+"current minimum and maximum threshold, with all data above the current "
+"maximum threshold set to the maximum threshold value (or zero, if "
+"specified), and all data below the current minimum threshold set to the "
+"minimum threshold value. This scaling can be relative to the data set's "
+"\"Global\" maximum and minimum, to the \"Per Frame\" maximum and minimum, or "
+"can be from maximum and minimum values \"Interpolated Between Frames\". "
+"\"Per slice\" scaling does not make sense in the context of volume "
+"rendering, and is interpreted as \"Global\" scaling."
+msgstr ""
+"Despues de pulsar \"Execute\" el programa convertirá los volúmenes y ROI's, "
+"al formato utilizado por Volpack y hará los cálculos iniciales de "
+"renderizado. Para los volúmenes se utilizará el <link linkend=\"interpolation"
+"\">tipo de interpolación</link> especificado. Este procedimiento tarda algo "
+"de tiempo , luego sea paciente. Por favor note tambien,que al convertir los "
+"volámenes, los datos se escalan entre los límites mínimo y máximos "
+"establecidos, luego todos los datos mayores del valor máximo se igualaran al "
+"valor máximo y todos los valores por debajo del mínimo se igualaran al "
+"mínimo. Este escalado pude ser relativo al mínimo y máximo \"Global\", al "
+"mínimo y máximo \"Por Segmento de Tiempo(Frame)\" , o al mínimo y máximo "
+"\"Interpolado Entre Segmentos\". El escalado \"por Corte\" carece de sentido "
+"en el contexto de rederizado volumétrico, y sera interpretado como escaldo "
+"\"Global\"."
+
+#: ../C/amide.xml.translate:1654(para)
+msgid ""
+"When all this is completed, the rendering window should pop-up. Its use is "
+"described below."
+msgstr ""
+"Cuando se finaliza esto se despliega una ventana. Su uso se describe abajo."
+
+#: ../C/amide.xml.translate:1659(title)
+msgid "Rendering Window"
+msgstr "Ventana de Renderizado"
+
+#: ../C/amide.xml.translate:1661(title)
+msgid "Main Rendering Canvas"
+msgstr "Panel Principal de Renderizado"
+
+#: ../C/amide.xml.translate:1662(para)
+msgid ""
+"The result of the rendering process is presented on the canvas in the center "
+"of the window. This canvas can accept user input to change the orientation "
+"of the rendering. Button 1 allows rotating on the x and y axis, and button 2 "
+"allows rotating on the z axis."
+msgstr ""
+"El resultado del renderizado se representa en el centro de la ventana . Esta "
+"ventana permite la interacción con el usuario. El botón 1 permite rotar en "
+"el eje xy , y el botón 2 permite rotar en el eje z."
+
+#: ../C/amide.xml.translate:1672(title)
+msgid "Spin Sliders"
+msgstr "Barras de Giro"
+
+#: ../C/amide.xml.translate:1673(para)
+msgid ""
+"You should notice two slider type widgets, one on top of the rendered image, "
+"and one on the right side. These are both appropriately labeled with the "
+"axis around which the rendering will be spun if they are changed. "
+"Additionally you should notice a dial widget (labeled 'z'). The dial is for "
+"rotating on the z axis (which comes out of the plane of the display). Note "
+"that the effect of rotations are cumulative."
+msgstr ""
+"Existe dos barra de desplazamiento, una encima de la imagen renderizada, y "
+"otra en el lado derecho. Estas estan marcadas apropiadamente con el eje "
+"sobre el cual rota el volumen. Adicionalmente existe una rudecilla marcada "
+"con la 'z'. esta ruedecilla es para rotar sobre el eje z, que es el "
+"perpendicular a la imagen. Nótese que los efectos de rotación son "
+"acumulativos."
+
+#: ../C/amide.xml.translate:1684(title)
+msgid "Reset Axis"
+msgstr ""
+
+#: ../C/amide.xml.translate:1685(para)
+msgid ""
+"This button will reset the rendering's orientation back to the default "
+"orientation."
+msgstr "Este botón situará el volumen en su posición original."
+
+#: ../C/amide.xml.translate:1692(title)
+msgid "Toolbar"
+msgstr "Barra de Herramientas"
+
+#: ../C/amide.xml.translate:1694(title)
+msgid "Transfer Function Button"
+msgstr "Botón de Función de Transferencia"
+
+#: ../C/amide.xml.translate:1696(para)
+msgid ""
+"This will pop-up a dialog with a panel for each object being rendered. The "
+"available options are described below:"
+msgstr "Este desplegará un diálogo con las opciónes abajo descritas:"
+
+#: ../C/amide.xml.translate:1702(term)
+msgid "Return Type"
+msgstr "Tipo Retornado"
+
+#: ../C/amide.xml.translate:1703(para)
+msgid ""
+"This setting determines whether the rendering returns an image which looks "
+"more analogous to an x-ray (the \"opacity\" setting), or returns an image "
+"which looks more like a surface (the \"grayscale\" setting). The \"grayscale"
+"\" setting does this by specifying a light source, material properties, and "
+"using depth cueing."
+msgstr ""
+"Este determina si el renderizado sera mas análogo a una radiografía (the "
+"\"opacity\" setting), o mas pareciado a una superficie (the \"grayscale\" "
+"setting). El \"grayscale\" hace esto especificando la iluminación, el "
+"material y usa indicación de profundidad."
+
+#: ../C/amide.xml.translate:1711(term)
+msgid "Color Table"
+msgstr "Tabla de Color"
+
+#: ../C/amide.xml.translate:1712(para)
+msgid "The color table of each rendered object can be changed here."
+msgstr "Aquí se puede cambiar la tabla de color de cada volumen renderizado."
+
+#: ../C/amide.xml.translate:1718(term)
+msgid "Classification Functions"
+msgstr "Funciones de Clasificación"
+
+#: ../C/amide.xml.translate:1720(para)
+msgid ""
+"This is the most confusing part of rendering, so hang on here. The "
+"classification functions are used to map between the value in each voxel and "
+"how much that voxel should be represented in the final rendered image. On "
+"the x axis is the possible values of the different voxels. On the y-axis is "
+"the opacity that will be given a voxel based on its value."
+msgstr ""
+"Esta el la parte más confusa del renderizado. Las funciónes de clasificación "
+"se usan para la correspondencia entre el valor de cada voxel y su "
+"representación final en el renderizado. El el eje x son posibles valores de "
+"diferentes vóxeles. En ele eje y es la opacidad lo que otorgara el valor en "
+"función del valor del voxel."
+
+#: ../C/amide.xml.translate:1728(para)
+msgid ""
+"Both classification functions have several buttons on the right side of "
+"their graphs. The top button allows the classification function to be drawn "
+"as a spline. The second button allows the classification function to be "
+"drawn as a series of straight lines. Finally, the last button resets the "
+"classification function to a straight line."
+msgstr ""
+"Las funciónes de clasificación tiene varios botónes a la derecha de sus "
+"gráficas. El botón de arriba permite dibujar la función como segmentos "
+"curvos. El segundo permite dibujar la función como varias segmentos rectos. "
+"Finalmente el último dibuja de nuevo la linea recta inicial."
+
+#: ../C/amide.xml.translate:1736(para)
+msgid "There are two classification functions:"
+msgstr "Hay dos funciónes de clasificación:"
+
+#: ../C/amide.xml.translate:1742(para)
+msgid ""
+"<emphasis>Density Dependent:</emphasis> This function tells you how opaque "
+"each voxel will be based on its current value. In a sense, this is analogous "
+"to an x-ray, where the amount of the x-rays that are absorbed in a structure "
+"is related to the density of that structure. of the display."
+msgstr ""
+"<emphasis>Dependientes de la Densidad:</emphasis> Esta función dice cuan "
+"opaca es en fución del valor del voxel. De alguna manera , tiene analogía "
+"con los rayos X , donde la cantidad de rayos X absorbidos depende de la "
+"densidad de la estructura."
+
+#: ../C/amide.xml.translate:1749(para)
+msgid ""
+"<emphasis>Gradient Dependent:</emphasis> Instead of relating the density of "
+"a voxel to its opacity, this function relates the gradient of a voxel (how "
+"much the value changes between this voxel and its neighbors) to its opacity. "
+"This has the effect of giving added weight to surfaces."
+msgstr ""
+"<emphasis>Dependiente del Gradiente: </emphasis> En vez de relacionar la "
+"opacidad con la estructura, esta función depende la opacidad del gradiente "
+"entre vóxeles (es decir cuanto cambia el valor de un voxel con respectoa sus "
+"vecinos). Este tiene un efecto de realzar las superficies."
+
+#: ../C/amide.xml.translate:1764(title)
+msgid "Monoscopic/Stereoscopic Buttons"
+msgstr "Botón Monoscópico/Estereoscópico"
+
+#: ../C/amide.xml.translate:1765(para)
+msgid ""
+"You can choose between generating a single rendered image (monoscopic), or a "
+"stereoscopic image pair. A stereoscopic image pair is a pair of images that "
+"have been generated at slightly different angles. When viewed correctly, "
+"these two images can be interpreted by the viewer's eyes as a single image "
+"containing depth information."
+msgstr ""
+"Puede elegir entre renderizar una imagen única (monoscópica), o un par de "
+"imágenes esteroscópicas. Un par esteroscópico de imágenes es cuando se "
+"generar a un ángulo ligeramente diferente la una de la otra. Cuando se las "
+"mira de manera adecuada pueden ser percibidas por el observador como una "
+"imagen única tridimensional."
+
+#: ../C/amide.xml.translate:1774(title)
+msgid "Zoom"
+msgstr ""
+
+#: ../C/amide.xml.translate:1775(para)
+msgid ""
+"Determines the size at which the resultant rendered image will be displayed. "
+"Note that changing the zoom will not affect the speed of the rendering, and "
+"increasing the zoom past 1 will not increase the resolution of the rendered "
+"image."
+msgstr ""
+"Determina el tamaño de la imagen resultante renderizada. Nótese que el "
+"cambio de zoom no afecta a la velocidad de renderizado, e incrementando por "
+"encima de factor 1 de zoom tampoco se incrementara la resolución de imagen "
+"renderizada."
+
+#: ../C/amide.xml.translate:1786(title)
+msgid "Rendering Menus"
+msgstr ""
+
+#: ../C/amide.xml.translate:1787(title)
+msgid "File-&gt;Export Rendering"
+msgstr ""
+
+#: ../C/amide.xml.translate:1788(para)
+msgid ""
+"This menu item allows you to export the rendered image to an external image "
+"file. The saved data format is jpeg."
+msgstr ""
+"Este menú le permite exportar la imagen renderizada a un fichero con formato "
+"jpg."
+
+#: ../C/amide.xml.translate:1794(title)
+msgid "File-&gt;Create Movie"
+msgstr ""
+
+#: ../C/amide.xml.translate:1795(para)
+msgid ""
+"This causes the movie generation dialog box to pop up. This dialog box is "
+"further described below: <xref linkend=\"rendering-movie-dialog\"/>."
+msgstr ""
+"Este causa el desplige de la ventana de generación de video. Este diálogo se "
+"describe en mayor detalle abajo: <xref linkend=\"rendering-movie-dialog\"/>."
+
+#: ../C/amide.xml.translate:1802(title)
+msgid "Edit-&gt;Rendering Parameters"
+msgstr ""
+
+#: ../C/amide.xml.translate:1803(para)
+msgid ""
+"This causes the rendering parameters dialog box to pop up. This dialog box "
+"is described below: <xref linkend=\"rendering-dialog\"/>."
+msgstr ""
+"Este despliega el diálogo del parámetros del renderizado. Este dialogo se "
+"describe abajo en: <xref linkend=\"rendering-dialog\"/>."
+
+#: ../C/amide.xml.translate:1813(title)
+msgid "Rendering Parameters Dialog"
+msgstr "Diálogo de los Parámeters de Renderizado"
+
+#: ../C/amide.xml.translate:1815(title)
+msgid "Speed versus Quality"
+msgstr "Velocidad vs. Calidad"
+
+#: ../C/amide.xml.translate:1816(para)
+msgid ""
+"With this drop-down menu, the user can choose between rendering speed and "
+"rendering quality. To increase speed, voxels with values either close to "
+"zero or close to unity can be counted as completely translucent or "
+"completely opaque, respectively. The highest quality doesn't use this "
+"approximation at all, the lowest quality setting uses this approximation big-"
+"time."
+msgstr ""
+"Con este menúg desplegable el usuario puede elegir la velocidad y calidad "
+"del renderizado. Para incrementar la velocidad, los vóxeles cuyos valores "
+"sean el máximo y el mínimo, seran tratados como totalmente opacos o "
+"translúcidos respectivamente. La mayor calidad en cambio no usa esta "
+"aproximación, la menor calidad si."
+
+#: ../C/amide.xml.translate:1825(title)
+msgid "Stereosopic parameters"
+msgstr "Parámetros Estereoscópicos"
+
+#: ../C/amide.xml.translate:1827(para)
+msgid ""
+"These parameters are used for controlling the results when the \"stereoscopic"
+"\" option has been chosen."
+msgstr ""
+"Estos parámetros son usados para controlar el resultado cuando se ha elegido "
+"la opción \"estereoscópica\"."
+
+#: ../C/amide.xml.translate:1830(title)
+msgid "Stereo Angle"
+msgstr ""
+
+#: ../C/amide.xml.translate:1831(para)
+msgid ""
+"This is the angle offset (in degrees) between a pair of rendered images. "
+"Increasing this number will generally give a greater sensation of depth in "
+"the image pair. A Reasonable value for this parameter is between 2 and 5 "
+"degrees. Note that this parameter will be saved between different sessions "
+"of the program (not currently done on MS Windows)."
+msgstr ""
+"este es el angulo (en grados) entre el par de imágenes renderizadas. "
+"Incrementándolo dara mas sensación de profundidad. Un valor razonable para "
+"este parámetro es de 2 a 5 grados. Este valor se puede guardar entre "
+"diferentes sesiones."
+
+#: ../C/amide.xml.translate:1839(title)
+msgid "Eye Width (mm)"
+msgstr ""
+
+#: ../C/amide.xml.translate:1840(para)
+msgid ""
+"Ideally, this should be (roughly) the distance between the two rendered "
+"images, and corresponds to the distance between the user's eyes. It is "
+"impossible for a person to resolve a stereoscopic pair if the images are "
+"farther apart then the person's eyes, since human eyes cannot move "
+"independently. While this parameter is specified in millimeters, the "
+"actually distance between the pair of images that gets displayed on the "
+"monitor depends on the setup of the computer. If the monitor information "
+"reported by the operating system is not correct (usually the case), the "
+"\"eye width\" parameter will not be in true millimeters. Note that this "
+"parameter will be saved between different sessions of the program (not "
+"currently done on MS windows)."
+msgstr ""
+"Idealmente correspondería a la distancia entre los ojos del observador. "
+"Aunque este parámetro está especificado en miliímetros, la distancia real "
+"entre las dos imágenes depende de el ajuste de pantalla de cada ordenador. "
+"Si la información del monitor que tiene el sitema ioperativo (que "
+"normalmente es el caso), the \"eye width\" el parámetro no estara realmente "
+"en milímetros. este parámetro pude ser guardado entre sesiones."
+
+#: ../C/amide.xml.translate:1856(title)
+msgid "Depth Cueing"
+msgstr "Indicación de Profundidad(Depth Cueing)"
+
+#: ../C/amide.xml.translate:1858(para)
+msgid ""
+"These parameters are only used if the \"grayscale\" output type has been "
+"chosen."
+msgstr ""
+"Este parámetro sólo se usa cuando los resultados son \"en escala de grises\"."
+
+#: ../C/amide.xml.translate:1861(title)
+msgid "Enable/Disable Depth Cueing"
+msgstr "Permitir/Anular Depth Cueing"
+
+#: ../C/amide.xml.translate:1862(para)
+msgid ""
+"Specify whether or not we want depth cueing. Depth cueing puts in a \"fog\" "
+"that causes more distant voxels to appear less bright."
+msgstr ""
+"Especifica si queremos o no 'Depth cueing'. Depth cueing pone una \"niebla\" "
+"que ocasiona que los vóxeles mas distantes aparezcan menos brillantes."
+
+#: ../C/amide.xml.translate:1867(title)
+msgid "Front Factor"
+msgstr "Factor Frontal(Front Factor)"
+
+#: ../C/amide.xml.translate:1868(para)
+msgid ""
+"This is the transparency of the fog at the front of the data set. If this "
+"number is greater than 1.0, voxels toward the front of the data set will be "
+"brightened. If this parameter is less than 1.0, voxels toward the front of "
+"the data set will be darker, respectively."
+msgstr ""
+"Es la transparencia de la niebla que se halla por delante del volumen. Si es "
+"un número mayor que 1.0, los vóxeles de delante del volumen apareceran mas "
+"brillantes. Si fuera menor que 1.0, los vóxeles de delante del volumen "
+"apareceran mas obscuros."
+
+#: ../C/amide.xml.translate:1875(title)
+msgid "Density"
+msgstr "Densidad"
+
+#: ../C/amide.xml.translate:1877(para)
+msgid ""
+"This is how thick the \"fog\" is. The thicker the fog, the darker distant "
+"objects seem."
+msgstr ""
+"Es cuan gruesa el la \"niebla\" . A mayor grosor de niebla los vóxeles "
+"aparecen más obscuros."
+
+#: ../C/amide.xml.translate:1884(title)
+msgid "Rendering Movie Dialog"
+msgstr "Diálogo de Animación del Renderizado"
+
+#: ../C/amide.xml.translate:1886(title)
+msgid "Frames"
+msgstr ""
+
+#: ../C/amide.xml.translate:1887(para)
+msgid ""
+"How many frames should be in the MPEG1 movie. The MPEG1 movies generated "
+"will be set to run at 30 frames/second, so the default of 300 frames will "
+"give a ten second movie."
+msgstr ""
+"Cuantas imágenes debería haber en el video MPEG1 . Los MPEG1 se generan a 30 "
+"imágenes/segundo, así el valor por defecto, 300 imágenes dará un video de 10 "
+"segundos de duración."
+
+#: ../C/amide.xml.translate:1895(title)
+msgid "Rotations on [x,y,z]"
+msgstr "Rotatciones en [x,y,z]"
+
+#: ../C/amide.xml.translate:1896(para)
+msgid ""
+"This setting determines how many times the data set will be rotated around "
+"the given axis over the course of the movie. The rotation for each frame is "
+"done in x-&gt;y-&gt;z order (rotate on x first, then y, then z)."
+msgstr ""
+"Esto determina cuantas vueltas sobre un eje dado ocurrirán a lo largo del "
+"video. La rotación de cada eje sigue este orden x-&gt;y-&gt;z (rota primero "
+"x , luego y, y al final z)."
+
+#: ../C/amide.xml.translate:1904(title)
+msgid "Dynamic Movie: No/Over Time/Over Frames Smoothed/Over Gates"
+msgstr "Static/Over Time/Over Frames"
+
+#: ../C/amide.xml.translate:1906(para)
+msgid ""
+"This option allows a rendered movie to be made over a time period, which is "
+"useful for dynamic data sets."
+msgstr ""
+
+#: ../C/amide.xml.translate:1910(para)
+msgid ""
+"Note that every time a frame boundary in the data set is passed over, the "
+"rendering process must slice and load in a new frame of data. This makes "
+"creating a rendered movie over time significantly slower than a movie with "
+"just rotations."
+msgstr ""
+"Nótese que cada vez que se atraviesa un marco de tiempo del volumen, el "
+"proceso de renderizado debe de cargar y prepara otro marco de tiempo. Esto "
+"hace que crear un video de renderizado dinámico es significativamente mas "
+"lento que crear un video solo con rotaciones."
+
+#: ../C/amide.xml.translate:1916(para)
+msgid ""
+"Picking \"over time\" will allow entry of a start and end time for which the "
+"data from the data sets should be drawn. With the \"over time\" option, each "
+"second is given equal waiting in terms of how many images from that time "
+"period are generated for the output movie."
+msgstr ""
+"Esta opción permite la creación de un video de un estudio dinámico. "
+"Seleccionando \"over time\" le permitiría definir el tiempo de inicio y "
+"finalización dentro del volumen dinámico. Con la opción \"over time\", cada "
+"segundo es igual en terminos de cuantas imágenes de ese periodo de tiempo "
+"seran generadas para el video."
+
+#: ../C/amide.xml.translate:1922(para)
+msgid ""
+"Picking \"over frames\" allows entry of a start and end frame (note that "
+"this really only makes sense with a single data set). The advantage of "
+"\"over frames\", is that each frame is weighted equally in terms of how many "
+"images are generated for the output movie, so for data sets were the "
+"dynamics of interest correspond closely to the dynamics of the data set "
+"framing sequence, \"over frames\" may give a more appealing result."
+msgstr ""
+"Seleccionando \"over frames\" permite la la entrada de la primera y última "
+"imagen (esto sólo tiene sentido cuando se trata de un volumen único). La "
+"ventaja de la opción \"over frames\", es que cada marco de tiempo repercute "
+"por igual en el video final, asi cuando la dinámica de interés corresponden "
+"a la dinámica de la secuencia del marcos de tiempo del volumen, dando un "
+"resultado mas atractivo."
+
+#: ../C/amide.xml.translate:1931(para)
+msgid ""
+"The \"over frames smoothed\" option is almost the same as \"over frames\", "
+"except that data will be interpolated between frames. This makes for a "
+"smoother movie (no jumps) but takes much longer as nearly every movie frame "
+"has to be reloaded."
+msgstr ""
+
+#: ../C/amide.xml.translate:1948(title)
+msgid "Additional Tools"
+msgstr "Herramientas Adicionales"
+
+#: ../C/amide.xml.translate:1950(title)
+msgid "Alignment Wizard"
+msgstr "Herramienta de Alineamiento(Alignment Wizard)"
+
+#: ../C/amide.xml.translate:1952(para)
+msgid ""
+"In addition to manually aligning data sets (described at <xref linkend="
+"\"manual_alignment\"/>), data sets can also be aligned using the alignment "
+"wizard. The process is basically:"
+msgstr ""
+"En adición al alineamiento manual (descrito en <xref linkend="
+"\"manual_alignment\"/>), los volúmenes tambien pueden alinearse con el "
+"\"alignement wizard\". El proceso es básicamente:"
+
+#: ../C/amide.xml.translate:1958(para)
+msgid ""
+"Draw at least three pairs of fiducial makers between the two data sets that "
+"you wish to align. Drawing fiducial markers is described below as <xref "
+"linkend=\"fiducial-marker\"/>."
+msgstr ""
+"Dibujar al menos 3 pares de puntos fiduciales en los volúmenes que desee "
+"alinear. El dibujo de puntos fiduciales se describe debajo como <xref "
+"linkend=\"fiducial-marker\"/>."
+
+#: ../C/amide.xml.translate:1965(para)
+msgid ""
+"Run the alignment wizard (under tools-&gt;alignment wizard). For the "
+"alignment wizard to recognize two fiducial markers as a pair, they must have "
+"exactly the same name. So if you have a marker labeled \"1\" under the first "
+"data set, you will need another marker, also labeled \"1\", under the second "
+"data set."
+msgstr ""
+"Corra el \"alignment wizard\" (bajo tools-&gt;alignment wizard). para que el "
+"\"alignment wizard\" reconozca 2 marcadores fiduciales como par, deben de "
+"tener exactamente el mismo nombre. Así si tiene un marcador llamado \"1\" en "
+"el primer volumen, tendrá que tener un marcador, también llamado \"1\", en "
+"el segundo volumen."
+
+#: ../C/amide.xml.translate:1976(title)
+msgid "Drawing Fiducial Markers"
+msgstr "Dibujando Marcadores Fiduciales"
+
+#: ../C/amide.xml.translate:1977(para)
+msgid ""
+"Fiducial markers can be added to any of the data sets in the study in a "
+"variety of ways. For the currently active data set, hitting the \"Edit-&gt;"
+"Add fiducial mark\" menu item will drop a fiducial maker at the currently "
+"viewed location. Fiducial marks can be added for the active data set "
+"directly from the views by pressing ctrl-right mouse button, which will drop "
+"a fiducial marker at the point that the mouse is currently at. Finally, "
+"fiducial markers can be added to non-active data sets by pressing ctrl-right "
+"mouse button while hovering over a data set's name in the study list."
+msgstr ""
+"Se pueden añadir marcadores fiduciales de varias maneras. Para el volumen "
+"activo, seleccionar el item del menu \"Edit-&gt;Add fiducial mark\" y "
+"añadirá una marca fiducial en la vista seleccionada. Las marcas fiduciales "
+"se pueden añadir directamente a la vista activa pulsando CTRL+botón 3 del "
+"raton, que dispondrá una marca fiducial en el lugar que apunte el ratón. "
+"Finalmente, los marcadores fiduciales se pueden añadir a volúmenes inactivos "
+"pulsando CTRL+botón 3 del ratón mientras se selecciona el volumen de la "
+"lista del estudio."
+
+#: ../C/amide.xml.translate:1988(para)
+msgid ""
+"After being created, the fiducial marker can be moved by clicking on the "
+"marker point shown in any of the views."
+msgstr ""
+"Después de crear, el marcador fiducial puede ser movido pulsando el punto de "
+"marcaje en cualquiera de las tres vistas."
+
+#: ../C/amide.xml.translate:1993(title)
+msgid "Fiducial Marker Modification Dialog Box"
+msgstr "Caja de Diálogo de Modificación de Marcadores Fiduciales"
+
+#: ../C/amide.xml.translate:1994(para)
+msgid ""
+"To modify parameters of a fiducial mark, right click the point in the study "
+"list to pop-up the Fiducial Marker Modification Dialog. From this dialog, "
+"the name and location of the fiducial marker can be altered."
+msgstr ""
+"Para modificar los parámetros de una marca fiducial, pulse el botón 3 en la "
+"lista del estudio para desplegar la Caja de Diálogo de Modificación de "
+"Marcadores Fiduciales. Desde este diálogo, se pueden modificar el nombre y "
+"localización del marcador fiducial."
+
+#: ../C/amide.xml.translate:2006(title)
+msgid "Crop Wizard"
+msgstr "Herramienta de Recorte(Crop Wizard)"
+
+#: ../C/amide.xml.translate:2008(para)
+msgid ""
+"Coming soon. Note that only what is strictly inside the cursor lines is "
+"saved. What's underneath and outside the cursor lines is cropped away."
+msgstr ""
+"Permite recortar los volúmenes quitando de ellos las partes carentes de "
+"interés. Se abrirá un diálogo con el MIP del plano axial, existiendo unos "
+"modificadores de dimensión que dibujarán una caja en el MIP, una vez "
+"seleccionado pulsar Next y aparecerá el MIP coronal, ajustarlo y pulsar Next "
+"de nuevo aparecerá el MIP sagital, recortando así, el volumen desde los 2 "
+"planos."
+
+#: ../C/amide.xml.translate:2014(title)
+msgid "Factor Analysis Wizard"
+msgstr ""
+
+#: ../C/amide.xml.translate:2015(para)
+msgid ""
+"The factor analysis wizard is currently being developed. It probably won't "
+"work for you, and is only included in AMIDE for those who might be "
+"interested in working on it (rather than with it)."
+msgstr ""
+
+#: ../C/amide.xml.translate:2022(title)
+msgid "Filter Wizard"
+msgstr "Herramienta de Filtrado"
+
+#: ../C/amide.xml.translate:2023(para) ../C/amide.xml.translate:2028(para)
+#, fuzzy
+msgid "Nothing written yet..."
+msgstr ""
+"#-#-#-#-#  es.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Permite aplicar filtros de Mediana lineal y 3D, y Gaussiano al volumen "
+"activo.\n"
+"#-#-#-#-#  es.po (PACKAGE VERSION)  #-#-#-#-#\n"
+"Crea un video de los cortes extraidos e cualquiera de los planos, axial, "
+"coronal o sagital, determinando el corte de inicio y el corte final."
+
+#: ../C/amide.xml.translate:2027(title)
+msgid "Fly Through Wizard"
+msgstr "Creación de video en una Orientación(Fly Through Wizard)"
+
+#: ../C/amide.xml.translate:2029(para)
+msgid ""
+"Note, will generally get much better results for fly through if using "
+"trilinear interpolation."
+msgstr "Nota, los resultados son mejores si se usa interpolación trilineal."
+
+#: ../C/amide.xml.translate:2034(title)
+msgid "Profile Tool"
+msgstr ""
+
+#: ../C/amide.xml.translate:2035(para)
+msgid "A complete description of this tool has not yet been written."
+msgstr ""
+
+#: ../C/amide.xml.translate:2037(para)
+msgid ""
+"The left and right limits of the gaussian fit can be altered by clicking on "
+"the profile with the left and right mouse buttons, respectively. The x value "
+"used for initializing the gaussian fit can be picked by clicking on the "
+"profile with the middle mouse button."
+msgstr ""
+
+#: ../C/amide.xml.translate:2046(title)
+msgid "ROI Statistics"
+msgstr "ROI Estadísticas"
+
+#: ../C/amide.xml.translate:2047(para)
+msgid ""
+"A description of the ROI statistics tool can be found at: <xref linkend="
+"\"roi_statistics\"/>."
+msgstr ""
+"La descripción de la estadísticas del ROI en: <xref linkend=\"roi_statistics"
+"\"/>."
+
+#: ../C/legal.xml:2(para)
+msgid ""
+"Permission is granted to copy, distribute and/or modify this document under "
+"the terms of the <citetitle>GNU Free Documentation License</citetitle>, "
+"Version 1.1 or any later version published by the Free Software Foundation "
+"with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. "
+"You may obtain a copy of the <citetitle>GNU Free Documentation License</"
+"citetitle> from the Free Software Foundation by visiting <ulink type=\"http"
+"\" url=\"http://www.fsf.org\">their Web site</ulink> or by writing to the "
+"below address."
+msgstr ""
+"Se garantiza la copia, distribución y/o modificación de este documento bajo "
+"los términos de la Licencia de Documentación GNU, Versión 1.1 o posterior "
+"publicado por la Free Software Foundation Puede obtener una copia de GNU "
+"Free Documentation License de Free Software Foundation visitando <ulink type="
+"\"http\" url=\"http://www.fsf.org\">su sitio web</ulink> o escribiendo a la "
+"dirección abajo indicada."
+
+#: ../C/legal.xml:13(para)
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU General Public License as published by the Free "
+"Software Foundation; either version 2 of the License, or (at your option) "
+"any later version."
+msgstr ""
+"Este programa es software libre; puede distribuirlo y/o modificarlo bajo los "
+"términos GNU General Public License publicada por el Free Software "
+"Foundation; o version 2 de la Licencia, o (bajo su criterio) cualquier "
+"versión posterior."
+
+#: ../C/legal.xml:18(para)
+msgid ""
+"This program is distributed in the hope that it will be useful, but WITHOUT "
+"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
+"FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for "
+"more details."
+msgstr ""
+"Este programa se distribuye con la esperanza de ser útil, pero SIN NINGUNA "
+"GARANTIA, sin incluso ninguna garantía MERCANTIL implícita o sin garantizar "
+"la CONVENIENCIA PARA UN PROPÓSITO PARTICULAR. Véase la Licencia Pública "
+"General de GNU para más detalles."
+
+#: ../C/legal.xml:23(para)
+msgid ""
+"You should have received a copy of the GNU General Public License along with "
+"this program; if not, write to: <address> The Free Software Foundation, "
+"Inc., <street>59 Temple Place</street> - Suite 330, <city>Boston</city>, "
+"<state>MA</state><postcode>02111-1307</postcode>, <country>USA</country></"
+"address>"
+msgstr ""
+"Debería haber recibido una copia de la Licencia Pública General junto con "
+"este programa. Si no ha sido así, escriba a la Free Software Foundation, "
+"<address> The Free Software Foundation, Inc., <street>59 Temple Place</"
+"street> - Suite 330, <city>Boston</city>, <state>MA</state><postcode>02111-"
+"1307</postcode>, <country>USA</country></address>"
+
+#: ../C/legal.xml:35(para)
+msgid ""
+"For more details see the file COPYING in the source distribution of AMIDE."
+msgstr "Para más detalles vea la copia distribuida con uAMIDE"
+
+#. Put one translator per line, in the form of NAME <EMAIL>, YEAR1, YEAR2.
+#: C/amide.xml:0(None)
+msgid "translator-credits"
+msgstr ""
+"Pablo Sau <psau@cadpet.es>, 2002"
+

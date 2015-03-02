@@ -1,3 +1,9 @@
+0.9.1
+	* added gtk_disable_locale on win32 to keep i18n from screwing up
+	* import raw on win32 was crashing due to NULL string [1]
+	* transformed help docs into gnome-doc-utils format
+	* fixed .spec file, rpm build now working again
+	[1] Found by Kai-Hsiang Chuang 
 0.9.0
 	* removing gtk 2.2 dependencies, now dependent on gtk >= 2.10
 	 -gtk_option_menu switched to gtk_combo

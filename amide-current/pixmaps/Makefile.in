@@ -35,8 +35,9 @@ host_triplet = @host@
 subdir = pixmaps
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/macros/ac_func_mkdir.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_func_mkdir.m4 \
+	$(top_srcdir)/m4/gnome-doc-utils.m4 \
+	$(top_srcdir)/m4/gtk-doc.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -204,8 +205,6 @@ builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
-dummy_CFLAGS = @dummy_CFLAGS@
-dummy_LIBS = @dummy_LIBS@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@

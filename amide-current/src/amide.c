@@ -133,8 +133,11 @@ int main (int argc, char *argv []) {
   //  textdomain(GETTEXT_PACKAGE);
 
 
-  /* gtk_init calls setlocale, etc. */
-  //  gtk_init(&argc, &argv);
+#if defined (G_PLATFORM_WIN32)
+  /* if setlocale is called on win32, we can't seem to reset the locale back to "C"
+     to allow correct reading in of text data */
+  gtk_disable_setlocale(); /* prevent gtk_init from calling setlocale, etc. */
+#endif
   if (!gtk_init_with_args(&argc, &argv, _("[FILE1] [FILE2] ..."),
 			  command_line_entries,
 			  NULL, NULL)) {

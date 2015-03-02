@@ -2,12 +2,12 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.9.0],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.9.1],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
-
 
 AM_MAINTAINER_MODE
 
@@ -22,7 +22,7 @@ AC_CHECK_SIZEOF(long long,8)
 
 AC_CHECK_FUNCS(strptime)
 
-dnl ================= translation =============================================
+dnl ================= translation =======================================
 
 GETTEXT_PACKAGE=amide
 AC_SUBST(GETTEXT_PACKAGE)
@@ -39,14 +39,7 @@ if test $M4 = "NOT_FOUND"; then
    exit 1
 fi
 
-dnl scrollkeeper-update required for document building
-AC_PATH_PROGS(SCROLLKEEPER, scrollkeeper-update, NOT_FOUND)
-if test $SCROLLKEEPER = "NOT_FOUND"; then
-   echo "Could not find scrollkeeper-update on this system.  Will not compile help files."
-fi
-AM_CONDITIONAL(SCROLLKEEPER_EXISTS, [test "$SCROLLKEEPER" != "NOT_FOUND"])
-
-dnl ===============================================================================
+dnl =====================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
 case "$host_os" in
 darwin*) 	CFLAGS="-g -O2 -Wall";;
@@ -55,26 +48,26 @@ darwin*) 	CFLAGS="-g -O2 -Wall";;
 esac
 
 if test $CC = "gcc"; then
-	echo -n "checking version of gcc... "
-	CC_VERSION=`$CC -dumpversion`
-	if (test $CC_VERSION = "2.96" || test $$CC_VERSION = "2.95.4"); then
-		echo $CC_VERSION
-		echo "******************************************************************"
-		echo "This version of gcc is a beta compiler and often incorrectly"
-		echo "compiles this program.  Please upgrade to the current version of"
-		echo "gcc (3.2.1 as of this writing) or downgrade to 2.95.3"
-		echo "******************************************************************"
-		echo -n "continue anyway? (y/n) "
-		read continue_with_bad_gcc
-		if test $continue_with_bad_gcc = "y"; then
-			echo "removing optimizations to reduce potential of compiler error"
-			CFLAGS="-g -O0"
-		else
-			exit 1
-		fi
+   echo -n "checking version of gcc... "
+   CC_VERSION=`$CC -dumpversion`
+   if (test $CC_VERSION = "2.96" || test $$CC_VERSION = "2.95.4"); then
+	echo $CC_VERSION
+	echo "******************************************************************"
+	echo "This version of gcc is a beta compiler and often incorrectly"
+	echo "compiles this program.  Please upgrade to the current version of"
+	echo "gcc (3.2.1 as of this writing) or downgrade to 2.95.3"
+	echo "******************************************************************"
+	echo -n "continue anyway? (y/n) "
+	read continue_with_bad_gcc
+	if test $continue_with_bad_gcc = "y"; then
+		echo "removing optimizations to reduce potential of compiler error"
+		CFLAGS="-g -O0"
 	else
-		echo "$CC_VERSION, good"
+		exit 1
 	fi
+   else
+	echo "$CC_VERSION, good"
+   fi
 fi
 
 
@@ -102,21 +95,11 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
 AC_CHECK_LIB(dcmdata, main, FOUND_DCMDATA=yes, FOUND_DCMDATA=no, -lofstd  -lz -L/usr/local/dicom/lib -L/sw/lib $THREAD_LIBS)
 
-dnl now obsolete
-dnl dnl add the -no-cpp-precomp for macintosh os x
-dnl case "$host_os" in
-dnl darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
-dnl		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" 
-dnl	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to compile with hacks for OS X)
-dnl		;;
-dnl esac
-
-
 
 dnl Let people compile without debugging information
 AC_ARG_ENABLE(
 	amide_debug, 
-	[  --enable-amide-debug	Compile with some debugging messages [default=yes]], 
+	[  --enable-amide-debug	  Compile with some debugging messages [default=yes]], 
 	enable_amide_debug="$enableval", 
 	enable_amide_debug=yes)
 
@@ -128,20 +111,6 @@ if test $enable_amide_debug = yes; then
 else
 	echo "Compiling without AMIDE debugging messages"
 fi
-
-dnl no longer needed with better gnome support on windows
-dnl dnl Enable stripped down version for Windows
-dnl AC_ARG_ENABLE(
-dnl 	mswin-hacks,
-dnl	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
-dnl	mswin_hacks="$enableval", 
-dnl	mswin_hacks=no)
-dnl
-dnl if (test $mswin_hacks = yes); then
-dnl	echo "Enabling hacks to support MS Windows compilation"
-dnl	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
-dnl fi
-dnl AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
 
 dnl check if we're building on windows
 AC_MSG_CHECKING([for native Win32])
@@ -155,12 +124,12 @@ case "$host" in
 esac
 AC_MSG_RESULT([$native_win32])
 AM_CONDITIONAL(AMIDE_OS_WIN32, test "$native_win32" = yes)
-dnl if you need to know os in .c code, use G_PLATFORM_WIN32
+dnl if you need to know OS in .c code, use G_PLATFORM_WIN32
 
 dnl let people compile without the GNU Scientific Library
 AC_ARG_ENABLE(
 	libgsl,
-	[  --enable-libgsl	Compile with the GNU Scientific Library [default=yes]],
+	[  --enable-libgsl	  Compile with the GNU Scientific Library [default=yes]],
 	enable_libgsl="$enableval",
 	enable_libgsl=yes)
 
@@ -175,7 +144,7 @@ fi
 dnl Let people compile without having libecat (z_matrix_70)
 AC_ARG_ENABLE(
 	libecat, 
-	[  --enable-libecat	Compile with the libecat/CTI library [default=yes]],
+	[  --enable-libecat	  Compile with the libecat/CTI library [default=yes]],
 	enable_libecat="$enableval",
 	enable_libecat=yes)
 
@@ -190,12 +159,10 @@ fi
 
 
 
-
-
 dnl Let people compile without having libmdc
 AC_ARG_ENABLE(
 	libmdc, 
-	[  --enable-libmdc	Compile with the xmedcon/libmdc library [default=yes]], 
+	[  --enable-libmdc	  Compile with the xmedcon/libmdc library [default=yes]], 
 	enable_libmdc="$enableval", 
 	enable_libmdc=yes)
 
@@ -214,7 +181,7 @@ fi
 dnl Let people compile without rendering/libvolpack
 AC_ARG_ENABLE(
 	libvolpack, 
-	[  --enable-libvolpack	Compile with libvolpack rendering support [default=yes]], 
+	[  --enable-libvolpack	  Compile in libvolpack rendering support [default=yes]], 
 	enable_libvolpack="$enableval", 
 	enable_libvolpack=yes)
 
@@ -231,7 +198,7 @@ fi
 dnl Let people compile without mpeg movie generation/libfame
 AC_ARG_ENABLE(
 	libfame,
-	[  --enable-libfame   	Compile with libfame mpeg encoding support [default=yes]], 
+	[  --enable-libfame   	  Compile in libfame mpeg encoding support [default=yes]], 
 	enable_libfame="$enableval", 
 	enable_libfame=yes)
 
@@ -245,7 +212,7 @@ fi
 dnl Let people compile without the DCMTK library
 AC_ARG_ENABLE(
 	libdcmdata,
-	[  --enable-libdcmdata	Compile with DCMTK support for DICOM files [default=yes]], 
+	[  --enable-libdcmdata	  Compile in DCMTK support for DICOM files [default=yes]], 
 	enable_libdcmdata="$enableval", 
 	enable_libdcmdata=yes)
 
@@ -273,7 +240,6 @@ PKG_CHECK_MODULES(AMIDE_GTK,[
 	libxml-2.0	>= 2.4.12
 	libgnomecanvas-2.0 >= 2.0.0
 ])
-dnl	libgnomeui-2.0  >= 2.0.0
 
 ## add in gnome-vfs and gconf if not on win32 
 ## gnome-vfs is only used by amide_gnome.c and only on unix
@@ -305,15 +271,16 @@ test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
 ])
 
 
+dnl libgnomecanvas anti-aliasing is buggy, and looks like it's never going to be fixed
 dnl record if our version of libgnomecanvas can handle anti-aliasing
-PKG_CHECK_MODULES(dummy, 
-	[libgnomecanvas-2.0 >= 2.2.0], 
-	 enable_antialiasing=yes, enable_antialiasing=no)
+dnl PKG_CHECK_MODULES(dummy, 
+dnl	[libgnomecanvas-2.0 >= 2.2.0], 
+dnl	 enable_antialiasing=yes, enable_antialiasing=no)
 dnl if test $enable_antialiasing = yes; then
 dnl	echo "Compiling with libgnomecanvas antialiasing support"
 dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
 dnl else
-	echo "Compiling without libgnomecanvas antialiasing support"
+dnl	echo "Compiling without libgnomecanvas antialiasing support"
 dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
 dnl fi
 
@@ -322,14 +289,45 @@ dnl fi
 # Checks for gtk-doc and docbook-tools, from gtk's configure.in
 ################################################################
 
-GNOME_DOC_INIT
+dnl if we define --enable-gtk-doc, we build the library documentation
 GTK_DOC_CHECK([1.0])
+
+dnl the following is for the application documentation
+AC_ARG_ENABLE(doc,
+        [  --disable-doc           Do not build documentation.],,)
+
+if test "x${enable_doc}" = "x" ; then
+  enable_doc=yes
+fi
+
+AC_MSG_CHECKING(whether documentation should be built)
+if test ${enable_doc} = no; then
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes])
+fi
+AM_CONDITIONAL(DISABLE_DOC, test ${enable_doc} = no)
+
+if test ${enable_doc} = yes; then
+   dnl building documentatin
+   GNOME_DOC_INIT
+
+   dnl scrollkeeper-update required for document building
+   AC_PATH_PROGS(SCROLLKEEPER, scrollkeeper-update, NOT_FOUND)
+   if test $SCROLLKEEPER = "NOT_FOUND"; then
+      echo "Could not find scrollkeeper-update on this system.  Will not compile help files."
+   fi
+else
+  dnl not building documentation
+  ENABLE_SK_TRUE="#"
+  ENABLE_SK_FALSE=""  
+  HAVE_GNOME_DOC_UTILS_TRUE="#"
+  HAVE_GNOME_DOC_UTILS_FALSE=""
+fi
 
 AC_CHECK_PROG(DB2HTML, db2html, true, false)
 AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
-
-
-
+AM_CONDITIONAL(SCROLLKEEPER_EXISTS, [test "$SCROLLKEEPER" != "NOT_FOUND"])
 
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
@@ -337,19 +335,17 @@ AC_SUBST(LDFLAGS)
 AC_CONFIG_FILES([
 Makefile
 pixmaps/Makefile
+src/Makefile
 win32/Makefile
-help/Makefile
-help/C/Makefile
-help/es/Makefile
 doc/Makefile
 doc/reference/Makefile
 doc/reference/version.xml
-man/Makefile
-src/Makefile
+help/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in
 etc/amide-$VERSION-1.iss:etc/amide.iss.in
 etc/amide.spec
+man/Makefile
 po/Makefile.in])
 AC_OUTPUT 
 dnl help/C/Makefile

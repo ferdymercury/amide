@@ -1,6 +1,6 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.9.0
+Version: 	0.9.1
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering
@@ -44,18 +44,24 @@ alignments.
 %setup -q
 
 %build
-%configure --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
+%configure \
+	   --enable-gtk-doc=yes \
+	   --enable-libecat=no \
+	   --enable-amide-debug=no \
+	   --disable-scrollkeeper
 make
 
 %install
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
 
-rm -rf $RPM_BUILD_ROOT/var/scrollkeeper
 desktop-file-install --vendor gnome --delete-original                   \
   --dir $RPM_BUILD_ROOT%{_datadir}/applications                         \
   --add-category X-Red-Hat-Extra                                        \
   $RPM_BUILD_ROOT%{_datadir}/applications/*
+
+rm -rf $RPM_BUILD_ROOT/var/scrollkeeper
+
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -83,6 +89,8 @@ scrollkeeper-update
 
 
 %changelog
+* Sun Dec 16 2007 Andy Loening <loening at alum dot mit dot edu>
+- small tweak for new gnome-doc help files
 * Tue Nov 05 2002 Andy Loening <loening at alum dot mit dot edu>
 - get it to work with scrollkeeper
 * Sun Dec 19 2000 Andy Loening <loening at alum dot mit dot edu>

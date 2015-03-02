@@ -1,6 +1,13 @@
 ACLOCAL_AMFLAGS = \
 	-I /usr/local/share/aclocal \
-	-I macros
+	-I m4
+
+if DISABLE_DOC
+HELPDIR = 
+else
+HELPDIR = help
+endif
+
 
 # note, win32 needs to be before src
 SUBDIRS = \
@@ -9,9 +16,9 @@ SUBDIRS = \
 	src \
 	doc \
 	man \
-	help \
 	po \
-	etc
+	etc \
+	$(HELPDIR)
 
 
 EXTRA_DIST = \
@@ -23,8 +30,9 @@ EXTRA_DIST = \
 CLEANFILES = \
 	intltool-extract \
 	intltool-merge \
-	intltool-update \
-	gnome-doc-utils.make	
+	intltool-update
 
 
 DISTCLEANFILES = *~ 
+
+DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper --enable-gtk-doc

@@ -27,21 +27,28 @@ optimizations are used when compiling.  The 2.96 versions of gcc
 
 
 
-2) Gtk+/Gnome:
+2) GTK+:
 
-The current series of AMIDE requires Gtk+-2 and GNOME-2.  I'm
-currently developing on a Fedora Core 7 system, although other
+The current series of AMIDE requires GTK+-2, at least version 2.10.
+I'm currently developing on a Fedora Core 7 system, although other
 distributions of Linux with equivalent library support should work.
 
 Very old distributions (e.g. Redhat <= 7.2, the previous Debian
 release) will require a large number of new packages to be installed
 to get the current version of AMIDE to compile and run.  If you want
 to run AMIDE on such a system, you might try the (ancient) AMIDE 0.6.*
-series, which only needs Gtk+-1.2/Gnome-1.4.
+series, which depends on GTK+-1.2/Gnome-1.4.
 
 Scrollkeeper is required for generating the help documentation.  If
 you don't care about that, it's not needed.
 
+3) Additional libraries:
+   libgnomecanvas
+   libxml-2
+   libgnomeui-2 (not needed on win32)
+
+These are various other libraries are needed for installation, most of
+which you will most likely already have installed if you have GTK+.
 
 Optional Packages
 -----------------

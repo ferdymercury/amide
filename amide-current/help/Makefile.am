@@ -1,12 +1,16 @@
 ## Process this file with automake to produce Makefile.in.
 
-SUBDIRS = \
-	C \
-	es
+include $(top_srcdir)/gnome-doc-utils.make
+dist-hook: doc-dist-hook
+
+DOC_MODULE = amide
+DOC_ENTITIES = 
+DOC_INCLUDES = legal.xml
+DOC_FIGURES = \
+	figures/amide_main_window.png \
+	figures/study_tree.png
+
+DOC_LINGUAS = es
 
 
-EXTRA_DIST = \
-	xmldocs.make
-
-DISTCLEANFILES = *~
-
+DISTCLEANFILES = *~ */*~

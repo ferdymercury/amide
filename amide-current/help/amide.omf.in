@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<omf>
+ <resource>
+    <subject category="Applications|Scientific"/>
+    <type>user's guide</type>
+    <relation seriesid="ef8a0e38-a679-11dc-8aca-aba6a29e410b"/>
+    <rights type="GNU FDL" license.version="1.1" holder="Andy Loening"/>
+  </resource>        
+</omf>

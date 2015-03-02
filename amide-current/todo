@@ -3,11 +3,9 @@ misc list of things todo:
 
 for next release?
 -----------------
-* help works in cygwin setup, but not in installed package. Probably doesn't know
-  exactly where to look, will need to add to amide_gnome.c. Probably want to use
-  g_win32_get_package_installation_directory (NULL, NULL);
-* internationalization is still somewhat broken on win32, this mainly impacts reading in
- concorde files via xmedcon.
+* change wait cursor to be whole dialog, not just canvas
+* help works in cygwin setup, but not in installed package. Seems to know the
+  right place to look, just isn't doing something correctly....
 * revert on dialogs doesn't work correctly... children get readded
 * some sort of way to easily measure distances between fiducials [1]
  [1] suggested by Michael Braden
@@ -40,9 +38,7 @@ remaining things to do now that we're using gtk 2.10
 
 windows todo
 ------------
-* check if internationalization of the application works, see if I can get it working
 * zdial on rendering doesn't work
-
 
 factor analysis things:
 -----------------------       
@@ -220,6 +216,11 @@ things dependent on other things:
        future, and replaced with DConf. If DConf ever emerges, and
        looks useable, will switch to using it.
 
+
+* setlocale is disabled on win32, this is because further setlocale
+  commands seem to be ignored, and so reading in text hdr files
+  (e.g. Concorde format ) gets screwed up for locales that use the
+  comma for the radix. This is as of mingw 3.13 at least.
 
 
 * ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of

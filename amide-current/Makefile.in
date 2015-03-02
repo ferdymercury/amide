@@ -38,8 +38,9 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	config.guess config.sub depcomp install-sh ltmain.sh missing \
 	mkinstalldirs
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/macros/ac_func_mkdir.m4 \
-	$(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_func_mkdir.m4 \
+	$(top_srcdir)/m4/gnome-doc-utils.m4 \
+	$(top_srcdir)/m4/gtk-doc.m4 $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -60,7 +61,7 @@ RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = pixmaps win32 src doc man po etc help
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -222,8 +223,6 @@ builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
-dummy_CFLAGS = @dummy_CFLAGS@
-dummy_LIBS = @dummy_LIBS@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@
@@ -255,8 +254,10 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = \
 	-I /usr/local/share/aclocal \
-	-I macros
+	-I m4
 
+@DISABLE_DOC_FALSE@HELPDIR = help
+@DISABLE_DOC_TRUE@HELPDIR = 
 
 # note, win32 needs to be before src
 SUBDIRS = \
@@ -265,9 +266,9 @@ SUBDIRS = \
 	src \
 	doc \
 	man \
-	help \
 	po \
-	etc
+	etc \
+	$(HELPDIR)
 
 EXTRA_DIST = \
 	intltool-extract.in \
@@ -278,10 +279,10 @@ EXTRA_DIST = \
 CLEANFILES = \
 	intltool-extract \
 	intltool-merge \
-	intltool-update \
-	gnome-doc-utils.make	
+	intltool-update
 
 DISTCLEANFILES = *~ 
+DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper --enable-gtk-doc
 all: amide_config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

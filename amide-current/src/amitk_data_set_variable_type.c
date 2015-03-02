@@ -53,7 +53,9 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_f
 
   /* note, we can't cancel this */
   if (update_func != NULL) {
-    temp_string = g_strdup_printf(_("Calculating Max/Min Values for:\n   %s"), AMITK_OBJECT_NAME(data_set));
+    temp_string = g_strdup_printf(_("Calculating Max/Min Values for:\n   %s"), 
+				  AMITK_OBJECT_NAME(data_set) == NULL ? "dataset" :
+				  AMITK_OBJECT_NAME(data_set));
     (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -73,7 +75,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_f
       for (i.z = 0; i.z < dim.z; i.z++, i_plane++) {
 	if (update_func != NULL) {
 	  x = div(i_plane, divider);
-	  if (x.rem == 0)
+	  if (x.rem == 0) 
 	    (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
 	}
 	for (i.y = 0; i.y < dim.y; i.y++) 

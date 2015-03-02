@@ -1,0 +1,3 @@
+2007.12.16
+	* converted to gnome-doc-utils.make setup for compiling help files
+	* converted es translation to using .po file

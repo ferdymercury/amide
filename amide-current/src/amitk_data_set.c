@@ -1577,7 +1577,7 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
     if (!((AMITK_DATA_SET_VOXEL_SIZE_Z(import_ds) > 0.0) && 
 	  (AMITK_DATA_SET_VOXEL_SIZE_Y(import_ds) > 0.0) && 
 	  (AMITK_DATA_SET_VOXEL_SIZE_X(import_ds) > 0.0))) {
-      g_warning("Data Set %s has erroneous voxel size of %gx%gx%g, setting to 1.0x1.0x1.0",
+      g_warning(_("Data Set %s has erroneous voxel size of %gx%gx%g, setting to 1.0x1.0x1.0"),
 		AMITK_OBJECT_NAME(import_ds),
 		AMITK_DATA_SET_VOXEL_SIZE_X(import_ds),
 		AMITK_DATA_SET_VOXEL_SIZE_Y(import_ds),

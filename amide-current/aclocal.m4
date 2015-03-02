@@ -450,55 +450,6 @@ sed 's/^/| /' conftest.foo >&AS_MESSAGE_LOG_FD
 fi])
 
 
-dnl Do not call GNOME_DOC_DEFINES directly.  It is split out from
-dnl GNOME_DOC_INIT to allow gnome-doc-utils to bootstrap off itself.
-AC_DEFUN([GNOME_DOC_DEFINES],
-[
-AC_ARG_WITH([help-dir],
-  AC_HELP_STRING([--with-help-dir=DIR], [path to help docs]),,
-  [with_help_dir='${datadir}/gnome/help'])
-HELP_DIR="$with_help_dir"
-AC_SUBST(HELP_DIR)
-
-AC_ARG_WITH([omf-dir],
-  AC_HELP_STRING([--with-omf-dir=DIR], [path to OMF files]),,
-  [with_omf_dir='${datadir}/omf'])
-OMF_DIR="$with_omf_dir"
-AC_SUBST(OMF_DIR)
-
-AC_ARG_WITH([help-formats],
-  AC_HELP_STRING([--with-help-formats=FORMATS], [list of formats]),,
-  [with_help_formats=''])
-DOC_USER_FORMATS="$with_help_formats"
-AC_SUBST(DOC_USER_FORMATS)
-
-AC_ARG_ENABLE([scrollkeeper],
-	[AC_HELP_STRING([--disable-scrollkeeper],
-			[do not make updates to the scrollkeeper database])],,
-	enable_scrollkeeper=yes)
-AM_CONDITIONAL([ENABLE_SK],[test "$gdu_cv_have_gdu" = "yes" -a "$enable_scrollkeeper" = "yes"])
-
-AM_CONDITIONAL([HAVE_GNOME_DOC_UTILS],[test "$gdu_cv_have_gdu" = "yes"])
-])
-
-# GNOME_DOC_INIT ([MINIMUM-VERSION],[ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])
-#
-AC_DEFUN([GNOME_DOC_INIT],
-[
-ifelse([$1],,[gdu_cv_version_required=0.3.2],[gdu_cv_version_required=$1])
-
-PKG_CHECK_EXISTS([gnome-doc-utils >= $gdu_cv_version_required],
-	[gdu_cv_have_gdu=yes],[gdu_cv_have_gdu=no])
-
-if test "$gdu_cv_have_gdu" = "yes"; then
-	ifelse([$2],,[:],[$2])
-else
-	ifelse([$3],,[AC_MSG_ERROR([gnome-doc-utils >= $gdu_cv_version_required not found])],[$3])
-fi
-
-GNOME_DOC_DEFINES
-])
-
 # Configure path for the GNU Scientific Library
 # Christopher R. Gabriel <cgabriel@linux.it>, April 2000
 
@@ -667,60 +618,6 @@ int main (void)
 ])
 
 
-
-dnl -*- mode: autoconf -*-
-
-# serial 1
-
-dnl Usage:
-dnl   GTK_DOC_CHECK([minimum-gtk-doc-version])
-AC_DEFUN([GTK_DOC_CHECK],
-[
-  AC_BEFORE([AC_PROG_LIBTOOL],[$0])dnl setup libtool first
-  AC_BEFORE([AM_PROG_LIBTOOL],[$0])dnl setup libtool first
-  dnl for overriding the documentation installation directory
-  AC_ARG_WITH(html-dir,
-    AC_HELP_STRING([--with-html-dir=PATH], [path to installed docs]),,
-    [with_html_dir='${datadir}/gtk-doc/html'])
-  HTML_DIR="$with_html_dir"
-  AC_SUBST(HTML_DIR)
-
-  dnl enable/disable documentation building
-  AC_ARG_ENABLE(gtk-doc,
-    AC_HELP_STRING([--enable-gtk-doc],
-                   [use gtk-doc to build documentation [default=no]]),,
-    enable_gtk_doc=no)
-
-  have_gtk_doc=no
-  if test x$enable_gtk_doc = xyes; then
-    if test -z "$PKG_CONFIG"; then
-      AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
-    fi
-    if test "$PKG_CONFIG" != "no" && $PKG_CONFIG --exists gtk-doc; then
-      have_gtk_doc=yes
-    fi
-
-  dnl do we want to do a version check?
-ifelse([$1],[],,
-    [gtk_doc_min_version=$1
-    if test "$have_gtk_doc" = yes; then
-      AC_MSG_CHECKING([gtk-doc version >= $gtk_doc_min_version])
-      if $PKG_CONFIG --atleast-version $gtk_doc_min_version gtk-doc; then
-        AC_MSG_RESULT(yes)
-      else
-        AC_MSG_RESULT(no)
-        have_gtk_doc=no
-      fi
-    fi
-])
-    if test "$have_gtk_doc" != yes; then
-      enable_gtk_doc=no
-    fi
-  fi
-
-  AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
-  AM_CONDITIONAL(GTK_DOC_USE_LIBTOOL, test -n "$LIBTOOL")
-])
 
 
 dnl IT_PROG_INTLTOOL([MINIMUM-VERSION], [no-xml])
@@ -8683,4 +8580,6 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
-m4_include([macros/ac_func_mkdir.m4])
+m4_include([m4/ac_func_mkdir.m4])
+m4_include([m4/gnome-doc-utils.m4])
+m4_include([m4/gtk-doc.m4])

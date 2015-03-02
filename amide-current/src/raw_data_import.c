@@ -619,7 +619,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename, AmitkPreferences
   if (dialog_reply == GTK_RESPONSE_YES) {
     /* the progress dialog */
     progress_dialog = amitk_progress_dialog_new(NULL);
-  
+
     ds = amitk_data_set_import_raw_file(raw_data_info->filename,
 					raw_data_info->raw_format,
 					raw_data_info->data_dim,
