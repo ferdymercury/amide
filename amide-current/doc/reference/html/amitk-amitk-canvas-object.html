@@ -1,0 +1,77 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>amitk_canvas_object</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="amitk-AmitkCanvas.html" title="AmitkCanvas"><link rel="next" href="amitk-AmitkColorTableMenu.html" title="AmitkColorTableMenu"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkCanvas.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkColorTableMenu.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-amitk-canvas-object"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">amitk_canvas_object</span></h2><p>amitk_canvas_object &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+GnomeCanvasItem* <a href="amitk-amitk-canvas-object.html#amitk-canvas-object-draw">amitk_canvas_object_draw</a>   (GnomeCanvas *canvas,
+                                             AmitkVolume *canvas_volume,
+                                             AmitkObject *object,
+                                             GnomeCanvasItem *item,
+                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim,
+                                             gint width,
+                                             gint height,
+                                             gdouble x_offset,
+                                             gdouble y_offset,
+                                             rgba_t roi_color,
+                                             gint roi_width,
+                                             GdkLineStyle line_style);
+</pre></div><div class="refsect1" lang="en"><a name="id2700325"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2700335"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2700340"></a><h3><a name="amitk-canvas-object-draw"></a>amitk_canvas_object_draw ()</h3><a class="indexterm" name="id2700352"></a><pre class="programlisting">GnomeCanvasItem* amitk_canvas_object_draw   (GnomeCanvas *canvas,
+                                             AmitkVolume *canvas_volume,
+                                             AmitkObject *object,
+                                             GnomeCanvasItem *item,
+                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim,
+                                             gint width,
+                                             gint height,
+                                             gdouble x_offset,
+                                             gdouble y_offset,
+                                             rgba_t roi_color,
+                                             gint roi_width,
+                                             GdkLineStyle line_style);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas_volume</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>item</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>pixel_dim</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>width</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>height</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>x_offset</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>y_offset</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>roi_color</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>roi_width</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>line_style</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkCanvas.html"><b>&lt;&lt; AmitkCanvas</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkColorTableMenu.html"><b>AmitkColorTableMenu &gt;&gt;</b></a></td></tr></table></body></html>

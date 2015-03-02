@@ -1,0 +1,117 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>amitk_filter</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk-amitk-common.html" title="amitk_common"><link rel="next" href="amitk-AmitkLineProfile.html" title="AmitkLineProfile"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-amitk-common.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkLineProfile.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-amitk-filter"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">amitk_filter</span></h2><p>amitk_filter &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+enum        <a href="amitk-amitk-filter.html#AmitkFilter">AmitkFilter</a>;
+#define     <a href="amitk-amitk-filter.html#AMITK-FILTER-FFT-SIZE-CAPS">AMITK_FILTER_FFT_SIZE</a>
+AmitkRawData* <a href="amitk-amitk-filter.html#amitk-filter-calculate-gaussian-kernel-complex">amitk_filter_calculate_gaussian_kernel_complex</a>
+                                            (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> kernel_size,
+                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> voxel_size,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> fwhm);
+void        <a href="amitk-amitk-filter.html#amitk-filter-3D-FFT">amitk_filter_3D_FFT</a>             (AmitkRawData *data,
+                                             gsl_fft_complex_wavetable *wavetable,
+                                             gsl_fft_complex_workspace *workspace);
+void        <a href="amitk-amitk-filter.html#amitk-filter-inverse-3D-FFT">amitk_filter_inverse_3D_FFT</a>     (AmitkRawData *data,
+                                             gsl_fft_complex_wavetable *wavetable,
+                                             gsl_fft_complex_workspace *workspace);
+void        <a href="amitk-amitk-filter.html#amitk-filter-complex-mult">amitk_filter_complex_mult</a>       (AmitkRawData *data,
+                                             AmitkRawData *kernel);
+<a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> <a href="amitk-amitk-filter.html#amitk-filter-find-median-by-partial-sort">amitk_filter_find_median_by_partial_sort</a>
+                                            (<a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> *partial_sort_data,
+                                             gint size);
+const gchar* <a href="amitk-amitk-filter.html#amitk-filter-get-name">amitk_filter_get_name</a>          (const <a href="amitk-amitk-filter.html#AmitkFilter">AmitkFilter</a> filter);
+</pre></div><div class="refsect1" lang="en"><a name="id2616614"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2616623"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2616629"></a><h3><a name="AmitkFilter"></a>enum AmitkFilter</h3><a class="indexterm" name="id2616639"></a><pre class="programlisting">typedef enum {
+  AMITK_FILTER_GAUSSIAN,
+  AMITK_FILTER_MEDIAN_LINEAR,
+  AMITK_FILTER_MEDIAN_3D,
+  AMITK_FILTER_NUM
+} AmitkFilter;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2616656"></a><h3><a name="AMITK-FILTER-FFT-SIZE-CAPS"></a>AMITK_FILTER_FFT_SIZE</h3><a class="indexterm" name="id2616667"></a><pre class="programlisting">#define AMITK_FILTER_FFT_SIZE 64
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2616682"></a><h3><a name="amitk-filter-calculate-gaussian-kernel-complex"></a>amitk_filter_calculate_gaussian_kernel_complex ()</h3><a class="indexterm" name="id2616695"></a><pre class="programlisting">AmitkRawData* amitk_filter_calculate_gaussian_kernel_complex
+                                            (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> kernel_size,
+                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> voxel_size,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> fwhm);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>kernel_size</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>voxel_size</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>fwhm</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2616796"></a><h3><a name="amitk-filter-3D-FFT"></a>amitk_filter_3D_FFT ()</h3><a class="indexterm" name="id2616807"></a><pre class="programlisting">void        amitk_filter_3D_FFT             (AmitkRawData *data,
+                                             gsl_fft_complex_wavetable *wavetable,
+                                             gsl_fft_complex_workspace *workspace);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>data</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>wavetable</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>workspace</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2616897"></a><h3><a name="amitk-filter-inverse-3D-FFT"></a>amitk_filter_inverse_3D_FFT ()</h3><a class="indexterm" name="id2616909"></a><pre class="programlisting">void        amitk_filter_inverse_3D_FFT     (AmitkRawData *data,
+                                             gsl_fft_complex_wavetable *wavetable,
+                                             gsl_fft_complex_workspace *workspace);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>data</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>wavetable</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>workspace</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2616999"></a><h3><a name="amitk-filter-complex-mult"></a>amitk_filter_complex_mult ()</h3><a class="indexterm" name="id2617010"></a><pre class="programlisting">void        amitk_filter_complex_mult       (AmitkRawData *data,
+                                             AmitkRawData *kernel);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>data</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>kernel</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2617078"></a><h3><a name="amitk-filter-find-median-by-partial-sort"></a>amitk_filter_find_median_by_partial_sort ()</h3><a class="indexterm" name="id2617090"></a><pre class="programlisting"><a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> amitk_filter_find_median_by_partial_sort
+                                            (<a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> *partial_sort_data,
+                                             gint size);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>partial_sort_data</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>size</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2617169"></a><h3><a name="amitk-filter-get-name"></a>amitk_filter_get_name ()</h3><a class="indexterm" name="id2617180"></a><pre class="programlisting">const gchar* amitk_filter_get_name          (const <a href="amitk-amitk-filter.html#AmitkFilter">AmitkFilter</a> filter);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>filter</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-amitk-common.html"><b>&lt;&lt; amitk_common</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkLineProfile.html"><b>AmitkLineProfile &gt;&gt;</b></a></td></tr></table></body></html>

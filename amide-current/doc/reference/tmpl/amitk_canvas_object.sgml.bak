@@ -1,0 +1,38 @@
+<!-- ##### SECTION Title ##### -->
+amitk_canvas_object
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amitk_canvas_object_draw ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@canvas_volume: 
+@object: 
+@item: 
+@pixel_dim: 
+@width: 
+@height: 
+@x_offset: 
+@y_offset: 
+@roi_color: 
+@roi_width: 
+@line_style: 
+@Returns: 
+
+

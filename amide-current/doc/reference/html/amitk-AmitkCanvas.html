@@ -1,0 +1,137 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkCanvas</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="next" href="amitk-amitk-canvas-object.html" title="amitk_canvas_object"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="AmitkWidgets.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-amitk-canvas-object.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkCanvas"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkCanvas</span></h2><p>AmitkCanvas &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+#define     <a href="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW-CAPS">AMITK_CANVAS_VIEW</a>               (obj)
+#define     <a href="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW-MODE-CAPS">AMITK_CANVAS_VIEW_MODE</a>          (obj)
+enum        <a href="amitk-AmitkCanvas.html#AmitkCanvasType">AmitkCanvasType</a>;
+enum        <a href="amitk-AmitkCanvas.html#AmitkCanvasTargetAction">AmitkCanvasTargetAction</a>;
+GtkWidget*  <a href="amitk-AmitkCanvas.html#amitk-canvas-new">amitk_canvas_new</a>                (AmitkStudy *study,
+                                             <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                             <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> view_mode,
+                                             <a href="amitk-AmitkCanvas.html#AmitkCanvasType">AmitkCanvasType</a> type);
+void        <a href="amitk-AmitkCanvas.html#amitk-canvas-set-study">amitk_canvas_set_study</a>          (AmitkCanvas *canvas,
+                                             AmitkStudy *study);
+void        <a href="amitk-AmitkCanvas.html#amitk-canvas-set-active-object">amitk_canvas_set_active_object</a>  (AmitkCanvas *canvas,
+                                             AmitkObject *active_object);
+void        <a href="amitk-AmitkCanvas.html#amitk-canvas-update-target">amitk_canvas_update_target</a>      (AmitkCanvas *canvas,
+                                             <a href="amitk-AmitkCanvas.html#AmitkCanvasTargetAction">AmitkCanvasTargetAction</a> action,
+                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center,
+                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> thickness);
+gint        <a href="amitk-AmitkCanvas.html#amitk-canvas-get-width">amitk_canvas_get_width</a>          (AmitkCanvas *canvas);
+gint        <a href="amitk-AmitkCanvas.html#amitk-canvas-get-height">amitk_canvas_get_height</a>         (AmitkCanvas *canvas);
+GdkPixbuf*  <a href="amitk-AmitkCanvas.html#amitk-canvas-get-pixbuf">amitk_canvas_get_pixbuf</a>         (AmitkCanvas *canvas);
+
+</pre></div><div class="refsect1" lang="en"><a name="id2698260"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2698270"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2698276"></a><h3><a name="AMITK-CANVAS-VIEW-CAPS"></a>AMITK_CANVAS_VIEW()</h3><a class="indexterm" name="id2698287"></a><pre class="programlisting">#define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)-&gt;view)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698322"></a><h3><a name="AMITK-CANVAS-VIEW-MODE-CAPS"></a>AMITK_CANVAS_VIEW_MODE()</h3><a class="indexterm" name="id2698333"></a><pre class="programlisting">#define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)-&gt;view_mode)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698367"></a><h3><a name="AmitkCanvasType"></a>enum AmitkCanvasType</h3><a class="indexterm" name="id2698379"></a><pre class="programlisting">typedef enum {
+  AMITK_CANVAS_TYPE_NORMAL,
+  AMITK_CANVAS_TYPE_FLY_THROUGH
+} AmitkCanvasType;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2698395"></a><h3><a name="AmitkCanvasTargetAction"></a>enum AmitkCanvasTargetAction</h3><a class="indexterm" name="id2698407"></a><pre class="programlisting">typedef enum {
+  AMITK_CANVAS_TARGET_ACTION_HIDE,
+  AMITK_CANVAS_TARGET_ACTION_SHOW,
+  AMITK_CANVAS_TARGET_ACTION_LEAVE
+} AmitkCanvasTargetAction;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2698424"></a><h3><a name="amitk-canvas-new"></a>amitk_canvas_new ()</h3><a class="indexterm" name="id2698435"></a><pre class="programlisting">GtkWidget*  amitk_canvas_new                (AmitkStudy *study,
+                                             <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                             <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> view_mode,
+                                             <a href="amitk-AmitkCanvas.html#AmitkCanvasType">AmitkCanvasType</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>view</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>view_mode</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698555"></a><h3><a name="amitk-canvas-set-study"></a>amitk_canvas_set_study ()</h3><a class="indexterm" name="id2698567"></a><pre class="programlisting">void        amitk_canvas_set_study          (AmitkCanvas *canvas,
+                                             AmitkStudy *study);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698634"></a><h3><a name="amitk-canvas-set-active-object"></a>amitk_canvas_set_active_object ()</h3><a class="indexterm" name="id2698646"></a><pre class="programlisting">void        amitk_canvas_set_active_object  (AmitkCanvas *canvas,
+                                             AmitkObject *active_object);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>active_object</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698714"></a><h3><a name="amitk-canvas-update-target"></a>amitk_canvas_update_target ()</h3><a class="indexterm" name="id2698726"></a><pre class="programlisting">void        amitk_canvas_update_target      (AmitkCanvas *canvas,
+                                             <a href="amitk-AmitkCanvas.html#AmitkCanvasTargetAction">AmitkCanvasTargetAction</a> action,
+                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center,
+                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> thickness);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>action</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>center</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>thickness</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698836"></a><h3><a name="amitk-canvas-get-width"></a>amitk_canvas_get_width ()</h3><a class="indexterm" name="id2698848"></a><pre class="programlisting">gint        amitk_canvas_get_width          (AmitkCanvas *canvas);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698904"></a><h3><a name="amitk-canvas-get-height"></a>amitk_canvas_get_height ()</h3><a class="indexterm" name="id2698915"></a><pre class="programlisting">gint        amitk_canvas_get_height         (AmitkCanvas *canvas);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2698971"></a><h3><a name="amitk-canvas-get-pixbuf"></a>amitk_canvas_get_pixbuf ()</h3><a class="indexterm" name="id2698982"></a><pre class="programlisting">GdkPixbuf*  amitk_canvas_get_pixbuf         (AmitkCanvas *canvas);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="AmitkWidgets.html"><b>&lt;&lt; Amitk Widgets</b></a></td><td align="right"><a accesskey="n" href="amitk-amitk-canvas-object.html"><b>amitk_canvas_object &gt;&gt;</b></a></td></tr></table></body></html>

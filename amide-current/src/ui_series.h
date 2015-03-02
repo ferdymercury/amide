@@ -37,11 +37,15 @@
 #define UI_SERIES_BOTTOM_MARGIN 15.0
 
 /* external functions */
-void ui_series_create(AmitkStudy * study, AmitkObject * active_object, 
+void ui_series_create(AmitkStudy * study, 
+		      AmitkObject * active_object, 
+		      GList * selected_objects,
 		      AmitkVolume * transverse_view, 
 		      AmitkVolume * coronal_view, 
 		      AmitkVolume * sagittal_view);
-GtkWidget * ui_series_init_dialog_create(GtkWindow * parent);
+GList * ui_series_init_dialog_selected_objects(GtkWidget * dialog);
+GtkWidget * ui_series_init_dialog_create(AmitkStudy * study,
+					 GtkWindow * parent);
 
 #endif /* UI_SERIES_H */
 

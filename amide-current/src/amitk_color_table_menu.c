@@ -37,6 +37,7 @@
 static void color_table_menu_class_init (AmitkColorTableMenuClass *klass);
 static void color_table_menu_init (AmitkColorTableMenu *menu);
 
+//static GtkComboBoxClass *parent_class;
 static GtkOptionMenuClass *parent_class;
 
 GType amitk_color_table_menu_get_type (void) {
@@ -59,7 +60,8 @@ GType amitk_color_table_menu_get_type (void) {
 	NULL /* value table */
       };
 
-      color_table_menu_type = g_type_register_static(GTK_TYPE_OPTION_MENU, 
+      //      color_table_menu_type = g_type_register_static(GTK_TYPE_COMBO_BOX,
+      color_table_menu_type = g_type_register_static(GTK_TYPE_OPTION_MENU,
 						     "AmitkColorTableMenu", 
 						     &color_table_menu_info, 0);
     }
@@ -72,6 +74,8 @@ static void color_table_menu_class_init (AmitkColorTableMenuClass *klass) {
 }
 
 
+
+#if 1
 /* this gets called when the hbox inside of a menu item is realized */
 static void pix_box_realize_cb(GtkWidget * pix_box, gpointer data) {
 
@@ -122,19 +126,19 @@ static GtkWidget * item_new(AmitkColorTable color_table) {
 }
 
 
-static void color_table_menu_init (AmitkColorTableMenu * ct_menu) {
-
+ static void color_table_menu_init (AmitkColorTableMenu * ct_menu) {
+ 
   GtkWidget * menu;
   GtkWidget * menuitem;
-  AmitkColorTable i_color_table;
+   AmitkColorTable i_color_table;
 
-  menu = gtk_menu_new();
+   menu = gtk_menu_new();
                                                                                 
-  for(i_color_table=0; i_color_table<AMITK_COLOR_TABLE_NUM; i_color_table++) {
+   for(i_color_table=0; i_color_table<AMITK_COLOR_TABLE_NUM; i_color_table++) {
     menuitem = item_new(i_color_table);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
     gtk_widget_show(menuitem);
-  }
+   }
                                                                                 
   gtk_option_menu_set_menu(GTK_OPTION_MENU(ct_menu), menu);
   gtk_widget_show(menu);
@@ -143,18 +147,70 @@ static void color_table_menu_init (AmitkColorTableMenu * ct_menu) {
 
   return;
 }
+ 
+#endif
 
 
 
+
+#if 0
+
+
+static void color_table_menu_init (AmitkColorTableMenu * ct_menu) {
+
+  GtkCellRenderer *renderer;
+  GdkPixbuf *pixbuf;
+  GtkTreeIter iter;
+  GtkListStore *store;
+  AmitkColorTable i_color_table;
+  
+  /* create the store of data */
+  store = gtk_list_store_new(2, /* NUM_COLUMNS */
+			     GDK_TYPE_PIXBUF, 
+			     G_TYPE_STRING);
+
+  for(i_color_table=0; i_color_table<AMITK_COLOR_TABLE_NUM; i_color_table++) {
+    pixbuf = image_from_colortable(i_color_table, MENU_COLOR_SCALE_WIDTH, MENU_COLOR_SCALE_HEIGHT,
+				   0, MENU_COLOR_SCALE_WIDTH-1, 0, MENU_COLOR_SCALE_WIDTH-1, TRUE);
+    gtk_list_store_append (store, &iter);
+    gtk_list_store_set (store, &iter,
+			0, pixbuf,
+			1, color_table_menu_names[i_color_table],
+			-1);
+    g_object_unref(pixbuf);
+  }
+
+
+  /* add it to the combo box */
+  gtk_combo_box_set_model(GTK_COMBO_BOX(ct_menu), GTK_TREE_MODEL(store));
+
+  /* setup the cell renderers */
+  renderer = gtk_cell_renderer_pixbuf_new ();
+  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (ct_menu),
+			      renderer, FALSE);
+  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (ct_menu), 
+				  renderer,"pixbuf", 0, NULL);
+
+  renderer = gtk_cell_renderer_text_new ();
+  gtk_cell_layout_pack_start (GTK_CELL_LAYOUT (ct_menu),
+			      renderer, TRUE);
+  gtk_cell_layout_set_attributes (GTK_CELL_LAYOUT (ct_menu), 
+				  renderer, "text", 1, NULL);
+
+  return;
+}
+
+#endif
 
 
 
 GtkWidget * amitk_color_table_menu_new(AmitkColorTable color_table) {
-  AmitkColorTableMenu * color_table_menu;
 
+  AmitkColorTableMenu * color_table_menu;
   color_table_menu = g_object_new(amitk_color_table_menu_get_type (), NULL);
 
   return GTK_WIDGET (color_table_menu);
 }
+
 
 

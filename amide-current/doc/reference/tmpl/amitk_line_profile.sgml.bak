@@ -1,0 +1,128 @@
+<!-- ##### SECTION Title ##### -->
+AmitkLineProfile
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_LINE_PROFILE_VIEW ##### -->
+<para>
+
+</para>
+
+@linep: 
+
+
+<!-- ##### MACRO AMITK_LINE_PROFILE_ANGLE ##### -->
+<para>
+
+</para>
+
+@linep: 
+
+
+<!-- ##### MACRO AMITK_LINE_PROFILE_VISIBLE ##### -->
+<para>
+
+</para>
+
+@linep: 
+
+
+<!-- ##### MACRO AMITK_LINE_PROFILE_START_POINT ##### -->
+<para>
+
+</para>
+
+@linep: 
+
+
+<!-- ##### MACRO AMITK_LINE_PROFILE_END_POINT ##### -->
+<para>
+
+</para>
+
+@linep: 
+
+
+<!-- ##### STRUCT AmitkLineProfileDataElement ##### -->
+<para>
+
+</para>
+
+@value: 
+@location: 
+
+<!-- ##### FUNCTION amitk_line_profile_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_copy_in_place ##### -->
+<para>
+
+</para>
+
+@dest_profile: 
+@src_profile: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_set_view ##### -->
+<para>
+
+</para>
+
+@line_profile: 
+@view: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_set_angle ##### -->
+<para>
+
+</para>
+
+@line_profile: 
+@angle: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_set_visible ##### -->
+<para>
+
+</para>
+
+@line_profile: 
+@visible: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_set_start_point ##### -->
+<para>
+
+</para>
+
+@line_profile: 
+@start_point: 
+
+
+<!-- ##### FUNCTION amitk_line_profile_set_end_point ##### -->
+<para>
+
+</para>
+
+@line_profile: 
+@end_point: 
+
+

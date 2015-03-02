@@ -1,0 +1,762 @@
+<!-- ##### SECTION Title ##### -->
+amitk_point
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM AmitkView ##### -->
+<para>
+
+</para>
+
+@AMITK_VIEW_TRANSVERSE: 
+@AMITK_VIEW_CORONAL: 
+@AMITK_VIEW_SAGITTAL: 
+@AMITK_VIEW_NUM: 
+
+<!-- ##### ENUM AmitkAxis ##### -->
+<para>
+
+</para>
+
+@AMITK_AXIS_X: 
+@AMITK_AXIS_Y: 
+@AMITK_AXIS_Z: 
+@AMITK_AXIS_NUM: 
+
+<!-- ##### ENUM AmitkDim ##### -->
+<para>
+
+</para>
+
+@AMITK_DIM_X: 
+@AMITK_DIM_Y: 
+@AMITK_DIM_Z: 
+@AMITK_DIM_G: 
+@AMITK_DIM_T: 
+@AMITK_DIM_NUM: 
+
+<!-- ##### ENUM AmitkLengthUnit ##### -->
+<para>
+
+</para>
+
+@AMITK_LENGTH_UNIT_MM: 
+@AMITK_LENGTH_UNIT_CM: 
+@AMITK_LENGTH_UNIT_M: 
+@AMITK_LENGTH_UNIT_INCHES: 
+@AMITK_LENGTH_UNIT_FEET: 
+@AMITK_LENGTH_UNIT_NUM: 
+
+<!-- ##### MACRO AMITK_TYPE_POINT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_TYPE_VOXEL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_TYPE_PIXEL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_TYPE_CANVAS_POINT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_TYPE_AXES ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### STRUCT AmitkPoint ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+@z: 
+
+<!-- ##### STRUCT AmitkVoxel ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+@z: 
+@g: 
+@t: 
+
+<!-- ##### STRUCT AmitkPixel ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+
+<!-- ##### STRUCT AmitkCanvasPoint ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+
+<!-- ##### FUNCTION amitk_point_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_point_copy ##### -->
+<para>
+
+</para>
+
+@point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_point_free ##### -->
+<para>
+
+</para>
+
+@point: 
+
+
+<!-- ##### FUNCTION amitk_point_read_xml ##### -->
+<para>
+
+</para>
+
+@nodes: 
+@descriptor: 
+@perror_buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_point_write_xml ##### -->
+<para>
+
+</para>
+
+@node: 
+@descriptor: 
+@point: 
+
+
+<!-- ##### FUNCTION amitk_voxel_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_voxel_copy ##### -->
+<para>
+
+</para>
+
+@voxel: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_voxel_free ##### -->
+<para>
+
+</para>
+
+@voxel: 
+
+
+<!-- ##### FUNCTION amitk_voxel_read_xml ##### -->
+<para>
+
+</para>
+
+@nodes: 
+@descriptor: 
+@perror_buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_voxel_write_xml ##### -->
+<para>
+
+</para>
+
+@node: 
+@descriptor: 
+@voxel: 
+
+
+<!-- ##### FUNCTION amitk_pixel_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_pixel_copy ##### -->
+<para>
+
+</para>
+
+@pixel: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_pixel_free ##### -->
+<para>
+
+</para>
+
+@pixel: 
+
+
+<!-- ##### FUNCTION amitk_canvas_point_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_canvas_point_copy ##### -->
+<para>
+
+</para>
+
+@point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_canvas_point_free ##### -->
+<para>
+
+</para>
+
+@point: 
+
+
+<!-- ##### TYPEDEF AmitkAxes[AMITK_AXIS_NUM] ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amitk_axes_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_axes_copy ##### -->
+<para>
+
+</para>
+
+@axes: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_axes_free ##### -->
+<para>
+
+</para>
+
+@axes: 
+
+
+<!-- ##### FUNCTION amitk_axes_copy_in_place ##### -->
+<para>
+
+</para>
+
+@dest_axes: 
+@src_axes: 
+
+
+<!-- ##### FUNCTION amitk_axes_transpose ##### -->
+<para>
+
+</para>
+
+@axes: 
+
+
+<!-- ##### FUNCTION amitk_axes_mult ##### -->
+<para>
+
+</para>
+
+@const_axes1: 
+@const_axes2: 
+@dest_axes: 
+
+
+<!-- ##### FUNCTION amitk_axes_make_orthonormal ##### -->
+<para>
+
+</para>
+
+@axes: 
+
+
+<!-- ##### FUNCTION amitk_axes_rotate_on_vector ##### -->
+<para>
+
+</para>
+
+@axes: 
+@vector: 
+@theta: 
+
+
+<!-- ##### FUNCTION amitk_axes_get_orthogonal_axis ##### -->
+<para>
+
+</para>
+
+@axes: 
+@which_view: 
+@which_layout: 
+@which_axis: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_axes_get_normal_axis ##### -->
+<para>
+
+</para>
+
+@axes: 
+@which_view: 
+@Returns: 
+
+
+<!-- ##### TYPEDEF AmitkCorners[2] ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amitk_corners_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_corners_free ##### -->
+<para>
+
+</para>
+
+@corners: 
+
+
+<!-- ##### FUNCTION amitk_corners_copy ##### -->
+<para>
+
+</para>
+
+@corners: 
+@Returns: 
+
+
+<!-- ##### MACRO EPSILON ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO EMPTY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SIGMA_TO_FWHM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO SIGMA_TO_FWTM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO REAL_EQUAL ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+
+
+<!-- ##### MACRO EQUAL_ZERO ##### -->
+<para>
+
+</para>
+
+@fp1: 
+
+
+<!-- ##### MACRO POINT_EQUAL ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+
+
+<!-- ##### MACRO VOXEL_EQUAL ##### -->
+<para>
+
+</para>
+
+@voxel1: 
+@voxel2: 
+
+
+<!-- ##### MACRO VOXEL_TO_POINT ##### -->
+<para>
+
+</para>
+
+@vox: 
+@vox_size: 
+@real: 
+
+
+<!-- ##### MACRO POINT_TO_VOXEL ##### -->
+<para>
+
+</para>
+
+@real: 
+@vox_size: 
+@frame: 
+@gate: 
+@vox: 
+
+
+<!-- ##### MACRO POINT_MAX ##### -->
+<para>
+
+</para>
+
+@point1: 
+
+
+<!-- ##### MACRO POINT_DOT_PRODUCT ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+
+
+<!-- ##### MACRO POINT_MAGNITUDE ##### -->
+<para>
+
+</para>
+
+@point: 
+
+
+<!-- ##### MACRO POINT_ABS ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+
+
+<!-- ##### MACRO POINT_ADD ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_SUB ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_MULT ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_DIV ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_DIFF ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_CMULT ##### -->
+<para>
+
+</para>
+
+@cm: 
+@point1: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_MADD ##### -->
+<para>
+
+</para>
+
+@cm: 
+@point1: 
+@dm: 
+@point2: 
+@point3: 
+
+
+<!-- ##### FUNCTION canvas_point_2_point ##### -->
+<para>
+
+</para>
+
+@volume_corner: 
+@width: 
+@height: 
+@x_offset: 
+@y_offset: 
+@canvas_cpoint: 
+@Returns: 
+
+
+<!-- ##### FUNCTION point_2_canvas_point ##### -->
+<para>
+
+</para>
+
+@volume_corner: 
+@width: 
+@height: 
+@x_offset: 
+@y_offset: 
+@canvas_point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION voxel_print ##### -->
+<para>
+
+</para>
+
+@message: 
+@voxel: 
+
+
+<!-- ##### FUNCTION voxel_get_dim ##### -->
+<para>
+
+</para>
+
+@voxel: 
+@which_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION voxel_set_dim ##### -->
+<para>
+
+</para>
+
+@voxel: 
+@which_dim: 
+@value: 
+
+
+<!-- ##### FUNCTION point_print ##### -->
+<para>
+
+</para>
+
+@message: 
+@point: 
+
+
+<!-- ##### FUNCTION point_rotate_on_vector ##### -->
+<para>
+
+</para>
+
+@in: 
+@vector: 
+@theta: 
+@Returns: 
+
+
+<!-- ##### FUNCTION point_get_component ##### -->
+<para>
+
+</para>
+
+@point: 
+@which_axis: 
+@Returns: 
+
+
+<!-- ##### FUNCTION point_set_component ##### -->
+<para>
+
+</para>
+
+@point: 
+@which_axis: 
+@value: 
+
+
+<!-- ##### VARIABLE zero_point ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE one_point ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE ten_point ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE zero_voxel ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE one_voxel ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE base_axes ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amitk_view_get_name ##### -->
+<para>
+
+</para>
+
+@view: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_dim_get_name ##### -->
+<para>
+
+</para>
+
+@dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_axis_get_name ##### -->
+<para>
+
+</para>
+
+@axis: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_length_unit_get_name ##### -->
+<para>
+
+</para>
+
+@length_unit: 
+@Returns: 
+
+

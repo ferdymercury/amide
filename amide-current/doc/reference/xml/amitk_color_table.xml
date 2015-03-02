@@ -1,0 +1,179 @@
+<refentry id="amitk-amitk-color-table">
+<refmeta>
+<refentrytitle>amitk_color_table</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amitk_color_table</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+enum        <link linkend="AmitkColorTable">AmitkColorTable</link>;
+typedef     <link linkend="color-data-t">color_data_t</link>;
+typedef     <link linkend="color-data16-t">color_data16_t</link>;
+typedef     <link linkend="hsv-data-t">hsv_data_t</link>;
+#define     <link linkend="amitk-color-table-rgba-to-uint32">amitk_color_table_rgba_to_uint32</link>(rgba)
+<link linkend="rgba-t">rgba_t</link>      <link linkend="amitk-color-table-outline-color">amitk_color_table_outline_color</link> (<link linkend="AmitkColorTable">AmitkColorTable</link> which,
+                                             <link linkend="gboolean">gboolean</link> highlight);
+<link linkend="rgba-t">rgba_t</link>      <link linkend="amitk-color-table-lookup">amitk_color_table_lookup</link>        (<link linkend="amide-data-t">amide_data_t</link> datum,
+                                             <link linkend="AmitkColorTable">AmitkColorTable</link> which,
+                                             <link linkend="amide-data-t">amide_data_t</link> min,
+                                             <link linkend="amide-data-t">amide_data_t</link> max);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-color-table-get-name">amitk_color_table_get_name</link>     (const <link linkend="AmitkColorTable">AmitkColorTable</link> which);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AmitkColorTable"/>enum AmitkColorTable</title>
+<indexterm><primary>AmitkColorTable</primary></indexterm><programlisting>typedef enum {
+  AMITK_COLOR_TABLE_BW_LINEAR, 
+  AMITK_COLOR_TABLE_WB_LINEAR, 
+  AMITK_COLOR_TABLE_BWB_LINEAR,
+  AMITK_COLOR_TABLE_WBW_LINEAR,
+  AMITK_COLOR_TABLE_RED_TEMP, 
+  AMITK_COLOR_TABLE_INV_RED_TEMP, 
+  AMITK_COLOR_TABLE_BLUE_TEMP, 
+  AMITK_COLOR_TABLE_INV_BLUE_TEMP, 
+  AMITK_COLOR_TABLE_GREEN_TEMP, 
+  AMITK_COLOR_TABLE_INV_GREEN_TEMP, 
+  AMITK_COLOR_TABLE_HOT_METAL, 
+  AMITK_COLOR_TABLE_INV_HOT_METAL, 
+  AMITK_COLOR_TABLE_HOT_BLUE, 
+  AMITK_COLOR_TABLE_INV_HOT_BLUE, 
+  AMITK_COLOR_TABLE_HOT_GREEN, 
+  AMITK_COLOR_TABLE_INV_HOT_GREEN, 
+  AMITK_COLOR_TABLE_SPECTRUM, 
+  AMITK_COLOR_TABLE_INV_SPECTRUM, 
+  AMITK_COLOR_TABLE_NIH_WHITE, 
+  AMITK_COLOR_TABLE_INV_NIH_WHITE, 
+  AMITK_COLOR_TABLE_NIH, 
+  AMITK_COLOR_TABLE_INV_NIH, 
+  AMITK_COLOR_TABLE_NUM
+} AmitkColorTable; 
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="color-data-t"/>color_data_t</title>
+<indexterm><primary>color_data_t</primary></indexterm><programlisting>typedef guint8 color_data_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="color-data16-t"/>color_data16_t</title>
+<indexterm><primary>color_data16_t</primary></indexterm><programlisting>typedef guint16 color_data16_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="hsv-data-t"/>hsv_data_t</title>
+<indexterm><primary>hsv_data_t</primary></indexterm><programlisting>typedef gdouble hsv_data_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-rgba-to-uint32"/>amitk_color_table_rgba_to_uint32()</title>
+<indexterm><primary>amitk_color_table_rgba_to_uint32</primary></indexterm><programlisting>#define amitk_color_table_rgba_to_uint32(rgba) (((rgba).r&lt;&lt;24) | ((rgba).g&lt;&lt;16) | ((rgba).b&lt;&lt;8) | ((rgba).a&lt;&lt;0))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rgba</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-outline-color"/>amitk_color_table_outline_color ()</title>
+<indexterm><primary>amitk_color_table_outline_color</primary></indexterm><programlisting><link linkend="rgba-t">rgba_t</link>      amitk_color_table_outline_color (<link linkend="AmitkColorTable">AmitkColorTable</link> which,
+                                             <link linkend="gboolean">gboolean</link> highlight);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>which</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>highlight</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-lookup"/>amitk_color_table_lookup ()</title>
+<indexterm><primary>amitk_color_table_lookup</primary></indexterm><programlisting><link linkend="rgba-t">rgba_t</link>      amitk_color_table_lookup        (<link linkend="amide-data-t">amide_data_t</link> datum,
+                                             <link linkend="AmitkColorTable">AmitkColorTable</link> which,
+                                             <link linkend="amide-data-t">amide_data_t</link> min,
+                                             <link linkend="amide-data-t">amide_data_t</link> max);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>datum</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>min</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>max</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-get-name"/>amitk_color_table_get_name ()</title>
+<indexterm><primary>amitk_color_table_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_color_table_get_name     (const <link linkend="AmitkColorTable">AmitkColorTable</link> which);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>which</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

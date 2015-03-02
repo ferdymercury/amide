@@ -1,0 +1,443 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkObject</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk-AmitkLineProfile.html" title="AmitkLineProfile"><link rel="next" href="amitk-amitk-point.html" title="amitk_point"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkLineProfile.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-amitk-point.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkObject"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkObject</span></h2><p>AmitkObject &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+#define     <a href="amitk-AmitkObject.html#AMITK-OBJECT-CHILDREN-CAPS">AMITK_OBJECT_CHILDREN</a>           (object)
+#define     <a href="amitk-AmitkObject.html#AMITK-OBJECT-PARENT-CAPS">AMITK_OBJECT_PARENT</a>             (object)
+#define     <a href="amitk-AmitkObject.html#AMITK-OBJECT-NAME-CAPS">AMITK_OBJECT_NAME</a>               (object)
+enum        <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a>;
+enum        <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a>;
+AmitkObject* <a href="amitk-AmitkObject.html#amitk-object-new">amitk_object_new</a>               (void);
+void        <a href="amitk-AmitkObject.html#amitk-object-write-xml">amitk_object_write_xml</a>          (AmitkObject *object,
+                                             FILE *study_file,
+                                             gchar **output_filename,
+                                             guint64 *location,
+                                             guint64 *size);
+AmitkObject* <a href="amitk-AmitkObject.html#amitk-object-read-xml">amitk_object_read_xml</a>          (gchar *xml_filename,
+                                             FILE *study_file,
+                                             guint64 location,
+                                             guint64 size,
+                                             gchar **perror_buf);
+AmitkObject* <a href="amitk-AmitkObject.html#amitk-object-copy">amitk_object_copy</a>              (const AmitkObject *object);
+void        <a href="amitk-AmitkObject.html#amitk-object-copy-in-place">amitk_object_copy_in_place</a>      (AmitkObject *dest_object,
+                                             const AmitkObject *src_object);
+void        <a href="amitk-AmitkObject.html#amitk-object-set-name">amitk_object_set_name</a>           (AmitkObject *object,
+                                             const gchar *new_name);
+gboolean    <a href="amitk-AmitkObject.html#amitk-object-get-selected">amitk_object_get_selected</a>       (const AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection);
+void        <a href="amitk-AmitkObject.html#amitk-object-set-selected">amitk_object_set_selected</a>       (AmitkObject *object,
+                                             const gboolean selection,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection);
+#define     <a href="amitk-AmitkObject.html#amitk-object-select">amitk_object_select</a>             (obj, which)
+#define     <a href="amitk-AmitkObject.html#amitk-object-unselect">amitk_object_unselect</a>           (obj, which)
+void        <a href="amitk-AmitkObject.html#amitk-object-set-parent">amitk_object_set_parent</a>         (AmitkObject *object,
+                                             AmitkObject *parent);
+void        <a href="amitk-AmitkObject.html#amitk-object-add-child">amitk_object_add_child</a>          (AmitkObject *object,
+                                             AmitkObject *child);
+void        <a href="amitk-AmitkObject.html#amitk-object-add-children">amitk_object_add_children</a>       (AmitkObject *object,
+                                             GList *children);
+gboolean    <a href="amitk-AmitkObject.html#amitk-object-remove-child">amitk_object_remove_child</a>       (AmitkObject *object,
+                                             AmitkObject *child);
+gboolean    <a href="amitk-AmitkObject.html#amitk-object-remove-children">amitk_object_remove_children</a>    (AmitkObject *object,
+                                             GList *children);
+gboolean    <a href="amitk-AmitkObject.html#amitk-object-compare-object-type">amitk_object_compare_object_type</a>
+                                            (AmitkObject *object,
+                                             <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);
+AmitkObject* <a href="amitk-AmitkObject.html#amitk-object-get-parent-of-type">amitk_object_get_parent_of_type</a>
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);
+GList*      <a href="amitk-AmitkObject.html#amitk-object-get-children-of-type">amitk_object_get_children_of_type</a>
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);
+gboolean    <a href="amitk-AmitkObject.html#amitk-object-selected-children">amitk_object_selected_children</a>  (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             gboolean recurse);
+GList*      <a href="amitk-AmitkObject.html#amitk-object-get-selected-children">amitk_object_get_selected_children</a>
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             const gboolean recurse);
+GList*      <a href="amitk-AmitkObject.html#amitk-object-get-selected-children-of-type">amitk_object_get_selected_children_of_type</a>
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             const gboolean recurse);
+gpointer    <a href="amitk-AmitkObject.html#amitk-object-ref">amitk_object_ref</a>                (gpointer object);
+gpointer    <a href="amitk-AmitkObject.html#amitk-object-unref">amitk_object_unref</a>              (gpointer object);
+GList*      <a href="amitk-AmitkObject.html#amitk-objects-ref">amitk_objects_ref</a>               (GList *objects);
+GList*      <a href="amitk-AmitkObject.html#amitk-objects-unref">amitk_objects_unref</a>             (GList *objects);
+gint        <a href="amitk-AmitkObject.html#amitk-objects-count">amitk_objects_count</a>             (GList *objects);
+AmitkObject* <a href="amitk-AmitkObject.html#amitk-objects-find-object-by-name">amitk_objects_find_object_by_name</a>
+                                            (GList *objects,
+                                             const gchar *name);
+gint        <a href="amitk-AmitkObject.html#amitk-objects-count-pairs-by-name">amitk_objects_count_pairs_by_name</a>
+                                            (GList *objects1,
+                                             GList *objects2);
+GList*      <a href="amitk-AmitkObject.html#amitk-objects-get-of-type">amitk_objects_get_of_type</a>       (GList *objects,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);
+gboolean    <a href="amitk-AmitkObject.html#amitk-objects-has-type">amitk_objects_has_type</a>          (GList *objects,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);
+void        <a href="amitk-AmitkObject.html#amitk-objects-write-xml">amitk_objects_write_xml</a>         (GList *objects,
+                                             xmlNodePtr node_list,
+                                             FILE *study_file);
+GList*      <a href="amitk-AmitkObject.html#amitk-objects-read-xml">amitk_objects_read_xml</a>          (xmlNodePtr node_list,
+                                             FILE *study_file,
+                                             gchar **perror_buf);
+const gchar* <a href="amitk-AmitkObject.html#amitk-object-type-get-name">amitk_object_type_get_name</a>     (const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);
+const gchar* <a href="amitk-AmitkObject.html#amitk-selection-get-name">amitk_selection_get_name</a>       (const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> type);
+
+</pre></div><div class="refsect1" lang="en"><a name="id2621593"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2621603"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2621608"></a><h3><a name="AMITK-OBJECT-CHILDREN-CAPS"></a>AMITK_OBJECT_CHILDREN()</h3><a class="indexterm" name="id2621619"></a><pre class="programlisting">#define AMITK_OBJECT_CHILDREN(object)   (AMITK_OBJECT(object)-&gt;children)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2621654"></a><h3><a name="AMITK-OBJECT-PARENT-CAPS"></a>AMITK_OBJECT_PARENT()</h3><a class="indexterm" name="id2621665"></a><pre class="programlisting">#define AMITK_OBJECT_PARENT(object)     (AMITK_OBJECT(object)-&gt;parent)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2621700"></a><h3><a name="AMITK-OBJECT-NAME-CAPS"></a>AMITK_OBJECT_NAME()</h3><a class="indexterm" name="id2621712"></a><pre class="programlisting">#define AMITK_OBJECT_NAME(object)       ((const gchar *) (AMITK_OBJECT(object)-&gt;name))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2621747"></a><h3><a name="AmitkObjectType"></a>enum AmitkObjectType</h3><a class="indexterm" name="id2621757"></a><pre class="programlisting">typedef enum {
+  AMITK_OBJECT_TYPE_STUDY,
+  AMITK_OBJECT_TYPE_DATA_SET,
+  AMITK_OBJECT_TYPE_FIDUCIAL_MARK,
+  AMITK_OBJECT_TYPE_ROI,
+  AMITK_OBJECT_TYPE_VOLUME,
+  AMITK_OBJECT_TYPE_NUM
+} AmitkObjectType;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2621775"></a><h3><a name="AmitkSelection"></a>enum AmitkSelection</h3><a class="indexterm" name="id2621786"></a><pre class="programlisting">typedef enum {
+  AMITK_SELECTION_SELECTED_0,
+  AMITK_SELECTION_SELECTED_1,
+  AMITK_SELECTION_SELECTED_2,
+  AMITK_SELECTION_NUM,
+  AMITK_SELECTION_ANY,
+  AMITK_SELECTION_ALL,
+} AmitkSelection;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2621804"></a><h3><a name="amitk-object-new"></a>amitk_object_new ()</h3><a class="indexterm" name="id2621815"></a><pre class="programlisting">AmitkObject* amitk_object_new               (void);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2621850"></a><h3><a name="amitk-object-write-xml"></a>amitk_object_write_xml ()</h3><a class="indexterm" name="id2621862"></a><pre class="programlisting">void        amitk_object_write_xml          (AmitkObject *object,
+                                             FILE *study_file,
+                                             gchar **output_filename,
+                                             guint64 *location,
+                                             guint64 *size);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>study_file</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>output_filename</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>location</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>size</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2621993"></a><h3><a name="amitk-object-read-xml"></a>amitk_object_read_xml ()</h3><a class="indexterm" name="id2622004"></a><pre class="programlisting">AmitkObject* amitk_object_read_xml          (gchar *xml_filename,
+                                             FILE *study_file,
+                                             guint64 location,
+                                             guint64 size,
+                                             gchar **perror_buf);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>xml_filename</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>study_file</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>location</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>size</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>perror_buf</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622145"></a><h3><a name="amitk-object-copy"></a>amitk_object_copy ()</h3><a class="indexterm" name="id2622156"></a><pre class="programlisting">AmitkObject* amitk_object_copy              (const AmitkObject *object);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622211"></a><h3><a name="amitk-object-copy-in-place"></a>amitk_object_copy_in_place ()</h3><a class="indexterm" name="id2622223"></a><pre class="programlisting">void        amitk_object_copy_in_place      (AmitkObject *dest_object,
+                                             const AmitkObject *src_object);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dest_object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>src_object</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622290"></a><h3><a name="amitk-object-set-name"></a>amitk_object_set_name ()</h3><a class="indexterm" name="id2622301"></a><pre class="programlisting">void        amitk_object_set_name           (AmitkObject *object,
+                                             const gchar *new_name);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_name</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622368"></a><h3><a name="amitk-object-get-selected"></a>amitk_object_get_selected ()</h3><a class="indexterm" name="id2622380"></a><pre class="programlisting">gboolean    amitk_object_get_selected       (const AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_selection</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622457"></a><h3><a name="amitk-object-set-selected"></a>amitk_object_set_selected ()</h3><a class="indexterm" name="id2622469"></a><pre class="programlisting">void        amitk_object_set_selected       (AmitkObject *object,
+                                             const gboolean selection,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>selection</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_selection</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622558"></a><h3><a name="amitk-object-select"></a>amitk_object_select()</h3><a class="indexterm" name="id2622569"></a><pre class="programlisting">#define         amitk_object_select(obj, which)      (amitk_object_set_selected((obj), (TRUE), (which)))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622616"></a><h3><a name="amitk-object-unselect"></a>amitk_object_unselect()</h3><a class="indexterm" name="id2622627"></a><pre class="programlisting">#define         amitk_object_unselect(obj, which)    (amitk_object_set_selected((obj), (FALSE), (which)))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622675"></a><h3><a name="amitk-object-set-parent"></a>amitk_object_set_parent ()</h3><a class="indexterm" name="id2622686"></a><pre class="programlisting">void        amitk_object_set_parent         (AmitkObject *object,
+                                             AmitkObject *parent);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>parent</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622753"></a><h3><a name="amitk-object-add-child"></a>amitk_object_add_child ()</h3><a class="indexterm" name="id2622764"></a><pre class="programlisting">void        amitk_object_add_child          (AmitkObject *object,
+                                             AmitkObject *child);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>child</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622832"></a><h3><a name="amitk-object-add-children"></a>amitk_object_add_children ()</h3><a class="indexterm" name="id2622843"></a><pre class="programlisting">void        amitk_object_add_children       (AmitkObject *object,
+                                             GList *children);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>children</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622910"></a><h3><a name="amitk-object-remove-child"></a>amitk_object_remove_child ()</h3><a class="indexterm" name="id2622922"></a><pre class="programlisting">gboolean    amitk_object_remove_child       (AmitkObject *object,
+                                             AmitkObject *child);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>child</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2622999"></a><h3><a name="amitk-object-remove-children"></a>amitk_object_remove_children ()</h3><a class="indexterm" name="id2623011"></a><pre class="programlisting">gboolean    amitk_object_remove_children    (AmitkObject *object,
+                                             GList *children);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>children</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623088"></a><h3><a name="amitk-object-compare-object-type"></a>amitk_object_compare_object_type ()</h3><a class="indexterm" name="id2623100"></a><pre class="programlisting">gboolean    amitk_object_compare_object_type
+                                            (AmitkObject *object,
+                                             <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623179"></a><h3><a name="amitk-object-get-parent-of-type"></a>amitk_object_get_parent_of_type ()</h3><a class="indexterm" name="id2623190"></a><pre class="programlisting">AmitkObject* amitk_object_get_parent_of_type
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623269"></a><h3><a name="amitk-object-get-children-of-type"></a>amitk_object_get_children_of_type ()</h3><a class="indexterm" name="id2623281"></a><pre class="programlisting">GList*      amitk_object_get_children_of_type
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623380"></a><h3><a name="amitk-object-selected-children"></a>amitk_object_selected_children ()</h3><a class="indexterm" name="id2623392"></a><pre class="programlisting">gboolean    amitk_object_selected_children  (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_selection</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623491"></a><h3><a name="amitk-object-get-selected-children"></a>amitk_object_get_selected_children ()</h3><a class="indexterm" name="id2623503"></a><pre class="programlisting">GList*      amitk_object_get_selected_children
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             const gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_selection</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623603"></a><h3><a name="amitk-object-get-selected-children-of-type"></a>amitk_object_get_selected_children_of_type ()</h3><a class="indexterm" name="id2623616"></a><pre class="programlisting">GList*      amitk_object_get_selected_children_of_type
+                                            (AmitkObject *object,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> which_selection,
+                                             const gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_selection</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623737"></a><h3><a name="amitk-object-ref"></a>amitk_object_ref ()</h3><a class="indexterm" name="id2623748"></a><pre class="programlisting">gpointer    amitk_object_ref                (gpointer object);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623803"></a><h3><a name="amitk-object-unref"></a>amitk_object_unref ()</h3><a class="indexterm" name="id2623814"></a><pre class="programlisting">gpointer    amitk_object_unref              (gpointer object);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623870"></a><h3><a name="amitk-objects-ref"></a>amitk_objects_ref ()</h3><a class="indexterm" name="id2623881"></a><pre class="programlisting">GList*      amitk_objects_ref               (GList *objects);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2623936"></a><h3><a name="amitk-objects-unref"></a>amitk_objects_unref ()</h3><a class="indexterm" name="id2623947"></a><pre class="programlisting">GList*      amitk_objects_unref             (GList *objects);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624003"></a><h3><a name="amitk-objects-count"></a>amitk_objects_count ()</h3><a class="indexterm" name="id2624014"></a><pre class="programlisting">gint        amitk_objects_count             (GList *objects);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624069"></a><h3><a name="amitk-objects-find-object-by-name"></a>amitk_objects_find_object_by_name ()</h3><a class="indexterm" name="id2624081"></a><pre class="programlisting">AmitkObject* amitk_objects_find_object_by_name
+                                            (GList *objects,
+                                             const gchar *name);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>name</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624159"></a><h3><a name="amitk-objects-count-pairs-by-name"></a>amitk_objects_count_pairs_by_name ()</h3><a class="indexterm" name="id2624172"></a><pre class="programlisting">gint        amitk_objects_count_pairs_by_name
+                                            (GList *objects1,
+                                             GList *objects2);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects1</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>objects2</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624249"></a><h3><a name="amitk-objects-get-of-type"></a>amitk_objects_get_of_type ()</h3><a class="indexterm" name="id2624261"></a><pre class="programlisting">GList*      amitk_objects_get_of_type       (GList *objects,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624359"></a><h3><a name="amitk-objects-has-type"></a>amitk_objects_has_type ()</h3><a class="indexterm" name="id2624370"></a><pre class="programlisting">gboolean    amitk_objects_has_type          (GList *objects,
+                                             const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type,
+                                             const gboolean recurse);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>recurse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624469"></a><h3><a name="amitk-objects-write-xml"></a>amitk_objects_write_xml ()</h3><a class="indexterm" name="id2624480"></a><pre class="programlisting">void        amitk_objects_write_xml         (GList *objects,
+                                             xmlNodePtr node_list,
+                                             FILE *study_file);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>node_list</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>study_file</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624569"></a><h3><a name="amitk-objects-read-xml"></a>amitk_objects_read_xml ()</h3><a class="indexterm" name="id2624580"></a><pre class="programlisting">GList*      amitk_objects_read_xml          (xmlNodePtr node_list,
+                                             FILE *study_file,
+                                             gchar **perror_buf);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>node_list</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>study_file</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>perror_buf</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624679"></a><h3><a name="amitk-object-type-get-name"></a>amitk_object_type_get_name ()</h3><a class="indexterm" name="id2624690"></a><pre class="programlisting">const gchar* amitk_object_type_get_name     (const <a href="amitk-AmitkObject.html#AmitkObjectType">AmitkObjectType</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2624747"></a><h3><a name="amitk-selection-get-name"></a>amitk_selection_get_name ()</h3><a class="indexterm" name="id2624758"></a><pre class="programlisting">const gchar* amitk_selection_get_name       (const <a href="amitk-AmitkObject.html#AmitkSelection">AmitkSelection</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkLineProfile.html"><b>&lt;&lt; AmitkLineProfile</b></a></td><td align="right"><a accesskey="n" href="amitk-amitk-point.html"><b>amitk_point &gt;&gt;</b></a></td></tr></table></body></html>

@@ -66,6 +66,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   gint total_planes, i_plane;
   gboolean continue_work=TRUE;
   gchar * temp_string;
+  gchar * invalid_point;
   Image_subheader * ish;
   Scan_subheader * ssh;
   Attn_subheader * ash;
@@ -161,9 +162,9 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   
   /* try figuring out the name */
   if (libecat_file->mhptr->study_name[0] != '\0')
-    name = g_strdup(libecat_file->mhptr->study_name);
+    name = g_strndup(libecat_file->mhptr->study_name, 12);
   else if (libecat_file->mhptr->original_file_name[0] != '\0')
-    name = g_strdup(libecat_file->mhptr->original_file_name);
+    name = g_strndup(libecat_file->mhptr->original_file_name, 32);
   else {/* no original filename? */
     temp_string = g_path_get_basename(libecat_filename);
     /* remove the extension of the file */
@@ -174,6 +175,12 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
     name = g_strdup(frags[1]);
     g_strfreev(frags); /* free up now unused strings */
   }
+
+  /* validate the name to utf8 */
+  if (!g_utf8_validate(name, -1, &invalid_point)) {
+    invalid_point[0] = '\0';
+  }
+
   /* try adding on the reconstruction method */
   switch(libecat_file->mhptr->file_type) {
   case PetImage: 
@@ -314,6 +321,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
 	  /* save the scale factor */
 	  j.x = j.y = 0;
 	  j.z = slice;
+	  j.g = i.g;
 	  j.t = i.t;
 	  if (scaling_type == AMITK_SCALING_TYPE_2D)
 	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;

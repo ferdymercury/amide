@@ -1,0 +1,224 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkThresholdsDialog</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="amitk-AmitkSpaceEdit.html" title="AmitkSpaceEdit"><link rel="next" href="amitk-AmitkTreeView.html" title="AmitkTreeView"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkSpaceEdit.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkTreeView.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkThresholdsDialog"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkThresholdsDialog</span></h2><p>AmitkThresholdsDialog &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+enum        <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdScale">AmitkThresholdScale</a>;
+enum        <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdArrow">AmitkThresholdArrow</a>;
+enum        <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdEntry">AmitkThresholdEntry</a>;
+enum        <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdLine">AmitkThresholdLine</a>;
+enum        <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdLayout">AmitkThresholdLayout</a>;
+GtkWidget*  <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-new">amitk_threshold_new</a>             (AmitkDataSet *data_set,
+                                             <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdLayout">AmitkThresholdLayout</a> layout,
+                                             GtkWindow *parent,
+                                             gboolean minimal);
+void        <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-new-data-set">amitk_threshold_new_data_set</a>    (AmitkThreshold *threshold,
+                                             AmitkDataSet *new_data_set);
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLD-DIALOG-CAPS">AMITK_TYPE_THRESHOLD_DIALOG</a>
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG-CAPS">AMITK_THRESHOLD_DIALOG</a>          (obj)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG-CLASS-CAPS">AMITK_THRESHOLD_DIALOG_CLASS</a>    (klass)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG-CAPS">AMITK_IS_THRESHOLD_DIALOG</a>       (obj)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG-CLASS-CAPS">AMITK_IS_THRESHOLD_DIALOG_CLASS</a> (klass)
+GType       <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-get-type">amitk_threshold_dialog_get_type</a> (void);
+GtkWidget*  <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-new">amitk_threshold_dialog_new</a>      (AmitkDataSet *data_set,
+                                             GtkWindow *parent);
+void        <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-new-data-set">amitk_threshold_dialog_new_data_set</a>
+                                            (AmitkThresholdDialog *threshold_dialog,
+                                             AmitkDataSet *new_data_set);
+AmitkDataSet* <a href="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-data-set">amitk_threshold_dialog_data_set</a>
+                                            (AmitkThresholdDialog *threshold_dialog);
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLDS-DIALOG-CAPS">AMITK_TYPE_THRESHOLDS_DIALOG</a>
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG-CAPS">AMITK_THRESHOLDS_DIALOG</a>         (obj)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG-CLASS-CAPS">AMITK_THRESHOLDS_DIALOG_CLASS</a>   (klass)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG-CAPS">AMITK_IS_THRESHOLDS_DIALOG</a>      (obj)
+#define     <a href="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG-CLASS-CAPS">AMITK_IS_THRESHOLDS_DIALOG_CLASS</a>(klass)
+GType       <a href="amitk-AmitkThresholdsDialog.html#amitk-thresholds-dialog-get-type">amitk_thresholds_dialog_get_type</a>
+                                            (void);
+GtkWidget*  <a href="amitk-AmitkThresholdsDialog.html#amitk-thresholds-dialog-new">amitk_thresholds_dialog_new</a>     (GList *objects,
+                                             GtkWindow *parent);
+
+</pre></div><div class="refsect1" lang="en"><a name="id2703773"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2703782"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2703788"></a><h3><a name="AmitkThresholdScale"></a>enum AmitkThresholdScale</h3><a class="indexterm" name="id2703800"></a><pre class="programlisting">typedef enum {
+  AMITK_THRESHOLD_SCALE_FULL,
+  AMITK_THRESHOLD_SCALE_SCALED,
+  AMITK_THRESHOLD_SCALE_NUM_SCALES
+} AmitkThresholdScale;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2703816"></a><h3><a name="AmitkThresholdArrow"></a>enum AmitkThresholdArrow</h3><a class="indexterm" name="id2703828"></a><pre class="programlisting">typedef enum {
+  AMITK_THRESHOLD_ARROW_FULL_MIN,
+  AMITK_THRESHOLD_ARROW_FULL_MAX,
+  AMITK_THRESHOLD_ARROW_SCALED_MIN,
+  AMITK_THRESHOLD_ARROW_SCALED_MAX,
+  AMITK_THRESHOLD_ARROW_NUM_ARROWS
+} AmitkThresholdArrow;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2703846"></a><h3><a name="AmitkThresholdEntry"></a>enum AmitkThresholdEntry</h3><a class="indexterm" name="id2703858"></a><pre class="programlisting">typedef enum {
+  AMITK_THRESHOLD_ENTRY_MAX_ABSOLUTE,
+  AMITK_THRESHOLD_ENTRY_MAX_PERCENT,
+  AMITK_THRESHOLD_ENTRY_MIN_ABSOLUTE,
+  AMITK_THRESHOLD_ENTRY_MIN_PERCENT,
+  AMITK_THRESHOLD_ENTRY_NUM_ENTRIES
+} AmitkThresholdEntry;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2703876"></a><h3><a name="AmitkThresholdLine"></a>enum AmitkThresholdLine</h3><a class="indexterm" name="id2703887"></a><pre class="programlisting">typedef enum {
+  AMITK_THRESHOLD_LINE_MAX,
+  AMITK_THRESHOLD_LINE_MIN,
+  AMITK_THRESHOLD_LINE_NUM_LINES
+} AmitkThresholdLine;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2703904"></a><h3><a name="AmitkThresholdLayout"></a>enum AmitkThresholdLayout</h3><a class="indexterm" name="id2703915"></a><pre class="programlisting">typedef enum {
+    AMITK_THRESHOLD_BOX_LAYOUT,
+    AMITK_THRESHOLD_LINEAR_LAYOUT
+} AmitkThresholdLayout;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2703932"></a><h3><a name="amitk-threshold-new"></a>amitk_threshold_new ()</h3><a class="indexterm" name="id2703943"></a><pre class="programlisting">GtkWidget*  amitk_threshold_new             (AmitkDataSet *data_set,
+                                             <a href="amitk-AmitkThresholdsDialog.html#AmitkThresholdLayout">AmitkThresholdLayout</a> layout,
+                                             GtkWindow *parent,
+                                             gboolean minimal);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>data_set</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>layout</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>parent</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>minimal</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704062"></a><h3><a name="amitk-threshold-new-data-set"></a>amitk_threshold_new_data_set ()</h3><a class="indexterm" name="id2704075"></a><pre class="programlisting">void        amitk_threshold_new_data_set    (AmitkThreshold *threshold,
+                                             AmitkDataSet *new_data_set);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>threshold</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_data_set</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704143"></a><h3><a name="AMITK-TYPE-THRESHOLD-DIALOG-CAPS"></a>AMITK_TYPE_THRESHOLD_DIALOG</h3><a class="indexterm" name="id2704156"></a><pre class="programlisting">#define AMITK_TYPE_THRESHOLD_DIALOG     (amitk_threshold_dialog_get_type ())
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2704172"></a><h3><a name="AMITK-THRESHOLD-DIALOG-CAPS"></a>AMITK_THRESHOLD_DIALOG()</h3><a class="indexterm" name="id2704184"></a><pre class="programlisting">#define AMITK_THRESHOLD_DIALOG(obj)     (GTK_CHECK_CAST ((obj), AMITK_TYPE_THRESHOLD_DIALOG, AmitkThresholdDialog))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704218"></a><h3><a name="AMITK-THRESHOLD-DIALOG-CLASS-CAPS"></a>AMITK_THRESHOLD_DIALOG_CLASS()</h3><a class="indexterm" name="id2704230"></a><pre class="programlisting">#define AMITK_THRESHOLD_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLD_DIALOG, AmitkThresholdDialogClass))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>klass</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704265"></a><h3><a name="AMITK-IS-THRESHOLD-DIALOG-CAPS"></a>AMITK_IS_THRESHOLD_DIALOG()</h3><a class="indexterm" name="id2704277"></a><pre class="programlisting">#define AMITK_IS_THRESHOLD_DIALOG(obj)  (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLD_DIALOG))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704312"></a><h3><a name="AMITK-IS-THRESHOLD-DIALOG-CLASS-CAPS"></a>AMITK_IS_THRESHOLD_DIALOG_CLASS()</h3><a class="indexterm" name="id2704324"></a><pre class="programlisting">#define AMITK_IS_THRESHOLD_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLD_DIALOG))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>klass</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704359"></a><h3><a name="amitk-threshold-dialog-get-type"></a>amitk_threshold_dialog_get_type ()</h3><a class="indexterm" name="id2704371"></a><pre class="programlisting">GType       amitk_threshold_dialog_get_type (void);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704407"></a><h3><a name="amitk-threshold-dialog-new"></a>amitk_threshold_dialog_new ()</h3><a class="indexterm" name="id2704419"></a><pre class="programlisting">GtkWidget*  amitk_threshold_dialog_new      (AmitkDataSet *data_set,
+                                             GtkWindow *parent);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>data_set</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>parent</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704495"></a><h3><a name="amitk-threshold-dialog-new-data-set"></a>amitk_threshold_dialog_new_data_set ()</h3><a class="indexterm" name="id2704508"></a><pre class="programlisting">void        amitk_threshold_dialog_new_data_set
+                                            (AmitkThresholdDialog *threshold_dialog,
+                                             AmitkDataSet *new_data_set);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>threshold_dialog</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_data_set</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704577"></a><h3><a name="amitk-threshold-dialog-data-set"></a>amitk_threshold_dialog_data_set ()</h3><a class="indexterm" name="id2704590"></a><pre class="programlisting">AmitkDataSet* amitk_threshold_dialog_data_set
+                                            (AmitkThresholdDialog *threshold_dialog);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>threshold_dialog</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704648"></a><h3><a name="AMITK-TYPE-THRESHOLDS-DIALOG-CAPS"></a>AMITK_TYPE_THRESHOLDS_DIALOG</h3><a class="indexterm" name="id2704660"></a><pre class="programlisting">#define AMITK_TYPE_THRESHOLDS_DIALOG     (amitk_thresholds_dialog_get_type ())
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2704676"></a><h3><a name="AMITK-THRESHOLDS-DIALOG-CAPS"></a>AMITK_THRESHOLDS_DIALOG()</h3><a class="indexterm" name="id2704688"></a><pre class="programlisting">#define AMITK_THRESHOLDS_DIALOG(obj)     (GTK_CHECK_CAST ((obj), AMITK_TYPE_THRESHOLDS_DIALOG, AmitkThresholdsDialog))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704723"></a><h3><a name="AMITK-THRESHOLDS-DIALOG-CLASS-CAPS"></a>AMITK_THRESHOLDS_DIALOG_CLASS()</h3><a class="indexterm" name="id2704734"></a><pre class="programlisting">#define AMITK_THRESHOLDS_DIALOG_CLASS(klass)    (GTK_CHECK_CLASS_CAST ((klass), AMITK_TYPE_THESHOLDS_DIALOG, AmitkThresholdsDialogClass))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>klass</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704770"></a><h3><a name="AMITK-IS-THRESHOLDS-DIALOG-CAPS"></a>AMITK_IS_THRESHOLDS_DIALOG()</h3><a class="indexterm" name="id2704781"></a><pre class="programlisting">#define AMITK_IS_THRESHOLDS_DIALOG(obj)  (GTK_CHECK_TYPE ((obj), AMITK_TYPE_THRESHOLDS_DIALOG))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704815"></a><h3><a name="AMITK-IS-THRESHOLDS-DIALOG-CLASS-CAPS"></a>AMITK_IS_THRESHOLDS_DIALOG_CLASS()</h3><a class="indexterm" name="id2704829"></a><pre class="programlisting">#define AMITK_IS_THRESHOLDS_DIALOG_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_THRESHOLDS_DIALOG))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>klass</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704864"></a><h3><a name="amitk-thresholds-dialog-get-type"></a>amitk_thresholds_dialog_get_type ()</h3><a class="indexterm" name="id2704876"></a><pre class="programlisting">GType       amitk_thresholds_dialog_get_type
+                                            (void);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2704912"></a><h3><a name="amitk-thresholds-dialog-new"></a>amitk_thresholds_dialog_new ()</h3><a class="indexterm" name="id2704924"></a><pre class="programlisting">GtkWidget*  amitk_thresholds_dialog_new     (GList *objects,
+                                             GtkWindow *parent);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>parent</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkSpaceEdit.html"><b>&lt;&lt; AmitkSpaceEdit</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkTreeView.html"><b>AmitkTreeView &gt;&gt;</b></a></td></tr></table></body></html>

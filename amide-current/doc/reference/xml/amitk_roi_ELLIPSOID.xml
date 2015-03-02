@@ -1,0 +1,199 @@
+<refentry id="amitk-amitk-roi-ELLIPSOID">
+<refmeta>
+<refentrytitle>amitk_roi_ELLIPSOID</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amitk_roi_ELLIPSOID</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="ROI-TYPE-ELLIPSOID-CAPS">ROI_TYPE_ELLIPSOID</link>
+<link linkend="GSList">GSList</link>*     <link linkend="amitk-roi-ELLIPSOID-get-intersection-line">amitk_roi_ELLIPSOID_get_intersection_line</link>
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *canvas_slice,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-roi-ELLIPSOID-get-intersection-slice">amitk_roi_ELLIPSOID_get_intersection_slice</link>
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *canvas_slice,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim);
+<link linkend="void">void</link>        <link linkend="amitk-roi-ELLIPSOID-set-isocontour">amitk_roi_ELLIPSOID_set_isocontour</link>
+                                            (<link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> iso_vp);
+<link linkend="void">void</link>        <link linkend="amitk-roi-ELLIPSOID-erase-area">amitk_roi_ELLIPSOID_erase_area</link>  (<link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> erase_vp,
+                                             <link linkend="gint">gint</link> area_size);
+<link linkend="void">void</link>        <link linkend="amitk-roi-ELLIPSOID-calculate-on-data-set">amitk_roi_ELLIPSOID_calculate_on_data_set</link>
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             const <link linkend="guint">guint</link> gate,
+                                             const <link linkend="gboolean">gboolean</link> inverse,
+                                             <link linkend="void">void</link> (*calculation) (),
+                                             <link linkend="gpointer">gpointer</link> data);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="ROI-TYPE-ELLIPSOID-CAPS"/>ROI_TYPE_ELLIPSOID</title>
+<indexterm><primary>ROI_TYPE_ELLIPSOID</primary></indexterm><programlisting>#define ROI_TYPE_ELLIPSOID
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-ELLIPSOID-get-intersection-line"/>amitk_roi_ELLIPSOID_get_intersection_line ()</title>
+<indexterm><primary>amitk_roi_ELLIPSOID_get_intersection_line</primary></indexterm><programlisting><link linkend="GSList">GSList</link>*     amitk_roi_ELLIPSOID_get_intersection_line
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *canvas_slice,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>canvas_slice</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pixel_dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-ELLIPSOID-get-intersection-slice"/>amitk_roi_ELLIPSOID_get_intersection_slice ()</title>
+<indexterm><primary>amitk_roi_ELLIPSOID_get_intersection_slice</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_roi_ELLIPSOID_get_intersection_slice
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *canvas_slice,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>canvas_slice</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pixel_dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-ELLIPSOID-set-isocontour"/>amitk_roi_ELLIPSOID_set_isocontour ()</title>
+<indexterm><primary>amitk_roi_ELLIPSOID_set_isocontour</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_roi_ELLIPSOID_set_isocontour
+                                            (<link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> iso_vp);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>iso_vp</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-ELLIPSOID-erase-area"/>amitk_roi_ELLIPSOID_erase_area ()</title>
+<indexterm><primary>amitk_roi_ELLIPSOID_erase_area</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_roi_ELLIPSOID_erase_area  (<link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> erase_vp,
+                                             <link linkend="gint">gint</link> area_size);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>erase_vp</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>area_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-ELLIPSOID-calculate-on-data-set"/>amitk_roi_ELLIPSOID_calculate_on_data_set ()</title>
+<indexterm><primary>amitk_roi_ELLIPSOID_calculate_on_data_set</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_roi_ELLIPSOID_calculate_on_data_set
+                                            (const <link linkend="AmitkRoi">AmitkRoi</link> *roi,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             const <link linkend="guint">guint</link> gate,
+                                             const <link linkend="gboolean">gboolean</link> inverse,
+                                             <link linkend="void">void</link> (*calculation) (),
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>inverse</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>calculation</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

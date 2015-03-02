@@ -43,7 +43,6 @@ G_BEGIN_DECLS
 
 #define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)->view)
 #define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)
-#define AMITK_CANVAS_PIXBUF(obj)     (AMITK_CANVAS(obj)->pixbuf)
 
 typedef enum {
   AMITK_CANVAS_TYPE_NORMAL,
@@ -146,6 +145,8 @@ void          amitk_canvas_update_target        (AmitkCanvas * canvas,
 
 gint          amitk_canvas_get_width            (AmitkCanvas * canvas);
 gint          amitk_canvas_get_height           (AmitkCanvas * canvas);
+
+GdkPixbuf *   amitk_canvas_get_pixbuf           (AmitkCanvas * canvas);
 
 G_END_DECLS
 

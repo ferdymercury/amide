@@ -1,0 +1,239 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkRoi</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="SpaceObjects.html" title="Medical Image Objects"><link rel="previous" href="amitk-AmitkFiducialMark.html" title="AmitkFiducialMark"><link rel="next" href="amitk-AmitkStudy.html" title="AmitkStudy"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkFiducialMark.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="SpaceObjects.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkStudy.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkRoi"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkRoi</span></h2><p>AmitkRoi &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-TYPE-CAPS">AMITK_ROI_TYPE</a>                  (roi)
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-ISOCONTOUR-VALUE-CAPS">AMITK_ROI_ISOCONTOUR_VALUE</a>      (roi)
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-VOXEL-SIZE-CAPS">AMITK_ROI_VOXEL_SIZE</a>            (roi)
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-UNDRAWN-CAPS">AMITK_ROI_UNDRAWN</a>               (roi)
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-TYPE-ISOCONTOUR-CAPS">AMITK_ROI_TYPE_ISOCONTOUR</a>       (roi)
+#define     <a href="amitk-AmitkRoi.html#AMITK-ROI-GRANULARITY-CAPS">AMITK_ROI_GRANULARITY</a>
+enum        <a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a>;
+AmitkRoi*   <a href="amitk-AmitkRoi.html#amitk-roi-new">amitk_roi_new</a>                   (<a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> type);
+GSList*     <a href="amitk-AmitkRoi.html#amitk-roi-get-intersection-line">amitk_roi_get_intersection_line</a> (const AmitkRoi *roi,
+                                             const AmitkVolume *canvas_slice,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim);
+GSList*     <a href="amitk-AmitkRoi.html#amitk-roi-free-points-list">amitk_roi_free_points_list</a>      (GSList *list);
+AmitkDataSet* <a href="amitk-AmitkRoi.html#amitk-roi-get-intersection-slice">amitk_roi_get_intersection_slice</a>
+                                            (const AmitkRoi *roi,
+                                             const AmitkVolume *canvas_slice,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-isocontour-set-voxel-size">amitk_roi_isocontour_set_voxel_size</a>
+                                            (AmitkRoi *roi,
+                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> voxel_size);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-isocontour-calc-far-corner">amitk_roi_isocontour_calc_far_corner</a>
+                                            (AmitkRoi *roi);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-set-isocontour">amitk_roi_set_isocontour</a>        (AmitkRoi *roi,
+                                             AmitkDataSet *ds,
+                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> value_voxel);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-isocontour-erase-area">amitk_roi_isocontour_erase_area</a> (AmitkRoi *roi,
+                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> erase_voxel,
+                                             gint area_size);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-set-type">amitk_roi_set_type</a>              (AmitkRoi *roi,
+                                             <a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> new_type);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-calculate-on-data-set">amitk_roi_calculate_on_data_set</a> (const AmitkRoi *roi,
+                                             const AmitkDataSet *ds,
+                                             const guint frame,
+                                             const guint gate,
+                                             const gboolean inverse,
+                                             void (*calculation) (),
+                                             gpointer data);
+void        <a href="amitk-AmitkRoi.html#amitk-roi-erase-volume">amitk_roi_erase_volume</a>          (const AmitkRoi *roi,
+                                             AmitkDataSet *ds,
+                                             const gboolean outside,
+                                             gboolean (*update_func) (),
+                                             gpointer update_data);
+const gchar* <a href="amitk-AmitkRoi.html#amitk-roi-type-get-name">amitk_roi_type_get_name</a>        (const <a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> roi_type);
+<a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> <a href="amitk-AmitkRoi.html#amitk-rois-get-max-min-voxel-size">amitk_rois_get_max_min_voxel_size</a>
+                                            (GList *objects);
+
+</pre></div><div class="refsect1" lang="en"><a name="id2687060"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2687070"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2687075"></a><h3><a name="AMITK-ROI-TYPE-CAPS"></a>AMITK_ROI_TYPE()</h3><a class="indexterm" name="id2687086"></a><pre class="programlisting">#define AMITK_ROI_TYPE(roi)             (AMITK_ROI(roi)-&gt;type)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687121"></a><h3><a name="AMITK-ROI-ISOCONTOUR-VALUE-CAPS"></a>AMITK_ROI_ISOCONTOUR_VALUE()</h3><a class="indexterm" name="id2687133"></a><pre class="programlisting">#define AMITK_ROI_ISOCONTOUR_VALUE(roi) (AMITK_ROI(roi)-&gt;isocontour_value)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687167"></a><h3><a name="AMITK-ROI-VOXEL-SIZE-CAPS"></a>AMITK_ROI_VOXEL_SIZE()</h3><a class="indexterm" name="id2687179"></a><pre class="programlisting">#define AMITK_ROI_VOXEL_SIZE(roi)       (AMITK_ROI(roi)-&gt;voxel_size)
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687213"></a><h3><a name="AMITK-ROI-UNDRAWN-CAPS"></a>AMITK_ROI_UNDRAWN()</h3><a class="indexterm" name="id2687225"></a><pre class="programlisting">#define AMITK_ROI_UNDRAWN(roi)          (!AMITK_VOLUME_VALID(roi))
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687258"></a><h3><a name="AMITK-ROI-TYPE-ISOCONTOUR-CAPS"></a>AMITK_ROI_TYPE_ISOCONTOUR()</h3><a class="indexterm" name="id2687270"></a><pre class="programlisting">#define     AMITK_ROI_TYPE_ISOCONTOUR(roi)</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687303"></a><h3><a name="AMITK-ROI-GRANULARITY-CAPS"></a>AMITK_ROI_GRANULARITY</h3><a class="indexterm" name="id2687315"></a><pre class="programlisting">#define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension, so 1/64 is grain size */
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2687331"></a><h3><a name="AmitkRoiType"></a>enum AmitkRoiType</h3><a class="indexterm" name="id2687342"></a><pre class="programlisting">typedef enum {
+  AMITK_ROI_TYPE_ELLIPSOID, 
+  AMITK_ROI_TYPE_CYLINDER, 
+  AMITK_ROI_TYPE_BOX, 
+  AMITK_ROI_TYPE_ISOCONTOUR_2D, 
+  AMITK_ROI_TYPE_ISOCONTOUR_3D, 
+  AMITK_ROI_TYPE_NUM
+} AmitkRoiType;
+</pre><p>
+
+</p></div><hr><div class="refsect2" lang="en"><a name="id2687360"></a><h3><a name="amitk-roi-new"></a>amitk_roi_new ()</h3><a class="indexterm" name="id2687371"></a><pre class="programlisting">AmitkRoi*   amitk_roi_new                   (<a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687427"></a><h3><a name="amitk-roi-get-intersection-line"></a>amitk_roi_get_intersection_line ()</h3><a class="indexterm" name="id2687439"></a><pre class="programlisting">GSList*     amitk_roi_get_intersection_line (const AmitkRoi *roi,
+                                             const AmitkVolume *canvas_slice,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas_slice</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>pixel_dim</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687538"></a><h3><a name="amitk-roi-free-points-list"></a>amitk_roi_free_points_list ()</h3><a class="indexterm" name="id2687550"></a><pre class="programlisting">GSList*     amitk_roi_free_points_list      (GSList *list);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>list</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687605"></a><h3><a name="amitk-roi-get-intersection-slice"></a>amitk_roi_get_intersection_slice ()</h3><a class="indexterm" name="id2687617"></a><pre class="programlisting">AmitkDataSet* amitk_roi_get_intersection_slice
+                                            (const AmitkRoi *roi,
+                                             const AmitkVolume *canvas_slice,
+                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> pixel_dim);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas_slice</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>pixel_dim</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687717"></a><h3><a name="amitk-roi-isocontour-set-voxel-size"></a>amitk_roi_isocontour_set_voxel_size ()</h3><a class="indexterm" name="id2687730"></a><pre class="programlisting">void        amitk_roi_isocontour_set_voxel_size
+                                            (AmitkRoi *roi,
+                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> voxel_size);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>voxel_size</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687797"></a><h3><a name="amitk-roi-isocontour-calc-far-corner"></a>amitk_roi_isocontour_calc_far_corner ()</h3><a class="indexterm" name="id2687810"></a><pre class="programlisting">void        amitk_roi_isocontour_calc_far_corner
+                                            (AmitkRoi *roi);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687857"></a><h3><a name="amitk-roi-set-isocontour"></a>amitk_roi_set_isocontour ()</h3><a class="indexterm" name="id2687868"></a><pre class="programlisting">void        amitk_roi_set_isocontour        (AmitkRoi *roi,
+                                             AmitkDataSet *ds,
+                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> value_voxel);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>ds</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>value_voxel</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2687957"></a><h3><a name="amitk-roi-isocontour-erase-area"></a>amitk_roi_isocontour_erase_area ()</h3><a class="indexterm" name="id2687969"></a><pre class="programlisting">void        amitk_roi_isocontour_erase_area (AmitkRoi *roi,
+                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> erase_voxel,
+                                             gint area_size);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>erase_voxel</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>area_size</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2688057"></a><h3><a name="amitk-roi-set-type"></a>amitk_roi_set_type ()</h3><a class="indexterm" name="id2688068"></a><pre class="programlisting">void        amitk_roi_set_type              (AmitkRoi *roi,
+                                             <a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> new_type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_type</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2688135"></a><h3><a name="amitk-roi-calculate-on-data-set"></a>amitk_roi_calculate_on_data_set ()</h3><a class="indexterm" name="id2688147"></a><pre class="programlisting">void        amitk_roi_calculate_on_data_set (const AmitkRoi *roi,
+                                             const AmitkDataSet *ds,
+                                             const guint frame,
+                                             const guint gate,
+                                             const gboolean inverse,
+                                             void (*calculation) (),
+                                             gpointer data);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>ds</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>frame</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>gate</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>inverse</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>calculation</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>data</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2688321"></a><h3><a name="amitk-roi-erase-volume"></a>amitk_roi_erase_volume ()</h3><a class="indexterm" name="id2688332"></a><pre class="programlisting">void        amitk_roi_erase_volume          (const AmitkRoi *roi,
+                                             AmitkDataSet *ds,
+                                             const gboolean outside,
+                                             gboolean (*update_func) (),
+                                             gpointer update_data);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>ds</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>outside</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>update_func</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>update_data</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2688463"></a><h3><a name="amitk-roi-type-get-name"></a>amitk_roi_type_get_name ()</h3><a class="indexterm" name="id2688475"></a><pre class="programlisting">const gchar* amitk_roi_type_get_name        (const <a href="amitk-AmitkRoi.html#AmitkRoiType">AmitkRoiType</a> roi_type);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>roi_type</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2688533"></a><h3><a name="amitk-rois-get-max-min-voxel-size"></a>amitk_rois_get_max_min_voxel_size ()</h3><a class="indexterm" name="id2688546"></a><pre class="programlisting"><a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> amitk_rois_get_max_min_voxel_size
+                                            (GList *objects);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>objects</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkFiducialMark.html"><b>&lt;&lt; AmitkFiducialMark</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkStudy.html"><b>AmitkStudy &gt;&gt;</b></a></td></tr></table></body></html>

@@ -1,0 +1,374 @@
+<!-- ##### SECTION Title ##### -->
+AmitkStudy
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_STUDY_VIEW_CENTER ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VIEW_THICKNESS ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_ZOOM ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VIEW_START_TIME ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VIEW_DURATION ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CREATION_DATE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_FILENAME ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VOXEL_DIM ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_FUSE_TYPE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VIEW_MODE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_VISIBLE ##### -->
+<para>
+
+</para>
+
+@stu: 
+@canvas: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_TARGET ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_ROI_WIDTH ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_LINE_STYLE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_LAYOUT ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_MAINTAIN_SIZE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_LINE_PROFILE ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### ENUM AmitkFuseType ##### -->
+<para>
+
+</para>
+
+@AMITK_FUSE_TYPE_BLEND: 
+@AMITK_FUSE_TYPE_OVERLAY: 
+@AMITK_FUSE_TYPE_NUM: 
+
+<!-- ##### ENUM AmitkViewMode ##### -->
+<para>
+
+</para>
+
+@AMITK_VIEW_MODE_SINGLE: 
+@AMITK_VIEW_MODE_LINKED_2WAY: 
+@AMITK_VIEW_MODE_LINKED_3WAY: 
+@AMITK_VIEW_MODE_NUM: 
+
+<!-- ##### FUNCTION amitk_study_new ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_study_set_filename ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_filename: 
+
+
+<!-- ##### FUNCTION amitk_study_set_creation_date ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_date: 
+
+
+<!-- ##### FUNCTION amitk_study_set_view_thickness ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_thickness: 
+
+
+<!-- ##### FUNCTION amitk_study_set_view_center ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_center: 
+
+
+<!-- ##### FUNCTION amitk_study_set_view_start_time ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_start: 
+
+
+<!-- ##### FUNCTION amitk_study_set_view_duration ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_duration: 
+
+
+<!-- ##### FUNCTION amitk_study_set_fuse_type ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_fuse_type: 
+
+
+<!-- ##### FUNCTION amitk_study_set_view_mode ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_view_mode: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_visible ##### -->
+<para>
+
+</para>
+
+@study: 
+@view: 
+@visible: 
+
+
+<!-- ##### FUNCTION amitk_study_set_zoom ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_zoom: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_target ##### -->
+<para>
+
+</para>
+
+@study: 
+@always_on: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_roi_width ##### -->
+<para>
+
+</para>
+
+@study: 
+@roi_width: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_line_style ##### -->
+<para>
+
+</para>
+
+@study: 
+@line_style: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_layout ##### -->
+<para>
+
+</para>
+
+@study: 
+@layout: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_maintain_size ##### -->
+<para>
+
+</para>
+
+@study: 
+@maintain_size: 
+
+
+<!-- ##### FUNCTION amitk_study_set_canvas_target_empty_area ##### -->
+<para>
+
+</para>
+
+@study: 
+@target_empty_area: 
+
+
+<!-- ##### FUNCTION amitk_study_load_xml ##### -->
+<para>
+
+</para>
+
+@study_filename: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_study_save_xml ##### -->
+<para>
+
+</para>
+
+@study: 
+@study_filename: 
+@save_as_directory: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_fuse_type_get_name ##### -->
+<para>
+
+</para>
+
+@fuse_type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_view_mode_get_name ##### -->
+<para>
+
+</para>
+
+@view_mode: 
+@Returns: 
+
+

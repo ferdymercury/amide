@@ -367,7 +367,8 @@ void amitk_volume_set_center(AmitkVolume * volume, const AmitkPoint new_center) 
 }
 
 /* takes a volume and a coordinate space, and give the corners of a box with
-   sides orthogonal to the given space that totally encompasses the volume */
+   sides orthogonal to the given space that totally encompasses the volume.
+   The returned corners are in the coordinate space of the "space" variable */
 void amitk_volume_get_enclosing_corners(const AmitkVolume * volume,
 					const AmitkSpace * space,
 					AmitkCorners return_corners) {

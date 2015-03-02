@@ -414,7 +414,7 @@ amitk_dial_button_release (GtkWidget      *widget,
       dial->button = 0;
 
       if (dial->policy == GTK_UPDATE_DELAYED)
-	gtk_timeout_remove (dial->timer);
+	g_source_remove (dial->timer);
       
       if ((dial->policy != GTK_UPDATE_CONTINUOUS) &&
 	  (dial->old_value != dial->adjustment->value))
@@ -517,11 +517,11 @@ amitk_dial_update_mouse (AmitkDial *dial, gint x, gint y)
 	  if (dial->policy == GTK_UPDATE_DELAYED)
 	    {
 	      if (dial->timer)
-		gtk_timeout_remove (dial->timer);
+		g_source_remove (dial->timer);
 
-	      dial->timer = gtk_timeout_add (SCROLL_DELAY_LENGTH,
-					     (GtkFunction) amitk_dial_timer,
-					     (gpointer) dial);
+	      dial->timer = g_timeout_add (SCROLL_DELAY_LENGTH,
+					   (GtkFunction) amitk_dial_timer,
+					   (gpointer) dial);
 	    }
 	}
     }

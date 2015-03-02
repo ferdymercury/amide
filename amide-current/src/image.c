@@ -638,6 +638,8 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   return temp_image;
 }
 
+/* note, generally call this function with gate -1, only use the gate
+   parameter if you want to override the data set's specified gate */
 GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 GList ** pslice_cache,
 				 const gint max_slice_cache_size,
@@ -645,6 +647,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,
 				 const amide_time_t duration,
+				 const amide_intpoint_t gate,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
 				 const AmitkFuseType fuse_type) {
@@ -671,7 +674,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
   g_return_val_if_fail(objects != NULL, NULL);
 
   slices = amitk_data_sets_get_slices(objects, pslice_cache, max_slice_cache_size,
-				      start, duration, pixel_dim,view_volume);
+				      start, duration, gate, pixel_dim,view_volume);
   g_return_val_if_fail(slices != NULL, NULL);
 
   /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */

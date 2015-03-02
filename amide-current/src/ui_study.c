@@ -1096,7 +1096,8 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(ui_study->app), "enter_notify_event",
 		   G_CALLBACK(ui_study_cb_update_help_info), ui_study);
 
-  ui_study->tree_view = amitk_tree_view_new(ui_study->preferences,
+  ui_study->tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MAIN,
+					    ui_study->preferences,
 					    ui_study->progress_dialog);
 
   g_signal_connect(G_OBJECT(ui_study->tree_view), "help_event",

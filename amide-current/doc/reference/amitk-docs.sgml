@@ -1,29 +1,31 @@
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-<!notation PNG system "PNG">
-<!entity % local.notation.class "| PNG">
-
-<!entity hash "#">
-<!entity percent "%">
-<!entity AmitkCanvas SYSTEM "sgml/amitk_canvas.sgml">
-<!entity AmitkColorTable SYSTEM "sgml/amitk_color_table.sgml">
-<!entity AmitkDataSet SYSTEM "sgml/amitk_data_set.sgml">
-<!entity AmitkFiducialMark SYSTEM "sgml/amitk_fiducial_mark.sgml">
-<!entity AmitkObjectDialog SYSTEM "sgml/amitk_object_dialog.sgml">
-<!entity AmitkObject SYSTEM "sgml/amitk_object.sgml">
-<!entity AmitkPoint SYSTEM "sgml/amitk_point.sgml">
-<!entity AmitkRawData SYSTEM "sgml/amitk_raw_data.sgml">
-<!entity AmitkRoi SYSTEM "sgml/amitk_roi.sgml">
-<!entity AmitkSpaceEdit SYSTEM "sgml/amitk_space_edit.sgml">
-<!entity AmitkSpace SYSTEM "sgml/amitk_space.sgml">
-<!entity AmitkStudy SYSTEM "sgml/amitk_study.sgml">
-<!entity AmitkThreshold SYSTEM "sgml/amitk_threshold.sgml">
-<!entity AmitkTree SYSTEM "sgml/amitk_tree.sgml">
-<!entity AmitkVolume SYSTEM "sgml/amitk_volume.sgml">
-
-<!entity index-Object-Tree SYSTEM "sgml/tree_index.sgml">
-
-<!entity amitk-Theory SYSTEM "theory.sgml">
-
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY AmitkCanvas SYSTEM "xml/amitk_canvas.xml">
+<!ENTITY AmitkCanvasObject SYSTEM "xml/amitk_canvas_object.xml">
+<!ENTITY AmitkColorTable SYSTEM "xml/amitk_color_table.xml">
+<!ENTITY AmitkColorTableMenu SYSTEM "xml/amitk_color_table_menu.xml">
+<!ENTITY AmitkCommon SYSTEM "xml/amitk_common.xml">
+<!ENTITY AmitkDataSet SYSTEM "xml/amitk_data_set.xml">
+<!ENTITY AmitkFiducialMark SYSTEM "xml/amitk_fiducial_mark.xml">
+<!ENTITY AmitkFilter SYSTEM "xml/amitk_filter.xml">
+<!ENTITY AmitkLineProfile SYSTEM "xml/amitk_line_profile.xml">
+<!ENTITY AmitkObjectDialog SYSTEM "xml/amitk_object_dialog.xml">
+<!ENTITY AmitkObject SYSTEM "xml/amitk_object.xml">
+<!ENTITY AmitkPoint SYSTEM "xml/amitk_point.xml">
+<!ENTITY AmitkProgressDialog SYSTEM "xml/amitk_progress_dialog.xml">
+<!ENTITY AmitkRawData SYSTEM "xml/amitk_raw_data.xml">
+<!ENTITY AmitkRoi SYSTEM "xml/amitk_roi.xml">
+<!ENTITY AmitkSpaceEdit SYSTEM "xml/amitk_space_edit.xml">
+<!ENTITY AmitkSpace SYSTEM "xml/amitk_space.xml">
+<!ENTITY AmitkStudy SYSTEM "xml/amitk_study.xml">
+<!ENTITY AmitkThreshold SYSTEM "xml/amitk_threshold.xml">
+<!ENTITY AmitkTreeView SYSTEM "xml/amitk_tree_view.xml">
+<!ENTITY AmitkType SYSTEM "xml/amitk_type.xml">
+<!ENTITY AmitkVolume SYSTEM "xml/amitk_volume.xml">
+<!ENTITY version SYSTEM "version.xml">
+<!ENTITY index-Object-Tree SYSTEM "xml/tree_index.sgml">
+<!ENTITY amitk-Theory SYSTEM "theory.sgml">
 ]>
 <book id="index">
   <bookinfo>
@@ -39,7 +41,7 @@
       </author>
     </authorgroup>
     <copyright>
-       <year>2002</year> <holder>Andy Loening</holder>
+       <year>2004</year> <holder>Andy Loening</holder>
     </copyright>
  
     <legalnotice>
@@ -92,10 +94,14 @@ bindings for other languages.
   <part  id="amitk_base">
     <title>AMITK Core Objects</title>
         &AmitkColorTable;
+        &AmitkCommon;
+        &AmitkFilter;
+        &AmitkLineProfile;
         &AmitkObject;
         &AmitkPoint;
         &AmitkRawData;
         &AmitkSpace;
+        &AmitkType;
         &AmitkVolume;
   </part>
 
@@ -117,10 +123,13 @@ bindings for other languages.
     <chapter id="AmitkWidgets">
       <title>Amitk Widgets</title>
         &AmitkCanvas;
+        &AmitkCanvasObject;
+        &AmitkColorTableMenu;
         &AmitkObjectDialog;
+        &AmitkProgressDialog;
         &AmitkSpaceEdit;
         &AmitkThreshold;
-        &AmitkTree;
+        &AmitkTreeView;
     </chapter>
 
   </part>

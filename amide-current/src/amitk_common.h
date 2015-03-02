@@ -25,7 +25,10 @@
 
 /* header files that are always needed with this file */
 #include <gtk/gtk.h>
+#include <libgnomecanvas/libgnomecanvas.h>
 
 void amitk_real_cell_data_func(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
 			       GtkTreeModel *tree_model, GtkTreeIter *iter, gpointer data);
 gint amitk_spin_button_scientific_output (GtkSpinButton *spin_button, gpointer data);
+GdkPixbuf * amitk_get_pixbuf_from_canvas(GnomeCanvas * canvas, gint xoffset, gint yoffset,
+					 gint width, gint height);

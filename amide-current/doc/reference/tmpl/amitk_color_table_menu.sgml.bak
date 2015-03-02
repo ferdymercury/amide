@@ -1,0 +1,34 @@
+<!-- ##### SECTION Title ##### -->
+AmitkColorTableMenu
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_COLOR_TABLE_MENU_COLOR_TABLE ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### FUNCTION amitk_color_table_menu_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+

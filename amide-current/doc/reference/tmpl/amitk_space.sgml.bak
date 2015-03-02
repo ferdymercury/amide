@@ -1,0 +1,246 @@
+<!-- ##### SECTION Title ##### -->
+AmitkSpace
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_SPACE_AXES ##### -->
+<para>
+
+</para>
+
+@space: 
+
+
+<!-- ##### MACRO AMITK_SPACE_OFFSET ##### -->
+<para>
+
+</para>
+
+@space: 
+
+
+<!-- ##### MACRO AMITK_UNDO_LEVEL ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_space_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_write_xml ##### -->
+<para>
+
+</para>
+
+@node: 
+@descriptor: 
+@space: 
+
+
+<!-- ##### FUNCTION amitk_space_read_xml ##### -->
+<para>
+
+</para>
+
+@nodes: 
+@descriptor: 
+@perror_buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_set_offset ##### -->
+<para>
+
+</para>
+
+@space: 
+@new_offset: 
+
+
+<!-- ##### FUNCTION amitk_space_shift_offset ##### -->
+<para>
+
+</para>
+
+@space: 
+@shift: 
+
+
+<!-- ##### FUNCTION amitk_space_set_axes ##### -->
+<para>
+
+</para>
+
+@space: 
+@new_axes: 
+@center_of_rotation: 
+
+
+<!-- ##### FUNCTION amitk_space_transform ##### -->
+<para>
+
+</para>
+
+@space: 
+@transform_space: 
+
+
+<!-- ##### FUNCTION amitk_space_transform_axes ##### -->
+<para>
+
+</para>
+
+@space: 
+@transform_axes: 
+@center_of_rotation: 
+
+
+<!-- ##### FUNCTION amitk_space_scale ##### -->
+<para>
+
+</para>
+
+@space: 
+@ref_point: 
+@scaling: 
+
+
+<!-- ##### FUNCTION amitk_space_get_axis ##### -->
+<para>
+
+</para>
+
+@space: 
+@which_axis: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_get_enclosing_corners ##### -->
+<para>
+
+</para>
+
+@in_space: 
+@in_corners: 
+@out_space: 
+@out_corners: 
+
+
+<!-- ##### FUNCTION amitk_space_copy ##### -->
+<para>
+
+</para>
+
+@space: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_copy_in_place ##### -->
+<para>
+
+</para>
+
+@dest_space: 
+@src_space: 
+
+
+<!-- ##### FUNCTION amitk_space_equal ##### -->
+<para>
+
+</para>
+
+@space1: 
+@space2: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_invert_axis ##### -->
+<para>
+
+</para>
+
+@space: 
+@which_axis: 
+@center_of_inversion: 
+
+
+<!-- ##### FUNCTION amitk_space_rotate_on_vector ##### -->
+<para>
+
+</para>
+
+@space: 
+@vector: 
+@theta: 
+@center_of_rotation: 
+
+
+<!-- ##### FUNCTION amitk_space_get_view_space ##### -->
+<para>
+
+</para>
+
+@view: 
+@layout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_space_set_view_space ##### -->
+<para>
+
+</para>
+
+@set_space: 
+@view: 
+@layout: 
+
+
+<!-- ##### MACRO amitk_space_s2s ##### -->
+<para>
+
+</para>
+
+@in_space: 
+@out_space: 
+@in: 
+
+
+<!-- ##### MACRO amitk_space_s2s_dim ##### -->
+<para>
+
+</para>
+
+@in_space: 
+@out_space: 
+@in: 
+
+
+<!-- ##### FUNCTION amitk_space_print ##### -->
+<para>
+
+</para>
+
+@space: 
+@message: 
+
+

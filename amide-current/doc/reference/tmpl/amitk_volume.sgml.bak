@@ -1,0 +1,163 @@
+<!-- ##### SECTION Title ##### -->
+amitk_volume
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_VOLUME_CORNER ##### -->
+<para>
+
+</para>
+
+@vol: 
+
+
+<!-- ##### MACRO AMITK_VOLUME_X_CORNER ##### -->
+<para>
+
+</para>
+
+@vol: 
+
+
+<!-- ##### MACRO AMITK_VOLUME_Y_CORNER ##### -->
+<para>
+
+</para>
+
+@vol: 
+
+
+<!-- ##### MACRO AMITK_VOLUME_Z_CORNER ##### -->
+<para>
+
+</para>
+
+@vol: 
+
+
+<!-- ##### MACRO AMITK_VOLUME_VALID ##### -->
+<para>
+
+</para>
+
+@vol: 
+
+
+<!-- ##### FUNCTION amitk_volume_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volume_point_in_bounds ##### -->
+<para>
+
+</para>
+
+@volume: 
+@point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volume_place_in_bounds ##### -->
+<para>
+
+</para>
+
+@volume: 
+@point: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volume_get_center ##### -->
+<para>
+
+</para>
+
+@volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volume_set_corner ##### -->
+<para>
+
+</para>
+
+@volume: 
+@corner: 
+
+
+<!-- ##### FUNCTION amitk_volume_set_z_corner ##### -->
+<para>
+
+</para>
+
+@volume: 
+@z: 
+
+
+<!-- ##### FUNCTION amitk_volume_set_center ##### -->
+<para>
+
+</para>
+
+@volume: 
+@center: 
+
+
+<!-- ##### FUNCTION amitk_volume_get_enclosing_corners ##### -->
+<para>
+
+</para>
+
+@volume: 
+@space: 
+@return_corners: 
+
+
+<!-- ##### FUNCTION amitk_volumes_get_enclosing_corners ##### -->
+<para>
+
+</para>
+
+@volumes: 
+@space: 
+@return_corners: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volume_volume_intersection_corners ##### -->
+<para>
+
+</para>
+
+@volume1: 
+@volume2: 
+@return_corners: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volumes_get_max_size ##### -->
+<para>
+
+</para>
+
+@objects: 
+@Returns: 
+
+

@@ -8,6 +8,7 @@ SUBDIRS = \
 	win32 \
 	src \
 	doc \
+	man \
 	help \
 	omf-install \
 	po \

@@ -73,6 +73,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   }
 
   /* initialize the data */
+  i_voxel.t = i_voxel.g = 0;
   for (i_voxel.z = 0; i_voxel.z < kernel->dim.z; i_voxel.z++) 
     for (i_voxel.y = 0; i_voxel.y < kernel->dim.y; i_voxel.y++) 
       for (i_voxel.x = 0; i_voxel.x < kernel->dim.x; i_voxel.x++) 
@@ -84,7 +85,6 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   half.y = kernel_size.y>>1;
   half.x = kernel_size.x>>1;
 
-  i_voxel.t = i_voxel.g = 0;
   total = 0.0;
 
   for (i_voxel.z = 0; i_voxel.z < kernel_size.z; i_voxel.z++) {

@@ -63,6 +63,11 @@
 
 #include <gdk/gdkkeysyms.h>
 
+/* gtkfilesel still uses gtkoptionmenu... */
+#undef GTK_DISABLE_DEPRECATED
+#include <gtk/gtkoptionmenu.h>
+#define GTK_DISABLE_DEPRECATED
+
 #define WANT_HPANED 1
 
 #ifdef G_OS_WIN32
@@ -667,7 +672,7 @@ amitk_xif_selection_init (AmitkXifSelection *filesel)
   gtk_widget_show (pulldown_hbox);
   
   /* Pulldown menu */
-  filesel->history_pulldown = gtk_option_menu_new ();
+  filesel->history_pulldown = gtk_option_menu_new();
   gtk_widget_show (filesel->history_pulldown);
   gtk_box_pack_start (GTK_BOX (pulldown_hbox), filesel->history_pulldown, 
 		      FALSE, FALSE, 0);

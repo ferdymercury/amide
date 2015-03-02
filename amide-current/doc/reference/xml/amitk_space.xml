@@ -1,0 +1,519 @@
+<refentry id="amitk-AmitkSpace">
+<refmeta>
+<refentrytitle>AmitkSpace</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkSpace</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-SPACE-AXES-CAPS">AMITK_SPACE_AXES</link>                (space)
+#define     <link linkend="AMITK-SPACE-OFFSET-CAPS">AMITK_SPACE_OFFSET</link>              (space)
+#define     <link linkend="AMITK-UNDO-LEVEL-CAPS">AMITK_UNDO_LEVEL</link>
+<link linkend="AmitkSpace">AmitkSpace</link>* <link linkend="amitk-space-new">amitk_space_new</link>                 (void);
+<link linkend="void">void</link>        <link linkend="amitk-space-write-xml">amitk_space_write_xml</link>           (<link linkend="xmlNodePtr">xmlNodePtr</link> node,
+                                             <link linkend="gchar">gchar</link> *descriptor,
+                                             <link linkend="AmitkSpace">AmitkSpace</link> *space);
+<link linkend="AmitkSpace">AmitkSpace</link>* <link linkend="amitk-space-read-xml">amitk_space_read_xml</link>            (<link linkend="xmlNodePtr">xmlNodePtr</link> nodes,
+                                             <link linkend="gchar">gchar</link> *descriptor,
+                                             <link linkend="gchar">gchar</link> **perror_buf);
+<link linkend="void">void</link>        <link linkend="amitk-space-set-offset">amitk_space_set_offset</link>          (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> new_offset);
+<link linkend="void">void</link>        <link linkend="amitk-space-shift-offset">amitk_space_shift_offset</link>        (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> shift);
+<link linkend="void">void</link>        <link linkend="amitk-space-set-axes">amitk_space_set_axes</link>            (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxes">AmitkAxes</link> new_axes,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);
+<link linkend="void">void</link>        <link linkend="amitk-space-transform">amitk_space_transform</link>           (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *transform_space);
+<link linkend="void">void</link>        <link linkend="amitk-space-transform-axes">amitk_space_transform_axes</link>      (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxes">AmitkAxes</link> transform_axes,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);
+<link linkend="void">void</link>        <link linkend="amitk-space-scale">amitk_space_scale</link>               (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> ref_point,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> scaling);
+<link linkend="AmitkPoint">AmitkPoint</link>  <link linkend="amitk-space-get-axis">amitk_space_get_axis</link>            (const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxis">AmitkAxis</link> which_axis);
+<link linkend="void">void</link>        <link linkend="amitk-space-get-enclosing-corners">amitk_space_get_enclosing_corners</link>
+                                            (const <link linkend="AmitkSpace">AmitkSpace</link> *in_space,
+                                             const <link linkend="AmitkCorners">AmitkCorners</link> in_corners,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *out_space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> out_corners);
+<link linkend="AmitkSpace">AmitkSpace</link>* <link linkend="amitk-space-copy">amitk_space_copy</link>                (const <link linkend="AmitkSpace">AmitkSpace</link> *space);
+<link linkend="void">void</link>        <link linkend="amitk-space-copy-in-place">amitk_space_copy_in_place</link>       (<link linkend="AmitkSpace">AmitkSpace</link> *dest_space,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *src_space);
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-space-equal">amitk_space_equal</link>               (const <link linkend="AmitkSpace">AmitkSpace</link> *space1,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space2);
+<link linkend="void">void</link>        <link linkend="amitk-space-invert-axis">amitk_space_invert_axis</link>         (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxis">AmitkAxis</link> which_axis,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_inversion);
+<link linkend="void">void</link>        <link linkend="amitk-space-rotate-on-vector">amitk_space_rotate_on_vector</link>    (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> vector,
+                                             const <link linkend="amide-real-t">amide_real_t</link> theta,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);
+<link linkend="AmitkSpace">AmitkSpace</link>* <link linkend="amitk-space-get-view-space">amitk_space_get_view_space</link>      (const <link linkend="AmitkView">AmitkView</link> view,
+                                             const <link linkend="AmitkLayout">AmitkLayout</link> layout);
+<link linkend="void">void</link>        <link linkend="amitk-space-set-view-space">amitk_space_set_view_space</link>      (<link linkend="AmitkSpace">AmitkSpace</link> *set_space,
+                                             const <link linkend="AmitkView">AmitkView</link> view,
+                                             const <link linkend="AmitkLayout">AmitkLayout</link> layout);
+#define     <link linkend="amitk-space-s2s">amitk_space_s2s</link>                 (in_space, out_space, in)
+#define     <link linkend="amitk-space-s2s-dim">amitk_space_s2s_dim</link>             (in_space, out_space, in)
+<link linkend="void">void</link>        <link linkend="amitk-space-print">amitk_space_print</link>               (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="gchar">gchar</link> *message);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-SPACE-AXES-CAPS"/>AMITK_SPACE_AXES()</title>
+<indexterm><primary>AMITK_SPACE_AXES</primary></indexterm><programlisting>#define AMITK_SPACE_AXES(space)         (AMITK_SPACE(space)-&gt;axes)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-SPACE-OFFSET-CAPS"/>AMITK_SPACE_OFFSET()</title>
+<indexterm><primary>AMITK_SPACE_OFFSET</primary></indexterm><programlisting>#define AMITK_SPACE_OFFSET(space)       (AMITK_SPACE(space)-&gt;offset)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-UNDO-LEVEL-CAPS"/>AMITK_UNDO_LEVEL</title>
+<indexterm><primary>AMITK_UNDO_LEVEL</primary></indexterm><programlisting>#define AMITK_UNDO_LEVEL 10
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-new"/>amitk_space_new ()</title>
+<indexterm><primary>amitk_space_new</primary></indexterm><programlisting><link linkend="AmitkSpace">AmitkSpace</link>* amitk_space_new                 (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-write-xml"/>amitk_space_write_xml ()</title>
+<indexterm><primary>amitk_space_write_xml</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_write_xml           (<link linkend="xmlNodePtr">xmlNodePtr</link> node,
+                                             <link linkend="gchar">gchar</link> *descriptor,
+                                             <link linkend="AmitkSpace">AmitkSpace</link> *space);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>node</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>descriptor</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-read-xml"/>amitk_space_read_xml ()</title>
+<indexterm><primary>amitk_space_read_xml</primary></indexterm><programlisting><link linkend="AmitkSpace">AmitkSpace</link>* amitk_space_read_xml            (<link linkend="xmlNodePtr">xmlNodePtr</link> nodes,
+                                             <link linkend="gchar">gchar</link> *descriptor,
+                                             <link linkend="gchar">gchar</link> **perror_buf);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>nodes</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>descriptor</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>perror_buf</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-set-offset"/>amitk_space_set_offset ()</title>
+<indexterm><primary>amitk_space_set_offset</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_set_offset          (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> new_offset);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_offset</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-shift-offset"/>amitk_space_shift_offset ()</title>
+<indexterm><primary>amitk_space_shift_offset</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_shift_offset        (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> shift);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>shift</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-set-axes"/>amitk_space_set_axes ()</title>
+<indexterm><primary>amitk_space_set_axes</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_set_axes            (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxes">AmitkAxes</link> new_axes,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_axes</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>center_of_rotation</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-transform"/>amitk_space_transform ()</title>
+<indexterm><primary>amitk_space_transform</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_transform           (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *transform_space);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>transform_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-transform-axes"/>amitk_space_transform_axes ()</title>
+<indexterm><primary>amitk_space_transform_axes</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_transform_axes      (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxes">AmitkAxes</link> transform_axes,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>transform_axes</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>center_of_rotation</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-scale"/>amitk_space_scale ()</title>
+<indexterm><primary>amitk_space_scale</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_scale               (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> ref_point,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> scaling);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ref_point</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>scaling</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-get-axis"/>amitk_space_get_axis ()</title>
+<indexterm><primary>amitk_space_get_axis</primary></indexterm><programlisting><link linkend="AmitkPoint">AmitkPoint</link>  amitk_space_get_axis            (const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxis">AmitkAxis</link> which_axis);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which_axis</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-get-enclosing-corners"/>amitk_space_get_enclosing_corners ()</title>
+<indexterm><primary>amitk_space_get_enclosing_corners</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_get_enclosing_corners
+                                            (const <link linkend="AmitkSpace">AmitkSpace</link> *in_space,
+                                             const <link linkend="AmitkCorners">AmitkCorners</link> in_corners,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *out_space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> out_corners);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>in_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>in_corners</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>out_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>out_corners</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-copy"/>amitk_space_copy ()</title>
+<indexterm><primary>amitk_space_copy</primary></indexterm><programlisting><link linkend="AmitkSpace">AmitkSpace</link>* amitk_space_copy                (const <link linkend="AmitkSpace">AmitkSpace</link> *space);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-copy-in-place"/>amitk_space_copy_in_place ()</title>
+<indexterm><primary>amitk_space_copy_in_place</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_copy_in_place       (<link linkend="AmitkSpace">AmitkSpace</link> *dest_space,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *src_space);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dest_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>src_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-equal"/>amitk_space_equal ()</title>
+<indexterm><primary>amitk_space_equal</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_space_equal               (const <link linkend="AmitkSpace">AmitkSpace</link> *space1,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space2);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space1</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space2</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-invert-axis"/>amitk_space_invert_axis ()</title>
+<indexterm><primary>amitk_space_invert_axis</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_invert_axis         (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkAxis">AmitkAxis</link> which_axis,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_inversion);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which_axis</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>center_of_inversion</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-rotate-on-vector"/>amitk_space_rotate_on_vector ()</title>
+<indexterm><primary>amitk_space_rotate_on_vector</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_rotate_on_vector    (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> vector,
+                                             const <link linkend="amide-real-t">amide_real_t</link> theta,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center_of_rotation);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>vector</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>theta</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>center_of_rotation</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-get-view-space"/>amitk_space_get_view_space ()</title>
+<indexterm><primary>amitk_space_get_view_space</primary></indexterm><programlisting><link linkend="AmitkSpace">AmitkSpace</link>* amitk_space_get_view_space      (const <link linkend="AmitkView">AmitkView</link> view,
+                                             const <link linkend="AmitkLayout">AmitkLayout</link> layout);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>layout</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-set-view-space"/>amitk_space_set_view_space ()</title>
+<indexterm><primary>amitk_space_set_view_space</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_set_view_space      (<link linkend="AmitkSpace">AmitkSpace</link> *set_space,
+                                             const <link linkend="AmitkView">AmitkView</link> view,
+                                             const <link linkend="AmitkLayout">AmitkLayout</link> layout);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>set_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>layout</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-s2s"/>amitk_space_s2s()</title>
+<indexterm><primary>amitk_space_s2s</primary></indexterm><programlisting>#define amitk_space_s2s(in_space, out_space, in) (amitk_space_b2s((out_space), amitk_space_s2b((in_space), (in))))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>in_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>out_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-s2s-dim"/>amitk_space_s2s_dim()</title>
+<indexterm><primary>amitk_space_s2s_dim</primary></indexterm><programlisting>#define amitk_space_s2s_dim(in_space, out_space, in) (amitk_space_b2s_dim((out_space), amitk_space_s2b_dim((in_space), (in))))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>in_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>out_space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-print"/>amitk_space_print ()</title>
+<indexterm><primary>amitk_space_print</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_space_print               (<link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="gchar">gchar</link> *message);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

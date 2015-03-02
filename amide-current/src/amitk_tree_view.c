@@ -63,7 +63,16 @@ enum {
   LAST_SIGNAL
 } amitk_tree_view_signals;
 
+
+/* notes 
+   MULTIPLE_SELECTION - is only used in AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION
+   VISIBLE_SINGLE/VISIBLE_LINKED_2WAY/VISIBLE_LINKED_3WAY - are used in
+     AMITK_TREE_VIEW_MODE_MAIN, and directly correlate with the related
+     AmitkObject parameters
+
+*/
 enum {
+  COLUMN_MULTIPLE_SELECTION,
   COLUMN_VISIBLE_SINGLE,
   COLUMN_VISIBLE_LINKED_2WAY,
   COLUMN_VISIBLE_LINKED_3WAY,
@@ -332,9 +341,12 @@ static void tree_view_destroy (GtkObject * object) {
 
 
 
+/* function only for AMITK_TREE_VIEW_MODE_MAIN */
 static void tree_view_set_view_mode(AmitkTreeView * tree_view, AmitkViewMode view_mode) {
 
   AmitkViewMode i_view_mode;
+
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   /* remove all linked columns, we'll add them back below if needed */
   for (i_view_mode = 0; i_view_mode <= tree_view->prev_view_mode; i_view_mode++) {
@@ -398,7 +410,7 @@ static gboolean tree_view_button_press_event (GtkWidget      *widget,
   gint cell_x, cell_y;
   GtkTreeViewColumn * column;
   gboolean return_value;
-  GtkTreeSelection *selection;
+  GtkTreeSelection *selection=NULL;
   gboolean valid_row;
   AmitkTreeView * tree_view;
 
@@ -408,30 +420,49 @@ static gboolean tree_view_button_press_event (GtkWidget      *widget,
 
   //  g_print("button press\n");
 
-  if (event->button == 1) {
-    tree_view->drag_begin_possible = TRUE;
-    tree_view->press_x = event->x;
-    tree_view->press_y = event->y;
-  }
-
   valid_row = gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view), event->x, event->y, 
 					    &(tree_view->current_path), 
 					    &column, &cell_x, &cell_y);
+  
+  switch(AMITK_TREE_VIEW(tree_view)->mode) {
+    
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    
+    if (event->button == 1) {
+      tree_view->drag_begin_possible = TRUE;
+      tree_view->press_x = event->x;
+      tree_view->press_y = event->y;
+    }
+    
+    /* making the selection mode none reduces some of the flickering caused by us
+       manually trying to force which row is selected */
+    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
+    gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
+    break;
 
-  /* making the selection mode none reduces some of the flickering caused by us
-     manually trying to force which row is selected */
-  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
-  gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
-
+  default:
+    break;
+  }
+    
   /* run the tree widget's button press event first */
   return_value = GTK_WIDGET_CLASS (parent_class)->button_press_event (widget, event);
+    
 
-  /* reset what's the active mark */
-  gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
-  amitk_tree_view_set_active_object(tree_view, tree_view->active_object);
 
-  if ((event->button == 3) && !valid_row)
-    tree_view_popup_roi_menu(tree_view, NULL, event->button, event->time);
+  switch(AMITK_TREE_VIEW(tree_view)->mode) {
+    
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    /* reset what's the active mark */
+    gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
+    amitk_tree_view_set_active_object(tree_view, tree_view->active_object);
+    
+    if ((event->button == 3) && !valid_row)
+      tree_view_popup_roi_menu(tree_view, NULL, event->button, event->time);
+    break;
+
+  default:
+    break;
+  }
 
   return return_value;
 }
@@ -454,11 +485,11 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
   //		   gboolean        del,
   //		   guint32         time)
   //    gtk_grab_remove (widget);
-
+  
   /* figure out if this click was on an item in the tree */
   if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view), event->x, event->y, 
 				    &path, &column, &cell_x, &cell_y)) {
-
+    
     /* make sure this isn't the expand button, and we're trying to expand,
        also check that we're doing a button release on the object we started
        the button press with */
@@ -472,6 +503,7 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
       gboolean make_active = FALSE;
       gboolean popup = FALSE;
       gboolean add_object = FALSE;
+      gboolean multiple_selection;
       gboolean visible[AMITK_VIEW_MODE_NUM];
       gboolean visible_at_all;
       AmitkObjectType add_type = -1;
@@ -482,14 +514,15 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
       model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
       gtk_tree_model_get_iter(model, &iter, path);
       gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, 
+			 COLUMN_MULTIPLE_SELECTION, &multiple_selection,
 			 COLUMN_VISIBLE_SINGLE, &(visible[AMITK_VIEW_MODE_SINGLE]),
 			 COLUMN_VISIBLE_LINKED_2WAY, &(visible[AMITK_VIEW_MODE_LINKED_2WAY]),
 			 COLUMN_VISIBLE_LINKED_3WAY, &(visible[AMITK_VIEW_MODE_LINKED_3WAY]),
 			 -1);
-
+      
       view_mode = AMITK_VIEW_MODE_SINGLE;/* default */
       visible_at_all = visible[AMITK_VIEW_MODE_SINGLE]; 
-
+      
       for (i_view_mode = AMITK_VIEW_MODE_NUM-1; i_view_mode > 0; i_view_mode--) {
 	visible_at_all = visible_at_all || visible[i_view_mode];
 	if (column == tree_view->select_column[i_view_mode]) {
@@ -497,60 +530,86 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
 	}
       }
 
-      switch (event->button) {
+      switch(tree_view->mode) {
+      case AMITK_TREE_VIEW_MODE_MAIN:
+
+	switch (event->button) {
 	
-      case 1: /* left button */
-	if (!AMITK_IS_STUDY(object)) {
-	  if (visible[view_mode])
-	    unselect = TRUE;
-	  else
-	    select = TRUE;
-	}
-	break;
-	
-      case 2: /* middle button */
-	make_active = TRUE;
-	if ((!visible_at_all) && (!AMITK_IS_STUDY(object)))
-	  select = TRUE;
-	break;
-	
-      case 3: /* right button */
-	if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)) {
-	if (object != NULL)
-	  if (AMITK_IS_DATA_SET(object)) {
-	    add_object=TRUE;
-	    if (event->state & GDK_SHIFT_MASK)
-	      add_type=AMITK_OBJECT_TYPE_ROI;
+	case 1: /* left button */
+	  if (!AMITK_IS_STUDY(object)) {
+	    if (visible[view_mode])
+	      unselect = TRUE;
 	    else
-	      add_type=AMITK_OBJECT_TYPE_FIDUCIAL_MARK;
+	      select = TRUE;
 	  }
-	} else {
-	  popup = TRUE;
+	  break;
+	  
+	case 2: /* middle button */
+	  make_active = TRUE;
+	  if ((!visible_at_all) && (!AMITK_IS_STUDY(object)))
+	    select = TRUE;
+	  break;
+	  
+	case 3: /* right button */
+	  if (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)) {
+	    if (object != NULL)
+	      if (AMITK_IS_DATA_SET(object)) {
+		add_object=TRUE;
+		if (event->state & GDK_SHIFT_MASK)
+		  add_type=AMITK_OBJECT_TYPE_ROI;
+		else
+		  add_type=AMITK_OBJECT_TYPE_FIDUCIAL_MARK;
+	      }
+	  } else {
+	    popup = TRUE;
+	  }
+	  break;
+	  
+	default:
+	  g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+	  break;
+	}
+      
+	if (select)
+	  amitk_object_select(object, view_mode);
+	else if (unselect) 
+	  amitk_object_unselect(object, view_mode);
+	
+	if (make_active)
+	  g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,object);
+      
+	if (popup)
+	  g_signal_emit(G_OBJECT(tree_view), tree_view_signals[POPUP_OBJECT], 0, object);
+      
+	if ((add_object) && (add_type==AMITK_OBJECT_TYPE_FIDUCIAL_MARK))
+	  g_signal_emit(G_OBJECT(tree_view),  tree_view_signals[ADD_OBJECT], 0, object, add_type, 0);
+      
+	if ((add_object) && (add_type==AMITK_OBJECT_TYPE_ROI))
+	  tree_view_popup_roi_menu(tree_view, object, event->button, event->time);
+	break;
+
+
+
+      case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
+	switch (event->button) {
+
+	case 1: /* left button */
+	  if (multiple_selection)
+	    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_MULTIPLE_SELECTION, FALSE, -1);
+	  else if (!AMITK_IS_STUDY(object))
+	    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_MULTIPLE_SELECTION, TRUE, -1);
+	  break;
+	
+	default:
+	  break;
 	}
 	break;
-	
+
       default:
-	g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
 	break;
       }
-      
-      if (select)
-	amitk_object_select(object, view_mode);
-      else if (unselect) 
-	amitk_object_unselect(object, view_mode);
-
-      if (make_active)
-	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,object);
-      
-      if (popup)
-	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[POPUP_OBJECT], 0, object);
-      
-      if ((add_object) && (add_type==AMITK_OBJECT_TYPE_FIDUCIAL_MARK))
-	g_signal_emit(G_OBJECT(tree_view),  tree_view_signals[ADD_OBJECT], 0, object, add_type, 0);
-      
-      if ((add_object) && (add_type==AMITK_OBJECT_TYPE_ROI))
-	tree_view_popup_roi_menu(tree_view, object, event->button, event->time);
     }
+
 
     gtk_tree_path_free(path);
   }
@@ -578,21 +637,28 @@ static gboolean tree_view_key_press_event(GtkWidget * widget,
   g_return_val_if_fail(AMITK_IS_TREE_VIEW(widget), FALSE);
   tree_view = AMITK_TREE_VIEW(widget);
 
-  if (event->state & GDK_CONTROL_MASK) 
-    if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view), 
-				      tree_view->mouse_x, 
-				      tree_view->mouse_y, 
-				      &path, NULL, &cell_x, &cell_y)) {
+  switch (tree_view->mode) {
 
-      model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
-      gtk_tree_model_get_iter(model, &iter, path);
-      gtk_tree_path_free(path);
-      gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, -1);
-      
-      if ((event->keyval == GDK_x) || (event->keyval == GDK_X))
-	if (!AMITK_IS_STUDY(object))
-	  g_signal_emit(G_OBJECT(tree_view), tree_view_signals[DELETE_OBJECT], 0, object);
-    }
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    if (event->state & GDK_CONTROL_MASK) 
+      if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view), 
+					tree_view->mouse_x, 
+					tree_view->mouse_y, 
+					&path, NULL, &cell_x, &cell_y)) {
+	
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_path_free(path);
+	gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, -1);
+	
+	if ((event->keyval == GDK_x) || (event->keyval == GDK_X))
+	  if (!AMITK_IS_STUDY(object))
+	    g_signal_emit(G_OBJECT(tree_view), tree_view_signals[DELETE_OBJECT], 0, object);
+      }
+    break;
+  default:
+    break;
+  }
 
   return GTK_WIDGET_CLASS (parent_class)->key_press_event (widget, event);
 }
@@ -607,6 +673,7 @@ static void tree_view_emit_help_signal(AmitkTreeView * tree_view) {
   GtkTreeIter iter;
   AmitkObject * object;
 
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(tree_view), tree_view->mouse_x, tree_view->mouse_y,
 				    &path, NULL, &cell_x, &cell_y)) {
@@ -653,7 +720,14 @@ static gboolean tree_view_motion_notify_event(GtkWidget *widget, GdkEventMotion 
 
   tree_view->mouse_x = event->x;
   tree_view->mouse_y = event->y;
-  tree_view_emit_help_signal(tree_view);
+
+  switch(tree_view->mode) {
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    tree_view_emit_help_signal(tree_view);
+    break;
+  default:
+    break;
+  }
 
   /* pass the signal on */
   return GTK_WIDGET_CLASS (parent_class)->motion_notify_event (widget, event);
@@ -673,18 +747,26 @@ static gboolean tree_view_enter_notify_event(GtkWidget * widget,
 
   tree_view->mouse_x = event->x;
   tree_view->mouse_y = event->y;
-  tree_view_emit_help_signal(tree_view);
 
-  gtk_widget_grab_focus(widget); /* move the keyboard entry focus into the tree */
+  switch(tree_view->mode) {
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    tree_view_emit_help_signal(tree_view);
 
-  /* double check that the right row is selected - gtk sometimes moves the selection to the 1st row */
-  if (tree_view->active_object != NULL) {
-    if (tree_view_find_object(tree_view, tree_view->active_object, &iter)) {
-      selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
-      if (!gtk_tree_selection_iter_is_selected(selection, &iter))
-	gtk_tree_selection_select_iter(selection, &iter);
+    gtk_widget_grab_focus(widget); /* move the keyboard entry focus into the tree */
+
+    /* double check that the right row is selected - gtk sometimes moves the selection to the 1st row */
+    if (tree_view->active_object != NULL) {
+      if (tree_view_find_object(tree_view, tree_view->active_object, &iter)) {
+	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(tree_view));
+	if (!gtk_tree_selection_iter_is_selected(selection, &iter))
+	  gtk_tree_selection_select_iter(selection, &iter);
+      }
     }
+    break;
+  default:
+    break;
   }
+
 
   /* pass the signal on */
   return (* GTK_WIDGET_CLASS (parent_class)->enter_notify_event) (widget, event);
@@ -717,6 +799,7 @@ static void tree_view_drag_begin (GtkWidget *widget, GdkDragContext *context)
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("drag begin from %s\n", AMITK_OBJECT_NAME(tree_view->study));
 
@@ -754,6 +837,7 @@ static void tree_view_drag_end         (GtkWidget        *widget,
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("drag end %s\n", AMITK_OBJECT_NAME(tree_view->study));
   tree_view->src_object = NULL;
@@ -771,6 +855,7 @@ static void tree_view_drag_data_get    (GtkWidget        *widget,
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   g_return_if_fail(selection_data != NULL);
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("drag data get %s    info %d\n", AMITK_OBJECT_NAME(tree_view->study), info);
 
@@ -796,6 +881,7 @@ static void tree_view_drag_data_delete (GtkWidget        *widget,
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("drag data delete on %s\n", AMITK_OBJECT_NAME(tree_view->study));
 }
@@ -809,6 +895,7 @@ static void     tree_view_drag_leave         (GtkWidget        *widget,
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("target leave on %s\n", AMITK_OBJECT_NAME(tree_view->study));
 
@@ -824,6 +911,7 @@ static gboolean tree_view_drag_motion        (GtkWidget        *widget,
 
   g_return_val_if_fail(AMITK_IS_TREE_VIEW(widget), FALSE);
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   //  g_print("target motion %d %d on %s\n", x, y, AMITK_OBJECT_NAME(tree_view->study));
   //  gdk_drag_status (context, 0, time);
@@ -851,6 +939,7 @@ static gboolean tree_view_drag_drop          (GtkWidget        *widget,
 
   g_return_val_if_fail(AMITK_IS_TREE_VIEW(widget), FALSE);
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("drop on %d %d %s\n", x, y,  AMITK_OBJECT_NAME(tree_view->study));
   /* check if drop is valid */
@@ -914,6 +1003,7 @@ static void tree_view_drag_data_received (GtkWidget        *widget,
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(widget));
   tree_view = AMITK_TREE_VIEW(widget);
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   g_print("target receive %s\n", AMITK_OBJECT_NAME(tree_view->study));
 
@@ -997,6 +1087,7 @@ static void tree_view_study_view_mode_cb(AmitkStudy * study, gpointer data) {
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(tree_view));
   g_return_if_fail(AMITK_IS_STUDY(study));
+  if (tree_view->mode != AMITK_TREE_VIEW_MODE_MAIN) return;
 
   tree_view_set_view_mode(tree_view, AMITK_STUDY_VIEW_MODE(study));
 
@@ -1026,12 +1117,15 @@ static void tree_view_object_update_cb(AmitkObject * object, gpointer data) {
     g_object_unref(pixbuf);
   }
 
-  if (tree_view->active_object == object) {
-    if (!amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we're unselecting the active object */
-      g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,NULL);
-  } else if (tree_view->active_object == NULL) { /* currently no active object */
-    if (amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we've selected something */
-      g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,object);
+  if (tree_view->mode == AMITK_TREE_VIEW_MODE_MAIN) {
+
+    if (tree_view->active_object == object) {
+      if (!amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we're unselecting the active object */
+	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,NULL);
+    } else if (tree_view->active_object == NULL) { /* currently no active object */
+      if (amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we've selected something */
+	g_signal_emit(G_OBJECT(tree_view), tree_view_signals[ACTIVATE_OBJECT], 0,object);
+    }
   }
 
   return;
@@ -1131,6 +1225,7 @@ static void tree_view_add_object(AmitkTreeView * tree_view, AmitkObject * object
   pixbuf = image_get_object_pixbuf(object);
 
   gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+		     COLUMN_MULTIPLE_SELECTION, amitk_object_get_selected(object, AMITK_SELECTION_SELECTED_0), /* default */
 		     COLUMN_VISIBLE_SINGLE, amitk_object_get_selected(object, AMITK_SELECTION_SELECTED_0),
 		     COLUMN_VISIBLE_LINKED_2WAY, amitk_object_get_selected(object, AMITK_SELECTION_SELECTED_1),
 		     COLUMN_VISIBLE_LINKED_3WAY, amitk_object_get_selected(object, AMITK_SELECTION_SELECTED_2),
@@ -1173,7 +1268,8 @@ static void tree_view_remove_object(AmitkTreeView * tree_view, AmitkObject * obj
   g_return_if_fail(tree_view_find_object(tree_view, object, &iter)); /* shouldn't fail */
 
   /* unselect the object */
-  amitk_object_unselect(object, AMITK_SELECTION_ALL);
+  if (tree_view->mode == AMITK_TREE_VIEW_MODE_MAIN)
+    amitk_object_unselect(object, AMITK_SELECTION_ALL);
 
   /* recursive remove children */
   children = AMITK_OBJECT_CHILDREN(object);
@@ -1203,7 +1299,8 @@ static void tree_view_remove_object(AmitkTreeView * tree_view, AmitkObject * obj
 
 
 /* preferences and progress_dialog can be NULL, nicer if they're not */
-GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
+GtkWidget* amitk_tree_view_new (AmitkTreeViewMode tree_mode,
+				AmitkPreferences * preferences,
 				GtkWidget * progress_dialog) {
 
   AmitkTreeView * tree_view;
@@ -1215,6 +1312,7 @@ GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
   GtkTreeSelection *selection;
 
   tree_view = g_object_new(amitk_tree_view_get_type(), NULL);
+  tree_view->mode = tree_mode;
 
   /* if given preferences, save them */
   if (preferences != NULL)
@@ -1232,6 +1330,7 @@ GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
 
   store = gtk_tree_store_new(NUM_COLUMNS, 
+			     G_TYPE_BOOLEAN, /* COLUMN_MULTIPLE_SELECTION */
 			     G_TYPE_BOOLEAN, /* COLUMN_VISIBLE_SINGLE */
 			     G_TYPE_BOOLEAN,/* COLUMN_VISIBLE_LINKED_2WAY */
 			     G_TYPE_BOOLEAN, /* COLUMN_VISIBLE_LINKED_3WAY */
@@ -1242,6 +1341,10 @@ GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
   gtk_tree_view_set_model (GTK_TREE_VIEW(tree_view), GTK_TREE_MODEL (store));
   g_object_unref(store);
 
+  renderer = gtk_cell_renderer_toggle_new ();
+  column = gtk_tree_view_column_new_with_attributes("", renderer, /* "visible" */
+						    "active", COLUMN_MULTIPLE_SELECTION, NULL);
+
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {
     renderer = gtk_cell_renderer_toggle_new ();
     temp_string = g_strdup_printf("%d", i_view_mode+1);
@@ -1251,9 +1354,18 @@ GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
     g_free(temp_string);
   }
 
-  /* by default, only first select column is shown */
-  gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), tree_view->select_column[AMITK_VIEW_MODE_SINGLE]);
-
+  switch(tree_view->mode) {
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    /* by default, only first select column is shown */
+    gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), tree_view->select_column[AMITK_VIEW_MODE_SINGLE]);
+    break;
+  case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
+    gtk_tree_view_append_column (GTK_TREE_VIEW (tree_view), column);
+    break;
+  default:
+    g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
+    break;
+  }
 
   renderer = gtk_cell_renderer_text_new ();
   column = gtk_tree_view_column_new_with_attributes("", renderer, /* "expand "*/
@@ -1273,7 +1385,15 @@ GtkWidget* amitk_tree_view_new (AmitkPreferences * preferences,
 
 
   selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (tree_view));
-  gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
+  switch (tree_view->mode) {
+  case AMITK_TREE_VIEW_MODE_MAIN:
+    gtk_tree_selection_set_mode (selection, GTK_SELECTION_BROWSE);
+    break;
+  case AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION:
+  default:
+    gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
+    break;
+  }
 
   return GTK_WIDGET (tree_view);
 }
@@ -1316,6 +1436,7 @@ void amitk_tree_view_set_active_object(AmitkTreeView * tree_view, AmitkObject * 
   GtkTreeIter iter;
 
   g_return_if_fail(AMITK_IS_TREE_VIEW(tree_view));
+  g_return_if_fail(tree_view->mode == AMITK_TREE_VIEW_MODE_MAIN);
 
   if (tree_view->active_object != NULL) {
     amitk_object_unref(tree_view->active_object);
@@ -1344,4 +1465,37 @@ void amitk_tree_view_set_active_object(AmitkTreeView * tree_view, AmitkObject * 
 }
 
 
+
+gboolean multiple_selection_foreach(GtkTreeModel *model,
+				    GtkTreePath *path,
+				    GtkTreeIter *iter,
+				    gpointer data) {
+
+  GList ** pobjects = data;
+  gboolean multiple_selection;
+  AmitkObject * object;
+
+  gtk_tree_model_get(model, iter, COLUMN_OBJECT, &object, 
+		     COLUMN_MULTIPLE_SELECTION, &multiple_selection,
+		     -1);
+
+  if (multiple_selection)
+    *pobjects = g_list_append(*pobjects, amitk_object_ref(object));
+
+  return FALSE;
+}
+
+GList * amitk_tree_view_get_multiple_selection_objects(AmitkTreeView * tree_view) {
+
+  GList * objects=NULL;
+  GtkTreeModel *tree_model;
+
+  g_return_val_if_fail(AMITK_IS_TREE_VIEW(tree_view), NULL);
+  g_return_val_if_fail(tree_view->mode == AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION, NULL);
+
+  tree_model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
+  gtk_tree_model_foreach(tree_model, multiple_selection_foreach, &objects);
+
+  return objects;
+}
 

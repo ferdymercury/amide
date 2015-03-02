@@ -182,23 +182,26 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
 
 /* function to change the modality */
 static void change_modality_cb(GtkWidget * widget, gpointer data) {
-  
   raw_data_info_t * raw_data_info = data;
-
-  /* figure out which menu item called me */
+#if 1
   raw_data_info->modality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-
+#else
+  raw_data_info->modality = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   return;
 }
 
 /* function to change the raw data file's data format */
 static void change_raw_format_cb(GtkWidget * widget, gpointer data) {
-
   raw_data_info_t * raw_data_info = data;
 
+#if 1
   /* figure out which menu item called me */
   raw_data_info->raw_format = 
     GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"raw_format"));
+#else
+  raw_data_info->raw_format = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
 
   /* recalculate the total number of bytes to be read and have it displayed*/
   update_num_bytes(raw_data_info);
@@ -280,9 +283,11 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   GtkWidget * packing_table;
   GtkWidget * label;
   GtkWidget * entry;
+#if 1
   GtkWidget * option_menu;
-  GtkWidget * menu;
   GtkWidget * menuitem;
+#endif
+  GtkWidget * menu;
   guint table_row = 0;
 
 
@@ -348,6 +353,8 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   		   0, 0,
   		   X_PADDING, Y_PADDING);
 
+
+#if 1
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
 
@@ -359,9 +366,21 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
   gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_MODALITY_PET);
   g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
+#else
+  menu = gtk_combo_box_new_text();
+  for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) 
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+			      amitk_modality_get_name(i_modality));
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), AMITK_MODALITY_PET);
+  g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
+#endif
   raw_data_info->modality = AMITK_MODALITY_PET;
   gtk_table_attach(GTK_TABLE(packing_table), 
+#if 1
 		   GTK_WIDGET(option_menu), 1,2, 
+#else
+		   GTK_WIDGET(menu), 1,2, 
+#endif
 		   table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, 
 		   X_PADDING, Y_PADDING);
@@ -375,7 +394,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1,
 		   0, 0,
 		   X_PADDING, Y_PADDING);
-
+#if 1
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
 
@@ -389,9 +408,22 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
   gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_RAW_FORMAT_UBYTE_8_NE);
+#else
+  menu = gtk_combo_box_new_text();
+  for (i_raw_format=0; i_raw_format<AMITK_RAW_FORMAT_NUM; i_raw_format++) 
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
+			      amitk_raw_format_names[i_raw_format]);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), AMITK_RAW_FORMAT_UBYTE_8_NE);
+  g_signal_connect(G_OBJECT(menu), "changed", 
+		   G_CALLBACK(change_raw_format_cb), raw_data_info);
+#endif
   raw_data_info->raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
   gtk_table_attach(GTK_TABLE(packing_table), 
+#if 1
 		   GTK_WIDGET(option_menu), 1,2, 
+#else
+		   GTK_WIDGET(menu), 1,2, 
+#endif
 		   table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, 
 		   X_PADDING, Y_PADDING);
@@ -430,11 +462,11 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   /* how many bytes we're currently reading from the file */
   raw_data_info->num_bytes_label1 = gtk_label_new("");
   raw_data_info->num_bytes_label2 = gtk_label_new("");
-  update_num_bytes(raw_data_info); /* put something sensible into the label */
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label1), 
 		   3,4, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->num_bytes_label2), 
 		   4,5, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  update_num_bytes(raw_data_info); /* put something sensible into the label */
   table_row++;
 
 

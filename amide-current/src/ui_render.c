@@ -44,6 +44,7 @@
 #include "ui_render_movie.h"
 #include "amitk_dial.h"
 #include "amitk_progress_dialog.h"
+#include "amitk_tree_view.h"
 #include "pixmaps.h"
 
 
@@ -68,7 +69,7 @@ static void close_cb(GtkWidget* widget, gpointer data);
 
 
 static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings);
-static ui_render_t * ui_render_init(GnomeApp * app, AmitkStudy * study);
+static ui_render_t * ui_render_init(GnomeApp * app, AmitkStudy * study, GList * selected_objects);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
 
 
@@ -633,7 +634,7 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 #endif
 
     if (ui_render->idle_handler_id != 0) {
-      gtk_idle_remove(ui_render->idle_handler_id);
+      g_source_remove(ui_render->idle_handler_id);
       ui_render->idle_handler_id = 0;
     }
 
@@ -679,10 +680,10 @@ static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderi
 
 /* allocate and initialize a ui_render data structure */
 static ui_render_t * ui_render_init(GnomeApp * app,
-				    AmitkStudy * study) {
+				    AmitkStudy * study,
+				    GList * selected_objects) {
 
   ui_render_t * ui_render;
-  GList * visible_objects;
 #ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
@@ -742,15 +743,12 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 #endif
 
   /* initialize the rendering contexts */
-  visible_objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_SELECTION_SELECTED_0, TRUE);
-  ui_render->renderings = renderings_init(visible_objects, 
+  ui_render->renderings = renderings_init(selected_objects, 
 					  ui_render->start, 
 					  ui_render->duration, 
 					  strip_highs, optimize_rendering,
 					  amitk_progress_dialog_update,
 					  ui_render->progress_dialog);
-  amitk_objects_unref(visible_objects);
-
 
   return ui_render;
 }
@@ -759,10 +757,14 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
 void ui_render_add_update(ui_render_t * ui_render) {
 
+
+  
   ui_render->next_update = ui_render->next_update | UPDATE_RENDERING;
-  if (ui_render->idle_handler_id == 0)
+  if (ui_render->idle_handler_id == 0) {
+    ui_common_place_cursor_no_wait(UI_CURSOR_WAIT, ui_render->canvas);
     ui_render->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,ui_render_update_immediate, ui_render);
+      g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,ui_render_update_immediate, ui_render, NULL);
+  }
 
   return;
 }
@@ -778,8 +780,6 @@ gboolean ui_render_update_immediate(gpointer data) {
 
   g_return_val_if_fail(ui_render != NULL, FALSE);
   g_return_val_if_fail(ui_render->renderings != NULL, FALSE);
-
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_render->canvas);
 
   if (!renderings_reload_objects(ui_render->renderings, ui_render->start,
 				 ui_render->duration,
@@ -827,16 +827,13 @@ gboolean ui_render_update_immediate(gpointer data) {
   /* reset the min size of the widget */
   gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_render->canvas), 0.0, 0.0, width, height);
   gtk_widget_set_size_request(ui_render->canvas, width, height);
+  return_val = FALSE;
 
  function_end:
 
   ui_common_remove_wait_cursor(ui_render->canvas);
   ui_render->next_update = UPDATE_NONE;
-
-  if (ui_render->idle_handler_id != 0) {
-    gtk_idle_remove(ui_render->idle_handler_id);
-    ui_render->idle_handler_id=0;
-  }
+  ui_render->idle_handler_id=0;
 
   return return_val;
 } 
@@ -845,7 +842,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
 
 /* function that sets up the rendering dialog */
-void ui_render_create(AmitkStudy * study) {
+void ui_render_create(AmitkStudy * study, GList * selected_objects) {
   
   GtkWidget * packing_table;
   GtkWidget * button;
@@ -864,7 +861,7 @@ void ui_render_create(AmitkStudy * study) {
 
   app = gnome_app_new(PACKAGE, _("Rendering Window"));
   gtk_window_set_resizable(GTK_WINDOW(app), FALSE);
-  ui_render = ui_render_init(GNOME_APP(app), study);
+  ui_render = ui_render_init(GNOME_APP(app), study, selected_objects);
 
   /* check we actually have something */
   if (ui_render->renderings == NULL) {
@@ -1027,14 +1024,27 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 }
 
 
+GList * ui_render_init_dialog_selected_objects(GtkWidget * dialog) {
+
+  GList * objects;
+  AmitkTreeView * tree_view;
+  
+  tree_view = g_object_get_data(G_OBJECT(dialog), "tree_view");
+  objects = amitk_tree_view_get_multiple_selection_objects(tree_view);
+
+  return objects;
+}
+
 /* function to setup a dialog to allow us to choose options for rendering */
-GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
+GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   
   GtkWidget * dialog;
   gchar * temp_string;
   GtkWidget * table;
   GtkWidget * check_button;
   guint table_row;
+  GtkWidget * tree_view;
+  GtkWidget * scrolled;
 #ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
@@ -1056,15 +1066,31 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(3,2,FALSE);
+  table = gtk_table_new(5,2,FALSE);
   table_row=0;
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+
+  tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,NULL, NULL);
+  g_object_set_data(G_OBJECT(dialog), "tree_view", tree_view);
+  amitk_tree_view_set_study(AMITK_TREE_VIEW(tree_view), study);
+  amitk_tree_view_expand_object(AMITK_TREE_VIEW(tree_view), AMITK_OBJECT(study));
+
+  /* make a scrolled area for the tree */
+  scrolled = gtk_scrolled_window_new(NULL,NULL);  
+  gtk_widget_set_size_request(scrolled,250,250);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
+				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
+					tree_view);
+  gtk_table_attach(GTK_TABLE(table), scrolled, 0,2,
+		   table_row, table_row+1,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  table_row++;
 
   /* do we want to strip values */
   check_button = gtk_check_button_new_with_label(_("Set values greater than max. threshold to zero?"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), strip_highs);
   gtk_table_attach(GTK_TABLE(table), check_button, 
-		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_strip_highs_cb), dialog);
   table_row++;
 
@@ -1072,7 +1098,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   check_button = gtk_check_button_new_with_label(_("Accelerate Rendering?  Increases memory use ~3x"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button),optimize_rendering);
   gtk_table_attach(GTK_TABLE(table), check_button, 
-		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_optimize_rendering_cb), dialog);
   table_row++;
 

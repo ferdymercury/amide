@@ -37,7 +37,6 @@
 #define MAX_FIR_FILTER_SIZE 31
 #define MIN_NONLINEAR_FILTER_SIZE 3
 #define MAX_NONLINEAR_FILTER_SIZE 11
-#define DEFAULT_FILTER AMITK_FILTER_GAUSSIAN
 #define DEFAULT_GAUSSIAN_FILTER_SIZE 15
 #define DEFAULT_MEDIAN_FILTER_SIZE 3
 
@@ -177,8 +176,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   gint table_column;
   AmitkFilter i_filter;
   GtkWidget * table;
-  GtkWidget * option_menu;
   GtkWidget * menu;
+  GtkWidget * option_menu;
   GtkWidget * menuitem;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
@@ -211,6 +210,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
+#if 1
       option_menu = gtk_option_menu_new();
       menu = gtk_menu_new();
 
@@ -222,9 +222,20 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(filter_cb), tb_filter);
       gtk_table_attach(GTK_TABLE(table), option_menu, 
+#else
+      menu = gtk_combo_box_new_text();
+      for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) 
+	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_filter_get_name(i_filter));
+      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_filter->filter);
+      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(filter_cb), tb_filter);
+      gtk_table_attach(GTK_TABLE(table), menu, 
+#endif
 		       table_column+1, table_column+2, table_row, table_row+1,
 		       FALSE, FALSE, X_PADDING, Y_PADDING);
+#if 1
       gtk_widget_show_all(option_menu);
+#endif
+      gtk_widget_show_all(menu);
       table_row++;
       
       break;
@@ -327,7 +338,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 static void filter_cb(GtkWidget * widget, gpointer data) {
 
   tb_filter_t * tb_filter = data;
+#if 1
   tb_filter->filter = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  tb_filter->filter = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   return;
 }
 
@@ -492,7 +507,7 @@ static tb_filter_t * tb_filter_init(void) {
   }
 
   tb_filter->reference_count = 1;
-  tb_filter->filter = DEFAULT_FILTER;
+  tb_filter->filter = AMITK_FILTER_GAUSSIAN; /* default filter */
   tb_filter->dialog = NULL;
   tb_filter->study = NULL;
   tb_filter->kernel_size=3;

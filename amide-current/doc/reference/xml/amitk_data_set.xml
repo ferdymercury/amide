@@ -1,0 +1,2528 @@
+<refentry id="amitk-AmitkDataSet">
+<refmeta>
+<refentrytitle>AmitkDataSet</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkDataSet</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-DATA-SET-MODALITY-CAPS">AMITK_DATA_SET_MODALITY</link>         (ds)
+#define     <link linkend="AMITK-DATA-SET-VOXEL-SIZE-CAPS">AMITK_DATA_SET_VOXEL_SIZE</link>       (ds)
+#define     <link linkend="AMITK-DATA-SET-VOXEL-SIZE-X-CAPS">AMITK_DATA_SET_VOXEL_SIZE_X</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-VOXEL-SIZE-Y-CAPS">AMITK_DATA_SET_VOXEL_SIZE_Y</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-VOXEL-SIZE-Z-CAPS">AMITK_DATA_SET_VOXEL_SIZE_Z</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-RAW-DATA-CAPS">AMITK_DATA_SET_RAW_DATA</link>         (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-CAPS">AMITK_DATA_SET_DIM</link>              (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-X-CAPS">AMITK_DATA_SET_DIM_X</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-Y-CAPS">AMITK_DATA_SET_DIM_Y</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-Z-CAPS">AMITK_DATA_SET_DIM_Z</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-G-CAPS">AMITK_DATA_SET_DIM_G</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-DIM-T-CAPS">AMITK_DATA_SET_DIM_T</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-FORMAT-CAPS">AMITK_DATA_SET_FORMAT</link>           (ds)
+#define     <link linkend="AMITK-DATA-SET-NUM-GATES-CAPS">AMITK_DATA_SET_NUM_GATES</link>        (ds)
+#define     <link linkend="AMITK-DATA-SET-NUM-FRAMES-CAPS">AMITK_DATA_SET_NUM_FRAMES</link>       (ds)
+#define     <link linkend="AMITK-DATA-SET-TOTAL-PLANES-CAPS">AMITK_DATA_SET_TOTAL_PLANES</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-DISTRIBUTION-CAPS">AMITK_DATA_SET_DISTRIBUTION</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-COLOR-TABLE-CAPS">AMITK_DATA_SET_COLOR_TABLE</link>      (ds)
+#define     <link linkend="AMITK-DATA-SET-INTERPOLATION-CAPS">AMITK_DATA_SET_INTERPOLATION</link>    (ds)
+#define     <link linkend="AMITK-DATA-SET-DYNAMIC-CAPS">AMITK_DATA_SET_DYNAMIC</link>          (ds)
+#define     <link linkend="AMITK-DATA-SET-GATED-CAPS">AMITK_DATA_SET_GATED</link>            (ds)
+#define     <link linkend="AMITK-DATA-SET-THRESHOLDING-CAPS">AMITK_DATA_SET_THRESHOLDING</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-SLICE-PARENT-CAPS">AMITK_DATA_SET_SLICE_PARENT</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-SCAN-DATE-CAPS">AMITK_DATA_SET_SCAN_DATE</link>        (ds)
+#define     <link linkend="AMITK-DATA-SET-SCAN-START-CAPS">AMITK_DATA_SET_SCAN_START</link>       (ds)
+#define     <link linkend="AMITK-DATA-SET-THRESHOLD-REF-FRAME-CAPS">AMITK_DATA_SET_THRESHOLD_REF_FRAME</link>(ds,ref_frame)
+#define     <link linkend="AMITK-DATA-SET-THRESHOLD-MAX-CAPS">AMITK_DATA_SET_THRESHOLD_MAX</link>    (ds, ref_frame)
+#define     <link linkend="AMITK-DATA-SET-THRESHOLD-MIN-CAPS">AMITK_DATA_SET_THRESHOLD_MIN</link>    (ds, ref_frame)
+#define     <link linkend="AMITK-DATA-SET-SCALING-TYPE-CAPS">AMITK_DATA_SET_SCALING_TYPE</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-CONVERSION-CAPS">AMITK_DATA_SET_CONVERSION</link>       (ds)
+#define     <link linkend="AMITK-DATA-SET-SCALE-FACTOR-CAPS">AMITK_DATA_SET_SCALE_FACTOR</link>     (ds)
+#define     <link linkend="AMITK-DATA-SET-INJECTED-DOSE-CAPS">AMITK_DATA_SET_INJECTED_DOSE</link>    (ds)
+#define     <link linkend="AMITK-DATA-SET-DISPLAYED-DOSE-UNIT-CAPS">AMITK_DATA_SET_DISPLAYED_DOSE_UNIT</link>(ds)
+#define     <link linkend="AMITK-DATA-SET-SUBJECT-WEIGHT-CAPS">AMITK_DATA_SET_SUBJECT_WEIGHT</link>   (ds)
+#define     <link linkend="AMITK-DATA-SET-DISPLAYED-WEIGHT-UNIT-CAPS">AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT</link>(ds)
+#define     <link linkend="AMITK-DATA-SET-CYLINDER-FACTOR-CAPS">AMITK_DATA_SET_CYLINDER_FACTOR</link>  (ds)
+#define     <link linkend="AMITK-DATA-SET-DISPLAYED-CYLINDER-UNIT-CAPS">AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT</link>(ds)
+#define     <link linkend="AMITK-DATA-SET-THRESHOLD-WINDOW-CAPS">AMITK_DATA_SET_THRESHOLD_WINDOW</link> (ds, i_win, limit)
+#define     <link linkend="AMITK-DATA-SET-VIEW-START-GATE-CAPS">AMITK_DATA_SET_VIEW_START_GATE</link>  (ds)
+#define     <link linkend="AMITK-DATA-SET-VIEW-END-GATE-CAPS">AMITK_DATA_SET_VIEW_END_GATE</link>    (ds)
+#define     <link linkend="AMITK-DATA-SET-NUM-VIEW-GATES-CAPS">AMITK_DATA_SET_NUM_VIEW_GATES</link>   (ds)
+#define     <link linkend="AMITK-DATA-SET-DISTRIBUTION-SIZE-CAPS">AMITK_DATA_SET_DISTRIBUTION_SIZE</link>
+enum        <link linkend="AmitkInterpolation">AmitkInterpolation</link>;
+enum        <link linkend="AmitkThresholding">AmitkThresholding</link>;
+enum        <link linkend="AmitkScalingType">AmitkScalingType</link>;
+enum        <link linkend="AmitkConversion">AmitkConversion</link>;
+enum        <link linkend="AmitkWeightUnit">AmitkWeightUnit</link>;
+enum        <link linkend="AmitkDoseUnit">AmitkDoseUnit</link>;
+enum        <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link>;
+enum        <link linkend="AmitkImportMethod">AmitkImportMethod</link>;
+enum        <link linkend="AmitkExportMethod">AmitkExportMethod</link>;
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-new">amitk_data_set_new</link>            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-new-with-data">amitk_data_set_new_with_data</link>  (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             const <link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> dim,
+                                             const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-import-raw-file">amitk_data_set_import_raw_file</link>
+                                            (const <link linkend="gchar">gchar</link> *file_name,
+                                             const <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> data_dim,
+                                             <link linkend="guint">guint</link> file_offset,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             const <link linkend="gchar">gchar</link> *data_set_name,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
+                                             const <link linkend="amide-data-t">amide_data_t</link> scale_factor,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-import-file">amitk_data_set_import_file</link>    (<link linkend="AmitkImportMethod">AmitkImportMethod</link> method,
+                                             <link linkend="int">int</link> submethod,
+                                             const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-export-file">amitk_data_set_export_file</link>      (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkExportMethod">AmitkExportMethod</link> method,
+                                             const <link linkend="int">int</link> submethod,
+                                             const <link linkend="gchar">gchar</link> *filename,
+                                             const <link linkend="gboolean">gboolean</link> resliced,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-global-max">amitk_data_set_get_global_max</link>  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-global-min">amitk_data_set_get_global_min</link>  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-frame-max">amitk_data_set_get_frame_max</link>   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-frame-min">amitk_data_set_get_frame_min</link>   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-modality">amitk_data_set_set_modality</link>     (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-scan-start">amitk_data_set_set_scan_start</link>   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-frame-duration">amitk_data_set_set_frame_duration</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             <link linkend="amide-time-t">amide_time_t</link> duration);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-voxel-size">amitk_data_set_set_voxel_size</link>   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-thresholding">amitk_data_set_set_thresholding</link> (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkThresholding">AmitkThresholding</link> thresholding);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-threshold-max">amitk_data_set_set_threshold_max</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="amide-data-t">amide_data_t</link> value);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-threshold-min">amitk_data_set_set_threshold_min</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="amide-data-t">amide_data_t</link> value);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-threshold-ref-frame">amitk_data_set_set_threshold_ref_frame</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="guint">guint</link> frame);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-color-table">amitk_data_set_set_color_table</link>  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkColorTable">AmitkColorTable</link> new_color_table);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-interpolation">amitk_data_set_set_interpolation</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkInterpolation">AmitkInterpolation</link> new_interpolation);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-scan-date">amitk_data_set_set_scan_date</link>    (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="gchar">gchar</link> *new_date);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-conversion">amitk_data_set_set_conversion</link>   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkConversion">AmitkConversion</link> new_conversion);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-scale-factor">amitk_data_set_set_scale_factor</link> (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_scale_factor);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-injected-dose">amitk_data_set_set_injected_dose</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_injected_dose);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-subject-weight">amitk_data_set_set_subject_weight</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_subject_weight);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-cylinder-factor">amitk_data_set_set_cylinder_factor</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_cylinder_factor);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-displayed-dose-unit">amitk_data_set_set_displayed_dose_unit</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> new_dose_unit);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-displayed-weight-unit">amitk_data_set_set_displayed_weight_unit</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> new_weight_unit);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-displayed-cylinder-unit">amitk_data_set_set_displayed_cylinder_unit</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> new_cylinder_unit);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-threshold-window">amitk_data_set_set_threshold_window</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkWindow">AmitkWindow</link> window,
+                                             const <link linkend="AmitkLimit">AmitkLimit</link> limit,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-view-start-gate">amitk_data_set_set_view_start_gate</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> start_gate);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-view-end-gate">amitk_data_set_set_view_end_gate</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> end_gate);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-set-get-start-time">amitk_data_set_get_start_time</link>  (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-set-get-end-time">amitk_data_set_get_end_time</link>    (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-set-get-midpt-time">amitk_data_set_get_midpt_time</link>  (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);
+<link linkend="guint">guint</link>       <link linkend="amitk-data-set-get-frame">amitk_data_set_get_frame</link>        (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> time);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-set-get-frame-duration">amitk_data_set_get_frame_duration</link>
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> frame);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-set-get-min-frame-duration">amitk_data_set_get_min_frame_duration</link>
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-calc-far-corner">amitk_data_set_calc_far_corner</link>  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-calc-max-min">amitk_data_set_calc_max_min</link>     (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-max">amitk_data_set_get_max</link>         (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-min">amitk_data_set_get_min</link>         (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-get-thresholding-max-min">amitk_data_set_get_thresholding_max_min</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> *slice,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             <link linkend="amide-data-t">amide_data_t</link> *max,
+                                             <link linkend="amide-data-t">amide_data_t</link> *min);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-calc-distribution">amitk_data_set_calc_distribution</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-internal-value">amitk_data_set_get_internal_value</link>
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-value">amitk_data_set_get_value</link>       (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-data-set-get-internal-scaling">amitk_data_set_get_internal_scaling</link>
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-value">amitk_data_set_set_value</link>        (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value,
+                                             const <link linkend="gboolean">gboolean</link> signal_change);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-set-internal-value">amitk_data_set_set_internal_value</link>
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i,
+                                             const <link linkend="amide-data-t">amide_data_t</link> internal_value,
+                                             const <link linkend="gboolean">gboolean</link> signal_change);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-get-projections">amitk_data_set_get_projections</link>  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             const <link linkend="guint">guint</link> gate,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> **projections,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-get-cropped">amitk_data_set_get_cropped</link>    (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> start,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> end,
+                                             const <link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-get-filtered">amitk_data_set_get_filtered</link>   (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkFilter">AmitkFilter</link> filter_type,
+                                             const <link linkend="gint">gint</link> kernel_size,
+                                             const <link linkend="amide-real-t">amide_real_t</link> fwhm,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-set-get-slice">amitk_data_set_get_slice</link>      (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="amide-intpoint-t">amide_intpoint_t</link> gate,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *slice_volume);
+<link linkend="void">void</link>        <link linkend="amitk-data-set-get-line-profile">amitk_data_set_get_line_profile</link> (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> start_point,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> end_point,
+                                             <link linkend="GPtrArray">GPtrArray</link> **preturn_data);
+<link linkend="gint">gint</link>        <link linkend="amitk-data-sets-count">amitk_data_sets_count</link>           (<link linkend="GList">GList</link> *objects,
+                                             <link linkend="gboolean">gboolean</link> recurse);
+<link linkend="amide-time-t">amide_time_t</link> <link linkend="amitk-data-sets-get-min-frame-duration">amitk_data_sets_get_min_frame_duration</link>
+                                            (<link linkend="GList">GList</link> *objects);
+<link linkend="amide-real-t">amide_real_t</link> <link linkend="amitk-data-sets-get-min-voxel-size">amitk_data_sets_get_min_voxel_size</link>
+                                            (<link linkend="GList">GList</link> *objects);
+<link linkend="amide-real-t">amide_real_t</link> <link linkend="amitk-data-sets-get-max-min-voxel-size">amitk_data_sets_get_max_min_voxel_size</link>
+                                            (<link linkend="GList">GList</link> *objects);
+<link linkend="GList">GList</link>*      <link linkend="amitk-data-sets-get-slices">amitk_data_sets_get_slices</link>      (<link linkend="GList">GList</link> *objects,
+                                             <link linkend="GList">GList</link> **pslice_cache,
+                                             const <link linkend="gint">gint</link> max_slice_cache_size,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="amide-intpoint-t">amide_intpoint_t</link> gate,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *view_volume);
+<link linkend="AmitkDataSet">AmitkDataSet</link>* <link linkend="amitk-data-sets-find-with-slice-parent">amitk_data_sets_find_with_slice_parent</link>
+                                            (<link linkend="GList">GList</link> *slices,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *slice_parent);
+<link linkend="GList">GList</link>*      <link linkend="amitk-data-sets-remove-with-slice-parent">amitk_data_sets_remove_with_slice_parent</link>
+                                            (<link linkend="GList">GList</link> *slices,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *slice_parent);
+#define     <link linkend="amitk-data-set-get-frame-duration-mem">amitk_data_set_get_frame_duration_mem</link>(ds)
+#define     <link linkend="amitk-data-set-get-frame-max-min-mem">amitk_data_set_get_frame_max_min_mem</link>(ds)
+#define     <link linkend="amitk-data-set-dynamic">amitk_data_set_dynamic</link>          (ds)
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-scaling-type-get-name">amitk_scaling_type_get_name</link>    (const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-interpolation-get-name">amitk_interpolation_get_name</link>   (const <link linkend="AmitkInterpolation">AmitkInterpolation</link> interpolation);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-thresholding-get-name">amitk_thresholding_get_name</link>    (const <link linkend="AmitkThresholding">AmitkThresholding</link> thresholding);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-conversion-get-name">amitk_conversion_get_name</link>      (const <link linkend="AmitkConversion">AmitkConversion</link> conversion);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-weight-unit-get-name">amitk_weight_unit_get_name</link>     (const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-dose-unit-get-name">amitk_dose_unit_get_name</link>       (const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-cylinder-unit-get-name">amitk_cylinder_unit_get_name</link>   (const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-weight-unit-convert-to">amitk_weight_unit_convert_to</link>   (const <link linkend="amide-data-t">amide_data_t</link> kg,
+                                             const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-weight-unit-convert-from">amitk_weight_unit_convert_from</link> (const <link linkend="amide-data-t">amide_data_t</link> weight,
+                                             const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-dose-unit-convert-to">amitk_dose_unit_convert_to</link>     (const <link linkend="amide-data-t">amide_data_t</link> MBq,
+                                             const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-dose-unit-convert-from">amitk_dose_unit_convert_from</link>   (const <link linkend="amide-data-t">amide_data_t</link> dose,
+                                             const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-cylinder-unit-convert-to">amitk_cylinder_unit_convert_to</link> (const <link linkend="amide-data-t">amide_data_t</link> MBq_cc_image_units,
+                                             const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-cylinder-unit-convert-from">amitk_cylinder_unit_convert_from</link>
+                                            (const <link linkend="amide-data-t">amide_data_t</link> cylinder_factor,
+                                             const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-MODALITY-CAPS"/>AMITK_DATA_SET_MODALITY()</title>
+<indexterm><primary>AMITK_DATA_SET_MODALITY</primary></indexterm><programlisting>#define AMITK_DATA_SET_MODALITY(ds)                (AMITK_DATA_SET(ds)-&gt;modality)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VOXEL-SIZE-CAPS"/>AMITK_DATA_SET_VOXEL_SIZE()</title>
+<indexterm><primary>AMITK_DATA_SET_VOXEL_SIZE</primary></indexterm><programlisting>#define AMITK_DATA_SET_VOXEL_SIZE(ds)              (AMITK_DATA_SET(ds)-&gt;voxel_size)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VOXEL-SIZE-X-CAPS"/>AMITK_DATA_SET_VOXEL_SIZE_X()</title>
+<indexterm><primary>AMITK_DATA_SET_VOXEL_SIZE_X</primary></indexterm><programlisting>#define AMITK_DATA_SET_VOXEL_SIZE_X(ds)            (AMITK_DATA_SET(ds)-&gt;voxel_size.x)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VOXEL-SIZE-Y-CAPS"/>AMITK_DATA_SET_VOXEL_SIZE_Y()</title>
+<indexterm><primary>AMITK_DATA_SET_VOXEL_SIZE_Y</primary></indexterm><programlisting>#define AMITK_DATA_SET_VOXEL_SIZE_Y(ds)            (AMITK_DATA_SET(ds)-&gt;voxel_size.y)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VOXEL-SIZE-Z-CAPS"/>AMITK_DATA_SET_VOXEL_SIZE_Z()</title>
+<indexterm><primary>AMITK_DATA_SET_VOXEL_SIZE_Z</primary></indexterm><programlisting>#define AMITK_DATA_SET_VOXEL_SIZE_Z(ds)            (AMITK_DATA_SET(ds)-&gt;voxel_size.z)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-RAW-DATA-CAPS"/>AMITK_DATA_SET_RAW_DATA()</title>
+<indexterm><primary>AMITK_DATA_SET_RAW_DATA</primary></indexterm><programlisting>#define AMITK_DATA_SET_RAW_DATA(ds)                (AMITK_DATA_SET(ds)-&gt;raw_data)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-CAPS"/>AMITK_DATA_SET_DIM()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM(ds)                     (AMITK_RAW_DATA_DIM(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-X-CAPS"/>AMITK_DATA_SET_DIM_X()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM_X</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM_X(ds)                   (AMITK_RAW_DATA_DIM_X(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-Y-CAPS"/>AMITK_DATA_SET_DIM_Y()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM_Y</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM_Y(ds)                   (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-Z-CAPS"/>AMITK_DATA_SET_DIM_Z()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM_Z</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM_Z(ds)                   (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-G-CAPS"/>AMITK_DATA_SET_DIM_G()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM_G</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM_G(ds)                   (AMITK_RAW_DATA_DIM_G(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DIM-T-CAPS"/>AMITK_DATA_SET_DIM_T()</title>
+<indexterm><primary>AMITK_DATA_SET_DIM_T</primary></indexterm><programlisting>#define AMITK_DATA_SET_DIM_T(ds)                   (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-FORMAT-CAPS"/>AMITK_DATA_SET_FORMAT()</title>
+<indexterm><primary>AMITK_DATA_SET_FORMAT</primary></indexterm><programlisting>#define AMITK_DATA_SET_FORMAT(ds)                  (AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(ds)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-NUM-GATES-CAPS"/>AMITK_DATA_SET_NUM_GATES()</title>
+<indexterm><primary>AMITK_DATA_SET_NUM_GATES</primary></indexterm><programlisting>#define AMITK_DATA_SET_NUM_GATES(ds)               (AMITK_DATA_SET_DIM_G(ds))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-NUM-FRAMES-CAPS"/>AMITK_DATA_SET_NUM_FRAMES()</title>
+<indexterm><primary>AMITK_DATA_SET_NUM_FRAMES</primary></indexterm><programlisting>#define AMITK_DATA_SET_NUM_FRAMES(ds)              (AMITK_DATA_SET_DIM_T(ds))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-TOTAL-PLANES-CAPS"/>AMITK_DATA_SET_TOTAL_PLANES()</title>
+<indexterm><primary>AMITK_DATA_SET_TOTAL_PLANES</primary></indexterm><programlisting>#define AMITK_DATA_SET_TOTAL_PLANES(ds)            (AMITK_DATA_SET_DIM_Z(ds)*AMITK_DATA_SET_DIM_G(ds)*AMITK_DATA_SET_DIM_T(ds))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DISTRIBUTION-CAPS"/>AMITK_DATA_SET_DISTRIBUTION()</title>
+<indexterm><primary>AMITK_DATA_SET_DISTRIBUTION</primary></indexterm><programlisting>#define AMITK_DATA_SET_DISTRIBUTION(ds)            (AMITK_DATA_SET(ds)-&gt;distribution)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-COLOR-TABLE-CAPS"/>AMITK_DATA_SET_COLOR_TABLE()</title>
+<indexterm><primary>AMITK_DATA_SET_COLOR_TABLE</primary></indexterm><programlisting>#define AMITK_DATA_SET_COLOR_TABLE(ds)             (AMITK_DATA_SET(ds)-&gt;color_table)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-INTERPOLATION-CAPS"/>AMITK_DATA_SET_INTERPOLATION()</title>
+<indexterm><primary>AMITK_DATA_SET_INTERPOLATION</primary></indexterm><programlisting>#define AMITK_DATA_SET_INTERPOLATION(ds)           (AMITK_DATA_SET(ds)-&gt;interpolation)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DYNAMIC-CAPS"/>AMITK_DATA_SET_DYNAMIC()</title>
+<indexterm><primary>AMITK_DATA_SET_DYNAMIC</primary></indexterm><programlisting>#define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET_NUM_FRAMES(ds) &gt; 1)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-GATED-CAPS"/>AMITK_DATA_SET_GATED()</title>
+<indexterm><primary>AMITK_DATA_SET_GATED</primary></indexterm><programlisting>#define AMITK_DATA_SET_GATED(ds)                   (AMITK_DATA_SET_NUM_GATES(ds) &gt; 1)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-THRESHOLDING-CAPS"/>AMITK_DATA_SET_THRESHOLDING()</title>
+<indexterm><primary>AMITK_DATA_SET_THRESHOLDING</primary></indexterm><programlisting>#define AMITK_DATA_SET_THRESHOLDING(ds)            (AMITK_DATA_SET(ds)-&gt;thresholding)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SLICE-PARENT-CAPS"/>AMITK_DATA_SET_SLICE_PARENT()</title>
+<indexterm><primary>AMITK_DATA_SET_SLICE_PARENT</primary></indexterm><programlisting>#define AMITK_DATA_SET_SLICE_PARENT(ds)            (AMITK_DATA_SET(ds)-&gt;slice_parent)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SCAN-DATE-CAPS"/>AMITK_DATA_SET_SCAN_DATE()</title>
+<indexterm><primary>AMITK_DATA_SET_SCAN_DATE</primary></indexterm><programlisting>#define AMITK_DATA_SET_SCAN_DATE(ds)               (AMITK_DATA_SET(ds)-&gt;scan_date)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SCAN-START-CAPS"/>AMITK_DATA_SET_SCAN_START()</title>
+<indexterm><primary>AMITK_DATA_SET_SCAN_START</primary></indexterm><programlisting>#define AMITK_DATA_SET_SCAN_START(ds)              (AMITK_DATA_SET(ds)-&gt;scan_start)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-THRESHOLD-REF-FRAME-CAPS"/>AMITK_DATA_SET_THRESHOLD_REF_FRAME()</title>
+<indexterm><primary>AMITK_DATA_SET_THRESHOLD_REF_FRAME</primary></indexterm><programlisting>#define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)-&gt;threshold_ref_frame[ref_frame])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ref_frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-THRESHOLD-MAX-CAPS"/>AMITK_DATA_SET_THRESHOLD_MAX()</title>
+<indexterm><primary>AMITK_DATA_SET_THRESHOLD_MAX</primary></indexterm><programlisting>#define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)-&gt;threshold_max[ref_frame])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ref_frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-THRESHOLD-MIN-CAPS"/>AMITK_DATA_SET_THRESHOLD_MIN()</title>
+<indexterm><primary>AMITK_DATA_SET_THRESHOLD_MIN</primary></indexterm><programlisting>#define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)-&gt;threshold_min[ref_frame])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>ref_frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SCALING-TYPE-CAPS"/>AMITK_DATA_SET_SCALING_TYPE()</title>
+<indexterm><primary>AMITK_DATA_SET_SCALING_TYPE</primary></indexterm><programlisting>#define AMITK_DATA_SET_SCALING_TYPE(ds)            (AMITK_DATA_SET(ds)-&gt;scaling_type)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-CONVERSION-CAPS"/>AMITK_DATA_SET_CONVERSION()</title>
+<indexterm><primary>AMITK_DATA_SET_CONVERSION</primary></indexterm><programlisting>#define AMITK_DATA_SET_CONVERSION(ds)              (AMITK_DATA_SET(ds)-&gt;conversion)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SCALE-FACTOR-CAPS"/>AMITK_DATA_SET_SCALE_FACTOR()</title>
+<indexterm><primary>AMITK_DATA_SET_SCALE_FACTOR</primary></indexterm><programlisting>#define AMITK_DATA_SET_SCALE_FACTOR(ds)            (AMITK_DATA_SET(ds)-&gt;scale_factor)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-INJECTED-DOSE-CAPS"/>AMITK_DATA_SET_INJECTED_DOSE()</title>
+<indexterm><primary>AMITK_DATA_SET_INJECTED_DOSE</primary></indexterm><programlisting>#define AMITK_DATA_SET_INJECTED_DOSE(ds)           (AMITK_DATA_SET(ds)-&gt;injected_dose)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DISPLAYED-DOSE-UNIT-CAPS"/>AMITK_DATA_SET_DISPLAYED_DOSE_UNIT()</title>
+<indexterm><primary>AMITK_DATA_SET_DISPLAYED_DOSE_UNIT</primary></indexterm><programlisting>#define AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(ds)     (AMITK_DATA_SET(ds)-&gt;displayed_dose_unit)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-SUBJECT-WEIGHT-CAPS"/>AMITK_DATA_SET_SUBJECT_WEIGHT()</title>
+<indexterm><primary>AMITK_DATA_SET_SUBJECT_WEIGHT</primary></indexterm><programlisting>#define AMITK_DATA_SET_SUBJECT_WEIGHT(ds)          (AMITK_DATA_SET(ds)-&gt;subject_weight)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DISPLAYED-WEIGHT-UNIT-CAPS"/>AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT()</title>
+<indexterm><primary>AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT</primary></indexterm><programlisting>#define AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(ds)   (AMITK_DATA_SET(ds)-&gt;displayed_weight_unit)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-CYLINDER-FACTOR-CAPS"/>AMITK_DATA_SET_CYLINDER_FACTOR()</title>
+<indexterm><primary>AMITK_DATA_SET_CYLINDER_FACTOR</primary></indexterm><programlisting>#define AMITK_DATA_SET_CYLINDER_FACTOR(ds)         (AMITK_DATA_SET(ds)-&gt;cylinder_factor)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DISPLAYED-CYLINDER-UNIT-CAPS"/>AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT()</title>
+<indexterm><primary>AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT</primary></indexterm><programlisting>#define AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(ds) (AMITK_DATA_SET(ds)-&gt;displayed_cylinder_unit)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-THRESHOLD-WINDOW-CAPS"/>AMITK_DATA_SET_THRESHOLD_WINDOW()</title>
+<indexterm><primary>AMITK_DATA_SET_THRESHOLD_WINDOW</primary></indexterm><programlisting>#define AMITK_DATA_SET_THRESHOLD_WINDOW(ds, i_win, limit) (AMITK_DATA_SET(ds)-&gt;threshold_window[i_win][limit])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i_win</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>limit</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VIEW-START-GATE-CAPS"/>AMITK_DATA_SET_VIEW_START_GATE()</title>
+<indexterm><primary>AMITK_DATA_SET_VIEW_START_GATE</primary></indexterm><programlisting>#define AMITK_DATA_SET_VIEW_START_GATE(ds)         (AMITK_DATA_SET(ds)-&gt;view_start_gate)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-VIEW-END-GATE-CAPS"/>AMITK_DATA_SET_VIEW_END_GATE()</title>
+<indexterm><primary>AMITK_DATA_SET_VIEW_END_GATE</primary></indexterm><programlisting>#define AMITK_DATA_SET_VIEW_END_GATE(ds)           (AMITK_DATA_SET(ds)-&gt;view_end_gate)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-NUM-VIEW-GATES-CAPS"/>AMITK_DATA_SET_NUM_VIEW_GATES()</title>
+<indexterm><primary>AMITK_DATA_SET_NUM_VIEW_GATES</primary></indexterm><programlisting>#define AMITK_DATA_SET_NUM_VIEW_GATES(ds)          (AMITK_DATA_SET(ds)-&gt;num_view_gates)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-DATA-SET-DISTRIBUTION-SIZE-CAPS"/>AMITK_DATA_SET_DISTRIBUTION_SIZE</title>
+<indexterm><primary>AMITK_DATA_SET_DISTRIBUTION_SIZE</primary></indexterm><programlisting>#define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkInterpolation"/>enum AmitkInterpolation</title>
+<indexterm><primary>AmitkInterpolation</primary></indexterm><programlisting>typedef enum {
+  AMITK_INTERPOLATION_NEAREST_NEIGHBOR, 
+  AMITK_INTERPOLATION_TRILINEAR, 
+  AMITK_INTERPOLATION_NUM
+} AmitkInterpolation;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkThresholding"/>enum AmitkThresholding</title>
+<indexterm><primary>AmitkThresholding</primary></indexterm><programlisting>typedef enum {
+  AMITK_THRESHOLDING_PER_SLICE, 
+  AMITK_THRESHOLDING_PER_FRAME, 
+  AMITK_THRESHOLDING_INTERPOLATE_FRAMES,
+  AMITK_THRESHOLDING_GLOBAL, 
+  AMITK_THRESHOLDING_NUM
+} AmitkThresholding;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkScalingType"/>enum AmitkScalingType</title>
+<indexterm><primary>AmitkScalingType</primary></indexterm><programlisting>typedef enum {
+  AMITK_SCALING_TYPE_0D,
+  AMITK_SCALING_TYPE_1D,
+  AMITK_SCALING_TYPE_2D,
+  AMITK_SCALING_TYPE_NUM
+} AmitkScalingType;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkConversion"/>enum AmitkConversion</title>
+<indexterm><primary>AmitkConversion</primary></indexterm><programlisting>typedef enum {
+  AMITK_CONVERSION_STRAIGHT,
+  AMITK_CONVERSION_PERCENT_ID_PER_G,
+  AMITK_CONVERSION_SUV,
+  AMITK_CONVERSION_NUM
+} AmitkConversion;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkWeightUnit"/>enum AmitkWeightUnit</title>
+<indexterm><primary>AmitkWeightUnit</primary></indexterm><programlisting>typedef enum {
+  AMITK_WEIGHT_UNIT_KILOGRAM,
+  AMITK_WEIGHT_UNIT_GRAM,
+  AMITK_WEIGHT_UNIT_POUND,
+  AMITK_WEIGHT_UNIT_OUNCE,
+  AMITK_WEIGHT_UNIT_NUM
+} AmitkWeightUnit;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkDoseUnit"/>enum AmitkDoseUnit</title>
+<indexterm><primary>AmitkDoseUnit</primary></indexterm><programlisting>typedef enum {
+  AMITK_DOSE_UNIT_MEGABECQUEREL,
+  AMITK_DOSE_UNIT_MILLICURIE,
+  AMITK_DOSE_UNIT_MICROCURIE,
+  AMITK_DOSE_UNIT_NANOCURIE,
+  AMITK_DOSE_UNIT_NUM
+} AmitkDoseUnit;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkCylinderUnit"/>enum AmitkCylinderUnit</title>
+<indexterm><primary>AmitkCylinderUnit</primary></indexterm><programlisting>typedef enum {
+  AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL,
+  AMITK_CYLINDER_UNIT_MILLICURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE,
+  AMITK_CYLINDER_UNIT_MICROCURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE,
+  AMITK_CYLINDER_UNIT_NANOCURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE,
+  AMITK_CYLINDER_UNIT_NUM
+} AmitkCylinderUnit;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkImportMethod"/>enum AmitkImportMethod</title>
+<indexterm><primary>AmitkImportMethod</primary></indexterm><programlisting>typedef enum { /*&lt; skip &gt;*/
+  AMITK_IMPORT_METHOD_GUESS, 
+  AMITK_IMPORT_METHOD_RAW, 
+#ifdef AMIDE_LIBECAT_SUPPORT
+  AMITK_IMPORT_METHOD_LIBECAT,
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+  AMITK_IMPORT_METHOD_LIBMDC,
+#endif
+  AMITK_IMPORT_METHOD_NUM
+} AmitkImportMethod;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkExportMethod"/>enum AmitkExportMethod</title>
+<indexterm><primary>AmitkExportMethod</primary></indexterm><programlisting>typedef enum { /*&lt; skip &gt;*/
+  AMITK_EXPORT_METHOD_RAW, 
+#ifdef AMIDE_LIBMDC_SUPPORT
+  AMITK_EXPORT_METHOD_LIBMDC,
+#endif
+  AMITK_EXPORT_METHOD_NUM
+} AmitkExportMethod;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-new"/>amitk_data_set_new ()</title>
+<indexterm><primary>amitk_data_set_new</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_new            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-new-with-data"/>amitk_data_set_new_with_data ()</title>
+<indexterm><primary>amitk_data_set_new_with_data</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_new_with_data  (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             const <link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> dim,
+                                             const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>scaling_type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-import-raw-file"/>amitk_data_set_import_raw_file ()</title>
+<indexterm><primary>amitk_data_set_import_raw_file</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_import_raw_file
+                                            (const <link linkend="gchar">gchar</link> *file_name,
+                                             const <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> data_dim,
+                                             <link linkend="guint">guint</link> file_offset,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             const <link linkend="gchar">gchar</link> *data_set_name,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
+                                             const <link linkend="amide-data-t">amide_data_t</link> scale_factor,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>file_name</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>data_dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>file_offset</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>data_set_name</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>voxel_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>scale_factor</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-import-file"/>amitk_data_set_import_file ()</title>
+<indexterm><primary>amitk_data_set_import_file</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_import_file    (<link linkend="AmitkImportMethod">AmitkImportMethod</link> method,
+                                             <link linkend="int">int</link> submethod,
+                                             const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>method</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>submethod</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-export-file"/>amitk_data_set_export_file ()</title>
+<indexterm><primary>amitk_data_set_export_file</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_export_file      (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkExportMethod">AmitkExportMethod</link> method,
+                                             const <link linkend="int">int</link> submethod,
+                                             const <link linkend="gchar">gchar</link> *filename,
+                                             const <link linkend="gboolean">gboolean</link> resliced,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>method</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>submethod</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>resliced</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-global-max"/>amitk_data_set_get_global_max ()</title>
+<indexterm><primary>amitk_data_set_get_global_max</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_global_max  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-global-min"/>amitk_data_set_get_global_min ()</title>
+<indexterm><primary>amitk_data_set_get_global_min</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_global_min  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame-max"/>amitk_data_set_get_frame_max ()</title>
+<indexterm><primary>amitk_data_set_get_frame_max</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_frame_max   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame-min"/>amitk_data_set_get_frame_min ()</title>
+<indexterm><primary>amitk_data_set_get_frame_min</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_frame_min   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-modality"/>amitk_data_set_set_modality ()</title>
+<indexterm><primary>amitk_data_set_set_modality</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_modality     (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkModality">AmitkModality</link> modality);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-scan-start"/>amitk_data_set_set_scan_start ()</title>
+<indexterm><primary>amitk_data_set_set_scan_start</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_scan_start   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-frame-duration"/>amitk_data_set_set_frame_duration ()</title>
+<indexterm><primary>amitk_data_set_set_frame_duration</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_frame_duration
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             <link linkend="amide-time-t">amide_time_t</link> duration);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-voxel-size"/>amitk_data_set_set_voxel_size ()</title>
+<indexterm><primary>amitk_data_set_set_voxel_size</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_voxel_size   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>voxel_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-thresholding"/>amitk_data_set_set_thresholding ()</title>
+<indexterm><primary>amitk_data_set_set_thresholding</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_thresholding (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkThresholding">AmitkThresholding</link> thresholding);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>thresholding</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-threshold-max"/>amitk_data_set_set_threshold_max ()</title>
+<indexterm><primary>amitk_data_set_set_threshold_max</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_threshold_max
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="amide-data-t">amide_data_t</link> value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which_reference</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-threshold-min"/>amitk_data_set_set_threshold_min ()</title>
+<indexterm><primary>amitk_data_set_set_threshold_min</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_threshold_min
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="amide-data-t">amide_data_t</link> value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which_reference</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-threshold-ref-frame"/>amitk_data_set_set_threshold_ref_frame ()</title>
+<indexterm><primary>amitk_data_set_set_threshold_ref_frame</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_threshold_ref_frame
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> which_reference,
+                                             <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>which_reference</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-color-table"/>amitk_data_set_set_color_table ()</title>
+<indexterm><primary>amitk_data_set_set_color_table</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_color_table  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkColorTable">AmitkColorTable</link> new_color_table);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_color_table</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-interpolation"/>amitk_data_set_set_interpolation ()</title>
+<indexterm><primary>amitk_data_set_set_interpolation</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_interpolation
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkInterpolation">AmitkInterpolation</link> new_interpolation);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_interpolation</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-scan-date"/>amitk_data_set_set_scan_date ()</title>
+<indexterm><primary>amitk_data_set_set_scan_date</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_scan_date    (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="gchar">gchar</link> *new_date);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_date</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-conversion"/>amitk_data_set_set_conversion ()</title>
+<indexterm><primary>amitk_data_set_set_conversion</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_conversion   (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkConversion">AmitkConversion</link> new_conversion);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_conversion</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-scale-factor"/>amitk_data_set_set_scale_factor ()</title>
+<indexterm><primary>amitk_data_set_set_scale_factor</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_scale_factor (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_scale_factor);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_scale_factor</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-injected-dose"/>amitk_data_set_set_injected_dose ()</title>
+<indexterm><primary>amitk_data_set_set_injected_dose</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_injected_dose
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_injected_dose);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_injected_dose</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-subject-weight"/>amitk_data_set_set_subject_weight ()</title>
+<indexterm><primary>amitk_data_set_set_subject_weight</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_subject_weight
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_subject_weight);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_subject_weight</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-cylinder-factor"/>amitk_data_set_set_cylinder_factor ()</title>
+<indexterm><primary>amitk_data_set_set_cylinder_factor</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_cylinder_factor
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-data-t">amide_data_t</link> new_cylinder_factor);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_cylinder_factor</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-displayed-dose-unit"/>amitk_data_set_set_displayed_dose_unit ()</title>
+<indexterm><primary>amitk_data_set_set_displayed_dose_unit</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_displayed_dose_unit
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> new_dose_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_dose_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-displayed-weight-unit"/>amitk_data_set_set_displayed_weight_unit ()</title>
+<indexterm><primary>amitk_data_set_set_displayed_weight_unit</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_displayed_weight_unit
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> new_weight_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_weight_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-displayed-cylinder-unit"/>amitk_data_set_set_displayed_cylinder_unit ()</title>
+<indexterm><primary>amitk_data_set_set_displayed_cylinder_unit</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_displayed_cylinder_unit
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> new_cylinder_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_cylinder_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-threshold-window"/>amitk_data_set_set_threshold_window ()</title>
+<indexterm><primary>amitk_data_set_set_threshold_window</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_threshold_window
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkWindow">AmitkWindow</link> window,
+                                             const <link linkend="AmitkLimit">AmitkLimit</link> limit,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>limit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-view-start-gate"/>amitk_data_set_set_view_start_gate ()</title>
+<indexterm><primary>amitk_data_set_set_view_start_gate</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_view_start_gate
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> start_gate);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start_gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-view-end-gate"/>amitk_data_set_set_view_end_gate ()</title>
+<indexterm><primary>amitk_data_set_set_view_end_gate</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_view_end_gate
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> end_gate);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>end_gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-start-time"/>amitk_data_set_get_start_time ()</title>
+<indexterm><primary>amitk_data_set_get_start_time</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_set_get_start_time  (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-end-time"/>amitk_data_set_get_end_time ()</title>
+<indexterm><primary>amitk_data_set_get_end_time</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_set_get_end_time    (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-midpt-time"/>amitk_data_set_get_midpt_time ()</title>
+<indexterm><primary>amitk_data_set_get_midpt_time</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_set_get_midpt_time  (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame"/>amitk_data_set_get_frame ()</title>
+<indexterm><primary>amitk_data_set_get_frame</primary></indexterm><programlisting><link linkend="guint">guint</link>       amitk_data_set_get_frame        (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> time);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>time</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame-duration"/>amitk_data_set_get_frame_duration ()</title>
+<indexterm><primary>amitk_data_set_get_frame_duration</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_set_get_frame_duration
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="guint">guint</link> frame);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-min-frame-duration"/>amitk_data_set_get_min_frame_duration ()</title>
+<indexterm><primary>amitk_data_set_get_min_frame_duration</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_set_get_min_frame_duration
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-calc-far-corner"/>amitk_data_set_calc_far_corner ()</title>
+<indexterm><primary>amitk_data_set_calc_far_corner</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_calc_far_corner  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-calc-max-min"/>amitk_data_set_calc_max_min ()</title>
+<indexterm><primary>amitk_data_set_calc_max_min</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_calc_max_min     (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-max"/>amitk_data_set_get_max ()</title>
+<indexterm><primary>amitk_data_set_get_max</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_max         (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-min"/>amitk_data_set_get_min ()</title>
+<indexterm><primary>amitk_data_set_get_min</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_min         (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-thresholding-max-min"/>amitk_data_set_get_thresholding_max_min ()</title>
+<indexterm><primary>amitk_data_set_get_thresholding_max_min</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_get_thresholding_max_min
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> *slice,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             <link linkend="amide-data-t">amide_data_t</link> *max,
+                                             <link linkend="amide-data-t">amide_data_t</link> *min);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>slice</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>max</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>min</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-calc-distribution"/>amitk_data_set_calc_distribution ()</title>
+<indexterm><primary>amitk_data_set_calc_distribution</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_calc_distribution
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-internal-value"/>amitk_data_set_get_internal_value ()</title>
+<indexterm><primary>amitk_data_set_get_internal_value</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_internal_value
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-value"/>amitk_data_set_get_value ()</title>
+<indexterm><primary>amitk_data_set_get_value</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_value       (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-internal-scaling"/>amitk_data_set_get_internal_scaling ()</title>
+<indexterm><primary>amitk_data_set_get_internal_scaling</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_data_set_get_internal_scaling
+                                            (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-value"/>amitk_data_set_set_value ()</title>
+<indexterm><primary>amitk_data_set_set_value</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_value        (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value,
+                                             const <link linkend="gboolean">gboolean</link> signal_change);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>signal_change</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-set-internal-value"/>amitk_data_set_set_internal_value ()</title>
+<indexterm><primary>amitk_data_set_set_internal_value</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_set_internal_value
+                                            (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i,
+                                             const <link linkend="amide-data-t">amide_data_t</link> internal_value,
+                                             const <link linkend="gboolean">gboolean</link> signal_change);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>internal_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>signal_change</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-projections"/>amitk_data_set_get_projections ()</title>
+<indexterm><primary>amitk_data_set_get_projections</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_get_projections  (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="guint">guint</link> frame,
+                                             const <link linkend="guint">guint</link> gate,
+                                             <link linkend="AmitkDataSet">AmitkDataSet</link> **projections,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>frame</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>projections</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-cropped"/>amitk_data_set_get_cropped ()</title>
+<indexterm><primary>amitk_data_set_get_cropped</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_get_cropped    (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> start,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> end,
+                                             const <link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>end</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>scaling_type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-filtered"/>amitk_data_set_get_filtered ()</title>
+<indexterm><primary>amitk_data_set_get_filtered</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_get_filtered   (const <link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="AmitkFilter">AmitkFilter</link> filter_type,
+                                             const <link linkend="gint">gint</link> kernel_size,
+                                             const <link linkend="amide-real-t">amide_real_t</link> fwhm,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>filter_type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>kernel_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>fwhm</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-slice"/>amitk_data_set_get_slice ()</title>
+<indexterm><primary>amitk_data_set_get_slice</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_set_get_slice      (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="amide-intpoint-t">amide_intpoint_t</link> gate,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *slice_volume);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pixel_dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>slice_volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-line-profile"/>amitk_data_set_get_line_profile ()</title>
+<indexterm><primary>amitk_data_set_get_line_profile</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_data_set_get_line_profile (<link linkend="AmitkDataSet">AmitkDataSet</link> *ds,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> start_point,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> end_point,
+                                             <link linkend="GPtrArray">GPtrArray</link> **preturn_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start_point</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>end_point</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>preturn_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-count"/>amitk_data_sets_count ()</title>
+<indexterm><primary>amitk_data_sets_count</primary></indexterm><programlisting><link linkend="gint">gint</link>        amitk_data_sets_count           (<link linkend="GList">GList</link> *objects,
+                                             <link linkend="gboolean">gboolean</link> recurse);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>recurse</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-get-min-frame-duration"/>amitk_data_sets_get_min_frame_duration ()</title>
+<indexterm><primary>amitk_data_sets_get_min_frame_duration</primary></indexterm><programlisting><link linkend="amide-time-t">amide_time_t</link> amitk_data_sets_get_min_frame_duration
+                                            (<link linkend="GList">GList</link> *objects);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-get-min-voxel-size"/>amitk_data_sets_get_min_voxel_size ()</title>
+<indexterm><primary>amitk_data_sets_get_min_voxel_size</primary></indexterm><programlisting><link linkend="amide-real-t">amide_real_t</link> amitk_data_sets_get_min_voxel_size
+                                            (<link linkend="GList">GList</link> *objects);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-get-max-min-voxel-size"/>amitk_data_sets_get_max_min_voxel_size ()</title>
+<indexterm><primary>amitk_data_sets_get_max_min_voxel_size</primary></indexterm><programlisting><link linkend="amide-real-t">amide_real_t</link> amitk_data_sets_get_max_min_voxel_size
+                                            (<link linkend="GList">GList</link> *objects);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-get-slices"/>amitk_data_sets_get_slices ()</title>
+<indexterm><primary>amitk_data_sets_get_slices</primary></indexterm><programlisting><link linkend="GList">GList</link>*      amitk_data_sets_get_slices      (<link linkend="GList">GList</link> *objects,
+                                             <link linkend="GList">GList</link> **pslice_cache,
+                                             const <link linkend="gint">gint</link> max_slice_cache_size,
+                                             const <link linkend="amide-time-t">amide_time_t</link> start,
+                                             const <link linkend="amide-time-t">amide_time_t</link> duration,
+                                             const <link linkend="amide-intpoint-t">amide_intpoint_t</link> gate,
+                                             const <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *view_volume);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pslice_cache</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>max_slice_cache_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>duration</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>gate</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pixel_dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>view_volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-find-with-slice-parent"/>amitk_data_sets_find_with_slice_parent ()</title>
+<indexterm><primary>amitk_data_sets_find_with_slice_parent</primary></indexterm><programlisting><link linkend="AmitkDataSet">AmitkDataSet</link>* amitk_data_sets_find_with_slice_parent
+                                            (<link linkend="GList">GList</link> *slices,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *slice_parent);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>slices</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>slice_parent</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-sets-remove-with-slice-parent"/>amitk_data_sets_remove_with_slice_parent ()</title>
+<indexterm><primary>amitk_data_sets_remove_with_slice_parent</primary></indexterm><programlisting><link linkend="GList">GList</link>*      amitk_data_sets_remove_with_slice_parent
+                                            (<link linkend="GList">GList</link> *slices,
+                                             const <link linkend="AmitkDataSet">AmitkDataSet</link> *slice_parent);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>slices</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>slice_parent</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame-duration-mem"/>amitk_data_set_get_frame_duration_mem()</title>
+<indexterm><primary>amitk_data_set_get_frame_duration_mem</primary></indexterm><programlisting>#define amitk_data_set_get_frame_duration_mem(ds) (g_try_new(amide_time_t,(ds)-&gt;raw_data-&gt;dim.t))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-get-frame-max-min-mem"/>amitk_data_set_get_frame_max_min_mem()</title>
+<indexterm><primary>amitk_data_set_get_frame_max_min_mem</primary></indexterm><programlisting>#define amitk_data_set_get_frame_max_min_mem(ds) (g_try_new(amide_data_t,(ds)-&gt;raw_data-&gt;dim.t))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-data-set-dynamic"/>amitk_data_set_dynamic()</title>
+<indexterm><primary>amitk_data_set_dynamic</primary></indexterm><programlisting>#define amitk_data_set_dynamic(ds) ((ds)-&gt;data_set-&gt;dim.t &gt; 1)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>ds</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-scaling-type-get-name"/>amitk_scaling_type_get_name ()</title>
+<indexterm><primary>amitk_scaling_type_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_scaling_type_get_name    (const <link linkend="AmitkScalingType">AmitkScalingType</link> scaling_type);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>scaling_type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-interpolation-get-name"/>amitk_interpolation_get_name ()</title>
+<indexterm><primary>amitk_interpolation_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_interpolation_get_name   (const <link linkend="AmitkInterpolation">AmitkInterpolation</link> interpolation);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>interpolation</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-thresholding-get-name"/>amitk_thresholding_get_name ()</title>
+<indexterm><primary>amitk_thresholding_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_thresholding_get_name    (const <link linkend="AmitkThresholding">AmitkThresholding</link> thresholding);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>thresholding</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-conversion-get-name"/>amitk_conversion_get_name ()</title>
+<indexterm><primary>amitk_conversion_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_conversion_get_name      (const <link linkend="AmitkConversion">AmitkConversion</link> conversion);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>conversion</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-weight-unit-get-name"/>amitk_weight_unit_get_name ()</title>
+<indexterm><primary>amitk_weight_unit_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_weight_unit_get_name     (const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>weight_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-dose-unit-get-name"/>amitk_dose_unit_get_name ()</title>
+<indexterm><primary>amitk_dose_unit_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_dose_unit_get_name       (const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dose_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-cylinder-unit-get-name"/>amitk_cylinder_unit_get_name ()</title>
+<indexterm><primary>amitk_cylinder_unit_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_cylinder_unit_get_name   (const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>cylinder_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-weight-unit-convert-to"/>amitk_weight_unit_convert_to ()</title>
+<indexterm><primary>amitk_weight_unit_convert_to</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_weight_unit_convert_to   (const <link linkend="amide-data-t">amide_data_t</link> kg,
+                                             const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>kg</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>weight_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-weight-unit-convert-from"/>amitk_weight_unit_convert_from ()</title>
+<indexterm><primary>amitk_weight_unit_convert_from</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_weight_unit_convert_from (const <link linkend="amide-data-t">amide_data_t</link> weight,
+                                             const <link linkend="AmitkWeightUnit">AmitkWeightUnit</link> weight_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>weight</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>weight_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-dose-unit-convert-to"/>amitk_dose_unit_convert_to ()</title>
+<indexterm><primary>amitk_dose_unit_convert_to</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_dose_unit_convert_to     (const <link linkend="amide-data-t">amide_data_t</link> MBq,
+                                             const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>MBq</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dose_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-dose-unit-convert-from"/>amitk_dose_unit_convert_from ()</title>
+<indexterm><primary>amitk_dose_unit_convert_from</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_dose_unit_convert_from   (const <link linkend="amide-data-t">amide_data_t</link> dose,
+                                             const <link linkend="AmitkDoseUnit">AmitkDoseUnit</link> dose_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dose</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dose_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-cylinder-unit-convert-to"/>amitk_cylinder_unit_convert_to ()</title>
+<indexterm><primary>amitk_cylinder_unit_convert_to</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_cylinder_unit_convert_to (const <link linkend="amide-data-t">amide_data_t</link> MBq_cc_image_units,
+                                             const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>MBq_cc_image_units</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>cylinder_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-cylinder-unit-convert-from"/>amitk_cylinder_unit_convert_from ()</title>
+<indexterm><primary>amitk_cylinder_unit_convert_from</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_cylinder_unit_convert_from
+                                            (const <link linkend="amide-data-t">amide_data_t</link> cylinder_factor,
+                                             const <link linkend="AmitkCylinderUnit">AmitkCylinderUnit</link> cylinder_unit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>cylinder_factor</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>cylinder_unit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

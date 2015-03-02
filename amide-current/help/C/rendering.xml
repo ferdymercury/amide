@@ -5,20 +5,20 @@
   rendering used by many other libraries and hardware
   accelerators).</para>
 
-<para> To start a rendering window, select the data sets and ROI that
-  you would like to include in your rendering, and then hit the
-  "View->Rendering" menu item.  A small dialog window will pop-up with
-  two options.  The first "Set values greater than max threshold to
-  zero" allows you to strip high level voxels out of the rendering
-  process.  In general you won't want this, but it might be useful if
-  you have high valued areas in your data set that obscures what you'd
-  like to see.  The second option "Accelerate Rendering" tells VolPack
-  to use a faster method for doing the volume rendering.  You will in
-  general want to use this option, as it causes a significance
-  performance enhancement (around 10 fold).  It does, however, require
-  around 3 fold as much rendering as the non-accelerated option, so if
-  you're running out of memory, you'll want to try to rendering
-  without the acceleration. </para>
+<para> To start a rendering window, select the "View->Rendering" menu
+  item.  A small dialog window will pop-up allowing you to select
+  which objects you'd like rendered, along with an additional two
+  options.  The first "Set values greater than max threshold to zero"
+  allows you to strip high level voxels out of the rendering process.
+  In general you won't want this, but it might be useful if you have
+  high valued areas in your data set that obscures what you'd like to
+  see.  The second option "Accelerate Rendering" tells VolPack to use
+  a faster method for doing the volume rendering.  You will in general
+  want to use this option, as it causes a significance performance
+  enhancement (around 10 fold).  It does, however, require around 3
+  fold as much rendering as the non-accelerated option, so if you're
+  running out of memory, you'll want to try to rendering without the
+  acceleration. </para>
 
 <para> After hitting "Execute" the program will reslice the data sets
   and ROI's into a data structure that the volpack library can handle,

@@ -1,0 +1,944 @@
+<refentry id="amitk-amitk-marshal">
+<refmeta>
+<refentrytitle>amitk_marshal</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amitk_marshal</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+<link linkend="void">void</link>        <link linkend="amitk-marshal-OBJECT--OBJECT">amitk_marshal_OBJECT__OBJECT</link>    (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+<link linkend="void">void</link>        <link linkend="amitk-marshal-OBJECT--VOID">amitk_marshal_OBJECT__VOID</link>      (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-OBJECT--NONE">amitk_marshal_OBJECT__NONE</link>
+#define     <link linkend="amitk-marshal-VOID--POINTER">amitk_marshal_VOID__POINTER</link>
+#define     <link linkend="amitk-marshal-NONE--POINTER">amitk_marshal_NONE__POINTER</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--POINTER-POINTER">amitk_marshal_VOID__POINTER_POINTER</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--POINTER-POINTER">amitk_marshal_NONE__POINTER_POINTER</link>
+#define     <link linkend="amitk-marshal-VOID--VOID">amitk_marshal_VOID__VOID</link>
+#define     <link linkend="amitk-marshal-NONE--NONE">amitk_marshal_NONE__NONE</link>
+#define     <link linkend="amitk-marshal-VOID--BOXED">amitk_marshal_VOID__BOXED</link>
+#define     <link linkend="amitk-marshal-NONE--BOXED">amitk_marshal_NONE__BOXED</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--BOXED-BOXED">amitk_marshal_VOID__BOXED_BOXED</link> (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--BOXED-BOXED">amitk_marshal_NONE__BOXED_BOXED</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--BOXED-DOUBLE">amitk_marshal_VOID__BOXED_DOUBLE</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--BOXED-DOUBLE">amitk_marshal_NONE__BOXED_DOUBLE</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--BOXED-DOUBLE-BOXED">amitk_marshal_VOID__BOXED_DOUBLE_BOXED</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--BOXED-DOUBLE-BOXED">amitk_marshal_NONE__BOXED_DOUBLE_BOXED</link>
+#define     <link linkend="amitk-marshal-VOID--ENUM">amitk_marshal_VOID__ENUM</link>
+#define     <link linkend="amitk-marshal-NONE--ENUM">amitk_marshal_NONE__ENUM</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--ENUM-BOXED">amitk_marshal_VOID__ENUM_BOXED</link>  (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--ENUM-BOXED">amitk_marshal_NONE__ENUM_BOXED</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--ENUM-BOXED-DOUBLE">amitk_marshal_VOID__ENUM_BOXED_DOUBLE</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--ENUM-BOXED-DOUBLE">amitk_marshal_NONE__ENUM_BOXED_DOUBLE</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--ENUM-POINTER-DOUBLE">amitk_marshal_VOID__ENUM_POINTER_DOUBLE</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--ENUM-POINTER-DOUBLE">amitk_marshal_NONE__ENUM_POINTER_DOUBLE</link>
+#define     <link linkend="amitk-marshal-VOID--OBJECT">amitk_marshal_VOID__OBJECT</link>
+#define     <link linkend="amitk-marshal-NONE--OBJECT">amitk_marshal_NONE__OBJECT</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--OBJECT-BOOLEAN">amitk_marshal_VOID__OBJECT_BOOLEAN</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--OBJECT-BOOLEAN">amitk_marshal_NONE__OBJECT_BOOLEAN</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--OBJECT-BOXED">amitk_marshal_VOID__OBJECT_BOXED</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--OBJECT-BOXED">amitk_marshal_NONE__OBJECT_BOXED</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--OBJECT-ENUM">amitk_marshal_VOID__OBJECT_ENUM</link> (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--OBJECT-ENUM">amitk_marshal_NONE__OBJECT_ENUM</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--OBJECT-ENUM-BOXED">amitk_marshal_VOID__OBJECT_ENUM_BOXED</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--OBJECT-ENUM-BOXED">amitk_marshal_NONE__OBJECT_ENUM_BOXED</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--OBJECT-ENUM-ENUM">amitk_marshal_VOID__OBJECT_ENUM_ENUM</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--OBJECT-ENUM-ENUM">amitk_marshal_NONE__OBJECT_ENUM_ENUM</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-VOID--UINT-UINT">amitk_marshal_VOID__UINT_UINT</link>   (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+#define     <link linkend="amitk-marshal-NONE--UINT-UINT">amitk_marshal_NONE__UINT_UINT</link>
+<link linkend="void">void</link>        <link linkend="amitk-marshal-STRING--POINTER-STRING">amitk_marshal_STRING__POINTER_STRING</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+<link linkend="void">void</link>        <link linkend="amitk-marshal-POINTER--POINTER-POINTER">amitk_marshal_POINTER__POINTER_POINTER</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+<link linkend="void">void</link>        <link linkend="amitk-marshal-POINTER--POINTER-POINTER-POINTER">amitk_marshal_POINTER__POINTER_POINTER_POINTER</link>
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="amitk-marshal-OBJECT--OBJECT"/>amitk_marshal_OBJECT__OBJECT ()</title>
+<indexterm><primary>amitk_marshal_OBJECT__OBJECT</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_OBJECT__OBJECT    (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-OBJECT--VOID"/>amitk_marshal_OBJECT__VOID ()</title>
+<indexterm><primary>amitk_marshal_OBJECT__VOID</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_OBJECT__VOID      (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-OBJECT--NONE"/>amitk_marshal_OBJECT__NONE</title>
+<indexterm><primary>amitk_marshal_OBJECT__NONE</primary></indexterm><programlisting>#define amitk_marshal_OBJECT__NONE	amitk_marshal_OBJECT__VOID
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--POINTER"/>amitk_marshal_VOID__POINTER</title>
+<indexterm><primary>amitk_marshal_VOID__POINTER</primary></indexterm><programlisting>#define amitk_marshal_VOID__POINTER	g_cclosure_marshal_VOID__POINTER
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--POINTER"/>amitk_marshal_NONE__POINTER</title>
+<indexterm><primary>amitk_marshal_NONE__POINTER</primary></indexterm><programlisting>#define amitk_marshal_NONE__POINTER	amitk_marshal_VOID__POINTER
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--POINTER-POINTER"/>amitk_marshal_VOID__POINTER_POINTER ()</title>
+<indexterm><primary>amitk_marshal_VOID__POINTER_POINTER</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__POINTER_POINTER
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--POINTER-POINTER"/>amitk_marshal_NONE__POINTER_POINTER</title>
+<indexterm><primary>amitk_marshal_NONE__POINTER_POINTER</primary></indexterm><programlisting>#define amitk_marshal_NONE__POINTER_POINTER	amitk_marshal_VOID__POINTER_POINTER
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--VOID"/>amitk_marshal_VOID__VOID</title>
+<indexterm><primary>amitk_marshal_VOID__VOID</primary></indexterm><programlisting>#define amitk_marshal_VOID__VOID	g_cclosure_marshal_VOID__VOID
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--NONE"/>amitk_marshal_NONE__NONE</title>
+<indexterm><primary>amitk_marshal_NONE__NONE</primary></indexterm><programlisting>#define amitk_marshal_NONE__NONE	amitk_marshal_VOID__VOID
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--BOXED"/>amitk_marshal_VOID__BOXED</title>
+<indexterm><primary>amitk_marshal_VOID__BOXED</primary></indexterm><programlisting>#define amitk_marshal_VOID__BOXED	g_cclosure_marshal_VOID__BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--BOXED"/>amitk_marshal_NONE__BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__BOXED	amitk_marshal_VOID__BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--BOXED-BOXED"/>amitk_marshal_VOID__BOXED_BOXED ()</title>
+<indexterm><primary>amitk_marshal_VOID__BOXED_BOXED</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__BOXED_BOXED (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--BOXED-BOXED"/>amitk_marshal_NONE__BOXED_BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__BOXED_BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__BOXED_BOXED	amitk_marshal_VOID__BOXED_BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--BOXED-DOUBLE"/>amitk_marshal_VOID__BOXED_DOUBLE ()</title>
+<indexterm><primary>amitk_marshal_VOID__BOXED_DOUBLE</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__BOXED_DOUBLE
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--BOXED-DOUBLE"/>amitk_marshal_NONE__BOXED_DOUBLE</title>
+<indexterm><primary>amitk_marshal_NONE__BOXED_DOUBLE</primary></indexterm><programlisting>#define amitk_marshal_NONE__BOXED_DOUBLE	amitk_marshal_VOID__BOXED_DOUBLE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--BOXED-DOUBLE-BOXED"/>amitk_marshal_VOID__BOXED_DOUBLE_BOXED ()</title>
+<indexterm><primary>amitk_marshal_VOID__BOXED_DOUBLE_BOXED</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__BOXED_DOUBLE_BOXED
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--BOXED-DOUBLE-BOXED"/>amitk_marshal_NONE__BOXED_DOUBLE_BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__BOXED_DOUBLE_BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__BOXED_DOUBLE_BOXED	amitk_marshal_VOID__BOXED_DOUBLE_BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--ENUM"/>amitk_marshal_VOID__ENUM</title>
+<indexterm><primary>amitk_marshal_VOID__ENUM</primary></indexterm><programlisting>#define amitk_marshal_VOID__ENUM	g_cclosure_marshal_VOID__ENUM
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--ENUM"/>amitk_marshal_NONE__ENUM</title>
+<indexterm><primary>amitk_marshal_NONE__ENUM</primary></indexterm><programlisting>#define amitk_marshal_NONE__ENUM	amitk_marshal_VOID__ENUM
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--ENUM-BOXED"/>amitk_marshal_VOID__ENUM_BOXED ()</title>
+<indexterm><primary>amitk_marshal_VOID__ENUM_BOXED</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__ENUM_BOXED  (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--ENUM-BOXED"/>amitk_marshal_NONE__ENUM_BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__ENUM_BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__ENUM_BOXED	amitk_marshal_VOID__ENUM_BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--ENUM-BOXED-DOUBLE"/>amitk_marshal_VOID__ENUM_BOXED_DOUBLE ()</title>
+<indexterm><primary>amitk_marshal_VOID__ENUM_BOXED_DOUBLE</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__ENUM_BOXED_DOUBLE
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--ENUM-BOXED-DOUBLE"/>amitk_marshal_NONE__ENUM_BOXED_DOUBLE</title>
+<indexterm><primary>amitk_marshal_NONE__ENUM_BOXED_DOUBLE</primary></indexterm><programlisting>#define amitk_marshal_NONE__ENUM_BOXED_DOUBLE	amitk_marshal_VOID__ENUM_BOXED_DOUBLE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--ENUM-POINTER-DOUBLE"/>amitk_marshal_VOID__ENUM_POINTER_DOUBLE ()</title>
+<indexterm><primary>amitk_marshal_VOID__ENUM_POINTER_DOUBLE</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__ENUM_POINTER_DOUBLE
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--ENUM-POINTER-DOUBLE"/>amitk_marshal_NONE__ENUM_POINTER_DOUBLE</title>
+<indexterm><primary>amitk_marshal_NONE__ENUM_POINTER_DOUBLE</primary></indexterm><programlisting>#define amitk_marshal_NONE__ENUM_POINTER_DOUBLE	amitk_marshal_VOID__ENUM_POINTER_DOUBLE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT"/>amitk_marshal_VOID__OBJECT</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT</primary></indexterm><programlisting>#define amitk_marshal_VOID__OBJECT	g_cclosure_marshal_VOID__OBJECT
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT"/>amitk_marshal_NONE__OBJECT</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT	amitk_marshal_VOID__OBJECT
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT-BOOLEAN"/>amitk_marshal_VOID__OBJECT_BOOLEAN ()</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT_BOOLEAN</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__OBJECT_BOOLEAN
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT-BOOLEAN"/>amitk_marshal_NONE__OBJECT_BOOLEAN</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT_BOOLEAN</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT_BOOLEAN	amitk_marshal_VOID__OBJECT_BOOLEAN
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT-BOXED"/>amitk_marshal_VOID__OBJECT_BOXED ()</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT_BOXED</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__OBJECT_BOXED
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT-BOXED"/>amitk_marshal_NONE__OBJECT_BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT_BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT_BOXED	amitk_marshal_VOID__OBJECT_BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT-ENUM"/>amitk_marshal_VOID__OBJECT_ENUM ()</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT_ENUM</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__OBJECT_ENUM (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT-ENUM"/>amitk_marshal_NONE__OBJECT_ENUM</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT_ENUM</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT_ENUM	amitk_marshal_VOID__OBJECT_ENUM
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT-ENUM-BOXED"/>amitk_marshal_VOID__OBJECT_ENUM_BOXED ()</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT_ENUM_BOXED</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__OBJECT_ENUM_BOXED
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT-ENUM-BOXED"/>amitk_marshal_NONE__OBJECT_ENUM_BOXED</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT_ENUM_BOXED</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT_ENUM_BOXED	amitk_marshal_VOID__OBJECT_ENUM_BOXED
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--OBJECT-ENUM-ENUM"/>amitk_marshal_VOID__OBJECT_ENUM_ENUM ()</title>
+<indexterm><primary>amitk_marshal_VOID__OBJECT_ENUM_ENUM</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__OBJECT_ENUM_ENUM
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--OBJECT-ENUM-ENUM"/>amitk_marshal_NONE__OBJECT_ENUM_ENUM</title>
+<indexterm><primary>amitk_marshal_NONE__OBJECT_ENUM_ENUM</primary></indexterm><programlisting>#define amitk_marshal_NONE__OBJECT_ENUM_ENUM	amitk_marshal_VOID__OBJECT_ENUM_ENUM
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-VOID--UINT-UINT"/>amitk_marshal_VOID__UINT_UINT ()</title>
+<indexterm><primary>amitk_marshal_VOID__UINT_UINT</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_VOID__UINT_UINT   (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-NONE--UINT-UINT"/>amitk_marshal_NONE__UINT_UINT</title>
+<indexterm><primary>amitk_marshal_NONE__UINT_UINT</primary></indexterm><programlisting>#define amitk_marshal_NONE__UINT_UINT	amitk_marshal_VOID__UINT_UINT
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-STRING--POINTER-STRING"/>amitk_marshal_STRING__POINTER_STRING ()</title>
+<indexterm><primary>amitk_marshal_STRING__POINTER_STRING</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_STRING__POINTER_STRING
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-POINTER--POINTER-POINTER"/>amitk_marshal_POINTER__POINTER_POINTER ()</title>
+<indexterm><primary>amitk_marshal_POINTER__POINTER_POINTER</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_POINTER__POINTER_POINTER
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-marshal-POINTER--POINTER-POINTER-POINTER"/>amitk_marshal_POINTER__POINTER_POINTER_POINTER ()</title>
+<indexterm><primary>amitk_marshal_POINTER__POINTER_POINTER_POINTER</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_marshal_POINTER__POINTER_POINTER_POINTER
+                                            (<link linkend="GClosure">GClosure</link> *closure,
+                                             <link linkend="GValue">GValue</link> *return_value,
+                                             <link linkend="guint">guint</link> n_param_values,
+                                             const <link linkend="GValue">GValue</link> *param_values,
+                                             <link linkend="gpointer">gpointer</link> invocation_hint,
+                                             <link linkend="gpointer">gpointer</link> marshal_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>closure</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>param_values</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>invocation_hint</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>marshal_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

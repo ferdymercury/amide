@@ -151,7 +151,8 @@ gboolean amide_is_xif_flat_file(const gchar * filename, guint64 * plocation_le, 
 
   if (S_ISDIR(file_info.st_mode)) return FALSE;
 
-  if ((study_file = fopen(filename, "r")) == NULL) 
+  /* Note, "rb" is same as "r" on Unix, but not in Windows */
+  if ((study_file = fopen(filename, "rb")) == NULL) 
     return FALSE;
 
   /* check magic string */

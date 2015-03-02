@@ -1,0 +1,43 @@
+<!-- ##### SECTION Title ##### -->
+AmitkFiducialMark
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_FIDUCIAL_MARK_GET ##### -->
+<para>
+
+</para>
+
+@mark: 
+
+
+<!-- ##### FUNCTION amitk_fiducial_mark_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_fiducial_mark_set ##### -->
+<para>
+
+</para>
+
+@fiducial_mark: 
+@new_point: 
+
+

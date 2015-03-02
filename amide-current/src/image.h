@@ -75,6 +75,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,
 				 const amide_time_t duration,
+				 const amide_intpoint_t gate,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
 				 const AmitkFuseType fuse_type);

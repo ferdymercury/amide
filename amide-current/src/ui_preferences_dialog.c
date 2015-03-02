@@ -102,7 +102,11 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   g_return_if_fail(ui_study->study != NULL);
 
   /* figure out which menu item called me */
+#if 1
   new_line_style = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  new_line_style = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   amitk_preferences_set_canvas_line_style(ui_study->preferences, new_line_style);
 
   /* update the roi indicator */
@@ -217,7 +221,11 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
   AmitkColorTable color_table;
 
   modality = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "modality"));
+#if 1
   color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   amitk_preferences_set_color_table(ui_study->preferences, modality, color_table);
 
   return;
@@ -361,8 +369,13 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_object_set_data(G_OBJECT(dialog), "roi_item", roi_item);
 
 #ifndef AMIDE_LIBGNOMECANVAS_AA
+#if 1
   gtk_option_menu_set_history(GTK_OPTION_MENU(line_style_menu),
 			      AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
+#else
+  gtk_combo_box_set_active(GTK_COMBO_BOX(line_style_menu),
+			   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
+#endif
   g_signal_connect(G_OBJECT(line_style_menu), "changed", G_CALLBACK(line_style_cb), ui_study);
 #endif
 
@@ -444,11 +457,15 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
     menu = amitk_color_table_menu_new();
     gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+#if 1
     gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
 				AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(ui_study->preferences, i_modality));
+#else
+    gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
+			     AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(ui_study->preferences, i_modality));
+#endif
     g_object_set_data(G_OBJECT(menu), "modality", GINT_TO_POINTER(i_modality));
-    g_signal_connect(G_OBJECT(menu), "changed", 
-		     G_CALLBACK(color_table_cb), ui_study);
+    g_signal_connect(G_OBJECT(menu), "changed",  G_CALLBACK(color_table_cb), ui_study);
     gtk_widget_show(menu);
 
     table_row++;

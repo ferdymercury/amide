@@ -1,0 +1,60 @@
+<refentry id="amitk-AmitkSpaceEdit">
+<refmeta>
+<refentrytitle>AmitkSpaceEdit</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkSpaceEdit</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-space-edit-new">amitk_space_edit_new</link>            (<link linkend="AmitkObject">AmitkObject</link> *object);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="amitk-space-edit-new"/>amitk_space_edit_new ()</title>
+<indexterm><primary>amitk_space_edit_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_space_edit_new            (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

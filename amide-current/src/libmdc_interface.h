@@ -79,6 +79,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
+		   gboolean resliced,
 		   gboolean (*update_func)(),
 		   gpointer update_data);
 

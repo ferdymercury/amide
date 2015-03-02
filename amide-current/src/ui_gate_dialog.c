@@ -78,7 +78,7 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
   ui_gate_dialog_t * gd = data;
   
   gtk_tree_model_get(model, iter, COLUMN_GATE, &i_gate, -1);
-
+  
   if (!gd->valid) {
     gd->start_gate = i_gate;
     gd->end_gate = i_gate;
@@ -98,8 +98,6 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
 static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
 
   GtkWidget * dialog = data;
-  //  GtkTreeView * tree_view;
-  //  GtkTreeModel * model;
   ui_gate_dialog_t * gd;
 
   gd = g_object_get_data(G_OBJECT(dialog), "gd");
@@ -109,16 +107,8 @@ static void selection_changed_cb (GtkTreeSelection *selection, gpointer data) {
   gd->valid = FALSE;
   gtk_tree_selection_selected_foreach(selection, selection_for_each_func, gd);
 
-  if (gd->valid) {
-    amitk_data_set_set_view_start_gate(gd->ds, gd->start_gate);
-    amitk_data_set_set_view_end_gate(gd->ds, gd->end_gate);
-  }
-
-  //  tree_view = gtk_tree_selection_get_tree_view(selection);
-  //  model = gtk_tree_view_get_model(tree_view);
-
-  //  update_selections(model, selection, dialog, gd);
-  //  update_entries(dialog);
+  amitk_data_set_set_view_start_gate(gd->ds, gd->start_gate);
+  amitk_data_set_set_view_end_gate(gd->ds, gd->end_gate);
 
   return;
 }

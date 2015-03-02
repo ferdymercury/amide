@@ -3,44 +3,24 @@ misc list of things todo:
 for next release?
 -----------------
 
-* Gating:
-	gate picker -> multiple selection still screwed up
-	finish gate support in ui_series (lots of fixmes)
+* gtk-doc isn't working
 
+touch tmpl-build.stamp
+make[2]: *** No rule to make target `tmpl/*.sgml', needed by `sgml-build.stamp'.  Stop.
 
-* fink -> doesn't have yelp
-	need to update amide/unstable packages to new gnome .info files and
-	add in fink
-
-* requested by steve jones:
-  add an import from file button for frame durations
-
-* ui_series:
-	-add support for gated data sets
-	-have an amitk_tree on the popup, where the user can switch which objects will be displayed
-* on ui_render's initial poup, have an amitk_tree for changing what gets displayed
+check doc/reference/Makefile.am, and doc/reference/Makefile very careful, compare to those with gtk
 
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used
-
-* add key combination-> set pixel to max threshold/set pixel to min threshold
-                                                                                
+* Gate picker -> multiple selection still screwed up
+* add drag-n-drop capabilities between study windows
+	don't use treeview reorderable stuff, too limited,
+* requested by steve jones- add an import from file button for frame durations
 * ability to import and export AIR .air files
   -probably from rotate axis page
   -need object list widget: should update automatically when something is removed somewhere else
-
 * add free hand ROI drawing (2D and 3D)
-                                                                                
-* ui_series needs to be updated, to update on study changes (roi_width, line_style, etc.)
-
-* add drag-n-drop capabilities between study windows
-	don't use treeview reorderable stuff, too limited,
-
 * export ROI's to external file? and allow import?
-
-* histogram for roi's
-  - probably an option on the ROI stat's pop-up
-
 * continue implementing progress bars for various functions:
 	-roi analysis
 	-loading in data sets
@@ -74,6 +54,7 @@ factor analysis things:
 
 big things:
 -----------
+* toolbox dialog for generating polar maps
 * should be able to specify units the image/display info is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 	-study would have an output units variable
@@ -102,14 +83,8 @@ small things:
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
 	would allow simplification of amitk_canvas event cruft
 	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
-	
 * add sqrt and log abilities into color table lookup?
-* get rid of amitk_canvas view_changed signal, should just listen to
-	study's version of it.  Also, canvas->center is redundant.
 * should have option to use rigid body registration with scaling
-* sliders don't work currently under Xwin32, stopped working 
-	after 0.7.6 (addition of optional transverse/coronal/etc. buttons).
-* need to switch gtk_idle (deprecated) calls to g_source calls
 * try to work in the max/min/distribution calculations into the loading loop
 * fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
@@ -120,9 +95,8 @@ small things:
 * ui_series, should add popup dialog allowing # columns and rows to
 	be specified (best guess would be default).
 	also, switch between putting time or frame number on display
-* default color table -> doesn't work for data sets loaded from command line
-* fly through's don't output ROI's, fiducial marks.
-* ui_series, should be able to export 
+* add key combination that sets current pixel value to max/min threshold
+                                                                                
 
 
 pre 1.0 things:
@@ -131,7 +105,6 @@ pre 1.0 things:
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
 * check that make distcheck works
-* write a man page
 * add tooltips to everything....
 * add more help buttons to the dialogs 
   -gnome_druid has an add help button function
@@ -158,13 +131,23 @@ probably post 1.0 things:
 things dependent on other things: 
 -------------- 
 
-* combine open and import menu items onto same file dialog.
+* dependent on gtk 2.4 support for windows and fink
+1. combine open and import menu items onto same file dialog.
 	There's no reason this can't currently be done on the AMIDE side.  There's a function
 	for detecting if a file/directory is a XIF, and if it's not, we just hand it off to
-	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4?) that allows
+	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4) that allows
 	specifying our own filters for figuring out what goes in the lists... XIF 
 	directories need to go on the "files" side.  And also would need a drop down for 
 	switching from "guess" to "import particular", like in gimp.
+	- similarly, the export data set functions should work similarly, with an additional
+	option on whether or not we want the data resliced.
+	* amitk_xif_sel uses deprecated GtkOptionMenu (gtkfilesel uses this also)
+	  remove amitk_xif_sel when conversion to the new file selection is done
+2. switch away from the GNOMEUIINFO method of toolbar/menu generation in favor
+	of GtkAction.  Conversion process is descriped in the gtk api documentation.
+3. switch from GtkOptionMenu to GtkComboBox.  Work's already done, just need to 
+	uncomment the relevant code.  GtkComboBox is not avaliable in gtk 2.2
+4. Add -DGTK_DISABLE_DEPRECATED back into src/Makefile.am
 
 
 * I'd like to change the icons on the toolbar to pixbuf data structures generated from
@@ -180,14 +163,13 @@ things dependent on other things:
 		libart_lgpl-2.3.14-1
 		libgnomecanvas-2.3.6-1
 
-	make sure to check that lines in tb_crop are placed correctly
-
+	-make sure to check that lines in tb_crop are placed correctly
+	-need to check that the export jpeg functions work, they have not been tested
 
 * AMIDE_OSX_HACKS, on OS X we currently
 	1- Disable interaction with ESD (enlightenment sound daemon).
            If amide crashed, ESD was locking files....  This is as of
 	   fink 0.5.2, OS X 10.2.5
-
 
 * anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
         -ui_preferences_dialog, and amitk_object_dialog define out the appropriate code 

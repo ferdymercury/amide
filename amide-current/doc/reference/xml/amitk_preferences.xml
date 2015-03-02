@@ -1,0 +1,549 @@
+<refentry id="amitk-AmitkPreferences">
+<refmeta>
+<refentrytitle>AmitkPreferences</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkPreferences</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-PREFERENCES-WARNINGS-TO-CONSOLE-CAPS">AMITK_PREFERENCES_WARNINGS_TO_CONSOLE</link>(object)
+#define     <link linkend="AMITK-PREFERENCES-PROMPT-FOR-SAVE-ON-EXIT-CAPS">AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT</link>(object)
+#define     <link linkend="AMITK-PREFERENCES-SAVE-XIF-AS-DIRECTORY-CAPS">AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY</link>(object)
+#define     <link linkend="AMITK-PREFERENCES-CANVAS-ROI-WIDTH-CAPS">AMITK_PREFERENCES_CANVAS_ROI_WIDTH</link>(pref)
+#define     <link linkend="AMITK-PREFERENCES-CANVAS-LINE-STYLE-CAPS">AMITK_PREFERENCES_CANVAS_LINE_STYLE</link>(pref)
+#define     <link linkend="AMITK-PREFERENCES-CANVAS-LAYOUT-CAPS">AMITK_PREFERENCES_CANVAS_LAYOUT</link> (pref)
+#define     <link linkend="AMITK-PREFERENCES-CANVAS-MAINTAIN-SIZE-CAPS">AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE</link>(pref)
+#define     <link linkend="AMITK-PREFERENCES-CANVAS-TARGET-EMPTY-AREA-CAPS">AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA</link>(pref)
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-COLOR-TABLE-CAPS">AMITK_PREFERENCES_DEFAULT_COLOR_TABLE</link>(pref, modality)
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-WINDOW-CAPS">AMITK_PREFERENCES_DEFAULT_WINDOW</link>(pref, window, limit)
+#define     <link linkend="AMITK-PREFERENCES-DIALOG-CAPS">AMITK_PREFERENCES_DIALOG</link>        (pref)
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-CANVAS-ROI-WIDTH-CAPS">AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-CANVAS-LINE-STYLE-CAPS">AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-CANVAS-LAYOUT-CAPS">AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-CANVAS-MAINTAIN-SIZE-CAPS">AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-CANVAS-TARGET-EMPTY-AREA-CAPS">AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-WARNINGS-TO-CONSOLE-CAPS">AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-PROMPT-FOR-SAVE-ON-EXIT-CAPS">AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT</link>
+#define     <link linkend="AMITK-PREFERENCES-DEFAULT-SAVE-XIF-AS-DIRECTORY-CAPS">AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY</link>
+#define     <link linkend="AMITK-PREFERENCES-MIN-ROI-WIDTH-CAPS">AMITK_PREFERENCES_MIN_ROI_WIDTH</link>
+#define     <link linkend="AMITK-PREFERENCES-MAX-ROI-WIDTH-CAPS">AMITK_PREFERENCES_MAX_ROI_WIDTH</link>
+#define     <link linkend="AMITK-PREFERENCES-MIN-TARGET-EMPTY-AREA-CAPS">AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA</link>
+#define     <link linkend="AMITK-PREFERENCES-MAX-TARGET-EMPTY-AREA-CAPS">AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA</link>
+<link linkend="AmitkPreferences">AmitkPreferences</link>* <link linkend="amitk-preferences-new">amitk_preferences_new</link>     (void);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-canvas-roi-width">amitk_preferences_set_canvas_roi_width</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gint">gint</link> roi_width);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-canvas-line-style">amitk_preferences_set_canvas_line_style</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GdkLineStyle">GdkLineStyle</link> line_style);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-canvas-layout">amitk_preferences_set_canvas_layout</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="AmitkLayout">AmitkLayout</link> layout);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-canvas-maintain-size">amitk_preferences_set_canvas_maintain_size</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> maintain_size);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-canvas-target-empty-area">amitk_preferences_set_canvas_target_empty_area</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gint">gint</link> target_empty_area);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-warnings-to-console">amitk_preferences_set_warnings_to_console</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-prompt-for-save-on-exit">amitk_preferences_set_prompt_for_save_on_exit</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-xif-as-directory">amitk_preferences_set_xif_as_directory</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-color-table">amitk_preferences_set_color_table</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             <link linkend="AmitkColorTable">AmitkColorTable</link> color_table);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-default-window">amitk_preferences_set_default_window</link>
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkWindow">AmitkWindow</link> window,
+                                             const <link linkend="AmitkLimit">AmitkLimit</link> limit,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value);
+<link linkend="void">void</link>        <link linkend="amitk-preferences-set-dialog">amitk_preferences_set_dialog</link>    (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GtkWidget">GtkWidget</link> *dialog);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-WARNINGS-TO-CONSOLE-CAPS"/>AMITK_PREFERENCES_WARNINGS_TO_CONSOLE()</title>
+<indexterm><primary>AMITK_PREFERENCES_WARNINGS_TO_CONSOLE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(object)     (AMITK_PREFERENCES(object)-&gt;warnings_to_console)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-PROMPT-FOR-SAVE-ON-EXIT-CAPS"/>AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT()</title>
+<indexterm><primary>AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT</primary></indexterm><programlisting>#define AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(object) (AMITK_PREFERENCES(object)-&gt;prompt_for_save_on_exit)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-SAVE-XIF-AS-DIRECTORY-CAPS"/>AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY()</title>
+<indexterm><primary>AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY</primary></indexterm><programlisting>#define AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(object)   (AMITK_PREFERENCES(object)-&gt;save_xif_as_directory)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-CANVAS-ROI-WIDTH-CAPS"/>AMITK_PREFERENCES_CANVAS_ROI_WIDTH()</title>
+<indexterm><primary>AMITK_PREFERENCES_CANVAS_ROI_WIDTH</primary></indexterm><programlisting>#define AMITK_PREFERENCES_CANVAS_ROI_WIDTH(pref)         (AMITK_PREFERENCES(pref)-&gt;canvas_roi_width)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-CANVAS-LINE-STYLE-CAPS"/>AMITK_PREFERENCES_CANVAS_LINE_STYLE()</title>
+<indexterm><primary>AMITK_PREFERENCES_CANVAS_LINE_STYLE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_CANVAS_LINE_STYLE(pref)        (AMITK_PREFERENCES(pref)-&gt;canvas_line_style)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-CANVAS-LAYOUT-CAPS"/>AMITK_PREFERENCES_CANVAS_LAYOUT()</title>
+<indexterm><primary>AMITK_PREFERENCES_CANVAS_LAYOUT</primary></indexterm><programlisting>#define AMITK_PREFERENCES_CANVAS_LAYOUT(pref)            (AMITK_PREFERENCES(pref)-&gt;canvas_layout)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-CANVAS-MAINTAIN-SIZE-CAPS"/>AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE()</title>
+<indexterm><primary>AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(pref)     (AMITK_PREFERENCES(pref)-&gt;canvas_maintain_size)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-CANVAS-TARGET-EMPTY-AREA-CAPS"/>AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA()</title>
+<indexterm><primary>AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA</primary></indexterm><programlisting>#define AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(pref) (AMITK_PREFERENCES(pref)-&gt;canvas_target_empty_area)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-COLOR-TABLE-CAPS"/>AMITK_PREFERENCES_DEFAULT_COLOR_TABLE()</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_COLOR_TABLE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(pref, modality) (AMITK_PREFERENCES(pref)-&gt;default_color_table[modality])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-WINDOW-CAPS"/>AMITK_PREFERENCES_DEFAULT_WINDOW()</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_WINDOW</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_WINDOW(pref, window, limit)   (AMITK_PREFERENCES(pref)-&gt;default_window[window][limit])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>limit</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DIALOG-CAPS"/>AMITK_PREFERENCES_DIALOG()</title>
+<indexterm><primary>AMITK_PREFERENCES_DIALOG</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DIALOG(pref)                   (AMITK_PREFERENCES(pref)-&gt;dialog)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pref</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-CANVAS-ROI-WIDTH-CAPS"/>AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH 2
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-CANVAS-LINE-STYLE-CAPS"/>AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE GDK_LINE_SOLID
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-CANVAS-LAYOUT-CAPS"/>AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT AMITK_LAYOUT_LINEAR
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-CANVAS-MAINTAIN-SIZE-CAPS"/>AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE TRUE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-CANVAS-TARGET-EMPTY-AREA-CAPS"/>AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA 5
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-WARNINGS-TO-CONSOLE-CAPS"/>AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE FALSE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-PROMPT-FOR-SAVE-ON-EXIT-CAPS"/>AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT TRUE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-DEFAULT-SAVE-XIF-AS-DIRECTORY-CAPS"/>AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY</title>
+<indexterm><primary>AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY</primary></indexterm><programlisting>#define AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY FALSE
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-MIN-ROI-WIDTH-CAPS"/>AMITK_PREFERENCES_MIN_ROI_WIDTH</title>
+<indexterm><primary>AMITK_PREFERENCES_MIN_ROI_WIDTH</primary></indexterm><programlisting>#define AMITK_PREFERENCES_MIN_ROI_WIDTH 1
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-MAX-ROI-WIDTH-CAPS"/>AMITK_PREFERENCES_MAX_ROI_WIDTH</title>
+<indexterm><primary>AMITK_PREFERENCES_MAX_ROI_WIDTH</primary></indexterm><programlisting>#define AMITK_PREFERENCES_MAX_ROI_WIDTH 5
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-MIN-TARGET-EMPTY-AREA-CAPS"/>AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA</title>
+<indexterm><primary>AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA</primary></indexterm><programlisting>#define AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA 0
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-PREFERENCES-MAX-TARGET-EMPTY-AREA-CAPS"/>AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA</title>
+<indexterm><primary>AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA</primary></indexterm><programlisting>#define AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA 25
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-new"/>amitk_preferences_new ()</title>
+<indexterm><primary>amitk_preferences_new</primary></indexterm><programlisting><link linkend="AmitkPreferences">AmitkPreferences</link>* amitk_preferences_new     (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-canvas-roi-width"/>amitk_preferences_set_canvas_roi_width ()</title>
+<indexterm><primary>amitk_preferences_set_canvas_roi_width</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_canvas_roi_width
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gint">gint</link> roi_width);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>roi_width</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-canvas-line-style"/>amitk_preferences_set_canvas_line_style ()</title>
+<indexterm><primary>amitk_preferences_set_canvas_line_style</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_canvas_line_style
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GdkLineStyle">GdkLineStyle</link> line_style);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>line_style</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-canvas-layout"/>amitk_preferences_set_canvas_layout ()</title>
+<indexterm><primary>amitk_preferences_set_canvas_layout</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_canvas_layout
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="AmitkLayout">AmitkLayout</link> layout);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>layout</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-canvas-maintain-size"/>amitk_preferences_set_canvas_maintain_size ()</title>
+<indexterm><primary>amitk_preferences_set_canvas_maintain_size</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_canvas_maintain_size
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> maintain_size);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>maintain_size</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-canvas-target-empty-area"/>amitk_preferences_set_canvas_target_empty_area ()</title>
+<indexterm><primary>amitk_preferences_set_canvas_target_empty_area</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_canvas_target_empty_area
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gint">gint</link> target_empty_area);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>target_empty_area</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-warnings-to-console"/>amitk_preferences_set_warnings_to_console ()</title>
+<indexterm><primary>amitk_preferences_set_warnings_to_console</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_warnings_to_console
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-prompt-for-save-on-exit"/>amitk_preferences_set_prompt_for_save_on_exit ()</title>
+<indexterm><primary>amitk_preferences_set_prompt_for_save_on_exit</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_prompt_for_save_on_exit
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-xif-as-directory"/>amitk_preferences_set_xif_as_directory ()</title>
+<indexterm><primary>amitk_preferences_set_xif_as_directory</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_xif_as_directory
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="gboolean">gboolean</link> new_value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-color-table"/>amitk_preferences_set_color_table ()</title>
+<indexterm><primary>amitk_preferences_set_color_table</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_color_table
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="AmitkModality">AmitkModality</link> modality,
+                                             <link linkend="AmitkColorTable">AmitkColorTable</link> color_table);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>color_table</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-default-window"/>amitk_preferences_set_default_window ()</title>
+<indexterm><primary>amitk_preferences_set_default_window</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_default_window
+                                            (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             const <link linkend="AmitkWindow">AmitkWindow</link> window,
+                                             const <link linkend="AmitkLimit">AmitkLimit</link> limit,
+                                             const <link linkend="amide-data-t">amide_data_t</link> value);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>window</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>limit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-preferences-set-dialog"/>amitk_preferences_set_dialog ()</title>
+<indexterm><primary>amitk_preferences_set_dialog</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_preferences_set_dialog    (<link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GtkWidget">GtkWidget</link> *dialog);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dialog</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

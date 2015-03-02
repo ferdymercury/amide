@@ -1,0 +1,155 @@
+<refentry id="amitk-AmitkTreeView">
+<refmeta>
+<refentrytitle>AmitkTreeView</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkTreeView</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+enum        <link linkend="AmitkTreeViewMode">AmitkTreeViewMode</link>;
+<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-tree-view-new">amitk_tree_view_new</link>             (<link linkend="AmitkTreeViewMode">AmitkTreeViewMode</link> tree_mode,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GtkWidget">GtkWidget</link> *progress_dialog);
+<link linkend="void">void</link>        <link linkend="amitk-tree-view-set-study">amitk_tree_view_set_study</link>       (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkStudy">AmitkStudy</link> *study);
+<link linkend="void">void</link>        <link linkend="amitk-tree-view-expand-object">amitk_tree_view_expand_object</link>   (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkObject">AmitkObject</link> *object);
+<link linkend="void">void</link>        <link linkend="amitk-tree-view-set-active-object">amitk_tree_view_set_active_object</link>
+                                            (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkObject">AmitkObject</link> *object);
+<link linkend="GList">GList</link>*      <link linkend="amitk-tree-view-get-multiple-selection-objects">amitk_tree_view_get_multiple_selection_objects</link>
+                                            (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AmitkTreeViewMode"/>enum AmitkTreeViewMode</title>
+<indexterm><primary>AmitkTreeViewMode</primary></indexterm><programlisting>typedef enum {
+  AMITK_TREE_VIEW_MODE_MAIN,
+  AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,
+  AMITK_TREE_VIEW_MODE_NUM
+} AmitkTreeViewMode;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-tree-view-new"/>amitk_tree_view_new ()</title>
+<indexterm><primary>amitk_tree_view_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_tree_view_new             (<link linkend="AmitkTreeViewMode">AmitkTreeViewMode</link> tree_mode,
+                                             <link linkend="AmitkPreferences">AmitkPreferences</link> *preferences,
+                                             <link linkend="GtkWidget">GtkWidget</link> *progress_dialog);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_mode</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>preferences</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>progress_dialog</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-tree-view-set-study"/>amitk_tree_view_set_study ()</title>
+<indexterm><primary>amitk_tree_view_set_study</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_tree_view_set_study       (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkStudy">AmitkStudy</link> *study);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>study</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-tree-view-expand-object"/>amitk_tree_view_expand_object ()</title>
+<indexterm><primary>amitk_tree_view_expand_object</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_tree_view_expand_object   (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-tree-view-set-active-object"/>amitk_tree_view_set_active_object ()</title>
+<indexterm><primary>amitk_tree_view_set_active_object</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_tree_view_set_active_object
+                                            (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view,
+                                             <link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-tree-view-get-multiple-selection-objects"/>amitk_tree_view_get_multiple_selection_objects ()</title>
+<indexterm><primary>amitk_tree_view_get_multiple_selection_objects</primary></indexterm><programlisting><link linkend="GList">GList</link>*      amitk_tree_view_get_multiple_selection_objects
+                                            (<link linkend="AmitkTreeView">AmitkTreeView</link> *tree_view);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_view</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

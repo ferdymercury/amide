@@ -1,0 +1,79 @@
+<!-- ##### SECTION Title ##### -->
+amitk_roi_ISOCONTOUR_2D
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### MACRO ROI_TYPE_ISOCONTOUR_2D ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_roi_ISOCONTOUR_2D_get_intersection_line ##### -->
+<para>
+
+</para>
+
+@roi: 
+@canvas_slice: 
+@pixel_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_roi_ISOCONTOUR_2D_get_intersection_slice ##### -->
+<para>
+
+</para>
+
+@roi: 
+@canvas_slice: 
+@pixel_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_roi_ISOCONTOUR_2D_set_isocontour ##### -->
+<para>
+
+</para>
+
+@roi: 
+@ds: 
+@iso_vp: 
+
+
+<!-- ##### FUNCTION amitk_roi_ISOCONTOUR_2D_erase_area ##### -->
+<para>
+
+</para>
+
+@roi: 
+@erase_vp: 
+@area_size: 
+
+
+<!-- ##### FUNCTION amitk_roi_ISOCONTOUR_2D_calculate_on_data_set ##### -->
+<para>
+
+</para>
+
+@roi: 
+@ds: 
+@frame: 
+@gate: 
+@inverse: 
+@calculation: 
+@data: 
+
+

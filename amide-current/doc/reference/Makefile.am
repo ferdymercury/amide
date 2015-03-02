@@ -1,8 +1,4 @@
 ## Process this file with automake to produce Makefile.in
-SUBDIRS = \
-	sgml \
-	tmpl 
-
 
 # The name of the module.
 DOC_MODULE=amitk
@@ -10,17 +6,17 @@ DOC_MODULE=amitk
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
 
+# Extra options to supply to gtkdoc-scan
+#SCAN_OPTIONS=--deprecated-guards="GTK_ENABLE_BROKEN|GTK_DISABLE_DEPRECATED" 
+
 # The directory containing the source code. Relative to $(srcdir)
 DOC_SOURCE_DIR=../../src
 
 # Extra options to pass to gtkdoc-scangobj
 SCANGOBJ_OPTIONS=--type-init-func="gtk_type_init(0)" 
 
-# Extra options to supply to gtkdoc-scan
-#SCAN_OPTIONS=--deprecated-guards="GTK_ENABLE_BROKEN|GTK_DISABLE_DEPRECATED" 
-
 # Extra options to supply to gtkdoc-mkdb
-MKDB_OPTIONS=--sgml-mode
+MKDB_OPTIONS=--main-sgml-file=$(DOC_MAIN_SGML_FILE) --sgml-mode --output-format=xml
 
 # Extra options to supply to gtkdoc-fixref
 #FIXXREF_OPTIONS=--extra-dir=../gdk-pixbuf/html --extra-dir=../gdk/html
@@ -32,29 +28,36 @@ CFILE_GLOB=$(top_srcdir)/src/*.c
 # Header files to ignore when scanning
 IGNORE_HFILES=			\
 	alignment.h		\
-	amide.h           	\
+	amide_intl.h		\
+	amitk_xif_sel.h         \
+	amitk_dial.h            \
 	analysis.h		\
-	cti_import.h		\
-	gtkdial.h		\
-	idl_data_import.h	\
+	fads.h			\
 	image.h			\
 	legacy.h		\
-	medcon_import.h		\
+	libecat_interface.h 	\
+	libmdc_interface.h 	\
+	mpeg_encode.h		\
+	pixmaps.h		\
 	raw_data_import.h	\
-	raw_data_import         \
-	rendering.h		\
-	ui_alignment_dialog.h	\
+	render.h		\
+	tb_alignment.h		\
+	tb_crop.h		\
+	tb_fads.h		\
+	tb_filter.h		\
+	tb_fly_through.h	\
+	tb_profile.h		\
+	tb_roi_analysis.h	\
 	ui_common.h   		\
+	ui_gate_dialog.h	\
 	ui_preferences_dialog.h	\
-	ui_rendering.h          \
-	ui_rendering_dialog.h	\
-	ui_rendering_movie_dialog.h \
-	ui_roi_analysis_dialog.h \
+	ui_render.h          	\
+	ui_render_dialog.h	\
+	ui_render_movie.h 	\
 	ui_series.h     	\
 	ui_study.h         	\
 	ui_study_cb.h		\
 	ui_study_menus.h        \
-	ui_study_toolbar.h	\
 	ui_time_dialog.h	\
 	xml.h
 
@@ -64,159 +67,25 @@ HTML_IMAGES =
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
 content_files = \
+	version.xml \
 	theory.sgml
-
-
-# Other files to distribute
-extra_files =
 
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
 # if $(DOC_MODULE).types is non-empty.
-GTKDOC_CFLAGS = \
+INCLUDES = \
 	@CFLAGS@					\
 	-I$(top_srcdir) 				\
 	-I$(top_builddir) 				\
 	-DAMIDE_LIBECAT_SUPPORT                         \
 	-DAMIDE_LIBMDC_SUPPORT                          
 
+# Extra options to supply to gtkdoc-fixref
+# FIXXREF_OPTIONS=--extra-dir=../gdk-pixbuf/html
 
-#TKDOC_LIBS = @STRIP_BEGIN@ 						\
-#	$(top_builddir)/gtk/@gtktargetlib@ 				\
-#STRIP_END@
+include $(top_srcdir)/doc/gtk-doc.make
 
-GTKDOC_CC=$(LIBTOOL) --mode=compile $(CC)
-GTKDOC_LD=$(LIBTOOL) --mode=link $(CC)
-
-
-####################################
-# Everything below here is generic #
-####################################
-
-# We set GPATH here; this gives us semantics for GNU make
-# which are more like other make's VPATH, when it comes to
-# whether a source that is a target of one rule is then
-# searched for in VPATH/GPATH.
-#
-GPATH = $(srcdir)
-
-TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
-
-EXTRA_DIST = 				\
-	$(content_files)		\
-	$(extra_files)			\
-	$(HTML_IMAGES)			\
-	$(DOC_MAIN_SGML_FILE)		\
-	$(DOC_MODULE).types		\
-	$(DOC_MODULE)-sections.txt	\
-	$(DOC_MODULE)-overrides.txt
-
-DOC_STAMPS=scan-build.stamp tmpl-build.stamp sgml-build.stamp html-build.stamp \
-	   $(srcdir)/tmpl.stamp $(srcdir)/sgml.stamp $(srcdir)/html.stamp
-
-SCANOBJ_FILES = 		\
-	$(DOC_MODULE).args 	\
-	$(DOC_MODULE).hierarchy \
-	$(DOC_MODULE).signals
-
-if ENABLE_GTK_DOC
-all-local: html-build.stamp
-
-#### scan ####
-
-scan-build.stamp: $(HFILE_GLOB)
-	@echo '*** Scanning header files ***'
-	if grep -l '^..*$$' $(srcdir)/$(DOC_MODULE).types > /dev/null ; then \
-	    CC="$(GTKDOC_CC)" LD="$(GTKDOC_LD)" CFLAGS="$(GTKDOC_CFLAGS)" LDFLAGS="$(GTKDOC_LIBS)" gtkdoc-scangobj $(SCANGOBJ_OPTIONS) --module=$(DOC_MODULE) --output-dir=$(srcdir) ; \
-	else \
-	    cd $(srcdir) ; \
-	    for i in $(SCANOBJ_FILES) ; do \
-               test -f $$i || touch $$i ; \
-	    done \
-	fi
-	cd $(srcdir) && \
-	  gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="$(IGNORE_HFILES)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
-	touch scan-build.stamp
-
-$(DOC_MODULE)-decl.txt $(SCANOBJ_FILES): scan-build.stamp
-	@true
-
-#### templates ####
-
-tmpl-build.stamp: $(DOC_MODULE)-decl.txt $(SCANOBJ_FILES) $(DOC_MODULE)-sections.txt $(DOC_MODULE)-overrides.txt
-	@echo '*** Rebuilding template files ***'
-	cd $(srcdir) && gtkdoc-mktmpl --module=$(DOC_MODULE)
-	touch tmpl-build.stamp
-
-tmpl.stamp: tmpl-build.stamp
-	@true
-
-#### sgml ####
-
-sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) ##$(srcdir)/tmpl/*.sgml
-	@echo '*** Building SGML ***'
-	cd $(srcdir) && \
-	gtkdoc-mkdb --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) $(MKDB_OPTIONS)
-	touch sgml-build.stamp
-
-sgml.stamp: sgml-build.stamp
-	@true
-
-#### html ####
-
-html-build.stamp: sgml.stamp $(DOC_MAIN_SGML_FILE) $(content_files)
-	@echo '*** Building HTML ***'
-	rm -rf $(srcdir)/html 
-	mkdir $(srcdir)/html
-	cd $(srcdir)/html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MAIN_SGML_FILE)
-	test "x$(HTML_IMAGES)" = "x" || ( cd $(srcdir) && cp $(HTML_IMAGES) html )
-	@echo '-- Fixing Crossreferences' 
-	cd $(srcdir) && gtkdoc-fixxref --module-dir=html --html-dir=$(HTML_DIR) $(FIXXREF_OPTIONS)
-	touch html-build.stamp
-endif
-
-##############
-
-clean-local:
-	rm -f *~ *.bak $(SCANOBJ_FILES) *-unused.txt $(DOC_STAMPS)
-
-maintainer-clean-local: clean
-	cd $(srcdir) && rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt
-
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)
-	(installfiles=`echo $(srcdir)/html/*`; \
-	if test "$$installfiles" = '$(srcdir)/html/*'; \
-	then echo '-- Nothing to install' ; \
-	else \
-	  for i in $$installfiles; do \
-	    echo '-- Installing '$$i ; \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(TARGET_DIR); \
-	  done; \
-	  echo '-- Installing $(srcdir)/html/index.sgml' ; \
-	  $(INSTALL_DATA) $(srcdir)/html/index.sgml $(DESTDIR)$(TARGET_DIR); \
-	fi)
-
-#
-# Require gtk-doc when making dist
-#
-if ENABLE_GTK_DOC
-dist-check-gtkdoc:
-else
-dist-check-gtkdoc:
-	@echo "*** gtk-doc must be installed and enabled in order to make dist"
-	@false
-endif
-
-dist-hook: dist-check-gtkdoc dist-hook-local
-	mkdir $(distdir)/tmpl
-	mkdir $(distdir)/sgml
-	mkdir $(distdir)/html
-	-cp $(srcdir)/tmpl/*.sgml $(distdir)/tmpl
-	-cp $(srcdir)/sgml/*.sgml $(distdir)/sgml
-	-cp $(srcdir)/html/* $(distdir)/html
-
-.PHONY : dist-hook-local
-
+# Other files to distribute
+EXTRA_DIST += version.xml.in
 
 DISTCLEANFILES = \
 	*~ \

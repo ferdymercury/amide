@@ -40,12 +40,20 @@ G_BEGIN_DECLS
 #define AMITK_IS_TREE_VIEW(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_TREE_VIEW))
 #define AMITK_IS_TREE_VIEW_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_TREE_VIEW))
 
+typedef enum {
+  AMITK_TREE_VIEW_MODE_MAIN,
+  AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,
+  AMITK_TREE_VIEW_MODE_NUM
+} AmitkTreeViewMode;
+  //  AMITK_TREE_MODE_SINGLE_SELECTION,
+
 typedef struct _AmitkTreeView             AmitkTreeView;
 typedef struct _AmitkTreeViewClass        AmitkTreeViewClass;
 
 struct _AmitkTreeView
 {
   GtkTreeView tree_view;
+  AmitkTreeViewMode mode;
 
   AmitkStudy * study;
   AmitkObject * active_object;
@@ -89,7 +97,8 @@ struct _AmitkTreeViewClass
 
 
 GType           amitk_tree_view_get_type          (void);
-GtkWidget*      amitk_tree_view_new               (AmitkPreferences * preferences,
+GtkWidget*      amitk_tree_view_new               (AmitkTreeViewMode tree_mode,
+						   AmitkPreferences * preferences,
 						   GtkWidget * progress_dialog);
 void            amitk_tree_view_set_study         (AmitkTreeView * tree_view,
 					      AmitkStudy * study);
@@ -97,6 +106,7 @@ void            amitk_tree_view_expand_object     (AmitkTreeView * tree_view,
 						   AmitkObject * object);
 void            amitk_tree_view_set_active_object (AmitkTreeView * tree_view,
 						   AmitkObject * object);
+GList *         amitk_tree_view_get_multiple_selection_objects(AmitkTreeView * tree_view);
 
 G_END_DECLS
 

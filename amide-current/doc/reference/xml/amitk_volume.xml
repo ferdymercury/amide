@@ -1,0 +1,330 @@
+<refentry id="amitk-amitk-volume">
+<refmeta>
+<refentrytitle>amitk_volume</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amitk_volume</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-VOLUME-CORNER-CAPS">AMITK_VOLUME_CORNER</link>             (vol)
+#define     <link linkend="AMITK-VOLUME-X-CORNER-CAPS">AMITK_VOLUME_X_CORNER</link>           (vol)
+#define     <link linkend="AMITK-VOLUME-Y-CORNER-CAPS">AMITK_VOLUME_Y_CORNER</link>           (vol)
+#define     <link linkend="AMITK-VOLUME-Z-CORNER-CAPS">AMITK_VOLUME_Z_CORNER</link>           (vol)
+#define     <link linkend="AMITK-VOLUME-VALID-CAPS">AMITK_VOLUME_VALID</link>              (vol)
+<link linkend="AmitkVolume">AmitkVolume</link>* <link linkend="amitk-volume-new">amitk_volume_new</link>               (void);
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-volume-point-in-bounds">amitk_volume_point_in_bounds</link>    (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> point);
+<link linkend="AmitkPoint">AmitkPoint</link>  <link linkend="amitk-volume-place-in-bounds">amitk_volume_place_in_bounds</link>    (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> point);
+<link linkend="AmitkPoint">AmitkPoint</link>  <link linkend="amitk-volume-get-center">amitk_volume_get_center</link>         (const <link linkend="AmitkVolume">AmitkVolume</link> *volume);
+<link linkend="void">void</link>        <link linkend="amitk-volume-set-corner">amitk_volume_set_corner</link>         (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> corner);
+<link linkend="void">void</link>        <link linkend="amitk-volume-set-z-corner">amitk_volume_set_z_corner</link>       (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             <link linkend="amide-real-t">amide_real_t</link> z);
+<link linkend="void">void</link>        <link linkend="amitk-volume-set-center">amitk_volume_set_center</link>         (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center);
+<link linkend="void">void</link>        <link linkend="amitk-volume-get-enclosing-corners">amitk_volume_get_enclosing_corners</link>
+                                            (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-volumes-get-enclosing-corners">amitk_volumes_get_enclosing_corners</link>
+                                            (<link linkend="GList">GList</link> *volumes,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-volume-volume-intersection-corners">amitk_volume_volume_intersection_corners</link>
+                                            (const <link linkend="AmitkVolume">AmitkVolume</link> *volume1,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *volume2,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);
+<link linkend="amide-real-t">amide_real_t</link> <link linkend="amitk-volumes-get-max-size">amitk_volumes_get_max_size</link>     (<link linkend="GList">GList</link> *objects);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-VOLUME-CORNER-CAPS"/>AMITK_VOLUME_CORNER()</title>
+<indexterm><primary>AMITK_VOLUME_CORNER</primary></indexterm><programlisting>#define AMITK_VOLUME_CORNER(vol)        (AMITK_VOLUME(vol)-&gt;corner)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>vol</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-VOLUME-X-CORNER-CAPS"/>AMITK_VOLUME_X_CORNER()</title>
+<indexterm><primary>AMITK_VOLUME_X_CORNER</primary></indexterm><programlisting>#define AMITK_VOLUME_X_CORNER(vol)      (AMITK_VOLUME(vol)-&gt;corner.x)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>vol</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-VOLUME-Y-CORNER-CAPS"/>AMITK_VOLUME_Y_CORNER()</title>
+<indexterm><primary>AMITK_VOLUME_Y_CORNER</primary></indexterm><programlisting>#define AMITK_VOLUME_Y_CORNER(vol)      (AMITK_VOLUME(vol)-&gt;corner.y)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>vol</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-VOLUME-Z-CORNER-CAPS"/>AMITK_VOLUME_Z_CORNER()</title>
+<indexterm><primary>AMITK_VOLUME_Z_CORNER</primary></indexterm><programlisting>#define AMITK_VOLUME_Z_CORNER(vol)      (AMITK_VOLUME(vol)-&gt;corner.z)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>vol</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-VOLUME-VALID-CAPS"/>AMITK_VOLUME_VALID()</title>
+<indexterm><primary>AMITK_VOLUME_VALID</primary></indexterm><programlisting>#define AMITK_VOLUME_VALID(vol)         (AMITK_VOLUME(vol)-&gt;valid)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>vol</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-new"/>amitk_volume_new ()</title>
+<indexterm><primary>amitk_volume_new</primary></indexterm><programlisting><link linkend="AmitkVolume">AmitkVolume</link>* amitk_volume_new               (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-point-in-bounds"/>amitk_volume_point_in_bounds ()</title>
+<indexterm><primary>amitk_volume_point_in_bounds</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_volume_point_in_bounds    (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> point);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>point</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-place-in-bounds"/>amitk_volume_place_in_bounds ()</title>
+<indexterm><primary>amitk_volume_place_in_bounds</primary></indexterm><programlisting><link linkend="AmitkPoint">AmitkPoint</link>  amitk_volume_place_in_bounds    (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> point);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>point</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-get-center"/>amitk_volume_get_center ()</title>
+<indexterm><primary>amitk_volume_get_center</primary></indexterm><programlisting><link linkend="AmitkPoint">AmitkPoint</link>  amitk_volume_get_center         (const <link linkend="AmitkVolume">AmitkVolume</link> *volume);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-set-corner"/>amitk_volume_set_corner ()</title>
+<indexterm><primary>amitk_volume_set_corner</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_volume_set_corner         (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> corner);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>corner</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-set-z-corner"/>amitk_volume_set_z_corner ()</title>
+<indexterm><primary>amitk_volume_set_z_corner</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_volume_set_z_corner       (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             <link linkend="amide-real-t">amide_real_t</link> z);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>z</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-set-center"/>amitk_volume_set_center ()</title>
+<indexterm><primary>amitk_volume_set_center</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_volume_set_center         (<link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkPoint">AmitkPoint</link> center);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>center</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-get-enclosing-corners"/>amitk_volume_get_enclosing_corners ()</title>
+<indexterm><primary>amitk_volume_get_enclosing_corners</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_volume_get_enclosing_corners
+                                            (const <link linkend="AmitkVolume">AmitkVolume</link> *volume,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_corners</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volumes-get-enclosing-corners"/>amitk_volumes_get_enclosing_corners ()</title>
+<indexterm><primary>amitk_volumes_get_enclosing_corners</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_volumes_get_enclosing_corners
+                                            (<link linkend="GList">GList</link> *volumes,
+                                             const <link linkend="AmitkSpace">AmitkSpace</link> *space,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volumes</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>space</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_corners</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volume-volume-intersection-corners"/>amitk_volume_volume_intersection_corners ()</title>
+<indexterm><primary>amitk_volume_volume_intersection_corners</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_volume_volume_intersection_corners
+                                            (const <link linkend="AmitkVolume">AmitkVolume</link> *volume1,
+                                             const <link linkend="AmitkVolume">AmitkVolume</link> *volume2,
+                                             <link linkend="AmitkCorners">AmitkCorners</link> return_corners);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>volume1</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>volume2</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>return_corners</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-volumes-get-max-size"/>amitk_volumes_get_max_size ()</title>
+<indexterm><primary>amitk_volumes_get_max_size</primary></indexterm><programlisting><link linkend="amide-real-t">amide_real_t</link> amitk_volumes_get_max_size     (<link linkend="GList">GList</link> *objects);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>objects</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

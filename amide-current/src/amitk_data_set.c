@@ -1263,10 +1263,11 @@ AmitkDataSet * amitk_data_set_import_file(AmitkImportMethod method,
 
 static void export_raw(AmitkDataSet *ds,
 		       const gchar * filename,
+		       const gboolean resliced,
 		       gboolean (*update_func)(),
 		       gpointer update_data) {
 
-  AmitkVoxel i;
+  AmitkVoxel i,j;
   FILE * file_pointer=NULL;
   gfloat * row_data=NULL;
   AmitkVoxel dim;
@@ -1276,11 +1277,37 @@ static void export_raw(AmitkDataSet *ds,
   size_t num_wrote;
   size_t total_wrote=0;
   gchar * temp_string;
+  amide_real_t min_voxel_size=1.0;
+  amide_time_t frame_start, frame_duration;
+  AmitkPoint corner;
+  AmitkCorners corners;
+  AmitkVolume * output_volume=NULL;
+  AmitkDataSet * slice = NULL;
+  AmitkPoint new_offset;
 
 #ifdef AMIDE_DEBUG
   g_print("\t- exporting raw data to file %s\n",filename);
 #endif
   dim = AMITK_DATA_SET_DIM(ds);
+
+  if (resliced) {
+    output_volume = amitk_volume_new();
+    min_voxel_size = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(ds));
+    amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
+    corner = point_diff(corners[0], corners[1]);
+    dim.x = ceil(corner.x/min_voxel_size);
+    dim.y = ceil(corner.y/min_voxel_size);
+    dim.z = ceil(corner.z/min_voxel_size);
+    corner.z = min_voxel_size;
+    amitk_space_set_offset(AMITK_SPACE(output_volume), 
+			   amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
+    amitk_volume_set_corner(output_volume, corner);
+#ifdef AMIDE_DEBUG
+    g_print("output dimensions %d %d %d, voxel size %f\n", dim.x, dim.y, dim.z, min_voxel_size);
+#else
+    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %f", dim.x, dim.y, dim.z, min_voxel_size);
+#endif
+  }
 
   if ((row_data = g_try_new(gfloat,dim.x)) == NULL) {
     g_warning(_("Couldn't allocate space for row_data"));
@@ -1301,21 +1328,45 @@ static void export_raw(AmitkDataSet *ds,
   }
   divider = ((dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMIDE_UPDATE_DIVIDER);
 
-  
+
+  j = zero_voxel;
   for(i.t = 0; i.t < dim.t; i.t++) {
+    frame_start = amitk_data_set_get_start_time(ds, i.t);
+    frame_duration = amitk_data_set_get_frame_duration(ds, i.t);
     for (i.g = 0; i.g < dim.g; i.g++) {
       for (i.z = 0; (i.z < dim.z) && continue_work; i.z++) {
-
 	if (update_func != NULL) {
 	  x = div(i.z,divider);
 	  if (x.rem == 0)
 	    continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z)/dim.z);
 	}
 
-	for (i.y = 0; i.y < dim.y; i.y++) {
+	if (resliced) {
+	  slice = amitk_data_set_get_slice(ds, frame_start, frame_duration, i.g,
+					   min_voxel_size, output_volume);
 
-	  for (i.x = 0; i.x < dim.x; i.x++) 
-	    row_data[i.x] = amitk_data_set_get_value(ds, i);
+	  if ((AMITK_DATA_SET_DIM_X(slice) != dim.x) || (AMITK_DATA_SET_DIM_Y(slice) != dim.y)) {
+	    g_warning(_("Error in generating resliced data, %dx%d != %dx%d"),
+		      AMITK_DATA_SET_DIM_X(slice), AMITK_DATA_SET_DIM_Y(slice),
+		      dim.x, dim.y);
+	    goto exit_strategy;
+	  }
+
+	  /* advance for next iteration */
+	  new_offset = AMITK_SPACE_OFFSET(output_volume);
+	  new_offset.z += min_voxel_size;
+	  amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
+	}
+
+	for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {
+
+	  if (resliced) {
+	    for (j.x = 0; j.x < dim.x; j.x++) 
+	      row_data[j.x] = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j);
+	  } else {
+	    for (i.x = 0; i.x < dim.x; i.x++) 
+	      row_data[i.x] = amitk_data_set_get_value(ds, i);
+	  }
 	  
 	  num_wrote = fwrite(row_data, sizeof(gfloat), dim.x, file_pointer);
 	  total_wrote += num_wrote;
@@ -1324,8 +1375,10 @@ static void export_raw(AmitkDataSet *ds,
 		      total_wrote*sizeof(gfloat), filename);
 	    goto exit_strategy;
 	  }
-	}
-      }
+	} /* i.y */
+
+	if (slice != NULL) slice = amitk_object_unref(slice);
+      } /* i.z */
     }
   }
 
@@ -1341,26 +1394,33 @@ static void export_raw(AmitkDataSet *ds,
   if (row_data != NULL)
     g_free(row_data);
 
+  if (output_volume != NULL)
+    output_volume = amitk_object_unref(output_volume);
+
+  if (slice != NULL)
+    slice = amitk_object_unref(slice);
+
   return;
 }
 
 
 void amitk_data_set_export_file(AmitkDataSet *ds,
-				AmitkExportMethod method, 
-				int submethod,
+				const AmitkExportMethod method, 
+				const int submethod,
 				const gchar * filename,
+				const gboolean resliced,
 				gboolean (*update_func)(),
 				gpointer update_data) {
 
   switch (method) {
 #ifdef AMIDE_LIBMDC_SUPPORT
   case AMITK_EXPORT_METHOD_LIBMDC:
-    libmdc_export(ds, filename, submethod, update_func, update_data);
+    libmdc_export(ds, filename, submethod, resliced, update_func, update_data);
     break;
 #endif
   case AMITK_EXPORT_METHOD_RAW:
   default:
-    export_raw(ds, filename, update_func, update_data);
+    export_raw(ds, filename, resliced, update_func, update_data);
     break;
   }
 
@@ -2627,6 +2687,7 @@ void amitk_data_set_set_internal_value(AmitkDataSet * ds,
 AmitkDataSet *amitk_data_set_get_slice(AmitkDataSet * ds,
 				       const amide_time_t start,
 				       const amide_time_t duration,
+				       const amide_intpoint_t gate,
 				       const amide_real_t  pixel_dim,
 				       const AmitkVolume * slice_volume) {
 
@@ -2639,67 +2700,67 @@ AmitkDataSet *amitk_data_set_get_slice(AmitkDataSet * ds,
   switch(ds->raw_data->format) {
   case AMITK_FORMAT_UBYTE:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_UBYTE_2D_SCALING_get_slice(ds, start, duration, pixel_dim,	slice_volume);
+      slice = amitk_data_set_UBYTE_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_UBYTE_1D_SCALING_get_slice(ds, start, duration, pixel_dim,	slice_volume);
+      slice = amitk_data_set_UBYTE_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_UBYTE_0D_SCALING_get_slice(ds, start, duration, pixel_dim,	slice_volume);
+      slice = amitk_data_set_UBYTE_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_SBYTE:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_SBYTE_2D_SCALING_get_slice(ds, start, duration, pixel_dim,	slice_volume);
+      slice = amitk_data_set_SBYTE_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_SBYTE_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SBYTE_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_SBYTE_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SBYTE_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_USHORT:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_USHORT_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_USHORT_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_USHORT_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_USHORT_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_USHORT_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_USHORT_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_SSHORT:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_SSHORT_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SSHORT_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_SSHORT_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SSHORT_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_SSHORT_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SSHORT_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_UINT:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_UINT_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_UINT_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_UINT_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_UINT_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_UINT_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_UINT_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_SINT:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_SINT_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SINT_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_SINT_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SINT_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_SINT_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_SINT_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_FLOAT:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_FLOAT_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_FLOAT_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_FLOAT_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_FLOAT_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_FLOAT_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_FLOAT_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   case AMITK_FORMAT_DOUBLE:
     if (ds->scaling_type == AMITK_SCALING_TYPE_2D) 
-      slice = amitk_data_set_DOUBLE_2D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_DOUBLE_2D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else if (ds->scaling_type == AMITK_SCALING_TYPE_1D)
-      slice = amitk_data_set_DOUBLE_1D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_DOUBLE_1D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     else 
-      slice = amitk_data_set_DOUBLE_0D_SCALING_get_slice(ds, start, duration, pixel_dim, slice_volume);
+      slice = amitk_data_set_DOUBLE_0D_SCALING_get_slice(ds, start, duration, gate, pixel_dim, slice_volume);
     break;
   default:
     slice = NULL;
@@ -3929,10 +3990,12 @@ GList * amitk_data_sets_remove_with_slice_parent(GList * slices,const AmitkDataS
 
 static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * parent_ds, 
 					const amide_time_t start, const amide_time_t duration,
+					const amide_intpoint_t gate,
 					const amide_real_t pixel_dim, const AmitkVolume * view_volume) {
 
   AmitkDataSet * slice;
   AmitkVoxel dim;
+  amide_intpoint_t start_gate, end_gate;
 
   if (slice_cache == NULL) {
     return NULL;
@@ -3941,11 +4004,16 @@ static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * pare
     if (AMITK_DATA_SET_SLICE_PARENT(slice) == parent_ds) 
       if (amitk_space_equal(AMITK_SPACE(slice), AMITK_SPACE(view_volume))) 
 	if (REAL_EQUAL(slice->scan_start, start)) 
-	  if (REAL_EQUAL(amitk_data_set_get_frame_duration(slice,0), duration)) 
-	    if (AMITK_DATA_SET_VIEW_START_GATE(slice) ==
-		AMITK_DATA_SET_VIEW_START_GATE(AMITK_DATA_SET_SLICE_PARENT(slice)))
-	      if (AMITK_DATA_SET_VIEW_END_GATE(slice) ==
-		  AMITK_DATA_SET_VIEW_END_GATE(AMITK_DATA_SET_SLICE_PARENT(slice)))
+	  if (REAL_EQUAL(amitk_data_set_get_frame_duration(slice,0), duration)) {
+	    if (gate < 0) {
+	      start_gate = AMITK_DATA_SET_VIEW_START_GATE(AMITK_DATA_SET_SLICE_PARENT(slice));
+	      end_gate = AMITK_DATA_SET_VIEW_END_GATE(AMITK_DATA_SET_SLICE_PARENT(slice));
+	    } else {
+	      start_gate = gate;
+	      end_gate = gate;
+	    }
+	    if (AMITK_DATA_SET_VIEW_START_GATE(slice) == start_gate)
+	      if (AMITK_DATA_SET_VIEW_END_GATE(slice) == end_gate)
 		if (REAL_EQUAL(slice->voxel_size.z,AMITK_VOLUME_Z_CORNER(view_volume))) {
 		  dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(view_volume))/pixel_dim);
 		  dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(view_volume))/pixel_dim);
@@ -3954,11 +4022,12 @@ static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * pare
 		    if (AMITK_DATA_SET_INTERPOLATION(slice) == AMITK_DATA_SET_INTERPOLATION(parent_ds)) 
 		      return slice;
 		}
+	  }
   }
   
 
   /* this one's not it, keep looking */
-  return slice_cache_find(slice_cache->next, parent_ds, start, duration, pixel_dim, view_volume);
+  return slice_cache_find(slice_cache->next, parent_ds, start, duration, gate, pixel_dim, view_volume);
 }
 
 
@@ -3967,14 +4036,17 @@ static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * pare
    intersecting these data_sets.  The slice_cache is a list of already generated slices,
    if an appropriate slice is found in there, it'll be used */
 /* notes
-   in real practice, the parent data set's local cache is rarely used,
-   as most slices, if there in the local cache, will also be in the passed in cache
+   - in real practice, the parent data set's local cache is rarely used,
+     as most slices, if there in the local cache, will also be in the passed in cache
+   - the "gate" parameter should ordinarily by -1 (ignored).  Only use it to override the
+     the data set's view_start_gate/view_end_gate parameters 
  */
 GList * amitk_data_sets_get_slices(GList * objects,
 				   GList ** pslice_cache,
 				   const gint max_slice_cache_size,
 				   const amide_time_t start,
 				   const amide_time_t duration,
+				   const amide_intpoint_t gate,
 				   const amide_real_t pixel_dim,
 				   const AmitkVolume * view_volume) {
 
@@ -4008,18 +4080,18 @@ GList * amitk_data_sets_get_slices(GList * objects,
       parent_ds = AMITK_DATA_SET(objects->data);
 
       /* try to find it in the caches first */
-      canvas_slice = slice_cache_find(*pslice_cache, parent_ds, start,  
-				      duration, pixel_dim, view_volume);
+      canvas_slice = slice_cache_find(*pslice_cache, parent_ds, start, duration, 
+				      gate, pixel_dim, view_volume);
 
-      local_slice = slice_cache_find(parent_ds->slice_cache, parent_ds, start, 
-				     duration, pixel_dim, view_volume);
+      local_slice = slice_cache_find(parent_ds->slice_cache, parent_ds, start, duration, 
+				     gate, pixel_dim, view_volume);
       
       if (canvas_slice != NULL) {
 	slice = amitk_object_ref(canvas_slice);
       } else if (local_slice != NULL) {
 	slice = amitk_object_ref(local_slice);
       } else {/* generate a new one */
-	slice = amitk_data_set_get_slice(parent_ds, start, duration,  pixel_dim, view_volume);
+	slice = amitk_data_set_get_slice(parent_ds, start, duration, gate, pixel_dim, view_volume);
       }
 
       g_return_val_if_fail(slice != NULL, slices);

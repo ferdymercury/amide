@@ -1,0 +1,139 @@
+<refentry id="amitk-AmitkProgressDialog">
+<refmeta>
+<refentrytitle>AmitkProgressDialog</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkProgressDialog</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-PROGRESS-DIALOG-CAN-CONTINUE-CAPS">AMITK_PROGRESS_DIALOG_CAN_CONTINUE</link>(obj)
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-progress-dialog-update">amitk_progress_dialog_update</link>    (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="char">char</link> *message,
+                                             <link linkend="gdouble">gdouble</link> fraction);
+<link linkend="void">void</link>        <link linkend="amitk-progress-dialog-set-text">amitk_progress_dialog_set_text</link>  (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="gchar">gchar</link> *message);
+<link linkend="gboolean">gboolean</link>    <link linkend="amitk-progress-dialog-set-fraction">amitk_progress_dialog_set_fraction</link>
+                                            (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="gdouble">gdouble</link> fraction);
+<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-progress-dialog-new">amitk_progress_dialog_new</link>       (<link linkend="GtkWindow">GtkWindow</link> *parent);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-PROGRESS-DIALOG-CAN-CONTINUE-CAPS"/>AMITK_PROGRESS_DIALOG_CAN_CONTINUE()</title>
+<indexterm><primary>AMITK_PROGRESS_DIALOG_CAN_CONTINUE</primary></indexterm><programlisting>#define AMITK_PROGRESS_DIALOG_CAN_CONTINUE(obj)   (AMITK_PROGRESS_DIALOG(obj)-&gt;can_continue);
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>obj</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-progress-dialog-update"/>amitk_progress_dialog_update ()</title>
+<indexterm><primary>amitk_progress_dialog_update</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_progress_dialog_update    (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="char">char</link> *message,
+                                             <link linkend="gdouble">gdouble</link> fraction);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dialog</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>fraction</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-progress-dialog-set-text"/>amitk_progress_dialog_set_text ()</title>
+<indexterm><primary>amitk_progress_dialog_set_text</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_progress_dialog_set_text  (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="gchar">gchar</link> *message);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dialog</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-progress-dialog-set-fraction"/>amitk_progress_dialog_set_fraction ()</title>
+<indexterm><primary>amitk_progress_dialog_set_fraction</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amitk_progress_dialog_set_fraction
+                                            (<link linkend="AmitkProgressDialog">AmitkProgressDialog</link> *dialog,
+                                             <link linkend="gdouble">gdouble</link> fraction);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dialog</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>fraction</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-progress-dialog-new"/>amitk_progress_dialog_new ()</title>
+<indexterm><primary>amitk_progress_dialog_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_progress_dialog_new       (<link linkend="GtkWindow">GtkWindow</link> *parent);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>parent</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

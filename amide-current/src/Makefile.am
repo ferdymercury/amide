@@ -23,9 +23,9 @@ AM_CFLAGS = \
 	$(LIBFAME_CFLAGS) \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
-	 -DGTK_DISABLE_DEPRECATED \
 	-DGNOME_DISABLE_DEPRECATED \
 	-I/usr/local/include
+##	-DGTK_DISABLE_DEPRECATED \
 
 
 # following are "toxic", as they drag in Gtk1 stuff
@@ -80,7 +80,6 @@ amide_SOURCES = \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
 	amitk_line_profile.c \
-	amitk_list_view.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
 	amitk_point.c \
@@ -163,7 +162,6 @@ AMITK_H_SOURCES = \
 	amitk_fiducial_mark.h \
 	amitk_filter.h \
 	amitk_line_profile.h \
-	amitk_list_view.h \
 	amitk_object.h \
 	amitk_object_dialog.h \
 	amitk_point.h \
@@ -382,7 +380,7 @@ $(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
 	@true
 stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	( cd $(srcdir) && glib-mkenums \
-		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amide.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amide.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n#include \"amitk_tree_view.h\"\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
 		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \

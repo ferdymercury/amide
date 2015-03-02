@@ -29,9 +29,11 @@
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
 #endif
+#include "amitk_common.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "amitk_canvas_object.h"
+#include "amitk_tree_view.h"
 #include "image.h"
 #include "ui_common.h"
 #include "ui_series.h"
@@ -41,7 +43,7 @@
 typedef enum {
   OVER_SPACE,
   OVER_FRAMES,
-  //  OVER_GATES,
+  OVER_GATES,
   NUM_SERIES_TYPES,
 } series_type_t;
 
@@ -106,6 +108,7 @@ typedef struct ui_series_t {
 
   /* for "OVER GATES" series */
   gint view_gate;
+  gint num_gates;
 
   guint next_update;
   guint idle_handler_id;
@@ -116,7 +119,8 @@ typedef struct ui_series_t {
 
 
 static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data);
-//static void export_cb(GtkWidget * widget, gpointer data);
+static void export_series_ok_cb(GtkWidget* widget, gpointer data);
+static void export_cb(GtkWidget * widget, gpointer data);
 static void changed_cb(gpointer dummy, gpointer ui_series);
 static void data_set_invalidate_slice_cache(AmitkDataSet *ds, gpointer ui_series);
 static void threshold_cb(GtkWidget * widget, gpointer data);
@@ -140,28 +144,139 @@ static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
 
   ui_series_t * ui_series = data;
 
-  if (ui_series->series_type == OVER_SPACE)
-    ui_series->z_point = adjustment->value-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
-  else // if (ui_series->series_type == OVER_FRAMES)
+  switch(ui_series->series_type) {
+  case OVER_GATES:
+    ui_series->view_gate = adjustment->value;
+    break;
+  case OVER_FRAMES:
     ui_series->view_frame = adjustment->value;
-  //  else if (ui_series->series_type == OVER_GATES)
-  //    ui_series->view_gate = adjustment->value;
-
+    break;
+  case OVER_SPACE:
+  default:
+    ui_series->z_point = adjustment->value-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
+    break;
+  }
   add_update(ui_series);
 
   return;
 }
 
-/* function to save the series as an external data format */
-//static void export_cb(GtkWidget * widget, gpointer data) {
+/* function to handle exporting a view */
+static void export_series_ok_cb(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  ui_series_t * ui_series;
+  const gchar * filename;
+  GdkPixbuf * pixbuf;
+
+  /* get a pointer to ui_series */
+  ui_series = g_object_get_data(G_OBJECT(file_selection), "ui_series");
+
+  /* get the filename */
+  filename = ui_common_file_selection_get_save_name(file_selection);
+  if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
+
+  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(ui_series->canvas),0,0,
+					ui_series->columns*(ui_series->pixbuf_width+UI_SERIES_R_MARGIN+UI_SERIES_L_MARGIN),
+					ui_series->rows*(ui_series->pixbuf_height+UI_SERIES_TOP_MARGIN+UI_SERIES_BOTTOM_MARGIN));
+
+  if (pixbuf == NULL) {
+    g_warning(_("ui_series canvas failed to return a valid image\n"));
+    return;
+  }
   
-  //  ui_series_t * ui_series = data;
+  if (gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, 
+  		       "quality", "100", NULL) == FALSE) {
+    g_warning(_("Failure Saving File: %s"),filename);
+    return;
+  }
 
-  /* this function would require being able to transform a canvas back into
-     a single image/pixbuf/etc.... don't know how to do this yet */
+  g_object_unref(pixbuf);
 
-//  return;
-//}
+  /* close the file selection box */
+  ui_common_file_selection_cancel_cb(widget, file_selection);
+
+  return;
+}
+
+
+/* function to save the series as an external data format */
+static void export_cb(GtkWidget * widget, gpointer data) {
+  
+  ui_series_t * ui_series = data;
+  GList * objects;
+  GtkWidget * file_selection;
+  gchar * temp_string=NULL;
+  gchar * data_set_names = NULL;
+
+  file_selection = gtk_file_selection_new(_("Export File"));
+
+  /* take a guess at the filename */
+  objects = ui_series->objects;
+  while (objects != NULL) {
+    if (AMITK_IS_DATA_SET(objects->data)) {
+      if (data_set_names == NULL)
+	temp_string = g_strdup(AMITK_OBJECT_NAME(objects->data));
+      else
+	temp_string = g_strdup_printf("%s+%s",data_set_names, 
+				      AMITK_OBJECT_NAME(objects->data));
+      g_free(data_set_names);
+      data_set_names = temp_string;
+    }
+    objects = objects->next;
+  }
+
+  if (data_set_names == NULL) {
+    objects = ui_series->objects;
+    while (objects != NULL) {
+      if (data_set_names == NULL)
+	temp_string = g_strdup(AMITK_OBJECT_NAME(objects->data));
+      else
+	temp_string = g_strdup_printf("%s+%s",data_set_names, 
+				      AMITK_OBJECT_NAME(objects->data));
+      g_free(data_set_names);
+      data_set_names = temp_string;
+      objects = objects->next;
+    }
+  }
+
+  switch(ui_series->series_type) {
+  case OVER_GATES:
+    temp_string = g_strdup_printf("%s_gated.jpg",  data_set_names);
+    break;
+  case OVER_FRAMES:
+    break;
+  case OVER_SPACE:
+  default:
+    temp_string = g_strdup_printf("%s.jpg", data_set_names);
+    break;
+  }
+  ui_common_file_selection_set_filename(file_selection, temp_string);
+  g_free(data_set_names);
+  g_free(temp_string); 
+
+  /* save a pointer to ui_series */
+  g_object_set_data(G_OBJECT(file_selection), "ui_series", ui_series);
+
+  /* don't want anything else going on till this window is gone */
+  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+
+  /* connect the signals */
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
+		   G_CALLBACK(export_series_ok_cb), file_selection);
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
+		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(file_selection);
+
+  return;
+}
 
 
 /* function called when a data set changed */
@@ -266,11 +381,10 @@ static void menus_create(ui_series_t * ui_series) {
 
   /* defining the menus for the series ui interface */
   GnomeUIInfo file_menu[] = {
-    //    GNOMEUIINFO_ITEM_DATA(N_("_Export Series"),
-    //			  N_("Export the series view to an image file (JPEG/TIFF/PNG/etc.)"),
-    //			  ui_series_cb_export,
-    //			  ui_series, NULL),
-    //    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_ITEM_DATA(N_("_Export Series"),
+    			  N_("Export the series view to a JPEG image file"),
+    			  export_cb, ui_series, NULL),
+    GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(close_cb, ui_series),
     GNOMEUIINFO_END
   };
@@ -351,7 +465,7 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
     g_print("freeing ui_series\n");
 #endif
     if (ui_series->idle_handler_id != 0) {
-      gtk_idle_remove(ui_series->idle_handler_id);
+      g_source_remove(ui_series->idle_handler_id);
       ui_series->idle_handler_id = 0;
     }
 
@@ -477,6 +591,9 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
   ui_series->start_time = 0.0;
   ui_series->frame_durations = NULL;
 
+  ui_series->view_gate = 0;
+  ui_series->num_gates = 1;
+
   ui_series->next_update = UPDATE_NONE;
   ui_series->idle_handler_id = 0;
 
@@ -488,27 +605,38 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series) { 
 
   amide_real_t thickness;
+  GtkObject * adjustment;
 
-  if (ui_series->series_type == OVER_SPACE) {
+  switch(ui_series->series_type) {
+  case OVER_GATES:
+    adjustment = gtk_adjustment_new(ui_series->view_gate, 0, ui_series->num_slices, 1,1,1);
+    break;
+  case OVER_FRAMES:
+    adjustment = gtk_adjustment_new(ui_series->view_frame, 0, ui_series->num_slices, 1,1,1);
+    break;
+  case OVER_SPACE:
+  default:
     thickness = AMITK_VOLUME_Z_CORNER(ui_series->volume);
-    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->z_point-thickness/2.0,
-					     ui_series->start_z+thickness/2.0,
-					     ui_series->end_z-thickness/2.0,
-					     thickness, thickness, thickness));
-  } else { //if (ui_series->series_type == OVER_FRAMES) {
-    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_frame, 0, ui_series->num_slices, 1,1,1));
-    //  } else if (ui_series->series_type == OVER_GATES) {
-    //    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_gate, 0, ui_series->num_slices, 1,1,1));
+    adjustment = gtk_adjustment_new(ui_series->z_point-thickness/2.0,
+				    ui_series->start_z+thickness/2.0,
+				    ui_series->end_z-thickness/2.0,
+				    thickness, thickness, thickness);
+    break;
   }
+
+  return GTK_ADJUSTMENT(adjustment);
 }
 
 
 static void add_update(ui_series_t * ui_series) {
 
+
   ui_series->next_update = ui_series->next_update | UPDATE_SERIES;
-  if (ui_series->idle_handler_id == 0)
+  if (ui_series->idle_handler_id == 0) {
+    ui_common_place_cursor_no_wait(UI_CURSOR_WAIT, ui_series->canvas);
     ui_series->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,update_immediate, ui_series);
+      g_idle_add_full(G_PRIORITY_HIGH_IDLE,update_immediate, ui_series, NULL);
+  }
 
   return;
 }
@@ -520,7 +648,7 @@ static gboolean update_immediate(gpointer data) {
   ui_series_t * ui_series = data;
   AmitkPoint temp_point;
   amide_time_t temp_time, temp_duration;
-  //  gint temp_gate;
+  gint temp_gate;
   gint i, start_i;
   gint width, height;
   gdouble x, y;
@@ -536,7 +664,6 @@ static gboolean update_immediate(gpointer data) {
   rgba_t outline_color;
 
   ui_series->in_generation=TRUE;
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_series->canvas);
 
   temp_string = g_strdup_printf(_("Slicing for series"));
   amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), temp_string);
@@ -586,13 +713,19 @@ static gboolean update_immediate(gpointer data) {
 
 
   /* figure out what's the first image we want to display */
-  if (ui_series->series_type == OVER_SPACE)
+  switch(ui_series->series_type) {
+  case OVER_GATES:
+    start_i = ui_series->view_gate;
+    break;
+  case OVER_FRAMES:
+    start_i = ui_series->view_frame;
+    break;
+  case OVER_SPACE:
+  default:
     start_i = ui_series->num_slices*((ui_series->z_point-ui_series->start_z)/
 				     (ui_series->end_z-ui_series->start_z-AMITK_VOLUME_Z_CORNER(ui_series->volume)));
-  else // if (ui_series->series_type == OVER_FRAMES)
-    start_i = ui_series->view_frame;
-  //  else if (ui_series->series_type == OVER_GATES)
-  //    start_i = ui_series->view_gate;
+    break;
+  }
 
   /* correct i for special cases */
   if (ui_series->num_slices < ui_series->columns*ui_series->rows)
@@ -606,17 +739,18 @@ static gboolean update_immediate(gpointer data) {
 
   temp_time = ui_series->start_time;
   temp_point = zero_point;
-  if (ui_series->series_type == OVER_SPACE) {
-    temp_time = ui_series->view_time;
-    temp_duration = ui_series->view_duration;
-  } else { // if (ui_series->series_type == OVER_FRAMES) {
+  temp_gate = -1;
+
+  if (ui_series->series_type == OVER_FRAMES) {
     for (i=0;i< start_i; i++)
       temp_time += ui_series->frame_durations[i];
     temp_time -= ui_series->frame_durations[start_i];/* well get added back 1st time through loop */
     temp_duration = ui_series->frame_durations[start_i]; 
-  } // else if (ui_series->series_type == OVER_GATES) {
-  //    g_print("fix me\n");
-  //  }
+  } else {
+    temp_time = ui_series->view_time;
+    temp_duration = ui_series->view_duration;
+  }
+
   x = y = 0.0;
 
   view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
@@ -628,14 +762,19 @@ static gboolean update_immediate(gpointer data) {
 	(!ui_series->quit_generation));
 	i++) {
 
-    if (ui_series->series_type == OVER_SPACE) {
-      temp_point.z = i*AMITK_VOLUME_Z_CORNER(ui_series->volume)+ui_series->start_z;
-    } else { // if (ui_series->series_type == OVER_FRAMES) {
+    switch (ui_series->series_type) {
+    case OVER_GATES:
+      temp_gate=i;
+      break;
+    case OVER_FRAMES:
       temp_time += temp_duration; /* duration from last time through the loop */
       temp_duration = ui_series->frame_durations[i];
-    } // else if (ui_series->series_type == OVER_GATES) {
-    //      g_print("fix me\n");
-    //    }
+      break;
+    case OVER_SPACE:
+    default:
+      temp_point.z = i*AMITK_VOLUME_Z_CORNER(ui_series->volume)+ui_series->start_z;
+      break;
+    }
 
     amitk_space_set_offset(AMITK_SPACE(view_volume), 
 			   amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
@@ -652,6 +791,7 @@ static gboolean update_immediate(gpointer data) {
 				    ui_series->active_ds,
 				    temp_time+EPSILON*fabs(temp_time),
 				    temp_duration-EPSILON*fabs(temp_duration),
+				    temp_gate,
 				    ui_series->pixel_dim,
 				    view_volume,
 				    ui_series->fuse_type);
@@ -702,12 +842,18 @@ static gboolean update_immediate(gpointer data) {
 
 
     /* write the caption */
-    if (ui_series->series_type == OVER_SPACE)
-      temp_string = g_strdup_printf("%2.1f-%2.1f mm", temp_point.z, temp_point.z+AMITK_VOLUME_Z_CORNER(ui_series->volume));
-    else // if (ui_series->series_type == OVER_FRAMES) 
+    switch (ui_series->series_type) {
+    case OVER_GATES:
+      temp_string = g_strdup_printf("gate %d", temp_gate);
+      break;
+    case OVER_FRAMES:
       temp_string = g_strdup_printf("%2.1f-%2.1f s", temp_time, temp_time+temp_duration);
-    //    else if (ui_series->series_type == OVER_GATES)
-    //      g_print("fix me\n");
+      break;
+    case OVER_SPACE:
+    default:
+      temp_string = g_strdup_printf("%2.1f-%2.1f mm", temp_point.z, temp_point.z+AMITK_VOLUME_Z_CORNER(ui_series->volume));
+      break;
+    }
 
     if (ui_series->captions[i-start_i] == NULL) 
       ui_series->captions[i-start_i] =
@@ -728,7 +874,7 @@ static gboolean update_immediate(gpointer data) {
     g_free(temp_string);
 
     can_continue = amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog),
-    						      (i-start_i)/((gdouble) ui_series->rows*ui_series->columns));
+						      (i-start_i)/((gdouble) ui_series->rows*ui_series->columns));
   }
   amitk_object_unref(view_volume);
 
@@ -745,6 +891,7 @@ static gboolean update_immediate(gpointer data) {
   gtk_widget_size_request(ui_series->canvas, &requisition);
   gtk_widget_set_size_request(ui_series->canvas, width, height);
   /* the requisition thing should work.... I'll use this for now for now... */
+  return_val = FALSE;
 
 
  exit_update:
@@ -752,12 +899,7 @@ static gboolean update_immediate(gpointer data) {
   amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), 2.0); /* hide progress dialog */
   ui_common_remove_wait_cursor(ui_series->canvas);
 
-  ui_series->next_update = UPDATE_NONE;
-  if (ui_series->idle_handler_id != 0) {
-    gtk_idle_remove(ui_series->idle_handler_id);
-    ui_series->idle_handler_id=0;
-  }
-
+  ui_series->idle_handler_id=0;
   ui_series->quit_generation=FALSE;
   ui_series->in_generation=FALSE;
 
@@ -779,7 +921,9 @@ static void read_preferences(series_type_t * series_type, AmitkView * view) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
+void ui_series_create(AmitkStudy * study, 
+		      AmitkObject * active_object,
+		      GList * selected_objects,
 		      AmitkVolume * transverse_view, 
 		      AmitkVolume * coronal_view, 
 		      AmitkVolume * sagittal_view) {
@@ -816,7 +960,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
   ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
-  ui_series->objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_SELECTION_SELECTED_0, TRUE);
+  ui_series->objects = amitk_objects_ref(selected_objects);
   if (ui_series->objects == NULL) {
     g_warning(_("Need selected objects to create a series"));
     ui_series_unref(ui_series);
@@ -867,184 +1011,199 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 
 
   /* do some initial calculations */
-  if (ui_series->series_type == OVER_SPACE) {
-    AmitkCorners view_corners;
+  switch (ui_series->series_type) {
+  case OVER_GATES:
 
-    amitk_volumes_get_enclosing_corners(ui_series->objects, AMITK_SPACE(ui_series->volume), view_corners);
-    ui_series->start_z = view_corners[0].z;
-    ui_series->end_z = view_corners[1].z;
-    ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/AMITK_VOLUME_Z_CORNER(ui_series->volume));
-
-  } else if (ui_series->series_type == OVER_FRAMES) {
-    amide_time_t current_start = 0.0;
-    amide_time_t last_start, current_end, temp_time;
-    guint * frames;
-    guint i;
-    guint series_frame = 0;
-    gboolean done;
-    gboolean valid;
-
-    if (num_data_sets == 0) {
-      g_warning(_("Need selected data sets to generate a series of slices over time"));
-      ui_series_unref(ui_series);
-      return;
-    }
-    
-    /* get space for the array that'll take care of which frame of which data set we're looking at*/
-    frames = g_try_new(guint,num_data_sets);
-    if (frames == NULL) {
-      g_warning(_("unable to allocate memory for frames"));
-      ui_series_unref(ui_series);
-      return;
-    }
-    for (i=0;i<num_data_sets;i++) frames[i]=0; /* initialize */
-    
-    /* get space for the array that'll hold the series' frame durations, overestimate the size */
-    ui_series->frame_durations = g_try_new(amide_time_t,total_data_set_frames+2);
-    if (ui_series->frame_durations == NULL) {
-      g_warning(_("unable to allocate memory for frame durations"));
-      g_free(frames);
-      ui_series_unref(ui_series);
-      return;
-    }
-
-    /* do the initial case */
     temp_objects = ui_series->objects;
-    i=0;
-    valid = FALSE;
+    ui_series->num_gates = 1;
     while (temp_objects != NULL) {
       if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
-	  temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
-	  if (!valid) /* first valid data set */ {
-	    current_start = temp_time;
-	    valid = TRUE;
-	  } else if (temp_time < current_start) {
-	    current_start = temp_time;
-	  }
-	}
-	i++;
+	if (AMITK_DATA_SET_NUM_GATES(temp_objects->data) > ui_series->num_gates)
+	  ui_series->num_gates = AMITK_DATA_SET_NUM_GATES(temp_objects->data);
       }
       temp_objects = temp_objects->next;
     }
+    ui_series->num_slices = ui_series->num_gates;
 
-    ui_series->start_time = current_start;
-    /* ignore any frames boundaries close to this one */
-    temp_objects = ui_series->objects;
-    i=0;
-    while (temp_objects != NULL) {
-      if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
-	if (REAL_EQUAL(ui_series->start_time, temp_time))
-	  frames[i]++;
-	i++;
+    break;
+  case OVER_FRAMES:
+    {
+      amide_time_t current_start = 0.0;
+      amide_time_t last_start, current_end, temp_time;
+      guint * frames;
+      guint i;
+      guint series_frame = 0;
+      gboolean done;
+      gboolean valid;
+      
+      if (num_data_sets == 0) {
+	g_warning(_("Need selected data sets to generate a series of slices over time"));
+	ui_series_unref(ui_series);
+	return;
       }
-      temp_objects = temp_objects->next;
-    }
-    
-    done = FALSE;
-    last_start = ui_series->start_time;
-    while (!done) {
-
-      /* check if we're done */
+      
+      /* get space for the array that'll take care of which frame of which data set we're looking at*/
+      frames = g_try_new(guint,num_data_sets);
+      if (frames == NULL) {
+	g_warning(_("unable to allocate memory for frames"));
+	ui_series_unref(ui_series);
+	return;
+      }
+      for (i=0;i<num_data_sets;i++) frames[i]=0; /* initialize */
+      
+      /* get space for the array that'll hold the series' frame durations, overestimate the size */
+      ui_series->frame_durations = g_try_new(amide_time_t,total_data_set_frames+2);
+      if (ui_series->frame_durations == NULL) {
+	g_warning(_("unable to allocate memory for frame durations"));
+	g_free(frames);
+	ui_series_unref(ui_series);
+	return;
+      }
+      
+      /* do the initial case */
       temp_objects = ui_series->objects;
       i=0;
-      done = TRUE;
+      valid = FALSE;
       while (temp_objects != NULL) {
 	if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	  if (frames[i] != AMITK_DATA_SET_NUM_FRAMES(temp_objects->data)) 
-	    done = FALSE;
-	  i++; 
+	  if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+	    temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	    if (!valid) /* first valid data set */ {
+	      current_start = temp_time;
+	      valid = TRUE;
+	    } else if (temp_time < current_start) {
+	      current_start = temp_time;
+	    }
+	  }
+	  i++;
 	}
 	temp_objects = temp_objects->next;
       }
-
-      if (!done) {
-	/* check for the next earliest start time */
+      
+      ui_series->start_time = current_start;
+      /* ignore any frames boundaries close to this one */
+      temp_objects = ui_series->objects;
+      i=0;
+      while (temp_objects != NULL) {
+	if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	  temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	  if (REAL_EQUAL(ui_series->start_time, temp_time))
+	  frames[i]++;
+	  i++;
+	}
+	temp_objects = temp_objects->next;
+      }
+    
+      done = FALSE;
+      last_start = ui_series->start_time;
+      while (!done) {
+	
+	/* check if we're done */
 	temp_objects = ui_series->objects;
 	i=0;
-	valid = FALSE;
+	done = TRUE;
 	while (temp_objects != NULL) {
 	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	    if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
-	      temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
-	      if (!valid) /* first valid data set */ {
-		current_start = temp_time;
-		valid = TRUE;
-	      } else if (temp_time < current_start) {
-		current_start = temp_time;
-	      }
-	    }
-	    i++;
+	    if (frames[i] != AMITK_DATA_SET_NUM_FRAMES(temp_objects->data)) 
+	      done = FALSE;
+	    i++; 
 	  }
 	  temp_objects = temp_objects->next;
 	}
-
-	/* allright, found the next start time */
-	ui_series->frame_durations[series_frame] = current_start-last_start;
-	series_frame++;
-	last_start = current_start;
-
-	/* and ignore any frames boundaries close to this one */
-	temp_objects = ui_series->objects;
-	i=0;
-	while (temp_objects != NULL) {
-	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	    if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
-	      temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+	
+	if (!done) {
+	  /* check for the next earliest start time */
+	  temp_objects = ui_series->objects;
+	  i=0;
+	  valid = FALSE;
+	  while (temp_objects != NULL) {
+	    if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	      if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+		temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
+		if (!valid) /* first valid data set */ {
+		  current_start = temp_time;
+		  valid = TRUE;
+		} else if (temp_time < current_start) {
+		  current_start = temp_time;
+		}
+	      }
+	      i++;
+	    }
+	    temp_objects = temp_objects->next;
+	  }
+	  
+	  /* allright, found the next start time */
+	  ui_series->frame_durations[series_frame] = current_start-last_start;
+	  series_frame++;
+	  last_start = current_start;
+	  
+	  /* and ignore any frames boundaries close to this one */
+	  temp_objects = ui_series->objects;
+	  i=0;
+	  while (temp_objects != NULL) {
+	    if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	      if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
+		temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
 	      if (REAL_EQUAL(current_start, temp_time))
 		frames[i]++;
-	    }
+	      }
 	    i++;
+	    }
+	    temp_objects = temp_objects->next;
 	  }
-	  temp_objects = temp_objects->next;
 	}
       }
-    }
-    
-    /* need to get the last frame */
-    temp_objects = ui_series->objects;
-    i=0;
-    current_end = amitk_data_set_get_end_time(temp_objects->data, frames[i]-1);
-    temp_objects = temp_objects->next;
-    i++;
-    while (temp_objects != NULL) {
-      if (AMITK_IS_DATA_SET(temp_objects->data)) {
-	temp_time = amitk_data_set_get_end_time(AMITK_DATA_SET(temp_objects->data), frames[i]-1);
-	if (temp_time > current_end) {
-	  current_end = temp_time;
-	}
-	i++;
-      }
+      
+      /* need to get the last frame */
+      temp_objects = ui_series->objects;
+      i=0;
+      current_end = amitk_data_set_get_end_time(temp_objects->data, frames[i]-1);
       temp_objects = temp_objects->next;
+      i++;
+      while (temp_objects != NULL) {
+	if (AMITK_IS_DATA_SET(temp_objects->data)) {
+	  temp_time = amitk_data_set_get_end_time(AMITK_DATA_SET(temp_objects->data), frames[i]-1);
+	  if (temp_time > current_end) {
+	    current_end = temp_time;
+	  }
+	  i++;
+	}
+	temp_objects = temp_objects->next;
+      }
+      ui_series->frame_durations[series_frame] = current_end-last_start;
+      series_frame++;
+      
+      /* save how many frames we'll need */
+      ui_series->num_slices = series_frame;
+      
+      /* garbage collection */
+      g_free(frames);
+      
+      /* figure out the view_frame */
+      temp_time = ui_series->start_time;
+      for (i=0; i<ui_series->num_slices;i++) {
+	if ((temp_time <= ui_series->view_time) && 
+	    (ui_series->view_time < temp_time+ui_series->frame_durations[i]))
+	  ui_series->view_frame = i;
+	temp_time += ui_series->frame_durations[i];
+      }
     }
-    ui_series->frame_durations[series_frame] = current_end-last_start;
-    series_frame++;
-    
-    /* save how many frames we'll need */
-    ui_series->num_slices = series_frame;
-    
-    /* garbage collection */
-    g_free(frames);
+    break;
+  case OVER_SPACE:
+    {
+      AmitkCorners view_corners;
 
-    /* figure out the view_frame */
-    temp_time = ui_series->start_time;
-    for (i=0; i<ui_series->num_slices;i++) {
-      if ((temp_time <= ui_series->view_time) && 
-	  (ui_series->view_time < temp_time+ui_series->frame_durations[i]))
-	ui_series->view_frame = i;
-      temp_time += ui_series->frame_durations[i];
+      amitk_volumes_get_enclosing_corners(ui_series->objects, AMITK_SPACE(ui_series->volume), view_corners);
+      ui_series->start_z = view_corners[0].z;
+      ui_series->end_z = view_corners[1].z;
+      ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/AMITK_VOLUME_Z_CORNER(ui_series->volume));
     }
-    //  } else if (ui_series->series_type == OVER_GATES) {
-  //
-  //    ui_series->num_gates = series_gates;
-  //    g_print("fix me\n");
-  } else {
+    break;
+  default:
     g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+    break;
   }
 
-  
-  
   ui_series->max_slice_cache_size = ui_series->num_slices*num_data_sets+5;
 
   /* connect the thresholding and color table signals */
@@ -1091,7 +1250,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   /* make a nice scroll bar */
   adjustment = ui_series_create_scroll_adjustment(ui_series);
   scale = gtk_hscale_new(adjustment);
-  if ((ui_series->series_type == OVER_FRAMES)) // || (ui_series->series_type == OVER_GATES))
+  if ((ui_series->series_type == OVER_FRAMES) || (ui_series->series_type == OVER_GATES))
     gtk_scale_set_digits(GTK_SCALE(scale), 0); /* want integer for frames */
   gtk_range_set_update_policy(GTK_RANGE(scale), GTK_UPDATE_DISCONTINUOUS);
   gtk_table_attach(GTK_TABLE(packing_table), 
@@ -1166,8 +1325,19 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 }
 
 
+GList * ui_series_init_dialog_selected_objects(GtkWidget * dialog) {
+
+  GList * objects;
+  AmitkTreeView * tree_view;
+  
+  tree_view = g_object_get_data(G_OBJECT(dialog), "tree_view");
+  objects = amitk_tree_view_get_multiple_selection_objects(tree_view);
+
+  return objects;
+}
+
 /* function to setup a dialog to allow us to choose options for the series */
-GtkWidget * ui_series_init_dialog_create(GtkWindow * parent) {
+GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   
   GtkWidget * dialog;
   gchar * temp_string;
@@ -1176,6 +1346,8 @@ GtkWidget * ui_series_init_dialog_create(GtkWindow * parent) {
   GtkWidget * label;
   GtkWidget * radio_button[4];
   GtkWidget * hseparator;
+  GtkWidget * scrolled;
+  GtkWidget * tree_view;
   GtkTooltips * tips;
   series_type_t i_series_type;
   AmitkView i_view;
@@ -1200,7 +1372,7 @@ GtkWidget * ui_series_init_dialog_create(GtkWindow * parent) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(7,2,FALSE);
+  table = gtk_table_new(7,3,FALSE);
   table_row=0;
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
   tips = gtk_tooltips_new();
@@ -1264,6 +1436,20 @@ GtkWidget * ui_series_init_dialog_create(GtkWindow * parent) {
     g_signal_connect(G_OBJECT(radio_button[i_view]), "clicked", G_CALLBACK(init_view_cb), NULL);
   }
 
+  tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,NULL, NULL);
+  g_object_set_data(G_OBJECT(dialog), "tree_view", tree_view);
+  amitk_tree_view_set_study(AMITK_TREE_VIEW(tree_view), study);
+  amitk_tree_view_expand_object(AMITK_TREE_VIEW(tree_view), AMITK_OBJECT(study));
+
+  /* make a scrolled area for the tree */
+  scrolled = gtk_scrolled_window_new(NULL,NULL);  
+  gtk_widget_set_size_request(scrolled,250,-1);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
+				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
+					tree_view);
+  gtk_table_attach(GTK_TABLE(table), scrolled, 2,3,
+		   0, table_row,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

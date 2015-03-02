@@ -558,6 +558,7 @@ gboolean rendering_load_object(rendering_t * rendering,
       slice = amitk_data_set_get_slice(AMITK_DATA_SET(rendering->object), 
 				       rendering->start, 
 				       rendering->duration, 
+				       -1,
 				       rendering->voxel_size, 
 				       slice_volume);
 

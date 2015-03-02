@@ -322,7 +322,7 @@ static void canvas_destroy (GtkObject * object) {
   canvas = AMITK_CANVAS(object);
 
   if (canvas->idle_handler_id != 0) {
-    gtk_idle_remove(canvas->idle_handler_id);
+    g_source_remove(canvas->idle_handler_id);
     canvas->idle_handler_id = 0;
   }
 
@@ -2531,6 +2531,7 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
 					  active_ds,
 					  AMITK_STUDY_VIEW_START_TIME(canvas->study),
 					  AMITK_STUDY_VIEW_DURATION(canvas->study),
+					  -1,
 					  pixel_dim,
 					  canvas->volume,
 					  AMITK_STUDY_FUSE_TYPE(canvas->study));
@@ -2740,7 +2741,7 @@ static void canvas_add_update(AmitkCanvas * canvas, guint update_type) {
   /* DEFAULT_IDLE is needed, as this is the first default lower then redraw */
   if (canvas->idle_handler_id == 0)
     canvas->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_DEFAULT_IDLE,canvas_update_while_idle, canvas);
+      g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,canvas_update_while_idle, canvas, NULL);
 
   return;
 }
@@ -2779,7 +2780,6 @@ static gboolean canvas_update_while_idle(gpointer data) {
 			 canvas->next_target_thickness);
   }
 
-  gtk_idle_remove(canvas->idle_handler_id);
   canvas->idle_handler_id=0;
 
   if (canvas->next_update & UPDATE_DATA_SETS) /* remove the cursor on slow updates */
@@ -3046,3 +3046,15 @@ gint amitk_canvas_get_height(AmitkCanvas * canvas) {
 
   return height;
 } 
+
+
+GdkPixbuf * amitk_canvas_get_pixbuf(AmitkCanvas * canvas) {
+
+  GdkPixbuf * pixbuf;
+
+  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(canvas->canvas), 
+					canvas->triangle_height,canvas->triangle_height,
+					canvas->pixbuf_width, canvas->pixbuf_height);
+
+  return pixbuf;
+}

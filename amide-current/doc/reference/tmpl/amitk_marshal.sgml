@@ -1,0 +1,418 @@
+<!-- ##### SECTION Title ##### -->
+amitk_marshal
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### FUNCTION amitk_marshal_OBJECT__OBJECT ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### FUNCTION amitk_marshal_OBJECT__VOID ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_OBJECT__NONE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_VOID__POINTER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_NONE__POINTER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_VOID__VOID ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_NONE__NONE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_VOID__BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_NONE__BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__BOXED_BOXED ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__BOXED_BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__BOXED_DOUBLE ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__BOXED_DOUBLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__BOXED_DOUBLE_BOXED ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__BOXED_DOUBLE_BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_VOID__ENUM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_NONE__ENUM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__ENUM_BOXED ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__ENUM_BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__ENUM_BOXED_DOUBLE ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__ENUM_BOXED_DOUBLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__ENUM_POINTER_DOUBLE ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__ENUM_POINTER_DOUBLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_VOID__OBJECT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__OBJECT_BOOLEAN ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT_BOOLEAN ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__OBJECT_BOXED ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT_BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__OBJECT_ENUM ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT_ENUM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__OBJECT_ENUM_BOXED ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT_ENUM_BOXED ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__OBJECT_ENUM_ENUM ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__OBJECT_ENUM_ENUM ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_VOID__UINT_UINT ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### MACRO amitk_marshal_NONE__UINT_UINT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_marshal_STRING__POINTER_STRING ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### FUNCTION amitk_marshal_POINTER__POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+
+<!-- ##### FUNCTION amitk_marshal_POINTER__POINTER_POINTER_POINTER ##### -->
+<para>
+
+</para>
+
+@closure: 
+@return_value: 
+@n_param_values: 
+@param_values: 
+@invocation_hint: 
+@marshal_data: 
+
+

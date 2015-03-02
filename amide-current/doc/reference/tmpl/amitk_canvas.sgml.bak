@@ -1,0 +1,119 @@
+<!-- ##### SECTION Title ##### -->
+AmitkCanvas
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_CANVAS_VIEW ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### MACRO AMITK_CANVAS_VIEW_MODE ##### -->
+<para>
+
+</para>
+
+@obj: 
+
+
+<!-- ##### ENUM AmitkCanvasType ##### -->
+<para>
+
+</para>
+
+@AMITK_CANVAS_TYPE_NORMAL: 
+@AMITK_CANVAS_TYPE_FLY_THROUGH: 
+
+<!-- ##### ENUM AmitkCanvasTargetAction ##### -->
+<para>
+
+</para>
+
+@AMITK_CANVAS_TARGET_ACTION_HIDE: 
+@AMITK_CANVAS_TARGET_ACTION_SHOW: 
+@AMITK_CANVAS_TARGET_ACTION_LEAVE: 
+
+<!-- ##### FUNCTION amitk_canvas_new ##### -->
+<para>
+
+</para>
+
+@study: 
+@view: 
+@view_mode: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_canvas_set_study ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@study: 
+
+
+<!-- ##### FUNCTION amitk_canvas_set_active_object ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@active_object: 
+
+
+<!-- ##### FUNCTION amitk_canvas_update_target ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@action: 
+@center: 
+@thickness: 
+
+
+<!-- ##### FUNCTION amitk_canvas_get_width ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_canvas_get_height ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_canvas_get_pixbuf ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@Returns: 
+
+

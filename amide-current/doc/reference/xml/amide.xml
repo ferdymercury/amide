@@ -1,0 +1,443 @@
+<refentry id="amitk-amide">
+<refmeta>
+<refentrytitle>amide</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amide</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="g-try-new">g_try_new</link>                       (struct_type, n_structs)
+#define     <link linkend="AMITK-RESPONSE-EXECUTE-CAPS">AMITK_RESPONSE_EXECUTE</link>
+#define     <link linkend="AMITK-RESPONSE-COPY-CAPS">AMITK_RESPONSE_COPY</link>
+#define     <link linkend="AMITK-RESPONSE-SAVE-AS-CAPS">AMITK_RESPONSE_SAVE_AS</link>
+#define     <link linkend="AMIDE-UPDATE-DIVIDER-CAPS">AMIDE_UPDATE_DIVIDER</link>
+#define     <link linkend="AMIDE-FILE-VERSION-CAPS">AMIDE_FILE_VERSION</link>
+#define     <link linkend="AMIDE-FLAT-FILE-MAGIC-STRING-CAPS">AMIDE_FLAT_FILE_MAGIC_STRING</link>
+#define     <link linkend="X-PACKING-OPTIONS-CAPS">X_PACKING_OPTIONS</link>
+#define     <link linkend="Y-PACKING-OPTIONS-CAPS">Y_PACKING_OPTIONS</link>
+#define     <link linkend="X-PADDING-CAPS">X_PADDING</link>
+#define     <link linkend="Y-PADDING-CAPS">Y_PADDING</link>
+enum        <link linkend="AmitkLayout">AmitkLayout</link>;
+enum        <link linkend="AmitkEye">AmitkEye</link>;
+enum        <link linkend="AmitkHelpInfo">AmitkHelpInfo</link>;
+enum        <link linkend="AmitkModality">AmitkModality</link>;
+enum        <link linkend="AmitkLimit">AmitkLimit</link>;
+enum        <link linkend="AmitkWindow">AmitkWindow</link>;
+extern      PangoFontDescription * <link linkend="amitk-fixed-font-desc">amitk_fixed_font_desc</link>;
+<link linkend="void">void</link>        <link linkend="amide-call-help">amide_call_help</link>                 (const <link linkend="gchar">gchar</link> *link_id);
+<link linkend="gboolean">gboolean</link>    <link linkend="amide-is-xif-directory">amide_is_xif_directory</link>          (const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="gboolean">gboolean</link> *plegacy,
+                                             <link linkend="gchar">gchar</link> **pxml_filename);
+<link linkend="gboolean">gboolean</link>    <link linkend="amide-is-xif-flat-file">amide_is_xif_flat_file</link>          (const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="guint64">guint64</link> *plocation_le,
+                                             <link linkend="guint64">guint64</link> *psize_le);
+<link linkend="void">void</link>        <link linkend="amitk-append-str-with-newline">amitk_append_str_with_newline</link>   (<link linkend="gchar">gchar</link> **pstr,
+                                             const <link linkend="gchar">gchar</link> *format,
+                                             ...);
+<link linkend="void">void</link>        <link linkend="amitk-append-str">amitk_append_str</link>                (<link linkend="gchar">gchar</link> **pstr,
+                                             const <link linkend="gchar">gchar</link> *format,
+                                             ...);
+<link linkend="void">void</link>        <link linkend="amide-register-window">amide_register_window</link>           (<link linkend="gpointer">gpointer</link> *widget);
+<link linkend="void">void</link>        <link linkend="amide-unregister-window">amide_unregister_window</link>         (<link linkend="gpointer">gpointer</link> *widget);
+<link linkend="void">void</link>        <link linkend="amide-unregister-all-windows">amide_unregister_all_windows</link>    (void);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-layout-get-name">amitk_layout_get_name</link>          (const <link linkend="AmitkLayout">AmitkLayout</link> layout);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-limit-get-name">amitk_limit_get_name</link>           (const <link linkend="AmitkLimit">AmitkLimit</link> limit);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-window-get-name">amitk_window_get_name</link>          (const <link linkend="AmitkWindow">AmitkWindow</link> window);
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-modality-get-name">amitk_modality_get_name</link>        (const <link linkend="AmitkModality">AmitkModality</link> modality);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-try-new"/>g_try_new()</title>
+<indexterm><primary>g_try_new</primary></indexterm><programlisting>#define     g_try_new(struct_type, n_structs)</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>struct_type</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>n_structs</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RESPONSE-EXECUTE-CAPS"/>AMITK_RESPONSE_EXECUTE</title>
+<indexterm><primary>AMITK_RESPONSE_EXECUTE</primary></indexterm><programlisting>#define AMITK_RESPONSE_EXECUTE 1
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RESPONSE-COPY-CAPS"/>AMITK_RESPONSE_COPY</title>
+<indexterm><primary>AMITK_RESPONSE_COPY</primary></indexterm><programlisting>#define AMITK_RESPONSE_COPY 2
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RESPONSE-SAVE-AS-CAPS"/>AMITK_RESPONSE_SAVE_AS</title>
+<indexterm><primary>AMITK_RESPONSE_SAVE_AS</primary></indexterm><programlisting>#define AMITK_RESPONSE_SAVE_AS 3
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMIDE-UPDATE-DIVIDER-CAPS"/>AMIDE_UPDATE_DIVIDER</title>
+<indexterm><primary>AMIDE_UPDATE_DIVIDER</primary></indexterm><programlisting>#define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMIDE-FILE-VERSION-CAPS"/>AMIDE_FILE_VERSION</title>
+<indexterm><primary>AMIDE_FILE_VERSION</primary></indexterm><programlisting>#define AMIDE_FILE_VERSION "2.0"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AMIDE-FLAT-FILE-MAGIC-STRING-CAPS"/>AMIDE_FLAT_FILE_MAGIC_STRING</title>
+<indexterm><primary>AMIDE_FLAT_FILE_MAGIC_STRING</primary></indexterm><programlisting>#define AMIDE_FLAT_FILE_MAGIC_STRING "AMIDE XML Image Format Flat File"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="X-PACKING-OPTIONS-CAPS"/>X_PACKING_OPTIONS</title>
+<indexterm><primary>X_PACKING_OPTIONS</primary></indexterm><programlisting>#define X_PACKING_OPTIONS GTK_EXPAND
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="Y-PACKING-OPTIONS-CAPS"/>Y_PACKING_OPTIONS</title>
+<indexterm><primary>Y_PACKING_OPTIONS</primary></indexterm><programlisting>#define Y_PACKING_OPTIONS GTK_EXPAND
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="X-PADDING-CAPS"/>X_PADDING</title>
+<indexterm><primary>X_PADDING</primary></indexterm><programlisting>#define X_PADDING 5
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="Y-PADDING-CAPS"/>Y_PADDING</title>
+<indexterm><primary>Y_PADDING</primary></indexterm><programlisting>#define Y_PADDING 5                 
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkLayout"/>enum AmitkLayout</title>
+<indexterm><primary>AmitkLayout</primary></indexterm><programlisting>typedef enum {
+  AMITK_LAYOUT_LINEAR, 
+  AMITK_LAYOUT_ORTHOGONAL,
+  AMITK_LAYOUT_NUM
+} AmitkLayout;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkEye"/>enum AmitkEye</title>
+<indexterm><primary>AmitkEye</primary></indexterm><programlisting>typedef enum {
+  AMITK_EYE_LEFT, 
+  AMITK_EYE_RIGHT, 
+  AMITK_EYE_NUM
+} AmitkEye;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkHelpInfo"/>enum AmitkHelpInfo</title>
+<indexterm><primary>AmitkHelpInfo</primary></indexterm><programlisting>typedef enum {
+  AMITK_HELP_INFO_BLANK,
+  AMITK_HELP_INFO_CANVAS_DATA_SET,
+  AMITK_HELP_INFO_CANVAS_ROI,
+  AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_CANVAS_STUDY,
+  AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_LINE_PROFILE,
+  AMITK_HELP_INFO_CANVAS_NEW_ROI,
+  AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
+  AMITK_HELP_INFO_CANVAS_CHANGE_ISOCONTOUR,
+  AMITK_HELP_INFO_CANVAS_SHIFT_OBJECT,
+  AMITK_HELP_INFO_CANVAS_ROTATE_OBJECT,
+  AMITK_HELP_INFO_TREE_VIEW_DATA_SET,
+  AMITK_HELP_INFO_TREE_VIEW_ROI,
+  AMITK_HELP_INFO_TREE_VIEW_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_TREE_VIEW_STUDY,
+  AMITK_HELP_INFO_TREE_VIEW_NONE,
+  AMITK_HELP_INFO_UPDATE_LOCATION,
+  AMITK_HELP_INFO_UPDATE_THETA,
+  AMITK_HELP_INFO_UPDATE_SHIFT,
+  AMITK_HELP_INFO_NUM
+} AmitkHelpInfo;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkModality"/>enum AmitkModality</title>
+<indexterm><primary>AmitkModality</primary></indexterm><programlisting>typedef enum {
+  AMITK_MODALITY_PET, 
+  AMITK_MODALITY_SPECT, 
+  AMITK_MODALITY_CT, 
+  AMITK_MODALITY_MRI, 
+  AMITK_MODALITY_OTHER, 
+  AMITK_MODALITY_NUM
+} AmitkModality;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkLimit"/>enum AmitkLimit</title>
+<indexterm><primary>AmitkLimit</primary></indexterm><programlisting>typedef enum {
+  AMITK_LIMIT_MIN,
+  AMITK_LIMIT_MAX,
+  AMITK_LIMIT_NUM
+} AmitkLimit;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkWindow"/>enum AmitkWindow</title>
+<indexterm><primary>AmitkWindow</primary></indexterm><programlisting>typedef enum {
+  AMITK_WINDOW_BONE,
+  AMITK_WINDOW_SOFT_TISSUE,
+  AMITK_WINDOW_NUM
+} AmitkWindow;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-fixed-font-desc"/>amitk_fixed_font_desc</title>
+<indexterm><primary>amitk_fixed_font_desc</primary></indexterm><programlisting>extern PangoFontDescription * amitk_fixed_font_desc;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amide-call-help"/>amide_call_help ()</title>
+<indexterm><primary>amide_call_help</primary></indexterm><programlisting><link linkend="void">void</link>        amide_call_help                 (const <link linkend="gchar">gchar</link> *link_id);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>link_id</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amide-is-xif-directory"/>amide_is_xif_directory ()</title>
+<indexterm><primary>amide_is_xif_directory</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amide_is_xif_directory          (const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="gboolean">gboolean</link> *plegacy,
+                                             <link linkend="gchar">gchar</link> **pxml_filename);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>plegacy</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>pxml_filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amide-is-xif-flat-file"/>amide_is_xif_flat_file ()</title>
+<indexterm><primary>amide_is_xif_flat_file</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>    amide_is_xif_flat_file          (const <link linkend="gchar">gchar</link> *filename,
+                                             <link linkend="guint64">guint64</link> *plocation_le,
+                                             <link linkend="guint64">guint64</link> *psize_le);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>plocation_le</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>psize_le</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-append-str-with-newline"/>amitk_append_str_with_newline ()</title>
+<indexterm><primary>amitk_append_str_with_newline</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_append_str_with_newline   (<link linkend="gchar">gchar</link> **pstr,
+                                             const <link linkend="gchar">gchar</link> *format,
+                                             ...);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pstr</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>...</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-append-str"/>amitk_append_str ()</title>
+<indexterm><primary>amitk_append_str</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_append_str                (<link linkend="gchar">gchar</link> **pstr,
+                                             const <link linkend="gchar">gchar</link> *format,
+                                             ...);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>pstr</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>...</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amide-register-window"/>amide_register_window ()</title>
+<indexterm><primary>amide_register_window</primary></indexterm><programlisting><link linkend="void">void</link>        amide_register_window           (<link linkend="gpointer">gpointer</link> *widget);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>widget</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amide-unregister-window"/>amide_unregister_window ()</title>
+<indexterm><primary>amide_unregister_window</primary></indexterm><programlisting><link linkend="void">void</link>        amide_unregister_window         (<link linkend="gpointer">gpointer</link> *widget);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>widget</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amide-unregister-all-windows"/>amide_unregister_all_windows ()</title>
+<indexterm><primary>amide_unregister_all_windows</primary></indexterm><programlisting><link linkend="void">void</link>        amide_unregister_all_windows    (void);</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-layout-get-name"/>amitk_layout_get_name ()</title>
+<indexterm><primary>amitk_layout_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_layout_get_name          (const <link linkend="AmitkLayout">AmitkLayout</link> layout);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>layout</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-limit-get-name"/>amitk_limit_get_name ()</title>
+<indexterm><primary>amitk_limit_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_limit_get_name           (const <link linkend="AmitkLimit">AmitkLimit</link> limit);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>limit</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-window-get-name"/>amitk_window_get_name ()</title>
+<indexterm><primary>amitk_window_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_window_get_name          (const <link linkend="AmitkWindow">AmitkWindow</link> window);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>window</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-modality-get-name"/>amitk_modality_get_name ()</title>
+<indexterm><primary>amitk_modality_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_modality_get_name        (const <link linkend="AmitkModality">AmitkModality</link> modality);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>modality</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

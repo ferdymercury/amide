@@ -273,9 +273,10 @@ AmitkDataSet * amitk_data_set_import_file        (AmitkImportMethod method,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
 void           amitk_data_set_export_file        (AmitkDataSet * ds,
-						  AmitkExportMethod method, 
-						  int submethod,
+						  const AmitkExportMethod method, 
+						  const int submethod,
 						  const gchar * filename,
+						  const gboolean resliced,
 						  gboolean (*update_func)(),
 						  gpointer update_data);
 
@@ -405,6 +406,7 @@ AmitkDataSet * amitk_data_set_get_filtered        (const AmitkDataSet * ds,
 AmitkDataSet * amitk_data_set_get_slice           (AmitkDataSet * ds,
 						   const amide_time_t start,
 						   const amide_time_t duration,
+						   const amide_intpoint_t gate,
 						   const amide_real_t pixel_dim,
 						   const AmitkVolume * slice_volume);
 void           amitk_data_set_get_line_profile    (AmitkDataSet * ds,
@@ -426,6 +428,7 @@ GList *        amitk_data_sets_get_slices            (GList * objects,
 						      const gint max_slice_cache_size,
 						      const amide_time_t start,
 						      const amide_time_t duration,
+						      const amide_intpoint_t gate,
 						      const amide_real_t pixel_dim,
 						      const AmitkVolume * view_volume);
 AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, 

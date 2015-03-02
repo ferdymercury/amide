@@ -219,9 +219,11 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   gint max_table_row;
   GtkWidget * table;
   GtkWidget * scrolled;
-  GtkWidget * option_menu;
   GtkWidget * menu;
+#if 1
+  GtkWidget * option_menu;
   GtkWidget * menuitem;
+#endif
   GtkWidget * view;
   GtkWidget * vseparator;
   GtkWidget * hseparator;
@@ -310,10 +312,9 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       label = gtk_label_new(_("FADS Method:"));
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
-
+#if 1
       option_menu = gtk_option_menu_new();
       menu = gtk_menu_new();
-	
       for (i_fads_type = 0; i_fads_type < NUM_FADS_TYPES; i_fads_type++) {
 	menuitem = gtk_menu_item_new_with_label(fads_type_name[i_fads_type]);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
@@ -325,6 +326,15 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_fads->fads_type);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
       gtk_table_attach(GTK_TABLE(table), option_menu, 1,2, table_row,table_row+1,
+#else
+      menu = gtk_combo_box_new_text();
+	
+      for (i_fads_type = 0; i_fads_type < NUM_FADS_TYPES; i_fads_type++) 
+	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), fads_type_name[i_fads_type]);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_fads->fads_type);
+      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), menu, 1,2, table_row,table_row+1,
+#endif
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
@@ -356,6 +366,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
+#if 1
       menu = gtk_menu_new();
 	
       for (i_algorithm = 0; i_algorithm < NUM_FADS_MINIMIZERS; i_algorithm++) {
@@ -368,6 +379,13 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       tb_fads->algorithm_menu = gtk_option_menu_new();
       gtk_option_menu_set_menu(GTK_OPTION_MENU(tb_fads->algorithm_menu), menu);
       gtk_option_menu_set_history(GTK_OPTION_MENU(tb_fads->algorithm_menu), tb_fads->algorithm);
+#else
+      tb_fads->algorithm_menu = gtk_combo_box_new_text();
+      for (i_algorithm = 0; i_algorithm < NUM_FADS_MINIMIZERS; i_algorithm++) 
+	gtk_combo_box_append_text(GTK_COMBO_BOX(tb_fads->algorithm_menu), 
+				  fads_minimizer_algorithm_name[i_algorithm]);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(tb_fads->algorithm_menu), tb_fads->algorithm);
+#endif
       g_signal_connect(G_OBJECT(tb_fads->algorithm_menu), "changed", G_CALLBACK(algorithm_cb), tb_fads);
       gtk_table_attach(GTK_TABLE(table), tb_fads->algorithm_menu, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -690,14 +708,22 @@ static void remove_blood_pressed_cb(GtkButton * button, gpointer data) {
 
 static void fads_type_cb(GtkWidget * widget, gpointer data) {
   tb_fads_t * tb_fads = data;
+#if 1
   tb_fads->fads_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  tb_fads->fads_type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   set_text(tb_fads);
   return;
 }
 
 static void algorithm_cb(GtkWidget * widget, gpointer data) {
   tb_fads_t * tb_fads = data;
+#if 1
   tb_fads->algorithm = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  tb_fads->algorithm = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   set_text(tb_fads);
   return;
 }

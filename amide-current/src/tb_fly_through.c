@@ -367,6 +367,7 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
   AmitkDataSet * most_frames_ds=NULL;
   guint ds_frame=0;
   gint ds_gate;
+  GdkPixbuf * pixbuf;
 
   /* gray out anything that could screw up the movie */
   dialog_set_sensitive(tb_fly_through, FALSE);
@@ -395,9 +396,12 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
 				  AMITK_STUDY_VIEW_CENTER(tb_fly_through->study));
   current_point.z = tb_fly_through->start_z;
 
+  pixbuf = amitk_canvas_get_pixbuf(AMITK_CANVAS(tb_fly_through->canvas));
+  g_return_if_fail(pixbuf != NULL);
   mpeg_encode_context = mpeg_encode_setup(output_filename, ENCODE_MPEG1,
-					  gdk_pixbuf_get_width(AMITK_CANVAS_PIXBUF(tb_fly_through->canvas)),
-					  gdk_pixbuf_get_height(AMITK_CANVAS_PIXBUF(tb_fly_through->canvas)));
+					  gdk_pixbuf_get_width(pixbuf),
+					  gdk_pixbuf_get_height(pixbuf));
+  g_object_unref(pixbuf);
   g_return_if_fail(mpeg_encode_context != NULL);
 
 #ifdef AMIDE_DEBUG
@@ -453,7 +457,10 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
     while (gtk_events_pending() || AMITK_CANVAS(tb_fly_through->canvas)->next_update)
       gtk_main_iteration();
       
-    return_val = mpeg_encode_frame(mpeg_encode_context, AMITK_CANVAS_PIXBUF(tb_fly_through->canvas));
+    pixbuf = amitk_canvas_get_pixbuf(AMITK_CANVAS(tb_fly_through->canvas));
+    g_return_if_fail(pixbuf != NULL);
+    return_val = mpeg_encode_frame(mpeg_encode_context, pixbuf);
+    g_object_unref(pixbuf);
 
     if (return_val != 1) 
       g_warning(_("encoding of frame %d failed"), i_frame);

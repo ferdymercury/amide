@@ -1,0 +1,71 @@
+<refentry id="amitk-AmitkColorTableMenu">
+<refmeta>
+<refentrytitle>AmitkColorTableMenu</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkColorTableMenu</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS">AMITK_COLOR_TABLE_MENU_COLOR_TABLE</link>(obj)
+<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-color-table-menu-new">amitk_color_table_menu_new</link>      ();
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS"/>AMITK_COLOR_TABLE_MENU_COLOR_TABLE()</title>
+<indexterm><primary>AMITK_COLOR_TABLE_MENU_COLOR_TABLE</primary></indexterm><programlisting>#define AMITK_COLOR_TABLE_MENU_COLOR_TABLE(obj) (AMITK_COLOR_TABLE_MENU(obj)-&gt;color_table)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>obj</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-menu-new"/>amitk_color_table_menu_new ()</title>
+<indexterm><primary>amitk_color_table_menu_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_color_table_menu_new      ();</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

@@ -1,0 +1,402 @@
+<!-- ##### SECTION Title ##### -->
+AmitkObject
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_OBJECT_CHILDREN ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO AMITK_OBJECT_PARENT ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO AMITK_OBJECT_NAME ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### ENUM AmitkObjectType ##### -->
+<para>
+
+</para>
+
+@AMITK_OBJECT_TYPE_STUDY: 
+@AMITK_OBJECT_TYPE_DATA_SET: 
+@AMITK_OBJECT_TYPE_FIDUCIAL_MARK: 
+@AMITK_OBJECT_TYPE_ROI: 
+@AMITK_OBJECT_TYPE_VOLUME: 
+@AMITK_OBJECT_TYPE_NUM: 
+
+<!-- ##### ENUM AmitkSelection ##### -->
+<para>
+
+</para>
+
+@AMITK_SELECTION_SELECTED_0: 
+@AMITK_SELECTION_SELECTED_1: 
+@AMITK_SELECTION_SELECTED_2: 
+@AMITK_SELECTION_NUM: 
+@AMITK_SELECTION_ANY: 
+@AMITK_SELECTION_ALL: 
+
+<!-- ##### FUNCTION amitk_object_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_write_xml ##### -->
+<para>
+
+</para>
+
+@object: 
+@study_file: 
+@output_filename: 
+@location: 
+@size: 
+
+
+<!-- ##### FUNCTION amitk_object_read_xml ##### -->
+<para>
+
+</para>
+
+@xml_filename: 
+@study_file: 
+@location: 
+@size: 
+@perror_buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_copy ##### -->
+<para>
+
+</para>
+
+@object: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_copy_in_place ##### -->
+<para>
+
+</para>
+
+@dest_object: 
+@src_object: 
+
+
+<!-- ##### FUNCTION amitk_object_set_name ##### -->
+<para>
+
+</para>
+
+@object: 
+@new_name: 
+
+
+<!-- ##### FUNCTION amitk_object_get_selected ##### -->
+<para>
+
+</para>
+
+@object: 
+@which_selection: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_set_selected ##### -->
+<para>
+
+</para>
+
+@object: 
+@selection: 
+@which_selection: 
+
+
+<!-- ##### MACRO amitk_object_select ##### -->
+<para>
+
+</para>
+
+@obj: 
+@which: 
+
+
+<!-- ##### MACRO amitk_object_unselect ##### -->
+<para>
+
+</para>
+
+@obj: 
+@which: 
+
+
+<!-- ##### FUNCTION amitk_object_set_parent ##### -->
+<para>
+
+</para>
+
+@object: 
+@parent: 
+
+
+<!-- ##### FUNCTION amitk_object_add_child ##### -->
+<para>
+
+</para>
+
+@object: 
+@child: 
+
+
+<!-- ##### FUNCTION amitk_object_add_children ##### -->
+<para>
+
+</para>
+
+@object: 
+@children: 
+
+
+<!-- ##### FUNCTION amitk_object_remove_child ##### -->
+<para>
+
+</para>
+
+@object: 
+@child: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_remove_children ##### -->
+<para>
+
+</para>
+
+@object: 
+@children: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_compare_object_type ##### -->
+<para>
+
+</para>
+
+@object: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_get_parent_of_type ##### -->
+<para>
+
+</para>
+
+@object: 
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_get_children_of_type ##### -->
+<para>
+
+</para>
+
+@object: 
+@type: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_selected_children ##### -->
+<para>
+
+</para>
+
+@object: 
+@which_selection: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_get_selected_children ##### -->
+<para>
+
+</para>
+
+@object: 
+@which_selection: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_get_selected_children_of_type ##### -->
+<para>
+
+</para>
+
+@object: 
+@type: 
+@which_selection: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_ref ##### -->
+<para>
+
+</para>
+
+@object: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_unref ##### -->
+<para>
+
+</para>
+
+@object: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_ref ##### -->
+<para>
+
+</para>
+
+@objects: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_unref ##### -->
+<para>
+
+</para>
+
+@objects: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_count ##### -->
+<para>
+
+</para>
+
+@objects: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_find_object_by_name ##### -->
+<para>
+
+</para>
+
+@objects: 
+@name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_count_pairs_by_name ##### -->
+<para>
+
+</para>
+
+@objects1: 
+@objects2: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_get_of_type ##### -->
+<para>
+
+</para>
+
+@objects: 
+@type: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_has_type ##### -->
+<para>
+
+</para>
+
+@objects: 
+@type: 
+@recurse: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_objects_write_xml ##### -->
+<para>
+
+</para>
+
+@objects: 
+@node_list: 
+@study_file: 
+
+
+<!-- ##### FUNCTION amitk_objects_read_xml ##### -->
+<para>
+
+</para>
+
+@node_list: 
+@study_file: 
+@perror_buf: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_object_type_get_name ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_selection_get_name ##### -->
+<para>
+
+</para>
+
+@type: 
+@Returns: 
+
+

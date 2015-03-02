@@ -188,7 +188,7 @@ static tb_profile_t * profile_free(tb_profile_t * tb_profile) {
     }
 
     if (tb_profile->idle_handler_id != 0) {
-      gtk_idle_remove(tb_profile->idle_handler_id);
+      g_source_remove(tb_profile->idle_handler_id);
       tb_profile->idle_handler_id = 0;
     }
 
@@ -849,7 +849,7 @@ static void recalc_profiles(tb_profile_t * tb_profile) {
 
   if (tb_profile->idle_handler_id == 0)
     tb_profile->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,update_while_idle, tb_profile);
+      g_idle_add_full(G_PRIORITY_HIGH_IDLE,update_while_idle, tb_profile, NULL);
 
 
   return;
@@ -1033,7 +1033,6 @@ static gboolean update_while_idle(gpointer data) {
   ui_common_remove_wait_cursor(tb_profile->canvas);
   data_sets = amitk_objects_unref(data_sets);
 
-  gtk_idle_remove(tb_profile->idle_handler_id);
   tb_profile->idle_handler_id=0;
 
   return FALSE;

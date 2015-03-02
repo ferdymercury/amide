@@ -78,11 +78,13 @@ static gboolean ui_common_cursors_initialized = FALSE;
 static gchar * last_path_used=NULL;
 static ui_common_cursor_t current_cursor;
 
+#ifndef AMIDE_LIBGNOMECANVAS_AA
 static gchar * line_style_names[] = {
   N_("Solid"),
   N_("On/Off"),
   N_("Double Dash")
 };
+#endif
 
 
 
@@ -553,9 +555,11 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   GdkPixbuf * pixbuf;
   GtkWidget * image;
   GtkWidget * hseparator;
-  GtkWidget * menu;
 #ifndef AMIDE_LIBGNOMECANVAS_AA
+#if 1
   GtkWidget * menuitem;
+  GtkWidget * menu;
+#endif
   GdkLineStyle i_line_style;
 #endif
 
@@ -622,7 +626,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
   		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
-  
+
+#if 1  
   menu = gtk_menu_new();
   for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) {
     menuitem = gtk_menu_item_new_with_label(line_style_names[i_line_style]);
@@ -634,7 +639,12 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   *pline_style_menu = gtk_option_menu_new();
   gtk_option_menu_set_menu(GTK_OPTION_MENU(*pline_style_menu), menu);
   gtk_widget_show(menu);
-
+#else
+  *pline_style_menu = gtk_combo_box_new_text();
+  for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) 
+     gtk_combo_box_append_text(GTK_COMBO_BOX(*pline_style_menu),
+			       line_style_names[i_line_style]);
+#endif
   gtk_widget_set_size_request (*pline_style_menu, 125, -1);
   gtk_table_attach(GTK_TABLE(packing_table),  *pline_style_menu, 1,2, 
   		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);

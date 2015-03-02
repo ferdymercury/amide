@@ -1,0 +1,72 @@
+<!-- ##### SECTION Title ##### -->
+AmitkTreeView
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM AmitkTreeViewMode ##### -->
+<para>
+
+</para>
+
+@AMITK_TREE_VIEW_MODE_MAIN: 
+@AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION: 
+@AMITK_TREE_VIEW_MODE_NUM: 
+
+<!-- ##### FUNCTION amitk_tree_view_new ##### -->
+<para>
+
+</para>
+
+@tree_mode: 
+@preferences: 
+@progress_dialog: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_tree_view_set_study ##### -->
+<para>
+
+</para>
+
+@tree_view: 
+@study: 
+
+
+<!-- ##### FUNCTION amitk_tree_view_expand_object ##### -->
+<para>
+
+</para>
+
+@tree_view: 
+@object: 
+
+
+<!-- ##### FUNCTION amitk_tree_view_set_active_object ##### -->
+<para>
+
+</para>
+
+@tree_view: 
+@object: 
+
+
+<!-- ##### FUNCTION amitk_tree_view_get_multiple_selection_objects ##### -->
+<para>
+
+</para>
+
+@tree_view: 
+@Returns: 
+
+

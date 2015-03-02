@@ -1,0 +1,287 @@
+<!-- ##### SECTION Title ##### -->
+amide
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO g_try_new ##### -->
+<para>
+
+</para>
+
+@struct_type: 
+@n_structs: 
+
+
+<!-- ##### MACRO AMITK_RESPONSE_EXECUTE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_RESPONSE_COPY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_RESPONSE_SAVE_AS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMIDE_UPDATE_DIVIDER ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMIDE_FILE_VERSION ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMIDE_FLAT_FILE_MAGIC_STRING ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO X_PACKING_OPTIONS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO Y_PACKING_OPTIONS ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO X_PADDING ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO Y_PADDING ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### ENUM AmitkLayout ##### -->
+<para>
+
+</para>
+
+@AMITK_LAYOUT_LINEAR: 
+@AMITK_LAYOUT_ORTHOGONAL: 
+@AMITK_LAYOUT_NUM: 
+
+<!-- ##### ENUM AmitkEye ##### -->
+<para>
+
+</para>
+
+@AMITK_EYE_LEFT: 
+@AMITK_EYE_RIGHT: 
+@AMITK_EYE_NUM: 
+
+<!-- ##### ENUM AmitkHelpInfo ##### -->
+<para>
+
+</para>
+
+@AMITK_HELP_INFO_BLANK: 
+@AMITK_HELP_INFO_CANVAS_DATA_SET: 
+@AMITK_HELP_INFO_CANVAS_ROI: 
+@AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK: 
+@AMITK_HELP_INFO_CANVAS_STUDY: 
+@AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI: 
+@AMITK_HELP_INFO_CANVAS_LINE_PROFILE: 
+@AMITK_HELP_INFO_CANVAS_NEW_ROI: 
+@AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI: 
+@AMITK_HELP_INFO_CANVAS_CHANGE_ISOCONTOUR: 
+@AMITK_HELP_INFO_CANVAS_SHIFT_OBJECT: 
+@AMITK_HELP_INFO_CANVAS_ROTATE_OBJECT: 
+@AMITK_HELP_INFO_TREE_VIEW_DATA_SET: 
+@AMITK_HELP_INFO_TREE_VIEW_ROI: 
+@AMITK_HELP_INFO_TREE_VIEW_FIDUCIAL_MARK: 
+@AMITK_HELP_INFO_TREE_VIEW_STUDY: 
+@AMITK_HELP_INFO_TREE_VIEW_NONE: 
+@AMITK_HELP_INFO_UPDATE_LOCATION: 
+@AMITK_HELP_INFO_UPDATE_THETA: 
+@AMITK_HELP_INFO_UPDATE_SHIFT: 
+@AMITK_HELP_INFO_NUM: 
+
+<!-- ##### ENUM AmitkModality ##### -->
+<para>
+
+</para>
+
+@AMITK_MODALITY_PET: 
+@AMITK_MODALITY_SPECT: 
+@AMITK_MODALITY_CT: 
+@AMITK_MODALITY_MRI: 
+@AMITK_MODALITY_OTHER: 
+@AMITK_MODALITY_NUM: 
+
+<!-- ##### ENUM AmitkLimit ##### -->
+<para>
+
+</para>
+
+@AMITK_LIMIT_MIN: 
+@AMITK_LIMIT_MAX: 
+@AMITK_LIMIT_NUM: 
+
+<!-- ##### ENUM AmitkWindow ##### -->
+<para>
+
+</para>
+
+@AMITK_WINDOW_BONE: 
+@AMITK_WINDOW_SOFT_TISSUE: 
+@AMITK_WINDOW_NUM: 
+
+<!-- ##### VARIABLE amitk_fixed_font_desc ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amide_call_help ##### -->
+<para>
+
+</para>
+
+@link_id: 
+
+
+<!-- ##### FUNCTION amide_is_xif_directory ##### -->
+<para>
+
+</para>
+
+@filename: 
+@plegacy: 
+@pxml_filename: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amide_is_xif_flat_file ##### -->
+<para>
+
+</para>
+
+@filename: 
+@plocation_le: 
+@psize_le: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_append_str_with_newline ##### -->
+<para>
+
+</para>
+
+@pstr: 
+@format: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION amitk_append_str ##### -->
+<para>
+
+</para>
+
+@pstr: 
+@format: 
+@Varargs: 
+
+
+<!-- ##### FUNCTION amide_register_window ##### -->
+<para>
+
+</para>
+
+@widget: 
+
+
+<!-- ##### FUNCTION amide_unregister_window ##### -->
+<para>
+
+</para>
+
+@widget: 
+
+
+<!-- ##### FUNCTION amide_unregister_all_windows ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_layout_get_name ##### -->
+<para>
+
+</para>
+
+@layout: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_limit_get_name ##### -->
+<para>
+
+</para>
+
+@limit: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_window_get_name ##### -->
+<para>
+
+</para>
+
+@window: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_modality_get_name ##### -->
+<para>
+
+</para>
+
+@modality: 
+@Returns: 
+
+

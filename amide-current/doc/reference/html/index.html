@@ -1,328 +1,58 @@
-<HTML
-><HEAD
-><TITLE
->AMITK Reference Manual</TITLE
-><META
-NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.76b+
-"><LINK
-REL="NEXT"
-TITLE="AMITK+ Overview"
-HREF="amitk_intro.html"></HEAD
-><BODY
-CLASS="BOOK"
-BGCOLOR="#FFFFFF"
-TEXT="#000000"
-LINK="#0000FF"
-VLINK="#840084"
-ALINK="#0000FF"
-><DIV
-CLASS="BOOK"
-><DIV
-CLASS="TITLEPAGE"
-><TABLE
-WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
-><TR
-><TH
-ALIGN="center"
-VALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="7"
-><P
-CLASS="TITLE"
-><A
-NAME="AEN2"
->AMITK Reference Manual</A
-></P
-></FONT
-></TH
-></TR
-></TABLE
-><H3
-CLASS="AUTHOR"
-><A
-NAME="AEN5"
-></A
->Andy Loening</H3
-><DIV
-CLASS="AFFILIATION"
-><DIV
-CLASS="ADDRESS"
-><P
-CLASS="ADDRESS"
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;loening@ucla.edu<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</P
-></DIV
-></DIV
-><P
-CLASS="COPYRIGHT"
->Copyright &copy; 2002 by Andy Loening</P
-><DIV
-CLASS="LEGALNOTICE"
-><A
-NAME="AEN14"
-></A
-><P
-></P
-><P
->	Permission is granted to copy, distribute and/or modify this
-	document under the terms of the <I
-CLASS="CITETITLE"
->GNU Free
-	Documentation License</I
->, Version 1.1 or any later
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AMITK Reference Manual</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="next" href="amitk_intro.html" title="Part I. AMITK+ Overview"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><table class="navigation" width="100%" cellpadding="2" cellspacing="0"><tr><th valign="middle"><p class="title">AMITK Reference Manual</p></th></tr></table></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">Andy</span> <span class="surname">Loening</span></h3><div class="affiliation"><div class="address"><p><br>
+                 <tt class="email">&lt;<a href="mailto:loening%20at%20alum%20dot%20mit%20dot%20edu">loening at alum dot mit dot edu</a>&gt;</tt><br>
+             </p></div></div></div></div></div><div><p class="copyright">Copyright © 2004 Andy Loening</p></div><div><div class="legalnotice"><p>
+	Permission is granted to copy, distribute and/or modify this
+	document under the terms of the <i class="citetitle">GNU Free
+	Documentation License</i>, Version 1.1 or any later
 	version published by the Free Software Foundation with no
 	Invariant Sections, no Front-Cover Texts, and no Back-Cover
-	Texts. You may obtain a copy of the <I
-CLASS="CITETITLE"
->GNU Free
-	Documentation License</I
-> from the Free Software
-	Foundation by visiting <A
-HREF="http://www.fsf.org"
-TARGET="_top"
->their Web site</A
-> or by writing
+	Texts. You may obtain a copy of the <i class="citetitle">GNU Free
+	Documentation License</i> from the Free Software
+	Foundation by visiting <a href="http://www.fsf.org" target="_top">their Web site</a> or by writing
 	to:
 
-	<DIV
-CLASS="ADDRESS"
-><P
-CLASS="ADDRESS"
->	&nbsp;&nbsp;The&nbsp;Free&nbsp;Software&nbsp;Foundation,&nbsp;Inc.,<br>
-	&nbsp;&nbsp;59 Temple Place&nbsp;-&nbsp;Suite&nbsp;330,<br>
-	&nbsp;&nbsp;Boston,&nbsp;MA&nbsp;02111-1307,<br>
-	&nbsp;&nbsp;USA<br>
-	</P
-></DIV
->
-      </P
-><P
->	Many of the names used by companies to distinguish their
+	</p><div class="address"><p><br>
+	  The Free Software Foundation, Inc.,<br>
+	  <span class="street">59 Temple Place</span> - Suite 330,<br>
+	  <span class="city">Boston</span>, <span class="state">MA</span> <span class="postcode">02111-1307</span>,<br>
+	  <span class="country">USA</span><br>
+	</p></div><p>
+      </p><p>
+	Many of the names used by companies to distinguish their
 	products and services are claimed as trademarks. Where those
 	names appear in any GNOME documentation, and those trademarks
 	are made aware to the members of the GNOME Documentation
 	Project, the names have been printed in caps or initial caps.
-      </P
-><P
-></P
-></DIV
-></DIV
-><DIV
-CLASS="TOC"
-><DL
-><DT
-><B
->Table of Contents</B
-></DT
-><DT
->I. <A
-HREF="amitk_intro.html"
->AMITK+ Overview</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="amitk-theory.html"
->Theory behind the AMITK Library</A
->&nbsp;--&nbsp;Mathematical underpinnings of the AMITK Library</DT
-></DL
-></DD
-><DT
->II. <A
-HREF="amitk_base.html"
->AMITK Core Objects</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="amitk-amitk-color-table.html"
->amitk_color_table</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkobject.html"
->AmitkObject</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitk-point.html"
->amitk_point</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkrawdata.html"
->AmitkRawData</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkspace.html"
->AmitkSpace</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitk-volume.html"
->amitk_volume</A
->&nbsp;--&nbsp;</DT
-></DL
-></DD
-><DT
->III. <A
-HREF="amitk_objects.html"
->AMITK Objects</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="c3504.html"
->AMITK Object Hierarchy</A
-></DT
-><DT
-><A
-HREF="spaceobjects.html"
->Medical Image Objects</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="amitk-amitkdataset.html"
->AmitkDataSet</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkfiducialmark.html"
->AmitkFiducialMark</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkroi.html"
->AmitkRoi</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkstudy.html"
->AmitkStudy</A
->&nbsp;--&nbsp;</DT
-></DL
-></DD
-><DT
-><A
-HREF="amitkwidgets.html"
->Amitk Widgets</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="amitk-amitkcanvas.html"
->AmitkCanvas</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkobjectdialog.html"
->AmitkObjectDialog</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkspaceedit.html"
->AmitkSpaceEdit</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitkthresholdsdialog.html"
->AmitkThresholdsDialog</A
->&nbsp;--&nbsp;</DT
-><DT
-><A
-HREF="amitk-amitktree.html"
->AmitkTree</A
->&nbsp;--&nbsp;</DT
-></DL
-></DD
-></DL
-></DD
-></DL
-></DIV
-></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
-WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
-><TR
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
->&nbsp;</TD
-><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&nbsp;</B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&nbsp;</B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
-><A
-HREF="amitk_intro.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
->&nbsp;</TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->AMITK+ Overview</B
-></FONT
-></TD
-></TR
-></TABLE
-></DIV
-></BODY
-></HTML
->
+      </p></div></div></div><div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="part"><a href="amitk_intro.html">I. AMITK+ Overview</a></span></dt><dd><dl><dt><a href="amitk-theory.html">Theory behind the AMITK Library</a> - 
+Mathematical underpinnings of the AMITK Library
+</dt></dl></dd><dt><span class="part"><a href="amitk_base.html">II. AMITK Core Objects</a></span></dt><dd><dl><dt><a href="amitk-amitk-color-table.html">amitk_color_table</a> - </dt><dt><a href="amitk-amitk-common.html">amitk_common</a> - </dt><dt><a href="amitk-amitk-filter.html">amitk_filter</a> - </dt><dt><a href="amitk-AmitkLineProfile.html">AmitkLineProfile</a> - </dt><dt><a href="amitk-AmitkObject.html">AmitkObject</a> - </dt><dt><a href="amitk-amitk-point.html">amitk_point</a> - </dt><dt><a href="amitk-AmitkRawData.html">AmitkRawData</a> - </dt><dt><a href="amitk-AmitkSpace.html">AmitkSpace</a> - </dt><dt><a href="amitk-amitk-type.html">amitk_type</a> - </dt><dt><a href="amitk-amitk-volume.html">amitk_volume</a> - </dt></dl></dd><dt><span class="part"><a href="amitk_objects.html">III. AMITK Objects</a></span></dt><dd><dl><dt><span class="chapter"><a href="ch01.html">AMITK Object Hierarchy</a></span></dt><dt><span class="chapter"><a href="SpaceObjects.html">Medical Image Objects</a></span></dt><dt><span class="chapter"><a href="AmitkWidgets.html">Amitk Widgets</a></span></dt></dl></dd></dl></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"></td><td align="right"><a accesskey="n" href="amitk_intro.html"><b>Part I. AMITK+ Overview &gt;&gt;</b></a></td></tr></table></body></html>

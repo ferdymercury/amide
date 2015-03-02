@@ -166,10 +166,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 #ifdef AMIDE_LIBMDC_SUPPORT
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS+1];
-  GnomeUIInfo export_data_set_menu[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
+  GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
+  GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
 #else
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
-  GnomeUIInfo export_data_set_menu[AMITK_EXPORT_METHOD_NUM+1];
+  GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM+1];
+  GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM+1];
 #endif
 
   GnomeUIInfo export_view_menu[] = {
@@ -184,6 +186,18 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  ui_study_cb_export_view, ui_study, NULL),
     GNOMEUIINFO_END
   };
+
+  GnomeUIInfo export_data_set_resliced_menu[] = {
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Original Orientation"),
+			     N_("Export the data set in its original orientation (unresliced)"),
+			     export_data_set_menu1),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Resliced Orientation"),
+			     N_("Export the data set in its current orientation (resliced)"),
+			     export_data_set_menu2),
+
+    GNOMEUIINFO_END
+  };
+
   
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
@@ -211,7 +225,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     export_view_menu),
     GNOMEUIINFO_SUBTREE_HINT(N_("Export _Data Set"),
 			     N_("Export the active data set to the specified format"),
-			     export_data_set_menu),
+			     export_data_set_resliced_menu),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
     GNOMEUIINFO_MENU_EXIT_ITEM(ui_study_cb_exit, ui_study),
@@ -343,20 +357,33 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
       for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) 
-	  fill_in_menuitem(&(export_data_set_menu[counter++]),
+	  fill_in_menuitem(&(export_data_set_menu1[counter]),
 			   libmdc_export_menu_names[i_libmdc_export],
 			   libmdc_export_menu_explanations[i_libmdc_export],
 			   ui_study_cb_export_data_set, ui_study);
+	  fill_in_menuitem(&(export_data_set_menu2[counter]),
+			   libmdc_export_menu_names[i_libmdc_export],
+			   libmdc_export_menu_explanations[i_libmdc_export],
+			   ui_study_cb_export_data_set, ui_study);
+	  counter++;
       }
     } else 
 #endif
-      fill_in_menuitem(&(export_data_set_menu[counter++]),
-		       amitk_export_menu_names[i_export_method],
-		       amitk_export_menu_explanations[i_export_method],
-		       ui_study_cb_export_data_set, ui_study);
-    
+      {
+	fill_in_menuitem(&(export_data_set_menu1[counter]),
+			 amitk_export_menu_names[i_export_method],
+			 amitk_export_menu_explanations[i_export_method],
+			 ui_study_cb_export_data_set, ui_study);
+	
+	fill_in_menuitem(&(export_data_set_menu2[counter]),
+			 amitk_export_menu_names[i_export_method],
+			 amitk_export_menu_explanations[i_export_method],
+			 ui_study_cb_export_data_set, ui_study);
+	counter++;
+      }
   }
-  fill_in_end(&(export_data_set_menu[counter]));
+  fill_in_end(&(export_data_set_menu1[counter]));
+  fill_in_end(&(export_data_set_menu2[counter]));
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
@@ -391,19 +418,37 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
       for (i_libmdc_export = 0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
-	  g_object_set_data(G_OBJECT(export_data_set_menu[counter].widget),
+	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			    "method", GINT_TO_POINTER(i_export_method));
-	  g_object_set_data(G_OBJECT(export_data_set_menu[counter++].widget),
+	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
+	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
+			    "resliced", GINT_TO_POINTER(FALSE));
+	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			    "method", GINT_TO_POINTER(i_export_method));
+	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
+	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			    "resliced", GINT_TO_POINTER(TRUE));
+	  counter++;
 	}
       }
     } else
 #endif
       {
-	g_object_set_data(G_OBJECT(export_data_set_menu[counter].widget),
+	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			  "method", GINT_TO_POINTER(i_export_method));
-	g_object_set_data(G_OBJECT(export_data_set_menu[counter++].widget),
+	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
 			  "submethod", GINT_TO_POINTER(0));
+	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
+			  "resliced", GINT_TO_POINTER(FALSE));
+	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			  "method", GINT_TO_POINTER(i_export_method));
+	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			  "submethod", GINT_TO_POINTER(0));
+	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
+			  "resliced", GINT_TO_POINTER(TRUE));
+	counter++;
       }
   }
   

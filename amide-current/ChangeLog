@@ -1,3 +1,24 @@
+0.8.5 
+	* fixed fopen binary versus text bug on windows [1]
+	* export view function now includes roi's, etc. [1]
+	* fly through mpeg's now include roi's, etc.
+	* data sets can now also be exported resliced [2]
+	* slice generation slightly more accurate for iterating over depth
+	* fixed core dumps with filtering [3]
+	* added export jpeg abilities to ui_series
+	* added gated study support to ui_series
+	* added ability to select which objects go onto series on init
+	* added ability to select which objects go into rendering on init
+	* libecat strings aren't necesarrily NULL terminated [4]
+	* some gtk 2.4 updates (switch to g_idle)
+	* switched to libmdc progressive loader
+	* values read through libmdc are now quantified & calibrated,
+	  they had only been quantified before (branching factor hadn't been added)
+	[1] Found/Requested by Steve Jones
+	[2] Requested by Jayashree Kanchana
+	[3] Found by Vania Kenanova
+	[4] Found by Kris Thielemans
+
 0.8.4 2004.04.26
 	* fixed bug in *_calc_frame_max_min [1]
 	[1] Found by Peter Bloomfield

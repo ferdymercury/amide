@@ -1,0 +1,60 @@
+<refentry id="amitk-AmitkObjectDialog">
+<refmeta>
+<refentrytitle>AmitkObjectDialog</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkObjectDialog</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-object-dialog-new">amitk_object_dialog_new</link>         (<link linkend="AmitkObject">AmitkObject</link> *object);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="amitk-object-dialog-new"/>amitk_object_dialog_new ()</title>
+<indexterm><primary>amitk_object_dialog_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_object_dialog_new         (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

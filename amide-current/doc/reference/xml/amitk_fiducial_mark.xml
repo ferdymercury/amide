@@ -1,0 +1,89 @@
+<refentry id="amitk-AmitkFiducialMark">
+<refmeta>
+<refentrytitle>AmitkFiducialMark</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkFiducialMark</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-FIDUCIAL-MARK-GET-CAPS">AMITK_FIDUCIAL_MARK_GET</link>         (mark)
+<link linkend="AmitkFiducialMark">AmitkFiducialMark</link>* <link linkend="amitk-fiducial-mark-new">amitk_fiducial_mark_new</link>  (void);
+<link linkend="void">void</link>        <link linkend="amitk-fiducial-mark-set">amitk_fiducial_mark_set</link>         (<link linkend="AmitkFiducialMark">AmitkFiducialMark</link> *fiducial_mark,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> new_point);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-FIDUCIAL-MARK-GET-CAPS"/>AMITK_FIDUCIAL_MARK_GET()</title>
+<indexterm><primary>AMITK_FIDUCIAL_MARK_GET</primary></indexterm><programlisting>#define AMITK_FIDUCIAL_MARK_GET(mark)                (AMITK_SPACE_OFFSET(mark))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>mark</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-fiducial-mark-new"/>amitk_fiducial_mark_new ()</title>
+<indexterm><primary>amitk_fiducial_mark_new</primary></indexterm><programlisting><link linkend="AmitkFiducialMark">AmitkFiducialMark</link>* amitk_fiducial_mark_new  (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-fiducial-mark-set"/>amitk_fiducial_mark_set ()</title>
+<indexterm><primary>amitk_fiducial_mark_set</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_fiducial_mark_set         (<link linkend="AmitkFiducialMark">AmitkFiducialMark</link> *fiducial_mark,
+                                             <link linkend="AmitkPoint">AmitkPoint</link> new_point);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>fiducial_mark</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>new_point</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

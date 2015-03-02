@@ -1,0 +1,303 @@
+<!-- ##### SECTION Title ##### -->
+AmitkPreferences
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_WARNINGS_TO_CONSOLE ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_ROI_WIDTH ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_LINE_STYLE ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_LAYOUT ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_COLOR_TABLE ##### -->
+<para>
+
+</para>
+
+@pref: 
+@modality: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_WINDOW ##### -->
+<para>
+
+</para>
+
+@pref: 
+@window: 
+@limit: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DIALOG ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_MIN_ROI_WIDTH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_MAX_ROI_WIDTH ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_preferences_new ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_roi_width ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@roi_width: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_line_style ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@line_style: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_layout ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@layout: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_maintain_size ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@maintain_size: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_target_empty_area ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@target_empty_area: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_warnings_to_console ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@new_value: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_prompt_for_save_on_exit ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@new_value: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_xif_as_directory ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@new_value: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_color_table ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@modality: 
+@color_table: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_default_window ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@window: 
+@limit: 
+@value: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_dialog ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@dialog: 
+
+

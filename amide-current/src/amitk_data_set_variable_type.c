@@ -194,6 +194,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t start_time,
 									      const amide_time_t duration,
+									      const amide_intpoint_t gate,
 									      const amide_real_t pixel_dim,
 									      const AmitkVolume * slice_volume) {
 
@@ -237,7 +238,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   end_frame = amitk_data_set_get_frame(data_set, end_time-EPSILON);
 
   /* the number of gates we'll be looking at */
-  num_gates = AMITK_DATA_SET_NUM_VIEW_GATES(data_set);
+  if (gate < 0)
+    num_gates = AMITK_DATA_SET_NUM_VIEW_GATES(data_set);
+  else
+    num_gates = 1;
 
   /* ------------------------- */
 
@@ -266,8 +270,13 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   slice->scan_start = start_time;
   slice->thresholding = data_set->thresholding;
   slice->interpolation = AMITK_DATA_SET_INTERPOLATION(data_set);
-  slice->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
-  slice->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(data_set);
+  if (gate < 0) {
+    slice->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
+    slice->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(data_set);
+  } else {
+    slice->view_start_gate = gate;
+    slice->view_end_gate = gate;
+  }
 
   amitk_data_set_calc_far_corner(slice);
   amitk_data_set_set_frame_duration(slice, 0, duration);
@@ -284,8 +293,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   {
     AmitkCorners real_corner;
     /* convert to real space */
-    real_corner[0] = rs_offset(slice->space);
-    real_corner[1] = amitk_space_s2b(slice->space, slice->corner);
+    real_corner[0] = AMITK_SPACE_OFFSET(slice);
+    real_corner[1] = amitk_space_s2b(AMITK_SPACE(slice), AMITK_VOLUME_CORNER(slice));
     g_print("new slice from data_set %s\t---------------------\n",AMITK_OBJECT_NAME(data_set));
     g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
     	    dim.x, dim.y, dim.z);
@@ -294,7 +303,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
     	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
     g_print("\tdata set\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
-    	    start_time, end_time,start_frame,start_frame+num_frames-1);
+    	    start_time, end_time,start_frame,end_frame);
   }
 #endif
 
@@ -310,7 +319,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   alt = amitk_space_s2s_dim(slice_space, data_set_space, alt);
   alt = point_mult(alt, data_set->voxel_size);
   voxel_length = POINT_MAGNITUDE(alt);
-  z_steps = slice->voxel_size.z/voxel_length;
+  z_steps = slice->voxel_size.z/voxel_length; /* non-integer */
 
   /* figure out the intersection bounds between the data set and the requested slice volume */
   if (amitk_volume_volume_intersection_corners(slice_volume, 
@@ -324,7 +333,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     end = zero_voxel;
   }
 
-  /* make sure we only iterate over the slice we've already mallocs */
+  /* make sure we only iterate over the slice we've already malloc'ed */
   if (start.x < 0) start.x = 0;
   if (start.y < 0) start.y = 0;
   if (end.x >= dim.x) end.x = dim.x-1;
@@ -373,10 +382,12 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       } else
 	time_weight = 1.0/((gdouble) num_gates);
 
-      /* iterate over gates */
-      i_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
       for (i_gate=0; i_gate < num_gates; i_gate++) {
-	use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	if (gate < 0)
+	  use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	else
+	  use_gate = i_gate+gate;
+
 	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
 	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
 
@@ -384,7 +395,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	for (z = 0; z < ceil(z_steps); z++) {
 	
 	  /* the slices z_coordinate for this iteration's slice voxel */
-	  slice_point.z = (((amide_real_t) z)+0.5)*voxel_length;
+	  slice_point.z = z*voxel_length + slice->voxel_size.z/2.0;
 	  
 	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
 	  if (floor(z_steps) > z)
@@ -478,7 +489,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     /* figure out what point in the data set we're going to start at */
     start_point.x = ((amide_real_t) start.x+0.5) * slice->voxel_size.x;
     start_point.y = ((amide_real_t) start.y+0.5) * slice->voxel_size.y;
-    start_point.z = voxel_length/2.0;
+    start_point.z = slice->voxel_size.z/2.0;
     start_point = amitk_space_s2s(slice_space, data_set_space, start_point);
 
     /* figure out what stepping one voxel in a given direction in our slice cooresponds to in our data set */
@@ -487,7 +498,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       alt.y = (i_axis == AMITK_AXIS_Y) ? slice->voxel_size.y : 0.0;
       alt.z = (i_axis == AMITK_AXIS_Z) ? voxel_length : 0.0;
       alt = point_add(point_sub(amitk_space_s2b(slice_space, alt),
-			  AMITK_SPACE_OFFSET(slice_space)),
+				AMITK_SPACE_OFFSET(slice_space)),
 		      AMITK_SPACE_OFFSET(data_set_space));
       stride[i_axis] = amitk_space_b2s(data_set_space, alt);
     }
@@ -507,9 +518,12 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	time_weight = 1.0/((gdouble) num_gates);
 
       /* iterate over gates */
-      i_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
       for (i_gate=0; i_gate < num_gates; i_gate++) {
-	use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	if (gate < 0)
+	  use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	else
+	  use_gate = i_gate+gate;
+
 	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
 	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
 

@@ -1,0 +1,176 @@
+<!-- ##### SECTION Title ##### -->
+amitk_raw_data_SSHORT
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_0D_SCALING_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_1D_SCALING_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_2D_SCALING_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_3D_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iz: 
+@iy: 
+@ix: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_2D_POINTER ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iy: 
+@ix: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_SET_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_2D_SET_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iy: 
+@ix: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_2D_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iy: 
+@ix: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_3D_SET_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iz: 
+@iy: 
+@ix: 
+
+
+<!-- ##### MACRO AMITK_RAW_DATA_SSHORT_3D_CONTENT ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@iz: 
+@iy: 
+@ix: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_SSHORT_0D_SCALING_init ##### -->
+<para>
+
+</para>
+
+@init_value: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_SSHORT_2D_init ##### -->
+<para>
+
+</para>
+
+@init_value: 
+@y_dim: 
+@x_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_SSHORT_3D_init ##### -->
+<para>
+
+</para>
+
+@init_value: 
+@z_dim: 
+@y_dim: 
+@x_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_SSHORT_initialize_data ##### -->
+<para>
+
+</para>
+
+@amitk_raw_data: 
+@init_value: 
+
+

@@ -412,11 +412,21 @@ static void threshold_construct(AmitkThreshold * threshold,
   /* show/hide taken care of by threshold_update_layout */
 
   for (i_ref=0; i_ref<2; i_ref++) {
+#if 1
     threshold->threshold_ref_frame_menu[i_ref] = gtk_option_menu_new();
+#else
+    threshold->threshold_ref_frame_menu[i_ref] = gtk_combo_box_new_text();
+#endif
     gtk_table_attach(GTK_TABLE(right_table), threshold->threshold_ref_frame_menu[i_ref],
 		     2+i_ref*2,3+i_ref*2, right_row,right_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_set_size_request(threshold->threshold_ref_frame_menu[i_ref], 50, -1);
+#if 0
+    g_object_set_data(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]), 
+		      "which_ref", GINT_TO_POINTER(i_ref));
+    g_signal_connect(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]), "changed", 
+		     G_CALLBACK(threshold_ref_frame_cb), threshold);
+#endif
     /* show/hide taken care of by threshold_update_layout */
   }
 
@@ -1099,8 +1109,12 @@ static void threshold_update_windowing(AmitkThreshold * threshold) {
 /* function to update what are in the ref frame menus */
 static void threshold_update_ref_frames(AmitkThreshold * threshold) {
 
+#if 1
   GtkWidget * menu;
   GtkWidget * menuitem;
+#else
+  GtkTreeModel * model;
+#endif
   guint i_ref, i_frame;
   gchar * temp_string;
 
@@ -1109,30 +1123,50 @@ static void threshold_update_ref_frames(AmitkThreshold * threshold) {
 
   for (i_ref=0; i_ref<2; i_ref++) {
 
+#if 1
     /* remove the old menu */
     gtk_option_menu_remove_menu(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]));
 
     /* make new menus */
     menu = gtk_menu_new();
+#else
+    g_signal_handlers_block_by_func(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]),
+				    G_CALLBACK(threshold_ref_frame_cb), threshold);
 
+    /* remove the old menu */
+    model = gtk_combo_box_get_model (GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]));
+    gtk_list_store_clear(GTK_LIST_STORE(model));
+
+    /* make new menu */
+#endif
     for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(threshold->data_set); i_frame++) {
       temp_string = g_strdup_printf("%d",i_frame);
+#if 1
       menuitem = gtk_menu_item_new_with_label(temp_string);
-      g_free(temp_string);
-      
       gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
       g_object_set_data(G_OBJECT(menuitem), "frame", GINT_TO_POINTER(i_frame));
       g_object_set_data(G_OBJECT(menuitem), "which_ref", GINT_TO_POINTER(i_ref));
       g_signal_connect(G_OBJECT(menuitem), "activate", 
 		       G_CALLBACK(threshold_ref_frame_cb), threshold);
-    }
-
+#else
+      gtk_combo_box_append_text(GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]),
+				temp_string);
+#endif
+      g_free(temp_string);
+     }
+#if 1
     gtk_option_menu_set_menu(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]), menu);
     gtk_widget_show_all(menu);
 
     gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]), 
 				AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,i_ref));
-
+#else
+    gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]), 
+			     AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,i_ref));
+				 
+    g_signal_handlers_unblock_by_func(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]),
+				      G_CALLBACK(threshold_ref_frame_cb), threshold);
+#endif
   }
 
   return;
@@ -1143,8 +1177,13 @@ static void threshold_update_color_table(AmitkThreshold * threshold) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(threshold->data_set));
 
+#if 1
   gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu), 
 			      AMITK_DATA_SET_COLOR_TABLE(threshold->data_set));
+#else
+  gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->color_table_menu), 
+			   AMITK_DATA_SET_COLOR_TABLE(threshold->data_set));
+#endif
   threshold_update_color_scales(threshold);
 
   return;
@@ -1192,7 +1231,9 @@ static void ds_thresholding_changed_cb(AmitkDataSet * ds, AmitkThreshold * thres
     threshold_update_arrow(threshold, i_arrow);
 
   threshold_update_type(threshold);
+#if 0
   threshold_update_ref_frames(threshold);
+#endif
   threshold_update_layout(threshold);
 
   return;
@@ -1213,6 +1254,7 @@ static void ds_thresholds_changed_cb(AmitkDataSet * ds, AmitkThreshold * thresho
   threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MAX);
+  threshold_update_ref_frames(threshold);
   threshold_update_spin_buttons(threshold);
 
   return;
@@ -1397,7 +1439,11 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
   AmitkColorTable i_color_table;
   AmitkThreshold * threshold = data;
 
+#if 1
   i_color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  i_color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
 
   /* check if we actually changed values */
   if (AMITK_DATA_SET_COLOR_TABLE(threshold->data_set) != i_color_table) 
@@ -1414,7 +1460,11 @@ static void threshold_ref_frame_cb(GtkWidget * widget, gpointer data) {
 
   /* figure out which menu item called me */
   which_ref = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"which_ref"));
+#if 1
   frame = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"frame"));
+#else
+  frame = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
 
   /* check if we actually changed values */
   if (frame != AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set, which_ref)) {
@@ -1423,7 +1473,9 @@ static void threshold_ref_frame_cb(GtkWidget * widget, gpointer data) {
       frame =AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,1);
     else if ((which_ref==1) && (frame < AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,0)))
       frame = AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,0);
+#if 1
     gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[which_ref]), frame);
+#endif
 
     /* and inact the changes */
     amitk_data_set_set_threshold_ref_frame(threshold->data_set, which_ref, frame);

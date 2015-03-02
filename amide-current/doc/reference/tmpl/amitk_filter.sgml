@@ -1,0 +1,92 @@
+<!-- ##### SECTION Title ##### -->
+amitk_filter
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+<!-- ##### ENUM AmitkFilter ##### -->
+<para>
+
+</para>
+
+@AMITK_FILTER_GAUSSIAN: 
+@AMITK_FILTER_MEDIAN_LINEAR: 
+@AMITK_FILTER_MEDIAN_3D: 
+@AMITK_FILTER_NUM: 
+
+<!-- ##### MACRO AMITK_FILTER_FFT_SIZE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_filter_calculate_gaussian_kernel_complex ##### -->
+<para>
+
+</para>
+
+@kernel_size: 
+@voxel_size: 
+@fwhm: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_filter_3D_FFT ##### -->
+<para>
+
+</para>
+
+@data: 
+@wavetable: 
+@workspace: 
+
+
+<!-- ##### FUNCTION amitk_filter_inverse_3D_FFT ##### -->
+<para>
+
+</para>
+
+@data: 
+@wavetable: 
+@workspace: 
+
+
+<!-- ##### FUNCTION amitk_filter_complex_mult ##### -->
+<para>
+
+</para>
+
+@data: 
+@kernel: 
+
+
+<!-- ##### FUNCTION amitk_filter_find_median_by_partial_sort ##### -->
+<para>
+
+</para>
+
+@partial_sort_data: 
+@size: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_filter_get_name ##### -->
+<para>
+
+</para>
+
+@filter: 
+@Returns: 
+
+

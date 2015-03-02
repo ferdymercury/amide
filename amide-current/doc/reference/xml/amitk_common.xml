@@ -1,0 +1,134 @@
+<refentry id="amitk-amitk-common">
+<refmeta>
+<refentrytitle>amitk_common</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>amitk_common</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+<link linkend="void">void</link>        <link linkend="amitk-real-cell-data-func">amitk_real_cell_data_func</link>       (<link linkend="GtkTreeViewColumn">GtkTreeViewColumn</link> *tree_column,
+                                             <link linkend="GtkCellRenderer">GtkCellRenderer</link> *cell,
+                                             <link linkend="GtkTreeModel">GtkTreeModel</link> *tree_model,
+                                             <link linkend="GtkTreeIter">GtkTreeIter</link> *iter,
+                                             <link linkend="gpointer">gpointer</link> data);
+<link linkend="gint">gint</link>        <link linkend="amitk-spin-button-scientific-output">amitk_spin_button_scientific_output</link>
+                                            (<link linkend="GtkSpinButton">GtkSpinButton</link> *spin_button,
+                                             <link linkend="gpointer">gpointer</link> data);
+<link linkend="GdkPixbuf">GdkPixbuf</link>*  <link linkend="amitk-get-pixbuf-from-canvas">amitk_get_pixbuf_from_canvas</link>    (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
+                                             <link linkend="gint">gint</link> xoffset,
+                                             <link linkend="gint">gint</link> yoffset,
+                                             <link linkend="gint">gint</link> width,
+                                             <link linkend="gint">gint</link> height);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="amitk-real-cell-data-func"/>amitk_real_cell_data_func ()</title>
+<indexterm><primary>amitk_real_cell_data_func</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_real_cell_data_func       (<link linkend="GtkTreeViewColumn">GtkTreeViewColumn</link> *tree_column,
+                                             <link linkend="GtkCellRenderer">GtkCellRenderer</link> *cell,
+                                             <link linkend="GtkTreeModel">GtkTreeModel</link> *tree_model,
+                                             <link linkend="GtkTreeIter">GtkTreeIter</link> *iter,
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>tree_column</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>cell</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>tree_model</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>iter</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>data</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-spin-button-scientific-output"/>amitk_spin_button_scientific_output ()</title>
+<indexterm><primary>amitk_spin_button_scientific_output</primary></indexterm><programlisting><link linkend="gint">gint</link>        amitk_spin_button_scientific_output
+                                            (<link linkend="GtkSpinButton">GtkSpinButton</link> *spin_button,
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>spin_button</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-get-pixbuf-from-canvas"/>amitk_get_pixbuf_from_canvas ()</title>
+<indexterm><primary>amitk_get_pixbuf_from_canvas</primary></indexterm><programlisting><link linkend="GdkPixbuf">GdkPixbuf</link>*  amitk_get_pixbuf_from_canvas    (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
+                                             <link linkend="gint">gint</link> xoffset,
+                                             <link linkend="gint">gint</link> yoffset,
+                                             <link linkend="gint">gint</link> width,
+                                             <link linkend="gint">gint</link> height);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>canvas</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>xoffset</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>yoffset</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>width</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>height</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

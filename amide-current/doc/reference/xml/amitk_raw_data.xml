@@ -1,0 +1,646 @@
+<refentry id="amitk-AmitkRawData">
+<refmeta>
+<refentrytitle>AmitkRawData</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>AMITK Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>AmitkRawData</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+
+<synopsis>
+
+
+
+#define     <link linkend="AMITK-RAW-DATA-FORMAT-CAPS">AMITK_RAW_DATA_FORMAT</link>           (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-CAPS">AMITK_RAW_DATA_DIM</link>              (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-X-CAPS">AMITK_RAW_DATA_DIM_X</link>            (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-Y-CAPS">AMITK_RAW_DATA_DIM_Y</link>            (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-Z-CAPS">AMITK_RAW_DATA_DIM_Z</link>            (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-G-CAPS">AMITK_RAW_DATA_DIM_G</link>            (rd)
+#define     <link linkend="AMITK-RAW-DATA-DIM-T-CAPS">AMITK_RAW_DATA_DIM_T</link>            (rd)
+#define     <link linkend="GINT32-TO-PDP-CAPS">GINT32_TO_PDP</link>                   (val)
+#define     <link linkend="GUINT32-TO-PDP-CAPS">GUINT32_TO_PDP</link>                  (val)
+#define     <link linkend="GINT32-FROM-PDP-CAPS">GINT32_FROM_PDP</link>                 (val)
+#define     <link linkend="GUINT32-FROM-PDP-CAPS">GUINT32_FROM_PDP</link>                (val)
+enum        <link linkend="AmitkFormat">AmitkFormat</link>;
+typedef     <link linkend="amitk-format-UBYTE-t">amitk_format_UBYTE_t</link>;
+typedef     <link linkend="amitk-format-SBYTE-t">amitk_format_SBYTE_t</link>;
+typedef     <link linkend="amitk-format-USHORT-t">amitk_format_USHORT_t</link>;
+typedef     <link linkend="amitk-format-SSHORT-t">amitk_format_SSHORT_t</link>;
+typedef     <link linkend="amitk-format-UINT-t">amitk_format_UINT_t</link>;
+typedef     <link linkend="amitk-format-SINT-t">amitk_format_SINT_t</link>;
+typedef     <link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link>;
+typedef     <link linkend="amitk-format-DOUBLE-t">amitk_format_DOUBLE_t</link>;
+enum        <link linkend="AmitkRawFormat">AmitkRawFormat</link>;
+#define     <link linkend="amitk-raw-data-includes-voxel">amitk_raw_data_includes_voxel</link>   (rd, vox)
+#define     <link linkend="amitk-raw-data-num-voxels">amitk_raw_data_num_voxels</link>       (rd)
+#define     <link linkend="amitk-raw-data-size-data-mem">amitk_raw_data_size_data_mem</link>    (rd)
+#define     <link linkend="amitk-raw-data-get-data-mem">amitk_raw_data_get_data_mem</link>     (rd)
+<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-new">amitk_raw_data_new</link>            (void);
+<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-new-with-data">amitk_raw_data_new_with_data</link>  (<link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> dim);
+<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-import-raw-file">amitk_raw_data_import_raw_file</link>
+                                            (const <link linkend="gchar">gchar</link> *file_name,
+                                             <link linkend="FILE-CAPS">FILE</link> *existing_file,
+                                             <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> dim,
+                                             <link linkend="long-file-offset">long file_offset</link>,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="void">void</link>        <link linkend="amitk-raw-data-write-xml">amitk_raw_data_write_xml</link>        (<link linkend="AmitkRawData">AmitkRawData</link> *raw_data,
+                                             const <link linkend="gchar">gchar</link> *name,
+                                             <link linkend="FILE-CAPS">FILE</link> *study_file,
+                                             <link linkend="gchar">gchar</link> **output_filename,
+                                             <link linkend="guint64">guint64</link> *location,
+                                             <link linkend="guint64">guint64</link> *size);
+<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-read-xml">amitk_raw_data_read_xml</link>       (<link linkend="gchar">gchar</link> *xml_filename,
+                                             <link linkend="FILE-CAPS">FILE</link> *study_file,
+                                             <link linkend="guint64">guint64</link> location,
+                                             <link linkend="guint64">guint64</link> size,
+                                             <link linkend="gchar">gchar</link> **perror_buf,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);
+<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-raw-data-get-value">amitk_raw_data_get_value</link>       (const <link linkend="AmitkRawData">AmitkRawData</link> *rd,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);
+<link linkend="gpointer">gpointer</link>    <link linkend="amitk-raw-data-get-pointer">amitk_raw_data_get_pointer</link>      (const <link linkend="AmitkRawData">AmitkRawData</link> *rd,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);
+<link linkend="AmitkFormat">AmitkFormat</link> <link linkend="amitk-raw-format-to-format">amitk_raw_format_to_format</link>      (<link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format);
+<link linkend="AmitkRawFormat">AmitkRawFormat</link> <link linkend="amitk-format-to-raw-format">amitk_format_to_raw_format</link>   (<link linkend="AmitkFormat">AmitkFormat</link> data_format);
+#define     <link linkend="amitk-raw-format-calc-num-bytes-per-slice">amitk_raw_format_calc_num_bytes_per_slice</link>(dim, raw_format)
+#define     <link linkend="amitk-raw-format-calc-num-bytes">amitk_raw_format_calc_num_bytes</link> (dim, raw_format)
+const <link linkend="gchar">gchar</link>* <link linkend="amitk-raw-format-get-name">amitk_raw_format_get_name</link>      (const <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format);
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-FORMAT-CAPS"/>AMITK_RAW_DATA_FORMAT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FORMAT</primary></indexterm><programlisting>#define AMITK_RAW_DATA_FORMAT(rd)         (AMITK_RAW_DATA(rd)-&gt;format)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-CAPS"/>AMITK_RAW_DATA_DIM()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM(rd)            (AMITK_RAW_DATA(rd)-&gt;dim)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-X-CAPS"/>AMITK_RAW_DATA_DIM_X()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM_X</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM_X(rd)          (AMITK_RAW_DATA(rd)-&gt;dim.x)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-Y-CAPS"/>AMITK_RAW_DATA_DIM_Y()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM_Y</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM_Y(rd)          (AMITK_RAW_DATA(rd)-&gt;dim.y)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-Z-CAPS"/>AMITK_RAW_DATA_DIM_Z()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM_Z</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM_Z(rd)          (AMITK_RAW_DATA(rd)-&gt;dim.z)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-G-CAPS"/>AMITK_RAW_DATA_DIM_G()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM_G</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM_G(rd)          (AMITK_RAW_DATA(rd)-&gt;dim.g)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-RAW-DATA-DIM-T-CAPS"/>AMITK_RAW_DATA_DIM_T()</title>
+<indexterm><primary>AMITK_RAW_DATA_DIM_T</primary></indexterm><programlisting>#define AMITK_RAW_DATA_DIM_T(rd)          (AMITK_RAW_DATA(rd)-&gt;dim.t)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="GINT32-TO-PDP-CAPS"/>GINT32_TO_PDP()</title>
+<indexterm><primary>GINT32_TO_PDP</primary></indexterm><programlisting>#define     GINT32_TO_PDP(val)</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>val</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="GUINT32-TO-PDP-CAPS"/>GUINT32_TO_PDP()</title>
+<indexterm><primary>GUINT32_TO_PDP</primary></indexterm><programlisting>#define     GUINT32_TO_PDP(val)</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>val</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="GINT32-FROM-PDP-CAPS"/>GINT32_FROM_PDP()</title>
+<indexterm><primary>GINT32_FROM_PDP</primary></indexterm><programlisting>#define GINT32_FROM_PDP(val)    (GINT32_TO_PDP (val))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>val</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="GUINT32-FROM-PDP-CAPS"/>GUINT32_FROM_PDP()</title>
+<indexterm><primary>GUINT32_FROM_PDP</primary></indexterm><programlisting>#define GUINT32_FROM_PDP(val)   (GUINT32_TO_PDP (val))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>val</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AmitkFormat"/>enum AmitkFormat</title>
+<indexterm><primary>AmitkFormat</primary></indexterm><programlisting>typedef enum {
+  AMITK_FORMAT_UBYTE, 
+  AMITK_FORMAT_SBYTE, 
+  AMITK_FORMAT_USHORT, 
+  AMITK_FORMAT_SSHORT, 
+  AMITK_FORMAT_UINT, 
+  AMITK_FORMAT_SINT, 
+  AMITK_FORMAT_FLOAT, 
+  AMITK_FORMAT_DOUBLE, 
+  AMITK_FORMAT_NUM
+} AmitkFormat;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-UBYTE-t"/>amitk_format_UBYTE_t</title>
+<indexterm><primary>amitk_format_UBYTE_t</primary></indexterm><programlisting>typedef guint8  amitk_format_UBYTE_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-SBYTE-t"/>amitk_format_SBYTE_t</title>
+<indexterm><primary>amitk_format_SBYTE_t</primary></indexterm><programlisting>typedef gint8   amitk_format_SBYTE_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-USHORT-t"/>amitk_format_USHORT_t</title>
+<indexterm><primary>amitk_format_USHORT_t</primary></indexterm><programlisting>typedef guint16 amitk_format_USHORT_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-SSHORT-t"/>amitk_format_SSHORT_t</title>
+<indexterm><primary>amitk_format_SSHORT_t</primary></indexterm><programlisting>typedef gint16  amitk_format_SSHORT_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-UINT-t"/>amitk_format_UINT_t</title>
+<indexterm><primary>amitk_format_UINT_t</primary></indexterm><programlisting>typedef guint32 amitk_format_UINT_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-SINT-t"/>amitk_format_SINT_t</title>
+<indexterm><primary>amitk_format_SINT_t</primary></indexterm><programlisting>typedef gint32  amitk_format_SINT_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-FLOAT-t"/>amitk_format_FLOAT_t</title>
+<indexterm><primary>amitk_format_FLOAT_t</primary></indexterm><programlisting>typedef gfloat  amitk_format_FLOAT_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-DOUBLE-t"/>amitk_format_DOUBLE_t</title>
+<indexterm><primary>amitk_format_DOUBLE_t</primary></indexterm><programlisting>typedef gdouble amitk_format_DOUBLE_t;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="AmitkRawFormat"/>enum AmitkRawFormat</title>
+<indexterm><primary>AmitkRawFormat</primary></indexterm><programlisting>typedef enum {
+  AMITK_RAW_FORMAT_UBYTE_8_NE, 
+  AMITK_RAW_FORMAT_SBYTE_8_NE, 
+  AMITK_RAW_FORMAT_USHORT_16_LE, 
+  AMITK_RAW_FORMAT_SSHORT_16_LE, 
+  AMITK_RAW_FORMAT_UINT_32_LE, 
+  AMITK_RAW_FORMAT_SINT_32_LE, 
+  AMITK_RAW_FORMAT_FLOAT_32_LE, 
+  AMITK_RAW_FORMAT_DOUBLE_64_LE, 
+  AMITK_RAW_FORMAT_USHORT_16_BE, 
+  AMITK_RAW_FORMAT_SSHORT_16_BE, 
+  AMITK_RAW_FORMAT_UINT_32_BE,
+  AMITK_RAW_FORMAT_SINT_32_BE,
+  AMITK_RAW_FORMAT_FLOAT_32_BE,
+  AMITK_RAW_FORMAT_DOUBLE_64_BE,
+  AMITK_RAW_FORMAT_UINT_32_PDP,
+  AMITK_RAW_FORMAT_SINT_32_PDP,
+  AMITK_RAW_FORMAT_FLOAT_32_PDP, 
+  AMITK_RAW_FORMAT_ASCII_8_NE,
+  AMITK_RAW_FORMAT_NUM
+} AmitkRawFormat;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-includes-voxel"/>amitk_raw_data_includes_voxel()</title>
+<indexterm><primary>amitk_raw_data_includes_voxel</primary></indexterm><programlisting>#define     amitk_raw_data_includes_voxel(rd, vox)</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>vox</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-num-voxels"/>amitk_raw_data_num_voxels()</title>
+<indexterm><primary>amitk_raw_data_num_voxels</primary></indexterm><programlisting>#define amitk_raw_data_num_voxels(rd) ((rd)-&gt;dim.x * (rd)-&gt;dim.y * (rd)-&gt;dim.z * (rd)-&gt;dim.g * (rd)-&gt;dim.t)
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-size-data-mem"/>amitk_raw_data_size_data_mem()</title>
+<indexterm><primary>amitk_raw_data_size_data_mem</primary></indexterm><programlisting>#define amitk_raw_data_size_data_mem(rd) (amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)-&gt;format])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-get-data-mem"/>amitk_raw_data_get_data_mem()</title>
+<indexterm><primary>amitk_raw_data_get_data_mem</primary></indexterm><programlisting>#define amitk_raw_data_get_data_mem(rd) (g_try_malloc(amitk_raw_data_size_data_mem(rd)))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-new"/>amitk_raw_data_new ()</title>
+<indexterm><primary>amitk_raw_data_new</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_new            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-new-with-data"/>amitk_raw_data_new_with_data ()</title>
+<indexterm><primary>amitk_raw_data_new_with_data</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_new_with_data  (<link linkend="AmitkFormat">AmitkFormat</link> format,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> dim);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-import-raw-file"/>amitk_raw_data_import_raw_file ()</title>
+<indexterm><primary>amitk_raw_data_import_raw_file</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_import_raw_file
+                                            (const <link linkend="gchar">gchar</link> *file_name,
+                                             <link linkend="FILE-CAPS">FILE</link> *existing_file,
+                                             <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format,
+                                             <link linkend="AmitkVoxel">AmitkVoxel</link> dim,
+                                             <link linkend="long-file-offset">long file_offset</link>,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>file_name</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>existing_file</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>Param5</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-write-xml"/>amitk_raw_data_write_xml ()</title>
+<indexterm><primary>amitk_raw_data_write_xml</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_raw_data_write_xml        (<link linkend="AmitkRawData">AmitkRawData</link> *raw_data,
+                                             const <link linkend="gchar">gchar</link> *name,
+                                             <link linkend="FILE-CAPS">FILE</link> *study_file,
+                                             <link linkend="gchar">gchar</link> **output_filename,
+                                             <link linkend="guint64">guint64</link> *location,
+                                             <link linkend="guint64">guint64</link> *size);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>raw_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>study_file</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>output_filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>location</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>size</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-read-xml"/>amitk_raw_data_read_xml ()</title>
+<indexterm><primary>amitk_raw_data_read_xml</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_read_xml       (<link linkend="gchar">gchar</link> *xml_filename,
+                                             <link linkend="FILE-CAPS">FILE</link> *study_file,
+                                             <link linkend="guint64">guint64</link> location,
+                                             <link linkend="guint64">guint64</link> size,
+                                             <link linkend="gchar">gchar</link> **perror_buf,
+                                             <link linkend="gboolean">gboolean</link> (*update_func) (),
+                                             <link linkend="gpointer">gpointer</link> update_data);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>xml_filename</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>study_file</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>location</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>size</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>perror_buf</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_func</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>update_data</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-get-value"/>amitk_raw_data_get_value ()</title>
+<indexterm><primary>amitk_raw_data_get_value</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_raw_data_get_value       (const <link linkend="AmitkRawData">AmitkRawData</link> *rd,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-data-get-pointer"/>amitk_raw_data_get_pointer ()</title>
+<indexterm><primary>amitk_raw_data_get_pointer</primary></indexterm><programlisting><link linkend="gpointer">gpointer</link>    amitk_raw_data_get_pointer      (const <link linkend="AmitkRawData">AmitkRawData</link> *rd,
+                                             const <link linkend="AmitkVoxel">AmitkVoxel</link> i);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>rd</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>i</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-format-to-format"/>amitk_raw_format_to_format ()</title>
+<indexterm><primary>amitk_raw_format_to_format</primary></indexterm><programlisting><link linkend="AmitkFormat">AmitkFormat</link> amitk_raw_format_to_format      (<link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-to-raw-format"/>amitk_format_to_raw_format ()</title>
+<indexterm><primary>amitk_format_to_raw_format</primary></indexterm><programlisting><link linkend="AmitkRawFormat">AmitkRawFormat</link> amitk_format_to_raw_format   (<link linkend="AmitkFormat">AmitkFormat</link> data_format);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>data_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-format-calc-num-bytes-per-slice"/>amitk_raw_format_calc_num_bytes_per_slice()</title>
+<indexterm><primary>amitk_raw_format_calc_num_bytes_per_slice</primary></indexterm><programlisting>#define amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format) ((dim).x*(dim).y*amitk_raw_format_sizes[raw_format])
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-format-calc-num-bytes"/>amitk_raw_format_calc_num_bytes()</title>
+<indexterm><primary>amitk_raw_format_calc_num_bytes</primary></indexterm><programlisting>#define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).z*(dim).t*amitk_raw_format_calc_num_bytes_per_slice(dim,raw_format))
+</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>dim</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-format-get-name"/>amitk_raw_format_get_name ()</title>
+<indexterm><primary>amitk_raw_format_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_raw_format_get_name      (const <link linkend="AmitkRawFormat">AmitkRawFormat</link> raw_format);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>raw_format</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

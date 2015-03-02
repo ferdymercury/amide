@@ -141,8 +141,10 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   GtkWidget * vseparator;
   GtkWidget * entry;
   GtkWidget * menu;
+#if 1
   GtkWidget * option_menu;
   GtkWidget * menuitem;
+#endif
   GtkWidget * hseparator;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
@@ -376,6 +378,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       
+#if 1
       menu = gtk_menu_new();
       for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) {
 	menuitem = gtk_menu_item_new_with_label(amitk_format_names[i_format]);
@@ -387,6 +390,14 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->format);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
+#else
+      menu = gtk_combo_box_new_text();
+      for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) 
+	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_format_names[i_format]);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->format);
+      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
+      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
+#endif
 		       1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       
       
@@ -395,6 +406,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 3,4,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       
+#if 1
       menu = gtk_menu_new();
       for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) {
 	menuitem = gtk_menu_item_new_with_label(amitk_scaling_menu_names[i_scaling_type]);
@@ -406,6 +418,14 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->scaling_type);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
+#else
+      menu = gtk_combo_box_new_text();
+      for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) 
+	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_scaling_menu_names[i_scaling_type]);
+      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->scaling_type);
+      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
+      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
+#endif
 		       4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       
       gtk_widget_show_all(tb_crop->table[DATA_CONVERSION_PAGE]);
@@ -653,14 +673,22 @@ static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer
 /* function called to change the desired format */
 static void change_format_cb(GtkWidget * widget, gpointer data) {
   tb_crop_t * tb_crop = data;
+#if 1
   tb_crop->format = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  tb_crop->format = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   return;
 }
 
 /* function called to change the desired scaling */
 static void change_scaling_type_cb(GtkWidget * widget, gpointer data) {
   tb_crop_t * tb_crop = data;
+#if 1
   tb_crop->scaling_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+#else
+  tb_crop->scaling_type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
+#endif
   return;
 }
 
@@ -768,7 +796,7 @@ static void add_canvas_update(tb_crop_t * tb_crop, AmitkView view) {
 
   if (tb_crop->idle_handler_id == 0)
     tb_crop->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,update_canvas_while_idle, tb_crop);
+      g_idle_add_full(G_PRIORITY_HIGH_IDLE,update_canvas_while_idle, tb_crop, NULL);
 
 }
 
@@ -838,7 +866,6 @@ static gboolean update_canvas_while_idle(gpointer data) {
     }
   }
 
-  gtk_idle_remove(tb_crop->idle_handler_id);
   tb_crop->idle_handler_id=0;
   
   return FALSE;
@@ -932,7 +959,7 @@ static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop) {
 #endif
 
     if (tb_crop->idle_handler_id != 0) {
-      gtk_idle_remove(tb_crop->idle_handler_id);
+      g_source_remove(tb_crop->idle_handler_id);
       tb_crop->idle_handler_id = 0;
     }
 

@@ -1,0 +1,86 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkProgressDialog</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="amitk-AmitkObjectDialog.html" title="AmitkObjectDialog"><link rel="next" href="amitk-AmitkSpaceEdit.html" title="AmitkSpaceEdit"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
+        .synopsis, .classsynopsis {
+            background: #eeeeee;
+            border: solid 1px #aaaaaa;
+            padding: 0.5em;
+        }
+        .programlisting {
+            background: #eeeeff;
+            border: solid 1px #aaaaff;
+            padding: 0.5em;
+        }
+        .variablelist {
+            padding: 4px;
+            margin-left: 3em;
+        }
+        .navigation {
+            background: #ffeeee;
+            border: solid 1px #ffaaaa;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+        .navigation a {
+            color: #770000;
+        }
+        .navigation a:visited {
+            color: #550000;
+        }
+        .navigation .title {
+            font-size: 200%;
+        }
+      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkObjectDialog.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkSpaceEdit.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkProgressDialog"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkProgressDialog</span></h2><p>AmitkProgressDialog &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+
+
+
+#define     <a href="amitk-AmitkProgressDialog.html#AMITK-PROGRESS-DIALOG-CAN-CONTINUE-CAPS">AMITK_PROGRESS_DIALOG_CAN_CONTINUE</a>(obj)
+gboolean    <a href="amitk-AmitkProgressDialog.html#amitk-progress-dialog-update">amitk_progress_dialog_update</a>    (AmitkProgressDialog *dialog,
+                                             char *message,
+                                             gdouble fraction);
+void        <a href="amitk-AmitkProgressDialog.html#amitk-progress-dialog-set-text">amitk_progress_dialog_set_text</a>  (AmitkProgressDialog *dialog,
+                                             gchar *message);
+gboolean    <a href="amitk-AmitkProgressDialog.html#amitk-progress-dialog-set-fraction">amitk_progress_dialog_set_fraction</a>
+                                            (AmitkProgressDialog *dialog,
+                                             gdouble fraction);
+GtkWidget*  <a href="amitk-AmitkProgressDialog.html#amitk-progress-dialog-new">amitk_progress_dialog_new</a>       (GtkWindow *parent);
+
+</pre></div><div class="refsect1" lang="en"><a name="id2702007"></a><h2>Description</h2><p>
+
+</p></div><div class="refsect1" lang="en"><a name="id2702017"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2702023"></a><h3><a name="AMITK-PROGRESS-DIALOG-CAN-CONTINUE-CAPS"></a>AMITK_PROGRESS_DIALOG_CAN_CONTINUE()</h3><a class="indexterm" name="id2702035"></a><pre class="programlisting">#define AMITK_PROGRESS_DIALOG_CAN_CONTINUE(obj)   (AMITK_PROGRESS_DIALOG(obj)-&gt;can_continue);
+</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2702070"></a><h3><a name="amitk-progress-dialog-update"></a>amitk_progress_dialog_update ()</h3><a class="indexterm" name="id2702082"></a><pre class="programlisting">gboolean    amitk_progress_dialog_update    (AmitkProgressDialog *dialog,
+                                             char *message,
+                                             gdouble fraction);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dialog</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>message</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>fraction</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2702180"></a><h3><a name="amitk-progress-dialog-set-text"></a>amitk_progress_dialog_set_text ()</h3><a class="indexterm" name="id2702192"></a><pre class="programlisting">void        amitk_progress_dialog_set_text  (AmitkProgressDialog *dialog,
+                                             gchar *message);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dialog</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>message</tt></i> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2702260"></a><h3><a name="amitk-progress-dialog-set-fraction"></a>amitk_progress_dialog_set_fraction ()</h3><a class="indexterm" name="id2702273"></a><pre class="programlisting">gboolean    amitk_progress_dialog_set_fraction
+                                            (AmitkProgressDialog *dialog,
+                                             gdouble fraction);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dialog</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><i class="parameter"><tt>fraction</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2702351"></a><h3><a name="amitk-progress-dialog-new"></a>amitk_progress_dialog_new ()</h3><a class="indexterm" name="id2702363"></a><pre class="programlisting">GtkWidget*  amitk_progress_dialog_new       (GtkWindow *parent);</pre><p>
+
+</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>parent</tt></i> :</span></td><td>
+</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+
+
+</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkObjectDialog.html"><b>&lt;&lt; AmitkObjectDialog</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkSpaceEdit.html"><b>AmitkSpaceEdit &gt;&gt;</b></a></td></tr></table></body></html>

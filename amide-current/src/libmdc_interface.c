@@ -28,6 +28,7 @@
 #ifdef AMIDE_LIBMDC_SUPPORT
 
 #include "amitk_data_set.h"
+#include "amitk_data_set_DOUBLE_0D_SCALING.h"
 #include "libmdc_interface.h"
 #include <medcon.h>
 #include <string.h>
@@ -223,7 +224,6 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gchar ** frags=NULL;
   AmitkVoxel dim;
   AmitkFormat format;
-  AmitkScalingType scaling_type;
   AmitkModality modality;
   div_t x;
   gint divider;
@@ -232,16 +232,21 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gboolean invalid_date;
   gchar * temp_string;
   gint image_num;
+  gboolean salvage = FALSE;
+  gchar * msg;
   
   /* setup some defaults */
-  XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
   MDC_INFO=MDC_NO;       /* don't print stuff */
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
   libmdc_fi.map = MDC_MAP_GRAY; /*default color map*/
   MDC_MAKE_GRAY=MDC_YES;
+
+  /* these are probably no longer important, as I now don't use MdcReadFile, and MdcPixelFiddle
+     doesn't get invoked */
   MDC_QUANTIFY=MDC_YES; /* want quantified data */
   MDC_NEGATIVE=MDC_YES; /* allow negative values */
+  MDC_NORM_OVER_FRAMES = MDC_NO;
 
   /* figure out the fallback format */
   if (libmdc_supports(libmdc_format)) 
@@ -257,16 +262,16 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     return NULL;
   }
   g_free(import_filename);
-  
+
   /* read the file */
-  if ((error = MdcReadFile(&libmdc_fi, 1)) != MDC_OK) {
+  if ((error = MdcLoadFile(&libmdc_fi)) != MDC_OK) {
     g_warning(_("Can't read file %s with libmdc/(X)MedCon"),filename);
     goto error;
   }
 
   /* start figuring out information */
-  dim.x = libmdc_fi.dim[1];
-  dim.y = libmdc_fi.dim[2];
+  dim.x = libmdc_fi.image[0].width;
+  dim.y = libmdc_fi.image[0].height;
   dim.z = libmdc_fi.dim[3];
   dim.t = libmdc_fi.dim[4];
   dim.g = libmdc_fi.dim[5];
@@ -284,12 +289,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 #endif
 
 
-  /* defaults, unless changed below */
-  scaling_type = AMITK_SCALING_TYPE_2D;
-  MDC_NORM_OVER_FRAMES = MDC_NO;
-
   /* pick our internal data format */
-    /* note: floats we have medcon quantify, everything else we try to get the raw data, and store scaling factors */
   switch(libmdc_fi.type) {
   case BIT8_S: /* 2 */
     format = AMITK_FORMAT_SBYTE;
@@ -309,6 +309,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   case BIT32_S: /* 6 */
     format = AMITK_FORMAT_SINT;
     break;
+  case FLT32: /* 10 */
+    format = AMITK_FORMAT_FLOAT;
+    break;
   default:
   case BIT64_U: /* 9 */
   case BIT64_S: /* 8 */
@@ -316,13 +319,29 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   case ASCII: /* 12 */
   case VAXFL32: /* 13 */
   case BIT1: /* 1 */
-    g_warning(_("Importing type %d file through (X)MedCon unsupported, will try as float"),
+    g_warning(_("Importing data type %d file through (X)MedCon unsupported in AMIDE, trying anyway"),
     	      libmdc_fi.type);
-  case FLT32: /* 10 */
     format = AMITK_FORMAT_FLOAT;
-    scaling_type = AMITK_SCALING_TYPE_0D;
-    MDC_NORM_OVER_FRAMES = MDC_YES;
+    salvage = TRUE;
     break;
+  }
+
+
+  if (salvage) {
+    /* need to load in all the raw data at once, this is because we'll be using MdcGetImgFLT32,
+       which requires having called MdcImagePixelFiddle, which requires all the data */
+    for (image_num=0; image_num<libmdc_fi.number; image_num++) 
+      if (libmdc_fi.image[image_num].buf == NULL) 
+	if ((error = MdcLoadPlane(&libmdc_fi, image_num)) != MDC_OK) {
+	  g_warning(_("Couldn't read plane %d in %s with libmdc/(X)MedCon"),image_num, filename);
+	  goto error;
+	}
+    
+    msg = MdcImagesPixelFiddle(&libmdc_fi);
+    if (msg != NULL) {
+      g_warning(_("libmdc returned error: %s"), msg);
+      goto error;
+    }
   }
 
   /* guess the modality */
@@ -331,7 +350,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   else
     modality = AMITK_MODALITY_CT;
 
-  ds = amitk_data_set_new_with_data(preferences, modality, format, dim, scaling_type);
+  ds = amitk_data_set_new_with_data(preferences, modality, format, dim, AMITK_SCALING_TYPE_2D);
   if (ds == NULL) {
     g_warning(_("Couldn't allocate space for the data set structure to hold (X)MedCon data"));
     goto error;
@@ -417,7 +436,6 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
 
-
   /* complain if xmedcon is using an affine transformation, this only checks the first image.... */
   if (!EQUAL_ZERO(libmdc_fi.image[0].rescale_intercept))
     g_warning(_("(X)MedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off"));
@@ -460,24 +478,22 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	    continue_work = (*update_func)(update_data, NULL, ((gdouble) image_num)/((gdouble) total_planes));
 	}
 
-	/* grab the scaling factors if we want them */
-	switch(ds->raw_data->format) {
-	case AMITK_FORMAT_SBYTE:
-	case AMITK_FORMAT_UBYTE:
-	case AMITK_FORMAT_SSHORT:
-	case AMITK_FORMAT_USHORT:
-	case AMITK_FORMAT_SINT:
-	case AMITK_FORMAT_UINT:
-	  /* store the scaling factor... I think this is the right scaling factor... */
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
-	    libmdc_fi.image[image_num].rescale_slope;
-	  break;
-	case AMITK_FORMAT_FLOAT:
-	  break;
-	default:
-	  g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+	/* read in the raw plane data if needed */
+	if (libmdc_fi.image[image_num].buf == NULL) {
+	  if ((error = MdcLoadPlane(&libmdc_fi, image_num)) != MDC_OK) {
+	    g_warning(_("Couldn't read plane %d in %s with libmdc/(X)MedCon"),image_num, filename);
+	    goto error;
+	  }
 	}
-	
+
+	/* store the scaling factor... I think this is the right scaling factor... */
+	if (salvage)
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 1.0;
+	else
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
+	    libmdc_fi.image[image_num].quant_scale*
+	    libmdc_fi.image[image_num].calibr_fctr;
+
 	switch(ds->raw_data->format) {
 	case AMITK_FORMAT_SBYTE:
 	  {
@@ -498,7 +514,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
 	    for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++) 
 		AMITK_RAW_DATA_UBYTE_SET_CONTENT(ds->raw_data,i) =
 		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
 	  }
@@ -506,6 +522,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SSHORT:
 	  {
 	    amitk_format_SSHORT_t * libmdc_buffer;
+	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 2*ds->raw_data->dim.y*ds->raw_data->dim.x);
 	    libmdc_buffer = (amitk_format_SSHORT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -518,6 +535,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_USHORT:
 	  {
 	    amitk_format_USHORT_t * libmdc_buffer;
+	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 2*ds->raw_data->dim.y*ds->raw_data->dim.x);
 	    libmdc_buffer = (amitk_format_USHORT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -530,6 +548,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_SINT:
 	  {
 	    amitk_format_SINT_t * libmdc_buffer;
+	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
 	    libmdc_buffer = (amitk_format_SINT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -542,6 +561,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_UINT:
 	  {
 	    amitk_format_UINT_t * libmdc_buffer;
+	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
 	    libmdc_buffer = (amitk_format_UINT_t *) (libmdc_fi.image[image_num].buf);
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -554,13 +574,17 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	case AMITK_FORMAT_FLOAT: 
 	  {
 	    amitk_format_FLOAT_t * libmdc_buffer;
-	    
-	    /* convert the image to a 32 bit float to begin with */
-	    if ((libmdc_buffer = 
-		 (amitk_format_FLOAT_t *) MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
-	      g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
-	      g_free(libmdc_buffer);
-	      goto error;
+	    MdcSwapBytes(libmdc_fi.image[image_num].buf, 4*ds->raw_data->dim.y*ds->raw_data->dim.x);
+
+	    if (salvage) {
+	      /* convert the image to a 32 bit float to begin with */
+	      if ((libmdc_buffer = (amitk_format_FLOAT_t *) MdcGetImgFLT32(&libmdc_fi, image_num)) == NULL){
+		g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
+		g_free(libmdc_buffer);
+		goto error;
+	      }
+	    } else {
+	      libmdc_buffer = (amitk_format_FLOAT_t *) (libmdc_fi.image[image_num].buf);
 	    }
 	    
 	    /* transfer over the medcon buffer, compensate for our origin being bottom left */
@@ -568,9 +592,9 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	      for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
 		  libmdc_buffer[(ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)+i.x)];
-	    
+
 	    /* done with the temporary float buffer */
-	    g_free(libmdc_buffer);
+	    if (salvage) g_free(libmdc_buffer);
 	  }
 	  break;
 	default:
@@ -578,7 +602,10 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 	  goto error;
 	  break;
 	}
-      }
+
+	/* free up the buffer data */
+	MdcFree(libmdc_fi.image[image_num].buf);
+      } /* i.z */
     }
       
 #ifdef AMIDE_DEBUG
@@ -624,6 +651,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
+		   gboolean resliced,
 		   gboolean (*update_func)(),
 		   gpointer update_data) {
 
@@ -631,7 +659,7 @@ void libmdc_export(AmitkDataSet * ds,
 
   FILEINFO fi;
   IMG_DATA * plane;
-  AmitkVoxel i;
+  AmitkVoxel i, j;
   AmitkVoxel dim;
   div_t x;
   gint divider;
@@ -645,9 +673,17 @@ void libmdc_export(AmitkDataSet * ds,
   gint err_num;
   void * data_ptr;
   gchar * temp_string;
+  amide_real_t min_voxel_size=1.0;
+  amide_time_t frame_start, frame_duration;
+  AmitkPoint corner;
+  AmitkCorners corners;
+  AmitkVolume * output_volume=NULL;
+  AmitkDataSet * slice = NULL;
+  AmitkPoint new_offset;
+  gfloat * row_data;
+
   
   /* setup some defaults */
-  XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
   MDC_INFO=MDC_NO;       /* don't print stuff */
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
@@ -658,6 +694,7 @@ void libmdc_export(AmitkDataSet * ds,
   MDC_PREFIX_DISABLED=MDC_YES; /* don't add on the m000- stuff */
   MDC_NORM_OVER_FRAMES=MDC_NO;
   MDC_FILE_ENDIAN=MDC_HOST_ENDIAN;
+  MDC_FILE_OVERWRITE=MDC_YES;
 
   /* figure out the fallback format */
   if (libmdc_supports(libmdc_format)) {
@@ -675,11 +712,34 @@ void libmdc_export(AmitkDataSet * ds,
   /* set what we can */
   fi.ifname = strdup(filename);
   fi.iformat = MDC_FRMT_RAW;
-  fi.type = libmdc_type_number(AMITK_DATA_SET_FORMAT(ds));
+  if (resliced) {
+    fi.type = libmdc_type_number(AMITK_FORMAT_FLOAT);
+  } else {
+    fi.type = libmdc_type_number(AMITK_DATA_SET_FORMAT(ds));
+  }
   fi.bits = MdcType2Bits(fi.type);
   fi.endian = MDC_HOST_ENDIAN;
 
   dim = AMITK_DATA_SET_DIM(ds);
+  if (resliced) {
+    output_volume = amitk_volume_new();
+    min_voxel_size = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(ds));
+    amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
+    corner = point_diff(corners[0], corners[1]);
+    dim.x = ceil(corner.x/min_voxel_size);
+    dim.y = ceil(corner.y/min_voxel_size);
+    dim.z = ceil(corner.z/min_voxel_size);
+    corner.z = min_voxel_size;
+    amitk_space_set_offset(AMITK_SPACE(output_volume), 
+			   amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
+    amitk_volume_set_corner(output_volume, corner);
+#ifdef AMIDE_DEBUG
+    g_print("output dimensions %d %d %d, voxel size %f\n", dim.x, dim.y, dim.z, min_voxel_size);
+#else
+    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %f", dim.x, dim.y, dim.z, min_voxel_size);
+#endif
+  }
+
   fi.dim[0]=6;
   fi.dim[1]=dim.x;
   fi.dim[2]=dim.y;
@@ -690,16 +750,24 @@ void libmdc_export(AmitkDataSet * ds,
   fi.number = fi.dim[6]*fi.dim[5]*fi.dim[4]*fi.dim[3]; /* total # planes */
 
   fi.pixdim[0]=3;
-  fi.pixdim[1]=AMITK_DATA_SET_VOXEL_SIZE_X(ds);
-  fi.pixdim[2]=AMITK_DATA_SET_VOXEL_SIZE_Y(ds);
-  fi.pixdim[3]=AMITK_DATA_SET_VOXEL_SIZE_Z(ds);
+  if (resliced) {
+    fi.pixdim[1] = fi.pixdim[2] = fi.pixdim[3] = min_voxel_size;
+  } else {
+    fi.pixdim[1]=AMITK_DATA_SET_VOXEL_SIZE_X(ds);
+    fi.pixdim[2]=AMITK_DATA_SET_VOXEL_SIZE_Y(ds);
+    fi.pixdim[3]=AMITK_DATA_SET_VOXEL_SIZE_Z(ds);
+  }
 
   if (dim.t > 1)
     fi.acquisition_type = MDC_ACQUISITION_DYNAMIC;
   else
     fi.acquisition_type = MDC_ACQUISITION_TOMO;
 
-  bytes_per_row = dim.x*amitk_raw_format_sizes[AMITK_DATA_SET_FORMAT(ds)];
+  if (resliced) {
+    bytes_per_row = dim.x*amitk_raw_format_sizes[AMITK_FORMAT_FLOAT];
+  } else {
+    bytes_per_row = dim.x*amitk_raw_format_sizes[AMITK_DATA_SET_FORMAT(ds)];
+  }
   bytes_per_plane  = dim.y*bytes_per_row;
 
   /* fill in dynamic data struct */
@@ -726,12 +794,16 @@ void libmdc_export(AmitkDataSet * ds,
 
   image_num=0;
   data_ptr = ds->raw_data->data;
+  j = zero_voxel;
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
+
+    frame_start = amitk_data_set_get_start_time(ds, i.t);
+    frame_duration = amitk_data_set_get_frame_duration(ds, i.t);
 
     fi.dyndata[i.t].nr_of_slices = fi.dim[3];
     /* medcon's in ms */
-    fi.dyndata[i.t].time_frame_start = 1000.0*amitk_data_set_get_start_time(ds, i.t);
-    fi.dyndata[i.t].time_frame_duration = 1000.0*amitk_data_set_get_frame_duration(ds, i.t);
+    fi.dyndata[i.t].time_frame_start = 1000.0*frame_start;
+    fi.dyndata[i.t].time_frame_duration = 1000.0*frame_duration;
 
     for (i.g = 0 ; (i.g < dim.g) && (continue_work); i.g++) {
 
@@ -754,9 +826,12 @@ void libmdc_export(AmitkDataSet * ds,
 	plane->pixel_xsize = fi.pixdim[1];
 	plane->pixel_ysize = fi.pixdim[2];
 	plane->slice_width = fi.pixdim[3];
-	plane->quant_scale = 
-	  AMITK_DATA_SET_SCALE_FACTOR(ds)*
-	  amitk_data_set_get_internal_scaling(ds, i);
+	if (resliced)
+	  plane->quant_scale = 1.0;
+	else
+	  plane->quant_scale = 
+	    AMITK_DATA_SET_SCALE_FACTOR(ds)*
+	    amitk_data_set_get_internal_scaling(ds, i);
 	plane->calibr_fctr = 1.0;
 	
 	switch (AMITK_DATA_SET_MODALITY(ds)) {
@@ -783,12 +858,37 @@ void libmdc_export(AmitkDataSet * ds,
 	  goto cleanup;
 	}
 	
-	/* flip for (X)MedCon's axis */
-	for (i.y = 0; i.y < dim.y; i.y++) {
-	  memcpy(plane->buf+bytes_per_row*(dim.y-i.y-1), data_ptr, bytes_per_row);
-	  data_ptr += bytes_per_row;
+	if (resliced) {
+	  slice = amitk_data_set_get_slice(ds, frame_start, frame_duration, i.g,
+					   min_voxel_size, output_volume);
+
+	  if ((AMITK_DATA_SET_DIM_X(slice) != dim.x) || (AMITK_DATA_SET_DIM_Y(slice) != dim.y)) {
+	    g_warning(_("Error in generating resliced data, %dx%d != %dx%d"),
+		      AMITK_DATA_SET_DIM_X(slice), AMITK_DATA_SET_DIM_Y(slice),
+		      dim.x, dim.y);
+	    goto cleanup;
+	  }
+
+	  /* advance for next iteration */
+	  new_offset = AMITK_SPACE_OFFSET(output_volume);
+	  new_offset.z += min_voxel_size;
+	  amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
 	}
-      }
+
+	/* flip for (X)MedCon's axis */
+	for (i.y=0, j.y=0; i.y < dim.y; i.y++, j.y++) {
+	  if (resliced) {
+	    row_data = (gfloat *) (plane->buf+bytes_per_row*(dim.y-i.y-1));
+	    for (j.x = 0; j.x < dim.x; j.x++) 
+	      row_data[j.x] = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j);
+	  } else {
+	    memcpy(plane->buf+bytes_per_row*(dim.y-i.y-1), data_ptr, bytes_per_row);
+	    data_ptr += bytes_per_row;
+	  }
+	}
+
+	if (slice != NULL) slice = amitk_object_unref(slice);
+      } /* i.z */
     }
   }
 
@@ -800,7 +900,7 @@ void libmdc_export(AmitkDataSet * ds,
   }
 
   /* and writeout the file */
-  err_num = MdcWriteFile(&fi, libmdc_format_num, 0);
+  err_num = MdcWriteFile(&fi, libmdc_format_num, 0, NULL);
   if (err_num != MDC_OK) {
     g_warning("couldn't write out file %s, error %d\n", fi.ofname, err_num);
     goto cleanup;
@@ -811,6 +911,12 @@ void libmdc_export(AmitkDataSet * ds,
  cleanup:
   
   MdcCleanUpFI(&fi); /* clean up FILEINFO struct */
+
+  if (output_volume != NULL)
+    output_volume = amitk_object_unref(output_volume);
+
+  if (slice != NULL)
+    slice = amitk_object_unref(slice);
 
   if (update_func != NULL) /* remove progress bar */
     (*update_func)(update_data, NULL, (gdouble) 2.0); 
