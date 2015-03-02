@@ -32,11 +32,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_time_dialog.h"
 #include "ui_time_dialog_callbacks.h"
@@ -47,7 +48,7 @@ void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column
 					 GdkEventButton *event, gpointer data) {
 
   ui_study_t * ui_study = data;
-  amide_volume_t * volume;
+  volume_t * volume;
   volume_time_t start, end, old_end;
   ui_time_dialog_t * new_time;
   guint frame;
@@ -112,7 +113,7 @@ void ui_time_dialog_callbacks_unselect_row(GtkCList * clist, gint row, gint colu
   ui_study_t * ui_study = data;
   GList * selected_rows;
   gint selected_row;
-  amide_volume_t * volume;
+  volume_t * volume;
   ui_time_dialog_t * new_time;
   volume_time_t start,end;
   gint error;

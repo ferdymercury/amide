@@ -26,7 +26,7 @@
 #ifdef AMIDE_LIBECAT_SUPPORT
 
 /* external functions */
-amide_volume_t * cti_import(gchar * filename);
+volume_t * cti_import(gchar * filename);
 
 
 #endif

@@ -38,10 +38,10 @@
 
 
 /* function to load in volume data from an IDL data file */
-amide_volume_t * idl_data_import(gchar * idl_data_filename) {
+volume_t * idl_data_import(gchar * idl_data_filename) {
 
   raw_data_info_t * idl_data_info;
-  amide_volume_t * temp_volume;
+  volume_t * temp_volume;
   FILE * file_pointer;
   void * file_buffer = NULL;
   size_t bytes_read;
@@ -77,7 +77,7 @@ amide_volume_t * idl_data_import(gchar * idl_data_filename) {
   /* open the file for reading */
   if ((file_pointer = fopen(idl_data_info->filename, "r")) == NULL) {
     g_warning("%s: couldn't open idl data file %s\n", PACKAGE,idl_data_info->filename);
-    volume_free(&(idl_data_info->volume));
+    idl_data_info->volume = volume_free(idl_data_info->volume);
     g_free(idl_data_info->filename);
     g_free(idl_data_info);
     return NULL;
@@ -90,7 +90,7 @@ amide_volume_t * idl_data_import(gchar * idl_data_filename) {
   if (bytes_read != bytes_to_read) {
     g_warning("%s: read wrong number of elements from idl data file:\n\t%s\n\texpected %d\tgot %d\n", 
 	      PACKAGE,idl_data_info->filename, bytes_to_read, bytes_read);
-    volume_free(&(idl_data_info->volume));
+    idl_data_info->volume = volume_free(idl_data_info->volume);
     g_free(file_buffer);
     fclose(file_pointer);
     g_free(idl_data_info->filename);
@@ -162,6 +162,7 @@ amide_volume_t * idl_data_import(gchar * idl_data_filename) {
 
   /* garbage collection */
   temp_volume = idl_data_info->volume;
+  idl_data_info->volume = NULL;
   g_free(file_buffer);
   g_free(idl_data_info->filename);
   g_free(idl_data_info); /* note, we've saved a pointer to raw_data_info->volume in temp_volume */

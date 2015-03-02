@@ -31,11 +31,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_threshold2.h"
 #include "ui_series2.h"
@@ -53,7 +54,7 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
   gdouble item_x, item_y;
   GdkCursor * cursor;
   volume_data_t temp;
-  amide_volume_t * volume;
+  volume_t * volume;
   which_threshold_widget_t which_threshold_widget;
   
   /* get the location of the event, and convert it to our coordinate system */
@@ -137,8 +138,8 @@ void ui_threshold_callbacks_entry(GtkWidget* widget, gpointer data) {
   ui_study_t * ui_study;
   gchar * string;
   gint error;
-  volume_data_t temp;
-  amide_volume_t * volume;
+  gdouble temp;
+  volume_t * volume;
   which_threshold_widget_t which_threshold_widget;
   gboolean update = FALSE;
 
@@ -208,7 +209,7 @@ void ui_threshold_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gp
   gtk_widget_destroy(widget);
 
   /* free the associated data structure */
-  ui_threshold_free(&(ui_study->threshold));
+  ui_study->threshold = ui_threshold_free(ui_study->threshold);
 
   return;
 }

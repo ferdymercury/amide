@@ -24,17 +24,32 @@
 */
 
 
-typedef struct amide_study_t {
+typedef struct study_t {
   gchar * name; /* name of the study */
   gchar * filename; /* file name of the study */
-  amide_volume_list_t * volumes; 
-  amide_roi_list_t * rois;
-} amide_study_t;
+  volume_list_t * volumes; 
+  roi_list_t * rois;
+
+  /* stuff that doesn't need to be saved */
+  guint reference_count;
+} study_t;
+
+/* defines */
+
+#define study_get_volumes(study) ((study)->volumes)
+#define study_get_rois(study) ((study)->rois)
+#define study_get_name(study) ((study)->name)
+#define study_get_first_volume(study) ((study)->volumes->volume)
 
 /* external functions */
-void study_free(amide_study_t ** pstudy);
-amide_study_t * study_init(void);
-void study_set_name(amide_study_t * study, gchar * new_name);
+study_t * study_free(study_t * study);
+study_t * study_init(void);
+study_t * study_add_reference(study_t * study);
+void study_add_volume(study_t * study, volume_t * volume);
+void study_remove_volume(study_t * study, volume_t * volume);
+void study_add_roi(study_t * study, roi_t * roi);
+void study_remove_roi(study_t * study, roi_t * roi);
+void study_set_name(study_t * study, gchar * new_name);
 
 
 

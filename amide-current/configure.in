@@ -1,7 +1,7 @@
 AC_INIT(src/amide.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.2.2)
+AM_INIT_AUTOMAKE(amide, 0.2.3)
 
 AM_MAINTAINER_MODE
 
@@ -81,6 +81,23 @@ if test $enable_libmdc = yes; then
 	AC_DEFINE_UNQUOTED(AMIDE_LIBMDC_SUPPORT)
 else
 	echo "Compiling without xmedcon/libmdc file support"
+fi
+
+
+dnl Let people compile without rendering/libvolpack
+AC_ARG_ENABLE(
+	libvolpack, 
+	[  --enable-libvolpack         Compile with libvolpack rendering support [default=yes]], 
+	enable_libvolpack="$enableval", 
+	enable_libvolpack=yes)
+
+if test $enable_libvolpack = yes; then
+	echo "Compiling with libvolpack rendering support "
+	AMIDE_LIBVOLPACK_LIBS="-lvolpack"
+	AC_SUBST(AMIDE_LIBVOLPACK_LIBS)
+	AC_DEFINE_UNQUOTED(AMIDE_LIBVOLPACK_SUPPORT)
+else
+	echo "Compiling without libvolpack rendering support"
 fi
 
 

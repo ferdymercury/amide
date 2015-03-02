@@ -1,0 +1,108 @@
+roi.c:  g_return_val_if_fail(roi->reference_count > 0, NULL);
+roi.c:  roi->reference_count--;
+roi.c:  if (roi->reference_count == 0) {
+roi.c:    if (roi->children != NULL)
+roi.c:      roi->children = roi_list_free(roi->children);
+roi.c:    g_free(roi->name);
+roi.c:  temp_roi->reference_count = 1;
+roi.c:  temp_roi->name = NULL;
+roi.c:  temp_roi->corner = realpoint_init;
+roi.c:  temp_roi->coord_frame.offset = realpoint_init;
+roi.c:  temp_roi->grain = GRAINS_1;
+roi.c:    temp_roi->coord_frame.axis[i] = default_axis[i];
+roi.c:  temp_roi->parent = NULL;
+roi.c:  temp_roi->children = NULL;
+roi.c:  dest_roi->type = src_roi->type;
+roi.c:  dest_roi->coord_frame = src_roi->coord_frame;
+roi.c:  dest_roi->corner = src_roi->corner;
+roi.c:  dest_roi->parent = src_roi->parent;
+roi.c:  dest_roi->grain = src_roi->grain;
+roi.c:  if (src_roi->children != NULL)
+roi.c:    dest_roi->children = roi_list_copy(src_roi->children);
+roi.c:  roi_set_name(dest_roi, src_roi->name);
+roi.c:  roi->reference_count++;
+roi.c:  g_free(roi->name); /* free up the memory used by the old name */
+roi.c:  roi->name = g_strdup(new_name); /* and assign the new name */
+roi.c:  corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
+roi.c:  corner[1] = roi->corner;
+roi.c:  center = realspace_alt_coord_to_base(center, roi->coord_frame);
+roi.c:    REALPOINT_EQUAL(roi->coord_frame.offset,realpoint_init) &&
+roi.c:    REALPOINT_EQUAL(roi->corner,realpoint_init);
+roi.c:  g_printerr("roi %s --------------------\n",roi->name);
+roi.c:	     roi->coord_frame.offset.x,
+roi.c:	     roi->coord_frame.offset.y,
+roi.c:	     roi->coord_frame.offset.z);
+roi.c:	     roi->corner.x,roi->corner.y,roi->corner.z);
+roi.c:  switch(roi->type) {
+roi.c:    roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
+roi.c:    roi_corner[1] = roi->corner;
+roi.c:					    roi->coord_frame);
+roi.c:	switch(roi->type) {
+roi.c:	  g_printerr("roi type %d not fully implemented!\n",roi->type);
+roi.c:  roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset,
+roi.c:					      roi->coord_frame);
+roi.c:  roi_corner[1] = roi->corner;
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:				    roi->coord_frame,
+roi.c:	  roi->name, volume->name, roi_grain_names[roi->grain]);
+roi.c:  roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset,
+roi.c:					      roi->coord_frame);
+roi.c:  roi_corner[1] = roi->corner;
+roi.c:			       roi->coord_frame,
+roi.c:						 roi->coord_frame);
+roi.c:	      switch(roi->type) {
+roi.c:		g_printerr("roi type %d not fully implemented!\n",roi->type);
+roi.c:						 roi->coord_frame);
+roi.c:	      switch(roi->type) {
+roi.c:		g_printerr("roi type %d not fully implemented!\n",roi->type);
+ui_roi_dialog.c:  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), roi->type);
+ui_roi_dialog.c:  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), roi->grain);
+ui_roi_dialog_callbacks.c:  roi_list_item->roi->type = roi_new_info->type;
+ui_roi_dialog_callbacks.c:  roi_list_item->roi->coord_frame = roi_new_info->coord_frame;
+ui_roi_dialog_callbacks.c:  roi_list_item->roi->corner = roi_new_info->corner;
+ui_roi_dialog_callbacks.c:  roi_list_item->roi->parent = roi_new_info->parent;
+ui_roi_dialog_callbacks.c:  roi_list_item->roi->children = roi_new_info->children;
+ui_roi_dialog_callbacks.c:			     roi_list_item->roi->name, spacing, pixmap, NULL);
+ui_study.c:  switch (roi->type) {
+ui_study.c:  tree_buf[0] = roi->name;
+ui_study_callbacks.c:	  switch(ui_study->current_roi->type) 
+ui_study_callbacks.c:	  ui_study->current_roi->coord_frame.offset = p0;
+ui_study_callbacks.c:	    ui_study->current_roi->coord_frame.axis[k] = view_coord_frame.axis[k];
+ui_study_callbacks.c:	  ui_study->current_roi->corner = 
+ui_study_callbacks.c:	    realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame);
+ui_study_callbacks.c:	  switch(ui_study->current_roi->type) {
+ui_study_callbacks.c:	roi->type = i_roi_type;
+ui_study_callbacks.c:	roi->grain = ui_study->default_roi_grain;
+ui_study_callbacks.c:	      p0 = ui_study->current_roi->coord_frame.offset;
+ui_study_callbacks.c:	      p1 = realspace_alt_coord_to_base(ui_study->current_roi->corner,
+ui_study_callbacks.c:					       ui_study->current_roi->coord_frame);
+ui_study_rois.c:					roi_list->roi->grain,
+ui_study_rois.c:			roi_list->roi->name,
+ui_study_rois.c:			roi_type_names[roi_list->roi->type]);
+ui_study_rois_callbacks.c:	realspace_base_coord_to_alt(current_roi_list_item->roi->coord_frame.offset,
+ui_study_rois_callbacks.c:				    current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:      t[1] = current_roi_list_item->roi->corner;
+ui_study_rois_callbacks.c:				     current_roi_list_item->roi->coord_frame,
+ui_study_rois_callbacks.c:				       current_roi_list_item->roi->coord_frame,
+ui_study_rois_callbacks.c:				       current_roi_list_item->roi->coord_frame,
+ui_study_rois_callbacks.c:	REALSPACE_ADD(current_roi_list_item->roi->coord_frame.offset,
+ui_study_rois_callbacks.c:		      current_roi_list_item->roi->coord_frame.offset);
+ui_study_rois_callbacks.c:		      current_roi_list_item->roi->coord_frame.offset,
+ui_study_rois_callbacks.c:				      current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:	current_roi_list_item->roi->coord_frame.offset =
+ui_study_rois_callbacks.c:				      current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:	current_roi_list_item->roi->corner = t[1];
+ui_study_rois_callbacks.c:				      current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:	current_roi_list_item->roi->coord_frame.offset = new_center;
+ui_study_rois_callbacks.c:	  current_roi_list_item->roi->coord_frame.axis[i_axis] =
+ui_study_rois_callbacks.c:	    realspace_rotate_on_axis(&(current_roi_list_item->roi->coord_frame.axis[i_axis]),
+ui_study_rois_callbacks.c:	realspace_make_orthonormal(current_roi_list_item->roi->coord_frame.axis);
+ui_study_rois_callbacks.c:				      current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:				      current_roi_list_item->roi->coord_frame);
+ui_study_rois_callbacks.c:	current_roi_list_item->roi->coord_frame.offset = t[0]; 

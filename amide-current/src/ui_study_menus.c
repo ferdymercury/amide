@@ -34,11 +34,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_study_callbacks.h"
 #include "ui_study_menus.h"
@@ -60,7 +61,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  /* the submenu under the slide show button */
+  /* the submenu under the series button */
   GnomeUIInfo slide_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a series of transaxial images"),
@@ -82,6 +83,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("_Series"),
 			     N_("Look at a series of images"), 
 			     slide_menu),
+#if AMIDE_LIBVOLPACK_SUPPORT
+    GNOMEUIINFO_ITEM_DATA(N_("_Rendering"),
+			  N_("perform volume renderings on the currently selected volumes"),
+			  ui_study_callbacks_rendering,
+			  ui_study, NULL),
+#endif
     GNOMEUIINFO_END
   };
 

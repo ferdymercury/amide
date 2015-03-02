@@ -37,6 +37,9 @@ void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_transverse_series(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_coronal_series(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_sagittal_series(GtkWidget * widget, gpointer data);
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+void ui_study_callbacks_rendering(GtkWidget * widget, gpointer data);
+#endif
 void ui_study_callbacks_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_callbacks_scaling(GtkWidget * adjustment, gpointer data);
 void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data);

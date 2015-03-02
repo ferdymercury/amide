@@ -23,7 +23,6 @@
   02111-1307, USA.
 */
 
-
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
@@ -33,18 +32,24 @@
 #include "volume.h"
 #include "medcon_import.h"
 
+#undef PACKAGE /* medcon redefines these.... */
+#undef VERSION 
+#include "medcon.h"
+#undef PACKAGE 
+#undef VERSION 
+#include "config.h"
+
 #define SIZEOF_SHORT 2
 #define SIZEOF_INT 4
-#include "medcon.h"
 
-amide_volume_t * medcon_import(gchar * filename) {
+volume_t * medcon_import(gchar * filename) {
 
   FILEINFO medcon_file_info;
   gint error;
 
 
   voxelpoint_t i;
-  amide_volume_t * temp_volume;
+  volume_t * temp_volume;
   guint t;
   volume_data_t max,min,temp;
   gchar * volume_name;
@@ -73,7 +78,7 @@ amide_volume_t * medcon_import(gchar * filename) {
   if ((temp_volume = volume_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the volume structure\n", PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    return NULL;
+    return temp_volume;
   }
 
   /* start figuring out information */
@@ -129,30 +134,20 @@ amide_volume_t * medcon_import(gchar * filename) {
 
 
   /* allocate space for the array containing info on the duration of the frames */
-  temp_volume->frame_duration = 
-    (volume_time_t *) g_malloc(temp_volume->num_frames*sizeof(volume_time_t));
-  if (temp_volume->frame_duration == NULL) {
+  if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    volume_free(&temp_volume);
-    return NULL;
+    temp_volume = volume_free(temp_volume);
+    return temp_volume;
   }
-
-
 
   /* malloc the space for the volume */
-  temp_volume->data =  (volume_data_t *) g_malloc(temp_volume->num_frames *
-						  temp_volume->dim.z*
-						  temp_volume->dim.y*
-						  temp_volume->dim.x*sizeof(volume_data_t));
-  if (temp_volume->data == NULL) {
+  if ((temp_volume->data = volume_get_data_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the volume\n",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    volume_free(&temp_volume);
-    return NULL;
+    temp_volume = volume_free(temp_volume);
+    return temp_volume;
   }
-
-
 
   /* and load in the data */
   for (t = 0; t < temp_volume->num_frames; t++) {
@@ -170,10 +165,10 @@ amide_volume_t * medcon_import(gchar * filename) {
       /* convert the image to a 32 bit float to begin with */
       if ((medcon_buffer = (gfloat *) MdcGetImgFLT32(&medcon_file_info, i.z+t*temp_volume->dim.z)) == NULL) {
 	g_warning("%s: medcon couldn't convert to a float... out of memory?\n",PACKAGE);
-	volume_free(&temp_volume);
+	temp_volume = volume_free(temp_volume);
 	MdcCleanUpFI(&medcon_file_info);
 	g_free(medcon_buffer);
-	return NULL;
+	return temp_volume;
       }
 
       for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 

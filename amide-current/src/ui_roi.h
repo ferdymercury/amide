@@ -1,4 +1,4 @@
-/* ui_study_rois.h
+/* ui_roi.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001 Andy Loening
@@ -25,31 +25,33 @@
 
 /* data structures */
 
-typedef struct _ui_study_roi_list_t ui_study_roi_list_t;
+typedef struct _ui_roi_list_t ui_roi_list_t;
 
-struct _ui_study_roi_list_t {
-  amide_roi_t * roi;
+struct _ui_roi_list_t {
+  roi_t * roi;
   GnomeCanvasItem * canvas_roi[NUM_VIEWS];
   GtkWidget * dialog;
   GtkCTree * tree;
   GtkCTreeNode * tree_node;
-  ui_study_roi_list_t * next;
+  guint reference_count;
+  ui_roi_list_t * next;
 };
 
 /* external functions */
-void ui_study_rois_list_free(ui_study_roi_list_t ** pui_study_rois);
-ui_study_roi_list_t * ui_study_rois_list_init(void);
-gboolean ui_study_rois_list_includes_roi(ui_study_roi_list_t *list, 
-					 amide_roi_t * roi);
-void ui_study_rois_list_add_roi(ui_study_roi_list_t ** plist, 
-				amide_roi_t * roi,
-				GnomeCanvasItem * canvas_roi_item[],
-				GtkCTree * tree,
-				GtkCTreeNode * tree_node);
-void ui_study_rois_list_add_roi_first(ui_study_roi_list_t ** plist, 
-				      amide_roi_t * roi,
-				      GnomeCanvasItem * canvas_roi_item[]);
-void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist, amide_roi_t * roi);
+ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list);
+ui_roi_list_t * ui_roi_list_init(void);
+gboolean ui_roi_list_includes_roi(ui_roi_list_t * ui_roilist, roi_t * roi);
+ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list, 
+				    roi_t * roi,
+				    GnomeCanvasItem * canvas_roi_item[],
+				    GtkCTree * tree,
+				    GtkCTreeNode * tree_node);
+ui_roi_list_t * ui_roi_list_add_roi_first(ui_roi_list_t * ui_roi_list,
+					  roi_t * roi,
+					  GnomeCanvasItem * canvas_roi_item[],
+					  GtkCTree * tree,
+					  GtkCTreeNode * tree_node);
+ui_roi_list_t * ui_roi_list_remove_roi(ui_roi_list_t * ui_roi_list, roi_t * roi);
 
 
 

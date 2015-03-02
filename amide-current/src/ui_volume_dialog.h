@@ -26,7 +26,7 @@
 
 /* external functions */
 void ui_volume_dialog_set_axis_display(GtkWidget * volume_dialog);
-void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume);
+void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume);
 
 
 

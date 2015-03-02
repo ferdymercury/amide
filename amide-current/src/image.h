@@ -27,19 +27,24 @@
 typedef enum {SLICE, VOLUME, NUM_SCALINGS} scaling_t;
 
 /* external functions */
-GdkImlibImage * image_blank(const gint width, const gint height);
-GdkImlibImage * image_of_distribution(amide_volume_t * volume,
-				      const gint width, 
-				      const gint height);
+GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height);
+GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
+				const color_table_t color_table);
+GdkImlibImage * image_from_renderings(
+				      rendering_list_t * contexts, 
+				      gint16 width, gint16 height);
+GdkImlibImage * image_of_distribution(volume_t * volume,
+				      const intpoint_t width, 
+				      const intpoint_t height);
 GdkImlibImage * image_from_colortable(const color_table_t color_table,
-				      const gint width, 
-				      const gint height,
+				      const intpoint_t width, 
+				      const intpoint_t height,
 				      const volume_data_t min,
 				      const volume_data_t max,
 				      const volume_data_t volume_min,
 				      const volume_data_t volume_max);
-GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
-				   amide_volume_list_t * volumes,
+GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
+				   volume_list_t * volumes,
 				   const volume_time_t start,
 				   const volume_time_t duration,
 				   const floatpoint_t thickness,

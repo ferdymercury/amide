@@ -33,11 +33,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_roi_dialog_callbacks.h"
 #include "ui_roi_dialog.h"
@@ -55,7 +56,7 @@ void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog) {
   GtkWidget * label;
   GtkWidget * entry;
   gchar * temp_string;
-  amide_roi_t * roi_new_info;
+  roi_t * roi_new_info;
   axis_t i_axis;
 
   roi_new_info = gtk_object_get_data(GTK_OBJECT(roi_dialog), "roi_new_info");
@@ -88,7 +89,7 @@ void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog) {
 
 
 /* function that sets up the roi dialog */
-void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
+void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   
   GtkWidget * roi_dialog;
   gchar * temp_string = NULL;
@@ -107,8 +108,8 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
   roi_type_t i_roi_type;
   roi_grain_t i_grain;
   guint table_row = 0;
-  ui_study_roi_list_t * roi_list_item;
-  amide_roi_t * roi_new_info = NULL;
+  ui_roi_list_t * roi_list_item;
+  roi_t * roi_new_info = NULL;
   realpoint_t center;
 
   /* figure out the ui_study_roi_list item corresponding to this roi */
@@ -135,7 +136,8 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
 
   /* create the temp roi which will store the new information, and then
      can either be applied or cancelled */
-  roi_copy(&roi_new_info, roi);
+  roi_new_info = roi_copy(roi);
+
   /* attach it to the dialog */
   gtk_object_set_data(GTK_OBJECT(roi_dialog), "roi_new_info", roi_new_info);
 
@@ -436,7 +438,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi) {
     /* dial section */
     adjustment = gtk_adjustment_new(0,-45.0,45.5,0.5,0.5,0.5);
     /*so we can figure out which adjustment this is in callbacks */
-    gtk_object_set_data(GTK_OBJECT(adjustment), "view", view_names[i_view]); 
+    gtk_object_set_data(GTK_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view)); 
     gtk_object_set_data(GTK_OBJECT(adjustment), "roi_dialog", roi_dialog); 
     gtk_object_set_data(GTK_OBJECT(adjustment), "ui_study", ui_study);
     dial = gtk_hscale_new(GTK_ADJUSTMENT(adjustment));

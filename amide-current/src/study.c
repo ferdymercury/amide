@@ -32,30 +32,41 @@
 #include "roi.h"
 #include "study.h"
 
-void study_free(amide_study_t ** pstudy) {
+study_t * study_free(study_t * study) {
 
+  if (study == NULL)
+    return study;
   
-  volume_list_free(&((*pstudy)->volumes)); /*  free volumes */
-  roi_list_free(&((*pstudy)->rois)); /* free rois */
+  /* sanity checks */
+  g_return_val_if_fail(study->reference_count > 0, NULL);
 
-  g_free((*pstudy)->name);
-  g_free(*pstudy);
-  *pstudy = NULL;
+  /* remove a reference count */
+  study->reference_count--;
 
-  return;
+  /* if we've removed all reference's, free the study */
+  if (study->reference_count == 0) {
+    study->volumes = volume_list_free(study->volumes); /*  free volumes */
+    study->rois = roi_list_free(study->rois); /* free rois */
+    g_free(study->name);
+    g_free(study);
+    study = NULL;
+  }
+
+  return study;
 }
 
 
 
-amide_study_t * study_init(void) {
+study_t * study_init(void) {
   
-  amide_study_t * study;
+  study_t * study;
 
   /* alloc space for the data structure for passing ui info */
-  if ((study = (amide_study_t *) g_malloc(sizeof(amide_study_t))) == NULL) {
+  if ((study = (study_t *) g_malloc(sizeof(study_t))) == NULL) {
     g_warning("%s: couldn't allocate space for study_t",PACKAGE);
     return NULL;
   }
+  study->reference_count = 1;
 
   study->name = NULL;
   study->filename = NULL;
@@ -65,9 +76,51 @@ amide_study_t * study_init(void) {
   return study;
 }
 
+
+/* adds one to the reference count of a study */
+study_t * study_add_reference(study_t * study) {
+
+  study->reference_count++;
+
+  return study;
+}
+
+/* add a volume to a study */
+void study_add_volume(study_t * study, volume_t * volume) {
+
+  study->volumes = volume_list_add_volume(study->volumes, volume);
+
+  return;
+}
+
+/* remove a volume from a study */
+void study_remove_volume(study_t * study, volume_t * volume) {
+
+  study->volumes = volume_list_remove_volume(study->volumes, volume);
+
+  return;
+}
+
+/* add an roi to a study */
+void study_add_roi(study_t * study, roi_t * roi) {
+
+  study->rois = roi_list_add_roi(study->rois, roi);
+
+  return;
+}
+
+
+/* remove an roi from a study */
+void study_remove_roi(study_t * study, roi_t * roi) {
+
+  study->rois = roi_list_remove_roi(study->rois, roi);
+
+  return;
+}
+
 /* sets the name of a study
    note: new_name is copied rather then just being referenced by study */
-void study_set_name(amide_study_t * study, gchar * new_name) {
+void study_set_name(study_t * study, gchar * new_name) {
 
   g_free(study->name); /* free up the memory used by the old name */
   study->name = g_strdup(new_name); /* and assign the new name */

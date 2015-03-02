@@ -31,23 +31,41 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_threshold2.h"
 #include "ui_threshold_callbacks.h"
 #include "ui_study_callbacks.h"
 
 /* destroy a ui_threshold data structure */
-void ui_threshold_free(ui_threshold_t ** pui_threshold) {
+ui_threshold_t * ui_threshold_free(ui_threshold_t * ui_threshold) {
 
-  g_free(*pui_threshold);
-  *pui_threshold = NULL;
+  if (ui_threshold == NULL)
+    return ui_threshold;
 
-  return;
+  /* sanity checks */
+  g_return_val_if_fail(ui_threshold->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  ui_threshold->reference_count--;
+
+  /* things we always do */
+  ui_threshold->volume = volume_free(ui_threshold->volume);
+
+  /* if we've removed all reference's,f ree the structure */
+  if (ui_threshold->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing ui_threshold\n");
+#endif
+    g_free(ui_threshold);
+  }
+
+  return ui_threshold;
 }
 
 /* malloc and initialize a ui_threshold data structure */
@@ -60,6 +78,7 @@ ui_threshold_t * ui_threshold_init(void) {
     g_warning("%s: couldn't allocate space for ui_threshold_t",PACKAGE);
     return NULL;
   }
+  ui_threshold->reference_count = 1;
 
   /* set any needed parameters */
   ui_threshold->color_strip_image = NULL;
@@ -72,7 +91,7 @@ ui_threshold_t * ui_threshold_init(void) {
 void ui_threshold_update_entries(ui_threshold_t * ui_threshold) {
 
   gchar * string;
-  amide_volume_t * volume;
+  volume_t * volume;
 
   volume =ui_threshold->volume;
 
@@ -103,7 +122,7 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
   GnomeCanvasPoints * min_points;
   GnomeCanvasPoints * max_points;
   volume_data_t max;
-  amide_volume_t * volume;
+  volume_t * volume;
 
   volume = ui_threshold->volume;
   
@@ -239,13 +258,13 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 /* function to update the whole dialog */
 void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
-  amide_volume_t * volume;
+  volume_t * volume;
   gchar * temp_string;
   GdkImlibImage * temp_image;
     
 
   /* sanity check */
-  if (ui_study->study->volumes == NULL)
+  if (study_get_volumes(ui_study->study) == NULL)
     return;
   if (ui_study->threshold == NULL) { /* looks like we called the wrong function */
     ui_threshold_dialog_create(ui_study);
@@ -254,10 +273,11 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = ui_study->study->volumes->volume;
+    volume = study_get_first_volume(ui_study->study);
   else
     volume = ui_study->current_volume;
-  ui_study->threshold->volume = volume;
+  ui_study->threshold->volume = volume_free(ui_study->threshold->volume);
+  ui_study->threshold->volume = volume_add_reference(volume);
 
   /* reset the label which holds the volume name */
   temp_string = g_strdup_printf("data set: %s\n",volume->name);
@@ -427,7 +447,7 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
   for (i_color_table=0; i_color_table<NUM_COLOR_TABLES; i_color_table++) {
     menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
     gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", color_table_names[i_color_table]);
+    gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", GINT_TO_POINTER(i_color_table));
     gtk_object_set_data(GTK_OBJECT(menuitem),"threshold", ui_threshold);
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
     		       GTK_SIGNAL_FUNC(ui_study_callbacks_color_table), ui_study);
@@ -529,11 +549,11 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
   GtkWidget * threshold_widget;
   GtkWidget * vbox;
   GtkWidget * label;
-  amide_volume_t * volume;
-  ui_study_volume_list_t * volume_list_item;
+  volume_t * volume;
+  ui_volume_list_t * ui_volume_list_item;
   
   /* sanity check */
-  if (ui_study->study->volumes == NULL)
+  if (study_get_volumes(ui_study->study) == NULL)
     return;
   if (ui_study->threshold != NULL)
     return;
@@ -547,18 +567,18 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
     volume = ui_study->current_volume;
 
   /* make sure we don't already have a volume edit dialog up */
-  volume_list_item = ui_study_volumes_list_get_volume(ui_study->current_volumes,volume);
-  if (volume_list_item != NULL)
-    if (volume_list_item->dialog != NULL)
+  ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes,volume);
+  if (ui_volume_list_item != NULL)
+    if (ui_volume_list_item->dialog != NULL)
       return;
 
   ui_study->threshold = ui_threshold_init();
 
-  temp_string = g_strdup_printf("Threshold: %s",ui_study->study->name);
+  temp_string = g_strdup_printf("Threshold: %s",study_get_name(ui_study->study));
   app = GNOME_APP(gnome_app_new(PACKAGE, temp_string));
   g_free(temp_string);
   ui_study->threshold->app = app;
-  ui_study->threshold->volume = volume;
+  ui_study->threshold->volume = volume_add_reference(volume);
 
   g_print("threshold for volume %s\n",volume->name);
 

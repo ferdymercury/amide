@@ -30,6 +30,7 @@
 #include "realspace.h"
 #include "color_table.h"
 #include "volume.h"
+#include "objects.h"
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", \
@@ -42,55 +43,48 @@ gchar * modality_names[] = {"PET", \
 			    "MRI", \
 			    "Other"};
 
-/* free up a volume */
-void volume_free(amide_volume_t ** pvolume) {
+/* removes a reference to a volume, frees up the volume if no more references */
+volume_t * volume_free(volume_t * volume) {
 
-  if (*pvolume != NULL) {
+  if (volume == NULL)
+    return volume;
 
-    if((*pvolume)->data != NULL)
-      g_free((*pvolume)->data);
-
-    if((*pvolume)->frame_duration != NULL)
-      g_free((*pvolume)->frame_duration);
-
-    if((*pvolume)->distribution != NULL)
-      g_free((*pvolume)->distribution);
-
-    g_free((*pvolume)->name);
-
-    g_free(*pvolume);
-    *pvolume = NULL;
-  }
-
-  return;
-}
-
-/* free up a list of volumes */
-void volume_list_free(amide_volume_list_t ** pvolume_list) {
+  /* sanity checks */
+  g_return_val_if_fail(volume->reference_count > 0, NULL);
   
-  if (*pvolume_list != NULL) {
-    volume_free(&((*pvolume_list)->volume));
-    if ((*pvolume_list)->next != NULL)
-      volume_list_free(&((*pvolume_list)->next));
-    g_free(*pvolume_list);
-    *pvolume_list = NULL;
+  /* remove a reference count */
+  volume->reference_count--;
+
+  /* if we've removed all reference's, free the volume */
+  if (volume->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing volume: %s\n",volume->name);
+#endif
+    g_free(volume->data);
+    g_free(volume->frame_duration);
+    g_free(volume->distribution);
+    g_free(volume->name);
+    g_free(volume);
+    volume = NULL;
   }
 
-  return;
+  return volume;
 }
-
 
 /* returns an initialized volume structure */
-amide_volume_t * volume_init(void) {
+volume_t * volume_init(void) {
 
-  amide_volume_t * temp_volume;
+  volume_t * temp_volume;
   axis_t i_axis;
 
   if ((temp_volume = 
-       (amide_volume_t *) g_malloc(sizeof(amide_volume_t))) == NULL) {
+       (volume_t *) g_malloc(sizeof(volume_t))) == NULL) {
+    g_warning("%s: Couldn't allocate memory for the volume structure\n",PACKAGE);
     return NULL;
   }
+  temp_volume->reference_count = 1;
 
+  /* put in some sensable values */
   temp_volume->name = NULL;
   temp_volume->modality = PET;
   temp_volume->voxel_size = realpoint_init;
@@ -110,53 +104,62 @@ amide_volume_t * volume_init(void) {
   return temp_volume;
 }
 
-/* copies the information of one volume into another, if dest volume
-   doesn't exist, make it. Does not copy data*/
-void volume_copy(amide_volume_t ** dest_volume, amide_volume_t * src_volume) {
+/* makes a new volume item which is a copy of a previous volume's information. 
+   Notes: 
+   - does not make a copy of the source volume's data
+   - does not make a copy of the distribution data */
+volume_t * volume_copy(volume_t * src_volume) {
+
+  volume_t * dest_volume;
   guint i;
 
   /* sanity checks */
-  g_assert(src_volume != NULL);
-  g_assert(src_volume != *dest_volume);
+  g_return_val_if_fail(src_volume != NULL, NULL);
 
-  /* start over from scratch */
-  volume_free(dest_volume);
-  *dest_volume = volume_init();
+  dest_volume = volume_init();
 
   /* copy the data elements */
-  (*dest_volume)->modality = src_volume->modality;
-  (*dest_volume)->voxel_size = src_volume->voxel_size;
-  (*dest_volume)->dim = src_volume->dim;
-  (*dest_volume)->conversion = src_volume->conversion;
-  (*dest_volume)->num_frames = src_volume->num_frames;
-  (*dest_volume)->max = src_volume->max;
-  (*dest_volume)->min = src_volume->min;
-  (*dest_volume)->color_table= src_volume->color_table;
-  (*dest_volume)->threshold_max = src_volume->threshold_max;
-  (*dest_volume)->threshold_min = src_volume->threshold_min;
-  (*dest_volume)->coord_frame = src_volume->coord_frame;
-  (*dest_volume)->corner = src_volume->corner;
+  dest_volume->modality = src_volume->modality;
+  dest_volume->voxel_size = src_volume->voxel_size;
+  dest_volume->dim = src_volume->dim;
+  dest_volume->conversion = src_volume->conversion;
+  dest_volume->num_frames = src_volume->num_frames;
+  dest_volume->max = src_volume->max;
+  dest_volume->min = src_volume->min;
+  dest_volume->color_table= src_volume->color_table;
+  dest_volume->threshold_max = src_volume->threshold_max;
+  dest_volume->threshold_min = src_volume->threshold_min;
+  dest_volume->coord_frame = src_volume->coord_frame;
+  dest_volume->corner = src_volume->corner;
 
   /* make a separate copy in memory of the volume's name */
-  volume_set_name(*dest_volume, src_volume->name);
+  volume_set_name(dest_volume, src_volume->name);
 
   /* make a separate copy in memory of the volume's frame durations */
-  (*dest_volume)->frame_duration =
-    (volume_time_t *) g_malloc((*dest_volume)->num_frames*sizeof(volume_time_t));
-  if ((*dest_volume)->frame_duration == NULL) {
+  dest_volume->frame_duration = volume_get_frame_duration_mem(dest_volume);
+  if (dest_volume->frame_duration == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
-    volume_free(dest_volume);
-    return;
+    dest_volume = volume_free(dest_volume);
+    return dest_volume;
   }
-  for (i=0;i<(*dest_volume)->num_frames;i++)
-    (*dest_volume)->frame_duration[i] = src_volume->frame_duration[i];
+  for (i=0;i<dest_volume->num_frames;i++)
+    dest_volume->frame_duration[i] = src_volume->frame_duration[i];
 
-  return;
+  return dest_volume;
 }
+
+/* adds one to the reference count of a volume */
+volume_t * volume_add_reference(volume_t * volume) {
+
+  volume->reference_count++;
+
+  return volume;
+}
+
 
 /* sets the name of a volume
    note: new_name is copied rather then just being referenced by volume */
-void volume_set_name(amide_volume_t * volume, gchar * new_name) {
+void volume_set_name(volume_t * volume, gchar * new_name) {
 
   g_free(volume->name); /* free up the memory used by the old name */
   volume->name = g_strdup(new_name); /* and assign the new name */
@@ -165,8 +168,9 @@ void volume_set_name(amide_volume_t * volume, gchar * new_name) {
 }
 
 
+
 /* figure out the center of the volume in real coords */
-realpoint_t volume_calculate_center(const amide_volume_t * volume) {
+realpoint_t volume_calculate_center(const volume_t * volume) {
 
   realpoint_t center;
   realpoint_t corner[2];
@@ -184,8 +188,39 @@ realpoint_t volume_calculate_center(const amide_volume_t * volume) {
   return center;
 }
 
+/* figure out the real point that corresponds to the voxel coordinates */
+realpoint_t volume_voxel_to_real(const volume_t * volume, const voxelpoint_t i) {
+
+  realpoint_t real_p;
+
+  //  real_p.x = (((floatpoint_t )i.x)*volume->corner.x)/volume->dim.x + volume->voxel_size.x/2.0;
+  //  real_p.y = (((floatpoint_t )i.y)*volume->corner.y)/volume->dim.y + volume->voxel_size.y/2.0;
+  //  real_p.z = (((floatpoint_t )i.z)*volume->corner.z)/volume->dim.z + volume->voxel_size.z/2.0;
+
+  real_p.x = (((floatpoint_t) i.x) + 0.5) * volume->voxel_size.x;
+  real_p.y = (((floatpoint_t) i.y) + 0.5) * volume->voxel_size.y; 
+  real_p.z = (((floatpoint_t) i.z) + 0.5) * volume->voxel_size.z; 
+
+  return real_p;
+}
+
+/* figure out the voxel point that corresponds to the real coordinates */
+voxelpoint_t volume_real_to_voxel(const volume_t * volume, const realpoint_t real) {
+  
+  voxelpoint_t voxel_p;
+
+  //  voxel_p.x = floor(((real.x)/volume->corner.x)*volume->dim.x);
+  //  voxel_p.y = floor(((real.y)/volume->corner.y)*volume->dim.y);
+  //  voxel_p.z = floor(((real.z)/volume->corner.z)*volume->dim.z);
+  voxel_p.x = floor(real.x/volume->voxel_size.x);
+  voxel_p.y = floor(real.y/volume->voxel_size.y);
+  voxel_p.z = floor(real.z/volume->voxel_size.z);
+  
+  return voxel_p;
+}
+
 /* returns the start time of the given frame */
-volume_time_t volume_start_time(const amide_volume_t * volume, guint frame) {
+volume_time_t volume_start_time(const volume_t * volume, guint frame) {
 
   volume_time_t time;
   guint i_frame;
@@ -200,92 +235,137 @@ volume_time_t volume_start_time(const amide_volume_t * volume, guint frame) {
   return time;
 }
 
-/* returns an initialized volume list node structure */
-amide_volume_list_t * volume_list_init(void) {
+
+/* free up a list of volumes */
+volume_list_t * volume_list_free(volume_list_t * volume_list) {
   
-  amide_volume_list_t * temp_volume_list;
+  if (volume_list == NULL)
+    return volume_list;
+
+  /* sanity check */
+  g_return_val_if_fail(volume_list->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  volume_list->reference_count--;
+
+  /* things we always do */
+  volume_list->volume = volume_free(volume_list->volume);
+
+  /* recursively delete rest of list */
+  volume_list->next = volume_list_free(volume_list->next); 
+
+  /* things to do if our reference count is zero */
+  if (volume_list->reference_count == 0) {
+    g_free(volume_list);
+    volume_list = NULL;
+  }
+
+  return volume_list;
+}
+
+/* returns an initialized volume list node structure */
+volume_list_t * volume_list_init(void) {
+  
+  volume_list_t * temp_volume_list;
   
   if ((temp_volume_list = 
-       (amide_volume_list_t *) g_malloc(sizeof(amide_volume_list_t))) == NULL) {
+       (volume_list_t *) g_malloc(sizeof(volume_list_t))) == NULL) {
     return NULL;
   }
+  temp_volume_list->reference_count = 1;
   
+  temp_volume_list->volume = NULL;
   temp_volume_list->next = NULL;
   
   return temp_volume_list;
 }
 
-/* function to check that a volume is in a volume list */
-gboolean volume_list_includes_volume(amide_volume_list_t *list, 
-				     amide_volume_t * volume) {
 
-  while (list != NULL)
-    if (list->volume == volume)
+/* adds one to the reference count of a volume list element*/
+volume_list_t * volume_list_add_reference(volume_list_t * volume_list_element) {
+
+  volume_list_element->reference_count++;
+
+  return volume_list_element;
+}
+
+
+/* function to check that a volume is in a volume list */
+gboolean volume_list_includes_volume(volume_list_t * volume_list,  volume_t * volume) {
+
+  while (volume_list != NULL)
+    if (volume_list->volume == volume)
       return TRUE;
     else
-      list = list->next;
+      volume_list = volume_list->next;
 
   return FALSE;
 }
 
 
-/* function to add a volume onto a volume list list */
-void volume_list_add_volume(amide_volume_list_t ** plist, amide_volume_t * vol) {
+/* function to add a volume to the end of a volume list */
+volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * vol) {
 
-  amide_volume_list_t ** ptemp_list = plist;
+  volume_list_t * temp_list = volume_list;
+  volume_list_t * prev_list = NULL;
 
-  while (*ptemp_list != NULL)
-    ptemp_list = &((*ptemp_list)->next);
+  /* get to the end of the list */
+  while (temp_list != NULL) {
+    prev_list = temp_list;
+    temp_list = temp_list->next;
+  }
   
-  (*ptemp_list) = volume_list_init();
-  (*ptemp_list)->volume = vol;
+  /* get a new volume_list data structure */
+  temp_list = volume_list_init();
 
-  return;
+  /* add the volume to this new list item */
+  temp_list->volume = volume_add_reference(vol);
+
+  if (volume_list == NULL)
+    return temp_list;
+  else {
+    prev_list->next = temp_list;
+    return volume_list;
+  }
 }
 
 
 /* function to add a volume onto a volume list as the first item*/
-void volume_list_add_volume_first(amide_volume_list_t ** plist, 
-				  amide_volume_t * vol) {
+volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol) {
 
-  amide_volume_list_t * temp_list;
+  volume_list_t * temp_list;
 
-  temp_list = volume_list_init();
-  temp_list->volume=vol;
-  temp_list->next = *plist;
-  *plist = temp_list;
+  temp_list = volume_list_add_volume(NULL,vol);
+  temp_list->next = volume_list;
 
-  return;
+  return temp_list;
 }
 
 
-/* function to remove a volume from a volume list, does not delete volume */
-void volume_list_remove_volume(amide_volume_list_t ** plist, 
-			       amide_volume_t * vol) {
+/* function to remove a volume list item from a volume list */
+volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t * vol) {
 
-  amide_volume_list_t * temp_list = *plist;
-  amide_volume_list_t * prev_list = NULL;
+  volume_list_t * temp_list = volume_list;
+  volume_list_t * prev_list = NULL;
 
   while (temp_list != NULL) {
     if (temp_list->volume == vol) {
       if (prev_list == NULL)
-	*plist = temp_list->next;
+	volume_list = temp_list->next;
       else
 	prev_list->next = temp_list->next;
       temp_list->next = NULL;
-      temp_list->volume = NULL;
-      volume_list_free(&temp_list);
+      temp_list = volume_list_free(temp_list);
     } else {
       prev_list = temp_list;
       temp_list = temp_list->next;
     }
   }
 
-  return;
+  return volume_list;
 }
 
-gboolean volume_includes_voxel(const amide_volume_t * volume,
-			       const voxelpoint_t voxel) {
+gboolean volume_includes_voxel(const volume_t * volume, const voxelpoint_t voxel) {
 
   if ( (voxel.x < 0) || (voxel.y < 0) || (voxel.z < 0) ||
        (voxel.x >= volume->dim.x) || (voxel.y >= volume->dim.y) ||
@@ -297,11 +377,10 @@ gboolean volume_includes_voxel(const amide_volume_t * volume,
 
 /* takes a volume and a view_axis, and gives the corners necessary for
    the view to totally encompass the volume in the base coord frame */
-void volume_get_view_corners(const amide_volume_t * volume,
+void volume_get_view_corners(const volume_t * volume,
 			     const realspace_t view_coord_frame,
 			     realpoint_t view_corner[]) {
 
-  realpoint_t corner, new_view_corner;
   realpoint_t volume_corner[2];
 
   g_assert(volume!=NULL);
@@ -310,108 +389,9 @@ void volume_get_view_corners(const amide_volume_t * volume,
 						 volume->coord_frame);
   volume_corner[1] = volume->corner;
 
-  
-
-  //  g_print("volume->coord_frame\n\t%5.3f %5.3f %5.3f\n\t%5.3f %5.3f %5.3f\n\t%5.3f %5.3f %5.3f\n",
-  //	  volume->coord_frame.axis[0].x,volume->coord_frame.axis[0].y, volume->coord_frame.axis[0].z,
-  //	  volume->coord_frame.axis[1].x,volume->coord_frame.axis[1].y, volume->coord_frame.axis[1].z,
-  //	  volume->coord_frame.axis[2].x,volume->coord_frame.axis[2].y, volume->coord_frame.axis[2].z);
-
-  //  g_print("view_coord_frame\n\t%5.3f %5.3f %5.3f\n\t%5.3f %5.3f %5.3f\n\t%5.3f %5.3f %5.3f\n",
-  //	  view_coord_frame.axis[0].x,view_coord_frame.axis[0].y, view_coord_frame.axis[0].z,
-  //	  view_coord_frame.axis[1].x,view_coord_frame.axis[1].y, view_coord_frame.axis[1].z,
-  //	  view_coord_frame.axis[2].x,view_coord_frame.axis[2].y, view_coord_frame.axis[2].z);
-
   /* look at all eight corners of our cube, figure out the min and max coords */
-
-  /* corner 0 */
-  corner = volume_corner[0];
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  view_corner[0] = view_corner[1] = new_view_corner;
-
-  /* corner 1 */
-  corner.x = volume_corner[0].x;
-  corner.y = volume_corner[0].y;
-  corner.z = volume_corner[1].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 2 */
-  corner.x = volume_corner[0].x;
-  corner.y = volume_corner[1].y;
-  corner.z = volume_corner[0].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 3 */
-  corner.x = volume_corner[0].x;
-  corner.y = volume_corner[1].y;
-  corner.z = volume_corner[1].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 4 */
-  corner.x = volume_corner[1].x;
-  corner.y = volume_corner[0].y;
-  corner.z = volume_corner[0].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 5 */
-  corner.x = volume_corner[1].x;
-  corner.y = volume_corner[0].y;
-  corner.z = volume_corner[1].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 6 */
-  corner.x = volume_corner[1].x;
-  corner.y = volume_corner[1].y;
-  corner.z = volume_corner[0].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
-
-  /* corner 7 */
-  corner.x = volume_corner[1].x;
-  corner.y = volume_corner[1].y;
-  corner.z = volume_corner[1].z;
-  new_view_corner = realspace_alt_coord_to_alt(corner, volume->coord_frame,view_coord_frame);
-  if (view_corner[0].x > new_view_corner.x) view_corner[0].x = new_view_corner.x;
-  if (view_corner[1].x < new_view_corner.x) view_corner[1].x = new_view_corner.x;
-  if (view_corner[0].y > new_view_corner.y) view_corner[0].y = new_view_corner.y;
-  if (view_corner[1].y < new_view_corner.y) view_corner[1].y = new_view_corner.y;
-  if (view_corner[0].z > new_view_corner.z) view_corner[0].z = new_view_corner.z;
-  if (view_corner[1].z < new_view_corner.z) view_corner[1].z = new_view_corner.z;
+  realspace_get_enclosing_corners(volume->coord_frame, volume_corner,
+				  view_coord_frame, view_corner);
 
   /* and return the corners in the base coord frame */
   view_corner[0] = realspace_alt_coord_to_base(view_corner[0], view_coord_frame);
@@ -422,11 +402,11 @@ void volume_get_view_corners(const amide_volume_t * volume,
 
 /* takes a list of volumes and a view axis, and give the corners
    necessary to totally encompass the volume in the base coord frame */
-void volumes_get_view_corners(amide_volume_list_t * volumes,
+void volumes_get_view_corners(volume_list_t * volumes,
 			      const realspace_t view_coord_frame,
 			      realpoint_t view_corner[]) {
 
-  amide_volume_list_t * temp_volumes;
+  volume_list_t * temp_volumes;
   realpoint_t temp_corner[2];
 
   temp_volumes = volumes;
@@ -434,14 +414,9 @@ void volumes_get_view_corners(amide_volume_list_t * volumes,
   view_corner[0] = realspace_base_coord_to_alt(view_corner[0], view_coord_frame);
   view_corner[1] = realspace_base_coord_to_alt(view_corner[1], view_coord_frame);
   temp_volumes = volumes->next;
-  //  g_print("corner [0] %5.3f %5.3f %5.3f [1] %5.3f %5.3f %5.3f\n",
-  //	  view_corner[0].x,view_corner[0].y,view_corner[0].z,
-  //	  view_corner[1].x,view_corner[1].y,view_corner[1].z);
+
   while (temp_volumes != NULL) {
     volume_get_view_corners(temp_volumes->volume,view_coord_frame,temp_corner);
-    //  g_print("corner [0] %5.3f %5.3f %5.3f [1] %5.3f %5.3f %5.3f\n",
-    //	  temp_corner[0].x,temp_corner[0].y,temp_corner[0].z,
-    //	  temp_corner[1].x,temp_corner[1].y,temp_corner[1].z);
     temp_corner[0] = realspace_base_coord_to_alt(temp_corner[0], view_coord_frame);
     temp_corner[1] = realspace_base_coord_to_alt(temp_corner[1], view_coord_frame);
     view_corner[0].x = (view_corner[0].x < temp_corner[0].x) ? view_corner[0].x : temp_corner[0].x;
@@ -460,9 +435,8 @@ void volumes_get_view_corners(amide_volume_list_t * volumes,
 
 
 /* returns the minimum dimensional width of the volume with the largest voxel size */
-floatpoint_t volumes_min_dim(amide_volume_list_t * volumes) {
+floatpoint_t volumes_min_dim(volume_list_t * volumes) {
 
-  amide_volume_list_t * temp_volumes;
   floatpoint_t min_dim, temp;
 
   g_assert(volumes!=NULL);
@@ -473,21 +447,38 @@ floatpoint_t volumes_min_dim(amide_volume_list_t * volumes) {
      huge image when adding in a study with small voxels (i.e. a CT
      scan).  The user can always increase the zoom later*/
   /* figure out out thickness */
-  temp_volumes = volumes;
   min_dim = 0.0;
-  while (temp_volumes != NULL) {
-    temp = REALPOINT_MIN_DIM(temp_volumes->volume->voxel_size);
+  while (volumes != NULL) {
+    temp = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
     if (temp > min_dim) min_dim = temp;
-    temp_volumes = temp_volumes->next;
+    volumes = volumes->next;
   }
 
   return min_dim;
 }
 
+/* returns the maximum dimension of the given volumes (in voxels) */
+intpoint_t volumes_max_dim(volume_list_t * volumes) {
+
+  intpoint_t max_dim, temp;
+
+  g_assert(volumes!=NULL);
+
+  max_dim = 0;
+  while (volumes != NULL) {
+    temp = ceil(REALPOINT_MAX_DIM(volumes->volume->dim));
+    if (temp > max_dim) max_dim = temp;
+    volumes = volumes->next;
+  }
+
+  return max_dim;
+}
+
+
 /* returns the length of the assembly of volumes wrt the given axis */
-floatpoint_t volumes_get_width(amide_volume_list_t * volumes, 
-			       const realspace_t view_coord_frame) {
-  amide_volume_list_t * temp_volumes;
+floatpoint_t volumes_get_width(volume_list_t * volumes, const realspace_t view_coord_frame) {
+
+  volume_list_t * temp_volumes;
   realpoint_t view_corner[2];
   realpoint_t temp_corner[2];
 
@@ -513,9 +504,9 @@ floatpoint_t volumes_get_width(amide_volume_list_t * volumes,
 }
 
 /* returns the length of the assembly of volumes wrt the given axis */
-floatpoint_t volumes_get_height(amide_volume_list_t * volumes, 
-				const realspace_t view_coord_frame) {
-  amide_volume_list_t * temp_volumes;
+floatpoint_t volumes_get_height(volume_list_t * volumes, const realspace_t view_coord_frame) {
+
+  volume_list_t * temp_volumes;
   realpoint_t view_corner[2];
   realpoint_t temp_corner[2];
 
@@ -541,9 +532,9 @@ floatpoint_t volumes_get_height(amide_volume_list_t * volumes,
 }
 
 /* returns the length of the assembly of volumes wrt the given axis */
-floatpoint_t volumes_get_length(amide_volume_list_t * volumes, 
-			       const realspace_t view_coord_frame) {
-  amide_volume_list_t * temp_volumes;
+floatpoint_t volumes_get_length(volume_list_t * volumes,  const realspace_t view_coord_frame) {
+
+  volume_list_t * temp_volumes;
   realpoint_t view_corner[2];
   realpoint_t temp_corner[2];
 
@@ -569,20 +560,133 @@ floatpoint_t volumes_get_length(amide_volume_list_t * volumes,
 }
 
 
+
+
+
+/* generate a volume that contains an axis figure, this is used by the rendering ui */
+volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
+
+  volume_t * axis_volume;
+  realpoint_t center, radius;
+  floatpoint_t height;
+  realspace_t object_coord_frame;
+  voxelpoint_t i;
+  volume_data_t min, max, temp;
+
+
+  axis_volume = volume_init();
+
+  /* initialize what variables we want */
+  volume_set_name(axis_volume, "rendering axis volume");
+  axis_volume->dim.x  = x_width;
+  axis_volume->dim.y = y_width;
+  axis_volume->dim.z = z_width;
+  axis_volume->conversion = 1.0;
+  axis_volume->num_frames = 1;
+  axis_volume->voxel_size.x = axis_volume->voxel_size.y = axis_volume->voxel_size.z = 1.0;
+  axis_volume->corner.x = axis_volume->voxel_size.x * axis_volume->dim.x;
+  axis_volume->corner.y = axis_volume->voxel_size.y * axis_volume->dim.y;
+  axis_volume->corner.z = axis_volume->voxel_size.z * axis_volume->dim.z;
+
+  
+  if ((axis_volume->frame_duration = volume_get_frame_duration_mem(axis_volume)) == NULL) {
+    g_warning("%s: couldn't allocate space for the axis volume frame duration array\n",PACKAGE);
+    axis_volume = volume_free(axis_volume);
+    return axis_volume;
+  }
+  axis_volume->frame_duration[0]=1.0;
+
+  if ((axis_volume->data = volume_get_data_mem(axis_volume)) == NULL) {
+    g_warning("%s: couldn't allocate space for the slice\n",PACKAGE);
+    axis_volume = volume_free(axis_volume);
+    return axis_volume;
+  }
+
+  /* initialize our volume */
+  for (i.z = 0; i.z < axis_volume->dim.z; i.z++) 
+    for (i.y = 0; i.y < axis_volume->dim.y; i.y++) 
+      for (i.x = 0; i.x < axis_volume->dim.x; i.x++) 
+	VOLUME_SET_CONTENT(axis_volume,0,i)=0.0;
+
+  /* figure out an appropriate radius for our cylinders and spheres */
+  radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/24;
+  radius.y = radius.x;
+  radius.z = radius.x;
+
+  /* start generating our axis */
+
+ 
+  /* draw the z axis */
+  center.z = (axis_volume->corner.z*4.5/8.0);
+  height = (axis_volume->corner.z*3.0/8.0);
+  center.x = axis_volume->corner.x/2;
+  center.y = axis_volume->corner.y/2;
+  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, TRANSVERSE);
+  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+				  center, radius, height, AXIS_VOLUME_DENSITY);
+
+                                                        
+  /* draw the y axis */
+  center.y = (axis_volume->corner.y*5.0/8.0);
+  height = (axis_volume->corner.y*4.0/8.0);
+  center.x = axis_volume->corner.x/2;
+  center.z = axis_volume->corner.z/2;
+  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, CORONAL);
+  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+				  center, radius, height, AXIS_VOLUME_DENSITY);
+
+ /* draw the x axis */
+  center.x = (axis_volume->corner.x*5.0/8.0);
+  height = (axis_volume->corner.x*4.0/8.0);
+  center.y = axis_volume->corner.y/2;
+  center.z = axis_volume->corner.z/2;
+  object_coord_frame = realspace_get_orthogonal_coord_frame(axis_volume->coord_frame, SAGITTAL);
+  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+				  center, radius, height, AXIS_VOLUME_DENSITY);
+
+  radius.z = radius.y = radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/12;
+  center.x = (axis_volume->corner.x*7.0/8.0);
+  objects_place_ellipsoid(axis_volume, 0, object_coord_frame, 
+			  center, radius, AXIS_VOLUME_DENSITY);
+
+  /* and figure out the max and min */
+  max = 0.0;
+  min = 0.0;
+  for (i.z = 0; i.z < axis_volume->dim.z;i.z++)
+    for (i.y = 0; i.y < axis_volume->dim.y; i.y++) 
+      for (i.x = 0; i.x <axis_volume->dim.x; i.x++) {
+	temp = VOLUME_CONTENTS(axis_volume, 0, i);
+	if (temp > max)
+	  max = temp;
+	else if (temp < min)
+	  min = temp;
+      }
+
+  axis_volume->max = max;
+  axis_volume->min = min;
+  axis_volume->threshold_max = max;
+  axis_volume->threshold_min = min;
+
+  return axis_volume;
+}
+
+
+
+
 /* returns a "2D" slice from a volume */
-amide_volume_t * volume_get_slice(const amide_volume_t * volume,
-				  const volume_time_t start,
-				  const volume_time_t duration,
-				  const realpoint_t  requested_voxel_size,
-				  const realspace_t slice_coord_frame,
-				  const realpoint_t far_corner,
-				  const interpolation_t interpolation) {
+volume_t * volume_get_slice(const volume_t * volume,
+			    const volume_time_t start,
+			    const volume_time_t duration,
+			    const realpoint_t  requested_voxel_size,
+			    const realspace_t slice_coord_frame,
+			    const realpoint_t far_corner,
+			    const interpolation_t interpolation) {
 
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
 
   floatpoint_t thickness = requested_voxel_size.z;
-  amide_volume_t * return_slice;
+  volume_t * return_slice;
   voxelpoint_t i,j;
   intpoint_t z;
   floatpoint_t volume_min_dim, view_min_dim, max_diff, voxel_length;
@@ -596,6 +700,7 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
   volume_data_t z_weight, max, min, temp;
   guint start_frame, num_frames, i_frame;
   volume_time_t volume_start, volume_end;
+  gchar * temp_string;
 
   /* sanity check */
   g_assert(volume != NULL);
@@ -666,6 +771,12 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	  volume_start, volume_end,start_frame,start_frame+num_frames-1);
 #endif
   return_slice = volume_init();
+  temp_string = g_strdup_printf("slice from volume %s: size x %5.3f y %5.3f z %5.3f", volume->name,
+				real_corner[1].x-real_corner[0].x,
+				real_corner[1].y-real_corner[0].y,
+				real_corner[1].z-real_corner[0].z);
+  volume_set_name(return_slice,temp_string);
+  g_free(temp_string);
   return_slice->num_frames = 1;
   return_slice->dim.x = dimx;
   return_slice->dim.y = dimy;
@@ -674,23 +785,16 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
   return_slice->coord_frame = slice_coord_frame;
   return_slice->corner = slice_corner;
   return_slice->scan_start = volume_start;
-  return_slice->frame_duration = 
-    (volume_time_t *) g_malloc(1*sizeof(volume_time_t));
-  if (return_slice->frame_duration == NULL) {
+  if ((return_slice->frame_duration = volume_get_frame_duration_mem(return_slice)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice frame duration array\n",PACKAGE);
-    volume_free(&return_slice);
-    return NULL;
+    return_slice = volume_free(return_slice);
+    return return_slice;
   }
   return_slice->frame_duration[0] = volume_end-volume_start;
-  return_slice->data = 
-    (volume_data_t *) g_malloc(return_slice->dim.z* 
-			       return_slice->dim.y* 
-			       return_slice->dim.x*
-			       sizeof(volume_data_t));
-  if (return_slice->data == NULL) {
+  if ((return_slice->data = volume_get_data_mem(return_slice)) == NULL) {
     g_warning("%s: couldn't allocate space for the slice\n",PACKAGE);
-    volume_free(&return_slice);
-    return NULL;
+    return_slice = volume_free(return_slice);
+    return return_slice;
   }
 
   /* get the length of a voxel for the given view axis*/
@@ -730,32 +834,19 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    
 	    /* get the locations and values of the four voxels in the real volume
 	       which are closest to our view voxel */
-	    
-	    /* the four corners we're interested in (view space) */
-	    box_corner_view[0].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[0].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[0].z = view_p.z;
-	    box_corner_view[1].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[1].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[1].z = view_p.z;
-	    box_corner_view[2].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[2].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[2].z = view_p.z;
-	    box_corner_view[3].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[3].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[3].z = view_p.z;
+
 	    
 	    /* find the closest voxels in real space and their values*/
 	    for (l=0; l<4; l++) {
+	      box_corner_view[l].x = view_p.x + ((l & 0x1) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+	      box_corner_view[l].y = view_p.y + ((l & 0x2) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+	      box_corner_view[l].z = view_p.z;
+
 	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
 						   slice_coord_frame,
 						   volume->coord_frame);
-	      j.x = floor((volume_p.x/volume->corner.x)*volume->dim.x);
-	      j.y = floor((volume_p.y/volume->corner.y)*volume->dim.y);
-	      j.z = floor((volume_p.z/volume->corner.z)*volume->dim.z);
-	      volume_p.x = (j.x*volume->corner.x)/volume->dim.x + volume->voxel_size.x/2.0;
-	      volume_p.y = (j.y*volume->corner.y)/volume->dim.y + volume->voxel_size.y/2.0;
-	      volume_p.z = (j.z*volume->corner.z)/volume->dim.z + volume->voxel_size.z/2.0;
+	      j = volume_real_to_voxel(volume, volume_p);
+	      volume_p = volume_voxel_to_real(volume, j);
 	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
 							      volume->coord_frame,
 							      slice_coord_frame);
@@ -844,43 +935,17 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    /* get the locations and values of the eight voxels in the real volume
 	       which are closest to our view voxel */
 
-	    /* the four corners we're interested in (view space) */
-	    box_corner_view[0].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[0].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[0].z = view_p.z-volume_min_dim/2.0;
-	    box_corner_view[1].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[1].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[1].z = view_p.z-volume_min_dim/2.0;
-	    box_corner_view[2].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[2].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[2].z = view_p.z-volume_min_dim/2.0;
-	    box_corner_view[3].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[3].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[3].z = view_p.z-volume_min_dim/2.0;
-	    box_corner_view[4].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[4].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[4].z = view_p.z+volume_min_dim/2.0;
-	    box_corner_view[5].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[5].y = view_p.y-volume_min_dim/2.0;
-	    box_corner_view[5].z = view_p.z+volume_min_dim/2.0;
-	    box_corner_view[6].x = view_p.x-volume_min_dim/2.0;
-	    box_corner_view[6].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[6].z = view_p.z+volume_min_dim/2.0;
-	    box_corner_view[7].x = view_p.x+volume_min_dim/2.0;
-	    box_corner_view[7].y = view_p.y+volume_min_dim/2.0;
-	    box_corner_view[7].z = view_p.z+volume_min_dim/2.0;
-
 	    /* find the closest voxels in real space and their values*/
 	    for (l=0; l<8; l++) {
+	      box_corner_view[l].x = view_p.x + ((l & 0x1) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+	      box_corner_view[l].y = view_p.y + ((l & 0x2) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+	      box_corner_view[l].z = view_p.z + ((l & 0x4) ? -volume_min_dim/2.0 : volume_min_dim/2.0);
+
 	      volume_p= realspace_alt_coord_to_alt(box_corner_view[l],
 						   slice_coord_frame,
 						   volume->coord_frame);
-	      j.x = floor(((volume_p.x)/volume->corner.x)*volume->dim.x);
-	      j.y = floor(((volume_p.y)/volume->corner.y)*volume->dim.y);
-	      j.z = floor(((volume_p.z)/volume->corner.z)*volume->dim.z);
-	      volume_p.x = (j.x*volume->corner.x)/volume->dim.x + volume->voxel_size.x/2.0;
-	      volume_p.y = (j.y*volume->corner.y)/volume->dim.y + volume->voxel_size.y/2.0;
-	      volume_p.z = (j.z*volume->corner.z)/volume->dim.z + volume->voxel_size.z/2.0;
+	      j = volume_real_to_voxel(volume, volume_p);
+	      volume_p = volume_voxel_to_real(volume, j);
 	      box_corner_real[l] = realspace_alt_coord_to_alt(volume_p,
 							      volume->coord_frame,
 							      slice_coord_frame);
@@ -987,10 +1052,7 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 	    volume_p= realspace_alt_coord_to_alt(view_p,
 						 slice_coord_frame,
 						 volume->coord_frame);
-	    j.x = floor((volume_p.x/volume->corner.x)*volume->dim.x);
-	    j.y = floor((volume_p.y/volume->corner.y)*volume->dim.y);
-	    j.z = floor((volume_p.z/volume->corner.z)*volume->dim.z);
-
+	    j = volume_real_to_voxel(volume, volume_p);
 	    if (!volume_includes_voxel(volume,j))
 	      VOLUME_SET_CONTENT(return_slice,0,i) += z_weight*EMPTY;
 	    else
@@ -1032,13 +1094,13 @@ amide_volume_t * volume_get_slice(const amide_volume_t * volume,
 
 /* give a list ov volumes, returns a list of slices of equal size and orientation
    intersecting these volumes */
-amide_volume_list_t * volumes_get_slices(amide_volume_list_t * volumes,
-					 const volume_time_t start,
-					 const volume_time_t duration,
-					 const floatpoint_t thickness,
-					 const realspace_t view_coord_frame,
-					 const floatpoint_t zoom,
-					 const interpolation_t interpolation) {
+volume_list_t * volumes_get_slices(volume_list_t * volumes,
+				   const volume_time_t start,
+				   const volume_time_t duration,
+				   const floatpoint_t thickness,
+				   const realspace_t view_coord_frame,
+				   const floatpoint_t zoom,
+				   const interpolation_t interpolation) {
 
 
   axis_t i_axis;
@@ -1046,9 +1108,8 @@ amide_volume_list_t * volumes_get_slices(amide_volume_list_t * volumes,
   realspace_t slice_coord_frame;
   realpoint_t view_corner[2];
   realpoint_t slice_corner;
-  amide_volume_list_t * temp_volumes;
-  amide_volume_list_t * temp_slices;
-  amide_volume_list_t * slices=NULL;
+  volume_list_t * slices=NULL;
+  volume_t * temp_slice;
   volume_data_t min_dim;
 
   /* thickness (of slice) in mm, negative indicates set this value
@@ -1069,7 +1130,6 @@ amide_volume_list_t * volumes_get_slices(amide_volume_list_t * volumes,
   /* figure out all encompasing corners for the slices based on our viewing axis */
   volumes_get_view_corners(volumes, view_coord_frame, view_corner);
 
-
   /* adjust the z' dimension of the view's corners */
   view_corner[0] = realspace_base_coord_to_alt(view_corner[0],view_coord_frame);
   view_corner[0].z=0;
@@ -1086,25 +1146,16 @@ amide_volume_list_t * volumes_get_slices(amide_volume_list_t * volumes,
   slice_corner = realspace_base_coord_to_alt(view_corner[1],slice_coord_frame);
 
   /* and get the slices */
-  temp_volumes = volumes;
-  temp_slices = volume_list_init();
-  slices = temp_slices;
-  temp_slices->volume = volume_get_slice(temp_volumes->volume, start, duration, voxel_size, 
-					 slice_coord_frame, slice_corner, interpolation);
-  temp_volumes = temp_volumes->next;
-  while (temp_volumes != NULL) {
-    temp_slices->next = volume_list_init();
-    temp_slices = temp_slices->next;
-    temp_slices->volume = volume_get_slice(temp_volumes->volume, start, duration, voxel_size, 
-					   slice_coord_frame, slice_corner, interpolation);
-    temp_volumes = temp_volumes->next;
+  while (volumes != NULL) {
+    temp_slice = volume_get_slice(volumes->volume, start, duration, voxel_size, 
+				  slice_coord_frame, slice_corner, interpolation);
+    slices = volume_list_add_volume(slices,temp_slice);
+    temp_slice = volume_free(temp_slice);
+    volumes = volumes->next;
   }
 
   return slices;
 }
-
-
-
 
 
 

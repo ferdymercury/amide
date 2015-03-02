@@ -2,19 +2,15 @@ misc list of things todo:
 
 big things:
 * allow looking at only a subset of the data (i.e. cropping)
-* incorporate volume rendering, probably via adapting vol_render
 * magnifying glass
 * gnuplot? interface for drawing graphs of ROI statistics
 
 small things:
+* make volume rendering less buggy.... 
+* have a separate dialog for changing the view parameters
 * figure out why gnome-help won't go to the right section
-* have item tree indicate which object is currently selected.
+* have item tree indicate which object is currently focused, not just selected.
 * have bottom scale indicate the width of data we're looking at...
 	is this possible with GTK widgets?
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
-
-
-non-important/cleanup things:
-* change roi_free(&roi) to roi=roi_free(roi)
-* change volume_free(&vol) to vol=volume_free(vol)

@@ -26,7 +26,7 @@
 #ifdef AMIDE_LIBMDC_SUPPORT
 
 /* external functions */
-amide_volume_t * medcon_import(gchar * filename);
+volume_t * medcon_import(gchar * filename);
 
 
 #endif

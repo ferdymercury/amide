@@ -1,4 +1,4 @@
-/* ui_series.h
+/* objects.h - functions used for defining objects in 3D volumes
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001 Andy Loening
@@ -23,33 +23,13 @@
   02111-1307, USA.
 */
 
-#define UI_SERIES_BORDER 2
-
-/* ui_series data structures */
-typedef struct ui_series_t {
-  GnomeApp * app; /* pointer to the threshold window for this study */
-  volume_list_t ** slices;
-  volume_list_t * volumes;
-  GnomeCanvas * canvas;
-  GnomeCanvasItem ** images;
-  GdkImlibImage ** rgb_images;
-  guint num_slices, rows, columns;
-  realspace_t coord_frame;
-  realpoint_t start;
-  floatpoint_t thickness;
-  volume_time_t time;
-  volume_time_t duration;
-  interpolation_t interpolation;
-  floatpoint_t zoom;
-  guint reference_count;
-} ui_series_t;
-
-/* external functions */
-void ui_series_slices_free(ui_series_t * ui_series);
-ui_series_t * ui_series_free(ui_series_t * ui_series);
-ui_series_t * ui_series_init(void);
-/* continued in ui_series2.h */
 
 
+/* functions */
+void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coord_frame,
+			     realpoint_t center, realpoint_t radius, volume_data_t level);
+void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t object_coord_frame,
+				     realpoint_t center, realpoint_t radius, floatpoint_t height,
+				     volume_data_t level);
 
 

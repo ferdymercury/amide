@@ -33,11 +33,12 @@
 #include "color_table2.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_series2.h"
 #include "ui_series_callbacks.h"
@@ -47,8 +48,7 @@ void ui_series_slices_free(ui_series_t * ui_series) {
   guint i;
 
   for (i=0; i < ui_series->num_slices; i++) {
-    if (ui_series->slices[i] != NULL)
-      volume_list_free(&(ui_series->slices[i]));
+    ui_series->slices[i] = volume_list_free(ui_series->slices[i]);
     if (ui_series->rgb_images[i] != NULL)
       gnome_canvas_destroy_image(ui_series->rgb_images[i]);
   }
@@ -59,16 +59,33 @@ void ui_series_slices_free(ui_series_t * ui_series) {
 }
 
 /* destroy a ui_series data structure */
-void ui_series_free(ui_series_t ** pui_series) {
+ui_series_t * ui_series_free(ui_series_t * ui_series) {
 
-  ui_series_slices_free(*pui_series);
-  g_free((*pui_series)->images);
-  while ((*pui_series)->volumes != NULL)
-    volume_list_remove_volume(&((*pui_series)->volumes), ((*pui_series)->volumes->volume));
-  g_free(*pui_series);
-  *pui_series = NULL;
+  if (ui_series == NULL)
+    return ui_series;
 
-  return;
+  /* sanity checks */
+  g_return_val_if_fail(ui_series->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  ui_series->reference_count--;
+
+  /* things we always do */
+  ui_series_slices_free(ui_series);
+  ui_series->volumes = volume_list_free(ui_series->volumes);
+
+  /* things to do if we've removed all reference's */
+  if (ui_series->reference_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing ui_series\n");
+#endif
+    g_free(ui_series->images);
+    g_free(ui_series);
+    ui_series = NULL;
+  }
+
+  return ui_series;
+
 }
 
 /* malloc and initialize a ui_series data structure */
@@ -81,6 +98,7 @@ ui_series_t * ui_series_init(void) {
     g_warning("%s: couldn't allocate space for ui_series_t",PACKAGE);
     return NULL;
   }
+  ui_series->reference_count = 1;
 
   /* set any needed parameters */
   ui_series->slices = NULL;
@@ -157,7 +175,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   /* allocate space for pointers to our slices if needed */
   if (ui_study->series->slices == NULL) {
     if ((ui_study->series->slices = 
-	 (amide_volume_list_t **) g_malloc(sizeof(amide_volume_list_t *) *ui_study->series->num_slices)) == NULL) {
+	 (volume_list_t **) g_malloc(sizeof(volume_list_t *) *ui_study->series->num_slices)) == NULL) {
       g_warning("%s: couldn't allocate space for pointers to amide_volume_t's",
 		PACKAGE);
       return;
@@ -318,12 +336,12 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   GnomeCanvas * series_canvas;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
-  ui_study_volume_list_t * ui_volumes;
+  ui_volume_list_t * ui_volumes;
 
   /* sanity checks */
-  if (ui_study->study->volumes == NULL)
+  if (study_get_volumes(ui_study->study) == NULL)
     return;
-  if (ui_study->study->volumes->volume == NULL)
+  if (study_get_first_volume(ui_study->study) == NULL)
     return;
   if (ui_study->series != NULL)
     return;
@@ -332,7 +350,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
 
   ui_study->series = ui_series_init();
 
-  title = g_strdup_printf("Series: %s (%s)",ui_study->study->name, view_names[view]);
+  title = g_strdup_printf("Series: %s (%s)",study_get_name(ui_study->study), view_names[view]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
   ui_study->series->app = app;
@@ -340,7 +358,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   /* figure out the currrent number of volumes, and make a copy in our series's volume list */
   ui_volumes = ui_study->current_volumes;
   while (ui_volumes != NULL) {
-    volume_list_add_volume(&(ui_study->series->volumes),ui_volumes->volume);
+    ui_study->series->volumes = volume_list_add_volume(ui_study->series->volumes,ui_volumes->volume);
     ui_volumes = ui_volumes->next;
   }
 

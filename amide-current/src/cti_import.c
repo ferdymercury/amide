@@ -34,14 +34,14 @@
 #include "volume.h"
 #include "cti_import.h"
 
-amide_volume_t * cti_import(gchar * cti_filename) {
+volume_t * cti_import(gchar * cti_filename) {
 
   MatrixFile * cti_file;
   MatrixData * cti_subheader;
   MatrixData * cti_slice;
   voxelpoint_t i;
   gint matnum;
-  amide_volume_t * temp_volume;
+  volume_t * temp_volume;
   guint t, slice, num_slices;
   volume_data_t max,min,temp;
   gchar * volume_name;
@@ -68,26 +68,22 @@ amide_volume_t * cti_import(gchar * cti_filename) {
     return NULL;
   }
 
-  temp_volume->dim.x = cti_subheader->xdim;
-  temp_volume->dim.y = cti_subheader->ydim;
+  volume_set_dim_x(temp_volume,cti_subheader->xdim);
+  volume_set_dim_y(temp_volume,cti_subheader->ydim);
   if (cti_subheader->zdim != 1)
-    temp_volume->dim.z = cti_subheader->zdim;
+    volume_set_dim_z(temp_volume,cti_subheader->zdim);
   else
-    temp_volume->dim.z = cti_file->mhptr->num_planes;
+    volume_set_dim_z(temp_volume,cti_file->mhptr->num_planes);
   temp_volume->num_frames = cti_file->mhptr->num_frames;
   num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
   
   /* malloc the space for the volume */
-  temp_volume->data = 
-    (volume_data_t *) g_malloc(temp_volume->num_frames *
-			     temp_volume->dim.z*
-			     temp_volume->dim.y*
-			     temp_volume->dim.x*sizeof(volume_data_t));
-  if (temp_volume->data == NULL) {
+  if ((temp_volume->data = volume_get_data_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the volume\n",PACKAGE);
-    volume_free(&temp_volume);
-    return NULL;
+    temp_volume = volume_free(temp_volume);
+    return temp_volume;
   }
+
 
   /* it's a CTI File, we'll guess it's PET data */
   temp_volume->modality = PET;
@@ -138,14 +134,11 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 
 
     /* allocate space for the array containing info on the duration of the frames */
-    temp_volume->frame_duration = 
-      (volume_time_t *) g_malloc(temp_volume->num_frames*sizeof(volume_time_t));
-    if (temp_volume->frame_duration == NULL) {
+    if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
       g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
-      volume_free(&temp_volume);
-      return NULL;
+      temp_volume = volume_free(temp_volume);
+      return temp_volume;
     }
-
 
     /* and load in the data */
     for (t = 0; t < temp_volume->num_frames; t++) {
@@ -159,8 +152,8 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 	if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
 	  g_warning("%s: can't get image matrix %x in file %s\n",\
 		    PACKAGE, matnum, cti_filename);
-	  volume_free(&temp_volume);
-	  return NULL;
+	  temp_volume = volume_free(temp_volume);
+	  return temp_volume;
 	}
 
 	/* set the frame duration, note, CTI files specify time as integers in msecs */
@@ -192,8 +185,8 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   case Sinogram:
   default:
     g_warning("%s: can't open this CTI file type", PACKAGE);
-    volume_free(&temp_volume);
-    return NULL;
+    temp_volume = volume_free(temp_volume);
+    return temp_volume;
   }
 
   /* set the far corner of the volume */
@@ -228,7 +221,6 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 
   free_matrix_data(cti_subheader);
   matrix_close(cti_file);
-
 
 
   return temp_volume;

@@ -32,20 +32,20 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_roi_dialog.h"
 #include "ui_roi_dialog_callbacks.h"
-#include "ui_study_rois2.h"
 
 /* function called when the name of the roi has been changed */
 void ui_roi_dialog_callbacks_change_name(GtkWidget * widget, gpointer data) {
 
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   gchar * new_name;
   GtkWidget * roi_dialog;
 
@@ -65,7 +65,7 @@ void ui_roi_dialog_callbacks_change_name(GtkWidget * widget, gpointer data) {
    used for the coordinate frame offset, axis, and the roi's corner*/
 void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) {
 
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   gchar * str;
   gint error;
   gdouble temp_val;
@@ -173,14 +173,13 @@ void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) {
 /* function to change an roi's type */
 void ui_roi_dialog_callbacks_change_type(GtkWidget * widget, gpointer data) {
 
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   roi_type_t i_roi_type;
   GtkWidget * roi_dialog;
 
   /* figure out which menu item called me */
-  for (i_roi_type=0;i_roi_type<NUM_ROI_TYPES;i_roi_type++)       
-    if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"roi_type")) == i_roi_type)
-      roi_new_info->type = i_roi_type;  /* save the new roi_type until it's applied */
+  i_roi_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"roi_type"));
+  roi_new_info->type = i_roi_type;  /* save the new roi_type until it's applied */
 
   /* now tell the roi_dialog that we've changed */
   roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
@@ -192,14 +191,13 @@ void ui_roi_dialog_callbacks_change_type(GtkWidget * widget, gpointer data) {
 /* function to change the grain size used to calculate an roi's statistics */
 void ui_roi_dialog_callbacks_change_grain(GtkWidget * widget, gpointer data) {
 
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   roi_grain_t i_grain;
   GtkWidget * roi_dialog;
 
   /* figure out which menu item called me */
-  for (i_grain=0;i_grain<NUM_GRAIN_TYPES;i_grain++)       
-    if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"grain_size")) == i_grain)
-      roi_new_info->grain = i_grain;  /* save the new grain size until it's applied */
+  i_grain = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"grain_size"));
+  roi_new_info->grain = i_grain;  /* save the new grain size until it's applied */
 
   /* now tell the roi_dialog that we've changed */
   roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
@@ -220,7 +218,7 @@ void ui_roi_dialog_callbacks_change_grain(GtkWidget * widget, gpointer data) {
 void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer data) {
 
   ui_study_t * ui_study;
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   view_t i_view;
   floatpoint_t rotation;
   GtkWidget * roi_dialog;
@@ -233,59 +231,57 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   center = roi_calculate_center(roi_new_info); 
 
   /* figure out which scale widget called me */
-  for (i_view=0;i_view<NUM_VIEWS;i_view++) 
-    if (gtk_object_get_data(GTK_OBJECT(adjustment),"view") == view_names[i_view]) {
-      rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
-      switch(i_view) {
-      case TRANSVERSE:
-	roi_new_info->coord_frame.axis[XAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_view_coord_frame.axis[ZAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[YAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_view_coord_frame.axis[ZAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[ZAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_view_coord_frame.axis[ZAXIS],
-				   rotation);
-	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-	break;
-      case CORONAL:
-	roi_new_info->coord_frame.axis[XAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_view_coord_frame.axis[YAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[YAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_view_coord_frame.axis[YAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[ZAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_view_coord_frame.axis[YAXIS],
-				   rotation);
-	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-	break;
-      case SAGITTAL:
-	roi_new_info->coord_frame.axis[XAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-				   &ui_study->current_view_coord_frame.axis[XAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[YAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-				   &ui_study->current_view_coord_frame.axis[XAXIS],
-				   rotation);
-	roi_new_info->coord_frame.axis[ZAXIS] = 
-	  realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-				   &ui_study->current_view_coord_frame.axis[XAXIS],
-				   rotation);
-	realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-	break;
-      default:
-	break;
-      }
-    }
+  i_view= GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"view"));
+  rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
+  switch(i_view) {
+  case TRANSVERSE:
+    roi_new_info->coord_frame.axis[XAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+			       &ui_study->current_view_coord_frame.axis[ZAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[YAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+			       &ui_study->current_view_coord_frame.axis[ZAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[ZAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+			       &ui_study->current_view_coord_frame.axis[ZAXIS],
+			       rotation);
+    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+    break;
+  case CORONAL:
+    roi_new_info->coord_frame.axis[XAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+			       &ui_study->current_view_coord_frame.axis[YAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[YAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+			       &ui_study->current_view_coord_frame.axis[YAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[ZAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+			       &ui_study->current_view_coord_frame.axis[YAXIS],
+			       rotation);
+    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+    break;
+  case SAGITTAL:
+    roi_new_info->coord_frame.axis[XAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
+			       &ui_study->current_view_coord_frame.axis[XAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[YAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
+			       &ui_study->current_view_coord_frame.axis[XAXIS],
+			       rotation);
+    roi_new_info->coord_frame.axis[ZAXIS] = 
+      realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
+			       &ui_study->current_view_coord_frame.axis[XAXIS],
+			       rotation);
+    realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
+    break;
+  default:
+    break;
+  }
 
   
   /* recalculate the offset of this roi based on the center we stored */
@@ -310,7 +306,7 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
 /* function to reset the roi's axis back to the default coords */
 void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 
-  amide_roi_t * roi_new_info = data;
+  roi_t * roi_new_info = data;
   axis_t i_axis;
   GtkWidget * roi_dialog;
   realpoint_t center, temp;
@@ -345,11 +341,11 @@ void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 /* function called when we hit the apply button */
 void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
-  ui_study_roi_list_t * roi_list_item = data;
+  ui_roi_list_t * roi_list_item = data;
   ui_study_t * ui_study;
   GdkPixmap * pixmap;
   guint8 spacing;
-  amide_roi_t * roi_new_info;
+  roi_t * roi_new_info;
   view_t i_views;
   
   /* we'll apply all page changes at once */
@@ -366,7 +362,17 @@ void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer
   }
 
   /* copy the new info on over */
-  roi_copy(&(roi_list_item->roi), roi_new_info);
+  roi_set_name(roi_list_item->roi, roi_new_info->name);
+  roi_list_item->roi->type = roi_new_info->type;
+  roi_list_item->roi->coord_frame = roi_new_info->coord_frame;
+  roi_list_item->roi->corner = roi_new_info->corner;
+  roi_list_item->roi->parent = roi_free(roi_list_item->roi->parent);
+  if (roi_new_info->parent != NULL) 
+    roi_list_item->roi->parent = roi_copy(roi_new_info->parent);
+  roi_list_item->roi->children = roi_list_free(roi_list_item->roi->children);
+  if (roi_new_info->children != NULL) 
+    roi_list_item->roi->children = roi_list_copy(roi_new_info->children);
+  roi_list_item->roi->grain = roi_new_info->grain;
 
   /* apply any changes to the name of the widget */
   /* get the current pixmap and spacing in the line of the tree corresponding to this roi */
@@ -383,9 +389,9 @@ void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer
   /* redraw the roi */
   for (i_views=0;i_views<NUM_VIEWS;i_views++) {
     roi_list_item->canvas_roi[i_views] =
-      ui_study_rois_update_canvas_roi(ui_study,i_views,
-				      roi_list_item->canvas_roi[i_views],
-				      roi_list_item->roi);
+      ui_study_update_canvas_roi(ui_study,i_views,
+				 roi_list_item->canvas_roi[i_views],
+				 roi_list_item->roi);
   }
 
   return;
@@ -425,12 +431,12 @@ void ui_roi_dialog_callbacks_help(GnomePropertyBox *roi_dialog, gint page_number
 /* function called to destroy the roi dialog */
 void ui_roi_dialog_callbacks_close_event(GtkWidget* widget, gpointer data) {
 
-  ui_study_roi_list_t * roi_list_item = data;
-  amide_roi_t * roi_new_info;
+  ui_roi_list_t * roi_list_item = data;
+  roi_t * roi_new_info;
 
   /* trash collection */
   roi_new_info = gtk_object_get_data(GTK_OBJECT(widget), "roi_new_info");
-  roi_free(&roi_new_info);
+  roi_new_info = roi_free(roi_new_info);
 
   /* destroy the widget */
   gtk_widget_destroy(GTK_WIDGET(roi_list_item->dialog));

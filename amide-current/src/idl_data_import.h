@@ -27,7 +27,7 @@
 
 
 /* external functions */
-amide_volume_t * idl_data_import(gchar * idl_data_filename);
+volume_t * idl_data_import(gchar * idl_data_filename);
 
 
 

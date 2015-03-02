@@ -44,43 +44,41 @@ gchar * roi_grain_names[] = {"1", \
 			     "64"};
 
 /* free up an roi */
-void roi_free(amide_roi_t ** proi) {
+roi_t * roi_free(roi_t * roi) {
   
-  if (*proi != NULL) {
-    if (((*proi)->children) != NULL)
-      roi_list_free(&((*proi)->children));
-    g_free((*proi)->name);
-    g_free(*proi);
-    *proi = NULL;
-  }
-  
-  return;
-}
+  if (roi == NULL)
+    return roi;
 
-/* free up an roi list */
-void roi_list_free(amide_roi_list_t ** proi_list) {
+  /* sanity checks */
+  g_return_val_if_fail(roi->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  roi->reference_count--;
+
+  /* things we always do */
+  roi->children = roi_list_free(roi->children);
   
-  if (*proi_list != NULL) {
-    roi_free(&((*proi_list)->roi));
-    if ((*proi_list)->next != NULL)
-      roi_list_free(&((*proi_list)->next));
-    g_free(*proi_list);
-    *proi_list = NULL;
+  /* if we've removed all reference's, free the roi */
+  if (roi->reference_count == 0) {
+    g_free(roi->name);
+    g_free(roi);
+    roi = NULL;
   }
 
-  return;
+  return roi;
 }
 
 /* returns an initialized roi structure */
-amide_roi_t * roi_init(void) {
+roi_t * roi_init(void) {
   
-  amide_roi_t * temp_roi;
+  roi_t * temp_roi;
   axis_t i;
   
   if ((temp_roi = 
-       (amide_roi_t *) g_malloc(sizeof(amide_roi_t))) == NULL) {
+       (roi_t *) g_malloc(sizeof(roi_t))) == NULL) {
     return NULL;
   }
+  temp_roi->reference_count = 1;
   
   temp_roi->name = NULL;
   temp_roi->corner = realpoint_init;
@@ -94,39 +92,45 @@ amide_roi_t * roi_init(void) {
   return temp_roi;
 }
 
-/* copies the information of one roi into another, if dest roi
-   doesn't exist, make it*/
-void roi_copy(amide_roi_t ** dest_roi, amide_roi_t * src_roi) {
+
+/* makes a new roi item which is a copy of a previous roi's information. */
+roi_t * roi_copy(roi_t * src_roi) {
+
+  roi_t * dest_roi;
 
   /* sanity checks */
-  g_assert(src_roi != NULL);
-  g_assert(src_roi != *dest_roi);
+  g_return_val_if_fail(src_roi != NULL, NULL);
 
-  /* start over from scratch */
-  roi_free(dest_roi);
-  *dest_roi = roi_init();
+  dest_roi = roi_init();
 
   /* copy the data elements */
-  (*dest_roi)->type = src_roi->type;
-  (*dest_roi)->coord_frame = src_roi->coord_frame;
-  (*dest_roi)->corner = src_roi->corner;
-  (*dest_roi)->parent = src_roi->parent;
-  (*dest_roi)->grain = src_roi->grain;
-
-
-  /* make a separate copy in memory of the roi's name */
-  roi_set_name(*dest_roi, src_roi->name);
+  dest_roi->type = src_roi->type;
+  dest_roi->coord_frame = src_roi->coord_frame;
+  dest_roi->corner = src_roi->corner;
+  dest_roi->parent = src_roi->parent;
+  dest_roi->grain = src_roi->grain;
 
   /* make a separate copy in memory of the roi's children */
   if (src_roi->children != NULL)
-    roi_list_copy(&((*dest_roi)->children), src_roi->children);
+    dest_roi->children = roi_list_copy(src_roi->children);
 
-  return;
+  /* make a separate copy in memory of the roi's name */
+  roi_set_name(dest_roi, src_roi->name);
+
+  return dest_roi;
+}
+
+/* adds one to the reference count of an roi */
+roi_t * roi_add_reference(roi_t * roi) {
+
+  roi->reference_count++;
+
+  return roi;
 }
 
 /* sets the name of an roi
    note: new_name is copied rather then just being referenced by roi */
-void roi_set_name(amide_roi_t * roi, gchar * new_name) {
+void roi_set_name(roi_t * roi, gchar * new_name) {
 
   g_free(roi->name); /* free up the memory used by the old name */
   roi->name = g_strdup(new_name); /* and assign the new name */
@@ -135,7 +139,7 @@ void roi_set_name(amide_roi_t * roi, gchar * new_name) {
 }
 
 /* figure out the center of the roi in real coords */
-realpoint_t roi_calculate_center(const amide_roi_t * roi) {
+realpoint_t roi_calculate_center(const roi_t * roi) {
 
   realpoint_t center;
   realpoint_t corner[2];
@@ -154,23 +158,52 @@ realpoint_t roi_calculate_center(const amide_roi_t * roi) {
 }
 
 
-/* returns an initialized roi list node structure */
-amide_roi_list_t * roi_list_init(void) {
-  
-  amide_roi_list_t * temp_roi_list;
-  
-  if ((temp_roi_list = 
-       (amide_roi_list_t *) g_malloc(sizeof(amide_roi_list_t))) == NULL) {
-    return NULL;
+/* free up an roi list */
+roi_list_t * roi_list_free(roi_list_t * roi_list) {
+
+  if (roi_list == NULL)
+    return roi_list;
+
+  /* sanity check */
+  g_return_val_if_fail(roi_list->reference_count > 0, NULL);
+
+  /* remove a reference count */
+  roi_list->reference_count--;
+
+  /* things we always do */
+  roi_list->roi = roi_free(roi_list->roi);
+
+  /* recursively delete rest of list */
+  roi_list->next = roi_list_free(roi_list->next);
+
+  /* stuff to do if reference count is zero */
+  if (roi_list->reference_count == 0) {
+    g_free(roi_list);
+    roi_list = NULL;
   }
 
+  return roi_list;
+}
+
+/* returns an initialized roi list node structure */
+roi_list_t * roi_list_init(void) {
+  
+  roi_list_t * temp_roi_list;
+  
+  if ((temp_roi_list = 
+       (roi_list_t *) g_malloc(sizeof(roi_list_t))) == NULL) {
+    return NULL;
+  }
+  temp_roi_list->reference_count = 1;
+
   temp_roi_list->next = NULL;
+  temp_roi_list->roi = NULL;
   
   return temp_roi_list;
 }
 
 /* function to check that an roi is in an roi list */
-gboolean roi_list_includes_roi(amide_roi_list_t *list, amide_roi_t * roi) {
+gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi) {
 
   while (list != NULL)
     if (list->roi == roi)
@@ -182,79 +215,86 @@ gboolean roi_list_includes_roi(amide_roi_list_t *list, amide_roi_t * roi) {
 }
 
 /* function to add an roi onto an roi list */
-void roi_list_add_roi(amide_roi_list_t ** plist, amide_roi_t * roi) {
+roi_list_t * roi_list_add_roi(roi_list_t * roi_list, roi_t * roi) {
 
-  amide_roi_list_t ** ptemp_list = plist;
+  roi_list_t * temp_list = roi_list;
+  roi_list_t * prev_list = NULL;
 
-  while (*ptemp_list != NULL)
-    ptemp_list = &((*ptemp_list)->next);
 
-  (*ptemp_list) = roi_list_init();
-  (*ptemp_list)->roi = roi;
+  /* get to the end of the list */
+  while (temp_list != NULL) {
+    prev_list = temp_list;
+    temp_list = temp_list->next;
+  }
+  
+  /* get a new roi_list data structure */
+  temp_list = roi_list_init();
 
-  return;
+  /* add the roi to this new list item */
+  temp_list->roi = roi_add_reference(roi);
+
+  if (roi_list == NULL)
+    return temp_list;
+  else {
+    prev_list->next = temp_list;
+    return roi_list;
+  }
 }
 
 
 /* function to add an roi onto an roi list as the first item*/
-void roi_list_add_roi_first(amide_roi_list_t ** plist, amide_roi_t * roi) {
+roi_list_t * roi_list_add_roi_first(roi_list_t * roi_list, roi_t * roi) {
 
-  amide_roi_list_t * temp_list;
+  roi_list_t * temp_list;
 
-  temp_list = roi_list_init();
-  temp_list->roi = roi;
-  temp_list->next = *plist;
-  *plist = temp_list;
+  temp_list = roi_list_add_roi(NULL,roi);
+  temp_list->next = roi_list;
 
-  return;
+  return temp_list;
 }
 
 
-/* function to remove an roi from an roi list, does not delete roi */
-void roi_list_remove_roi(amide_roi_list_t ** plist, amide_roi_t * roi) {
+/* function to remove an roi from an roi list */
+roi_list_t * roi_list_remove_roi(roi_list_t * roi_list, roi_t * roi) {
 
-  amide_roi_list_t * temp_list = *plist;
-  amide_roi_list_t * prev_list = NULL;
+  roi_list_t * temp_list = roi_list;
+  roi_list_t * prev_list = NULL;
 
   while (temp_list != NULL) {
     if (temp_list->roi == roi) {
       if (prev_list == NULL)
-	*plist = temp_list->next;
+	roi_list = temp_list->next;
       else
 	prev_list->next = temp_list->next;
       temp_list->next = NULL;
-      temp_list->roi = NULL;
-      roi_list_free(&temp_list);
+      temp_list = roi_list_free(temp_list);
     } else {
       prev_list = temp_list;
       temp_list = temp_list->next;
     }
   }
 
-  return;
+  return roi_list;
 }
 
-/* copies the information of one roi list into another, if dest roi list
-   doesn't exist, make it*/
-void roi_list_copy(amide_roi_list_t ** dest_roi_list, amide_roi_list_t * src_roi_list) {
+/* makes a new roi_list which is a copy of a previous roi_list */
+roi_list_t * roi_list_copy(roi_list_t * src_roi_list) {
+
+  roi_list_t * dest_roi_list;
 
   /* sanity check */
-  g_assert(src_roi_list != NULL);
-  g_assert(src_roi_list != (*dest_roi_list));
+  g_return_val_if_fail(src_roi_list != NULL, NULL);
 
-  /* if we don't already have a roi_list, allocate the space for one */
-  if (*dest_roi_list == NULL)
-    *dest_roi_list = roi_list_init();
+  dest_roi_list = roi_list_init();
 
   /* make a separate copy in memory of the roi this list item points to */
-  (*dest_roi_list)->roi = NULL;
-  roi_copy(&((*dest_roi_list)->roi), src_roi_list->roi);
+  dest_roi_list->roi = roi_copy(src_roi_list->roi);
     
   /* and make copies of the rest of the elements in this list */
   if (src_roi_list->next != NULL)
-    roi_list_copy(&((*dest_roi_list)->next), src_roi_list->next);
+    dest_roi_list->next = roi_list_copy(src_roi_list->next);
 
-  return;
+  return dest_roi_list;
 }
 
 
@@ -267,16 +307,14 @@ void roi_free_points_list(GSList ** plist) {
     roi_free_points_list(&((*plist)->next));
 
   g_free((*plist)->data);
-
   g_free(*plist);
-
   *plist = NULL;
 
   return;
 }
 
 /* returns true if we haven't drawn this roi */
-gboolean roi_undrawn(const amide_roi_t * roi) {
+gboolean roi_undrawn(const roi_t * roi) {
   
   return 
     REALPOINT_EQUAL(roi->coord_frame.offset,realpoint_init) &&
@@ -284,61 +322,11 @@ gboolean roi_undrawn(const amide_roi_t * roi) {
 }
     
 
-/* returns true if this voxel is in the given box */
-gboolean roi_voxel_in_box(const realpoint_t p,
-			  const realpoint_t p0,
-			  const realpoint_t p1) {
-
-
-  return (
-	  (
-	   (
-	    ((p.z >= p0.z-CLOSE) && (p.z <= p1.z+CLOSE)) ||
-	    ((p.z <= p0.z+CLOSE) && (p.z >= p1.z-CLOSE))) && 
-	   (
-	    ((p.y >= p0.y-CLOSE) && (p.y <= p1.y+CLOSE)) ||
-	    ((p.y <= p0.y+CLOSE) && (p.y >= p1.y-CLOSE))) && 
-	   (
-	    ((p.x >= p0.x-CLOSE) && (p.x <= p1.x+CLOSE)) ||
-	    ((p.x <= p0.x+CLOSE) && (p.x >= p1.x-CLOSE)))));
-
-}
-
-
-/* returns true if this voxel is in the elliptic cylinder */
-gboolean roi_voxel_in_elliptic_cylinder(const realpoint_t p,
-					const realpoint_t center,
-					const floatpoint_t height,
-					const realpoint_t radius) {
-
-  return ((1.0+2*CLOSE >= 
-	   (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
-	    pow((p.y-center.y),2.0)/pow(radius.y,2.0)))
-	  &&
-	  ((p.z > (center.z-height/2.0)-CLOSE) && 
-	   (p.z < (center.z+height/2.0)-CLOSE)));
-  
-}
-
-
-
-/* returns true if this voxel is in the ellipsoid */
-gboolean roi_voxel_in_ellipsoid(const realpoint_t p,
-				const realpoint_t center,
-				const realpoint_t radius) {
-
-  	  
-  return (1.0 + 3*CLOSE >= 
-	  (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
-	   pow((p.y-center.y),2.0)/pow(radius.y,2.0) +
-	   pow((p.z-center.z),2.0)/pow(radius.z,2.0)));
-}
-
 
 /* returns a singly linked list of intersection points between the roi
    and the given slice.  returned points are in the slice's coord_frame */
-GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
-					    const amide_roi_t * roi) {
+GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
+					    const roi_t * roi) {
 
 
   GSList * return_points = NULL;
@@ -412,14 +400,14 @@ GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
 
 	switch(roi->type) {
 	case BOX: 
-	  voxel_in = roi_voxel_in_box(temp_p, roi_corner[0],roi_corner[1]);
+	  voxel_in = realpoint_in_box(temp_p, roi_corner[0],roi_corner[1]);
 	  break;
 	case CYLINDER:
-	  voxel_in = roi_voxel_in_elliptic_cylinder(temp_p, center, 
+	  voxel_in = realpoint_in_elliptic_cylinder(temp_p, center, 
 						    height, radius);
 	  break;
 	case ELLIPSOID: 
-	  voxel_in = roi_voxel_in_ellipsoid(temp_p,center,radius);
+	  voxel_in = realpoint_in_ellipsoid(temp_p,center,radius);
 	  break;
 	default:
 	  g_printerr("roi type %d not fully implemented!\n",roi->type);
@@ -500,15 +488,14 @@ GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
 
 /* figure out the smallest subset of the given volume structure that the roi is 
    enclosed within */
-void roi_subset_of_volume(amide_roi_t * roi,
-			  amide_volume_t * volume,
+void roi_subset_of_volume(roi_t * roi,
+			  const volume_t * volume,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim){
 
   realpoint_t roi_corner[2];
   realpoint_t subset_corner[2];
   voxelpoint_t subset_index[2];
-  realpoint_t temp;
 
   g_assert(volume != NULL);
   g_assert(roi != NULL);
@@ -518,124 +505,14 @@ void roi_subset_of_volume(amide_roi_t * roi,
 					      roi->coord_frame);
   roi_corner[1] = roi->corner;
 
-
-
   /* look at all eight corners of the roi cube, figure out the max and min dim */
-
-  /* corner 0 */
-  temp = realspace_alt_coord_to_alt(roi_corner[0],
-				    roi->coord_frame,
-				    volume->coord_frame);
-  subset_corner[0] = subset_corner[1] = temp;
-
-  /* corner 1 */
-  temp.x = roi_corner[0].x;
-  temp.y = roi_corner[0].y;
-  temp.z = roi_corner[1].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 2 */
-  temp.x = roi_corner[0].x;
-  temp.y = roi_corner[1].y;
-  temp.z = roi_corner[0].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 3 */
-  temp.x = roi_corner[0].x;
-  temp.y = roi_corner[1].y;
-  temp.z = roi_corner[1].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 4 */
-  temp.x = roi_corner[1].x;
-  temp.y = roi_corner[0].y;
-  temp.z = roi_corner[0].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 5 */
-  temp.x = roi_corner[1].x;
-  temp.y = roi_corner[0].y;
-  temp.z = roi_corner[1].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 6 */
-  temp.x = roi_corner[1].x;
-  temp.y = roi_corner[1].y;
-  temp.z = roi_corner[0].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
-
-  /* corner 7 */
-  temp.x = roi_corner[1].x;
-  temp.y = roi_corner[1].y;
-  temp.z = roi_corner[1].z;
-  temp = realspace_alt_coord_to_alt(temp,
-				    roi->coord_frame,
-				    volume->coord_frame);
-  if (subset_corner[0].x > temp.x) subset_corner[0].x = temp.x;
-  if (subset_corner[1].x < temp.x) subset_corner[1].x = temp.x;
-  if (subset_corner[0].y > temp.y) subset_corner[0].y = temp.y;
-  if (subset_corner[1].y < temp.y) subset_corner[1].y = temp.y;
-  if (subset_corner[0].z > temp.z) subset_corner[0].z = temp.z;
-  if (subset_corner[1].z < temp.z) subset_corner[1].z = temp.z;
-
+  realspace_get_enclosing_corners(roi->coord_frame, roi_corner,
+				  volume->coord_frame, subset_corner);
+				  
 
   /* and convert the subset_corners into indexes */
-  VOLUME_REALPOINT_TO_INDEX(volume,subset_corner[0],subset_index[0]);
-  VOLUME_REALPOINT_TO_INDEX(volume,subset_corner[1],subset_index[1]);
+  subset_index[0] = volume_real_to_voxel(volume,subset_corner[0]);
+  subset_index[1] = volume_real_to_voxel(volume,subset_corner[1]);
 
   /* sanity checks */
   if (subset_index[0].x < 0) subset_index[0].x = 0;
@@ -665,12 +542,12 @@ void roi_subset_of_volume(amide_roi_t * roi,
    each voxel up into when calculating our statistics.  Setting the grain
    to something more than 1 [GRAIN_1], such as 8 [GRAIN_8] or 64 [GRAIN_64]
    may be useful for getting accurate statistics on small roi's */
-amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi, 
-					    amide_volume_t * volume,
-					    roi_grain_t grain,
-					    guint frame) {
+roi_analysis_t roi_calculate_analysis(roi_t * roi, 
+				      const volume_t * volume,
+				      roi_grain_t grain,
+				      guint frame) {
   
-  amide_roi_analysis_t analysis;
+  roi_analysis_t analysis;
   realpoint_t roi_corner[2];
   realpoint_t center, radius,roi_p, volume_p;
   floatpoint_t height;
@@ -706,7 +583,7 @@ amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi,
     realspace_alt_coord_to_alt(center,
 			       roi->coord_frame,
 			       volume->coord_frame);
-  VOLUME_REALPOINT_TO_INDEX(volume,volume_p,i);
+  i = volume_real_to_voxel(volume,volume_p);
   temp_data = VOLUME_CONTENTS(volume, frame, i);
   
   analysis.voxels = 1.0; 
@@ -770,14 +647,14 @@ amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi,
 	      /* determine if it's in or not */
 	      switch(roi->type) {
 	      case BOX: 
-		voxel_in = roi_voxel_in_box(roi_p, roi_corner[0],roi_corner[1]);
+		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 		break;
 	      case CYLINDER:
-		voxel_in = roi_voxel_in_elliptic_cylinder(roi_p, center, 
+		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, 
 							  height, radius);
 		break;
 	      case ELLIPSOID: 
-		voxel_in = roi_voxel_in_ellipsoid(roi_p,center,radius);
+		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
 		break;
 	      default:
 		g_printerr("roi type %d not fully implemented!\n",roi->type);
@@ -829,14 +706,14 @@ amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi,
 	      /* determine if it's in or not */
 	      switch(roi->type) {
 	      case BOX: 
-		voxel_in = roi_voxel_in_box(roi_p, roi_corner[0],roi_corner[1]);
+		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 		break;
 	      case CYLINDER:
-		voxel_in = roi_voxel_in_elliptic_cylinder(roi_p, center, 
+		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, 
 							  height, radius);
 		break;
 	      case ELLIPSOID: 
-		voxel_in = roi_voxel_in_ellipsoid(roi_p,center,radius);
+		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
 		break;
 	      default:
 		g_printerr("roi type %d not fully implemented!\n",roi->type);

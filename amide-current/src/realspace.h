@@ -122,6 +122,18 @@ typedef struct realspace_t {
 
 
 /* external functions */
+gboolean realpoint_in_box(const realpoint_t p,
+			  const realpoint_t p0,
+			  const realpoint_t p1);
+gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
+					const realpoint_t center,
+					const floatpoint_t height,
+					const realpoint_t radius);
+gboolean realpoint_in_ellipsoid(const realpoint_t p,
+				const realpoint_t center,
+				const realpoint_t radius);
+void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const realpoint_t in_corner[], 
+				     const realspace_t out_coord_frame, realpoint_t out_corner[] );
 void realspace_make_orthogonal(realpoint_t axis[]);
 void realspace_make_orthonormal(realpoint_t axis[]);
 realpoint_t realspace_rotate_on_axis(const realpoint_t * in,

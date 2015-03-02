@@ -1,4 +1,4 @@
-/* ui_study_rois2.h
+/* ui_rendering_callbacks.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001 Andy Loening
@@ -22,20 +22,17 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
   02111-1307, USA.
 */
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-/* this is a continuation of ui_study_rois.h, it gets around some data
-   dependencies (i.e. some functions use ui_study_t) */
 
 /* external functions */
-GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study, 
-						   view_t i, 
-						   GnomeCanvasItem * roi_item,
-						   amide_roi_t * roi);
-void ui_study_rois_update_canvas_rois(ui_study_t * ui_study, view_t i);
-void ui_study_rois_calculate(ui_study_t * ui_study, gboolean All);
+void ui_rendering_callbacks_render(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_immediate(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_rotate(GtkAdjustment * adjustment, gpointer data);
+void ui_rendering_parameters_pressed(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 
 
 
 
-
-
+#endif

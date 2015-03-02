@@ -32,11 +32,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_time_dialog.h"
 #include "ui_time_dialog_callbacks.h"
@@ -50,8 +51,8 @@ static gchar * column_names[] =  {"Start (s)", \
 /* function to setup the time combo widget */
 void ui_time_dialog_set_times(ui_study_t * ui_study) {
   
-  ui_study_volume_list_t * volumes;
-  amide_volume_t * min_volume;
+  ui_volume_list_t * ui_volume_list;
+  volume_t * min_volume;
   GtkWidget * clist;
   guint num_volumes;
   guint i_volume, min_volume_num;
@@ -74,12 +75,12 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   new_time = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "new_time");
 
   /* count the number of volumes */
-  volumes = ui_study->current_volumes;
+  ui_volume_list = ui_study->current_volumes;
   num_volumes=0;
-  while (volumes != NULL) {
+  while (ui_volume_list != NULL) {
     num_volumes++;
-    total_frames += volumes->volume->num_frames;
-    volumes=volumes->next;
+    total_frames += ui_volume_list->volume->num_frames;
+    ui_volume_list = ui_volume_list->next;
   }
 
   /* get space for the array that'll take care of which frame of which volume we're looking at*/
@@ -113,31 +114,31 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   /* start generating our list of options */
   current_frames=0;
   while (current_frames < total_frames) {
-    volumes = ui_study->current_volumes;
+    ui_volume_list = ui_study->current_volumes;
 
     /* initialize the variables with the first volume on the volumes list */
     i_volume=0;
-    while (volumes->volume->num_frames <= frames[i_volume]) {
-      volumes = volumes->next; /* advancing to a volume that still has frames left */
+    while (ui_volume_list->volume->num_frames <= frames[i_volume]) {
+      ui_volume_list = ui_volume_list->next; /* advancing to a volume that still has frames left */
       i_volume++;
     }
-    min_volume = volumes->volume;
+    min_volume = ui_volume_list->volume;
     min_volume_num = i_volume;
     min = volume_start_time(min_volume,frames[i_volume]);
 
-    volumes = volumes->next;
+    ui_volume_list = ui_volume_list->next;
     i_volume++;
-    while (volumes != NULL) {
-      if (frames[i_volume] < volumes->volume->num_frames) {
-	temp = volume_start_time(volumes->volume, frames[i_volume]);
+    while (ui_volume_list != NULL) {
+      if (frames[i_volume] < ui_volume_list->volume->num_frames) {
+	temp = volume_start_time(ui_volume_list->volume, frames[i_volume]);
 	if (temp < min) {
-	  min_volume = volumes->volume;
+	  min_volume = ui_volume_list->volume;
 	  min = temp;
 	  min_volume_num = i_volume;
 	}	
       }
       i_volume++;
-      volumes = volumes->next;
+      ui_volume_list = ui_volume_list->next;
     }
     
     /* we now have the next minimum start time */

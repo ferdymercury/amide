@@ -32,13 +32,13 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
-#include "ui_study_rois2.h"
 #include "ui_study_rois_callbacks.h"
 
 
@@ -49,13 +49,13 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 				       gpointer data) {
 
   ui_study_t * ui_study = data;
-  ui_study_roi_list_t * temp_roi_list;
+  ui_roi_list_t * temp_roi_list;
   realpoint_t real_loc, view_loc;
   view_t i_view;
   axis_t i_axis;
   floatpoint_t view_width,view_height;
   realpoint_t item, diff;
-  amide_volume_t * volume;
+  volume_t * volume;
   GdkCursor * cursor;
   realpoint_t t[3]; /* temp variables */
   realpoint_t new_center, new_radius, view_center, view_radius;
@@ -65,7 +65,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   static realpoint_t initial_view_loc;
   static realpoint_t last_pic_loc;
   static gboolean dragging = FALSE;
-  static ui_study_roi_list_t * current_roi_list_item = NULL;
+  static ui_roi_list_t * current_roi_list_item = NULL;
   static GnomeCanvasItem * roi_item = NULL;
   static double theta;
   static realpoint_t zoom;
@@ -74,7 +74,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   /* sanity checks */
   if (ui_study->current_mode == VOLUME_MODE) 
     return TRUE;
-  if (ui_study->study->volumes == NULL)
+  if (study_get_volumes(ui_study->study) == NULL)
     return TRUE;
   for (i_view=0; i_view<NUM_VIEWS; i_view++)
     if (ui_study->current_slices[i_view] == NULL)
@@ -82,7 +82,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = ui_study->study->volumes->volume;
+    volume = study_get_first_volume(ui_study->study);
   else
     volume = ui_study->current_volume;
 		   
@@ -405,9 +405,9 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       /* update the roi */
       for (i_view=0;i_view<NUM_VIEWS;i_view++) {
 	current_roi_list_item->canvas_roi[i_view] =
-	  ui_study_rois_update_canvas_roi(ui_study,i_view,
-					  current_roi_list_item->canvas_roi[i_view],
-					  current_roi_list_item->roi);
+	  ui_study_update_canvas_roi(ui_study,i_view,
+				     current_roi_list_item->canvas_roi[i_view],
+				     current_roi_list_item->roi);
       }
       
       break;
@@ -425,7 +425,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 void ui_study_rois_callbacks_calculate_all(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
 
-  ui_study_rois_calculate(ui_study, TRUE);
+  ui_study_rois_callbacks_calculate(ui_study, TRUE);
 
   return;
 
@@ -434,7 +434,131 @@ void ui_study_rois_callbacks_calculate_all(GtkWidget * widget, gpointer data) {
 void ui_study_rois_callbacks_calculate_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
 
-  ui_study_rois_calculate(ui_study, FALSE);
+  ui_study_rois_callbacks_calculate(ui_study, FALSE);
+
+  return;
+}
+
+
+
+
+
+/* analyse the roi's, if All is true, do all roi's, otherwise only
+   do selected roi's */
+void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
+
+  GnomeApp * app;
+  gchar * title;
+  gchar * line;
+  guint i=0;
+  guint j;
+  volume_t * volume;
+  GtkWidget * packing_table;
+  GtkWidget * text;
+  roi_list_t * roi_list;
+  roi_list_t * temp_roi_list;
+  roi_analysis_t analysis;
+  ui_roi_list_t * current_roi_list;
+
+  /* sanity check */
+  if (study_get_volumes(ui_study->study) == NULL)
+    return;
+  
+  /* figure out which volume we're dealing with */
+  if (ui_study->current_volume == NULL)
+    volume = study_get_first_volume(ui_study->study);
+  else
+    volume = ui_study->current_volume;
+
+  /* get the list of roi's we're going to be calculating over */
+  if (all)
+    roi_list = roi_list_copy(study_get_rois(ui_study->study));
+  else {
+    current_roi_list = ui_study->current_rois;
+    roi_list = NULL;
+    while (current_roi_list != NULL) {
+      roi_list = roi_list_add_roi(roi_list, current_roi_list->roi);
+      current_roi_list = current_roi_list->next;
+    }
+  }
+
+  /* start setting up the widget we'll display the info from */
+  title = g_strdup_printf("Roi Analysis: Study %s", study_get_name(ui_study->study));
+  app = GNOME_APP(gnome_app_new(PACKAGE, title));
+  g_free(title);
+
+  /* setup the callbacks for app */
+  gtk_signal_connect(GTK_OBJECT(app), "delete_event",
+                     GTK_SIGNAL_FUNC(ui_study_rois_callbacks_delete_event),
+                     ui_study);
+                      
+
+ /* make the widgets for this dialog box */
+  packing_table = gtk_table_new(1,1,FALSE);
+  gnome_app_set_contents(app, GTK_WIDGET(packing_table));
+                          
+
+  /* create the text widget */
+  text = gtk_text_new(NULL,NULL);
+  gtk_text_set_editable(GTK_TEXT(text), FALSE); /* don't want user to edit */
+  gtk_text_set_word_wrap(GTK_TEXT(text), FALSE); 
+  gtk_text_set_line_wrap(GTK_TEXT(text), FALSE);
+  gtk_widget_set_usize(GTK_WIDGET(text), 700,0);
+  
+  line = g_strdup_printf("Roi Analysis:\t\tStudy: %s\t\tVolume: %s\n",
+			 study_get_name(ui_study->study), volume->name);
+  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+  g_free(line);
+
+  line = g_strdup_printf("-------------------------------------------------\n");
+  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+  g_free(line);
+
+  line = g_strdup_printf("Roi #\tFrame\tVoxels\t\tMean\t\tVar\t\t\tStd E\t\tMin\t\t\tMax\t\t\t\tRoi Name\t\tType\n");
+  gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+  g_free(line);
+
+  temp_roi_list = roi_list;
+  while(temp_roi_list != NULL) {
+    for (j=0;j<volume->num_frames;j++) {
+      /* calculate the info for this roi */
+      i++;
+      analysis = roi_calculate_analysis(temp_roi_list->roi,volume,
+					temp_roi_list->roi->grain,
+					j);
+      
+      /* print the info for this roi */
+      line = 
+	g_strdup_printf("%d\t%d\t\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%5.3f\t\t%s\t\t%s\n",
+			i, 
+			j,
+			analysis.voxels,
+			analysis.mean,
+			analysis.var,
+			sqrt(analysis.var/analysis.voxels),
+			analysis.min,
+			analysis.max,
+			temp_roi_list->roi->name,
+			roi_type_names[temp_roi_list->roi->type]);
+      gtk_text_insert(GTK_TEXT(text), NULL, NULL, NULL, line, -1);
+      g_free(line);
+    }
+    temp_roi_list = temp_roi_list->next; /* go to next roi */
+  }
+
+
+  /* and throw the text box into the packing table */
+  gtk_table_attach(GTK_TABLE(packing_table),
+		   GTK_WIDGET(text), 0,1,0,1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   Y_PACKING_OPTIONS | GTK_FILL,
+		   X_PADDING, Y_PADDING);
+
+  /* deallocate our roi list if we created it */
+  roi_list = roi_list_free(roi_list);
+
+  /* and show all our widgets */
+  gtk_widget_show_all(GTK_WIDGET(app));
 
   return;
 }

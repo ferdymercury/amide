@@ -91,22 +91,16 @@ void raw_data_read_file(raw_data_info_t * raw_data_info) {
   
   /* malloc the space for the volume data */
   g_free(raw_data_info->volume->data); /* make sure we're doing garbage collection */
-  raw_data_info->volume->data = (volume_data_t * ) g_malloc(raw_data_info->volume->num_frames *
-							    raw_data_info->volume->dim.z *
-							    raw_data_info->volume->dim.y *
-							    raw_data_info->volume->dim.x * 
-							    sizeof(volume_data_t));
-  
-  if (raw_data_info->volume->data == NULL) {
+  if ((raw_data_info->volume->data = volume_get_data_mem(raw_data_info->volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the volume\n",PACKAGE);
-    volume_free(&(raw_data_info->volume));
+    raw_data_info->volume = volume_free(raw_data_info->volume);
     return;
   }
 
   /* open the file for reading */
   if ((file_pointer = fopen(raw_data_info->filename, "r")) == NULL) {
     g_warning("%s: couldn't open raw data file %s\n", PACKAGE,raw_data_info->filename);
-    volume_free(&(raw_data_info->volume));
+    raw_data_info->volume = volume_free(raw_data_info->volume);
     return;
   }
   
@@ -114,7 +108,7 @@ void raw_data_read_file(raw_data_info_t * raw_data_info) {
   if (fseek(file_pointer, raw_data_info->offset, SEEK_SET) != 0) {
     g_warning("%s: could not seek forward %d bytes in raw data file:\n\t%s\n",
 	      PACKAGE, raw_data_info->offset, raw_data_info->filename);
-    volume_free(&(raw_data_info->volume));
+    raw_data_info->volume = volume_free(raw_data_info->volume);
     fclose(file_pointer);
     return;
   }
@@ -126,7 +120,7 @@ void raw_data_read_file(raw_data_info_t * raw_data_info) {
   if (bytes_read != bytes_to_read) {
     g_warning("%s: read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d\n", 
 	      PACKAGE,raw_data_info->filename, bytes_to_read, bytes_read);
-    volume_free(&(raw_data_info->volume));
+    raw_data_info->volume = volume_free(raw_data_info->volume);
     g_free(file_buffer);
     fclose(file_pointer);
     return;
@@ -139,11 +133,9 @@ void raw_data_read_file(raw_data_info_t * raw_data_info) {
   raw_data_info->volume->scan_start = 0.0;
   
   /* allocate space for the array containing info on the duration of the frames */
-  raw_data_info->volume->frame_duration = 
-    (volume_time_t *) g_malloc(raw_data_info->volume->num_frames*sizeof(volume_time_t));
-  if (raw_data_info->volume->frame_duration == NULL) {
+  if ((raw_data_info->volume->frame_duration = volume_get_frame_duration_mem(raw_data_info->volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
-    volume_free(&(raw_data_info->volume));
+    raw_data_info->volume = volume_free(raw_data_info->volume);
     g_free(file_buffer);
     return;
   }
@@ -728,11 +720,11 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-amide_volume_t * raw_data_import(gchar * raw_data_filename) {
+volume_t * raw_data_import(gchar * raw_data_filename) {
 
   struct stat file_info;
   raw_data_info_t * raw_data_info;
-  amide_volume_t * temp_volume;
+  volume_t * temp_volume;
   gint dialog_reply;
 
   /* get space for our raw_data_info structure */
@@ -772,7 +764,7 @@ amide_volume_t * raw_data_import(gchar * raw_data_filename) {
   if (dialog_reply == 0) {
     raw_data_read_file(raw_data_info);
   } else /* we hit the cancel button */
-    volume_free(&temp_volume);
+    temp_volume = volume_free(temp_volume);
 
   g_free(raw_data_info->filename);
   g_free(raw_data_info); /* note, we've saved a pointer to raw_data_info->volume in temp_volume */

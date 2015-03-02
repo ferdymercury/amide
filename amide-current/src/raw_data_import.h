@@ -41,7 +41,7 @@ typedef struct raw_data_info_t {
   guint offset;
   GtkWidget * num_bytes_label;
   GtkWidget * dialog;
-  amide_volume_t * volume;
+  volume_t * volume;
 } raw_data_info_t;
 
 /* internal functions */
@@ -51,7 +51,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info);
 guint raw_data_calc_num_bytes(raw_data_info_t * raw_data_info);
 void raw_data_read_file(raw_data_info_t * raw_data_info);
 guint raw_data_ui_num_bytes(raw_data_info_t * raw_data_info);
-amide_volume_t * raw_data_import(gchar * filename);
+volume_t * raw_data_import(gchar * filename);
 
 /* external variables */
 extern gchar * data_format_names[];

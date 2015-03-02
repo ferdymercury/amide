@@ -26,71 +26,66 @@
 typedef enum {GROUP, ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
 typedef enum {GRAINS_1, GRAINS_8, GRAINS_27, GRAINS_64, NUM_GRAIN_TYPES} roi_grain_t;
 
-typedef struct _amide_roi_t amide_roi_t;
-typedef struct _amide_roi_list_t amide_roi_list_t;
+typedef struct _roi_t roi_t;
+typedef struct _roi_list_t roi_list_t;
 
 /* the amide roi structure */
-struct _amide_roi_t {
+struct _roi_t {
   gchar * name;
   roi_type_t type;
   realspace_t coord_frame;
   realpoint_t corner; /*far corner,near corner is always 0,0,0 in roi coord frame*/
-  amide_roi_t * parent;
-  amide_roi_list_t * children;
+  roi_t * parent;
+  roi_list_t * children;
   roi_grain_t grain; /* how fine a grain to calculate this roi at */
+
+  /* stuff that doesn't need to be saved */
+  guint reference_count;
 };
 
-/* used to make a linked list of amide_roi_t's */
-struct _amide_roi_list_t {
-  amide_roi_t * roi;
-  amide_roi_list_t * next;
+/* used to make a linked list of roi_t's */
+struct _roi_list_t {
+  roi_t * roi;
+  guint reference_count;
+  roi_list_t * next;
 };
 
 /* structure containing the results of an roi analysis */
-typedef struct amide_roi_analysis_t {
+typedef struct roi_analysis_t {
   volume_data_t mean;
   volume_data_t voxels;
   volume_data_t var;
   volume_data_t min;
   volume_data_t max;
-} amide_roi_analysis_t;
+} roi_analysis_t;
 
 /* external functions */
-void roi_free(amide_roi_t ** proi);
-void roi_list_free(amide_roi_list_t ** proi_list);
-amide_roi_t * roi_init(void);
-void roi_copy(amide_roi_t ** dest_roi, amide_roi_t * src_roi);
-void roi_set_name(amide_roi_t * roi, gchar * new_name);
-realpoint_t roi_calculate_center(const amide_roi_t * roi);
-amide_roi_list_t * roi_list_init(void);
-gboolean roi_list_includes_roi(amide_roi_list_t *list, amide_roi_t * roi);
-void roi_list_add_roi(amide_roi_list_t ** plist, amide_roi_t * roi);
-void roi_list_add_roi_first(amide_roi_list_t ** plist, amide_roi_t * roi);
-void roi_list_remove_roi(amide_roi_list_t ** plist, amide_roi_t * roi);
-void roi_list_copy(amide_roi_list_t ** dest_roi_list, amide_roi_list_t * src_roi_list);
+roi_t * roi_free(roi_t * roi);
+roi_t * roi_init(void);
+roi_t * roi_copy(roi_t * src_roi);
+roi_t * roi_add_reference(roi_t * roi);
+void roi_set_name(roi_t * roi, gchar * new_name);
+realpoint_t roi_calculate_center(const roi_t * roi);
+roi_list_t * roi_list_free(roi_list_t *roi_list);
+roi_list_t * roi_list_init(void);
+gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
+roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
+roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
+roi_list_t * roi_list_remove_roi(roi_list_t * list, roi_t * roi);
+roi_list_t * roi_list_copy(roi_list_t * src_roi_list);
 void roi_free_points_list(GSList ** plist);
-gboolean roi_undrawn(const amide_roi_t * roi);
-GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
-					    const amide_roi_t * roi);
-amide_roi_analysis_t roi_calculate_analysis(amide_roi_t * roi, 
-					    amide_volume_t * volume,
-					    roi_grain_t grain,
-					    guint frame);
+gboolean roi_undrawn(const roi_t * roi);
+GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
+					    const roi_t * roi);
+roi_analysis_t roi_calculate_analysis(roi_t * roi, 
+				      const volume_t * volume,
+				      roi_grain_t grain,
+				      guint frame);
 
 
 /* internal functions */
-gboolean roi_voxel_in_box(const realpoint_t p,
-			  const realpoint_t p0,
-			  const realpoint_t p1);
-gboolean roi_voxel_in_elliptic_cylinder(const realpoint_t p,
-					const realpoint_t center,
-					const floatpoint_t height,
-					const realpoint_t radius);
-gboolean roi_voxel_in_ellipsoid(const realpoint_t p,
-				const realpoint_t center,
-				const realpoint_t radius);
-void roi_subset_of_volume(amide_roi_t * roi,
-			  amide_volume_t * volume,
+void roi_subset_of_volume(roi_t * roi,
+			  const volume_t * volume,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim);
 

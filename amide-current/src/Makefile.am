@@ -18,12 +18,16 @@ amide_SOURCES = \
 	image.h \
 	medcon_import.c \
 	medcon_import.h \
+	objects.c \
+	objects.h \
 	realspace.c \
 	realspace.h \
 	raw_data_import.c \
 	raw_data_import.h \
 	raw_data_import_callbacks.c \
 	raw_data_import_callbacks.h \
+	rendering.c \
+	rendering.h \
 	roi.c \
 	roi.h \
 	study.c \
@@ -34,6 +38,16 @@ amide_SOURCES = \
 	ui_main_callbacks.h \
 	ui_main_menus.c \
 	ui_main_menus.h \
+	ui_rendering.c \
+	ui_rendering.h \
+	ui_rendering_callbacks.c \
+	ui_rendering_callbacks.h \
+	ui_rendering_dialog.c \
+	ui_rendering_dialog.h \
+	ui_rendering_dialog_callbacks.c \
+	ui_rendering_dialog_callbacks.h \
+	ui_roi.c \
+	ui_roi.h \
 	ui_roi_dialog.c \
 	ui_roi_dialog.h \
 	ui_roi_dialog_callbacks.c \
@@ -49,13 +63,8 @@ amide_SOURCES = \
 	ui_study_callbacks.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
-	ui_study_rois.c \
-	ui_study_rois.h \
-	ui_study_rois2.h \
 	ui_study_rois_callbacks.c \
 	ui_study_rois_callbacks.h \
-	ui_study_volumes.c \
-	ui_study_volumes.h \
 	ui_threshold.c \
 	ui_threshold.h \
 	ui_threshold2.h \
@@ -65,6 +74,8 @@ amide_SOURCES = \
 	ui_time_dialoh.h \
 	ui_time_dialog_callbacks.c \
 	ui_time_dialoh_callbacks.h \
+	ui_volume.c \
+	ui_volume.h \
 	ui_volume_dialog.c \
 	ui_volume_dialog.h \
 	ui_volume_dialog_callbacks.c \
@@ -78,5 +89,6 @@ amide_LDADD = \
 	$(INTLLIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBMDC_LIBS) \
+	$(AMIDE_LIBVOLPACK_LIBS) \
 	-L/usr/local/lib 
 

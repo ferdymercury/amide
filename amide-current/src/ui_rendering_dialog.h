@@ -1,4 +1,4 @@
-/* ui_series.h
+/* ui_rendering_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001 Andy Loening
@@ -23,32 +23,13 @@
   02111-1307, USA.
 */
 
-#define UI_SERIES_BORDER 2
-
-/* ui_series data structures */
-typedef struct ui_series_t {
-  GnomeApp * app; /* pointer to the threshold window for this study */
-  volume_list_t ** slices;
-  volume_list_t * volumes;
-  GnomeCanvas * canvas;
-  GnomeCanvasItem ** images;
-  GdkImlibImage ** rgb_images;
-  guint num_slices, rows, columns;
-  realspace_t coord_frame;
-  realpoint_t start;
-  floatpoint_t thickness;
-  volume_time_t time;
-  volume_time_t duration;
-  interpolation_t interpolation;
-  floatpoint_t zoom;
-  guint reference_count;
-} ui_series_t;
 
 /* external functions */
-void ui_series_slices_free(ui_series_t * ui_series);
-ui_series_t * ui_series_free(ui_series_t * ui_series);
-ui_series_t * ui_series_init(void);
-/* continued in ui_series2.h */
+void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which);
+void ui_rendering_dialog_create(ui_rendering_t * ui_rendering);
+
+
+
 
 
 

@@ -31,11 +31,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_series2.h"
 #include "ui_threshold2.h"
@@ -62,7 +63,7 @@ void ui_series_callbacks_delete_event(GtkWidget* widget, GdkEvent * event,
   gtk_widget_destroy(widget);
 
   /* free the associated data structure */
-  ui_series_free(&(ui_study->series));
+  ui_study->series = ui_series_free(ui_study->series);
 
   return;
 }

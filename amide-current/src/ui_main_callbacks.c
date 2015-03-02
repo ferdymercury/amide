@@ -31,11 +31,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_main_callbacks.h"
 
@@ -61,20 +62,66 @@ void ui_main_callbacks_open_study(GnomeApp* app, gpointer data) {
 void ui_main_callbacks_about(GnomeApp* app, gpointer data) {
 
   GtkWidget *about;
+
   const gchar *authors[] = {
     "Andy Loening <loening@ucla.edu>",
     NULL
   };
 
+  const gchar *contents_base = \
+    _("Amide's a Medical Image Data Examiner\n   \n");
+
+  const gchar * contents_compiled = \
+    _("compiled with support for the following libraries:");
+
+#ifdef AMIDE_LIBECAT_SUPPORT
+  const gchar *contents_libecat = \
+    _("\tlibecat: CTI File library by Merence Sibomona");
+#endif
+
+#ifdef AMIDE_LIBMDC_SUPPORT
+  const gchar *contents_libmdc = \
+    _("\tlibmdc: Medical Imaging File library by Erik Nolf");
+#endif
+
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+  const gchar *contents_libvolpack = \
+    _("\tlibvolpack: Volume Rendering library by Philippe Lacroute");
+#endif
+
+
+  gchar * contents;
+
+
+
+  contents = g_strjoin("\n", 
+		       contents_base,
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
+		       contents_compiled,
+#endif
+#ifdef AMIDE_LIBECAT_SUPPORT
+		       contents_libecat,
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+		       contents_libmdc,
+#endif
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+		       contents_libvolpack,
+#endif
+		       NULL);
+
+
   about = gnome_about_new(PACKAGE, VERSION, 
 			  "(c) 2001 Andy Loening",
 			  authors,
-			  _("Amide's a Medical Image Data Examiner"),
+			  contents,
 			  "amide.png");
 
   gtk_window_set_modal(GTK_WINDOW(about), FALSE);
 
   gtk_widget_show(about);
+
+  g_free(contents);
 
   return;
 }

@@ -33,8 +33,8 @@
 #include "color_table.h"
 #include "volume.h"
 #include "color_table2.h"
+#include "rendering.h"
 #include "image.h"
-
 
 /* external variables */
 gchar * scaling_names[] = {"per slice", "global"};
@@ -42,10 +42,10 @@ gchar * scaling_names[] = {"per slice", "global"};
 
 
 /* function to return a blank image */
-GdkImlibImage * image_blank(const gint width, const gint height) {
+GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height) {
   
   GdkImlibImage * temp_image;
-  gint i,j;
+  intpoint_t i,j;
   guchar * rgb_data;
   
   if ((rgb_data = 
@@ -67,17 +67,119 @@ GdkImlibImage * image_blank(const gint width, const gint height) {
   return temp_image;
 }
 
+
+/* function returns a GdkImlibImage from 8 bit data */
+GdkImlibImage * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
+				const color_table_t color_table) {
+  
+  GdkImlibImage * temp_image;
+  intpoint_t i,j;
+  guchar * rgb_data;
+  color_point_t rgb_temp;
+  guint location;
+
+  if ((rgb_data = 
+       (guchar *) g_malloc(sizeof(guchar) * 3 * width * height)) == NULL) {
+    g_warning("%s: couldn't allocate memory for image from 8 bit data",PACKAGE);
+    return NULL;
+  }
+
+
+  for (i=0 ; i < height; i++)
+    for (j=0; j < width; j++) {
+      rgb_temp = color_table_lookup(image[i*width+j], color_table, 0, RENDERING_DENSITY_MAX);
+      location = i*width*3+j*3;
+      rgb_data[location+0] = rgb_temp.r;
+      rgb_data[location+1] = rgb_temp.r;
+      rgb_data[location+2] = rgb_temp.r;
+    }
+
+  /* generate the GdkImlibImage from the rgb_data */
+  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
+  
+  return temp_image;
+}
+
+/* function returns a GdkImlibImage from a rendering context */
+GdkImlibImage * image_from_renderings(rendering_list_t * contexts, gint16 width, gint16 height) {
+
+  gint16 * temp_data;
+  guchar * rgb_data;
+  voxelpoint_t i;
+  color_point_t rgb_temp;
+  guint location;
+  GdkImlibImage * temp_image;
+
+  /* malloc space for a temporary storage buffer */
+  if ((temp_data = (guint16 *) g_malloc(sizeof(guint16) * 3 * width * height)) == NULL) {
+    g_warning("%s: couldn't allocate memory for temp_data for transfering rendering to image",PACKAGE);
+    return NULL;
+  }
+  /* and initialize it */
+  i.z = 0;
+  for (i.y = 0; i.y < height; i.y++) 
+    for (i.x = 0; i.x < width; i.x++) {
+      location = i.y*width*3+i.x*3;
+      temp_data[location+0] = 0;
+      temp_data[location+1] = 0;
+      temp_data[location+2] = 0;
+    }
+
+  /* iterate through the contexts, tranfering the image data into the temp storage buffer */
+  while (contexts != NULL) {
+    i.z = 0;
+    for (i.y = 0; i.y < height; i.y++) 
+      for (i.x = 0; i.x < width; i.x++) {
+	rgb_temp = color_table_lookup(contexts->rendering_context->image[i.x+i.y*width], 
+				      contexts->rendering_context->volume->color_table, 
+				      0, RENDERING_DENSITY_MAX);
+	location = i.y*width*3+i.x*3;
+	temp_data[location+0] += rgb_temp.r;
+	temp_data[location+1] += rgb_temp.g;
+	temp_data[location+2] += rgb_temp.b;
+      }
+
+    contexts = contexts->next;
+  }
+
+  /* malloc space for the true rgb buffer */
+  if ((rgb_data = (guchar *) g_malloc(sizeof(guchar) * 3 * height * width)) == NULL) {
+    g_warning("%s: couldn't allocate memory for rgb_data for rendering image",PACKAGE);
+    g_free(temp_data);
+    return NULL;
+  }
+
+  /* now convert our temp rgb data to real rgb data */
+  i.z = 0;
+  for (i.y = 0; i.y < height; i.y++) 
+    for (i.x = 0; i.x < width; i.x++) {
+      location = i.y*width*3+i.x*3;
+      rgb_data[location+0] = (temp_data[location+0] < 0xFF) ? temp_data[location+0] : 0xFF;
+      rgb_data[location+1] = (temp_data[location+1] < 0xFF) ? temp_data[location+1] : 0xFF;
+      rgb_data[location+2] = (temp_data[location+2] < 0xFF) ? temp_data[location+2] : 0xFF;
+    }
+
+  /* from the rgb_data, generate a GdkImlibImage */
+  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, width, height);
+
+  /* no longer need the data */
+  g_free(rgb_data); 
+  g_free(temp_data);
+
+  return temp_image;
+}
+
 /* function to make the bar graph to put next to the color_strip image */
-GdkImlibImage * image_of_distribution(amide_volume_t * volume,
-				      const gint width, 
-				      const gint height) {
+GdkImlibImage * image_of_distribution(volume_t * volume,
+				      const intpoint_t width, 
+				      const intpoint_t height) {
 
   voxelpoint_t i;
   GdkImlibImage * temp_image;
   volume_data_t scale;
   guchar * rgb_data;
   guint frame;
-  guint32 j, k;
+  intpoint_t j, k;
   volume_data_t max;
 
 
@@ -161,14 +263,14 @@ GdkImlibImage * image_of_distribution(amide_volume_t * volume,
 
 /* function to make the color_strip image */
 GdkImlibImage * image_from_colortable(const color_table_t color_table,
-				      const gint width, 
-				      const gint height,
+				      const intpoint_t width, 
+				      const intpoint_t height,
 				      const volume_data_t min,
 				      const volume_data_t max,
 				      const volume_data_t volume_min,
 				      const volume_data_t volume_max) {
 
-  guint i,j;
+  intpoint_t i,j;
   color_point_t color;
   GdkImlibImage * temp_image;
   volume_data_t datum;
@@ -205,8 +307,8 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
   return temp_image;
 }
 
-GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
-				   amide_volume_list_t * volumes,
+GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
+				   volume_list_t * volumes,
 				   const volume_time_t start,
 				   const volume_time_t duration,
 				   const floatpoint_t thickness,
@@ -223,12 +325,12 @@ GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
   volume_data_t max,min;
   GdkImlibImage * temp_image;
   color_point_t rgb_temp;
-  amide_volume_list_t * slices;
-  amide_volume_list_t * temp_slices;
-  amide_volume_list_t * temp_volumes;
+  volume_list_t * slices;
+  volume_list_t * temp_slices;
+  volume_list_t * temp_volumes;
 
   /* sanity checks */
-  g_assert(volumes != NULL);
+  g_return_val_if_fail(volumes != NULL, NULL);
 #ifdef AMIDE_DEBUG
   if ((*pslices) != NULL) {
     temp_slices = *pslices;
@@ -330,6 +432,7 @@ GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
 
   
 
+  /* from the rgb_data, generate a GdkImlibImage */
   temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL,dim.x, dim.y);
 
   /* no longer need the data */

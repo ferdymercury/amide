@@ -48,6 +48,96 @@ const realpoint_t realpoint_init = {0.0,0.0,0.0};
 const voxelpoint_t voxelpoint_init = {0,0,0};
 
 
+/* returns true if the realpoint is in the given box */
+gboolean realpoint_in_box(const realpoint_t p,
+			  const realpoint_t p0,
+			  const realpoint_t p1) {
+
+
+  return (
+	  (
+	   (
+	    ((p.z >= p0.z-CLOSE) && (p.z <= p1.z+CLOSE)) ||
+	    ((p.z <= p0.z+CLOSE) && (p.z >= p1.z-CLOSE))) && 
+	   (
+	    ((p.y >= p0.y-CLOSE) && (p.y <= p1.y+CLOSE)) ||
+	    ((p.y <= p0.y+CLOSE) && (p.y >= p1.y-CLOSE))) && 
+	   (
+	    ((p.x >= p0.x-CLOSE) && (p.x <= p1.x+CLOSE)) ||
+	    ((p.x <= p0.x+CLOSE) && (p.x >= p1.x-CLOSE)))));
+
+}
+
+
+/* returns true if the realpoint is in the elliptic cylinder 
+   note: height is in the z direction, and radius.z isn't used for anything */
+gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
+					const realpoint_t center,
+					const floatpoint_t height,
+					const realpoint_t radius) {
+
+  return ((1.0+2*CLOSE >= 
+	   (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
+	    pow((p.y-center.y),2.0)/pow(radius.y,2.0)))
+	  &&
+	  ((p.z > (center.z-height/2.0)-CLOSE) && 
+	   (p.z < (center.z+height/2.0)-CLOSE)));
+  
+}
+
+
+
+/* returns true if the realpoint is in the ellipsoid */
+gboolean realpoint_in_ellipsoid(const realpoint_t p,
+				const realpoint_t center,
+				const realpoint_t radius) {
+
+  	  
+  return (1.0 + 3*CLOSE >= 
+	  (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
+	   pow((p.y-center.y),2.0)/pow(radius.y,2.0) +
+	   pow((p.z-center.z),2.0)/pow(radius.z,2.0)));
+}
+
+
+/* given the ordered corners[] (i.e corner[0].x < corner[1].x, etc.)
+   and the coord_space of those corners, this function will return an
+   ordered set of corners in a new coord space that completely enclose
+   the given corners */
+
+void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const realpoint_t in_corner[], 
+				     const realspace_t out_coord_frame, realpoint_t out_corner[] ) {
+
+  realpoint_t temp;
+  guint corner;
+
+  
+
+  for (corner=0; corner<8 ; corner++) {
+    temp.x = in_corner[(corner & 0x1) ? 1 : 0].x;
+    temp.y = in_corner[(corner & 0x2) ? 1 : 0].y;
+    temp.z = in_corner[(corner & 0x4) ? 1 : 0].z;
+    temp = realspace_alt_coord_to_alt(temp,
+				      in_coord_frame,
+				      out_coord_frame);
+    if (corner==0)
+      out_corner[0]=out_corner[1]=temp;
+    else {
+      if (temp.x < out_corner[0].x) out_corner[0].x=temp.x;
+      if (temp.x > out_corner[1].x) out_corner[1].x=temp.x;
+      if (temp.y < out_corner[0].y) out_corner[0].y=temp.y;
+      if (temp.y > out_corner[1].y) out_corner[1].y=temp.y;
+      if (temp.z < out_corner[0].z) out_corner[0].z=temp.z;
+      if (temp.z > out_corner[1].z) out_corner[1].z=temp.z;
+
+    }
+  }
+
+  return;
+}
+
+
+
 /* adjusts the given axis into an orthogonal set */
 void realspace_make_orthogonal(realpoint_t axis[]) {
 

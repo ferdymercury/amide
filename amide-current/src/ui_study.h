@@ -103,10 +103,10 @@ typedef struct ui_study_t {
   GtkWidget * time_button;
   scaling_t scaling; /* scale on this slice or the whole volume */
   ui_study_mode_t current_mode; /* are we currently working on an roi or a volume */
-  amide_volume_t * current_volume; /* the last volume double clicked on */
-  amide_roi_t * current_roi; /* the last roi double clicked on */
-  ui_study_volume_list_t * current_volumes; /* the currently selected volumes */ 
-  ui_study_roi_list_t * current_rois; /* the currently selected rois */
+  volume_t * current_volume; /* the last volume double clicked on */
+  roi_t * current_roi; /* the last roi double clicked on */
+  ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
+  ui_roi_list_t * current_rois; /* the currently selected rois */
   realspace_t current_view_coord_frame;
   volume_time_t current_time;
   volume_time_t current_duration;
@@ -114,11 +114,12 @@ typedef struct ui_study_t {
   floatpoint_t current_zoom;
   interpolation_t current_interpolation;
   realpoint_t current_view_center; /* this is in the current_view coord frame */
-  amide_volume_list_t * current_slices[NUM_VIEWS];
+  volume_list_t * current_slices[NUM_VIEWS];
   roi_grain_t default_roi_grain;
-  amide_study_t * study; /* pointer to the study data structure */
+  study_t * study; /* pointer to the study data structure */
   ui_threshold_t * threshold; /* pointer to the threshold widget data structure */
   ui_series_t * series; /* pointer to the series widget data structure */
+  guint reference_count;
 } ui_study_t;
 
 /* external functions */
@@ -129,17 +130,20 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
 void ui_study_place_wait_cursor(ui_study_t * ui_study);
 void ui_study_remove_wait_cursor(ui_study_t * ui_study);
+GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t i, 
+					      GnomeCanvasItem * roi_item, roi_t * roi);
+void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t i);
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i, 
 			    ui_study_update_t update);
-void ui_study_tree_add_roi(ui_study_t * ui_study, amide_roi_t * roi);
-void ui_study_tree_add_volume(ui_study_t * ui_study, amide_volume_t * volume);
+void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi);
+void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume);
 
 /* internal functions */
 void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t i);
 void ui_study_update_canvas_image(ui_study_t * ui_study, view_t i);
 void ui_study_update_tree(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);
-void ui_study_free(ui_study_t ** pui_study);
+ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
 
 

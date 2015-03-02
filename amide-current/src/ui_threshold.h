@@ -49,11 +49,12 @@ typedef struct ui_threshold_t {
   GtkWidget * min_percentage;
   GtkWidget * min_absolute;
   GtkWidget * color_table_menu;
-  amide_volume_t * volume; /* what volume this threshold corresponds to */
+  volume_t * volume; /* what volume this threshold corresponds to */
+  guint reference_count;
 } ui_threshold_t;
 
 /* external functions */
-void ui_threshold_free(ui_threshold_t ** pui_threshold);
+ui_threshold_t * ui_threshold_free(ui_threshold_t * ui_threshold);
 ui_threshold_t * ui_threshold_init(void);
 void ui_threshold_update_entries(ui_threshold_t * ui_threshold);
 

@@ -33,11 +33,12 @@
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
+#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_study_rois.h"
-#include "ui_study_volumes.h"
+#include "ui_roi.h"
+#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_volume_dialog_callbacks.h"
 #include "ui_volume_dialog.h"
@@ -51,7 +52,7 @@ void ui_volume_dialog_set_axis_display(GtkWidget * volume_dialog) {
   GtkWidget * label;
   GtkWidget * entry;
   gchar * temp_string;
-  amide_volume_t * volume_new_info;
+  volume_t * volume_new_info;
   axis_t i_axis;
 
   volume_new_info = gtk_object_get_data(GTK_OBJECT(volume_dialog), "volume_new_info");
@@ -83,7 +84,7 @@ void ui_volume_dialog_set_axis_display(GtkWidget * volume_dialog) {
 
 
 /* function that sets up the volume dialog */
-void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
+void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   
   GtkWidget * volume_dialog;
   gchar * temp_string = NULL;
@@ -107,17 +108,17 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   view_t i_view;
   axis_t i_axis, j_axis;
   guint i;
-  ui_study_volume_list_t * volume_list_item;
-  amide_volume_t * volume_new_info = NULL;
+  ui_volume_list_t * ui_volume_list_item;
+  volume_t * volume_new_info;
   realpoint_t center;
   ui_threshold_t * volume_threshold;
 
   /* figure out the ui_study_volume_list item corresponding to this volume */
-  volume_list_item = ui_study_volumes_list_get_volume(ui_study->current_volumes, volume);
-  if (volume_list_item == NULL) return;
+  ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes, volume);
+  if (ui_volume_list_item == NULL) return;
 
   /* only want one of these dialogs at a time for a given volume */
-  if (volume_list_item->dialog != NULL)
+  if (ui_volume_list_item->dialog != NULL)
     return;
 
   /* and if the threshold dialog corresponds to this volume, kill it */
@@ -129,9 +130,9 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
 
   
   /* sanity checks */
-  g_return_if_fail(volume_list_item != NULL);
-  g_return_if_fail(volume_list_item->tree != NULL);
-  g_return_if_fail(volume_list_item->tree_node != NULL);
+  g_return_if_fail(ui_volume_list_item != NULL);
+  g_return_if_fail(ui_volume_list_item->tree != NULL);
+  g_return_if_fail(ui_volume_list_item->tree_node != NULL);
     
   temp_string = g_strdup_printf("%s: Data Set Modification Dialog",PACKAGE);
   volume_dialog = gnome_property_box_new();
@@ -140,7 +141,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
 
   /* create the temp volume which will store the new information, and then
      can either be applied or cancelled */
-  volume_copy(&volume_new_info, volume);
+  volume_new_info = volume_copy(volume);
 
   /* attach it to the dialog */
   gtk_object_set_data(GTK_OBJECT(volume_dialog), "volume_new_info", volume_new_info);
@@ -152,13 +153,13 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(volume_dialog), "close",
 		     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_close_event),
-		     volume_list_item);
+		     ui_volume_list_item);
   gtk_signal_connect(GTK_OBJECT(volume_dialog), "apply",
 		     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_apply),
-		     volume_list_item);
+		     ui_volume_list_item);
   gtk_signal_connect(GTK_OBJECT(volume_dialog), "help",
     		     GTK_SIGNAL_FUNC(ui_volume_dialog_callbacks_help),
-    		     volume_list_item);
+    		     ui_volume_list_item);
 
   /* start making the widgets for this dialog box */
 
@@ -170,7 +171,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   label = gtk_label_new("Basic Info");
   table_row=0;
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), GTK_WIDGET(packing_table), label);
-  volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
+  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
 
   /* widgets to change the volume's name */
   label = gtk_label_new("name:");
@@ -330,7 +331,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  label = gtk_label_new("x");
+  label = gtk_label_new("y");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -368,7 +369,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  label = gtk_label_new("x");
+  label = gtk_label_new("z");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -440,7 +441,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
     /* dial section */
     adjustment = gtk_adjustment_new(0,-45.0,45.5,0.5,0.5,0.5);
     /*so we can figure out which adjustment this is in callbacks */
-    gtk_object_set_data(GTK_OBJECT(adjustment), "view", view_names[i_view]); 
+    gtk_object_set_data(GTK_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view));
     gtk_object_set_data(GTK_OBJECT(adjustment), "volume_dialog", volume_dialog); 
     gtk_object_set_data(GTK_OBJECT(adjustment), "ui_study", ui_study);
     dial = gtk_hscale_new(GTK_ADJUSTMENT(adjustment));
@@ -541,7 +542,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, amide_volume_t * volume) {
   volume_threshold = ui_threshold_init();
   volume_threshold->volume = volume;
   threshold_widget = ui_threshold_create(ui_study, volume_threshold);
-  volume_list_item->threshold = volume_threshold;
+  ui_volume_list_item->threshold = volume_threshold;
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(threshold_widget), 0,1,
 		   table_row, table_row+1,
