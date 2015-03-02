@@ -115,7 +115,8 @@ typedef struct tb_fads_t {
 
 
 static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
 
 static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads);
 static tb_fads_t * tb_fads_init(void);
@@ -326,6 +327,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_fads->fads_type);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
       gtk_table_attach(GTK_TABLE(table), option_menu, 1,2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
 #else
       menu = gtk_combo_box_new_text();
 	
@@ -334,8 +336,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_fads->fads_type);
       g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(fads_type_cb), tb_fads);
       gtk_table_attach(GTK_TABLE(table), menu, 1,2, table_row,table_row+1,
-#endif
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
+#endif
       table_row++;
 
 
@@ -876,14 +878,15 @@ static void cancel_cb(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function called on a delete event */
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
 
+static void destroy_cb(GtkObject * object, gpointer data) {
   tb_fads_t * tb_fads = data;
+  tb_fads = tb_fads_free(tb_fads); /* trash collection */
+  return;
+}
 
-  /* trash collection */
-  tb_fads = tb_fads_free(tb_fads);
-
+/* function called on a delete event */
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -959,7 +962,7 @@ static tb_fads_t * tb_fads_init(void) {
 
 
 
-void tb_fads(AmitkDataSet * active_ds) {
+void tb_fads(AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_fads_t * tb_fads;
   GdkPixbuf * logo;
@@ -975,7 +978,10 @@ void tb_fads(AmitkDataSet * active_ds) {
   tb_fads->data_set = amitk_object_ref(active_ds);
 
   tb_fads->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(tb_fads->dialog), "delete_event", G_CALLBACK(delete_event), tb_fads);
+  gtk_window_set_transient_for(GTK_WINDOW(tb_fads->dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_fads->dialog), TRUE);
+  g_signal_connect(G_OBJECT(tb_fads->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_fads);
+  g_signal_connect(G_OBJECT(tb_fads->dialog), "destroy", G_CALLBACK(destroy_cb), tb_fads);
 
   tb_fads->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_fads->dialog));
 

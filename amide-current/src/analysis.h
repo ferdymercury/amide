@@ -47,7 +47,19 @@ typedef struct _analysis_volume_t analysis_volume_t;
 typedef struct _analysis_roi_t analysis_roi_t;
 typedef struct _analysis_study_t analysis_study_t;
 
+
+
+typedef struct analysis_element_t {
+  amide_data_t value;
+  amide_real_t weight;
+  AmitkVoxel ds_voxel;
+} analysis_element_t;
+
+
 struct _analysis_gate_t {
+
+  /* roi data - array of analysis_element's */
+  GPtrArray * data_array;
 
   /* stats */
   amide_data_t mean;

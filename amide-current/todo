@@ -3,8 +3,8 @@ misc list of things todo:
 for next release?
 -----------------
 
-* Windows compile: get popt/libgnomecanvas/etc. to be able to find
-	libintl like gtk can.
+* seeing bugs loading old .xif files on Linux/PPC.  Looks like compiler bugs, 
+	seen with gcc 4.0.1-4.fc4
 
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used
@@ -81,7 +81,16 @@ big things:
 	-you pick data set, then subtract/divide/etc. another data set from
 	 picked data set, with slices grabbed via amitk_data_set_get_slice to
 	 be in the coordinate set of the picked data set.
-
+* create an AmitkAnalysis type, holding voxel statistics
+	-when created, passed a study
+	-use callbacks, so that stats are marked as current or obsolete,
+	 stats also marked as obsolete if a AmitkAnalysis calculation type
+         changed from "fast" to "accurate" or back
+        -stats are only (re)calculated as needed (i.e. when stat values/raw values are requested)
+        -has a callback "amitk_analysis_changed", so that the roi_analysis_widget
+         knows to update it's table.
+        -function to request stats as an array of structs
+        -function to request raw values as array of structs
 
                        
 small things:
@@ -133,6 +142,9 @@ probably post 1.0 things:
 things dependent on other things: 
 -------------- 
 
+* dependent on requring glib >= 2.8 
+	remove g_try_malloc0 and g_try_new definitions in amide.h/amide.c
+
 * dependent on gtk 2.4 support for windows and fink
 1. combine open and import menu items onto same file dialog.
 	There's no reason this can't currently be done on the AMIDE side.  There's a function
@@ -145,6 +157,7 @@ things dependent on other things:
 	option on whether or not we want the data resliced.
 	* amitk_xif_sel uses deprecated GtkOptionMenu (gtkfilesel uses this also)
 	  remove amitk_xif_sel when conversion to the new file selection is done
+        * should probably offer an option for displaying a default "/volumes" directory
 2. switch away from the GNOMEUIINFO method of toolbar/menu generation in favor
 	of GtkAction.  Conversion process is descriped in the gtk api documentation.
 3. switch from GtkOptionMenu to GtkComboBox.  Work's already done, just need to 

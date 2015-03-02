@@ -53,20 +53,54 @@ gchar * object_menu_names[] = {
   N_("Selected _Alignment Points")
 };
 
-gchar * limit_names[] = {
-  N_("Min"),
-  N_("Max")
+gchar * limit_names[AMITK_THRESHOLD_STYLE_NUM][AMITK_LIMIT_NUM] = {
+  {
+    N_("Min"),
+    N_("Max")
+  },
+  { 
+    N_("Center"),
+    N_("Width")
+  }
 };
 
 gchar * window_names[] = {
-  N_("Bone"),
-  N_("Soft Tissue")
+  //  N_("Bone"),
+  //  N_("Soft Tissue")
+  N_("Abdomen"),
+  N_("Brain"),
+  N_("Extremities"),
+  N_("Liver"),
+  N_("Lung"),
+  N_("Pelvis, soft tissue"),
+  N_("Skull Base"),
+  N_("Spine A"),
+  N_("Spine B"),
+  N_("Thorax, soft tissue")
 };
 
 PangoFontDescription * amitk_fixed_font_desc;
+PangoFontDescription * amitk_small_fixed_font_desc;
 
 /* internal variables */
 static GList * windows = NULL;
+
+
+/* stuff that isn't in earlier version of glib but that are handy */
+#if ((GLIB_MAJOR_VERSION <= 2) && (GLIB_MINOR_VERSION < 8))
+gpointer
+g_try_malloc0 (gulong n_bytes)
+{
+  gpointer mem;
+
+  mem = g_try_malloc (n_bytes);
+
+  if (mem)
+    memset (mem, 0, n_bytes);
+
+  return mem;
+}
+#endif
 
 
 void amide_call_help(const gchar * link_id) {
@@ -271,10 +305,15 @@ void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
 
 
 static void font_init(void) {
+
+  /* actually, these fonts aren't fixed width... but it's what I've been using */
 #ifdef AMIDE_WIN32_HACKS
-  amitk_fixed_font_desc = pango_font_description_from_string("Sans 10");
+  amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
+  amitk_small_fixed_font_desc = pango_font_description_from_string("Sans 7");
 #else
-  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
+  amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
+  amitk_small_fixed_font_desc = pango_font_description_from_string("Sans 7");
+  //  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
 #endif
 
   return;

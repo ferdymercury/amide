@@ -110,10 +110,12 @@ static gchar * analysis_titles[] = {
 
 
 static void export_ok_cb(GtkWidget* widget, gpointer data);
-static void export_data(analysis_roi_t * roi_analyses);
-static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses);
+static void export_data(analysis_roi_t * roi_analyses, gboolean raw_values);
+static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses,
+			    gboolean raw_data);
 static gchar * analyses_as_string(analysis_roi_t * roi_analyses);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 		      analysis_roi_t * roi_analyses);
@@ -132,15 +134,19 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   GtkWidget * file_selection = data;
   analysis_roi_t * roi_analyses;
   const gchar * save_filename;
+  gboolean raw_data;
 
   /* get a pointer to the analysis */
   roi_analyses = g_object_get_data(G_OBJECT(file_selection), "roi_analyses");
+
+  /* do we want stats or raw data */
+  raw_data = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "raw_data"));
 
   save_filename = ui_common_file_selection_get_save_name(file_selection);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* allright, save the data */
-  export_analyses(save_filename, roi_analyses);
+  export_analyses(save_filename, roi_analyses, raw_data);
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
@@ -149,37 +155,45 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
 }
 
 /* function to save the generated roi statistics */
-static void export_data(analysis_roi_t * roi_analyses) {
+static void export_data(analysis_roi_t * roi_analyses, gboolean raw_data) {
   
   analysis_roi_t * temp_analyses = roi_analyses;
   GtkWidget * file_selection;
   gchar * temp_string;
-  gchar * analysis_name = NULL;
+  gchar * filename = NULL;
 
   /* sanity checks */
   g_return_if_fail(roi_analyses != NULL);
 
-  file_selection = gtk_file_selection_new(_("Export Statistics"));
+  if (!raw_data)
+    file_selection = gtk_file_selection_new(_("Export Statistics"));
+  else
+    file_selection = gtk_file_selection_new(_("Export ROI Raw Data Values"));
 
   /* take a guess at the filename */
-  analysis_name = g_strdup_printf("%s_analysis_{%s",
-				  AMITK_OBJECT_NAME(roi_analyses->study), 
-				  AMITK_OBJECT_NAME(roi_analyses->roi));
+  filename = g_strdup_printf("%s_%s_{%s",
+			     AMITK_OBJECT_NAME(roi_analyses->study), 
+			     raw_data ? _("roi_raw_data"): _("analysis"),
+			     AMITK_OBJECT_NAME(roi_analyses->roi));
+  
   temp_analyses= roi_analyses->next_roi_analysis;
   while (temp_analyses != NULL) {
-    temp_string = g_strdup_printf("%s+%s",analysis_name,AMITK_OBJECT_NAME(temp_analyses->roi));
-    g_free(analysis_name);
-    analysis_name = temp_string;
+    temp_string = g_strdup_printf("%s+%s",filename,AMITK_OBJECT_NAME(temp_analyses->roi));
+    g_free(filename);
+    filename = temp_string;
     temp_analyses= temp_analyses->next_roi_analysis;
   }
-  temp_string = g_strdup_printf("%s}.tsv",analysis_name);
-  g_free(analysis_name);
-  analysis_name = temp_string;
-  ui_common_file_selection_set_filename(file_selection, analysis_name);
-  g_free(analysis_name);
+  temp_string = g_strdup_printf("%s}.tsv",filename);
+  g_free(filename);
+  filename = temp_string;
+  ui_common_file_selection_set_filename(file_selection, filename);
+  g_free(filename);
 
   /* save a pointer to the analyses */
   g_object_set_data(G_OBJECT(file_selection), "roi_analyses", roi_analyses);
+
+  /* do we want the stats, or the raw data */
+  g_object_set_data(G_OBJECT(file_selection), "raw_data", GINT_TO_POINTER(raw_data));
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
@@ -201,7 +215,8 @@ static void export_data(analysis_roi_t * roi_analyses) {
   return;
 }
 
-static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses) {
+static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses,
+			    gboolean raw_data) {
 
   FILE * file_pointer;
   time_t current_time;
@@ -213,10 +228,11 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   guint i;
   amide_real_t voxel_volume;
   gboolean title_printed;
-  AmitkPoint voxel_size;
+  AmitkPoint location;
+  analysis_element_t * element;
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
-    g_warning(_("couldn't open: %s for writing roi analyses"), save_filename);
+    g_warning(_("couldn't open: %s for writing roi data"), save_filename);
     return;
   }
 
@@ -242,21 +258,24 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 		AMITK_ROI_ISOCONTOUR_MAX_VALUE(roi_analyses->roi));
     }
     fprintf(file_pointer,"\n");
-    switch(roi_analyses->calculation_type) {
-    case ALL_VOXELS:
-      fprintf(file_pointer, _("#   Calculation done with all voxels in ROI\n"));
-      break;
-    case HIGHEST_FRACTION_VOXELS:
-      fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction*100);
-      break;
-    case VOXELS_NEAR_MAX:
-      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_percentage);
-      break;
-    case VOXELS_GREATER_THAN_VALUE:
-      fprintf(file_pointer, _("#   Calculation done on voxels >= %g in ROI\n"), roi_analyses->threshold_value);
-      break;
-    default:
-      g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+
+    if (!raw_data) {
+      switch(roi_analyses->calculation_type) {
+      case ALL_VOXELS:
+	fprintf(file_pointer, _("#   Calculation done with all voxels in ROI\n"));
+	break;
+      case HIGHEST_FRACTION_VOXELS:
+	fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction*100);
+	break;
+      case VOXELS_NEAR_MAX:
+	fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_percentage);
+	break;
+      case VOXELS_GREATER_THAN_VALUE:
+	fprintf(file_pointer, _("#   Calculation done on voxels >= %g in ROI\n"), roi_analyses->threshold_value);
+	break;
+      default:
+	g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+      }
     }
 
     title_printed = FALSE;
@@ -297,7 +316,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	break;
       }
 
-      if (!title_printed) {
+      if ((!raw_data) && (!title_printed)) {
 	fprintf(file_pointer, "#   %s", analysis_titles[COLUMN_FRAME]);
 	for (i=COLUMN_FRAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
 	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
@@ -305,8 +324,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	title_printed = TRUE;
       }
 
-      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
-      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
+      voxel_volume = AMITK_DATA_SET_VOXEL_VOLUME(volume_analyses->data_set); 
 
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
@@ -315,21 +333,32 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	gate_analyses = frame_analyses->gate_analyses;
 	gate = 0;
 	while (gate_analyses != NULL) {
-	  fprintf(file_pointer, "    %5d", frame);
-	  fprintf(file_pointer, "\t% 12.3f", gate_analyses->duration);
-	  fprintf(file_pointer, "\t% 12.3f", gate_analyses->time_midpoint);
-	  fprintf(file_pointer, "\t% 12d", gate);
-	  /*	  fprintf(file_pointer, "\t% 12g", gate_analyses->total); */
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->median);
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->mean);
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->var);
-	  fprintf(file_pointer, "\t% 12g", sqrt(gate_analyses->var));
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->min);
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->max);
-	  fprintf(file_pointer, "\t% 12g", gate_analyses->fractional_voxels*voxel_volume);
-	  fprintf(file_pointer, "\t% 12.2f", gate_analyses->fractional_voxels);
-	  fprintf(file_pointer, "\t% 12d", gate_analyses->voxels);
-	  fprintf(file_pointer, "\n");
+	  if (!raw_data) {
+	    fprintf(file_pointer, "    %5d", frame);
+	    fprintf(file_pointer, "\t% 12.3f", gate_analyses->duration);
+	    fprintf(file_pointer, "\t% 12.3f", gate_analyses->time_midpoint);
+	    fprintf(file_pointer, "\t% 12d", gate);
+	    /*	  fprintf(file_pointer, "\t% 12g", gate_analyses->total); */
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->median);
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->mean);
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->var);
+	    fprintf(file_pointer, "\t% 12g", sqrt(gate_analyses->var));
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->min);
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->max);
+	    fprintf(file_pointer, "\t% 12g", gate_analyses->fractional_voxels*voxel_volume);
+	    fprintf(file_pointer, "\t% 12.2f", gate_analyses->fractional_voxels);
+	    fprintf(file_pointer, "\t% 12d", gate_analyses->voxels);
+	    fprintf(file_pointer, "\n");
+	  } else { /* raw data */
+	    fprintf(file_pointer, "#   Frame %d, Gate %d\n", frame, gate);
+	    fprintf(file_pointer, "#      Value\t      Weight\t      X (mm)\t      Y (mm)\t      Z (mm)\n");
+	    for (i=0; i < gate_analyses->data_array->len; i++) {
+	      element = g_ptr_array_index(gate_analyses->data_array, i);
+	      VOXEL_TO_POINT(element->ds_voxel, AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set),location);
+	      location = amitk_space_s2b(AMITK_SPACE(volume_analyses->data_set), location);
+	      fprintf(file_pointer, "%12g\t%12g\t%12g\t%12g\t%12g\n", element->value, element->weight, location.x, location.y, location.z);
+	    }
+	  }
 
 	  gate_analyses = gate_analyses->next_gate_analysis;
 	  gate++;
@@ -340,8 +369,9 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       }
       volume_analyses = volume_analyses->next_volume_analysis;
     }
-    fprintf(file_pointer, "#\n");
     roi_analyses = roi_analyses->next_roi_analysis;
+    if (roi_analyses != NULL)
+      fprintf(file_pointer, "#\n");
   }
 
 
@@ -361,7 +391,6 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
   guint gate;
   guint i;
   amide_real_t voxel_volume;
-  AmitkPoint voxel_size;
 
   /* intro information */
   time(&current_time);
@@ -381,8 +410,7 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
 
     while (volume_analyses != NULL) {
 
-      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
-      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
+      voxel_volume = AMITK_DATA_SET_VOXEL_VOLUME(volume_analyses->data_set); 
 
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
@@ -436,7 +464,11 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
   switch(response_id) {
   case AMITK_RESPONSE_SAVE_AS:
-    export_data(roi_analyses);
+    export_data(roi_analyses, FALSE);
+    break;
+
+  case AMITK_RESPONSE_SAVE_RAW_AS:
+    export_data(roi_analyses, TRUE);
     break;
 
   case AMITK_RESPONSE_COPY:
@@ -471,13 +503,14 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
 
 /* function called to destroy the roi analysis dialog */
-static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
-
+static void destroy_cb(GtkObject * object, gpointer data) {
   analysis_roi_t * roi_analyses = data;
-
-  /* free the associated data structure */
   roi_analyses = analysis_roi_unref(roi_analyses);
+  return;
+}
 
+
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -500,7 +533,6 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
   guint gate;
   guint table_row=0;
   amide_real_t voxel_volume;
-  AmitkPoint voxel_size;
   GtkListStore * store=NULL;
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
@@ -635,8 +667,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
     while (volume_analyses != NULL) {
       frame_analyses = volume_analyses->frame_analyses;
       
-      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
-      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
+      voxel_volume = AMITK_DATA_SET_VOXEL_VOLUME(volume_analyses->data_set); 
       
       /* iterate over the frames */
       /* note, use to also include:
@@ -788,6 +819,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
 				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
 				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
+				       "Save Raw Values", AMITK_RESPONSE_SAVE_RAW_AS,
 				       GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
 				       NULL);
@@ -796,6 +828,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), roi_analyses);
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(destroy_cb), roi_analyses);
 
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
 

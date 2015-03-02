@@ -29,7 +29,7 @@
 
 
 /* external functions */
-void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds);
+void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent_window);
 
 
 

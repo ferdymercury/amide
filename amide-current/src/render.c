@@ -131,6 +131,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 			     const amide_time_t duration,
 			     const gboolean zero_fill,
 			     const gboolean optimize_rendering,
+			     const gboolean no_gradient_opacity,
 			     gboolean (* update_func)(), 
 			     gpointer update_data) {
 
@@ -140,6 +141,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   gfloat init_density_ramp_y[] = RENDERING_DENSITY_RAMP_Y;
   gint init_gradient_ramp_x[] = RENDERING_GRADIENT_RAMP_X;
   gfloat init_gradient_ramp_y[] = RENDERING_GRADIENT_RAMP_Y;
+  gfloat init_gradient_ramp_y_flat[] = RENDERING_GRADIENT_RAMP_Y_FLAT;
 
   if (!(AMITK_IS_DATA_SET(object) || AMITK_IS_ROI(object)))
     return NULL;
@@ -160,7 +162,10 @@ rendering_t * rendering_init(const AmitkObject * object,
     new_rendering->color_table = AMITK_DATA_SET_COLOR_TABLE(object);
   else 
     new_rendering->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
-  new_rendering->pixel_type = RENDERING_DEFAULT_PIXEL_TYPE;
+  if (no_gradient_opacity)
+    new_rendering->pixel_type = OPACITY;
+  else
+    new_rendering->pixel_type = RENDERING_DEFAULT_PIXEL_TYPE;
 
   new_rendering->image = NULL;
   new_rendering->rendering_data = NULL;
@@ -230,7 +235,10 @@ rendering_t * rendering_init(const AmitkObject * object,
   }
   for (i=0;i<new_rendering->num_points[GRADIENT_CLASSIFICATION];i++) {
     new_rendering->ramp_x[GRADIENT_CLASSIFICATION][i] = init_gradient_ramp_x[i];
-    new_rendering->ramp_y[GRADIENT_CLASSIFICATION][i] = init_gradient_ramp_y[i];
+    if (no_gradient_opacity)
+      new_rendering->ramp_y[GRADIENT_CLASSIFICATION][i] = init_gradient_ramp_y_flat[i];
+    else
+      new_rendering->ramp_y[GRADIENT_CLASSIFICATION][i] = init_gradient_ramp_y[i];
   }
 
 
@@ -281,6 +289,7 @@ rendering_t * rendering_init(const AmitkObject * object,
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
   }
+
   if (vpSetVoxelField (new_rendering->vpc,RENDERING_GRADIENT_FIELD, RENDERING_GRADIENT_SIZE, 
 		       RENDERING_GRADIENT_OFFSET, RENDERING_GRADIENT_MAX) != VP_OK) {
     g_warning(_("Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s"),
@@ -1017,6 +1026,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
 					      const amide_time_t duration,
 					      const gboolean zero_fill,
 					      const gboolean optimize_rendering,
+					      const gboolean no_gradient_opacity,
 					      gboolean (* update_func)(), 
 					      gpointer update_data) {
 
@@ -1028,10 +1038,12 @@ static renderings_t * renderings_init_recurse(GList * objects,
 
   /* recurse first */
   rest_of_list = renderings_init_recurse(objects->next, render_volume, voxel_size, start, duration, 
-					 zero_fill, optimize_rendering, update_func, update_data);
+					 zero_fill, optimize_rendering, no_gradient_opacity,
+					 update_func, update_data);
 
   new_rendering = rendering_init(objects->data, render_volume,voxel_size, start, duration, 
-				 zero_fill, optimize_rendering, update_func, update_data);
+				 zero_fill, optimize_rendering, no_gradient_opacity,
+				 update_func, update_data);
 
   if (new_rendering != NULL) {
     if ((temp_renderings = g_try_new(renderings_t, 1)) == NULL) {
@@ -1051,6 +1063,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
 /* returns an initialized rendering list */
 renderings_t * renderings_init(GList * objects,const amide_time_t start, const amide_time_t duration,
 			       const gboolean zero_fill, const gboolean optimize_rendering, 
+			       const gboolean no_gradient_opacity,
 			       gboolean (* update_func)(), gpointer update_data) {
   
   AmitkCorners render_corner;
@@ -1075,7 +1088,8 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start, const a
 
   /* and generate our rendering list */
   return_list = renderings_init_recurse(objects, render_volume,voxel_size, start, duration, 
-					zero_fill, optimize_rendering, update_func, update_data);
+					zero_fill, optimize_rendering, no_gradient_opacity,
+					update_func, update_data);
   amitk_object_unref(render_volume);
   return return_list;
 }

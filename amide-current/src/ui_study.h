@@ -51,7 +51,6 @@ typedef enum {
 
 /* ui_study data structures */
 typedef struct ui_study_t {
-  GtkWidget * main_table;
   GtkWidget * app; /* pointer to the window managing this study */
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
@@ -73,6 +72,7 @@ typedef struct ui_study_t {
   /* canvas specific info */
   GtkWidget * center_table;
   GtkWidget * canvas_table[AMITK_VIEW_MODE_NUM];
+  GtkWidget * canvas_handle[AMITK_VIEW_MODE_NUM];
   GtkWidget * canvas[AMITK_VIEW_MODE_NUM][AMITK_VIEW_NUM];
 
   /* help canvas info */

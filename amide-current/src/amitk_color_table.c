@@ -117,6 +117,10 @@ static rgb_t hsv_to_rgb(hsv_t * hsv) {
       rgb.g = UCHAR_MAX * p;
       rgb.b = UCHAR_MAX * q;
       break;
+    default:
+      /* should never get here */
+      rgb.r = rgb.g = rgb.b = 0;
+      break;
     }
   }    
 

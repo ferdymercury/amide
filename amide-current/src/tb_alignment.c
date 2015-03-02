@@ -97,7 +97,8 @@ typedef struct tb_alignment_t {
 
 
 static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
 static tb_alignment_t * tb_alignment_free(tb_alignment_t * alignment);
 static tb_alignment_t * tb_alignment_init(void);
 
@@ -426,14 +427,15 @@ static void cancel_cb(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function called on a delete event */
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
 
+static void destroy_cb(GtkObject * object, gpointer data) {
   tb_alignment_t * alignment = data;
+  alignment = tb_alignment_free(alignment); /* trash collection */
+  return;
+}
 
-  /* trash collection */
-  alignment = tb_alignment_free(alignment);
-
+/* function called on a delete event */
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -512,7 +514,7 @@ static tb_alignment_t * tb_alignment_init(void) {
 
 
 /* function that sets up an align point dialog */
-void tb_alignment(AmitkStudy * study) {
+void tb_alignment(AmitkStudy * study, GtkWindow * parent) {
 
   tb_alignment_t * alignment;
   GdkPixbuf * logo;
@@ -533,8 +535,10 @@ void tb_alignment(AmitkStudy * study) {
     amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
 
   alignment->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(alignment->dialog), "delete_event",
-		   G_CALLBACK(delete_event), alignment);
+  gtk_window_set_transient_for(GTK_WINDOW(alignment->dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(alignment->dialog), TRUE);
+  g_signal_connect(G_OBJECT(alignment->dialog), "delete_event", G_CALLBACK(delete_event_cb), alignment);
+  g_signal_connect(G_OBJECT(alignment->dialog), "destroy", G_CALLBACK(destroy_cb), alignment);
 
   alignment->druid = gnome_druid_new();
   gtk_container_add(GTK_CONTAINER(alignment->dialog), alignment->druid);

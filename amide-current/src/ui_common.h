@@ -60,9 +60,6 @@ void ui_common_about_cb(GtkWidget * button, gpointer data);
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height);
-void ui_common_data_set_preferences_widgets(GtkWidget * packing_table,
-					    gint table_row,
-					    GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM]);
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
 					 GtkWidget ** pspin_button,

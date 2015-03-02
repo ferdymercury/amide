@@ -73,6 +73,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   Attn_subheader * ash;
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
+  time_t dob;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -222,10 +223,48 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   g_print("\tslices/volume %d\n",num_slices);
 	  
 #endif
+
+
   
-  /* try to enter in a scan date */
+  /* try to enter in a scan date and addition data */
   scan_time = libecat_file->mhptr->scan_start_time;
   amitk_data_set_set_scan_date(ds, ctime(&scan_time));
+  amitk_data_set_set_subject_name(ds, libecat_file->mhptr->patient_name);
+  amitk_data_set_set_subject_id(ds, libecat_file->mhptr->patient_id);
+  dob = libecat_file->mhptr->patient_birth_date;
+  g_print("dob %d\n", dob);
+  amitk_data_set_set_subject_dob(ds, ctime(&(dob)));
+
+  switch(libecat_file->mhptr->patient_orientation) {
+  case FeetFirstProne:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
+    break;
+  case HeadFirstProne:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
+    break;
+  case FeetFirstSupine: 
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
+    break;
+  case HeadFirstSupine:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+    break;
+  case FeetFirstRight: 
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+    break;
+  case HeadFirstRight:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+    break;
+  case FeetFirstLeft:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    break;
+  case HeadFirstLeft:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+    break;
+  case UnknownOrientation:
+  default:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
+    break;
+  }
 
   /* get the voxel size */
   temp_point.x = 10*matrix_data->pixel_size;

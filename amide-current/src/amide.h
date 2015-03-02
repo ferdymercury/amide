@@ -31,13 +31,20 @@
 #include "amide_intl.h"
 
 
-/* define a macro glib should have */
+/* stuff that isn't in earlier version of glib but that are handy */
+#if ((GLIB_MAJOR_VERSION <= 2) && (GLIB_MINOR_VERSION < 8))
+gpointer g_try_malloc0    (gulong        n_bytes);
 #define g_try_new(struct_type, n_structs)           \
     ((struct_type *) g_try_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
+#endif
+
+
+
 
 #define AMITK_RESPONSE_EXECUTE 1
 #define AMITK_RESPONSE_COPY 2
 #define AMITK_RESPONSE_SAVE_AS 3
+#define AMITK_RESPONSE_SAVE_RAW_AS 4
 
 /* defines how many times we want the progress bar to be updated over the course of an action */
 #define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
@@ -111,17 +118,34 @@ typedef enum {
   AMITK_LIMIT_NUM
 } AmitkLimit;
 
+  //  AMITK_WINDOW_BONE,
+  //  AMITK_WINDOW_SOFT_TISSUE,
 typedef enum {
-  AMITK_WINDOW_BONE,
-  AMITK_WINDOW_SOFT_TISSUE,
+  AMITK_WINDOW_ABDOMEN,
+  AMITK_WINDOW_BRAIN,
+  AMITK_WINDOW_EXTREMITIES,
+  AMITK_WINDOW_LIVER,
+  AMITK_WINDOW_LUNG,
+  AMITK_WINDOW_PELVIS_SOFT_TISSUE,
+  AMITK_WINDOW_SKULL_BASE,
+  AMITK_WINDOW_SPINE_A,
+  AMITK_WINDOW_SPINE_B,
+  AMITK_WINDOW_THORAX_SOFT_TISSUE,
   AMITK_WINDOW_NUM
 } AmitkWindow;
+
+typedef enum {
+  AMITK_THRESHOLD_STYLE_MIN_MAX,
+  AMITK_THRESHOLD_STYLE_CENTER_WIDTH,
+  AMITK_THRESHOLD_STYLE_NUM
+} AmitkThresholdStyle;
 
 /* external variables */
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
 extern PangoFontDescription * amitk_fixed_font_desc;
-extern gchar * limit_names[];
+extern PangoFontDescription * amitk_small_fixed_font_desc;
+extern gchar * limit_names[AMITK_THRESHOLD_STYLE_NUM][AMITK_LIMIT_NUM];
 extern gchar * window_names[];
 
 /* external functions */

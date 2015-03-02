@@ -55,8 +55,10 @@ typedef enum {
 
 typedef enum {
   AMITK_THRESHOLD_ARROW_FULL_MIN,
+  AMITK_THRESHOLD_ARROW_FULL_CENTER,
   AMITK_THRESHOLD_ARROW_FULL_MAX,
   AMITK_THRESHOLD_ARROW_SCALED_MIN,
+  AMITK_THRESHOLD_ARROW_SCALED_CENTER,
   AMITK_THRESHOLD_ARROW_SCALED_MAX,
   AMITK_THRESHOLD_ARROW_NUM_ARROWS
 } AmitkThresholdArrow;
@@ -71,6 +73,7 @@ typedef enum {
 
 typedef enum {
   AMITK_THRESHOLD_LINE_MAX,
+  AMITK_THRESHOLD_LINE_CENTER,
   AMITK_THRESHOLD_LINE_MIN,
   AMITK_THRESHOLD_LINE_NUM_LINES
 } AmitkThresholdLine;
@@ -87,6 +90,7 @@ struct _AmitkThreshold
   gboolean minimal; /* true if we just want the color table menu and the color scale */
   GtkWidget * color_scales[2];
   GtkWidget * histogram;
+  GtkWidget * histogram_label;
   GnomeCanvasItem * color_scale_image[2][AMITK_THRESHOLD_SCALE_NUM_SCALES];
   GnomeCanvasItem * histogram_image;
   GnomeCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
@@ -101,7 +105,10 @@ struct _AmitkThreshold
   GtkWidget * scaled_label[2];
   GtkWidget * type_button[AMITK_THRESHOLDING_NUM];
   GtkWidget * window_label;
-  GtkWidget * window_hbox;
+  GtkWidget * window_vbox;
+  GtkWidget * style_button[AMITK_THRESHOLD_STYLE_NUM];
+  GtkWidget * min_max_label[AMITK_LIMIT_NUM];
+
 
   gdouble initial_y[2];
   amide_data_t initial_min[2];
@@ -128,6 +135,8 @@ GtkWidget* amitk_threshold_new               (AmitkDataSet * data_set,
 					      gboolean minimal);
 void       amitk_threshold_new_data_set      (AmitkThreshold * threshold, 
 					      AmitkDataSet * new_data_set);
+void       amitk_threshold_style_widgets     (GtkWidget ** radio_buttons, 
+					      GtkWidget * hbox);
 
 /* ---------- ThresholdDialog------------- */
 

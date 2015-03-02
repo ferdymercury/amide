@@ -120,6 +120,7 @@ static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile
 static void recalc_profiles(tb_profile_t * tb_profile);
 static gboolean update_while_idle(gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void view_center_changed_cb(AmitkStudy * study, gpointer data);
 static void selections_changed_cb(AmitkObject * object, gpointer data);
@@ -199,6 +200,11 @@ static tb_profile_t * profile_free(tb_profile_t * tb_profile) {
     g_free(tb_profile);
     tb_profile = NULL;
   }
+#ifdef AMIDE_DEBUG
+  else {
+    g_print("unrefering tb_profile\n");
+  }
+#endif
 
   return tb_profile;
 
@@ -1082,9 +1088,8 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 }
 
 
-/* function called to destroy the dialog */
-static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
-
+static void destroy_cb(GtkObject * object, gpointer data) {
+  
   tb_profile_t * tb_profile = data;
 
   /* make the line profile invisible */
@@ -1093,6 +1098,10 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
   /* free the associated data structure */
   tb_profile = profile_free(tb_profile);
 
+}
+
+/* function called to destroy the dialog */
+static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -1195,6 +1204,7 @@ void tb_profile(AmitkStudy * study, GtkWindow * parent) {
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), tb_profile);
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_profile);
+  g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(destroy_cb), tb_profile);
 
   /* setup the callbacks for detecting if the line profile has changed */
   g_signal_connect(G_OBJECT(tb_profile->study), "view_center_changed", 

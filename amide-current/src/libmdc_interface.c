@@ -475,6 +475,41 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     amitk_data_set_set_scan_date(ds, asctime(&time_structure));
   }
 
+  /* get the patient orientation */
+  switch (libmdc_fi.pat_slice_orient) {
+  case MDC_SUPINE_HEADFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+    break;
+  case MDC_SUPINE_FEETFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
+    break;
+  case MDC_PRONE_HEADFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
+    break;
+  case MDC_PRONE_FEETFIRST_TRANSAXIAL:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
+    break;
+    //  case MDC_DECUBITUS_RIGHT_HEADFIRST_TRANSAXIAL:
+    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+    //    break;
+    //  case MDC_DECUBITUS_RIGHT_FEETFIRST_TRANSAXIAL:
+    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+    //    break;
+    //  case MDC_DECUBITUS_LEFT_HEADFIRST_TRANSAXIAL:
+    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+    //    break;
+    //  case MDC_DECUBITUS_LEFT_FEETFIRST_TRANSAXIAL:
+    //    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    //    break;
+  default:
+    amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
+    break;
+  }
+
+  amitk_data_set_set_subject_name(ds, libmdc_fi.patient_name);
+  amitk_data_set_set_subject_id(ds, libmdc_fi.patient_id);
+  amitk_data_set_set_subject_dob(ds, libmdc_fi.patient_dob);
+
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, libmdc specifies time as integers in msecs */
   /* note, libmdc only uses dyndata if there's more than one frame of data,

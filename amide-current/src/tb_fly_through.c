@@ -102,6 +102,7 @@ static void set_end_position_pressed_cb(GtkWidget * button, gpointer data);
 static void change_start_position_spin_cb(GtkWidget * widget, gpointer data);
 static void change_end_position_spin_cb(GtkWidget * widget, gpointer data);
 static void change_duration_spin_cb(GtkWidget * widget, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void save_as_ok_cb(GtkWidget* widget, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
@@ -272,9 +273,13 @@ static void change_duration_spin_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+static void destroy_cb(GtkObject * object, gpointer data) {
+  tb_fly_through_t * tb_fly_through = data;
+  tb_fly_through = tb_fly_through_unref(tb_fly_through); /* free the associated data structure */
+}
+
 /* function to run for a delete_event */
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
-
   tb_fly_through_t * tb_fly_through = data;
 
   /* trying to close while we're generating */
@@ -282,9 +287,6 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
     tb_fly_through->in_generation = FALSE; /* signal we need to exit */
     return TRUE;
   }
-
-  /* free the associated data structure */
-  tb_fly_through = tb_fly_through_unref(tb_fly_through);
 
   return FALSE;
 }
@@ -708,6 +710,8 @@ void tb_fly_through(AmitkStudy * study,
 
   g_signal_connect(G_OBJECT(tb_fly_through->dialog), "delete_event",
 		   G_CALLBACK(delete_event_cb), tb_fly_through);
+  g_signal_connect(G_OBJECT(tb_fly_through->dialog), "destroy",
+		   G_CALLBACK(destroy_cb), tb_fly_through);
   g_signal_connect(G_OBJECT(tb_fly_through->dialog), "response", 
 		   G_CALLBACK(response_cb), tb_fly_through);
   gtk_window_set_resizable(GTK_WINDOW(tb_fly_through->dialog), TRUE);

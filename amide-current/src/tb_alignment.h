@@ -31,7 +31,7 @@
 #ifdef AMIDE_LIBGSL_SUPPORT
 
 /* external functions */
-void tb_alignment(AmitkStudy * study);
+void tb_alignment(AmitkStudy * study, GtkWindow * parent);
 
 #endif
 

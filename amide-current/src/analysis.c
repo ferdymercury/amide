@@ -68,9 +68,15 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes,
 						gdouble threshold_value);
 
 
+void free_array_element(gpointer data, gpointer user_data) {
+  analysis_element_t * element = data;
+  g_free(element);
+}
+
 static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
 
   analysis_gate_t * return_list;
+  guint i;
 
   if (gate_analysis == NULL)
     return gate_analysis;
@@ -83,6 +89,13 @@ static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
 
   /* if we've removed all reference's, free the roi */
   if (gate_analysis->ref_count == 0) {
+
+    /* g_ptr_array is a glib 2.4 function.... */
+    //  g_ptr_array_foreach(data_array, free_array_element, NULL); /* free the elements */
+    for (i = 0; i < gate_analysis->data_array->len; i++)
+      free_array_element(gate_analysis->data_array->pdata[i], NULL);
+    g_ptr_array_free(gate_analysis->data_array, TRUE); /* TRUE frees the array of pointers to elements as well */
+
     /* recursively delete rest of list */
     return_list = analysis_gate_unref(gate_analysis->next_gate_analysis);
     gate_analysis->next_gate_analysis = NULL;
@@ -94,34 +107,33 @@ static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
   return gate_analysis;
 }
 
-typedef struct element_t {
-  amide_data_t value;
-  amide_real_t weight;
-} element_t;
 
-static void record_stats(AmitkVoxel voxel,
+static void record_stats(AmitkVoxel ds_voxel,
 			 amide_data_t value,
 			 amide_real_t voxel_fraction,
 			 gpointer data) {
 
   GPtrArray * array = data;
-  element_t * element;
+  analysis_element_t * element;
   
   /* crashes if alloc fails, but I don't want to do error checking in the inner loop... 
      let's not run out of memory */
-  element = g_malloc(sizeof(element_t)); 
+  if (voxel_fraction > 0.0) {
+    element = g_malloc(sizeof(analysis_element_t)); 
     
-  element->value = value;
-  element->weight = voxel_fraction;
-  g_ptr_array_add(array, element);
+    element->value = value;
+    element->weight = voxel_fraction;
+    element->ds_voxel = ds_voxel;
+    g_ptr_array_add(array, element);
+  }
 
   return;
 }
 
 static gint array_comparison(gconstpointer a, gconstpointer b) {
 
-  const element_t * ea = *((element_t **) a);
-  const element_t * eb = *((element_t **) b);
+  const analysis_element_t * ea = *((analysis_element_t **) a);
+  const analysis_element_t * eb = *((analysis_element_t **) b);
 
   if (ea->value > eb->value) 
     return -1;
@@ -131,10 +143,6 @@ static gint array_comparison(gconstpointer a, gconstpointer b) {
     return 0;
 }
 
-void free_array_element(gpointer data, gpointer user_data) {
-  element_t * element = data;
-  g_free(element);
-}
 
 
 /* note, the following function for weight variance calcuation is
@@ -145,7 +153,7 @@ void free_array_element(gpointer data, gpointer user_data) {
    statistical experience disagrees, please speak up */
 static gdouble wvariance (GPtrArray * array, guint num_elements, gdouble wmean)
 {
-  element_t * element;
+  analysis_element_t * element;
   gdouble wsumofsquares = 0 ;
   gdouble Wa = 0;
   gdouble Wb = 0;
@@ -188,11 +196,12 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
 						    gdouble subfraction,
 						    gdouble threshold_percentage,
 						    gdouble threshold_value) {
-  analysis_gate_t * analysis;
+
   GPtrArray * data_array;
+  analysis_gate_t * analysis;
   guint subfraction_voxels;
   guint i;
-  element_t * element;
+  analysis_element_t * element;
   gdouble max;
   gboolean done;
 #ifdef AMIDE_DEBUG
@@ -276,6 +285,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
     g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
   }
 
+
   /* fill in our gate_analysis structure */
   if ((analysis =  g_try_new(analysis_gate_t,1)) == NULL) {
     g_warning(_("couldn't allocate space for roi analysis of frame %d/gate %d"), frame, gate);
@@ -284,6 +294,7 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
   analysis->ref_count = 1;
 
   /* set values */
+  analysis->data_array = data_array;
   analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
   analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
   analysis->total = 0.0;
@@ -336,13 +347,6 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
     analysis->var = wvariance(data_array, subfraction_voxels, analysis->mean);
   }
   
-  /* g_ptr_array is a glib 2.4 function.... */
-  //  g_ptr_array_foreach(data_array, free_array_element, NULL); /* free the elements */
-  for (i = 0; i < data_array->len; i++)
-    free_array_element(data_array->pdata[i], NULL);
-  g_ptr_array_free(data_array, TRUE); /* TRUE frees the array of pointers to elements as well */
-
-
 #ifdef AMIDE_DEBUG
   /* and wrapup our timing */
   gettimeofday(&tv2, NULL);
@@ -544,6 +548,9 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
 
   /* stuff to do if reference count is zero */
   if (roi_analysis->ref_count == 0) {
+#ifdef AMIDE_DEBUG
+    g_print("freeing roi_analysis\n");
+#endif
     /* recursively free/dereference rest of list */
     return_list = analysis_roi_unref(roi_analysis->next_roi_analysis);
     roi_analysis->next_roi_analysis = NULL;

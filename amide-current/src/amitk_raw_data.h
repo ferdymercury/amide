@@ -145,6 +145,7 @@ struct _AmitkRawDataClass
 #define amitk_raw_data_num_voxels(rd) ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.g * (rd)->dim.t)
 #define amitk_raw_data_size_data_mem(rd) (amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format])
 #define amitk_raw_data_get_data_mem(rd) (g_try_malloc(amitk_raw_data_size_data_mem(rd)))
+#define amitk_raw_data_get_data_mem0(rd) (g_try_malloc0(amitk_raw_data_size_data_mem(rd)))
 
 
 /* ------------ external functions ---------- */
@@ -153,6 +154,15 @@ GType	        amitk_raw_data_get_type	            (void);
 AmitkRawData*   amitk_raw_data_new                  (void);
 AmitkRawData*   amitk_raw_data_new_with_data        (AmitkFormat format,
 						     AmitkVoxel dim);
+AmitkRawData*   amitk_raw_data_new_with_data0       (AmitkFormat format,
+						     AmitkVoxel dim);
+AmitkRawData *  amitk_raw_data_new_2D_with_data0    (AmitkFormat format, 
+						     amide_intpoint_t y_dim, 
+						     amide_intpoint_t x_dim);
+AmitkRawData *  amitk_raw_data_new_3D_with_data0    (AmitkFormat format, 
+						     amide_intpoint_t z_dim, 
+						     amide_intpoint_t y_dim, 
+						     amide_intpoint_t x_dim);
 AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name, 
 						     FILE * existing_file,
 						     AmitkRawFormat raw_format,

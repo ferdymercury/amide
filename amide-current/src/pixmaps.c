@@ -80,12 +80,39 @@ const guint8 * thresholding_icons[AMITK_THRESHOLDING_NUM] = {
   thresholding_global_icon
 };
 
-#include "../pixmaps/window_bone_icon.h"
-#include "../pixmaps/window_soft_tissue_icon.h"
-const guint8 * windowing_icons[AMITK_WINDOW_NUM] = {
-  window_bone_icon,
-  window_soft_tissue_icon
+#include "../pixmaps/min_max_icon.h"
+#include "../pixmaps/center_width_icon.h"
+const guint8 * threshold_style_icons[AMITK_THRESHOLD_STYLE_NUM] = {
+  min_max_icon,
+  center_width_icon
 };
+
+/* #include "../pixmaps/window_bone_icon.h" */
+/* #include "../pixmaps/window_soft_tissue_icon.h" */
+#include "../pixmaps/window_abdomen.h"
+#include "../pixmaps/window_brain.h"
+#include "../pixmaps/window_extremities.h"
+#include "../pixmaps/window_liver.h"
+#include "../pixmaps/window_lung.h"
+#include "../pixmaps/window_pelvis_soft_tissue.h"
+#include "../pixmaps/window_skull_base.h"
+#include "../pixmaps/window_spine_a.h"
+#include "../pixmaps/window_spine_b.h"
+#include "../pixmaps/window_thorax_soft_tissue.h"
+const guint8 * windowing_icons[AMITK_WINDOW_NUM] = {
+  window_abdomen,
+  window_brain,
+  window_extremities,
+  window_liver,
+  window_lung,
+  window_pelvis_soft_tissue,
+  window_skull_base,
+  window_spine_a,
+  window_spine_b,
+  window_thorax_soft_tissue
+};
+  //  window_bone_icon,
+  //  window_soft_tissue_icon
 
 
 #include "../pixmaps/box_icon.h"

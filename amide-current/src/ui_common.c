@@ -495,48 +495,6 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 }
 
 
-void ui_common_data_set_preferences_widgets(GtkWidget * packing_table,
-					    gint table_row,
-					    GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM]) {
-
-  AmitkWindow i_window;
-  AmitkLimit i_limit;
-  GtkWidget * label;
-
-  for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
-    label  = gtk_label_new(limit_names[i_limit]);
-    gtk_table_attach(GTK_TABLE(packing_table), label, 1+i_limit,2+i_limit, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-    gtk_widget_show(label);
-  }
-  table_row++;
-
-  for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) {
-    label = gtk_label_new(window_names[i_window]);
-    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, 
-		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-    gtk_widget_show(label);
-      
-    for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
-      
-      window_spins[i_window][i_limit] = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
-      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(window_spins[i_window][i_limit]), FALSE);
-      g_object_set_data(G_OBJECT(window_spins[i_window][i_limit]), "which_window", GINT_TO_POINTER(i_window));
-      g_object_set_data(G_OBJECT(window_spins[i_window][i_limit]), "which_limit", GINT_TO_POINTER(i_limit));
-      g_signal_connect(G_OBJECT(window_spins[i_window][i_limit]), "output",
-		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-      gtk_table_attach(GTK_TABLE(packing_table), window_spins[i_window][i_limit], 1+i_limit,2+i_limit, 
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(window_spins[i_window][i_limit]);
-    }
-    table_row++;
-  }
-
-
-  return;
-}
-
-
 void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 gint table_row,
 					 GtkWidget ** pspin_button,

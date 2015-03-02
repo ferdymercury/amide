@@ -99,7 +99,8 @@ typedef struct tb_crop_t {
 
 
 static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
 
 static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop);
 static tb_crop_t * tb_crop_init(void);
@@ -390,6 +391,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->format);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
+		       1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 #else
       menu = gtk_combo_box_new_text();
       for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) 
@@ -397,8 +399,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->format);
       g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
-#endif
 		       1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+#endif
       
       
       /* widget to tell you the scaling format */
@@ -418,6 +420,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->scaling_type);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
+		       4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 #else
       menu = gtk_combo_box_new_text();
       for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) 
@@ -425,8 +428,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->scaling_type);
       g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
       gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
-#endif
 		       4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+#endif
       
       gtk_widget_show_all(tb_crop->table[DATA_CONVERSION_PAGE]);
     }
@@ -924,14 +927,15 @@ static void cancel_cb(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function called on a delete event */
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
 
+static void destroy_cb(GtkObject * object, gpointer data) {
   tb_crop_t * tb_crop = data;
-
-  /* trash collection */
   tb_crop = tb_crop_free(tb_crop);
+  return;
+}
 
+/* function called on a delete event */
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -987,7 +991,12 @@ static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop) {
 
     g_free(tb_crop);
     tb_crop = NULL;
+  } 
+#ifdef AMIDE_DEBUG
+  else {
+    g_print("unrefering tb_crop\n");
   }
+#endif
 
   return tb_crop;
 
@@ -1038,7 +1047,7 @@ static tb_crop_t * tb_crop_init(void) {
 }
 
 
-void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
+void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_crop_t * tb_crop;
   GdkPixbuf * logo;
@@ -1063,8 +1072,10 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
   tb_crop->gate = AMITK_DATA_SET_VIEW_START_GATE(active_ds);
 
   tb_crop->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(tb_crop->dialog), "delete_event",
-		   G_CALLBACK(delete_event), tb_crop);
+  gtk_window_set_transient_for(GTK_WINDOW(tb_crop->dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_crop->dialog), TRUE);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_crop);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "destroy", G_CALLBACK(destroy_cb), tb_crop);
 
   tb_crop->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_crop->dialog));
 

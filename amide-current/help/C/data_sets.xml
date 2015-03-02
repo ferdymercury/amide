@@ -118,18 +118,21 @@
 
     <varlistentry><term>Basic Info</term>
       <listitem><para>
-	On this page are options to alter the name, type of modality,
-	conversion factor, and the interpolation type to use for this
-	data set (described at <xref linkend="interpolation" />).  The
-	conversion factor is a parameter that is multiplied to the
-	data set before it is used for viewing or quantitation.  Since
-	the data set is in ECAT/MAP/abitrary scale units, the
+
+	On this page are options to alter the data set name, type of
+	modality, subject name, subject id, subject date of birth
+	(DOB), conversion factor, and the interpolation type to use
+	for this data set (described at <xref linkend="interpolation"
+	/>).  The conversion factor is a parameter that is multiplied
+	to the data set before it is used for viewing or quantitation.
+	Since the data set is in ECAT/MAP/abitrary scale units, the
 	conversion factor can be used in order to analyze the data set
 	in another type of reference unit (e.g. Percent Injected Dose
 	[%ID]).  There is also a built in calculator, where parameters
 	such as subject weight and injected dose can be entered, and
-	the conversion factor will be generated.  Note that 1 cc is 
-        assumed to equal 1 g when generating the %ID/g and SUV.
+	the conversion factor will be generated.  Note that 1 cc is
+	assumed to equal 1 g when generating the %ID/g and SUV.
+
       </para></listitem>
     </varlistentry>
     

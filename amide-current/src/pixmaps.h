@@ -50,6 +50,8 @@ extern const char ** icon_view[];
 extern const char * icon_threshold_xpm[];
 extern const guint8 * thresholding_icons[];
 
+extern const guint8 * threshold_style_icons[];
+
 extern const guint8 * windowing_icons[];
 
 extern const guint8 * roi_icons[];

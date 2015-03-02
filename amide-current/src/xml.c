@@ -72,7 +72,7 @@ gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor) {
   gchar * xml_str;
   gchar * return_str;
 
-  xml_str = xmlNodeGetContent(xml_get_node(nodes, descriptor));
+  xml_str = (gchar *) xmlNodeGetContent(xml_get_node(nodes, descriptor));
   if (xml_str != NULL)
     return_str = g_strdup_printf("%s", xml_str);
   else
@@ -383,7 +383,7 @@ void xml_get_location_and_size(xmlNodePtr nodes, const gchar * descriptor,
 
 void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string) {
   
-  xmlNewChild(node, NULL, descriptor, string);
+  xmlNewChild(node, NULL, (xmlChar *) descriptor, (xmlChar *) string);
 
   return;
 }

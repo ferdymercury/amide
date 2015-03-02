@@ -673,7 +673,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 				"justification", GTK_JUSTIFY_RIGHT,
 				"anchor", GTK_ANCHOR_NORTH_EAST,
 				"text", legend,
-				"x", (gdouble) 40.0,
+				"x", (gdouble) 55.0,
 				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
 				"fill_color", "black", 
 				"font_desc", amitk_fixed_font_desc, NULL);
@@ -688,7 +688,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 				"justification", GTK_JUSTIFY_LEFT,
 				"anchor", GTK_ANCHOR_NORTH_WEST,
 				"text", help_info_lines[which_info][i_line],
-				"x", (gdouble) 50.0,
+				"x", (gdouble) 65.0,
 				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
 				"fill_color", "black", 
 				"font_desc", amitk_fixed_font_desc, NULL);
@@ -916,7 +916,6 @@ void ui_study_update_layout(ui_study_t * ui_study) {
   gboolean canvas_table_new;
   AmitkViewMode i_view_mode;
   gint row, column, table_column = 0, table_row = 0;
-  gint max_width=0, max_height=0, width, height;
   
   g_return_if_fail(ui_study->study != NULL);
 
@@ -927,6 +926,8 @@ void ui_study_update_layout(ui_study_t * ui_study) {
     if (ui_study->canvas_table[i_view_mode] != NULL) {
       gtk_widget_destroy(ui_study->canvas_table[i_view_mode]);
       ui_study->canvas_table[i_view_mode] = NULL;
+      gtk_widget_destroy(ui_study->canvas_handle[i_view_mode]);
+      ui_study->canvas_handle[i_view_mode] = NULL;
       for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++)
 	ui_study->canvas[i_view_mode][i_view] = NULL;
     }
@@ -946,6 +947,10 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 
     if (ui_study->canvas_table[i_view_mode] == NULL) {
       ui_study->canvas_table[i_view_mode] = gtk_table_new(3, 2,FALSE);
+      ui_study->canvas_handle[i_view_mode] = gtk_handle_box_new();
+      gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(ui_study->canvas_handle[i_view_mode]), GTK_SHADOW_NONE);
+      gtk_handle_box_set_handle_position(GTK_HANDLE_BOX(ui_study->canvas_handle[i_view_mode]), GTK_POS_TOP);
+      gtk_container_add(GTK_CONTAINER(ui_study->canvas_handle[i_view_mode]), ui_study->canvas_table[i_view_mode]);
       canvas_table_new = TRUE;
     } else {
       canvas_table_new = FALSE;
@@ -983,57 +988,8 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 	}
       }
     }
-	  
-
-    g_object_ref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
-    if (!canvas_table_new)
-      gtk_container_remove(GTK_CONTAINER(ui_study->center_table),
-    			   ui_study->canvas_table[i_view_mode]);
-
-    /* keep an estimate as to how large each set of canvases is in max_width and max_height*/
-    width = height = 0;
-    switch(AMITK_STUDY_CANVAS_LAYOUT(ui_study->study)) {
-    case AMITK_LAYOUT_ORTHOGONAL:
-      if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] != NULL) {
-	width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]));
-	height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE]));
-      } 
-
-      if (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] != NULL) {
-	height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL]));
-	if (ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] == NULL) {
-	  width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL]));
-	}
-      }
-
-      if (ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL] != NULL) {
-	width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]));
-	if ((ui_study->canvas[i_view_mode][AMITK_VIEW_TRANSVERSE] == NULL)  &&
-	    (ui_study->canvas[i_view_mode][AMITK_VIEW_CORONAL] == NULL)) {
-	  height += amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][AMITK_VIEW_SAGITTAL]));
-	}
-      }
-
-      if (width > max_width) max_width = width;
-      if (height > max_height) max_height = height;
-
-      break;
-    case AMITK_LAYOUT_LINEAR:
-    default:
-      for (i_view=0; i_view < AMITK_VIEW_NUM ;i_view++ ) {
-	if (ui_study->canvas[i_view_mode][i_view] != NULL) {
-	  height = amitk_canvas_get_height(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-	  if (height > max_height) max_height = height;
-	  width += amitk_canvas_get_width(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-	}
-      }
-      if (width > max_width) max_width = width;
-      break;
-    }
   }
 
-
-  height = width = 0;
   for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) {
 
     /* put the canvases in the table according to the desired layout */
@@ -1071,39 +1027,20 @@ void ui_study_update_layout(ui_study_t * ui_study) {
     }
 
 
-    /* figure out where this group of canvases should go */
-    /* this only works for up to 3 sets of canvases */
-    if ((height == 0) && (width == 0)) {
-      /* first iteration */
-      height += max_height;
-      width += max_width;
-    } else {
-      if (height > width/1.5) { /* the 1.5 is to favour horizontal placement */
-	table_column++;
-	table_row = 0;
-	width += max_width;
-      } else {
-	height += max_height;
-	table_row++;
-	table_column = 0;
-      }
-    }
-
     /* and place them */
-    gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
-    		     table_column, table_column+1, table_row, table_row+1,
-    		     X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
-    		     X_PADDING, Y_PADDING);
-
+    if (gtk_widget_get_parent(ui_study->canvas_handle[i_view_mode]) == NULL) 
+      gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_handle[i_view_mode],
+		       table_column, table_column+1, table_row, table_row+1,
+		       X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  
+		       X_PADDING, Y_PADDING);
+    table_column++;
 
 
     /* remove the additional reference */
     for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++)
       if (ui_study->canvas[i_view_mode][i_view] != NULL)
 	g_object_unref(G_OBJECT(ui_study->canvas[i_view_mode][i_view]));
-    g_object_unref(G_OBJECT(ui_study->canvas_table[i_view_mode]));
-    gtk_widget_show_all(ui_study->canvas_table[i_view_mode]); /* and show */
-
+    gtk_widget_show_all(ui_study->canvas_handle[i_view_mode]); /* and show */
       
   }
 
@@ -1114,13 +1051,22 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 /* function to setup the widgets inside of the GnomeApp study */
 void ui_study_setup_widgets(ui_study_t * ui_study) {
 
-  guint main_table_row=0; 
-  guint main_table_column=0;
   GtkWidget * scrolled;
+  GtkWidget * left_vbox;
+  GtkWidget * hbox;
+  GtkWidget * handle_box;
 
-  /* make and add the main packing table */
-  ui_study->main_table = gtk_table_new(3,2,FALSE);
-  gnome_app_set_contents(GNOME_APP(ui_study->app), ui_study->main_table);
+  /* make and add the left packing table */
+  left_vbox = gtk_vbox_new(FALSE,0);
+
+  handle_box = gtk_handle_box_new();
+  gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(handle_box), GTK_SHADOW_NONE);
+  gtk_handle_box_set_handle_position(GTK_HANDLE_BOX(handle_box), GTK_POS_TOP);
+  gtk_container_add(GTK_CONTAINER(handle_box), left_vbox);
+
+  hbox = gtk_hbox_new(FALSE,0);
+  gtk_box_pack_start(GTK_BOX(hbox), handle_box, FALSE, FALSE, X_PADDING);
+  gnome_app_set_contents(GNOME_APP(ui_study->app), hbox);
 
   /* connect the blank help signal */
   g_object_set_data(G_OBJECT(ui_study->app), "which_help", GINT_TO_POINTER(AMITK_HELP_INFO_BLANK));
@@ -1149,12 +1095,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
 					ui_study->tree_view);
-  gtk_table_attach(GTK_TABLE(ui_study->main_table), scrolled, 
-		   main_table_column, main_table_column+1, main_table_row, main_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
-		   X_PADDING, Y_PADDING);
-
-  main_table_row++;
+  gtk_box_pack_start(GTK_BOX(left_vbox), scrolled, TRUE, TRUE,Y_PADDING);
 
 
   /* the help information canvas */
@@ -1163,23 +1104,15 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 #else
   ui_study->help_info = GNOME_CANVAS(gnome_canvas_new());
 #endif
-  gtk_table_attach(GTK_TABLE(ui_study->main_table), GTK_WIDGET(ui_study->help_info), 
-		   main_table_column, main_table_column+1, main_table_row, main_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_box_pack_start(GTK_BOX(left_vbox), GTK_WIDGET(ui_study->help_info), FALSE, TRUE, Y_PADDING);
   gtk_widget_set_size_request(GTK_WIDGET(ui_study->help_info), LEFT_COLUMN_WIDTH,
 			      HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES+2);
   gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, LEFT_COLUMN_WIDTH, 
 				 HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES+2.0);
-  main_table_column++;
-  main_table_row=0;
 
   /* make the stuff in the center */
   ui_study->center_table = gtk_table_new(2, 2,FALSE);
-  gtk_table_attach(GTK_TABLE(ui_study->main_table), ui_study->center_table,
-		   main_table_column, main_table_column+1, main_table_row, main_table_row+3,
-  		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,  X_PADDING, Y_PADDING);
-  main_table_column++;
-  main_table_row=0;
+  gtk_box_pack_start(GTK_BOX(hbox),ui_study->center_table, TRUE, TRUE, X_PADDING);
   
   return;
 }

@@ -95,6 +95,7 @@ rendering_voxel_t * dummy_voxel;
 
 #define RENDERING_GRADIENT_RAMP_X {0.0, RENDERING_GRADIENT_MAX}
 #define RENDERING_GRADIENT_RAMP_Y {0.0, 1.0}
+#define RENDERING_GRADIENT_RAMP_Y_FLAT {0.2, 0.2}
 #define RENDERING_GRADIENT_RAMP_POINTS 2
 
 #define RENDERING_OCTREE_DENSITY_THRESH 	4
@@ -166,6 +167,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 			     const amide_time_t duration,
 			     const gboolean zero_fill,
 			     const gboolean optimize_rendering,
+			     const gboolean no_gradient_opacity,
 			     gboolean (* update_func)(), 
 			     gpointer update_data);
 gboolean rendering_reload_object(rendering_t * rendering, 
@@ -191,6 +193,7 @@ renderings_t * renderings_init(GList * objects,
 			       const amide_time_t duration, 
 			       const gboolean zero_fill,
 			       const gboolean optimize_rendering,
+			       const gboolean no_gradient_opacity,
 			       gboolean (* update_func)(),
 			       gpointer update_data);
 gboolean renderings_reload_objects(renderings_t * renderings, 

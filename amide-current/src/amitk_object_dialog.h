@@ -60,7 +60,11 @@ struct _AmitkObjectDialog
   GtkWidget * name_entry;
   GtkWidget * roi_type_menu;
   GtkWidget * scan_date_entry;
+  GtkWidget * subject_name_entry;
+  GtkWidget * subject_id_entry;
+  GtkWidget * subject_dob_entry;
   GtkWidget * modality_menu;
+  GtkWidget * subject_orientation_menu;
   GtkWidget * scaling_factor_spin;
   GtkWidget * dose_spin;
   GtkWidget * dose_unit_menu;
@@ -92,9 +96,6 @@ struct _AmitkObjectDialog
   GtkWidget * layout_button2;
   GtkWidget * maintain_size_button;
   GtkWidget * target_size_spin;
-
-  /* data set preferences */
-  GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
 
 };
 

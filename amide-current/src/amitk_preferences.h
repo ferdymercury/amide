@@ -51,8 +51,9 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_CANVAS_LAYOUT(pref)                   (AMITK_PREFERENCES(pref)->canvas_layout)
 #define AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(pref)            (AMITK_PREFERENCES(pref)->canvas_maintain_size)
 #define AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(pref)        (AMITK_PREFERENCES(pref)->canvas_target_empty_area)
-#define AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(pref, modality)   (AMITK_PREFERENCES(pref)->default_color_table[modality])
-#define AMITK_PREFERENCES_DEFAULT_WINDOW(pref, window, limit)   (AMITK_PREFERENCES(pref)->default_window[window][limit])
+#define AMITK_PREFERENCES_COLOR_TABLE(pref, modality)           (AMITK_PREFERENCES(pref)->color_table[modality])
+#define AMITK_PREFERENCES_WINDOW(pref, which_window, limit)     (AMITK_PREFERENCES(pref)->window[which_window][limit])
+#define AMITK_PREFERENCES_THRESHOLD_STYLE(pref)                 (AMITK_PREFERENCES(pref)->threshold_style)
 #define AMITK_PREFERENCES_DIALOG(pref)                          (AMITK_PREFERENCES(pref)->dialog)
 
 #define AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH 2
@@ -64,12 +65,12 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE FALSE
 #define AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT TRUE
 #define AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY FALSE
+#define AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE AMITK_THRESHOLD_STYLE_MIN_MAX
 
 #define AMITK_PREFERENCES_MIN_ROI_WIDTH 1
 #define AMITK_PREFERENCES_MAX_ROI_WIDTH 5
 #define AMITK_PREFERENCES_MIN_TARGET_EMPTY_AREA 0
 #define AMITK_PREFERENCES_MAX_TARGET_EMPTY_AREA 25
-
 
 
 typedef struct _AmitkPreferencesClass AmitkPreferencesClass;
@@ -95,8 +96,9 @@ struct _AmitkPreferences {
   gint canvas_target_empty_area; /* in pixels */
 
   /* data set preferences */
-  AmitkColorTable default_color_table[AMITK_MODALITY_NUM];
-  amide_data_t default_window[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
+  AmitkColorTable color_table[AMITK_MODALITY_NUM];
+  amide_data_t window[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
+  AmitkThresholdStyle threshold_style;
 
   /* misc pointers */
   GtkWidget * dialog;
@@ -143,6 +145,8 @@ void                amitk_preferences_set_default_window         (AmitkPreferenc
 								  const AmitkWindow window,
 								  const AmitkLimit limit,
 								  const amide_data_t value);
+void                amitk_preferences_set_threshold_style        (AmitkPreferences * preferences,
+								  const AmitkThresholdStyle threshold_style);
 void                amitk_preferences_set_dialog                 (AmitkPreferences * preferences,
 								  GtkWidget * dialog);
 

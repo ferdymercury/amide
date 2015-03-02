@@ -165,17 +165,29 @@ gchar * amitk_scaling_menu_names[] = {
 };
 
 amide_data_t amitk_window_default[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM] = {
-  {-800.0, 1200.0}, /* bone window */
-  {-200.0, 200.0} /* tissue window */
+  //  {-800.0, 1200.0}, /* bone */
+  //  {-200.0, 200.0} /* tissue */
+  {-85.0, 165.0}, /* abdomen */
+  {-0.0, 80.0}, /* brain */
+  {-400.0, 1000.0}, /* extremities */
+  {-40.0, 160.0}, /* liver */
+  {-1350.0, 150.0}, /* lung */
+  {-140.0, 210.0}, /* pelvis, soft tissue */
+  {-60.0, 140.0}, /* skull base */
+  {-35.0, 215.0}, /* spine a */
+  {-300.0, 1200.0}, /* spine b */
+  {-125.0, 225.0} /* thorax, soft tissue */
 };
-
 
 
 enum {
   THRESHOLDING_CHANGED,
+  THRESHOLD_STYLE_CHANGED,
   THRESHOLDS_CHANGED,
+  WINDOWS_CHANGED,
   COLOR_TABLE_CHANGED,
   INTERPOLATION_CHANGED,
+  SUBJECT_ORIENTATION_CHANGED,
   CONVERSION_CHANGED,
   SCALE_FACTOR_CHANGED,
   MODALITY_CHANGED,
@@ -267,11 +279,25 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_STRUCT_OFFSET (AmitkDataSetClass, thresholding_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[THRESHOLD_STYLE_CHANGED] =
+    g_signal_new ("threshold_style_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, threshold_style_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[THRESHOLDS_CHANGED] =
     g_signal_new ("thresholds_changed",
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, thresholds_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[WINDOWS_CHANGED] =
+    g_signal_new ("windows_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, windows_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[COLOR_TABLE_CHANGED] =
@@ -286,6 +312,13 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET (AmitkDataSetClass, interpolation_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[SUBJECT_ORIENTATION_CHANGED] =
+    g_signal_new ("subject_orientation_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, subject_orientation_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[CONVERSION_CHANGED] =
@@ -349,7 +382,6 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 
 static void data_set_init (AmitkDataSet * data_set) {
 
-  time_t current_time;
   gint i;
   AmitkWindow i_window;
   AmitkLimit i_limit;
@@ -364,6 +396,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->global_max = 0.0;
   data_set->global_min = 0.0;
   amitk_data_set_set_thresholding(data_set, AMITK_THRESHOLDING_GLOBAL);
+  amitk_data_set_set_threshold_style(data_set, AMITK_THRESHOLD_STYLE_MIN_MAX);
   for (i=0; i<2; i++)
     data_set->threshold_ref_frame[i]=0;
   data_set->distribution = NULL;
@@ -389,6 +422,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->scan_start = 0.0;
   data_set->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
   data_set->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  data_set->subject_orientation = AMITK_SUBJECT_ORIENTATION_UNKNOWN;
   data_set->slice_cache = NULL;
   data_set->max_slice_cache_size = 6;
   data_set->slice_parent = NULL;
@@ -398,9 +432,17 @@ static void data_set_init (AmitkDataSet * data_set) {
       data_set->threshold_window[i_window][i_limit] = amitk_window_default[i_window][i_limit];
 
   /* set the scan date to the current time, good for an initial guess */
-  time(&current_time);
   data_set->scan_date = NULL;
-  amitk_data_set_set_scan_date(data_set, ctime(&current_time));
+  amitk_data_set_set_scan_date(data_set, NULL);
+
+  data_set->subject_name = NULL;
+  amitk_data_set_set_subject_name(data_set, NULL);
+
+  data_set->subject_id = NULL;
+  amitk_data_set_set_subject_id(data_set, NULL);
+
+  data_set->subject_dob = NULL;
+  amitk_data_set_set_subject_dob(data_set, NULL);
 }
 
 
@@ -450,6 +492,21 @@ static void data_set_finalize (GObject *object)
   if (data_set->scan_date != NULL) {
     g_free(data_set->scan_date);
     data_set->scan_date = NULL;
+  }
+
+  if (data_set->subject_name != NULL) {
+    g_free(data_set->subject_name);
+    data_set->subject_name = NULL;
+  }
+
+  if (data_set->subject_id != NULL) {
+    g_free(data_set->subject_id);
+    data_set->subject_id = NULL;
+  }
+
+  if (data_set->subject_dob != NULL) {
+    g_free(data_set->subject_dob);
+    data_set->subject_dob = NULL;
   }
 
   if (data_set->slice_cache != NULL) {
@@ -533,6 +590,9 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
 
   /* copy the data elements */
   amitk_data_set_set_scan_date(dest_ds, AMITK_DATA_SET_SCAN_DATE(src_object));
+  amitk_data_set_set_subject_name(dest_ds, AMITK_DATA_SET_SUBJECT_NAME(src_object));
+  amitk_data_set_set_subject_id(dest_ds, AMITK_DATA_SET_SUBJECT_ID(src_object));
+  amitk_data_set_set_subject_dob(dest_ds, AMITK_DATA_SET_SUBJECT_DOB(src_object));
   amitk_data_set_set_modality(dest_ds, AMITK_DATA_SET_MODALITY(src_object));
   dest_ds->voxel_size = AMITK_DATA_SET_VOXEL_SIZE(src_object);
   if (src_ds->raw_data != NULL) {
@@ -567,7 +627,9 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
 
   amitk_data_set_set_color_table(dest_ds, AMITK_DATA_SET_COLOR_TABLE(src_object));
   amitk_data_set_set_interpolation(dest_ds, AMITK_DATA_SET_INTERPOLATION(src_object));
+  amitk_data_set_set_subject_orientation(dest_ds, AMITK_DATA_SET_SUBJECT_ORIENTATION(src_object));
   amitk_data_set_set_thresholding(dest_ds,AMITK_DATA_SET_THRESHOLDING(src_object));
+  amitk_data_set_set_threshold_style(dest_ds, AMITK_DATA_SET_THRESHOLD_STYLE(src_object));
   for (i=0; i<2; i++) {
     dest_ds->threshold_max[i] = AMITK_DATA_SET_THRESHOLD_MAX(src_object, i);
     dest_ds->threshold_min[i] = AMITK_DATA_SET_THRESHOLD_MIN(src_object, i);
@@ -628,6 +690,9 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   ds = AMITK_DATA_SET(object);
 
   xml_save_string(nodes, "scan_date", AMITK_DATA_SET_SCAN_DATE(ds));
+  xml_save_string(nodes, "subject_name", AMITK_DATA_SET_SUBJECT_NAME(ds));
+  xml_save_string(nodes, "subject_id", AMITK_DATA_SET_SUBJECT_ID(ds));
+  xml_save_string(nodes, "subject_dob", AMITK_DATA_SET_SUBJECT_DOB(ds));
   xml_save_string(nodes, "modality", amitk_modality_get_name(AMITK_DATA_SET_MODALITY(ds)));
   amitk_point_write_xml(nodes,"voxel_size", AMITK_DATA_SET_VOXEL_SIZE(ds));
 
@@ -676,9 +741,10 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes, FIL
   xml_save_time(nodes, "scan_start", AMITK_DATA_SET_SCAN_START(ds));
   xml_save_times(nodes, "frame_duration", ds->frame_duration, AMITK_DATA_SET_NUM_FRAMES(ds));
   xml_save_string(nodes, "color_table", amitk_color_table_get_name(AMITK_DATA_SET_COLOR_TABLE(ds)));
-  xml_save_string(nodes, "interpolation", 
-		  amitk_interpolation_get_name(AMITK_DATA_SET_INTERPOLATION(ds)));
+  xml_save_string(nodes, "interpolation", amitk_interpolation_get_name(AMITK_DATA_SET_INTERPOLATION(ds)));
+  xml_save_string(nodes, "subject_orientation", amitk_subject_orientation_get_name(AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)));
   xml_save_string(nodes, "thresholding", amitk_thresholding_get_name(AMITK_DATA_SET_THRESHOLDING(ds)));
+  xml_save_string(nodes, "threshold_style", amitk_threshold_style_get_name(AMITK_DATA_SET_THRESHOLD_STYLE(ds)));
   xml_save_data(nodes, "threshold_max_0", ds->threshold_max[0]);
   xml_save_data(nodes, "threshold_min_0", ds->threshold_min[0]);
   xml_save_int(nodes, "threshold_ref_frame_0", ds->threshold_ref_frame[0]);
@@ -707,7 +773,9 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   AmitkModality i_modality;
   AmitkColorTable i_color_table;
   AmitkThresholding i_thresholding;
+  AmitkThresholdStyle i_threshold_style;
   AmitkInterpolation i_interpolation;
+  AmitkSubjectOrientation i_subject_orientation;
   AmitkScalingType i_scaling_type;
   AmitkConversion i_conversion;
   AmitkDoseUnit i_dose_unit;
@@ -716,7 +784,6 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   AmitkWindow i_window;
   AmitkLimit i_limit;
   gchar * temp_string;
-  gchar * scan_date;
   gchar * filename=NULL;
   guint64 location, size;
 
@@ -724,9 +791,27 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 
   ds = AMITK_DATA_SET(object);
 
-  scan_date = xml_get_string(nodes, "scan_date");
-  amitk_data_set_set_scan_date(ds, scan_date);
-  g_free(scan_date);
+  temp_string = xml_get_string(nodes, "scan_date");
+  amitk_data_set_set_scan_date(ds, temp_string);
+  g_free(temp_string);
+
+  if (xml_node_exists(nodes, "subject_name")) {
+    temp_string = xml_get_string(nodes, "subject_name");
+    amitk_data_set_set_subject_name(ds, temp_string);
+    g_free(temp_string);
+  }
+
+  if (xml_node_exists(nodes, "subject_id")) {
+    temp_string = xml_get_string(nodes, "subject_id");
+    amitk_data_set_set_subject_id(ds, temp_string);
+    g_free(temp_string);
+  }
+
+  if (xml_node_exists(nodes, "subject_dob")) {
+    temp_string = xml_get_string(nodes, "subject_dob");
+    amitk_data_set_set_subject_dob(ds, temp_string);
+    g_free(temp_string);
+  }
 
   temp_string = xml_get_string(nodes, "modality");
   if (temp_string != NULL)
@@ -831,6 +916,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   /* end legacy cruft */
 
   amitk_data_set_set_scale_factor(ds, xml_get_data(nodes, "scale_factor", &error_buf));
+
   ds->injected_dose = xml_get_data(nodes, "injected_dose", &error_buf);
   ds->subject_weight = xml_get_data(nodes, "subject_weight", &error_buf); 
   ds->cylinder_factor = xml_get_data(nodes, "cylinder_factor", &error_buf);
@@ -874,12 +960,18 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 	amitk_data_set_set_color_table(ds, i_color_table);
   g_free(temp_string);
 
-  /* figure out the interpolation */
   temp_string = xml_get_string(nodes, "interpolation");
   if (temp_string != NULL)
     for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
       if (g_ascii_strcasecmp(temp_string, amitk_interpolation_get_name(i_interpolation)) == 0)
 	amitk_data_set_set_interpolation(ds, i_interpolation);
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "subject_orientation");
+  if (temp_string != NULL) 
+    for (i_subject_orientation=0; i_subject_orientation < AMITK_SUBJECT_ORIENTATION_NUM; i_subject_orientation++) 
+      if (g_ascii_strcasecmp(temp_string, amitk_subject_orientation_get_name(i_subject_orientation)) == 0)
+	amitk_data_set_set_subject_orientation(ds, i_subject_orientation);
   g_free(temp_string);
 
   temp_string = xml_get_string(nodes, "thresholding");
@@ -888,6 +980,14 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
       if (g_ascii_strcasecmp(temp_string, amitk_thresholding_get_name(i_thresholding)) == 0)
 	amitk_data_set_set_thresholding(ds, i_thresholding);
   g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "threshold_style");
+  if (temp_string != NULL)
+    for (i_threshold_style=0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++)
+      if (g_ascii_strcasecmp(temp_string, amitk_threshold_style_get_name(i_threshold_style)) == 0)
+	amitk_data_set_set_threshold_style(ds, i_threshold_style);
+  g_free(temp_string);
+
 
   ds->threshold_max[0] =  xml_get_data(nodes, "threshold_max_0", &error_buf);
   ds->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1", &error_buf);
@@ -955,14 +1055,17 @@ AmitkDataSet * amitk_data_set_new (AmitkPreferences * preferences,
   if (preferences != NULL) { 
     /* apply our preferential colortable*/
     amitk_data_set_set_color_table(data_set,
-				   AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(preferences, modality));
+				   AMITK_PREFERENCES_COLOR_TABLE(preferences, modality));
 
     /* and copy in the default windows */
     for (i_window=0; i_window < AMITK_WINDOW_NUM; i_window++) 
       for (i_limit=0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
 	amitk_data_set_set_threshold_window(data_set, i_window, i_limit,
-					    AMITK_PREFERENCES_DEFAULT_WINDOW(preferences, i_window, i_limit));
+					    AMITK_PREFERENCES_WINDOW(preferences, i_window, i_limit));
       }
+
+    amitk_data_set_set_threshold_style(data_set, 
+				       AMITK_PREFERENCES_THRESHOLD_STYLE(preferences));
   }
 
 
@@ -1389,7 +1492,7 @@ static void export_raw(AmitkDataSet *ds,
 	  num_wrote = fwrite(row_data, sizeof(gfloat), dim.x, file_pointer);
 	  total_wrote += num_wrote;
 	  if ( num_wrote != dim.x) {
-	    g_warning(_("incomplete save of raw data, wrote %z (bytes), file: %s"),
+	    g_warning(_("incomplete save of raw data, wrote %lx (bytes), file: %s"),
 		      total_wrote*sizeof(gfloat), filename);
 	    goto exit_strategy;
 	  }
@@ -1765,6 +1868,16 @@ void amitk_data_set_set_thresholding(AmitkDataSet * ds, const AmitkThresholding 
   }
 }
 
+void amitk_data_set_set_threshold_style(AmitkDataSet * ds, const AmitkThresholdStyle threshold_style) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  if (ds->threshold_style != threshold_style) {
+    ds->threshold_style = threshold_style;
+
+    g_signal_emit(G_OBJECT (ds), data_set_signals[THRESHOLD_STYLE_CHANGED], 0);
+  }
+}
+
 void amitk_data_set_set_threshold_max(AmitkDataSet * ds, guint which_reference, amide_data_t value) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
@@ -1821,7 +1934,19 @@ void amitk_data_set_set_interpolation(AmitkDataSet * ds, const AmitkInterpolatio
   return;
 }
 
-/* sets the creation date of a data set
+void amitk_data_set_set_subject_orientation(AmitkDataSet * ds, const AmitkSubjectOrientation subject_orientation) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_orientation != subject_orientation) {
+    ds->subject_orientation = subject_orientation;
+    g_signal_emit(G_OBJECT (ds), data_set_signals[SUBJECT_ORIENTATION_CHANGED], 0);
+  }
+
+  return;
+}
+
+/* sets the scan date of a data set
    note: no error checking is done on the date, as of yet */
 void amitk_data_set_set_scan_date(AmitkDataSet * ds, const gchar * new_date) {
 
@@ -1838,6 +1963,70 @@ void amitk_data_set_set_scan_date(AmitkDataSet * ds, const gchar * new_date) {
     g_strstrip(ds->scan_date); /* removes trailing and leading white space */
   } else {
     ds->scan_date = g_strdup(_("unknown"));
+  }
+
+  return;
+}
+
+/* sets the subject name associated with the data set */
+void amitk_data_set_set_subject_name(AmitkDataSet * ds, const gchar * new_name) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_name != NULL) {
+    g_free(ds->subject_name); 
+    ds->subject_name = NULL;
+  }
+
+  if (new_name != NULL) {
+    ds->subject_name = g_strdup(new_name); 
+    g_strdelimit(ds->subject_name, "\n", ' '); /* turns newlines to white space */
+    g_strstrip(ds->subject_name); /* removes trailing and leading white space */
+  } else {
+    ds->subject_name = g_strdup(_("unknown"));
+  }
+
+  return;
+}
+
+/* sets the subject id associated with the data set */
+void amitk_data_set_set_subject_id(AmitkDataSet * ds, const gchar * new_id) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_id != NULL) {
+    g_free(ds->subject_id); 
+    ds->subject_id = NULL;
+  }
+
+  if (new_id != NULL) {
+    ds->subject_id = g_strdup(new_id); 
+    g_strdelimit(ds->subject_id, "\n", ' '); /* turns newlines to white space */
+    g_strstrip(ds->subject_id); /* removes trailing and leading white space */
+  } else {
+    ds->subject_id = g_strdup(_("unknown"));
+  }
+
+  return;
+}
+
+/* sets the subject's date of birth 
+   note: no error checking is done on the date, as of yet */
+void amitk_data_set_set_subject_dob(AmitkDataSet * ds, const gchar * new_dob) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_dob != NULL) {
+    g_free(ds->subject_dob); 
+    ds->subject_dob = NULL;
+  }
+
+  if (new_dob != NULL) {
+    ds->subject_dob = g_strdup(new_dob); 
+    g_strdelimit(ds->subject_dob, "\n", ' '); /* turns newlines to white space */
+    g_strstrip(ds->subject_dob); /* removes trailing and leading white space */
+  } else {
+    ds->subject_dob = g_strdup(_("unknown"));
   }
 
   return;
@@ -2034,7 +2223,7 @@ void amitk_data_set_set_threshold_window(AmitkDataSet * ds,
     ds->threshold_window[window][limit] = value;
   }
 
-  g_signal_emit (G_OBJECT (ds), data_set_signals[DATA_SET_CHANGED], 0);
+  g_signal_emit (G_OBJECT (ds), data_set_signals[WINDOWS_CHANGED], 0);
 }
 
 void amitk_data_set_set_view_start_gate(AmitkDataSet * ds, amide_intpoint_t start_gate) {
@@ -4389,6 +4578,18 @@ const gchar * amitk_interpolation_get_name(const AmitkInterpolation interpolatio
   return enum_value->value_nick;
 }
 
+const gchar * amitk_subject_orientation_get_name(const AmitkSubjectOrientation subject_orientation) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_SUBJECT_ORIENTATION);
+  enum_value = g_enum_get_value(enum_class, subject_orientation);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
 const gchar * amitk_thresholding_get_name(const AmitkThresholding thresholding) {
 
   GEnumClass * enum_class;
@@ -4396,6 +4597,18 @@ const gchar * amitk_thresholding_get_name(const AmitkThresholding thresholding) 
 
   enum_class = g_type_class_ref(AMITK_TYPE_THRESHOLDING);
   enum_value = g_enum_get_value(enum_class, thresholding);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_threshold_style_get_name(const AmitkThresholdStyle threshold_style) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_THRESHOLD_STYLE);
+  enum_value = g_enum_get_value(enum_class, threshold_style);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

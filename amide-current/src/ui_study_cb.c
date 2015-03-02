@@ -1029,7 +1029,7 @@ void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data) {
 #ifdef AMIDE_LIBGSL_SUPPORT
   ui_study_t * ui_study = data;
-  tb_alignment(ui_study->study);
+  tb_alignment(ui_study->study, GTK_WINDOW(ui_study->app));
 #else
   g_warning(no_gsl);
 #endif
@@ -1045,7 +1045,7 @@ void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data) {
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
     g_warning(no_active_ds);
   else
-    tb_crop(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
+    tb_crop(ui_study->study, AMITK_DATA_SET(ui_study->active_object), GTK_WINDOW(ui_study->app));
   return;
 }
 
@@ -1057,7 +1057,7 @@ void ui_study_cb_fads_selected(GtkWidget * widget, gpointer data) {
     g_warning(no_active_ds);
   else {
 #ifdef AMIDE_LIBGSL_SUPPORT
-    tb_fads(AMITK_DATA_SET(ui_study->active_object));
+    tb_fads(AMITK_DATA_SET(ui_study->active_object), GTK_WINDOW(ui_study->app));
 #else
     g_warning(no_gsl);
 #endif
@@ -1072,7 +1072,7 @@ void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data) {
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
     g_warning(no_active_ds);
   else 
-    tb_filter(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
+    tb_filter(ui_study->study, AMITK_DATA_SET(ui_study->active_object), GTK_WINDOW(ui_study->app));
 
   return;
 }

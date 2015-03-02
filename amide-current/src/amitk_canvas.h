@@ -68,6 +68,7 @@ struct _AmitkCanvas
   GtkWidget * scrollbar;
   GtkObject * scrollbar_adjustment;
   GnomeCanvasItem * arrows[4];
+  GnomeCanvasItem * orientation_label[4];
   AmitkCanvasType type;
 
   AmitkVolume * volume; /* the volume that this canvas slice displays */

@@ -116,7 +116,8 @@ static void fwhm_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 
 static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
 static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void destroy_cb(GtkObject * object, gpointer data);
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
 
 static tb_filter_t * tb_filter_free(tb_filter_t * tb_filter);
 static tb_filter_t * tb_filter_init(void);
@@ -224,6 +225,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
       g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(filter_cb), tb_filter);
       gtk_table_attach(GTK_TABLE(table), option_menu, 
+		       table_column+1, table_column+2, table_row, table_row+1,
+		       FALSE, FALSE, X_PADDING, Y_PADDING);
 #else
       menu = gtk_combo_box_new_text();
       for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) 
@@ -231,9 +234,9 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_filter->filter);
       g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(filter_cb), tb_filter);
       gtk_table_attach(GTK_TABLE(table), menu, 
-#endif
 		       table_column+1, table_column+2, table_row, table_row+1,
 		       FALSE, FALSE, X_PADDING, Y_PADDING);
+#endif
 #if 1
       gtk_widget_show_all(option_menu);
 #endif
@@ -442,14 +445,17 @@ static void cancel_cb(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function called on a delete event */
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
-
+static void destroy_cb(GtkObject * object, gpointer data) {
   tb_filter_t * tb_filter = data;
-
+  
   /* trash collection */
   tb_filter = tb_filter_free(tb_filter);
+  return;
+}
 
+
+/* function called on a delete event */
+static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
   return FALSE;
 }
 
@@ -522,7 +528,7 @@ static tb_filter_t * tb_filter_init(void) {
 }
 
 
-void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
+void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_filter_t * tb_filter;
   GdkPixbuf * logo;
@@ -544,7 +550,10 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
   tb_filter->fwhm = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(tb_filter->data_set));
 
   tb_filter->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(tb_filter->dialog), "delete_event", G_CALLBACK(delete_event), tb_filter);
+  gtk_window_set_transient_for(GTK_WINDOW(tb_filter->dialog), parent);
+  gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_filter->dialog), TRUE);
+  g_signal_connect(G_OBJECT(tb_filter->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_filter);
+  g_signal_connect(G_OBJECT(tb_filter->dialog), "destroy", G_CALLBACK(destroy_cb), tb_filter);
 
   tb_filter->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_filter->dialog));
 

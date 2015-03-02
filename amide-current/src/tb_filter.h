@@ -29,7 +29,7 @@
 
 
 /* external functions */
-void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds);
+void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent);
 
 
 

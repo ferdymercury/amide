@@ -33,8 +33,9 @@
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
 #else
-  static gboolean strip_highs=FALSE;
-  static gboolean optimize_rendering=TRUE;
+static gboolean strip_highs=FALSE;
+static gboolean optimize_rendering=TRUE;
+static gboolean initially_no_gradient_opacity=FALSE;
 #endif
 
 #include "image.h"
@@ -69,7 +70,8 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 static void close_cb(GtkWidget* widget, gpointer data);
 
 
-static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings);
+static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
+			     gboolean * initially_no_gradient_opacity);
 static ui_render_t * ui_render_init(GnomeApp * app, AmitkStudy * study, GList * selected_objects);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
 
@@ -667,13 +669,15 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
 
 
-static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings) {
+static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
+			     gboolean * initially_no_gradient_opacity) {
 
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
 
   *strip_highs = gnome_config_get_int("RENDERING/StripHighs");
   *optimize_renderings = gnome_config_get_int("RENDERING/OptimizeRendering");
+  *initially_no_gradient_opacity = gnome_config_get_int("RENDERING/InitiallyNoGradientOpacity");
 
   gnome_config_pop_prefix();
 #endif
@@ -691,8 +695,9 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 #ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
+  gboolean initially_no_gradient_opacity;
 
-  read_preferences(&strip_highs, &optimize_rendering);
+  read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
 #endif
 
   /* alloc space for the data structure for passing ui info */
@@ -756,7 +761,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->renderings = renderings_init(selected_objects, 
 					  ui_render->start, 
 					  ui_render->duration, 
-					  strip_highs, optimize_rendering,
+					  strip_highs, optimize_rendering, initially_no_gradient_opacity,
 					  ui_render->disable_progress_dialog ? NULL : amitk_progress_dialog_update,
 					  ui_render->disable_progress_dialog ? NULL : ui_render->progress_dialog);
 
@@ -1022,8 +1027,9 @@ void ui_render_create(AmitkStudy * study, GList * selected_objects) {
 
 
 
-static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data);
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data);
+static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data);
+static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data);
 static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
 
@@ -1055,6 +1061,22 @@ static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("RENDERING/OptimizeRendering", optimize_rendering);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+  return;
+}
+
+static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
+  gboolean initially_no_gradient_opacity;
+#endif
+
+  initially_no_gradient_opacity =gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("RENDERING/InitiallyNoGradientOpacity", initially_no_gradient_opacity);
   gnome_config_pop_prefix();
   gnome_config_sync();
 #endif
@@ -1105,8 +1127,9 @@ GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
 #ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
+  gboolean initially_no_gradient_opacity;
 
-  read_preferences(&strip_highs, &optimize_rendering);
+  read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
 #endif
 
   temp_string = g_strdup_printf(_("%s: Rendering Initialization Dialog"), PACKAGE);
@@ -1158,6 +1181,15 @@ GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
 		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_optimize_rendering_cb), dialog);
   table_row++;
+
+  /* do we want the initial opacities to be only density dependent */
+  check_button = gtk_check_button_new_with_label(_("Initial opacity functions only density dependent?"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button),initially_no_gradient_opacity);
+  gtk_table_attach(GTK_TABLE(table), check_button, 
+		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_no_gradient_opacity_cb), dialog);
+  table_row++;
+
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

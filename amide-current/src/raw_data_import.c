@@ -28,9 +28,20 @@
 #include <gtk/gtk.h>
 #include <sys/stat.h>
 #include <string.h>
+
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#else
+static AmitkModality last_modality = AMITK_MODALITY_PET;
+static AmitkRawFormat last_raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
+static AmitkVoxel last_data_dim;
+static AmitkPoint last_voxel_size = one_point;
+static guint last_offset = 0;
+static amide_data_t scale_factor;
+#endif
+
 #include "raw_data_import.h"
 #include "amitk_progress_dialog.h"
-
 
 
 /* raw_data information structure */
@@ -61,9 +72,15 @@ static void change_modality_cb(GtkWidget * widget, gpointer data);
 static void change_raw_format_cb(GtkWidget * widget, gpointer data);
 
 
+static guint update_num_bytes(raw_data_info_t * raw_data_info);
+static void read_last_values(AmitkModality * plast_modality,
+			     AmitkRawFormat * plast_raw_format,
+			     AmitkVoxel * plast_data_dim,
+			     AmitkPoint * plast_voxel_size,
+			     guint * plast_offset,
+			     amide_data_t *plast_scale_factor);
 static GtkWidget * import_dialog(raw_data_info_t * raw_data_info);
 static void update_offset_label(raw_data_info_t * raw_data_info);
-static guint update_num_bytes(raw_data_info_t * raw_data_info);
 
 
 
@@ -101,6 +118,14 @@ static void change_scaling_cb(GtkWidget * widget, gpointer data) {
   /* and save the value */
   raw_data_info->scale_factor = temp_real;
 
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_float("RAWDATAIMPORT/LastScaleFactor", raw_data_info->scale_factor);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#else
+  last_scale_factor = raw_data_info->scale_factor;
+#endif
   return;
 }
       
@@ -175,6 +200,25 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
   /* recalculate the total number of bytes to be read and have it displayed */
   update_num_bytes(raw_data_info);
 
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("RAWDATAIMPORT/LastDataDimG", raw_data_info->data_dim.g);
+  gnome_config_set_int("RAWDATAIMPORT/LastDataDimT", raw_data_info->data_dim.t);
+  gnome_config_set_int("RAWDATAIMPORT/LastDataDimZ", raw_data_info->data_dim.z);
+  gnome_config_set_int("RAWDATAIMPORT/LastDataDimY", raw_data_info->data_dim.y);
+  gnome_config_set_int("RAWDATAIMPORT/LastDataDimX", raw_data_info->data_dim.x);
+  gnome_config_set_float("RAWDATAIMPORT/LastVoxelSizeZ", raw_data_info->voxel_size.z);
+  gnome_config_set_float("RAWDATAIMPORT/LastVoxelSizeY", raw_data_info->voxel_size.y);
+  gnome_config_set_float("RAWDATAIMPORT/LastVoxelSizeX", raw_data_info->voxel_size.x);
+  gnome_config_set_int("RAWDATAIMPORT/LastOffset", raw_data_info->offset);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#else
+  last_data_dim = raw_data_info->data_dim;
+  last_voxel_size = raw_data_info->voxel_size;
+  last_offset = raw_data_info->offset;
+#endif
+
   return;
 }
       
@@ -183,11 +227,22 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
 /* function to change the modality */
 static void change_modality_cb(GtkWidget * widget, gpointer data) {
   raw_data_info_t * raw_data_info = data;
+
 #if 1
   raw_data_info->modality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
 #else
   raw_data_info->modality = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 #endif
+
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("RAWDATAIMPORT/LastModality", raw_data_info->modality);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#else
+  last_modality = raw_data_info->modality;
+#endif
+
   return;
 }
 
@@ -209,6 +264,14 @@ static void change_raw_format_cb(GtkWidget * widget, gpointer data) {
   /* update the offset label so it makes sense */
   update_offset_label(raw_data_info);
 
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("RAWDATAIMPORT/LastRawFormat", raw_data_info->raw_format);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#else
+  last_raw_format = raw_data_info->raw_format;
+#endif
   return;
 }
 
@@ -270,6 +333,50 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 }
 
 
+static void read_last_values(AmitkModality * plast_modality,
+			     AmitkRawFormat * plast_raw_format,
+			     AmitkVoxel * plast_data_dim,
+			     AmitkPoint * plast_voxel_size,
+			     guint * plast_offset,
+			     amide_data_t *plast_scale_factor) {
+#ifndef AMIDE_WIN32_HACKS
+  gint default_value;
+  gint temp_int;
+  gfloat temp_float;
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+
+  *plast_modality = gnome_config_get_int("RAWDATAIMPORT/LastModality");
+  *plast_raw_format = gnome_config_get_int("RAWDATAIMPORT/LastRawFormat");
+
+  temp_int = gnome_config_get_int_with_default("RAWDATAIMPORT/LastDataDimG",&default_value);
+  (*plast_data_dim).g = default_value ? 1 : temp_int;
+  temp_int = gnome_config_get_int_with_default("RAWDATAIMPORT/LastDataDimT",&default_value);
+  (*plast_data_dim).t = default_value ? 1 : temp_int;
+  temp_int = gnome_config_get_int_with_default("RAWDATAIMPORT/LastDataDimZ",&default_value);
+  (*plast_data_dim).z = default_value ? 1 : temp_int;
+  temp_int = gnome_config_get_int_with_default("RAWDATAIMPORT/LastDataDimY",&default_value);
+  (*plast_data_dim).y = default_value ? 1 : temp_int; 
+  temp_int = gnome_config_get_int_with_default("RAWDATAIMPORT/LastDataDimX",&default_value);
+  (*plast_data_dim).x = default_value ? 1 : temp_int; 
+
+
+  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastVoxelSizeZ",&default_value);
+  (*plast_voxel_size).z =  default_value ? 1.0 : temp_float;
+  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastVoxelSizeY",&default_value);
+  (*plast_voxel_size).y =  default_value ? 1.0 : temp_float;
+  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastVoxelSizeX",&default_value);
+  (*plast_voxel_size).x =  default_value ? 1.0 : temp_float;
+
+  *plast_offset = gnome_config_get_int("RAWDATAIMPORT/LastOffset");
+
+  temp_float = gnome_config_get_float_with_default("RAWDATAIMPORT/LastScaleFormat",&default_value);
+  *plast_scale_factor =  default_value ? 1.0 : temp_float;
+
+  gnome_config_pop_prefix();
+#endif
+}
+
 /* function to bring up the dialog widget to direct our importing of raw data */
 static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
@@ -289,6 +396,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 #endif
   GtkWidget * menu;
   guint table_row = 0;
+
 
 
 
@@ -364,17 +472,16 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_MODALITY_PET);
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), raw_data_info->modality);
   g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
 #else
   menu = gtk_combo_box_new_text();
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) 
     gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
 			      amitk_modality_get_name(i_modality));
-  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), AMITK_MODALITY_PET);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), raw_data_info->modality);
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_modality_cb), raw_data_info);
 #endif
-  raw_data_info->modality = AMITK_MODALITY_PET;
   gtk_table_attach(GTK_TABLE(packing_table), 
 #if 1
 		   GTK_WIDGET(option_menu), 1,2, 
@@ -407,17 +514,16 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_RAW_FORMAT_UBYTE_8_NE);
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), raw_data_info->raw_format);
 #else
   menu = gtk_combo_box_new_text();
   for (i_raw_format=0; i_raw_format<AMITK_RAW_FORMAT_NUM; i_raw_format++) 
     gtk_combo_box_append_text(GTK_COMBO_BOX(menu),
 			      amitk_raw_format_names[i_raw_format]);
-  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), AMITK_RAW_FORMAT_UBYTE_8_NE);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), raw_data_info->raw_format);
   g_signal_connect(G_OBJECT(menu), "changed", 
 		   G_CALLBACK(change_raw_format_cb), raw_data_info);
 #endif
-  raw_data_info->raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
   gtk_table_attach(GTK_TABLE(packing_table), 
 #if 1
 		   GTK_WIDGET(option_menu), 1,2, 
@@ -447,7 +553,6 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(raw_data_info->read_offset_label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
-  raw_data_info->offset = 0;
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%d", raw_data_info->offset);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
@@ -496,10 +601,9 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
-  raw_data_info->data_dim = one_voxel;
   for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
     entry = gtk_entry_new();
-    temp_string = g_strdup_printf("%d", 1);
+    temp_string = g_strdup_printf("%d", voxel_get_dim(raw_data_info->data_dim, i_dim));
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
@@ -518,7 +622,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
     entry = gtk_entry_new();
-    temp_string = g_strdup_printf("%d", 1);
+    temp_string = g_strdup_printf("%g", point_get_component(raw_data_info->voxel_size, i_axis));
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
@@ -570,10 +674,20 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename, AmitkPreferences
     return NULL;
   }
 
-  /* some initializations */
-  raw_data_info->scale_factor = 1.0;
+  /* initialize */
   raw_data_info->filename = g_strdup(raw_data_filename);
-  raw_data_info->voxel_size = one_point;
+#ifndef AMIDE_WIN32_HACKS
+  read_last_values(&(raw_data_info->modality), &(raw_data_info->raw_format), 
+		   &(raw_data_info->data_dim), &(raw_data_info->voxel_size),
+		   &(raw_data_info->offset), &(raw_data_info->scale_factor));
+#else
+  raw_data_info->modality = last_modality;
+  raw_data_info->raw_format = last_raw_format;
+  raw_data_info->data_dim = last_data_dim;
+  raw_data_info->voxel_size = last_voxel_size;
+  raw_data_info->offset = last_offset;
+  raw_data_info->scale_factor = last_scale_factor;
+#endif
 
   /* figure out the file size in bytes (file_info.st_size) */
   if (stat(raw_data_info->filename, &file_info) != 0) {

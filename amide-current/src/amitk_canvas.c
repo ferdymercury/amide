@@ -36,8 +36,8 @@
 #include "amitk_study.h"
 
 #define BOX_SPACING 3
-#define DEFAULT_CANVAS_TRIANGLE_WIDTH 8.0
-#define DEFAULT_CANVAS_TRIANGLE_HEIGHT 8.0
+#define DEFAULT_CANVAS_TRIANGLE_WIDTH 10.0
+#define DEFAULT_CANVAS_TRIANGLE_HEIGHT 10.0
 
 
 #define UPDATE_NONE 0x00
@@ -50,7 +50,8 @@
 #define UPDATE_OBJECTS 0x40
 #define UPDATE_TARGET 0x80
 #define UPDATE_TIME 0x100
-#define UPDATE_ALL 0x1FF
+#define UPDATE_SUBJECT_ORIENTATION 0x200
+#define UPDATE_ALL 0x2FF
 
 #define cp_2_p(canvas, canvas_cpoint) (canvas_point_2_point(AMITK_VOLUME_CORNER((canvas)->volume),\
 							    (canvas)->pixbuf_width, \
@@ -65,6 +66,19 @@
 							    (canvas)->triangle_width, \
 							    (canvas)->triangle_height, \
 							    (canvas_cpoint)))
+
+gchar * orientation_label[6] = {
+  N_("A"), N_("P"), N_("L"), N_("R"), N_("S"), N_("I")
+};
+
+enum {
+  ANTERIOR, 
+  POSTERIOR, 
+  LEFT, 
+  RIGHT, 
+  SUPERIOR, 
+  INFERIOR
+};
 
 
 enum {
@@ -158,6 +172,7 @@ static void canvas_volume_changed_cb(AmitkVolume * vol, gpointer canvas);
 static void canvas_roi_changed_cb(AmitkRoi * roi, gpointer canvas);
 static void canvas_data_set_invalidate_slice_cache(AmitkDataSet * ds, gpointer data);
 static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer canvas);
+static void canvas_subject_orientation_changed_cb(AmitkDataSet * ds, gpointer canvas);
 static void canvas_thresholding_changed_cb(AmitkDataSet * ds, gpointer data);
 static void canvas_color_table_changed_cb(AmitkDataSet * ds, gpointer data);
 static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t z);
@@ -175,6 +190,7 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
 static void canvas_update_arrows(AmitkCanvas * canvas);
 static void canvas_update_line_profile(AmitkCanvas * canvas);
 static void canvas_update_time_on_image(AmitkCanvas * canvas);
+static void canvas_update_subject_orientation(AmitkCanvas * canvas);
 static void canvas_update_pixbuf(AmitkCanvas * canvas);
 static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object);
 static void canvas_update_objects(AmitkCanvas * canvas, gboolean all);
@@ -294,6 +310,7 @@ static void canvas_init (AmitkCanvas *canvas)
   /* initialize some critical stuff */
   for (i=0;i<4;i++) canvas->arrows[i]=NULL;
   for (i=0;i<8;i++) canvas->target[i]=NULL;
+  for (i=0;i<4;i++) canvas->orientation_label[i]=NULL;
   canvas->line_profile_item = NULL;
   canvas->type = AMITK_CANVAS_TYPE_NORMAL;
 
@@ -644,6 +661,19 @@ static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer data) {
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   canvas_add_object_update(canvas, AMITK_OBJECT(ds));
+
+  return;
+}
+
+static void canvas_subject_orientation_changed_cb(AmitkDataSet * ds, gpointer data) {
+
+  AmitkCanvas * canvas = data;  
+
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds == AMITK_DATA_SET(canvas->active_object))
+    canvas_add_update(canvas, UPDATE_SUBJECT_ORIENTATION);
 
   return;
 }
@@ -2703,14 +2733,16 @@ static void canvas_update_line_profile(AmitkCanvas * canvas) {
 
   /* figure out if we need to hide it */
   if ((canvas->view != AMITK_LINE_PROFILE_VIEW(line_profile)) ||
-      (!AMITK_LINE_PROFILE_VISIBLE(line_profile))) {
+      (!AMITK_LINE_PROFILE_VISIBLE(line_profile)) ||
+      !amitk_volume_point_in_bounds(canvas->volume, canvas->center)) {
+    /* the !amitk_volume_point_in_bounds gets hit when there's no data set 
+       on the given canvas..  only happens if multiple views are up at the same
+    time */
+
     if (canvas->line_profile_item != NULL)
       gnome_canvas_item_hide(canvas->line_profile_item);
     return;
   }
-
-  /* sanity check */
-  g_return_if_fail(amitk_volume_point_in_bounds(canvas->volume, canvas->center));
 
 
   initial = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
@@ -2884,6 +2916,243 @@ static void canvas_update_time_on_image(AmitkCanvas * canvas) {
 }
 
 
+static void canvas_update_subject_orientation(AmitkCanvas * canvas) {
+
+  gboolean remove = FALSE;
+  int i;
+  float x[4];
+  float y[4];
+  gint anchor[4];
+  gint which_orientation[4];
+
+  if (canvas->active_object == NULL)
+    remove = TRUE;
+  else if (!AMITK_IS_DATA_SET(canvas->active_object))
+    remove = TRUE;
+  else if (AMITK_DATA_SET_SUBJECT_ORIENTATION(canvas->active_object) == 
+	   AMITK_SUBJECT_ORIENTATION_UNKNOWN)
+    remove = TRUE;
+
+  if (remove) {
+    for (i=0; i<4; i++) 
+      if (canvas->orientation_label[i] != NULL)
+	gnome_canvas_item_hide(canvas->orientation_label[i]);
+
+  } else {
+
+    switch(canvas->view) {
+
+    case AMITK_VIEW_TRANSVERSE:
+      switch(AMITK_DATA_SET_SUBJECT_ORIENTATION(canvas->active_object)) {
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST:
+	which_orientation[0] = ANTERIOR;
+	which_orientation[1] = POSTERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST:
+	which_orientation[0] = ANTERIOR;
+	which_orientation[1] = POSTERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST:
+	which_orientation[0] = POSTERIOR;
+	which_orientation[1] = ANTERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST:
+	which_orientation[0] = POSTERIOR;
+	which_orientation[1] = ANTERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = LEFT;
+	which_orientation[1] = RIGHT;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = LEFT;
+	which_orientation[1] = RIGHT;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = RIGHT;
+	which_orientation[1] = LEFT;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = RIGHT;
+	which_orientation[1] = LEFT;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      default:
+	g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+	break;
+      }
+      break;
+
+    case AMITK_VIEW_CORONAL:
+      switch(AMITK_DATA_SET_SUBJECT_ORIENTATION(canvas->active_object)) {
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      default:
+	g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+	break;
+      }
+      break;
+
+    case AMITK_VIEW_SAGITTAL:
+      switch(AMITK_DATA_SET_SUBJECT_ORIENTATION(canvas->active_object)) {
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = POSTERIOR;
+	which_orientation[3] = ANTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = ANTERIOR;
+	which_orientation[3] = POSTERIOR;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = RIGHT;
+	which_orientation[3] = LEFT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST:
+	which_orientation[0] = SUPERIOR;
+	which_orientation[1] = INFERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST:
+	which_orientation[0] = INFERIOR;
+	which_orientation[1] = SUPERIOR;
+	which_orientation[2] = LEFT;
+	which_orientation[3] = RIGHT;
+	break;
+      default:
+	g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+	break;
+      }
+      break;
+
+    default:
+      g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+      break;
+    }
+
+    /* text locations */
+    x[0] = 0;
+    y[0] = canvas->triangle_height;
+    anchor[0] = GTK_ANCHOR_NORTH_WEST;
+
+    x[1] = 0;
+    y[1] = canvas->triangle_height + canvas->pixbuf_height;
+    anchor[1] = GTK_ANCHOR_SOUTH_WEST;
+    
+    x[2] = canvas->triangle_height;
+    y[2] = 2*canvas->triangle_height + canvas->pixbuf_height;
+    anchor[2] = GTK_ANCHOR_SOUTH_WEST;
+    
+    x[3] = canvas->triangle_height+canvas->pixbuf_width;
+    y[3] = 2*canvas->triangle_height + canvas->pixbuf_height;
+    anchor[3] = GTK_ANCHOR_SOUTH_EAST;
+
+    
+    for (i=0; i<4; i++) {
+      if (canvas->orientation_label[i] != NULL ) 
+	gnome_canvas_item_set(canvas->orientation_label[i],"text", orientation_label[which_orientation[i]], 
+			      "x", x[i], "y", y[i], NULL);
+      else 
+	canvas->orientation_label[i] = 
+	  gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
+				gnome_canvas_text_get_type(),
+				"anchor", anchor[i],
+				"text", orientation_label[which_orientation[i]],
+				"x", x[i],
+				"y", y[i],
+				"fill_color", "black",
+				"font_desc", amitk_small_fixed_font_desc, NULL);
+      gnome_canvas_item_show(canvas->orientation_label[i]);
+    }
+  }
+
+  return;
+}
 
 
 
@@ -3062,6 +3331,7 @@ static void canvas_update_objects(AmitkCanvas * canvas, gboolean all) {
 static void canvas_update_setup(AmitkCanvas * canvas) {
 
   gboolean first_time = FALSE;
+  gchar * temp_str;
 
   if (canvas->canvas != NULL) {
     /* add a ref so they aren't destroyed when removed from the container */
@@ -3076,7 +3346,9 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
   } else {
     first_time = TRUE;
 
-    canvas->label = gtk_label_new(view_names[canvas->view]);
+    temp_str = g_strdup_printf("%s %d\n", view_names[canvas->view], canvas->view_mode+1);
+    canvas->label = gtk_label_new(temp_str);
+    g_free(temp_str);
 
 #ifdef AMIDE_LIBGNOMECANVAS_AA
     canvas->canvas = gnome_canvas_new_aa();
@@ -3204,6 +3476,11 @@ static gboolean canvas_update_while_idle(gpointer data) {
     canvas_update_time_on_image(canvas);
   }
 
+  if (canvas->next_update & UPDATE_SUBJECT_ORIENTATION) {
+    canvas_update_subject_orientation(canvas);
+  }
+
+
   if (canvas->next_update & UPDATE_TARGET) {
     canvas_update_target(canvas, canvas->next_target_action, canvas->next_target_center,
 			 canvas->next_target_thickness);
@@ -3272,6 +3549,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "thresholding_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholds_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(canvas_color_table_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "subject_orientation_changed", G_CALLBACK(canvas_subject_orientation_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "view_gates_changed", G_CALLBACK(canvas_data_set_changed_cb), canvas);
     canvas->max_slice_cache_size += 3;
   }
@@ -3347,6 +3625,7 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_data_set_invalidate_slice_cache, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_thresholding_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_color_table_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_subject_orientation_changed_cb, canvas);
     canvas->slice_cache = amitk_data_sets_remove_with_slice_parent(canvas->slice_cache, AMITK_DATA_SET(object));
     canvas->max_slice_cache_size -= 3;
   }
@@ -3431,6 +3710,7 @@ void amitk_canvas_set_active_object(AmitkCanvas * canvas,
 
     canvas_add_update(canvas, UPDATE_TARGET);
     canvas_add_update(canvas, UPDATE_LINE_PROFILE);
+    canvas_add_update(canvas, UPDATE_SUBJECT_ORIENTATION);
   }
 
   return;

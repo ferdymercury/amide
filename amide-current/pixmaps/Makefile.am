@@ -19,8 +19,16 @@ BUILT_SOURCES = \
 	thresholding_global_icon.h \
 	three_compartment.h \
 	two_compartment.h \
-	window_bone_icon.h \
-	window_soft_tissue_icon.h \
+	window_abdomen.h \
+	window_brain.h \
+	window_extremities.h \
+	window_liver.h \
+	window_lung.h \
+	window_pelvis_soft_tissue.h \
+	window_skull_base.h \
+	window_spine_a.h \
+	window_spine_b.h \
+	window_thorax_soft_tissue.h \
 	align_pt_icon.h \
 	study_icon.h \
 	box_icon.h \
@@ -29,7 +37,11 @@ BUILT_SOURCES = \
 	isocontour_2d_icon.h \
 	isocontour_3d_icon.h \
 	freehand_2d_icon.h \
-	freehand_3d_icon.h 
+	freehand_3d_icon.h \
+	min_max_icon.h \
+	center_width_icon.h
+##	window_bone_icon.h \
+##	window_soft_tissue_icon.h \
 
 
 

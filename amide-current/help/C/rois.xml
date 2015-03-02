@@ -220,6 +220,9 @@
    explicitly tell it you're importing a TSV file).  Pressing the
    "Copy" button copies the information into the operating systems
    clipboard, allowing pasting of the results into other programs.
+   The "Save Raw Values" button allows you to export the underlying
+   raw data values for the ROI's in case you wish to do your own
+   statistical analysis.
   </para>
 
   

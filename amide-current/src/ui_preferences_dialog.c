@@ -34,6 +34,7 @@
 #include "amitk_canvas.h"
 #include "amitk_color_table_menu.h"
 #include "amitk_threshold.h"
+#include "amitk_window_edit.h"
 #include "ui_common.h"
 
 
@@ -58,7 +59,7 @@ static void fill_roi_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
-static void window_threshold_cb(GtkWidget * widget, gpointer data);
+static void threshold_style_cb(GtkWidget * widget, gpointer data);
 #endif
 
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data);
@@ -165,22 +166,13 @@ static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function called when the roi width has been changed */
-static void window_threshold_cb(GtkWidget * widget, gpointer data) {
+static void threshold_style_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  amide_data_t new_threshold;
-  AmitkWindow which_window;
-  AmitkLimit which_limit;
 
-  g_return_if_fail(ui_study->study != NULL);
+  amitk_preferences_set_threshold_style(ui_study->preferences, 
+					GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "threshold_style")));
 
-  new_threshold = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  which_window = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_window"));
-  which_limit = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "which_limit"));
-
-  amitk_preferences_set_default_window(ui_study->preferences, which_window, 
-				       which_limit, new_threshold);
   return;
 }
 
@@ -299,11 +291,13 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * layout_button2;
   GtkWidget * hseparator;
   GtkWidget * menu;
-  GtkWidget * window_spins[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
+  GtkWidget * windows_widget;
+  GtkWidget * scrolled;
   AmitkModality i_modality;
   GnomeCanvasItem * roi_item;
-  AmitkWindow i_window;
-  AmitkLimit i_limit;
+  AmitkThresholdStyle i_threshold_style;
+  GtkWidget * style_buttons[AMITK_THRESHOLD_STYLE_NUM];
+  GtkWidget * hbox;
 #endif
 
 
@@ -412,6 +406,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 			    AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(ui_study->preferences));
   g_signal_connect(G_OBJECT(target_size_spin), "value_changed",  G_CALLBACK(target_empty_area_cb), ui_study);
 
+  gtk_widget_show_all(packing_table);
 
 
 
@@ -422,7 +417,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
      ---------------------- */
 
   packing_table = gtk_table_new(4,2,FALSE);
-  label = gtk_label_new(_("Threshold Windows"));
+  label = gtk_label_new(_("Thresholding"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
@@ -431,26 +426,55 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,3, table_row, table_row+1,
 		   0, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
   table_row++;
 
   hseparator = gtk_hseparator_new();
   gtk_table_attach(GTK_TABLE(packing_table), hseparator, 
 		   0, 3, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(hseparator);
+  table_row++;
+
+  
+  /* threshold type selection */
+  label = gtk_label_new(_("Threshold Style"));
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(label);
+    
+  hbox = gtk_hbox_new(FALSE, 0);
+  amitk_threshold_style_widgets(style_buttons, hbox);
+  gtk_table_attach(GTK_TABLE(packing_table), hbox, 1,2, table_row,table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(style_buttons[AMITK_PREFERENCES_THRESHOLD_STYLE(ui_study->preferences)]),
+			       TRUE);
+  for (i_threshold_style = 0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++) 
+    g_signal_connect(G_OBJECT(style_buttons[i_threshold_style]), "clicked",  
+		     G_CALLBACK(threshold_style_cb), ui_study);
+  gtk_widget_show(hbox);
+
+
   table_row++;
 
 
-  ui_common_data_set_preferences_widgets(packing_table, table_row,
-					 window_spins);
-  
-  for (i_window=0; i_window<AMITK_WINDOW_NUM; i_window++) {
-    for (i_limit=0; i_limit< AMITK_LIMIT_NUM; i_limit++) {
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(window_spins[i_window][i_limit]), 
-				AMITK_PREFERENCES_DEFAULT_WINDOW(ui_study->preferences, i_window, i_limit));
-      g_signal_connect(G_OBJECT(window_spins[i_window][i_limit]), "value_changed",  
-		       G_CALLBACK(window_threshold_cb), ui_study);
-    }
-  }
+  /* draw the window widgets */
+  scrolled = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+				 GTK_POLICY_NEVER,
+				 GTK_POLICY_AUTOMATIC);
+
+
+  windows_widget = amitk_window_edit_new(NULL, ui_study->preferences);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), windows_widget);
+  gtk_widget_show(windows_widget);
+
+  gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2, table_row,table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
+  gtk_widget_show(scrolled);
+
+  gtk_widget_show(packing_table);
+
 
 
   /* ----------------------
@@ -477,10 +501,10 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 #if 1
     gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
-				AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(ui_study->preferences, i_modality));
+				AMITK_PREFERENCES_COLOR_TABLE(ui_study->preferences, i_modality));
 #else
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
-			     AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(ui_study->preferences, i_modality));
+			     AMITK_PREFERENCES_COLOR_TABLE(ui_study->preferences, i_modality));
 #endif
     g_object_set_data(G_OBJECT(menu), "modality", GINT_TO_POINTER(i_modality));
     g_signal_connect(G_OBJECT(menu), "changed",  G_CALLBACK(color_table_cb), ui_study);
@@ -488,6 +512,8 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 
     table_row++;
   }
+
+  gtk_widget_show_all(packing_table);
 
 #endif /* AMIDE_WIN32_HACKS */
 
@@ -531,10 +557,12 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
 		   0,1, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
+  gtk_widget_show_all(packing_table);
 
 
   /* and show all our widgets */
-  gtk_widget_show_all(dialog);
+  gtk_widget_show(notebook);
+  gtk_widget_show(dialog);
 
   return;
 }

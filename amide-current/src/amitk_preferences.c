@@ -156,7 +156,7 @@ static void preferences_init (AmitkPreferences * preferences) {
     temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", amitk_modality_get_name(i_modality));
     temp_int = gnome_config_get_int_with_default(temp_string, &default_value);
     g_free(temp_string);
-    preferences->default_color_table[i_modality] = 
+    preferences->color_table[i_modality] = 
       default_value ? amitk_modality_default_color_table[i_modality] : temp_int;
   }
 
@@ -166,9 +166,12 @@ static void preferences_init (AmitkPreferences * preferences) {
 				    amitk_limit_get_name(i_limit));
       temp_float = gnome_config_get_float_with_default(temp_string,&default_value);
       g_free(temp_string);
-      preferences->default_window[i_window][i_limit] =
+      preferences->window[i_window][i_limit] =
 	default_value ? amitk_window_default[i_window][i_limit] : temp_float;
   }
+
+  temp_int = gnome_config_get_int_with_default("DATASETS/ThresholdStyle", &default_value); 
+  preferences->threshold_style = default_value ? AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE : temp_int;
 
   gnome_config_pop_prefix();
 
@@ -191,11 +194,13 @@ static void preferences_init (AmitkPreferences * preferences) {
 
   /* data set preferences */
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    preferences->default_color_table[i_modality] = amitk_modality_default_color_table[i_modality];
+    preferences->color_table[i_modality] = amitk_modality_default_color_table[i_modality];
   }
   for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) 
     for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) 
-      preferences->default_window[i_window][i_limit] = amitk_window_default[i_window][i_limit];
+      preferences->window[i_window][i_limit] = amitk_window_default[i_window][i_limit];
+
+  preferences->threshold_style = AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE;
 
 #endif /* AMIDE_WIN32_HACKS */
 
@@ -412,8 +417,8 @@ void amitk_preferences_set_color_table(AmitkPreferences * preferences,
   g_return_if_fail((modality >= 0) && (modality < AMITK_MODALITY_NUM));
   g_return_if_fail((color_table >= 0) && (color_table < AMITK_COLOR_TABLE_NUM));
 
-  if (AMITK_PREFERENCES_DEFAULT_COLOR_TABLE(preferences,modality) != color_table) {
-    preferences->default_color_table[modality] = color_table;
+  if (AMITK_PREFERENCES_COLOR_TABLE(preferences,modality) != color_table) {
+    preferences->color_table[modality] = color_table;
 
 #ifndef AMIDE_WIN32_HACKS
     temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", 
@@ -443,11 +448,11 @@ void amitk_preferences_set_default_window(AmitkPreferences * preferences,
   g_return_if_fail((window >= 0) && (window < AMITK_WINDOW_NUM));
   g_return_if_fail((limit >= 0) && (limit < AMITK_LIMIT_NUM));
 
-  if (!REAL_EQUAL(AMITK_PREFERENCES_DEFAULT_WINDOW(preferences, window, limit), value)) {
-    preferences->default_window[window][limit] = value;
+  if (!REAL_EQUAL(AMITK_PREFERENCES_WINDOW(preferences, window, limit), value)) {
+    preferences->window[window][limit] = value;
 
 #ifndef AMIDE_WIN32_HACKS
-    temp_string = g_strdup_printf("THRESHOLDS/%s-%s", amitk_window_get_name(window),
+    temp_string = g_strdup_printf("WINDOWS/%s-%s", amitk_window_get_name(window),
 				  amitk_limit_get_name(limit));
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_float(temp_string,value);
@@ -459,6 +464,23 @@ void amitk_preferences_set_default_window(AmitkPreferences * preferences,
   }
 
   return;
+}
+
+void amitk_preferences_set_threshold_style(AmitkPreferences * preferences,
+					   const AmitkThresholdStyle threshold_style) {
+
+  g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
+
+  if (AMITK_PREFERENCES_THRESHOLD_STYLE(preferences) != threshold_style) {
+    preferences->threshold_style = threshold_style;
+#ifndef AMIDE_WIN32_HACKS
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("DATASETS/ThresholdStyle", threshold_style);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+#endif
+    g_signal_emit(G_OBJECT(preferences), preferences_signals[DATA_SET_PREFERENCES_CHANGED], 0);
+  }
 }
 
 void amitk_preferences_set_dialog(AmitkPreferences * preferences,

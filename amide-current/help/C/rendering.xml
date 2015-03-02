@@ -7,7 +7,7 @@
 
 <para> To start a rendering window, select the "View->Rendering" menu
   item.  A small dialog window will pop-up allowing you to select
-  which objects you'd like rendered, along with an additional two
+  which objects you'd like rendered, along with some additional
   options.  The first "Set values greater than max threshold to zero"
   allows you to strip high level voxels out of the rendering process.
   In general you won't want this, but it might be useful if you have
@@ -18,7 +18,12 @@
   enhancement (around 10 fold).  It does, however, require around 3
   fold as much rendering as the non-accelerated option, so if you're
   running out of memory, you'll want to try to rendering without the
-  acceleration. </para>
+  acceleration. The third option "Initial opacity functions only
+  density dependent" sets things such that the initial gradient
+  opacity function does not contribute to the rendering.  This is
+  useful for data sets (e.g. PET) where one is more interested in
+  having an accurate view of the data, rather than a view where
+  gradients in the data set are highlighted.</para>
 
 <para> After hitting "Execute" the program will reslice the data sets
   and ROI's into a data structure that the volpack library can handle,

@@ -79,13 +79,6 @@
 
 /* function declarations */
 AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_`'m4_Variable_Type`'_t init_value);
-AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_2D_init(amitk_format_`'m4_Variable_Type`'_t init_value, 
-							   amide_intpoint_t y_dim,
-							   amide_intpoint_t x_dim);
-AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_3D_init(amitk_format_`'m4_Variable_Type`'_t init_value, 
-							   amide_intpoint_t z_dim,
-							   amide_intpoint_t y_dim,
-							   amide_intpoint_t x_dim);
 void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_raw_data, 
 							 amitk_format_`'m4_Variable_Type`'_t init_value);
 

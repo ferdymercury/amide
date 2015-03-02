@@ -66,18 +66,12 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   kernel->dim.z = kernel->dim.y = AMITK_FILTER_FFT_SIZE;
   kernel->dim.x = 2*AMITK_FILTER_FFT_SIZE; /* real and complex */
 
-  if ((kernel->data = amitk_raw_data_get_data_mem(kernel)) == NULL) {
+  /* get mem for the kernel, initialized to 0 */
+  if ((kernel->data = amitk_raw_data_get_data_mem0(kernel)) == NULL) {
     g_warning(_("Couldn't allocate space for the kernel data"));
     amitk_object_unref(kernel);
     return NULL;
   }
-
-  /* initialize the data */
-  i_voxel.t = i_voxel.g = 0;
-  for (i_voxel.z = 0; i_voxel.z < kernel->dim.z; i_voxel.z++) 
-    for (i_voxel.y = 0; i_voxel.y < kernel->dim.y; i_voxel.y++) 
-      for (i_voxel.x = 0; i_voxel.x < kernel->dim.x; i_voxel.x++) 
-	AMITK_RAW_DATA_DOUBLE_SET_CONTENT(kernel, i_voxel) = 0.0;
 
   sigma = fwhm/SIGMA_TO_FWHM;
   half.t = half.g = 0;
@@ -87,6 +81,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
 
   total = 0.0;
 
+  i_voxel.t = i_voxel.g = 0;
   for (i_voxel.z = 0; i_voxel.z < kernel_size.z; i_voxel.z++) {
     location.z = voxel_size.z*(i_voxel.z-half.z);
     for (i_voxel.y = 0; i_voxel.y < kernel_size.y; i_voxel.y++) {

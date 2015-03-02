@@ -1,3 +1,26 @@
+0.8.14 2005.11.17
+	* faster functions for initialized amitk_raw_data structures [1]
+ 	* fast roi quantitation now gives more accurate median value
+	* freehand/isocontour drawing speed-ups
+ 	* can export underlying raw roi values to file [2]
+ 	* canvases and tree/help can torn off as separate windows [3]
+	* removed 'logic' for placing orthogonal sets of canvases 
+	  -now simply left to right
+	* Default rendering opacity can now be specified as density only [4]
+	* raw data import dialog values are now persistent [5]
+ 	* distribution on threshold now only shown for global thresholding
+	* can now display thresholds as center/window as well as min/max [6]
+	* additional CT windowing options [6]
+ 	* added "subject orientation", and appropriate displays on canvas [6]
+ 	* added subject name, id, and dob entries [6]
+	* toolbox dialogs now correctly free memory on destroy signal
+	[1] Requested by Buyean Lee
+ 	[2] Requested by Daniel Rubin
+	[3] Suggested by Jonathan Bailleul 	
+	[4] Suggested by Jeff Tseng
+	[5] Suggested by Robert Hunter
+	[6] Suggested by Freimut Juengling
+
 0.8.13 2005.06.24
 	* added freehand ROI's [1]
 	* added drawing mode for isocontour ROI's

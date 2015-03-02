@@ -275,6 +275,9 @@ static amitk_format_UBYTE_t map_roi_edge(AmitkRawData * map_roi_ds, AmitkVoxel v
 }
 
 
+
+#define FAST_INTERSECTION_SLICE 1
+
 /* intersection data is returned in the form of a volume slice */
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
@@ -294,6 +297,11 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
   AmitkPoint temp_point;
   AmitkPoint canvas_voxel_size;
   amitk_format_UBYTE_t value;
+#if FAST_INTERSECTION_SLICE
+  AmitkPoint alt, start_point;
+  AmitkPoint stride[AMITK_AXIS_NUM], last_point;
+  AmitkAxis i_axis;
+#endif
 
   g_return_val_if_fail(!AMITK_ROI_UNDRAWN(roi), NULL);
 
@@ -311,22 +319,49 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
   dim = voxel_add(voxel_sub(end, start), one_voxel);
 
   intersection = amitk_data_set_new(NULL, -1);
-  intersection->raw_data = amitk_raw_data_UBYTE_2D_init(0, dim.y, dim.x);
+  intersection->raw_data = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE,dim.y, dim.x);
 
   /* get the corners of the view slice in view coordinate space */
   slice_corners[0] = amitk_space_b2s(AMITK_SPACE(canvas_slice), 
 				     AMITK_SPACE_OFFSET(canvas_slice));
   slice_corners[1] = AMITK_VOLUME_CORNER(canvas_slice);
 
-  i_voxel.z = i_voxel.g = i_voxel.t = 0;
   view_point.z = (slice_corners[0].z+slice_corners[1].z)/2.0;
   view_point.y = slice_corners[0].y+((double) start.y + 0.5)*pixel_dim;
+#if FAST_INTERSECTION_SLICE
+  view_point.x = slice_corners[0].x+((double) start.x + 0.5)*pixel_dim;
 
+  /* figure out what point in the roi we're going to start at */
+  start_point = amitk_space_s2s(AMITK_SPACE(canvas_slice),AMITK_SPACE(roi), view_point);
+
+  /* figure out what stepping one voxel in a given direction in our slice coresponds to in our roi */
+  for (i_axis = 0; i_axis <= AMITK_AXIS_Y; i_axis++) {
+    alt.x = (i_axis == AMITK_AXIS_X) ? pixel_dim : 0.0;
+    alt.y = (i_axis == AMITK_AXIS_Y) ? pixel_dim : 0.0;
+    alt.z = 0.0;
+    alt = point_add(point_sub(amitk_space_s2b(AMITK_SPACE(canvas_slice), alt),
+			      AMITK_SPACE_OFFSET(canvas_slice)),
+		    AMITK_SPACE_OFFSET(roi));
+    stride[i_axis] = amitk_space_b2s(AMITK_SPACE(roi), alt);
+  }
+
+
+  roi_point = start_point;
+#endif
+  i_voxel.z = i_voxel.g = i_voxel.t = 0;
   for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) {
+#if FAST_INTERSECTION_SLICE
+    last_point = roi_point;
+#else
     view_point.x = slice_corners[0].x+((double)start.x+0.5)*pixel_dim;
+#endif
 
     for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) {
+#if FAST_INTERSECTION_SLICE
+
+#else
       roi_point = amitk_space_s2s(AMITK_SPACE(canvas_slice), AMITK_SPACE(roi), view_point);
+#endif
       POINT_TO_VOXEL(roi_point, roi->voxel_size, 0, 0, roi_voxel);
       if (amitk_raw_data_includes_voxel(roi->map_data, roi_voxel)) {
 	value = AMITK_RAW_DATA_UBYTE_CONTENT(roi->map_data, roi_voxel);
@@ -337,10 +372,18 @@ AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const Amitk
 #endif
 	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(intersection->raw_data, i_voxel) = 1;
       }
-
+#if FAST_INTERSECTION_SLICE
+      POINT_ADD(roi_point, stride[AMITK_AXIS_X], roi_point);
+#else
       view_point.x += pixel_dim;
+#endif
     }
+#if FAST_INTERSECTION_SLICE
+    POINT_ADD(last_point, stride[AMITK_AXIS_Y], roi_point);
+#else
     view_point.y += pixel_dim;
+#endif
+
   }
 
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_FREEHAND_2D)
@@ -514,9 +557,9 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 
   /* we first make a raw data set the size of the data set to record the in/out values */
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
-  temp_rd = amitk_raw_data_UBYTE_2D_init(0, ds->raw_data->dim.y, ds->raw_data->dim.x);
+  temp_rd = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE, ds->raw_data->dim.y, ds->raw_data->dim.x);
 #elif defined(ROI_TYPE_ISOCONTOUR_3D)
-  temp_rd = amitk_raw_data_UBYTE_3D_init(0, ds->raw_data->dim.z, ds->raw_data->dim.y, ds->raw_data->dim.x);
+  temp_rd = amitk_raw_data_new_3D_with_data0(AMITK_FORMAT_UBYTE, ds->raw_data->dim.z, ds->raw_data->dim.y, ds->raw_data->dim.x);
 #endif
 
   /* epsilon guards for floating point rounding */
@@ -551,11 +594,12 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   if (roi->map_data != NULL)
     g_object_unref(roi->map_data);
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
-  roi->map_data = amitk_raw_data_UBYTE_2D_init(0, max_voxel.y-min_voxel.y+1, max_voxel.x-min_voxel.x+1);
+  roi->map_data = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE, max_voxel.y-min_voxel.y+1, max_voxel.x-min_voxel.x+1);
 #elif defined(ROI_TYPE_ISOCONTOUR_3D)
-  roi->map_data = amitk_raw_data_UBYTE_3D_init(0,max_voxel.z-min_voxel.z+1,
-					       max_voxel.y-min_voxel.y+1, 
-					       max_voxel.x-min_voxel.x+1);
+  roi->map_data = amitk_raw_data_new_3D_with_data0(AMITK_FORMAT_UBYTE,
+						   max_voxel.z-min_voxel.z+1,
+						   max_voxel.y-min_voxel.y+1, 
+						   max_voxel.x-min_voxel.x+1);
 #endif
 
   i_voxel.t = i_voxel.g = 0;
@@ -660,11 +704,11 @@ void amitk_roi_`'m4_Variable_Type`'_manipulate_area(AmitkRoi * roi, gboolean era
       dim_changed = TRUE;
     }
 
-    if (dim_changed) {
+if (dim_changed) {
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_FREEHAND_2D)
-      temp_rd = amitk_raw_data_UBYTE_2D_init(0, new_dim.y, new_dim.x);
+      temp_rd = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE, new_dim.y, new_dim.x);
 #else /* ROI_TYPE_ISOCONTOUR_3D or ROI_TYPE_FREEHAND_3D */
-      temp_rd = amitk_raw_data_UBYTE_3D_init(0, new_dim.z, new_dim.y, new_dim.x);
+      temp_rd = amitk_raw_data_new_3D_with_data0(AMITK_FORMAT_UBYTE, new_dim.z, new_dim.y, new_dim.x);
 #endif
       
       /* copy the old map data over */
@@ -760,7 +804,7 @@ void amitk_roi_`'m4_Variable_Type`'_calc_center_of_mass(AmitkRoi * roi) {
 /* iterates over the voxels in the given data set that are inside the given roi,
    and performs the specified calculation function for those points */
 /* calulation should be a function taking the following arguments:
-   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+   calculation(AmitkVoxel dataset_voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
 							       const AmitkDataSet * ds, 
 							       const guint frame,
@@ -862,8 +906,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * 
      the volume we should be iterating over */
 
   /* these two arrays are used to store whether the voxel vertices are in the ROI or not */
-  next_plane_in = amitk_raw_data_UBYTE_2D_init(0, dim.y+1, dim.x+1);
-  curr_plane_in = amitk_raw_data_UBYTE_2D_init(0, dim.y+1, dim.x+1);
+  next_plane_in = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE, dim.y+1, dim.x+1);
+  curr_plane_in = amitk_raw_data_new_2D_with_data0(AMITK_FORMAT_UBYTE, dim.y+1, dim.x+1);
 
   j.t = frame;
   j.g = gate;
@@ -1009,7 +1053,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * 
 /* iterates over the voxels in the given data set that are inside the given roi,
    and performs the specified calculation function for those points */
 /* calulation should be a function taking the following arguments:
-   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+   calculation(AmitkVoxel dataset_voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
 								   const AmitkDataSet * ds, 
 								   const guint frame,

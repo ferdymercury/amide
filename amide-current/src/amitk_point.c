@@ -470,6 +470,9 @@ AmitkPoint amitk_axes_get_orthogonal_axis(const AmitkAxes axes,
     }
     break;
   }
+
+  /* shouldn't get here */
+  return axes[AMITK_AXIS_Z];
 }
 
 /* returns the normal axis vector for the given view */

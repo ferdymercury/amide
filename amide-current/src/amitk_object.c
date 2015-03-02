@@ -551,9 +551,9 @@ void amitk_object_write_xml(AmitkObject * object, FILE * study_file,
   /* write the xml file */
   doc = xmlNewDoc((xmlChar *) "1.0");
 
-  doc->children = xmlNewDocNode(doc, NULL, amide_data_file_version_str, AMIDE_FILE_VERSION);
+  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) amide_data_file_version_str, AMIDE_FILE_VERSION);
 
-  nodes = xmlNewChild(doc->children, NULL, object_name, AMITK_OBJECT_NAME(object));
+  nodes = xmlNewChild(doc->children, NULL, (xmlChar *) object_name, (xmlChar *) AMITK_OBJECT_NAME(object));
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_WRITE_XML], 0, nodes, study_file);
 
   /* and save */
@@ -1160,9 +1160,9 @@ void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list, FILE * study
 			 &location, &size);
 
   if (study_file == NULL) 
-    xmlNewChild(node_list, NULL, (xmlChar*) "object_file", object_filename);
+    xmlNewChild(node_list, NULL, (xmlChar*) "object_file", (xmlChar *) object_filename);
   else 
-    xml_save_location_and_size(node_list, (xmlChar*) "object_location_and_size", location, size);
+    xml_save_location_and_size(node_list, "object_location_and_size", location, size);
 
 
 

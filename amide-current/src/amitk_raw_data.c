@@ -255,6 +255,62 @@ AmitkRawData* amitk_raw_data_new_with_data(AmitkFormat format, AmitkVoxel dim) {
 }
 
 
+/* initalize a 2D slice, with values initialized to 0 */
+AmitkRawData * amitk_raw_data_new_2D_with_data0(AmitkFormat format, amide_intpoint_t y_dim, amide_intpoint_t x_dim) {
+
+  AmitkRawData * raw_data;
+  AmitkVoxel dim;
+
+  dim.x = x_dim;
+  dim.y = y_dim;
+  dim.z = dim.g = dim.t = 1;
+  raw_data = amitk_raw_data_new_with_data0(format, dim);
+  g_return_val_if_fail(raw_data != NULL, NULL);
+
+  return raw_data;
+}
+
+
+/* initalize a 2D slice, with values initialized to 0 */
+AmitkRawData * amitk_raw_data_new_3D_with_data0(AmitkFormat format, amide_intpoint_t z_dim, amide_intpoint_t y_dim, amide_intpoint_t x_dim) {
+
+  AmitkRawData * raw_data;
+  AmitkVoxel dim;
+
+  dim.x = x_dim;
+  dim.y = y_dim;
+  dim.z = z_dim;
+  dim.g = dim.t = 1;
+  raw_data = amitk_raw_data_new_with_data0(format, dim);
+  g_return_val_if_fail(raw_data != NULL, NULL);
+
+  return raw_data;
+}
+
+
+
+/* same as amitk_raw_data_new_with_data, except allocated data memory is initialized to 0 */
+AmitkRawData* amitk_raw_data_new_with_data0(AmitkFormat format, AmitkVoxel dim) {
+
+  AmitkRawData * raw_data;
+  
+  raw_data = amitk_raw_data_new();
+  g_return_val_if_fail(raw_data != NULL, NULL);
+ 
+  raw_data->format = format;
+  raw_data->dim = dim;
+
+  /* allocate the space for the data */
+  raw_data->data = amitk_raw_data_get_data_mem0(raw_data);
+  if (raw_data->data == NULL) {
+    g_object_unref(raw_data);
+    return NULL;
+  }
+
+  return raw_data;
+}
+
+
 
 
 /* reads the contents of a raw data file into an amide raw data structure,
@@ -460,8 +516,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	    for (i.y = 0; i.y < dim.y; i.y++) 
 	      for (i.x = 0; i.x < dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-		temp = 
-		  GUINT64_FROM_BE(DATA_CONTENT(data, dim, i));
+		temp = GUINT64_FROM_BE(DATA_CONTENT(data, dim, i));
 		double_p = (void *) &temp;
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
 #else /* G_BIG_ENDIAN */
@@ -800,7 +855,7 @@ void amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name,
     
   /* write the xml portion */
   doc = xmlNewDoc((xmlChar *) "1.0");
-  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) "raw_data", name);
+  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) "raw_data", (xmlChar *) name);
   amitk_voxel_write_xml(doc->children, "dim", raw_data->dim);
   xml_save_string(doc->children,"raw_format", 
 		  amitk_raw_format_get_name(amitk_format_to_raw_format(raw_data->format)));
@@ -911,7 +966,6 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
   raw_data = amitk_raw_data_import_raw_file(raw_filename, study_file, raw_format, dim, offset_long, 
 					    update_func, update_data);
 
-   
   /* and we're done */
   if (raw_filename != NULL) g_free(raw_filename);
   xmlFreeDoc(doc);

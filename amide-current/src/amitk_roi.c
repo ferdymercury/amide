@@ -686,7 +686,7 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
 /* if inverse is true, the calculation is done for the portion of the data set not in the roi */
 /* if accurate is true, uses much slower but more accurate calculation */
 /* calulation should be a function taking the following arguments:
-   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+   calculation(AmitkVoxel dataset_voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
 void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
 				     const AmitkDataSet * ds, 
 				     const guint frame,

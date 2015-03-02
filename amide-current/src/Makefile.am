@@ -99,6 +99,7 @@ amide_SOURCES = \
 	amitk_threshold.c \
 	amitk_tree_view.c \
 	amitk_volume.c \
+	amitk_window_edit.c \
 	fads.c \
 	fads.h \
 	image.c \
@@ -181,7 +182,8 @@ AMITK_H_SOURCES = \
 	amitk_threshold.h \
 	amitk_tree_view.h \
 	amitk_type.h \
-	amitk_volume.h 
+	amitk_volume.h \
+	amitk_window_edit.h 
 
 AMITK_ROI_VARIABLE_C = \
 	amitk_roi_ELLIPSOID.c \
