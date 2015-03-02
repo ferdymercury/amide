@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->DICOM Files</TITLE
+>Raw Data Files</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,11 +12,11 @@ REL="UP"
 TITLE="Importing Data "
 HREF="importing.html"><LINK
 REL="PREVIOUS"
-TITLE="Raw Data Files"
-HREF="x121.html"><LINK
+TITLE="IDL Data Files"
+HREF="x128.html"><LINK
 REL="NEXT"
-TITLE="Other Filetypes"
-HREF="x127.html"></HEAD
+TITLE="DICOM Files"
+HREF="x134.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,20 +38,20 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x121.html"
+HREF="x128.html"
 >Prev</A
 ></TD
 ><TD
 WIDTH="80%"
 ALIGN="center"
 VALIGN="bottom"
->Chapter 2. Importing Data</TD
+>Chapter 3. Importing Data</TD
 ><TD
 WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x127.html"
+HREF="x134.html"
 >Next</A
 ></TD
 ></TR
@@ -64,17 +64,18 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN124"
->DICOM Files</A
+NAME="AEN131"
+>Raw Data Files</A
 ></H1
 ><P
->    
-    DICOM 3.0 is partially supported through medcon/libmdc, which
-    actually uses a slightly modified version of Tony Voet's
-    VT-DICOM library.  The level of support for DICOM 3.0 is
-    entirely determined by medcon/libmdc/VT-DICOM.
-    
-    
+>    AMIDE will attempt to load any file ending in ".dat" or ".raw"
+    as a raw data file.  The user will be prompted for the
+    dimensions of the study, the offset of the data in the file, and
+    the data format of the data in the file.  Both big endian and
+    little endian files can be loaded, with the following data
+    formats supported: 8 bit integer, 16 bit signed or unsigned
+    integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
+    point, and 64 bit IEEE floating point.
   </P
 ></DIV
 ><DIV
@@ -92,7 +93,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x121.html"
+HREF="x128.html"
 >Prev</A
 ></TD
 ><TD
@@ -108,7 +109,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x127.html"
+HREF="x134.html"
 >Next</A
 ></TD
 ></TR
@@ -117,7 +118,7 @@ HREF="x127.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Raw Data Files</TD
+>IDL Data Files</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -130,7 +131,7 @@ HREF="importing.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Other Filetypes</TD
+>DICOM Files</TD
 ></TR
 ></TABLE
 ></DIV

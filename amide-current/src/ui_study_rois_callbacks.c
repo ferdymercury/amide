@@ -148,20 +148,20 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	return TRUE;
       }
 
-      if (event->button.button == 1)
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON)
 	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
 			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			       ui_study->cursor[UI_STUDY_OLD_ROI_RESIZE],
+			       ui_study->cursor[UI_STUDY_OLD_ROI_SHIFT],
 			       event->button.time);
-      else if (event->button.button == 2)
+      else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON)
 	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
 			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
 			       ui_study->cursor[UI_STUDY_OLD_ROI_ROTATE],
 			       event->button.time);
-      else if (event->button.button == 3)
+      else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON)
 	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
 			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			       ui_study->cursor[UI_STUDY_OLD_ROI_SHIFT],
+			       ui_study->cursor[UI_STUDY_OLD_ROI_RESIZE],
 			       event->button.time);
       else /* what the hell button got pressed? */
 	return TRUE;
@@ -192,7 +192,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
       ui_study_update_location_display(ui_study, real_loc);
       if (dragging && 
 	  ((event->motion.state & 
-	    (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK | GDK_BUTTON3_MASK)))) {
+	    (UI_STUDY_ROIS_SHIFT_MASK | UI_STUDY_ROIS_ROTATE_MASK | UI_STUDY_ROIS_RESIZE_MASK)))) {
 
 	/* last second sanity check */
 	if (current_roi_list_item == NULL) {
@@ -201,8 +201,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	}
 
 
-	if (event->motion.state & GDK_BUTTON3_MASK) {
-	  /* BUTTON3 Pressed, we're scaling the object */
+	if (event->motion.state & UI_STUDY_ROIS_RESIZE_MASK) {
+	  /* RESIZE button Pressed, we're scaling the object */
 	  /* note, I'd like to use the function "gnome_canvas_item_scale"
 	     but this isn't defined in the current version of gnome.... 
 	     so I'll have to do a whole bunch of shit*/
@@ -271,8 +271,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	    - item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
 	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
 
-	} else if (event->motion.state & GDK_BUTTON2_MASK) {
-	  /* BUTTON2 Pressed, we're rotating the object */
+	} else if (event->motion.state & UI_STUDY_ROIS_ROTATE_MASK) {
+	  /* rotate button Pressed, we're rotating the object */
 	  /* note, I'd like to use the function "gnome_canvas_item_rotate"
 	     but this isn't defined in the current version of gnome.... 
 	     so I'll have to do a whole bunch of shit*/
@@ -309,8 +309,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	  affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
 	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
 
-	} else if (event->motion.state & GDK_BUTTON1_MASK) {
-	  /* BUTTON1 pressed, we're shifting the object */
+	} else if (event->motion.state & UI_STUDY_ROIS_SHIFT_MASK) {
+	  /* shift button pressed, we're shifting the object */
 	  /* do movement calculations */
 	  shift = rp_sub(real_loc, initial_real_loc);
 	  diff = rp_sub(item, last_pic_loc);
@@ -347,11 +347,11 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 
       /* apply our changes to the roi */
 
-      if (event->button.button == 1) {
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
 	/* ------------- apply any shift done -------------- */
 	current_roi_list_item->roi->coord_frame.offset = 
 	  rp_add(shift, current_roi_list_item->roi->coord_frame.offset);
-      } else if (event->button.button == 3) {
+      } else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON) {
 	/* ------------- apply any zoom done -------------- */
 	REALPOINT_MULT(roi_zoom,radius,new_radius); 
 	
@@ -367,7 +367,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	REALPOINT_CMULT(2,new_radius,t[1]);
 	current_roi_list_item->roi->corner = t[1];
 	
-      } else if (event->button.button == 2) {
+      } else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON) {
 	
 	/* ------------- apply any rotation done -------------- */
 	new_center = /* get the center in real coords */
@@ -399,13 +399,28 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	
       } else 
 	return TRUE; /* shouldn't get here */
-	
-      /* update the roi's */
-      for (i_view=0;i_view<NUM_VIEWS;i_view++) {
-	current_roi_list_item->canvas_roi[i_view] =
-	  ui_study_update_canvas_roi(ui_study,i_view,
-				     current_roi_list_item->canvas_roi[i_view],
-				     current_roi_list_item->roi);
+
+      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
+	/* if we were moving the ROI, reset the view_center to the center of the current roi */
+	t[0] = realspace_base_coord_to_alt(current_roi_list_item->roi->coord_frame.offset,
+					   current_roi_list_item->roi->coord_frame);
+	t[1] = current_roi_list_item->roi->corner;
+	center = rp_add(rp_cmult(0.5, t[0]), rp_cmult(0.5, t[1]));
+	center = realspace_alt_coord_to_alt(center,
+					    current_roi_list_item->roi->coord_frame,
+					    study_coord_frame(ui_study->study));
+	study_set_view_center(ui_study->study, center);
+
+	/* update everything */
+	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+      } else { 
+	/* we just need to update the ROI's otherwise */
+	/* update the roi's */
+	for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+	  current_roi_list_item->canvas_roi[i_view] =
+	    ui_study_update_canvas_roi(ui_study,i_view,
+				       current_roi_list_item->canvas_roi[i_view],
+				       current_roi_list_item->roi);
       }
       
       break;

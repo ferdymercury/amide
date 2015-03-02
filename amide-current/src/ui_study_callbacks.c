@@ -98,7 +98,7 @@ static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
   if (stat(save_filename, &file_info) == 0) {
     /* check if it's okay to writeover the file */
     temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
-    question = gnome_question_dialog_modal(temp_string, NULL, NULL);
+    question = gnome_question_dialog_modal_parented(temp_string, NULL, NULL, GTK_WINDOW(ui_study->app));
     g_free(temp_string);
 
     /* and wait for the question to return */
@@ -288,10 +288,11 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
   } else { /* no filename */
     ; 
   }
-#ifdef AMIDE_DEBUG
-  g_print("name %s\n",import_volume->name);
-#endif
   if (import_volume != NULL) {
+
+#ifdef AMIDE_DEBUG
+    g_print("name %s\n",import_volume->name);
+#endif
 
     /* add the volume to the study structure */
     study_add_volume(ui_study->study, import_volume);
@@ -379,14 +380,29 @@ gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossin
   ui_study_help_info_t which_info;
 
   which_info = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_help"));
+
   /* quick correction so we can handle when the canvas switches to roi mode */
   if (which_info == HELP_INFO_CANVAS_VOLUME)
-    if (ui_study->current_mode == ROI_MODE)
-      which_info = HELP_INFO_CANVAS_ROI;
+    if (ui_study->current_mode == ROI_MODE) {
+      if (roi_undrawn(ui_study->current_roi))
+	which_info = HELP_INFO_CANVAS_NEW_ROI;
+      else
+	which_info = HELP_INFO_CANVAS_ROI;
+    }
+
+  /* quick correction so we can handle leaving a tree leaf */
+  if (((which_info == HELP_INFO_TREE_VOLUME) ||
+       (which_info == HELP_INFO_TREE_ROI) ||
+       (which_info == HELP_INFO_TREE_STUDY)) &&
+      (event->type == GDK_LEAVE_NOTIFY))
+    which_info = HELP_INFO_TREE_NONE;
+
   ui_study_update_help_info(ui_study, which_info);
 
   return FALSE;
 }
+
+
 
 /* function called when an event occurs on the image canvas, 
    notes:
@@ -493,7 +509,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
       outline_color = color_table_outline_color(volume->color_table, TRUE);
 
       if (ui_study->current_mode == ROI_MODE) {
-	if ( roi_undrawn(ui_study->current_roi)) {
+	if ((roi_undrawn(ui_study->current_roi)) && (event->button.button == 1)) {
 	  /* only new roi's handled in this function, old ones handled by
 	     ui_study_rois_callbacks_roi_event */
 	  
@@ -589,7 +605,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
     case GDK_BUTTON_RELEASE:
       ui_study_update_location_display(ui_study, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
-	if ( roi_undrawn(ui_study->current_roi)) {
+	if (roi_undrawn(ui_study->current_roi) && dragging) {
 	  /* only new roi's handled in this function, old ones handled by
 	     ui_study_rois_callbacks_roi_event */
 	  gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_image), event->button.time);
@@ -693,7 +709,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 
 
 /* function called indicating the plane adjustment has changed */
-void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) {
+void ui_study_callbacks_plane_change(GtkObject * adjustment, gpointer data) {
 
   ui_study_t * ui_study = data;
   view_t i_view;
@@ -711,7 +727,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
   switch(i_view) {
   case TRANSVERSE:
     view_center = study_view_center(ui_study->study);
-    view_center.z = adjustment->value;
+    view_center.z = GTK_ADJUSTMENT(adjustment)->value;
     study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ALL);
     ui_study_update_canvas(ui_study,CORONAL,UPDATE_ARROWS);
@@ -719,7 +735,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
     break;
   case CORONAL:
     view_center = study_view_center(ui_study->study);
-    view_center.y = adjustment->value;
+    view_center.y = GTK_ADJUSTMENT(adjustment)->value;
     study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,CORONAL,UPDATE_ALL);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
@@ -727,7 +743,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
     break;
   case SAGITTAL:
     view_center = study_view_center(ui_study->study);
-    view_center.x = adjustment->value;
+    view_center.x = GTK_ADJUSTMENT(adjustment)->value;
     study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ALL);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
@@ -740,7 +756,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
   return;
 }
 
-void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data) {
+void ui_study_callbacks_zoom(GtkObject * adjustment, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -748,8 +764,8 @@ void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data) {
   if (study_volumes(ui_study->study) == NULL)
     return;
 
-  if (study_zoom(ui_study->study) != adjustment->value) {
-    study_set_zoom(ui_study->study, adjustment->value);
+  if (study_zoom(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
+    study_set_zoom(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
     ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
 
@@ -769,7 +785,7 @@ void ui_study_callbacks_time_pressed(GtkWidget * combo, gpointer data) {
 }
 
 
-void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data) {
+void ui_study_callbacks_thickness(GtkObject * adjustment, gpointer data) {
 
   ui_study_t * ui_study = data;
 
@@ -777,8 +793,8 @@ void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data) {
   if (study_volumes(ui_study->study) == NULL)
     return;
 
-  if (study_view_thickness(ui_study->study) != adjustment->value) {
-    study_set_view_thickness(ui_study->study, adjustment->value);
+  if (study_view_thickness(ui_study->study) != GTK_ADJUSTMENT(adjustment)->value) {
+    study_set_view_thickness(ui_study->study, GTK_ADJUSTMENT(adjustment)->value);
     ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
 
@@ -952,11 +968,9 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
   /* figure out which menu item called me */
   i_roi_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"roi_type"));
 
-  entry = 
-    gnome_request_dialog(FALSE, "ROI Name:", "", 256, 
-			 ui_study_callbacks_roi_entry_name,
-			 &roi_name, 
-			 GTK_WINDOW(ui_study->app));
+  entry = gnome_request_dialog(FALSE, "ROI Name:", "", 256, 
+			       ui_study_callbacks_roi_entry_name,
+			       &roi_name, GTK_WINDOW(ui_study->app));
   
   entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
   
@@ -970,294 +984,284 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
     roi = roi_free(roi);
   }
 
-  gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->add_roi_option_menu), 0);
   return;
 }
 
 
-/* function called when another row has been selected in the tree */
-void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node, 
-				       gint column, gpointer data) {
+/* callback used when a leaf is clicked on, 
+   this handles double-clicks, middle clicks, and right clicks  */
+void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
+
   ui_study_t * ui_study = data;
-  view_t i_view;
-  gpointer node_pointer;
-  GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
-  volume_list_t * volume_list;
-  roi_list_t * roi_list;
+  ui_study_tree_object_t object_type;
+  volume_t * volume;
+  roi_t * roi;
+  GtkWidget * subtree;
+  GtkWidget * study_leaf;
+  realpoint_t roi_center;
 
-  volume_list = study_volumes(ui_study->study);
-  roi_list = study_rois(ui_study->study);
 
-  /* figure out what this node corresponds to, if anything */
-  node_pointer = gtk_ctree_node_get_row_data(ctree, GTK_CTREE_NODE(node));
-  if (node_pointer != NULL) {
+  if ((event->type == GDK_BUTTON_PRESS) && (event->button == 1))
+    return; /* the select callback handles this case */
 
-    while (roi_list != NULL) {
+  object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(leaf), "type"));
 
-      /* if it's an roi, do the appropriate roi action */
-      if (node_pointer == roi_list->roi) {
+  switch(object_type) {
 
-	/* add the roi to the current list, making sure to only add it once */
-	if (!ui_roi_list_includes_roi(ui_study->current_rois, roi_list->roi)) {
-	  /* make the canvas graphics */
-	  for (i_view=0;i_view<NUM_VIEWS;i_view++)
-	    roi_canvas_item[i_view] = 
-	      ui_study_update_canvas_roi(ui_study,i_view,NULL, roi_list->roi);
+  case UI_STUDY_TREE_VOLUME:
+    volume = gtk_object_get_data(GTK_OBJECT(leaf), "object");
 
-	  /* and add this roi to the current_rois list */
-	  ui_study->current_rois = 
-	    ui_roi_list_add_roi(ui_study->current_rois, roi_list->roi,
-				roi_canvas_item, ctree, GTK_CTREE_NODE(node));
-	  
-	}
+
+    if ((event->button == 1) || (event->button == 2)) {
+      ui_study->current_mode = VOLUME_MODE;
+      ui_study->current_volume = volume;
+
+      /* make sure it's already selected */
+      if ((GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) && (event->type != GDK_2BUTTON_PRESS)) {
+	study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+	subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+	gtk_tree_select_child(GTK_TREE(subtree), leaf); 
       }
 
-      roi_list = roi_list->next;
+      /* reset the threshold widget based on the current volume */
+      if (ui_study->threshold != NULL) 
+	ui_threshold_dialog_update(ui_study);
+
+      /* reset the color_table picker based on the current volume */
+      gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu), volume->color_table);
+
+      /* indicate this is now the active object */
+      ui_study_tree_update_active_leaf(ui_study, leaf);
+
+    } else {/* event.button == 3 */
+      ui_volume_dialog_create(ui_study, volume); /* start up the volume dialog */
+    }
+    break;
+
+
+  case UI_STUDY_TREE_ROI:
+    roi = gtk_object_get_data(GTK_OBJECT(leaf), "object");
+
+    if ((event->button == 1) || (event->button == 2)) {
+      ui_study->current_mode = ROI_MODE;
+      ui_study->current_roi = roi;
+
+      /* make sure it's already selected */
+      if ((GTK_WIDGET_STATE(leaf) != GTK_STATE_SELECTED) && (event->type != GDK_2BUTTON_PRESS)) {
+	study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+	subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+	gtk_tree_select_child(GTK_TREE(subtree), leaf); 
+      }
+
+      /* center the view on this roi, check first if the roi has been drawn, and if we're
+	 already centered */
+      roi_center = roi_calculate_center(roi);
+      roi_center = realspace_base_coord_to_alt(roi_center, study_coord_frame(ui_study->study));
+      if ( !roi_undrawn(roi) && !REALPOINT_EQUAL(roi_center, study_view_center(ui_study->study))) {
+	study_set_view_center(ui_study->study, roi_center);
+	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
+      } else {
+	/* if this roi hasn't yet been drawn, at least update 
+	   which roi is highlighted */
+	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
+      }
+
+      /* indicate this is now the active leaf */
+      ui_study_tree_update_active_leaf(ui_study, leaf);
+
+    } else { /* button 3 clicked */
+      /* start up the dialog to adjust the roi */
+      ui_roi_dialog_create(ui_study, roi);
     }
 
-    while (volume_list != NULL) {
+    break;
 
-      /* if it's a volume, do the appropriate volume action */
-      if (node_pointer == volume_list->volume) {
-	if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume_list->volume))
-	  ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, volume_list->volume,
-								ctree, GTK_CTREE_NODE(node));
-	if (ui_study->current_volume == NULL) {
-	  /* make this the current volume if we don't have one yet */
-	  ui_study->current_volume = volume_list->volume;
 
-	  /* reset the color_table picker based on the current volume */
+  case UI_STUDY_TREE_STUDY:
+  default:
+    if (event->button ==3)
+      ui_study_dialog_create(ui_study);
+    break;
+  }
+
+  return;
+}
+
+/* callback function used when a  row in the tree is selected */
+void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  ui_study_tree_object_t object_type;
+  volume_t * volume;
+  roi_t * roi;
+  GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
+  view_t i_view;
+
+  object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(leaf), "type"));
+
+  switch(object_type) {
+
+
+
+  case UI_STUDY_TREE_VOLUME:
+    volume = gtk_object_get_data(GTK_OBJECT(leaf), "object");
+
+    /* --------------------- select ----------------- */
+    if (GTK_WIDGET_STATE(leaf) == GTK_STATE_SELECTED) {
+
+      if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume))
+	ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, 
+							      volume, leaf);
+
+      if (ui_study->current_volume == NULL) {
+	/* make this the current volume if we don't have one yet */
+	ui_study->current_volume = volume;
+	/* reset the color_table picker based on the current volume */
+	gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+				    ui_study->current_volume->color_table);
+	/* indicate this is now the active if we're not pointing at anything else leaf */
+	if (ui_study->current_mode == VOLUME_MODE)
+	  ui_study_tree_update_active_leaf(ui_study, leaf);
+      }	  
+
+
+      /*---------------------- unselect --------------- */
+    } else { 
+      ui_study->current_volumes =  /* remove the volume from the selection list */
+	ui_volume_list_remove_volume(ui_study->current_volumes, volume);
+      
+      /* if it's the currently active volume... */
+      if (ui_study->current_volume == volume) {
+	/* reset the currently active volume */
+	ui_study->current_volume = ui_volume_list_get_first_volume(ui_study->current_volumes);
+	/* reset the color_table picker based on the current volume */
+	if (ui_study->current_volume != NULL)
 	  gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
 				      ui_study->current_volume->color_table);
+	/* update which row in the tree has the active symbol */
+	if (ui_study->current_mode == VOLUME_MODE)
+	  ui_study_tree_update_active_leaf(ui_study, NULL); 
+      } 
+      
+      /* destroy the threshold window if it's open and looking at this volume */
+      if (ui_study->threshold != NULL)
+	if (ui_study->threshold->volume== volume)
+	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
+      
+    }
 
-	  /* indicate this is now the active row */
-	  ui_study_tree_update_active_row(ui_study, 
-					  gtk_clist_find_row_from_data(GTK_CLIST(ctree), volume_list->volume));
-	}	  
+    /* we'll need to redraw the canvas */
+    ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+    ui_time_dialog_set_times(ui_study);
+    break;
 
-	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
-	ui_time_dialog_set_times(ui_study);
+
+
+
+  case UI_STUDY_TREE_ROI:
+    roi = gtk_object_get_data(GTK_OBJECT(leaf), "object");
+
+    /* --------------------- select ----------------- */
+    if ((GTK_WIDGET_STATE(leaf) == GTK_STATE_SELECTED) && 
+	(!ui_roi_list_includes_roi(ui_study->current_rois, roi))) {
+      /* make the canvas graphics */
+      for (i_view=0;i_view<NUM_VIEWS;i_view++)
+	roi_canvas_item[i_view] = ui_study_update_canvas_roi(ui_study,i_view,NULL, roi);
+      /* and add this roi to the current_rois list */
+      ui_study->current_rois =  ui_roi_list_add_roi(ui_study->current_rois, roi,
+						    roi_canvas_item, leaf);
+      
+
+      /*---------------------- unselect --------------- */
+    } else { 
+
+      if (ui_study->current_roi == roi) {
+	ui_study->current_roi = NULL;
+	if (ui_study->current_mode == ROI_MODE) {
+	  ui_study->current_mode = VOLUME_MODE;
+	  ui_study_tree_update_active_leaf(ui_study, NULL); 
+	}
       }
-
-      volume_list = volume_list->next;
+      ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi);
     }
+    break;
 
-    /* check if we were selecting the study */
-    if (node_pointer == ui_study->study) {
-      ui_study->study_selected = TRUE;
-    }
 
+
+
+
+  case UI_STUDY_TREE_STUDY:
+  default:
+    ; 
+    break;
   }
 
   return;
 }
 
-/* function called when another row has been unselected in the tree */
-void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node, 
-					 gint column, gpointer data) {
+
+
+
+/* callback used when the background of the tree is clicked on */
+void ui_study_callbacks_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data) {
+
   ui_study_t * ui_study = data;
-  gpointer node_pointer;
-  volume_list_t * volume_list;
-  roi_list_t * roi_list;
+  GtkWidget * menu;
+  GtkWidget * menuitem;
+  roi_type_t i_roi_type;
+  gchar * temp_string;
 
-  volume_list = study_volumes(ui_study->study);
-  roi_list = study_rois(ui_study->study);
+  if (event->type != GDK_BUTTON_PRESS)
+    return;
 
-  /* figure out what this node corresponds to, if anything */
-  node_pointer = gtk_ctree_node_get_row_data(ctree, GTK_CTREE_NODE(node));
-  if (node_pointer != NULL) {
-    while (roi_list != NULL) {
+  if (event->button == 3) {
+    menu = gtk_menu_new();
 
-      /* if it's an roi, do the appropriate roi action */
-      if (node_pointer == roi_list->roi) {
-        if (ui_study->current_roi == roi_list->roi) {
-          ui_study->current_roi = NULL;
-	  if (ui_study->current_mode == ROI_MODE) {
-	    ui_study->current_mode = VOLUME_MODE;
-	    ui_study_tree_update_active_row(ui_study, -1); 
-	  }
-	}
-        ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi_list->roi);
-      }       
-
-      roi_list = roi_list->next;
+    for (i_roi_type=0; i_roi_type<NUM_ROI_TYPES; i_roi_type++) {
+      temp_string = g_strdup_printf("add new %s",roi_type_names[i_roi_type]);
+      menuitem = gtk_menu_item_new_with_label(temp_string);
+      g_free(temp_string);
+      gtk_menu_append(GTK_MENU(menu), menuitem);
+      gtk_object_set_data(GTK_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
+      gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
+			 GTK_SIGNAL_FUNC(ui_study_callbacks_add_roi_type), ui_study);
+      gtk_widget_show(menuitem);
     }
-    while (volume_list != NULL) {
-
-      /* if it's a volume, do the appropriate volume action */
-      if (node_pointer == volume_list->volume) {
-
-	/* if it's the currently active volume... */
-	if (ui_study->current_volume == volume_list->volume) {
-	  /* remove it */
-	  ui_study->current_volumes = 
-	    ui_volume_list_remove_volume(ui_study->current_volumes, volume_list->volume);
-	  /* reset the currently active volume */
-	  ui_study->current_volume = ui_volume_list_get_first_volume(ui_study->current_volumes);
-
-	  /* reset the color_table picker based on the current volume */
-	  if (ui_study->current_volume != NULL)
-	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-					ui_study->current_volume->color_table);
-
-	  /* update which row in the tree has the active symbol */
-	  if (ui_study->current_mode == VOLUME_MODE)
-	    ui_study_tree_update_active_row(ui_study, -1); 
-	} else {
-	  /* just remove it */
-	  ui_study->current_volumes = 
-	    ui_volume_list_remove_volume(ui_study->current_volumes, volume_list->volume);
-	}
-      
-	/* destroy the threshold window if it's open and looking at this volume */
-	if (ui_study->threshold != NULL)
-	  if (ui_study->threshold->volume==volume_list->volume)
-	    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", 
-				    NULL, ui_study);
-
-	/* we'll need to redraw the canvas */
-	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
-	ui_time_dialog_set_times(ui_study);
-      }
-
-      volume_list = volume_list->next;
-    }
-
-    /* check if we were unselecting the study */
-    if (node_pointer == ui_study->study) {
-      if (ui_study->study_dialog != NULL)
-	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->study_dialog), 
-			      "delete_event", NULL, ui_study);
-      ui_study->study_selected = FALSE;
-    }
-
+    gtk_widget_show(menu);
+    
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, event->button, event->time);
   }
 
   return;
 }
 
-/* function called when a row in the tree is clicked on */
-gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
-					  GdkEventButton *event,
-					  gpointer data) {
-  ui_study_t * ui_study = data;
-  gpointer node_pointer = NULL;
-  volume_list_t * volume_list; 
-  roi_list_t * roi_list;
-  realpoint_t view_center;
-  GtkCTree * ctree = GTK_CTREE(widget);
-  GtkCTreeNode * node = NULL;
-  gint row = -1;
-  gint col;
-
-  volume_list = study_volumes(ui_study->study);
-  roi_list = study_rois(ui_study->study);
-
-  /* we're really only interest in double clicks with button 1, or clicks
-     with buttons 2 or 3 */
-  if (((event->type == GDK_2BUTTON_PRESS) && (event->button == 1)) 
-      || (event->button == 3) || (event->button ==2)) {
-
-    /* do some fancy stuff to figure out what node in the tree just got selected*/
-    gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, &row, &col);
-    if (row != -1) 
-      node = gtk_ctree_node_nth(ctree, (guint)row);
-
-    /* figure out what this node corresponds to, if anything, and take
-       appropriate corresponding action */
-    if (node != NULL)
-      node_pointer = gtk_ctree_node_get_row_data(ctree, node);
-    if (node_pointer != NULL) {
-      while (roi_list != NULL) {
-
-	/* if it's an roi, do the appropriate roi action */
-	if (node_pointer == roi_list->roi) {
-	  if ((event->button == 1) || (event->button == 2)) {
-	    ui_study->current_mode = ROI_MODE;
-	    ui_study->current_roi = node_pointer;
-
-	    /* make sure it's already selected */
-	    if (!ui_roi_list_includes_roi(ui_study->current_rois, roi_list->roi))
-	      gtk_clist_select_row(GTK_CLIST(ui_study->tree),row, col);
-	    
-	    /* center the view on this roi, check first if the roi has been drawn */
-	    if ( !roi_undrawn(ui_study->current_roi)) {
-	      view_center = roi_calculate_center(ui_study->current_roi);
-	      view_center = realspace_base_coord_to_alt(view_center, study_coord_frame(ui_study->study));
-	      study_set_view_center(ui_study->study, view_center);
-	      ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
-	    } else {
-	      /* if this roi hasn't yet been drawn, at least update 
-		 which roi is highlighted */
-	      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
-	    }
-
-	    /* indicate this is now the active row */
-	    ui_study_tree_update_active_row(ui_study, row);
-
-	  } else { /* button 3 clicked */
-	    /* start up the dialog to adjust the roi */
-	    ui_roi_dialog_create(ui_study, node_pointer);
-	  }
-	}
-
-
-	roi_list = roi_list->next;
-      }
-
-
-      while (volume_list != NULL) {
-
-	/* if it's a volume, display that volume */
-	if (node_pointer == volume_list->volume) {
-
-	  if ((event->button == 1) || (event->button == 2)) {
-	    ui_study->current_mode = VOLUME_MODE;
-	    ui_study->current_volume = node_pointer;
-
-	    /* make sure it's already selected */
-	    if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume_list->volume))
-	      gtk_clist_select_row(GTK_CLIST(ui_study->tree),row, col);
-
-	    /* reset the threshold widget based on the current volume */
-	    if (ui_study->threshold != NULL)
-	      ui_threshold_dialog_update(ui_study);
-
-	    /* reset the color_table picker based on the current volume */
-	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-					ui_study->current_volume->color_table);
-
-	    /* indicate this is now the active row */
-	    ui_study_tree_update_active_row(ui_study, row);
-
-	  } else { /* event.button == 3 */
-	    /* start up the volume dialog */
-	    ui_volume_dialog_create(ui_study, node_pointer);
-
-	  }
-	}
-
-	volume_list = volume_list->next;
-      }
-      
-      /* check if we were clicking on the study */
-      if (node_pointer == ui_study->study) {
-	if ((event->button == 1 ) || (event->button == 2))
-	  ; /* don't do anything for this */
-	else  /*event.button == 3 */
-	  ui_study_dialog_create(ui_study);
-      }
-
-    }
-  }
-
-
-  return TRUE;
+/* callback functions for the add_roi menu items */
+void ui_study_callbacks_new_roi_ellipsoid(GtkWidget * widget, gpointer data) {
+  
+  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(ELLIPSOID));
+  ui_study_callbacks_add_roi_type(widget, data);
+  
+  return;
 }
-
+/* callback functions for the add_roi menu items */
+void ui_study_callbacks_new_roi_cylinder(GtkWidget * widget, gpointer data) {
+  
+  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(CYLINDER));
+  ui_study_callbacks_add_roi_type(widget, data);
+  
+  return;
+}
+/* callback functions for the add_roi menu items */
+void ui_study_callbacks_new_roi_box(GtkWidget * widget, gpointer data) {
+  
+  gtk_object_set_data(GTK_OBJECT(widget), "roi_type", GINT_TO_POINTER(BOX));
+  ui_study_callbacks_add_roi_type(widget, data);
+  
+  return;
+}
 
 /* function called to edit selected objects in the study */
-void ui_study_callbacks_edit_object_pressed(GtkWidget * button, gpointer data) {
+void ui_study_callbacks_edit_objects(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
   ui_volume_list_t * volume_list = ui_study->current_volumes;
@@ -1275,51 +1279,75 @@ void ui_study_callbacks_edit_object_pressed(GtkWidget * button, gpointer data) {
     roi_list = roi_list->next;
   }
 
-  /* pop up the study parameter dialog if selected */
-  if (ui_study->study_selected)
-    ui_study_dialog_create(ui_study);
-
   return;
 }
 
 
 
 /* function called to delete selected objects from the tree and the study */
-void ui_study_callbacks_delete_object_pressed(GtkWidget * button, gpointer data) {
+void ui_study_callbacks_delete_objects(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  volume_t * current_volume;
   volume_t * volume;
   roi_t * roi;
-  GtkCTreeNode * node;
+  GtkWidget * study_leaf;
+  GtkWidget * subtree;
+  GtkWidget * question;
+  gchar * message;
+  gchar * temp;
+  gint question_return;
+  ui_volume_list_t * current_volumes;
+  ui_roi_list_t * current_rois;
+
+  /* sanity check */
+  if ((ui_study->current_volumes == NULL) && (ui_study->current_rois == NULL))
+    return;
+
+  /* formulate a message to prompt to the user */
+  message = g_strdup_printf("Do you want to delete:\n");
+  current_volumes = ui_study->current_volumes;
+  while (current_volumes != NULL) {
+    temp = message;
+    message = g_strdup_printf("%s\tvolume:\t%s\n", temp, current_volumes->volume->name);
+    g_free(temp);
+    current_volumes = current_volumes->next;
+  }
+  current_rois = ui_study->current_rois;
+  while (current_rois != NULL) {
+    temp = message;
+    message = g_strdup_printf("%s\troi:\t%s\n", temp, current_rois->roi->name);
+    g_free(temp);
+    current_rois = current_rois->next;
+  }
+  
+  /* see if we really wanna delete crap */
+  question = gnome_ok_cancel_dialog_modal_parented(message, NULL, NULL, GTK_WINDOW(ui_study->app));
+  g_free(message);
+  question_return = gnome_dialog_run_and_close(GNOME_DIALOG(question));
+
+  if (question_return != 0) 
+    return; /* didn't hit the "ok" button */
+
+  study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+  subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
 
   /* delete the selected volumes */
   while (ui_study->current_volumes != NULL) {
     volume = volume_add_reference(ui_study->current_volumes->volume);
+
+    /* remove the leaf */
+    gtk_tree_remove_item(GTK_TREE(subtree), ui_study->current_volumes->tree_leaf);
     
-    /*figure out what node in the tree corresponds to this and remove it */
-    node = gtk_ctree_find_by_row_data(GTK_CTREE(ui_study->tree),
-				      ui_study->tree_volumes,
-				      volume);
-    if (node == ui_study->tree_volumes)
-      ui_study->tree_volumes = GTK_CTREE_NODE_NEXT(node);
-    gtk_ctree_remove_node(GTK_CTREE(ui_study->tree), node);
-    
-    /* destroy the threshold window if it's open and looking at this volume */
-    /* figure out what's the current active volume */
-    if (ui_study->current_volume == NULL)
-      current_volume = study_first_volume(ui_study->study);
-    else
-      current_volume = ui_study->current_volume;
-    if (current_volume==volume)
+    /* destroy the threshold window if it's open, and remove the active mark */
+    if (ui_study->current_volume==volume) {
+      ui_study->current_volume = NULL;
       if (ui_study->threshold != NULL)
 	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
+    }
      
     /* remove the volume from existence */
-    if (ui_study->current_volume == volume)
-      ui_study->current_volume = volume_free(ui_study->current_volume);
-    study_remove_volume(ui_study->study, volume);
     ui_study->current_volumes = ui_volume_list_remove_volume(ui_study->current_volumes, volume);
+    study_remove_volume(ui_study->study, volume);
     volume = volume_free(volume);
   }
 
@@ -1327,21 +1355,22 @@ void ui_study_callbacks_delete_object_pressed(GtkWidget * button, gpointer data)
   while (ui_study->current_rois != NULL) {
     roi = roi_add_reference(ui_study->current_rois->roi);
 
-    /*figure out what node in the tree corresponds to this and remove it */
-    node = gtk_ctree_find_by_row_data(GTK_CTREE(ui_study->tree),
-				      ui_study->tree_rois,
-				      roi);
-    if (node == ui_study->tree_rois)
-      ui_study->tree_rois = GTK_CTREE_NODE_NEXT(node);
-    gtk_ctree_remove_node(GTK_CTREE(ui_study->tree), node);
+    /* remove the leaf */
+    gtk_tree_remove_item(GTK_TREE(subtree), ui_study->current_rois->tree_leaf);
 
     /* remove the roi's data structure */
     if (ui_study->current_roi == roi)
-      ui_study->current_roi = roi_free(ui_study->current_roi);
+      ui_study->current_roi = NULL;
     study_remove_roi(ui_study->study, roi);
     ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi);
     roi = roi_free(roi);
   }
+
+  /* save info as to which leaf has the active symbol */
+  gtk_object_set_data(GTK_OBJECT(ui_study->tree), "active_row", NULL);
+
+  /* redraw the screen */
+  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
 
   return;
 }
@@ -1360,11 +1389,8 @@ void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data) {
   if (study_interpolation(ui_study->study) != i_interpolation) {
     /* and inact the changes */
     study_set_interpolation(ui_study->study, i_interpolation);
-	if (study_volumes(ui_study->study) != NULL) {
-	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
-	  //	  if (ui_study->threshold != NULL)
-	  //	    ui_threshold_update_canvas(ui_study, ui_study->threshold);
-	}
+    if (study_volumes(ui_study->study) != NULL) 
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
   }
 
   return;

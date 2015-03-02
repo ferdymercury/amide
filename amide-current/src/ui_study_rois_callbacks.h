@@ -23,6 +23,16 @@
   02111-1307, USA.
 */
 
+/* defines */
+#define UI_STUDY_ROIS_SHIFT_BUTTON 1
+#define UI_STUDY_ROIS_SHIFT_MASK GDK_BUTTON1_MASK
+#define UI_STUDY_ROIS_ROTATE_BUTTON 2
+#define UI_STUDY_ROIS_ROTATE_MASK GDK_BUTTON2_MASK
+#define UI_STUDY_ROIS_RESIZE_BUTTON 3
+#define UI_STUDY_ROIS_RESIZE_MASK GDK_BUTTON3_MASK
+
+
+
 /* external functions */
 gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 void ui_study_rois_callbacks_calculate_all(GtkWidget * widget, gpointer data);

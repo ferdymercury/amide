@@ -344,12 +344,12 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   
   ui_volume_list_t * ui_volume_list_item = data;
   ui_study_t * ui_study;
-  GdkPixmap * pixmap;
-  guint8 spacing;
   volume_t * volume_new_info;
-  GdkWindow * parent;
   volume_data_t scale;
   guint i;
+  GtkWidget * label;
+  GtkWidget * pixmap;
+  GdkPixmap * icon;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -399,42 +399,42 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   ui_time_dialog_set_times(ui_study);
 
 
-  /* apply any changes to the name of the widget */
-  /* get the current pixmap and spacing in the line of the tree corresponding to this volume */
-  gtk_ctree_node_get_pixtext(ui_volume_list_item->tree, ui_volume_list_item->tree_node, 
-			     UI_STUDY_TREE_TEXT_COLUMN, NULL, &spacing, &pixmap, NULL);
-  g_free(pixmap);
+  /* apply any changes to the name of the volume */
+  label = gtk_object_get_data(GTK_OBJECT(ui_volume_list_item->tree_leaf), "text_label");
+  gtk_label_set_text(GTK_LABEL(label), ui_volume_list_item->volume->name);
 
-  parent = gtk_widget_get_parent_window(ui_study->tree);
-  
-  /* which icon to use */
-  switch (ui_volume_list_item->volume->modality) {
+
+  /* change the modality icon */
+  pixmap = gtk_object_get_data(GTK_OBJECT(ui_volume_list_item->tree_leaf), "pixmap");
+  switch (volume_new_info->modality) {
   case SPECT:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,SPECT_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,SPECT_xpm);
     break;
   case MRI:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,MRI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,MRI_xpm);
     break;
   case CT:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,CT_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,CT_xpm);
     break;
   case OTHER:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,OTHER_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,OTHER_xpm);
     break;
   case PET:
   default:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,PET_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,PET_xpm);
     break;
   }
-  /* reset the text in that tree line */
-  gtk_ctree_node_set_pixtext(ui_volume_list_item->tree, ui_volume_list_item->tree_node, 
-			     UI_STUDY_TREE_TEXT_COLUMN, ui_volume_list_item->volume->name, 
-			     spacing, pixmap, NULL);
-
+  gtk_pixmap_set(GTK_PIXMAP(pixmap), icon, NULL);
 
 
   /* redraw the volume */
-  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+  if (ui_volume_list_includes_volume(ui_study->current_volumes, ui_volume_list_item->volume))
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
 
   return;
 }

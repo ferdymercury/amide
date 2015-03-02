@@ -37,6 +37,10 @@ typedef enum {BW_LINEAR, \
 	      INV_GREEN_TEMPERATURE, \
 	      HOT_METAL, \
 	      INV_HOT_METAL, \
+	      HOT_BLUE, \
+	      INV_HOT_BLUE, \
+	      HOT_GREEN, \
+	      INV_HOT_GREEN, \
 	      SPECTRUM, \
 	      INV_SPECTRUM, \
 	      NIH_WHITE, \

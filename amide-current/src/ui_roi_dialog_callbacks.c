@@ -302,19 +302,18 @@ void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 /* function called when we hit the apply button */
 void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
-  ui_roi_list_t * roi_list_item = data;
+  ui_roi_list_t * ui_roi_list_item = data;
   ui_study_t * ui_study;
-  GdkPixmap * pixmap;
-  guint8 spacing;
   roi_t * roi_new_info;
   view_t i_views;
+  GtkWidget * label;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
     return;
 
   /* get the new info for the roi */
-  roi_new_info = gtk_object_get_data(GTK_OBJECT(roi_list_item->dialog),"roi_new_info");
+  roi_new_info = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->dialog),"roi_new_info");
 
   /* sanity check */
   if (roi_new_info == NULL) {
@@ -323,36 +322,31 @@ void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer
   }
 
   /* copy the new info on over */
-  roi_set_name(roi_list_item->roi, roi_new_info->name);
-  roi_list_item->roi->type = roi_new_info->type;
-  roi_list_item->roi->coord_frame = roi_new_info->coord_frame;
-  roi_list_item->roi->corner = roi_new_info->corner;
-  roi_list_item->roi->parent = roi_free(roi_list_item->roi->parent);
+  roi_set_name(ui_roi_list_item->roi, roi_new_info->name);
+  ui_roi_list_item->roi->type = roi_new_info->type;
+  ui_roi_list_item->roi->coord_frame = roi_new_info->coord_frame;
+  ui_roi_list_item->roi->corner = roi_new_info->corner;
+  ui_roi_list_item->roi->parent = roi_free(ui_roi_list_item->roi->parent);
   if (roi_new_info->parent != NULL) 
-    roi_list_item->roi->parent = roi_copy(roi_new_info->parent);
-  roi_list_item->roi->children = roi_list_free(roi_list_item->roi->children);
+    ui_roi_list_item->roi->parent = roi_copy(roi_new_info->parent);
+  ui_roi_list_item->roi->children = roi_list_free(ui_roi_list_item->roi->children);
   if (roi_new_info->children != NULL) 
-    roi_list_item->roi->children = roi_list_copy(roi_new_info->children);
-  roi_list_item->roi->grain = roi_new_info->grain;
+    ui_roi_list_item->roi->children = roi_list_copy(roi_new_info->children);
+  ui_roi_list_item->roi->grain = roi_new_info->grain;
 
-  /* apply any changes to the name of the widget */
-  /* get the current pixmap and spacing in the line of the tree corresponding to this roi */
-  gtk_ctree_node_get_pixtext(roi_list_item->tree, roi_list_item->tree_node, UI_STUDY_TREE_TEXT_COLUMN,
-			     NULL, &spacing, &pixmap, NULL);
-  /* reset the text in that tree line */
-  gtk_ctree_node_set_pixtext(roi_list_item->tree, roi_list_item->tree_node, UI_STUDY_TREE_TEXT_COLUMN, 
-			     roi_list_item->roi->name, spacing, pixmap, NULL);
-
+  /* apply any changes to the name of the roi */
+  label = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->tree_leaf), "text_label");
+  gtk_label_set_text(GTK_LABEL(label), ui_roi_list_item->roi->name);
 
   /* get a pointer to ui_study so we can redraw the roi's */
-  ui_study = gtk_object_get_data(GTK_OBJECT(roi_list_item->dialog), "ui_study"); 
+  ui_study = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->dialog), "ui_study"); 
 
   /* redraw the roi */
   for (i_views=0;i_views<NUM_VIEWS;i_views++) {
-    roi_list_item->canvas_roi[i_views] =
+    ui_roi_list_item->canvas_roi[i_views] =
       ui_study_update_canvas_roi(ui_study,i_views,
-				 roi_list_item->canvas_roi[i_views],
-				 roi_list_item->roi);
+				 ui_roi_list_item->canvas_roi[i_views],
+				 ui_roi_list_item->roi);
   }
 
   return;
@@ -392,7 +386,7 @@ void ui_roi_dialog_callbacks_help(GnomePropertyBox *roi_dialog, gint page_number
 /* function called to destroy the roi dialog */
 void ui_roi_dialog_callbacks_close_event(GtkWidget* widget, gpointer data) {
 
-  ui_roi_list_t * roi_list_item = data;
+  ui_roi_list_t * ui_roi_list_item = data;
   roi_t * roi_new_info;
 
   /* trash collection */
@@ -400,10 +394,10 @@ void ui_roi_dialog_callbacks_close_event(GtkWidget* widget, gpointer data) {
   roi_new_info = roi_free(roi_new_info);
 
   /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(roi_list_item->dialog));
+  gtk_widget_destroy(GTK_WIDGET(ui_roi_list_item->dialog));
 
   /* make sure the pointer in the roi_list_item is nulled */
-  roi_list_item->dialog = NULL;
+  ui_roi_list_item->dialog = NULL;
 
   return;
 }

@@ -176,10 +176,10 @@ void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
   ui_study_t * ui_study = data;
-  GdkPixmap * pixmap;
-  guint8 spacing;
   study_t * study_new_info;
   realpoint_t center;
+  GtkWidget * label;
+  GtkWidget * study_leaf;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -214,13 +214,17 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
 
 
   /* apply any changes to the name of the widget */
+  study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+  label = gtk_object_get_data(GTK_OBJECT(study_leaf), "text_label");
+  gtk_label_set_text(GTK_LABEL(label), study_name(ui_study->study));
+
   /* get the current pixmap and spacing in the line of the tree corresponding to the study */
-  gtk_ctree_node_get_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
-			     UI_STUDY_TREE_TEXT_COLUMN, NULL, &spacing, &pixmap, NULL);
+  //  gtk_ctree_node_get_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
+  //			     UI_STUDY_TREE_TEXT_COLUMN, NULL, &spacing, &pixmap, NULL);
 
   /* reset the text in that tree line */
-  gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
-			     UI_STUDY_TREE_TEXT_COLUMN, study_name(ui_study->study), spacing, pixmap, NULL);
+  //  gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 
+  //			     UI_STUDY_TREE_TEXT_COLUMN, study_name(ui_study->study), spacing, pixmap, NULL);
 
 
   /* redraw the canvas if needed*/

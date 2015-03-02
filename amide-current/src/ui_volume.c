@@ -77,8 +77,7 @@ ui_volume_list_t * ui_volume_list_init(void) {
 
   temp_volume_list->volume = NULL;
   temp_volume_list->dialog = NULL;
-  temp_volume_list->tree = NULL;
-  temp_volume_list->tree_node = NULL;
+  temp_volume_list->tree_leaf = NULL;
   temp_volume_list->threshold = NULL;
   temp_volume_list->next = NULL;
 
@@ -118,8 +117,7 @@ gboolean ui_volume_list_includes_volume(ui_volume_list_t * ui_volume_list, volum
 /* function to add a volume onto a ui_volume_list */
 ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list, 
 					     volume_t * volume,
-					     GtkCTree * tree,
-					     GtkCTreeNode * tree_node) {
+					     GtkWidget * tree_leaf) {
 
 
   ui_volume_list_t * temp_list = ui_volume_list;
@@ -134,10 +132,9 @@ ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list,
   /* get a new structure */
   temp_list = ui_volume_list_init();
 
-  /* add the roi and other info to this list structure */
+  /* add the volume and other info to this list structure */
   temp_list->volume = volume_add_reference(volume);
-  temp_list->tree = tree;
-  temp_list->tree_node = tree_node;
+  temp_list->tree_leaf = tree_leaf;
 
   if  (ui_volume_list == NULL)
     return temp_list;
@@ -149,13 +146,11 @@ ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list,
 
 /* function to add a volume onto a ui_volume_list as the first item*/
 ui_volume_list_t * ui_volume_list_add_volume_first(ui_volume_list_t * ui_volume_list, 
-					     volume_t * volume,
-					     GtkCTree * tree,
-					     GtkCTreeNode * tree_node) {
+					     volume_t * volume, GtkWidget * tree_leaf) {
 
   ui_volume_list_t * temp_list;
 
-  temp_list = ui_volume_list_add_volume(NULL,volume,tree,tree_node);
+  temp_list = ui_volume_list_add_volume(NULL,volume,tree_leaf);
   temp_list->next = ui_volume_list;
 
   return temp_list;

@@ -23,6 +23,7 @@
   02111-1307, USA.
 */
 
+#include <signal.h>
 #include "config.h" 
 #include <gnome.h>
 #include "amide.h"
@@ -37,6 +38,10 @@ int main (int argc, char *argv []) {
   textdomain(PACKAGE);
 
   gnome_init(PACKAGE, VERSION, argc, argv);
+
+  /* restore the normal segmentation fault signalling so we can get 
+     core dumps and don't get the gnome crash dialog */
+  signal(SIGSEGV, SIG_DFL);
 
   gdk_rgb_init(); /* needed for the rgb graphics usage stuff */
 

@@ -30,8 +30,7 @@ typedef struct _ui_volume_list_t ui_volume_list_t;
 struct _ui_volume_list_t {
   volume_t * volume;
   GtkWidget * dialog;
-  GtkCTree * tree;
-  GtkCTreeNode * tree_node;
+  GtkWidget * tree_leaf;
   ui_threshold_t * threshold;
   guint reference_count;
   ui_volume_list_t * next;
@@ -44,13 +43,9 @@ volume_t * ui_volume_list_get_first_volume(ui_volume_list_t * ui_volume_list);
 ui_volume_list_t * ui_volume_list_get_ui_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 gboolean ui_volume_list_includes_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list, 
-					     volume_t * volume,
-					     GtkCTree * tree,
-					     GtkCTreeNode * tree_node);
+					     volume_t * volume, GtkWidget * tree_leaf);
 ui_volume_list_t * ui_volume_list_add_volume_first(ui_volume_list_t * ui_volume_list, 
-						   volume_t * volume,
-						   GtkCTree * tree,
-						   GtkCTreeNode * tree_node);
+						   volume_t * volume, GtkWidget * tree_leaf);
 ui_volume_list_t * ui_volume_list_remove_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 volume_list_t * ui_volume_list_return_volume_list(ui_volume_list_t * ui_volume_list);
 floatpoint_t ui_volume_list_max_min_voxel_size(ui_volume_list_t * ui__volume_list);

@@ -84,8 +84,7 @@ ui_roi_list_t * ui_roi_list_init(void) {
   for (i_view=0;i_view<NUM_VIEWS;i_view++)
     temp_roi_list->canvas_roi[i_view] = NULL;
   temp_roi_list->dialog = NULL;
-  temp_roi_list->tree = NULL;
-  temp_roi_list->tree_node = NULL;
+  temp_roi_list->tree_leaf = NULL;
   temp_roi_list->next = NULL;
 
   return temp_roi_list;
@@ -116,8 +115,7 @@ gboolean ui_roi_list_includes_roi(ui_roi_list_t * ui_roi_list, roi_t * roi) {
 ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list, 
 				    roi_t * roi,
 				    GnomeCanvasItem * canvas_roi_item[],
-				    GtkCTree * tree,
-				    GtkCTreeNode * tree_node) {
+				    GtkWidget * tree_leaf) {
 
   ui_roi_list_t * temp_list = ui_roi_list;
   ui_roi_list_t * prev_list = NULL;
@@ -136,8 +134,7 @@ ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list,
   temp_list->roi = roi_add_reference(roi);
   for (i_view=0;i_view<NUM_VIEWS;i_view++) 
     temp_list->canvas_roi[i_view] = canvas_roi_item[i_view];
-  temp_list->tree = tree;
-  temp_list->tree_node = tree_node;
+  temp_list->tree_leaf = tree_leaf;
 
   if  (ui_roi_list == NULL)
     return temp_list;
@@ -152,12 +149,11 @@ ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list,
 ui_roi_list_t * ui_roi_list_add_roi_first(ui_roi_list_t * ui_roi_list,
 					  roi_t * roi,
 					  GnomeCanvasItem * canvas_roi_item[],
-					  GtkCTree * tree,
-					  GtkCTreeNode * tree_node) {
+					  GtkWidget * tree_leaf) {
 
   ui_roi_list_t * temp_list;
 
-  temp_list = ui_roi_list_add_roi(NULL,roi,canvas_roi_item,tree,tree_node);
+  temp_list = ui_roi_list_add_roi(NULL,roi,canvas_roi_item,tree_leaf);
   temp_list->next = ui_roi_list;
 
   return temp_list;

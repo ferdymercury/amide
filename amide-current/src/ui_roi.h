@@ -31,8 +31,7 @@ struct _ui_roi_list_t {
   roi_t * roi;
   GnomeCanvasItem * canvas_roi[NUM_VIEWS];
   GtkWidget * dialog;
-  GtkCTree * tree;
-  GtkCTreeNode * tree_node;
+  GtkWidget * tree_leaf;
   guint reference_count;
   ui_roi_list_t * next;
 };
@@ -45,13 +44,11 @@ gboolean ui_roi_list_includes_roi(ui_roi_list_t * ui_roilist, roi_t * roi);
 ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list, 
 				    roi_t * roi,
 				    GnomeCanvasItem * canvas_roi_item[],
-				    GtkCTree * tree,
-				    GtkCTreeNode * tree_node);
+				    GtkWidget * tree_leaf);
 ui_roi_list_t * ui_roi_list_add_roi_first(ui_roi_list_t * ui_roi_list,
 					  roi_t * roi,
 					  GnomeCanvasItem * canvas_roi_item[],
-					  GtkCTree * tree,
-					  GtkCTreeNode * tree_node);
+					  GtkWidget * tree_leaf);
 ui_roi_list_t * ui_roi_list_remove_roi(ui_roi_list_t * ui_roi_list, roi_t * roi);
 
 

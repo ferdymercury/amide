@@ -84,6 +84,7 @@ typedef enum {
   HELP_INFO_BLANK,
   HELP_INFO_CANVAS_VOLUME,
   HELP_INFO_CANVAS_ROI,
+  HELP_INFO_CANVAS_NEW_ROI,
   HELP_INFO_TREE_VOLUME,
   HELP_INFO_TREE_ROI,
   HELP_INFO_TREE_STUDY,
@@ -118,22 +119,25 @@ typedef enum {
   CONVERSION_FACTOR, SCAN_START, FRAME_DURATION,
 } which_entry_widget_t;
 
+typedef enum {
+  UI_STUDY_TREE_STUDY,
+  UI_STUDY_TREE_VOLUME,
+  UI_STUDY_TREE_ROI,
+  NUM_UI_STUDY_TREE_TYPES
+} ui_study_tree_object_t;
+
 /* ui_study data structures */
 typedef struct ui_study_t {
   GnomeApp * app; /* pointer to the window managing this study */
   GnomeCanvas * canvas[NUM_VIEWS];
-  GtkAdjustment * thickness_adjustment;
+  GtkObject * thickness_adjustment;
   GdkCursor * cursor[NUM_CURSORS];
   GSList * cursor_stack;
   GtkWidget * location[NUM_VIEWS];
   GnomeCanvas * help_info;
   GtkWidget * thickness_spin_button;
   GtkWidget * color_table_menu;
-  GtkWidget * add_roi_option_menu;
   GtkWidget * tree; /* the tree showing the study data structure info */
-  GtkCTreeNode * tree_study;
-  GtkCTreeNode * tree_volumes;
-  GtkCTreeNode * tree_rois;
   GtkWidget * study_dialog;
   gboolean study_selected;
   GtkWidget * time_dialog;
@@ -157,16 +161,15 @@ void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
 void ui_study_update_location_display(ui_study_t * ui_study, realpoint_t new_point);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, guint32 outline_color);
-GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
+GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
 void ui_study_place_cursor(ui_study_t * ui_study, ui_study_cursor_t which_cursor, GtkWidget * widget);
 void ui_study_remove_cursor(ui_study_t * ui_study, GtkWidget * widget);
 GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t view, 
 					      GnomeCanvasItem * roi_item, roi_t * roi);
 void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view);
-void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, 
-			    ui_study_update_t update);
-void ui_study_tree_update_active_row(ui_study_t * ui_study, gint row);
+void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,  ui_study_update_t update);
+void ui_study_tree_update_active_leaf(ui_study_t * ui_study, GtkWidget * leaf);
 void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi);
 void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume);
 

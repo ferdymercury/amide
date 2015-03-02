@@ -764,6 +764,8 @@ void volumes_get_view_corners(volume_list_t * volumes,
   volume_list_t * temp_volumes;
   realpoint_t temp_corner[2];
 
+  g_assert(volumes!=NULL);
+
   temp_volumes = volumes;
   volume_get_view_corners(temp_volumes->volume,view_coord_frame,view_corner);
   view_corner[0] = realspace_base_coord_to_alt(view_corner[0], view_coord_frame);

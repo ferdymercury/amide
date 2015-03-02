@@ -43,6 +43,10 @@ gchar * color_table_names[] = {"black/white linear", \
 			       "inverse green temp.", \
 			       "hot metal", \
 			       "inverse hot metal", \
+			       "hot blue", \
+			       "inverse hot blue", \
+			       "hot green", \
+			       "inverse hot green", \
 			       "spectrum", \
 			       "inverse spectrum", \
 			       "NIH + white", \
@@ -193,6 +197,58 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
   case INV_HOT_METAL:
     rgb = color_table_lookup((max-datum)+min, HOT_METAL, min, max);
     break;
+  case HOT_BLUE:
+    /* derived from code in xmedcon (by Erik Nolf) */
+
+    temp = ((datum-min)/(max-min)); /* between 0.0 and 1.0 */
+    if (temp > 1.0)
+      rgb.r = rgb.g = rgb.b = 0xFF;
+    else if (temp < 0.0)
+      rgb.r = rgb.g = rgb.b = 0;
+    else {
+      /* several "magic" numbers are used, i.e. I have no idea how they're derived, 
+	 but they work.....
+	 green: distributed between 0-181 (out of 255)
+	 red: distributed between 128-218 (out of 255)
+	 blue: distributed between 192-255 (out of 255)
+      */
+      rgb.b = (temp >= (182.0/255.0)) ? 0xFF : 0xFF*temp*(255.0/182); 
+      rgb.g = 
+	(temp <  (128.0/255.0)) ? 0x00 : 
+	((temp >= (219.0/255.0)) ? 0xFF : 0xFF*(temp-128.0/255.0)*(255.0/91.0));
+      rgb.r = (temp >= (192.0/255.0)) ? 0xFF*(temp-192.0/255)*(255.0/63.0) : 0x00 ;
+      
+    }
+    break;
+  case INV_HOT_BLUE:
+    rgb = color_table_lookup((max-datum)+min, HOT_BLUE, min, max);
+    break;
+  case HOT_GREEN:
+    /* derived from code in xmedcon (by Erik Nolf) */
+
+    temp = ((datum-min)/(max-min)); /* between 0.0 and 1.0 */
+    if (temp > 1.0)
+      rgb.r = rgb.g = rgb.b = 0xFF;
+    else if (temp < 0.0)
+      rgb.r = rgb.g = rgb.b = 0;
+    else {
+      /* several "magic" numbers are used, i.e. I have no idea how they're derived, 
+	 but they work.....
+	 green: distributed between 0-181 (out of 255)
+	 red: distributed between 128-218 (out of 255)
+	 blue: distributed between 192-255 (out of 255)
+      */
+      rgb.g = (temp >= (182.0/255.0)) ? 0xFF : 0xFF*temp*(255.0/182); 
+      rgb.r = 
+	(temp <  (128.0/255.0)) ? 0x00 : 
+	((temp >= (219.0/255.0)) ? 0xFF : 0xFF*(temp-128.0/255.0)*(255.0/91.0));
+      rgb.b = (temp >= (192.0/255.0)) ? 0xFF*(temp-192.0/255)*(255.0/63.0) : 0x00 ;
+      
+    }
+    break;
+  case INV_HOT_GREEN:
+    rgb = color_table_lookup((max-datum)+min, HOT_GREEN, min, max);
+    break;
   case SPECTRUM:
     temp = ((datum-min)/(max-min));
     hsv.s = 1.0;
@@ -322,6 +378,20 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
     highlight_color.r = 0x00;
     highlight_color.g = 0xFF;
     highlight_color.b = 0xFF;
+    break;
+  case HOT_BLUE:
+  case INV_HOT_BLUE:
+    normal_color = color_table_lookup(1.0, which, 0.0,1.0);
+    highlight_color.r = 0xFF;
+    highlight_color.g = 0x00;
+    highlight_color.b = 0xFF;
+    break;
+  case HOT_GREEN:
+  case INV_HOT_GREEN:
+    normal_color = color_table_lookup(1.0, which, 0.0,1.0);
+    highlight_color.r = 0xFF;
+    highlight_color.g = 0xFF;
+    highlight_color.b = 0x00;
     break;
   case SPECTRUM:
   case INV_SPECTRUM:

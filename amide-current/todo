@@ -18,22 +18,27 @@ big things:
 small things:
 -------------
 
-* when dragging an ROI, keep the center of the view the center of the ROI
-* figure out why we lost the horizontal scrollbar on the tree widget
 * put the canvases in a scrolled widget?
 * figure out what's going wrong with my use of gtk_gamma_curve
 	to set the density and gradient classification functions
-* need to change the GtkCTree to GtkTree so we can get item specific help
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
 * ui_main delete events should call ui_study_delete_event
 * re-write realspace functions so that a pregenerated inverse matrix can be used
 	also change realspace_function to rs_function
-* remove delete/edit/add object widgets on study window, instead:
-	- have an edit menu with these functions
-	- and also be able to add objects by right clicking on the non-used tree area
 * continue header file inclusion cleaning-up
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * program preferences box?
 	-width of roi lines
+
+
+future things:
+--------------
+
+* gtk_spin_button -> multiple value_changed are emitted when the callback takes
+	to long.  This is a gtk+ bug.
+
+* when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
+	delete the following line from amide.c so we can have bug reporting
+	"signal(SIGSEGV, SIG_DFL);"

@@ -130,7 +130,7 @@ amide_helpdir = $(datadir)/gnome/help/amide/C
 amide_help_DATA =  	amide.html		topic.dat
 
 
-SGML_FILES =  	amide.sgml			basics.sgml			importing.sgml			rois.sgml			volumes.sgml		
+SGML_FILES =  	amide.sgml			basics.sgml			file-handling.sgml		importing.sgml			rois.sgml			volumes.sgml		
 
 
 PERL_FILES =  	make-index.pl			make-docbook.pl	

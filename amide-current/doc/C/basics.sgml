@@ -37,13 +37,13 @@
 	  the middle mouse button.  Note that making an ROI the active
 	  object will center the canvases around that ROI. Object
 	  modification dialog boxes can be brought up in one of two
-	  ways; right clicking on the object, or hitting the "edit
-	  item(s) button (which will bring up modification dialog
-	  boxes for all selected items).  An "add roi" pull down menu
-	  is available for adding different types of ROI's to the
-	  study.  A "delete object(s)" button is also available which
-	  will remove all objects that are currently selected from the
-	  study.
+	  ways; right clicking on the object, or hitting the
+	  "edit->edit" menu item (which will bring up modification
+	  dialog boxes for all selected items).  ROI's can be added by
+	  either right clicking on an empty area of the study tree, or
+	  hitting the "edit->add ROI" menu item.  To delete objects,
+	  hit the "edit->delete" menu item, which will delete the
+	  currently selected objects.
 	</para>
       </sect3>
 

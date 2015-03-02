@@ -126,8 +126,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   
   /* sanity checks */
   g_return_if_fail(ui_volume_list_item != NULL);
-  g_return_if_fail(ui_volume_list_item->tree != NULL);
-  g_return_if_fail(ui_volume_list_item->tree_node != NULL);
+  g_return_if_fail(ui_volume_list_item->tree_leaf != NULL);
     
   temp_string = g_strdup_printf("%s: Data Set Modification Dialog",PACKAGE);
   volume_dialog = gnome_property_box_new();

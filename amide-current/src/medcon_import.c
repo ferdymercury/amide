@@ -55,9 +55,10 @@ volume_t * medcon_import(gchar * filename) {
   gfloat * medcon_buffer;
 
   
+  XMDC_MEDCON = MDC_NO;            /* make sure it is command line driven    */
+
   /* setup some defaults */
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
-
 
   /* open the file */
   if ((error = MdcOpenFile(&medcon_file_info, filename)) != MDC_OK) {

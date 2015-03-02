@@ -54,14 +54,16 @@ static gchar * ui_study_help_info_lines[][NUM_HELP_INFO_LINES] = {
   {"", "", "", "", "", ""}, /* BLANK */
   {"1-Move View", "", "2-Move View, Min. Depth", "", "3-Change Depth",""},
   {"1-Shift", "", "2-Rotate", "", "3-Scale", ""}, /*CANVAS_ROI */
-  {"1-select", "", "2-make active", "", "3-pop up dialog", ""}, /* TREE_VOLUME */
-  {"1-select", "", "2-make active", "", "3-pop up dialog", ""}, /* TREE_ROI */
-  {"", "", "", "", "3-pop up dialog",""}, /* TREE_STUDY */
-  {"1-select", "", "2-make active", "", "3-pop up dialog",""} /* TREE_NONE */
+  {"1-Draw", "", "", "", "", ""}, /*NEW_ROI */
+  {"1-select volume", "", "2-make active", "", "3-pop up volume dialog", ""}, /* TREE_VOLUME */
+  {"1-select roi", "", "2-make active", "", "3-pop up roi dialog", ""}, /* TREE_ROI */
+  {"", "", "", "", "3-pop up study dialog",""}, /* TREE_STUDY */
+  {"", "", "", "", "3-add roi",""} /* TREE_NONE */
 };
-static gchar * ui_study_tree_active_mark = "*";
+
+static gchar * ui_study_tree_active_mark = "X";
+static gchar * ui_study_tree_non_active_mark = " ";
 static gint next_study_num=1;
-static gchar * ui_study_tree_column_titles[] = {"*", "object"};
 
 /* destroy a ui_study data structure */
 ui_study_t * ui_study_free(ui_study_t * ui_study) {
@@ -104,9 +106,6 @@ ui_study_t * ui_study_init(void) {
   }
   ui_study->reference_count = 1;
 
-  ui_study->tree_study = NULL;
-  ui_study->tree_rois = NULL;
-  ui_study->tree_volumes = NULL;
   ui_study->study = NULL;
   ui_study->current_mode = VOLUME_MODE;
   ui_study->current_volume = NULL;
@@ -385,7 +384,7 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
 }
 
 /* function to update the adjustments for the plane scrollbar */
-GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view) {
+GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view) {
 
   realspace_t view_coord_frame;
   realpoint_t view_corner[2];
@@ -393,7 +392,7 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
   floatpoint_t upper, lower;
   floatpoint_t min_voxel_size;
   realpoint_t zp_start;
-  GtkAdjustment * adjustment;
+  GtkObject * adjustment;
 
   /* which adjustment */
   adjustment = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "plane_adjustment");
@@ -443,26 +442,23 @@ GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t v
 
   /* if we haven't yet made the adjustment, make it */
   if (adjustment == NULL) {
-    adjustment = 
-      GTK_ADJUSTMENT(gtk_adjustment_new(zp_start.z, lower, upper,
-					min_voxel_size,min_voxel_size,
-					study_view_thickness(ui_study->study)));
+    adjustment = gtk_adjustment_new(zp_start.z, lower, upper,
+				    min_voxel_size,min_voxel_size,
+				    study_view_thickness(ui_study->study));
     /*save this, so we can change it later*/
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "plane_adjustment", adjustment); 
   } else {
-    adjustment->upper = upper;
-    adjustment->lower = lower;
-    adjustment->page_increment = min_voxel_size;
-    adjustment->page_size = study_view_thickness(ui_study->study);
-    adjustment->value = zp_start.z;
+    GTK_ADJUSTMENT(adjustment)->upper = upper;
+    GTK_ADJUSTMENT(adjustment)->lower = lower;
+    GTK_ADJUSTMENT(adjustment)->page_increment = min_voxel_size;
+    GTK_ADJUSTMENT(adjustment)->page_size = study_view_thickness(ui_study->study);
+    GTK_ADJUSTMENT(adjustment)->value = zp_start.z;
 
     /* allright, we need to update widgets connected to the adjustment without triggering our callback */
-    gtk_signal_handler_block_by_func(GTK_OBJECT(adjustment),
-				     GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change),
+    gtk_signal_handler_block_by_func(adjustment, GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change),
 				     ui_study);
-    gtk_adjustment_changed(adjustment);  
-    gtk_signal_handler_unblock_by_func(GTK_OBJECT(adjustment), 
-				       GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change),
+    gtk_adjustment_changed(GTK_ADJUSTMENT(adjustment));  
+    gtk_signal_handler_unblock_by_func(adjustment, GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change),
 				       ui_study);
 
   }
@@ -484,11 +480,11 @@ void ui_study_update_thickness_adjustment(ui_study_t * ui_study) {
      change the value of the adjustment, it's up to the caller of this
      function to change anything on the actual canvases... we'll 
      unblock at the end of this function */
-  gtk_signal_handler_block_by_func(GTK_OBJECT(ui_study->thickness_adjustment),
+  gtk_signal_handler_block_by_func(ui_study->thickness_adjustment,
 				   GTK_SIGNAL_FUNC(ui_study_callbacks_thickness), 
-				     ui_study);
+				   ui_study);
 
-    
+
   min_voxel_size = volumes_min_voxel_size(study_volumes(ui_study->study));
   max_size = volumes_max_size(study_volumes(ui_study->study));
 
@@ -496,21 +492,21 @@ void ui_study_update_thickness_adjustment(ui_study_t * ui_study) {
   if (study_view_thickness(ui_study->study) < min_voxel_size)
     study_view_thickness(ui_study->study) = min_voxel_size;
 
-  ui_study->thickness_adjustment->upper = max_size;
-  ui_study->thickness_adjustment->lower = min_voxel_size;
-  ui_study->thickness_adjustment->page_size = min_voxel_size;
-  ui_study->thickness_adjustment->step_increment = min_voxel_size;
-  ui_study->thickness_adjustment->page_increment = min_voxel_size;
-  ui_study->thickness_adjustment->value = study_view_thickness(ui_study->study);
-  gtk_adjustment_changed(ui_study->thickness_adjustment);
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->upper = max_size;
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->lower = min_voxel_size;
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->page_size = min_voxel_size;
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->step_increment = min_voxel_size;
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->page_increment = min_voxel_size;
+  GTK_ADJUSTMENT(ui_study->thickness_adjustment)->value = study_view_thickness(ui_study->study);
+  gtk_adjustment_changed(GTK_ADJUSTMENT(ui_study->thickness_adjustment));
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->thickness_spin_button),
 			    study_view_thickness(ui_study->study));   
   gtk_spin_button_configure(GTK_SPIN_BUTTON(ui_study->thickness_spin_button),
-			    ui_study->thickness_adjustment,
+			    GTK_ADJUSTMENT(ui_study->thickness_adjustment),
 			    study_view_thickness(ui_study->study),
 			    2);
   /* and now, reconnect the signal */
-  gtk_signal_handler_unblock_by_func(GTK_OBJECT(ui_study->thickness_adjustment), 
+  gtk_signal_handler_unblock_by_func(ui_study->thickness_adjustment, 
 				     GTK_SIGNAL_FUNC(ui_study_callbacks_thickness), 
 				     ui_study);
   return;
@@ -777,7 +773,6 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
 
     /* save the pointer to the current slice list */
     gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "slices", current_slices);
-
     
     /* and delete the volume_list */
     temp_volumes = volume_list_free(temp_volumes);
@@ -789,8 +784,8 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   /* reset the min size of the widget */
   if ((width != rgb_image->rgb_width) || (height != rgb_image->rgb_height) || (canvas_image == NULL)) {
     gtk_widget_set_usize(GTK_WIDGET(ui_study->canvas[view]), 
-			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
-			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
+    			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
+    			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
     //requisition.width = rgb_image->rgb_width;
     //    requisition.height = rgb_image->rgb_height;
     //gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
@@ -799,16 +794,16 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
 
   /* set the scroll region */
   gnome_canvas_set_scroll_region(ui_study->canvas[view], 0.0, 0.0, 
-    				 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT,
-  				 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
+      				 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT,
+    				 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
   
   /* put the rgb_image on the canvas_image */
   if (canvas_image != NULL) {
     gnome_canvas_item_set(canvas_image,
-			  "image", rgb_image, 
-			  "width", (double) rgb_image->rgb_width,
-			  "height", (double) rgb_image->rgb_height,
-			  NULL);
+    			  "image", rgb_image, 
+    			  "width", (double) rgb_image->rgb_width,
+    			  "height", (double) rgb_image->rgb_height,
+    			  NULL);
   } else {
     /* time to make a new image */
     canvas_image =
@@ -861,8 +856,8 @@ void ui_study_remove_cursor(ui_study_t * ui_study, GtkWidget * widget) {
   gdk_window_set_cursor(gtk_widget_get_parent_window(widget), cursor);
 
   /* do any events pending, this allows the cursor to get displayed */
-  while (gtk_events_pending()) 
-    gtk_main_iteration();
+  //  while (gtk_events_pending()) 
+  //    gtk_main_iteration();
 
   return;
 }
@@ -904,10 +899,9 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
     return NULL;
   else
     volume = ui_study->current_volume;
+
   /* and figure out the outline color from that*/
-  outline_color = 
-    color_table_outline_color(volume->color_table,
-			      ui_study->current_roi == roi);
+  outline_color = color_table_outline_color(volume->color_table, ui_study->current_roi == roi);
 
   /* get the points */
   roi_points =  roi_get_volume_intersection_points(current_slices->volume, roi);
@@ -958,7 +952,7 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
     gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
 
     /* and reset the line points */
-    gnome_canvas_item_set(roi_item, "points", item_points, NULL);
+    gnome_canvas_item_set(roi_item, "points", item_points, "fill_color_rgba", outline_color,NULL);
     return roi_item;
   } else {
     item =  gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[view]),
@@ -970,8 +964,7 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
     
     /* attach it's callback */
     gtk_signal_connect(GTK_OBJECT(item), "event",
-		       GTK_SIGNAL_FUNC(ui_study_rois_callbacks_roi_event),
-		       ui_study);
+		       GTK_SIGNAL_FUNC(ui_study_rois_callbacks_roi_event), ui_study);
     gtk_object_set_data(GTK_OBJECT(item), "view", GINT_TO_POINTER(view));
     gtk_object_set_data(GTK_OBJECT(item), "roi", roi);
     
@@ -1002,8 +995,7 @@ void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view) {
 
 /* function to update a canvas, if view_it is  NUM_VIEWS, update
    all canvases */
-void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, 
-			    ui_study_update_t update) {
+void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, ui_study_update_t update) {
 
   view_t j_view,k_view;
   realpoint_t temp_center;
@@ -1021,12 +1013,15 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,
   /* make sure the study coord_frame offset is set correctly, 
      adjust current_view_center if necessary */
   temp_center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
-    					    study_coord_frame(ui_study->study));
-  volumes_get_view_corners(study_volumes(ui_study->study),
-			   study_coord_frame(ui_study->study), view_corner);
-  study_set_coord_frame_offset(ui_study->study, view_corner[0]);
-  study_set_view_center(ui_study->study, 
-			realspace_base_coord_to_alt(temp_center, study_coord_frame(ui_study->study)));
+					    study_coord_frame(ui_study->study));
+  if (study_volumes(ui_study->study) != NULL) {
+    volumes_get_view_corners(study_volumes(ui_study->study), 
+			     study_coord_frame(ui_study->study), view_corner);
+    study_set_coord_frame_offset(ui_study->study, view_corner[0]);
+    study_set_view_center(ui_study->study, 
+			  realspace_base_coord_to_alt(temp_center, study_coord_frame(ui_study->study)));
+  } else
+    temp_center = realpoint_init;
   ui_study_update_location_display(ui_study, temp_center);
 
   for (k_view=i_view;k_view<j_view;k_view++) {
@@ -1072,31 +1067,37 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,
 }
 
 
-/* function to update which row has the active symbol */
-void ui_study_tree_update_active_row(ui_study_t * ui_study, gint row) {
+/* function to update which leaf has the active symbol */
+void ui_study_tree_update_active_leaf(ui_study_t * ui_study, GtkWidget * leaf) {
 
-  GtkCTree * ctree = GTK_CTREE(ui_study->tree);
-  GtkCTreeNode * active_node = NULL;
-  GtkCTreeNode * prev_active_node;
+  GtkWidget * prev_active_leaf;
+  GtkWidget * label;
+  ui_volume_list_t * ui_volume_item;
   
-
   /* remove the previous active symbol */
-  prev_active_node = gtk_object_get_data(GTK_OBJECT(ctree), "active_row");
-  if (prev_active_node != NULL)
-    gtk_ctree_node_set_text(ctree, prev_active_node, UI_STUDY_TREE_ACTIVE_COLUMN, NULL);
+  prev_active_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "active_row");
 
-  /* set the current active symbol */
-  if (row != -1) {
-    active_node = gtk_ctree_node_nth(ctree, row);
-    gtk_ctree_node_set_text(ctree, active_node, UI_STUDY_TREE_ACTIVE_COLUMN, ui_study_tree_active_mark); 
-  } else if (ui_study->current_volume != NULL) {
-    /* gotta figure out which one to mark */
-    active_node = gtk_ctree_find_by_row_data(ctree, NULL, ui_study->current_volume);
-    gtk_ctree_node_set_text(ctree, active_node, UI_STUDY_TREE_ACTIVE_COLUMN, ui_study_tree_active_mark); 
+  if (prev_active_leaf != NULL) {
+    label = gtk_object_get_data(GTK_OBJECT(prev_active_leaf), "active_label");
+    gtk_label_set_text(GTK_LABEL(label), ui_study_tree_non_active_mark);
   }
 
-  /* save info as to which row has the active symbol */
-  gtk_object_set_data(GTK_OBJECT(ctree), "active_row", active_node);
+  /* set the current active symbol */
+  if (leaf != NULL) {
+    label = gtk_object_get_data(GTK_OBJECT(leaf), "active_label");
+    gtk_label_set_text(GTK_LABEL(label), ui_study_tree_active_mark);
+  } else if (ui_study->current_volume != NULL) {
+    /* gotta figure out which one to mark */
+    ui_volume_item = ui_volume_list_get_ui_volume(ui_study->current_volumes, ui_study->current_volume);
+    if (ui_volume_item != NULL) {
+      leaf = ui_volume_item->tree_leaf;
+      label = gtk_object_get_data(GTK_OBJECT(leaf), "active_label");
+      gtk_label_set_text(GTK_LABEL(label), ui_study_tree_active_mark);
+    }
+  }
+
+  /* save info as to which leaf has the active symbol */
+  gtk_object_set_data(GTK_OBJECT(ui_study->tree), "active_row", leaf);
   
   return;
 }
@@ -1104,139 +1105,257 @@ void ui_study_tree_update_active_row(ui_study_t * ui_study, gint row) {
 /* function adds a roi item to the tree */
 void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi) {
 
-  GdkPixmap * pixmap;
-  GdkWindow * parent;
-  gchar * tree_buf[UI_STUDY_TREE_NUM_COLUMNS];
-
-  parent = gtk_widget_get_parent_window(ui_study->tree);
+  GdkPixmap * icon;
+  GtkWidget * leaf;
+  GtkWidget * text_label;
+  GtkWidget * active_label;
+  GtkWidget * pixmap;
+  GtkWidget * hbox;
+  GtkWidget * event_box;
+  GtkWidget * subtree;
+  GtkWidget * study_leaf;
 
   /* which icon to use */
   switch (roi->type) {
   case ELLIPSOID:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),NULL,NULL,ROI_xpm);
     break;
   case CYLINDER:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),NULL,NULL,ROI_xpm);
     break;
   case BOX:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),NULL,NULL,ROI_xpm);
     break;
   default:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,ROI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),NULL,NULL,ROI_xpm);
     break;
   }
+  pixmap = gtk_pixmap_new(icon, NULL);
 
-  tree_buf[UI_STUDY_TREE_ACTIVE_COLUMN] = NULL;
-  tree_buf[UI_STUDY_TREE_TEXT_COLUMN] = roi->name;
+  text_label = gtk_label_new(roi->name);
+  active_label = gtk_label_new(ui_study_tree_non_active_mark);
+  gtk_widget_set_usize(active_label, 7, -1);
 
-  ui_study->tree_rois = /* now points to current node */
-    gtk_ctree_insert_node(GTK_CTREE(ui_study->tree),
-			  ui_study->tree_study, /* parent */
-			  ui_study->tree_rois, /* siblings */
-			  tree_buf,
-			  5, /* spacing */
-			  pixmap, NULL, pixmap, NULL, FALSE, TRUE);
+  /* pack the text and icon into a box */
+  hbox = gtk_hbox_new(FALSE,0);
+  gtk_box_pack_start(GTK_BOX(hbox), active_label, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), pixmap, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), text_label, FALSE, FALSE, 5);
+  gtk_widget_show(text_label);
+  gtk_widget_show(active_label);
+  gtk_widget_show(pixmap);
 
-  gtk_ctree_node_set_row_data(GTK_CTREE(ui_study->tree),
-			      ui_study->tree_rois,
-			      roi);
+  /* make an event box so we can get enter_notify events and display the right help*/
+  event_box = gtk_event_box_new();
+  gtk_container_add(GTK_CONTAINER(event_box), hbox);
+  gtk_object_set_data(GTK_OBJECT(event_box), "which_help", GINT_TO_POINTER(HELP_INFO_TREE_ROI));
+  gtk_signal_connect(GTK_OBJECT(event_box), "enter_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_signal_connect(GTK_OBJECT(event_box), "leave_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_widget_show(hbox);
+  
+  /* and make the leaf and put the hbox into the leaf */
+  leaf = gtk_tree_item_new();
+  gtk_container_add(GTK_CONTAINER(leaf), event_box);
+  gtk_widget_show(event_box);
+
+  /* save pertinent values */
+  gtk_object_set_data(GTK_OBJECT(leaf), "type", GINT_TO_POINTER(UI_STUDY_TREE_ROI));
+  gtk_object_set_data(GTK_OBJECT(leaf), "text_label", text_label);
+  gtk_object_set_data(GTK_OBJECT(leaf), "active_label", active_label);
+  gtk_object_set_data(GTK_OBJECT(leaf), "pixmap", pixmap);
+  gtk_object_set_data(GTK_OBJECT(leaf), "object", roi);
+
+  /* attach the callback */
+  gtk_signal_connect(GTK_OBJECT(leaf), "button_press_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_tree_leaf_clicked), ui_study);
+
+  /* and add this leaf to the study_leaf's tree */
+  study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+  subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+  gtk_tree_append(GTK_TREE(subtree), leaf);
+  gtk_widget_show(leaf);
+
   return;
 }
 
 /* function adds a volume item to the tree */
 void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume) {
 
-  GdkPixmap * pixmap;
-  GdkWindow * parent;
-  gchar * tree_buf[UI_STUDY_TREE_NUM_COLUMNS];
-
-  parent = gtk_widget_get_parent_window(ui_study->tree);
+  GdkPixmap * icon;
+  GtkWidget * leaf;
+  GtkWidget * text_label;
+  GtkWidget * active_label;
+  GtkWidget * pixmap;
+  GtkWidget * hbox;
+  GtkWidget * event_box;
+  GtkWidget * subtree;
+  GtkWidget * study_leaf;
 
   /* which icon to use */
   switch (volume->modality) {
   case SPECT:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,SPECT_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,SPECT_xpm);
     break;
   case MRI:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,MRI_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,MRI_xpm);
     break;
   case CT:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,CT_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,CT_xpm);
     break;
   case OTHER:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,OTHER_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,OTHER_xpm);
     break;
   case PET:
   default:
-    pixmap = gdk_pixmap_create_from_xpm_d(parent,NULL,NULL,PET_xpm);
+    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
+					NULL,NULL,PET_xpm);
     break;
   }
+  pixmap = gtk_pixmap_new(icon, NULL);
 
+  text_label = gtk_label_new(volume->name);
+  active_label = gtk_label_new(ui_study_tree_non_active_mark);
+  gtk_widget_set_usize(active_label, 7, -1);
+
+  /* pack the text and icon into a box */
+  hbox = gtk_hbox_new(FALSE,0);
+  gtk_box_pack_start(GTK_BOX(hbox), active_label, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), pixmap, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), text_label, FALSE, FALSE, 5);
+  gtk_widget_show(text_label);
+  gtk_widget_show(active_label);
+  gtk_widget_show(pixmap);
+
+  /* make an event box so we can get enter_notify events and display the right help*/
+  event_box = gtk_event_box_new();
+  gtk_container_add(GTK_CONTAINER(event_box), hbox);
+  gtk_object_set_data(GTK_OBJECT(event_box), "which_help", GINT_TO_POINTER(HELP_INFO_TREE_VOLUME));
+  gtk_signal_connect(GTK_OBJECT(event_box), "enter_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_signal_connect(GTK_OBJECT(event_box), "leave_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_widget_show(hbox);
   
-  tree_buf[UI_STUDY_TREE_ACTIVE_COLUMN] = NULL;
-  tree_buf[UI_STUDY_TREE_TEXT_COLUMN] = volume->name;
-  ui_study->tree_volumes =
-    gtk_ctree_insert_node(GTK_CTREE(ui_study->tree),
-			  ui_study->tree_study, /* parent */
-			  ui_study->tree_volumes,
-			  tree_buf,
-			  5, /* spacing */
-			  pixmap, NULL, pixmap, NULL, FALSE, TRUE);
+  /* and make the leaf and put the hbox into the leaf */
+  leaf = gtk_tree_item_new();
+  gtk_container_add(GTK_CONTAINER(leaf), event_box);
+  gtk_widget_show(event_box);
 
-  gtk_ctree_node_set_row_data(GTK_CTREE(ui_study->tree),
-			      ui_study->tree_volumes,
-			      volume);
+  /* save pertinent values */
+  gtk_object_set_data(GTK_OBJECT(leaf), "type", GINT_TO_POINTER(UI_STUDY_TREE_VOLUME));
+  gtk_object_set_data(GTK_OBJECT(leaf), "text_label", text_label);
+  gtk_object_set_data(GTK_OBJECT(leaf), "active_label", active_label);
+  gtk_object_set_data(GTK_OBJECT(leaf), "pixmap", pixmap);
+  gtk_object_set_data(GTK_OBJECT(leaf), "object", volume);
+
+  /* attach the callback */
+  gtk_signal_connect(GTK_OBJECT(leaf), "button_press_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_tree_leaf_clicked), ui_study);
+
+  /* and add this leaf to the study_leaf's tree */
+  study_leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+  subtree = GTK_TREE_ITEM_SUBTREE(study_leaf);
+  gtk_tree_append(GTK_TREE(subtree), leaf);
+  gtk_widget_show(leaf);
+
   return;
 }
 
 
 /* function to update the study tree 
    since we use pixmaps in this function, make sure to realize the tree
-   before calling this */
+   before calling this  */
 void ui_study_update_tree(ui_study_t * ui_study) {
 
-  GdkPixmap * pixmap;
-  gchar * tree_buf[UI_STUDY_TREE_NUM_COLUMNS];
+  GdkPixmap * icon;
   volume_list_t * volume_list;
   roi_list_t * roi_list;
+  GtkWidget * leaf;
+  GtkWidget * label;
+  GtkWidget * pixmap;
+  GtkWidget * hbox;
+  GtkWidget * event_box;
+  GtkWidget * subtree;
+
+  /* sanity check */
+  leaf = gtk_object_get_data(GTK_OBJECT(ui_study->tree), "study_leaf");
+  if (leaf != NULL)
+    return;
+
+  /* make the pixmap we'll be putting into the study line */
+  icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree), NULL,NULL,study_xpm);
+  pixmap = gtk_pixmap_new(icon, NULL);
   
-  /* make the primary nodes if needed*/
-  if (ui_study->tree_study == NULL) {
-    pixmap = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					  NULL,NULL,study_xpm);
-    
-    /* put the current study into the tree */
-    tree_buf[UI_STUDY_TREE_ACTIVE_COLUMN] = NULL;
-    tree_buf[UI_STUDY_TREE_TEXT_COLUMN] = study_name(ui_study->study);
+  /* make the text label for putting into the study line */
+  label = gtk_label_new(study_name(ui_study->study));
+  
+  /* pack the text and icon into a box */
+  hbox = gtk_hbox_new(FALSE,0);
+  gtk_box_pack_start(GTK_BOX(hbox), pixmap, FALSE, FALSE, 5);
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+  
+  /* make an event box so we can get enter_notify events and display the right help*/
+  event_box = gtk_event_box_new();
+  gtk_container_add(GTK_CONTAINER(event_box), hbox);
+  gtk_object_set_data(GTK_OBJECT(event_box), "which_help", GINT_TO_POINTER(HELP_INFO_TREE_STUDY));
+  gtk_signal_connect(GTK_OBJECT(event_box), "enter_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_signal_connect(GTK_OBJECT(event_box), "leave_notify_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
 
-    ui_study->tree_study =
-      gtk_ctree_insert_node(GTK_CTREE(ui_study->tree),
-			    NULL, /* parent */
-			    ui_study->tree_study, /* siblings */
-			    tree_buf,
-			    5, /* spacing */
-			    pixmap, NULL, pixmap, NULL, FALSE, TRUE);
-    gtk_ctree_node_set_row_data(GTK_CTREE(ui_study->tree), ui_study->tree_study, ui_study->study);
-
-    /* if there are any volumes, place them on in */
-    if (study_volumes(ui_study->study) != NULL) {
-      volume_list = study_volumes(ui_study->study);
-      while (volume_list != NULL) {
-	ui_study_tree_add_volume(ui_study, volume_list->volume);
-	volume_list = volume_list->next;
-      }
-    }
-
-    /* if there are any rois, place them on in */
-    if (study_rois(ui_study->study)!= NULL) {
-      roi_list = study_rois(ui_study->study);
-      while (roi_list != NULL) {
-	ui_study_tree_add_roi(ui_study, roi_list->roi);
-	roi_list = roi_list->next;
-      }
+  /* and make the leaf and put the hbox into the leaf */
+  leaf = gtk_tree_item_new();
+  gtk_container_add(GTK_CONTAINER(leaf), event_box);
+  
+  /* save pertinent values */
+  gtk_object_set_data(GTK_OBJECT(leaf), "type", GINT_TO_POINTER(UI_STUDY_TREE_STUDY));
+  gtk_object_set_data(GTK_OBJECT(leaf), "text_label", label);
+  gtk_object_set_data(GTK_OBJECT(leaf), "pixmap", pixmap);
+  
+  /* make it so we get the right help info */
+  
+  /* attach the callback, using "_after" has the side effect of not being able to
+     select this leaf, which we desire */
+  gtk_signal_connect_after(GTK_OBJECT(leaf), "button_press_event",
+			   GTK_SIGNAL_FUNC(ui_study_callbacks_tree_leaf_clicked), ui_study);
+  
+  gtk_tree_append(GTK_TREE(ui_study->tree), leaf);
+  gtk_object_set_data(GTK_OBJECT(ui_study->tree), "study_leaf", leaf); /* save a pointer to it */
+  
+  /*  make the subtree that will hold the volume and roi nodes */
+  subtree = gtk_tree_new();
+  gtk_tree_item_set_subtree(GTK_TREE_ITEM(leaf), subtree);
+  
+  /* have to hookup the select child callbacks to this tree also */
+  gtk_signal_connect(GTK_OBJECT(subtree), "select-child", 
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_tree_select), ui_study);
+  
+  /* if there are any volumes, place them on in */
+  if (study_volumes(ui_study->study) != NULL) {
+    volume_list = study_volumes(ui_study->study);
+    while (volume_list != NULL) {
+      ui_study_tree_add_volume(ui_study, volume_list->volume);
+      volume_list = volume_list->next;
     }
   }
-
+  
+  /* if there are any rois, place them on in */
+  if (study_rois(ui_study->study)!= NULL) {
+    roi_list = study_rois(ui_study->study);
+    while (roi_list != NULL) {
+      ui_study_tree_add_roi(ui_study, roi_list->roi);
+      roi_list = roi_list->next;
+    }
+  }
+  
+  gtk_tree_item_expand(GTK_TREE_ITEM(leaf)); /* have the study leaf expanded by default */
+  
   return;
 }
 
@@ -1249,7 +1368,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   GtkWidget * middle_table;
   GtkWidget * label;
   GtkWidget * scrollbar;
-  GtkAdjustment * adjustment;
+  GtkObject * adjustment;
   GtkWidget * option_menu;
   GtkWidget * menu;
   GtkWidget * menuitem;
@@ -1264,7 +1383,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   scaling_t i_scaling;
   color_table_t i_color_table;
   interpolation_t i_interpolation;
-  roi_type_t i_roi_type;
   realpoint_t * far_corner;
   realspace_t * canvas_coord_frame;
   guint main_table_row, main_table_column;
@@ -1297,50 +1415,37 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   main_table_column++;
   main_table_row = 0;
 
-  /* make an event box, this allows us to catch events for the tree */
+  /* make an event box, this allows us to catch events for the scrolled area */
   event_box = gtk_event_box_new();
   gtk_table_attach(GTK_TABLE(left_table), event_box,
-		   0,2, left_table_row, left_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 
-		   Y_PACKING_OPTIONS | GTK_FILL, 
-		   X_PADDING, Y_PADDING);
+  		   0,2, left_table_row, left_table_row+1,
+  		   X_PACKING_OPTIONS | GTK_FILL, 
+  		   Y_PACKING_OPTIONS | GTK_FILL, 
+  		   X_PADDING, Y_PADDING);
   left_table_row++;
   gtk_object_set_data(GTK_OBJECT(event_box), "which_help", GINT_TO_POINTER(HELP_INFO_TREE_NONE));
   gtk_signal_connect(GTK_OBJECT(event_box), "enter_notify_event",
-  		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+    		     GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+  gtk_signal_connect(GTK_OBJECT(event_box), "button_press_event",
+    		     GTK_SIGNAL_FUNC(ui_study_callbacks_tree_clicked), ui_study);
 
 
   /* make a scrolled area for the tree */
   scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_usize(scrolled,200,200);
+  gtk_widget_set_usize(scrolled,200,-1);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(event_box),scrolled);
-  //  gtk_table_attach(GTK_TABLE(left_table), scrolled,
-  //		   0,2, left_table_row, left_table_row+1,
-  //		   X_PACKING_OPTIONS | GTK_FILL, 
-  //		   Y_PACKING_OPTIONS | GTK_FILL, 
-  //		   X_PADDING, Y_PADDING);
-
 
   /* make the tree */
-  tree = gtk_ctree_new_with_titles(UI_STUDY_TREE_NUM_COLUMNS,
-				   UI_STUDY_TREE_TREE_COLUMN,
-				   ui_study_tree_column_titles);
-  gtk_clist_set_row_height(GTK_CLIST(tree),UI_STUDY_SIZE_TREE_PIXMAPS);
-  gtk_clist_set_selection_mode(GTK_CLIST(tree), GTK_SELECTION_MULTIPLE);
-  gtk_signal_connect(GTK_OBJECT(tree), "tree_select_row",
-		     GTK_SIGNAL_FUNC(ui_study_callback_tree_select_row),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(tree), "tree_unselect_row",
-		     GTK_SIGNAL_FUNC(ui_study_callback_tree_unselect_row),
-		     ui_study);
-  gtk_signal_connect(GTK_OBJECT(tree), "button_press_event",
-		     GTK_SIGNAL_FUNC(ui_study_callback_tree_click_row),
-		     ui_study);
+  tree = gtk_tree_new();
+  gtk_tree_set_selection_mode(GTK_TREE(tree), GTK_SELECTION_MULTIPLE);
+  gtk_tree_set_view_lines(GTK_TREE(tree), FALSE);
   gtk_object_set_data(GTK_OBJECT(tree), "active_row", NULL);
+  gtk_object_set_data(GTK_OBJECT(tree), "study_leaf", NULL);
+  gtk_signal_connect(GTK_OBJECT(tree), "select-child", 
+    		     GTK_SIGNAL_FUNC(ui_study_callbacks_tree_select), ui_study);
 
-
-  gtk_container_add(GTK_CONTAINER(scrolled),tree);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled),tree);
   ui_study->tree = tree;
   gtk_widget_realize(tree); /* realize now so we can add pixmaps to the tree now */
 
@@ -1348,58 +1453,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   ui_study_update_tree(ui_study);
 
 
-  /* add an roi type selector */
-  label = gtk_label_new("add roi:");
-  gtk_table_attach(GTK_TABLE(left_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   left_table_row,left_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-  ui_study->add_roi_option_menu = option_menu;
-
-  menuitem = gtk_menu_item_new_with_label(""); /* add a blank menu item */
-  gtk_menu_append(GTK_MENU(menu), menuitem);
-  for (i_roi_type=0; i_roi_type<NUM_ROI_TYPES; i_roi_type++) {
-    menuitem = gtk_menu_item_new_with_label(roi_type_names[i_roi_type]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-      		       GTK_SIGNAL_FUNC(ui_study_callbacks_add_roi_type), 
-    		       ui_study);
-  }
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_table_attach(GTK_TABLE(left_table), 
-		   GTK_WIDGET(option_menu), 1,2, 
-		   left_table_row,left_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  left_table_row++;
-
-
-  /* do we want to edit an object in the study */
-  button = gtk_button_new_with_label("edit object(s)");
-  gtk_table_attach(GTK_TABLE(left_table), 
-		   GTK_WIDGET(button), 0,2, 
-		   left_table_row,left_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_edit_object_pressed), 
-		     ui_study);
-  left_table_row++;
-
-
-
-  /* and if we want to delete an object from the study */
-  button = gtk_button_new_with_label("delete object(s)");
-  gtk_table_attach(GTK_TABLE(left_table), 
-		   GTK_WIDGET(button), 0,2, 
-		   left_table_row,left_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_delete_object_pressed), 
-		     ui_study);
-  left_table_row++;
 
   /* the help information canvas */
   ui_study->help_info = GNOME_CANVAS(gnome_canvas_new());
@@ -1493,6 +1547,8 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 			GINT_TO_POINTER(HELP_INFO_CANVAS_VOLUME));
     gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view]), "enter_notify_event",
 		       GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
+    gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view]), "button_release_event",
+		       GTK_SIGNAL_FUNC(ui_study_callbacks_update_help_info), ui_study);
 
     middle_table_row++;
 
@@ -1500,15 +1556,15 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
     /* scrollbar section */
     adjustment = ui_study_update_plane_adjustment(ui_study, i_view);
     /*so we can figure out which adjustment this is in callbacks */
-    gtk_object_set_data(GTK_OBJECT(adjustment), "view", GINT_TO_POINTER(i_view));
-    scrollbar = gtk_hscrollbar_new(adjustment);
+    gtk_object_set_data(adjustment, "view", GINT_TO_POINTER(i_view));
+    scrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(adjustment));
     gtk_range_set_update_policy(GTK_RANGE(scrollbar), GTK_UPDATE_DISCONTINUOUS);
     gtk_table_attach(GTK_TABLE(middle_table), 
 		     GTK_WIDGET(scrollbar), 
 		     middle_table_column, middle_table_column+1,
 		     middle_table_row, middle_table_row+1,
 		     GTK_FILL,FALSE, X_PADDING, Y_PADDING);
-    gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
+    gtk_signal_connect(adjustment, "value_changed", 
 		       GTK_SIGNAL_FUNC(ui_study_callbacks_plane_change), 
 		       ui_study);
     middle_table_row++;
@@ -1656,19 +1712,16 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		   right_table_row,right_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(study_zoom(ui_study->study),
-						 0.2,5,0.2, 0.25, 0.25));
-  spin_button = gtk_spin_button_new(adjustment, 0.25, 2);
+  adjustment = gtk_adjustment_new(study_zoom(ui_study->study), 0.2,5,0.2, 0.25, 0.25);
+  spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 2);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
 
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), 
-				    GTK_UPDATE_ALWAYS);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
 
-  gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
+  gtk_signal_connect(adjustment, "value_changed",  
 		     GTK_SIGNAL_FUNC(ui_study_callbacks_zoom), 
 		     ui_study);
-
 			      
   gtk_table_attach(GTK_TABLE(right_table), 
 		   GTK_WIDGET(spin_button),1,2, 
@@ -1705,17 +1758,17 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		   right_table_row,right_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(1.0,1.0,1.0,1.0,1.0,1.0));
+  adjustment = gtk_adjustment_new(1.0,1.0,1.0,1.0,1.0,1.0);
   ui_study->thickness_adjustment = adjustment;
   ui_study->thickness_spin_button = 
-    spin_button = gtk_spin_button_new(adjustment,1.0, 2);
+    spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 2);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
 
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), 
 				    GTK_UPDATE_ALWAYS);
 
-  gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
+  gtk_signal_connect(adjustment, "value_changed", 
 		     GTK_SIGNAL_FUNC(ui_study_callbacks_thickness), 
 		     ui_study);
 

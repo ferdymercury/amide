@@ -183,7 +183,8 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
 		   X_PADDING, Y_PADDING);
 
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), study_new_info->filename);
+  if (study_new_info->filename != NULL)
+    gtk_entry_set_text(GTK_ENTRY(entry), study_new_info->filename);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "study_dialog", study_dialog); 
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 

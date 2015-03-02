@@ -59,6 +59,37 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
+  GnomeUIInfo add_roi_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(roi_type_names[ELLIPSOID], 
+			  N_("Add a new elliptical ROI"),
+			  ui_study_callbacks_new_roi_ellipsoid,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(roi_type_names[CYLINDER], 
+			  N_("Add a new elliptic cylinder ROI"),
+			  ui_study_callbacks_new_roi_cylinder,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(roi_type_names[BOX], 
+			  N_("Add a new box shaped ROI"),
+			  ui_study_callbacks_new_roi_box,
+			  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
+
+  GnomeUIInfo edit_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Edit"),
+			  N_("Edit the selected objects"),
+			  ui_study_callbacks_edit_objects,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Delete"),
+			  N_("Delete the selected objects"),
+			  ui_study_callbacks_delete_objects,
+			  ui_study, NULL),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Add ROI"),
+			     N_("Add a new ROI"),
+			     add_roi_menu),
+    GNOMEUIINFO_END
+  };
+
   /* the submenus under the series_type menu */
   GnomeUIInfo series_space_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
@@ -101,6 +132,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     series_time_menu),
     GNOMEUIINFO_END
   };
+
 
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
@@ -148,6 +180,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   /* and the main menu definition */
   GnomeUIInfo study_main_menu[] = {
     GNOMEUIINFO_SUBTREE(N_("_File"), file_menu),
+    GNOMEUIINFO_SUBTREE(N_("_Edit"), edit_menu),
     GNOMEUIINFO_SUBTREE(N_("_View"), view_menu),
     GNOMEUIINFO_SUBTREE(N_("_Analysis"), analysis_menu),
     GNOMEUIINFO_SUBTREE(N_("_Help"), study_help_menu),
@@ -158,9 +191,8 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   /* sanity check */
   g_assert(ui_study!=NULL);
 
-  /* and make the menu */
+  /* make the menu */
   gnome_app_create_menus(ui_study->app, study_main_menu);
-
 
   return;
 

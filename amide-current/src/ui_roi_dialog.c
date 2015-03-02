@@ -103,26 +103,21 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   roi_type_t i_roi_type;
   roi_grain_t i_grain;
   guint table_row = 0;
-  ui_roi_list_t * roi_list_item;
+  ui_roi_list_t * ui_roi_list_item;
   roi_t * roi_new_info = NULL;
   realpoint_t center;
 
   /* figure out the ui_study_roi_list item corresponding to this roi */
-  roi_list_item = ui_study->current_rois;
-  if (roi_list_item == NULL) return;
-
-  while (roi_list_item->roi != roi)
-    if (roi_list_item->next == NULL) return;
-    else roi_list_item = roi_list_item->next;
+  ui_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
+  if (ui_roi_list_item == NULL) return;
 
   /* only want one of these dialogs at a time for a given roi */
-  if (roi_list_item->dialog != NULL)
+  if (ui_roi_list_item->dialog != NULL)
     return;
   
   /* sanity checks */
-  g_return_if_fail(roi_list_item != NULL);
-  g_return_if_fail(roi_list_item->tree != NULL);
-  g_return_if_fail(roi_list_item->tree_node != NULL);
+  g_return_if_fail(ui_roi_list_item != NULL);
+  g_return_if_fail(ui_roi_list_item->tree_leaf != NULL);
     
   temp_string = g_strdup_printf("%s: ROI Modification Dialog",PACKAGE);
   roi_dialog = gnome_property_box_new();
@@ -144,13 +139,13 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "close",
 		     GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_close_event),
-		     roi_list_item);
+		     ui_roi_list_item);
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "apply",
 		     GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_apply),
-		     roi_list_item);
+		     ui_roi_list_item);
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "help",
 		     GTK_SIGNAL_FUNC(ui_roi_dialog_callbacks_help),
-		     roi_list_item);
+		     ui_roi_list_item);
 
 
 
@@ -165,7 +160,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   label = gtk_label_new("Basic Info");
   table_row=0;
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
-  roi_list_item->dialog = roi_dialog; /* save a pointer to the dialog */
+  ui_roi_list_item->dialog = roi_dialog; /* save a pointer to the dialog */
 
   /* widgets to change the roi's name */
   label = gtk_label_new("name:");
