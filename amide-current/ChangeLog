@@ -1,3 +1,16 @@
+0.4.0
+	* moved the functionality in the right column to a toolbar on top
+	* fixed some dumb errors with the mouse-depth change
+	* couple small documentation updates
+	* more sensible initial classification function for rendering
+	* the density and gradient classification functions now work correctly
+	  for multiple volumes
+	* fixed stupid bug in rendering_context_free()
+	* rendering parameters dialog changes now make more sense
+	* did a first-draft of user documentation for rendering 
+	
+	
+	
 0.3.5
 	* added Hot Blue/Hot Green colormaps
 	* changed study tree from GtkCTree to GtkTree

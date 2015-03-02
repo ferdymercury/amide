@@ -397,7 +397,7 @@ gboolean ui_study_callbacks_update_help_info(GtkWidget * widget, GdkEventCrossin
       (event->type == GDK_LEAVE_NOTIFY))
     which_info = HELP_INFO_TREE_NONE;
 
-  ui_study_update_help_info(ui_study, which_info);
+  ui_study_update_help_info(ui_study, which_info, realpoint_init);
 
   return FALSE;
 }
@@ -480,7 +480,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 
 
     case GDK_ENTER_NOTIFY:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	/* if we're a new roi, using the drawing cursor */
 	if (roi_undrawn(ui_study->current_roi))
@@ -495,16 +495,13 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 
 
      case GDK_LEAVE_NOTIFY:
-       ui_study_update_location_display(ui_study, 
-					realspace_alt_coord_to_base(study_view_center(ui_study->study),
-								    study_coord_frame(ui_study->study)));
        ui_study_remove_cursor(ui_study, GTK_WIDGET(canvas));
        break;
 
 
 
     case GDK_BUTTON_PRESS:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       /* figure out the outline color */
       outline_color = color_table_outline_color(volume->color_table, TRUE);
 
@@ -571,7 +568,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
       break;
 
     case GDK_MOTION_NOTIFY:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	if (dragging && (event->motion.state & GDK_BUTTON1_MASK)) {
 	  if ( roi_undrawn(ui_study->current_roi)) {
@@ -603,7 +600,7 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
       break;
 
     case GDK_BUTTON_RELEASE:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       if (ui_study->current_mode == ROI_MODE) {
 	if (roi_undrawn(ui_study->current_roi) && dragging) {
 	  /* only new roi's handled in this function, old ones handled by
@@ -664,9 +661,11 @@ gboolean ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, g
 	/* get rid of the "target" lines */
 	ui_study_update_targets(ui_study, TARGET_DELETE, realpoint_init, 0);
 
-	/* update the view center if it's been changed */
+	/* update the view center */
 	if (event->button.button != 3)
 	  study_set_view_center(ui_study->study, view_loc);
+	else
+	  study_set_view_center(ui_study->study, initial_loc);
 
 	/* update the canvases */
 	if (depth_change == TRUE) {
@@ -913,11 +912,6 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
       ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
       
-      /* update the main color table box if needed */
-      if (volume == ui_study->current_volume)
-	gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-				    volume->color_table);
-      
       /* update the threshold dialog box if needed */
       if (ui_study->threshold != NULL) 
 	if (ui_study->threshold->volume == volume) {
@@ -1027,9 +1021,6 @@ void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * eve
       if (ui_study->threshold != NULL) 
 	ui_threshold_dialog_update(ui_study);
 
-      /* reset the color_table picker based on the current volume */
-      gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu), volume->color_table);
-
       /* indicate this is now the active object */
       ui_study_tree_update_active_leaf(ui_study, leaf);
 
@@ -1116,9 +1107,6 @@ void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer d
       if (ui_study->current_volume == NULL) {
 	/* make this the current volume if we don't have one yet */
 	ui_study->current_volume = volume;
-	/* reset the color_table picker based on the current volume */
-	gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-				    ui_study->current_volume->color_table);
 	/* indicate this is now the active if we're not pointing at anything else leaf */
 	if (ui_study->current_mode == VOLUME_MODE)
 	  ui_study_tree_update_active_leaf(ui_study, leaf);
@@ -1134,10 +1122,6 @@ void ui_study_callbacks_tree_select(GtkTree * tree, GtkWidget * leaf, gpointer d
       if (ui_study->current_volume == volume) {
 	/* reset the currently active volume */
 	ui_study->current_volume = ui_volume_list_get_first_volume(ui_study->current_volumes);
-	/* reset the color_table picker based on the current volume */
-	if (ui_study->current_volume != NULL)
-	  gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
-				      ui_study->current_volume->color_table);
 	/* update which row in the tree has the active symbol */
 	if (ui_study->current_mode == VOLUME_MODE)
 	  ui_study_tree_update_active_leaf(ui_study, NULL); 

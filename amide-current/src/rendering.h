@@ -40,7 +40,7 @@ typedef guchar rendering_density_t;
 typedef guchar rendering_gradient_t;
 typedef enum {HIGHEST, HIGH, FAST, FASTEST, NUM_QUALITIES} rendering_quality_t;
 typedef enum {OPACITY, GRAYSCALE, NUM_PIXEL_TYPES} pixel_type_t;
-typedef enum {LINEAR, SPLINE, NUM_CURVE_TYPES} curve_type_t;
+typedef enum {CURVE_LINEAR, CURVE_SPLINE, CURVE_FREE, NUM_CURVE_TYPES} curve_type_t;
 
 typedef struct {        /*   contents of a voxel */
   rendering_normal_t normal;        /*   encoded surface normal vector */
@@ -93,7 +93,7 @@ rendering_voxel_t * dummy_voxel;
 #define RENDERING_DENSITY_RAMP_POINTS 2
 
 #define RENDERING_GRADIENT_RAMP_X {0.0, RENDERING_GRADIENT_MAX}
-#define RENDERING_GRADIENT_RAMP_Y {1.0, 1.0}
+#define RENDERING_GRADIENT_RAMP_Y {0.0, 1.0}
 #define RENDERING_GRADIENT_RAMP_POINTS 2
 
 #define RENDERING_OCTREE_DENSITY_THRESH 	4
@@ -125,10 +125,11 @@ typedef struct _rendering_t {
   gint * density_ramp_x;
   gfloat * density_ramp_y;
   guint num_density_points;
+  curve_type_t density_curve_type;
   gint * gradient_ramp_x;
   gfloat * gradient_ramp_y;
-  curve_type_t curve_type;
   guint num_gradient_points;
+  curve_type_t gradient_curve_type;
   guint reference_count;
 } rendering_t;
 

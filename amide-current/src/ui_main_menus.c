@@ -50,8 +50,8 @@ static GnomeUIInfo help_menu[]= {
 };
 
 static GnomeUIInfo main_menu[] = {
-  GNOMEUIINFO_SUBTREE(N_("_File"), file_menu),
-  GNOMEUIINFO_SUBTREE(N_("_Help"), help_menu),
+  GNOMEUIINFO_MENU_FILE_TREE(file_menu),
+  GNOMEUIINFO_MENU_HELP_TREE(help_menu),
   GNOMEUIINFO_END
 };
 

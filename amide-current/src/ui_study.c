@@ -37,6 +37,7 @@
 #include "ui_study.h"
 #include "ui_study_callbacks.h"
 #include "ui_study_menus.h"
+#include "ui_study_toolbar.h"
 #include "ui_study_rois_callbacks.h"
 
 #include "../pixmaps/study.xpm"
@@ -178,59 +179,72 @@ void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view) {
 
 /* This function updates the little info box which tells us what the different 
    mouse buttons will do */
-void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info) {
-  GnomeCanvasItem * button[NUM_HELP_INFO_LINES];
+void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, realpoint_t new_point) {
+
+  GnomeCanvasItem * button[HELP_INFO_LINE_3_SHIFT-HELP_INFO_LINE_1+1];
+  GnomeCanvasItem * location;
   ui_study_help_info_line_t i_line;
+  gchar * location_text;
+  realpoint_t location_p;
 
-  button[HELP_INFO_LINE_1] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1_info");
-  button[HELP_INFO_LINE_1_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1s_info");
-  button[HELP_INFO_LINE_2] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2_info");
-  button[HELP_INFO_LINE_2_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2s_info");
-  button[HELP_INFO_LINE_3] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3_info");
-  button[HELP_INFO_LINE_3_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3s_info");
+  if (which_info != HELP_INFO_UPDATE_LOCATION) {
+    button[HELP_INFO_LINE_1] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1_info");
+    button[HELP_INFO_LINE_1_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1s_info");
+    button[HELP_INFO_LINE_2] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2_info");
+    button[HELP_INFO_LINE_2_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2s_info");
+    button[HELP_INFO_LINE_3] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3_info");
+    button[HELP_INFO_LINE_3_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3s_info");
+    
+    for (i_line=HELP_INFO_LINE_1 ;i_line <= HELP_INFO_LINE_3_SHIFT;i_line++) 
+      if (button[i_line] == NULL) 
+	button[i_line] = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+					       gnome_canvas_text_get_type(),
+					       "justification", GTK_JUSTIFY_LEFT,
+					       "anchor", GTK_ANCHOR_NORTH_WEST,
+					       "text", ui_study_help_info_lines[which_info][i_line],
+					       "x", (gdouble) UI_STUDY_HELP_INFO_LINE_X,
+					       "y", (gdouble) (i_line*UI_STUDY_HELP_INFO_LINE_HEIGHT),
+					       "font", UI_STUDY_HELP_FONT, NULL);
+      else /* just need to change the text */
+    	gnome_canvas_item_set(button[i_line], "text", ui_study_help_info_lines[which_info][i_line], NULL);
+    
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", button[HELP_INFO_LINE_1]);
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", button[HELP_INFO_LINE_1_SHIFT]);
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", button[HELP_INFO_LINE_2]);
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", button[HELP_INFO_LINE_2_SHIFT]);
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", button[HELP_INFO_LINE_3]);
+    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", button[HELP_INFO_LINE_3_SHIFT]);
 
-  for (i_line=0;i_line<NUM_HELP_INFO_LINES;i_line++) 
-    if (button[i_line] == NULL) 
-      button[i_line] = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
-					     gnome_canvas_text_get_type(),
-					     "justification", GTK_JUSTIFY_LEFT,
-					     "anchor", GTK_ANCHOR_NORTH_WEST,
-					     "text", ui_study_help_info_lines[which_info][i_line],
-					     "x", (gdouble) UI_STUDY_HELP_INFO_LINE_X,
-					     "y", (gdouble) (i_line*UI_STUDY_HELP_INFO_LINE_HEIGHT),
-					     "font", UI_STUDY_HELP_FONT, NULL);
-    else /* just need to change the text */
-      gnome_canvas_item_set(button[i_line], "text", ui_study_help_info_lines[which_info][i_line], NULL);
-  
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", button[HELP_INFO_LINE_1]);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", button[HELP_INFO_LINE_1_SHIFT]);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", button[HELP_INFO_LINE_2]);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", button[HELP_INFO_LINE_2_SHIFT]);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", button[HELP_INFO_LINE_3]);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", button[HELP_INFO_LINE_3_SHIFT]);
+    location_p = realspace_alt_coord_to_base(study_view_center(ui_study->study),
+					     study_coord_frame(ui_study->study));
+    location_text = g_strdup_printf("view center (x,y,z) = \n (% 5.2f,% 5.2f,% 5.2f)", 
+				    location_p.x, location_p.y, location_p.z);
+  } else {
+    location_text = g_strdup_printf("location (x,y,z) = \n (% 5.2f,% 5.2f,% 5.2f)", 
+				    new_point.x, new_point.y, new_point.z);
+  }
+
+  /* update the location display */
+  location = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "location");
+  if (location == NULL) 
+    location = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+				     gnome_canvas_text_get_type(),
+				     "justification", GTK_JUSTIFY_LEFT,
+				     "anchor", GTK_ANCHOR_NORTH_WEST,
+				     "text", location_text,
+				     "x", (gdouble) 0,
+				     "y", (gdouble) (HELP_INFO_LINE_LOCATION*UI_STUDY_HELP_INFO_LINE_HEIGHT),
+				     "font", UI_STUDY_HELP_FONT, NULL);
+  else /* just need to change the text */
+    gnome_canvas_item_set(location, "text", location_text, NULL);
+
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "location", location);
+
+  g_free(location_text);
 
   return;
 }
 
-/* This function updates the little boxes which display the current location */
-void ui_study_update_location_display(ui_study_t * ui_study, realpoint_t new_point) {
-
-  gchar * temp_string;
-
-  temp_string = g_strdup_printf("% 5.2f", new_point.x);
-  gtk_entry_set_text(GTK_ENTRY(ui_study->location[XAXIS]), temp_string);
-  g_free(temp_string);
-
-  temp_string = g_strdup_printf("% 5.2f", new_point.y);
-  gtk_entry_set_text(GTK_ENTRY(ui_study->location[YAXIS]), temp_string);
-  g_free(temp_string);
-
-  temp_string = g_strdup_printf("% 5.2f", new_point.z);
-  gtk_entry_set_text(GTK_ENTRY(ui_study->location[ZAXIS]), temp_string);
-  g_free(temp_string);
-
-  return;
-}
 
 /* this function is used to draw/update/remove the target lines on the canvases */
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action, 
@@ -715,7 +729,6 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   GdkImlibImage * rgb_image;
   color_point_t blank_color;
   GtkStyle * widget_style;
-  //GtkRequisition requisition;
 
   /* get points to the canvas image and rgb image associated with the current canvas */
   canvas_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_image");
@@ -784,12 +797,8 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   /* reset the min size of the widget */
   if ((width != rgb_image->rgb_width) || (height != rgb_image->rgb_height) || (canvas_image == NULL)) {
     gtk_widget_set_usize(GTK_WIDGET(ui_study->canvas[view]), 
-    			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
-    			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
-    //requisition.width = rgb_image->rgb_width;
-    //    requisition.height = rgb_image->rgb_height;
-    //gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
-    //gtk_widget_queue_resize(GTK_WIDGET(ui_study->app));
+			 rgb_image->rgb_width + 2 * UI_STUDY_TRIANGLE_HEIGHT, 
+			 rgb_image->rgb_height + 2 * UI_STUDY_TRIANGLE_HEIGHT);
   }
 
   /* set the scroll region */
@@ -1013,16 +1022,14 @@ void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view, ui_study_updat
   /* make sure the study coord_frame offset is set correctly, 
      adjust current_view_center if necessary */
   temp_center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
-					    study_coord_frame(ui_study->study));
+  					    study_coord_frame(ui_study->study));
   if (study_volumes(ui_study->study) != NULL) {
     volumes_get_view_corners(study_volumes(ui_study->study), 
 			     study_coord_frame(ui_study->study), view_corner);
     study_set_coord_frame_offset(ui_study->study, view_corner[0]);
     study_set_view_center(ui_study->study, 
 			  realspace_base_coord_to_alt(temp_center, study_coord_frame(ui_study->study)));
-  } else
-    temp_center = realpoint_init;
-  ui_study_update_location_display(ui_study, temp_center);
+  };
 
   for (k_view=i_view;k_view<j_view;k_view++) {
     switch (update) {
@@ -1363,32 +1370,21 @@ void ui_study_update_tree(ui_study_t * ui_study) {
 void ui_study_setup_widgets(ui_study_t * ui_study) {
 
   GtkWidget * main_table;
-  GtkWidget * right_table;
   GtkWidget * left_table;
   GtkWidget * middle_table;
   GtkWidget * label;
   GtkWidget * scrollbar;
   GtkObject * adjustment;
-  GtkWidget * option_menu;
-  GtkWidget * menu;
-  GtkWidget * menuitem;
-  GtkWidget * button;
-  GtkWidget * spin_button;
   GtkWidget * tree;
   GtkWidget * scrolled;
-  GtkWidget * entry;
+  //  GtkWidget * viewport;
   GtkWidget * event_box;
   view_t i_view;
-  axis_t i_axis;
-  scaling_t i_scaling;
-  color_table_t i_color_table;
-  interpolation_t i_interpolation;
   realpoint_t * far_corner;
   realspace_t * canvas_coord_frame;
   guint main_table_row, main_table_column;
-  guint left_table_row, right_table_row;
+  guint left_table_row;
   gint middle_table_row, middle_table_column;
-  gchar * temp_string;
 
 
   /* make and add the main packing table */
@@ -1409,7 +1405,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 		   left_table, 
 		   main_table_column, main_table_column+1, 
 		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
-		   X_PACKING_OPTIONS | GTK_FILL, 
+		   0, //X_PACKING_OPTIONS | GTK_FILL, 
 		   Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
   main_table_column++;
@@ -1432,7 +1428,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
   /* make a scrolled area for the tree */
   scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_usize(scrolled,200,-1);
+  gtk_widget_set_usize(scrolled,200,200);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(event_box),scrolled);
 
@@ -1466,37 +1462,40 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", NULL);
   gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", NULL);
   gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", NULL);
+  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "location", NULL);
   gtk_widget_set_usize(GTK_WIDGET(ui_study->help_info), 150,
 		       UI_STUDY_HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
-  gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, 150.0, 100.0);
+  gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, 150.0, 
+				 UI_STUDY_HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
   left_table_row++;
 
   /* make the stuff in the middle, we'll have the entire middle table in a scrolled window  */
   //  scrolled = gtk_scrolled_window_new(NULL,NULL);
-  //  gtk_widget_set_usize(scrolled,-1,-1);
+  //  gtk_widget_set_usize(scrolled,200,200);
   //  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-  //				 GTK_POLICY_AUTOMATIC,
-  //				 GTK_POLICY_AUTOMATIC);
+  //  				 GTK_POLICY_AUTOMATIC,
+  //  				 GTK_POLICY_AUTOMATIC);
   //  gtk_table_attach(GTK_TABLE(main_table), scrolled,
-  //		   main_table_column, main_table_column+1, 
-  //		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
-  //		   X_PACKING_OPTIONS | GTK_FILL, 
-  //		   Y_PACKING_OPTIONS | GTK_FILL, 
-  //		   X_PADDING, Y_PADDING);
-  //  main_table_column++;
-  //  main_table_row = 0;
+  //  		   main_table_column, main_table_column+1, 
+  //  		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
+  //  		   X_PACKING_OPTIONS | GTK_FILL, 
+  //  		   Y_PACKING_OPTIONS | GTK_FILL, 
+  //  		   X_PADDING, Y_PADDING);
+
+  //  viewport = gtk_viewport_new(NULL, NULL);
+  //  gtk_viewport_set_shadow_type(GTK_VIEWPORT(viewport), GTK_SHADOW_NONE);
+  //  gtk_container_add(GTK_CONTAINER(scrolled), viewport);
+
 
   middle_table = gtk_table_new(UI_STUDY_MIDDLE_TABLE_WIDTH, UI_STUDY_MIDDLE_TABLE_HEIGHT,FALSE);
+  //  gtk_container_add(GTK_CONTAINER(viewport), middle_table);
   middle_table_row=middle_table_column = 0;
-  //  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled),middle_table);
   gtk_table_attach(GTK_TABLE(main_table), middle_table,
-		   main_table_column, main_table_column+1, 
-		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
-		   X_PACKING_OPTIONS | GTK_FILL, 
-		   Y_PACKING_OPTIONS | GTK_FILL, 
-		   X_PADDING, Y_PADDING);
-  main_table_column++;
-  main_table_row = 0;
+  		   main_table_column, main_table_column+1, 
+  		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
+  		   X_PACKING_OPTIONS | GTK_FILL, 
+  		   Y_PACKING_OPTIONS | GTK_FILL, 
+  		   X_PADDING, Y_PADDING);
 
 
   /* make the three canvases, scrollbars, dials, etc. */
@@ -1573,222 +1572,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
     middle_table_column++;
   }
-  main_table_row=0;
-
-  /* things to put in the right most column */
-  right_table = gtk_table_new(UI_STUDY_RIGHT_TABLE_WIDTH,
-			      UI_STUDY_RIGHT_TABLE_HEIGHT,FALSE);
-  right_table_row=0;
-
-  /* displaying the current location */
-  label = gtk_label_new("location:");
-  gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-		   
-  for (i_axis = 0; i_axis < NUM_AXIS; i_axis++) {
-    label = gtk_label_new(axis_names[i_axis]);
-    gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(label), 0,1, 
-		     right_table_row,right_table_row+1,
-		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-    entry = gtk_entry_new();
-    gtk_widget_set_usize(GTK_WIDGET(entry), UI_STUDY_DEFAULT_ENTRY_WIDTH,0);
-    gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-    gtk_table_attach(GTK_TABLE(right_table), GTK_WIDGET(entry), 1, 2,
-		     right_table_row, right_table_row+1, 0, 0, X_PADDING, Y_PADDING);
-    ui_study->location[i_axis] = entry;
-    right_table_row++;
-  }
-  ui_study_update_location_display(ui_study, 
-				   realspace_alt_coord_to_base(study_view_center(ui_study->study),
-							       study_coord_frame(ui_study->study)));
-
-  /* selecting per slice/global file normalization */
-  label = gtk_label_new("scaling:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_scaling=0; i_scaling<NUM_SCALINGS; i_scaling++) {
-    menuitem = gtk_menu_item_new_with_label(scaling_names[i_scaling]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "scaling", GINT_TO_POINTER(i_scaling));
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-		       GTK_SIGNAL_FUNC(ui_study_callbacks_scaling), ui_study);
-  }
-
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), study_scaling(ui_study->study));
-
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(option_menu), 1,2,
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-
-  /* color table selector */
-  label = gtk_label_new("color table:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_color_table=0; i_color_table<NUM_COLOR_TABLES; i_color_table++) {
-    menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", GINT_TO_POINTER(i_color_table));
-    gtk_object_set_data(GTK_OBJECT(menuitem),"threshold", NULL);
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-    		       GTK_SIGNAL_FUNC(ui_study_callbacks_color_table), ui_study);
-  }
-
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), BW_LINEAR);
-  ui_study->color_table_menu = option_menu;
-
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(option_menu), 1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-
-  /* interpolation selector */
-  label = gtk_label_new("interpolation:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_interpolation=0; i_interpolation<NUM_INTERPOLATIONS; i_interpolation++) {
-    menuitem = gtk_menu_item_new_with_label(interpolation_names[i_interpolation]);
-    gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "interpolation", GINT_TO_POINTER(i_interpolation));
-    gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-    		       GTK_SIGNAL_FUNC(ui_study_callbacks_interpolation), 
-		       ui_study);
-  }
-
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), 
-			      study_interpolation(ui_study->study));
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(option_menu), 1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-
-  /* button to get the threshold dialog */
-  label = gtk_label_new("threshold:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  
-  button = gtk_button_new_with_label("popup");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(button), 1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_threshold_pressed), 
-		     ui_study);
-  right_table_row++;
-
-  /* zoom selector */
-  label = gtk_label_new("zoom:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  adjustment = gtk_adjustment_new(study_zoom(ui_study->study), 0.2,5,0.2, 0.25, 0.25);
-  spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 2);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
-
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
-
-  gtk_signal_connect(adjustment, "value_changed",  
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_zoom), 
-		     ui_study);
-			      
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(spin_button),1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-
-  /* frame selector */
-  label = gtk_label_new("time:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  temp_string = g_strdup_printf("%5.1f-%5.1fs",
-				study_view_time(ui_study->study),
-				study_view_duration(ui_study->study));
-  button = gtk_button_new_with_label(temp_string);
-  ui_study->time_button = button;
-  g_free(temp_string);
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(button), 1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_time_pressed), 
-		     ui_study);
-  right_table_row++;
-
-  /* width selector */
-  label = gtk_label_new("thickness:");
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(label), 0,1, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  adjustment = gtk_adjustment_new(1.0,1.0,1.0,1.0,1.0,1.0);
-  ui_study->thickness_adjustment = adjustment;
-  ui_study->thickness_spin_button = 
-    spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 2);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), FALSE);
-
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), 
-				    GTK_UPDATE_ALWAYS);
-
-  gtk_signal_connect(adjustment, "value_changed", 
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_thickness), 
-		     ui_study);
-
-			      
-  gtk_table_attach(GTK_TABLE(right_table), 
-		   GTK_WIDGET(spin_button), 1,2, 
-		   right_table_row,right_table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  right_table_row++;
-
-
-  /* and add the right column to the main table */
-  gtk_table_attach(GTK_TABLE(main_table), 
-		   GTK_WIDGET(right_table), 
-		   main_table_column,main_table_column+1,
-		   main_table_row, UI_STUDY_MAIN_TABLE_HEIGHT,
-		   //		   X_PACKING_OPTIONS | GTK_FILL, 
-		   0, 
-		   0, 
-		   X_PADDING, Y_PADDING);
 
   return;
 }
@@ -1829,6 +1612,9 @@ GnomeApp * ui_study_create(study_t * study) {
 
   /* setup the study menu */
   ui_study_menus_create(ui_study);
+
+  /* setup the toolbar */
+  ui_study_toolbar_create(ui_study);
 
   /* setup the rest of the study window */
   ui_study_setup_widgets(ui_study);

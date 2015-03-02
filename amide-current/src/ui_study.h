@@ -26,10 +26,8 @@
 
 #define UI_STUDY_TRIANGLE_WIDTH 15
 #define UI_STUDY_TRIANGLE_HEIGHT 7.5
-#define UI_STUDY_MAIN_TABLE_HEIGHT 3
-#define UI_STUDY_MAIN_TABLE_WIDTH 3
-#define UI_STUDY_RIGHT_TABLE_HEIGHT 8
-#define UI_STUDY_RIGHT_TABLE_WIDTH 2
+#define UI_STUDY_MAIN_TABLE_HEIGHT 1
+#define UI_STUDY_MAIN_TABLE_WIDTH 2
 #define UI_STUDY_MIDDLE_TABLE_HEIGHT 3
 #define UI_STUDY_MIDDLE_TABLE_WIDTH 3
 #define UI_STUDY_SIZE_TREE_PIXMAPS 24
@@ -89,6 +87,7 @@ typedef enum {
   HELP_INFO_TREE_ROI,
   HELP_INFO_TREE_STUDY,
   HELP_INFO_TREE_NONE,
+  HELP_INFO_UPDATE_LOCATION,
   NUM_HELP_INFOS
 } ui_study_help_info_t;
 
@@ -99,6 +98,8 @@ typedef enum {
   HELP_INFO_LINE_2_SHIFT,
   HELP_INFO_LINE_3,
   HELP_INFO_LINE_3_SHIFT,
+  HELP_INFO_LINE_LOCATION,
+  HELP_INFO_LINE_LOCATION2,
   NUM_HELP_INFO_LINES
 } ui_study_help_info_line_t;
 
@@ -136,7 +137,6 @@ typedef struct ui_study_t {
   GtkWidget * location[NUM_VIEWS];
   GnomeCanvas * help_info;
   GtkWidget * thickness_spin_button;
-  GtkWidget * color_table_menu;
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * study_dialog;
   gboolean study_selected;
@@ -156,9 +156,8 @@ typedef struct ui_study_t {
 
 /* external functions */
 GnomeApp * ui_study_create(study_t * study);
-void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info);
+void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, realpoint_t new_point);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
-void ui_study_update_location_display(ui_study_t * ui_study, realpoint_t new_point);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, guint32 outline_color);
 GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);

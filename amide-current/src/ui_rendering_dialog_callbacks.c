@@ -52,9 +52,13 @@ void ui_rendering_dialog_callbacks_change_quality(GtkWidget * widget, gpointer d
   rendering_context_set_quality(ui_rendering->axis_context, ui_rendering->quality);
   rendering_list_set_quality(ui_rendering->contexts, ui_rendering->quality);
 
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -77,9 +81,13 @@ void ui_rendering_dialog_callbacks_change_pixel_type(GtkWidget * widget, gpointe
 			   ui_rendering->pixel_type,
 			   ui_rendering->zoom);
 
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -94,7 +102,6 @@ void ui_rendering_dialog_callbacks_change_zoom(GtkWidget * widget, gpointer data
   gchar * str;
   gint error;
   gdouble temp_val;
-
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -116,9 +123,13 @@ void ui_rendering_dialog_callbacks_change_zoom(GtkWidget * widget, gpointer data
 			   ui_rendering->pixel_type,
 			   ui_rendering->zoom);
 
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -137,9 +148,13 @@ void ui_rendering_dialog_callbacks_depth_cueing_toggle(GtkWidget * widget, gpoin
   rendering_context_set_depth_cueing(ui_rendering->axis_context, ui_rendering->depth_cueing);
   rendering_list_set_depth_cueing(ui_rendering->contexts, ui_rendering->depth_cueing);
 
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -155,7 +170,6 @@ void ui_rendering_dialog_callbacks_change_front_factor(GtkWidget * widget, gpoin
   gchar * str;
   gint error;
   gdouble temp_val;
-
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -176,9 +190,13 @@ void ui_rendering_dialog_callbacks_change_front_factor(GtkWidget * widget, gpoin
 					     ui_rendering->front_factor,
 					     ui_rendering->density);
 
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -193,7 +211,6 @@ void ui_rendering_dialog_callbacks_change_density(GtkWidget * widget, gpointer d
   gchar * str;
   gint error;
   gdouble temp_val;
-
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -214,9 +231,13 @@ void ui_rendering_dialog_callbacks_change_density(GtkWidget * widget, gpointer d
 					     ui_rendering->front_factor,
 					     ui_rendering->density);
   
-  /* now tell the roi_dialog that we've changed */
-  rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
 
   return;
 }
@@ -227,21 +248,25 @@ void ui_rendering_dialog_callbacks_change_apply_to(GtkWidget * widget, gpointer 
   
   ui_rendering_t * ui_rendering = data;
   GtkWidget * rendering_dialog;
-  guint which;
-
+  guint which_context;
 
   /* what's our choice */
-  which = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which"));
+  which_context = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_context"));
 
-  /* update the gamma curves */
-  ui_rendering_dialog_update_curves(ui_rendering, which);
   
   /* and save that choice for the opacity callbacks */
   rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
-  gtk_object_set_data(GTK_OBJECT(rendering_dialog), "apply_to", GINT_TO_POINTER(which));
+  gtk_object_set_data(GTK_OBJECT(rendering_dialog), "apply_to", GINT_TO_POINTER(which_context));
 
-  /* now tell the roi_dialog that we've changed */
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* update the gamma curves */
+  ui_rendering_dialog_update_curves(ui_rendering, which_context);
+
+
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else  /* otherwise, tell the dialog we've changed */
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
 			  
   return;
 }
@@ -257,7 +282,8 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
   gint i;
   rendering_list_t * temp_list;
   rendering_t * context;
-  guint which, temp_which;
+  guint which_context, temp_which_context;
+  curve_type_t curve_type;
 
   /* get some pointers */
   gamma_curve =  gtk_object_get_data(GTK_OBJECT(widget), "gamma_curve");
@@ -265,14 +291,28 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
   ui_rendering = gtk_object_get_data(GTK_OBJECT(gamma_curve), "ui_rendering");
   temp_list = ui_rendering->contexts;
 
+  /* figure out the curve type */
+  switch (GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->curve_type) {
+  case GTK_CURVE_TYPE_LINEAR:       
+    curve_type = CURVE_LINEAR;
+    break;
+  case GTK_CURVE_TYPE_SPLINE:
+    curve_type = CURVE_SPLINE;
+    break;
+  case GTK_CURVE_TYPE_FREE:    
+  default:
+    curve_type = CURVE_FREE;
+    break;
+  }
 
-  /* ------ first apply the changes to the axis rendering -------- */
+  /* ------ first apply the changes to the axis rendering context -------- */
   gtk_curve_get_vector(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), 
 		       RENDERING_DENSITY_MAX, ui_rendering->axis_context->density_ramp);   
   g_free(ui_rendering->axis_context->density_ramp_x); /* free the old stuff */
   g_free(ui_rendering->axis_context->density_ramp_y); /* free the old stuff */
   ui_rendering->axis_context->num_density_points = 
     GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; /* get the # of ctrl points */
+  ui_rendering->axis_context->density_curve_type = curve_type;
 
   if ((ui_rendering->axis_context->density_ramp_x = 
        (gint *) g_malloc(ui_rendering->axis_context->num_density_points*sizeof(gint))) == NULL) {
@@ -296,16 +336,16 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
 
   /* ----------- now apply the changes to the other context(s) ----- */
   /* what are we applying the changes to */
-  which = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(rendering_dialog), "apply_to"));
+  which_context = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(rendering_dialog), "apply_to"));
 
   /* figure out which context */
-  if (which == 0) /* we'll just use the first context if we're applying to all */
+  if (which_context == 0) /* we'll just use the first context if we're applying to all */
     context = temp_list->rendering_context;
   else {
-    temp_which = which-1;
-    while (temp_which > 0) {
+    temp_which_context = which_context-1;
+    while (temp_which_context > 0) {
       temp_list = temp_list->next;
-      temp_which--;
+      temp_which_context--;
     }
     context = temp_list->rendering_context;
   }
@@ -322,6 +362,7 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
     g_free(context->density_ramp_y); /* free the old stuff */
     context->num_density_points =  
       GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; /* get the # of ctrl points */
+    context->density_curve_type = curve_type;
     
     /* allocate some new memory */
     if ((context->density_ramp_x = 
@@ -341,7 +382,7 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
       context->density_ramp_y[i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->ctlpoint[i][1];
     }
     
-    if (which > 0)
+    if (which_context > 0)
       context = NULL;
     else {
       temp_list = temp_list->next;
@@ -352,8 +393,12 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
     }
   }
     
-  /* now tell the roi_dialog that we've changed */
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else  /* otherwise, tell the dialog we've changed */
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
 
   return;
 }
@@ -369,7 +414,7 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
   gint i;
   rendering_list_t * temp_list;
   rendering_t * context;
-  guint which, temp_which;
+  guint which_context, temp_which_context;
   curve_type_t curve_type;
 
   /* get some pointers */
@@ -379,25 +424,27 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
   temp_list = ui_rendering->contexts;
 
   /* figure out the curve type */
-  switch (GTK_CURVE(gamma_curve)->curve_type) {
+  switch (GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->curve_type) {
   case GTK_CURVE_TYPE_LINEAR:       
-    curve_type = LINEAR;
+    curve_type = CURVE_LINEAR;
     break;
   case GTK_CURVE_TYPE_SPLINE:
+    curve_type = CURVE_SPLINE;
+    break;
   case GTK_CURVE_TYPE_FREE:    
   default:
-    curve_type = SPLINE;
+    curve_type = CURVE_FREE;
     break;
   }
 
-  /* ------ first apply the changes to the axis rendering -------- */
+  /* ------ first apply the changes to the axis rendering context -------- */
   gtk_curve_get_vector(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), 
 		       RENDERING_GRADIENT_MAX, ui_rendering->axis_context->gradient_ramp);   
   g_free(ui_rendering->axis_context->gradient_ramp_x); /* free the old stuff */
   g_free(ui_rendering->axis_context->gradient_ramp_y); /* free the old stuff */
   ui_rendering->axis_context->num_gradient_points = 
     GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; /* get the # of ctrl points */
-  ui_rendering->axis_context->curve_type = curve_type;
+  ui_rendering->axis_context->gradient_curve_type = curve_type;
 
   if ((ui_rendering->axis_context->gradient_ramp_x = 
        (gint *) g_malloc(ui_rendering->axis_context->num_gradient_points*sizeof(gint))) == NULL) {
@@ -421,16 +468,16 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
 
   /* ----------- now apply the changes to the other context(s) ----- */
   /* what are we applying the changes to */
-  which = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(rendering_dialog), "apply_to"));
+  which_context = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(rendering_dialog), "apply_to"));
 
   /* figure out which context */
-  if (which == 0) /* we'll just use the first context if we're applying to all */
+  if (which_context == 0) /* we'll just use the first context if we're applying to all */
     context = temp_list->rendering_context;
   else {
-    temp_which = which-1;
-    while (temp_which > 0) {
+    temp_which_context = which_context-1;
+    while (temp_which_context > 0) {
       temp_list = temp_list->next;
-      temp_which--;
+      temp_which_context--;
     }
     context = temp_list->rendering_context;
   }
@@ -446,7 +493,7 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
     g_free(context->gradient_ramp_y); /* free the old stuff */
     context->num_gradient_points =  
       GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->num_ctlpoints; /* get the # of ctrl points */
-    context->curve_type = curve_type;
+    context->gradient_curve_type = curve_type;
     
     /* allocate some new memory */
     if ((context->gradient_ramp_x = 
@@ -466,7 +513,7 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
       context->gradient_ramp_y[i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve)->ctlpoint[i][1];
     }
     
-    if (which > 0)
+    if (which_context > 0)
       context = NULL;
     else {
       temp_list = temp_list->next;
@@ -477,8 +524,11 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
     }
   }
     
-  /* now tell the roi_dialog that we've changed */
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  /* do updating */
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); /* render now */
+  else  /* otherwise, tell the dialog we've changed */
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
 
   return;
 }
@@ -503,31 +553,26 @@ void ui_rendering_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gp
 /* callback for the help button */
 void ui_rendering_dialog_callbacks_help(GnomePropertyBox *rendering_dialog, gint page_number, gpointer data) {
 
-  //  GnomeHelpMenuEntry help_ref={PACKAGE,"basics.html#ROI-DIALOG-HELP"};
-  //  GnomeHelpMenuEntry help_ref_0 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-BASIC"};
-  //  GnomeHelpMenuEntry help_ref_1 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-CENTER"};
-  //  GnomeHelpMenuEntry help_ref_2 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-DIMENSIONS"};
-  //  GnomeHelpMenuEntry help_ref_3 = {PACKAGE,"basics.html#ROI-DIALOG-HELP-ROTATE"};
+  GnomeHelpMenuEntry help_ref={PACKAGE,"rendering-dialog-help.html#RENDERING-DIALOG-HELP"};
+  GnomeHelpMenuEntry help_ref_0 = {PACKAGE,"rendering-dialog-help.html#RENDERING-DIALOG-HELP-BASIC"};
+  GnomeHelpMenuEntry help_ref_1 = {PACKAGE,"rendering-dialog-help.html#RENDERING-DIALOG-HELP-DEPTH-CUEING"};
+  GnomeHelpMenuEntry help_ref_2 = {PACKAGE,"rendering-dialog-help.html#RENDERING-DIALOG-HELP-CLASSIFICATION"};
 
 
-  //  switch (page_number) {
-  //  case 0:
-  //    gnome_help_display (0, &help_ref_0);
-  //    break;
-  //  case 1:
-  //    gnome_help_display (0, &help_ref_1);
-  //    break;
-  //  case 2:
-  //    gnome_help_display (0, &help_ref_2);
-  //    break;
-  //  case 3:
-  //    gnome_help_display (0, &help_ref_3);
-  //    break;
-  //  default:
-  //    gnome_help_display (0, &help_ref);
-  //    break;
-  //  }
-  g_print("not yet implemented, sorry\n");
+  switch (page_number) {
+  case 0:
+    gnome_help_display (0, &help_ref_0);
+    break;
+  case 1:
+    gnome_help_display (0, &help_ref_1);
+    break;
+  case 2:
+    gnome_help_display (0, &help_ref_2);
+    break;
+  default:
+    gnome_help_display (0, &help_ref);
+    break;
+  }
 
   return;
 }

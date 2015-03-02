@@ -55,14 +55,16 @@ rendering_t * rendering_context_free(rendering_t * context) {
   /* remove a reference count */
   context->reference_count--;
 
+#ifdef AMIDE_DEBUG
+  if (context->reference_count == 0)
+    g_print("freeing rendering context of %s\n",context->volume->name);
+#endif
+
   /* things we always do */
   context->volume = volume_free(context->volume);
   
   /* if we've removed all reference's, free the roi */
   if (context->reference_count == 0) {
-#ifdef AMIDE_DEBUG
-    g_print("freeing rendering context of %s\n",context->volume->name);
-#endif
     if (context->vpc != NULL)
       vpDestroyContext(context->vpc);
     g_free(context->rendering_vol);
@@ -109,7 +111,8 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
   temp_context->image = NULL;
   temp_context->image_dim = max_dim;
   temp_context->rendering_vol = NULL;
-  temp_context->curve_type = LINEAR;
+  temp_context->density_curve_type = CURVE_LINEAR;
+  temp_context->gradient_curve_type = CURVE_LINEAR;
 
 #if AMIDE_DEBUG
   g_print("\tSetting up a Rendering Context\n");
@@ -390,7 +393,7 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
     }*/
 
   /*  if (vpSetMaterial(vpc[PET_VOLUME], VP_MATERIAL0, VP_SPECULAR, VP_BOTH_SIDES, 0.39, 0.39, 0.39) != VP_OK){
-    g_warning("Error Setting the Material (PET_VOLUME, SPECULAR): %s",vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
+      g_warning("Error Setting the Material (PET_VOLUME, SPECULAR): %s",vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
     return FALSE;
   }  */
 

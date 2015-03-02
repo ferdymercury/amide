@@ -126,13 +126,13 @@ NAME="AEN31"
 	  the middle mouse button.  Note that making an ROI the active
 	  object will center the canvases around that ROI. Object
 	  modification dialog boxes can be brought up in one of two
-	  ways; right clicking on the object, or hitting the "edit
-	  item(s) button (which will bring up modification dialog
-	  boxes for all selected items).  An "add roi" pull down menu
-	  is available for adding different types of ROI's to the
-	  study.  A "delete object(s)" button is also available which
-	  will remove all objects that are currently selected from the
-	  study.
+	  ways; right clicking on the object, or hitting the
+	  "edit-&#62;edit" menu item (which will bring up modification
+	  dialog boxes for all selected items).  ROI's can be added by
+	  either right clicking on an empty area of the study tree, or
+	  hitting the "edit-&#62;add ROI" menu item.  To delete objects,
+	  hit the "edit-&#62;delete" menu item, which will delete the
+	  currently selected objects.
 	</P
 ></DIV
 ><DIV
@@ -170,14 +170,14 @@ CLASS="SECT3"
 CLASS="SECT3"
 ><A
 NAME="AEN37"
->Misc. Widgets</A
+>Toolbar</A
 ></H3
 ><P
->	  On the right side of the study window are several widgets
-	  used for adjusting the most commonly changed display
-	  parameters.  Scaling, interpolation, zoom, and thickness are
-	  global options and will affect all displayed data sets.
-	  Color table and threshold only apply to the data set that
+>	  On the top of the study window are several widgets used for
+	  adjusting the most commonly changed display parameters.
+	  Scaling, interpolation, zoom, and thickness are global
+	  options and will affect all displayed data sets.  Color
+	  table and threshold only apply to the data set that
 	  currently has the active focus.
 	</P
 ><DIV
@@ -192,7 +192,8 @@ NAME="AEN40"
 >	    The user has the option of specifying whether each slice
 	    should be scaled individually by the maximum and minimum
 	    values in that slice, or if the slices should be scaled to
-	    the maximum and minium values in their respective data sets.
+	    the maximum and minium values in their respective data
+	    sets.
 	  </P
 ></DIV
 ><DIV
@@ -201,19 +202,6 @@ CLASS="SECT4"
 CLASS="SECT4"
 ><A
 NAME="AEN43"
->Color Table</A
-></H4
-><P
->	    The color table widget allows the user to change the
-	    color table/map of the currently focused object.
-	  </P
-></DIV
-><DIV
-CLASS="SECT4"
-><H4
-CLASS="SECT4"
-><A
-NAME="AEN46"
 >Interpolation</A
 ></H4
 ><P
@@ -232,15 +220,31 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN49"
+NAME="AEN46"
 >Threshold</A
 ></H4
 ><P
 >	    This button will pop-up a threshold widget which can be
-	    used for scaling the currently focused data set.  Other
-	    data sets can be thresholded by either placing them as the
-	    focus or by using the data set modification dialog.  The
-	    threshold dialog is described below.
+	    used for scaling the currently focused data set and
+	    changing the colormap.  Other data sets can be thresholded
+	    by either placing them as the focus or by using the data
+	    set modification dialog.  The threshold dialog is
+	    described below.
+	  </P
+></DIV
+><DIV
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
+><A
+NAME="AEN49"
+>Zoom</A
+></H4
+><P
+>	    This specificies how much to enlarge the canvas for
+	    viewing.  AMIDE tries to make an educated guess about how
+	    large the display of the data set should be.  Zoom can be
+	    used in addition to that guesswork.
 	  </P
 ></DIV
 ><DIV
@@ -249,13 +253,11 @@ CLASS="SECT4"
 CLASS="SECT4"
 ><A
 NAME="AEN52"
->Zoom</A
+>Thickness</A
 ></H4
 ><P
->	    This specificies how much to enlarge the canvas for
-	    viewing.  AMIDE tries to make an educated guess about how
-	    large the display of the data set should be.  Zoom can be
-	    used in addition to that guesswork.
+>	    Thickness specifies how deep the slices displayed on the
+	    study canvas are.
 	  </P
 ></DIV
 ><DIV
@@ -272,19 +274,6 @@ NAME="AEN55"
 	    over which data should be displayed.
 	  </P
 ></DIV
-><DIV
-CLASS="SECT4"
-><H4
-CLASS="SECT4"
-><A
-NAME="AEN58"
->Thickness</A
-></H4
-><P
->	    Thickness specifies how deep the slices displayed on the
-	    study canvas are.
-	  </P
-></DIV
 ></DIV
 ></DIV
 ><DIV
@@ -292,7 +281,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN61"
+NAME="AEN58"
 >Threshold Dialog</A
 ></H2
 ><P
@@ -313,7 +302,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN64"
+NAME="AEN61"
 >Series View Window</A
 ></H2
 ><P

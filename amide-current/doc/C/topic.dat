@@ -3,4 +3,5 @@ basics.html		AMIDE Basics
 file-handling.html	Saving/Loading Files
 importing.html		Importing Data
 volumes.html		Manipulating Data
+rendering.html		Rendering Data
 rois.html		Handling ROI's

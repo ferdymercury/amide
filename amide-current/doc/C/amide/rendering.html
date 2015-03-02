@@ -1,0 +1,261 @@
+<HTML
+><HEAD
+><TITLE
+>Rendering Data</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+REL="HOME"
+TITLE="Amide's user manual"
+HREF="amide.html"><LINK
+REL="PREVIOUS"
+TITLE="Gotcha's to ROI calculations "
+HREF="x185.html"><LINK
+REL="NEXT"
+TITLE="Rendering Parameters Dialog"
+HREF="rendering-dialog-help.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Amide's user manual</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x185.html"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="rendering-dialog-help.html"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="RENDERING"
+>Chapter 6. Rendering Data</A
+></H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="rendering.html#AEN198"
+>Rendering Dialog</A
+></DT
+><DT
+><A
+HREF="rendering-dialog-help.html"
+>Rendering Parameters Dialog</A
+></DT
+></DL
+></DIV
+><P
+> 
+
+  Rendering in AMIDE is accomplished via the volpack rendering
+  library.  The rendering performed is volume rendering, which is a
+  more computationally expensive approach than the surface rendering
+  abilities of most other packages.&#13;</P
+><P
+>&#13;  To start a rendering dialog, select the images that you would like
+  to render, and then hit the "View-&#62;Analysis" menu item.  The program
+  will reslice the data set into a data structure that the volpack
+  library can handle, and then perform some initial rendering
+  calculations which are used to speed up later renderings.  This
+  whole process will take some time, so be patient.  Please also note
+  that, when converting the data set, the data is scaled between 0 and
+  1, with all data above the current maximum threshold set to 1, and
+  all data below the current minimum threshold set to 0.&#13;</P
+><P
+>&#13;  When this is completed, the rendering dialog should pop-up.  It's
+  use is described below.&#13;</P
+><DIV
+CLASS="SECT1"
+><H1
+CLASS="SECT1"
+><A
+NAME="AEN198"
+>Rendering Dialog</A
+></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN200"
+>Axis Rendering</A
+></H2
+><P
+>      A coordinate axis is always rendered along with the data set,
+      and is displayed in a separate window on the upper left.  The
+      x-axis is designated by the long bar with a ball at the end of
+      it.  The y-axis is the second shorted bar.  And the shorted bar
+      is the z-axis.
+    </P
+><P
+>      The purpose of this rendering is two fold.  First, it allows the
+      user to see in which direction the data set will be spun.
+      Second, since the axis is rendered using the same classification
+      functions as the data set, it allows a quick check that the data
+      set is valid and is being rendered correctly.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN204"
+>"Render" Button</A
+></H2
+><P
+>      This button tells the program to render the data set.  It will
+      be inactive if the "render on change" option has been picked.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN207"
+>"Render on Change" Checkbox</A
+></H2
+><P
+>      If this is checked, the data set will be rerendered on every
+      change.  If this is not checked, the "Render" button will have
+      to be hit to cause rerendering of the data set.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN210"
+>Spin Sliders</A
+></H2
+><P
+>      Sliding one of these will cause the data set to be spun on the
+      respective axis.  The effect is cumulative.  If you become
+      confused as to where the axis lies that you're spinning on, look
+      at the axis rendering.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN213"
+>"Rendering Parameters" Button</A
+></H2
+><P
+>      This causes the rendering parameters dialog box to pop up.  This
+      dialog box is described below.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN216"
+>Data Set Rendering Window</A
+></H2
+><P
+>      In this window is shown the results of rendering the data set.
+    </P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x185.html"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="amide.html"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="rendering-dialog-help.html"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Gotcha's to ROI calculations</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Rendering Parameters Dialog</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

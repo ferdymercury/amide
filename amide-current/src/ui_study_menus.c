@@ -42,7 +42,49 @@
 #include "ui_study_rois_callbacks.h"
 #include "ui_main_callbacks.h"
 
-/* function to setup the menus for the main ui */
+
+/* function to fill in a radioitem */
+void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item, 
+				     gchar * name,
+				     gchar * tooltip,
+				     gpointer callback_func,
+				     gpointer callback_data,
+				     gpointer xpm_data) {
+  
+  item->type = GNOME_APP_UI_ITEM;
+  item->label = name;
+  item->hint = tooltip;
+  item->moreinfo = callback_func;
+  item->user_data = callback_data;
+  item->unused_data = NULL;
+  item->pixmap_type =  GNOME_APP_PIXMAP_DATA;
+  item->pixmap_info = xpm_data;
+  item->accelerator_key = 0;
+  item->ac_mods = (GdkModifierType) 0;
+  item->widget = NULL;
+
+  return;
+}
+
+/* functionto fill in the end of a menu */
+void ui_study_menu_fill_in_end(GnomeUIInfo * item) {
+
+  item->type = GNOME_APP_UI_ENDOFINFO;
+  item->label = NULL;
+  item->hint = NULL;
+  item->moreinfo = NULL;
+  item->user_data = NULL;
+  item->unused_data = NULL;
+  item->pixmap_type =  (GnomeUIPixmapType) 0;
+  item->pixmap_info = NULL;
+  item->accelerator_key = 0;
+  item->ac_mods = (GdkModifierType) 0;
+  item->widget = NULL;
+
+  return;
+}
+
+/* function to setup the menus for the study ui */
 void ui_study_menus_create(ui_study_t * ui_study) {
 
   
@@ -106,6 +148,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
+
   GnomeUIInfo series_time_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a times series of a transaxial plane"),
@@ -179,11 +222,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* and the main menu definition */
   GnomeUIInfo study_main_menu[] = {
-    GNOMEUIINFO_SUBTREE(N_("_File"), file_menu),
-    GNOMEUIINFO_SUBTREE(N_("_Edit"), edit_menu),
-    GNOMEUIINFO_SUBTREE(N_("_View"), view_menu),
+    GNOMEUIINFO_MENU_FILE_TREE(file_menu),
+    GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
+    GNOMEUIINFO_MENU_VIEW_TREE(view_menu),
     GNOMEUIINFO_SUBTREE(N_("_Analysis"), analysis_menu),
-    GNOMEUIINFO_SUBTREE(N_("_Help"), study_help_menu),
+    GNOMEUIINFO_MENU_HELP_TREE(study_help_menu),
     GNOMEUIINFO_END
   };
 

@@ -9,6 +9,7 @@ SGML_FILES =			\
 	basics.sgml		\
 	file-handling.sgml	\
 	importing.sgml		\
+	rendering.sgml		\
 	rois.sgml		\
 	volumes.sgml		
 

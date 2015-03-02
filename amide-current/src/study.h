@@ -31,7 +31,7 @@
 #include "roi.h"
 
 /* typedef's */
-typedef enum {SLICE, VOLUME, NUM_SCALINGS} scaling_t;
+typedef enum {SCALING_PER_SLICE, SCALING_GLOBAL, NUM_SCALINGS} scaling_t;
 
 typedef struct study_t {
   gchar * name; /* name of the study */
@@ -101,6 +101,7 @@ void study_set_filename(study_t * study, gchar * new_filename);
 
 /* external variables */
 extern gchar * scaling_names[];
+extern gchar * scaling_explanations[];
 
 
 #endif /*__STUDY_H__ */

@@ -25,7 +25,7 @@
 
 
 /* external functions */
-void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which);
+void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which_context);
 void ui_rendering_dialog_create(ui_rendering_t * ui_rendering);
 
 

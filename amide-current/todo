@@ -17,10 +17,9 @@ big things:
 
 small things:
 -------------
-
 * put the canvases in a scrolled widget?
-* figure out what's going wrong with my use of gtk_gamma_curve
-	to set the density and gradient classification functions
+* cardiac shaped ROI?
+* add ability to change material properties, lighting? for rendering
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
 * ui_main delete events should call ui_study_delete_event

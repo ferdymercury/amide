@@ -37,11 +37,19 @@
 #include "raw_data.h"
 
 /* external variables */
-gchar * interpolation_names[] = {"Nearest Neighbhor", \
-				 "2x2x1 Filter", \
-				 "2x2x2 Filter", \
-				 "Bilinear", \
+gchar * interpolation_names[] = {"Nearest Neighbhor", 
+				 "2x2x1 Filter", 
+				 "2x2x2 Filter", 
+				 "Bilinear", 
 				 "Trilinear"};
+
+gchar * interpolation_explanations[] = {
+  "interpolate using nearest neighbhor (very fast)", 
+  "interpolate using a 2x2x1 blurring matrix (fast)",
+  "interpolate using a 2x2x2 blurring matrix (middle)",
+  "interpolate using bilinear interpolation (slow)",
+  "interpolate using trilinear interpolation (very slow)"
+};
 
 gchar * modality_names[] = {"PET", \
 			    "SPECT", \

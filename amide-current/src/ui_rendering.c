@@ -90,7 +90,7 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
   ui_rendering->app = NULL;
   ui_rendering->parameter_dialog = NULL;
   ui_rendering->render_button = NULL;
-  ui_rendering->immediate = FALSE;
+  ui_rendering->immediate = TRUE;
   ui_rendering->contexts = NULL;
   ui_rendering->axis_image = NULL;
   ui_rendering->main_image = NULL;
@@ -294,6 +294,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
    * wanna hit to rerender the volume, unless you have immediate rendering set */
   ui_rendering->render_button = gtk_button_new_with_label("Render");
   gtk_box_pack_start(GTK_BOX(vbox), ui_rendering->render_button, FALSE, FALSE, 0);
+  gtk_widget_set_sensitive(GTK_WIDGET(ui_rendering->render_button), !(ui_rendering->immediate));
   gtk_signal_connect(GTK_OBJECT(ui_rendering->render_button), "clicked", 
 		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_render), ui_rendering);
 

@@ -482,6 +482,15 @@ void ui_volume_dialog_callbacks_close_event(GtkWidget* widget, gpointer data) {
 
   /* trash collection */
   volume_new_info = gtk_object_get_data(GTK_OBJECT(widget), "volume_new_info");
+#if AMIDE_DEBUG
+  { /* little something to make the debugging messages make sense */
+    gchar * temp_string;
+    temp_string = g_strdup_printf("Copy of %s",volume_new_info->name);
+    volume_set_name(volume_new_info, temp_string);
+    g_free(temp_string);
+
+  }
+#endif
   volume_new_info = volume_free(volume_new_info);
 
   /* destroy the widget */

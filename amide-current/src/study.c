@@ -32,8 +32,10 @@
 
 /* external variables */
 gchar * scaling_names[] = {"per slice", "global"};
-
-
+gchar * scaling_explanations[] = {
+  "scale the images based on the max and min values in the current slice",
+  "scale the images based on the max and min values of the entire data set",
+};
 
 /* functions */
 
@@ -95,7 +97,7 @@ study_t * study_init(void) {
   study_set_view_duration(study, 1.0-CLOSE);
   study_set_zoom(study, 1.0);
   study_set_interpolation(study, NEAREST_NEIGHBOR);
-  study_set_scaling(study, SLICE);
+  study_set_scaling(study, SCALING_PER_SLICE);
 
   return study;
 }

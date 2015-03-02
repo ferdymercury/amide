@@ -2,6 +2,7 @@
 <!entity basics SYSTEM "basics.sgml">
 <!entity file-handling SYSTEM "file-handling.sgml">
 <!entity importing SYSTEM "importing.sgml">
+<!entity rendering SYSTEM "rendering.sgml">
 <!entity rois SYSTEM "rois.sgml">
 <!entity volumes SYSTEM "volumes.sgml">
 ]>
@@ -70,6 +71,11 @@
   <chapter id="rois">
     <title>Using ROI's </title>
     &rois;
+  </chapter>
+
+  <chapter id="rendering">
+    <title>Rendering Data</title>
+    &rendering;
   </chapter>
 
 </book>

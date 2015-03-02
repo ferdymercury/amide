@@ -124,22 +124,19 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
     {
 
     case GDK_ENTER_NOTIFY:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       ui_study_place_cursor(ui_study, UI_STUDY_OLD_ROI_MODE, GTK_WIDGET(ui_study->canvas[view_static]));
       break;
 
 
     case GDK_LEAVE_NOTIFY:
-       ui_study_update_location_display(ui_study, 
-					realspace_alt_coord_to_base(study_view_center(ui_study->study),
-								    study_coord_frame(ui_study->study)));
-       ui_study_remove_cursor(ui_study, GTK_WIDGET(ui_study->canvas[view_static]));
+      ui_study_remove_cursor(ui_study, GTK_WIDGET(ui_study->canvas[view_static]));
       break;
       
 
 
     case GDK_BUTTON_PRESS:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       dragging = TRUE;
 
       /* last second sanity check */
@@ -189,7 +186,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
       break;
 
     case GDK_MOTION_NOTIFY:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       if (dragging && 
 	  ((event->motion.state & 
 	    (UI_STUDY_ROIS_SHIFT_MASK | UI_STUDY_ROIS_ROTATE_MASK | UI_STUDY_ROIS_RESIZE_MASK)))) {
@@ -327,7 +324,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
       break;
       
     case GDK_BUTTON_RELEASE:
-      ui_study_update_location_display(ui_study, real_loc);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
       dragging = FALSE;
       roi_item = NULL;

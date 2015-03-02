@@ -189,7 +189,9 @@ GdkImlibImage * image_of_distribution(volume_t * volume,
   /* check if we've already calculated the data distribution */
   if (volume->distribution == NULL) {
     /* if not, calculate it now */
-
+#if AMIDE_DEBUG
+    g_print("Generating distribution data for volume %s",volume->name);
+#endif
     scale = (height-1)/(volume->max - volume->min);
 
     if ((volume->distribution = 
@@ -204,13 +206,29 @@ GdkImlibImage * image_of_distribution(volume_t * volume,
       volume->distribution[j] = 0.0;
 
     /* now "bin" the data */
-    for (frame = 0; frame < volume->num_frames; frame++)
-      for ( i.z = 0; i.z < volume->dim.z; i.z++)
+    for (frame = 0; frame < volume->num_frames; frame++) {
+#if AMIDE_DEBUG
+      div_t x;
+      gint divider;
+      divider = ((volume->dim.z/20.0) < 1) ? 1 : (volume->dim.z/20.0);
+      g_print("\n\tframe %d\t",frame);
+#endif
+      for ( i.z = 0; i.z < volume->dim.z; i.z++) {
+#if AMIDE_DEBUG
+	x = div(i.z,divider);
+	if (x.rem == 0)
+	  g_print(".");
+#endif
 	for (i.y = 0; i.y < volume->dim.y; i.y++) 
 	  for (i.x = 0; i.x < volume->dim.x; i.x++) {
 	    j = rint(scale*(VOLUME_CONTENTS(volume,frame,i)-volume->min));
 	    volume->distribution[j]+=1.0;
 	  }
+      }
+    }
+#if AMIDE_DEBUG
+      g_print("\n");
+#endif
   
     /* normalize the distribution array to the width */
 
@@ -381,7 +399,7 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
 
 
     /* get the max/min values for scaling */
-    if (scaling == VOLUME) {
+    if (scaling == SCALING_GLOBAL) {
       max = temp_volumes->volume->threshold_max;
       min = temp_volumes->volume->threshold_min;
     } else {

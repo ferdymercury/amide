@@ -160,6 +160,7 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
 				 
 /* external variables */
 extern gchar * interpolation_names[];
+extern gchar * interpolation_explanations[];
 extern gchar * modality_names[];
 
 

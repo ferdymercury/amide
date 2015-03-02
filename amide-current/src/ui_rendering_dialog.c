@@ -38,8 +38,9 @@
 #include "ui_rendering_dialog.h"
 #include "ui_rendering_dialog_callbacks.h"
 
+
 /* function to update what's in the density and gradient opacity curves */
-void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which) {
+void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which_context) {
 
   rendering_list_t * temp_list=ui_rendering->contexts;
   rendering_t * context;
@@ -49,66 +50,120 @@ void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint whic
   guint i;
 
   /* figure out which context */
-  if (which == 0) /* we'll just use the first context if we're applying to all */
+  if (which_context == 0) /* we'll just use the first context if we're applying to all */
     context = temp_list->rendering_context;
   else {
-    which--;
-    while (which != 0) {
+    which_context--;
+    while (which_context != 0) {
       temp_list = temp_list->next;
-      which--;
+      which_context--;
     }
     context = temp_list->rendering_context;
   }
 
-  /* get points to the two curve widgets */
-  density_curve = gtk_object_get_data(GTK_OBJECT(ui_rendering->parameter_dialog), "density_curve");
-  gradient_curve =gtk_object_get_data(GTK_OBJECT(ui_rendering->parameter_dialog), "gradient_curve");
-
   /* allocate some memory for the curve we're passing to the curve widget */
-  if ((curve_points = 
-       g_malloc(context->num_density_points*sizeof(gfloat)*2)) == NULL) {
+  if ((curve_points = g_malloc(context->num_density_points*sizeof(gfloat)*2)) == NULL) {
     g_warning("%s: Failed to Allocate Memory for Density Ramp", PACKAGE);
     return;
   }
-  /* copy rampx and rampy into the curve array */
+
+  /* copy rampx and rampy into the curve array for density */
   for (i=0; i< context->num_density_points; i++) {
     curve_points[i][0]=context->density_ramp_x[i];
     curve_points[i][1]=context->density_ramp_y[i];
   }
 
   /* doing some hackish stuff to get this to work as I'd like it (i.e. saving state) */
+  density_curve = gtk_object_get_data(GTK_OBJECT(ui_rendering->parameter_dialog), "density_curve");
   GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve)->num_ctlpoints =  context->num_density_points;
   g_free(GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve)->ctlpoint);
   GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve)->ctlpoint = curve_points;
 
+  /* don't want to inadvertently trigger the following functions */
+  gtk_signal_handler_block_by_func(GTK_OBJECT(density_curve), 
+				   GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
+  gtk_signal_handler_block_by_func(GTK_OBJECT(GTK_GAMMA_CURVE(density_curve)->curve), 
+  				   GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
+
+  /* get the curve to redraw itself */
+  switch (context->density_curve_type) {
+  case CURVE_LINEAR:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve), GTK_CURVE_TYPE_LINEAR);
+    break;
+  case CURVE_SPLINE:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve), GTK_CURVE_TYPE_SPLINE);
+    break;
+  case CURVE_FREE:    
+  default:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve), GTK_CURVE_TYPE_FREE);
+    break;
+  }
+
+
+  /* and yes, it takes all of this to get the gamma curves to redraw correctly */
+  gtk_signal_emit_by_name(GTK_OBJECT(GTK_GAMMA_CURVE(density_curve)->curve), "curve_type_changed", NULL); 
+  gtk_signal_emit_by_name(GTK_OBJECT(GTK_GAMMA_CURVE(density_curve)->curve), "configure_event", NULL);
+  gtk_widget_queue_draw(GTK_WIDGET(density_curve));
+
+  /* and unblock the following functions */
+  gtk_signal_handler_unblock_by_func(GTK_OBJECT(density_curve), 
+				     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
+  gtk_signal_handler_unblock_by_func(GTK_OBJECT(GTK_GAMMA_CURVE(density_curve)->curve), 
+  				     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
+
+
+
+
+
   /* allocate some memory for the curve we're passing to the curve widget */
-  if ((curve_points = 
-       g_malloc(context->num_gradient_points*sizeof(gfloat)*2)) == NULL) {
+  if ((curve_points =  g_malloc(context->num_gradient_points*sizeof(gfloat)*2)) == NULL) {
     g_warning("%s: Failed to Allocate Memory for Gradient Ramp", PACKAGE);
     return;
   }
-  /* copy rampx and rampy into the curve array */
+  /* copy rampx and rampy into the curve array for gradient */
   for (i=0; i< context->num_gradient_points; i++) {
     curve_points[i][0]=context->gradient_ramp_x[i];
     curve_points[i][1]=context->gradient_ramp_y[i];
   }
 
   /* doing some hackish stuff to get this to work as I'd like it (i.e. saving state) */
+  gradient_curve = gtk_object_get_data(GTK_OBJECT(ui_rendering->parameter_dialog), "gradient_curve");
   GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve)->num_ctlpoints =  context->num_gradient_points;
   g_free(GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve)->ctlpoint);
   GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve)->ctlpoint = curve_points;
 
-  /* and get the two curves to redraw themselves */
-  //  if (GTK_WIDGET_REALIZED(density_curve))
-    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(density_curve)->curve), context->curve_type);
-  //  if (GTK_WIDGET_REALIZED(gradient_curve))
-    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve), context->curve_type);
+  /* don't want to inadvertently trigger the following functions */
+  gtk_signal_handler_block_by_func(GTK_OBJECT(gradient_curve), 
+				   GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
+  gtk_signal_handler_block_by_func(GTK_OBJECT(GTK_GAMMA_CURVE(gradient_curve)->curve), 
+				   GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
 
-    //    gtk_widget_queue_draw_area(density_curve, 0,0,200,200);
-    //    gtk_signal_emit_by_name(GTK_OBJECT(density_curve), "configure_event", NULL);
-    //    gtk_widget_queue_draw_area(gradient_curve, 0,0,200,200);
-    //    gtk_signal_emit_by_name(GTK_OBJECT(gradient_curve), "configure_event", NULL);
+  /* get the curve to redraw itself */
+  switch (context->gradient_curve_type) {
+  case CURVE_LINEAR:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve), GTK_CURVE_TYPE_LINEAR);
+    break;
+  case CURVE_SPLINE:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve), GTK_CURVE_TYPE_SPLINE);
+    break;
+  case CURVE_FREE:    
+  default:
+    gtk_curve_set_curve_type(GTK_CURVE(GTK_GAMMA_CURVE(gradient_curve)->curve), GTK_CURVE_TYPE_FREE);
+    break;
+  }
 
+  /* and yes, it takes all of this to get the gamma curves to redraw correctly */
+  gtk_signal_emit_by_name(GTK_OBJECT(GTK_GAMMA_CURVE(gradient_curve)->curve), "curve_type_changed", NULL); 
+  gtk_signal_emit_by_name(GTK_OBJECT(GTK_GAMMA_CURVE(gradient_curve)->curve), "configure_event", NULL);
+  gtk_widget_queue_draw(GTK_WIDGET(gradient_curve));
+
+  /* and unblock the following functions */
+  gtk_signal_handler_unblock_by_func(GTK_OBJECT(gradient_curve), 
+				     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
+  gtk_signal_handler_unblock_by_func(GTK_OBJECT(GTK_GAMMA_CURVE(gradient_curve)->curve), 
+				     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
+
+  return;
 }
 
 
@@ -142,14 +197,17 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(rendering_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_close_event),
-		     ui_rendering);
+  		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_close_event),
+  		     ui_rendering);
   gtk_signal_connect(GTK_OBJECT(rendering_dialog), "apply",
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_apply),
+  		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_apply), 
 		     ui_rendering);
   gtk_signal_connect(GTK_OBJECT(rendering_dialog), "help",
 		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_help),
 		     ui_rendering);
+
+  /* not operating as a true property box dialog, i.e. no cancel option */
+  gtk_widget_destroy(GNOME_PROPERTY_BOX(rendering_dialog)->ok_button);
 
 
 
@@ -331,7 +389,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   menuitem = gtk_menu_item_new_with_label("all rendering contexts");
   gtk_menu_append(GTK_MENU(menu), menuitem);
   i = 0;
-  gtk_object_set_data(GTK_OBJECT(menuitem), "which", GINT_TO_POINTER(i)); 
+  gtk_object_set_data(GTK_OBJECT(menuitem), "which_context", GINT_TO_POINTER(i)); 
   i++;
   gtk_object_set_data(GTK_OBJECT(menuitem), "rendering_dialog", rendering_dialog);
   gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
@@ -341,7 +399,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   while (temp_list != NULL) {
     menuitem = gtk_menu_item_new_with_label(temp_list->rendering_context->volume->name);
     gtk_menu_append(GTK_MENU(menu), menuitem);
-    gtk_object_set_data(GTK_OBJECT(menuitem), "which", GINT_TO_POINTER(i)); 
+    gtk_object_set_data(GTK_OBJECT(menuitem), "which_context", GINT_TO_POINTER(i)); 
     i++;
     gtk_object_set_data(GTK_OBJECT(menuitem), "rendering_dialog", rendering_dialog);
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
@@ -368,34 +426,24 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   
   gamma_curve = gtk_gamma_curve_new();
   gtk_curve_set_range(GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve)->curve), 0.0, 
-		      RENDERING_DENSITY_MAX, 0.0, 1.0);
+  		      RENDERING_DENSITY_MAX, 0.0, 1.0);
 
   /* set some data */
   gtk_object_set_data(GTK_OBJECT(rendering_dialog), "density_curve", gamma_curve);
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "rendering_dialog", rendering_dialog);
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "gamma_curve", gamma_curve);
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "ui_rendering", ui_rendering);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), 
-		      "gamma_curve", gamma_curve);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]), 
-		      "gamma_curve", gamma_curve);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[4]), 
-		      "gamma_curve", gamma_curve);
+  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), "gamma_curve", gamma_curve);
     
   /* connect the signals together */
   gtk_signal_connect(GTK_OBJECT(gamma_curve), "button-release-event", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), 
-		     NULL);
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
   gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), "curve_type_changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), 
-		     NULL);
-  gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]), "clicked", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), 
-		     NULL);
-  gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[4]), "clicked", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), 
-		     NULL);
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_density), NULL);
+  /* disable the gamma button */
+  gtk_signal_handlers_destroy (GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]));
 
+  /* and attach */
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(gamma_curve), 1,2,
 		   table_row, table_row+1,
 		   GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
@@ -416,30 +464,22 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "rendering_dialog", rendering_dialog);
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "gamma_curve", gamma_curve);
   gtk_object_set_data(GTK_OBJECT(gamma_curve), "ui_rendering", ui_rendering);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), 
-		      "gamma_curve", gamma_curve);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]), 
-		      "gamma_curve", gamma_curve);
-  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[4]), 
-		      "gamma_curve", gamma_curve);
+  gtk_object_set_data(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), "gamma_curve", gamma_curve);
     
   /* connect the signals together */
   gtk_signal_connect(GTK_OBJECT(gamma_curve), "button-release-event", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), 
-		     NULL);
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
   gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->curve), "curve_type_changed", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), 
-		     NULL);
-  gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]), "clicked", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), 
-		     NULL);
-  gtk_signal_connect(GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[4]), "clicked", 
-		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), 
-		     NULL);
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_callbacks_opacity_gradient), NULL);
 
+  /* disable the gamma button */
+  gtk_signal_handlers_destroy (GTK_OBJECT(GTK_GAMMA_CURVE(gamma_curve)->button[3]));
+
+  /* and attach */
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(gamma_curve), 1,2,
 		   table_row, table_row+1, 
 		   GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  gtk_widget_show(gamma_curve);
   table_row++;
 
 

@@ -391,6 +391,15 @@ void ui_roi_dialog_callbacks_close_event(GtkWidget* widget, gpointer data) {
 
   /* trash collection */
   roi_new_info = gtk_object_get_data(GTK_OBJECT(widget), "roi_new_info");
+#if AMIDE_DEBUG
+  { /* little something to make the debugging messages make sense */
+    gchar * temp_string;
+    temp_string = g_strdup_printf("Copy of %s",roi_new_info->name);
+    roi_set_name(roi_new_info, temp_string);
+    g_free(temp_string);
+
+  }
+#endif
   roi_new_info = roi_free(roi_new_info);
 
   /* destroy the widget */

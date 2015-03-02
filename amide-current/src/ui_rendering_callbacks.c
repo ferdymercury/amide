@@ -64,7 +64,7 @@ void ui_rendering_callbacks_immediate(GtkWidget * widget, gpointer data) {
 
   /* set the sensitivity of the render button */
   gtk_widget_set_sensitive(GTK_WIDGET(ui_rendering->render_button), !(ui_rendering->immediate));
-    
+
   if (ui_rendering->immediate)
     ui_rendering_update_canvases(ui_rendering); /* render now */
 
