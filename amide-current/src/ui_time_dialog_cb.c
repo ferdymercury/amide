@@ -213,7 +213,7 @@ void ui_time_dialog_cb_help(GnomePropertyBox *time_dialog, gint page_number, gpo
 }
 
 /* function called to destroy the time dialog */
-void ui_time_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_time_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   ui_time_dialog_t * new_time;
@@ -222,11 +222,8 @@ void ui_time_dialog_cb_close(GtkWidget* widget, gpointer data) {
   new_time = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "new_time");
   g_free(new_time);
 
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_study->time_dialog));
-
   /* make sure the pointer in ui_study do this dialog is nulled */
   ui_study->time_dialog = NULL;
 
-  return;
+  return FALSE;
 }

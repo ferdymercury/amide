@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->DICOM Files</TITLE
+>Manipulating ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -9,14 +9,14 @@ REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="UP"
-TITLE="Importing Data "
-HREF="importing.html"><LINK
+TITLE="Using ROI's "
+HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Raw Data Files"
-HREF="x152.html"><LINK
+TITLE="Drawing ROI's"
+HREF="x213.html"><LINK
 REL="NEXT"
-TITLE="Other Filetypes"
-HREF="x158.html"></HEAD
+TITLE="Calculating Statistics over ROI's"
+HREF="x219.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,20 +38,20 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x152.html"
+HREF="x213.html"
 >Prev</A
 ></TD
 ><TD
 WIDTH="80%"
 ALIGN="center"
 VALIGN="bottom"
->Chapter 3. Importing Data</TD
+>Chapter 5. Using ROI's</TD
 ><TD
 WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x158.html"
+HREF="x219.html"
 >Next</A
 ></TD
 ></TR
@@ -64,17 +64,24 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN155"
->DICOM Files</A
+NAME="AEN216"
+>Manipulating ROI's</A
 ></H1
 ><P
->    
-    DICOM 3.0 is partially supported through medcon/libmdc, which
-    actually uses a slightly modified version of Tony Voet's
-    VT-DICOM library.  The level of support for DICOM 3.0 is
-    entirely determined by medcon/libmdc/VT-DICOM.
+>    After an ROI is drawn, it can be further manipulated to adjust
+    it's size, placement, and orientation.  You can directly
+    manipulate the ROI by clicking on it in any of the volume view
+    windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
+    used to rotate ellipsoid, elliptic cylinder, and box ROIs.  Mouse
+    button 3 is used for zooming ellipsoid, elliptic cylinder and box
+    ROI, and is used for redefining the isocontour value for
+    isocontour ROI's.
     
-    
+    You can also edit the ROI size/placement/orientation/name etc. by
+    clicking on mouse button 3 while over the ROI's name in the study
+    item list.  This brings up the edit ROI dialog, which allows
+    keyboard entry of the ROI's parameters.
+
   </P
 ></DIV
 ><DIV
@@ -92,7 +99,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x152.html"
+HREF="x213.html"
 >Prev</A
 ></TD
 ><TD
@@ -108,7 +115,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x158.html"
+HREF="x219.html"
 >Next</A
 ></TD
 ></TR
@@ -117,20 +124,20 @@ HREF="x158.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Raw Data Files</TD
+>Drawing ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
 VALIGN="top"
 ><A
-HREF="importing.html"
+HREF="rois.html"
 >Up</A
 ></TD
 ><TD
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Other Filetypes</TD
+>Calculating Statistics over ROI's</TD
 ></TR
 ></TABLE
 ></DIV

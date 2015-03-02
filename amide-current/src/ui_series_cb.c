@@ -84,23 +84,18 @@ void ui_series_cb_scaling(GtkWidget * widget, gpointer data) {
 /* function called when the threshold is changed */
 static void ui_series_cb_threshold_changed(GtkWidget * widget, gpointer data) {
   ui_series_t * ui_series=data;
-
   ui_series_update_canvas(ui_series);
-
   return;
 }
 
 /* function called when the volume's color is changed */
 static void ui_series_cb_color_changed(GtkWidget * widget, gpointer data) {
   ui_series_t * ui_series=data;
-
   ui_series_update_canvas(ui_series);
-
   return;
 }
 
 static gboolean ui_series_cb_thresholds_close(GtkWidget* widget, gpointer data) {
-
   ui_series_t * ui_series = data;
 
   /* just keeping track on whether or not the threshold widget is up */
@@ -127,20 +122,24 @@ void ui_series_cb_threshold(GtkWidget * widget, gpointer data) {
 		     GTK_SIGNAL_FUNC(ui_series_cb_color_changed), ui_series);
   gtk_signal_connect(GTK_OBJECT(ui_series->thresholds_dialog), "close",
 		     GTK_SIGNAL_FUNC(ui_series_cb_thresholds_close), ui_series);
-  gtk_widget_show(GTK_WIDGET(ui_series->thresholds_dialog));
+  gtk_widget_show(ui_series->thresholds_dialog);
 
   ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
 
   return;
 }
 
+
+
 /* function ran when closing a series window */
 void ui_series_cb_close(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * app = data;
+  ui_series_t * ui_series = data;
+  GtkWidget * app = GTK_WIDGET(ui_series->app);
 
-  /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
+  /* delete the widget */
+  ui_series_cb_delete_event(app, NULL, ui_series);
+  gtk_widget_destroy(app);
 
   return;
 }
@@ -149,21 +148,19 @@ void ui_series_cb_close(GtkWidget* widget, gpointer data) {
 gboolean ui_series_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_series_t * ui_series = data;
+  GtkWidget * app = GTK_WIDGET(ui_series->app);
 
   /* make sure our threshold dialog is gone */
-  if (ui_series->thresholds_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_series->thresholds_dialog), "delete_event");
+  if (ui_series->thresholds_dialog != NULL) {
+    gtk_widget_destroy(ui_series->thresholds_dialog);
+    ui_series->thresholds_dialog = NULL;
+  }
 
   /* free the associated data structure */
   ui_series = ui_series_free(ui_series);
 
-  /* destroy the widget */
-  gtk_widget_destroy(widget);
-
-  /* quit our app if we've closed all windows */
-  number_of_windows--;
-  if (number_of_windows == 0)
-    gtk_main_quit();
+  /* tell the rest of the program this window is no longer here */
+  amide_unregister_window((gpointer) app);
 
   return FALSE;
 }

@@ -43,7 +43,7 @@ typedef enum {
   LIBECAT_DATA, 
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
-  LIBMDC_DATA, 
+  LIBMDC_DATA,
 #endif
   NUM_IMPORT_METHODS
 } import_method_t;
@@ -101,9 +101,9 @@ struct _volume_list_t {
 
 /* figure out the voxel point that corresponds to the real coordinates */
 /* makes use of floats being truncated when converting to int */
-#define VOLUME_REALPOINT_TO_VOXEL(vol, real, frame, vox) (((vox).x = ((real).x/(vol)->voxel_size.x)), \
-							  ((vox).y = ((real).y/(vol)->voxel_size.y)), \
-							  ((vox).z = ((real).z/(vol)->voxel_size.z)), \
+#define VOLUME_REALPOINT_TO_VOXEL(vol, real, frame, vox) (((vox).x = floor((real).x/(vol)->voxel_size.x)), \
+							  ((vox).y = floor((real).y/(vol)->voxel_size.y)), \
+							  ((vox).z = floor((real).z/(vol)->voxel_size.z)), \
 							  ((vox).t = (frame)))
      
 
@@ -119,8 +119,8 @@ volume_t * volume_free(volume_t * volume);
 volume_t * volume_init(void);
 gchar * volume_write_xml(volume_t * volume, gchar * study_directory);
 volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_directory);
-volume_t * volume_import_file(const gchar * import_filename, gchar * model_filename,
-			      import_method_t import_method);
+volume_t * volume_import_file(import_method_t import_method, int submethod,
+			      const gchar * import_filename, gchar * model_filename);
 volume_t * volume_copy(volume_t * src_volume);
 volume_t * volume_add_reference(volume_t * volume);
 void volume_set_name(volume_t * volume, gchar * new_name);
@@ -206,6 +206,8 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
 extern gchar * interpolation_names[];
 extern gchar * interpolation_explanations[];
 extern gchar * modality_names[];
+extern gchar * import_menu_names[];
+extern gchar * import_menu_explanations[];
 
 
 #endif /* __VOLUME_H__ */

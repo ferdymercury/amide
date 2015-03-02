@@ -38,6 +38,6 @@ void ui_rendering_dialog_cb_opacity(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_rendering_dialog_cb_help(GnomePropertyBox *rendering_dialog, 
 				 gint page_number, gpointer data);
-void ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data);
+gboolean ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data);
 
 #endif

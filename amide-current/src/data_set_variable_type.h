@@ -46,18 +46,28 @@
     (i).z * ((data_set)->dim.x) * ((data_set)->dim.y) +  \
     (i).t * ((data_set)->dim.x) * ((data_set)->dim.y) * ((data_set)->dim.z))) 
 
+#define DATA_SET_`'m4_Variable_Type`'_3D_POINTER(data_set,iz,iy,ix) \
+  (((data_set_`'m4_Variable_Type`'_t *) (data_set)->data)+ \
+   ((ix) +  \
+    (iy) * ((data_set)->dim.x) +  \
+    (iz) * ((data_set)->dim.x) * ((data_set)->dim.y)))
+
 #define DATA_SET_`'m4_Variable_Type`'_2D_POINTER(data_set,iy,ix) \
   (((data_set_`'m4_Variable_Type`'_t *) (data_set)->data)+ \
-    (ix) + \
-    (iy) * ((data_set)->dim.x))
+   ((ix) + \
+    (iy) * ((data_set)->dim.x)))
 
 #define DATA_SET_`'m4_Variable_Type`'_SET_CONTENT(data_set,i) \
   (*((data_set_`'m4_Variable_Type`'_t *) DATA_SET_`'m4_Variable_Type`'_POINTER((data_set),(i))))
 
 
 /* function declarations */
-data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(amide_data_t init_value);
-data_set_t * data_set_`'m4_Variable_Type`'_2D_init(amide_data_t init_value, 
+data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(data_set_`'m4_Variable_Type`'_t init_value);
+data_set_t * data_set_`'m4_Variable_Type`'_2D_init(data_set_`'m4_Variable_Type`'_t init_value, 
+						   intpoint_t y_dim,
+						   intpoint_t x_dim);
+data_set_t * data_set_`'m4_Variable_Type`'_3D_init(data_set_`'m4_Variable_Type`'_t init_value, 
+						   intpoint_t z_dim,
 						   intpoint_t y_dim,
 						   intpoint_t x_dim);
 void data_set_`'m4_Variable_Type`'_initialize_data(data_set_t * data_set, 

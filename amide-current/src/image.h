@@ -34,6 +34,9 @@
 #define IMAGE_DISTRIBUTION_WIDTH 100
 
 /* external functions */
+GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, rgba_t color,
+				     realspace_t * return_frame,
+				     realpoint_t * return_corner);
 GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t image_color);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,

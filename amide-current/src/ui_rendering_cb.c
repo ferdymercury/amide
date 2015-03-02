@@ -54,7 +54,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
   canvaspoint_t canvas_cp, diff_cp;
   GnomeCanvasPoints * line_points;
   guint i, j,k;
-  guint32 color;
+  rgba_t color;
   static floatpoint_t dim;
   static canvaspoint_t last_cp, initial_cp, center_cp;
   static gboolean dragging = FALSE;
@@ -127,7 +127,8 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 				      TRUE);
 	  rotation_box[i] = 
 	    gnome_canvas_item_new(gnome_canvas_root(ui_rendering->canvas), gnome_canvas_line_get_type(),
-				  "points", line_points, "fill_color_rgba", color,
+				  "points", line_points, 
+				  "fill_color_rgba", color_table_rgba_to_uint32(color),
 				  "width_units", 1.0, NULL);
 	  gnome_canvas_points_unref(line_points);
 	}
@@ -495,31 +496,25 @@ void ui_rendering_cb_movie(GtkWidget * widget, gpointer data) {
 gboolean ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
+  GtkWidget * app = GTK_WIDGET(ui_rendering->app);
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
   ui_rendering_movie_t * ui_rendering_movie = ui_rendering->movie;
 #endif
 
   /* if our parameter modification dialog is up, kill that */
-  if (ui_rendering->parameter_dialog  != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering->parameter_dialog), "delete_event"); 
+  if (ui_rendering->parameter_dialog  != NULL) {
+    gnome_dialog_close(GNOME_DIALOG(ui_rendering->parameter_dialog));
+    ui_rendering->parameter_dialog = NULL;
+  }
 
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
   /* if the movie dialog is up, kill that */
   if (ui_rendering_movie  != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_rendering_movie->dialog), "delete_event"); 
+    gnome_dialog_close(GNOME_DIALOG(ui_rendering_movie->dialog));
 #endif
 
-
-  /* destroy the widget */
-  gtk_widget_destroy(widget);
-
-  /* free the associated data structure */
-  ui_rendering = ui_rendering_free(ui_rendering);
-
-  /* quit our app if we've closed all windows */
-  number_of_windows--;
-  if (number_of_windows == 0)
-    gtk_main_quit();
+  ui_rendering = ui_rendering_free(ui_rendering); /* free the associated data structure */
+  amide_unregister_window((gpointer) app); /* tell amide this window is no longer */
 
   return FALSE;
 }
@@ -527,10 +522,12 @@ gboolean ui_rendering_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpoin
 /* function ran when closing the rendering window */
 void ui_rendering_cb_close(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * app = data;
+  ui_rendering_t * ui_rendering = data;
+  GtkWidget * app = GTK_WIDGET(ui_rendering->app);
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
+  ui_rendering_cb_delete_event(app, NULL, ui_rendering);
+  gtk_widget_destroy(app);
 
   return;
 }

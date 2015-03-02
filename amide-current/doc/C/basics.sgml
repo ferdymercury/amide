@@ -21,20 +21,26 @@
 	<para>
 	  On the left hand side of the study window is a list of all
 	  the objects in the study arranged in a tree.  Objects in the
-	  study list can be selected by left clicking on the object,
-	  and can become the active focus of the study by either
-	  double clicking on the object or clicking on the object with
-	  the middle mouse button.  Note that making an ROI the active
-	  object will center the canvases around that ROI. Object
-	  modification dialog boxes can be brought up in one of two
-	  ways; right clicking on the object, or hitting the
-	  "Edit->>Edit Items" menu
-	  item (which will bring up modification dialog boxes for all
-	  selected items).  ROI's can be added by either right
-	  clicking on an empty area of the study tree, or hitting the
-	  "Edit->add ROI" menu item.
-	  To delete objects, hit the "edit->delete items" menu item, which
-	  will delete the currently selected objects.
+	  study list can be selected by left clicking on the object.
+	  Data set objects can additionally be made the active focus
+	  of the program by either double clicking on the object with
+	  the left mouse button or clicking on the object with the
+	  middle mouse button.  The active data set is noted by the
+	  small "X" to the left of the data set's name.  When an
+	  action is performed which cannot be performed on all
+	  selected data sets (like drawing an isocontour ROI for
+	  example), the active data set will be the one used.
+      </para>
+
+      <para>
+	  Object modification dialog boxes can be brought up in one of
+	  two ways; right clicking on the object, or hitting the
+	  "Edit->>Edit Items" menu item (which will bring up
+	  modification dialog boxes for all selected items).  ROI's
+	  can be added by either right clicking on an empty area of
+	  the study tree, or hitting the "Edit->add ROI" menu item.
+	  To delete objects, hit the "edit->delete items" menu item,
+	  which will delete the currently selected objects.
 	</para>
       </sect3>
 

@@ -28,43 +28,67 @@
 #include <glib.h>
 #include "data_set_`'m4_Variable_Type`'.h"
 
-data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(amide_data_t init_value) {
+data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(data_set_`'m4_Variable_Type`'_t init_value) {
 
   data_set_t * temp_data_set;
   voxelpoint_t i;
 
   temp_data_set = data_set_init();
+  g_return_val_if_fail(temp_data_set != NULL, NULL);
   i = voxelpoint_zero;
 
-  /* put in our 0D values */
   temp_data_set->dim.x = temp_data_set->dim.y = temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';
   temp_data_set->data = data_set_get_data_mem(temp_data_set);
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
   (*DATA_SET_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_data_set, i)) = init_value;
 
   return temp_data_set;
 }
 
-data_set_t * data_set_`'m4_Variable_Type`'_2D_init(amide_data_t init_value, 
+data_set_t * data_set_`'m4_Variable_Type`'_2D_init(data_set_`'m4_Variable_Type`'_t init_value, 
 						   intpoint_t y_dim,
 						   intpoint_t x_dim) {
 
   data_set_t * temp_data_set;
 
   temp_data_set = data_set_init();
+  g_return_val_if_fail(temp_data_set != NULL, NULL);
 
-  /* put in our 0D values */
   temp_data_set->dim.x = x_dim;
   temp_data_set->dim.y = y_dim;
   temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';
   temp_data_set->data = data_set_get_data_mem(temp_data_set);
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
 
   data_set_`'m4_Variable_Type`'_initialize_data(temp_data_set, init_value);
 
   return temp_data_set;
 }
 
+data_set_t * data_set_`'m4_Variable_Type`'_3D_init(data_set_`'m4_Variable_Type`'_t init_value, 
+						   intpoint_t z_dim,
+						   intpoint_t y_dim,
+						   intpoint_t x_dim) {
+
+  data_set_t * temp_data_set;
+
+  temp_data_set = data_set_init();
+  g_return_val_if_fail(temp_data_set != NULL, NULL);
+
+  temp_data_set->dim.x = x_dim;
+  temp_data_set->dim.y = y_dim;
+  temp_data_set->dim.z = z_dim;
+  temp_data_set->dim.t = 1;
+  temp_data_set->format = `'m4_Variable_Type`';
+  temp_data_set->data = data_set_get_data_mem(temp_data_set);
+  g_return_val_if_fail(temp_data_set->data != NULL, data_set_free(temp_data_set));
+
+  data_set_`'m4_Variable_Type`'_initialize_data(temp_data_set, init_value);
+
+  return temp_data_set;
+}
 
 void data_set_`'m4_Variable_Type`'_initialize_data(data_set_t * data_set, 
 						   data_set_`'m4_Variable_Type`'_t init_value) {
@@ -79,3 +103,4 @@ void data_set_`'m4_Variable_Type`'_initialize_data(data_set_t * data_set,
 
   return;
 }
+

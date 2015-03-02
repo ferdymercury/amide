@@ -45,6 +45,9 @@ gchar * raw_data_format_names[] = {"Unsigned Byte (8 bit)", \
 				   "Signed Integer, Big Endian (32 bit)", \
 				   "Float, Big Endian (32 bit)", \
 				   "Double, Big Endian (64 bit)", \
+				   "Unsigned Integer, PDP (32 bit)", \
+				   "Signed Integer, PDP (32 bit)", \
+				   "Float, PDP/VAX (32 bit)", \
 				   "ASCII (8 bit)"};
 
 guint raw_data_sizes[] = {sizeof(guint8),
@@ -60,7 +63,10 @@ guint raw_data_sizes[] = {sizeof(guint8),
 			  sizeof(guint32),
 			  sizeof(gint32),
 			  sizeof(gfloat),
-			  sizeof(gdouble), 
+			  sizeof(gdouble),
+			  sizeof(guint32),
+			  sizeof(gint32),
+			  sizeof(gfloat),
 			  1};
 
 
@@ -96,18 +102,21 @@ data_format_t raw_data_format_data(raw_data_format_t raw_data_format) {
     }
   case UINT_LE:
   case UINT_BE:
+  case UINT_PDP:
     {
       data_format = UINT;
       break;
     }
   case SINT_LE:
   case SINT_BE:
+  case SINT_PDP:
     {
       data_format = SINT;
       break;
     }
   case FLOAT_LE:
   case FLOAT_BE:
+  case FLOAT_PDP:
     {
       data_format = FLOAT;
       break;
@@ -121,7 +130,7 @@ data_format_t raw_data_format_data(raw_data_format_t raw_data_format) {
     }
   default:
     {
-      g_warning("PACKAGE: unexpected case condition in __FILE__ at line __LINE__");
+      g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
       data_format = FLOAT; /* take a wild guess */
       break;
     }
@@ -209,7 +218,7 @@ raw_data_format_t raw_data_format_raw(data_format_t data_format) {
     }
   default:
     {
-      g_warning("PACKAGE: unexpected case condition in __FILE__ at line __LINE__");
+      g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
       raw_data_format = UBYTE_NE; /* take a wild guess */
       break;
     }
@@ -358,6 +367,47 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 
       break;
 	
+    case FLOAT_PDP:
+      {
+	guint32 * data = file_buffer;
+	guint32 temp;
+	gfloat * float_p;
+
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      temp = GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      float_p = (void *) &temp;
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
+	    }
+      }
+      break;
+    case SINT_PDP:
+      {
+	gint32 * data=file_buffer;
+	  
+	/* copy this frame into the data_set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) = 
+		GINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+      }
+      break;
+    case UINT_PDP:
+      {
+	guint32 * data=file_buffer;
+	  
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
+		GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+      }
+      break;
+
     case DOUBLE_BE: 
       {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
@@ -378,19 +428,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	      temp = 
-		GUINT64_FROM_BE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+		GUINT64_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      double_p = (void *) &temp;
 	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_BIG_ENDIAN */
-	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = 
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
-
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 #endif
               }
       }
@@ -410,20 +452,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	      temp = 
-		GUINT32_FROM_BE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+	      temp = GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_BIG_ENDIAN */
-	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = 
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
-
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
 #endif
 	    }
       }
@@ -436,12 +469,8 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) =
-		GINT32_FROM_BE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
-	  
+	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) = 
+		GINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
       }
       break;
     case UINT_BE:
@@ -452,12 +481,8 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) =
-		GUINT32_FROM_BE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
-
+	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
+		GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
       }
       break;
     case SSHORT_BE:
@@ -468,12 +493,8 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) =
-		GINT16_FROM_BE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
-
+	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) = 
+		GINT16_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
       }
       break;
     case USHORT_BE:
@@ -485,11 +506,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
-		GUINT16_FROM_BE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
-
+		GUINT16_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
       }
       break;
 
@@ -511,20 +528,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = 
-		GUINT64_FROM_LE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+	      temp = GUINT64_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      double_p = (void *) &temp;
 	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_LITTLE_ENDIAN */
-	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = 
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
-
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
 #endif
                }
       }
@@ -548,19 +556,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = 
-		GUINT32_FROM_LE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+	      temp = GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
-	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = 
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
 
 #endif
 	    }
@@ -579,27 +579,20 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) =
-		GINT32_FROM_LE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+		GINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	  
       }
       break;
     case UINT_LE:
       {
 	guint32 * data=file_buffer;
-	  
+
 	/* copy this frame into the data set */
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) =
-		GUINT32_FROM_LE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
-
+	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
+		GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
       }
       break;
     case SSHORT_LE:
@@ -611,10 +604,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) =
-		GINT16_FROM_LE(data[i.x + 
-				   raw_data_set->dim.x*i.y +
-				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+		GINT16_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 
       }
       break;
@@ -627,10 +617,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
-		GUINT16_FROM_LE(data[i.x + 
-				    raw_data_set->dim.x*i.y +
-				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
+		GUINT16_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 
       }
       break;
@@ -642,12 +629,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_SBYTE_SET_CONTENT(raw_data_set,i) =
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
-
+	      DATA_SET_SBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
       }
       break;
     case UBYTE_NE:
@@ -659,20 +641,15 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_UBYTE_SET_CONTENT(raw_data_set,i) =
-		data[i.x + 
-		    raw_data_set->dim.x*i.y +
-		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
-		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
-	  
+	      DATA_SET_UBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
       }
       break;
-    }
+    }   
   }      
 
   /* garbage collection */
   g_free(file_buffer);
-
+  
   return raw_data_set;
 }
 
@@ -729,7 +706,5 @@ volume_t * raw_data_read_volume(const gchar * file_name,
 
   return raw_data_volume;
 }
-
-
 
 

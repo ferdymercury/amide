@@ -28,5 +28,5 @@
 
 /* external functions */
 void ui_roi_analysis_dialog_cb_export(GtkWidget * widget, gpointer data);
-gboolean ui_roi_analysis_dialog_cb_delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
-void ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data);
+void ui_roi_analysis_dialog_cb_close_button(GtkWidget* widget, gpointer data);
+gboolean ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data);

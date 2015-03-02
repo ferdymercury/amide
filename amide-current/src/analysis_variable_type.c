@@ -36,7 +36,7 @@
 #define NAN 0
 #endif
 
-#define `'m4_Variable_Type`' 1
+#define ANALYSIS_`'m4_Variable_Type`'_TYPE
 
 analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_t * volume, guint frame) {
 
@@ -51,11 +51,14 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
   gboolean small_dimensions;
   realpoint_t roi_corner[2];
   realpoint_t center;
-#if (ELLIPSOID == 1 || CYLINDER == 1)
+#if defined(ANALYSIS_ELLIPSOID_TYPE) || defined(ANALYSIS_CYLINDER_TYPE)
   realpoint_t radius;
 #endif
-#ifdef CYLINDER
+#if defined(ANALYSIS_CYLINDER_TYPE)
   floatpoint_t height;
+#endif
+#if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
+  voxelpoint_t roi_vp;
 #endif
 
   /* get the roi corners in roi space */
@@ -64,11 +67,12 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 
   center = rp_add(rp_cmult(0.5,roi_corner[1]), rp_cmult(0.5,roi_corner[0])); 
 
-#if (ELLIPSOID == 1 || CYLINDER == 1)
+#if defined(ANALYSIS_ELLIPSOID_TYPE) || defined(ANALYSIS_CYLINDER_TYPE)
   radius = rp_cmult(0.5, rp_diff(roi_corner[1],roi_corner[0])); 
 #endif
 
-#ifdef CYLINDER
+
+#if defined(ANALYSIS_CYLINDER_TYPE)
   height = fabs(roi_corner[1].z-roi_corner[0].z);
 #endif  
 
@@ -149,14 +153,20 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	roi_p = realspace_alt_coord_to_alt(far_volume_p, volume->coord_frame,  roi->coord_frame);
 
 	/* calculate the one corner of the voxel "box" to determine if it's in or not */
-#ifdef BOX
+#ifdef ANALYSIS_BOX_TYPE
 	voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
-#ifdef CYLINDER
+#ifdef ANALYSIS_CYLINDER_TYPE
 	voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
-#ifdef ELLIPSOID
+#ifdef ANALYSIS_ELLIPSOID_TYPE
 	voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+#endif
+#if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
+	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+	if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
+	else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
+	else voxel_in = TRUE;
 #endif
 
 	*DATA_SET_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)=voxel_in;
@@ -171,8 +181,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	    *DATA_SET_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)) {
 	  /* this voxel is entirely in the ROI */
 
-	  if (!data_set_includes_voxel(volume->data_set,j)) temp_data = EMPTY;
-	  else temp_data = volume_value(volume,j);
+	  temp_data = volume_value(volume,j);
 
 	  total += temp_data;
 	  frame_analysis->voxels += 1.0;
@@ -190,8 +199,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 		   small_dimensions) {
 	  /* this voxel is partially in the ROI, will need to do subvoxel analysis */
 
-	  if (!data_set_includes_voxel(volume->data_set,j)) temp_data = EMPTY;
-	  else temp_data = volume_value(volume,j);
+	  temp_data = volume_value(volume,j);
 
 	  for (k.z = 0;k.z<ANALYSIS_GRANULARITY;k.z++) {
 	    fine_volume_p.z = j.z*volume->voxel_size.z+
@@ -210,14 +218,20 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 						   roi->coord_frame);
 
 		/* calculate the one corner of the voxel "box" to determine if it's in or not */
-#ifdef BOX
+#ifdef ANALYSIS_BOX_TYPE
 		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
-#ifdef CYLINDER
+#ifdef ANALYSIS_CYLINDER_TYPE
 		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
-#ifdef ELLIPSOID
+#ifdef ANALYSIS_ELLIPSOID_TYPE
 		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+#endif
+#if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
+		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+		if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
+		else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
+		else voxel_in = TRUE;
 #endif
 		if (voxel_in) {
 		  total += temp_data*ANALYSIS_GRAIN_SIZE;
@@ -264,14 +278,20 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	roi_p = realspace_alt_coord_to_alt(far_volume_p, volume->coord_frame,  roi->coord_frame);
 
 	/* calculate the one corner of the voxel "box" to determine if it's in or not */
-#ifdef BOX
+#ifdef ANALYSIS_BOX_TYPE
 	voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
-#ifdef CYLINDER
+#ifdef ANALYSIS_CYLINDER_TYPE
 	voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
-#ifdef ELLIPSOID
+#ifdef ANALYSIS_ELLIPSOID_TYPE
 	voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+#endif
+#if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
+	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+	if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
+	else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
+	else voxel_in = TRUE;
 #endif
 
 	*DATA_SET_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)=voxel_in;
@@ -286,8 +306,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 	    *DATA_SET_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)) {
 	  /* this voxel is entirely in the ROI */
 
-	  if (!data_set_includes_voxel(volume->data_set,j)) temp_data = EMPTY;
-	  else temp_data = volume_value(volume,j);
+	  temp_data = volume_value(volume,j);
 
 	  temp = (temp_data-frame_analysis->mean);
 	  total_correction += temp;
@@ -304,8 +323,7 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 		   small_dimensions) {
 	  /* this voxel is partially in the ROI, will need to do subvoxel analysis */
 
-	  if (!data_set_includes_voxel(volume->data_set,j)) temp_data = EMPTY;
-	  else temp_data = volume_value(volume,j);
+	  temp_data = volume_value(volume,j);
 
 	  for (k.z = 0;k.z<ANALYSIS_GRANULARITY;k.z++) {
 	    fine_volume_p.z = j.z*volume->voxel_size.z+
@@ -324,14 +342,20 @@ analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_
 						   roi->coord_frame);
 
 		/* calculate the one corner of the voxel "box" to determine if it's in or not */
-#ifdef BOX
+#ifdef ANALYSIS_BOX_TYPE
 		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
-#ifdef CYLINDER
+#ifdef ANALYSIS_CYLINDER_TYPE
 		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
-#ifdef ELLIPSOID
+#ifdef ANALYSIS_ELLIPSOID_TYPE
 		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+#endif
+#if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
+		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
+		if (!data_set_includes_voxel(roi->isocontour, roi_vp)) voxel_in = FALSE;
+		else if (*DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp) == 0) voxel_in = FALSE;
+		else voxel_in = TRUE;
 #endif
 		if (voxel_in) {
 		  temp = (temp_data-frame_analysis->mean);

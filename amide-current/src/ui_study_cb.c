@@ -291,6 +291,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   GtkWidget * entry;
   gint entry_return;
   struct stat file_info;
+  int submethod = 0;
 
   /* get a pointer to ui_study */
   ui_study = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_study");
@@ -330,10 +331,17 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
     }
   }
 
+#ifdef AMIDE_LIBMDC_SUPPORT
+  /* figure out the submethod if we're loading through libmdc */
+  if (import_method == LIBMDC_DATA) 
+    submethod =  GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(file_selection), "submethod"));
+#endif
+
+
   /* get the filename and import */
   import_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_study->canvas[0]));
-  ui_study_import_file(ui_study, import_filename, model_filename, import_method);
+  ui_study_import_file(ui_study, import_method, submethod, import_filename, model_filename);
   ui_common_remove_cursor(GTK_WIDGET(ui_study->canvas[0]));
 
   /* garbage cleanup */
@@ -357,6 +365,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   
   ui_study_t * ui_study = data;
   GtkFileSelection * file_selection;
+  import_method_t import_method;
 
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
 
@@ -364,8 +373,11 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   gtk_object_set_data(GTK_OBJECT(file_selection), "ui_study", ui_study);
   
   /* and save which method of importing we want to use */
-  gtk_object_set_data(GTK_OBJECT(file_selection), "method",
-		      gtk_object_get_data(GTK_OBJECT(widget), "method"));
+  import_method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "method"));
+  gtk_object_set_data(GTK_OBJECT(file_selection), "method", GINT_TO_POINTER(import_method));
+  if (import_method == LIBMDC_DATA)
+    gtk_object_set_data(GTK_OBJECT(file_selection), "submethod",
+			gtk_object_get_data(GTK_OBJECT(widget), "submethod"));
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
@@ -554,21 +566,11 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 }
 
 /* callback generally attached to the entry_notify_event */
-gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event,
-					     gpointer data) {
+gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data) {
   ui_study_t * ui_study = data;
   ui_study_help_info_t which_info;
 
   which_info = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_help"));
-
-  /* quick correction so we can handle when the canvas switches to roi mode */
-  if (which_info == HELP_INFO_CANVAS_VOLUME)
-    if (ui_study->current_mode == ROI_MODE) {
-      if (roi_undrawn(ui_study->current_roi))
-	which_info = HELP_INFO_CANVAS_NEW_ROI;
-      else
-	which_info = HELP_INFO_CANVAS_ROI;
-    }
 
   /* quick correction so we can handle leaving a tree leaf */
   if (((which_info == HELP_INFO_TREE_VOLUME) ||
@@ -577,7 +579,7 @@ gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * eve
       (event->type == GDK_LEAVE_NOTIFY))
     which_info = HELP_INFO_TREE_NONE;
 
-  ui_study_update_help_info(ui_study, which_info, realpoint_zero);
+  ui_study_update_help_info(ui_study, which_info, realpoint_zero, 0.0);
 
   return FALSE;
 }
@@ -592,806 +594,942 @@ gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * eve
 gboolean ui_study_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
-  realpoint_t real_loc, view_loc, canvas_rp, p0, p1, diff_rp;
-  view_t i_view, view;
-  canvaspoint_t canvas_cp, diff_cp;
-  guint32 outline_color;
   GnomeCanvas * canvas;
-  GnomeCanvasPoints * align_line_points;
-  static canvaspoint_t picture_center,picture0,picture1;
-  static realpoint_t center;
-  static GnomeCanvasItem * new_roi = NULL;
-  static GnomeCanvasItem * align_line = NULL;
-  static gboolean dragging = FALSE;
-  static gboolean shift = FALSE;
+  realpoint_t base_rp, view_rp, canvas_rp, diff_rp;
+  view_t view;
+  canvaspoint_t canvas_cp, diff_cp, event_cp;
+  rgba_t outline_color;
+  GnomeCanvasPoints * points;
+  ui_study_canvas_event_t canvas_event_type;
+  ui_study_canvas_object_t object_type;
+  roi_t * roi;
+  canvaspoint_t temp_cp[2];
+  realpoint_t temp_rp[2];
+  static GnomeCanvasItem * canvas_item = NULL;
+  static gboolean grab_on = FALSE;
+  static gboolean extended_mode = FALSE;
   static gboolean depth_change = FALSE;
   static gboolean align_vertical = FALSE;
-  static realpoint_t initial_loc;
+  static canvaspoint_t initial_cp;
+  static canvaspoint_t previous_cp;
+  static realpoint_t initial_view_rp;
+  static realpoint_t initial_base_rp;
+  static realpoint_t initial_canvas_rp;
+  static double theta;
+  static realpoint_t roi_zoom;
+  static realpoint_t shift;
+  static realpoint_t roi_center_rp;
+  static realpoint_t roi_radius_rp;
+  static gboolean in_roi=FALSE;
 
   /* sanity checks */
   if (study_volumes(ui_study->study) == NULL) return TRUE;
   if (ui_study->current_volume == NULL) return TRUE;
-  if (ui_study->current_mode == ROI_MODE)
-    if (ui_study->current_roi == NULL)
-      ui_study->current_mode = VOLUME_MODE; /* switch back to volume mode */
 
-  canvas = GNOME_CANVAS(widget);
+  /* figure out which view we're on, get our canvas, and type of object */ 
+  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
+  canvas = ui_study->canvas[view];
+  object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "object_type"));
 
-  /* figure out which canvas called this (transverse/coronal/sagittal)*/
-  view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(canvas), "view"));
+  /* get the roi if appropriate */
+  if (object_type != OBJECT_ROI_TYPE) roi = NULL;
+  else roi = gtk_object_get_data(GTK_OBJECT(widget), "roi");
+
+  switch(event->type) {
+    
+  case GDK_ENTER_NOTIFY:
+    event_cp.x = event->crossing.x;
+    event_cp.y = event->crossing.y;
+    if (event->crossing.mode != GDK_CROSSING_NORMAL)
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING; /* ignore grabs */
+
+    else if (ui_study->undrawn_roi != NULL) {
+      if ((ui_study->undrawn_roi->type == ISOCONTOUR_2D) || (ui_study->undrawn_roi->type == ISOCONTOUR_3D)) 
+	canvas_event_type = UI_STUDY_EVENT_ENTER_NEW_ISOCONTOUR_ROI;      
+      else canvas_event_type = UI_STUDY_EVENT_ENTER_NEW_NORMAL_ROI;      
+      
+    } else if (object_type == OBJECT_VOLUME_TYPE) {
+      canvas_event_type = UI_STUDY_EVENT_ENTER_VOLUME;
+      
+    } else if (roi != NULL) { /* sanity check */
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_ENTER_ISOCONTOUR_ROI;
+      else  canvas_event_type = UI_STUDY_EVENT_ENTER_NORMAL_ROI;
+      
+    } else
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+    
+    break;
+    
+  case GDK_LEAVE_NOTIFY:
+    event_cp.x = event->crossing.x;
+    event_cp.y = event->crossing.y;
+    if (event->crossing.mode != GDK_CROSSING_NORMAL)
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING; /* ignore grabs */
+    else
+      canvas_event_type = UI_STUDY_EVENT_LEAVE;
+    break;
+    
+  case GDK_BUTTON_PRESS:
+    event_cp.x = event->button.x;
+    event_cp.y = event->button.y;
+    if (ui_study->undrawn_roi != NULL) {
+      canvas_event_type = UI_STUDY_EVENT_PRESS_NEW_ROI;
+      
+    } else if (extended_mode) {
+      if (align_vertical) canvas_event_type = UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_PRESS_ALIGN_HORIZONTAL;
+
+    } else if ((!grab_on) && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 1)) {
+      if (event->button.state & GDK_SHIFT_MASK) canvas_event_type = UI_STUDY_EVENT_PRESS_ALIGN_HORIZONTAL;
+      else canvas_event_type = UI_STUDY_EVENT_PRESS_MOVE_VIEW;
+      
+    } else if ((!grab_on) && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 2)) {
+      if (event->button.state & GDK_SHIFT_MASK) canvas_event_type = UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_PRESS_MINIMIZE_VIEW;
+      
+    } else if ((!grab_on) && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 3)) {
+      if (event->button.state & GDK_SHIFT_MASK) canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+      else canvas_event_type = UI_STUDY_EVENT_PRESS_RESIZE_VIEW;
+      
+    } else if ((!grab_on) && (object_type == OBJECT_ROI_TYPE) && (event->button.button == 1)) {
+      canvas_event_type = UI_STUDY_EVENT_PRESS_SHIFT_ROI;
+      
+    } else if ((!grab_on) && (object_type == OBJECT_ROI_TYPE) && (event->button.button == 2)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+      else  canvas_event_type = UI_STUDY_EVENT_PRESS_ROTATE_ROI;
+      
+    } else if ((!grab_on) && (object_type == OBJECT_ROI_TYPE) && (event->button.button == 3)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_PRESS_CHANGE_ISOCONTOUR;
+      else  canvas_event_type = UI_STUDY_EVENT_PRESS_RESIZE_ROI;
+      
+    } else 
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+    
+    break;
+    
+  case GDK_MOTION_NOTIFY:
+    event_cp.x = event->motion.x;
+    event_cp.y = event->motion.y;
+    if (grab_on && (ui_study->undrawn_roi != NULL)) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION_NEW_ROI;
+      
+    } else if (extended_mode ) {
+      if (align_vertical) canvas_event_type = UI_STUDY_EVENT_MOTION_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_MOTION_ALIGN_HORIZONTAL;
+      
+    } else if (grab_on && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->motion.state & GDK_BUTTON1_MASK)) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION_MOVE_VIEW;
+      
+    } else if (grab_on && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->motion.state & GDK_BUTTON2_MASK)) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION_MINIMIZE_VIEW;
+      
+    } else if (grab_on && (!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->motion.state & GDK_BUTTON3_MASK)) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION_RESIZE_VIEW;
+      
+    } else if (grab_on && (object_type == OBJECT_ROI_TYPE) && (event->motion.state & GDK_BUTTON1_MASK)) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION_SHIFT_ROI;
+      
+    } else if (grab_on && (object_type == OBJECT_ROI_TYPE) && (event->motion.state & GDK_BUTTON2_MASK)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D)) 
+	canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+      else canvas_event_type = UI_STUDY_EVENT_MOTION_ROTATE_ROI;
+      
+    } else if (grab_on && (object_type == OBJECT_ROI_TYPE) && (event->motion.state & GDK_BUTTON3_MASK)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_MOTION_CHANGE_ISOCONTOUR;
+      else canvas_event_type = UI_STUDY_EVENT_MOTION_RESIZE_ROI;
+      
+    } else if (!in_roi) {
+      canvas_event_type = UI_STUDY_EVENT_MOTION;
+    
+    } else
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+
+    break;
+    
+  case GDK_BUTTON_RELEASE:
+    event_cp.x = event->button.x;
+    event_cp.y = event->button.y;
+    if (ui_study->undrawn_roi != NULL) {
+	canvas_event_type = UI_STUDY_EVENT_RELEASE_NEW_ROI;
+	
+    } else if (extended_mode && (!grab_on) && (event->button.button == 3)) {
+      if (align_vertical) canvas_event_type = UI_STUDY_EVENT_ENACT_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_ENACT_ALIGN_HORIZONTAL;
+      
+    } else if (extended_mode && (!grab_on))  {
+      if (align_vertical) canvas_event_type = UI_STUDY_EVENT_CANCEL_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_CANCEL_ALIGN_HORIZONTAL;
+
+    } else if (extended_mode && (grab_on)) {
+      if (align_vertical) canvas_event_type = UI_STUDY_EVENT_RELEASE_ALIGN_VERTICAL;
+      else canvas_event_type = UI_STUDY_EVENT_RELEASE_ALIGN_HORIZONTAL;
+      
+    } else if ((!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 1)) {
+      canvas_event_type = UI_STUDY_EVENT_RELEASE_MOVE_VIEW;
+	
+    } else if ((!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 2)) {
+      canvas_event_type = UI_STUDY_EVENT_RELEASE_MINIMIZE_VIEW;
+      
+    } else if ((!in_roi) && (object_type == OBJECT_VOLUME_TYPE) && (event->button.button == 3)) {
+      canvas_event_type = UI_STUDY_EVENT_RELEASE_RESIZE_VIEW;
+      
+    } else if ((object_type == OBJECT_ROI_TYPE) && (event->button.button == 1)) {
+      canvas_event_type = UI_STUDY_EVENT_RELEASE_SHIFT_ROI;
+      
+    } else if ((object_type == OBJECT_ROI_TYPE) && (event->button.button == 2)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+      else canvas_event_type = UI_STUDY_EVENT_RELEASE_ROTATE_ROI;
+      
+    } else if ((object_type == OBJECT_ROI_TYPE) && (event->button.button == 3)) {
+      if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+	canvas_event_type = UI_STUDY_EVENT_RELEASE_CHANGE_ISOCONTOUR;
+      else canvas_event_type = UI_STUDY_EVENT_RELEASE_RESIZE_ROI;
+      
+    } else 
+      canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+    
+    break;
+    
+  default: 
+    event_cp.x = event_cp.y = 0;
+    /* an event we don't handle */
+    canvas_event_type = UI_STUDY_EVENT_DO_NOTHING;
+    break;
+    
+  }
 
   /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cp.x, &canvas_cp.y);
+  gnome_canvas_w2c_d(canvas, event_cp.x, event_cp.y, &canvas_cp.x, &canvas_cp.y);
 
   /* Convert the event location info to real units */
   canvas_rp = ui_study_cp_2_rp(ui_study, view, canvas_cp);
-  real_loc = realspace_alt_coord_to_base(canvas_rp, ui_study->canvas_coord_frame[view]);
-  view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
-
-  /* switch on the event which called this */
-  switch (event->type)
-    {
+  base_rp = realspace_alt_coord_to_base(canvas_rp, ui_study->canvas_coord_frame[view]);
+  view_rp = realspace_base_coord_to_alt(base_rp, study_coord_frame(ui_study->study));
 
 
-    case GDK_ENTER_NOTIFY:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      if (ui_study->current_mode == ROI_MODE) {
-	/* if we're a new roi, using the drawing cursor */
-	if (roi_undrawn(ui_study->current_roi))
-	  ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
-	//	else
-	/* cursor will be this until we're actually positioned on an roi */
-	//	  ui_common_place_cursor(UI_CURSOR_NO_ROI_MODE, GTK_WIDGET(canvas));
-	// since we need to double the remove cursor below, it's better not to do
-	// this guy, as it starts to look really stupid
-      } else  /* VOLUME_MODE */
-	ui_common_place_cursor(UI_CURSOR_VOLUME_MODE, GTK_WIDGET(canvas));
-      
-      break;
+  //  if ((event->type == 3) && (canvas_event_type == 40))
+  //    ;
+  //  else
+  //    g_print("gdk %2d canvas %2d grab_on %d button %d mode %d in_roi %d widget %p extended %d\n",
+  //	    event->type, canvas_event_type, grab_on, event->button.button, object_type, in_roi,
+  //	  widget, extended_mode );
 
 
-    case GDK_LEAVE_NOTIFY:
-      /* yes, do it twice, there's a bug where if the canvas gets covered by a menu,
-	 no GDK_LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
-      ui_common_remove_cursor(GTK_WIDGET(canvas)); 
-      ui_common_remove_cursor(GTK_WIDGET(canvas));
-      break;
+  switch (canvas_event_type) {
+    
+  case UI_STUDY_EVENT_ENTER_VOLUME:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, base_rp, 0.0);
+    ui_common_place_cursor(UI_CURSOR_VOLUME_MODE, GTK_WIDGET(canvas));
+    break;
 
+    
+  case UI_STUDY_EVENT_ENTER_NEW_NORMAL_ROI:
+    in_roi = TRUE;
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_NEW_ROI, base_rp, 0.0);
+    ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
+    break;
 
+    
+  case UI_STUDY_EVENT_ENTER_NEW_ISOCONTOUR_ROI:
+    in_roi = TRUE;
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI, base_rp, 0.0);
+    ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
+    break;
 
-    case GDK_BUTTON_PRESS:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      /* figure out the outline color */
+    
+  case UI_STUDY_EVENT_ENTER_NORMAL_ROI:
+    in_roi = TRUE;
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ROI, base_rp, 0.0);
+    ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
+    break;
+
+    
+  case UI_STUDY_EVENT_ENTER_ISOCONTOUR_ROI:
+    in_roi = TRUE;
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ISOCONTOUR_ROI, base_rp, 0.0);
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_VALUE, base_rp, roi->isocontour_value);
+    ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
+    break;
+    
+    
+  case UI_STUDY_EVENT_LEAVE:
+    ui_common_remove_cursor(GTK_WIDGET(canvas)); 
+
+    /* yes, do it twice if we're leaving the canvas, there's a bug where if the canvas gets 
+       covered by a menu, no GDK_LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
+    if (object_type == OBJECT_VOLUME_TYPE) ui_common_remove_cursor(GTK_WIDGET(canvas));
+
+    /* yep, we don't seem to get an EVENT_ENTER corresponding to the EVENT_LEAVE for a canvas_item */
+    if (in_roi) ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, base_rp, 0.0);
+    in_roi = FALSE;
+    break;
+
+    
+  case UI_STUDY_EVENT_PRESS_MINIMIZE_VIEW:
+    depth_change = TRUE;
+    study_set_view_thickness(ui_study->study, 0);
+    ui_study_update_thickness_adjustment(ui_study);
+  case UI_STUDY_EVENT_PRESS_MOVE_VIEW:
+  case UI_STUDY_EVENT_PRESS_RESIZE_VIEW:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    grab_on = TRUE;
+    initial_view_rp = view_rp;
+    outline_color = color_table_outline_color(ui_study->current_volume->color_table, FALSE);
+    ui_study_update_targets(ui_study, TARGET_CREATE, view_rp, outline_color);
+    break;
+
+    
+  case UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL:
+  case UI_STUDY_EVENT_PRESS_ALIGN_HORIZONTAL:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ALIGN, base_rp, 0.0);
+    if (extended_mode) {
+      grab_on = FALSE; /* do everything on the BUTTON_RELEASE */
+    } else {
+      grab_on = TRUE;
+      initial_view_rp = view_rp;
+      extended_mode = TRUE;
+      initial_cp = canvas_cp;
+
+      points = gnome_canvas_points_new(2);
+      points->coords[2] = points->coords[0] = canvas_cp.x;
+      points->coords[3] = points->coords[1] = canvas_cp.y;
       outline_color = color_table_outline_color(ui_study->current_volume->color_table, TRUE);
+      canvas_item = gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
+					  "points", points, "width_pixels", ui_study->roi_width,
+					  "fill_color_rgba", color_table_rgba_to_uint32(outline_color),
+					  NULL);
+      gnome_canvas_points_unref(points);
 
-      if (ui_study->current_mode == ROI_MODE) {
-	if ((roi_undrawn(ui_study->current_roi)) && (event->button.button == 1)) {
+      align_vertical = (canvas_event_type == UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL);
+    }
+    break;
 
-	  /* only new roi's handled in this function, old ones handled by
-	     ui_study_rois_cb_roi_event */
-	  
-	  /* save the center of our object in static variables for future use */
-	  center = canvas_rp;
-	  picture_center = picture0 = picture1 = canvas_cp;
-
-	  /* create the new roi */
-	  switch(ui_study->current_roi->type) 
-	    {
-	    case BOX:
-	      new_roi = 
-		gnome_canvas_item_new(gnome_canvas_root(canvas),
-				      gnome_canvas_rect_get_type(),
-				      "x1",picture0.x, "y1", picture0.y, 
-				      "x2", picture1.x, "y2", picture1.y,
-				      "fill_color", NULL,
-				      "outline_color_rgba", outline_color,
-				      "width_pixels", ui_study->roi_width,
-				      NULL);
- 	      
-	      break;
-	    case ELLIPSOID:
-	    case CYLINDER:
-	    default:
-	      new_roi = 
-		gnome_canvas_item_new(gnome_canvas_root(canvas),
-				      gnome_canvas_ellipse_get_type(),
-				      "x1", picture0.x, "y1", picture0.y, 
-				      "x2", picture1.x, "y2", picture1.y,
-				      "fill_color", NULL,
-				      "outline_color_rgba", outline_color,
-				      "width_pixels", ui_study->roi_width,
-				      NULL);
-	      break;
-	    }
-
-	  /* grab based on the new roi */
-	  dragging = TRUE;
-	  gnome_canvas_item_grab(GNOME_CANVAS_ITEM(new_roi),
-				 GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-				 ui_common_cursor[UI_CURSOR_NEW_ROI_MOTION],
-				 event->button.time);
-	  
-	  
-	}
-      } else { /* VOLUME_MODE */
-
-	if (shift == TRUE) {
-	  dragging = FALSE; /* do everything in BUTTON_RELEASE */
-	  ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ALIGN, real_loc);
-	} else if (event->button.state && GDK_SHIFT_MASK) {
-	  dragging = TRUE;
-	  initial_loc = view_loc;
-	  shift = TRUE;
-	  picture0 = picture1 = canvas_cp;
-	  align_line_points = gnome_canvas_points_new(2);
-	  align_line_points->coords[0] = picture0.x;
-	  align_line_points->coords[1] = picture0.y;
-	  align_line_points->coords[2] = picture1.x;
-	  align_line_points->coords[3] = picture1.y;
-	  
-	  align_line = gnome_canvas_item_new(gnome_canvas_root(canvas),
-					     gnome_canvas_line_get_type(),
-					     "points", align_line_points,
-					     "fill_color_rgba", outline_color,
-					     "width_pixels", ui_study->roi_width,
-					     NULL);
-	  
-	  gnome_canvas_points_unref(align_line_points);
-	  
-	  /* check if we're aligning vertically or horizontally */
-	  if (event->button.button == 2) 
-	    align_vertical = TRUE;
-	  else
-	    align_vertical = FALSE;
-
-	  ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ALIGN, real_loc);
-	} else {
-	  dragging = TRUE;
-	  initial_loc = view_loc;
-	  shift = FALSE;
-
-	  /* if we clicked with button 2, minimize the thickness */
-	  if (event->button.button == 2) {
-	    depth_change = TRUE;
-	    study_set_view_thickness(ui_study->study, 0);
-	    ui_study_update_thickness_adjustment(ui_study);
-	  }
-
-	  /* make them targets */
-	  ui_study_update_targets(ui_study, TARGET_CREATE, view_loc, outline_color);
-	}
-      }
+    
+  case UI_STUDY_EVENT_PRESS_NEW_ROI:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_NEW_ROI, base_rp, 0.0);
+    outline_color = color_table_outline_color(ui_study->current_volume->color_table, TRUE);
+    initial_canvas_rp = canvas_rp;
+    initial_cp = canvas_cp;
+    
+    /* create the new roi */
+    switch(ui_study->undrawn_roi->type) {
+    case BOX:
+      canvas_item = 
+	gnome_canvas_item_new(gnome_canvas_root(canvas),
+			      gnome_canvas_rect_get_type(),
+			      "x1",canvas_cp.x, "y1", canvas_cp.y, 
+			      "x2", canvas_cp.x, "y2", canvas_cp.y,
+			      "fill_color", NULL,
+			      "outline_color_rgba", color_table_rgba_to_uint32(outline_color),
+			      "width_pixels", ui_study->roi_width,
+			      NULL);
+      grab_on = TRUE;
+      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(canvas_item),
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     ui_common_cursor[UI_CURSOR_NEW_ROI_MOTION],
+			     event->button.time);
       break;
-
-    case GDK_MOTION_NOTIFY:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      if (ui_study->current_mode == ROI_MODE) {
-	if (dragging && (event->motion.state & GDK_BUTTON1_MASK)) {
-	  if ( roi_undrawn(ui_study->current_roi)) {
-	    /* only new roi's handled in this function, old ones handled by
-	       ui_study_rois_cb_roi_event */
-	    diff_cp = cp_diff(picture_center, canvas_cp);
-	    picture0 = cp_sub(picture_center, diff_cp);
-	    picture1 = cp_add(picture_center, diff_cp);
-	    gnome_canvas_item_set(new_roi, 
-				  "x1", picture0.x, "y1", picture0.y,
-				  "x2", picture1.x, "y2", picture1.y,NULL);
-	  }
-	}
-      } else { /* VOLUME_MODE */
-
-	if ((shift == TRUE) && (dragging == TRUE)) {
-	  picture1 = canvas_cp;
-	  align_line_points = gnome_canvas_points_new(2);
-	  align_line_points->coords[0] = picture0.x;
-	  align_line_points->coords[1] = picture0.y;
-	  align_line_points->coords[2] = picture1.x;
-	  align_line_points->coords[3] = picture1.y;
-
-	  gnome_canvas_item_set(align_line, "points", align_line_points, NULL);
-	  
-	  gnome_canvas_points_unref(align_line_points);
-	  
-	  ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ALIGN, real_loc);
-	} else {
-
-	  if (dragging && (event->motion.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK))) {
-	    /* button one or two indicates we want to slide the target without changing the depth */
-	    /* with button two, the depth should have already been changed back to the minimum */
-	    ui_study_update_targets(ui_study, TARGET_UPDATE, view_loc, 0);
-	  } else if (dragging && (event->motion.state & GDK_BUTTON3_MASK)) {
-	    /* button three indicates we want to resize the depth */
-	    depth_change = TRUE;
-	    study_set_view_thickness(ui_study->study,REALPOINT_MAX_DIM(rp_diff(view_loc, initial_loc)));
-	    ui_study_update_thickness_adjustment(ui_study);
-	    ui_study_update_targets(ui_study, TARGET_UPDATE, initial_loc, 0);
-	  }
-	}
-      }
+    case ELLIPSOID:
+    case CYLINDER:
+      canvas_item = 
+	gnome_canvas_item_new(gnome_canvas_root(canvas),
+			      gnome_canvas_ellipse_get_type(),
+			      "x1", canvas_cp.x, "y1", canvas_cp.y, 
+			      "x2", canvas_cp.x, "y2", canvas_cp.y,
+			      "fill_color", NULL,
+			      "outline_color_rgba", color_table_rgba_to_uint32(outline_color),
+			      "width_pixels", ui_study->roi_width,
+			      NULL);
+      grab_on = TRUE;
+      gnome_canvas_item_grab(GNOME_CANVAS_ITEM(canvas_item),
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     ui_common_cursor[UI_CURSOR_NEW_ROI_MOTION],
+			     event->button.time);
       break;
-
-    case GDK_BUTTON_RELEASE:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      if (ui_study->current_mode == ROI_MODE) {
-	if (roi_undrawn(ui_study->current_roi) && dragging) {
-	  /* only new roi's handled in this function, old ones handled by
-	     ui_study_rois_cb_roi_event */
-	  gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(new_roi), event->button.time);
-	  dragging = FALSE;
-	  
-	  diff_rp = rp_diff(center, canvas_rp);
-	  diff_rp.z = study_view_thickness(ui_study->study)/2.0;
-
-	  p0 = rp_sub(center, diff_rp);
-	  p1 = rp_add(center, diff_rp);
-
-	  /* get rid of the roi drawn on the canvas */
-	  gtk_object_destroy(GTK_OBJECT(new_roi));
-	  
-	  /* let's save the info */
-	  /* we'll save the coord frame and offset of the roi */
-	  rs_set_offset(&ui_study->current_roi->coord_frame,
-			realspace_alt_coord_to_base(p0, ui_study->canvas_coord_frame[view]));
-	  rs_set_axis(&ui_study->current_roi->coord_frame, 
-		      rs_all_axis(ui_study->canvas_coord_frame[view]));
-
-	  /* and set the far corner of the roi */
-	  p1 = realspace_alt_coord_to_base(p1, ui_study->canvas_coord_frame[view]);
-	  ui_study->current_roi->corner = 
-	    rp_abs(realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame));
-	  
-	  
-	  /* and save any roi type specfic info */
-	  switch(ui_study->current_roi->type) {
-	  case CYLINDER:
-	  case BOX:
-	  case ELLIPSOID:
-	  default:
-	    break;
-	  }
-	  
-	  /* update the roi's */
-	  for (i_view=0;i_view<NUM_VIEWS;i_view++) {
-	    ui_study_update_canvas_rois(ui_study,i_view);
-	  }
-	}
-      } else { /* VOLUME_MODE */
-
-	if (shift == TRUE) {
-	  if (dragging != TRUE) { /* time to enact changes */
-
-	    shift = FALSE;
-	    gtk_object_destroy(GTK_OBJECT(align_line));
-	    if (event->button.button == 3) { /* we want to act on our changes */
-	      floatpoint_t rotation;
-	      ui_volume_list_t * temp_list = ui_study->current_volumes;
-	      realpoint_t volume_center, real_center;
-
-	      /* figure out how many degrees we've rotated */
-	      diff_cp = cp_sub(picture1, picture0);
-	      if (align_vertical)
-		rotation = -atan(diff_cp.x/diff_cp.y);
-	      else
-		rotation = atan(diff_cp.y/diff_cp.x);
-	      
-	      /* compensate for sagittal being a left-handed coordinate frame */
-	      if (view == SAGITTAL) 
-		rotation = -rotation; 
-
-	      /* rotate all the currently displayed volumes */
-	      while (temp_list != NULL) {
-
-		/* saving the view center wrt to the volume's coord axis, as we're rotating around
-		   the view center */
-		real_center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
-							  study_coord_frame(ui_study->study));
-		volume_center = realspace_base_coord_to_alt(real_center,
-							    temp_list->volume->coord_frame);
-		realspace_rotate_on_axis(&temp_list->volume->coord_frame,
-					 realspace_get_view_normal(study_coord_frame_axis(ui_study->study),
-								   view),
-					 rotation);
-  
-		/* recalculate the offset of this volume based on the center we stored */
-		rs_set_offset(&temp_list->volume->coord_frame, realpoint_zero);
-		volume_center = realspace_alt_coord_to_base(volume_center,
-							    temp_list->volume->coord_frame);
-		rs_set_offset(&temp_list->volume->coord_frame, rp_sub(real_center, volume_center));
-
-		/* I really should check to see if a volume dialog is up, and update
-		   the rotations.... */
-
-		temp_list = temp_list->next; /* and go on to the next */
-	      }
-
-	      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
-	      ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, real_loc);
-	    }
-	  }
-	} else if (dragging == TRUE) { 
-
-	  dragging = FALSE;
-
-	  /* get rid of the "target" lines */
-	  ui_study_update_targets(ui_study, TARGET_DELETE, realpoint_zero, 0);
-
-	  /* update the view center */
-	  if (event->button.button == 3)
-	    study_set_view_center(ui_study->study, initial_loc);
-	  else if (event->button.button == 2) {
-	    /* correct for the change in depth */
-	    p0 = realspace_alt_coord_to_alt(initial_loc, study_coord_frame(ui_study->study),
-					    ui_study->canvas_coord_frame[view]);
-	    p1 = realspace_alt_coord_to_alt(view_loc, study_coord_frame(ui_study->study),
-					    ui_study->canvas_coord_frame[view]);
-	    p1.z = p0.z; /* correct for any depth change */
-	    view_loc = realspace_alt_coord_to_alt(p1, ui_study->canvas_coord_frame[view],
-						  study_coord_frame(ui_study->study));
-	    study_set_view_center(ui_study->study, view_loc);
-	  } else /* button 1 */
-	    study_set_view_center(ui_study->study, view_loc);
-
-
-	  /* update the canvases */
-	  if (depth_change == TRUE) {
-	    /* need to update all canvases */
-	    ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
-	  } else { /* depth_change == FALSE */
-	    /* don't need to update the canvas we're currently over */
-	    switch (view)
-	      {
-	      case TRANSVERSE:
-		ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
-		ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
-		break;
-	      case CORONAL:
-		ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
-		ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
-		break;
-	      case SAGITTAL:
-		ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
-		ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
-		ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ARROWS);
-		break;
-	      default:
-		break;
-	      }
-	  }
-	}
-      }
+    case ISOCONTOUR_2D:
+    case ISOCONTOUR_3D:
+      grab_on = TRUE;
       break;
     default:
+      grab_on = FALSE;
+      g_warning("%s: unexpected case in %s at line %d, roi_type %d", 
+		PACKAGE, __FILE__, __LINE__, ui_study->undrawn_roi->type);
       break;
     }
-  
-  return FALSE;
-}
-
-/* function called when an event occurs on the roi item 
-   notes:
-   - new roi's are handled by ui_study_cb_canvas_event
-   - widget should generally by GnomeCanvasLine type */
-gboolean ui_study_cb_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
-
-  GnomeCanvas * canvas;
-  ui_study_t * ui_study = data;
-  realpoint_t real_loc, canvas_rp; 
-  view_t i_view;
-  canvaspoint_t canvas_cp, diff;
-  realpoint_t t[2]; /* temp variables */
-  realpoint_t new_center, new_radius, roi_center, roi_radius;
-  realpoint_t canvas_zoom;
-  roi_t * roi;
-  gint rgb_width, rgb_height;
-  static realpoint_t center, radius;
-  static view_t view_static;
-  static realpoint_t initial_real_loc;
-  static realpoint_t initial_canvas_rp;
-  static canvaspoint_t last_pic_cp;
-  static gboolean dragging = FALSE;
-  static ui_roi_list_t * current_roi_list_item = NULL;
-  static GnomeCanvasItem * roi_item = NULL;
-  static double theta;
-  static realpoint_t roi_zoom;
-  static realpoint_t shift;
+    break;
 
 
-  /* sanity checks */
-  if (study_volumes(ui_study->study) == NULL)  return TRUE;
-  if (ui_study->current_volume == NULL) return TRUE; 
-  if (ui_study->current_mode == VOLUME_MODE) return TRUE;
-		   
-  /* if we don't already know what roi_item we're dealing with, find out */
-  if (roi_item == NULL) {
-    view_static = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "view"));
-    roi = gtk_object_get_data(GTK_OBJECT(widget), "roi");
-    current_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
-  }
+  case UI_STUDY_EVENT_PRESS_SHIFT_ROI:
+    previous_cp = canvas_cp;
+  case UI_STUDY_EVENT_PRESS_ROTATE_ROI:
+  case UI_STUDY_EVENT_PRESS_RESIZE_ROI:
+    if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D))
+      ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ISOCONTOUR_ROI, base_rp, 0.0);
+    else
+      ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ROI, base_rp, 0.0);
+    grab_on = TRUE;
+    canvas_item = GNOME_CANVAS_ITEM(widget); 
+    if (canvas_event_type == UI_STUDY_EVENT_PRESS_SHIFT_ROI)
+      gnome_canvas_item_grab(canvas_item,
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     ui_common_cursor[UI_CURSOR_OLD_ROI_SHIFT], event->button.time);
+    else if (canvas_event_type == UI_STUDY_EVENT_PRESS_ROTATE_ROI)
+      gnome_canvas_item_grab(canvas_item,
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     ui_common_cursor[UI_CURSOR_OLD_ROI_ROTATE], event->button.time);
+    else /* UI_STUDY_EVENT_PRESS_RESIZE_ROI */
+      gnome_canvas_item_grab(canvas_item,
+			     GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			     ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE], event->button.time);
+    initial_base_rp = base_rp;
+    initial_cp = canvas_cp;
+    initial_canvas_rp = canvas_rp;
+    theta = 0.0;
+    roi_zoom.x = roi_zoom.y = roi_zoom.z = 1.0;
+    shift = realpoint_zero;
+    temp_rp[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame), roi->coord_frame);
+    roi_center_rp = rp_add(rp_cmult(0.5, temp_rp[0]), rp_cmult(0.5, roi->corner));
+    roi_radius_rp = rp_cmult(0.5,rp_diff(roi->corner, temp_rp[0]));
+    break;
 
-  canvas = GNOME_CANVAS(ui_study->canvas[view_static]);
-      
-  /* get the location of the event, and convert it to the canvas coordinates */
-  gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cp.x, &canvas_cp.y);
-  rgb_width = gdk_pixbuf_get_width(ui_study->canvas_rgb[view_static]);
-  rgb_height = gdk_pixbuf_get_height(ui_study->canvas_rgb[view_static]);
 
-  /* Convert the event location info to real units */
-  canvas_rp = ui_study_cp_2_rp(ui_study, view_static, canvas_cp);
-  real_loc = realspace_alt_coord_to_base(canvas_rp, ui_study->canvas_coord_frame[view_static]);
+  case UI_STUDY_EVENT_PRESS_CHANGE_ISOCONTOUR:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ISOCONTOUR_ROI, base_rp, 0.0);
+    grab_on = TRUE;
+    initial_cp = canvas_cp;
 
-  /* switch on the event which called this */
-  switch (event->type)
+    points = gnome_canvas_points_new(2);
+    points->coords[2] = points->coords[0] = canvas_cp.x;
+    points->coords[3] = points->coords[1] = canvas_cp.y;
+    outline_color = color_table_outline_color(ui_study->current_volume->color_table, TRUE);
+    canvas_item = gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
+					"points", points, "width_pixels", ui_study->roi_width,
+					"fill_color_rgba", color_table_rgba_to_uint32(outline_color),
+					NULL);
+    gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
+			   GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
+			   ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE], event->button.time);
+    gtk_object_set_data(GTK_OBJECT(canvas_item), "roi", roi);
+    gtk_object_set_data(GTK_OBJECT(canvas_item), "object_type", GINT_TO_POINTER(OBJECT_ROI_TYPE));
+    gnome_canvas_points_unref(points);
+    break;
+
+  case UI_STUDY_EVENT_MOTION:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    break;
+
+  case UI_STUDY_EVENT_MOTION_MOVE_VIEW:
+  case UI_STUDY_EVENT_MOTION_MINIMIZE_VIEW:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    ui_study_update_targets(ui_study, TARGET_UPDATE, view_rp, rgba_black);
+    break;
+
+
+  case UI_STUDY_EVENT_MOTION_RESIZE_VIEW:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    depth_change = TRUE;
+    study_set_view_thickness(ui_study->study,REALPOINT_MAX_DIM(rp_diff(view_rp, initial_view_rp)));
+    ui_study_update_thickness_adjustment(ui_study);
+    ui_study_update_targets(ui_study, TARGET_UPDATE, initial_view_rp, rgba_black);
+    break;
+
+
+  case UI_STUDY_EVENT_MOTION_ALIGN_HORIZONTAL:
+  case UI_STUDY_EVENT_MOTION_ALIGN_VERTICAL:
+  case UI_STUDY_EVENT_MOTION_CHANGE_ISOCONTOUR:
     {
+      voxelpoint_t temp_vp;
+      intpoint_t temp_frame;
+      volume_t * temp_vol;
 
-    case GDK_ENTER_NOTIFY:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
-      break;
+      if (roi->type == ISOCONTOUR_2D)
+	temp_vol = ui_study->current_slices[view]->volume; /* just use the first slice for now */
+      else /* ISOCONTOUR_3D */
+	temp_vol = ui_study->current_volume;
+      temp_frame = volume_frame(temp_vol, study_view_time(ui_study->study));
+      temp_rp[0] = realspace_base_coord_to_alt(base_rp, temp_vol->coord_frame);
+      VOLUME_REALPOINT_TO_VOXEL(temp_vol, temp_rp[0], temp_frame, temp_vp);
+      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_VALUE, base_rp, 
+				volume_value(temp_vol, temp_vp));
+    }
+    points = gnome_canvas_points_new(2);
+    points->coords[0] = initial_cp.x;
+    points->coords[1] = initial_cp.y;
+    points->coords[2] = canvas_cp.x;
+    points->coords[3] = canvas_cp.y;
+    gnome_canvas_item_set(canvas_item, "points", points, NULL);
+    gnome_canvas_points_unref(points);
+    break;
 
 
-    case GDK_LEAVE_NOTIFY:
-      /* yes, do it twice, there's a bug where if the canvas gets covered by a menu,
-	 no LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
-      ui_common_remove_cursor(GTK_WIDGET(canvas));
-      ui_common_remove_cursor(GTK_WIDGET(canvas));
-      break;
+  case UI_STUDY_EVENT_MOTION_NEW_ROI:
+    if ((ui_study->undrawn_roi->type == ISOCONTOUR_2D) || (ui_study->undrawn_roi->type == ISOCONTOUR_3D))
+      ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI, base_rp, 0.0);
+    else {
+      ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_NEW_ROI, base_rp, 0.0);
+      diff_cp = cp_diff(initial_cp, canvas_cp);
+      temp_cp[0] = cp_sub(initial_cp, diff_cp);
+      temp_cp[1] = cp_add(initial_cp, diff_cp);
+      gnome_canvas_item_set(canvas_item, "x1", temp_cp[0].x, "y1", temp_cp[0].y,
+			    "x2", temp_cp[1].x, "y2", temp_cp[1].y,NULL);
+    }
+    break;
+
+  case UI_STUDY_EVENT_MOTION_SHIFT_ROI:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    shift = rp_sub(base_rp, initial_base_rp);
+    diff_cp = cp_sub(canvas_cp, previous_cp);
+    gnome_canvas_item_i2w(GNOME_CANVAS_ITEM(canvas_item)->parent, &diff_cp.x, &diff_cp.y);
+    gnome_canvas_item_move(GNOME_CANVAS_ITEM(canvas_item),diff_cp.x,diff_cp.y); 
+    previous_cp = canvas_cp;
+    break;
+
+
+  case UI_STUDY_EVENT_MOTION_ROTATE_ROI: 
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    {
+      /* rotate button Pressed, we're rotating the object */
+      /* note, I'd like to use the function "gnome_canvas_item_rotate"
+	 but this isn't defined in the current version of gnome.... 
+	 so I'll have to do a whole bunch of shit*/
+      double affine[6];
+      canvaspoint_t item_center;
+      realpoint_t center;
       
+      center = realspace_alt_coord_to_alt(roi_center_rp, roi->coord_frame, ui_study->canvas_coord_frame[view]);
+      temp_rp[0] = rp_sub(initial_canvas_rp,center);
+      temp_rp[1] = rp_sub(canvas_rp,center);
+      
+      theta = acos(rp_dot_product(temp_rp[0],temp_rp[1])/(rp_mag(temp_rp[0]) * rp_mag(temp_rp[1])));
+
+      /* correct for the fact that acos is always positive by using the cross product */
+      if ((temp_rp[0].x*temp_rp[1].y-temp_rp[0].y*temp_rp[1].x) < 0.0) theta = -theta;
+
+      /* figure out what the center of the roi is in canvas_item coords */
+      /* compensate for x's origin being top left (ours is bottom left) */
+      item_center = ui_study_rp_2_cp(ui_study, view, center);
+      affine[0] = cos(-theta); /* neg cause GDK has Y axis going down, not up */
+      affine[1] = sin(-theta);
+      affine[2] = -affine[1];
+      affine[3] = affine[0];
+      affine[4] = (1.0-affine[0])*item_center.x+affine[1]*item_center.y;
+      affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
+      gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(canvas_item),affine);
+    }
+    break;
 
 
-    case GDK_BUTTON_PRESS:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      dragging = TRUE;
-
-      /* last second sanity check */
-      if (current_roi_list_item == NULL) {
-	g_warning("%s: null current_roi_list_item?", PACKAGE);
-	return TRUE;
-      }
-
-      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON)
-	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
-			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			       ui_common_cursor[UI_CURSOR_OLD_ROI_SHIFT], event->button.time);
-      else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON)
-	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
-			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			       ui_common_cursor[UI_CURSOR_OLD_ROI_ROTATE], event->button.time);
-      else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON)
-	gnome_canvas_item_grab(GNOME_CANVAS_ITEM(widget),
-			       GDK_POINTER_MOTION_MASK | GDK_BUTTON_RELEASE_MASK,
-			       ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE], event->button.time);
-      else /* what the hell button got pressed? */
-	return TRUE;
-
-
-      /* save the roi we're going to manipulate for future use */
-      roi_item = current_roi_list_item->canvas_roi[view_static];
-
-      /* save some values in static variables for future use */
-      initial_real_loc = real_loc;
-      initial_canvas_rp = canvas_rp;
-      last_pic_cp = canvas_cp;
-      theta = 0.0;
-      roi_zoom.x = roi_zoom.y = roi_zoom.z = 1.0;
-      shift = realpoint_zero;
-
-      t[0] = realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
-					 current_roi_list_item->roi->coord_frame);
-      t[1] = current_roi_list_item->roi->corner;
-      center = rp_add(rp_cmult(0.5, t[1]), rp_cmult(0.5, t[0]));
-      radius=rp_cmult(0.5,rp_diff(t[1], t[0]));
-      break;
-
-    case GDK_MOTION_NOTIFY:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      if (dragging && 
-	  ((event->motion.state & 
-	    (UI_STUDY_ROIS_SHIFT_MASK | UI_STUDY_ROIS_ROTATE_MASK | UI_STUDY_ROIS_RESIZE_MASK)))) {
-
-	/* last second sanity check */
-	if (current_roi_list_item == NULL) {
-	  g_warning("%s: null current_roi_list_item?", PACKAGE);
-	  return TRUE;
+  case UI_STUDY_EVENT_MOTION_RESIZE_ROI:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    {
+      /* RESIZE button Pressed, we're scaling the object */
+      /* note, I'd like to use the function "gnome_canvas_item_scale"
+	 but this isn't defined in the current version of gnome.... 
+	 so I'll have to do a whole bunch of shit*/
+      /* also, this "zoom" strategy doesn't always work if the object is not
+	 aligned with the view.... oh well... good enough for now... */
+      double affine[6];
+      canvaspoint_t item_center;
+      floatpoint_t jump_limit, max, temp, dot;
+      double cos_r, sin_r, rot;
+      axis_t i_axis, axis[NUM_AXIS];
+      canvaspoint_t radius_cp;
+      realpoint_t center, radius, canvas_zoom;
+	
+      /* calculating the radius and center wrt the canvas */
+      radius = realspace_alt_dim_to_alt(roi_radius_rp, roi->coord_frame, ui_study->canvas_coord_frame[view]);
+      center = realspace_alt_coord_to_alt(roi_center_rp, roi->coord_frame, ui_study->canvas_coord_frame[view]);
+      temp_rp[0] = rp_diff(initial_canvas_rp, center);
+      temp_rp[1] = rp_diff(canvas_rp,center);
+      radius_cp.x = roi_radius_rp.x;
+      radius_cp.y = roi_radius_rp.y;
+      jump_limit = cp_mag(radius_cp)/3.0;
+	
+      /* figure out the zoom we're specifying via the canvas */
+      if (temp_rp[0].x < jump_limit) /* prevent jumping */
+	canvas_zoom.x = (radius.x+temp_rp[1].x)/(radius.x+temp_rp[0].x);
+      else
+	canvas_zoom.x = temp_rp[1].x/temp_rp[0].x;
+      if (temp_rp[0].y < jump_limit) /* prevent jumping */
+	canvas_zoom.y = (radius.x+temp_rp[1].y)/(radius.x+temp_rp[0].y);
+      else
+	canvas_zoom.y = temp_rp[1].y/temp_rp[0].y;
+      canvas_zoom.z = 1.0;
+	
+      /* translate the canvas zoom into the ROI's coordinate frame */
+      temp_rp[0].x = temp_rp[0].y = temp_rp[0].z = 1.0;
+      temp_rp[0] = realspace_alt_dim_to_alt(temp_rp[0], ui_study->canvas_coord_frame[view],
+					    roi->coord_frame);
+      roi_zoom = realspace_alt_dim_to_alt(canvas_zoom, ui_study->canvas_coord_frame[view],
+					  roi->coord_frame);
+      roi_zoom = rp_div(roi_zoom, temp_rp[0]);
+	
+      /* first, figure out how much the roi is rotated in the plane of the canvas */
+      /* figure out which axis in the ROI is closest to the view's x axis */
+      max = 0.0;
+      axis[XAXIS]=XAXIS;
+      temp_rp[0] = 
+	realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view]), view, XAXIS);
+      for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+	temp = fabs(rp_dot_product(temp_rp[0], rs_specific_axis(roi->coord_frame, i_axis)));
+	if (temp > max) {
+	  max=temp;
+	  axis[XAXIS]=i_axis;
 	}
-
-
-	if (event->motion.state & UI_STUDY_ROIS_RESIZE_MASK) {
-	  /* RESIZE button Pressed, we're scaling the object */
-	  /* note, I'd like to use the function "gnome_canvas_item_scale"
-	     but this isn't defined in the current version of gnome.... 
-	     so I'll have to do a whole bunch of shit*/
-	  /* also, this "zoom" strategy doesn't always work if the object is not
-	     aligned with the view.... oh well... good enough for now... */
-	  double affine[6];
-	  realpoint_t item_center;
-	  floatpoint_t jump_limit, max, temp, dot;
-	  double cos_r, sin_r, rot;
-	  axis_t i_axis, axis[NUM_AXIS];
-	  canvaspoint_t radius_cp;
-	  
-	  /* calculating the radius and center wrt the canvas */
-	  roi_radius = realspace_alt_dim_to_alt(radius, current_roi_list_item->roi->coord_frame,
-						ui_study->canvas_coord_frame[view_static]);
-	  roi_center = realspace_alt_coord_to_alt(center, current_roi_list_item->roi->coord_frame,
-						  ui_study->canvas_coord_frame[view_static]);
-	  t[0] = rp_diff(initial_canvas_rp, roi_center);
-	  t[1] = rp_diff(canvas_rp,roi_center);
-	  radius_cp.x = radius.x;
-	  radius_cp.y = radius.y;
-	  jump_limit = cp_mag(radius_cp)/3.0;
-
-	  /* figure out the zoom we're specifying via the canvas */
-	  if (t[0].x < jump_limit) /* prevent jumping */
-	    canvas_zoom.x = (roi_radius.x+t[1].x)/(roi_radius.x+t[0].x);
-	  else
-	    canvas_zoom.x = t[1].x/t[0].x;
-	  if (t[0].y < jump_limit) /* prevent jumping */
-	    canvas_zoom.y = (roi_radius.x+t[1].y)/(roi_radius.x+t[0].y);
-	  else
-	    canvas_zoom.y = t[1].y/t[0].y;
-	  
-	  canvas_zoom.z = 1.0;
-
-	  //	  g_print("---------------------- view: %d\n", view_static);
-	  /* translate the canvas zoom into the ROI's coordinate frame */
-	  t[0].x = t[0].y = t[0].z = 1.0;
-	  t[0] = realspace_alt_dim_to_alt(t[0], ui_study->canvas_coord_frame[view_static],
-					  current_roi_list_item->roi->coord_frame);
-	  roi_zoom = realspace_alt_dim_to_alt(canvas_zoom, ui_study->canvas_coord_frame[view_static],
-					      current_roi_list_item->roi->coord_frame);
-	  roi_zoom = rp_div(roi_zoom, t[0]);
-
-	  /* first, figure out how much the roi is rotated in the plane of the canvas */
-
-	  /* allright, figure out which axis in the ROI is closest to the view's x axis */
-	  max = 0.0;
-	  axis[XAXIS]=XAXIS;
-	  t[0] = realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]),
-						    view_static, XAXIS);
-	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-	    temp = fabs(rp_dot_product(t[0],
-  				       rs_specific_axis(current_roi_list_item->roi->coord_frame, i_axis)));
-	    if (temp > max) {
-	      max=temp;
-	      axis[XAXIS]=i_axis;
-	    }
+      }
+	
+      /* and y axis */
+      max = 0.0;
+      axis[YAXIS]= (axis[XAXIS]+1 < NUM_AXIS) ? axis[XAXIS]+1 : XAXIS;
+      temp_rp[0] = 
+	realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view]), view, YAXIS);
+      for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+	temp = fabs(rp_dot_product(temp_rp[0], rs_specific_axis(roi->coord_frame, i_axis)));
+	if (temp > max) {
+	  if (i_axis != axis[XAXIS]) {
+	    max=temp;
+	    axis[YAXIS]=i_axis;
 	  }
-
-	  /* and y axis */
-	  max = 0.0;
-	  axis[YAXIS]= (axis[XAXIS]+1 < NUM_AXIS) ? axis[XAXIS]+1 : XAXIS;
-	  t[0] = realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]), 
-						    view_static, YAXIS);
-	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-	    temp = fabs(rp_dot_product(t[0],
-  				       rs_specific_axis(current_roi_list_item->roi->coord_frame, i_axis)));
-	    if (temp > max) {
-	      if (i_axis != axis[XAXIS]) {
-		max=temp;
-		axis[YAXIS]=i_axis;
-	      }
-	    }
-	  }
-
-	  i_axis = ZAXIS;
-	  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-	    if (i_axis != axis[XAXIS])
-	      if (i_axis != axis[YAXIS])
-		axis[ZAXIS]=i_axis;
-
-	  rot = 0;
-	  for (i_axis=0;i_axis<=XAXIS;i_axis++) {
-	    /* and project that axis onto the x,y plane of the canvas */
-	    t[0] = rs_specific_axis(current_roi_list_item->roi->coord_frame,axis[i_axis]);
-	    	    t[0] = realspace_base_coord_to_alt(t[0], ui_study->canvas_coord_frame[view_static]);
-	    t[0].z = 0.0;
-	    t[1] = 
-	      realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view_static]), 
-						 view_static, i_axis);
-	    t[1] = realspace_base_coord_to_alt(t[1], ui_study->canvas_coord_frame[view_static]);
-	    t[1].z = 0.0;
-	    //	    g_print("t[0] %5.3f %5.3f %5.3f\nt[1] %5.3f %5.3f %5.3f\n",
-	    //		    t[0].x,t[0].y,t[0].z,
-	    //		    t[1].x,t[1].y,t[1].z);
-
-	    /* and get the angle the projection makes to the x axis */
-	    dot = rp_dot_product(t[0],t[1])/(rp_mag(t[0]) * rp_mag(t[1]));
-	    /* correct for the fact that acos is always positive by using the cross product */
-	    if ((t[0].x*t[1].y-t[0].y*t[1].x) > 0.0)
-	      temp = acos(dot);
-	    else
-	      temp = -acos(dot);
-	    if (isnan(temp)) temp=0; 
-	    //	    g_print("rot is %5.3f dot is %5.3f\n",temp*180/M_PI, dot);
-
-	    rot += temp;
-	  }
-	  //	  rot = rot/2.0;
-
-	  /* precompute cos and sin of rot */
-	  cos_r = cos(rot);
-	  sin_r = sin(rot);
-
-	  //	  g_print("xaxis %d yaxis %d zaxis %d rot %5.3f\n", axis[0],axis[1], axis[2], 180*rot/M_PI);
-
-	  /* figure out what the center of the roi is in gnome_canvas_item coords */
-	  /* compensate for X's origin being top left (not bottom left) */
-	  item_center.x = ((roi_center.x/ui_study->canvas_corner[view_static].x)*rgb_width+UI_STUDY_TRIANGLE_HEIGHT);
-	  item_center.y =  rgb_height - ((roi_center.y/ui_study->canvas_corner[view_static].y) *rgb_height)
-	    +UI_STUDY_TRIANGLE_HEIGHT;
-
-	  /* do a wild ass affine matrix so that we can scale while preserving angles */
-	  affine[0] = canvas_zoom.x * cos_r * cos_r + canvas_zoom.y * sin_r * sin_r;
-	  affine[1] = (canvas_zoom.x-canvas_zoom.y)* cos_r * sin_r;
-	  affine[2] = affine[1];
-	  affine[3] = canvas_zoom.x * sin_r * sin_r + canvas_zoom.y * cos_r * cos_r;
-	  affine[4] = item_center.x - item_center.x*canvas_zoom.x*cos_r*cos_r 
-	    - item_center.x*canvas_zoom.y*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.y*cos_r*sin_r;
-	  affine[5] = item_center.y - item_center.y*canvas_zoom.y*cos_r*cos_r 
-	    - item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
-	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
-
-	} else if (event->motion.state & UI_STUDY_ROIS_ROTATE_MASK) {
-	  /* rotate button Pressed, we're rotating the object */
-	  /* note, I'd like to use the function "gnome_canvas_item_rotate"
-	     but this isn't defined in the current version of gnome.... 
-	     so I'll have to do a whole bunch of shit*/
-	  double affine[6];
-	  realpoint_t item_center;
-
-	  //	  gnome_canvas_item_i2w_affine(GNOME_CANVAS_ITEM(roi_item),affine);
-	  roi_center = realspace_alt_coord_to_alt(center,
-						  current_roi_list_item->roi->coord_frame,
-						  ui_study->canvas_coord_frame[view_static]);
-	  t[0] = rp_sub(initial_canvas_rp,roi_center);
-	  t[1] = rp_sub(canvas_rp,roi_center);
-
-	  /* figure out theta */
-	  theta = acos(rp_dot_product(t[0],t[1])/(rp_mag(t[0]) * rp_mag(t[1])));
-	  
-	  /* correct for the fact that acos is always positive by using the cross product */
-	  if ((t[0].x*t[1].y-t[0].y*t[1].x) > 0.0)
-	    theta = -theta;
-
-	  /* figure out what the center of the roi is in canvas_item coords */
-	  /* compensate for x's origin being top left (ours is bottom left) */
-	  item_center.x = 
-	    rgb_width * roi_center.x/ui_study->canvas_corner[view_static].x +UI_STUDY_TRIANGLE_HEIGHT;
-	  item_center.y = 
-	    rgb_height - 
-	    rgb_height * roi_center.y/ui_study->canvas_corner[view_static].y +UI_STUDY_TRIANGLE_HEIGHT;
-	  affine[0] = cos(theta);
-	  affine[1] = sin(theta);
-	  affine[2] = -affine[1];
-	  affine[3] = affine[0];
-	  affine[4] = (1.0-affine[0])*item_center.x+affine[1]*item_center.y;
-	  affine[5] = (1.0-affine[3])*item_center.y+affine[2]*item_center.x;
-	  gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(roi_item),affine);
-
-	} else if (event->motion.state & UI_STUDY_ROIS_SHIFT_MASK) {
-	  /* shift button pressed, we're shifting the object */
-	  /* do movement calculations */
-	  shift = rp_sub(real_loc, initial_real_loc);
-	  diff = cp_sub(canvas_cp, last_pic_cp);
-	  /* convert the location back to world coordiantes */
-	  gnome_canvas_item_i2w(GNOME_CANVAS_ITEM(roi_item)->parent, &diff.x, &diff.y);
-	  gnome_canvas_item_move(GNOME_CANVAS_ITEM(roi_item),diff.x,diff.y); 
-	} else {
-	  g_warning("%s: reached unsuspected condition in ui_study_rois_cb.c", PACKAGE);
-	  dragging = FALSE;
-	  return TRUE;
 	}
-	last_pic_cp = canvas_cp;
       }
+	
+      i_axis = ZAXIS;
+      for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+	if (i_axis != axis[XAXIS])
+	  if (i_axis != axis[YAXIS])
+	    axis[ZAXIS]=i_axis;
+	
+      rot = 0;
+      for (i_axis=0;i_axis<=XAXIS;i_axis++) {
+	/* and project that axis onto the x,y plane of the canvas */
+	temp_rp[0] = rs_specific_axis(roi->coord_frame,axis[i_axis]);
+	temp_rp[0] = realspace_base_coord_to_alt(temp_rp[0], ui_study->canvas_coord_frame[view]);
+	temp_rp[0].z = 0.0;
+	temp_rp[1] = 
+	  realspace_get_orthogonal_view_axis(rs_all_axis(ui_study->canvas_coord_frame[view]), view, i_axis);
+	temp_rp[1] = realspace_base_coord_to_alt(temp_rp[1], ui_study->canvas_coord_frame[view]);
+	temp_rp[1].z = 0.0;
+	  
+	/* and get the angle the projection makes to the x axis */
+	dot = rp_dot_product(temp_rp[0],temp_rp[1])/(rp_mag(temp_rp[0]) * rp_mag(temp_rp[1]));
+	/* correct for the fact that acos is always positive by using the cross product */
+	if ((temp_rp[0].x*temp_rp[1].y-temp_rp[0].y*temp_rp[1].x) > 0.0)
+	  temp = acos(dot);
+	else
+	  temp = -acos(dot);
+	if (isnan(temp)) temp=0; 
+	rot += temp;
+      }
+
+      cos_r = cos(rot);       /* precompute cos and sin of rot */
+      sin_r = sin(rot);
+	
+      /* figure out what the center of the roi is in gnome_canvas_item coords */
+      /* compensate for X's origin being top left (not bottom left) */
+      item_center = ui_study_rp_2_cp(ui_study, view, center);
+	
+      /* do a wild ass affine matrix so that we can scale while preserving angles */
+      affine[0] = canvas_zoom.x * cos_r * cos_r + canvas_zoom.y * sin_r * sin_r;
+      affine[1] = (canvas_zoom.x-canvas_zoom.y)* cos_r * sin_r;
+      affine[2] = affine[1];
+      affine[3] = canvas_zoom.x * sin_r * sin_r + canvas_zoom.y * cos_r * cos_r;
+      affine[4] = item_center.x - item_center.x*canvas_zoom.x*cos_r*cos_r 
+	- item_center.x*canvas_zoom.y*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.y*cos_r*sin_r;
+      affine[5] = item_center.y - item_center.y*canvas_zoom.y*cos_r*cos_r 
+	- item_center.y*canvas_zoom.x*sin_r*sin_r + (canvas_zoom.y-canvas_zoom.x)*item_center.x*cos_r*sin_r;
+      gnome_canvas_item_affine_absolute(GNOME_CANVAS_ITEM(canvas_item),affine);
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_MOVE_VIEW:
+  case UI_STUDY_EVENT_RELEASE_MINIMIZE_VIEW:
+  case UI_STUDY_EVENT_RELEASE_RESIZE_VIEW:
+    ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, base_rp, 0.0);
+    grab_on = FALSE;
+    ui_study_update_targets(ui_study, TARGET_DELETE, realpoint_zero, rgba_black); /* remove targets */
+
+    if (canvas_event_type == UI_STUDY_EVENT_RELEASE_MOVE_VIEW) 
+      study_set_view_center(ui_study->study, view_rp);
+    else if (canvas_event_type == UI_STUDY_EVENT_RELEASE_RESIZE_VIEW)
+      study_set_view_center(ui_study->study, initial_view_rp);
+    else { /* UI_STUDY_EVENT_RELASE_MINIMIZE_VIEW */
+      /* correct for the change in depth */
+      temp_rp[0] = realspace_alt_coord_to_alt(initial_view_rp, study_coord_frame(ui_study->study),
+					      ui_study->canvas_coord_frame[view]);
+      temp_rp[1] = realspace_alt_coord_to_alt(view_rp, study_coord_frame(ui_study->study),
+      					      ui_study->canvas_coord_frame[view]);
+      temp_rp[0].z = temp_rp[1].z; /* correct for any depth change */
+      view_rp = realspace_alt_coord_to_alt(temp_rp[0], ui_study->canvas_coord_frame[view],
+					   study_coord_frame(ui_study->study));
+      study_set_view_center(ui_study->study, view_rp);
+    }
+
+    /* update the canvases */
+    if (depth_change == TRUE) {
+      depth_change = FALSE; /* reset */
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL); /* need to update all canvases */
+    } else { /* depth_change == FALSE ,don't need to update the canvas we're currently over */
+      switch (view) {
+      case TRANSVERSE:
+	ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
+	ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
+	break;
+      case CORONAL:
+	ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
+	ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
+	break;
+      case SAGITTAL:
+	ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
+	ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
+	ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ARROWS);
+	break;
+      default:
+	break;
+      }
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_ALIGN_HORIZONTAL:
+  case UI_STUDY_EVENT_RELEASE_ALIGN_VERTICAL:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_ALIGN, base_rp, 0.0);
+    break;
+
+  case UI_STUDY_EVENT_CANCEL_ALIGN_HORIZONTAL:
+  case UI_STUDY_EVENT_CANCEL_ALIGN_VERTICAL:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, base_rp, 0.0);
+    extended_mode = FALSE;
+    gtk_object_destroy(GTK_OBJECT(canvas_item));
+    break;
+
+
+  case UI_STUDY_EVENT_ENACT_ALIGN_HORIZONTAL:
+  case UI_STUDY_EVENT_ENACT_ALIGN_VERTICAL:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, base_rp, 0.0);
+    {
+      floatpoint_t temp_rot;
+      volume_t * temp_vol;
+      ui_volume_list_t * temp_ui_vols;
+      realpoint_t volume_center, real_center;
+
+      extended_mode = FALSE;
+      gtk_object_destroy(GTK_OBJECT(canvas_item));
+
+      /* figure out how many degrees we've rotated */
+      diff_cp = cp_sub(canvas_cp, initial_cp);
+      if (align_vertical) temp_rot = -atan(diff_cp.x/diff_cp.y);
+      else temp_rot = atan(diff_cp.y/diff_cp.x);
+
+      if (isnan(temp_rot)) temp_rot = 0;
+      
+      if (view == SAGITTAL) temp_rot = -temp_rot; /* sagittal is left-handed */
+      
+      /* rotate all the currently displayed volumes */
+      temp_ui_vols = ui_study->current_volumes;
+      while (temp_ui_vols != NULL) {
+	temp_vol = temp_ui_vols->volume;
+	
+	/* saving the view center wrt to the volume's coord axis, as we're rotating around the view center */
+	real_center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
+						  study_coord_frame(ui_study->study));
+	volume_center = realspace_base_coord_to_alt(real_center, temp_vol->coord_frame);
+	realspace_rotate_on_axis(&temp_vol->coord_frame,
+				 realspace_get_view_normal(study_coord_frame_axis(ui_study->study), view),
+				 temp_rot);
+	
+	/* recalculate the offset of this volume based on the center we stored */
+	rs_set_offset(&temp_vol->coord_frame, realpoint_zero);
+	volume_center = realspace_alt_coord_to_base(volume_center, temp_vol->coord_frame);
+	rs_set_offset(&temp_vol->coord_frame, rp_sub(real_center, volume_center));
+	/* I really should check to see if a volume dialog is up, and update the rotations.... */
+	temp_ui_vols = temp_ui_vols->next; /* and go on to the next */
+      }
+      
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_NEW_ROI:
+    ui_study_update_help_info(ui_study, HELP_INFO_CANVAS_VOLUME, base_rp, 0.0);
+    grab_on = FALSE;
+    switch(ui_study->undrawn_roi->type) {
+    case CYLINDER:
+    case BOX:
+    case ELLIPSOID:  
+      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_item), event->button.time);
+      gtk_object_destroy(GTK_OBJECT(canvas_item)); /* get rid of the roi drawn on the canvas */
+      
+      diff_rp = rp_diff(initial_canvas_rp, canvas_rp);
+      diff_rp.z = study_view_thickness(ui_study->study)/2.0;
+      temp_rp[0] = rp_sub(initial_canvas_rp, diff_rp);
+      temp_rp[1] = rp_add(initial_canvas_rp, diff_rp);
+
+      /* we'll save the coord frame and offset of the roi */
+      rs_set_offset(&ui_study->undrawn_roi->coord_frame,
+		    realspace_alt_coord_to_base(temp_rp[0], ui_study->canvas_coord_frame[view]));
+      rs_set_axis(&ui_study->undrawn_roi->coord_frame, rs_all_axis(ui_study->canvas_coord_frame[view]));
+      
+      /* and set the far corner of the roi */
+      ui_study->undrawn_roi->corner = 
+	rp_abs(realspace_alt_coord_to_alt(temp_rp[1], ui_study->canvas_coord_frame[view],
+					  ui_study->undrawn_roi->coord_frame));
       break;
-      
-    case GDK_BUTTON_RELEASE:
-      ui_study_update_help_info(ui_study, HELP_INFO_UPDATE_LOCATION, real_loc);
-      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
-      dragging = FALSE;
-      roi_item = NULL;
+    case ISOCONTOUR_2D: 
+    case ISOCONTOUR_3D:
+      {
+	voxelpoint_t temp_vp;
+	intpoint_t temp_frame;
+	volume_t * temp_vol;
 
-      /* last second sanity check */
-      if (current_roi_list_item == NULL) {
-	g_warning("%s: null current_roi_list_item?", PACKAGE);
-	return TRUE;
+	if (ui_study->undrawn_roi->type == ISOCONTOUR_2D) {
+	  temp_vol = ui_study->current_slices[view]->volume; /* just use the first slice for now */
+	  temp_frame = 0;
+	} else { /* ISOCONTOUR_3D */
+	  temp_vol = ui_study->current_volume;
+	  temp_frame = volume_frame(temp_vol, study_view_time(ui_study->study));
+	}
+	temp_rp[0] = realspace_base_coord_to_alt(base_rp, temp_vol->coord_frame);
+	VOLUME_REALPOINT_TO_VOXEL(temp_vol, temp_rp[0], temp_frame, temp_vp);
+	ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+	if (data_set_includes_voxel(temp_vol->data_set,temp_vp))
+	  roi_set_isocontour(ui_study->undrawn_roi, temp_vol, temp_vp);
+	ui_common_remove_cursor(GTK_WIDGET(canvas));
       }
-
-      /* compensate for the fact that our origin is left bottom, not X's left top */
-      /* also, compensate for sagittal being a left-handed coordinate frame */
-      if (view_static != SAGITTAL)
-	theta = -theta;
-
-#ifdef AMIDE_DEBUG
-      g_print("roi changes\n");
-      g_print("\tshift\t%5.3f\t%5.3f\t%5.3f\n",shift.x,shift.y,shift.z);
-      g_print("\troi_zoom\t%5.3f\t%5.3f\t%5.3f\n",roi_zoom.x,roi_zoom.y,roi_zoom.z);
-      g_print("\ttheta\t%5.3f\n",theta*180/M_PI);
-#endif
-
-      /* apply our changes to the roi */
-
-      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
-	/* ------------- apply any shift done -------------- */
-	rs_set_offset(&current_roi_list_item->roi->coord_frame,
-		      rp_add(shift, rs_offset(current_roi_list_item->roi->coord_frame)));
-      } else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON) {
-	/* ------------- apply any zoom done -------------- */
-	new_radius = rp_mult(roi_zoom, radius);
-	
-	
-	t[0] = rp_sub(center, new_radius); /* figure out the new lower left corner */
-
-	/* the new roi offset will be the new lower left corner */
-	rs_set_offset(&current_roi_list_item->roi->coord_frame,
-		      realspace_alt_coord_to_base(t[0],
-						  current_roi_list_item->roi->coord_frame));
-	
-	/* and the new upper right corner is simply twice the radius */
-	t[1] = rp_cmult(2.0, new_radius);
-	current_roi_list_item->roi->corner = t[1];
-	
-      } else if (event->button.button == UI_STUDY_ROIS_ROTATE_BUTTON) {
-	
-	/* ------------- apply any rotation done -------------- */
-	new_center = /* get the center in real coords */
-	  realspace_alt_coord_to_base(center,
-				      current_roi_list_item->roi->coord_frame);
-	
-	/* reset the offset of the roi coord_frame to the object's center */
-	rs_set_offset(&current_roi_list_item->roi->coord_frame, new_center);
-
-	/* now rotate the roi coord_frame axis */
-	realspace_rotate_on_axis(&current_roi_list_item->roi->coord_frame,
-				 rs_specific_axis(ui_study->canvas_coord_frame[view_static],  ZAXIS),
-				 theta);
-	
-	/* and recaculate the offset */
-	new_center = /* get the center in roi coords */
-	  realspace_base_coord_to_alt(new_center,
-				      current_roi_list_item->roi->coord_frame);
-	t[0] = rp_sub(new_center, radius);
-	t[0] = /* get the new offset in real coords */
-	  realspace_alt_coord_to_base(t[0],
-				      current_roi_list_item->roi->coord_frame);
-	rs_set_offset(&current_roi_list_item->roi->coord_frame, t[0]); 
-	
-      } else 
-	return TRUE; /* shouldn't get here */
-
-      if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
-	/* if we were moving the ROI, reset the view_center to the center of the current roi */
-	t[0] = realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
-					   current_roi_list_item->roi->coord_frame);
-	t[1] = current_roi_list_item->roi->corner;
-	center = rp_add(rp_cmult(0.5, t[0]), rp_cmult(0.5, t[1]));
-	center = realspace_alt_coord_to_alt(center,
-					    current_roi_list_item->roi->coord_frame,
-					    study_coord_frame(ui_study->study));
-	study_set_view_center(ui_study->study, center);
-
-	/* update everything */
-	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
-      } else { 
-	/* we just need to update the ROI's otherwise */
-	/* update the roi's */
-	for (i_view=0;i_view<NUM_VIEWS;i_view++) 
-	  current_roi_list_item->canvas_roi[i_view] =
-	    ui_study_update_canvas_roi(ui_study,i_view,
-				       current_roi_list_item->canvas_roi[i_view],
-				       current_roi_list_item->roi);
-      }
-      
       break;
     default:
+      g_warning("%s: unexpected case in %s at line %d, roi_type %d", 
+		PACKAGE, __FILE__, __LINE__, ui_study->undrawn_roi->type);
       break;
     }
+    ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
+    roi_free(ui_study->undrawn_roi); 
+    ui_study->undrawn_roi = NULL;
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_SHIFT_ROI:
+    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    grab_on = FALSE;
+    /* ------------- apply any shift done -------------- */
+    if (!REALPOINT_EQUAL(shift, realpoint_zero)) {
+      rs_set_offset(&roi->coord_frame, rp_add(shift, rs_offset(roi->coord_frame)));
+      /* if we were moving the ROI, reset the view_center to the center of the current roi */
+      temp_rp[0] = rp_add(rp_cmult(0.5, realspace_base_coord_to_alt(rs_offset(roi->coord_frame), 
+								    roi->coord_frame)),
+			  rp_cmult(0.5, roi->corner));
+      temp_rp[0] = realspace_alt_coord_to_alt(temp_rp[0],
+					      roi->coord_frame, 
+					      study_coord_frame(ui_study->study));
+      study_set_view_center(ui_study->study, temp_rp[0]);
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_ROTATE_ROI:
+    {
+      ui_roi_list_t * ui_roi_item;
+      view_t i_view;
+
+      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+      grab_on = FALSE;
+      if (view == SAGITTAL) theta = -theta; /* compensate for sagittal being left-handed coord frame */
       
+      temp_rp[0] = realspace_alt_coord_to_base(roi_center_rp, roi->coord_frame); /* new center */
+      rs_set_offset(&roi->coord_frame, temp_rp[0]);
+      
+      /* now rotate the roi coord_frame axis */
+      realspace_rotate_on_axis(&roi->coord_frame,
+			       rs_specific_axis(ui_study->canvas_coord_frame[view],  ZAXIS),
+			       theta);
+
+      /* and recaculate the offset */
+      temp_rp[0] = rp_sub(realspace_base_coord_to_alt(temp_rp[0], roi->coord_frame), roi_radius_rp);
+      temp_rp[0] = realspace_alt_coord_to_base(temp_rp[0],roi->coord_frame);
+      rs_set_offset(&roi->coord_frame, temp_rp[0]); 
+      
+      ui_roi_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
+      for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+	ui_roi_item->canvas_roi[i_view] =
+	  ui_study_update_canvas_roi(ui_study,i_view, ui_roi_item->canvas_roi[i_view], ui_roi_item->roi);
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_RESIZE_ROI:
+    {
+      ui_roi_list_t * ui_roi_item;
+      view_t i_view;
+
+      gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+      grab_on = FALSE;
+
+      temp_rp[0] = rp_mult(roi_zoom, roi_radius_rp); /* new radius */
+      rs_set_offset(&roi->coord_frame, realspace_alt_coord_to_base(rp_sub(roi_center_rp, temp_rp[0]), 
+								   roi->coord_frame));
+	  
+      /* and the new upper right corner is simply twice the radius */
+      roi->corner = rp_cmult(2.0, temp_rp[0]);
+	  
+      ui_roi_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
+      for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+	ui_roi_item->canvas_roi[i_view] =
+	  ui_study_update_canvas_roi(ui_study,i_view, ui_roi_item->canvas_roi[i_view], ui_roi_item->roi);
+    }
+    break;
+
+
+  case UI_STUDY_EVENT_RELEASE_CHANGE_ISOCONTOUR:
+    gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
+    grab_on = FALSE;
+    gtk_object_destroy(GTK_OBJECT(canvas_item));
+    {
+      voxelpoint_t temp_vp;
+      intpoint_t temp_frame;
+      volume_t * temp_vol;
+      ui_roi_list_t * ui_roi_item;
+      view_t i_view;
+
+      if (roi->type == ISOCONTOUR_2D) {
+	temp_vol = ui_study->current_slices[view]->volume; /* just use the first slice for now */
+	temp_frame = 0;
+      } else { /* ISOCONTOUR_3D */
+	temp_vol = ui_study->current_volume;
+	temp_frame = volume_frame(temp_vol, study_view_time(ui_study->study));
+      }
+      temp_rp[0] = realspace_base_coord_to_alt(base_rp, temp_vol->coord_frame);
+      VOLUME_REALPOINT_TO_VOXEL(temp_vol, temp_rp[0], temp_frame, temp_vp);
+      ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+      if (data_set_includes_voxel(temp_vol->data_set,temp_vp))
+	roi_set_isocontour(roi, temp_vol, temp_vp);
+      ui_common_remove_cursor(GTK_WIDGET(canvas));
+
+      ui_roi_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
+      for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+	ui_roi_item->canvas_roi[i_view] =
+	  ui_study_update_canvas_roi(ui_study,i_view, ui_roi_item->canvas_roi[i_view], ui_roi_item->roi);
+      break;
+    }
+
+  case UI_STUDY_EVENT_DO_NOTHING:
+    break;
+  default:
+    g_warning("%s: unexpected case in %s at line %d, event %d", PACKAGE, __FILE__, __LINE__, canvas_event_type);
+    break;
+  }
+  
   return FALSE;
 }
 
@@ -1682,6 +1820,7 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
     roi->type = i_roi_type;
     study_add_roi(ui_study->study, roi);
     ui_study_tree_add_roi(ui_study, roi);
+    ui_study->undrawn_roi = roi_add_reference(roi);
     roi = roi_free(roi);
   }
 
@@ -1697,7 +1836,7 @@ void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data) {
   gint entry_return;
   //  align_pt_t new_point;
 
-  if (ui_study->current_mode != VOLUME_MODE) return;
+  //  if (ui_study->current_mode != VOLUME_MODE) return;
   if (ui_study->current_volume == NULL) return;
 
   entry = gnome_request_dialog(FALSE, "Alignment Point Name:", "", 256, 
@@ -1746,10 +1885,9 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
   GnomeCanvasItem * roi_canvas_item[NUM_VIEWS];
   ui_volume_list_t * ui_volume_list_item;
 
-  /* do any events pending, this allows the select state of the 
-     leaf to get updated correctly with double clicks*/
-  while (gtk_events_pending()) 
-    gtk_main_iteration();
+  /* do any events pending, this allows the select state of the leaf
+     to get updated correctly with double clicks*/
+  while (gtk_events_pending())  gtk_main_iteration();
 
   /* decode the event, and figure out what we gotta do */
   switch (event->button) {
@@ -1795,9 +1933,6 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
     break;
   }
 
-  //    g_print("click event %d %d select %d unselect %d make_active %d popup %d\n",event->type, event->button,
-  //  	  select, unselect, make_active, popup_dialog);
-
   /* do the appropriate action for the appropriate object */
   object_type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(leaf), "type"));
 
@@ -1807,13 +1942,14 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
     volume = gtk_object_get_data(GTK_OBJECT(leaf), "object");
 
     if (select) {
-      ui_study->current_mode = VOLUME_MODE;
       if (!ui_volume_list_includes_volume(ui_study->current_volumes, volume))
 	ui_study->current_volumes = ui_volume_list_add_volume(ui_study->current_volumes, volume, leaf);
 
       /* if no other volume is active, make this guy active */
-      if (ui_study->current_volume == NULL)
+      if (ui_study->current_volume == NULL) {
+	ui_study->current_volume = volume;
 	make_active = TRUE;
+      }
 
       /* we'll need to redraw the canvas */
       ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
@@ -1831,14 +1967,15 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
 	/* reset the currently active volume */
 	ui_study->current_volume = ui_volume_list_get_first_volume(ui_study->current_volumes);
 	/* update which row in the tree has the active symbol */
-	if (ui_study->current_mode == VOLUME_MODE)
-	  ui_study_tree_update_active_leaf(ui_study, NULL); 
+	ui_study_tree_update_active_leaf(ui_study, NULL); 
       } 
       
       /* destroy the threshold window if it's open and looking at this volume */
       if (ui_study->threshold_dialog != NULL)
-      	if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume)
-      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+      	if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume) {
+	  gtk_widget_destroy(ui_study->threshold_dialog);
+	  ui_study->threshold_dialog = NULL;
+	}
       
       /* we'll need to redraw the canvas */
       ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
@@ -1847,14 +1984,14 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
     }
 
     if (make_active) {
-      ui_study->current_mode = VOLUME_MODE;
       ui_study->current_volume = volume;
       
       /* make sure we don't already have a volume edit dialog up */
       ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes,ui_study->current_volume);
       if (ui_volume_list_item != NULL) {
 	if (ui_volume_list_item->dialog != NULL) {
-      	  gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+	  gtk_widget_destroy(ui_study->threshold_dialog);
+	  ui_study->threshold_dialog = NULL;
 	} else {
 	  /* reset the threshold widget based on the current volume */
 	  if (ui_study->threshold_dialog != NULL)
@@ -1881,7 +2018,6 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
 
 
     if (select) {
-
       /* and add this roi to the current_rois list */
       if (!ui_roi_list_includes_roi(ui_study->current_rois, roi)) {
 	/* make the canvas graphics */
@@ -1893,21 +2029,11 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
 
 
     if (unselect) {
-      if (ui_study->current_roi == roi) {
-	ui_study->current_roi = NULL;
-	if (ui_study->current_mode == ROI_MODE) {
-	  ui_study->current_mode = VOLUME_MODE;
-	  ui_study_tree_update_active_leaf(ui_study, NULL); 
-	}
-      }
       ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi);
     }
 
 
     if (make_active) {
-      ui_study->current_mode = ROI_MODE;
-      ui_study->current_roi = roi;
-
       /* center the view on this roi, check first if the roi has been drawn, and if we're
 	 already centered */
       roi_center = roi_calculate_center(roi);
@@ -1920,12 +2046,9 @@ void ui_study_cb_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpo
 	   which roi is highlighted */
 	ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
       }
-      /* indicate this is now the active leaf */
-      ui_study_tree_update_active_leaf(ui_study, leaf);
-
     }
 
-    if (popup_dialog) {
+    if ((popup_dialog) && (!roi_undrawn(roi))) {
       ui_roi_dialog_create(ui_study, roi);
     }
     break;
@@ -2059,8 +2182,10 @@ void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
     /* destroy the threshold window if it's open, and remove the active mark */
     if (ui_study->current_volume==volume) {
       ui_study->current_volume = NULL;
-      if (ui_study->threshold_dialog != NULL)
-	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+      if (ui_study->threshold_dialog != NULL) {
+	gtk_widget_destroy(ui_study->threshold_dialog);
+	ui_study->threshold_dialog = NULL;
+      }
     }
      
     /* remove the volume from existence */
@@ -2077,8 +2202,6 @@ void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
     gtk_tree_remove_item(GTK_TREE(subtree), ui_study->current_rois->tree_leaf);
 
     /* remove the roi's data structure */
-    if (ui_study->current_roi == roi)
-      ui_study->current_roi = NULL;
     study_remove_roi(ui_study->study, roi);
     ui_study->current_rois = ui_roi_list_remove_roi(ui_study->current_rois, roi);
     roi = roi_free(roi);
@@ -2116,13 +2239,30 @@ void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
 
 
 
+/* function ran to exit the program */
+void ui_study_cb_exit(GtkWidget* widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  GtkWidget * app = GTK_WIDGET(ui_study->app);
+
+  /* run the delete event function */
+  ui_study_cb_delete_event(app, NULL, ui_study);
+  gtk_widget_destroy(app);
+
+  amide_unregister_all_windows(); /* kill everything */
+
+  return;
+}
+
 /* function ran when closing a study window */
 void ui_study_cb_close(GtkWidget* widget, gpointer data) {
 
-  GtkWidget * app = data;
+  ui_study_t * ui_study = data;
+  GtkWidget * app = GTK_WIDGET(ui_study->app);
 
   /* run the delete event function */
-  gtk_signal_emit_by_name(GTK_OBJECT(app), "delete_event");
+  ui_study_cb_delete_event(app, NULL, ui_study);
+  gtk_widget_destroy(app);
 
   return;
 }
@@ -2131,34 +2271,40 @@ void ui_study_cb_close(GtkWidget* widget, gpointer data) {
 gboolean ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
+  GtkWidget * app = ui_study->app;
 
   /* check to see if we need saving */
 
   /* destroy the threshold window if it's open */
-  if (ui_study->threshold_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+  if (ui_study->threshold_dialog != NULL) {
+    gtk_widget_destroy(ui_study->threshold_dialog);
+    ui_study->threshold_dialog = NULL;
+  }
 
   /* destroy the preferences dialog if it's open */
-  if (ui_study->preferences_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->preferences_dialog), "close", ui_study);
+  if (ui_study->preferences_dialog != NULL) {
+    gnome_dialog_close(GNOME_DIALOG(ui_study->preferences_dialog));
+    ui_study->preferences_dialog = NULL;
+  }
 
   /* destroy the time window if it's open */
-  if (ui_study->time_dialog != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->time_dialog), "close", ui_study);
+  if (ui_study->time_dialog != NULL) {
+    gnome_dialog_close(GNOME_DIALOG(ui_study->time_dialog));
+    ui_study->time_dialog = NULL;
+  }
 
-  /* free our data structure's */
-  ui_study = ui_study_free(ui_study);
-
-  /* destroy the widget last */
-  gtk_widget_destroy(widget);
-
-  /* quit our app if we've closed all windows */
-  number_of_windows--;
-  if (number_of_windows == 0)
-    gtk_main_quit();
+  
+  ui_study = ui_study_free(ui_study); /* free our data structure's */
+  amide_unregister_window((gpointer) app); /* tell the rest of the program this window's gone */
 
   return FALSE;
 }
+
+
+
+
+
+
 
 
 

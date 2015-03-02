@@ -57,7 +57,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   guint table_row;
   GdkLineStyle i_line_style;
   GnomeCanvasPoints * roi_line_points;
-  guint32 outline_color;
+  rgba_t outline_color;
 
   /* sanity checks */
   g_return_val_if_fail(ui_study != NULL, NULL);
@@ -170,7 +170,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   roi_item = gnome_canvas_item_new(gnome_canvas_root(roi_indicator), 
 				   gnome_canvas_line_get_type(),
 				   "points", roi_line_points, 
-				   "fill_color_rgba", outline_color, 
+				   "fill_color_rgba", color_table_rgba_to_uint32(outline_color), 
   				   "width_pixels", ui_study->roi_width,
     				   "line_style", ui_study->line_style, NULL);
   gnome_canvas_points_unref(roi_line_points);

@@ -29,15 +29,92 @@
 #ifdef AMIDE_LIBMDC_SUPPORT
 #include "volume.h"
 #include "medcon_import.h"
-
 #undef PACKAGE /* medcon redefines these.... */
 #undef VERSION 
-#include "medcon.h"
+#include <medcon.h>
 #undef PACKAGE 
 #undef VERSION 
 #include "config.h"
 
-volume_t * medcon_import(const gchar * filename) {
+/* this line can be removed with the release of xmedcon > 0.6.6 */
+#ifndef MDC_INCLUDE_CONC
+#define MDC_INCLUDE_CONC 0
+#endif
+#ifndef MDC_FRMT_CONC
+#define MDC_FRMT_CONC 0
+#endif
+
+gchar * libmdc_menu_names[] = {
+  "(_X)MedCon Guess",
+  "_Raw",
+  "A_SCII",
+  "_GIF 87a/89a",
+  "Acr/_Nema 2.0",
+  "IN_W 1.0 (RUG)",
+  "Concorde/_microPET",
+  "_CTI 6.4",
+  "_InterFile 3.3",
+  "_Analyze (SPM)",
+  "_DICOM 3.0",
+};
+  
+gchar * libmdc_menu_explanations[] = {
+  "let (X)MedCon/libmdc guess file type",
+  "Import a raw data file",
+  "Import an ASCII data file",
+  "Import a file stored as GIF",
+  "Import a Acr/Nema 2.0 file",
+  "Import a INW 1.0 (RUG) File",
+  "Import a file from the Concorde microPET",
+  "Import a CTI 6.4 file",
+  "Import a InterFile 3.3 file"
+  "Import an Analyze file"
+  "Import a DICOM 3.0 file",
+};
+
+gboolean medcon_import_supports(libmdc_import_method_t submethod) {
+  
+  gboolean return_value;
+
+  switch(submethod) {
+  case LIBMDC_RAW: 
+  case LIBMDC_ASCII:
+    return_value = TRUE;
+    break;
+  case LIBMDC_GIF:
+    return_value = MDC_INCLUDE_GIF;
+    break;
+  case LIBMDC_ACR:
+    return_value = MDC_INCLUDE_ACR;
+    break;
+  case LIBMDC_INW:
+    return_value = MDC_INCLUDE_INW;
+    break;
+  case LIBMDC_CONC:
+    return_value = MDC_INCLUDE_CONC;
+    break;
+  case LIBMDC_ECAT:
+    return_value = MDC_INCLUDE_ECAT;
+    break;
+  case LIBMDC_INTF:
+    return_value = MDC_INCLUDE_INTF;
+    break;
+  case LIBMDC_ANLZ:
+    return_value = MDC_INCLUDE_ANLZ;
+    break;
+  case LIBMDC_DICM:
+    return_value = MDC_INCLUDE_DICM;
+    break;
+  case LIBMDC_NONE:
+  default:
+    return_value = TRUE;
+    break;
+  }
+
+  return return_value;
+}
+
+volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submethod) {
 
   FILEINFO medcon_file_info;
   gint error;
@@ -54,6 +131,49 @@ volume_t * medcon_import(const gchar * filename) {
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
+  MDC_CALIBRATE=MDC_YES; /* want quantified, calibrated data */
+  MDC_QUANTIFY=MDC_YES;
+
+  /* figure out the fallback format */
+  MDC_FALLBACK_FRMT = MDC_FRMT_NONE;
+  if (medcon_import_supports(submethod)) {
+    switch(submethod) {
+    case LIBMDC_RAW: 
+      MDC_FALLBACK_FRMT = MDC_FRMT_RAW;
+      break;
+    case LIBMDC_ASCII:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ASCII;
+      break;
+    case LIBMDC_GIF:
+      MDC_FALLBACK_FRMT = MDC_FRMT_GIF;
+      break;
+    case LIBMDC_ACR:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ACR;
+      break;
+    case LIBMDC_INW:
+      MDC_FALLBACK_FRMT = MDC_FRMT_INW;
+      break;
+    case LIBMDC_CONC:
+      MDC_FALLBACK_FRMT = MDC_FRMT_CONC;
+      break;
+    case LIBMDC_ECAT:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT;
+      break;
+    case LIBMDC_INTF:
+      MDC_FALLBACK_FRMT = MDC_FRMT_INTF;
+      break;
+    case LIBMDC_ANLZ:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ANLZ;
+      break;
+    case LIBMDC_DICM:
+      MDC_FALLBACK_FRMT = MDC_FRMT_DICM;
+      break;
+    case LIBMDC_NONE:
+    default:
+      MDC_FALLBACK_FRMT = MDC_FRMT_NONE;
+      break;
+    }
+  }  
 
   /* open the file */
   import_filename = g_strdup(filename); /* this gets around the facts that filename is type const */
@@ -162,8 +282,7 @@ volume_t * medcon_import(const gchar * filename) {
 
   /* try figuring out the name */
   if (medcon_file_info.study_name != NULL) {
-    volume_name = medcon_file_info.study_name;
-    volume_set_name(temp_volume,volume_name);
+    volume_set_name(temp_volume,medcon_file_info.study_name);
   } else {/* no original filename? */
     volume_name = g_strdup(g_basename(filename));
     /* remove the extension of the file */
@@ -200,7 +319,7 @@ volume_t * medcon_import(const gchar * filename) {
 
   /* guess the start of the scan is the same as the start of the first frame of data */
   /* note, CTI files specify time as integers in msecs */
-  temp_volume->scan_start = medcon_file_info.image[0].frame_start/1000;
+  temp_volume->scan_start = medcon_file_info.image[0].frame_start/1000.0;
 
 #ifdef AMIDE_DEBUG
   g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
@@ -242,7 +361,7 @@ volume_t * medcon_import(const gchar * filename) {
 
     /* set the frame duration, note, medcon/libMDC specifies time as float in msecs */
     temp_volume->frame_duration[i.t] = 
-      medcon_file_info.image[i.t*temp_volume->data_set->dim.z].frame_duration/1000;
+      medcon_file_info.image[i.t*temp_volume->data_set->dim.z].frame_duration/1000.0;
 
     /* copy the data into the volume */
     for (i.z = 0 ; i.z < temp_volume->data_set->dim.z; i.z++) {
@@ -360,7 +479,7 @@ volume_t * medcon_import(const gchar * filename) {
 	}
 	break;
       default:
-	g_warning("PACKAGE: unexpected case in __FILE__ at line __LINE__");
+	g_warning("%s: unexpected case in %s at line %d", PACKAGE, __FILE__, __LINE__);
 	MdcCleanUpFI(&medcon_file_info);
 	return volume_free(temp_volume);
 	break;

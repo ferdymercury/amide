@@ -482,7 +482,7 @@ void ui_volume_dialog_cb_help(GnomePropertyBox *volume_dialog, gint page_number,
 }
 
 /* function called to destroy the volume dialog */
-void ui_volume_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_volume_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_volume_list_t * ui_volume_list_item = data;
   volume_t * volume_new_info;
@@ -500,13 +500,10 @@ void ui_volume_dialog_cb_close(GtkWidget* widget, gpointer data) {
 #endif
   volume_new_info = volume_free(volume_new_info);
 
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_volume_list_item->dialog));
-
   /* make sure the pointer in the ui_volume_list_item is nulled */
   ui_volume_list_item->dialog = NULL;
 
-  return;
+  return FALSE;
 }
 
 

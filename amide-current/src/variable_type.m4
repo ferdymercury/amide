@@ -48,8 +48,11 @@ m4_m4exit')
 m4_dnl
 m4_dnl extract any additional information out of "Temp_Variable_Type"
 
-m4_ifelse(m4_regexp(m4_Temp_Variable_Type, `_'), `-1',`
+m4_dnl m4_ifelse(m4_regexp(m4_Temp_Variable_Type, `_'), `-1',`
+m4_dnl [^-]* matches everything but the ldash... using this as a poor man's wild card
+m4_ifelse(m4_regexp(m4_Temp_Variable_Type, `_[^-]*_'), `-1',`
 	m4_define(m4_Variable_Type, m4_Temp_Variable_Type)
+	m4_define(m4_Scale_Dim, `')
 	',`
 	m4_define(m4_Scale_Dim, `m4_substr(m4_Temp_Variable_Type,
 		m4_eval(m4_regexp(m4_Temp_Variable_Type, `_')+1))')

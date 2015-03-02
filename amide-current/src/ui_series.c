@@ -132,8 +132,6 @@ static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_serie
     realpoint_t view_corner[2];
 
     volumes_get_view_corners(ui_series->volumes, ui_series->coord_frame, view_corner);
-    view_corner[0] = realspace_base_coord_to_alt(view_corner[0], ui_series->coord_frame);
-    view_corner[1] = realspace_base_coord_to_alt(view_corner[1], ui_series->coord_frame);
     
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_point.z,
 					     view_corner[0].z,
@@ -383,6 +381,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, ser
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
   ui_series->app = app;
+  gtk_window_set_policy (GTK_WINDOW(ui_series->app), TRUE, TRUE, TRUE);
 
   /* make a copy of the volumes sent to this series */
   ui_series->volumes = volume_list_copy(volumes);
@@ -610,7 +609,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, ser
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(app));
-  number_of_windows++;
+  amide_register_window((gpointer) app);
 
   return;
 }

@@ -39,23 +39,31 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volu
   amide_data_t max, min, temp;
 
 #ifdef AMIDE_DEBUG
-  g_print("\tcalculating max & min");
+  div_t x;
+  gint divider;
+  divider = ((volume->data_set->dim.t/20.0) < 1) ? 1 : (volume->data_set->dim.t/20.0);
+  g_print("\tcalculating max & min\t");
 #endif
-  max = 0.0;
-  min = 0.0;
+
+  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, voxelpoint_zero);
+  if (finite(temp)) max = min = temp;
+  else max = min = 0.0; /* just throw in zero */
+
   for(i.t = 0; i.t < volume->data_set->dim.t; i.t++) {
+#if AMIDE_DEBUG
+    x = div(i.t,divider);
+    if (x.rem == 0)
+      g_print(".");
+#endif
     for (i.z = 0; i.z < volume->data_set->dim.z; i.z++) 
       for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
 	  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, i);
-	  if (temp > max)
-	    max = temp;
-	  else if (temp < min)
-	    min = temp;
+	  if (finite(temp)) {
+	    if (temp > max) max = temp;
+	    else if (temp < min) min = temp;
+	  }
 	}
-#ifdef AMIDE_DEBUG
-    g_print(".");
-#endif
   }
   volume->max = max;
   volume->min = min;
@@ -79,7 +87,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_generate_distribution(volume_t
 #if AMIDE_DEBUG
   g_print("Generating distribution data for volume %s",volume->name);
 #endif
-  scale = VOLUME_DISTRIBUTION_SIZE/(volume->max - volume->min);
+  scale = (VOLUME_DISTRIBUTION_SIZE-1)/(volume->max - volume->min);
   
   if ((volume->distribution = data_set_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the data set structure to hold distribution data", PACKAGE);
@@ -253,8 +261,8 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
     //	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
     //    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
     //	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
-    g_print("new_slice from volume %s, frames %d to %d, z offset %5.3f\n",volume->name,
-    	    start_frame, start_frame+num_frames-1, real_corner[0].z);
+    //    g_print("new_slice from volume %s, frames %d to %d, z offset %5.3f\n",volume->name,
+    //    	    start_frame, start_frame+num_frames-1, real_corner[0].z);
   }
 #endif
 

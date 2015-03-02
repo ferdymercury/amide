@@ -123,6 +123,10 @@ void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
   /* and save any changes to the coord frame */
   roi_new_info->coord_frame = temp_coord_frame;
 
+  /* adjust the voxel size if appropriate */
+  if (roi_new_info->type == ISOCONTOUR_2D)
+    roi_new_info->voxel_size.z = temp_dim.z;
+
   /* now tell the roi_dialog that we've changed */
   roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
   gnome_property_box_changed(GNOME_PROPERTY_BOX(roi_dialog));
@@ -264,6 +268,7 @@ void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) 
   ui_roi_list_item->roi->type = roi_new_info->type;
   ui_roi_list_item->roi->coord_frame = roi_new_info->coord_frame;
   ui_roi_list_item->roi->corner = roi_new_info->corner;
+  ui_roi_list_item->roi->voxel_size = roi_new_info->voxel_size;
   ui_roi_list_item->roi->parent = roi_free(ui_roi_list_item->roi->parent);
   if (roi_new_info->parent != NULL) 
     ui_roi_list_item->roi->parent = roi_copy(roi_new_info->parent);
@@ -279,12 +284,11 @@ void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) 
   ui_study = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->dialog), "ui_study"); 
 
   /* redraw the roi */
-  for (i_views=0;i_views<NUM_VIEWS;i_views++) {
+  for (i_views=0;i_views<NUM_VIEWS;i_views++)
     ui_roi_list_item->canvas_roi[i_views] =
       ui_study_update_canvas_roi(ui_study,i_views,
-				 ui_roi_list_item->canvas_roi[i_views],
-				 ui_roi_list_item->roi);
-  }
+  				 ui_roi_list_item->canvas_roi[i_views],
+  				 ui_roi_list_item->roi);
 
   return;
 }
@@ -321,7 +325,7 @@ void ui_roi_dialog_cb_help(GnomePropertyBox *roi_dialog, gint page_number, gpoin
 }
 
 /* function called to destroy the roi dialog */
-void ui_roi_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_roi_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_roi_list_t * ui_roi_list_item = data;
   roi_t * roi_new_info;
@@ -339,13 +343,10 @@ void ui_roi_dialog_cb_close(GtkWidget* widget, gpointer data) {
 #endif
   roi_new_info = roi_free(roi_new_info);
 
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_roi_list_item->dialog));
-
   /* make sure the pointer in the roi_list_item is nulled */
   ui_roi_list_item->dialog = NULL;
 
-  return;
+  return FALSE;
 }
 
 

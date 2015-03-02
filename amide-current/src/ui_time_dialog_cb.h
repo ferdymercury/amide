@@ -29,4 +29,4 @@ void ui_time_dialog_cb_select_row(GtkCList * clist, gint row, gint column, GdkEv
 void ui_time_dialog_cb_unselect_row(GtkCList * clist, gint row, gint column, GdkEventButton *event, gpointer data);
 void ui_time_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_time_dialog_cb_help(GnomePropertyBox *time_dialog, gint page_number, gpointer data);
-void ui_time_dialog_cb_close(GtkWidget* widget, gpointer data);
+gboolean ui_time_dialog_cb_close(GtkWidget* widget, gpointer data);

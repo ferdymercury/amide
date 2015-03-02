@@ -24,23 +24,25 @@
 */
 
 
-#include <time.h>
 #include "config.h"
-#include <gnome.h>
 #ifdef AMIDE_LIBECAT_SUPPORT
+#include <time.h>
+#include <gnome.h>
+#include <math.h>
 #include <matrix.h>
 #include "volume.h"
 #include "cti_import.h"
 
 static char * cti_data_types[] = {
-        "Unknown Data Type", 
-	"Byte", 
-	"Short (16 bit), Little Endian", 
-	"Integer (32 bit), Little Endian",
-	"VAX Float (32 bit)",
-	"IEEE Float (32 bit)",
-	"Short (16 bit), Big Endian",
-	"Integer (32 bit), Big Endian"};
+  "Unknown Data Type",  /* UnknownMatDataType */
+  "Byte", /* ByteData */
+  "Short (16 bit), Little Endian", /* VAX_Ix2 */
+  "Integer (32 bit), Little Endian", /* VAX_Ix4 */
+  "VAX Float (32 bit)", /* VAX_Rx4 */
+  "IEEE Float (32 bit)", /* IeeeFloat */
+  "Short (16 bit), Big Endian", /* SunShort */
+  "Integer (32 bit), Big Endian" /* SunLong */
+}; /* NumMatrixDataTypes */
 
 volume_t * cti_import(const gchar * cti_filename) {
 
@@ -76,7 +78,8 @@ volume_t * cti_import(const gchar * cti_filename) {
   /* make sure we know how to process this */
   if (!((cti_subheader->data_type == VAX_Ix2) || (cti_subheader->data_type == SunShort))) {
     g_warning("%s: no support for importing CTI files with data type of: %s", PACKAGE, 
-	      cti_data_types[((cti_subheader->data_type) < 8) ? cti_subheader->data_type : 0]);
+	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
+			    cti_subheader->data_type : 0]);
     matrix_close(cti_file);
     free_matrix_data(cti_subheader);
     return NULL;
@@ -171,17 +174,32 @@ volume_t * cti_import(const gchar * cti_filename) {
   case PetVolume: /* i.e. CTI 7.0 */
 
     /* set some more parameters */
-    temp_volume->voxel_size.x = 10*((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
-    temp_volume->voxel_size.y = 10*((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
-    temp_volume->voxel_size.z = 10*((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
+    temp_rp.x = 10*((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
+    temp_rp.y = 10*((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
+    temp_rp.z = 10*((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
+
+    /*handle corrupted cti files */
+    if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) 
+      g_warning("%s: dectected corrupted CTI file, will try to continue by guessing voxel_size", PACKAGE);
+    if (isnan(temp_rp.y)) temp_rp.x = 1.0;
+    if (isnan(temp_rp.y)) temp_rp.y = 1.0;
+    if (isnan(temp_rp.z)) temp_rp.z = 1.0;
+    temp_volume->voxel_size = temp_rp;
+
     temp_rp.x = 10*((Image_subheader*)cti_subheader->shptr)->x_offset;
     temp_rp.y = 10*((Image_subheader*)cti_subheader->shptr)->y_offset;
     temp_rp.z = 10*((Image_subheader*)cti_subheader->shptr)->z_offset;
+    /*handle corrupted cti files */
+    if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) 
+      g_warning("%s: dectected corrupted CTI file, will try to continue by guessing offset", PACKAGE);
+    if (isnan(temp_rp.x)) temp_rp.x = 0.0;
+    if (isnan(temp_rp.y)) temp_rp.y = 0.0;
+    if (isnan(temp_rp.z)) temp_rp.z = 0.0;
     rs_set_offset(&temp_volume->coord_frame, temp_rp);
 
     /* guess the start of the scan is the same as the start of the first frame of data */
     /* note, CTI files specify time as integers in msecs */
-    temp_volume->scan_start =  (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000;
+    temp_volume->scan_start =  (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
 #ifdef AMIDE_DEBUG
     g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
 #endif
@@ -212,7 +230,7 @@ volume_t * cti_import(const gchar * cti_filename) {
 	}
 
 	/* set the frame duration, note, CTI files specify time as integers in msecs */
-	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000;
+	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
 
 	/* save the scale factor */
 	j.x = j.y = 0;

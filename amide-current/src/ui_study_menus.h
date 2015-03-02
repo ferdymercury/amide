@@ -41,6 +41,10 @@ void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item,
 				     gchar * tooltip,
 				     gpointer callback_func,
 				     gpointer callback_data);
+void ui_study_menus_fill_in_submenu(GnomeUIInfo * item, 
+				    gchar * name,
+				    gchar * tooltip,
+				    GnomeUIInfo * submenu);
 void ui_study_menus_fill_in_end(GnomeUIInfo * item);
 void ui_study_menus_create(ui_study_t * ui_study);
 

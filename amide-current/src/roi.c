@@ -31,15 +31,28 @@
 #include "roi.h"
 
 /* external variables */
-gchar * roi_type_names[] = {"Ellipsoid", 
-			    "Elliptic Cylinder", 
-			    "Box"};
-gchar * roi_menu_names[] = {"_Ellipsoid", 
-			    "Elliptic _Cylinder", 
-			    "_Box"};
-gchar * roi_menu_explanation[] = {"Add a new elliptical ROI", 
-				  "Add a new elliptic cylinder ROI", 
-				  "Add a new box shaped ROI"};
+gchar * roi_type_names[] = {
+  "Ellipsoid", 
+  "Elliptic Cylinder", 
+  "Box",
+  "2D Isocontour",
+  "3D Isocontour"
+};
+
+gchar * roi_menu_names[] = {
+  "_Ellipsoid", 
+  "Elliptic _Cylinder", 
+  "_Box",
+  "_2D Isocontour",
+  "_3D Isocontour",
+};
+gchar * roi_menu_explanation[] = {
+  "Add a new elliptical ROI", 
+  "Add a new elliptic cylinder ROI", 
+  "Add a new box shaped ROI",
+  "Add a new 2D Isocontour ROI",
+  "Add a new 3D Isocontour ROI",
+};
 
 /* free up an roi */
 roi_t * roi_free(roi_t * roi) {
@@ -55,8 +68,9 @@ roi_t * roi_free(roi_t * roi) {
   /* if we've removed all reference's, free the roi */
   if (roi->reference_count == 0) {
     roi->children = roi_list_free(roi->children);
+    roi->isocontour = data_set_free(roi->isocontour);
 #ifdef AMIDE_DEBUG
-    g_print("freeing roi: %s\n",roi->name);
+    //    g_print("freeing roi: %s\n",roi->name);
 #endif
     g_free(roi->name);
     g_free(roi);
@@ -83,6 +97,10 @@ roi_t * roi_init(void) {
   rs_set_axis(&temp_roi->coord_frame, default_axis);
   temp_roi->parent = NULL;
   temp_roi->children = NULL;
+
+  temp_roi->isocontour = NULL;
+  temp_roi->voxel_size = realpoint_zero;
+  temp_roi->isocontour_value = EMPTY;
   
   return temp_roi;
 }
@@ -96,6 +114,8 @@ gchar * roi_write_xml(roi_t * roi, gchar * study_directory) {
   struct stat file_info;
   xmlDocPtr doc;
   xmlNodePtr roi_nodes;
+  gchar * isocontour_name;
+  gchar * isocontour_xml_filename;
 
   /* make a guess as to our filename */
   count = 1;
@@ -119,6 +139,18 @@ gchar * roi_write_xml(roi_t * roi, gchar * study_directory) {
   xml_save_string(doc->children, "type", roi_type_names[roi->type]);
   xml_save_realspace(doc->children, "coord_frame", roi->coord_frame);
   xml_save_realpoint(doc->children, "corner", roi->corner);
+  xml_save_realpoint(doc->children, "voxel_size", roi->voxel_size);
+  xml_save_floatpoint(doc->children, "isocontour_value", roi->isocontour_value);
+
+  if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D)) {
+    isocontour_name = g_strdup_printf("Isocontour_%s", roi->name);
+    isocontour_xml_filename = data_set_write_xml(roi->isocontour, study_directory, isocontour_name);
+    g_free(isocontour_name);
+    xml_save_string(doc->children,"isocontour_file", isocontour_xml_filename);
+    g_free(isocontour_xml_filename);
+  } else {
+    xml_save_string(doc->children,"isocontour_file", NULL);
+  }
 
   /* save our children */
   roi_nodes = xmlNewChild(doc->children, NULL, "Children", NULL);
@@ -142,6 +174,7 @@ roi_t * roi_load_xml(gchar * roi_xml_filename, const gchar * study_directory) {
   xmlNodePtr children_nodes;
   roi_type_t i_roi_type;
   gchar * temp_string;
+  gchar * isocontour_xml_filename;
 
   new_roi = roi_init();
 
@@ -182,6 +215,16 @@ roi_t * roi_load_xml(gchar * roi_xml_filename, const gchar * study_directory) {
   new_roi->coord_frame = xml_get_realspace(nodes, "coord_frame");
   new_roi->corner = xml_get_realpoint(nodes, "corner");
 
+  /* isocontour specific stuff */
+  if ((new_roi->type == ISOCONTOUR_2D) || (new_roi->type == ISOCONTOUR_3D)) {
+    new_roi->voxel_size = xml_get_realpoint(nodes, "voxel_size");
+    new_roi->isocontour_value = xml_get_floatpoint(nodes, "isocontour_value");
+
+    isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
+    if (isocontour_xml_filename != NULL)
+      new_roi->isocontour = data_set_load_xml(isocontour_xml_filename, study_directory);
+  }
+
   /* and get any children */
   temp_string = xml_get_string(nodes->children, "Children");
   if (temp_string != NULL) {
@@ -213,7 +256,10 @@ roi_t * roi_copy(roi_t * src_roi) {
   dest_roi->coord_frame = src_roi->coord_frame;
   dest_roi->corner = src_roi->corner;
   dest_roi->parent = src_roi->parent;
-
+  dest_roi->voxel_size = src_roi->voxel_size;
+  dest_roi->isocontour_value = src_roi->isocontour_value;
+  dest_roi->isocontour = data_set_add_reference(src_roi->isocontour);
+  
   /* make a separate copy in memory of the roi's children */
   if (src_roi->children != NULL)
     dest_roi->children = roi_list_copy(src_roi->children);
@@ -253,7 +299,7 @@ realpoint_t roi_calculate_center(const roi_t * roi) {
   corner[1] = roi->corner;
  
   /* the center in roi coords is then just half the far corner */
-  REALPOINT_MADD(0.5,corner[1], 0.5,corner[0], center);
+  center = rp_add(rp_cmult(0.5,corner[1]), rp_cmult(0.5,corner[0]));
   
   /* now, translate that into real coords */
   center = realspace_alt_coord_to_base(center, roi->coord_frame);
@@ -459,194 +505,93 @@ roi_list_t * roi_list_add_reference(roi_list_t * rois) {
 }
 
 
-void roi_free_points_list(GSList ** plist) {
+GSList * roi_free_points_list(GSList * list) {
 
-  if (*plist == NULL)
-    return;
+  realpoint_t * ppoint;
 
-  while ((*plist)->next != NULL)
-    roi_free_points_list(&((*plist)->next));
+  if (list == NULL) return list;
 
-  g_free((*plist)->data);
-  g_free(*plist);
-  *plist = NULL;
+  list->next = roi_free_points_list(list->next); /* recurse */
 
-  return;
+  ppoint = (realpoint_t *) list->data;
+
+  list = g_slist_remove(list, ppoint);
+
+  g_free(ppoint);
+
+  return list;
 }
 
 /* returns true if we haven't drawn this roi */
 gboolean roi_undrawn(const roi_t * roi) {
   
-  return 
-    REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_zero) &&
-    REALPOINT_EQUAL(roi->corner,realpoint_zero);
+  if ((roi->type == ISOCONTOUR_2D) ||
+      (roi->type == ISOCONTOUR_3D))
+    return (roi->isocontour == NULL);
+  else
+    return 
+      REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_zero) &&
+      REALPOINT_EQUAL(roi->corner,realpoint_zero);
 }
     
 
 
 /* returns a singly linked list of intersection points between the roi
-   and the given slice.  returned points are in the slice's coord_frame */
-GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
-					    const roi_t * roi) {
-
+   and the given slice.  returned points are in the slice's coord_frame.
+   note: use this function for ELLIPSOID, CYLINDER, and BOX 
+*/
+GSList * roi_get_slice_intersection_line(const roi_t * roi,  const volume_t * view_slice) {
 
   GSList * return_points = NULL;
-  GSList * new_point, * last_return_point=NULL;
-  realpoint_t * ppoint;
-  realpoint_t view_p,temp_p, center,radius, slice_corner[2], roi_corner[2];
-  voxelpoint_t i;
-  floatpoint_t height;
-  gboolean voxel_in=FALSE, prev_voxel_intersection, saved=TRUE;
-
-  /* sanity checks */
-  g_assert(view_slice->data_set->dim.z == 1);
-
-  /* make sure we've already defined this guy */
-  if (roi_undrawn(roi))
-    return NULL;
-
-#ifdef AMIDE_DEBUG
-  g_print("roi %s --------------------\n",roi->name);
-  //  g_print("\t\toffset\tx %5.3f\ty %5.3f\tz %5.3f\n",
-  //	  roi->coord_frame.offset.x,
-  //	  roi->coord_frame.offset.y,
-  //	  roi->coord_frame.offset.z);
-  g_print("\t\tcorner\tx %5.3f\ty %5.3f\tz %5.3f\n",
-	     roi->corner.x,roi->corner.y,roi->corner.z);
-#endif
 
   switch(roi->type) {
-  case BOX: /* yes, not the most efficient way to do this, but i didn't
-	       feel like figuring out the math.... */
-  case CYLINDER:
-  case ELLIPSOID: 
-  default: /* checking all voxels, looking for those on the edge of the object
-	      of interest */
-
-    /* get the roi corners in roi space */
-    roi_corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame), roi->coord_frame);
-    roi_corner[1] = roi->corner;
-
-    /* figure out the center of the object in it's space*/
-    REALPOINT_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);   
-
-    /* figure out the radius in each direction */
-    REALPOINT_DIFF(roi_corner[1],roi_corner[0], radius);
-    REALPOINT_CMULT(0.5,radius, radius);
-
-    /* figure out the height */
-    height = fabs(roi_corner[1].z-roi_corner[0].z);
-
-    /* get the corners of the view slice in view coordinate space */
-    slice_corner[0] = realspace_base_coord_to_alt(rs_offset(view_slice->coord_frame),
-						  view_slice->coord_frame);
-    slice_corner[1] = view_slice->corner;
-
-    /* iterate through the slice, putting all edge points in the list */
-    i.t = i.z=0;
-    view_p.z = (slice_corner[0].z+slice_corner[1].z)/2.0;
-    view_p.y = slice_corner[0].y+view_slice->voxel_size.y/2.0;
-
-    for (i.y=0; i.y < view_slice->data_set->dim.y ; i.y++) {
-      view_p.x = slice_corner[0].x+view_slice->voxel_size.x/2.0;
-      prev_voxel_intersection = FALSE;
-
-      for (i.x=0; i.x < view_slice->data_set->dim.x ; i.x++) {
-	temp_p = realspace_alt_coord_to_alt(view_p, 
-					    view_slice->coord_frame,
-					    roi->coord_frame);
-
-	switch(roi->type) {
-	case BOX: 
-	  voxel_in = realpoint_in_box(temp_p, roi_corner[0],roi_corner[1]);
-	  break;
-	case CYLINDER:
-	  voxel_in = realpoint_in_elliptic_cylinder(temp_p, center, 
-						    height, radius);
-	  break;
-	case ELLIPSOID: 
-	  voxel_in = realpoint_in_ellipsoid(temp_p,center,radius);
-	  break;
-	default:
-	  g_warning("%s: roi type %d not fully implemented!",PACKAGE, roi->type);
-	};
-	
-	/* is it an edge */
-	if (voxel_in != prev_voxel_intersection) {
-
-	  /* than save the point */
-	  saved = TRUE;
-	  new_point = (GSList * ) g_malloc(sizeof(GSList));
-	  ppoint = (realpoint_t * ) g_malloc(sizeof(realpoint_t));
-	  *ppoint = view_p;
-	 
-	  if (voxel_in ) {
-	    new_point->data = ppoint;
-	    new_point->next = NULL;
-	    if (return_points == NULL) /* is this the first point? */
-	      return_points = new_point;
-	    else
-	      last_return_point->next = new_point;
-	    last_return_point = new_point;
-	  } else { /* previous voxel should be returned */
-	    ppoint->x -= view_slice->voxel_size.x; /* backup one voxel */
-	    new_point->data = ppoint;
-	    new_point->next = return_points;
-	    if (return_points == NULL) /* is this the first point? */
-	      last_return_point = new_point;
-	    return_points = new_point;
-	  }
-	} else {
-	  saved = FALSE;
-	}
-
-	prev_voxel_intersection = voxel_in;
-	view_p.x += view_slice->voxel_size.x; /* advance one voxel */
-      }
-
-      /* check if the edge of this row is still in the roi, if it is, add it as
-	 a point */
-      if ((voxel_in) && !(saved)) {
-
-	/* than save the point */
-	new_point = (GSList * ) g_malloc(sizeof(GSList));
-	ppoint = (realpoint_t * ) g_malloc(sizeof(realpoint_t));
-	*ppoint = view_p;
-	ppoint->x -= view_slice->voxel_size.x; /* backup one voxel */
-	new_point->data = ppoint;
-	new_point->next = return_points;
-	if (return_points == NULL) /* is this the first point? */
-	  last_return_point = new_point;
-	return_points = new_point;
-      }
-
-      view_p.y += view_slice->voxel_size.y; /* advance one row */
-    }
-
-    /* make sure the two ends meet */
-    if (return_points != NULL) {
-      new_point = (GSList * ) g_malloc(sizeof(GSList));
-      ppoint = (realpoint_t * ) g_malloc(sizeof(realpoint_t));
-      *ppoint = *((realpoint_t *) (last_return_point->data));
-
-      new_point->data = ppoint;
-      new_point->next = return_points;
-      return_points = new_point;
-    }
-
+  case ELLIPSOID:
+    return_points = roi_ELLIPSOID_get_slice_intersection(roi, view_slice);
     break;
-
+  case CYLINDER:
+    return_points = roi_CYLINDER_get_slice_intersection(roi, view_slice);
+    break;
+  case BOX:
+    return_points = roi_BOX_get_slice_intersection(roi, view_slice);
+    break;
+  default: 
+    g_warning("%s: roi type %d not implemented!",PACKAGE, roi->type);
+    break;
   }
 
 
   return return_points;
 }
 
+/* returns an roi containing a  data set defining the edges of the roi in the given slice.
+   returned data set is in the slice's coord frame.
+   note: use this function for ISOCONTOUR_2D, ISOCONTOUR_3D
+*/
+roi_t * roi_get_slice_intersection_image(const roi_t * roi, const volume_t * view_slice) {
+  
+  roi_t * return_roi = NULL;
+
+  switch(roi->type) {
+  case ISOCONTOUR_2D:
+    return_roi = roi_ISOCONTOUR_2D_get_slice_intersection(roi, view_slice);
+    break;
+  case ISOCONTOUR_3D:
+    return_roi = roi_ISOCONTOUR_3D_get_slice_intersection(roi, view_slice);
+    break;
+  default: 
+    g_warning("%s: roi type %d not implemented!",PACKAGE, roi->type);
+    break;
+  }
+
+
+  return return_roi;
+
+}
 
 
 /* figure out the smallest subset of the given volume structure that the roi is 
    enclosed within */
-void roi_subset_of_volume(roi_t * roi,
+void roi_subset_of_volume(const roi_t * roi,
 			  const volume_t * volume,
 			  intpoint_t frame,
 			  voxelpoint_t * subset_start,
@@ -700,6 +645,33 @@ void roi_subset_of_volume(roi_t * roi,
 
   return;
 }
+
+
+
+/* sets/resets the isocontour value of an isocontour ROI based on the given volume and voxel 
+   note: vol should be a slice for the case of ISOCONTOUR_2D */
+void roi_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t value_vp) {
+
+  g_return_if_fail((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D));
+
+  
+  switch(roi->type) {
+  case ISOCONTOUR_2D:
+    roi_ISOCONTOUR_2D_set_isocontour(roi, vol, value_vp);
+    break;
+  case ISOCONTOUR_3D:
+    roi_ISOCONTOUR_3D_set_isocontour(roi, vol, value_vp);
+    break;
+  default:
+    g_warning("%s: unexpected case in %s at line %d, roi_type %d", PACKAGE, __FILE__, __LINE__, roi->type);
+    break;
+  }
+
+  return;
+}
+
+
+
 
 
 

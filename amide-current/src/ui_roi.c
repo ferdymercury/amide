@@ -49,8 +49,10 @@ ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
 	gtk_object_destroy(GTK_OBJECT(ui_roi_list->canvas_roi[i_view]));
 	ui_roi_list->canvas_roi[i_view] = NULL;
       }
-    if (ui_roi_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_roi_list->dialog), "delete_event");
+    if (ui_roi_list->dialog != NULL) {
+      gnome_dialog_close(GNOME_DIALOG(ui_roi_list->dialog));
+      ui_roi_list->dialog = NULL;
+    }
     g_free(ui_roi_list);
     ui_roi_list = NULL;
   }
@@ -129,8 +131,9 @@ ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list,
 
   /* add the roi and other info to this list structure */
   temp_list->roi = roi_add_reference(roi);
-  for (i_view=0;i_view<NUM_VIEWS;i_view++) 
-    temp_list->canvas_roi[i_view] = canvas_roi_item[i_view];
+  if (canvas_roi_item != NULL)
+    for (i_view=0;i_view<NUM_VIEWS;i_view++) 
+      temp_list->canvas_roi[i_view] = canvas_roi_item[i_view];
   temp_list->tree_leaf = tree_leaf;
 
   if  (ui_roi_list == NULL)

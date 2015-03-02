@@ -100,6 +100,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   ui_roi_list_t * ui_roi_list_item;
   roi_t * roi_new_info = NULL;
   realpoint_t center;
+  roi_type_t type_start, type_end;
 
   /* figure out the ui_study_roi_list item corresponding to this roi */
   ui_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
@@ -117,6 +118,7 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   roi_dialog = gnome_property_box_new();
   gtk_window_set_title(GTK_WINDOW(roi_dialog), temp_string);
   g_free(temp_string);
+  ui_roi_list_item->dialog = roi_dialog; /* save a pointer to the dialog */
 
   /* create the temp roi which will store the new information, and then
      can either be applied or cancelled */
@@ -128,7 +130,6 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   /* save a pointer to ui_study with the dialog widget so we can redraw roi's */ 
   gtk_object_set_data(GTK_OBJECT(roi_dialog), "ui_study", ui_study);
 
-  
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(roi_dialog), "close",
@@ -154,7 +155,6 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   label = gtk_label_new("Basic Info");
   table_row=0;
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
-  ui_roi_list_item->dialog = roi_dialog; /* save a pointer to the dialog */
 
   /* widgets to change the roi's name */
   label = gtk_label_new("name:");
@@ -192,7 +192,22 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
 
-  for (i_roi_type=0; i_roi_type<NUM_ROI_TYPES; i_roi_type++) {
+
+  switch(roi->type) {
+  case ELLIPSOID:
+  case CYLINDER:
+  case BOX:
+    type_start = 0;
+    type_end = BOX;
+    break;
+  case ISOCONTOUR_2D:
+  case ISOCONTOUR_3D:
+  default:
+    type_start = type_end = roi->type;
+    break;
+  }
+
+  for (i_roi_type=type_start; i_roi_type<=type_end; i_roi_type++) {
     menuitem = gtk_menu_item_new_with_label(roi_type_names[i_roi_type]);
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "roi_type", GINT_TO_POINTER(i_roi_type)); 
@@ -211,6 +226,19 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
 		   X_PADDING, Y_PADDING);
   table_row++;
 
+  if ((roi->type == ISOCONTOUR_2D) || (roi->type == ISOCONTOUR_3D)) {
+    label = gtk_label_new("isocontour value");
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    entry = gtk_entry_new();
+    temp_string = g_strdup_printf("%f", roi->isocontour_value);
+    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+    g_free(temp_string);
+    gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    table_row++;
+  }
 
   /* ---------------------------
      Center adjustment page
@@ -304,74 +332,78 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
      Dimension adjustment page
      --------------------------- */
 
+  if (roi->type != ISOCONTOUR_3D) {
 
-  /* the next page of options */
-  packing_table = gtk_table_new(4,2,FALSE);
-  table_row=0;
-  label = gtk_label_new("Dimensions");
-  gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
-
-  /* widgets to change the dimensions of the ROI (in roi space) */
-  label = gtk_label_new("Dimensions (mm from center of roi)");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,2,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /**************/
-  label = gtk_label_new("x'");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%f", roi_new_info->corner.x);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
-  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_X));
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
-		     roi_new_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /*************/
-  label = gtk_label_new("y'");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%f", roi_new_info->corner.y);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
-  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Y));
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
-		     roi_new_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /*************/
-  label = gtk_label_new("z'");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%f", roi_new_info->corner.z);
-  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
-  g_free(temp_string);
-  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
-  gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Z));
-  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
-		     roi_new_info);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-
+    /* the next page of options */
+    packing_table = gtk_table_new(4,2,FALSE);
+    table_row=0;
+    label = gtk_label_new("Dimensions");
+    gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
+    
+    /* widgets to change the dimensions of the ROI (in roi space) */
+    label = gtk_label_new("Dimensions (mm from center of roi)");
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,2,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    table_row++;
+   
+    if (roi->type != ISOCONTOUR_2D) {
+ 
+      /**************/
+      label = gtk_label_new("x'");
+      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%f", roi_new_info->corner.x);
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+      gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+      gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
+      gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_X));
+      gtk_signal_connect(GTK_OBJECT(entry), "changed", 
+			 GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
+			 roi_new_info);
+      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      table_row++;
+      
+      /*************/
+      label = gtk_label_new("y'");
+      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%f", roi_new_info->corner.y);
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+      gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+      gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
+      gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Y));
+      gtk_signal_connect(GTK_OBJECT(entry), "changed", 
+			 GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
+			 roi_new_info);
+      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      table_row++;
+    }
+      
+    /*************/
+    label = gtk_label_new("z'");
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    entry = gtk_entry_new();
+    temp_string = g_strdup_printf("%f", roi_new_info->corner.z);
+    gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+    g_free(temp_string);
+    gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+    gtk_object_set_data(GTK_OBJECT(entry), "roi_dialog", roi_dialog); 
+    gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(DIM_Z));
+    gtk_signal_connect(GTK_OBJECT(entry), "changed", 
+		       GTK_SIGNAL_FUNC(ui_roi_dialog_cb_change_entry), 
+		       roi_new_info);
+    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    table_row++;
+      
+    }
 
 
   /* ---------------------------

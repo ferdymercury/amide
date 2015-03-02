@@ -29,6 +29,7 @@
 
 #include <glib.h>
 #include <math.h>
+#include <stdlib.h>
 #include "rendering.h"
 
 
@@ -289,6 +290,10 @@ void rendering_context_load_volume(rendering_t * rendering_context, const interp
   realpoint_t slice_far_corner;
   realpoint_t new_offset;
   realspace_t slice_coord_frame;
+#if AMIDE_DEBUG
+  div_t x;
+  gint divider;
+#endif
 
   /* tell the context the dimensions of our rendering volume */
   if (vpSetVolumeSize(rendering_context->vpc, rendering_context->dim.x, 
@@ -325,7 +330,7 @@ void rendering_context_load_volume(rendering_t * rendering_context, const interp
 		 rendering_context->dim.x* rendering_context->dim.y * RENDERING_BYTES_PER_VOXEL);
 
 #if AMIDE_DEBUG
-  g_print("\tCopying Data into Rendering Volume");
+  g_print("\tCopying Data into Rendering Volume\t");
 #endif
 
 
@@ -341,7 +346,15 @@ void rendering_context_load_volume(rendering_t * rendering_context, const interp
   					   rendering_context->current_coord_frame);
   new_offset.z -= rendering_context->voxel_size.z;
   slice_coord_frame = rendering_context->initial_coord_frame;
+#ifdef AMIDE_DEBUG
+  divider = ((rendering_context->dim.z/20.0) < 1) ? 1 : (rendering_context->dim.z/20.0);
+#endif 
   for (i_voxel.z = 0; i_voxel.z < rendering_context->dim.z; i_voxel.z++) {
+#ifdef AMIDE_DEBUG
+    x = div(i_voxel.z,divider);
+    if (x.rem == 0)
+      g_print(".");
+#endif 
     /* use volume_get_slice to slice out our needed data */
     slice_far_corner.z += rendering_context->voxel_size.z;
     new_offset.z += rendering_context->voxel_size.z; 
@@ -365,6 +378,9 @@ void rendering_context_load_volume(rendering_t * rendering_context, const interp
       }
     slice = volume_free(slice);
   }
+#ifdef AMIDE_DEBUG
+    g_print("\n");
+#endif
 
   /* compute surface normals (for shading) and gradient magnitudes (for classification) */
   if (vpVolumeNormals(rendering_context->vpc, density, density_size, RENDERING_DENSITY_FIELD, 
@@ -719,6 +735,8 @@ rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t rend
 
   /* figure out all encompasing corners for the slices based on our viewing axis */
   volumes_get_view_corners(volumes, render_coord_frame, render_corner);
+  render_corner[0] = realspace_alt_coord_to_base(render_corner[0], render_coord_frame);
+  render_corner[1] = realspace_alt_coord_to_base(render_corner[1], render_coord_frame);
   size = rp_sub(render_corner[1], render_corner[0]);
   max_dim = ceil(REALPOINT_MAX(size)/min_voxel_size); /* what our largest dimension could possibly be */
   rs_set_offset(&render_coord_frame, render_corner[0]);

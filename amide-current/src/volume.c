@@ -36,8 +36,8 @@
 #include "raw_data_import.h"
 #include "idl_data_import.h"
 #include "pem_data_import.h"
-#include "medcon_import.h"
 #include "cti_import.h"
+#include "medcon_import.h"
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", 
@@ -54,6 +54,29 @@ gchar * modality_names[] = {"PET", \
 			    "MRI", \
 			    "Other"};
 
+gchar * import_menu_names[] = {
+  "",
+  "_Raw Data", 
+  "_PEM Technologies", 
+  "_IDL Output",
+#ifdef AMIDE_LIBECAT_SUPPORT
+  "_CTI 6.4/7.0 via libecat",
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+  "(_X)medcon importing"
+#endif
+};
+  
+gchar * import_menu_explanations[] = {
+  "",
+  "Import file as raw data",
+  "Import a PEM Technologies File (raw ASCII)",
+  "Import an IDL created file, generally from the microCT's volume rendering tool",
+  "Import a CTI 6.4 or 7.0 file using the libecat library",
+  "Import via the (X)medcon importing library (libmdc)",
+};
+
+
 /* removes a reference to a volume, frees up the volume if no more references */
 volume_t * volume_free(volume_t * volume) {
 
@@ -69,7 +92,7 @@ volume_t * volume_free(volume_t * volume) {
   /* if we've removed all reference's, free remaining data structures */
   if (volume->reference_count == 0) {
 #ifdef AMIDE_DEBUG
-    g_print("freeing volume: %s\n",volume->name);
+    //    g_print("freeing volume: %s\n",volume->name);
     //    g_print("freeing volume: %s\n\tdata:\t",volume->name);
 #endif
     volume->data_set = data_set_free(volume->data_set);
@@ -121,7 +144,7 @@ volume_t * volume_init(void) {
   temp_volume->modality = PET;
   temp_volume->voxel_size = realpoint_zero;
   if ((temp_volume->internal_scaling = data_set_FLOAT_0D_SCALING_init(1.0)) == NULL) {
-    g_warning("PACKAGE: Couldn't allocate memory for internal scaling structure");
+    g_warning("%s: Couldn't allocate memory for internal scaling structure", PACKAGE);
     return volume_free(temp_volume);
   }
   volume_set_scaling(temp_volume, 1.0);
@@ -359,8 +382,8 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
 
 /* function to import a file into a volume
    note: model_name is a secondary file needed by PEM, usually going to be set to NULL */
-volume_t * volume_import_file(const gchar * import_filename, gchar * model_filename,
-			      import_method_t import_method) {
+volume_t * volume_import_file(import_method_t import_method, int submethod,
+			      const gchar * import_filename, gchar * model_filename) {
   volume_t * import_volume;
   gchar * import_filename_base;
   gchar * import_filename_extension;
@@ -412,30 +435,30 @@ volume_t * volume_import_file(const gchar * import_filename, gchar * model_filen
 
   case IDL_DATA:
     if ((import_volume=idl_data_import(import_filename)) == NULL)
-      g_warning("PACKAGE: Could not interpret as an IDL file:\n\t%s",import_filename);
+      g_warning("%s: Could not interpret as an IDL file:\n\t%s",PACKAGE, import_filename);
     break;
     
   case PEM_DATA:
     if ((import_volume= pem_data_import(import_filename, model_filename)) == NULL)
-      g_warning("PACKAGE: Could not interpret as a PEM technologies model file:\n\t%s",	model_filename);
+      g_warning("%s: Could not interpret as a PEM technologies model file:\n\t%s",PACKAGE,model_filename);
     break;
     
 #ifdef AMIDE_LIBECAT_SUPPORT      
   case LIBECAT_DATA:
     if ((import_volume=cti_import(import_filename)) == NULL) 
-      g_warning("PACKAGE: Could not interpret as a CTI file using libecat:\n\t%s",import_filename);
+      g_warning("%s: Could not interpret as a CTI file using libecat:\n\t%s",PACKAGE, import_filename);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   case LIBMDC_DATA:
-    if ((import_volume=medcon_import(import_filename)) == NULL) 
-      g_warning("PACKAGE: Could not interpret using (X)medcon/libmdc file:\n\t%s", import_filename);
+    if ((import_volume=medcon_import(import_filename, submethod)) == NULL) 
+      g_warning("%s: Could not interpret using (X)medcon/libmdc file:\n\t%s",PACKAGE, import_filename);
     break;
 #endif
   case RAW_DATA:
   default:
     if ((import_volume=raw_data_import(import_filename)) == NULL)
-      g_warning("PACKAGE: Could not interpret as a raw data file:\n\t%s", import_filename);
+      g_warning("%s: Could not interpret as a raw data file:\n\t%s", PACKAGE, import_filename);
     break;
   }
 
@@ -501,12 +524,8 @@ volume_t * volume_copy(volume_t * src_volume) {
 
 /* adds one to the reference count of a volume */
 volume_t * volume_add_reference(volume_t * volume) {
-
-  /* sanity checks */
-  g_return_val_if_fail(volume != NULL, NULL);
-
+  g_return_val_if_fail(volume != NULL, NULL);   /* sanity checks */
   volume->reference_count++;
-
   return volume;
 }
 
@@ -550,7 +569,7 @@ void volume_set_scaling(volume_t * volume, amide_data_t new_external_scaling) {
   
   if (volume->current_scaling == NULL) {
     if ((volume->current_scaling = data_set_init()) == NULL) {
-      g_warning("PACKAGE: Couldn't allocate space for current scaling stucture");
+      g_warning("%s: Couldn't allocate space for current scaling stucture", PACKAGE);
       return;
     }
     volume->current_scaling->dim = volume->internal_scaling->dim;
@@ -737,7 +756,7 @@ void volume_recalc_max_min(volume_t * volume) {
       volume_DOUBLE_0D_SCALING_recalc_max_min(volume);
     break;
   default:
-    g_warning("PACKAGE: unobtainable case in __FILE__ at line __LINE__");
+    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
@@ -816,7 +835,7 @@ void volume_generate_distribution(volume_t * volume) {
       volume_DOUBLE_0D_SCALING_generate_distribution(volume);
     break;
   default:
-    g_warning("PACKAGE: unobtainable case in __FILE__ at line __LINE__");
+    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
@@ -825,6 +844,9 @@ void volume_generate_distribution(volume_t * volume) {
 
   
 amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i) {
+
+  if (volume == NULL) return EMPTY;
+  if (!data_set_includes_voxel(volume->data_set, i)) return EMPTY;
 
   /* hand everything off to the data type specific function */
   switch(volume->data_set->format) {
@@ -893,7 +915,7 @@ amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i) {
       return VOLUME_DOUBLE_0D_SCALING_CONTENTS(volume,i);
     break;
   default:
-    g_warning("PACKAGE: unobtainable case in __FILE__ at line __LINE__");
+    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     return 0.0;
     break;
   }
@@ -1015,6 +1037,8 @@ volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * v
   volume_list_t * temp_list = volume_list;
   volume_list_t * prev_list = NULL;
 
+  g_return_val_if_fail(vol != NULL, volume_list);
+
   /* get to the end of the list */
   while (temp_list != NULL) {
     prev_list = temp_list;
@@ -1040,6 +1064,8 @@ volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * v
 volume_list_t * volume_list_add_volume_first(volume_list_t * volume_list, volume_t * vol) {
 
   volume_list_t * temp_list;
+
+  g_return_val_if_fail(vol != NULL, volume_list);
 
   temp_list = volume_list_add_volume(NULL,vol);
   temp_list->next = volume_list;
@@ -1144,8 +1170,8 @@ amide_time_t volume_list_min_frame_duration(volume_list_t * volume_list) {
 }
 
 
-/* takes a volume and a view_axis, and gives the corners necessary for
-   the view to totally encompass the volume in the base coord frame */
+/* takes a volume and a view_axis, and gives the corners necessary for 
+   the view to totally encompass the volume in the view coord frame */
 void volume_get_view_corners(const volume_t * volume,
 			     const realspace_t view_coord_frame,
 			     realpoint_t view_corner[]) {
@@ -1161,17 +1187,12 @@ void volume_get_view_corners(const volume_t * volume,
   /* look at all eight corners of our cube, figure out the min and max coords */
   realspace_get_enclosing_corners(volume->coord_frame, volume_corner,
 				  view_coord_frame, view_corner);
-
-  /* and return the corners in the base coord frame */
-  view_corner[0] = realspace_alt_coord_to_base(view_corner[0], view_coord_frame);
-  view_corner[1] = realspace_alt_coord_to_base(view_corner[1], view_coord_frame);
-
   return;
 }
 
 
 /* takes a list of volumes and a view axis, and give the corners
-   necessary to totally encompass the volume in the base coord frame */
+   necessary to totally encompass the volume in the view coord frame */
 void volumes_get_view_corners(volume_list_t * volumes,
 			      const realspace_t view_coord_frame,
 			      realpoint_t view_corner[]) {
@@ -1183,14 +1204,10 @@ void volumes_get_view_corners(volume_list_t * volumes,
 
   temp_volumes = volumes;
   volume_get_view_corners(temp_volumes->volume,view_coord_frame,view_corner);
-  view_corner[0] = realspace_base_coord_to_alt(view_corner[0], view_coord_frame);
-  view_corner[1] = realspace_base_coord_to_alt(view_corner[1], view_coord_frame);
   temp_volumes = volumes->next;
 
   while (temp_volumes != NULL) {
     volume_get_view_corners(temp_volumes->volume,view_coord_frame,temp_corner);
-    temp_corner[0] = realspace_base_coord_to_alt(temp_corner[0], view_coord_frame);
-    temp_corner[1] = realspace_base_coord_to_alt(temp_corner[1], view_coord_frame);
     view_corner[0].x = (view_corner[0].x < temp_corner[0].x) ? view_corner[0].x : temp_corner[0].x;
     view_corner[0].y = (view_corner[0].y < temp_corner[0].y) ? view_corner[0].y : temp_corner[0].y;
     view_corner[0].z = (view_corner[0].z < temp_corner[0].z) ? view_corner[0].z : temp_corner[0].z;
@@ -1199,8 +1216,6 @@ void volumes_get_view_corners(volume_list_t * volumes,
     view_corner[1].z = (view_corner[1].z > temp_corner[1].z) ? view_corner[1].z : temp_corner[1].z;
     temp_volumes = temp_volumes->next;
   }
-  view_corner[0] = realspace_alt_coord_to_base(view_corner[0], view_coord_frame);
-  view_corner[1] = realspace_alt_coord_to_base(view_corner[1], view_coord_frame);
 
   return;
 }
@@ -1491,7 +1506,7 @@ volume_t * volume_get_slice(const volume_t * volume,
     break;
   default:
     slice = NULL;
-    g_warning("PACKAGE: unobtainable case in __FILE__ at line __LINE__");
+    g_warning("%s: unobtainable case in %s at line %d", PACKAGE, __FILE__, __LINE__);
     break;
   }
 
@@ -1553,18 +1568,13 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   volumes_get_view_corners(volumes, view_coord_frame, view_corner);
 
   /* adjust the z' dimension of the view's corners */
-  view_corner[0] = realspace_base_coord_to_alt(view_corner[0],view_coord_frame);
   view_corner[0].z=0;
-  view_corner[0] = realspace_alt_coord_to_base(view_corner[0],view_coord_frame);
-
-  view_corner[1] = realspace_base_coord_to_alt(view_corner[1],view_coord_frame);
   view_corner[1].z=voxel_size.z;
-  view_corner[1] = realspace_alt_coord_to_base(view_corner[1],view_coord_frame);
 
   /* figure out the coordinate frame for the slices based on the corners returned */
   rs_set_axis(&slice_coord_frame, rs_all_axis(view_coord_frame));
-  rs_set_offset(&slice_coord_frame, view_corner[0]);
-  slice_corner = realspace_base_coord_to_alt(view_corner[1],slice_coord_frame);
+  rs_set_offset(&slice_coord_frame, realspace_alt_coord_to_base(view_corner[0],view_coord_frame));
+  slice_corner = realspace_alt_coord_to_alt(view_corner[1],view_coord_frame, slice_coord_frame);
 
   /* and get the slices */
   while (volumes != NULL) {

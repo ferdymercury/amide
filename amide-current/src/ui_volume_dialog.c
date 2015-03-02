@@ -116,7 +116,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   /* and if the threshold dialog corresponds to this volume, kill it */
   if (ui_study->threshold_dialog != NULL)
     if (amitk_threshold_dialog_volume(AMITK_THRESHOLD_DIALOG(ui_study->threshold_dialog)) == volume)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold_dialog), "delete_event");
+      gtk_widget_destroy(ui_study->threshold_dialog);
 
   
   /* sanity checks */
@@ -127,6 +127,7 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   volume_dialog = gnome_property_box_new();
   gtk_window_set_title(GTK_WINDOW(volume_dialog), temp_string);
   g_free(temp_string);
+  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
 
   /* create the temp volume which will store the new information, and then
      can either be applied or cancelled */
@@ -644,7 +645,6 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   label = gtk_label_new("Immutables");
   table_row=0;
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
-  ui_volume_list_item->dialog = volume_dialog; /* save a pointer to the dialog */
 
 
   /* widget to tell you the internal data format */

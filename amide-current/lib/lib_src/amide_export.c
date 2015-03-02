@@ -135,7 +135,7 @@ void amide_study_import_pem(GtkWidget * amide_widget,
   ui_study = gtk_object_get_data(GTK_OBJECT(amide_widget), "ui_study");
 
   /* import the file */
-  ui_study_import_file(ui_study, pem_data_filename, pem_model_filename, PEM_DATA);
+  ui_study_import_file(ui_study, PEM_DATA, 0, pem_data_filename, pem_model_filename);
 
   return;
 }

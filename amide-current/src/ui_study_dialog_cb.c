@@ -260,7 +260,7 @@ void ui_study_dialog_cb_help(GnomePropertyBox *study_dialog, gint page_number, g
 }
 
 /* function called to destroy the study dialog */
-void ui_study_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_study_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   study_t * study_new_info;
@@ -269,13 +269,10 @@ void ui_study_dialog_cb_close(GtkWidget* widget, gpointer data) {
   study_new_info = gtk_object_get_data(GTK_OBJECT(widget), "study_new_info");
   study_new_info = study_free(study_new_info);
 
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_study->study_dialog));
-
   /* make sure the pointer in the roi_list_item is nulled */
   ui_study->study_dialog = NULL;
 
-  return;
+  return FALSE;
 }
 
 

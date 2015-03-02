@@ -1,3 +1,18 @@
+0.4.6
+	* added 2D and 3D isocontour ROI's
+	* no more notion of an "active" roi.  All roi's are now always moveable
+	* multiple fixes for closing widgets
+	* fix for crashing study parameter window
+	* fixed cti import bug that screwed up the value for small frame durations
+	* added more logic for dealing with corrupted CTI files
+	* canvas event processing functions combined and rewritten for clarity
+	* (X)medcon importing now (hopefully) get's scaling constants right
+	* specific (X)medcon import fallbacks can be specified by the user
+	* added ability to load in PDP and VAX raw data formats
+	* can now handle data set with inf and nan values
+	* fixed the bug with saving ROI statistics
+	* gcc requirement is now listed as gcc 3.0.2
+	
 0.4.5
 	* removed notion of "grains" for calculating ROI statistics
 	* added a "scaled" color strip to the threshold widget

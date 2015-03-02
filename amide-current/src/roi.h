@@ -29,10 +29,13 @@
 /* header files that are always needed with this file */
 #include "volume.h"
 
-typedef enum {ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
+
+typedef enum {ELLIPSOID, CYLINDER, BOX, ISOCONTOUR_2D, ISOCONTOUR_3D, NUM_ROI_TYPES} roi_type_t;
 
 typedef struct _roi_t roi_t;
 typedef struct _roi_list_t roi_list_t;
+
+     
 
 /* the amide roi structure */
 struct _roi_t {
@@ -42,6 +45,11 @@ struct _roi_t {
   realpoint_t corner; /*far corner,near corner is always 0,0,0 in roi coord frame*/
   roi_t * parent;
   roi_list_t * children;
+
+  /* isocontour specific stuff */
+  data_set_t * isocontour;
+  realpoint_t voxel_size;
+  amide_data_t isocontour_value;
 
   /* stuff that doesn't need to be saved */
   guint reference_count;
@@ -53,6 +61,12 @@ struct _roi_list_t {
   guint reference_count;
   roi_list_t * next;
 };
+
+/* macros */
+#define ROI_REALPOINT_TO_VOXEL(roi, real, vox) (((vox).x = floor((real).x/(roi)->voxel_size.x)), \
+						((vox).y = floor((real).y/(roi)->voxel_size.y)), \
+						((vox).z = floor((real).z/(roi)->voxel_size.z)), \
+						((vox).t = (0)))
 
 /* external functions */
 roi_t * roi_free(roi_t * roi);
@@ -75,22 +89,28 @@ roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_remove_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_copy(roi_list_t * src_roi_list);
 roi_list_t * roi_list_add_reference(roi_list_t * rois);
-void roi_free_points_list(GSList ** plist);
+GSList * roi_free_points_list(GSList * list);
 gboolean roi_undrawn(const roi_t * roi);
-GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
-					    const roi_t * roi);
-
-void roi_subset_of_volume(roi_t * roi,
+GSList * roi_get_slice_intersection_line(const roi_t * roi, const volume_t * view_slice);
+roi_t * roi_get_slice_intersection_image(const roi_t * roi, const volume_t * view_slice);
+void roi_subset_of_volume(const roi_t * roi,
 			  const volume_t * volume,
 			  intpoint_t frame,
 			  voxelpoint_t * subset_start,
 			  voxelpoint_t * subset_dim);
+void roi_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t value_vp);
 
 /* external variables */
 extern gchar * roi_type_names[];
 extern gchar * roi_menu_names[];
 extern gchar * roi_menu_explanation[];
 
+/* variable type function declarations */
+#include "roi_ELLIPSOID.h"
+#include "roi_CYLINDER.h"
+#include "roi_BOX.h"
+#include "roi_ISOCONTOUR_2D.h"
+#include "roi_ISOCONTOUR_3D.h"
 
 
 

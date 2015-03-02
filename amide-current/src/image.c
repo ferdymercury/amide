@@ -35,6 +35,55 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 }
 
 
+GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, rgba_t color,
+				     realspace_t * return_frame,
+				     realpoint_t * return_corner) {
+
+  GdkPixbuf * temp_image;
+  roi_t * intersection_roi;
+  voxelpoint_t i;
+  guchar * rgba_data;
+  voxelpoint_t dim;
+
+  
+  if ((intersection_roi = roi_get_slice_intersection_image(roi, slice)) == NULL)
+    return NULL;
+
+  dim = intersection_roi->isocontour->dim;
+
+  if ((rgba_data = (guchar *) g_malloc(4*sizeof(guchar)*dim.x*dim.y)) == NULL) {
+    g_warning("%s: couldn't allocate memory for rgba_data for roi image",PACKAGE);
+    return NULL;
+  }
+
+  *return_frame = intersection_roi->coord_frame;
+  *return_corner = intersection_roi->corner;
+
+  i.z = i.t = 0;
+  for (i.y=0 ; i.y < dim.y; i.y++)
+    for (i.x=0 ; i.x < dim.x; i.x++)
+      if (*DATA_SET_UBYTE_POINTER(intersection_roi->isocontour, i) == 1) {
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = color.r;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = color.g;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = color.b;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = 0xFF;
+      }	else {
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = 0x00;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = 0x00;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = 0x00;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = 0x00;
+      }
+
+  temp_image = gdk_pixbuf_new_from_data(rgba_data, GDK_COLORSPACE_RGB, TRUE,8,
+					dim.x,dim.y,dim.x*4*sizeof(guchar),
+					image_free_rgb_data, 
+					NULL);
+
+  intersection_roi = roi_free(intersection_roi);
+
+  return temp_image;
+}
+
 /* function to return a blank image */
 GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t image_color) {
   

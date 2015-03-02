@@ -74,12 +74,17 @@ typedef struct hsv_t {
   hsv_data_t v;
 } hsv_t;
 
+
+/* defines */
+#define color_table_rgba_to_uint32(rgba) (((rgba).r<<24) | ((rgba).g<<16) | ((rgba).b<<8) | ((rgba).a<<0))
+
 /* external functions */
-guint32 color_table_outline_color(color_table_t which, gboolean highlight);
+rgba_t color_table_outline_color(color_table_t which, gboolean highlight);
 rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
 			  amide_data_t min, amide_data_t max);
 /* external variables */
 extern gchar * color_table_names[];
+extern rgba_t rgba_black;
 
 
 /* internal functions */

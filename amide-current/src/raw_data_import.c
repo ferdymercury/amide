@@ -51,7 +51,7 @@ guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info) {
   
   /* sanity checks */
   if (raw_data_info->volume->data_set == NULL) {
-    g_warning("PACKAGE: called raw_data_update_num_bytes with no data_set");
+    g_warning("%s: called raw_data_update_num_bytes with no data_set", PACKAGE);
     return 0;
   }
     

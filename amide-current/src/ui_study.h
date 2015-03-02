@@ -54,10 +54,6 @@
 #define UI_STUDY_MAX_ROI_WIDTH 5
 
 typedef enum {
-  VOLUME_MODE, ROI_MODE, NUM_MODES
-} ui_study_mode_t;
-
-typedef enum {
   UPDATE_ARROWS, 
   REFRESH_IMAGE,
   UPDATE_IMAGE, 
@@ -71,13 +67,16 @@ typedef enum {
   HELP_INFO_BLANK,
   HELP_INFO_CANVAS_VOLUME,
   HELP_INFO_CANVAS_ROI,
+  HELP_INFO_CANVAS_ISOCONTOUR_ROI,
   HELP_INFO_CANVAS_NEW_ROI,
+  HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
   HELP_INFO_CANVAS_ALIGN,
   HELP_INFO_TREE_VOLUME,
   HELP_INFO_TREE_ROI,
   HELP_INFO_TREE_STUDY,
   HELP_INFO_TREE_NONE,
   HELP_INFO_UPDATE_LOCATION,
+  HELP_INFO_UPDATE_VALUE,
   NUM_HELP_INFOS
 } ui_study_help_info_t;
 
@@ -114,6 +113,55 @@ typedef enum {
   NUM_UI_STUDY_TREE_TYPES
 } ui_study_tree_object_t;
 
+typedef enum {
+  UI_STUDY_EVENT_ENTER_VOLUME, /* 0 */
+  UI_STUDY_EVENT_ENTER_NEW_NORMAL_ROI,
+  UI_STUDY_EVENT_ENTER_NEW_ISOCONTOUR_ROI,
+  UI_STUDY_EVENT_ENTER_NORMAL_ROI,
+  UI_STUDY_EVENT_ENTER_ISOCONTOUR_ROI,
+  UI_STUDY_EVENT_LEAVE, /* 5 */
+  UI_STUDY_EVENT_PRESS_MOVE_VIEW,
+  UI_STUDY_EVENT_PRESS_MINIMIZE_VIEW,
+  UI_STUDY_EVENT_PRESS_RESIZE_VIEW,
+  UI_STUDY_EVENT_PRESS_ALIGN_HORIZONTAL,
+  UI_STUDY_EVENT_PRESS_ALIGN_VERTICAL, /* 10 */
+  UI_STUDY_EVENT_PRESS_NEW_ROI,
+  UI_STUDY_EVENT_PRESS_SHIFT_ROI,
+  UI_STUDY_EVENT_PRESS_ROTATE_ROI,
+  UI_STUDY_EVENT_PRESS_RESIZE_ROI,
+  UI_STUDY_EVENT_PRESS_CHANGE_ISOCONTOUR, /* 15 */
+  UI_STUDY_EVENT_MOTION,
+  UI_STUDY_EVENT_MOTION_MOVE_VIEW,
+  UI_STUDY_EVENT_MOTION_MINIMIZE_VIEW,
+  UI_STUDY_EVENT_MOTION_RESIZE_VIEW,
+  UI_STUDY_EVENT_MOTION_ALIGN_HORIZONTAL, /* 20 */
+  UI_STUDY_EVENT_MOTION_ALIGN_VERTICAL, 
+  UI_STUDY_EVENT_MOTION_NEW_ROI,
+  UI_STUDY_EVENT_MOTION_SHIFT_ROI,
+  UI_STUDY_EVENT_MOTION_ROTATE_ROI,
+  UI_STUDY_EVENT_MOTION_RESIZE_ROI,/* 25 */
+  UI_STUDY_EVENT_MOTION_CHANGE_ISOCONTOUR, 
+  UI_STUDY_EVENT_RELEASE_MOVE_VIEW,
+  UI_STUDY_EVENT_RELEASE_MINIMIZE_VIEW,
+  UI_STUDY_EVENT_RELEASE_RESIZE_VIEW,
+  UI_STUDY_EVENT_RELEASE_ALIGN_HORIZONTAL, /* 30 */
+  UI_STUDY_EVENT_RELEASE_ALIGN_VERTICAL, 
+  UI_STUDY_EVENT_RELEASE_NEW_ROI,
+  UI_STUDY_EVENT_RELEASE_SHIFT_ROI,
+  UI_STUDY_EVENT_RELEASE_ROTATE_ROI,
+  UI_STUDY_EVENT_RELEASE_RESIZE_ROI,  /* 35 */
+  UI_STUDY_EVENT_RELEASE_CHANGE_ISOCONTOUR,
+  UI_STUDY_EVENT_CANCEL_ALIGN_HORIZONTAL,
+  UI_STUDY_EVENT_CANCEL_ALIGN_VERTICAL,
+  UI_STUDY_EVENT_ENACT_ALIGN_HORIZONTAL,
+  UI_STUDY_EVENT_ENACT_ALIGN_VERTICAL, /* 40 */
+  UI_STUDY_EVENT_DO_NOTHING
+} ui_study_canvas_event_t;
+
+typedef enum {
+  OBJECT_VOLUME_TYPE, OBJECT_ROI_TYPE, NUM_OBJECT_TYPES
+} ui_study_canvas_object_t;
+      
 /* ui_study data structures */
 typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
@@ -124,11 +172,10 @@ typedef struct ui_study_t {
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * study_dialog;
   gboolean study_selected;
+  roi_t * undrawn_roi;
   GtkWidget * time_dialog;
   GtkWidget * time_button;
-  ui_study_mode_t current_mode; /* are we currently working on an roi or a volume */
   volume_t * current_volume; /* the last volume double clicked on */
-  roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
   study_t * study; /* pointer to the study data structure */
@@ -152,19 +199,24 @@ typedef struct ui_study_t {
 
 /* external functions */
 void ui_study_add_volume(ui_study_t * ui_study, volume_t * new_volume);
-void ui_study_import_file(ui_study_t * ui_study, gchar * import_filename, 
-			  gchar * model_filename, import_method_t import_method);
+void ui_study_import_file(ui_study_t * ui_study, import_method_t import_method, int submethod,
+			  gchar * import_filename, gchar * model_filename);
 GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin);
-void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, realpoint_t new_point);
+void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, 
+			       realpoint_t new_point, amide_data_t value);
 realpoint_t ui_study_cp_2_rp(ui_study_t * ui_study, view_t view, canvaspoint_t canvas_cp);
 canvaspoint_t ui_study_rp_2_cp(ui_study_t * ui_study, view_t view, realpoint_t canvas_rp);
 void ui_study_update_time_button(ui_study_t * ui_study);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
-			     realpoint_t center, guint32 outline_color);
+			     realpoint_t center, rgba_t outline_color);
 GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
-GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t view, 
+GnomeCanvasItem *  ui_study_update_canvas_roi_line(ui_study_t * ui_study, view_t view, 
+						   GnomeCanvasItem * roi_item, roi_t * roi);
+GnomeCanvasItem *  ui_study_update_canvas_roi_image(ui_study_t * ui_study, view_t view, 
+						    GnomeCanvasItem * roi_item, roi_t * roi);
+GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,  view_t view, 
 					      GnomeCanvasItem * roi_item, roi_t * roi);
 void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view);
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,  ui_study_update_t update);

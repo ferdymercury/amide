@@ -19,8 +19,9 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-2.95.2, as AMIDE is fairly unstable when compiled
-with egcs-1.1.2 
+I currently use gcc-3.0.2, as AMIDE is fairly unstable when compiled
+with any previous version of the gcc compiler if optimizations are
+used
 
 
 2) Gtk+/Gnome:

@@ -11,6 +11,7 @@ amide_SOURCES = \
 	gtkdirsel.h \
 	$(DATA_SET_VARIABLE_SRCS) \
 	$(VOLUME_VARIABLE_SRCS) \
+	$(ROI_VARIABLE_SRCS) \
 	$(ANALYSIS_VARIABLE_SRCS) \
 	amide.c \
 	amide.h \
@@ -129,7 +130,23 @@ ANALYSIS_VARIABLE_SRCS = \
 	analysis_CYLINDER.c \
 	analysis_CYLINDER.h \
 	analysis_BOX.c \
-	analysis_BOX.h
+	analysis_BOX.h \
+	analysis_ISOCONTOUR_2D.c \
+	analysis_ISOCONTOUR_2D.h \
+	analysis_ISOCONTOUR_3D.c \
+	analysis_ISOCONTOUR_3D.h
+
+ROI_VARIABLE_SRCS = \
+	roi_ELLIPSOID.c \
+	roi_ELLIPSOID.h \
+	roi_CYLINDER.c \
+	roi_CYLINDER.h \
+	roi_BOX.c \
+	roi_BOX.h \
+	roi_ISOCONTOUR_2D.c \
+	roi_ISOCONTOUR_2D.h \
+	roi_ISOCONTOUR_3D.c \
+	roi_ISOCONTOUR_3D.h
 
 DATA_SET_VARIABLE_SRCS = \
 	data_set_UBYTE.c \
@@ -206,6 +223,10 @@ ANALYSIS_VARIABLE_INCLUDES = \
 	analysis_variable_type.c \
 	analysis_variable_type.h 
 
+ROI_VARIABLE_INCLUDES = \
+	roi_variable_type.c \
+	roi_variable_type.h 
+
 DATA_SET_VARIABLE_INCLUDES = \
 	data_set_variable_type.c \
 	data_set_variable_type.h 
@@ -216,6 +237,15 @@ VOLUME_VARIABLE_INCLUDES = \
 
 $(ANALYSIS_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_INCLUDES)
 	@for i in $(ANALYSIS_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(ROI_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ROI_VARIABLE_INCLUDES)
+	@for i in $(ROI_VARIABLE_SRCS) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -242,5 +272,6 @@ $(VOLUME_VARIABLE_SRCS): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_INCLUDES)
             done
 
 
-CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
+CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(ROI_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
 DISTCLEANFILES = *~
+

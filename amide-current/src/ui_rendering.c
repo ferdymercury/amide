@@ -201,6 +201,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
   ui_rendering = ui_rendering_init(volumes, coord_frame, start, duration, interpolation);
   ui_rendering->app = GNOME_APP(gnome_app_new(PACKAGE, "Rendering Window"));
+  gtk_window_set_policy (GTK_WINDOW(ui_rendering->app), TRUE, TRUE, TRUE);
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(ui_rendering->app), "realize", 
@@ -214,14 +215,12 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
   /* make the widgets for this dialog box */
   packing_table = gtk_table_new(3,3,FALSE);
-  gnome_app_set_contents(ui_rendering->app, GTK_WIDGET(packing_table));
+  gnome_app_set_contents(ui_rendering->app, packing_table);
 
   /* start making those widgets */
   vbox = gtk_vbox_new(FALSE, Y_PADDING);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(vbox), 0,1,0,2,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   Y_PACKING_OPTIONS | GTK_FILL,
+  gtk_table_attach(GTK_TABLE(packing_table), vbox, 0,1,0,2,
+		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
 
   /* create the z dial */
@@ -331,7 +330,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
    * wanna hit to rerender the volume, unless you have immediate rendering set */
   ui_rendering->render_button = gtk_button_new_with_label("Render");
   gtk_box_pack_start(GTK_BOX(vbox), ui_rendering->render_button, FALSE, FALSE, 0);
-  gtk_widget_set_sensitive(GTK_WIDGET(ui_rendering->render_button), !(ui_rendering->immediate));
+  gtk_widget_set_sensitive(ui_rendering->render_button, !(ui_rendering->immediate));
   gtk_signal_connect(GTK_OBJECT(ui_rendering->render_button), "clicked", 
 		     GTK_SIGNAL_FUNC(ui_rendering_cb_render), ui_rendering);
 
@@ -388,7 +387,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(ui_rendering->app));
-  number_of_windows++;
+  amide_register_window((gpointer) ui_rendering->app);
 
   return;
 }
@@ -396,6 +395,23 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

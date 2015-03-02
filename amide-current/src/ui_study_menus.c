@@ -35,6 +35,7 @@
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
 #include "ui_series.h"
+#include "medcon_import.h"
 
 /* function to fill in a radioitem */
 void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item, 
@@ -65,14 +66,22 @@ void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item,
 				     gchar * tooltip,
 				     gpointer callback_func,
 				     gpointer callback_data) {
-  
-  item->type = GNOME_APP_UI_ITEM;
+
+  ui_study_menus_fill_in_radioitem(item, name, tooltip, callback_func, callback_data, NULL);
+
+  return;
+}
+void ui_study_menus_fill_in_submenu(GnomeUIInfo * item, 
+				    gchar * name,
+				    gchar * tooltip,
+				    GnomeUIInfo * submenu) {
+  item->type = GNOME_APP_UI_SUBTREE;
   item->label = name;
   item->hint = tooltip;
-  item->moreinfo = callback_func;
-  item->user_data = callback_data;
+  item->moreinfo = submenu;
+  item->user_data = NULL;
   item->unused_data = NULL;
-  item->pixmap_type =  GNOME_APP_PIXMAP_DATA;
+  item->pixmap_type = (GnomeUIPixmapType) 0; 
   item->pixmap_info = NULL;
   item->accelerator_key = 0;
   item->ac_mods = (GdkModifierType) 0;
@@ -104,31 +113,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   view_t i_view;
   import_method_t i_method;
+  libmdc_import_method_t i_libmdc;
   roi_type_t i_roi_type;
+  gint counter;
 
-  /* the submenus under the series_type menu */
-  GnomeUIInfo import_specific_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Raw Data"),
-			  N_("Import file as raw data"),
-			  ui_study_cb_import, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_PEM Technologies"),
-			  N_("Import a PEM Technologies File (raw ASCII)"),
-			  ui_study_cb_import, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_IDL microCT Output"),
-			  N_("Import an IDL created file, generally from the microCT's volume rendering tool"),
-			  ui_study_cb_import, ui_study, NULL),
-#ifdef AMIDE_LIBECAT_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_CTI 6.4/7.0 via libecat"),
-			  N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
-			  ui_study_cb_import, ui_study, NULL),
-#endif
-#ifdef AMIDE_LIBMDC_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("(_X)medcon importing"),
-			  N_("Let the (X)medcon importing library (libmdc) guess: Acr/Nema 2.0, Analyze, DICOM 3.0, CTI 6.4, InterFile3.3, etc."),
-			  ui_study_cb_import, ui_study, NULL),
-#endif
-    GNOMEUIINFO_END
-  };
+
+  GnomeUIInfo libmdc_specific_menu[LIBMDC_NUM_IMPORT_METHODS+1];
+  GnomeUIInfo import_specific_menu[NUM_IMPORT_METHODS+1];
 
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
@@ -166,7 +157,8 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Export one of the views to a data file"),
 			     export_view_menu),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study->app),
+    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
+    GNOMEUIINFO_MENU_EXIT_ITEM(ui_study_cb_exit, ui_study),
     GNOMEUIINFO_END
   };
 
@@ -306,19 +298,60 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     ui_study_menus_fill_in_menuitem(&(add_roi_menu[i_roi_type]),
 				    roi_menu_names[i_roi_type], 
 				    roi_menu_explanation[i_roi_type],
-				    ui_study_cb_add_roi,
-				    ui_study);
+				    ui_study_cb_add_roi, ui_study);
   ui_study_menus_fill_in_end(&(add_roi_menu[NUM_ROI_TYPES]));
 
+  for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++) 
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_method == LIBMDC_DATA) 
+      ui_study_menus_fill_in_submenu(&(import_specific_menu[i_method-RAW_DATA]),
+				     import_menu_names[i_method],
+				     import_menu_explanations[i_method],
+				     libmdc_specific_menu);
+    else
+#endif
+      ui_study_menus_fill_in_menuitem(&(import_specific_menu[i_method-RAW_DATA]),
+				      import_menu_names[i_method],
+				      import_menu_explanations[i_method],
+				      ui_study_cb_import, ui_study);
+  ui_study_menus_fill_in_end(&(import_specific_menu[NUM_IMPORT_METHODS-RAW_DATA]));
+
+#ifdef AMIDE_LIBMDC_SUPPORT
+  counter = 0;
+  for (i_libmdc = 0; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
+    if (medcon_import_supports(i_libmdc)) {
+      ui_study_menus_fill_in_menuitem(&(libmdc_specific_menu[counter]),
+				      libmdc_menu_names[i_libmdc],
+				      libmdc_menu_explanations[i_libmdc],
+				      ui_study_cb_import,
+				      ui_study);
+      counter++;
+    }
+  }
+  ui_study_menus_fill_in_end(&(libmdc_specific_menu[counter]));
+    
+#endif
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
 
   /* add some info to some of the menus 
      note: the "Importing guess" widget doesn't have data set, NULL == AMIDE_GUESS */ 
-  for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++)
+  for (i_method = RAW_DATA; i_method < NUM_IMPORT_METHODS; i_method++) 
     gtk_object_set_data(GTK_OBJECT(import_specific_menu[i_method-RAW_DATA].widget),
 			"method", GINT_TO_POINTER(i_method));
+#ifdef AMIDE_LIBMDC_SUPPORT
+  counter = 0;
+  for (i_libmdc = LIBMDC_NONE; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
+    if (medcon_import_supports(i_libmdc)) {
+      gtk_object_set_data(GTK_OBJECT(libmdc_specific_menu[counter].widget),
+			  "method", GINT_TO_POINTER(LIBMDC_DATA));
+      gtk_object_set_data(GTK_OBJECT(libmdc_specific_menu[counter].widget),
+			  "submethod", GINT_TO_POINTER(i_libmdc));
+      counter++;
+    }
+  }
+#endif
 
   for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++)
     gtk_object_set_data(GTK_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 

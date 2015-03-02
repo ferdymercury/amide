@@ -3,22 +3,21 @@ misc list of things todo:
 
 for next release?
 -----------------
-
-
+       
 big things:
 -----------
 * aligning of data sets by specifying >= 3 points in each
 * aligning of data using automated registration?
 * guppi interface for drawing graphs of ROI statistics
 * allow looking at only a subset of the data (i.e. cropping)
-* isocontour roi's
- 
- 
  
                        
 small things:
 -------------
-* check that glitchy drawing of gamma curve doesn't crash under MacX anymore
+* adding volume rendering of roi's should be relatively easy
+* add thickness/line style for isocontours?
+* figure out a better way of determining which slice we're drawning a 2D isocontour on
+* gamma curve drawing still crashes program under MacX... don't use MacX for now
 * change realpoint to 4D?
 * figure out what to do with the extraneous study if you start
 	amide, and then load in a file...
@@ -31,6 +30,11 @@ small things:
 * should all voxel's that an roi edge passes through be displayed?
 * when moving roi, should probably update roi dialog, same thing with volumes
 * get libamide compiling correctly under OS X
+* should add unique ID to each data set, This will allow cool things
+	like having multiple volumes using and saving the same data set 
+	(rather then having to copy the data).
+* ISOCONTOUR_3D won't work quite right if the user is looking over multiple frames
+	problem is in picking "frame" in ui_study_cb.c
 
 
 probably before 1.0 things:
@@ -41,6 +45,7 @@ probably before 1.0 things:
 * rewrite documentation
 * add quad-linear interpolation for short time periods?
 	would be especially useful for dynamic rendering movies
+* all windows should have an exit menu item in addition to close
 
 probably post 1.0 things:
 ----------------

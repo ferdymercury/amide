@@ -33,11 +33,17 @@
 
 /* setup the types for various internal data formats */
 /* data format is the formats that data can take in memory */
-typedef enum {UBYTE, SBYTE, 
-	      USHORT, SSHORT, 
-	      UINT, SINT, 
-	      FLOAT, DOUBLE, 
-	      NUM_DATA_FORMATS} data_format_t;
+typedef enum {
+  UBYTE, 
+  SBYTE, 
+  USHORT, 
+  SSHORT, 
+  UINT, 
+  SINT, 
+  FLOAT, 
+  DOUBLE, 
+  NUM_DATA_FORMATS
+} data_format_t;
 
 typedef guint8 data_set_UBYTE_t;
 typedef gint8 data_set_SBYTE_t;

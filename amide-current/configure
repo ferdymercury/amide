@@ -904,7 +904,7 @@ fi
 
 PACKAGE=amide
 
-VERSION=0.4.5
+VERSION=0.4.6
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { echo "configure: error: source directory already configured; run "make distclean" there first" 1>&2; exit 1; }
@@ -6211,6 +6211,47 @@ fi
 
 
 
+echo $ac_n "checking for matrix_open in -lecat""... $ac_c" 1>&6
+echo "configure:6216: checking for matrix_open in -lecat" >&5
+ac_lib_var=`echo ecat'_'matrix_open | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lecat  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 6224 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char matrix_open();
+
+int main() {
+matrix_open()
+; return 0; }
+EOF
+if { (eval echo configure:6235: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  FOUND_LIBECAT=yes
+else
+  echo "$ac_t""no" 1>&6
+FOUND_LIBECAT=no
+fi
+
 # Check whether --enable-libecat or --disable-libecat was given.
 if test "${enable_libecat+set}" = set; then
   enableval="$enable_libecat"
@@ -6220,7 +6261,7 @@ else
 fi
 
 
-if test $enable_libecat = yes; then
+if (test $enable_libecat = yes) && (test $FOUND_LIBECAT = yes); then
 	echo "Compiling with libecat/CTI file support"
 	AMIDE_LIBECAT_LIBS="-lecat"
 	
@@ -6236,6 +6277,47 @@ fi
 
 
 
+echo $ac_n "checking for MdcOpenFile in -lmdc""... $ac_c" 1>&6
+echo "configure:6282: checking for MdcOpenFile in -lmdc" >&5
+ac_lib_var=`echo mdc'_'MdcOpenFile | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lmdc  $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 6290 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char MdcOpenFile();
+
+int main() {
+MdcOpenFile()
+; return 0; }
+EOF
+if { (eval echo configure:6301: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  FOUND_MEDCON=yes
+else
+  echo "$ac_t""no" 1>&6
+FOUND_MEDCON=no
+fi
+
 # Check whether --enable-libmdc or --disable-libmdc was given.
 if test "${enable_libmdc+set}" = set; then
   enableval="$enable_libmdc"
@@ -6245,7 +6327,7 @@ else
 fi
 
 
-if test $enable_libmdc = yes; then
+if (test $enable_libmdc = yes) && (test $FOUND_MEDCON = yes); then
 	echo "Compiling with xmedcon/libmdc file support"
 	AMIDE_LIBMDC_LIBS="-lmdc"
 	
@@ -6258,6 +6340,47 @@ else
 fi
 
 
+echo $ac_n "checking for vpGetErrorString in -lvolpack""... $ac_c" 1>&6
+echo "configure:6345: checking for vpGetErrorString in -lvolpack" >&5
+ac_lib_var=`echo volpack'_'vpGetErrorString | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lvolpack -lm $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 6353 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char vpGetErrorString();
+
+int main() {
+vpGetErrorString()
+; return 0; }
+EOF
+if { (eval echo configure:6364: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  FOUND_VOLPACK=yes
+else
+  echo "$ac_t""no" 1>&6
+FOUND_VOLPACK=no
+fi
+
 # Check whether --enable-libvolpack or --disable-libvolpack was given.
 if test "${enable_libvolpack+set}" = set; then
   enableval="$enable_libvolpack"
@@ -6267,7 +6390,7 @@ else
 fi
 
 
-if test $enable_libvolpack = yes; then
+if (test $enable_libvolpack = yes) && (test $FOUND_VOLPACK = yes); then
 	echo "Compiling with libvolpack rendering support "
 	AMIDE_LIBVOLPACK_LIBS="-lvolpack"
 	
@@ -6280,6 +6403,41 @@ else
 fi
 
 
+# Extract the first word of "mpeg_encode", so it can be a program name with args.
+set dummy mpeg_encode; ac_word=$2
+echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:6410: checking for $ac_word" >&5
+if eval "test \"`echo '$''{'ac_cv_path_MPEG_ENCODE'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  case "$MPEG_ENCODE" in
+  /*)
+  ac_cv_path_MPEG_ENCODE="$MPEG_ENCODE" # Let the user override the test with a path.
+  ;;
+  ?:/*)			 
+  ac_cv_path_MPEG_ENCODE="$MPEG_ENCODE" # Let the user override the test with a dos path.
+  ;;
+  *)
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  ac_dummy="$PATH"
+  for ac_dir in $ac_dummy; do 
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_path_MPEG_ENCODE="$ac_dir/$ac_word"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+  ;;
+esac
+fi
+MPEG_ENCODE="$ac_cv_path_MPEG_ENCODE"
+if test -n "$MPEG_ENCODE"; then
+  echo "$ac_t""$MPEG_ENCODE" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+ 
 # Check whether --enable-mpeg_encode or --disable-mpeg_encode was given.
 if test "${enable_mpeg_encode+set}" = set; then
   enableval="$enable_mpeg_encode"
@@ -6289,7 +6447,7 @@ else
 fi
 
 
-if test $enable_mpeg_encode = yes; then
+if (test $enable_mpeg_encode = yes) && (test -x $MPEG_ENCODE); then
 	echo "Compiling with mpeg_encode movie support "
 	cat >> confdefs.h <<EOF
 #define AMIDE_MPEG_ENCODE_BIN "mpeg_encode"
@@ -6302,6 +6460,8 @@ EOF
 else
 	echo "Compiling without mpeg_encode movie support"
 fi
+
+
 
 # Check whether --enable-libamide or --disable-libamide was given.
 if test "${enable_libamide+set}" = set; then
@@ -6545,6 +6705,7 @@ s%@AMIDE_DEBUG_CFLAGS@%$AMIDE_DEBUG_CFLAGS%g
 s%@AMIDE_LIBECAT_LIBS@%$AMIDE_LIBECAT_LIBS%g
 s%@AMIDE_LIBMDC_LIBS@%$AMIDE_LIBMDC_LIBS%g
 s%@AMIDE_LIBVOLPACK_LIBS@%$AMIDE_LIBVOLPACK_LIBS%g
+s%@MPEG_ENCODE@%$MPEG_ENCODE%g
 s%@BUILD_LIBAMIDE_TRUE@%$BUILD_LIBAMIDE_TRUE%g
 s%@BUILD_LIBAMIDE_FALSE@%$BUILD_LIBAMIDE_FALSE%g
 s%@EXTRA_GNOME_LIBS@%$EXTRA_GNOME_LIBS%g

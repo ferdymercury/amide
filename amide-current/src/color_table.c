@@ -52,6 +52,8 @@ gchar * color_table_names[] = {"black/white linear", \
 			       "NIH", \
 			       "inverse NIH"};
 
+rgba_t rgba_black = {0, 0, 0, 0};
+
 /* this algorithm is derived from "Computer Graphics: principles and practice" */
 /* hue = [0 360], s and v are in [0,1] */
 rgb_t color_table_hsv_to_rgb(hsv_t * hsv) {
@@ -321,15 +323,17 @@ rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
 }
 
 
-guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
+rgba_t color_table_outline_color(color_table_t which, gboolean highlight) {
 
   rgba_t rgba, normal_rgba, highlight_rgba;
-  guint32 outline_color;
 
   switch(which) {
   case RED_TEMPERATURE:
   case INV_RED_TEMPERATURE:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0x00;
+    normal_rgba.g = 0xFF;
+    normal_rgba.b = 0x80;
     highlight_rgba.r = 0x00;
     highlight_rgba.g = 0xFF;
     highlight_rgba.b = 0xFF;
@@ -338,6 +342,9 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   case BLUE_TEMPERATURE:
   case INV_BLUE_TEMPERATURE:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x80;
+    normal_rgba.b = 0x00;
     highlight_rgba.r = 0xFF;
     highlight_rgba.g = 0xFF;
     highlight_rgba.b = 0x00;
@@ -346,6 +353,9 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   case GREEN_TEMPERATURE:
   case INV_GREEN_TEMPERATURE:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0x00;
+    normal_rgba.g = 0x80;
+    normal_rgba.b = 0xFF;
     highlight_rgba.r = 0xFF;
     highlight_rgba.g = 0x00;
     highlight_rgba.b = 0xFF;
@@ -354,6 +364,9 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   case HOT_METAL:
   case INV_HOT_METAL:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0x00;
+    normal_rgba.g = 0xFF;
+    normal_rgba.b = 0x80;
     highlight_rgba.r = 0x00;
     highlight_rgba.g = 0xFF;
     highlight_rgba.b = 0xFF;
@@ -362,17 +375,23 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   case HOT_BLUE:
   case INV_HOT_BLUE:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x80;
+    normal_rgba.b = 0x00;
     highlight_rgba.r = 0xFF;
-    highlight_rgba.g = 0x00;
-    highlight_rgba.b = 0xFF;
+    highlight_rgba.g = 0xFF;
+    highlight_rgba.b = 0x00;
     highlight_rgba.a = normal_rgba.a;
     break;
   case HOT_GREEN:
   case INV_HOT_GREEN:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0x80;
+    normal_rgba.g = 0x00;
+    normal_rgba.b = 0xFF;
     highlight_rgba.r = 0xFF;
-    highlight_rgba.g = 0xFF;
-    highlight_rgba.b = 0x00;
+    highlight_rgba.g = 0x00;
+    highlight_rgba.b = 0xFF;
     highlight_rgba.a = normal_rgba.a;
     break;
   case SPECTRUM:
@@ -399,14 +418,20 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
     break;
   case WB_LINEAR:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
-    highlight_rgba.r = 0xFF;
-    highlight_rgba.g = 0x00;
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x00;
+    normal_rgba.b = 0x00;
+    highlight_rgba.r = 0xF0;
+    highlight_rgba.g = 0xF0;
     highlight_rgba.b = 0x00;
     highlight_rgba.a = normal_rgba.a;
     break;
   case BW_LINEAR:
   default:
     normal_rgba = color_table_lookup(1.0, which, 0.0,1.0);
+    normal_rgba.r = 0xFF;
+    normal_rgba.g = 0x00;
+    normal_rgba.b = 0x00;
     highlight_rgba.r = 0xFF;
     highlight_rgba.g = 0xFF;
     highlight_rgba.b = 0x00;
@@ -419,7 +444,5 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   else
     rgba = normal_rgba;
 
-  outline_color = rgba.r <<24 | rgba.g <<16 | rgba.b << 8 | rgba.a << 0;
-
-  return outline_color;
+  return rgba;
 }

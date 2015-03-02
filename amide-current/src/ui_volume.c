@@ -43,8 +43,10 @@ ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list) {
   if (ui_volume_list->reference_count == 0) {
     ui_volume_list->next = ui_volume_list_free(ui_volume_list->next);
     ui_volume_list->volume = volume_free(ui_volume_list->volume);
-    if (ui_volume_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(ui_volume_list->dialog), "delete_event");
+    if (ui_volume_list->dialog != NULL) {
+      gnome_dialog_close(GNOME_DIALOG(ui_volume_list->dialog));
+      ui_volume_list->dialog = NULL;
+    }			 
     g_free(ui_volume_list);
     ui_volume_list = NULL;
   }
@@ -189,9 +191,7 @@ floatpoint_t ui_volume_list_max_min_voxel_size(ui_volume_list_t * ui_volume_list
 
   /* first, generate a volume_list we can pass to volumes_min_dim */
   temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
-  
   value=volumes_max_min_voxel_size(temp_volumes); /* now calculate the value */
-  
   temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
 
   return value;
@@ -211,9 +211,7 @@ void ui_volume_list_get_view_corners(ui_volume_list_t * ui_volume_list,
 
   /* first, generate a volume_list we can pass to volumes_get_view_corners */
   temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
-  
   volumes_get_view_corners(temp_volumes, view_coord_frame, view_corner); 
-  
   temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
 
   return;

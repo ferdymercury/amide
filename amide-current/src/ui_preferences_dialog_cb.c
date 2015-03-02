@@ -132,16 +132,13 @@ void ui_preferences_dialog_cb_help(GnomePropertyBox *preferences_dialog, gint pa
 }
 
 /* function called to destroy the preferences dialog */
-void ui_preferences_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_preferences_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
 
-  /* destroy the widget */
-  gtk_widget_destroy(ui_study->preferences_dialog);
-
   ui_study->preferences_dialog = NULL;
 
-  return;
+  return FALSE;
 }
 
 

@@ -97,6 +97,7 @@ LN_S = @LN_S@
 M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MPEG_ENCODE = @MPEG_ENCODE@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 ORBIT_CFLAGS = @ORBIT_CFLAGS@
@@ -128,10 +129,13 @@ libamideinclude_HEADERS =  	amide_export.h
 libamide_la_SOURCES =  	$(amide_SOURCES) 	amide_export.c 
 
 
-amide_SOURCES =  	gtkdial.c 	gtkdial.h 	gtkdirsel.c 	gtkdirsel.h 	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	$(ANALYSIS_VARIABLE_SRCS) 	amide.c 	amide.h 	analysis.c 	analysis.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_preferences_dialog.c 	ui_preferences_dialog.h 	ui_preferences_dialog_cb.c 	ui_preferences_dialog_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_roi_analysis_dialog.c 	ui_roi_analysis_dialog.h 	ui_roi_analysis_dialog_cb.c 	ui_roi_analysis_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	gtkdial.c 	gtkdial.h 	gtkdirsel.c 	gtkdirsel.h 	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	$(ROI_VARIABLE_SRCS) 	$(ANALYSIS_VARIABLE_SRCS) 	amide.c 	amide.h 	analysis.c 	analysis.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_preferences_dialog.c 	ui_preferences_dialog.h 	ui_preferences_dialog_cb.c 	ui_preferences_dialog_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_roi_analysis_dialog.c 	ui_roi_analysis_dialog.h 	ui_roi_analysis_dialog_cb.c 	ui_roi_analysis_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
 
 
-ANALYSIS_VARIABLE_SRCS =  	analysis_ELLIPSOID.c 	analysis_ELLIPSOID.h 	analysis_CYLINDER.c 	analysis_CYLINDER.h 	analysis_BOX.c 	analysis_BOX.h
+ANALYSIS_VARIABLE_SRCS =  	analysis_ELLIPSOID.c 	analysis_ELLIPSOID.h 	analysis_CYLINDER.c 	analysis_CYLINDER.h 	analysis_BOX.c 	analysis_BOX.h 	analysis_ISOCONTOUR_2D.c 	analysis_ISOCONTOUR_2D.h 	analysis_ISOCONTOUR_3D.c 	analysis_ISOCONTOUR_3D.h
+
+
+ROI_VARIABLE_SRCS =  	roi_ELLIPSOID.c 	roi_ELLIPSOID.h 	roi_CYLINDER.c 	roi_CYLINDER.h 	roi_BOX.c 	roi_BOX.h 	roi_ISOCONTOUR_2D.c 	roi_ISOCONTOUR_2D.h 	roi_ISOCONTOUR_3D.c 	roi_ISOCONTOUR_3D.h
 
 
 DATA_SET_VARIABLE_SRCS =  	data_set_UBYTE.c 	data_set_UBYTE.h 	data_set_SBYTE.c 	data_set_SBYTE.h 	data_set_USHORT.c 	data_set_USHORT.h 	data_set_SSHORT.c 	data_set_SSHORT.h 	data_set_UINT.c 	data_set_UINT.h 	data_set_SINT.c 	data_set_SINT.h 	data_set_FLOAT.c 	data_set_FLOAT.h 	data_set_DOUBLE.c 	data_set_DOUBLE.h 
@@ -140,10 +144,13 @@ DATA_SET_VARIABLE_SRCS =  	data_set_UBYTE.c 	data_set_UBYTE.h 	data_set_SBYTE.c 
 VOLUME_VARIABLE_SRCS =  	volume_UBYTE_0D_SCALING.c 	volume_UBYTE_0D_SCALING.h 	volume_UBYTE_1D_SCALING.c 	volume_UBYTE_1D_SCALING.h 	volume_UBYTE_2D_SCALING.c 	volume_UBYTE_2D_SCALING.h 	volume_SBYTE_0D_SCALING.c 	volume_SBYTE_0D_SCALING.h 	volume_SBYTE_1D_SCALING.c 	volume_SBYTE_1D_SCALING.h 	volume_SBYTE_2D_SCALING.c 	volume_SBYTE_2D_SCALING.h 	volume_USHORT_0D_SCALING.c 	volume_USHORT_0D_SCALING.h 	volume_USHORT_1D_SCALING.c 	volume_USHORT_1D_SCALING.h 	volume_USHORT_2D_SCALING.c 	volume_USHORT_2D_SCALING.h 	volume_SSHORT_0D_SCALING.c 	volume_SSHORT_0D_SCALING.h 	volume_SSHORT_1D_SCALING.c 	volume_SSHORT_1D_SCALING.h 	volume_SSHORT_2D_SCALING.c 	volume_SSHORT_2D_SCALING.h 	volume_UINT_0D_SCALING.c 	volume_UINT_0D_SCALING.h 	volume_UINT_1D_SCALING.c 	volume_UINT_1D_SCALING.h 	volume_UINT_2D_SCALING.c 	volume_UINT_2D_SCALING.h 	volume_SINT_0D_SCALING.c 	volume_SINT_0D_SCALING.h 	volume_SINT_1D_SCALING.c 	volume_SINT_1D_SCALING.h 	volume_SINT_2D_SCALING.c 	volume_SINT_2D_SCALING.h 	volume_FLOAT_0D_SCALING.c 	volume_FLOAT_0D_SCALING.h 	volume_FLOAT_1D_SCALING.c 	volume_FLOAT_1D_SCALING.h 	volume_FLOAT_2D_SCALING.c 	volume_FLOAT_2D_SCALING.h 	volume_DOUBLE_0D_SCALING.c 	volume_DOUBLE_0D_SCALING.h 	volume_DOUBLE_1D_SCALING.c 	volume_DOUBLE_1D_SCALING.h 	volume_DOUBLE_2D_SCALING.c 	volume_DOUBLE_2D_SCALING.h 
 
 
+VARIABLE_INPUT =  	variable_type.m4
+
+
 ANALYSIS_VARIABLE_INCLUDES =  	analysis_variable_type.c 	analysis_variable_type.h 
 
 
-VARIABLE_INPUT =  	variable_type.m4
+ROI_VARIABLE_INCLUDES =  	roi_variable_type.c 	roi_variable_type.h 
 
 
 DATA_SET_VARIABLE_INCLUDES =  	data_set_variable_type.c 	data_set_variable_type.h 
@@ -152,9 +159,8 @@ DATA_SET_VARIABLE_INCLUDES =  	data_set_variable_type.c 	data_set_variable_type.
 VOLUME_VARIABLE_INCLUDES =  	volume_variable_type.c 	volume_variable_type.h 
 
 
-CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
-
-DISTCLEANFILES =  	$(libamide_la_SOURCES) 	$(libamideinclude_HEADERS) 	$(VARIABLE_INPUT) 	$(DATA_SET_VARIABLE_INCLUDES) 	$(VOLUME_VARIABLE_INCLUDES) 	*~
+CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(ROI_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
+DISTCLEANFILES =          $(libamide_la_SOURCES)         $(libamideinclude_HEADERS)         $(VARIABLE_INPUT)         $(ANALYSIS_VARIABLE_INCLUDES)         $(ROI_VARIABLE_INCLUDES)         $(DATA_SET_VARIABLE_INCLUDES)         $(VOLUME_VARIABLE_INCLUDES)         *~      
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -180,11 +186,13 @@ volume_SINT_1D_SCALING.lo volume_SINT_2D_SCALING.lo \
 volume_FLOAT_0D_SCALING.lo volume_FLOAT_1D_SCALING.lo \
 volume_FLOAT_2D_SCALING.lo volume_DOUBLE_0D_SCALING.lo \
 volume_DOUBLE_1D_SCALING.lo volume_DOUBLE_2D_SCALING.lo \
-analysis_ELLIPSOID.lo analysis_CYLINDER.lo analysis_BOX.lo amide.lo \
-analysis.lo amitk_threshold.lo color_table.lo cti_import.lo data_set.lo \
-idl_data_import.lo image.lo medcon_import.lo pem_data_import.lo \
-raw_data.lo raw_data_import.lo raw_data_import_cb.lo realspace.lo \
-rendering.lo roi.lo study.lo ui_common.lo ui_common_cb.lo \
+roi_ELLIPSOID.lo roi_CYLINDER.lo roi_BOX.lo roi_ISOCONTOUR_2D.lo \
+roi_ISOCONTOUR_3D.lo analysis_ELLIPSOID.lo analysis_CYLINDER.lo \
+analysis_BOX.lo analysis_ISOCONTOUR_2D.lo analysis_ISOCONTOUR_3D.lo \
+amide.lo analysis.lo amitk_threshold.lo color_table.lo cti_import.lo \
+data_set.lo idl_data_import.lo image.lo medcon_import.lo \
+pem_data_import.lo raw_data.lo raw_data_import.lo raw_data_import_cb.lo \
+realspace.lo rendering.lo roi.lo study.lo ui_common.lo ui_common_cb.lo \
 ui_preferences_dialog.lo ui_preferences_dialog_cb.lo ui_rendering.lo \
 ui_rendering_cb.lo ui_rendering_dialog.lo ui_rendering_dialog_cb.lo \
 ui_rendering_menus.lo ui_rendering_movie_dialog.lo \
@@ -211,14 +219,17 @@ TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/amide.P .deps/amide_export.P .deps/amitk_threshold.P \
 .deps/analysis.P .deps/analysis_BOX.P .deps/analysis_CYLINDER.P \
-.deps/analysis_ELLIPSOID.P .deps/color_table.P .deps/cti_import.P \
+.deps/analysis_ELLIPSOID.P .deps/analysis_ISOCONTOUR_2D.P \
+.deps/analysis_ISOCONTOUR_3D.P .deps/color_table.P .deps/cti_import.P \
 .deps/data_set.P .deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P \
 .deps/data_set_SBYTE.P .deps/data_set_SINT.P .deps/data_set_SSHORT.P \
 .deps/data_set_UBYTE.P .deps/data_set_UINT.P .deps/data_set_USHORT.P \
 .deps/gtkdial.P .deps/gtkdirsel.P .deps/idl_data_import.P .deps/image.P \
 .deps/medcon_import.P .deps/pem_data_import.P .deps/raw_data.P \
 .deps/raw_data_import.P .deps/raw_data_import_cb.P .deps/realspace.P \
-.deps/rendering.P .deps/roi.P .deps/study.P .deps/ui_common.P \
+.deps/rendering.P .deps/roi.P .deps/roi_BOX.P .deps/roi_CYLINDER.P \
+.deps/roi_ELLIPSOID.P .deps/roi_ISOCONTOUR_2D.P \
+.deps/roi_ISOCONTOUR_3D.P .deps/study.P .deps/ui_common.P \
 .deps/ui_common_cb.P .deps/ui_preferences_dialog.P \
 .deps/ui_preferences_dialog_cb.P .deps/ui_rendering.P \
 .deps/ui_rendering_cb.P .deps/ui_rendering_dialog.P \
@@ -581,6 +592,15 @@ mostlyclean distclean maintainer-clean
 
 $(ANALYSIS_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_INCLUDES)
 	@for i in $(ANALYSIS_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(ROI_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ROI_VARIABLE_INCLUDES)
+	@for i in $(ROI_VARIABLE_SRCS) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\

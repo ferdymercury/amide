@@ -523,6 +523,10 @@ void study_set_filename(study_t * study, const gchar * new_filename) {
   gchar * temp_string;
 
   g_free(study->filename); /* free up the memory used by the old filename */
+  study->filename = NULL;
+
+  if (new_filename == NULL) return;
+
   temp_string = g_strdup(new_filename); /* and assign the new name */
   
   /* and remove any trailing slashes */

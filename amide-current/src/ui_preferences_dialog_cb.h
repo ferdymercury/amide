@@ -31,4 +31,4 @@ void ui_preferences_dialog_cb_roi_width(GtkWidget * widget, gpointer data);
 void ui_preferences_dialog_cb_line_style(GtkWidget * widget, gpointer data);
 void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data);
 void ui_preferences_dialog_cb_help(GnomePropertyBox *preferences_dialog, gint page_number, gpointer data);
-void ui_preferences_dialog_cb_close(GtkWidget* widget, gpointer data);
+gboolean ui_preferences_dialog_cb_close(GtkWidget* widget, gpointer data);

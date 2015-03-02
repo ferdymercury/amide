@@ -25,6 +25,7 @@ amide_SOURCES = \
 	gtkdirsel.h \
 	$(DATA_SET_VARIABLE_SRCS) \
 	$(VOLUME_VARIABLE_SRCS) \
+	$(ROI_VARIABLE_SRCS) \
 	$(ANALYSIS_VARIABLE_SRCS) \
 	amide.c \
 	amide.h \
@@ -127,13 +128,30 @@ amide_SOURCES = \
 	xml.c \
 	xml.h
 
+
 ANALYSIS_VARIABLE_SRCS = \
 	analysis_ELLIPSOID.c \
 	analysis_ELLIPSOID.h \
 	analysis_CYLINDER.c \
 	analysis_CYLINDER.h \
 	analysis_BOX.c \
-	analysis_BOX.h
+	analysis_BOX.h \
+	analysis_ISOCONTOUR_2D.c \
+	analysis_ISOCONTOUR_2D.h \
+	analysis_ISOCONTOUR_3D.c \
+	analysis_ISOCONTOUR_3D.h
+
+ROI_VARIABLE_SRCS = \
+	roi_ELLIPSOID.c \
+	roi_ELLIPSOID.h \
+	roi_CYLINDER.c \
+	roi_CYLINDER.h \
+	roi_BOX.c \
+	roi_BOX.h \
+	roi_ISOCONTOUR_2D.c \
+	roi_ISOCONTOUR_2D.h \
+	roi_ISOCONTOUR_3D.c \
+	roi_ISOCONTOUR_3D.h
 
 DATA_SET_VARIABLE_SRCS = \
 	data_set_UBYTE.c \
@@ -203,12 +221,16 @@ VOLUME_VARIABLE_SRCS = \
 	volume_DOUBLE_2D_SCALING.c \
 	volume_DOUBLE_2D_SCALING.h 
 
+VARIABLE_INPUT = \
+	variable_type.m4
+
 ANALYSIS_VARIABLE_INCLUDES = \
 	analysis_variable_type.c \
 	analysis_variable_type.h 
 
-VARIABLE_INPUT = \
-	variable_type.m4
+ROI_VARIABLE_INCLUDES = \
+	roi_variable_type.c \
+	roi_variable_type.h 
 
 DATA_SET_VARIABLE_INCLUDES = \
 	data_set_variable_type.c \
@@ -220,6 +242,15 @@ VOLUME_VARIABLE_INCLUDES = \
 
 $(ANALYSIS_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_INCLUDES)
 	@for i in $(ANALYSIS_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(ROI_VARIABLE_SRCS): $(VARIABLE_INPUT) $(ROI_VARIABLE_INCLUDES)
+	@for i in $(ROI_VARIABLE_SRCS) ; \
             do \
                 rm -f $$i ;\
                 echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
@@ -246,13 +277,13 @@ $(VOLUME_VARIABLE_SRCS): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_INCLUDES)
             done
 
 
-CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
-
+CLEANFILES = $(ANALYSIS_VARIABLE_SRCS) $(ROI_VARIABLE_SRCS) $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
 DISTCLEANFILES = \
-	$(libamide_la_SOURCES) \
-	$(libamideinclude_HEADERS) \
-	$(VARIABLE_INPUT) \
-	$(DATA_SET_VARIABLE_INCLUDES) \
-	$(VOLUME_VARIABLE_INCLUDES) \
-	*~
-
+        $(libamide_la_SOURCES) \
+        $(libamideinclude_HEADERS) \
+        $(VARIABLE_INPUT) \
+        $(ANALYSIS_VARIABLE_INCLUDES) \
+        $(ROI_VARIABLE_INCLUDES) \
+        $(DATA_SET_VARIABLE_INCLUDES) \
+        $(VOLUME_VARIABLE_INCLUDES) \
+        *~      

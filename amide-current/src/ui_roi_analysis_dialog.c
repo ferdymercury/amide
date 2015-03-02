@@ -61,7 +61,7 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
   floatpoint_t voxel_volume;
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
-    g_warning("PACKAGE: couldn't open: %s for writing roi analyses", save_filename);
+    g_warning("%s: couldn't open: %s for writing roi analyses", PACKAGE, save_filename);
     return;
   }
 
@@ -243,8 +243,12 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   /* start setting up the widget we'll display the info from */
   title = g_strdup_printf("%s Roi Analysis: Study %s", PACKAGE, study_name(ui_study->study));
   dialog = gnome_dialog_new(title, "Save Analysis", GNOME_STOCK_BUTTON_CLOSE, NULL);
-  gtk_signal_connect(GTK_OBJECT(dialog), "delete_event",
-		     GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_delete_event),
+  gnome_dialog_set_close(GNOME_DIALOG(dialog), FALSE);
+
+  gnome_dialog_button_connect(GNOME_DIALOG(dialog), 1,  /* 1 corresponds to the close button */
+			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close_button),dialog);
+  gtk_signal_connect(GTK_OBJECT(dialog), "close",
+		     GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close),
 		     roi_analyses);
   g_free(title);
 
@@ -252,9 +256,6 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   button_num=0;
   gnome_dialog_button_connect(GNOME_DIALOG(dialog), button_num, 
   			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_export), roi_analyses);
-  button_num++;
-  gnome_dialog_button_connect(GNOME_DIALOG(dialog), button_num, 
-			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close), dialog);
   button_num++;
 
  /* make the widgets for this dialog box */

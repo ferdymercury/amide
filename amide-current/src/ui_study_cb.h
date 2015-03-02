@@ -24,15 +24,6 @@
 */
 
 
-/* defines */
-#define UI_STUDY_ROIS_SHIFT_BUTTON 1
-#define UI_STUDY_ROIS_SHIFT_MASK GDK_BUTTON1_MASK
-#define UI_STUDY_ROIS_ROTATE_BUTTON 2
-#define UI_STUDY_ROIS_ROTATE_MASK GDK_BUTTON2_MASK
-#define UI_STUDY_ROIS_RESIZE_BUTTON 3
-#define UI_STUDY_ROIS_RESIZE_MASK GDK_BUTTON3_MASK
-
-
 /* external functions */
 void ui_study_cb_new_study(GtkWidget * button, gpointer data);
 void ui_study_cb_open_study(GtkWidget * button, gpointer data);
@@ -41,7 +32,6 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data);
 void ui_study_cb_export(GtkWidget * widget, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
 gboolean ui_study_cb_canvas_event(GtkWidget* widget, GdkEvent * event, gpointer data);
-gboolean ui_study_cb_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 void ui_study_cb_plane_change(GtkObject * adjustment, gpointer data);
 void ui_study_cb_zoom(GtkObject * adjustment, gpointer data);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
@@ -65,6 +55,7 @@ void ui_study_cb_tree_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer
 void ui_study_cb_edit_objects(GtkWidget * button, gpointer data);
 void ui_study_cb_delete_objects(GtkWidget * button, gpointer data);
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer data);
+void ui_study_cb_exit(GtkWidget* widget, gpointer data);
 void ui_study_cb_close(GtkWidget* widget, gpointer data);
 gboolean ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 

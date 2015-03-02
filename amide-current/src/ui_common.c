@@ -241,7 +241,6 @@ static void ui_common_cursor_init(void) {
   ui_common_cursor[UI_CURSOR_DEFAULT] = NULL;
   ui_common_cursor[UI_CURSOR_NEW_ROI_MODE] =  gdk_cursor_new(UI_COMMON_NEW_ROI_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_NEW_ROI_MOTION] = gdk_cursor_new(UI_COMMON_NEW_ROI_MOTION_CURSOR);
-  ui_common_cursor[UI_CURSOR_NO_ROI_MODE] = gdk_cursor_new(UI_COMMON_NO_ROI_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_MODE] = gdk_cursor_new(UI_COMMON_OLD_ROI_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE] = gdk_cursor_new(UI_COMMON_OLD_ROI_RESIZE_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_ROTATE] = gdk_cursor_new(UI_COMMON_OLD_ROI_ROTATE_CURSOR);

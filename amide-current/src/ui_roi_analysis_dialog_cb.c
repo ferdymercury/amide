@@ -137,29 +137,23 @@ void ui_roi_analysis_dialog_cb_export(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function called for a delete event */
-gboolean ui_roi_analysis_dialog_cb_delete_event(GtkWidget * widget, GdkEvent * event, gpointer data) {
+/* callback for the close button*/
+void ui_roi_analysis_dialog_cb_close_button(GtkWidget* widget, gpointer data) {
+  
+  GtkWidget * dialog = data;
+  gnome_dialog_close(GNOME_DIALOG(dialog));
+  return;
+}
+
+/* function called to destroy the roi dialog */
+gboolean ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   analysis_roi_t * roi_analyses = data;
-
-  /* destroy the dialog */
-  gtk_widget_destroy(widget);
 
   /* free the associated data structure */
   roi_analyses = analysis_roi_free(roi_analyses);
 
   return FALSE;
-}
-
-/* function called to destroy the roi dialog */
-void ui_roi_analysis_dialog_cb_close(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * dialog = data;
-
-  /* send a delete signal */
-  gtk_signal_emit_by_name(GTK_OBJECT(dialog), "delete_event");
-
-  return;
 }
 
 

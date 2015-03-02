@@ -30,6 +30,20 @@
 /* header files that are always needed with this file */
 #include "volume.h"
 
+#define RAW_DATA_CONTENT(data, dim, i) ((data)[(i).x + (dim).x*(i).y + (dim).x*(dim).y*(i).z + (dim).x*(dim).y*(dim).z*(i).t])
+
+
+/* glib doesn't define these for PDP */
+#ifdef G_BIG_ENDIAN
+#define GINT32_TO_PDP(val)      ((gint32) GUINT32_SWAP_BE_PDP (val))
+#define GUINT32_TO_PDP(val)     ((guint32) GUINT32_SWAP_BE_PDP (val))
+#else /* G_LITTLE_ENDIAN */
+#define GINT32_TO_PDP(val)      ((gint32) GUINT32_SWAP_LE_PDP (val))
+#define GUINT32_TO_PDP(val)     ((guint32) GUINT32_SWAP_LE_PDP (val))
+#endif
+#define GINT32_FROM_PDP(val)    (GINT32_TO_PDP (val))
+#define GUINT32_FROM_PDP(val)   (GUINT32_TO_PDP (val))
+
 /* raw_data_format is the formats that data can take on disk */
 typedef enum {UBYTE_NE, SBYTE_NE, 
 	      USHORT_LE, SSHORT_LE, 
@@ -38,6 +52,8 @@ typedef enum {UBYTE_NE, SBYTE_NE,
 	      USHORT_BE, SSHORT_BE, 
 	      UINT_BE, SINT_BE,
 	      FLOAT_BE, DOUBLE_BE,
+	      UINT_PDP, SINT_PDP,
+	      FLOAT_PDP, 
 	      ASCII_NE,
 	      NUM_RAW_DATA_FORMATS} raw_data_format_t;
 

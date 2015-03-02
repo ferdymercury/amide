@@ -33,9 +33,9 @@
 
 /* external variables */
 gchar * view_names[] = {"transverse", "coronal", "sagittal"};
-gint number_of_windows = 0;
 
-   
+/* internal variables */
+static GList * windows = NULL;
 
 int main (int argc, char *argv []) {
 
@@ -95,14 +95,14 @@ int main (int argc, char *argv []) {
 	g_warning("%s: AMIDE study %s does not exist",PACKAGE, input_filenames[i]);
       else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
-	if ((new_volume = volume_import_file(input_filenames[i], NULL, AMIDE_GUESS)) != NULL) {
+	if ((new_volume = volume_import_file(AMIDE_GUESS, 0,input_filenames[i], NULL)) != NULL) {
 	  study = study_init();
 	  study_add_volume(study, new_volume);
 	  study_set_name(study, new_volume->name); /* first guess at a name */
 	  new_volume = volume_free(new_volume); /* remove a reference */
 	  loaded = TRUE;
 	} else
-	  g_warning("PACKAGE: %s is not an AMIDE study or importable file type ", input_filenames[i]);
+	  g_warning("%s: %s is not an AMIDE study or importable file type ", PACKAGE, input_filenames[i]);
       } else if ((study=study_load_xml(input_filenames[i])) == NULL)
 	/* try loading the study into memory */
 	g_warning("%s: error loading study: %s",PACKAGE, input_filenames[i]);
@@ -131,4 +131,37 @@ int main (int argc, char *argv []) {
 }
 
 
+/* keep track of open windows */
+void amide_register_window(gpointer * widget) {
 
+  g_return_if_fail(widget != NULL);
+  
+  windows = g_list_append(windows, widget);
+
+  return;
+}
+
+
+/* keep track of open windows */
+void amide_unregister_window(gpointer * widget) {
+
+  g_return_if_fail(widget != NULL);
+
+  windows = g_list_remove(windows, widget);
+
+  if (windows == NULL) gtk_main_quit();
+
+  return;
+}
+
+
+/* this should cleanly exit the program */
+void amide_unregister_all_windows(void) {
+
+  while (windows != NULL) {
+    /* this works, because each delete event should call amide_unregister_window */
+    gtk_signal_emit_by_name(GTK_OBJECT(windows->data), "delete_event");
+  }
+
+  return;
+}

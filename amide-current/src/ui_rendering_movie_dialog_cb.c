@@ -283,20 +283,17 @@ void ui_rendering_movie_dialog_cb_help(GnomePropertyBox *rendering_dialog, gint 
 
 
 /* function called to destroy the rendering parameter dialog */
-void ui_rendering_movie_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_rendering_movie_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_rendering_movie_t * ui_rendering_movie = data;
   ui_rendering_t * ui_rendering = ui_rendering_movie->ui_rendering;
 
 
-  /* destroy the widget */
-  gtk_widget_destroy(GTK_WIDGET(ui_rendering_movie->dialog));
-
   /* trash collection */
   ui_rendering_movie_free(ui_rendering->movie);
   ui_rendering->movie = NULL; /* informs the ui_rendering widget that the movie widget is gone */
 
-  return;
+  return FALSE;
 }
 
 

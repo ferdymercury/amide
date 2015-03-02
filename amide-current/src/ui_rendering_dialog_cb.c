@@ -398,15 +398,13 @@ void ui_rendering_dialog_cb_help(GnomePropertyBox *rendering_dialog, gint page_n
 
 
 /* function called to destroy the rendering parameter dialog */
-void ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data) {
+gboolean ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
 
-  /* destroy the dialog */
-  gtk_widget_destroy(widget);
   ui_rendering->parameter_dialog = NULL;
 
-  return;
+  return FALSE;
 }
 
 #endif

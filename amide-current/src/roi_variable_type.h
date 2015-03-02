@@ -1,4 +1,4 @@
-/* analysis_variable_type.h - used to generate the different analysis_*.h files
+/* roi_variable_type.h - used to generate the different roi_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
  * Copyright (C) 2001 Andy Loening
@@ -24,18 +24,31 @@
 */
 
 
-#ifndef __ANALYSIS_`'m4_Internal_Data_Format`'__
-#define __ANALYSIS_`'m4_Variable_Type`'__
+#ifndef __ROI_`'m4_Internal_Data_Format`'__
+#define __ROI_`'m4_Variable_Type`'__
 
 /* header files that are always needed with this file */
-#include "analysis.h"
+#include "roi.h"
 
-/* defines */
 
 /* function declarations */
-analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(roi_t * roi, volume_t * volume, guint frame);
+#define ROI_`'m4_Variable_Type`'_TYPE
 
-#endif /* __ANALYSIS_`'m4_Variable_Type`'__ */
+#if defined(ROI_ELLIPSOID_TYPE) || defined(ROI_CYLINDER_TYPE) || defined(ROI_BOX_TYPE)
+GSList * roi_`'m4_Variable_Type`'_get_slice_intersection(const roi_t * roi, const volume_t * view_slice);
+#endif
+
+#if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
+roi_t * roi_`'m4_Variable_Type`'_get_slice_intersection(const roi_t * roi, const volume_t * view_slice);
+#endif
+
+#if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
+void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t iso_vp);
+#endif
+
+#undef ROI_`'m4_Variable_Type`'_TYPE
+
+#endif /* __ROI_`'m4_Variable_Type`'__ */
 
 
 

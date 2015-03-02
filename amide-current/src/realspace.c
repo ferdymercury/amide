@@ -173,6 +173,15 @@ inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2) {
   return temp;
 }
 
+/* returns vp1 == vp2 for voxelpoint structures */
+inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2) {
+
+  return ((vp1.x == vp2.x) &&
+	  (vp1.y == vp2.y) &&
+	  (vp1.z == vp2.z) &&
+	  (vp1.t == vp2.t));
+}
+
 
 /* returns true if the realpoint is in the given box */
 gboolean realpoint_in_box(const realpoint_t p,
@@ -206,8 +215,8 @@ gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
 	   (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
 	    pow((p.y-center.y),2.0)/pow(radius.y,2.0)))
 	  &&
-	  ((p.z > (center.z-height/2.0)-CLOSE) && 
-	   (p.z < (center.z+height/2.0)-CLOSE)));
+	  ((p.z >= (center.z-height/2.0)-CLOSE) && 
+	   (p.z <= (center.z+height/2.0)-CLOSE)));
   
 }
 
@@ -253,7 +262,7 @@ void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]) {
 
   if (isnan(detA)) { /* gcc does some funkyness at times .... */
     detA=1.0; 
-    g_warning("PACKAGE: NaN generated for determinate, weirdness may follow");
+    g_warning("%s: NaN generated for determinate, weirdness may follow", PACKAGE);
   }
 
   /* figure out the adjoint matrix */
@@ -281,7 +290,7 @@ void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]) {
 	isnan(rs->inverse[i_axis].z))
       nan_detected = TRUE;
   if (nan_detected) {
-    g_warning("PACKAGE: NaN detected when generating inverse matrix, weirdness will likely follow");
+    g_warning("%s: NaN detected when generating inverse matrix, weirdness will likely follow", PACKAGE);
     for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
       rs->inverse[i_axis] = default_axis[i_axis];
   }

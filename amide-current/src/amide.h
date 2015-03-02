@@ -53,9 +53,11 @@ typedef gint16 intpoint_t;
 
 /* external variables */
 extern gchar * view_names[];
-extern gint number_of_windows;
 
-
+/* external functions */
+void amide_register_window(gpointer * widget);
+void amide_unregister_window(gpointer * widget);
+void amide_unregister_all_windows(void);
 
 
 #endif /* __AMIDE_H__ */

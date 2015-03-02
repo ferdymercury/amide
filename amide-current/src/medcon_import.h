@@ -25,9 +25,27 @@
 
 #ifdef AMIDE_LIBMDC_SUPPORT
 
-/* external functions */
-volume_t * medcon_import(const gchar * filename);
+typedef enum {
+  LIBMDC_NONE,
+  LIBMDC_RAW, 
+  LIBMDC_ASCII, 
+  LIBMDC_GIF, 
+  LIBMDC_ACR, 
+  LIBMDC_INW, 
+  LIBMDC_CONC, 
+  LIBMDC_ECAT, 
+  LIBMDC_INTF, 
+  LIBMDC_ANLZ, 
+  LIBMDC_DICM,
+  LIBMDC_NUM_IMPORT_METHODS
+} libmdc_import_method_t;
 
+/* external functions */
+gboolean medcon_import_supports(libmdc_import_method_t submethod);
+volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submethod);
+
+extern gchar * libmdc_menu_names[];
+extern gchar * libmdc_menu_explanations[];
 
 #endif
 

@@ -88,11 +88,15 @@ typedef struct realspace_t {
 				   ((fp1) < ((1.00+CLOSE)*(fp2)+CLOSE)))
 
 /* returns the boolean value of rp1==rp2 (within a factor of CLOSE) */
-#define REALPOINT_EQUAL(rp1,rp2) (FLOATPOINT_EQUAL((rp1.x),(rp2.x)) && \
-				  FLOATPOINT_EQUAL((rp1.y),(rp2.y)) && \
-				  FLOATPOINT_EQUAL((rp1.z),(rp2.z)))
+#define REALPOINT_EQUAL(rp1,rp2) (FLOATPOINT_EQUAL(((rp1).x),((rp2).x)) && \
+				  FLOATPOINT_EQUAL(((rp1).y),((rp2).y)) && \
+				  FLOATPOINT_EQUAL(((rp1).z),((rp2).z)))
 
-				  
+#define VOXELPOINT_EQUAL(vp1,vp2) (((vp1).x == (vp2).x) && \
+				   ((vp1).y == (vp2).y) && \
+				   ((vp1).z == (vp2).z) && \
+				   ((vp1).t == (vp2).t))
+
 /* returns the minimum dimension of the "box" defined by rp1*/
 #define REALPOINT_MIN_DIM(rp1) (MIN( MIN((rp1).x, (rp1).y), (rp1).z))
 
@@ -172,6 +176,7 @@ inline floatpoint_t cp_dot_product(const canvaspoint_t cp1, const canvaspoint_t 
 inline floatpoint_t cp_mag(const canvaspoint_t cp1);
 
 inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2);
+inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2);
 
 gboolean realpoint_in_box(const realpoint_t p,
 			  const realpoint_t p0,

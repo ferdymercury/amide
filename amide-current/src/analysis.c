@@ -79,6 +79,12 @@ static analysis_frame_t * analysis_frame_init_recurse(roi_t * roi,
   case BOX:
     frame_analysis = analysis_frame_BOX_init(roi, volume, frame);
     break;
+  case ISOCONTOUR_2D:
+    frame_analysis = analysis_frame_ISOCONTOUR_2D_init(roi, volume, frame);
+    break;
+  case ISOCONTOUR_3D:
+    frame_analysis = analysis_frame_ISOCONTOUR_3D_init(roi, volume, frame);
+    break;
   default:
     g_warning("%s: roi type %d not implemented!",PACKAGE, roi->type);
     return frame_analysis;

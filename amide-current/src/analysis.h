@@ -82,6 +82,8 @@ analysis_roi_t * analysis_roi_init(study_t * study, roi_list_t * rois, volume_li
 #include "analysis_ELLIPSOID.h"
 #include "analysis_CYLINDER.h"
 #include "analysis_BOX.h"
+#include "analysis_ISOCONTOUR_2D.h"
+#include "analysis_ISOCONTOUR_3D.h"
 
 #endif /* __ANALYSIS_H__ */
 
