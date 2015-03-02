@@ -389,7 +389,7 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 
   /* and add the new data set to the study */
   amitk_object_add_child(AMITK_OBJECT(tb_filter->study), AMITK_OBJECT(filtered)); /* this adds a reference to the data set*/
-  g_object_unref(filtered); /* so remove a reference */
+  amitk_object_unref(filtered); /* so remove a reference */
 
   /* close the dialog box */
   cancel_cb(widget, data);
@@ -448,12 +448,12 @@ static tb_filter_t * tb_filter_free(tb_filter_t * tb_filter) {
 #endif
 
     if (tb_filter->data_set != NULL) {
-      g_object_unref(tb_filter->data_set);
+      amitk_object_unref(tb_filter->data_set);
       tb_filter->data_set = NULL;
     }
 
     if (tb_filter->study != NULL) {
-      g_object_unref(tb_filter->study);
+      amitk_object_unref(tb_filter->study);
       tb_filter->study = NULL;
     }
 
@@ -509,8 +509,8 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
   logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
   tb_filter = tb_filter_init();
-  tb_filter->study = g_object_ref(study);
-  tb_filter->data_set = g_object_ref(active_ds);
+  tb_filter->study = amitk_object_ref(study);
+  tb_filter->data_set = amitk_object_ref(active_ds);
 
   /* take a guess at a good fwhm */
   tb_filter->fwhm = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(tb_filter->data_set));

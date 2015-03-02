@@ -309,7 +309,6 @@ static void canvas_init (AmitkCanvas *canvas)
 static void canvas_destroy (GtkObject * object) {
 
   AmitkCanvas * canvas;
-  AmitkObject * amitk_object;
 
   g_return_if_fail (object != NULL);
   g_return_if_fail (AMITK_IS_CANVAS (object));
@@ -321,26 +320,19 @@ static void canvas_destroy (GtkObject * object) {
     canvas->idle_handler_id = 0;
   }
 
-
-  while (canvas->next_update_objects != NULL) {
-    amitk_object = AMITK_OBJECT(canvas->next_update_objects->data);
-    canvas->next_update_objects = g_list_remove(canvas->next_update_objects, amitk_object);
-    g_object_unref(amitk_object);
+  if (canvas->next_update_objects != NULL) {
+    canvas->next_update_objects = amitk_objects_unref(canvas->next_update_objects);
   }
 
-  if (canvas->volume != NULL) {
-    g_object_unref(canvas->volume);
-    canvas->volume = NULL;
-  }
+  if (canvas->volume != NULL) 
+    canvas->volume = amitk_object_unref(canvas->volume);
 
   if (canvas->slice_cache != NULL) {
-    amitk_objects_unref(canvas->slice_cache);
-    canvas->slice_cache = NULL;
+    canvas->slice_cache = amitk_objects_unref(canvas->slice_cache);
   }
 
   if (canvas->slices != NULL) {
-    amitk_objects_unref(canvas->slices);
-    canvas->slices = NULL;
+    canvas->slices = amitk_objects_unref(canvas->slices);
   }
 
   if (canvas->pixbuf != NULL) {
@@ -349,8 +341,7 @@ static void canvas_destroy (GtkObject * object) {
   }
 
   if (canvas->undrawn_rois != NULL) {
-    amitk_objects_unref(canvas->undrawn_rois);
-    canvas->undrawn_rois = NULL;
+    canvas->undrawn_rois = amitk_objects_unref(canvas->undrawn_rois);
   }
 
   if (canvas->study != NULL) {
@@ -390,7 +381,7 @@ static GList * canvas_add_current_objects(AmitkCanvas * canvas, GList * objects)
 
     if (object != NULL)
       if (g_list_index(objects, object) < 0) 
-	objects = g_list_append(objects, g_object_ref(object)); 
+	objects = g_list_append(objects, amitk_object_ref(object)); 
 
     items = items->next;
   }
@@ -447,7 +438,7 @@ static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer da
 
       if (undrawn_roi) {
 	if (g_list_index(canvas->undrawn_rois, object) < 0)  /* not yet in list */
-	  canvas->undrawn_rois = g_list_prepend(canvas->undrawn_rois, g_object_ref(object));
+	  canvas->undrawn_rois = g_list_prepend(canvas->undrawn_rois, amitk_object_ref(object));
       } else {
 	canvas_add_object_update(canvas, object);
       }
@@ -457,7 +448,7 @@ static void canvas_object_selection_changed_cb(AmitkObject * object, gpointer da
       if (undrawn_roi) {
 	if (g_list_index(canvas->undrawn_rois, object) >= 0) {
 	  canvas->undrawn_rois = g_list_remove(canvas->undrawn_rois, object);
-	  g_object_unref(object);
+	  amitk_object_unref(object);
 	}
       } else if ((item = canvas_find_item(canvas, object)) != NULL) { /* an unselect */
 	canvas->object_items = g_list_remove(canvas->object_items, item);
@@ -562,7 +553,7 @@ static void canvas_volume_changed_cb(AmitkVolume * vol, gpointer data) {
     if (!AMITK_ROI_UNDRAWN(vol)) 
       if (g_list_index(canvas->undrawn_rois, vol) >= 0) {
 	canvas->undrawn_rois = g_list_remove(canvas->undrawn_rois, vol);
-	g_object_unref(vol);
+	amitk_object_unref(vol);
       }
   canvas_add_object_update(canvas, AMITK_OBJECT(vol));
 
@@ -2234,9 +2225,9 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
   pixel_dim = (1/AMITK_STUDY_ZOOM(canvas->study))*AMITK_STUDY_VOXEL_DIM(canvas->study); /* compensate for zoom */
 
   data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study),
-							 AMITK_OBJECT_TYPE_DATA_SET,
-							 canvas->view_mode,
-							 TRUE);
+  							 AMITK_OBJECT_TYPE_DATA_SET,
+  							 canvas->view_mode,
+  							 TRUE);
 
   if (data_sets == NULL) {
     /* just use a blank image */
@@ -2370,7 +2361,7 @@ static void canvas_update_objects(AmitkCanvas * canvas, gboolean all) {
     object = AMITK_OBJECT(objects->data);
     canvas_update_object(canvas, object);
     objects = g_list_remove(objects, object);
-    g_object_unref(object);
+    amitk_object_unref(object);
   }
 }
 
@@ -2463,7 +2454,7 @@ static void canvas_add_object_update(AmitkCanvas * canvas, AmitkObject * object)
     if (AMITK_IS_DATA_SET(object)) {
       canvas_add_update(canvas, UPDATE_ALL);
     } else if (g_list_index(canvas->next_update_objects, object) < 0) {/* not yet in list */
-      canvas->next_update_objects=g_list_append(canvas->next_update_objects, g_object_ref(object));
+      canvas->next_update_objects=g_list_append(canvas->next_update_objects, amitk_object_ref(object));
       canvas_add_update(canvas, UPDATE_OBJECT);
     }
   }
@@ -2537,7 +2528,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_OBJECT(object));
 
-  g_object_ref(object);
+  amitk_object_ref(object);
 
   if (AMITK_IS_STUDY(object)) {
     
@@ -2581,10 +2572,12 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
 
   /* keep track of undrawn rois */
   if (AMITK_IS_ROI(object))
-    if (AMITK_ROI_UNDRAWN(object)) {
-      canvas->undrawn_rois = g_list_prepend(canvas->undrawn_rois, object);
-      g_object_ref(object);
-    }
+    if (AMITK_ROI_UNDRAWN(object)) 
+      if (amitk_object_get_selected(object, canvas->view_mode)) {
+	if (g_list_index(canvas->undrawn_rois, object) < 0)  /* not yet in list */
+	  canvas->undrawn_rois = g_list_prepend(canvas->undrawn_rois, amitk_object_ref(object));
+	amitk_object_ref(object);
+      }
 
 
   /* recurse */
@@ -2617,7 +2610,7 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
   if (AMITK_IS_ROI(object)) {
     if (g_list_index(canvas->undrawn_rois, object) >= 0) {
       canvas->undrawn_rois = g_list_remove(canvas->undrawn_rois, object);
-      g_object_unref(object);
+      amitk_object_unref(object);
     }
   }
 
@@ -2642,6 +2635,7 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_data_set_invalidate_slice_cache, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_thresholding_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_color_table_changed_cb, canvas);
+    canvas->slice_cache = amitk_data_sets_remove_with_slice_parent(canvas->slice_cache, AMITK_DATA_SET(object));
     canvas->max_slice_cache_size -= 3;
   }
   
@@ -2656,7 +2650,7 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
     canvas_add_update(canvas, UPDATE_ALL);
   }
 
-  g_object_unref(object);
+  amitk_object_unref(object);
   
   return;
 }

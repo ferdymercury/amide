@@ -223,7 +223,7 @@ static void object_finalize (GObject *object)
     child = amitk_object->children->data;
     child->parent = NULL;
     amitk_object->children = g_list_remove(amitk_object->children, child);
-    g_object_unref(child);
+    amitk_object_unref(child);
   }
   amitk_object_set_parent(amitk_object, NULL);
 
@@ -366,7 +366,7 @@ void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_obj
   while (children != NULL) {
     child = amitk_object_copy(children->data);
     amitk_object_add_child(dest_object, child);
-    g_object_unref(child);
+    amitk_object_unref(child);
     children = children->next;
   }
   
@@ -417,7 +417,7 @@ static gchar * object_read_xml (AmitkObject * object, xmlNodePtr nodes,
 
 static void object_add_child(AmitkObject * object, AmitkObject * child) {
 
-  g_object_ref(child);
+  amitk_object_ref(child);
   object->children = g_list_append(object->children, child);
   child->parent = object;
 
@@ -428,7 +428,7 @@ static void object_remove_child(AmitkObject * object, AmitkObject * child) {
 
   child->parent = NULL;
   object->children = g_list_remove(object->children, child);
-  g_object_unref(child);
+  amitk_object_unref(child);
 
   return;
 }
@@ -708,7 +708,7 @@ void amitk_object_set_parent(AmitkObject * object,AmitkObject * parent) {
   g_return_if_fail(AMITK_IS_OBJECT(parent) || (parent == NULL));
 
   if (object->parent != NULL) {
-    g_object_ref(object);
+    amitk_object_ref(object);
     ref_added = TRUE;
     amitk_object_remove_child(object->parent, object);
   }
@@ -718,10 +718,11 @@ void amitk_object_set_parent(AmitkObject * object,AmitkObject * parent) {
   }
 
   if (ref_added == TRUE)
-    g_object_unref(object);
+    amitk_object_unref(object);
 
   return;
 }
+
 
 
 void amitk_object_add_child(AmitkObject * object, AmitkObject * child) {
@@ -815,7 +816,7 @@ AmitkObject * amitk_object_get_parent_of_type(AmitkObject * object,
   if (AMITK_OBJECT_PARENT(object) == NULL)  /* top node */
     return NULL;
   else if (amitk_object_compare_object_type(AMITK_OBJECT_PARENT(object),type))
-    return g_object_ref(AMITK_OBJECT_PARENT(object));
+    return AMITK_OBJECT_PARENT(object);
   else
     return amitk_object_get_parent_of_type(AMITK_OBJECT_PARENT(object), type); /* recurse */
 }
@@ -840,7 +841,7 @@ GList * amitk_object_get_children_of_type(AmitkObject * object,
     child = AMITK_OBJECT(children->data);
 
     if (amitk_object_compare_object_type(child,type))
-      return_objects = g_list_append(return_objects, g_object_ref(child));
+      return_objects = g_list_append(return_objects, amitk_object_ref(child));
 
     if (recurse) { /* get child's objects */
       children_objects = amitk_object_get_children_of_type(AMITK_OBJECT(child), type, recurse);
@@ -901,7 +902,7 @@ GList * amitk_object_get_selected_children(AmitkObject * object,
     child = AMITK_OBJECT(children->data);
 
     if (amitk_object_get_selected(child, which_selection))
-      return_objects = g_list_append(return_objects, g_object_ref(child));
+      return_objects = g_list_append(return_objects, amitk_object_ref(child));
 
     if (recurse) { /* get child's objects */
       children_objects = amitk_object_get_selected_children(AMITK_OBJECT(child), which_selection, recurse);
@@ -934,7 +935,7 @@ GList * amitk_object_get_selected_children_of_type(AmitkObject * object,
     child = AMITK_OBJECT(children->data);
 
     if ((amitk_object_compare_object_type(child,type)) && (amitk_object_get_selected(child, which_selection)))
-      return_objects = g_list_append(return_objects, g_object_ref(child));
+      return_objects = g_list_append(return_objects, amitk_object_ref(child));
 
     if (recurse) { /* get child's objects */
       children_objects = amitk_object_get_selected_children_of_type(AMITK_OBJECT(child), type, which_selection, recurse);
@@ -947,6 +948,33 @@ GList * amitk_object_get_selected_children_of_type(AmitkObject * object,
   return return_objects;
 }
 
+/* this function is used mainly so that I can debug referencing within amide */
+gpointer amitk_object_ref(gpointer object) {
+
+  //  g_return_val_if_fail(object != NULL, NULL);
+  //  g_assert(AMITK_IS_OBJECT(object));
+  //  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+
+  //  if (AMITK_IS_DATA_SET(object))
+  //    if (AMITK_DATA_SET_DIM_Z(object) != 1) /* avoid slices */
+  //      g_print("add ref %s\n", AMITK_OBJECT_NAME(object));
+  
+  return g_object_ref(object);
+}
+
+gpointer amitk_object_unref(gpointer object) {
+
+  //  g_return_val_if_fail(object != NULL, NULL);
+  //  g_assert(AMITK_IS_OBJECT(object));
+  //  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+
+  //  if (AMITK_IS_DATA_SET(object))
+  //    if (AMITK_DATA_SET_DIM_Z(object) != 1) /* avoid slices */
+  //      g_print("un  ref %s\n", AMITK_OBJECT_NAME(object));
+
+  g_object_unref(object);
+  return NULL;
+}
 
 /* returns a copy of a list of objects, with a reference added for each copy */
 GList * amitk_objects_ref(GList * objects) {
@@ -957,11 +985,8 @@ GList * amitk_objects_ref(GList * objects) {
 
   return_list = amitk_objects_ref(objects->next); /* recurse */
 
-  if (AMITK_IS_OBJECT(objects->data)) {
-    g_object_ref(G_OBJECT(objects->data)); /* add ref to this item */
-    return_list = g_list_prepend(return_list, objects->data);
-  } else
-    g_return_val_if_reached(return_list);
+  amitk_object_ref(G_OBJECT(objects->data)); /* add ref to this item */
+  return_list = g_list_prepend(return_list, objects->data);
 
   return return_list;
 }
@@ -975,12 +1000,11 @@ GList * amitk_objects_unref(GList * objects) {
 
   objects->next = amitk_objects_unref(objects->next); /* recurse */
 
-  if (AMITK_IS_OBJECT(objects->data)) {
-    object = objects->data;
-    g_list_remove(objects, object);
-    g_object_unref(G_OBJECT(object));
-  } else
-    g_return_val_if_reached(NULL);
+  g_return_val_if_fail(AMITK_IS_OBJECT(objects->data), NULL);
+
+  object = objects->data;
+  g_list_remove(objects, object);
+  amitk_object_unref(object);
 
   return NULL;
 }
@@ -1053,7 +1077,7 @@ GList * amitk_objects_get_of_type(GList * objects, const AmitkObjectType type, c
   g_return_val_if_fail(AMITK_IS_OBJECT(objects->data), return_objects);
 
   if (amitk_object_compare_object_type(objects->data, type))
-    return_objects = g_list_append(return_objects, g_object_ref(objects->data));
+    return_objects = g_list_append(return_objects, amitk_object_ref(objects->data));
 
   if (recurse) {
     children_objects = amitk_objects_get_of_type(AMITK_OBJECT_CHILDREN(objects->data), type, recurse);

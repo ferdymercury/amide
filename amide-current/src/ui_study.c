@@ -192,7 +192,7 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
   amide_real_t vox_size;
 
 
-  g_object_ref(object); /* add a reference */
+  amitk_object_ref(object); /* add a reference */
 
   if (AMITK_IS_STUDY(object)) { /* save a ref to a study object */
     if (ui_study->study != NULL) 
@@ -288,7 +288,7 @@ static void remove_object(ui_study_t * ui_study, AmitkObject * object) {
   }
 
   /* and unref */
-  g_object_unref(object);
+  amitk_object_unref(object);
 
   return;
 }
@@ -528,7 +528,7 @@ void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_obje
     amitk_object_set_name(AMITK_OBJECT(new_pt), return_str);
     amitk_object_add_child(AMITK_OBJECT(parent_object), AMITK_OBJECT(new_pt));
     amitk_tree_expand_object(AMITK_TREE(ui_study->tree), AMITK_OBJECT(parent_object));
-    g_object_unref(new_pt); /* don't want an extra ref */
+    amitk_object_unref(new_pt); /* don't want an extra ref */
 
     if (selected)
       amitk_object_set_selected(AMITK_OBJECT(new_pt), TRUE, AMITK_SELECTION_SELECTED_0);
@@ -554,6 +554,7 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
   AmitkRoi * roi;
   gchar * temp_string;
   gchar * return_str=NULL;
+  AmitkViewMode i_view_mode;
 
   g_return_if_fail(AMITK_IS_OBJECT(parent_object));
 
@@ -570,10 +571,11 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
     roi = amitk_roi_new(roi_type);
     amitk_object_set_name(AMITK_OBJECT(roi), return_str);
     amitk_object_add_child(parent_object, AMITK_OBJECT(roi));
-    g_object_unref(roi); /* don't want an extra ref */
+    amitk_object_unref(roi); /* don't want an extra ref */
 
     if (AMITK_ROI_UNDRAWN(roi)) /* undrawn roi's selected to begin with*/
-      amitk_object_set_selected(AMITK_OBJECT(roi), TRUE, AMITK_SELECTION_SELECTED_0);
+      for (i_view_mode = 0; i_view_mode <=  AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
+	amitk_object_set_selected(AMITK_OBJECT(roi), TRUE, i_view_mode);
   
     if (ui_study->study_altered != TRUE) {
       ui_study->study_altered=TRUE;
@@ -1221,7 +1223,7 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
     amitk_object_set_name(AMITK_OBJECT(study), blank_name);
 
     ui_study_set_study(ui_study, study);
-    g_object_unref(study);
+    amitk_object_unref(study);
     ui_study->study_virgin=TRUE;
 
   } else {

@@ -206,7 +206,7 @@ static void space_edit_destroy (GtkObject * gtkobject) {
   if (space_edit->object != NULL) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(space_edit->object), 
 					 space_edit_update_entries, space_edit);
-    g_object_unref(space_edit->object);
+    amitk_object_unref(space_edit->object);
     space_edit->object = NULL;
   }
 
@@ -368,7 +368,7 @@ GtkWidget * amitk_space_edit_new(AmitkObject * object) {
 
   space_edit = g_object_new(amitk_space_edit_get_type (), NULL);
 
-  space_edit->object = g_object_ref(object);
+  space_edit->object = amitk_object_ref(object);
   g_signal_connect_swapped(G_OBJECT(object), "space_changed", 
 			   G_CALLBACK(space_edit_update_entries), space_edit);
 

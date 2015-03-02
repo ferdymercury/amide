@@ -28,7 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <glib-object.h>
-#include "amitk_point.h"
+#include "amitk_object.h"
 
 G_BEGIN_DECLS
 

@@ -398,11 +398,9 @@ static void frame_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 				      G_CALLBACK(frame_spinner_cb), tb_crop);
     
     /* unref all the computed projections */
-    for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
+    for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) 
       if (tb_crop->projection[i_view] != NULL)
-	g_object_unref(tb_crop->projection[i_view]);
-      tb_crop->projection[i_view] = NULL;
-    }
+	tb_crop->projection[i_view] = amitk_object_unref(tb_crop->projection[i_view]);
     
     /* just update the current projection for now */
     add_canvas_update(tb_crop, view);
@@ -653,7 +651,7 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   if (cropped != NULL) {
     amitk_object_add_child(AMITK_OBJECT(tb_crop->study), 
 			   AMITK_OBJECT(cropped)); /* this adds a reference to the data set*/
-    g_object_unref(cropped); /* so remove a reference */
+    amitk_object_unref(cropped); /* so remove a reference */
 
     /* close the dialog box */
     cancel_cb(widget, data);
@@ -720,18 +718,18 @@ static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop) {
     }
 
     if (tb_crop->data_set != NULL) {
-      g_object_unref(tb_crop->data_set);
+      amitk_object_unref(tb_crop->data_set);
       tb_crop->data_set = NULL;
     }
 
     if (tb_crop->study != NULL) {
-      g_object_unref(tb_crop->study);
+      amitk_object_unref(tb_crop->study);
       tb_crop->study = NULL;
     }
     
     for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
       if (tb_crop->projection[i_view] != NULL) {
-	g_object_unref(tb_crop->projection[i_view]);
+	amitk_object_unref(tb_crop->projection[i_view]);
 	tb_crop->projection[i_view] = NULL;
       }
     }
@@ -804,8 +802,8 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
   logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
   tb_crop = tb_crop_init();
-  tb_crop->study = g_object_ref(study);
-  tb_crop->data_set = g_object_ref(active_ds);
+  tb_crop->study = amitk_object_ref(study);
+  tb_crop->data_set = amitk_object_ref(active_ds);
   tb_crop->frame = amitk_data_set_get_frame(active_ds, AMITK_STUDY_VIEW_START_TIME(study));
 
   tb_crop->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);

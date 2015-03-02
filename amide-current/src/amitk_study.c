@@ -695,8 +695,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
     /* and return to the old directory */
     if (chdir(old_dir) != 0) {
       g_warning(_("Couldn't return to previous directory in load study"));
-      if (study != NULL) g_object_unref(study);
-      study = NULL;
+      if (study != NULL) study = amitk_object_unref(study);
     }
     
     g_free(old_dir);
@@ -804,8 +803,7 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
   if (save_as_directory) {
     if (chdir(old_dir) != 0) {
       g_warning(_("Couldn't return to previous directory in load study"));
-      g_object_unref(study);
-      study = NULL;
+      study = amitk_object_unref(study);
     }
   } else { /* flat file */
     /* record location of study object xml, always little endian */

@@ -87,7 +87,7 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
     ui_study_set_study(ui_study, study);
   else
     ui_study_create(study);
-  g_object_unref(study);
+  amitk_object_unref(study);
 
   return;
 }
@@ -319,7 +319,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
     amitk_object_add_child(AMITK_OBJECT(ui_study->study), 
 			   AMITK_OBJECT(import_ds)); /* this adds a reference to the data set*/
-    g_object_unref(import_ds); /* so remove a reference */
+    amitk_object_unref(import_ds); /* so remove a reference */
   }
 
   ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);

@@ -156,10 +156,9 @@ static gboolean delete_event_cb(GtkWidget* dialog, GdkEvent * event, gpointer da
   while(td->data_sets != NULL) 
     remove_data_set(dialog, td->data_sets->data);
 
-  if (td->study != NULL) {
-    g_object_unref(td->study);
-    td->study = NULL;
-  }
+  if (td->study != NULL) 
+    td->study = amitk_object_unref(td->study);
+
   g_free(td);
 
   return FALSE;
@@ -374,8 +373,7 @@ static void add_data_set(GtkWidget * dialog, AmitkDataSet * ds) {
   ui_time_dialog_t * td;
   td = g_object_get_data(G_OBJECT(dialog), "td");
 
-  g_object_ref(ds);
-  td->data_sets = g_list_append(td->data_sets, ds);
+  td->data_sets = g_list_append(td->data_sets, amitk_object_ref(ds));
   g_signal_connect(G_OBJECT(ds), "time_changed", 
 		   G_CALLBACK(data_set_time_changed_cb), dialog);
   return;
@@ -390,7 +388,7 @@ static void remove_data_set(GtkWidget * dialog, AmitkDataSet * ds) {
 
   g_signal_handlers_disconnect_by_func(G_OBJECT(ds), G_CALLBACK(data_set_time_changed_cb), dialog);
   td->data_sets = g_list_remove(td->data_sets, ds);
-  g_object_unref(ds);
+  amitk_object_unref(ds);
   return;
 }
 
@@ -470,7 +468,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   td->start = AMITK_STUDY_VIEW_START_TIME(study);
   td->end = td->start+AMITK_STUDY_VIEW_DURATION(study);
   td->valid = TRUE;
-  td->study = g_object_ref(study);
+  td->study = amitk_object_ref(study);
   td->data_sets = NULL;
   g_object_set_data(G_OBJECT(dialog), "td", td);
   

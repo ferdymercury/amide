@@ -545,7 +545,7 @@ static tb_fly_through_t * tb_fly_through_unref(tb_fly_through_t * tb_fly_through
 #endif
 
     if (tb_fly_through->study != NULL) {
-      g_object_unref(tb_fly_through->study);
+      amitk_object_unref(tb_fly_through->study);
       tb_fly_through->study = NULL;
     }
 

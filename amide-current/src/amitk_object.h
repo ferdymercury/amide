@@ -148,6 +148,8 @@ GList *         amitk_object_get_selected_children_of_type    (AmitkObject * obj
 							       const AmitkObjectType type,
 							       const AmitkSelection which_selection,
 							       const gboolean recurse);
+gpointer        amitk_object_ref                     (gpointer object);
+gpointer        amitk_object_unref                   (gpointer object);
 GList *         amitk_objects_ref                    (GList * objects);
 GList *         amitk_objects_unref                  (GList * objects);
 gint            amitk_objects_count                  (GList * objects);

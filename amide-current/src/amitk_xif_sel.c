@@ -2076,7 +2076,7 @@ amitk_xif_selection_populate (AmitkXifSelection *fs,
   GtkListStore *dir_model;
   GtkListStore *file_model;
   gchar* filename;
-  gchar* full_filename;
+  const gchar* fullname;
   gchar* rem_path = rel_path;
   gchar* sel_text;
   gint did_recurse = FALSE;
@@ -2115,33 +2115,33 @@ amitk_xif_selection_populate (AmitkXifSelection *fs,
         {
           possible_count += 1;
 
-          filename = cmpl_this_completion (poss);
 
+	  filename = cmpl_this_completion (poss);
+	  fullname = cmpl_completion_fullname(filename, cmpl_state);
+	      
 	  if (strcmp (filename, "." G_DIR_SEPARATOR_S) != 0 &&
 	      strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0)  {
 
-	    full_filename = g_strconcat(rel_path, filename, NULL);
-	    if ( amide_is_xif_flat_file(full_filename, NULL, NULL) ||
-		 amide_is_xif_directory(full_filename, NULL, NULL)) {
-	      gchar * temp_str;
+	    if ( amide_is_xif_flat_file(fullname, NULL, NULL) ||
+		 amide_is_xif_directory(fullname, NULL, NULL)) {
+	      gchar *xifname;
 	      gint length;
 
 	      /* remove any trailing directory characters */
 	      length = strlen(filename);
 	      if ((length >= 1) && (strcmp(filename+length-1, G_DIR_SEPARATOR_S) == 0))
 		length--;
-	      temp_str = g_strndup(filename, length);
+	      xifname = g_strndup(filename, length);
 
 	      gtk_list_store_append (file_model, &iter);
-	      gtk_list_store_set (file_model, &iter, DIR_COLUMN, temp_str, -1);
-	      g_free(temp_str);
+	      gtk_list_store_set (file_model, &iter, DIR_COLUMN, xifname, -1);
+	      g_free(xifname);
 
 
-	    } else { 
+	    } else if (cmpl_is_directory (poss)) { 
 	      gtk_list_store_append (dir_model, &iter);
 	      gtk_list_store_set (dir_model, &iter, DIR_COLUMN, filename, -1);
 	    }
-	    g_free(full_filename);
 	  }
 	}
 

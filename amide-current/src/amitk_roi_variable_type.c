@@ -534,7 +534,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   
   /* transfer the subset of the data set that contains positive information */
   if (roi->isocontour != NULL)
-    g_object_unref(roi->isocontour);
+    amitk_object_unref(roi->isocontour);
 #if defined(ROI_TYPE_ISOCONTOUR_2D)
   roi->isocontour = amitk_raw_data_UBYTE_2D_init(0, max_voxel.y-min_voxel.y+1, max_voxel.x-min_voxel.x+1);
 #elif defined(ROI_TYPE_ISOCONTOUR_3D)
@@ -556,7 +556,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 #endif
       }
 
-  g_object_unref(temp_rd);
+  amitk_object_unref(temp_rd);
 
   /* mark the edges as such */
   i_voxel.t = 0;
@@ -842,8 +842,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   } /* i.z loop */
 
   /* trash collection */
-  g_object_unref(curr_plane_in);
-  g_object_unref(next_plane_in);
+  amitk_object_unref(curr_plane_in);
+  amitk_object_unref(next_plane_in);
 
 
   return;

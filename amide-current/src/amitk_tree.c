@@ -210,8 +210,7 @@ static void tree_destroy (GtkObject * object) {
   }
 
   if (tree->active_object != NULL) {
-    g_object_unref(tree->active_object);
-    tree->active_object = NULL;
+    tree->active_object = amitk_object_unref(tree->active_object);
   }
 
   if (tree->study != NULL) {
@@ -696,9 +695,9 @@ static void tree_add_object(AmitkTree * tree, AmitkObject * object) {
   GtkTreeModel * model;
   GdkPixbuf * pixbuf;
 
-  g_object_ref(object); /* add a reference */
+  amitk_object_ref(object); /* add a reference */
 
-  if (AMITK_IS_STUDY(object)) { /* save a ref to a study object */
+  if (AMITK_IS_STUDY(object)) { /* save a pointer to thestudy object */
     if (tree->study != NULL) {
       tree_remove_object(tree, AMITK_OBJECT(tree->study));
     }
@@ -784,7 +783,7 @@ static void tree_remove_object(AmitkTree * tree, AmitkObject * object) {
   gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
   
   /* and unref */
-  g_object_unref(object);
+  amitk_object_unref(object);
 
   return;
 }
@@ -894,7 +893,7 @@ void amitk_tree_set_active_object(AmitkTree * tree, AmitkObject * object) {
   g_return_if_fail(AMITK_IS_TREE(tree));
 
   if (tree->active_object != NULL) {
-    g_object_unref(tree->active_object);
+    amitk_object_unref(tree->active_object);
     tree->active_object = NULL;
   }
 
@@ -909,7 +908,7 @@ void amitk_tree_set_active_object(AmitkTree * tree, AmitkObject * object) {
     g_return_if_fail(AMITK_IS_OBJECT(object));
     if (tree_find_object(tree, object, &iter)) {
       
-      tree->active_object = g_object_ref(object);
+      tree->active_object = amitk_object_ref(object);
       if (!gtk_tree_selection_iter_is_selected(selection, &iter))
 	gtk_tree_selection_select_iter(selection, &iter);
 

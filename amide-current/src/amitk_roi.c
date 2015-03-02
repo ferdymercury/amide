@@ -150,7 +150,7 @@ static void roi_finalize (GObject *object)
   AmitkRoi * roi = AMITK_ROI(object);
 
   if (roi->isocontour != NULL) {
-    g_object_unref(roi->isocontour);
+    amitk_object_unref(roi->isocontour);
     roi->isocontour = NULL;
   }
 
@@ -185,8 +185,8 @@ static void roi_copy_in_place (AmitkObject * dest_object, const AmitkObject * sr
 
   if (src_roi->isocontour != NULL) {
     if (dest_roi->isocontour != NULL)
-      g_object_unref(dest_roi->isocontour);
-    dest_roi->isocontour = g_object_ref(src_roi->isocontour);
+      amitk_object_unref(dest_roi->isocontour);
+    dest_roi->isocontour = amitk_object_ref(src_roi->isocontour);
   }
 
   amitk_roi_set_voxel_size(dest_roi, AMITK_ROI_VOXEL_SIZE(src_object));
@@ -552,7 +552,7 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 
   /* mark the distribution data as invalid */
   if (AMITK_DATA_SET_DISTRIBUTION(ds) != NULL) {
-    g_object_unref(AMITK_DATA_SET_DISTRIBUTION(ds));
+    amitk_object_unref(AMITK_DATA_SET_DISTRIBUTION(ds));
     ds->distribution = NULL;
   }
 

@@ -131,8 +131,7 @@ static void object_dialog_destroy (GtkObject * object) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_interpolation, dialog);
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_conversion, dialog);
     dialog->object->dialog = NULL;
-    g_object_unref(dialog->object);
-    dialog->object = NULL;
+    dialog->object = amitk_object_unref(dialog->object);
   }
 
   if (dialog->original_object != NULL) {
@@ -144,8 +143,7 @@ static void object_dialog_destroy (GtkObject * object) {
       g_free(temp_string);
     }
 #endif
-    g_object_unref(dialog->original_object);
-    dialog->original_object = NULL;
+    dialog->original_object = amitk_object_unref(dialog->original_object);
   }
 
   if (dialog->duration_spins != NULL) {
@@ -201,7 +199,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   /* create the temp object which will store the old info if we want revert */
   dialog->original_object = amitk_object_copy(object);
-  dialog->object = g_object_ref(object);
+  dialog->object = amitk_object_ref(object);
 
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(dialog), "response",

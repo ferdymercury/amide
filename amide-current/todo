@@ -2,8 +2,19 @@ misc list of things todo:
 
 for next release?
 -----------------
+* figure out how to get autoconf not to kill .spec file
+* figure out why data set's aren't getting freed
 
-* test flat file xif on big endian architecture
+1. extend help documentation - what do different stat columsn means (i.e.
+"voxels")
+2. add help button to roi analysis widget
+3. need to implement drag-n-drop.
+4. export ROI's to external file? and allow import?
+5. finish profile tool.  allow doing 2D ROI through all planes.
+   show planar view -> allow switching transverse/coronal/sagittal
+   allow picking point, box, or circle, and moving/resizing on screen
+
+* rendering of 3D isocontour doesn't work
 
 * be able to generate line profiles.  You specify 2 points...
   -page 1, list of points (pick 1)
@@ -53,6 +64,7 @@ big things:
 	-need gobject based approach, so widgets can listen for change
 * add a data sets list item,
 	-would allow reading in multi-bed data sets
+	-raw_data type already has its own space...
 * calculating PV correction.  
 	Correction factors could be calculated for each volume's 
 	resolution and then cached.

@@ -139,7 +139,7 @@ static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer
 
     if (profile->ds != NULL) 
       g_object_unref(profile->ds);
-    profile->ds = g_object_ref(ds);
+    profile->ds = amitk_object_ref(ds);
   } else {
     g_print("no pick !\n");
   }
@@ -163,11 +163,11 @@ static void point_selection_changed_cb(GtkTreeSelection * selection, gpointer da
     g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(pt));
 
     if (point1) {
-      if (profile->pt1 != NULL) g_object_unref(profile->pt1);
-      profile->pt1 = g_object_ref(pt);
+      if (profile->pt1 != NULL) amitk_object_unref(profile->pt1);
+      profile->pt1 = amitk_object_ref(pt);
     } else { /* point2 */
-      if (profile->pt2 != NULL) g_object_unref(profile->pt2);
-      profile->pt1 = g_object_ref(pt);
+      if (profile->pt2 != NULL) amitk_object_unref(profile->pt2);
+      profile->pt1 = amitk_object_ref(pt);
     }
   }
 
@@ -247,17 +247,17 @@ static tb_profile_t * tb_profile_free(tb_profile_t * profile) {
       profile->fiducial_marks = amitk_objects_unref(profile->fiducial_marks);
 
     if (profile->ds != NULL) {
-      g_object_unref(profile->ds);
+      amitk_object_unref(profile->ds);
       profile->ds = NULL;
     }
 
     if (profile->pt1 != NULL) {
-      g_object_unref(profile->pt1);
+      amitk_object_unref(profile->pt1);
       profile->pt1 = NULL;
     }
 
     if (profile->pt2 != NULL) {
-      g_object_unref(profile->pt2);
+      amitk_object_unref(profile->pt2);
       profile->pt2 = NULL;
     }
 

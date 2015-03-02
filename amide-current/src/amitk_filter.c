@@ -69,7 +69,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
 
   if ((kernel->data = amitk_raw_data_get_data_mem(kernel)) == NULL) {
     g_warning(_("Couldn't allocate space for the kernel data"));
-    g_object_unref(kernel);
+    amitk_object_unref(kernel);
     return NULL;
   }
 

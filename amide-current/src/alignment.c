@@ -135,14 +135,14 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
       if ((AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark) || AMITK_IS_VOLUME(moving_fiducial_mark)) &&
 	  (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark) || AMITK_IS_VOLUME(moving_fiducial_mark))) {
 
-	moving_fiducial_marks = g_list_append(moving_fiducial_marks, g_object_ref(moving_fiducial_mark));
+	moving_fiducial_marks = g_list_append(moving_fiducial_marks, amitk_object_ref(moving_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
 	  moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
 	else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
 	  moving_center = amitk_volume_get_center(AMITK_VOLUME(moving_fiducial_mark));
 	moving_centroid = point_add(moving_centroid, moving_center);
 	
-	fixed_fiducial_marks = g_list_append(fixed_fiducial_marks, g_object_ref(fixed_fiducial_mark));
+	fixed_fiducial_marks = g_list_append(fixed_fiducial_marks, amitk_object_ref(fixed_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
 	  fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
 	else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) */

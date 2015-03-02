@@ -283,8 +283,7 @@ int main (int argc, char *argv []) {
 	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
 	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
 	  amitk_study_set_view_thickness(imported_study, min_voxel_size);
-	  g_object_unref(new_ds);
-	  new_ds = NULL;
+	  new_ds = amitk_object_unref(new_ds);
 	} else 
 	  g_warning(_("%s is not an AMIDE study or importable file type"), input_filenames[i]);
       } else {
@@ -295,8 +294,7 @@ int main (int argc, char *argv []) {
 	/* each whole study gets it's own window */
 	ui_study_create(study);
 	studies_launched++;
-	g_object_unref(study);
-	study = NULL;
+	study = amitk_object_unref(study);
       } 
 
     }
@@ -306,8 +304,7 @@ int main (int argc, char *argv []) {
     /* all imported data sets go into one study */
     ui_study_create(imported_study);
     studies_launched++;
-    g_object_unref(imported_study);
-    imported_study =NULL;
+    imported_study = amitk_object_unref(imported_study);
   }
 
   poptFreeContext(amide_ctx);

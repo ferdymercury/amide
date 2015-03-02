@@ -327,10 +327,8 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
       ui_series->idle_handler_id = 0;
     }
 
-    if (ui_series->active_ds != NULL) {
-      g_object_unref(ui_series->active_ds);
-      ui_series->active_ds = NULL;
-    }
+    if (ui_series->active_ds != NULL) 
+      ui_series->active_ds = amitk_object_unref(ui_series->active_ds);
 
     if (ui_series->objects != NULL) {
 
@@ -355,7 +353,7 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
     }
 
     if (ui_series->volume != NULL) {
-      g_object_unref(ui_series->volume);
+      amitk_object_unref(ui_series->volume);
       ui_series->volume = NULL;
     }
 
@@ -690,7 +688,7 @@ static gboolean update_immediate(gpointer data) {
     can_continue = amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog),
     						      (i-start_i)/((gdouble) ui_series->rows*ui_series->columns));
   }
-  g_object_unref(view_volume);
+  amitk_object_unref(view_volume);
 
   /* readjust widith and height for what we really used */
   width = ui_series->columns*image_width;
@@ -763,7 +761,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 
   if (active_object != NULL)
     if (AMITK_IS_DATA_SET(active_object))
-      ui_series->active_ds = g_object_ref(active_object); /* save a pointer to which object is active */
+      ui_series->active_ds = amitk_object_ref(active_object); /* save a pointer to which object is active */
 
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(app), "realize", G_CALLBACK(ui_common_window_realize_cb), NULL);

@@ -74,7 +74,7 @@ rendering_t * rendering_unref(rendering_t * rendering) {
   /* if we've removed all reference's, free the context */
   if (rendering->ref_count == 0) {
     if (rendering->object != NULL) {
-      g_object_unref(rendering->object);
+      amitk_object_unref(rendering->object);
       rendering->object = NULL;
     }
 
@@ -104,12 +104,12 @@ rendering_t * rendering_unref(rendering_t * rendering) {
     }
     
     if (rendering->transformed_volume != NULL) {
-      g_object_unref(rendering->transformed_volume);
+      amitk_object_unref(rendering->transformed_volume);
       rendering->transformed_volume = NULL;
     }
 
     if (rendering->extraction_volume != NULL) {
-      g_object_unref(rendering->extraction_volume);
+      amitk_object_unref(rendering->extraction_volume);
       rendering->extraction_volume = NULL;
     }
 
@@ -572,13 +572,13 @@ gboolean rendering_load_object(rendering_t * rendering,
 		    (rendering->dim.z-i_voxel.z-1)* rendering->dim.y* rendering->dim.x] = temp_val;
 	  }
       }
-      g_object_unref(slice);
+      amitk_object_unref(slice);
 
       /* advance the requested slice volume for next iteration */
       amitk_space_set_offset(AMITK_SPACE(slice_volume), 
 			     amitk_space_s2b(AMITK_SPACE(slice_volume), new_offset));
     }
-    g_object_unref(slice_volume);
+    amitk_object_unref(slice_volume);
   }
 
   /* if we quit, get out of here */
@@ -1033,7 +1033,7 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start, const a
   /* and generate our rendering list */
   return_list = renderings_init_recurse(objects, render_volume,voxel_size, start, duration, 
 					zero_fill, optimize_rendering, update_func, update_data);
-  g_object_unref(render_volume);
+  amitk_object_unref(render_volume);
   return return_list;
 }
 

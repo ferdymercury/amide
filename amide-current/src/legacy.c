@@ -333,7 +333,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
       new_volume->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
       if (new_volume->internal_scaling == NULL) {
 	amitk_append_str(perror_buf,"couldn't allocate space for the new scaling structure");
-	g_object_unref(new_volume);
+	amitk_object_unref(new_volume);
 	return NULL;
       }
       
@@ -344,7 +344,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
 		amitk_raw_data_get_value(old_scaling, i);
       
-      g_object_unref(old_scaling);
+      amitk_object_unref(old_scaling);
     }
 
     /* parameters that aren't in older versions and default values aren't good enough*/

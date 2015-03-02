@@ -372,10 +372,8 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 
  error:
 
-  if (ds != NULL) {
-    g_object_unref(ds);
-    ds = NULL;
-  }
+  if (ds != NULL) 
+    ds = amitk_object_unref(ds);
 
 
 

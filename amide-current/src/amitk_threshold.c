@@ -488,7 +488,7 @@ static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds
 
   g_return_if_fail(threshold->data_set == NULL);
 
-  threshold->data_set = g_object_ref(ds);
+  threshold->data_set = amitk_object_ref(ds);
 
   for (i=0; i<2; i++) {
     threshold->threshold_max[i] = AMITK_DATA_SET_THRESHOLD_MAX(ds, i);
@@ -509,8 +509,7 @@ static void threshold_remove_data_set(AmitkThreshold * threshold) {
 
   AMITK_OBJECT(threshold->data_set)->dialog = NULL;
   g_signal_handlers_disconnect_by_func(G_OBJECT(threshold->data_set), data_set_changed_cb, threshold);
-  g_object_unref(threshold->data_set);
-  threshold->data_set = NULL;
+  threshold->data_set = amitk_object_unref(threshold->data_set);
 
   return;
 }

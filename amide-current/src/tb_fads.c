@@ -875,7 +875,7 @@ static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads) {
 #endif
 
     if (tb_fads->data_set != NULL) {
-      g_object_unref(tb_fads->data_set);
+      amitk_object_unref(tb_fads->data_set);
       tb_fads->data_set = NULL;
     }
 
@@ -941,7 +941,7 @@ void tb_fads(AmitkDataSet * active_ds) {
   logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
   tb_fads = tb_fads_init();
-  tb_fads->data_set = g_object_ref(active_ds);
+  tb_fads->data_set = amitk_object_ref(active_ds);
 
   tb_fads->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(tb_fads->dialog), "delete_event", G_CALLBACK(delete_event), tb_fads);

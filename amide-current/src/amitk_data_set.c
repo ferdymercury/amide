@@ -345,22 +345,22 @@ static void data_set_finalize (GObject *object)
     if (data_set->raw_data->dim.z != 1) /* avoid slices */
       g_print("\tfreeing data set: %s\n",AMITK_OBJECT_NAME(data_set));
 #endif
-    g_object_unref(data_set->raw_data);
+    amitk_object_unref(data_set->raw_data);
     data_set->raw_data = NULL;
   }
 
   if (data_set->internal_scaling != NULL) {
-    g_object_unref(data_set->internal_scaling);
+    amitk_object_unref(data_set->internal_scaling);
     data_set->internal_scaling = NULL;
   }
 
   if (data_set->current_scaling != NULL) {
-    g_object_unref(data_set->current_scaling);
+    amitk_object_unref(data_set->current_scaling);
     data_set->current_scaling = NULL;
   }
 
   if (data_set->distribution != NULL) {
-    g_object_unref(data_set->distribution);
+    amitk_object_unref(data_set->distribution);
     data_set->distribution = NULL;
   }
 
@@ -390,7 +390,7 @@ static void data_set_finalize (GObject *object)
   }
 
   if (data_set->slice_parent != NULL) {
-    g_object_unref(data_set->slice_parent);
+    amitk_object_unref(data_set->slice_parent);
     data_set->slice_parent = NULL;
   }
 
@@ -445,24 +445,24 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
   dest_ds->voxel_size = AMITK_DATA_SET_VOXEL_SIZE(src_object);
   if (src_ds->raw_data != NULL) {
     if (dest_ds->raw_data != NULL)
-      g_object_unref(dest_ds->raw_data);
-    dest_ds->raw_data = g_object_ref(src_ds->raw_data);
+      amitk_object_unref(dest_ds->raw_data);
+    dest_ds->raw_data = amitk_object_ref(src_ds->raw_data);
   }
 
   /* just reference, as internal scaling is never suppose to change */
   dest_ds->scaling_type = src_ds->scaling_type;
   if (src_ds->internal_scaling != NULL) {
     if (dest_ds->internal_scaling != NULL)
-      g_object_unref(dest_ds->internal_scaling);
-    dest_ds->internal_scaling = g_object_ref(src_ds->internal_scaling);
+      amitk_object_unref(dest_ds->internal_scaling);
+    dest_ds->internal_scaling = amitk_object_ref(src_ds->internal_scaling);
   }
 
   dest_ds->scan_start = AMITK_DATA_SET_SCAN_START(src_object);
 
   if (src_ds->distribution != NULL) {
     if (dest_ds->distribution != NULL)
-      g_object_unref(dest_ds->distribution);
-    dest_ds->distribution = g_object_ref(src_ds->distribution);
+      amitk_object_unref(dest_ds->distribution);
+    dest_ds->distribution = amitk_object_ref(src_ds->distribution);
   }
   amitk_data_set_set_scale_factor(dest_ds, AMITK_DATA_SET_SCALE_FACTOR(src_object));
   dest_ds->conversion = AMITK_DATA_SET_CONVERSION(src_object);
@@ -639,7 +639,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   else
     xml_get_location_and_size(nodes, "internal_scaling_location_and_size", &location, &size, &error_buf);
 
-  if (ds->internal_scaling != NULL) g_object_unref(ds->internal_scaling);
+  if (ds->internal_scaling != NULL) amitk_object_unref(ds->internal_scaling);
   ds->internal_scaling = amitk_raw_data_read_xml(filename, study_file, location, size, &error_buf, NULL, NULL);
   if (filename != NULL) {
     g_free(filename);
@@ -652,7 +652,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
       filename = xml_get_string(nodes, "distribution_file");
     else
       xml_get_location_and_size(nodes, "distribution_location_and_size", &location, &size, &error_buf);
-    if (ds->distribution != NULL) g_object_unref(ds->distribution);
+    if (ds->distribution != NULL) amitk_object_unref(ds->distribution);
     ds->distribution = amitk_raw_data_read_xml(filename, study_file, location, size, &error_buf, NULL, NULL);
     if (filename != NULL) {
       g_free(filename);
@@ -698,7 +698,7 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
 	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(ds->internal_scaling,i) = 
 	      amitk_raw_data_get_value(old_scaling, i);
     
-    g_object_unref(old_scaling);
+    amitk_object_unref(old_scaling);
   }
   /* end legacy cruft */
 
@@ -810,14 +810,14 @@ AmitkDataSet * amitk_data_set_new_with_data(const AmitkFormat format,
   g_assert(data_set->raw_data == NULL);
   data_set->raw_data = amitk_raw_data_new_with_data(format, dim);
   if (data_set->raw_data == NULL) {
-    g_object_unref(data_set);
+    amitk_object_unref(data_set);
     g_return_val_if_reached(NULL);
   }
 
   g_assert(data_set->frame_duration == NULL);
   data_set->frame_duration = amitk_data_set_get_frame_duration_mem(data_set);
   if (data_set->frame_duration == NULL) {
-    g_object_unref(data_set);
+    amitk_object_unref(data_set);
     g_return_val_if_reached(NULL);
   }
   for (i=0; i < dim.t; i++) 
@@ -828,13 +828,13 @@ AmitkDataSet * amitk_data_set_new_with_data(const AmitkFormat format,
   data_set->scaling_type = scaling_type;
   switch(scaling_type) {
   case AMITK_SCALING_TYPE_2D:
-    g_object_unref(data_set->internal_scaling);
+    amitk_object_unref(data_set->internal_scaling);
     scaling_dim.t = dim.t;
     scaling_dim.z = dim.z;
     data_set->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
     break;
   case AMITK_SCALING_TYPE_1D:
-    g_object_unref(data_set->internal_scaling);
+    amitk_object_unref(data_set->internal_scaling);
     scaling_dim.t = dim.t;
     data_set->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
     break;
@@ -843,7 +843,7 @@ AmitkDataSet * amitk_data_set_new_with_data(const AmitkFormat format,
     break; /* amitk_new returns a 0D scaling factor already */
   }
   if (data_set->internal_scaling == NULL) {
-    g_object_unref(data_set);
+    amitk_object_unref(data_set);
     g_return_val_if_reached(NULL);
   }
 
@@ -879,14 +879,14 @@ AmitkDataSet * amitk_data_set_import_raw_file(const gchar * file_name,
 						 update_func, update_data);
   if (ds->raw_data == NULL) {
     g_warning(_("raw_data_read_file failed returning NULL data set"));
-    g_object_unref(ds);
+    amitk_object_unref(ds);
     return NULL;
   }
 
   /* allocate space for the array containing info on the duration of the frames */
   if ((ds->frame_duration = amitk_data_set_get_frame_duration_mem(ds)) == NULL) {
     g_warning(_("couldn't allocate space for the frame duration info"));
-    g_object_unref(ds);
+    amitk_object_unref(ds);
     return NULL;
   }
 
@@ -1176,8 +1176,7 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
 	  (ds->current_scaling->dim.y != ds->internal_scaling->dim.y) ||
 	  (ds->current_scaling->dim.z != ds->internal_scaling->dim.z) ||
 	  (ds->current_scaling->dim.t != ds->internal_scaling->dim.t)) {
-	g_object_unref(ds->current_scaling);
-	ds->current_scaling = NULL;
+	ds->current_scaling = amitk_object_unref(ds->current_scaling);
       }
     
     if (ds->current_scaling == NULL) {
@@ -1734,7 +1733,7 @@ void amitk_data_set_calc_distribution(AmitkDataSet * ds,
      in an old file */
   if (ds->distribution != NULL)
     if (AMITK_RAW_DATA_DIM_X(ds->distribution) != AMITK_DATA_SET_DISTRIBUTION_SIZE) {
-      g_object_unref(ds->distribution);
+      amitk_object_unref(ds->distribution);
       ds->distribution = NULL;
     }
 
@@ -2431,7 +2430,7 @@ static void filter_fir(const AmitkDataSet * data_set,
   }
   
   if (subset != NULL) {
-    g_object_unref(subset);
+    amitk_object_unref(subset);
     subset = NULL;
   }
 
@@ -2584,7 +2583,7 @@ void filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * filtered_ds,
   } /* j.t */
 
   /* garbage collection */
-  g_object_unref(output_data); 
+  amitk_object_unref(output_data); 
   g_free(partial_sort_data);
 
   return;
@@ -2640,23 +2639,23 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 
   /* start by unrefing the info that's only copied by reference by amitk_object_copy */
   if (filtered->raw_data != NULL) {
-    g_object_unref(filtered->raw_data);
+    amitk_object_unref(filtered->raw_data);
     filtered->raw_data = NULL;
   }
   
   if (filtered->internal_scaling != NULL) {
-    g_object_unref(filtered->internal_scaling);
+    amitk_object_unref(filtered->internal_scaling);
     filtered->internal_scaling = NULL;
   }
 
   if (filtered->distribution != NULL) {
-    g_object_unref(filtered->distribution);
+    amitk_object_unref(filtered->distribution);
     filtered->distribution = NULL;
   }
 
   /* and unref anything that's obviously now incorrect */
   if (filtered->current_scaling != NULL) {
-    g_object_unref(filtered->current_scaling);
+    amitk_object_unref(filtered->current_scaling);
     filtered->current_scaling = NULL;
   }
 
@@ -2709,7 +2708,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 	goto error;
       }
       filter_fir(ds, filtered, kernel, kernel_size_3D);
-      g_object_unref(kernel);
+      amitk_object_unref(kernel);
     }
     break;
 #endif
@@ -2737,7 +2736,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
   return filtered;
     
  error:
-  if (filtered != NULL) g_object_unref(filtered);
+  if (filtered != NULL) amitk_object_unref(filtered);
   return NULL;
 }
 
@@ -2853,7 +2852,7 @@ amide_real_t amitk_data_sets_get_max_min_voxel_size(GList * objects) {
   return min_voxel_size;
 }
 
-/* returns an unreferenced pointer to the slice in the list with the given parent */
+/* returns an unreferenced pointer to a slice in the list with the given parent */
 AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const AmitkDataSet * slice_parent) {
 
   AmitkDataSet * slice;
@@ -2861,18 +2860,17 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const Amit
   if (slice_parent == NULL) return NULL;
   if (slices == NULL) return NULL;
 
-  /* first process the rest of the list */
-  slice = amitk_data_sets_find_with_slice_parent(slices->next, slice_parent);
+  if (AMITK_IS_DATA_SET(slices->data))
+    if (AMITK_DATA_SET(slices->data)->slice_parent == slice_parent)
+      slice = AMITK_DATA_SET(slices->data);
 
   /* check children */
   if (slice == NULL)
     slice = amitk_data_sets_find_with_slice_parent(AMITK_OBJECT_CHILDREN(slices->data), slice_parent);
 
-  /* check this guy */
-  if (slice == NULL) 
-    if (AMITK_IS_DATA_SET(slices->data))
-      if (AMITK_DATA_SET(slices->data)->slice_parent == slice_parent)
-	slice = AMITK_DATA_SET(slices->data);
+  /* process the rest of the list */
+  if (slice == NULL)
+    slice = amitk_data_sets_find_with_slice_parent(slices->next, slice_parent);
 
   return slice;
 }
@@ -2889,7 +2887,7 @@ GList * amitk_data_sets_remove_with_slice_parent(GList * slices,const AmitkDataS
 
   while (slice != NULL) {
     slices = g_list_remove(slices, slice);
-    g_object_unref(slice);
+    amitk_object_unref(slice);
 
     /* may be multiple slices with this parent */
     slice = amitk_data_sets_find_with_slice_parent(slices, slice_parent);
@@ -2993,9 +2991,9 @@ GList * amitk_data_sets_get_slices(GList * objects,
 				     duration, pixel_dim, view_volume);
       
       if (canvas_slice != NULL) {
-	slice = g_object_ref(canvas_slice);
+	slice = amitk_object_ref(canvas_slice);
       } else if (local_slice != NULL) {
-	slice = g_object_ref(local_slice);
+	slice = amitk_object_ref(local_slice);
       } else {/* generate a new one */
 	slice = amitk_data_set_get_slice(parent_ds, start, duration,  pixel_dim, view_volume, TRUE);
       }
@@ -3005,9 +3003,9 @@ GList * amitk_data_sets_get_slices(GList * objects,
       slices = g_list_prepend(slices, slice);
 
       if (canvas_slice == NULL)
-	*pslice_cache = g_list_prepend(*pslice_cache, g_object_ref(slice)); /* most recently used first */
+	*pslice_cache = g_list_prepend(*pslice_cache, amitk_object_ref(slice)); /* most recently used first */
       if (local_slice == NULL) {
-	parent_ds->slice_cache = g_list_prepend(parent_ds->slice_cache, g_object_ref(slice));
+	parent_ds->slice_cache = g_list_prepend(parent_ds->slice_cache, amitk_object_ref(slice));
 
 	cache_size = g_list_length(parent_ds->slice_cache);
 	if (cache_size > parent_ds->max_slice_cache_size) {

@@ -1,3 +1,6 @@
+0.7.13
+	* fixed problems with selecting XIF files in the file selector
+
 0.7.12
 	* added ability to save XIF files as flat file, made default
 	* put in configure ability to detect libgnomecanvas version,

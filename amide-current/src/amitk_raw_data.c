@@ -225,7 +225,7 @@ AmitkRawData* amitk_raw_data_new_with_data(AmitkFormat format, AmitkVoxel dim) {
   /* allocate the space for the data */
   raw_data->data = amitk_raw_data_get_data_mem(raw_data);
   if (raw_data->data == NULL) {
-    g_object_unref(raw_data);
+    amitk_object_unref(raw_data);
     return NULL;
   }
 
@@ -666,7 +666,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
  error_condition:
 
   if (raw_data != NULL)
-    g_object_unref(raw_data);
+    amitk_object_unref(raw_data);
   raw_data = NULL;
 
 

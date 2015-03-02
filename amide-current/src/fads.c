@@ -416,7 +416,7 @@ void fads_pca(AmitkDataSet * data_set,
     amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(data_set));
     amitk_object_add_child(AMITK_OBJECT(data_set), AMITK_OBJECT(new_ds));
-    g_object_unref(new_ds); /* add_child adds a reference */
+    amitk_object_unref(new_ds); /* add_child adds a reference */
   }
 
   /* and output the curves */
@@ -1219,7 +1219,7 @@ void fads_pls(AmitkDataSet * data_set,
     amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(p.data_set));
     amitk_object_add_child(AMITK_OBJECT(p.data_set), AMITK_OBJECT(new_ds));
-    g_object_unref(new_ds); /* add_child adds a reference */
+    amitk_object_unref(new_ds); /* add_child adds a reference */
   }
 
 
@@ -2188,7 +2188,7 @@ void fads_two_comp(AmitkDataSet * data_set,
     amitk_data_set_set_threshold_min(new_ds, 0, AMITK_DATA_SET_GLOBAL_MIN(new_ds));
     amitk_data_set_set_interpolation(new_ds, AMITK_DATA_SET_INTERPOLATION(p.data_set));
     amitk_object_add_child(AMITK_OBJECT(p.data_set), AMITK_OBJECT(new_ds));
-    g_object_unref(new_ds); /* add_child adds a reference */
+    amitk_object_unref(new_ds); /* add_child adds a reference */
   }
 
 

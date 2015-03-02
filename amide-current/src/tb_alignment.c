@@ -249,7 +249,7 @@ static void points_update_model(tb_alignment_t * alignment) {
 			   COLUMN_POINT_NAME, AMITK_OBJECT_NAME(fiducial_marks->data), 
 			   COLUMN_POINT_POINTER, fiducial_marks->data, -1);
 	if (selected)
-	  alignment->selected_marks = g_list_append(alignment->selected_marks, g_object_ref(fiducial_marks->data));
+	  alignment->selected_marks = g_list_append(alignment->selected_marks, amitk_object_ref(fiducial_marks->data));
 	
       }
     }
@@ -325,18 +325,18 @@ static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer
     g_return_if_fail(AMITK_IS_DATA_SET(ds));
 
     if (fixed_ds) {
-      if (alignment->fixed_ds != NULL) g_object_unref(alignment->fixed_ds);
-      alignment->fixed_ds = g_object_ref(ds);
+      if (alignment->fixed_ds != NULL) amitk_object_unref(alignment->fixed_ds);
+      alignment->fixed_ds = amitk_object_ref(ds);
     } else {
-      if (alignment->moving_ds != NULL) g_object_unref(alignment->moving_ds);
-      alignment->moving_ds = g_object_ref(ds);
+      if (alignment->moving_ds != NULL) amitk_object_unref(alignment->moving_ds);
+      alignment->moving_ds = amitk_object_ref(ds);
     }
   } else {
     if (fixed_ds) {
-      if (alignment->fixed_ds != NULL) g_object_unref(alignment->fixed_ds);
+      if (alignment->fixed_ds != NULL) amitk_object_unref(alignment->fixed_ds);
       alignment->fixed_ds = NULL;
     } else {
-      if (alignment->moving_ds != NULL) g_object_unref(alignment->moving_ds);
+      if (alignment->moving_ds != NULL) amitk_object_unref(alignment->moving_ds);
       alignment->moving_ds = NULL;
     }
   }
@@ -373,10 +373,10 @@ static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * eve
       toggled = !toggled;
       gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_POINT_SELECTED, toggled, -1);
       if (toggled) {
-	alignment->selected_marks = g_list_append(alignment->selected_marks, g_object_ref(point));
+	alignment->selected_marks = g_list_append(alignment->selected_marks, amitk_object_ref(point));
       } else {
 	alignment->selected_marks = g_list_remove(alignment->selected_marks, point);
-	g_object_unref(point);
+	amitk_object_unref(point);
       }
     }
     break;
@@ -463,12 +463,12 @@ static tb_alignment_t * tb_alignment_free(tb_alignment_t * alignment) {
       alignment->data_sets = amitk_objects_unref(alignment->data_sets);
 
     if (alignment->moving_ds != NULL) {
-      g_object_unref(alignment->moving_ds);
+      amitk_object_unref(alignment->moving_ds);
       alignment->moving_ds = NULL;
     }
 
     if (alignment->fixed_ds != NULL) {
-      g_object_unref(alignment->fixed_ds);
+      amitk_object_unref(alignment->fixed_ds);
       alignment->fixed_ds = NULL;
     }
 

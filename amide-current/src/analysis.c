@@ -320,10 +320,8 @@ static analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_anal
     volume_analysis->next_volume_analysis = NULL;
 
     volume_analysis->frame_analyses = analysis_frame_unref(volume_analysis->frame_analyses);
-    if (volume_analysis->data_set != NULL) {
-      g_object_unref(volume_analysis->data_set);
-      volume_analysis->data_set=NULL;
-    }
+    if (volume_analysis->data_set != NULL)
+      volume_analysis->data_set=amitk_object_unref(volume_analysis->data_set);
     g_free(volume_analysis);
     volume_analysis = NULL;
   } else
@@ -349,7 +347,7 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_set
   }
 
   temp_volume_analysis->ref_count = 1;
-  temp_volume_analysis->data_set = g_object_ref(data_sets->data);
+  temp_volume_analysis->data_set = amitk_object_ref(data_sets->data);
 
   /* calculate this one */
   temp_volume_analysis->frame_analyses = 
@@ -385,14 +383,10 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
     roi_analysis->next_roi_analysis = NULL;
 
     roi_analysis->volume_analyses = analysis_volume_unref(roi_analysis->volume_analyses);
-    if (roi_analysis->roi != NULL) {
-      g_object_unref(roi_analysis->roi);
-      roi_analysis->roi = NULL;
-    }
-    if (roi_analysis->study != NULL) {
-      g_object_unref(roi_analysis->study);
-      roi_analysis->study = NULL;
-    }
+    if (roi_analysis->roi != NULL) 
+      roi_analysis->roi = amitk_object_unref(roi_analysis->roi);
+    if (roi_analysis->study != NULL) 
+      roi_analysis->study = amitk_object_unref(roi_analysis->study);
     g_free(roi_analysis);
     roi_analysis = NULL;
   } else
@@ -415,8 +409,8 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois,
   }
 
   temp_roi_analysis->ref_count = 1;
-  temp_roi_analysis->roi = g_object_ref(rois->data);
-  temp_roi_analysis->study = g_object_ref(study);
+  temp_roi_analysis->roi = amitk_object_ref(rois->data);
+  temp_roi_analysis->study = amitk_object_ref(study);
   temp_roi_analysis->subfraction = subfraction;
 
   /* calculate this one */

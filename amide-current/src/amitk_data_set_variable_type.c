@@ -164,7 +164,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
     continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
   if (!continue_work) {   /* if we quit, get out of here */
-    g_object_unref(distribution);
+    amitk_object_unref(distribution);
     return;
   }
   
@@ -247,7 +247,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
     break;
   }
 
-  projection->slice_parent = g_object_ref(data_set);
+  projection->slice_parent = amitk_object_ref(data_set);
   amitk_space_copy_in_place(AMITK_SPACE(projection), AMITK_SPACE(data_set));
   amitk_data_set_calc_far_corner(projection);
   projection->scan_start = amitk_data_set_get_start_time(data_set, frame);
@@ -318,7 +318,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
     continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0);
 
   if (!continue_work) {/* we hit cancel */
-    g_object_unref(projection);
+    amitk_object_unref(projection);
     return NULL;
   }
     
@@ -363,22 +363,22 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
 
   /* start by unrefing the info that's only copied by reference by amitk_object_copy */
   if (cropped->raw_data != NULL) {
-    g_object_unref(cropped->raw_data);
+    amitk_object_unref(cropped->raw_data);
     cropped->raw_data = NULL;
   }
   
   if (cropped->internal_scaling != NULL) {
-    g_object_unref(cropped->internal_scaling);
+    amitk_object_unref(cropped->internal_scaling);
     cropped->internal_scaling = NULL;
   }
 
   if (cropped->distribution != NULL) {
-    g_object_unref(cropped->distribution);
+    amitk_object_unref(cropped->distribution);
     cropped->distribution = NULL;  }
 
   /* and unref anything that's obviously now incorrect */
   if (cropped->current_scaling != NULL) {
-    g_object_unref(cropped->current_scaling);
+    amitk_object_unref(cropped->current_scaling);
     cropped->current_scaling = NULL;
   }
 
@@ -498,7 +498,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
   return cropped; 
 
 error:
-  g_object_unref(cropped);
+  amitk_object_unref(cropped);
 
   return NULL;
 }
@@ -564,7 +564,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   }
 
 
-  slice->slice_parent = g_object_ref(data_set);
+  slice->slice_parent = amitk_object_ref(data_set);
   slice->voxel_size.x = pixel_dim;
   slice->voxel_size.y = pixel_dim;
   slice->voxel_size.z = AMITK_VOLUME_Z_CORNER(slice_volume);

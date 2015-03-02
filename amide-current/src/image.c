@@ -172,13 +172,13 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 
   dim = AMITK_DATA_SET_DIM(intersection);
   if ((dim.x == 0) && (dim.y ==0)) {
-    g_object_unref(intersection);
+    amitk_object_unref(intersection);
     return NULL;
   }
 
   if ((rgba_data = g_try_new(guchar,4*dim.x*dim.y)) == NULL) {
     g_warning(_("couldn't allocate memory for rgba_data for roi image"));
-    g_object_unref(intersection);
+    amitk_object_unref(intersection);
     return NULL;
   }
 
@@ -206,7 +206,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   if (return_corner != NULL)
     *return_corner = amitk_space_s2b(AMITK_SPACE(intersection), AMITK_VOLUME_CORNER(intersection));
 
-  g_object_unref(intersection);
+  amitk_object_unref(intersection);
 
   return temp_image;
 }
