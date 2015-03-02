@@ -26,12 +26,9 @@
 
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #include <matrix.h>
 #include "raw_data.h"
 #include <sys/stat.h>
-#include "raw_data_import.h"
-#include "raw_data_import_callbacks.h"
  
 /* external variables */        
 gchar * raw_data_format_names[] = {"Unsigned Byte (8 bit)", \

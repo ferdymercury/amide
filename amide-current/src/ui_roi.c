@@ -26,9 +26,6 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
-#include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "ui_roi.h"
 
 /* free up a ui_roi list */

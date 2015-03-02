@@ -23,7 +23,18 @@
   02111-1307, USA.
 */
 
-#define UI_SERIES_BORDER 2
+#ifndef __UI_SERIES_H__
+#define __UI_SERIES_H__
+
+/* header files that are always needed with this file */
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
+
+#define UI_SERIES_L_MARGIN 2.0
+#define UI_SERIES_R_MARGIN UI_SERIES_L_MARGIN
+#define UI_SERIES_TOP_MARGIN 2.0
+#define UI_SERIES_BOTTOM_MARGIN 15.0
+#define UI_SERIES_CAPTION_FONT "fixed"
 
 typedef enum {PLANES, FRAMES} series_t;
 
@@ -34,28 +45,42 @@ typedef struct ui_series_t {
   volume_list_t * volumes;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
+  GnomeCanvasItem ** captions;
   GdkPixbuf ** rgb_images;
+  GtkWidget * thresholds_dialog;
   guint num_slices, rows, columns;
   realspace_t coord_frame;
   realpoint_t view_point;
-  floatpoint_t thickness;
   amide_time_t view_time;
-  amide_time_t view_duration;
+  floatpoint_t thickness;
   interpolation_t interpolation;
+  scaling_t scaling;
   floatpoint_t zoom;
   series_t type;
   guint reference_count;
+
+  /* for "PLANES" series */
+  amide_time_t view_duration;
+  floatpoint_t start_z;
+  floatpoint_t end_z;
+
+  /* for "FRAMES" series */
+  guint view_frame;
+  amide_time_t start_time;
+  amide_time_t * frame_durations; /* an array of frame durations */
+
 } ui_series_t;
 
 /* external functions */
-void ui_series_slices_free(ui_series_t * ui_series);
 ui_series_t * ui_series_free(ui_series_t * ui_series);
-ui_series_t * ui_series_init(void);
-/* continued in ui_series2.h */
+void ui_series_update_canvas(ui_series_t * ui_series);
+void ui_series_create(study_t * study, volume_list_t * volumes, view_t view, series_t series_type);
 
 /* external variables */
 extern gchar * series_names[];
 
+
+#endif /* UI_SERIES_H */
 
 
 

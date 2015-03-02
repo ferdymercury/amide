@@ -25,14 +25,17 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+#ifndef __UI_RENDERING_H__
+#define __UI_RENDERING_H__
+
+/* header files that are always needed with this file */
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include "rendering.h"
 
 /* defines */
-#define AXIS_VOLUME_X_WIDTH 96
-#define AXIS_VOLUME_Y_WIDTH AXIS_VOLUME_X_WIDTH
-#define AXIS_VOLUME_Z_WIDTH AXIS_VOLUME_Y_WIDTH      
 #define UI_RENDERING_BLANK_WIDTH 200
 #define UI_RENDERING_BLANK_HEIGHT 200
-
+#define BOX_OFFSET 0.2
 
 /* ui_rendering data structures */
 typedef struct ui_rendering_t {
@@ -41,16 +44,11 @@ typedef struct ui_rendering_t {
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
   gpointer movie; /* pointer to type ui_rendering_movie_t */
 #endif
-  realspace_t coord_frame;
   amide_time_t start;
   amide_time_t duration;
-  GnomeCanvas * axis_canvas;
-  GnomeCanvasItem * axis_canvas_image;
-  GdkPixbuf * axis_image;
-  GnomeCanvas * main_canvas;
-  GnomeCanvasItem * main_canvas_image;
-  GdkPixbuf * main_image;
-  rendering_t * axis_context;
+  GnomeCanvas * canvas;
+  GnomeCanvasItem * canvas_image;
+  GdkPixbuf * rgb_image;
   rendering_list_t * contexts;
   GtkWidget * render_button;
   gboolean immediate;
@@ -60,6 +58,7 @@ typedef struct ui_rendering_t {
   gdouble front_factor;
   gdouble density;
   gdouble zoom;
+  interpolation_t interpolation;
   guint reference_count;
 } ui_rendering_t;
 
@@ -71,7 +70,8 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering);
 void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame, 
 			 amide_time_t start, amide_time_t duration, interpolation_t interpolation);
 
-#endif
+#endif /* __UI_RENDERING_H__ */
+#endif /* AMIDE_LIBVOLPACK_SUPPORT */
 
 
 

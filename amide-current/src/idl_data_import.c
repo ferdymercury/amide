@@ -26,8 +26,6 @@
 
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
-#include "volume.h"
 #include <sys/stat.h>
 #include "raw_data_import.h"
 #include "idl_data_import.h"

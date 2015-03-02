@@ -74,7 +74,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN287"
+NAME="AEN296"
 >Frames</A
 ></H3
 ><P
@@ -88,16 +88,36 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN290"
+NAME="AEN299"
 >Rotations on [x,y,z]</A
 ></H3
 ><P
->	This setting determines how many times the data set will be
+> 
+	This setting determines how many times the data set will be
 	rotated around the given axis over the course of the movie.
-	Note that the rotations will be done around the initial axis
-	(frame 0), not the axis of the previous frame.  Additionally,
-	the rotation for each frame is done in x-&#62;y-&#62;z order (rotate
+	The rotation for each frame is done in x-&#62;y-&#62;z order (rotate
 	on x first, then y, then z).
+      </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN302"
+>Start/End Time</A
+></H3
+><P
+> 
+	These entries determine over which time period of the data set
+	the rendered images will be drawn from.  By default, they show
+	the time period over which the current rendered image is drawn
+	from.  By changing these entries, a rendered movie can be made
+	over time.  Note that every time a frame boundary in the data
+	set is passed over, the rendering process must slice and load
+	in a new frame of data.  This makes creating a rendered movie
+	over time significantly slower than a movie with just
+	rotations.
       </P
 ></DIV
 ></DIV

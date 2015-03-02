@@ -88,9 +88,8 @@
     
     A variety of other file formats are supported through the use of
     medcon/libmdc, including: Acr/Nema 2.0, Analyze (SPM),
-    InterFile3.3, and Gif87a/89a.  For more current information,
-    check out the webpage at:
-    http://xmedcon.sourceforge.net
+    InterFile3.3, and Gif87a/89a.  For more current information, check
+    out the xmedcon/libmdc webpage at: http://xmedcon.sourceforge.net
     
   </para>
   

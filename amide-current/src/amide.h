@@ -23,6 +23,9 @@
   02111-1307, USA.
 */
 
+#ifndef __AMIDE_H__
+#define __AMIDE_H__
+
 /* some basic defines for packing tables */
 #define X_PACKING_OPTIONS GTK_EXPAND
 #define Y_PACKING_OPTIONS GTK_EXPAND
@@ -68,3 +71,6 @@ extern gchar * view_names[];
 extern gint number_of_windows;
 
 
+
+
+#endif /* __AMIDE_H__ */

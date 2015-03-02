@@ -10,7 +10,7 @@ TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="PREVIOUS"
 TITLE="Gotcha's to ROI calculations "
-HREF="x200.html"><LINK
+HREF="x209.html"><LINK
 REL="NEXT"
 TITLE="Rendering Parameters Dialog"
 HREF="rendering-dialog-help.html"></HEAD
@@ -35,7 +35,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x200.html"
+HREF="x209.html"
 >Prev</A
 ></TD
 ><TD
@@ -72,7 +72,7 @@ CLASS="TOC"
 ></DT
 ><DT
 ><A
-HREF="rendering.html#AEN213"
+HREF="rendering.html#AEN222"
 >Rendering Dialog</A
 ></DT
 ><DT
@@ -107,7 +107,7 @@ HREF="rendering-movie-dialog-help.html"
   the data is scaled between the current minimum and maximum
   threshold, with all data above the current maximum threshold set to
   the maximum threshold value, and all data below the current minimum
-  threshold set to the minimum threshold.&#13;</P
+  threshold set to the minimum threshold value.&#13;</P
 ><P
 >&#13;  When this is completed, the rendering dialog should pop-up.  It's
   use is described below.&#13;</P
@@ -116,7 +116,7 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN213"
+NAME="AEN222"
 >Rendering Dialog</A
 ></H1
 ><DIV
@@ -124,22 +124,15 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN215"
->Axis Rendering</A
+NAME="AEN224"
+>Main Rendering Canvas</A
 ></H2
 ><P
->      A coordinate axis is always rendered along with the data set,
-      and is displayed in a separate window on the upper left.  The
-      x-axis is designated by the long bar with a ball at the end of
-      it.  The y-axis is the second shorted bar.  And the shorted bar
-      is the z-axis.
-    </P
-><P
->      The purpose of this rendering is two fold.  First, it allows the
-      user to see in which direction the data set will be spun.
-      Second, since the axis is rendered using the same classification
-      functions as the data set, it allows a quick check that the data
-      set is valid and is being rendered correctly.
+>      The result of the rendering process is presented on the canvas
+      in the center of the dialog.  This canvas can accept user input
+      to change the orientation of the rendering.  Button 1 allows
+      rotating on the x and y axis, and button 2 allows rotating on
+      the z axis.
     </P
 ></DIV
 ><DIV
@@ -147,12 +140,56 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN219"
+NAME="AEN227"
+>Spin Sliders</A
+></H2
+><P
+>      You should notice two slider type widgets, one on top of the
+      rendered image, and one on the right side.  These are both
+      appropriately labeled with the axis around which the rendering
+      will be spun if they are changed.  Additionally you should
+      notice a dial widget (labeled 'z').  The dial is for rotating on
+      the z axis (which comes out of the plane of the display).  Note
+      that the effect of rotations are cumulative.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN230"
+>Axis Drawing</A
+></H2
+><P
+>      A coordinate axis is displayed to the left of the rendering, for
+      reminding you which way the axis are pointing.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN233"
+>Reset Axis</A
+></H2
+><P
+>      This button will reset the rendering's orientation back to the
+      default orientation.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN236"
 >"Render" Button</A
 ></H2
 ><P
 >      This button tells the program to render the data set.  It will
-      be inactive if the "render on change" option has been picked.
+      be inactive if the "on change" option has been picked.
     </P
 ></DIV
 ><DIV
@@ -160,8 +197,8 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN222"
->"Render on Change" Checkbox</A
+NAME="AEN239"
+>"On Change" Checkbox</A
 ></H2
 ><P
 >      If this is checked, the data set will be rerendered on every
@@ -174,82 +211,51 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN225"
->Spin Sliders</A
+NAME="AEN242"
+>Rendering Menus</A
 ></H2
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN244"
+>File-&#62;Export Rendering</A
+></H3
 ><P
->      Sliding one of these will cause the data set to be spun on the
-      respective axis.  The effect is cumulative.  If you become
-      confused as to where the axis lies that you're spinning on, look
-      at the axis rendering.
-    </P
+>	This menu item allows you to export the rendered image to
+	an external image file.  The saved data format is determined by
+	the extension of the specified filename.  A large variety of
+	image data formats can be saved, including JPEG [.jpg], TIFF
+	[.tiff], Postscript [.ps], Encapsulated Postscript [.eps], and
+	PNG [.png].  </P
 ></DIV
 ><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
 ><A
-NAME="AEN228"
->Reset Axis</A
-></H2
+NAME="AEN247"
+>File-&#62;Create Movie</A
+></H3
 ><P
->      This button will reset the data set's orientation back to the
-      default orientation.
-    </P
+>	This causes the movie generation dialog box to pop up.  This
+	dialog box is further described below.
+      </P
 ></DIV
 ><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
 ><A
-NAME="AEN231"
->Export Rendering</A
-></H2
+NAME="AEN250"
+>"Edit-&#62;Rendering Parameters</A
+></H3
 ><P
->      This button allows you to export the rendered image to
-      anexternal image file.  The saved data format is determined by
-      the extension of the specified filename.  A large variety of
-      image data formats can be saved, including JPEG [.jpg], TIFF
-      [.tiff], Postscript [.ps], Encapsulated Postscript [.eps], and
-      PNG [.png].  </P
+>	This causes the rendering parameters dialog box to pop up.
+	This dialog box is described below.
+      </P
 ></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN234"
->"Rendering Parameters" Button</A
-></H2
-><P
->      This causes the rendering parameters dialog box to pop up.  This
-      dialog box is described below.
-    </P
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN237"
->"Create Movie" Button</A
-></H2
-><P
->      This causes the movie generation dialog box to pop up.  This
-      dialog box is further described below.
-    </P
-></DIV
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN240"
->Data Set Rendering Window</A
-></H2
-><P
->      In this window is shown the results of rendering the data set.
-    </P
 ></DIV
 ></DIV
 ></DIV
@@ -268,7 +274,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x200.html"
+HREF="x209.html"
 >Prev</A
 ></TD
 ><TD

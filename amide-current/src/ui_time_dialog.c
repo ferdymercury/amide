@@ -26,16 +26,10 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
-#include "amide.h"
 #include "study.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h"
 #include "ui_study.h"
 #include "ui_time_dialog.h"
-#include "ui_time_dialog_callbacks.h"
+#include "ui_time_dialog_cb.h"
 
 
 static gchar * column_names[] =  {"Start (s)", \
@@ -79,7 +73,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   }
 
   /* get space for the array that'll take care of which frame of which volume we're looking at*/
-  frames = (guint *) g_malloc(num_volumes+sizeof(guint));
+  frames = (guint *) g_malloc(num_volumes*sizeof(guint));
   if ((frames == NULL) && (num_volumes !=0)) {
     g_warning("%s: can't count frames or allocate memory!",PACKAGE);
     return;
@@ -96,7 +90,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
      throught the gtk_clist_select_row function, which emits a
      "select_row" signal.  Unblocking is at the end of this function */
   gtk_signal_handler_block_by_func(GTK_OBJECT(clist),
-				   GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_select_row),
+				   GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
 				   ui_study);
 
 
@@ -197,7 +191,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 
   /* done updating the clist, we can reconnect signals now */
   gtk_signal_handler_unblock_by_func(GTK_OBJECT(clist),
-				     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_select_row),
+				     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
 				     ui_study);
   
   return;
@@ -239,13 +233,13 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(time_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_close_event),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_close_event),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(time_dialog), "apply",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_apply),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_apply),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(time_dialog), "help",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_help),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_help),
 		     ui_study);
 
   /* start making the widgets for this dialog box */
@@ -273,13 +267,13 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
   gtk_object_set_data(GTK_OBJECT(clist), "time_dialog", time_dialog);
   gtk_object_set_data(GTK_OBJECT(time_dialog), "clist", clist);
   gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_select_row),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_unselect_row),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_unselect_row),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(clist), "button_press_event",
-		     GTK_SIGNAL_FUNC(ui_time_dialog_callbacks_select_row),
+		     GTK_SIGNAL_FUNC(ui_time_dialog_cb_select_row),
 		     ui_study);
   gtk_container_add(GTK_CONTAINER(scrolled),clist);
   ui_time_dialog_set_times(ui_study);

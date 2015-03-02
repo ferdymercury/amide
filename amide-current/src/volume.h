@@ -28,7 +28,6 @@
 
 /* header files that are always needed with this file */
 #include "xml.h"
-#include "realspace.h"
 #include "color_table.h"
 #include "data_set.h"
 
@@ -41,10 +40,6 @@ typedef enum {NEAREST_NEIGHBOR,
 	      TRILINEAR, 
 	      NUM_INTERPOLATIONS} interpolation_t;
 typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
-
-/* setup the types for various internal data formats */
-/* amide_data_t and amide_time_t are now specified in amide.h */
-
 
 /* the volume structure */
 typedef struct volume_t { 
@@ -108,7 +103,7 @@ struct _volume_list_t {
 #define volume_get_frame_duration_mem(vol) ((amide_time_t * ) g_malloc(volume_size_frame_duration_mem(vol)))
 
 #define EMPTY 0.0
-#define AXIS_VOLUME_DENSITY 0.1
+//#define AXIS_VOLUME_DENSITY 0.1
 
 /* ------------ external functions ---------- */
 volume_t * volume_free(volume_t * volume);
@@ -123,6 +118,7 @@ void volume_set_scaling(volume_t * volume, amide_data_t new_external_scaling);
 realpoint_t volume_calculate_center(const volume_t * volume);
 amide_time_t volume_start_time(const volume_t * volume, guint frame);
 amide_time_t volume_end_time(const volume_t * volume, guint frame);
+guint volume_frame(const volume_t * volume, const amide_time_t time);
 amide_time_t volume_min_frame_duration(const volume_t * volume);
 void volume_recalc_far_corner(volume_t * volume);
 void volume_recalc_max_min(volume_t * volume);
@@ -151,7 +147,7 @@ floatpoint_t volumes_min_voxel_size(volume_list_t * volumes);
 floatpoint_t volumes_max_size(volume_list_t * volumes);
 floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes);
 intpoint_t volumes_max_dim(volume_list_t * volumes);
-volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width);
+//volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width);
 volume_t * volume_get_slice(const volume_t * volume,
 			    const amide_time_t start,
 			    const amide_time_t duration,

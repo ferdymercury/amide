@@ -27,10 +27,8 @@
 #include <glib.h>
 #include <limits.h>
 #include <math.h>
-#include "amide.h"
 #include "color_table.h"
 #include "volume.h"
-#include "color_table2.h"
 
 /* external variables */
 gchar * color_table_names[] = {"black/white linear", \
@@ -249,14 +247,14 @@ rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
     else
       hsv.v = 5*temp;
 
-    if (temp > 0.99) {
+    if (temp > 1.0) {
       hsv.h = 0.0;
       rgba.a = 0xFF;
     } else if (temp < 0.0) {
       hsv.h = 300.0;
       rgba.a = 0;
     } else {
-      hsv.h = (1.0/0.99) * 300.0*(1.0-temp); 
+      hsv.h = 300.0*(1.0-temp); 
       rgba.a = 0xFF*temp;
     }
 
@@ -281,14 +279,14 @@ rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
     else
       hsv.v = 5*temp;
 
-    if (temp > 0.99) { 
+    if (temp > 1.0) { 
       hsv.s = hsv.h = 0.0;
       rgba.a = 0xFF;
     } else if (temp < 0.0) {
       hsv.h = 300.0;
       rgba.a = 0;
     } else {
-      hsv.h = (1.0/0.99) * 300.0*(1.0-temp); 
+      hsv.h = 300.0*(1.0-temp); 
       rgba.a = 0xFF * temp;
     }
 

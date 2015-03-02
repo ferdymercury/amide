@@ -23,9 +23,13 @@
   02111-1307, USA.
 */
 
+#ifndef __IDL_DATA_IMPORT_H__
+#define __IDL_DATA_IMPORT_H__
+
+/* header files that are always needed with this file */
+#include "volume.h"
 
 /* defines */
-
 #define IDL_RAW_DATA_FORMAT UBYTE_NE
 
 /* internal functions */
@@ -34,6 +38,8 @@
 /* external functions */
 volume_t * idl_data_import(gchar * idl_data_filename);
 
+
+#endif /* __IDL_DATA_IMPORT_H__ */
 
 
 

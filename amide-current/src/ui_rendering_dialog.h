@@ -25,8 +25,10 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+/* header files that are always needed with this file */
+#include "ui_rendering.h"
+
 /* external functions */
-void ui_rendering_dialog_update_curves(ui_rendering_t * ui_rendering, guint which_context);
 void ui_rendering_dialog_create(ui_rendering_t * ui_rendering);
 
 #endif

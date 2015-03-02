@@ -1,53 +1,83 @@
-  <para> 
+<para> 
 
-    After being loaded in, medical images can be manipulated in a
-    variety of ways with AMIDE.  An important point to remember is
-    that AMIDE deals with all medical images as 3 or 4 dimensional
-    data sets.  While the data is displayed as 2D images on the
-    computer screen, at no time does AMIDE handle images as anything
-    less than 3 dimensional data.
+  After being loaded in, medical images can be manipulated in a
+  variety of ways with AMIDE.  An important point to remember is that
+  AMIDE deals with all medical images as 3 or 4 dimensional data sets.
+  While 2D slices from the the data set are displayed on the computer
+  screen, at no time does AMIDE handle images as anything less than 3
+  dimensional data.
 
-  </para>
+</para>
   
 
-  <sect1><title>Displaying a Data Set</title>
+<sect1><title>Displaying a Data Set</title>
 
+  <para>
+    When initially loaded into the program, a data set is not
+    displayed on the canvases.  Rather, the name of the data set is
+    contained in the study list, and the user needs to select the
+    data set in the study list so that it is displayed on the canvases.
+  </para>
+  
+  <sect2><title>Displaying Multiple Data Sets</title>
     <para>
-      
-      When initially loaded into the program, a data set is not
-      displayed on the canvases.  Rather, the name of the data set is
-      contained in the study list, and the user needs to select the
-      data set in the study list so that it is displayed on the canvases.
+      Displaying multiple data sets is as simple as importing more
+      than one data set, and then selecting the data sets that you
+      wish to view from the study list.
     </para>
+  </sect2>
+  
+  <sect2><title>Handling Dynamic Data Sets</title>
+    <para>
+      The time period over which the slices are drawn is determined by
+      the time dialog, described in more detail by:
+      <xref linkend="time-dialog-help">
+    </para>
+  </sect2>
 
-    <sect2><title>Moving through Data Sets</title>
+</sect1>
+  
+<sect1><title>Aligning Data Sets</title>
+  
+  <para>
+    Aligning of data sets in amide is currently done manually.  The
+    easiest way to align data sets manually is as follows:
+  </para>
+  
+  <procedure>
+    <title>Manual Alignment</title>
+    <step>
       <para>
-	coming...
+	First rotate the data sets so that they are level with
+	respect to the transverse, coronal, and sagittal views.
       </para>
-    </sect2>
-
-    <sect2><title>Displaying Multiple Data Sets</title>
+    </step>
+    <step>
       <para>
-	coming....
+	Set the center of each of the data sets to the origin
+	(0,0,0).
       </para>
-    </sect2>
-
-    <sect2><title>Aligning Data Sets</title>
+    </step>
+    <step>
       <para>
-	coming....
+	Choose one of the data sets to be the "fixed" data set.
       </para>
-    </sect2>
-
-    <sect2><title>Handling Dynamic Data Sets</title>
+    </step>
+    <step>
       <para>
-	coming....
+	Then slowly alter the center of the data sets relative to
+	the "fixed" data set until the data sets overly each other
+	as desired.
       </para>
-    </sect2>
-      
-  </sect1>
-
-
-
+    </step>
+  </procedure>          
+  
+  <para>
+    In the future for amide... semi-automated and automated (mutual
+    information?) based registration methods
+  </para>
+</sect1>
+  
 
   
   

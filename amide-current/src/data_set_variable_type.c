@@ -26,7 +26,6 @@
 #include "config.h"
 #include <math.h>
 #include <glib.h>
-#include "amide.h"
 #include "data_set_`'m4_Internal_Data_Format`'.h"
 
 data_set_t * data_set_`'m4_Internal_Data_Format`'_0D_SCALING_init(amide_data_t init_value) {

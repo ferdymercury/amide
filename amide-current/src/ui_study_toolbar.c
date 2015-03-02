@@ -28,16 +28,10 @@
 
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #include "study.h"
 #include "rendering.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h"
 #include "ui_study.h"
-#include "ui_study_callbacks.h"
+#include "ui_study_cb.h"
 #include "ui_study_menus.h"
 #include "ui_study_toolbar.h"
 #include "../pixmaps/icon_threshold.xpm"
@@ -83,7 +77,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(NULL,
 			  N_("Set the thresholds and colormaps for the active data set"),
-			  ui_study_callbacks_threshold_pressed,
+			  ui_study_cb_threshold_pressed,
 			  ui_study, icon_threshold_xpm),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_END
@@ -99,7 +93,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
     ui_study_menu_fill_in_radioitem(&(scaling_list[i_scaling]),
 				    (icon_scaling[i_scaling] == NULL) ? scaling_names[i_scaling] : NULL,
 				    scaling_explanations[i_scaling],
-				    ui_study_callbacks_scaling,
+				    ui_study_cb_scaling,
 				    ui_study, 
 				    icon_scaling[i_scaling]);
   ui_study_menu_fill_in_end(&(scaling_list[NUM_SCALINGS]));
@@ -110,7 +104,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 				    (icon_interpolation[i_interpolation] == NULL) ? 
 				    interpolation_names[i_interpolation] : NULL,
 				    interpolation_explanations[i_interpolation],
-				    ui_study_callbacks_interpolation,
+				    ui_study_cb_interpolation,
 				    ui_study, 
 				    icon_interpolation[i_interpolation]);
   ui_study_menu_fill_in_end(&(interpolation_list[NUM_INTERPOLATIONS]));
@@ -128,14 +122,14 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++) {
     gtk_object_set_data(GTK_OBJECT(scaling_list[i_scaling].widget), "scaling", GINT_TO_POINTER(i_scaling));
     gtk_signal_handler_block_by_func(GTK_OBJECT(scaling_list[i_scaling].widget),
-				     GTK_SIGNAL_FUNC(ui_study_callbacks_scaling),
+				     GTK_SIGNAL_FUNC(ui_study_cb_scaling),
 				     ui_study);
   }
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(scaling_list[study_scaling(ui_study->study)].widget),
 			       TRUE);
   for (i_scaling = 0; i_scaling < NUM_SCALINGS; i_scaling++)
     gtk_signal_handler_unblock_by_func(GTK_OBJECT(scaling_list[i_scaling].widget),
-  				       GTK_SIGNAL_FUNC(ui_study_callbacks_scaling),
+  				       GTK_SIGNAL_FUNC(ui_study_cb_scaling),
   				       ui_study);
 
   /* finish setting up the interpolation items */
@@ -143,14 +137,14 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
     gtk_object_set_data(GTK_OBJECT(interpolation_list[i_interpolation].widget), 
 			"interpolation", GINT_TO_POINTER(i_interpolation));
     gtk_signal_handler_block_by_func(GTK_OBJECT(interpolation_list[i_interpolation].widget),
-				     GTK_SIGNAL_FUNC(ui_study_callbacks_interpolation),
+				     GTK_SIGNAL_FUNC(ui_study_cb_interpolation),
 				     ui_study);
   }
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(interpolation_list[study_interpolation(ui_study->study)].widget),
 			       TRUE);
   for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
     gtk_signal_handler_unblock_by_func(GTK_OBJECT(interpolation_list[i_interpolation].widget),
-				       GTK_SIGNAL_FUNC(ui_study_callbacks_interpolation),
+				       GTK_SIGNAL_FUNC(ui_study_cb_interpolation),
 				       ui_study);
 
 
@@ -168,7 +162,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
 
   gtk_signal_connect(adjustment, "value_changed",  
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_zoom), 
+		     GTK_SIGNAL_FUNC(ui_study_cb_zoom), 
 		     ui_study);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
   			    spin_button, "specify how much to magnify the images", NULL);
@@ -193,7 +187,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 				    GTK_UPDATE_ALWAYS);
 
   gtk_signal_connect(adjustment, "value_changed", 
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_thickness), 
+		     GTK_SIGNAL_FUNC(ui_study_cb_thickness), 
 		     ui_study);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
   			    spin_button, "specify how thick to make the slices (mm)", NULL);
@@ -213,7 +207,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   ui_study->time_button = button;
   g_free(temp_string);
   gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_callbacks_time_pressed), 
+		     GTK_SIGNAL_FUNC(ui_study_cb_time_pressed), 
 		     ui_study);
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
   			    button, "the time range over which to view the data (s)", NULL);

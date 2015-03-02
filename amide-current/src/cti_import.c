@@ -27,7 +27,6 @@
 #include <time.h>
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <matrix.h>
 #include "volume.h"
@@ -56,6 +55,7 @@ volume_t * cti_import(gchar * cti_filename) {
   gchar ** frags=NULL;
   time_t scan_time;
   gboolean two_dim_scale;
+  realpoint_t temp_rp;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("%s: can't open file %s", PACKAGE, cti_filename);
@@ -174,8 +174,10 @@ volume_t * cti_import(gchar * cti_filename) {
     temp_volume->voxel_size.x = 10*((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
     temp_volume->voxel_size.y = 10*((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
     temp_volume->voxel_size.z = 10*((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
-
-
+    temp_rp.x = 10*((Image_subheader*)cti_subheader->shptr)->x_offset;
+    temp_rp.y = 10*((Image_subheader*)cti_subheader->shptr)->y_offset;
+    temp_rp.z = 10*((Image_subheader*)cti_subheader->shptr)->z_offset;
+    rs_set_offset(&temp_volume->coord_frame, temp_rp);
 
     /* guess the start of the scan is the same as the start of the first frame of data */
     /* note, CTI files specify time as integers in msecs */
@@ -183,13 +185,13 @@ volume_t * cti_import(gchar * cti_filename) {
 #ifdef AMIDE_DEBUG
     g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
 #endif
+    free_matrix_data(cti_subheader);
 
 
     /* allocate space for the array containing info on the duration of the frames */
     if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
       g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
       matrix_close(cti_file);
-      free_matrix_data(cti_subheader);
       return volume_free(temp_volume);
     }
 
@@ -206,12 +208,11 @@ volume_t * cti_import(gchar * cti_filename) {
 	  g_warning("%s: can't get image matrix %x in file %s",\
 		    PACKAGE, matnum, cti_filename);
 	  matrix_close(cti_file);
-	  free_matrix_data(cti_subheader);
 	  return volume_free(temp_volume);
 	}
 
 	/* set the frame duration, note, CTI files specify time as integers in msecs */
-	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_subheader->shptr)->frame_duration)/1000;
+	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000;
 
 	/* save the scale factor */
 	j.x = j.y = 0;
@@ -252,12 +253,10 @@ volume_t * cti_import(gchar * cti_filename) {
   default:
     g_warning("%s: can't open this CTI file type", PACKAGE);
     matrix_close(cti_file);
-    free_matrix_data(cti_subheader);
     return volume_free(temp_volume);
   }
 
   /* garbage collection */
-  free_matrix_data(cti_subheader);
   matrix_close(cti_file);
 
   /* setup remaining volume parameters */

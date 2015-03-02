@@ -25,7 +25,6 @@
 
 #include "config.h"
 #include <glib.h>
-#include "amide.h"
 #include "data_set.h"
 #include "raw_data.h"
 #include <sys/stat.h>
@@ -66,7 +65,7 @@ data_set_t * data_set_free(data_set_t * data_set) {
   /* if we've removed all reference's, free the data_set */
   if (data_set->reference_count == 0) {
 #ifdef AMIDE_DEBUG
-    g_print("freeing data_set\n");
+    //    g_print("freeing data_set\n");
 #endif
     g_free(data_set->data);
     g_free(data_set);
@@ -89,7 +88,7 @@ data_set_t * data_set_init(void) {
   temp_data_set->reference_count = 1;
 
   /* put in some sensable values */
-  temp_data_set->dim = voxelpoint_init;
+  temp_data_set->dim = voxelpoint_zero;
   temp_data_set->data = NULL;
   temp_data_set->format = FLOAT;
 

@@ -26,12 +26,6 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
-#include "amide.h"
-#include "study.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
 #include "ui_volume.h"
 
 
@@ -79,6 +73,7 @@ ui_volume_list_t * ui_volume_list_init(void) {
   temp_volume_list->dialog = NULL;
   temp_volume_list->tree_leaf = NULL;
   temp_volume_list->threshold = NULL;
+  temp_volume_list->series_list = NULL;
   temp_volume_list->next = NULL;
 
   return temp_volume_list;

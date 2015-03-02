@@ -1,62 +1,59 @@
 misc list of things todo:
 
-to be done for next release:
-----------------------------
 
+for next release?
+-----------------
 
 big things:
 -----------
 * aligning of data sets by specifying three points in each
-* add the ability to generate rendered movies over multiple frames of data
 * guppi? interface for drawing graphs of ROI statistics
 	-plotutils instead?
 * allow looking at only a subset of the data (i.e. cropping)
-* progress bar
-* rendering alterations -> 
-	allow the user to grap the imag and spin it,
-	replace x,y,z rotations with bottom and side of image rotations
-	3D red/green imaging
-	movie? are we rotating relative or absolute?
-	allow rotation of light source and view in addition to object
 * work around and remove the whole notion of "grains" for roi's
-
+ 
+ 
+ 
+                       
 small things:
 -------------
+* slices shouldn't have to be the size of the largest dimensions
 * change realpoint to 4D?
 * add quad-linear interpolation for short time periods?
+	would be especially useful for dynamic rendering movies
 * figure out what to do with the extraneous study if you start
 	amide, and then load in a file...
-* put in markers on the series widget
 * add drag-n-drop capabilities between study windows
 * add axis indications somewhere, so user knows which way x,y,z is on each canvas 
 	this should go on the volume dialog
-* add to documentation 
-	- how to align
-	- rotating in volume dialog rotates around current view center
-* core-dump when trying to create movie with a filename entered via a
-	fileselection dialog.... it's a weird interaction with
-	the fileselection dialog.... like the ui_rendering_movie
-	structure is getting overwritten by the fileselection dialog
-	box.... upgrade gtk?  currently all output is pegged to
-	'out.mpeg'
-* gamma_curves still aren't updating correctly
 * put the canvases in a scrolled widget?
 * cardiac shaped ROI?
-* add ability to change material properties, lighting? for rendering
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
-* continue header file inclusion cleaning-up
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * program preferences box?
 	-width of roi lines
-* add wait cursors to ui_rendering, probably want to make ui_study_place_cursor, etc.
-	amide.c functions
 * when moving roi, should probably update roi dialog, same thing with volumes
 * get libamide compiling correctly under OS X
+* write a FileSelection widget that can handle directories
 
-future things:
---------------
+probably post 1.0 things:
+----------------
+* add corba/CIAS support
+* add report generation.  This would add colormaps, location, thickness
+	study name, volume name, scan date, etc. to the export function.
+	Would handle multiple images.
+* rendering alterations -> 
+	3D red/green imaging
+	allow rotation of light source and view in addition to object
+	allow changing of material properties
+* change mpeg_encode to a library? 
+	would allow lose of "system" command, and proper progress reports, in ui_rendering_movie_dialog
+
+things dependent on other things: 
+-------------- 
+
 * figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
 	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities
 	- I believe this will be added in GTK 2.0
@@ -69,7 +66,11 @@ future things:
 	"signal(SIGSEGV, SIG_DFL);"
 
 
+
+
 polish things:
 --------------
+* progress bars
 * if we're not compiling in debug mode, have warning messages go to 
 	popup windows
+* rewrite documentation

@@ -23,6 +23,11 @@
   02111-1307, USA.
 */
 
+
+/* header files always needed with this file */
+#include "volume.h"
+//#include "ui_threshold.h"
+
 /* data structures */
 
 typedef struct _ui_volume_list_t ui_volume_list_t;
@@ -31,7 +36,8 @@ struct _ui_volume_list_t {
   volume_t * volume;
   GtkWidget * dialog;
   GtkWidget * tree_leaf;
-  ui_threshold_t * threshold;
+  GtkWidget * threshold;
+  GSList * series_list;
   guint reference_count;
   ui_volume_list_t * next;
 };

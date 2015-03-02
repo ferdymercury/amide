@@ -26,13 +26,19 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
 
+/* header files that are always needed with this file */
+#include "ui_rendering.h"
+
 #define MOVIE_DEFAULT_FRAMES 300
 
 /* data structures */
 typedef struct ui_rendering_movie_t {
   GtkWidget * dialog;
+  GtkWidget * progress;
   guint num_frames;
   gdouble rotation[NUM_AXIS];
+  amide_time_t start;
+  amide_time_t duration;
   ui_rendering_t * ui_rendering; /* a pointer back to the main rendering ui */
   guint reference_count;
 } ui_rendering_movie_t;
@@ -41,6 +47,7 @@ typedef struct ui_rendering_movie_t {
 /* external functions */
 ui_rendering_movie_t * ui_rendering_movie_free(ui_rendering_movie_t * ui_rendering_movie);
 ui_rendering_movie_t * ui_rendering_movie_init(void);
+ui_rendering_movie_t * ui_rendering_movie_add_reference(ui_rendering_movie_t * movie);
 void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie, char * output_file_name);
 ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rendering);
 

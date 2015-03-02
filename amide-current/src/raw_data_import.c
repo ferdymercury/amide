@@ -26,11 +26,10 @@
 
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #include "volume.h"
 #include <sys/stat.h>
 #include "raw_data_import.h"
-#include "raw_data_import_callbacks.h"
+#include "raw_data_import_cb.h"
 
 
 /* reset the label for the offset entry */
@@ -158,7 +157,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
 
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_name), 
+		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_name), 
 		     raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(entry),1,2,
@@ -187,7 +186,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "modality", GINT_TO_POINTER(i_modality)); 
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_modality), 
+     		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_modality), 
     		       raw_data_info);
   }
   
@@ -218,7 +217,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "raw_data_format", GINT_TO_POINTER(i_raw_data_format)); 
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-     		       GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_raw_data_format), 
+     		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_raw_data_format), 
     		       raw_data_info);
   }
   
@@ -258,7 +257,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(NUM_DIMS+NUM_AXIS));
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_entry), 
+		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
 		     raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -310,7 +309,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
     gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(i_dim));
     gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_entry), 
+		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
 		       raw_data_info);
     gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_dim+1,i_dim+2,
 		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -334,7 +333,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
     gtk_object_set_data(GTK_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+NUM_DIMS));
     gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		       GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_entry), 
+		       GTK_SIGNAL_FUNC(raw_data_import_cb_change_entry), 
 		       raw_data_info);
     gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_axis+1,i_axis+2,
 		     table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -353,7 +352,7 @@ void raw_data_import_dialog(raw_data_info_t * raw_data_info) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(raw_data_import_callbacks_change_scaling), 
+		     GTK_SIGNAL_FUNC(raw_data_import_cb_change_scaling), 
 		     raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);

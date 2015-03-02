@@ -27,7 +27,6 @@
 #include <glib.h>
 #include <math.h>
 #include <sys/stat.h>
-#include "amide.h"
 #include "volume.h"
 #include "roi.h"
 
@@ -81,8 +80,8 @@ roi_t * roi_init(void) {
   temp_roi->reference_count = 1;
   
   temp_roi->name = NULL;
-  temp_roi->corner = realpoint_init;
-  rs_set_offset(&temp_roi->coord_frame, realpoint_init);
+  temp_roi->corner = realpoint_zero;
+  rs_set_offset(&temp_roi->coord_frame, realpoint_zero);
   temp_roi->grain = GRAINS_1;
   rs_set_axis(&temp_roi->coord_frame, default_axis);
   temp_roi->parent = NULL;
@@ -480,8 +479,8 @@ void roi_free_points_list(GSList ** plist) {
 gboolean roi_undrawn(const roi_t * roi) {
   
   return 
-    REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_init) &&
-    REALPOINT_EQUAL(roi->corner,realpoint_init);
+    REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_zero) &&
+    REALPOINT_EQUAL(roi->corner,realpoint_zero);
 }
     
 

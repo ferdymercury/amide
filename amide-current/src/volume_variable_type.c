@@ -29,7 +29,6 @@
 #ifdef AMIDE_DEBUG
 #include <stdlib.h>
 #endif
-#include "amide.h"
 #include "volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'.h"
 
 
@@ -80,7 +79,7 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(v
 #if AMIDE_DEBUG
   g_print("Generating distribution data for volume %s",volume->name);
 #endif
-  scale = (VOLUME_DISTRIBUTION_SIZE-1)/(volume->max - volume->min);
+  scale = VOLUME_DISTRIBUTION_SIZE/(volume->max - volume->min);
   
   if ((volume->distribution = data_set_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the data set structure to hold distribution data", PACKAGE);
@@ -117,7 +116,7 @@ void volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_generate_distribution(v
 #endif
 	for (i.y = 0; i.y < volume->data_set->dim.y; i.y++) 
 	  for (i.x = 0; i.x < volume->data_set->dim.x; i.x++) {
-	    j.x = rint(scale*(VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->min));
+	    j.x = scale*(VOLUME_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_CONTENTS(volume,i)-volume->min);
 	    DATA_SET_FLOAT_SET_CONTENT(volume->distribution,j) += 1.0;
 	  }
     }
@@ -246,15 +245,17 @@ volume_t * volume_`'m4_Internal_Data_Format`'_`'m4_Scale_Dim`'_get_slice(const v
     real_corner[0] = rs_offset(slice->coord_frame);
     real_corner[1] = realspace_alt_coord_to_base(slice->corner,
 						 slice->coord_frame);
-    g_print("new slice from volume %s\t---------------------\n",volume->name);
-    g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
-	    slice->data_set->dim.x, slice->data_set->dim.y, slice->data_set->dim.z);
-    g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-	    real_corner[0].x,real_corner[0].y,real_corner[0].z);
-    g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
-	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
-    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
-	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
+    //    g_print("new slice from volume %s\t---------------------\n",volume->name);
+    //    g_print("\tdim\t\tx %d\t\ty %d\t\tz %d\n",
+    //	    slice->data_set->dim.x, slice->data_set->dim.y, slice->data_set->dim.z);
+    //    g_print("\treal corner[0]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+    //	    real_corner[0].x,real_corner[0].y,real_corner[0].z);
+    //    g_print("\treal corner[1]\tx %5.4f\ty %5.4f\tz %5.4f\n",
+    //	    real_corner[1].x,real_corner[1].y,real_corner[1].z);
+    //    g_print("\tvolume\t\tstart\t%5.4f\tend\t%5.3f\tframes %d to %d\n",
+    //	    volume_start, volume_end,start_frame,start_frame+num_frames-1);
+    g_print("new_slice from volume %s, frames %d to %d, z offset %5.3f\n",volume->name,
+    	    start_frame, start_frame+num_frames-1, real_corner[0].z);
   }
 #endif
 

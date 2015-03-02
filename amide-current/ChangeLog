@@ -1,3 +1,20 @@
+0.4.4
+	* rendering dialog changed considerably
+	  - user can now grab canvas and spin it using buttons 1 and 2
+	  - x,y,z rotations have been moved
+	  - all rotations are now relative to the canvas
+	* rendering parameters dialog fixed up, now allows colormap changing
+	* rendering movies can now be done over time
+	* can now change the name of the output movie
+	* medcon importing importing was a little off, hopefully we
+	  have the right scale factors now
+	* rewrote the threshold widget as a gtk style widget
+	* added toolbar and menu to series widget
+	* allow independent thresholding of series display
+	* added captions to the series pic's
+	* now importing correcting the frame durations of dynamic CTI files
+	* now adding in image offsets from CTI files
+
 0.4.3
 	* multiple speed improvements (at least 2x faster now for slice generation)
 	  -changed multiple functions to defines (based on profiling)

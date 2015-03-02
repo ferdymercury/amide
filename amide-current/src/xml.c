@@ -26,7 +26,6 @@
 
 #include "config.h"
 #include <glib.h>
-#include "amide.h"
 #include "xml.h"
 
 
@@ -80,7 +79,7 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   if ((temp_string == NULL) || (error == EOF)) {
     g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    return_point = realpoint_init;
+    return_point = realpoint_zero;
   }
 
   return return_point;
@@ -316,7 +315,7 @@ realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
     temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
     new_axis[i_axis] = xml_get_realpoint(nodes,temp_string);
-    if (REALPOINT_EQUAL(new_axis[i_axis], realpoint_init))
+    if (REALPOINT_EQUAL(new_axis[i_axis], realpoint_zero))
 	new_axis[i_axis] = default_axis[i_axis];
     g_free(temp_string);
   }

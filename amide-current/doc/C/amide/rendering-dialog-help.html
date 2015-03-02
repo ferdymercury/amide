@@ -80,7 +80,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN247"
+NAME="AEN257"
 >Speed versus Quality</A
 ></H3
 ><P
@@ -97,7 +97,7 @@ CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN250"
+NAME="AEN260"
 >Return Type</A
 ></H3
 ><P
@@ -109,61 +109,61 @@ NAME="AEN250"
 	depth cueing.
       </P
 ></DIV
-></DIV
 ><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
 ><A
-NAME="RENDERING-DIALOG-HELP-DEPTH-CUEING"
+NAME="AEN263"
 >Depth Cueing</A
-></H2
+></H3
 ><P
->      These parameters are only used if the "grayscale" output type
-      has been chosen.
-    </P
+>	These parameters are only used if the "grayscale" output type
+	has been chosen.
+      </P
 ><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
 ><A
-NAME="AEN256"
+NAME="AEN266"
 >Enable/Disable Depth Cueing</A
-></H3
+></H4
 ><P
->	Specify whether or not we want depth cueing.  Depth cueing
-	puts in a "fog" that causes more distant voxels to appear less
-	bright.
-      </P
+>	  Specify whether or not we want depth cueing.  Depth cueing
+	  puts in a "fog" that causes more distant voxels to appear less
+	  bright.
+	</P
 ></DIV
 ><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
 ><A
-NAME="AEN259"
+NAME="AEN269"
 >Front Factor</A
-></H3
+></H4
 ><P
->	This is the transparency of the fog at the front of the
-	volume.  If this number is greater than 1.0, voxels toward the
-	front of the data set will be brightened.  If this parameter
-	is less than 1.0, voxels toward the front of the data set will
-	be darker, respectively.
-      </P
+>	  This is the transparency of the fog at the front of the
+	  volume.  If this number is greater than 1.0, voxels toward the
+	  front of the data set will be brightened.  If this parameter
+	  is less than 1.0, voxels toward the front of the data set will
+	  be darker, respectively.
+	</P
 ></DIV
 ><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
+CLASS="SECT4"
+><H4
+CLASS="SECT4"
 ><A
-NAME="AEN262"
+NAME="AEN272"
 >Density</A
-></H3
+></H4
 ><P
->	This is how thick the "fog" is.  The thicker the fog, the
-	darker distant objects seem.
-      </P
+>	  This is how thick the "fog" is.  The thicker the fog, the
+	  darker distant objects seem.
+	</P
+></DIV
 ></DIV
 ></DIV
 ><DIV
@@ -171,25 +171,51 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="RENDERING-DIALOG-HELP-CLASSIFICATION"
->Classification</A
+NAME="RENDERING-DIALOG-HELP-DATA-SET"
+>Data Set Specific Settings</A
 ></H2
 ><P
->      This is the most confusing part of rendering, so hang on here.
-      The classification functions are used to map between the value
-      in each voxel and how much that voxel should be represented in
-      the final rendered image.  On the x axis is the possible values
-      of the different voxels.  On the y-axis is the opacity that will
-      be given a voxel based on it's value.
+>      Each panel after the "basic parameters" panel allows the
+      changing of settings specific to each data set that is being
+      rendered.
     </P
 ><DIV
 CLASS="SECT3"
 ><H3
 CLASS="SECT3"
 ><A
-NAME="AEN268"
+NAME="AEN278"
+>Color Table</A
+></H3
+><P
+>	The color table of each rendered data set can be changed here.
+      </P
+></DIV
+><DIV
+CLASS="SECT3"
+><H3
+CLASS="SECT3"
+><A
+NAME="AEN281"
 >Classification Functions</A
 ></H3
+><P
+>	This is the most confusing part of rendering, so hang on here.
+	The classification functions are used to map between the value
+	in each voxel and how much that voxel should be represented in
+	the final rendered image.  On the x axis is the possible
+	values of the different voxels.  On the y-axis is the opacity
+	that will be given a voxel based on it's value.
+      </P
+><P
+>	Both classification functions have several buttons on the
+	right side of their graphs.  The top button allows the
+	classification function to be drawn as a spline.  The second
+	button allows the classification function to be drawn as a
+	series of straight lines.  The third button allows the
+	function to be hand-drawn.  Finally, the last button resets
+	the classification function to a straight line.
+      </P
 ><P
 >	There are two classification functions:
       </P
@@ -198,16 +224,14 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN271"
+NAME="AEN286"
 >Density Dependent</A
 ></H4
 ><P
 >	  This function tells you how opaque each voxel will be based
 	  on it's current value.  In a sense, this is analogous to an
 	  x-ray, where the amount of the x-rays that are absorbed in a
-	  structure is related to the density of that structure.  If
-	  you want the rendering to be determined entirely by the
-	  gradient function, set this curve to a flat line on the top
+	  structure is related to the density of that structure. 
 	  of the display.
 	</P
 ></DIV
@@ -216,7 +240,7 @@ CLASS="SECT4"
 ><H4
 CLASS="SECT4"
 ><A
-NAME="AEN274"
+NAME="AEN289"
 >Gradient Dependent</A
 ></H4
 ><P
@@ -224,45 +248,9 @@ NAME="AEN274"
 	  this function relates the gradient of a voxel (how much the
 	  value changes between this voxel and it's neighbors) to its
 	  opacity.  This has the effect of giving added weight to
-	  surfaces.  If you want the rendering to be determined
-	  entirely by the density function, set this curve to a flat
-	  line on the top of the display
+	  surfaces. 
 	</P
 ></DIV
-></DIV
-><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
-><A
-NAME="AEN277"
->Apply Changes To:</A
-></H3
-><P
->	  This pull-down menu is useful when more than one data set is
-	  being rendered.  It allows the user to set the
-	  classification functions of each data set individually, or
-	  apply classification function changes to all data sets at
-	  the same time.
-      </P
-></DIV
-><DIV
-CLASS="SECT3"
-><H3
-CLASS="SECT3"
-><A
-NAME="AEN280"
->Buttons on the Right Side</A
-></H3
-><P
->	  Both classification functions have several buttons on the
-	  right side of their graphs.  The top button allows the
-	  classification function to be drawn as a spline.  The second
-	  button allows the classification function to be drawn as a
-	  series of straight lines.  The third button allows the
-	  function to be hand-drawn.  Finally, the last button resets
-	  the classification function to a straight line.
-      </P
 ></DIV
 ></DIV
 ></DIV

@@ -48,9 +48,6 @@ void raw_data_update_offset_label(raw_data_info_t * raw_data_info);
 guint raw_data_update_num_bytes(raw_data_info_t * raw_data_info);
 volume_t * raw_data_import(gchar * filename);
 
-/* external variables */
-extern gchar * data_format_names[];
-extern guint data_sizes[];
 
 
 

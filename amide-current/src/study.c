@@ -28,7 +28,6 @@
 #include "config.h"
 #include <glib.h>
 #include <unistd.h>
-#include "amide.h"
 #include "study.h"
 
 
@@ -87,7 +86,7 @@ study_t * study_init(void) {
 
   study->name = NULL;
   study->filename = NULL;
-  rs_set_offset(&study->coord_frame,realpoint_init);
+  rs_set_offset(&study->coord_frame,realpoint_zero);
   rs_set_axis(&study->coord_frame, default_axis);
   study->volumes = NULL;
   study->rois = NULL;

@@ -28,7 +28,6 @@
 
 
 /* header files that are always needed with this file */
-#include "data_set.h"
 #include "volume.h"
 
 /* raw_data_format is the formats that data can take on disk */

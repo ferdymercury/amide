@@ -29,11 +29,6 @@
 #include <gnome.h>
 #include "amide.h"
 #include "study.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h" 
 #include "ui_study.h"
 
 /* external variables */

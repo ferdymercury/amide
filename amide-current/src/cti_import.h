@@ -23,12 +23,17 @@
   02111-1307, USA.
 */
 
+
 #ifdef AMIDE_LIBECAT_SUPPORT
+
+#ifndef __CTI_IMPORT_H__
+#define __CTI_IMPORT_H__
 
 /* external functions */
 volume_t * cti_import(gchar * filename);
 
+#endif /* __CTI_IMPORT_H__ */
 
-#endif
+#endif /* AMIDE_LIBECAT_SUPPORT */
 
 

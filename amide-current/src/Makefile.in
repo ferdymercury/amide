@@ -118,7 +118,7 @@ CFLAGS = $(AMIDE_CFLAGS) @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
 
 bin_PROGRAMS = amide
 
-amide_SOURCES =  	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	amide.c 	amide.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	gtkdial.c 	gtkdial.h 	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	amide.c 	amide.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_cb.c 	ui_study_rois_cb.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
 
 
 amide_LDADD =  	$(GNOMEUI_LIBS) 	$(GNOME_LIBDIR) 	$(GNOME_XML2_LIBS) 	$(AMIDE_LIBECAT_LIBS) 	$(AMIDE_LIBMDC_LIBS) 	$(AMIDE_LIBVOLPACK_LIBS) 	$(EXTRA_GNOME_LIBS) 	-L/usr/local/lib 
@@ -150,41 +150,42 @@ PROGRAMS =  $(bin_PROGRAMS)
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
-amide_OBJECTS =  data_set_UBYTE.$(OBJEXT) data_set_SBYTE.$(OBJEXT) \
-data_set_USHORT.$(OBJEXT) data_set_SSHORT.$(OBJEXT) \
-data_set_UINT.$(OBJEXT) data_set_SINT.$(OBJEXT) \
-data_set_FLOAT.$(OBJEXT) data_set_DOUBLE.$(OBJEXT) \
-volume_UBYTE_0D_SCALING.$(OBJEXT) volume_UBYTE_1D_SCALING.$(OBJEXT) \
-volume_UBYTE_2D_SCALING.$(OBJEXT) volume_SBYTE_0D_SCALING.$(OBJEXT) \
-volume_SBYTE_1D_SCALING.$(OBJEXT) volume_SBYTE_2D_SCALING.$(OBJEXT) \
-volume_USHORT_0D_SCALING.$(OBJEXT) volume_USHORT_1D_SCALING.$(OBJEXT) \
-volume_USHORT_2D_SCALING.$(OBJEXT) volume_SSHORT_0D_SCALING.$(OBJEXT) \
-volume_SSHORT_1D_SCALING.$(OBJEXT) volume_SSHORT_2D_SCALING.$(OBJEXT) \
-volume_UINT_0D_SCALING.$(OBJEXT) volume_UINT_1D_SCALING.$(OBJEXT) \
-volume_UINT_2D_SCALING.$(OBJEXT) volume_SINT_0D_SCALING.$(OBJEXT) \
-volume_SINT_1D_SCALING.$(OBJEXT) volume_SINT_2D_SCALING.$(OBJEXT) \
-volume_FLOAT_0D_SCALING.$(OBJEXT) volume_FLOAT_1D_SCALING.$(OBJEXT) \
-volume_FLOAT_2D_SCALING.$(OBJEXT) volume_DOUBLE_0D_SCALING.$(OBJEXT) \
-volume_DOUBLE_1D_SCALING.$(OBJEXT) volume_DOUBLE_2D_SCALING.$(OBJEXT) \
-amide.$(OBJEXT) color_table.$(OBJEXT) cti_import.$(OBJEXT) \
+amide_OBJECTS =  gtkdial.$(OBJEXT) data_set_UBYTE.$(OBJEXT) \
+data_set_SBYTE.$(OBJEXT) data_set_USHORT.$(OBJEXT) \
+data_set_SSHORT.$(OBJEXT) data_set_UINT.$(OBJEXT) \
+data_set_SINT.$(OBJEXT) data_set_FLOAT.$(OBJEXT) \
+data_set_DOUBLE.$(OBJEXT) volume_UBYTE_0D_SCALING.$(OBJEXT) \
+volume_UBYTE_1D_SCALING.$(OBJEXT) volume_UBYTE_2D_SCALING.$(OBJEXT) \
+volume_SBYTE_0D_SCALING.$(OBJEXT) volume_SBYTE_1D_SCALING.$(OBJEXT) \
+volume_SBYTE_2D_SCALING.$(OBJEXT) volume_USHORT_0D_SCALING.$(OBJEXT) \
+volume_USHORT_1D_SCALING.$(OBJEXT) volume_USHORT_2D_SCALING.$(OBJEXT) \
+volume_SSHORT_0D_SCALING.$(OBJEXT) volume_SSHORT_1D_SCALING.$(OBJEXT) \
+volume_SSHORT_2D_SCALING.$(OBJEXT) volume_UINT_0D_SCALING.$(OBJEXT) \
+volume_UINT_1D_SCALING.$(OBJEXT) volume_UINT_2D_SCALING.$(OBJEXT) \
+volume_SINT_0D_SCALING.$(OBJEXT) volume_SINT_1D_SCALING.$(OBJEXT) \
+volume_SINT_2D_SCALING.$(OBJEXT) volume_FLOAT_0D_SCALING.$(OBJEXT) \
+volume_FLOAT_1D_SCALING.$(OBJEXT) volume_FLOAT_2D_SCALING.$(OBJEXT) \
+volume_DOUBLE_0D_SCALING.$(OBJEXT) volume_DOUBLE_1D_SCALING.$(OBJEXT) \
+volume_DOUBLE_2D_SCALING.$(OBJEXT) amide.$(OBJEXT) \
+amitk_threshold.$(OBJEXT) color_table.$(OBJEXT) cti_import.$(OBJEXT) \
 data_set.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
-medcon_import.$(OBJEXT) objects.$(OBJEXT) pem_data_import.$(OBJEXT) \
-raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
-raw_data_import_callbacks.$(OBJEXT) realspace.$(OBJEXT) \
-rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
-ui_rendering.$(OBJEXT) ui_rendering_callbacks.$(OBJEXT) \
-ui_rendering_dialog.$(OBJEXT) ui_rendering_dialog_callbacks.$(OBJEXT) \
+medcon_import.$(OBJEXT) pem_data_import.$(OBJEXT) raw_data.$(OBJEXT) \
+raw_data_import.$(OBJEXT) raw_data_import_cb.$(OBJEXT) \
+realspace.$(OBJEXT) rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
+ui_common.$(OBJEXT) ui_common_cb.$(OBJEXT) ui_rendering.$(OBJEXT) \
+ui_rendering_cb.$(OBJEXT) ui_rendering_dialog.$(OBJEXT) \
+ui_rendering_dialog_cb.$(OBJEXT) ui_rendering_menus.$(OBJEXT) \
 ui_rendering_movie_dialog.$(OBJEXT) \
-ui_rendering_movie_dialog_callbacks.$(OBJEXT) ui_roi.$(OBJEXT) \
-ui_roi_dialog.$(OBJEXT) ui_roi_dialog_callbacks.$(OBJEXT) \
-ui_series.$(OBJEXT) ui_series_callbacks.$(OBJEXT) ui_study.$(OBJEXT) \
-ui_study_callbacks.$(OBJEXT) ui_study_dialog.$(OBJEXT) \
-ui_study_dialog_callbacks.$(OBJEXT) ui_study_menus.$(OBJEXT) \
-ui_study_toolbar.$(OBJEXT) ui_study_rois_callbacks.$(OBJEXT) \
-ui_threshold.$(OBJEXT) ui_threshold_callbacks.$(OBJEXT) \
-ui_time_dialog.$(OBJEXT) ui_time_dialog_callbacks.$(OBJEXT) \
-ui_volume.$(OBJEXT) ui_volume_dialog.$(OBJEXT) \
-ui_volume_dialog_callbacks.$(OBJEXT) volume.$(OBJEXT) xml.$(OBJEXT)
+ui_rendering_movie_dialog_cb.$(OBJEXT) ui_roi.$(OBJEXT) \
+ui_roi_dialog.$(OBJEXT) ui_roi_dialog_cb.$(OBJEXT) ui_series.$(OBJEXT) \
+ui_series_cb.$(OBJEXT) ui_series_menus.$(OBJEXT) \
+ui_series_toolbar.$(OBJEXT) ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
+ui_study_dialog.$(OBJEXT) ui_study_dialog_cb.$(OBJEXT) \
+ui_study_menus.$(OBJEXT) ui_study_toolbar.$(OBJEXT) \
+ui_study_rois_cb.$(OBJEXT) ui_time_dialog.$(OBJEXT) \
+ui_time_dialog_cb.$(OBJEXT) ui_volume.$(OBJEXT) \
+ui_volume_dialog.$(OBJEXT) ui_volume_dialog_cb.$(OBJEXT) \
+volume.$(OBJEXT) xml.$(OBJEXT)
 amide_DEPENDENCIES = 
 amide_LDFLAGS = 
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -198,39 +199,39 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/amide.P .deps/color_table.P .deps/cti_import.P \
-.deps/data_set.P .deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P \
-.deps/data_set_SBYTE.P .deps/data_set_SINT.P .deps/data_set_SSHORT.P \
-.deps/data_set_UBYTE.P .deps/data_set_UINT.P .deps/data_set_USHORT.P \
-.deps/idl_data_import.P .deps/image.P .deps/medcon_import.P \
-.deps/objects.P .deps/pem_data_import.P .deps/raw_data.P \
-.deps/raw_data_import.P .deps/raw_data_import_callbacks.P \
+DEP_FILES =  .deps/amide.P .deps/amitk_threshold.P .deps/color_table.P \
+.deps/cti_import.P .deps/data_set.P .deps/data_set_DOUBLE.P \
+.deps/data_set_FLOAT.P .deps/data_set_SBYTE.P .deps/data_set_SINT.P \
+.deps/data_set_SSHORT.P .deps/data_set_UBYTE.P .deps/data_set_UINT.P \
+.deps/data_set_USHORT.P .deps/gtkdial.P .deps/idl_data_import.P \
+.deps/image.P .deps/medcon_import.P .deps/pem_data_import.P \
+.deps/raw_data.P .deps/raw_data_import.P .deps/raw_data_import_cb.P \
 .deps/realspace.P .deps/rendering.P .deps/roi.P .deps/study.P \
-.deps/ui_rendering.P .deps/ui_rendering_callbacks.P \
-.deps/ui_rendering_dialog.P .deps/ui_rendering_dialog_callbacks.P \
-.deps/ui_rendering_movie_dialog.P \
-.deps/ui_rendering_movie_dialog_callbacks.P .deps/ui_roi.P \
-.deps/ui_roi_dialog.P .deps/ui_roi_dialog_callbacks.P .deps/ui_series.P \
-.deps/ui_series_callbacks.P .deps/ui_study.P .deps/ui_study_callbacks.P \
-.deps/ui_study_dialog.P .deps/ui_study_dialog_callbacks.P \
-.deps/ui_study_menus.P .deps/ui_study_rois_callbacks.P \
-.deps/ui_study_toolbar.P .deps/ui_threshold.P \
-.deps/ui_threshold_callbacks.P .deps/ui_time_dialog.P \
-.deps/ui_time_dialog_callbacks.P .deps/ui_volume.P \
-.deps/ui_volume_dialog.P .deps/ui_volume_dialog_callbacks.P \
-.deps/volume.P .deps/volume_DOUBLE_0D_SCALING.P \
-.deps/volume_DOUBLE_1D_SCALING.P .deps/volume_DOUBLE_2D_SCALING.P \
-.deps/volume_FLOAT_0D_SCALING.P .deps/volume_FLOAT_1D_SCALING.P \
-.deps/volume_FLOAT_2D_SCALING.P .deps/volume_SBYTE_0D_SCALING.P \
-.deps/volume_SBYTE_1D_SCALING.P .deps/volume_SBYTE_2D_SCALING.P \
-.deps/volume_SINT_0D_SCALING.P .deps/volume_SINT_1D_SCALING.P \
-.deps/volume_SINT_2D_SCALING.P .deps/volume_SSHORT_0D_SCALING.P \
-.deps/volume_SSHORT_1D_SCALING.P .deps/volume_SSHORT_2D_SCALING.P \
-.deps/volume_UBYTE_0D_SCALING.P .deps/volume_UBYTE_1D_SCALING.P \
-.deps/volume_UBYTE_2D_SCALING.P .deps/volume_UINT_0D_SCALING.P \
-.deps/volume_UINT_1D_SCALING.P .deps/volume_UINT_2D_SCALING.P \
-.deps/volume_USHORT_0D_SCALING.P .deps/volume_USHORT_1D_SCALING.P \
-.deps/volume_USHORT_2D_SCALING.P .deps/xml.P
+.deps/ui_common.P .deps/ui_common_cb.P .deps/ui_rendering.P \
+.deps/ui_rendering_cb.P .deps/ui_rendering_dialog.P \
+.deps/ui_rendering_dialog_cb.P .deps/ui_rendering_menus.P \
+.deps/ui_rendering_movie_dialog.P .deps/ui_rendering_movie_dialog_cb.P \
+.deps/ui_roi.P .deps/ui_roi_dialog.P .deps/ui_roi_dialog_cb.P \
+.deps/ui_series.P .deps/ui_series_cb.P .deps/ui_series_menus.P \
+.deps/ui_series_toolbar.P .deps/ui_study.P .deps/ui_study_cb.P \
+.deps/ui_study_dialog.P .deps/ui_study_dialog_cb.P \
+.deps/ui_study_menus.P .deps/ui_study_rois_cb.P \
+.deps/ui_study_toolbar.P .deps/ui_time_dialog.P \
+.deps/ui_time_dialog_cb.P .deps/ui_volume.P .deps/ui_volume_dialog.P \
+.deps/ui_volume_dialog_cb.P .deps/volume.P \
+.deps/volume_DOUBLE_0D_SCALING.P .deps/volume_DOUBLE_1D_SCALING.P \
+.deps/volume_DOUBLE_2D_SCALING.P .deps/volume_FLOAT_0D_SCALING.P \
+.deps/volume_FLOAT_1D_SCALING.P .deps/volume_FLOAT_2D_SCALING.P \
+.deps/volume_SBYTE_0D_SCALING.P .deps/volume_SBYTE_1D_SCALING.P \
+.deps/volume_SBYTE_2D_SCALING.P .deps/volume_SINT_0D_SCALING.P \
+.deps/volume_SINT_1D_SCALING.P .deps/volume_SINT_2D_SCALING.P \
+.deps/volume_SSHORT_0D_SCALING.P .deps/volume_SSHORT_1D_SCALING.P \
+.deps/volume_SSHORT_2D_SCALING.P .deps/volume_UBYTE_0D_SCALING.P \
+.deps/volume_UBYTE_1D_SCALING.P .deps/volume_UBYTE_2D_SCALING.P \
+.deps/volume_UINT_0D_SCALING.P .deps/volume_UINT_1D_SCALING.P \
+.deps/volume_UINT_2D_SCALING.P .deps/volume_USHORT_0D_SCALING.P \
+.deps/volume_USHORT_1D_SCALING.P .deps/volume_USHORT_2D_SCALING.P \
+.deps/xml.P
 SOURCES = $(amide_SOURCES)
 OBJECTS = $(amide_OBJECTS)
 

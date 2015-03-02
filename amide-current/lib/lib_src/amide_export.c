@@ -31,13 +31,9 @@
 #include "color_table.h"
 #include "study.h"
 #include "image.h"
-#include "ui_threshold.h"
 #include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h"
 #include "ui_study.h"
-#include "ui_study_callbacks.h"
-#include "ui_threshold2.h"
+#include "ui_study_cb.h"
 
 /* exported procedure to set the name of the study */
 void amide_study_set_name(GtkWidget * amide_widget,  gchar * new_name) {
@@ -113,7 +109,7 @@ void amide_study_save(GtkWidget * amide_widget) {
   ui_study_t * ui_study;
 
   ui_study = gtk_object_get_data(GTK_OBJECT(amide_widget), "ui_study");
-  ui_study_callbacks_save_as(amide_widget, ui_study);
+  ui_study_cb_save_as(amide_widget, ui_study);
 
   return;
 }
@@ -124,7 +120,7 @@ void amide_study_threshold(GtkWidget * amide_widget) {
   ui_study_t * ui_study;
 
   ui_study = gtk_object_get_data(GTK_OBJECT(amide_widget), "ui_study");
-  ui_threshold_dialog_create(ui_study);
+  ui_study_cb_threshold_pressed(amide_widget, ui_study);
 
   return;
 }

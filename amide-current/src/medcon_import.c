@@ -26,7 +26,6 @@
 #include <time.h>
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #ifdef AMIDE_LIBMDC_SUPPORT
 #include "volume.h"
 #include "medcon_import.h"
@@ -52,6 +51,7 @@ volume_t * medcon_import(gchar * filename) {
   XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
   MDC_INFO=MDC_NO;       /* don't print stuff */
   MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
+  MDC_ANLZ_SPM=MDC_YES; /* if analyze format, assume SPM */
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
 
   /* open the file */
@@ -99,25 +99,35 @@ volume_t * medcon_import(gchar * filename) {
 
   /* pick our internal data format */
   switch(medcon_file_info.type) {
-    /* note: which types are supported are determined by what MdcGetImg* functions are available */
+    /* note1: which types are supported are determined by what MdcGetImg* functions are available */
+    /* note2: floats we have medcon quantify, everything else we try to get the raw data, and store scaling factors */
   case BIT1: /* 1 */
   case BIT8_S: /* 2 */
     g_warning("%s: Importing type %d file through medcon unsupported, trying as unsigned byte",
-	      PACKAGE, medcon_file_info.type);
+    	      PACKAGE, medcon_file_info.type);
   case BIT8_U: /* 3 */
     temp_volume->data_set->format = UBYTE;
+    MDC_QUANTIFY = MDC_NO; 
+    MDC_CALIBRATE = MDC_NO;
+    MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   case BIT16_U: /*  5 */
     g_warning("%s: Importing type %d file through medcon unsupported, trying as signed short",
-	      PACKAGE, medcon_file_info.type);
+    	      PACKAGE, medcon_file_info.type);
   case BIT16_S: /* 4 */
     temp_volume->data_set->format = SSHORT;
+    MDC_QUANTIFY = MDC_NO;
+    MDC_CALIBRATE = MDC_NO;
+    MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   case BIT32_U: /* 7 */
     g_warning("%s: Importing type %d file through medcon unsupported, trying as signed int",
-	      PACKAGE, medcon_file_info.type);
+    	      PACKAGE, medcon_file_info.type);
   case BIT32_S: /* 6 */
     temp_volume->data_set->format = SINT;
+    MDC_QUANTIFY = MDC_NO;
+    MDC_CALIBRATE = MDC_NO;
+    MDC_NORM_OVER_FRAMES = MDC_NO;
     break;
   default:
   case BIT64_U: /* 9 */
@@ -126,9 +136,12 @@ volume_t * medcon_import(gchar * filename) {
   case ASCII: /* 12 */
   case VAXFL32: /* 13 */
     g_warning("%s: Importing type %d file through medcon unsupported, trying as float",
-	      PACKAGE, medcon_file_info.type);
+    	      PACKAGE, medcon_file_info.type);
   case FLT32: /* 10 */
     temp_volume->data_set->format = FLOAT;
+    MDC_QUANTIFY = MDC_YES;
+    MDC_CALIBRATE = MDC_YES;
+    MDC_NORM_OVER_FRAMES = MDC_YES;
     break;
   }
 
@@ -204,15 +217,17 @@ volume_t * medcon_import(gchar * filename) {
     return volume_free(temp_volume);
   }
 
-  /* setup the internal scaling factor array */
-  temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
-  temp_volume->internal_scaling->dim.z = temp_volume->data_set->dim.z;
-  /* malloc the space for the scaling factors */
-  g_free(temp_volume->internal_scaling->data); /* get rid of any old scaling factors */
-  if ((temp_volume->internal_scaling->data = data_set_get_data_mem(temp_volume->internal_scaling)) == NULL) {
-    g_warning("%s: couldn't allocate space for the scaling factors for the (X)medcon data",PACKAGE);
-    MdcCleanUpFI(&medcon_file_info);
-    return volume_free(temp_volume);
+  /* setup the internal scaling factor array for integer types */
+  if (temp_volume->data_set->format != FLOAT) {
+    temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
+    temp_volume->internal_scaling->dim.z = temp_volume->data_set->dim.z;
+    /* malloc the space for the scaling factors */
+    g_free(temp_volume->internal_scaling->data); /* get rid of any old scaling factors */
+    if ((temp_volume->internal_scaling->data = data_set_get_data_mem(temp_volume->internal_scaling)) == NULL) {
+      g_warning("%s: couldn't allocate space for the scaling factors for the (X)medcon data",PACKAGE);
+      MdcCleanUpFI(&medcon_file_info);
+      return volume_free(temp_volume);
+    }
   }
 
   /* and load in the data */
@@ -228,16 +243,17 @@ volume_t * medcon_import(gchar * filename) {
     /* copy the data into the volume */
     for (i.z = 0 ; i.z < temp_volume->data_set->dim.z; i.z++) {
 
-      /* store the scaling factor... I think this is the right scaling factor... */
-      *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
-	medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].rescale_fctr;
-
       switch(temp_volume->data_set->format) {
       case UBYTE:
 	{
 	  data_set_UBYTE_t * medcon_buffer;
 
-	  /* convert the image to a 16 bit signed in to begin with */
+	  /* store the scaling factor... I think this is the right scaling factor... */
+	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
+	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
+	    * medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+
+	  /* convert the image to a 8 bit unsigned int to begin with */
 	  if ((medcon_buffer = 
 	       (data_set_UBYTE_t *) MdcGetImgBIT8_U(&medcon_file_info, 
 						    i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){
@@ -261,7 +277,12 @@ volume_t * medcon_import(gchar * filename) {
 	{
 	  data_set_SSHORT_t * medcon_buffer;
 
-	  /* convert the image to a 16 bit signed in to begin with */
+	  /* store the scaling factor... I think this is the right scaling factor... */
+	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
+	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
+	    *medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+
+	  /* convert the image to a 16 bit signed int to begin with */
 	  if ((medcon_buffer = 
 	       (data_set_SSHORT_t *) MdcGetImgBIT16_S(&medcon_file_info, 
 						      i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){
@@ -285,7 +306,12 @@ volume_t * medcon_import(gchar * filename) {
 	{
 	  data_set_SINT_t * medcon_buffer;
 
-	  /* convert the image to a 16 bit signed in to begin with */
+	  /* store the scaling factor... I think this is the right scaling factor... */
+	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
+	    medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].quant_scale
+	    *medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].calibr_fctr;
+
+	  /* convert the image to a 32 bit signed int to begin with */
 	  if ((medcon_buffer = 
 	       (data_set_SINT_t *) MdcGetImgBIT32_S(&medcon_file_info, 
 						    i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){

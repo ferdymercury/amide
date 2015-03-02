@@ -23,8 +23,10 @@
   02111-1307, USA.
 */
 
-/* data structures */
+/* header files always needed with this file */
+#include "roi.h"
 
+/* data structures */
 typedef struct _ui_roi_list_t ui_roi_list_t;
 
 struct _ui_roi_list_t {

@@ -26,15 +26,14 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
-#include "amide.h"
 #include "image.h"
-#include "color_table2.h"
 
 /* callback function used for freeing the pixel data in a gdkpixbuf */
-void image_free_rgb_data(guchar * pixels, gpointer data) {
+static void image_free_rgb_data(guchar * pixels, gpointer data) {
   g_free(pixels);
   return;
 }
+
 
 /* function to return a blank image */
 GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t image_color) {
@@ -280,12 +279,7 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
 
   for (j=0; j < height; j++) {
     datum = ((((double) height-j)/height) * (volume_max-volume_min))+volume_min;
-    if (datum >= max)
-      datum = volume_max;
-    else if (datum <= min)
-      datum = volume_min;
-    else
-      datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
+    datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
 
 
     rgba = color_table_lookup(datum, color_table, volume_min, volume_max);
@@ -420,17 +414,11 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 	  new_alpha = rgba_temp.a;
 	}
 	rgba_data[location].r = 
-	  ((initial_alpha* rgba_data[location].r) +
-	   (new_alpha * rgba_temp.r)) /
-	  total_alpha;
+	  ((initial_alpha* rgba_data[location].r) + (new_alpha * rgba_temp.r)) / total_alpha;
 	rgba_data[location].g = 
-	  ((initial_alpha* rgba_data[location].g) +
-	   (new_alpha * rgba_temp.g)) /
-	  total_alpha;
+	  ((initial_alpha* rgba_data[location].g) +(new_alpha * rgba_temp.g)) / total_alpha;
 	rgba_data[location].b = 
-	  ((initial_alpha* rgba_data[location].b) +
-	   (new_alpha * rgba_temp.b)) /
-	  total_alpha;
+	  ((initial_alpha* rgba_data[location].b) +(new_alpha * rgba_temp.b)) / total_alpha;
 	rgba_data[location].a = total_alpha;
       }
     temp_slices = temp_slices->next;

@@ -28,19 +28,14 @@
 
 #include "config.h"
 #include <gnome.h>
-#include "amide.h"
 #include "study.h"
 #include "rendering.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h"
+#include "ui_common.h"
 #include "ui_study.h"
-#include "ui_study_callbacks.h"
+#include "ui_study_cb.h"
 #include "ui_study_menus.h"
-#include "ui_study_rois_callbacks.h"
-
+#include "ui_study_rois_cb.h"
+#include "ui_series.h"
 
 /* function to fill in a radioitem */
 void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item, 
@@ -93,22 +88,22 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo import_specific_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Raw Data"),
 			  N_("Import file as raw data"),
-			  ui_study_callbacks_import, ui_study, NULL),
+			  ui_study_cb_import, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_PEM Technologies"),
 			  N_("Import a PEM Technologies File (raw ASCII)"),
-			  ui_study_callbacks_import, ui_study, NULL),
+			  ui_study_cb_import, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_IDL microCT Output"),
 			  N_("Import an IDL created file, generally from the microCT's volume rendering tool"),
-			  ui_study_callbacks_import, ui_study, NULL),
+			  ui_study_cb_import, ui_study, NULL),
 #ifdef AMIDE_LIBECAT_SUPPORT
     GNOMEUIINFO_ITEM_DATA(N_("_CTI 6.4/7.0 via libecat"),
 			  N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
-			  ui_study_callbacks_import, ui_study, NULL),
+			  ui_study_cb_import, ui_study, NULL),
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
     GNOMEUIINFO_ITEM_DATA(N_("(_X)medcon importing"),
 			  N_("Let the (X)medcon importing library (libmdc) guess: Acr/Nema 2.0, Analyze, DICOM 3.0, CTI 6.4, InterFile3.3, etc."),
-			  ui_study_callbacks_import, ui_study, NULL),
+			  ui_study_cb_import, ui_study, NULL),
 #endif
     GNOMEUIINFO_END
   };
@@ -116,15 +111,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_callbacks_export,
+			  ui_study_cb_export,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_callbacks_export,
+			  ui_study_cb_export,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_callbacks_export,
+			  ui_study_cb_export,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -133,13 +128,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo file_menu[] = {
     GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Study"), 
 			      N_("Create a new study viewer window"),
-			      ui_study_callbacks_new_study, NULL),
-    GNOMEUIINFO_MENU_OPEN_ITEM(ui_study_callbacks_open_study, NULL),
-    GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_callbacks_save_as, ui_study),
+			      ui_study_cb_new_study, NULL),
+    GNOMEUIINFO_MENU_OPEN_ITEM(ui_study_cb_open_study, NULL),
+    GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_cb_save_as, ui_study),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(N_("_Import File (guess)"),
 			  N_("Import an image data file into this study, guessing at the file type"),
-			  ui_study_callbacks_import, 
+			  ui_study_cb_import, 
 			  ui_study, NULL),
     GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
 			     N_("Import an image data file into this study, specifying the import filter"), 
@@ -149,34 +144,34 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Export one of the views to a data file"),
 			     export_view_menu),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_callbacks_close_event, ui_study),
+    GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
     GNOMEUIINFO_END
   };
 
   GnomeUIInfo add_roi_menu[] = {
     GNOMEUIINFO_ITEM_DATA(roi_type_names[ELLIPSOID], 
 			  N_("Add a new elliptical ROI"),
-			  ui_study_callbacks_new_roi_ellipsoid,
+			  ui_study_cb_new_roi_ellipsoid,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(roi_type_names[CYLINDER], 
 			  N_("Add a new elliptic cylinder ROI"),
-			  ui_study_callbacks_new_roi_cylinder,
+			  ui_study_cb_new_roi_cylinder,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(roi_type_names[BOX], 
 			  N_("Add a new box shaped ROI"),
-			  ui_study_callbacks_new_roi_box,
+			  ui_study_cb_new_roi_box,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
 
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Edit"),
+    GNOMEUIINFO_ITEM_DATA(N_("_Edit Items"),
 			  N_("Edit the selected objects"),
-			  ui_study_callbacks_edit_objects,
+			  ui_study_cb_edit_objects,
 			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Delete"),
+    GNOMEUIINFO_ITEM_DATA(N_("_Delete Items"),
 			  N_("Delete the selected objects"),
-			  ui_study_callbacks_delete_objects,
+			  ui_study_cb_delete_objects,
 			  ui_study, NULL),
     GNOMEUIINFO_SUBTREE_HINT(N_("_Add ROI"),
 			     N_("Add a new ROI"),
@@ -188,15 +183,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo series_space_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a series of transaxial views in a single frame"),
-			  ui_study_callbacks_transverse_series_planes, 
+			  ui_study_cb_series, 
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Look at a series of coronal views in a single frame"),
-			  ui_study_callbacks_coronal_series_planes, 
+			  ui_study_cb_series,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Look at a series of sagittal views in a single frame"),
-			  ui_study_callbacks_sagittal_series_planes, 
+			  ui_study_cb_series,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -204,15 +199,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo series_time_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a times series of a single transaxial view"),
-			  ui_study_callbacks_transverse_series_frames, 
+			  ui_study_cb_series,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Look at a time series of a single coronal view"),
-			  ui_study_callbacks_coronal_series_frames, 
+			  ui_study_cb_series,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Look at a time series of a a signal sagittal view"),
-			  ui_study_callbacks_sagittal_series_frames, 
+			  ui_study_cb_series,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -233,11 +228,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo rendering_type_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Nearest Neighbor Conversion"),
 			  N_("convert image data for rendering using nearest neighbor interpolation (Fast)"),
-			  ui_study_callbacks_rendering_nearest_neighbor,
+			  ui_study_cb_rendering_nearest_neighbor,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Trilinear Conversion"),
 			  N_("convert image data for rendering using trilinear interpolation (Slow, High Quality)"),
-			  ui_study_callbacks_rendering_trilinear,
+			  ui_study_cb_rendering_trilinear,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -260,11 +255,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo roi_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_All"),
 			  N_("caculate values for all ROI's"),
-			  ui_study_rois_callbacks_calculate_all,
+			  ui_study_rois_cb_calculate_all,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Selected"),
 			  N_("calculate values only for the currently selected ROI's"),
-			  ui_study_rois_callbacks_calculate_selected,
+			  ui_study_rois_cb_calculate_selected,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -277,21 +272,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  /* our help menu... */
-  GnomeUIInfo study_help_menu[]= {
-    GNOMEUIINFO_HELP(PACKAGE),
-    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_ABOUT_ITEM(ui_study_callbacks_about, NULL), 
-    GNOMEUIINFO_END
-  };
-
   /* and the main menu definition */
   GnomeUIInfo study_main_menu[] = {
     GNOMEUIINFO_MENU_FILE_TREE(file_menu),
     GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
     GNOMEUIINFO_MENU_VIEW_TREE(view_menu),
     GNOMEUIINFO_SUBTREE(N_("_Analysis"), analysis_menu),
-    GNOMEUIINFO_MENU_HELP_TREE(study_help_menu),
+    GNOMEUIINFO_MENU_HELP_TREE(ui_common_help_menu),
     GNOMEUIINFO_END
   };
 
@@ -312,6 +299,14 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_view = 0; i_view < NUM_VIEWS; i_view++) {
     gtk_object_set_data(GTK_OBJECT(export_view_menu[i_view].widget),
 			"view", GINT_TO_POINTER(i_view));
+    gtk_object_set_data(GTK_OBJECT(series_space_menu[i_view].widget),
+			"view", GINT_TO_POINTER(i_view));
+    gtk_object_set_data(GTK_OBJECT(series_space_menu[i_view].widget),
+			"series_type", GINT_TO_POINTER(PLANES));
+    gtk_object_set_data(GTK_OBJECT(series_time_menu[i_view].widget),
+			"view", GINT_TO_POINTER(i_view));
+    gtk_object_set_data(GTK_OBJECT(series_time_menu[i_view].widget),
+			"series_type", GINT_TO_POINTER(FRAMES));
   }
 
   return;

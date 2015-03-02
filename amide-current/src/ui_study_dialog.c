@@ -27,15 +27,9 @@
 #include "config.h"
 #include <gnome.h>
 #include <math.h>
-#include "amide.h"
 #include "study.h"
-#include "image.h"
-#include "ui_threshold.h"
-#include "ui_series.h"
-#include "ui_roi.h"
-#include "ui_volume.h"
 #include "ui_study.h"
-#include "ui_study_dialog_callbacks.h"
+#include "ui_study_dialog_cb.h"
 #include "ui_study_dialog.h"
 
 
@@ -131,13 +125,13 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(study_dialog), "close",
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_close_event),
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_close_event),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(study_dialog), "apply",
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_apply),
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_apply),
 		     ui_study);
   gtk_signal_connect(GTK_OBJECT(study_dialog), "help",
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_help),
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_help),
 		     ui_study);
 
 
@@ -167,7 +161,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "study_dialog", study_dialog); 
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_change_name), 
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_change_name), 
 		     study_new_info);
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(entry),1,2,
@@ -190,7 +184,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   gtk_object_set_data(GTK_OBJECT(entry), "study_dialog", study_dialog); 
   gtk_signal_connect(GTK_OBJECT(entry), "changed", 
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_change_creation_date), 
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_change_creation_date), 
 		     study_new_info);
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(entry),1,2,
@@ -244,7 +238,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
 		     1,4, table_row, table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL,FALSE, X_PADDING, Y_PADDING);
     gtk_signal_connect(GTK_OBJECT(adjustment), "value_changed", 
-		       GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_change_axis), 
+		       GTK_SIGNAL_FUNC(ui_study_dialog_cb_change_axis), 
 		       study_new_info);
     table_row++;
   }
@@ -264,7 +258,7 @@ void ui_study_dialog_create(ui_study_t * ui_study) {
 		   table_row, table_row+1,
 		   0, 0, X_PADDING, Y_PADDING);
   gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_study_dialog_callbacks_reset_axis), 
+		     GTK_SIGNAL_FUNC(ui_study_dialog_cb_reset_axis), 
 		     study_new_info);
   table_row++;
 

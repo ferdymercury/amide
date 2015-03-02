@@ -32,10 +32,6 @@
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
-#include "amide.h"
-#include "color_table.h"
-#include "volume.h"
-#include "objects.h"
 #include "raw_data.h"
 
 /* external variables */
@@ -74,23 +70,23 @@ volume_t * volume_free(volume_t * volume) {
   /* if we've removed all reference's, free remaining data structures */
   if (volume->reference_count == 0) {
 #ifdef AMIDE_DEBUG
-    g_print("freeing volume: %s\n\t",volume->name);
+    //    g_print("freeing volume: %s\n\tdata:\t",volume->name);
 #endif
     volume->data_set = data_set_free(volume->data_set);
 #ifdef AMIDE_DEBUG
-    if (volume->internal_scaling->reference_count == 1)
-      g_print("\t");
+    //    if (volume->internal_scaling->reference_count == 1)
+    //      g_print("\tinternal scaling:\t");
 #endif
     volume->internal_scaling = data_set_free(volume->internal_scaling);
 #ifdef AMIDE_DEBUG
-    if (volume->current_scaling->reference_count == 1)
-      g_print("\t");
+    //    if (volume->current_scaling->reference_count == 1)
+    //      g_print("\tcurrent scaling:\t");
 #endif
     volume->current_scaling = data_set_free(volume->current_scaling);
 #ifdef AMIDE_DEBUG
-    if (volume->distribution != NULL)
-      if (volume->distribution->reference_count == 1)
-	g_print("\t");
+    //    if (volume->distribution != NULL)
+    //      if (volume->distribution->reference_count == 1)
+    //	g_print("\tdistribution:\t");
 #endif
     volume->distribution = data_set_free(volume->distribution);
     g_free(volume->frame_duration);
@@ -123,7 +119,7 @@ volume_t * volume_init(void) {
   temp_volume->frame_duration = NULL;
   temp_volume->distribution = NULL;
   temp_volume->modality = PET;
-  temp_volume->voxel_size = realpoint_init;
+  temp_volume->voxel_size = realpoint_zero;
   if ((temp_volume->internal_scaling = data_set_FLOAT_0D_SCALING_init(1.0)) == NULL) {
     g_warning("PACKAGE: Couldn't allocate memory for internal scaling structure");
     return volume_free(temp_volume);
@@ -131,9 +127,9 @@ volume_t * volume_init(void) {
   volume_set_scaling(temp_volume, 1.0);
   temp_volume->scan_start = 0.0;
   temp_volume->color_table = BW_LINEAR;
-  rs_set_offset(&temp_volume->coord_frame,realpoint_init);
+  rs_set_offset(&temp_volume->coord_frame,realpoint_zero);
   rs_set_axis(&temp_volume->coord_frame, default_axis);
-  temp_volume->corner = realpoint_init;
+  temp_volume->corner = realpoint_zero;
 
   /* set the scan date to the current time, good for an initial guess */
   time(&current_time);
@@ -523,6 +519,27 @@ amide_time_t volume_end_time(const volume_t * volume, guint frame) {
     frame = volume->data_set->dim.t-1;
 
   return volume_start_time(volume, frame) + volume->frame_duration[frame];
+}
+
+/* returns the frame that corresponds to the time */
+guint volume_frame(const volume_t * volume, const amide_time_t time) {
+
+  amide_time_t start, end;
+  guint i_frame;
+
+  start = volume_start_time(volume, 0);
+  if (time <= start)
+    return 0;
+
+  for(i_frame=0; i_frame <volume->data_set->dim.t; i_frame++) {
+    start = volume_start_time(volume, i_frame);
+    end = volume_end_time(volume, i_frame);
+    if ((start <= time) && (time <= end))
+      return i_frame;
+  }
+
+  /* must be past the end */
+  return volume->data_set->dim.t-1;
 }
 
 /* return the minimal frame duration in this volume */
@@ -1176,101 +1193,102 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 
 
 /* generate a volume that contains an axis figure, this is used by the rendering ui */
-volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
-
-  volume_t * axis_volume;
-  realpoint_t center, radius;
-  floatpoint_t height;
-  realspace_t object_coord_frame;
-
-  /* initialize our data structures */
-  if ((axis_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the axis volume structure", PACKAGE);
-    return axis_volume;
-  }
-  if ((axis_volume->data_set = data_set_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the axis data set structure", PACKAGE);
-    return volume_free(axis_volume);
-  }
-
-  /* initialize what variables we want */
-  volume_set_name(axis_volume, "rendering axis volume");
-  axis_volume->data_set->dim.x  = x_width;
-  axis_volume->data_set->dim.y = y_width;
-  axis_volume->data_set->dim.z = z_width;
-  axis_volume->data_set->dim.t = 1;
-  axis_volume->data_set->format = FLOAT;
-  volume_set_scaling(axis_volume, 1.0);
-  axis_volume->voxel_size.x = axis_volume->voxel_size.y = axis_volume->voxel_size.z = 1.0;
-  volume_recalc_far_corner(axis_volume);
-  
-  if ((axis_volume->frame_duration = volume_get_frame_duration_mem(axis_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the axis volume frame duration array",PACKAGE);
-    return volume_free(axis_volume);
-  }
-  axis_volume->frame_duration[0]=1.0;
-
-  if ((axis_volume->data_set->data = data_set_get_data_mem(axis_volume->data_set)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
-    return volume_free(axis_volume);
-  }
-
-  /* initialize our data set */
-  data_set_FLOAT_initialize_data(axis_volume->data_set, 0.0);
-
-  /* figure out an appropriate radius for our cylinders and spheres */
-  radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/24;
-  radius.y = radius.x;
-  radius.z = radius.x;
+//volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
+//
+//  volume_t * axis_volume;
+//  realpoint_t center, radius;
+//  floatpoint_t height;
+//  realspace_t object_coord_frame;
+//
+//  /* initialize our data structures */
+//  if ((axis_volume = volume_init()) == NULL) {
+//    g_warning("%s: couldn't allocate space for the axis volume structure", PACKAGE);
+//    return axis_volume;
+//  }
+//  if ((axis_volume->data_set = data_set_init()) == NULL) {
+//    g_warning("%s: couldn't allocate space for the axis data set structure", PACKAGE);
+//    return volume_free(axis_volume);
+//  }
+//
+//  /* initialize what variables we want */
+//  volume_set_name(axis_volume, "rendering axis volume");
+//  axis_volume->data_set->dim.x  = x_width;
+//  axis_volume->data_set->dim.y = y_width;
+//  axis_volume->data_set->dim.z = z_width;
+//  axis_volume->data_set->dim.t = 1;
+//  axis_volume->data_set->format = FLOAT;
+//  volume_set_scaling(axis_volume, 1.0);
+//  axis_volume->voxel_size.x = axis_volume->voxel_size.y = axis_volume->voxel_size.z = 1.0;
+//  volume_recalc_far_corner(axis_volume);
+//  
+//  if ((axis_volume->frame_duration = volume_get_frame_duration_mem(axis_volume)) == NULL) {
+//    g_warning("%s: couldn't allocate space for the axis volume frame duration array",PACKAGE);
+//    return volume_free(axis_volume);
+//  }
+//  axis_volume->frame_duration[0]=1.0;
+//
+//  if ((axis_volume->data_set->data = data_set_get_data_mem(axis_volume->data_set)) == NULL) {
+//    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
+//    return volume_free(axis_volume);
+//  }
+//
+//  /* initialize our data set */
+//  data_set_FLOAT_initialize_data(axis_volume->data_set, 0.0);
+//
+//  /* figure out an appropriate radius for our cylinders and spheres */
+//  radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/24;
+//  radius.y = radius.x;
+//  radius.z = radius.x;
 
   /* start generating our axis */
 
  
   /* draw the z axis */
-  center.z = (axis_volume->corner.z*4.5/8.0);
-  height = (axis_volume->corner.z*3.0/8.0);
-  center.x = axis_volume->corner.x/2;
-  center.y = axis_volume->corner.y/2;
-  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, TRANSVERSE);
-  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
-				  center, radius, height, AXIS_VOLUME_DENSITY);
+//  center.z = (axis_volume->corner.z*4.5/8.0);
+//  height = (axis_volume->corner.z*3.0/8.0);
+//  center.x = axis_volume->corner.x/2;
+//  center.y = axis_volume->corner.y/2;
+//  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, TRANSVERSE);
+//  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+//				  center, radius, height, AXIS_VOLUME_DENSITY);
 
                                                         
   /* draw the y axis */
-  center.y = (axis_volume->corner.y*5.0/8.0);
-  height = (axis_volume->corner.y*4.0/8.0);
-  center.x = axis_volume->corner.x/2;
-  center.z = axis_volume->corner.z/2;
-  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, CORONAL);
-  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
-				  center, radius, height, AXIS_VOLUME_DENSITY);
+//  center.y = (axis_volume->corner.y*5.0/8.0);
+//  height = (axis_volume->corner.y*4.0/8.0);
+//  center.x = axis_volume->corner.x/2;
+//  center.z = axis_volume->corner.z/2;
+//  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, CORONAL);
+//  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+//				  center, radius, height, AXIS_VOLUME_DENSITY);
 
  /* draw the x axis */
-  center.x = (axis_volume->corner.x*5.0/8.0);
-  height = (axis_volume->corner.x*4.0/8.0);
-  center.y = axis_volume->corner.y/2;
-  center.z = axis_volume->corner.z/2;
-  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, SAGITTAL);
-  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
-				  center, radius, height, AXIS_VOLUME_DENSITY);
+//  center.x = (axis_volume->corner.x*5.0/8.0);
+//  height = (axis_volume->corner.x*4.0/8.0);
+//  center.y = axis_volume->corner.y/2;
+//  center.z = axis_volume->corner.z/2;
+//  object_coord_frame = realspace_get_view_coord_frame(axis_volume->coord_frame, SAGITTAL);
+//  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
+//				  center, radius, height, AXIS_VOLUME_DENSITY);
 
-  radius.z = radius.y = radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/12;
-  center.x = (axis_volume->corner.x*7.0/8.0);
-  objects_place_ellipsoid(axis_volume, 0, object_coord_frame, 
-			  center, radius, AXIS_VOLUME_DENSITY);
+//  radius.z = radius.y = radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/12;
+//  center.x = (axis_volume->corner.x*7.0/8.0);
+//  objects_place_ellipsoid(axis_volume, 0, object_coord_frame, 
+//			  center, radius, AXIS_VOLUME_DENSITY);
 
   /* and figure out the max and min */
-  volume_recalc_max_min(axis_volume);
-
-  axis_volume->threshold_max = axis_volume->max;
-  axis_volume->threshold_min = axis_volume->min;
-
-  return axis_volume;
-}
+//  volume_recalc_max_min(axis_volume);
+//
+//  axis_volume->threshold_max = axis_volume->max;
+//  axis_volume->threshold_min = axis_volume->min;
+//
+//  return axis_volume;
+//}
 
 
 
 /* returns a "2D" slice from a volume */
+/* far_corner should be in the slice_coord_frame */
 volume_t * volume_get_slice(const volume_t * volume,
 			    const amide_time_t start,
 			    const amide_time_t duration,

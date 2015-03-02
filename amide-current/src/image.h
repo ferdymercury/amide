@@ -23,16 +23,17 @@
   02111-1307, USA.
 */
 
+#ifndef __IMAGE_H__
+#define __IMAGE_H__
+
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gdk-pixbuf/gnome-canvas-pixbuf.h>
 #include "study.h"
 #include "rendering.h"
 
 #define IMAGE_DISTRIBUTION_WIDTH 100
 
 /* external functions */
-void image_free_rgb_data(guchar * pixels, gpointer data);
 GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t image_color);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
@@ -57,4 +58,6 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 			       const scaling_t scaling,
 			       const floatpoint_t zoom,
 			       const interpolation_t interpolation);
+
+#endif /*  __IMAGE_H__ */
 

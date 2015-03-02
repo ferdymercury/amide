@@ -26,7 +26,6 @@
 #include "config.h"
 #include <glib.h>
 #include <math.h>
-#include "amide.h"
 #include "realspace.h"
 
 /* external variables */
@@ -36,9 +35,9 @@ const realpoint_t default_axis[NUM_AXIS] = {{1.0,0.0,0.0},
 					    {0.0,1.0,0.0},
 					    {0.0,0.0,1.0}};
 
-const realpoint_t realpoint_init = {0.0,0.0,0.0};
+const realpoint_t realpoint_zero = {0.0,0.0,0.0};
 
-const voxelpoint_t voxelpoint_init = {0,0,0,0};
+const voxelpoint_t voxelpoint_zero = {0,0,0,0};
 
 /* returns abs(rp1) for realpoint structures */
 inline realpoint_t rp_abs(const realpoint_t rp1) {
@@ -48,7 +47,6 @@ inline realpoint_t rp_abs(const realpoint_t rp1) {
   temp.z = fabs(rp1.z);
   return temp;
 }
-
 /* returns -rp1 for realpoint structures */
 inline realpoint_t rp_neg(const realpoint_t rp1) {
   realpoint_t temp;
@@ -57,7 +55,6 @@ inline realpoint_t rp_neg(const realpoint_t rp1) {
   temp.z = -rp1.z;
   return temp;
 }
-
 /* returns rp1+rp2 for realpoint structures */
 inline realpoint_t rp_add(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -66,7 +63,6 @@ inline realpoint_t rp_add(const realpoint_t rp1,const realpoint_t rp2) {
   temp.z = rp1.z+rp2.z;
   return temp;
 }
-
 /* returns rp1-rp2 for realpoint structures */
 inline realpoint_t rp_sub(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -75,7 +71,6 @@ inline realpoint_t rp_sub(const realpoint_t rp1,const realpoint_t rp2) {
   temp.z = rp1.z-rp2.z;
   return temp;
 }
-
 /* returns rp1.*rp2 for realpoint structures */
 inline realpoint_t rp_mult(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -84,7 +79,6 @@ inline realpoint_t rp_mult(const realpoint_t rp1,const realpoint_t rp2) {
   temp.z = rp1.z*rp2.z;
   return temp;
 }
-
 /* returns rp1./rp2 for realpoint structures */
 inline realpoint_t rp_div(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -93,7 +87,6 @@ inline realpoint_t rp_div(const realpoint_t rp1,const realpoint_t rp2) {
   temp.z = rp1.z/rp2.z;
   return temp;
 }
-
 /* returns abs(rp1-rp2) for realpoint structures */
 inline realpoint_t rp_diff(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
@@ -102,7 +95,6 @@ inline realpoint_t rp_diff(const realpoint_t rp1,const realpoint_t rp2) {
   temp.z = fabs(rp1.z-rp2.z);
   return temp;
 }
-
 /* returns cm*rp1 for realpoint structures */
 inline realpoint_t rp_cmult(const floatpoint_t cmult,const realpoint_t rp1) {
   realpoint_t temp;
@@ -111,7 +103,16 @@ inline realpoint_t rp_cmult(const floatpoint_t cmult,const realpoint_t rp1) {
   temp.z = cmult*rp1.z;
   return temp;
 }
+/* returns dot product of rp1 and rp2 for realpoint structures */
+inline floatpoint_t rp_dot_product(const realpoint_t rp1, const realpoint_t rp2) {
 
+  return rp1.x*rp2.x + rp1.y*rp2.y + rp1.z*rp2.z;
+
+}
+/* returns sqrt(rp_dot_product(rp1, rp1)) for realpoint structures */
+inline floatpoint_t rp_mag(const realpoint_t rp1) {
+  return sqrt(rp_dot_product(rp1, rp1));
+}
 
 
 
@@ -138,8 +139,16 @@ inline canvaspoint_t cp_add(const canvaspoint_t cp1,const canvaspoint_t cp2) {
   temp.y = cp1.y+cp2.y;
   return temp;
 }
+/* returns dot product of cp1 and cp2 for canvaspoint structures */
+inline floatpoint_t cp_dot_product(const canvaspoint_t cp1, const canvaspoint_t cp2) {
 
+  return cp1.x*cp2.x + cp1.y*cp2.y;
 
+}
+/* returns sqrt(cp_dot_product(cp1, cp1)) for canvaspoint structures */
+inline floatpoint_t cp_mag(const canvaspoint_t cp1) {
+  return sqrt(cp_dot_product(cp1, cp1));
+}
 
 
 

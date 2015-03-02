@@ -38,6 +38,7 @@
 typedef gshort rendering_normal_t;
 typedef guchar rendering_density_t;
 typedef guchar rendering_gradient_t;
+typedef enum {DENSITY_CLASSIFICATION, GRADIENT_CLASSIFICATION, NUM_CLASSIFICATIONS} classification_t;
 typedef enum {HIGHEST, HIGH, FAST, FASTEST, NUM_QUALITIES} rendering_quality_t;
 typedef enum {OPACITY, GRAYSCALE, NUM_PIXEL_TYPES} pixel_type_t;
 typedef enum {CURVE_LINEAR, CURVE_SPLINE, CURVE_FREE, NUM_CURVE_TYPES} curve_type_t;
@@ -81,7 +82,7 @@ rendering_voxel_t * dummy_voxel;
 #define RENDERING_GRADIENT_SIZE 	sizeof(rendering_gradient_t)
 #define RENDERING_GRADIENT_MAX  	VP_GRAD_MAX /* 221 last time I checked */
 
-#define RENDERING_DENSITY_PARAM		0		/* classification parameter */
+#define RENDERING_DENSITY_PARAM		0      /* classification parameter */
 #define RENDERING_GRADIENT_PARAM	1      /* classification parameter */
 
 /* initial density and gradient ramps */
@@ -102,7 +103,7 @@ rendering_voxel_t * dummy_voxel;
 
 #define RENDERING_DEFAULT_ZOOM 1.0
 #define RENDERING_DEFAULT_QUALITY HIGHEST
-#define RENDERING_DEFAULT_PIXEL_TYPE OPACITY
+#define RENDERING_DEFAULT_PIXEL_TYPE GRAYSCALE
 #define RENDERING_DEFAULT_DEPTH_CUEING FALSE
 #define RENDERING_DEFAULT_FRONT_FACTOR 1.0
 #define RENDERING_DEFAULT_DENSITY 1.0
@@ -114,22 +115,20 @@ typedef struct _rendering_t {
   volume_t * volume;
   amide_time_t start;
   amide_time_t duration;
+  realspace_t current_coord_frame;
+  realspace_t initial_coord_frame;
   rendering_voxel_t * rendering_vol;
+  realpoint_t voxel_size;
   voxelpoint_t dim; /* dimensions of our rendering_vol and image */
   guchar * image;
-  intpoint_t image_dim; /* x=y dimension of image */
   pixel_type_t pixel_type;
-  gfloat density_ramp[RENDERING_DENSITY_MAX+1];	/* opacity as a function of density */
-  gfloat gradient_ramp[RENDERING_GRADIENT_MAX+1];/* opacity as a function  of gradient magnitude */
   gfloat shade_table[RENDERING_NORMAL_MAX+1];	/* shading lookup table */
-  gint * density_ramp_x;
-  gfloat * density_ramp_y;
-  guint num_density_points;
-  curve_type_t density_curve_type;
-  gint * gradient_ramp_x;
-  gfloat * gradient_ramp_y;
-  guint num_gradient_points;
-  curve_type_t gradient_curve_type;
+  gfloat density_ramp[RENDERING_DENSITY_MAX+1]; /* opacity as a function */
+  gfloat gradient_ramp[RENDERING_GRADIENT_MAX+1]; /* opacity as a function */
+  gint * ramp_x[NUM_CLASSIFICATIONS];
+  gfloat * ramp_y[NUM_CLASSIFICATIONS];
+  guint num_points[NUM_CLASSIFICATIONS];
+  curve_type_t curve_type[NUM_CLASSIFICATIONS];
   guint reference_count;
 } rendering_t;
 
@@ -147,13 +146,13 @@ struct _rendering_list_t {
 
 /* external functions */
 rendering_t * rendering_context_free(rendering_t * context);
-rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord_frame, 
-				     realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				     intpoint_t max_dim, amide_time_t start, amide_time_t duration,
-				     interpolation_t interpolation);
-void rendering_context_load_volume(rendering_t * rendering_context, realspace_t render_coord_frame,
-				   realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				   amide_time_t start, amide_time_t duration, interpolation_t interpolation);
+rendering_t * rendering_context_init(volume_t * volume, const realspace_t render_coord_frame, 
+				     const realpoint_t render_far_corner, const floatpoint_t min_voxel_size, 
+				     const intpoint_t max_dim, const amide_time_t start, 
+				     const amide_time_t duration, const interpolation_t interpolation);
+void rendering_context_reload_volume(rendering_t * rendering_context, const amide_time_t new_start,
+				     const amide_time_t new_duration, const interpolation_t interpolation);
+void rendering_context_load_volume(rendering_t * rendering_context, const interpolation_t interpolation);
 void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble rotation);
 void rendering_context_reset_rotation(rendering_t * context);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
@@ -163,13 +162,11 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 						   gdouble front_factor, gdouble density);
 void rendering_context_render(rendering_t * context);
 rendering_list_t * rendering_list_free(rendering_list_t * rendering_list);
-rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspace_t render_coord_frame,
-					       realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-					       intpoint_t max_dim, amide_time_t start, amide_time_t duration,
-					       interpolation_t interpolation);
 rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
-				       amide_time_t start, amide_time_t duration, 
-				       interpolation_t interpolation);
+				       const amide_time_t start, const amide_time_t duration, 
+				       const interpolation_t interpolation);
+void rendering_list_reload_volume(rendering_list_t * rendering_list, const amide_time_t start, 
+				  const amide_time_t duration, const interpolation_t interpolation);
 void rendering_list_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);
 void rendering_list_reset_rotation(rendering_list_t * contexts);
 void rendering_list_set_quality(rendering_list_t * renderling_list, rendering_quality_t quality);

@@ -27,8 +27,7 @@
 #define __ROI__
 
 /* header files that are always needed with this file */
-#include "xml.h"
-#include "realspace.h"
+#include "volume.h"
 
 typedef enum {ELLIPSOID, CYLINDER, BOX, NUM_ROI_TYPES} roi_type_t;
 typedef enum {GRAINS_1, GRAINS_8, GRAINS_27, GRAINS_64, NUM_GRAIN_TYPES} roi_grain_t;

@@ -26,6 +26,9 @@
 #ifndef __COLOR_TABLE_H__
 #define __COLOR_TABLE_H__
 
+/* header files that are always associated with this header file */
+#include "amide.h"
+
 /* typedef's */
 typedef enum {BW_LINEAR, \
 	      WB_LINEAR, \
@@ -73,10 +76,8 @@ typedef struct hsv_t {
 
 /* external functions */
 guint32 color_table_outline_color(color_table_t which, gboolean highlight);
-
-/* in color_table2.h 
-   rgba_t color_table_lookup */
-
+rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
+			  amide_data_t min, amide_data_t max);
 /* external variables */
 extern gchar * color_table_names[];
 

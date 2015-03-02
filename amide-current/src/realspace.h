@@ -26,6 +26,9 @@
 #ifndef __REALSPACE_H__
 #define __REALSPACE_H__
 
+/* header files that are always associated with this header file */
+#include "amide.h"
+
 typedef enum {XAXIS, YAXIS, ZAXIS, NUM_AXIS} axis_t;
 
 /* canvas point is a point in canvas (real) 2D space */
@@ -158,11 +161,14 @@ inline realpoint_t rp_mult(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_div(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_diff(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
-
+inline floatpoint_t rp_dot_product(const realpoint_t rp1, const realpoint_t rp2);
+inline floatpoint_t rp_mag(const realpoint_t rp1);
 
 inline canvaspoint_t cp_diff(const canvaspoint_t cp1,const canvaspoint_t cp2);
 inline canvaspoint_t cp_sub(const canvaspoint_t cp1,const canvaspoint_t cp2);
 inline canvaspoint_t cp_add(const canvaspoint_t cp1,const canvaspoint_t cp2);
+inline floatpoint_t cp_dot_product(const canvaspoint_t cp1, const canvaspoint_t cp2);
+inline floatpoint_t cp_mag(const canvaspoint_t cp1);
 
 gboolean realpoint_in_box(const realpoint_t p,
 			  const realpoint_t p0,
@@ -198,8 +204,8 @@ inline realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
 /* external variables */
 extern const gchar * axis_names[];
 extern const realpoint_t default_axis[NUM_AXIS];
-extern const realpoint_t realpoint_init;
-extern const voxelpoint_t voxelpoint_init;
+extern const realpoint_t realpoint_zero;
+extern const voxelpoint_t voxelpoint_zero;
 
 
 

@@ -20,7 +20,7 @@
   the data is scaled between the current minimum and maximum
   threshold, with all data above the current maximum threshold set to
   the maximum threshold value, and all data below the current minimum
-  threshold set to the minimum threshold.
+  threshold set to the minimum threshold value.
 
 </para>
 <para>
@@ -32,32 +32,51 @@
 
 <sect1><title>Rendering Dialog</title>
 
-  <sect2><title>Axis Rendering</title>
+  <sect2><title>Main Rendering Canvas</title>
     <para>
-      A coordinate axis is always rendered along with the data set,
-      and is displayed in a separate window on the upper left.  The
-      x-axis is designated by the long bar with a ball at the end of
-      it.  The y-axis is the second shorted bar.  And the shorted bar
-      is the z-axis.
+      The result of the rendering process is presented on the canvas
+      in the center of the dialog.  This canvas can accept user input
+      to change the orientation of the rendering.  Button 1 allows
+      rotating on the x and y axis, and button 2 allows rotating on
+      the z axis.
     </para>
+  </sect2>
 
+
+  <sect2><title>Spin Sliders</title>
     <para>
-      The purpose of this rendering is two fold.  First, it allows the
-      user to see in which direction the data set will be spun.
-      Second, since the axis is rendered using the same classification
-      functions as the data set, it allows a quick check that the data
-      set is valid and is being rendered correctly.
+      You should notice two slider type widgets, one on top of the
+      rendered image, and one on the right side.  These are both
+      appropriately labeled with the axis around which the rendering
+      will be spun if they are changed.  Additionally you should
+      notice a dial widget (labeled 'z').  The dial is for rotating on
+      the z axis (which comes out of the plane of the display).  Note
+      that the effect of rotations are cumulative.
+    </para>
+  </sect2>
+
+  <sect2><title>Axis Drawing</title>
+    <para>
+      A coordinate axis is displayed to the left of the rendering, for
+      reminding you which way the axis are pointing.
     </para>
   </sect2>
   
-    <sect2><title>"Render" Button</title>
+  <sect2><title>Reset Axis</title>
+    <para>
+      This button will reset the rendering's orientation back to the
+      default orientation.
+    </para>
+  </sect2>
+
+  <sect2><title>"Render" Button</title>
     <para>
       This button tells the program to render the data set.  It will
-      be inactive if the "render on change" option has been picked.
+      be inactive if the "on change" option has been picked.
     </para>
   </sect2>
   
-  <sect2><title>"Render on Change" Checkbox</title>
+  <sect2><title>"On Change" Checkbox</title>
     <para>
       If this is checked, the data set will be rerendered on every
       change.  If this is not checked, the "Render" button will have
@@ -65,50 +84,31 @@
     </para>
   </sect2>
   
-  <sect2><title>Spin Sliders</title>
-    <para>
-      Sliding one of these will cause the data set to be spun on the
-      respective axis.  The effect is cumulative.  If you become
-      confused as to where the axis lies that you're spinning on, look
-      at the axis rendering.
-    </para>
-  </sect2>
 
-  <sect2><title>Reset Axis</title>
-    <para>
-      This button will reset the data set's orientation back to the
-      default orientation.
-    </para>
-  </sect2>
-  
-  <sect2><title>Export Rendering</title>
-    <para>
-      This button allows you to export the rendered image to
-      anexternal image file.  The saved data format is determined by
-      the extension of the specified filename.  A large variety of
-      image data formats can be saved, including JPEG [.jpg], TIFF
-      [.tiff], Postscript [.ps], Encapsulated Postscript [.eps], and
-      PNG [.png].  </para>
-  </sect2>
-  
-  <sect2><title>"Rendering Parameters" Button</title>
-    <para>
-      This causes the rendering parameters dialog box to pop up.  This
-      dialog box is described below.
-    </para>
-  </sect2>
+  <sect2><title>Rendering Menus</title>
+    <sect3><title>File->Export Rendering</title>
+      <para>
+	This menu item allows you to export the rendered image to
+	an external image file.  The saved data format is determined by
+	the extension of the specified filename.  A large variety of
+	image data formats can be saved, including JPEG [.jpg], TIFF
+	[.tiff], Postscript [.ps], Encapsulated Postscript [.eps], and
+	PNG [.png].  </para>
+    </sect3>
 
-  <sect2><title>"Create Movie" Button</title>
-    <para>
-      This causes the movie generation dialog box to pop up.  This
-      dialog box is further described below.
-    </para>
-  </sect2>
+    <sect3><title>File->Create Movie</title>
+      <para>
+	This causes the movie generation dialog box to pop up.  This
+	dialog box is further described below.
+      </para>
+    </sect3>
   
-  <sect2><title>Data Set Rendering Window</title>
-    <para>
-      In this window is shown the results of rendering the data set.
-    </para>
+    <sect3><title>"Edit->Rendering Parameters</title>
+      <para>
+	This causes the rendering parameters dialog box to pop up.
+	This dialog box is described below.
+      </para>
+    </sect3>
   </sect2>
   
 </sect1>
@@ -140,55 +140,76 @@
     </sect3>
 
 
-  </sect2>
+    <sect3><title>Depth Cueing</title>
 
-  <sect2 id="rendering-dialog-help-depth-cueing"><title>Depth Cueing</title>
-
-    <para>
-      These parameters are only used if the "grayscale" output type
-      has been chosen.
-    </para>
-
-    <sect3><title>Enable/Disable Depth Cueing</title>
       <para>
-	Specify whether or not we want depth cueing.  Depth cueing
-	puts in a "fog" that causes more distant voxels to appear less
-	bright.
+	These parameters are only used if the "grayscale" output type
+	has been chosen.
       </para>
-    </sect3>
+      
+      <sect4><title>Enable/Disable Depth Cueing</title>
+	<para>
+	  Specify whether or not we want depth cueing.  Depth cueing
+	  puts in a "fog" that causes more distant voxels to appear less
+	  bright.
+	</para>
+      </sect4>
+      
+      <sect4><title>Front Factor</title>
+	<para>
+	  This is the transparency of the fog at the front of the
+	  volume.  If this number is greater than 1.0, voxels toward the
+	  front of the data set will be brightened.  If this parameter
+	  is less than 1.0, voxels toward the front of the data set will
+	  be darker, respectively.
+	</para>
+      </sect4>
 
-    <sect3><title>Front Factor</title>
-      <para>
-	This is the transparency of the fog at the front of the
-	volume.  If this number is greater than 1.0, voxels toward the
-	front of the data set will be brightened.  If this parameter
-	is less than 1.0, voxels toward the front of the data set will
-	be darker, respectively.
-      </para>
-    </sect3>
+      <sect4><title>Density</title>
+	<para>
+	  This is how thick the "fog" is.  The thicker the fog, the
+	  darker distant objects seem.
+	</para>
+      </sect4>
 
-    <sect3><title>Density</title>
-      <para>
-	This is how thick the "fog" is.  The thicker the fog, the
-	darker distant objects seem.
-      </para>
     </sect3>
 
   </sect2>
     
 
-  <sect2 id="rendering-dialog-help-classification"><title>Classification</title>
+  <sect2 id="rendering-dialog-help-data-set"><title>Data Set Specific Settings</title>
 
     <para>
-      This is the most confusing part of rendering, so hang on here.
-      The classification functions are used to map between the value
-      in each voxel and how much that voxel should be represented in
-      the final rendered image.  On the x axis is the possible values
-      of the different voxels.  On the y-axis is the opacity that will
-      be given a voxel based on it's value.
+      Each panel after the "basic parameters" panel allows the
+      changing of settings specific to each data set that is being
+      rendered.
     </para>
+
+    <sect3><title>Color Table</title>
+      <para>
+	The color table of each rendered data set can be changed here.
+      </para>
+    </sect3>
+
     
     <sect3><title>Classification Functions</title>
+      <para>
+	This is the most confusing part of rendering, so hang on here.
+	The classification functions are used to map between the value
+	in each voxel and how much that voxel should be represented in
+	the final rendered image.  On the x axis is the possible
+	values of the different voxels.  On the y-axis is the opacity
+	that will be given a voxel based on it's value.
+      </para>
+      <para>
+	Both classification functions have several buttons on the
+	right side of their graphs.  The top button allows the
+	classification function to be drawn as a spline.  The second
+	button allows the classification function to be drawn as a
+	series of straight lines.  The third button allows the
+	function to be hand-drawn.  Finally, the last button resets
+	the classification function to a straight line.
+      </para>
       <para>
 	There are two classification functions:
       </para>
@@ -198,9 +219,7 @@
 	  This function tells you how opaque each voxel will be based
 	  on it's current value.  In a sense, this is analogous to an
 	  x-ray, where the amount of the x-rays that are absorbed in a
-	  structure is related to the density of that structure.  If
-	  you want the rendering to be determined entirely by the
-	  gradient function, set this curve to a flat line on the top
+	  structure is related to the density of that structure. 
 	  of the display.
 	</para>
       </sect4>
@@ -211,35 +230,12 @@
 	  this function relates the gradient of a voxel (how much the
 	  value changes between this voxel and it's neighbors) to its
 	  opacity.  This has the effect of giving added weight to
-	  surfaces.  If you want the rendering to be determined
-	  entirely by the density function, set this curve to a flat
-	  line on the top of the display
+	  surfaces. 
 	</para>
       </sect4>
 
     </sect3>
 
-    <sect3><title>Apply Changes To:</title>
-      <para>
-	  This pull-down menu is useful when more than one data set is
-	  being rendered.  It allows the user to set the
-	  classification functions of each data set individually, or
-	  apply classification function changes to all data sets at
-	  the same time.
-      </para>
-    </sect3>
-
-    <sect3><title>Buttons on the Right Side</title>
-      <para>
-	  Both classification functions have several buttons on the
-	  right side of their graphs.  The top button allows the
-	  classification function to be drawn as a spline.  The second
-	  button allows the classification function to be drawn as a
-	  series of straight lines.  The third button allows the
-	  function to be hand-drawn.  Finally, the last button resets
-	  the classification function to a straight line.
-      </para>
-    </sect3>
 
   </sect2>
 
@@ -257,14 +253,26 @@
       </para>
     </sect3>
 
-    <sect3><title>Rotations on [x,y,z] </title>
-      <para>
+    <sect3><title>Rotations on [x,y,z] </title> 
+      <para> 
 	This setting determines how many times the data set will be
 	rotated around the given axis over the course of the movie.
-	Note that the rotations will be done around the initial axis
-	(frame 0), not the axis of the previous frame.  Additionally,
-	the rotation for each frame is done in x->y->z order (rotate
+	The rotation for each frame is done in x->y->z order (rotate
 	on x first, then y, then z).
+      </para>
+    </sect3>
+
+    <sect3><title>Start/End Time</title> 
+      <para> 
+	These entries determine over which time period of the data set
+	the rendered images will be drawn from.  By default, they show
+	the time period over which the current rendered image is drawn
+	from.  By changing these entries, a rendered movie can be made
+	over time.  Note that every time a frame boundary in the data
+	set is passed over, the rendering process must slice and load
+	in a new frame of data.  This makes creating a rendered movie
+	over time significantly slower than a movie with just
+	rotations.
       </para>
     </sect3>
 

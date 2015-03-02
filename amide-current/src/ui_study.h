@@ -23,6 +23,13 @@
   02111-1307, USA.
 */
 
+#ifndef __UI_STUDY_H__
+#define __UI_STUDY_H__
+
+/* header files that are always needed with this file */
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include "ui_roi.h"
+#include "ui_volume.h"
 
 #define UI_STUDY_TRIANGLE_WIDTH 13.0
 #define UI_STUDY_TRIANGLE_HEIGHT 8.0
@@ -31,15 +38,6 @@
 #define UI_STUDY_MIDDLE_TABLE_HEIGHT 3
 #define UI_STUDY_MIDDLE_TABLE_WIDTH 3
 #define UI_STUDY_SIZE_TREE_PIXMAPS 24
-#define UI_STUDY_NEW_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_STUDY_NEW_ROI_MOTION_CURSOR GDK_PENCIL
-#define UI_STUDY_NO_ROI_MODE_CURSOR GDK_QUESTION_ARROW
-#define UI_STUDY_OLD_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_STUDY_OLD_ROI_RESIZE_CURSOR GDK_X_CURSOR
-#define UI_STUDY_OLD_ROI_ROTATE_CURSOR GDK_EXCHANGE
-#define UI_STUDY_OLD_ROI_SHIFT_CURSOR GDK_FLEUR
-#define UI_STUDY_VOLUME_MODE_CURSOR GDK_CROSSHAIR
-#define UI_STUDY_WAIT_CURSOR GDK_WATCH
 #define UI_STUDY_BLANK_WIDTH 128
 #define UI_STUDY_BLANK_HEIGHT 128
 #define UI_STUDY_DEFAULT_ENTRY_WIDTH 75
@@ -64,19 +62,6 @@ typedef enum {
   UPDATE_ALL
 } ui_study_update_t;
 
-typedef enum {
-  UI_STUDY_DEFAULT,
-  UI_STUDY_NEW_ROI_MODE,
-  UI_STUDY_NEW_ROI_MOTION, 
-  UI_STUDY_NO_ROI_MODE,
-  UI_STUDY_OLD_ROI_MODE,
-  UI_STUDY_OLD_ROI_RESIZE,
-  UI_STUDY_OLD_ROI_ROTATE,
-  UI_STUDY_OLD_ROI_SHIFT,
-  UI_STUDY_VOLUME_MODE, 
-  UI_STUDY_WAIT,
-  NUM_CURSORS
-} ui_study_cursor_t;
 
 typedef enum {
   HELP_INFO_BLANK,
@@ -130,8 +115,6 @@ typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
   GnomeCanvas * canvas[NUM_VIEWS];
   GtkObject * thickness_adjustment;
-  GdkCursor * cursor[NUM_CURSORS];
-  GSList * cursor_stack;
   GtkWidget * location[NUM_VIEWS];
   GnomeCanvas * help_info;
   GtkWidget * thickness_spin_button;
@@ -147,8 +130,7 @@ typedef struct ui_study_t {
   ui_roi_list_t * current_rois; /* the currently selected rois */
   roi_grain_t default_roi_grain;
   study_t * study; /* pointer to the study data structure */
-  ui_threshold_t * threshold; /* pointer to the threshold widget data structure */
-  ui_series_t * series; /* pointer to the series widget data structure */
+  GtkWidget * threshold_dialog; /* pointer to the threshold dialog */
   guint reference_count;
 } ui_study_t;
 
@@ -165,8 +147,6 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
 			     realpoint_t center, guint32 outline_color);
 GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
-void ui_study_place_cursor(ui_study_t * ui_study, ui_study_cursor_t which_cursor, GtkWidget * widget);
-void ui_study_remove_cursor(ui_study_t * ui_study, GtkWidget * widget);
 GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study, view_t view, 
 					      GnomeCanvasItem * roi_item, roi_t * roi);
 void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view);
@@ -186,3 +166,7 @@ ui_study_t * ui_study_init(void);
 
 
 /* external variables */
+
+
+
+#endif /* __UI_STUDY_H__ */

@@ -23,6 +23,12 @@
   02111-1307, USA.
 */
 
+#ifndef __UI_STUDY_MENUS_H__
+#define __UI_STUDY_MENUS_H__
+
+/* always needed with this header */
+#include "ui_study.h"
+
 /* external functions */
 void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item,
 				     gchar * name,
@@ -32,3 +38,8 @@ void ui_study_menu_fill_in_radioitem(GnomeUIInfo * item,
 				     gpointer xpm_data);
 void ui_study_menu_fill_in_end(GnomeUIInfo * item);
 void ui_study_menus_create(ui_study_t * ui_study);
+
+
+
+
+#endif /* __UI_STUDY_MENUS_H__ */
