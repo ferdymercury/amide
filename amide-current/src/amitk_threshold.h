@@ -110,6 +110,8 @@ struct _AmitkThreshold
   amide_data_t threshold_max[2]; 
   amide_data_t threshold_min[2]; 
 
+  GtkWidget * progress_dialog;
+
   AmitkDataSet * data_set; /* what data set this threshold corresponds to */
 };
 
@@ -122,6 +124,7 @@ struct _AmitkThresholdClass
 GType      amitk_threshold_get_type          (void);
 GtkWidget* amitk_threshold_new               (AmitkDataSet * data_set,
 					      AmitkThresholdLayout layout,
+					      GtkWindow * parent,
 					      gboolean minimal);
 void       amitk_threshold_new_data_set      (AmitkThreshold * threshold, 
 					      AmitkDataSet * new_data_set);

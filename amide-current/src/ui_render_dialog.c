@@ -127,6 +127,31 @@ static void change_zoom_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+/* function to switch between click & drag versus click, drag, release */
+static void update_without_release_toggle_cb(GtkWidget * widget, gpointer data) {
+  
+  ui_render_t * ui_render = data;
+  gboolean update_without_release;
+
+  update_without_release = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  
+  if (ui_render->update_without_release != update_without_release) {
+    ui_render->update_without_release = update_without_release;
+
+    /* save user preferences */
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_float("RENDERING/UpdateWithoutRelease", ui_render->update_without_release);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+    
+
+  }
+
+  return;
+}
+  
+
 
 /* function to change the stereo eye angle */
 static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
@@ -386,7 +411,6 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 
   ui_render_t * ui_render = data;
 
-  g_print("parameter dialog delete\n");
   ui_render->parameter_dialog = NULL;
 
   return FALSE;
@@ -530,6 +554,15 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
 		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
   table_row++;
+
+  /* allow rendering to be click and drag */
+  check_button = gtk_check_button_new_with_label ("update without button release");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->update_without_release);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(update_without_release_toggle_cb), ui_render);
+  gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
+		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
 
   /* widget for the stereo eye angle */
   label = gtk_label_new("Stereo Angle");

@@ -27,6 +27,7 @@
 
 
 #include "amide_config.h"
+#include "amitk_progress_dialog.h"
 #include "amitk_threshold.h"
 #include "pixmaps.h"
 #include "image.h"
@@ -86,12 +87,12 @@ static void threshold_update(AmitkThreshold * threshold);
 
 static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass);
 static void threshold_dialog_init (AmitkThresholdDialog *threshold_dialog);
-static void threshold_dialog_construct(AmitkThresholdDialog * dialog, AmitkDataSet * data_set);
+static void threshold_dialog_construct(AmitkThresholdDialog * dialog, GtkWindow * parent, AmitkDataSet * data_set);
 static void threshold_dialog_realize_cb(GtkWidget * dialog, gpointer data);
 
 static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass);
 static void thresholds_dialog_init (AmitkThresholdsDialog *thresholds_dialog);
-static void thresholds_dialog_construct(AmitkThresholdsDialog * thresholds_dialog, GList * data_sets);
+static void thresholds_dialog_construct(AmitkThresholdsDialog * thresholds_dialog, GtkWindow * parent, GList * data_sets);
 
 static GtkVBoxClass *threshold_parent_class;
 static GtkDialogClass *threshold_dialog_parent_class;
@@ -600,16 +601,20 @@ static void threshold_update_histogram(AmitkThreshold * threshold) {
   fg.g = widget_style->fg[GTK_STATE_NORMAL].green >> 8;
   fg.b = widget_style->fg[GTK_STATE_NORMAL].blue >> 8;
 
-  pixbuf = image_of_distribution(threshold->data_set, fg);
+  pixbuf = image_of_distribution(threshold->data_set, fg, 
+				 amitk_progress_dialog_update, 
+				 threshold->progress_dialog);
 
-  if (threshold->histogram_image != NULL)
-    gnome_canvas_item_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
-  else 
-    threshold->histogram_image = 
-      gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->histogram)),
-			    gnome_canvas_pixbuf_get_type(), "pixbuf", pixbuf,
-			    "x", 0.0, "y", ((gdouble) THRESHOLD_TRIANGLE_HEIGHT),  NULL);
-  g_object_unref(pixbuf);
+  if (pixbuf != NULL) {
+    if (threshold->histogram_image != NULL)
+      gnome_canvas_item_set(threshold->histogram_image, "pixbuf", pixbuf, NULL);
+    else 
+      threshold->histogram_image = 
+	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(threshold->histogram)),
+			      gnome_canvas_pixbuf_get_type(), "pixbuf", pixbuf,
+			      "x", 0.0, "y", ((gdouble) THRESHOLD_TRIANGLE_HEIGHT),  NULL);
+    g_object_unref(pixbuf);
+  }
 
   return;
 }
@@ -1310,7 +1315,6 @@ static void threshold_update(AmitkThreshold * threshold) {
 			      AMITK_DATA_SET_COLOR_TABLE(threshold->data_set));
 
   threshold_update_layout(threshold);
-  threshold_update_histogram(threshold);
   threshold_update_spin_buttons(threshold);
   threshold_update_color_scales(threshold);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
@@ -1333,6 +1337,7 @@ void amitk_threshold_new_data_set(AmitkThreshold * threshold, AmitkDataSet * new
   threshold_add_data_set(threshold, new_data_set);
 
   threshold_update(threshold);
+  threshold_update_histogram(threshold);
 
   return;
 }
@@ -1340,6 +1345,7 @@ void amitk_threshold_new_data_set(AmitkThreshold * threshold, AmitkDataSet * new
 
 GtkWidget* amitk_threshold_new (AmitkDataSet * ds,
 				AmitkThresholdLayout layout,
+				GtkWindow * parent,
 				gboolean minimal) {
 
   AmitkThreshold * threshold;
@@ -1357,6 +1363,7 @@ GtkWidget* amitk_threshold_new (AmitkDataSet * ds,
     threshold->visible_refs=1;
   threshold->minimal = minimal;
 
+  threshold->progress_dialog = amitk_progress_dialog_new(parent);
   threshold_construct(threshold, layout);
 
   threshold_update_spin_buttons(threshold); /* update what's in the spin button widgets */
@@ -1426,15 +1433,19 @@ static void threshold_dialog_init (AmitkThresholdDialog * dialog)
 
   /* hookup a callback to load in a pixmap icon when realized */
   g_signal_connect(G_OBJECT(dialog), "realize", G_CALLBACK(threshold_dialog_realize_cb), NULL);
+
   return;
 }
 
 /* this gets called after we have a data_set */
-static void threshold_dialog_construct(AmitkThresholdDialog * dialog, AmitkDataSet * data_set) {
+static void threshold_dialog_construct(AmitkThresholdDialog * dialog, 
+				       GtkWindow * parent,
+				       AmitkDataSet * data_set) {
 
   gchar * temp_string;
 
-  dialog->threshold = amitk_threshold_new(data_set, AMITK_THRESHOLD_LINEAR_LAYOUT, FALSE);
+  dialog->threshold = amitk_threshold_new(data_set, AMITK_THRESHOLD_LINEAR_LAYOUT, 
+					  parent, FALSE);
   gtk_box_pack_end(GTK_BOX(dialog->vbox), dialog->threshold, TRUE, TRUE, 0);
   gtk_widget_show(dialog->threshold);
 
@@ -1473,7 +1484,7 @@ GtkWidget* amitk_threshold_dialog_new (AmitkDataSet * data_set, GtkWindow * pare
     return NULL;
 
   dialog = g_object_new(AMITK_TYPE_THRESHOLD_DIALOG, NULL);
-  threshold_dialog_construct(dialog, data_set);
+  threshold_dialog_construct(dialog, parent, data_set);
   gtk_window_set_title (GTK_WINDOW (dialog), "Threshold Dialog");
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW (dialog), TRUE);
@@ -1572,6 +1583,7 @@ static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
 
 /* this gets called after we have a list of data set */
 static void thresholds_dialog_construct(AmitkThresholdsDialog * dialog, 
+					GtkWindow * parent,
 					GList * objects) {
 
   GtkWidget * threshold;
@@ -1579,7 +1591,8 @@ static void thresholds_dialog_construct(AmitkThresholdsDialog * dialog,
 
   while (objects != NULL) {
     if (AMITK_IS_DATA_SET(objects->data)) {
-      threshold = amitk_threshold_new(objects->data, AMITK_THRESHOLD_LINEAR_LAYOUT, FALSE);
+      threshold = amitk_threshold_new(objects->data, AMITK_THRESHOLD_LINEAR_LAYOUT, 
+				     parent, FALSE);
       dialog->thresholds = g_list_append(dialog->thresholds, threshold);
 
       label = gtk_label_new(AMITK_OBJECT_NAME(objects->data));
@@ -1604,7 +1617,7 @@ GtkWidget* amitk_thresholds_dialog_new (GList * objects, GtkWindow * parent) {
   g_return_val_if_fail(objects != NULL, NULL);
 
   dialog = g_object_new(AMITK_TYPE_THRESHOLDS_DIALOG, NULL);
-  thresholds_dialog_construct(dialog, objects);
+  thresholds_dialog_construct(dialog, parent, objects);
   gtk_window_set_title (GTK_WINDOW (dialog), "Threshold Dialog");
 
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);

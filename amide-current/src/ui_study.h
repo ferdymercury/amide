@@ -1,7 +1,7 @@
 /* ui_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2002 Andy Loening
+ * Copyright (C) 2000-2003 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -67,6 +67,7 @@ typedef struct ui_study_t {
   AmitkStudy * study; /* pointer to the study data structure */
   GtkWidget * threshold_dialog; /* pointer to the threshold dialog */
   GtkWidget * preferences_dialog; /* pointer to the preferences dialog */
+  GtkWidget * progress_dialog;
 
   /* canvas specific info */
   GtkWidget * center_table;
@@ -96,18 +97,15 @@ typedef struct ui_study_t {
 /* external functions */
 ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
-GList * ui_study_selected_data_sets(ui_study_t * ui_study);
-GList * ui_study_selected_rois(ui_study_t * ui_study);
 void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds);
 void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_object,
 				gboolean selected, AmitkPoint position);
 void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkRoiType roi_type);
-void ui_study_add_data_set(ui_study_t * ui_study, AmitkDataSet * data_set);
-void ui_study_replace_study(ui_study_t * ui_study, AmitkStudy * study);
+void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study);
 GtkWidget * ui_study_create(AmitkStudy * study);
 void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info, 
 			       AmitkPoint new_point, amide_data_t value);
-void ui_study_update_time_button(ui_study_t * ui_study);
+void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
 void ui_study_update_interpolation(ui_study_t * ui_study);

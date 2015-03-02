@@ -43,14 +43,22 @@
   (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i)))))
 
 /* function declarations */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set,
+									     gboolean (*update_func)(),
+									     gpointer update_data);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
+									    gboolean (*update_func)(),
+									    gpointer update_data);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
-									       const AmitkView view,
-									       const guint frame);
+										   const AmitkView view,
+										   const guint frame,
+										   gboolean (*update_func)(),
+										   gpointer update_data);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(const AmitkDataSet * data_set,
 										const AmitkVoxel start,
-										const AmitkVoxel end);
+										const AmitkVoxel end,
+										gboolean (*update_func)(),
+										gpointer update_data);
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const AmitkDataSet * data_set,
 								       AmitkDataSet * filtered_ds,
 								       const AmitkRawData * kernel);

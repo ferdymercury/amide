@@ -33,7 +33,9 @@
 #include "amitk_data_set.h"
 
 /* external functions */
-AmitkDataSet * cti_import(const gchar * filename);
+AmitkDataSet * cti_import(const gchar * filename,
+			  gboolean (*update_func)(),
+			  gpointer update_data);
 
 #endif /* __CTI_IMPORT_H__ */
 

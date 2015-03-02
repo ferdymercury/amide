@@ -254,6 +254,14 @@ inline AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const Ami
 inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
 inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2);
 inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1);
+AmitkPoint canvas_point_2_point(AmitkPoint volume_corner,
+				gint width, gint height,
+				gdouble x_offset,gdouble y_offset,
+				AmitkCanvasPoint canvas_cpoint);
+AmitkCanvasPoint point_2_canvas_point(AmitkPoint volume_corner,
+				      gint width,gint height,
+				      gdouble x_offset, gdouble y_offset,
+				      AmitkPoint canvas_point);
 
 inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2);
 inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2);

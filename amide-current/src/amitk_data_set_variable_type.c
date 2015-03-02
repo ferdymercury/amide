@@ -35,29 +35,52 @@
 
 
 /* function to recalcule the max and min values of a data set */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set) {
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set,
+									     gboolean (*update_func)(),
+									     gpointer update_data) {
 
   AmitkVoxel i;
   amide_data_t max, min, temp;
   AmitkVoxel initial_voxel;
-
+  div_t x;
+  gint divider;
+  gint t_times_z;
+  gchar * temp_string;
+  AmitkVoxel dim;
   
+  dim = AMITK_DATA_SET_DIM(data_set);
+
+  /* note, we can't cancel this */
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Calculating Max/Min Values for:\n   %s", AMITK_OBJECT_NAME(data_set));
+    (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  t_times_z = dim.z*dim.t;
+  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+
   initial_voxel = zero_voxel;
-  for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(data_set); i.t++) {
+  for (i.t = 0; i.t < dim.t; i.t++) {
     initial_voxel.t = i.t;
     temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, initial_voxel);
     if (finite(temp)) max = min = temp;   
     else max = min = 0.0; /* just throw in zero */
 
-    for (i.z = 0; i.z < data_set->raw_data->dim.z; i.z++) 
-      for (i.y = 0; i.y < data_set->raw_data->dim.y; i.y++) 
-	for (i.x = 0; i.x < data_set->raw_data->dim.x; i.x++) {
+    for (i.z = 0; i.z < dim.z; i.z++) {
+      if (update_func != NULL) {
+	x = div(i.t*dim.z+i.z,divider);
+	if (x.rem == 0)
+	  (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
+      }
+      for (i.y = 0; i.y < dim.y; i.y++) 
+	for (i.x = 0; i.x < dim.x; i.x++) {
 	  temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
 	  if (finite(temp)) {
 	    if (temp > max) max = temp;
 	    else if (temp < min) min = temp;
 	  }
 	}
+    }
     
     data_set->frame_max[i.t] = max;
     data_set->frame_min[i.t] = min;
@@ -66,69 +89,88 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
     g_print("\tframe %d max %5.3f frame min %5.3f\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
 #endif
   }
+
+  if (update_func != NULL)
+    (*update_func)(update_data, NULL, (gdouble) 2.0); /* remove progress bar */
   
   return;
 }
 
 /* generate the distribution array for a data_set */
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set) {
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set,
+									    gboolean (*update_func)(),
+									    gpointer update_data) {
 
   AmitkVoxel i,j;
   amide_data_t scale;
-  AmitkVoxel dim;
+  AmitkVoxel distribution_dim;
+  AmitkVoxel data_set_dim;
+  gchar * temp_string;
+  div_t x;
+  gint divider;
+  gint t_times_z;
+  gboolean continue_work=TRUE;
+  AmitkRawData * distribution;
 
   if (data_set->distribution != NULL)
     return;
 
-#if AMIDE_DEBUG
-  g_print("Generating distribution data for medical data set %s", AMITK_OBJECT_NAME(data_set));
-#endif
+  data_set_dim = AMITK_DATA_SET_DIM(data_set);
   scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/(data_set->global_max - data_set->global_min);
   
-  dim.x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
-  dim.y = dim.z = dim.t = 1;
-  data_set->distribution = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, dim);
-  if (data_set->distribution == NULL) {
+  distribution_dim.x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
+  distribution_dim.y = distribution_dim.z = distribution_dim.t = 1;
+  distribution = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, distribution_dim);
+  if (distribution == NULL) {
     g_warning("couldn't allocate space for the data set structure to hold distribution data");
     return;
   }
-  
+
   /* initialize the distribution array */
-  amitk_raw_data_DOUBLE_initialize_data(data_set->distribution, 0.0);
+  amitk_raw_data_DOUBLE_initialize_data(distribution, 0.0);
   
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Generating distribution data for:\n   %s", AMITK_OBJECT_NAME(data_set));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  t_times_z = data_set_dim.z*data_set_dim.t;
+  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+
   /* now "bin" the data */
   j.t = j.z = j.y = 0;
-  for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(data_set); i.t++) {
-#if AMIDE_DEBUG
-    div_t x;
-    gint divider;
-    divider = ((data_set->raw_data->dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (data_set->raw_data->dim.z/AMIDE_UPDATE_DIVIDER);
-    g_print("\n\tframe %d\t",i.t);
-#endif
-    for ( i.z = 0; i.z < data_set->raw_data->dim.z; i.z++) {
-#if AMIDE_DEBUG
-      x = div(i.z,divider);
-      if (x.rem == 0)
-	g_print(".");
-#endif
-	for (i.y = 0; i.y < data_set->raw_data->dim.y; i.y++) 
-	  for (i.x = 0; i.x < data_set->raw_data->dim.x; i.x++) {
-	    j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-data_set->global_min);
-	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(data_set->distribution,j) += 1.0;
-	  }
+  for (i.t = 0; (i.t < data_set_dim.t) && continue_work; i.t++) {
+    for ( i.z = 0; (i.z < data_set_dim.z) && continue_work; i.z++) {
+      if (update_func != NULL) {
+	x = div(i.t*data_set_dim.z+i.z,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*data_set_dim.z)/t_times_z);
+      }
+
+      for (i.y = 0; i.y < data_set_dim.y; i.y++) 
+	for (i.x = 0; i.x < data_set_dim.x; i.x++) {
+	  j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-data_set->global_min);
+	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) += 1.0;
+	}
     }
   }
-#if AMIDE_DEBUG
-  g_print("\n");
-#endif
-  
+
+  if (update_func != NULL) /* remove progress bar */
+    continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0); 
+
+  if (!continue_work) {   /* if we quit, get out of here */
+    g_object_unref(distribution);
+    return;
+  }
   
   /* do some log scaling so the distribution is more meaningful, and doesn't get
      swamped by outlyers */
-  for (j.x = 0; j.x < data_set->distribution->dim.x ; j.x++) 
-    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(data_set->distribution,j) = 
-      log10(AMITK_RAW_DATA_DOUBLE_CONTENT(data_set->distribution,j)+1.0);
+  for (j.x = 0; j.x < distribution_dim.x ; j.x++) 
+    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) = 
+      log10(AMITK_RAW_DATA_DOUBLE_CONTENT(distribution,j)+1.0);
 
+  /* and store the distribution with the data set */
+  data_set->distribution = distribution;
   return;
 }
 
@@ -136,12 +178,18 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 /* return a planar projection of the data set given the associated view */
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
 										   const AmitkView view,
-										   const guint frame) {
+										   const guint frame,
+										   gboolean (*update_func)(),
+										   gpointer update_data) {
 
   AmitkDataSet * projection;
   AmitkVoxel dim, i, j;
   AmitkPoint voxel_size;
   amide_data_t normalizer;
+  div_t x;
+  gint divider;
+  gboolean continue_work=TRUE;
+  gchar * temp_string;
 
   dim.z = 1;
   dim.t = 1;
@@ -202,6 +250,12 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
   amitk_data_set_set_color_table(projection, AMITK_DATA_SET_COLOR_TABLE(data_set));
   amitk_data_set_set_frame_duration(projection, 0, amitk_data_set_get_frame_duration(data_set, frame));
 
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Generating projection of:\n   %s", AMITK_OBJECT_NAME(data_set));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+
   /* initialize our data set */
   amitk_raw_data_DOUBLE_initialize_data(projection->raw_data, 0.0);
 
@@ -211,28 +265,58 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
   /* and compute the projection */
   switch(view) {
   case AMITK_VIEW_CORONAL:
-    for (i.y = 0; i.y < dim.y; i.y++)
+    divider = ((dim.y/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.y/AMIDE_UPDATE_DIVIDER);
+    for (i.y = 0; (i.y < dim.y) && continue_work; i.y++) {
+      if (update_func != NULL) {
+	x = div(i.y,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.y)/dim.y);
+      }
       for (i.z = 0, j.y = dim.z-1; i.z < dim.z; i.z++, j.y--)
 	for (i.x = j.x = 0; i.x < dim.x; i.x++, j.x++)
 	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(projection->raw_data,j) += 
 	    AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i);
+    }
     break;
   case AMITK_VIEW_SAGITTAL:
-    for (i.x = 0; i.x < dim.x; i.x++)
+    divider = ((dim.x/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.x/AMIDE_UPDATE_DIVIDER);
+    for (i.x = 0; (i.x < dim.x) && continue_work; i.x++) {
+      if (update_func != NULL) {
+	x = div(i.x,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.x)/dim.x);
+      }
       for (i.z = 0, j.y = dim.z-1; i.z < dim.z; i.z++, j.y--)
 	for (i.y = j.x = 0; i.y < dim.y; i.y++, j.x++)
 	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(projection->raw_data,j) += 
 	    AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i);
+    }
     break;
   case AMITK_VIEW_TRANSVERSE:
   default:
-    for (i.z = 0; i.z < dim.z; i.z++)
+    divider = ((dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMIDE_UPDATE_DIVIDER);
+    for (i.z = 0; (i.z < dim.z) && continue_work; i.z++) {
+      if (update_func != NULL) {
+	x = div(i.z,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z)/dim.z);
+      }
       for (i.y = j.y = 0; i.y < dim.y; i.y++, j.y++)
 	for (i.x = j.x = 0; i.x < dim.x; i.x++, j.x++)
 	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(projection->raw_data,j) += 
 	    AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i);
+    }
     break;
   }
+
+  if (update_func != NULL) /* remove progress bar */
+    continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0);
+
+  if (!continue_work) {/* we hit cancel */
+    g_object_unref(projection);
+    return NULL;
+  }
+    
 
   /* normalize for the thickness, we're assuming the previous voxels were
      in some units of blah/mm^3 */
@@ -242,8 +326,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
     for (j.x = 0; j.x < dim.x; j.x++)
       AMITK_RAW_DATA_DOUBLE_SET_CONTENT(projection->raw_data,j) *= normalizer;
 
-  amitk_data_set_calc_frame_max_min(projection);
-  amitk_data_set_calc_global_max_min(projection);
+  amitk_data_set_calc_max_min(projection, NULL, NULL); /* should be a short op, don't need progress bars */
   amitk_data_set_set_threshold_max(projection, 0,
 				   AMITK_DATA_SET_GLOBAL_MAX(projection));
   amitk_data_set_set_threshold_min(projection, 0,
@@ -254,7 +337,9 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
 
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(const AmitkDataSet * data_set,
 										const AmitkVoxel start,
-										const AmitkVoxel end) {
+										const AmitkVoxel end,
+										gboolean (*update_func)(),
+										gpointer update_data) {
 
   AmitkDataSet * cropped;
   AmitkVoxel i, j;
@@ -263,6 +348,11 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
   AmitkPoint shift;
   AmitkPoint temp_pt;
   GList * children;
+  div_t x;
+  gint divider;
+  gint t_times_z;
+  gint i_progress;
+  gboolean continue_work=TRUE;
 
   cropped = AMITK_DATA_SET(amitk_object_copy(AMITK_OBJECT(data_set)));
 
@@ -279,8 +369,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
 
   if (cropped->distribution != NULL) {
     g_object_unref(cropped->distribution);
-    cropped->distribution = NULL;
-  }
+    cropped->distribution = NULL;  }
 
   /* and unref anything that's obviously now incorrect */
   if (cropped->current_scaling != NULL) {
@@ -315,15 +404,34 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
     g_warning("couldn't allocate space for the cropped raw data set structure");
     goto error;
   }
+
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Generating cropped version of:\n   %s", AMITK_OBJECT_NAME(data_set));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  t_times_z = (end.t-start.t+1)*(end.z-start.z+1);
+  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
   
   /* copy the raw data on over */
   for (i.t=0, j.t=start.t; j.t <= end.t; i.t++, j.t++) 
-    for (i.z=0, j.z=start.z; j.z <= end.z; i.z++, j.z++) 
+    for (i.z=0, j.z=start.z; (j.z <= end.z) && continue_work; i.z++, j.z++) {
+      if (update_func != NULL) {
+	i_progress = i.t*(end.z-start.z+1)+i.z;
+	x = div(i_progress,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i_progress)/t_times_z);
+      }
       for (i.y=0, j.y=start.y; j.y <= end.y; i.y++, j.y++) 
 	for (i.x=0, j.x=start.x; j.x <= end.x; i.x++, j.x++) 
 	  AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(cropped->raw_data,i) =
 	    AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(data_set->raw_data,j);
+    }
 
+  if (update_func != NULL) /* remove progress bar */
+    continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0); 
+
+  if (!continue_work) goto error;
 
   dim = one_voxel;
 #if defined(DIM_TYPE_1D_SCALING) || defined(DIM_TYPE_2D_SCALING)
@@ -366,8 +474,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(cropped);
-  amitk_data_set_calc_frame_max_min(cropped);
-  amitk_data_set_calc_global_max_min(cropped);
+  amitk_data_set_calc_max_min(cropped, update_func, update_data);
 
   /* and shift the offset appropriately */
   POINT_MULT(start, AMITK_DATA_SET_VOXEL_SIZE(cropped), temp_pt);
@@ -383,9 +490,9 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
     children = children->next;
   }
 
-  return cropped;
+  return cropped; 
 
- error:
+error:
   g_object_unref(cropped);
 
   return NULL;
@@ -827,7 +934,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
      to the rotated axises, if negative, choose the midpoint */
 
   AmitkDataSet * slice;
-  AmitkVoxel i_voxel,j_voxel;
+  AmitkVoxel i_voxel;
   amide_intpoint_t z;
   amide_real_t max_diff, voxel_length, z_steps;
   AmitkPoint alt;
@@ -843,7 +950,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   AmitkVoxel box_voxel[8];
   AmitkVoxel start, end;
   amide_data_t box_value[8];
-  AmitkPoint slice_point, ds_point,diff, nearest_point;
+  AmitkPoint slice_point, ds_point,start_point,diff, nearest_point;
   AmitkSpace * slice_space;
   AmitkSpace * data_set_space;
 #if AMIDE_DEBUG
@@ -1092,10 +1199,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   case AMITK_INTERPOLATION_NEAREST_NEIGHBOR:
   default:  
     /* figure out what point in the data set we're going to start at */
-    ds_point.x = ((amide_real_t) start.x+0.5) * slice->voxel_size.x;
-    ds_point.y = ((amide_real_t) start.y+0.5) * slice->voxel_size.y;
-    ds_point.z = voxel_length/2.0;
-    ds_point = amitk_space_s2s(slice_space, data_set_space, ds_point);
+    start_point.x = ((amide_real_t) start.x+0.5) * slice->voxel_size.x;
+    start_point.y = ((amide_real_t) start.y+0.5) * slice->voxel_size.y;
+    start_point.z = voxel_length/2.0;
+    start_point = amitk_space_s2s(slice_space, data_set_space, start_point);
 
     /* figure out what stepping one voxel in a given direction in our slice cooresponds to in our data set */
     for (i_axis = 0; i_axis < AMITK_AXIS_NUM; i_axis++) {
@@ -1122,6 +1229,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       } else
 	time_weight = 1.0;
 
+      ds_point = start_point;
       /* iterate over the number of planes we'll be compressing into this slice */
       for (z = 0; z < ceil(z_steps*(1.0-SMALL_DISTANCE))*(1.0-SMALL_DISTANCE); z++) { 
 	last[AMITK_AXIS_Z] = ds_point;
@@ -1138,12 +1246,12 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 
 	  /* and iteratate over x */
 	  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
-	    POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, j_voxel);
-	    if (!amitk_raw_data_includes_voxel(data_set->raw_data,j_voxel))
+	    POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, ds_voxel);
+	    if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel))
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
 	    else
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
-		weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,j_voxel);
+		weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,ds_voxel);
 	    POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
 	  }
 	  POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
@@ -1155,10 +1263,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   }
 
 
-  if (need_calc_max_min) {
-    amitk_data_set_calc_frame_max_min(slice);
-    amitk_data_set_calc_global_max_min(slice);
-  }
+  if (need_calc_max_min)
+    amitk_data_set_calc_max_min(slice, NULL, NULL);
 
   return slice;
 }

@@ -249,7 +249,7 @@ static void roi_read_xml (AmitkObject * object, xmlNodePtr nodes) {
 
     isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
     if (isocontour_xml_filename != NULL)
-      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename);
+      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, NULL, NULL);
   }
 
   /* make sure to mark the roi as undrawn if needed */
@@ -526,15 +526,18 @@ static void erase_volume(AmitkVoxel voxel,
 
 
 /* sets the volume inside/or outside of the given data set that is enclosed by roi equal to zero */
-void amitk_roi_erase_volume(const AmitkRoi * roi, AmitkDataSet * ds, const gboolean outside) {
+void amitk_roi_erase_volume(const AmitkRoi * roi, 
+			    AmitkDataSet * ds, 
+			    const gboolean outside,
+			    gboolean (*update_func)(),
+			    gpointer update_data) {
 
   guint i_frame;
 
   for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) {
     amitk_roi_calculate_on_data_set(roi, ds, i_frame, outside, erase_volume, ds);
-    amitk_data_set_calc_frame_max_min(ds);
   }
-  amitk_data_set_calc_global_max_min(ds);
+  amitk_data_set_calc_max_min(ds, update_func, update_data);
 
   /* mark the distribution data as invalid */
   if (AMITK_DATA_SET_DISTRIBUTION(ds) != NULL) {

@@ -120,6 +120,7 @@ static void object_dialog_destroy (GtkObject * object) {
 
   if (dialog->object != NULL) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_entries, dialog);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(dialog->object), dialog_update_interpolation, dialog);
     dialog->object->dialog = NULL;
     g_object_unref(dialog->object);
     dialog->object = NULL;
@@ -587,7 +588,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     GtkWidget * threshold;
 
     label = gtk_label_new("Colormap/Threshold");
-    threshold = amitk_threshold_new(AMITK_DATA_SET(object), AMITK_THRESHOLD_BOX_LAYOUT, FALSE);
+    threshold = amitk_threshold_new(AMITK_DATA_SET(object), AMITK_THRESHOLD_BOX_LAYOUT, 
+				    GTK_WINDOW(dialog), FALSE);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), threshold, label);
     gtk_widget_show(label);
     gtk_widget_show(threshold);
@@ -769,7 +771,6 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	memory_used /= 1024.0;
 	prefix=3;
       }
-	
 
       /* how big in memory the raw data is */
       switch(prefix) {

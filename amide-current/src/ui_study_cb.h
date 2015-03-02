@@ -1,7 +1,7 @@
 /* ui_study_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2002 Andy Loening
+ * Copyright (C) 2000-2003 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -44,17 +44,9 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
 				     gboolean outside, gpointer ui_study);
 void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type, 
 				   AmitkPoint *position, gpointer ui_study);
-void ui_study_cb_tree_select_object(GtkWidget * tree, 
-				    AmitkObject * object, 
-				    AmitkViewMode view_mode, 
-				    gpointer ui_study);
-void ui_study_cb_tree_unselect_object(GtkWidget * tree, 
+void ui_study_cb_tree_activate_object(GtkWidget * tree, 
 				      AmitkObject * object, 
-				      AmitkViewMode view_mode, 
 				      gpointer ui_study);
-void ui_study_cb_tree_make_active_object(GtkWidget * tree, 
-					 AmitkObject * object, 
-					 gpointer ui_study);
 void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpointer ui_study);
 void ui_study_cb_tree_add_object(GtkWidget * tree, AmitkObject * parent, 
 				 AmitkObjectType object_type, AmitkRoiType roi_type, gpointer ui_study);
@@ -71,9 +63,10 @@ void ui_study_cb_fly_through(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_render(GtkWidget * widget, gpointer data);
 #endif
 void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data);
-void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data);
-void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_fads_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_cb_add_roi(GtkWidget * widget, gpointer data);
 void ui_study_cb_add_fiducial_mark(GtkWidget * widget, gpointer data);

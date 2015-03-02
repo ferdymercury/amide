@@ -31,6 +31,7 @@
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "render.h"
+#include "amitk_study.h"
 
 /* defines */
 #define UI_RENDER_BLANK_WIDTH 200
@@ -52,6 +53,7 @@ typedef struct ui_render_t {
   renderings_t * renderings;
   GtkWidget * render_button;
   gboolean immediate;
+  gboolean update_without_release;
   gboolean stereoscopic;
   gdouble stereo_eye_angle;
   gint stereo_eye_width; /* pixels */
@@ -65,15 +67,14 @@ typedef struct ui_render_t {
   guint next_update;
   guint idle_handler_id;
 
-  progress_t * progress_dialog;
+  GtkWidget * progress_dialog;
   guint reference_count;
 } ui_render_t;
 
 /* external functions */
 void ui_render_add_update(ui_render_t * ui_render);
 gboolean ui_render_update_immediate(gpointer ui_render);
-void ui_render_create(GList * objects, amide_time_t start, amide_time_t duration, 
-		      gboolean zero_fill,gboolean conserve_memory);
+void ui_render_create(AmitkStudy * study, gboolean zero_fill,gboolean conserve_memory);
 GtkWidget * ui_render_init_dialog_create(GtkWindow * parent);
 
 #endif /* __UI_RENDER_H__ */

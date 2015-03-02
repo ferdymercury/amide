@@ -173,10 +173,6 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->fame_parameters->frame_rate_den = 1;
   context->fame_parameters->verbose = 0;  /* turn off verbose mode */
 
-  g_print("----------- %d %d\n", 
-	  context->fame_parameters->width,
-	  context->fame_parameters->height);
-
   /* specify additional options */
   switch(type) {
   case ENCODE_MPEG4:

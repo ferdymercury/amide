@@ -173,6 +173,7 @@ gboolean rendering_reload_object(rendering_t * rendering,
 gboolean rendering_load_object(rendering_t * rendering, 
 			       gboolean (* update_func)(), 
 			       gpointer update_data);
+void rendering_set_space(rendering_t * rendering, AmitkSpace * space);
 void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rotation);
 void rendering_reset_rotation(rendering_t * rendering);
 void rendering_set_quality(rendering_t * rendering, rendering_quality_t quality);
@@ -194,6 +195,7 @@ gboolean renderings_reload_objects(renderings_t * renderings,
 				   const amide_time_t duration,
 				   gboolean (* update_func)(), 
 				   gpointer update_data);
+void renderings_set_space(renderings_t * renderings, AmitkSpace * space);
 void renderings_set_rotation(renderings_t * renderings, AmitkAxis dir, gdouble rotation);
 void renderings_reset_rotation(renderings_t * renderings);
 void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);

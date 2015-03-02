@@ -327,6 +327,7 @@ gboolean rendering_reload_object(rendering_t * rendering,
 
   /* allright, reload the rendering context's data */
   rendering->need_rerender = TRUE;
+  rendering->need_reclassify = TRUE; 
   return rendering_load_object(rendering, update_func, update_data);
 }
 
@@ -384,10 +385,11 @@ gboolean rendering_load_object(rendering_t * rendering,
 		 rendering->dim.x* rendering->dim.y * RENDERING_BYTES_PER_VOXEL);
 
   /* setup the progress information */
-  temp_string = g_strdup_printf("Converting for rendering: %s", rendering->name);
-  if (update_func != NULL)
-    continue_work = (*update_func)(temp_string, (gdouble) 0.0, update_data);
-  g_free(temp_string);
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Converting for rendering: %s", rendering->name);
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
   divider = ((rendering->dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (rendering->dim.z/AMIDE_UPDATE_DIVIDER);
 
   if (AMITK_IS_ROI(rendering->object)) {
@@ -425,9 +427,11 @@ gboolean rendering_load_object(rendering_t * rendering,
     g_return_val_if_fail(end.z < rendering->dim.z, FALSE);
 
     for (i_voxel.z = start.z; (i_voxel.z <= end.z) && (continue_work); i_voxel.z++) {
-      x = div(i_voxel.z,divider);
-      if ((x.rem == 0) && (update_func != NULL))
-	continue_work = (*update_func)(NULL, (gdouble) i_voxel.z/(end.z-start.z), update_data);
+      if (update_func != NULL) {
+	x = div(i_voxel.z,divider);
+	if (x.rem == 0) 
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) i_voxel.z/(end.z-start.z));
+      }
 
       for (i_voxel.y = start.y; i_voxel.y <=  end.y; i_voxel.y++)
 	for (i_voxel.x = start.x; i_voxel.x <=  end.x; i_voxel.x++) {
@@ -500,9 +504,11 @@ gboolean rendering_load_object(rendering_t * rendering,
     /* copy the info from a data set structure into our rendering_volume structure */
     j_voxel.t = j_voxel.z = i_voxel.t=0;
     for (i_voxel.z = 0; ((i_voxel.z < rendering->dim.z) && continue_work); i_voxel.z++) {
-      x = div(i_voxel.z,divider);
-      if ((x.rem == 0) && (update_func != 0))
-	continue_work = (*update_func)(NULL, (gdouble) i_voxel.z/rendering->dim.z, update_data);
+      if  (update_func != 0) {
+	x = div(i_voxel.z,divider);
+	if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, (gdouble) i_voxel.z/rendering->dim.z);
+      }
       
       slice = amitk_data_set_get_slice(AMITK_DATA_SET(rendering->object), 
 				       rendering->start, 
@@ -548,9 +554,13 @@ gboolean rendering_load_object(rendering_t * rendering,
   }
 
   /* if we quit, get out of here */
-  continue_work = (*update_func)(NULL, (gdouble) 2.0, update_data); /* remove progress bar */
-  if (!continue_work) 
+  if (update_func != NULL) 
+    continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0); /* remove progress bar */
+
+  if (!continue_work) {
+    g_free(density);
     return FALSE;
+  }
 
   /* compute surface normals (for shading) and gradient magnitudes (for classification) */
   if (vpVolumeNormals(rendering->vpc, density, density_size, RENDERING_DENSITY_FIELD, 
@@ -647,19 +657,11 @@ static void classify_volume(rendering_t * rendering) {
 }
 
 
-/* sets the rotation transform for a rendering context */
-void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rotation) {
+static void set_space(rendering_t * rendering) {
 
   vpMatrix4 m; 
   guint i,j;
   AmitkPoint axis;
-
-  rendering->need_rerender = TRUE;
-
-  /* rotate the axis */
-  amitk_space_rotate_on_vector(AMITK_SPACE(rendering->volume),
-			       amitk_space_get_axis(AMITK_SPACE(rendering->volume), dir),
-			       rotation, zero_point);
 
   /* initalize */
   for (i=0;i<4;i++)
@@ -687,6 +689,27 @@ void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rota
     g_warning("Error Rotating Rendering (%s): %s",
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
 
+}
+
+/* set the rotation space for a rendering context */
+void rendering_set_space(rendering_t * rendering, AmitkSpace * space) {
+
+  rendering->need_rerender = TRUE;
+  amitk_space_copy_in_place(AMITK_SPACE(rendering->volume), space);
+  set_space(rendering);
+  return;
+}
+
+/* sets the rotation transform for a rendering context */
+void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rotation) {
+
+  rendering->need_rerender = TRUE;
+
+  /* rotate the axis */
+  amitk_space_rotate_on_vector(AMITK_SPACE(rendering->volume),
+			       amitk_space_get_axis(AMITK_SPACE(rendering->volume), dir),
+			       rotation, zero_point);
+  set_space(rendering);
   return;
 }
 
@@ -984,6 +1007,18 @@ gboolean renderings_reload_objects(renderings_t * renderings,
 }
     
 
+
+/* sets the space for a list of rendering context */
+void renderings_set_space(renderings_t * renderings, AmitkSpace * space) {
+
+
+  while (renderings != NULL) {
+    rendering_set_space(renderings->rendering, space);
+    renderings = renderings->next;
+  }
+
+  return;
+}
 
 /* sets the rotation transform for a list of rendering context */
 void renderings_set_rotation(renderings_t * renderings, AmitkAxis dir, gdouble rotation) {

@@ -37,7 +37,9 @@
 
 
 /* function to setup the toolbar for the study ui */
-void ui_study_toolbar_create(ui_study_t * ui_study) {
+/* takes a separate study parameter, as the ui_study->study variable 
+   isn't usually set when these function is called */
+void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
 
   AmitkInterpolation i_interpolation;
   AmitkFuseType i_fuse_type;
@@ -128,7 +130,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
     g_signal_handlers_block_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
 				    G_CALLBACK(ui_study_cb_fuse_type), ui_study);
   }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fuse_type_list[AMITK_STUDY_FUSE_TYPE(ui_study->study)].widget),
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fuse_type_list[AMITK_STUDY_FUSE_TYPE(study)].widget),
 			       TRUE);
   for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++)
     g_signal_handlers_unblock_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
@@ -153,7 +155,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 
-  adjustment = gtk_adjustment_new(AMITK_STUDY_ZOOM(ui_study->study),
+  adjustment = gtk_adjustment_new(AMITK_STUDY_ZOOM(study),
 				  AMIDE_LIMIT_ZOOM_LOWER,
 				  AMIDE_LIMIT_ZOOM_UPPER,
 				  AMIDE_LIMIT_ZOOM_STEP, 
@@ -204,7 +206,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_widget_show(label);
 
   ui_study->time_button = gtk_button_new_with_label(""); 
-  ui_study_update_time_button(ui_study); /* put in some meaningful text */
 
   g_signal_connect(G_OBJECT(ui_study->time_button), "pressed",
 		   G_CALLBACK(ui_study_cb_time_pressed), 

@@ -25,6 +25,7 @@
 
 #include "amitk_data_set.h"
 #include "amitk_study.h"
+#include "fads.h"
 
 #include "../pixmaps/amide_logo.xpm"
 
@@ -72,4 +73,3 @@ const char ** icon_thresholding[AMITK_THRESHOLDING_NUM] = {
 
 #include "../pixmaps/linear_layout.xpm"
 #include "../pixmaps/orthogonal_layout.xpm"
-

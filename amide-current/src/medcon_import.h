@@ -48,7 +48,10 @@ typedef enum {
 
 /* external functions */
 gboolean medcon_import_supports(libmdc_import_method_t submethod);
-AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t submethod);
+AmitkDataSet * medcon_import(const gchar * filename, 
+			     libmdc_import_method_t submethod,
+			     gboolean (*update_func)(),
+			     gpointer update_data);
 
 extern gchar * libmdc_menu_names[];
 extern gchar * libmdc_menu_explanations[];

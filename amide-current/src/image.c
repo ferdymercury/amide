@@ -402,7 +402,8 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 #endif
 
 /* function to make the bar graph to put next to the color_strip image */
-GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg) {
+GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
+				  gboolean (*update_func)(), gpointer update_data) {
 
   GdkPixbuf * temp_image;
   guchar * rgba_data;
@@ -410,49 +411,64 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg) {
   AmitkVoxel j;
   amide_data_t max, scale;
   AmitkRawData * distribution;
-  AmitkVoxel dim;
+  gint dim_x;
 
   /* make sure we have a distribution calculated */
-  amitk_data_set_calc_distribution(ds);
+  amitk_data_set_calc_distribution(ds, update_func, update_data);
   distribution = AMITK_DATA_SET_DISTRIBUTION(ds);
-  dim = AMITK_RAW_DATA_DIM(distribution);
+  if(distribution==NULL) {
+    dim_x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
+  } else {
+    dim_x = AMITK_RAW_DATA_DIM_X(distribution);
+  }
 
-  if ((rgba_data = g_try_new(guchar,4*IMAGE_DISTRIBUTION_WIDTH*dim.x)) == NULL) {
+  if ((rgba_data = g_try_new(guchar,4*IMAGE_DISTRIBUTION_WIDTH*dim_x)) == NULL) {
     g_warning("couldn't allocate memory for rgba_data for bar_graph");
     return NULL;
   }
 
-  /* figure out the max of the distribution, so we can normalize the distribution to the width */
-  max = 0.0;
-  j.t = j.z = j.y = 0;
-  for (j.x = 0; j.x < dim.x ; j.x++) 
+  if (distribution == NULL) {
+    for (l=0 ; l < dim_x ; l++) {
+      for (k=0; k < IMAGE_DISTRIBUTION_WIDTH; k++) {
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+0] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+1] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+2] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+3] = 0x00;
+      }
+    }
+  } else {
+    /* figure out the max of the distribution, so we can normalize the distribution to the width */
+    max = 0.0;
+    j.t = j.z = j.y = 0;
+    for (j.x = 0; j.x < dim_x ; j.x++) 
     if (*AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j) > max)
       max = *AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j);
-  scale = ((gdouble) IMAGE_DISTRIBUTION_WIDTH)/max;
-
-  /* figure out what the rgb data is */
-  j.t = j.z = j.y = 0;
-  for (l=0 ; l < dim.x ; l++) {
-    j.x = dim.x-l-1;
-    for (k=0; k < floor(((gdouble) IMAGE_DISTRIBUTION_WIDTH)-
-			scale*(*AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j))) ; k++) {
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+0] = 0x00;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+1] = 0x00;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+2] = 0x00;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+3] = 0x00;
-    }
-    for ( ; k < IMAGE_DISTRIBUTION_WIDTH ; k++) {
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+0] = fg.r;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+1] = fg.g;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+2] = fg.b;
-      rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+3] = 0xFF;
+    scale = ((gdouble) IMAGE_DISTRIBUTION_WIDTH)/max;
+    
+    /* figure out what the rgb data is */
+    j.t = j.z = j.y = 0;
+    for (l=0 ; l < dim_x ; l++) {
+      j.x = dim_x-l-1;
+      for (k=0; k < floor(((gdouble) IMAGE_DISTRIBUTION_WIDTH)-
+			  scale*(*AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j))) ; k++) {
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+0] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+1] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+2] = 0x00;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+3] = 0x00;
+      }
+      for ( ; k < IMAGE_DISTRIBUTION_WIDTH ; k++) {
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+0] = fg.r;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+1] = fg.g;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+2] = fg.b;
+	rgba_data[l*IMAGE_DISTRIBUTION_WIDTH*4+k*4+3] = 0xFF;
+      }
     }
   }
-    
+
   /* generate the pixbuf image */
   temp_image = gdk_pixbuf_new_from_data(rgba_data, GDK_COLORSPACE_RGB,
 					TRUE,8,IMAGE_DISTRIBUTION_WIDTH,
-					dim.x,
+					dim_x,
 					IMAGE_DISTRIBUTION_WIDTH*4*sizeof(guchar),
 					image_free_rgb_data, NULL);
   

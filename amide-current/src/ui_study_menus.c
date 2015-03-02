@@ -29,10 +29,10 @@
 #include "amide_config.h"
 #include <gnome.h>
 #include "ui_common.h"
+#include "ui_series.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
-#include "ui_series.h"
 #include "medcon_import.h"
 
 /* function to fill in a radioitem */
@@ -249,17 +249,21 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* tools for analyzing/etc. the data */
   GnomeUIInfo tools_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
+			  N_("guides you throw the processing of alignment"),
+			  ui_study_cb_alignment_selected,
+			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Crop Active Data Set"),
 			  N_("allows you to crop the active data set"),
 			  ui_study_cb_crop_selected,
 			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Factor Analysis"),
+			  N_("allows you to do factor analysis of dynamic data on the active data set"),
+			  ui_study_cb_fads_selected,
+			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Filter Active Data Set"),
 			  N_("allows you to filter the active data set"),
 			  ui_study_cb_filter_selected,
-			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
-			  N_("guides you throw the processing of alignment"),
-			  ui_study_cb_alignment_selected,
 			  ui_study, NULL),
 #if AMIDE_LIBFAME_SUPPORT
     GNOMEUIINFO_SUBTREE_HINT(N_("Generate _Fly Through"),

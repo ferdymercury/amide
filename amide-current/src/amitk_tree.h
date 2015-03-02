@@ -30,8 +30,7 @@
 #include <gnome.h>
 #include "amide.h"
 #include "amitk_type_builtins.h"
-#include "amitk_object.h"
-#include "amitk_roi.h"
+#include "amitk_study.h"
 
 G_BEGIN_DECLS
 
@@ -41,8 +40,7 @@ G_BEGIN_DECLS
 #define AMITK_IS_TREE(obj)         (GTK_CHECK_TYPE ((obj), AMITK_TYPE_TREE))
 #define AMITK_IS_TREE_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_TREE))
 
-#define AMITK_TREE_VISIBLE_OBJECTS(obj, view_mode)   (AMITK_TREE(obj)->visible_objects[(view_mode)])
-
+#define AMITK_TREE_STUDY(obj)          (AMITK_TREE(obj)->study);
 
 typedef struct _AmitkTree             AmitkTree;
 typedef struct _AmitkTreeClass        AmitkTreeClass;
@@ -51,7 +49,7 @@ struct _AmitkTree
 {
   GtkTreeView tree;
 
-  GList * visible_objects[AMITK_VIEW_MODE_NUM];
+  AmitkStudy * study;
   AmitkObject * active_object;
 
   GtkTreeViewColumn * linked_column;
@@ -68,13 +66,7 @@ struct _AmitkTreeClass
   
   void (* help_event)                (AmitkTree *     tree,
 				      AmitkHelpInfo   help_type);
-  void (* select_object)             (AmitkTree *     tree,
-				      AmitkObject *   object,
-				      AmitkViewMode   view_mode);
-  void (* unselect_object)           (AmitkTree *     tree,
-				      AmitkObject *   object,
-				      AmitkViewMode   view_mode);
-  void (* make_active_object)        (AmitkTree *     tree,
+  void (* activate_object)           (AmitkTree *     tree,
 				      AmitkObject *   object);
   void (* popup_object)              (AmitkTree *     tree,
 				      AmitkObject *   object);
@@ -89,19 +81,12 @@ struct _AmitkTreeClass
 
 GType           amitk_tree_get_type          (void);
 GtkWidget*      amitk_tree_new               (void);
-void            amitk_tree_add_object        (AmitkTree * tree, 
-					      AmitkObject * object,
-					      gboolean expand_parent);
-void            amitk_tree_remove_object     (AmitkTree * tree, 
+void            amitk_tree_set_study         (AmitkTree * tree,
+					      AmitkStudy * study);
+void            amitk_tree_expand_object     (AmitkTree * tree,
 					      AmitkObject * object);
 void            amitk_tree_set_active_object (AmitkTree * tree,
 					      AmitkObject * object);
-void            amitk_tree_select_object     (AmitkTree * tree,
-					      AmitkObject * object,
-					      AmitkViewMode view_mode);
-gboolean        amitk_tree_unselect_object   (AmitkTree * tree, 
-					      AmitkObject * object,
-					      AmitkViewMode view_mode);
 void            amitk_tree_set_linked_mode_column_visible (AmitkTree * tree,
 							   gboolean visible);
 

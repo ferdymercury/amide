@@ -92,6 +92,7 @@ struct _AmitkStudyClass
 
   void (* study_changed) (AmitkStudy * study);
   void (* thickness_changed) (AmitkStudy * study);
+  void (* time_changed) (AmitkStudy * study);
 
 };
 

@@ -568,7 +568,6 @@ inline amide_real_t point_max_dim(const AmitkPoint point1) {
 
 
 
-
 /* returns abs(point1-point2) for canvaspoint structures */
 inline AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2) {
   AmitkCanvasPoint temp;
@@ -599,6 +598,46 @@ inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, cons
 /* returns sqrt(canvas_point_dot_product(point1, point1)) for canvaspoint structures */
 inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1) {
   return sqrt(canvas_point_dot_product(point1, point1));
+}
+
+
+
+/* converts a gnome canvas point to a realpoint in the canvas coordinate's frame */
+/* volume_corner is the corner of the volume the appropriate canvas is defined on */
+/* width and height are of the canvas, in pixels */
+AmitkPoint canvas_point_2_point(AmitkPoint volume_corner,
+				gint width, gint height,
+				gdouble x_offset,gdouble y_offset,
+				AmitkCanvasPoint canvas_cpoint) {
+
+  AmitkPoint canvas_point;
+
+  canvas_point.x = ((canvas_cpoint.x-x_offset)/width)*volume_corner.x;
+  canvas_point.y = ((height-(canvas_cpoint.y-y_offset))/height)*volume_corner.y;
+  canvas_point.z = volume_corner.z/2.0;
+
+  /* make sure it's in the given volume */
+  if (canvas_point.x < 0.0) canvas_point.x = 0.0;
+  if (canvas_point.y < 0.0) canvas_point.y = 0.0;
+  if (canvas_point.x > volume_corner.x) canvas_point.x = volume_corner.x;
+  if (canvas_point.y > volume_corner.y) canvas_point.y = volume_corner.y;
+
+  return canvas_point;
+
+}
+
+/* converts a point in the canvas's coordinate space to a gnome canvas event location */
+AmitkCanvasPoint point_2_canvas_point(AmitkPoint volume_corner,
+				      gint width,gint height,
+				      gdouble x_offset, gdouble y_offset,
+				      AmitkPoint canvas_point) {
+
+  AmitkCanvasPoint canvas_cpoint;
+
+  canvas_cpoint.x = width * canvas_point.x/volume_corner.x + x_offset;
+  canvas_cpoint.y = height * (volume_corner.y - canvas_point.y)/volume_corner.y + y_offset;
+  
+  return canvas_cpoint;
 }
 
 

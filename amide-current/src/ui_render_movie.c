@@ -34,6 +34,7 @@
 #include "ui_common.h"
 #include "ui_render_movie.h"
 #include "amitk_type_builtins.h"
+#include "amitk_progress_dialog.h"
 #include "mpeg_encode.h"
 
 
@@ -41,6 +42,7 @@
 #define SPIN_BUTTON_DIGITS 3
 
 typedef enum {
+  NOT_DYNAMIC,
   OVER_TIME, 
   OVER_FRAMES, 
   DYNAMIC_TYPES
@@ -62,7 +64,7 @@ typedef struct ui_render_movie_t {
   gboolean quit_generation;
 
   GtkWidget * dialog;
-  GtkWidget * progress_bar;
+  GtkWidget * progress_dialog;
   GtkWidget * start_time_label;
   GtkWidget * end_time_label;
   GtkWidget * start_frame_label;
@@ -158,19 +160,28 @@ static void dynamic_type_cb(GtkWidget * widget, gpointer data) {
       gtk_widget_show(ui_render_movie->start_time_spin_button);
       gtk_widget_show(ui_render_movie->end_time_label);
       gtk_widget_show(ui_render_movie->end_time_spin_button);
-      gtk_widget_hide(ui_render_movie->start_frame_label);
-      gtk_widget_hide(ui_render_movie->start_frame_spin_button);
-      gtk_widget_hide(ui_render_movie->end_frame_label);
-      gtk_widget_hide(ui_render_movie->end_frame_spin_button);
-    } else {
-      gtk_widget_hide(ui_render_movie->start_time_label);
-      gtk_widget_hide(ui_render_movie->start_time_spin_button);
-      gtk_widget_hide(ui_render_movie->end_time_label);
-      gtk_widget_hide(ui_render_movie->end_time_spin_button);
+    }
+
+    if (type == OVER_FRAMES) {
       gtk_widget_show(ui_render_movie->start_frame_label);
       gtk_widget_show(ui_render_movie->start_frame_spin_button);
       gtk_widget_show(ui_render_movie->end_frame_label);
       gtk_widget_show(ui_render_movie->end_frame_spin_button);
+    }
+
+
+    if ((type == OVER_TIME) || (type == NOT_DYNAMIC)) {
+      gtk_widget_hide(ui_render_movie->start_frame_label);
+      gtk_widget_hide(ui_render_movie->start_frame_spin_button);
+      gtk_widget_hide(ui_render_movie->end_frame_label);
+      gtk_widget_hide(ui_render_movie->end_frame_spin_button);
+    }
+
+    if ((type == OVER_FRAMES) || (type == NOT_DYNAMIC)) {
+      gtk_widget_hide(ui_render_movie->start_time_label);
+      gtk_widget_hide(ui_render_movie->start_time_spin_button);
+      gtk_widget_hide(ui_render_movie->end_time_label);
+      gtk_widget_hide(ui_render_movie->end_time_spin_button);
     }
   }
   return;
@@ -344,6 +355,8 @@ static void dialog_set_sensitive(ui_render_movie_t * ui_render_movie, gboolean s
 /* destroy a ui_render_movie data structure */
 static ui_render_movie_t * movie_unref(ui_render_movie_t * ui_render_movie) {
 
+  gboolean return_val;
+
   if (ui_render_movie == NULL) return ui_render_movie;
 
   /* sanity checks */
@@ -356,6 +369,13 @@ static ui_render_movie_t * movie_unref(ui_render_movie_t * ui_render_movie) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_render_movie\n");
 #endif
+
+    if (ui_render_movie->progress_dialog != NULL) {
+      g_signal_emit_by_name(G_OBJECT(ui_render_movie->progress_dialog), 
+			    "delete_event", NULL, &return_val);
+      ui_render_movie->progress_dialog = NULL;
+    }
+
     g_free(ui_render_movie);
     ui_render_movie = NULL;
   }
@@ -382,7 +402,7 @@ static ui_render_movie_t * movie_init(void) {
   ui_render_movie->rotation[AMITK_AXIS_X] = 0;
   ui_render_movie->rotation[AMITK_AXIS_Y] = 1;
   ui_render_movie->rotation[AMITK_AXIS_Z] = 0;
-  ui_render_movie->type = OVER_TIME;
+  ui_render_movie->type = NOT_DYNAMIC;
   ui_render_movie->ui_render = NULL;
   ui_render_movie->start_time = 0.0;
   ui_render_movie->end_time = 1.0;
@@ -390,6 +410,7 @@ static ui_render_movie_t * movie_init(void) {
   ui_render_movie->end_frame = 0;
   ui_render_movie->in_generation=FALSE;
   ui_render_movie->quit_generation=FALSE;
+  ui_render_movie->progress_dialog = NULL;
 
  return ui_render_movie;
 }
@@ -411,6 +432,7 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
   guint ds_frame=0;
   guint num_frames;
   gpointer mpeg_encode_context;
+  gboolean continue_work=TRUE;
 
   /* gray out anything that could screw up the movie */
   dialog_set_sensitive(ui_render_movie, FALSE);
@@ -437,9 +459,10 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
   num_frames = ceil(ui_render_movie->duration*FRAMES_PER_SECOND);
 
   /* figure out each frame's duration, needed if we're doing a movie over time */
-  ui_render->duration = 
-    (ui_render_movie->end_time-ui_render_movie->start_time)
-    /((amide_time_t) num_frames);
+  if (ui_render_movie->type != NOT_DYNAMIC) {
+    ui_render->duration = 
+      (ui_render_movie->end_time-ui_render_movie->start_time) /((amide_time_t) num_frames);
+  }
 
   
   mpeg_encode_context = mpeg_encode_setup(output_filename, ENCODE_MPEG1,
@@ -447,20 +470,14 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
 					  gdk_pixbuf_get_height(ui_render->pixbuf));
   g_return_if_fail(mpeg_encode_context != NULL);
 
-#ifdef AMIDE_DEBUG
-  g_print("Total number of movie frames to do:\t%d\n",num_frames);
-  g_print("Frame:\n");
-#endif
-  
-
   /* start generating the frames, continue while we haven't hit cancel */
   for (i_frame = 0; 
-       ((i_frame < num_frames) && !ui_render_movie->quit_generation && return_val);
+       ((i_frame < num_frames) && !ui_render_movie->quit_generation && return_val && continue_work);
        i_frame++) {
 
     /* update the progress bar */
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_render_movie->progress_bar),
-				  (gdouble) i_frame/((gdouble) num_frames));
+    continue_work = amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_render_movie->progress_dialog),
+						       (gdouble) i_frame/((gdouble) num_frames));
 
     /* figure out the rotation for this frame */
     for (i_axis = 0; i_axis < AMITK_AXIS_NUM ; i_axis++) {
@@ -473,7 +490,7 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
     /* figure out the start interval for this frame */
     if (ui_render_movie->type == OVER_TIME) {
       ui_render->start = ui_render_movie->start_time + i_frame*ui_render->duration;
-    }  else {
+    }  else if (ui_render_movie->type == OVER_FRAMES) {
       if (most_frames_ds) {
 	ds_frame = floor((i_frame/((gdouble) num_frames)
 			  * AMITK_DATA_SET_NUM_FRAMES(most_frames_ds)));
@@ -485,30 +502,12 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
 	ui_render->start = 0.0;
 	ui_render->duration = 1.0;
       }
-    }
+    } /* else NOT_DYNAMIC */
+
  
-#ifdef AMIDE_DEBUG
-    if (ui_render_movie->type == OVER_TIME)
-      g_print("Rendering %d -- %5.3f-%5.3f s -- rot. x %5.1f y %5.1f z %5.1f\r",
-	      i_frame, ui_render->start, ui_render->start+ui_render->duration,
-	      180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
-	      180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
-	      180.0*rotation_step[AMITK_AXIS_Z]/M_PI);
-    else
-      g_print("Rendering %d -- data frame %d -- rot. x %5.1f y %5.1f z %5.1f\r",
-	      i_frame, ds_frame, 
-	      180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
-	      180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
-	      180.0*rotation_step[AMITK_AXIS_Z]/M_PI);
-#endif
-    
     /* render the contexts */
     return_val = ui_render_update_immediate(ui_render);
     
-#ifdef AMIDE_DEBUG
-    g_print("Writing   %d\r",i_frame);
-#endif
-
     if (return_val) /* if we rendered correct, encode the mpeg frame */
       return_val = mpeg_encode_frame(mpeg_encode_context, ui_render->pixbuf);
       
@@ -525,7 +524,7 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
   }
 
   mpeg_encode_close(mpeg_encode_context);
-  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_render_movie->progress_bar), 1.0);
+  amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_render_movie->progress_dialog),2.0);
 
   /* and rerender one last time to back to the initial rotation and time */
   ui_render->start = initial_start;
@@ -549,6 +548,8 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   GtkWidget * label;
   GtkWidget * radio_button1;
   GtkWidget * radio_button2;
+  GtkWidget * radio_button3;
+  GtkWidget * hbox;
   guint table_row = 0;
   AmitkAxis i_axis;
   renderings_t * renderings;
@@ -677,26 +678,28 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(hbox);
+
   /* the radio buttons */
-  radio_button1 = gtk_radio_button_new_with_label(NULL, "over time");
-  gtk_table_attach(GTK_TABLE(packing_table), radio_button1,
-  		   1,2, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
+  radio_button1 = gtk_radio_button_new_with_label(NULL, "No");
+  gtk_box_pack_start(GTK_BOX(hbox), radio_button1, FALSE, FALSE, 3);
+  g_object_set_data(G_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(NOT_DYNAMIC));
+  ui_render_movie->dynamic_type = radio_button1;
 
-  g_object_set_data(G_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
+  radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over time");
+  gtk_box_pack_start(GTK_BOX(hbox), radio_button2, FALSE, FALSE, 3);
+  g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
 
-  radio_button2 = gtk_radio_button_new_with_label(NULL, "over frames");
-  gtk_radio_button_set_group(GTK_RADIO_BUTTON(radio_button2), 
-			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio_button1)));
-  gtk_table_attach(GTK_TABLE(packing_table), radio_button2,
-  		   2,3, table_row, table_row+1,
-  		   0, 0, X_PADDING, Y_PADDING);
-  g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
+  radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over frames");
+  gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
+  g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
 
   g_signal_connect(G_OBJECT(radio_button1), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(radio_button2), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
-  ui_render_movie->dynamic_type = radio_button1;
+  g_signal_connect(G_OBJECT(radio_button3), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
 
   table_row++;
 
@@ -760,32 +763,24 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0,3,
-		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /* progress bar */
-  label = gtk_label_new("Progress");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  ui_render_movie->progress_bar = gtk_progress_bar_new();
-  gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(ui_render_movie->progress_bar), 
-				   GTK_PROGRESS_LEFT_TO_RIGHT);
-  gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->progress_bar,1,3,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
+  /* progress dialog */
+  ui_render_movie->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render_movie->dialog));
+  amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(ui_render_movie->progress_dialog),
+				 "Rendered Movie Progress");
 
   /* show all our widgets */
   gtk_widget_show_all(ui_render_movie->dialog);
 
   /* and hide the appropriate widgets */
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
   gtk_widget_hide(ui_render_movie->start_frame_label);
   gtk_widget_hide(ui_render_movie->start_frame_spin_button);
   gtk_widget_hide(ui_render_movie->end_frame_label);
   gtk_widget_hide(ui_render_movie->end_frame_spin_button);
+  gtk_widget_hide(ui_render_movie->start_time_label);
+  gtk_widget_hide(ui_render_movie->start_time_spin_button);
+  gtk_widget_hide(ui_render_movie->end_time_label);
+  gtk_widget_hide(ui_render_movie->end_time_spin_button);
 
   return (gpointer) ui_render_movie;
 }

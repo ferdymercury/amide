@@ -65,6 +65,7 @@ typedef enum {
   AMITK_EYE_NUM
 } AmitkEye;
 
+
 typedef enum {
   AMITK_VIEW_MODE_SINGLE,
   AMITK_VIEW_MODE_LINKED,

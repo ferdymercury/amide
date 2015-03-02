@@ -56,3 +56,4 @@ extern const char * ALIGN_PT_xpm[];
 
 extern const char * linear_layout_xpm[];
 extern const char * orthogonal_layout_xpm[];
+

@@ -172,9 +172,19 @@ static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
 
 static void volume_read_xml(AmitkObject * object, xmlNodePtr nodes) {
 
+  AmitkVolume * volume;
+
   AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
-  if (xml_get_boolean(nodes, "valid"))
-    amitk_volume_set_corner(AMITK_VOLUME(object), amitk_point_read_xml(nodes, "corner"));
+  
+  volume = AMITK_VOLUME(object);
+
+  volume->corner = amitk_point_read_xml(nodes, "corner");
+  volume->valid = xml_get_boolean(nodes, "valid");
+
+  /* legacy, "valid" is a new parameter */
+  if (!volume->valid)
+    if (!POINT_EQUAL(volume->corner, zero_point))
+      volume->valid = TRUE;
 
   return;
 }

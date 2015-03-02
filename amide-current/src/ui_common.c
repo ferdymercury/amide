@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -110,7 +110,6 @@ gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
   return g_strdup(save_filename);
 }
 
-
 /* function to close a file selection widget */
 void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
 
@@ -160,7 +159,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
   amide_logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
   about = gnome_about_new(PACKAGE, VERSION, 
-			  "Copyright (c) 2000-2002 Andy Loening",
+			  "Copyright (c) 2000-2003 Andy Loening",
 			  contents,
 			  authors, NULL, NULL, amide_logo);
   g_object_unref(amide_logo);
@@ -470,156 +469,5 @@ void ui_common_remove_cursor(GtkWidget * widget) {
 
 
 
-progress_t * ui_common_progress_dialog_init(GtkWindow * parent_window) {
-
-  progress_t * progress_dialog;
-
-  if ((progress_dialog = g_try_new(progress_t, 1)) == NULL) {
-    g_warning("couldn't allocate space for progress dialog");
-    return NULL;
-  }
-
-  progress_dialog->reference_count = 1;
-  progress_dialog->dialog = NULL;
-  progress_dialog->message_label = NULL;
-  progress_dialog->progress_bar = NULL;
-  progress_dialog->can_continue = TRUE;
-  progress_dialog->parent_window = parent_window;
-
-  return progress_dialog;
-}
 
 
-static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
-  
-  progress_t * progress_dialog = data;
-
-  switch(response_id) {
-  case GTK_RESPONSE_CANCEL:
-    progress_dialog->can_continue = FALSE;
-    break;
-  default:
-    break;
-  }
-  return;
-}
-
-
-/* we're trying to destroy the progress dialog for some reason */
-static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
-
-  progress_t * progress_dialog = data;
-  progress_dialog->can_continue = FALSE;
-  progress_dialog->dialog = NULL;
-  progress_dialog->message_label = NULL;
-  progress_dialog->progress_bar = NULL;
-  return FALSE;
-}
-
-
-gboolean ui_common_progress_dialog_update(gchar * message, 
-					  gdouble fraction, 
-					  progress_t * progress_dialog) {
-  gboolean new_dialog;
-  gboolean return_val;
-  gboolean can_continue;
-  GtkWidget * dialog;
-
-  g_return_val_if_fail(progress_dialog != NULL, FALSE);
-
-  if (fraction > 1.0) { /* means we want to close dialog */
-    if (progress_dialog->dialog != NULL) {
-      can_continue = progress_dialog->can_continue;
-      dialog = progress_dialog->dialog;
-
-      /* this will set press_dialog->can_continue to FALSE, and progress_dialog->dialog to NULL */
-      g_signal_emit_by_name(G_OBJECT(progress_dialog->dialog), 
-			    "delete_event", NULL, &return_val); 
-      if (!return_val) gtk_widget_destroy(dialog);
-      progress_dialog->can_continue = can_continue; /* use the previous value */
-    }
-    return progress_dialog->can_continue;
-  }
-
-
-  /* create dialog if needed */
-  if (progress_dialog->dialog == NULL) {  
-    progress_dialog->dialog=
-      gtk_dialog_new_with_buttons("Progress Report",
-				  progress_dialog->parent_window,
-				  GTK_DIALOG_DESTROY_WITH_PARENT,
-				  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				  NULL);
-
-    /* setup the callbacks */
-    g_signal_connect(G_OBJECT(progress_dialog->dialog), "response", 
-		     G_CALLBACK(response_cb), progress_dialog);
-    g_signal_connect(G_OBJECT(progress_dialog->dialog), "delete_event", 
-		     G_CALLBACK(delete_event_cb), progress_dialog);
-
-    new_dialog = TRUE;
-  } else
-    new_dialog = FALSE;
-
-  /* update message if needed*/
-  if (message != NULL) { 
-    if (progress_dialog->message_label == NULL) {
-      progress_dialog->message_label = gtk_label_new(message);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(progress_dialog->dialog)->vbox), 
-			 progress_dialog->message_label, FALSE, FALSE, 3);
-    } else {
-      gtk_label_set_text(GTK_LABEL(progress_dialog->message_label), message);
-    }
-    progress_dialog->can_continue = TRUE;
-  }
-
-  /* update progress bar */
-  if (progress_dialog->progress_bar == NULL) {
-    progress_dialog->progress_bar = gtk_progress_bar_new();
-    gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(progress_dialog->progress_bar), 
-				     GTK_PROGRESS_LEFT_TO_RIGHT);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(progress_dialog->dialog)->vbox), 
-			 progress_dialog->progress_bar, FALSE, FALSE, 3);
-  }
-  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_dialog->progress_bar), 
-				fraction);
-
-  if (new_dialog) 
-    gtk_widget_show_all(progress_dialog->dialog);
-
-  /* let spin while events are pending, this allows cancel to happen */
-  while (gtk_events_pending()) gtk_main_iteration();
-
-  return progress_dialog->can_continue;
-}
-
-
-progress_t * ui_common_progress_dialog_free(progress_t * progress_dialog) {
-
-  gboolean return_val;
-  GtkWidget * dialog;
-
-  if (progress_dialog == NULL) 
-    return progress_dialog;
-
-  /* sanity checks */
-  g_return_val_if_fail(progress_dialog->reference_count > 0, NULL);
-
-  progress_dialog->reference_count--;
-
-  /* things to do if we've removed all reference's */
-  if (progress_dialog->reference_count == 0) {
-
-    if (progress_dialog->dialog != NULL) {
-      dialog = progress_dialog->dialog; /* keep track, gets nulled by delete event */
-      g_signal_emit_by_name(G_OBJECT(progress_dialog->dialog), 
-			    "delete_event", NULL, &return_val);
-      if (!return_val) gtk_widget_destroy(dialog);
-    }
-
-    g_free(progress_dialog);
-    progress_dialog = NULL;
-  }
-
-  return progress_dialog;
-}

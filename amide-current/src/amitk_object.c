@@ -37,6 +37,7 @@
 
 enum {
   OBJECT_NAME_CHANGED,
+  OBJECT_SELECTION_CHANGED,
   OBJECT_COPY,
   OBJECT_COPY_IN_PLACE,
   OBJECT_WRITE_XML,
@@ -118,6 +119,7 @@ static void object_class_init (AmitkObjectClass * class) {
   space_class->space_transform_axes = object_transform_axes;
 
   class->object_name_changed = NULL;
+  class->object_selection_changed = NULL;
   class->object_copy = object_copy;
   class->object_copy_in_place = object_copy_in_place;
   
@@ -133,6 +135,13 @@ static void object_class_init (AmitkObjectClass * class) {
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_name_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
+  object_signals[OBJECT_SELECTION_CHANGED] =
+    g_signal_new ("object_selection_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkObjectClass, object_selection_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE, 0);
   object_signals[OBJECT_COPY] =
     g_signal_new ("object_copy",
 		  G_TYPE_FROM_CLASS(class),
@@ -166,7 +175,7 @@ static void object_class_init (AmitkObjectClass * class) {
   object_signals[OBJECT_ADD_CHILD] =
     g_signal_new ("object_add_child",
   		  G_TYPE_FROM_CLASS(class),
-  		  G_SIGNAL_RUN_LAST,
+  		  G_SIGNAL_RUN_FIRST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_add_child),
   		  NULL, NULL, amitk_marshal_NONE__OBJECT,
 		  G_TYPE_NONE, 1,
@@ -174,7 +183,7 @@ static void object_class_init (AmitkObjectClass * class) {
   object_signals[OBJECT_REMOVE_CHILD] =
     g_signal_new ("object_remove_child",
   		  G_TYPE_FROM_CLASS(class),
-  		  G_SIGNAL_RUN_LAST,
+  		  G_SIGNAL_RUN_FIRST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_remove_child),
   		  NULL, NULL, amitk_marshal_NONE__OBJECT,
 		  G_TYPE_NONE, 1,
@@ -184,10 +193,15 @@ static void object_class_init (AmitkObjectClass * class) {
 
 static void object_init (AmitkObject * object) {
 
+  AmitkSelection i_selection;
+
   object->name = NULL;
   object->parent = NULL;
   object->children = NULL;
   object->dialog = NULL;
+  for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
+    object->selected[i_selection] = FALSE;
+
 }
 
 
@@ -215,7 +229,6 @@ static void object_finalize (GObject *object)
     g_free(amitk_object->name);
     amitk_object->name = NULL;
   }
-
 
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -316,6 +329,12 @@ static void object_transform_axes(AmitkSpace * space, AmitkAxes   transform_axes
   AMITK_SPACE_CLASS(parent_class)->space_transform_axes (space, transform_axes, center_of_rotation);
 }
 
+static gboolean object_change_selection(AmitkObject * object, const gboolean state, const gint which) {
+
+  return TRUE; /* returns if the state was set, higher level objects may not change state */
+}
+
+
 static AmitkObject * object_copy (const AmitkObject * object) {
 
   AmitkObject * copy;
@@ -340,11 +359,16 @@ void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_obj
 static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
 
   xmlNodePtr children_nodes;
+  AmitkSelection i_selection;
 
   amitk_space_write_xml(nodes, "coordinate_space", AMITK_SPACE(object));
 
   children_nodes = xmlNewChild(nodes, NULL, "children", NULL);
   amitk_objects_write_xml(AMITK_OBJECT_CHILDREN(object), children_nodes);
+
+  for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
+    xml_save_boolean(nodes, amitk_selection_get_name(i_selection),
+		     object->selected[i_selection]);
 
   return;
 }
@@ -354,6 +378,7 @@ static void object_read_xml (AmitkObject * object, xmlNodePtr nodes) {
   AmitkSpace * space;
   xmlNodePtr children_nodes;
   GList * children;
+  AmitkSelection i_selection;
 
   space = amitk_space_read_xml(nodes, "coordinate_space");
   amitk_space_copy_in_place(AMITK_SPACE(object), space);
@@ -363,6 +388,9 @@ static void object_read_xml (AmitkObject * object, xmlNodePtr nodes) {
   children = amitk_objects_read_xml(children_nodes->children);
   amitk_object_add_children(object, children);
   children = amitk_objects_unref(children);
+
+  for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
+    object->selected[i_selection] = xml_get_boolean(nodes, amitk_selection_get_name(i_selection));
 
   return;
 }
@@ -414,6 +442,8 @@ gchar * amitk_object_write_xml(AmitkObject * object) {
     object_name = amitk_object_type_get_name(AMITK_OBJECT_TYPE_FIDUCIAL_MARK);
   else if (AMITK_IS_ROI(object))
     object_name = amitk_object_type_get_name(AMITK_OBJECT_TYPE_ROI);
+  else if (AMITK_IS_VOLUME(object))
+    object_name = amitk_object_type_get_name(AMITK_OBJECT_TYPE_VOLUME);
   else
     g_return_val_if_reached(NULL);
 
@@ -503,6 +533,9 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename) {
   case AMITK_OBJECT_TYPE_ROI:
     new_object = AMITK_OBJECT(amitk_roi_new(0));
     break;
+  case AMITK_OBJECT_TYPE_VOLUME:
+    new_object = AMITK_OBJECT(amitk_volume_new());
+    break;
   default:
     g_return_val_if_reached(NULL);
     break;
@@ -554,6 +587,65 @@ void amitk_object_set_name(AmitkObject * object, const gchar * new_name) {
     g_free(object->name);
   object->name = g_strdup(new_name);
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_NAME_CHANGED],0);
+
+  return;
+}
+
+/* note, AMITK_SELECTION_ALL means all selections */
+gboolean amitk_object_get_selected(AmitkObject * object, const AmitkSelection which_selection) {
+
+  AmitkSelection i_selection;
+  gboolean return_val = FALSE;
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), FALSE);
+  g_return_val_if_fail(which_selection >= 0, FALSE);
+  g_return_val_if_fail(which_selection <= AMITK_SELECTION_ALL, FALSE);
+  g_return_val_if_fail(which_selection != AMITK_SELECTION_NUM, FALSE);
+
+  if (which_selection == AMITK_SELECTION_ALL) {
+    for (i_selection=0; i_selection < AMITK_SELECTION_NUM; i_selection++)
+      return_val = object->selected[i_selection] || return_val;
+  } else
+    return_val = object->selected[which_selection];
+
+  return return_val;
+}
+
+void amitk_object_set_selected(AmitkObject * object, const gboolean selection, const AmitkSelection which_selection) {
+
+  AmitkSelection i_selection;
+  GList * children;
+  gboolean changed=FALSE;
+
+  g_return_if_fail(AMITK_IS_OBJECT(object));
+  g_return_if_fail(which_selection >= 0);
+  g_return_if_fail(which_selection <= AMITK_SELECTION_ALL);
+  g_return_if_fail(which_selection != AMITK_SELECTION_NUM);
+
+  if (which_selection == AMITK_SELECTION_ALL) {
+    for (i_selection=0; i_selection < AMITK_SELECTION_NUM; i_selection++) {
+      if (object->selected[i_selection] != selection) {
+	object->selected[i_selection] = selection;
+	changed = TRUE;
+      }
+    }
+  } else {
+    if (object->selected[which_selection] != selection) {
+      object->selected[which_selection] = selection;
+      changed = TRUE;
+    }
+  }
+
+  if (selection == FALSE) { /* propagate unselect to children */
+    children = AMITK_OBJECT_CHILDREN(object);
+    while (children != NULL) {
+      amitk_object_set_selected(children->data, selection, which_selection);
+      children = children->next;
+    }
+  }
+
+  if (changed) 
+    g_signal_emit(G_OBJECT(object), object_signals[OBJECT_SELECTION_CHANGED], 0);
 
   return;
 }
@@ -639,18 +731,28 @@ gboolean amitk_object_remove_children(AmitkObject * object, GList * children) {
 
 
 /* returns the type of the given object */
-AmitkObjectType amitk_object_get_object_type(AmitkObject * object) {
+gboolean amitk_object_compare_object_type(AmitkObject * object, AmitkObjectType type) {
 
-  if (AMITK_IS_STUDY(object))
-    return AMITK_OBJECT_TYPE_STUDY;
-  else if (AMITK_IS_DATA_SET(object))
-    return AMITK_OBJECT_TYPE_DATA_SET;
-  else if (AMITK_IS_FIDUCIAL_MARK(object))
-    return AMITK_OBJECT_TYPE_FIDUCIAL_MARK;
-  else if (AMITK_IS_ROI(object))
-    return AMITK_OBJECT_TYPE_ROI;
-  else
-    g_return_val_if_reached(AMITK_OBJECT_TYPE_NUM);
+  switch(type) {
+  case AMITK_OBJECT_TYPE_STUDY:
+    return AMITK_IS_STUDY(object);
+    break;
+  case AMITK_OBJECT_TYPE_FIDUCIAL_MARK:
+    return AMITK_IS_FIDUCIAL_MARK(object);
+    break;
+  case AMITK_OBJECT_TYPE_DATA_SET:
+    return AMITK_IS_DATA_SET(object);
+    break;
+  case AMITK_OBJECT_TYPE_ROI:
+    return AMITK_IS_ROI(object);
+    break;
+  case AMITK_OBJECT_TYPE_VOLUME:
+    return AMITK_IS_VOLUME(object);
+    break;
+  default:
+    g_return_val_if_reached(FALSE);
+    break;
+  }
 }
 
 /* return a referenced pointer 
@@ -663,7 +765,7 @@ AmitkObject * amitk_object_get_parent_of_type(AmitkObject * object,
 
   if (AMITK_OBJECT_PARENT(object) == NULL)  /* top node */
     return NULL;
-  else if (amitk_object_get_object_type(AMITK_OBJECT_PARENT(object)) == type)
+  else if (amitk_object_compare_object_type(AMITK_OBJECT_PARENT(object),type))
     return g_object_ref(AMITK_OBJECT_PARENT(object));
   else
     return amitk_object_get_parent_of_type(AMITK_OBJECT_PARENT(object), type); /* recurse */
@@ -685,17 +787,111 @@ GList * amitk_object_get_children_of_type(AmitkObject * object,
   g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 
   children = AMITK_OBJECT_CHILDREN(object);
-
   while(children != NULL) {
-    child = children->data;
-    if (amitk_object_get_object_type(child) == type)
+    child = AMITK_OBJECT(children->data);
+
+    if (amitk_object_compare_object_type(child,type))
       return_objects = g_list_append(return_objects, g_object_ref(child));
 
-    /* get child's objects */
-    if (recurse){
-      children_objects = amitk_object_get_children_of_type(children->data, type, recurse);
+    if (recurse) { /* get child's objects */
+      children_objects = amitk_object_get_children_of_type(AMITK_OBJECT(child), type, recurse);
       return_objects = g_list_concat(return_objects, children_objects);
     }
+
+    children = children->next;
+  }
+
+  return return_objects;
+}
+
+/* indicates if any children of the given node has been selected */
+gboolean amitk_object_selected_children(AmitkObject * object, 
+					const AmitkSelection which_selection,
+					gboolean recurse) {
+
+
+  GList * children;
+  AmitkObject * child;
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), FALSE);
+
+  children = AMITK_OBJECT_CHILDREN(object);
+  while(children != NULL) {
+    child = AMITK_OBJECT(children->data);
+
+    if (amitk_object_get_selected(child, which_selection))
+      return TRUE;
+
+    if (recurse) { /* check child's objects */
+      if (amitk_object_selected_children(AMITK_OBJECT(child), which_selection, recurse))
+	  return TRUE;
+    }
+
+    children = children->next;
+  }
+
+  return FALSE;
+}
+
+/* returns a referenced list of selected objects of type "type" that are children
+   of the given node (usually the study object). Will recurse if specified*/
+GList * amitk_object_get_selected_children(AmitkObject * object, 
+					   const AmitkSelection which_selection,
+					   gboolean recurse) {
+
+
+  GList * children;
+  GList * return_objects=NULL;
+  GList * children_objects;
+  AmitkObject * child;
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+
+  children = AMITK_OBJECT_CHILDREN(object);
+  while(children != NULL) {
+    child = AMITK_OBJECT(children->data);
+
+    if (amitk_object_get_selected(child, which_selection))
+      return_objects = g_list_append(return_objects, g_object_ref(child));
+
+    if (recurse) { /* get child's objects */
+      children_objects = amitk_object_get_selected_children(AMITK_OBJECT(child), which_selection, recurse);
+      return_objects = g_list_concat(return_objects, children_objects);
+    }
+
+    children = children->next;
+  }
+
+  return return_objects;
+}
+
+/* returns a referenced list of selected objects of type "type" that are children
+   of the given node (usually the study object). Will recurse if specified*/
+GList * amitk_object_get_selected_children_of_type(AmitkObject * object, 
+						   const AmitkObjectType type,
+						   const AmitkSelection which_selection,
+						   gboolean recurse) {
+
+
+  GList * children;
+  GList * return_objects=NULL;
+  GList * children_objects;
+  AmitkObject * child;
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+
+  children = AMITK_OBJECT_CHILDREN(object);
+  while(children != NULL) {
+    child = AMITK_OBJECT(children->data);
+
+    if ((amitk_object_compare_object_type(child,type)) && (amitk_object_get_selected(child, which_selection)))
+      return_objects = g_list_append(return_objects, g_object_ref(child));
+
+    if (recurse) { /* get child's objects */
+      children_objects = amitk_object_get_selected_children_of_type(AMITK_OBJECT(child), type, which_selection, recurse);
+      return_objects = g_list_concat(return_objects, children_objects);
+    }
+
     children = children->next;
   }
 
@@ -822,7 +1018,6 @@ GList * amitk_objects_read_xml(xmlNodePtr node_list) {
 
   /* and add this node */
   filename = xml_get_string(node_list, "object_file");
-  g_print("filename %s\n",filename);
   object = amitk_object_read_xml(filename);
   g_free(filename);
 
@@ -839,6 +1034,18 @@ const gchar * amitk_object_type_get_name(const AmitkObjectType type) {
   GEnumValue * enum_value;
 
   enum_class = g_type_class_ref(AMITK_TYPE_OBJECT_TYPE);
+  enum_value = g_enum_get_value(enum_class, type);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_selection_get_name(const AmitkSelection type) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_SELECTION);
   enum_value = g_enum_get_value(enum_class, type);
   g_type_class_unref(enum_class);
 

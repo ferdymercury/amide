@@ -61,6 +61,8 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SCAN_START(ds)           (AMITK_DATA_SET(ds)->scan_start)
 #define AMITK_DATA_SET_GLOBAL_MAX(ds)           (AMITK_DATA_SET(ds)->global_max)
 #define AMITK_DATA_SET_GLOBAL_MIN(ds)           (AMITK_DATA_SET(ds)->global_min)
+#define AMITK_DATA_SET_FRAME_MAX(ds, i)         (AMITK_DATA_SET(ds)->frame_max[(i)])
+#define AMITK_DATA_SET_FRAME_MIN(ds, i)         (AMITK_DATA_SET(ds)->frame_min[(i)])
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
@@ -101,7 +103,6 @@ typedef enum {
 typedef enum { /*< skip >*/
   AMITK_IMPORT_METHOD_GUESS, 
   AMITK_IMPORT_METHOD_RAW, 
-  AMITK_IMPORT_METHOD_IDL,
 #ifdef AMIDE_LIBECAT_SUPPORT
   AMITK_IMPORT_METHOD_LIBECAT,
 #endif
@@ -176,10 +177,14 @@ AmitkDataSet *  amitk_data_set_new_with_data     (const AmitkFormat format,
 AmitkDataSet * amitk_data_set_import_raw_file    (const gchar * file_name, 
 						  AmitkRawFormat raw_format,
 						  AmitkVoxel data_dim,
-						  guint file_offset);
+						  guint file_offset,
+						  gboolean (*update_func)(), 
+						  gpointer update_data);
 AmitkDataSet * amitk_data_set_import_file        (AmitkImportMethod import_method, 
 						  int submethod,
-						  const gchar * import_filename);
+						  const gchar * import_filename,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 void           amitk_data_set_set_modality       (AmitkDataSet * ds,
 						  const AmitkModality modality);
 void           amitk_data_set_set_scan_start     (AmitkDataSet * ds,
@@ -218,8 +223,9 @@ amide_time_t   amitk_data_set_get_frame_duration (const AmitkDataSet * ds,
 						  guint frame);
 amide_time_t   amitk_data_set_get_min_frame_duration (const AmitkDataSet * ds);
 void           amitk_data_set_calc_far_corner    (AmitkDataSet * ds);
-void           amitk_data_set_calc_global_max_min(AmitkDataSet * ds);
-void           amitk_data_set_calc_frame_max_min (AmitkDataSet * ds);
+void           amitk_data_set_calc_max_min       (AmitkDataSet * ds,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 amide_data_t   amitk_data_set_get_max            (const AmitkDataSet * ds, 
 						  const amide_time_t start, 
 						  const amide_time_t duration);
@@ -231,7 +237,9 @@ void           amitk_data_set_get_thresholding_max_min(const AmitkDataSet * ds,
 						       const amide_time_t start,
 						       const amide_time_t duration,
 						       amide_data_t * max, amide_data_t * min);
-void           amitk_data_set_calc_distribution  (AmitkDataSet * ds);
+void           amitk_data_set_calc_distribution  (AmitkDataSet * ds, 
+						  gboolean (*update_func)(), 
+						  gpointer update_data);
 amide_data_t   amitk_data_set_get_value          (const AmitkDataSet * ds, 
 						  const AmitkVoxel i);
 void           amitk_data_set_set_value          (AmitkDataSet *ds,
@@ -240,14 +248,20 @@ void           amitk_data_set_set_value          (AmitkDataSet *ds,
 						  const gboolean signal_change);
 AmitkDataSet * amitk_data_set_get_projection     (AmitkDataSet * ds,
 						  const AmitkView view,
-						  const guint frame);
+						  const guint frame,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 AmitkDataSet * amitk_data_set_get_cropped        (const AmitkDataSet * ds,
 						  const AmitkVoxel start,
-						  const AmitkVoxel end);
+						  const AmitkVoxel end,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 AmitkDataSet * amitk_data_set_get_filtered       (const AmitkDataSet * ds,
 						  const AmitkFilter filter_type,
 						  const gint kernel_size,
-						  const amide_real_t fwhm);
+						  const amide_real_t fwhm,
+						  gboolean (*update_func)(),
+						  gpointer update_data);
 AmitkDataSet * amitk_data_set_get_slice          (AmitkDataSet * ds,
 						  const amide_time_t start,
 						  const amide_time_t duration,

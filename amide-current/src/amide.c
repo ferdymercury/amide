@@ -136,7 +136,7 @@ int main (int argc, char *argv []) {
       else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
 	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0,
-						 input_filenames[i])) != NULL) {
+						 input_filenames[i], NULL, NULL)) != NULL) {
 	  if (imported_study == NULL) {
 	    imported_study = amitk_study_new();
 	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));

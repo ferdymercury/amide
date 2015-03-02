@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.5],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.6],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -26,12 +26,12 @@ esac
 if test $CC = "gcc"; then
 	echo -n "checking version of gcc... "
 	CC_VERSION=`$CC -dumpversion`
-	if test $CC_VERSION = "2.96"; then
+	if (test $CC_VERSION = "2.96" || test $$CC_VERSION = "2.95.4"); then
 		echo $CC_VERSION
 		echo "******************************************************************"
 		echo "This version of gcc is a beta compiler and often incorrectly"
 		echo "compiles this program.  Please upgrade to the current version of"
-		echo "gcc (3.0.4 as of this writing) or downgrade to 2.95.3"
+		echo "gcc (3.2.1 as of this writing) or downgrade to 2.95.3"
 		echo "******************************************************************"
 		echo -n "continue anyway? (y/n) "
 		read continue_with_bad_gcc

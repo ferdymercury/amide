@@ -1,3 +1,29 @@
+0.7.6
+	* fixed long standing bug, dealing with slices generated via nearest neighbhor
+	  over multiple frames.  Would cause "flickering" in dynamic movies
+	* added a factor analysis tool
+	  - implemented Sitek, et al. penalized least squares algorithm
+	* ui_fly_through's can now be done over time
+	* ui_series now shows roi's and fiducial marks too
+	* added an option so that moving of rendered object can be click-n-drag
+	* encoding of selected objects now in amitk_object
+	  - new signal, "object_selection_changed"
+	  - canvas and tree now automatically adjust for changed in selection
+	  - canvas and tree also keep track of the entire object tree
+	* more progress bar popups
+	  - histograming
+	  - flythrough and rendering movie progress bars now popup
+	  - cropping
+	  - importing
+	* dropped the "IDL" file type
+	* was crashing on interpolation change after object dialog is closed, fixed
+	* crop dialog: added idle loop handler for canvas update, fixs spin button bug
+	* scrollbar's on canvas now do a better job of guessing their adjustment values
+	* managed to get rid of dump double clicking bug on canvas
+	* study_copy wasn't copying view_start_time
+
+
+	
 0.7.5
 	* medcon importing now allows negative values (had been set to zero)
 	* added progress bars for rendering context initialization

@@ -55,7 +55,9 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 				  gdouble eye_angle, 
 				  gint16 eye_width);
 #endif
-GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg);
+GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
+				  gboolean (*update_func)(), 
+				  gpointer update_data);
 GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const amide_intpoint_t width, 
 				  const amide_intpoint_t height,

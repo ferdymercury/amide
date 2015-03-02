@@ -1,7 +1,7 @@
 /* amitk_canvas.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002 Andy Loening
+ * Copyright (C) 2002-2003 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -75,6 +75,7 @@ struct _AmitkCanvas
   AmitkFuseType fuse_type;
 
   AmitkView view;
+  AmitkViewMode view_mode;
   AmitkLayout layout;
   gint roi_width;
   GdkLineStyle line_style;
@@ -87,12 +88,13 @@ struct _AmitkCanvas
   GnomeCanvasItem * image;
   GdkPixbuf * pixbuf;
 
-  GList * objects;
+  AmitkStudy * study;
+  GList * undrawn_rois;
   GList * object_items;
 
   guint next_update;
   guint idle_handler_id;
-  GList * next_update_items;
+  GList * next_update_objects;
 
   /* target stuff */
   GnomeCanvasItem * target[8];
@@ -131,15 +133,16 @@ struct _AmitkCanvasClass
 
 
 GType         amitk_canvas_get_type             (void);
-GtkWidget *   amitk_canvas_new                  (AmitkStudy * study,
-						 AmitkView view, 
+GtkWidget *   amitk_canvas_new                  (AmitkView view, 
+						 AmitkViewMode view_mode,
 						 AmitkLayout layout, 
 						 GdkLineStyle line_style,
 						 gint roi_width,
-						 AmitkDataSet * active_ds,
 						 gboolean with_arrows,
 						 gboolean leave_target,
 						 gint target_empty_area);
+void          amitk_canvas_set_study            (AmitkCanvas * canvas, 
+						 AmitkStudy * study);
 void          amitk_canvas_set_layout           (AmitkCanvas * canvas, 
 						 AmitkLayout new_layout);
 void          amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
@@ -151,10 +154,6 @@ void          amitk_canvas_set_line_style       (AmitkCanvas * canvas,
 						 GdkLineStyle new_line_style);
 void          amitk_canvas_set_roi_width        (AmitkCanvas * canvas, 
 						 gint new_roi_width);
-void          amitk_canvas_add_object           (AmitkCanvas * canvas, 
-						 AmitkObject * object);
-gboolean      amitk_canvas_remove_object        (AmitkCanvas * canvas, 
-						 AmitkObject * object);
 void          amitk_canvas_update_target        (AmitkCanvas * canvas, 
 						 AmitkCanvasTargetAction action, 
 						 AmitkPoint center, 

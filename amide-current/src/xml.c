@@ -215,9 +215,8 @@ gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor) {
   temp_string = xml_get_string(nodes, descriptor);
 
   if (temp_string == NULL) {
-    /* TRUE tends to be better for backwards compatibility */
-    g_warning("Couldn't read value for %s, substituting TRUE",descriptor);
-    return TRUE;
+    g_warning("Couldn't read value for %s, substituting FALSE",descriptor);
+    return FALSE;
   }
   if (g_ascii_strncasecmp(temp_string, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
     value = TRUE;

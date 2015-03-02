@@ -25,8 +25,8 @@
 
 
 /* header files always needed with this */
-#include "ui_study.h"
+#include "amitk_study.h"
 
 /* external functions */
-void ui_time_dialog_set_times(ui_study_t * ui_study);
-void ui_time_dialog_create(ui_study_t * ui_study);
+void ui_time_dialog_set_times(GtkWidget * time_dialog);
+GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent);

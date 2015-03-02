@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include "raw_data_import.h"
+#include "amitk_progress_dialog.h"
 
 
 
@@ -45,10 +46,12 @@ typedef struct raw_data_info_t {
   AmitkModality modality;
   amide_data_t scale_factor;
   guint offset;
+
   GtkWidget * num_bytes_label1;
   GtkWidget * num_bytes_label2;
   GtkWidget * read_offset_label;
   GtkWidget * ok_button;
+
 } raw_data_info_t;
 
 
@@ -289,7 +292,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   temp_string = g_strdup_printf("%s: Raw Data Import Dialog\n", PACKAGE);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
-  
+
   raw_data_info->ok_button = gtk_dialog_add_button(GTK_DIALOG(dialog), 
 						   GTK_STOCK_OK, GTK_RESPONSE_YES);
   gtk_dialog_add_button(GTK_DIALOG(dialog),
@@ -526,6 +529,8 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   AmitkDataSet * ds;
   gint dialog_reply;
   GtkWidget * dialog;
+  GtkWidget * progress_dialog = NULL;
+  gboolean return_val;
 
   /* get space for our raw_data_info structure */
   if ((raw_data_info = g_try_new(raw_data_info_t,1)) == NULL) {
@@ -549,13 +554,18 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   /* block till the user closes the dialog */
   dialog_reply = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
-  
+
   /* and start loading in the file if we hit ok*/
   if (dialog_reply == GTK_RESPONSE_YES) {
+    /* the progress dialog */
+    progress_dialog = amitk_progress_dialog_new(NULL);
+  
     ds = amitk_data_set_import_raw_file(raw_data_info->filename,
 					raw_data_info->raw_format,
 					raw_data_info->data_dim,
-					raw_data_info->offset);
+					raw_data_info->offset,
+					amitk_progress_dialog_update,
+					progress_dialog);
     
     /* set remaining parameters */
     amitk_object_set_name(AMITK_OBJECT(ds),raw_data_info->name);
@@ -566,9 +576,26 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   } else /* we hit the cancel button */
     ds = NULL;
 
-  g_free(raw_data_info->filename);
-  g_free(raw_data_info->name);
-  g_free(raw_data_info); 
+  if (progress_dialog != NULL) {
+    g_signal_emit_by_name(G_OBJECT(progress_dialog), "delete_event", NULL, &return_val);
+    progress_dialog = NULL;
+  }
+
+  if (raw_data_info->filename != NULL) {
+    g_free(raw_data_info->filename);
+    raw_data_info->filename = NULL;
+  }
+
+  if (raw_data_info->name != NULL) {
+    g_free(raw_data_info->name);
+    raw_data_info->name = NULL;
+  }
+
+  if (raw_data_info != NULL) {
+    g_free(raw_data_info); 
+    raw_data_info = NULL;
+  }
+
   return ds; /* NULL if we hit cancel */
 
 }

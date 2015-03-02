@@ -55,15 +55,6 @@ typedef enum {
   NUM_CURSORS
 } ui_common_cursor_t;
 
-typedef struct {
-  GtkWidget * dialog;
-  GtkWidget * message_label;
-  GtkWidget * progress_bar;
-  GtkWindow * parent_window;
-  gboolean can_continue;
-  gint reference_count;
-} progress_t;
-
 #define UI_CURSOR_RENDERING_ROTATE_XY UI_CURSOR_OLD_ROI_SHIFT
 #define UI_CURSOR_RENDERING_ROTATE_Z UI_CURSOR_OLD_ROI_ROTATE
 
@@ -80,13 +71,6 @@ void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_cursor(GtkWidget * widget);
 
-
-
-progress_t * ui_common_progress_dialog_init(GtkWindow * parent_window);
-gboolean ui_common_progress_dialog_update(gchar * message, 
-					  gdouble fraction, 
-					  progress_t * progress_dialog);
-progress_t * ui_common_progress_dialog_free(progress_t * progress_dialog);
 
 
 /* external variables */

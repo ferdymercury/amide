@@ -47,6 +47,7 @@ gchar * amitk_fuse_type_explanations[] = {
 enum {
   STUDY_CHANGED,
   THICKNESS_CHANGED,
+  TIME_CHANGED,
   LAST_SIGNAL
 };
 
@@ -128,6 +129,13 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, thickness_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
+  study_signals[TIME_CHANGED] =
+    g_signal_new ("time_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, time_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
 
 }
 
@@ -160,7 +168,6 @@ static void study_init (AmitkStudy * study) {
 
 static void study_finalize (GObject * object) {
   AmitkStudy * study = AMITK_STUDY(object);
-
 
   if (study->creation_date != NULL) {
     g_free(study->creation_date);
@@ -200,6 +207,7 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   amitk_study_set_creation_date(dest_study, AMITK_STUDY_CREATION_DATE(src_object));
   dest_study->view_center = AMITK_STUDY(src_object)->view_center;
   amitk_study_set_view_thickness(dest_study, AMITK_STUDY_VIEW_THICKNESS(src_object));
+  dest_study->view_start_time = AMITK_STUDY_VIEW_START_TIME(src_object);
   dest_study->view_duration = AMITK_STUDY_VIEW_DURATION(src_object);
   dest_study->zoom = AMITK_STUDY_ZOOM(src_object);
   dest_study->fuse_type =AMITK_STUDY_FUSE_TYPE(src_object);
@@ -417,6 +425,7 @@ void amitk_study_set_view_start_time (AmitkStudy * study, const amide_time_t new
   if (!REAL_EQUAL(study->view_start_time, new_start)) {
     study->view_start_time = new_start;
     g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[TIME_CHANGED], 0);
   }
 
   return;
@@ -429,6 +438,7 @@ void amitk_study_set_view_duration (AmitkStudy * study, const amide_time_t new_d
   if (!REAL_EQUAL(study->view_duration, new_duration)) {
     study->view_duration = new_duration;
     g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[TIME_CHANGED], 0);
   }
 
   return;

@@ -595,6 +595,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 							  const gboolean inverse,
 							  void (* calculation)(),
 							  gpointer data) {
+
   AmitkPoint roi_pt, fine_ds_pt, far_ds_pt;
   amide_data_t value;
   amide_real_t voxel_fraction;

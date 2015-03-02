@@ -50,8 +50,17 @@ typedef enum {
   AMITK_OBJECT_TYPE_DATA_SET,
   AMITK_OBJECT_TYPE_FIDUCIAL_MARK,
   AMITK_OBJECT_TYPE_ROI,
+  AMITK_OBJECT_TYPE_VOLUME,
   AMITK_OBJECT_TYPE_NUM
 } AmitkObjectType;
+
+
+typedef enum {
+  AMITK_SELECTION_SELECTED_0,
+  AMITK_SELECTION_SELECTED_1,
+  AMITK_SELECTION_NUM,
+  AMITK_SELECTION_ALL,
+} AmitkSelection;
 
 
 struct _AmitkObject
@@ -60,6 +69,7 @@ struct _AmitkObject
 
   gchar * name;
 
+  gboolean selected[AMITK_SELECTION_NUM];
   AmitkObject * parent;
   GList * children;
 
@@ -70,13 +80,14 @@ struct _AmitkObjectClass
 {
   AmitkSpaceClass space_class;
 
-  void (* object_name_changed)      (AmitkObject * object);
-  AmitkObject * (* object_copy)     (const AmitkObject * object);
-  void (* object_copy_in_place)     (AmitkObject * dest_object, const AmitkObject * src_object);
-  void (* object_write_xml)         (const AmitkObject * object, xmlNodePtr nodes);
-  void (* object_read_xml)          (AmitkObject * object, xmlNodePtr nodes);
-  void (* object_add_child)         (AmitkObject * object, AmitkObject * child);
-  void (* object_remove_child)      (AmitkObject * object, AmitkObject * child);
+  void (* object_name_changed)          (AmitkObject * object);
+  gboolean (* object_selection_changed) (AmitkObject * object);
+  AmitkObject * (* object_copy)         (const AmitkObject * object);
+  void (* object_copy_in_place)         (AmitkObject * dest_object, const AmitkObject * src_object);
+  void (* object_write_xml)             (const AmitkObject * object, xmlNodePtr nodes);
+  void (* object_read_xml)              (AmitkObject * object, xmlNodePtr nodes);
+  void (* object_add_child)             (AmitkObject * object, AmitkObject * child);
+  void (* object_remove_child)          (AmitkObject * object, AmitkObject * child);
        
 };
 
@@ -93,6 +104,13 @@ void            amitk_object_copy_in_place           (AmitkObject * dest_object,
 						      const AmitkObject * src_object);
 void            amitk_object_set_name                (AmitkObject * object, 
 						      const gchar * new_name);
+gboolean        amitk_object_get_selected            (AmitkObject * object,
+						      const AmitkSelection which_selection);
+void            amitk_object_set_selected            (AmitkObject * object, 
+						      const gboolean selection, 
+						      const AmitkSelection which_selection);
+#define         amitk_object_select(obj, which)      (amitk_object_set_selected((obj), (TRUE), (which)))
+#define         amitk_object_unselect(obj, which)    (amitk_object_set_selected((obj), (FALSE), (which)))
 void            amitk_object_set_parent              (AmitkObject * object,
 						      AmitkObject * parent);
 void            amitk_object_add_child               (AmitkObject * object,
@@ -103,13 +121,23 @@ gboolean        amitk_object_remove_child            (AmitkObject * object,
 						      AmitkObject * child);
 gboolean        amitk_object_remove_children         (AmitkObject * object, 
 						      GList * children);
-AmitkObjectType amitk_object_get_object_type         (AmitkObject * object);
+gboolean amitk_object_compare_object_type            (AmitkObject * object, 
+						      AmitkObjectType type);
 AmitkObject *   amitk_object_get_parent_of_type      (AmitkObject * object,
 						      const AmitkObjectType type);
 GList *         amitk_object_get_children_of_type    (AmitkObject * object,
 						      const AmitkObjectType type,
 						      const gboolean recurse);
-
+gboolean        amitk_object_selected_children       (AmitkObject * object, 
+						      const AmitkSelection which_selection,
+						      gboolean recurse);
+GList *         amitk_object_get_selected_children   (AmitkObject * object,
+						      const AmitkSelection which_selection,
+						      const gboolean recurse);
+GList *         amitk_object_get_selected_children_of_type    (AmitkObject * object,
+							       const AmitkObjectType type,
+							       const AmitkSelection which_selection,
+							       const gboolean recurse);
 GList *         amitk_objects_ref                    (GList * objects);
 GList *         amitk_objects_unref                  (GList * objects);
 gint            amitk_objects_count                  (GList * objects);
@@ -118,6 +146,7 @@ gint            amitk_objects_count_pairs_by_name    (GList * objects1, GList * 
 void            amitk_objects_write_xml              (GList * objects, xmlNodePtr node_list);
 GList *         amitk_objects_read_xml               (xmlNodePtr node_list);
 const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);
+const gchar *   amitk_selection_get_name             (const AmitkSelection type);
 
 G_END_DECLS
 

@@ -44,6 +44,7 @@ amide_SOURCES = \
 	analysis.c \
 	analysis.h \
 	amitk_canvas.c \
+	amitk_canvas_object.c \
 	amitk_color_table.c \
 	amitk_data_set.c \
 	amitk_dir_sel.c \
@@ -52,6 +53,7 @@ amide_SOURCES = \
 	amitk_point.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
+	amitk_progress_dialog.c \
 	amitk_raw_data.c \
 	amitk_roi.c \
 	amitk_space_edit.c \
@@ -62,8 +64,8 @@ amide_SOURCES = \
 	amitk_volume.c \
 	cti_import.c \
 	cti_import.h \
-	idl_data_import.c \
-	idl_data_import.h \
+	fads.c \
+	fads.h \
 	image.c \
 	image.h \
 	legacy.c \
@@ -78,16 +80,20 @@ amide_SOURCES = \
 	raw_data_import.h \
 	render.c \
 	render.h \
-	ui_alignment_dialog.c \
-	ui_alignment_dialog.h \
+	tb_alignment.c \
+	tb_alignment.h \
+	tb_crop.c \
+	tb_crop.h \
+	tb_fads.c \
+	tb_fads.h \
+	tb_filter.c \
+	tb_filter.h \
+	tb_fly_through.c \
+	tb_fly_through.h \
+	tb_roi_analysis.c \
+	tb_roi_analysis.h \
 	ui_common.c \
 	ui_common.h \
-	ui_crop_dialog.c \
-	ui_crop_dialog.h \
-	ui_filter_dialog.c \
-	ui_filter_dialog.h \
-	ui_fly_through.c \
-	ui_fly_through.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
 	ui_render.c \
@@ -96,8 +102,6 @@ amide_SOURCES = \
 	ui_render_dialog.h \
 	ui_render_movie.c \
 	ui_render_movie.h \
-	ui_roi_analysis_dialog.c \
-	ui_roi_analysis_dialog.h \
 	ui_series.c \
 	ui_series.h \
 	ui_study.c \
@@ -116,6 +120,7 @@ amide_SOURCES = \
 AMITK_H_SOURCES = \
 	amide.h \
 	amitk_canvas.h \
+	amitk_canvas_object.h \
 	amitk_color_table.h \
 	amitk_dir_sel.h \
 	amitk_data_set.h \
@@ -123,6 +128,7 @@ AMITK_H_SOURCES = \
 	amitk_filter.h \
 	amitk_object.h \
 	amitk_object_dialog.h \
+	amitk_progress_dialog.h \
 	amitk_point.h \
 	amitk_raw_data.h \
 	amitk_roi.h \

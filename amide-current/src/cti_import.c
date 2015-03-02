@@ -42,7 +42,9 @@ static char * cti_data_types[] = {
   "Integer (32 bit), Big Endian" /* SunLong */
 }; /* NumMatrixDataTypes */
 
-AmitkDataSet * cti_import(const gchar * cti_filename) {
+AmitkDataSet * cti_import(const gchar * cti_filename, 
+			  gboolean (*update_func)(),
+			  gpointer update_data) {
 
   MatrixFile * cti_file=NULL;
   MatrixData * cti_subheader=NULL;
@@ -58,6 +60,11 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   AmitkFormat format;
   AmitkVoxel dim;
   AmitkScaling scaling;
+  div_t x;
+  gint divider;
+  gint t_times_z;
+  gboolean continue_work=TRUE;
+  gchar * temp_string;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("can't open file %s", cti_filename);
@@ -217,16 +224,22 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
 #ifdef AMIDE_DEBUG
   g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
-  free_matrix_data(cti_subheader);
-  cti_subheader = NULL;
   
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Importing CTI File:\n   %s", cti_filename);
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  t_times_z = dim.z*dim.t;
+  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+
 
   /* and load in the data */
   for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
 #ifdef AMIDE_DEBUG
     g_print("\tloading frame:\t%d",i.t);
 #endif
-    for (slice=0; slice < num_slices ; slice++) {
+    for (slice=0; (slice < num_slices) && (continue_work) ; slice++) {
       matnum=mat_numcod(i.t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
       
       /* read in the corresponding cti slice */
@@ -251,56 +264,57 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
 	break; /* should never get here */
       }
       
-      switch (format) {
-      case AMITK_FORMAT_SSHORT:
-	
-	/* save the scale factor */
-	j.x = j.y = 0;
-	j.z = slice;
-	j.t = i.t;
-	if (scaling == AMITK_SCALING_2D)
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
-	else if (slice == 0)
-	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
-	
-	/* copy the data into the volume */
-	/* note, we compensate here for the fact that we define 
-	   our origin as the bottom left, not top left like the CTI file */
-	for (i.z = slice*(ds->raw_data->dim.z/num_slices); 
-	     i.z < ds->raw_data->dim.z/num_slices + slice*(ds->raw_data->dim.z/num_slices); 
-	     i.z++) {
-	  for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	    for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+      for (i.z = slice*(dim.z/num_slices); 
+	   i.z < dim.z/num_slices + slice*(dim.z/num_slices); 
+	   i.z++) {
+
+	if (update_func != NULL) {
+	  x = div(i.t*dim.z+i.z,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
+	}
+
+	switch (format) {
+	case AMITK_FORMAT_SSHORT:
+	  
+	  /* save the scale factor */
+	  j.x = j.y = 0;
+	  j.z = slice;
+	  j.t = i.t;
+	  if (scaling == AMITK_SCALING_2D)
+	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  else if (slice == 0)
+	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  
+	  /* copy the data into the volume */
+	  /* note, we compensate here for the fact that we define 
+	     our origin as the bottom left, not top left like the CTI file */
+	  for (i.y = 0; i.y < dim.y; i.y++) 
+	    for (i.x = 0; i.x < dim.x; i.x++)
 	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
 		*(((amitk_format_SSHORT_t *) cti_slice->data_ptr) + 
-		  (ds->raw_data->dim.y*ds->raw_data->dim.x*
-		   (i.z-slice*(ds->raw_data->dim.z/num_slices))
-		   +ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)
+		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		   +dim.x*(dim.y-i.y-1)
 		   +i.x));
-	}
-	break;
-      case AMITK_FORMAT_FLOAT:
-	/* floating point data should use no scale factor */
-	
-	/* copy the data into the volume */
-	/* note, we compensate here for the fact that we define 
-	   our origin as the bottom left, not top left like the CTI file */
-	for (i.z = slice*(ds->raw_data->dim.z/num_slices); 
-	     i.z < ds->raw_data->dim.z/num_slices + slice*(ds->raw_data->dim.z/num_slices); 
-	     i.z++) {
-	  for (i.y = 0; i.y < ds->raw_data->dim.y; i.y++) 
-	    for (i.x = 0; i.x < ds->raw_data->dim.x; i.x++)
+	  break;
+	case AMITK_FORMAT_FLOAT:
+	  /* floating point data should use no scale factor */
+	  
+	  /* copy the data into the volume */
+	  /* note, we compensate here for the fact that we define 
+	     our origin as the bottom left, not top left like the CTI file */
+	  for (i.y = 0; i.y < dim.y; i.y++) 
+	    for (i.x = 0; i.x < dim.x; i.x++)
 	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
 		*(((amitk_format_FLOAT_t *) cti_slice->data_ptr) + 
-		  (ds->raw_data->dim.y*ds->raw_data->dim.x*
-		   (i.z-slice*(ds->raw_data->dim.z/num_slices))
-		   +ds->raw_data->dim.x*(ds->raw_data->dim.y-i.y-1)
+		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		   +dim.x*(dim.y-i.y-1)
 		   +i.x));
+	default:
+	  g_warning("unexpected case in %s at %d\n", __FILE__, __LINE__);
+	  goto error;
+	  break; 
 	}
-      default:
-	g_warning("unexpected case in %s at %d\n", __FILE__, __LINE__);
-	goto error;
-	break; 
       }
 
       free_matrix_data(cti_slice);
@@ -310,20 +324,29 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
 #endif
   }
 
-  /* garbage collection */
-  matrix_close(cti_file);
-  cti_file = NULL;
-
+  if (!continue_work) goto error;
 
   /* setup remaining volume parameters */
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
-  amitk_data_set_calc_frame_max_min(ds);
-  amitk_data_set_calc_global_max_min(ds); 
+  amitk_data_set_calc_max_min(ds, update_func, update_data);
+  goto function_end;
 
-  return ds;
+
 
  error:
+
+  if (ds != NULL) {
+    g_object_unref(ds);
+    ds = NULL;
+  }
+
+
+
+ function_end:
+
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
   if (cti_file != NULL)
     matrix_close(cti_file);
@@ -331,10 +354,9 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   if (cti_subheader != NULL)
     free_matrix_data(cti_subheader);
 
-  if (ds != NULL)
-    g_object_unref(ds);
 
-  return NULL;
+
+  return ds;
 
 }
 

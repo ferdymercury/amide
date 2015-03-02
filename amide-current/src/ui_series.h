@@ -1,7 +1,7 @@
 /* ui_series.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2002 Andy Loening
+ * Copyright (C) 2000-2003 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
  */
@@ -39,47 +39,10 @@
 
 typedef enum {PLANES, FRAMES} series_t;
 
-/* ui_series data structures */
-typedef struct ui_series_t {
-  GnomeApp * app; 
-  GList ** slices;
-  GList * objects;
-  AmitkDataSet * active_ds;
-  GnomeCanvas * canvas;
-  GnomeCanvasItem ** images;
-  GnomeCanvasItem ** captions;
-  GtkWidget * thresholds_dialog;
-  guint num_slices, rows, columns;
-  AmitkVolume * volume;
-  amide_time_t view_time;
-  AmitkFuseType fuse_type;
-  amide_real_t voxel_dim;
-  series_t type;
-  progress_t * progress_dialog;
-  gboolean in_generation;
-  gboolean quit_generation;
-
-  /* for "PLANES" series */
-  amide_time_t view_duration;
-  amide_real_t start_z;
-  amide_real_t z_point; /* current slice offset z component*/
-  amide_real_t end_z;
-
-  /* for "FRAMES" series */
-  guint view_frame;
-  amide_time_t start_time;
-  amide_time_t * frame_durations; /* an array of frame durations */
-
-  guint next_update;
-  guint idle_handler_id;
-
-  guint reference_count;
-} ui_series_t;
-
 /* external functions */
-void ui_series_create(AmitkStudy * study,GList * objects, AmitkDataSet * active_ds,
-		      AmitkView view, AmitkVolume * canvas_view, series_t series_type);
-
+void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
+		      AmitkView view, AmitkVolume * canvas_view, 
+		      gint roi_width, GdkLineStyle line_style, series_t series_type);
 
 
 #endif /* UI_SERIES_H */

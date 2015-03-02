@@ -113,7 +113,9 @@ void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,
 						   gpointer data);
 void            amitk_roi_erase_volume            (const AmitkRoi * roi, 
 						   AmitkDataSet * ds,
-						   const gboolean outside );
+						   const gboolean outside,
+						   gboolean (*update_func)(),
+						   gpointer update_data);
 const gchar *   amitk_roi_type_get_name           (const AmitkRoiType roi_type);
 
 amide_real_t    amitk_rois_get_max_min_voxel_size (GList * objects);

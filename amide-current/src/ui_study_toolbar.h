@@ -25,4 +25,4 @@
 
 
 /* external functions */
-void ui_study_toolbar_create(ui_study_t * ui_study);
+void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study);

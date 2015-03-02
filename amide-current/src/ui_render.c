@@ -35,6 +35,7 @@
 #include "ui_render_dialog.h"
 #include "ui_render_movie.h"
 #include "gtkdial.h"
+#include "amitk_progress_dialog.h"
 
 
 
@@ -61,9 +62,7 @@ static void close_cb(GtkWidget* widget, gpointer data);
 
 
 static ui_render_t * ui_render_init(GnomeApp * app,
-				    GList * objects, 
-				    amide_time_t start, 
-				    amide_time_t duration,
+				    AmitkStudy * study,
 				    gboolean zero_fill,
 				    gboolean conserve_memory);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
@@ -86,24 +85,27 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   GnomeCanvasPoints * line_points;
   guint i, j,k;
   rgba_t color;
-  static amide_real_t dim;
-  static AmitkCanvasPoint last_cpoint, initial_cpoint, center_cpoint;
+  gdouble dim;
+  gdouble height, width;
+  static AmitkPoint prev_theta;
+  static AmitkPoint theta;
+  static AmitkCanvasPoint initial_cpoint, center_cpoint;
   static gboolean dragging = FALSE;
   static GnomeCanvasItem * rotation_box[8];
   static AmitkPoint box_point[8];
-  static AmitkPoint theta;
 
   canvas = GNOME_CANVAS(widget);
 
   /* get the location of the event, and convert it to the canvas coordinates */
   gnome_canvas_w2c_d(canvas, event->button.x, event->button.y, &canvas_cpoint.x, &canvas_cpoint.y);
-  //g_print("location %5.3f %5.3f\n",canvas_cpoint.x, canvas_cpoint.y);
-
-  dim = MIN(gdk_pixbuf_get_width(ui_render->pixbuf),
-	    gdk_pixbuf_get_height(ui_render->pixbuf));
+  height = gdk_pixbuf_get_height(ui_render->pixbuf);
+  width = gdk_pixbuf_get_width(ui_render->pixbuf);
+  dim = MIN(width, height);
   temp_point.x = temp_point.y = temp_point.z = -dim/2.0;
   amitk_space_set_offset(ui_render->box_space, temp_point);
+  //  amitk_space_set_axes(ui_render->box_space, base_axes, AMITK_SPACE_OFFSET(ui_render->box_space));
   amitk_space_set_axes(ui_render->box_space, base_axes, AMITK_SPACE_OFFSET(ui_render->box_space));
+
 
   /* switch on the event which called this */
   switch (event->type)
@@ -124,9 +126,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     case GDK_BUTTON_PRESS:
       if ((event->button.button == 1) || (event->button.button == 2)) {
 	dragging = TRUE;
-	initial_cpoint = last_cpoint = canvas_cpoint;
-	theta = zero_point;
+	initial_cpoint = canvas_cpoint;
 	center_cpoint.x = center_cpoint.y = dim/2.0;
+	prev_theta = zero_point;
 
 	/* figure out the eight vertices */
 	for (i=0; i<8; i++) {
@@ -181,11 +183,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     
     case GDK_MOTION_NOTIFY:
       if (dragging && (event->motion.state & (GDK_BUTTON1_MASK | GDK_BUTTON2_MASK))) {
-	diff_cpoint = canvas_point_sub(initial_cpoint, canvas_cpoint);
 
 	if (event->motion.state & GDK_BUTTON1_MASK) {
+	  diff_cpoint = canvas_point_sub(initial_cpoint, canvas_cpoint);
 	  theta.y = M_PI * diff_cpoint.x / dim;
-	  theta.x = M_PI * -diff_cpoint.y / dim; /* compensate for y's origin being top */
+	  theta.x = M_PI * -diff_cpoint.y / dim; 
 
 	  /* rotate the axis */
 	  amitk_space_rotate_on_vector(ui_render->box_space,
@@ -194,6 +196,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	  amitk_space_rotate_on_vector(ui_render->box_space,
 				       amitk_space_get_axis(ui_render->box_space, AMITK_AXIS_Y),
 				       theta.y, zero_point);
+
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Y, prev_theta.y);
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_X, -prev_theta.x);
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_X, theta.x);
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Y, -theta.y);
 	} else {/* button 2 */
 	  temp_cpoint1 = canvas_point_sub(initial_cpoint,center_cpoint);
 	  temp_cpoint2 = canvas_point_sub(canvas_cpoint,center_cpoint);
@@ -203,11 +210,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 			 (canvas_point_mag(temp_cpoint1) * canvas_point_mag(temp_cpoint2)));
 	  
 	  /* correct for the fact that acos is always positive by using the cross product */
-	  if ((temp_cpoint1.x*temp_cpoint2.y-temp_cpoint1.y*temp_cpoint2.x) > 0.0)
+	  if ((temp_cpoint1.x*temp_cpoint2.y-temp_cpoint1.y*temp_cpoint2.x) < 0.0)
 	    theta.z = -theta.z;
 	  amitk_space_rotate_on_vector(ui_render->box_space,
 				       amitk_space_get_axis(ui_render->box_space, AMITK_AXIS_Z),
-				       theta.z, zero_point);
+				       -theta.z, zero_point);
+
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Z, -prev_theta.z);
+	  renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Z, theta.z);
 	}
 	/* recalculate the offset */
 	temp_point.x = temp_point.y = temp_point.z = -dim/2.0;
@@ -244,9 +254,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	for (i=0; i<8; i++)
 	  box_point[i] = amitk_space_s2b(ui_render->box_space, box_point[i]);
 
+	if (ui_render->update_without_release) 
+	  ui_render_add_update(ui_render); 
 
-	last_cpoint = canvas_cpoint;
-      }	
+	prev_theta = theta;
+      }
 
       break;
 
@@ -259,13 +271,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	for (i=0; i<8; i++)
 	  gtk_object_destroy(GTK_OBJECT(rotation_box[i]));
 
-	/* update the rotation values */
-	renderings_set_rotation(ui_render->renderings, AMITK_AXIS_X, theta.x);
-	renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Y, -theta.y); 
-	renderings_set_rotation(ui_render->renderings, AMITK_AXIS_Z, -theta.z); 
-
 	/* render now if appropriate*/
-	ui_render_add_update(ui_render); 
+	if (!ui_render->update_without_release) 
+	  ui_render_add_update(ui_render); 
 
       }
       break;
@@ -542,6 +550,8 @@ static void menus_create(ui_render_t * ui_render) {
 /* destroy a ui_render data structure */
 static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
+  gboolean return_val;
+
   if (ui_render == NULL)
     return ui_render;
 
@@ -573,7 +583,7 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
     }
     
     if (ui_render->progress_dialog != NULL) {
-      ui_common_progress_dialog_free(ui_render->progress_dialog);
+      g_signal_emit_by_name(G_OBJECT(ui_render->progress_dialog), "delete_event", NULL, &return_val);
       ui_render->progress_dialog = NULL;
     }
 
@@ -589,13 +599,12 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
 /* allocate and initialize a ui_render data structure */
 static ui_render_t * ui_render_init(GnomeApp * app,
-				    GList * objects, 
-				    amide_time_t start, 
-				    amide_time_t duration,
+				    AmitkStudy * study,
 				    gboolean zero_fill,
 				    gboolean conserve_memory) {
 
   ui_render_t * ui_render;
+  GList * visible_objects;
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
@@ -621,15 +630,17 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->front_factor = RENDERING_DEFAULT_FRONT_FACTOR;
   ui_render->density = RENDERING_DEFAULT_DENSITY;
   ui_render->zoom = RENDERING_DEFAULT_ZOOM;
-  ui_render->start = start;
-  ui_render->duration = duration;
+  ui_render->start = AMITK_STUDY_VIEW_START_TIME(study);
+  ui_render->duration = AMITK_STUDY_VIEW_DURATION(study);
   ui_render->box_space = amitk_space_new();
-  ui_render->progress_dialog = ui_common_progress_dialog_init(GTK_WINDOW(ui_render->app));
+  ui_render->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render->app));
   ui_render->next_update= UPDATE_NONE;
   ui_render->idle_handler_id = 0;
 
   /* load in saved preferences */
   gnome_config_push_prefix("/"PACKAGE"/");
+
+  ui_render->update_without_release = gnome_config_get_int("RENDERING/UpdateWithoutRelease");
 
   ui_render->stereo_eye_width = gnome_config_get_int("RENDERING/EyeWidth");
   if (ui_render->stereo_eye_width == 0)  /* if no config file, put in sane value */
@@ -642,9 +653,14 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   gnome_config_pop_prefix();
 
   /* initialize the rendering contexts */
-  ui_render->renderings = renderings_init(objects, start, duration, zero_fill, conserve_memory,
-					  ui_common_progress_dialog_update, 
+  visible_objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
+  ui_render->renderings = renderings_init(visible_objects, 
+					  ui_render->start, 
+					  ui_render->duration, 
+					  zero_fill, conserve_memory,
+					  amitk_progress_dialog_update,
 					  ui_render->progress_dialog);
+  amitk_objects_unref(visible_objects);
 
 
   return ui_render;
@@ -680,7 +696,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
   if (!renderings_reload_objects(ui_render->renderings, ui_render->start,
 				 ui_render->duration,
-				 ui_common_progress_dialog_update, 
+				 amitk_progress_dialog_update, 
 				 ui_render->progress_dialog)) {
     return_val=FALSE;
     goto function_end;
@@ -739,8 +755,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
 
 /* function that sets up the rendering dialog */
-void ui_render_create(GList * objects, amide_time_t start, amide_time_t duration, 
-		      gboolean zero_fill, gboolean conserve_memory) {
+void ui_render_create(AmitkStudy * study, gboolean zero_fill, gboolean conserve_memory) {
   
   GtkWidget * packing_table;
   GtkWidget * check_button;
@@ -759,12 +774,11 @@ void ui_render_create(GList * objects, amide_time_t start, amide_time_t duration
   gboolean return_val;
 
   /* sanity checks */
-  g_return_if_fail(objects != NULL);
+  g_return_if_fail(AMITK_IS_STUDY(study));
 
   app = gnome_app_new(PACKAGE, "Rendering Window");
   gtk_window_set_resizable(GTK_WINDOW(app), TRUE);
-  ui_render = ui_render_init(GNOME_APP(app),objects, start, duration, 
-			     zero_fill,conserve_memory);
+  ui_render = ui_render_init(GNOME_APP(app), study, zero_fill,conserve_memory);
 
   /* check we actually have something */
   if (ui_render->renderings == NULL) {

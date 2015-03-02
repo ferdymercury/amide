@@ -108,7 +108,10 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
   return return_value;
 }
 
-AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t submethod) {
+AmitkDataSet * medcon_import(const gchar * filename, 
+			     libmdc_import_method_t submethod,
+			     gboolean (*update_func)(),
+			     gpointer update_data) {
 
   FILEINFO medcon_file_info;
   gint error;
@@ -122,6 +125,11 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
   AmitkVoxel dim;
   AmitkFormat format;
   AmitkScaling scaling;
+  div_t x;
+  gint divider;
+  gint t_times_z;
+  gboolean continue_work=TRUE;
+  gchar * temp_string;
   
   /* setup some defaults */
   XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
@@ -331,6 +339,14 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
   if (!EQUAL_ZERO(medcon_file_info.image[0].rescale_intercept))
     g_warning("XmedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off\n");
 
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf("Importing File Through (X)MedCon:\n   %s", filename);
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  t_times_z = dim.z*dim.t;
+  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+
   /* and load in the data */
   for (i.t = 0; i.t <AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
 #ifdef AMIDE_DEBUG
@@ -345,7 +361,13 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
     if (ds->frame_duration[i.t] < SMALL_TIME) ds->frame_duration[i.t] = SMALL_TIME;
 
     /* copy the data into the data set */
-    for (i.z = 0 ; i.z < ds->raw_data->dim.z; i.z++) {
+    for (i.z = 0 ; (i.z < ds->raw_data->dim.z) && (continue_work); i.z++) {
+
+      if (update_func != NULL) {
+	x = div(i.t*dim.z+i.z,divider);
+	if (x.rem == 0)
+	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
+      }
 
       switch(ds->raw_data->format) {
       case AMITK_FORMAT_UBYTE:
@@ -465,29 +487,34 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
 #endif
   }    
 
-
-  /* and done with the medcon file info structure */
-  MdcCleanUpFI(&medcon_file_info);
-
-
   /* setup remaining parameters */
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
-  amitk_data_set_calc_frame_max_min(ds);
-  amitk_data_set_calc_global_max_min(ds); 
+  amitk_data_set_calc_max_min(ds, update_func, update_data);
   amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
+  goto function_end;
 
-  return ds;
+
+
+
 
  error:
+  if (ds != NULL) {
+    g_object_unref(ds);
+    ds = NULL;
+  }
+
+
+
+
+ function_end:
 
   MdcCleanUpFI(&medcon_file_info);
 
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
-  if (ds != NULL)
-    g_object_unref(ds);
-
-  return NULL;
+  return ds;
 }
 
 

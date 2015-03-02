@@ -33,9 +33,7 @@
 
 enum {
   HELP_EVENT,
-  SELECT_OBJECT,
-  UNSELECT_OBJECT,
-  MAKE_ACTIVE_OBJECT,
+  ACTIVATE_OBJECT,
   POPUP_OBJECT,
   ADD_OBJECT,
   DELETE_OBJECT,
@@ -43,8 +41,8 @@ enum {
 } amitk_tree_signals;
 
 enum {
-  COLUMN_VISIBLE,
-  COLUMN_VISIBLE_2,
+  COLUMN_VISIBLE_0,
+  COLUMN_VISIBLE_1,
   COLUMN_EXPANDER,
   COLUMN_ICON,
   COLUMN_NAME,
@@ -80,10 +78,14 @@ static void tree_rows_reordered_cb(GtkTreeModel *tree_model,
 				   GtkTreeIter  *iter,
 				   gint         *new_order,
 				   gpointer     amitk_tree);
-static void tree_item_update_cb(AmitkObject * object, gpointer tree);
+static void tree_object_update_cb(AmitkObject * object, gpointer tree);
+static void tree_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
+static void tree_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
 static gboolean tree_find_recurse(GtkTreeModel *model, GtkTreePath *path, 
 				  GtkTreeIter *iter, gpointer data);
 static gboolean tree_find_object(AmitkTree * tree, AmitkObject * object, GtkTreeIter * iter);
+static void tree_add_object(AmitkTree * tree, AmitkObject * object);
+static void tree_remove_object(AmitkTree * tree, AmitkObject * object);
 
 static GtkTreeViewClass *parent_class;
 static guint tree_signals[LAST_SIGNAL];
@@ -144,31 +146,11 @@ static void tree_class_init (AmitkTreeClass *klass)
 		  amitk_marshal_NONE__ENUM, 
 		  G_TYPE_NONE, 1,
 		  AMITK_TYPE_HELP_INFO);
-  tree_signals[SELECT_OBJECT] =
-    g_signal_new ("select_object",
+  tree_signals[ACTIVATE_OBJECT] =
+    g_signal_new ("activate_object",
 		  G_TYPE_FROM_CLASS(klass),
 		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET (AmitkTreeClass, select_object),
-		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT_ENUM,
-		  G_TYPE_NONE, 2,
-		  AMITK_TYPE_OBJECT, 
-		  AMITK_TYPE_VIEW_MODE);
-  tree_signals[UNSELECT_OBJECT] =
-    g_signal_new ("unselect_object",
-		  G_TYPE_FROM_CLASS(klass),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET (AmitkTreeClass, unselect_object),
-		  NULL, NULL,
-		  amitk_marshal_NONE__OBJECT_ENUM,
-		  G_TYPE_NONE, 2,
-		  AMITK_TYPE_OBJECT,
-		  AMITK_TYPE_VIEW_MODE);
-  tree_signals[MAKE_ACTIVE_OBJECT] =
-    g_signal_new ("make_active_object",
-		  G_TYPE_FROM_CLASS(klass),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET (AmitkTreeClass, make_active_object),
+		  G_STRUCT_OFFSET (AmitkTreeClass, activate_object),
 		  NULL, NULL,
 		  amitk_marshal_NONE__OBJECT,
 		  G_TYPE_NONE, 1,
@@ -207,10 +189,7 @@ static void tree_class_init (AmitkTreeClass *klass)
 
 static void tree_init (AmitkTree * tree)
 {
-  AmitkViewMode i_view_mode;
-
-  for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
-    tree->visible_objects[i_view_mode] = NULL;
+  tree->study = NULL;
   tree->active_object = NULL;
   tree->mouse_x = 0;
   tree->mouse_y = 0;
@@ -221,22 +200,25 @@ static void tree_init (AmitkTree * tree)
 static void tree_destroy (GtkObject * object) {
 
   AmitkTree * tree;
-  AmitkViewMode i_view_mode;
 
   g_return_if_fail (object != NULL);
   g_return_if_fail (AMITK_IS_TREE (object));
 
   tree =  AMITK_TREE (object);
 
-
-  for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
-    while (tree->visible_objects[i_view_mode] != NULL)
-      if (!amitk_tree_unselect_object(tree, tree->visible_objects[i_view_mode]->data, i_view_mode))
-	break; /* guard against endless loop*/
+  if (tree->current_path != NULL) {
+    gtk_tree_path_free(tree->current_path);
+    tree->current_path = NULL;
+  }
 
   if (tree->active_object != NULL) {
     g_object_unref(tree->active_object);
     tree->active_object = NULL;
+  }
+
+  if (tree->study != NULL) {
+    tree_remove_object(tree, AMITK_OBJECT(tree->study));
+    tree->study = NULL;
   }
 
   if (GTK_OBJECT_CLASS (parent_class)->destroy)
@@ -345,8 +327,8 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
       gboolean make_active = FALSE;
       gboolean popup = FALSE;
       gboolean add_object = FALSE;
-      gboolean visible;
-      gboolean visible_2;
+      gboolean visible_0;
+      gboolean visible_1;
       AmitkObjectType add_type = -1;
       AmitkObject * object=NULL;
       AmitkViewMode view_mode;
@@ -354,10 +336,10 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
       model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
       gtk_tree_model_get_iter(model, &iter, path);
       gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, 
-			 COLUMN_VISIBLE, &visible, COLUMN_VISIBLE_2, &visible_2, -1);
+			 COLUMN_VISIBLE_0, &visible_0, COLUMN_VISIBLE_1, &visible_1, -1);
       
       if (column == AMITK_TREE(tree)->linked_column) {
-	visible = visible_2;
+	visible_0 = visible_1;
 	view_mode = AMITK_VIEW_MODE_LINKED;
       } else {
 	view_mode = AMITK_VIEW_MODE_SINGLE;
@@ -367,7 +349,7 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
 	
       case 1: /* left button */
 	if (!AMITK_IS_STUDY(object)) {
-	  if (visible)
+	  if (visible_0)
 	    unselect = TRUE;
 	  else
 	    select = TRUE;
@@ -376,7 +358,7 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
 	
       case 2: /* middle button */
 	make_active = TRUE;
-	if ((!visible) && (!visible_2))
+	if ((!visible_0) && (!visible_1))
 	  select = TRUE;
 	break;
 	
@@ -401,13 +383,12 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
       }
       
       if (select)
-	amitk_tree_select_object(AMITK_TREE(tree), object, view_mode);
+	amitk_object_select(object, view_mode);
       else if (unselect) 
-	amitk_tree_unselect_object(AMITK_TREE(tree), object, view_mode);
-      
-      
+	amitk_object_unselect(object, view_mode);
+
       if (make_active)
-	g_signal_emit(G_OBJECT(tree), tree_signals[MAKE_ACTIVE_OBJECT], 0,object);
+	g_signal_emit(G_OBJECT(tree), tree_signals[ACTIVATE_OBJECT], 0,object);
       
       if (popup)
 	g_signal_emit(G_OBJECT(tree), tree_signals[POPUP_OBJECT], 0, object);
@@ -549,7 +530,7 @@ static void tree_rows_reordered_cb(GtkTreeModel *tree_model,
   return;
 }
 
-static void tree_item_update_cb(AmitkObject * object, gpointer data) {
+static void tree_object_update_cb(AmitkObject * object, gpointer data) {
 
   AmitkTree * tree = data;
   GtkTreeIter iter;
@@ -564,13 +545,47 @@ static void tree_item_update_cb(AmitkObject * object, gpointer data) {
     pixbuf = image_get_object_pixbuf(object);
     gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
 		       COLUMN_ICON, pixbuf,
-		       COLUMN_NAME, AMITK_OBJECT_NAME(object), -1);
+		       COLUMN_NAME, AMITK_OBJECT_NAME(object), 
+		       COLUMN_VISIBLE_0, amitk_object_get_selected(object, AMITK_VIEW_MODE_SINGLE),
+		       COLUMN_VISIBLE_1, amitk_object_get_selected(object, AMITK_VIEW_MODE_LINKED),
+		       -1);
     g_object_unref(pixbuf);
   }
+
+  if (tree->active_object == object) {
+    if (!amitk_object_get_selected(object, AMITK_SELECTION_ALL)) /* we're unselecting the active object */
+      g_signal_emit(G_OBJECT(tree), tree_signals[ACTIVATE_OBJECT], 0,NULL);
+  } else if (tree->active_object == NULL) { /* currently no active object */
+    if (amitk_object_get_selected(object, AMITK_SELECTION_ALL)) /* we've selected something */
+      g_signal_emit(G_OBJECT(tree), tree_signals[ACTIVATE_OBJECT], 0,object);
+  }
+      
 
   return;
 }
 
+static void tree_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer data) {
+
+  AmitkTree * tree = data;
+
+  g_return_if_fail(AMITK_IS_TREE(tree));
+  g_return_if_fail(AMITK_IS_OBJECT(child));
+
+  tree_add_object(AMITK_TREE(tree), child);
+
+  return;
+}
+
+static void tree_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer data) {
+  AmitkTree * tree = data;
+
+  g_return_if_fail(AMITK_IS_TREE(tree));
+  g_return_if_fail(AMITK_IS_OBJECT(child));
+
+  tree_remove_object(AMITK_TREE(tree), child);
+
+  return;
+}
 
 static gboolean tree_find_recurse(GtkTreeModel *model, GtkTreePath *path, 
 				  GtkTreeIter *iter, gpointer data) {
@@ -612,6 +627,100 @@ static gboolean tree_find_object(AmitkTree * tree, AmitkObject * object, GtkTree
 }
 
 
+static void tree_add_object(AmitkTree * tree, AmitkObject * object) {
+
+  GList * children;
+  GtkTreeIter parent_iter;
+  GtkTreeIter iter;
+  GtkTreeModel * model;
+  GdkPixbuf * pixbuf;
+
+  g_object_ref(object); /* add a reference */
+
+  if (AMITK_IS_STUDY(object)) { /* save a ref to a study object */
+    if (tree->study != NULL) {
+      tree_remove_object(tree, AMITK_OBJECT(tree->study));
+    }
+    tree->study = AMITK_STUDY(object);
+  }
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
+
+  if (AMITK_OBJECT_PARENT(object) == NULL) 
+    gtk_tree_store_append (GTK_TREE_STORE(model), &iter, NULL);  /* Acquire a top-level iterator */
+  else {
+    if (tree_find_object(tree, AMITK_OBJECT_PARENT(object), &parent_iter))
+      gtk_tree_store_append (GTK_TREE_STORE(model), &iter, &parent_iter);
+    else
+      g_return_if_reached();
+  }
+
+  pixbuf = image_get_object_pixbuf(object);
+
+  gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+		     COLUMN_VISIBLE_0, amitk_object_get_selected(object, AMITK_VIEW_MODE_SINGLE),
+		     COLUMN_VISIBLE_1, amitk_object_get_selected(object, AMITK_VIEW_MODE_LINKED),
+		     COLUMN_EXPANDER, "*",
+		     COLUMN_ICON, pixbuf,
+		     COLUMN_NAME, AMITK_OBJECT_NAME(object),
+		     COLUMN_OBJECT, object, -1);
+  g_object_unref(pixbuf);
+
+  g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(tree_object_update_cb), tree);
+  g_signal_connect(G_OBJECT(object), "object_selection_changed", G_CALLBACK(tree_object_update_cb), tree);
+  if (AMITK_IS_DATA_SET(object)) {
+    g_signal_connect(G_OBJECT(object), "modality_changed", G_CALLBACK(tree_object_update_cb), tree);
+    g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(tree_object_update_cb), tree);
+  } else if (AMITK_IS_ROI(object)) {
+    g_signal_connect(G_OBJECT(object), "roi_type_changed", G_CALLBACK(tree_object_update_cb), tree);
+  }
+  g_signal_connect(G_OBJECT(object), "object_add_child", G_CALLBACK(tree_object_add_child_cb), tree);
+  g_signal_connect(G_OBJECT(object), "object_remove_child", G_CALLBACK(tree_object_remove_child_cb), tree);
+
+  /* add children */
+  children = AMITK_OBJECT_CHILDREN(object);
+  while (children != NULL) {
+      tree_add_object(tree, children->data);
+      children = children->next;
+  }
+
+
+}
+
+static void tree_remove_object(AmitkTree * tree, AmitkObject * object) {
+
+  GList * children;
+  GtkTreeIter iter;
+  GtkTreeModel * model;
+
+  g_return_if_fail(AMITK_IS_TREE(tree));
+  g_return_if_fail(tree_find_object(tree, object, &iter)); /* shouldn't fail */
+
+  /* unselect the object */
+  amitk_object_unselect(object, AMITK_SELECTION_ALL);
+
+  /* recursive remove children */
+  children = AMITK_OBJECT_CHILDREN(object);
+  while (children != NULL) {
+    tree_remove_object(tree, children->data);
+    children = children->next;
+  }
+
+  /* disconnect the object's signals */
+  g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_object_update_cb), tree);
+  g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_object_add_child_cb), tree);
+  g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_object_remove_child_cb), tree);
+  
+  /* remove the object */
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
+  gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
+  
+  /* and unref */
+  g_object_unref(object);
+
+  return;
+}
+
+
 GtkWidget* amitk_tree_new (void) {
 
   AmitkTree * tree;
@@ -639,12 +748,12 @@ GtkWidget* amitk_tree_new (void) {
 
   renderer = gtk_cell_renderer_toggle_new ();
   column = gtk_tree_view_column_new_with_attributes("vis. 1", renderer, /* "visible" */
-						    "active", COLUMN_VISIBLE, NULL);
+						    "active", COLUMN_VISIBLE_0, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (tree), column);
 
   renderer = gtk_cell_renderer_toggle_new ();
-  tree->linked_column = gtk_tree_view_column_new_with_attributes("vis. 2", renderer, /* "visible_2" */
-						    "active", COLUMN_VISIBLE_2, NULL);
+  tree->linked_column = gtk_tree_view_column_new_with_attributes("vis. 2", renderer, /* "visible #2" */
+						    "active", COLUMN_VISIBLE_1, NULL);
 
   renderer = gtk_cell_renderer_text_new ();
   column = gtk_tree_view_column_new_with_attributes("", renderer, /* "expand "*/
@@ -668,105 +777,36 @@ GtkWidget* amitk_tree_new (void) {
   return GTK_WIDGET (tree);
 }
 
-void amitk_tree_add_object(AmitkTree * tree, AmitkObject * object, gboolean expand_parent) {
 
-  GList * children;
-  GtkTreeIter parent_iter;
+void amitk_tree_set_study(AmitkTree * tree, AmitkStudy * study) {
+
+  g_return_if_fail(AMITK_IS_TREE(tree));
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  tree_add_object(tree, AMITK_OBJECT(study));
+
+  return;
+}
+
+void amitk_tree_expand_object(AmitkTree * tree, AmitkObject * object) {
+
   GtkTreeIter iter;
   GtkTreeModel * model;
   GtkTreePath * path;
-  GdkPixbuf * pixbuf;
 
   g_return_if_fail(AMITK_IS_TREE(tree));
+  g_return_if_fail(AMITK_IS_OBJECT(object));
 
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
 
-  if (AMITK_OBJECT_PARENT(object) == NULL)
-    gtk_tree_store_append (GTK_TREE_STORE(model), &iter, NULL);  /* Acquire a top-level iterator */
-  else {
-    if (tree_find_object(tree, AMITK_OBJECT_PARENT(object), &parent_iter))
-      gtk_tree_store_append (GTK_TREE_STORE(model), &iter, &parent_iter);
-    else
-      g_return_if_reached();
-  }
-
-  pixbuf = image_get_object_pixbuf(object);
-
-  gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
-		     COLUMN_VISIBLE, AMITK_IS_STUDY(object),
-		     COLUMN_VISIBLE_2, AMITK_IS_STUDY(object),
-		     COLUMN_EXPANDER, "*",
-		     COLUMN_ICON, pixbuf,
-		     COLUMN_NAME, AMITK_OBJECT_NAME(object),
-		     COLUMN_OBJECT, object, -1);
-  g_object_unref(pixbuf);
-
-  g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(tree_item_update_cb), tree);
-  if (AMITK_IS_DATA_SET(object)) {
-    g_signal_connect(G_OBJECT(object), "modality_changed", G_CALLBACK(tree_item_update_cb), tree);
-    g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(tree_item_update_cb), tree);
-  } else if (AMITK_IS_ROI(object))
-    g_signal_connect(G_OBJECT(object), "roi_type_changed", G_CALLBACK(tree_item_update_cb), tree);
-
-  if (expand_parent) {
-    if (AMITK_OBJECT_PARENT(object) != NULL) {
-      path = gtk_tree_model_get_path(model, &parent_iter);
-      gtk_tree_view_expand_row(GTK_TREE_VIEW(tree), path, FALSE);
-      gtk_tree_path_free(path);
-    }
-  }
-
-
-  /* add children */
-  children = AMITK_OBJECT_CHILDREN(object);
-  while (children != NULL) {
-      amitk_tree_add_object(tree, children->data, expand_parent);
-      children = children->next;
-  }
-
-  return;
-}
-
-void amitk_tree_remove_object(AmitkTree * tree, AmitkObject * object) {
-
-  GList * children;
-  GtkTreeIter iter;
-  GtkTreeModel * model;
-  AmitkViewMode i_view_mode;
-
-  g_return_if_fail(AMITK_IS_TREE(tree));
-
   if (tree_find_object(tree, object, &iter)) {
-
-    /* make sure it and it's children are unselectet */
-    for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
-      amitk_tree_unselect_object(tree, object, i_view_mode);
-
-    /* recursive remove children */
-    children = AMITK_OBJECT_CHILDREN(object);
-    while (children != NULL) {
-      amitk_tree_remove_object(tree, children->data);
-      children = children->next;
-    }
-
-    /* disconnect the object's signals */
-    g_signal_handlers_disconnect_by_func(G_OBJECT(object), G_CALLBACK(tree_item_update_cb), tree);
-
-    /* close down the object's dialog if it's up */
-    if (object->dialog != NULL) {
-      gtk_widget_destroy(GTK_WIDGET(object->dialog));
-      object->dialog = NULL;
-    }
-
-    /* remove the object */
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
-    gtk_tree_store_remove(GTK_TREE_STORE(model), &iter);
-
+    path = gtk_tree_model_get_path(model, &iter);
+    gtk_tree_view_expand_row(GTK_TREE_VIEW(tree), path, FALSE);
+    gtk_tree_path_free(path);
   }
 
   return;
 }
-
 
 
 void amitk_tree_set_active_object(AmitkTree * tree, AmitkObject * object) {
@@ -807,88 +847,16 @@ void amitk_tree_set_active_object(AmitkTree * tree, AmitkObject * object) {
 }
 
 
-void amitk_tree_select_object (AmitkTree * tree, AmitkObject * object, AmitkViewMode view_mode) {
-
-  GtkTreeIter iter;
-  GtkTreeModel * model;
-
-  g_return_if_fail(AMITK_IS_TREE(tree));
-
-  if (tree_find_object(tree, object, &iter)) {
-
-    /* only do stuff if it's not selected */
-    if (g_list_index(tree->visible_objects[view_mode], object) < 0) {
-      g_object_ref(object);
-      tree->visible_objects[view_mode] = g_list_append(tree->visible_objects[view_mode], object);
-      model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
-      
-      if (view_mode == AMITK_VIEW_MODE_SINGLE)
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_VISIBLE, TRUE, -1);
-      else /* AMITK_VIEW_MODE_LINKED */
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_VISIBLE_2, TRUE, -1);
-      
-      g_signal_emit(G_OBJECT(tree), tree_signals[SELECT_OBJECT], 0, object, view_mode);
-    }
-  }
-
-  return;
-}
-
-gboolean amitk_tree_unselect_object(AmitkTree * tree, AmitkObject * object, AmitkViewMode view_mode) {
-
-
-  GtkTreeIter iter;
-  GtkTreeModel * model;
-  GList * children;
-
-  g_return_val_if_fail(AMITK_IS_TREE(tree), FALSE);
-
-  if (tree_find_object(tree, object, &iter)) {
-
-    /* only do stuff if it's selected */
-    if (g_list_index(tree->visible_objects[view_mode], object) >= 0) {
-
-      /* first recurse */
-      children = AMITK_OBJECT_CHILDREN(object);
-      while (children != NULL) {
-	amitk_tree_unselect_object(tree, children->data, view_mode);
-	children = children->next;
-      }
-      
-      /* now unselect */
-      tree->visible_objects[view_mode] = g_list_remove(tree->visible_objects[view_mode], object);
-      
-      model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
-      if (view_mode == AMITK_VIEW_MODE_SINGLE)
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_VISIBLE, FALSE, -1);
-      else /* AMITK_VIEW_MODE_LINKED */
-	gtk_tree_store_set(GTK_TREE_STORE(model), &iter, COLUMN_VISIBLE_2, FALSE, -1);
-      
-      g_signal_emit(G_OBJECT(tree), tree_signals[UNSELECT_OBJECT], 0, object, view_mode);
-      g_object_unref(object);
-    }
-  }
-
-  return TRUE;
-}
 
 void amitk_tree_set_linked_mode_column_visible (AmitkTree * tree, gboolean visible) {
 
   if (visible) {
     /* insert_column doesn't add a reference */
-    gtk_tree_view_insert_column (GTK_TREE_VIEW (tree), tree->linked_column,COLUMN_VISIBLE_2);
+    gtk_tree_view_insert_column (GTK_TREE_VIEW (tree), tree->linked_column,COLUMN_VISIBLE_1);
   } else {
     g_object_ref(tree->linked_column); /* view_remove_column removes a reference */
     gtk_tree_view_remove_column (GTK_TREE_VIEW (tree), tree->linked_column);
-
-    /* remove selected objects from the column */
-    while (tree->visible_objects[AMITK_VIEW_MODE_LINKED] != NULL) {
-      if (!amitk_tree_unselect_object(tree, tree->visible_objects[AMITK_VIEW_MODE_LINKED]->data, 
-    				      AMITK_VIEW_MODE_LINKED));
-      break; /* guard against endless loop*/
-    }
   }
-
 
   gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), visible);
 
