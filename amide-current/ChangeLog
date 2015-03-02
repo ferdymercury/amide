@@ -1,3 +1,7 @@
+0.6.6
+	* update for xmedcon 0.8.11
+	* removed libecat dependency for default rpm build
+
 0.6.5
 	* reduced memory consumption when importing raw data
 	* configure.in fix for medcon now using glib

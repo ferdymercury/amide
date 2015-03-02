@@ -53,12 +53,16 @@ volume_t * cti_import(const gchar * cti_filename) {
   gint matnum;
   volume_t * temp_volume;
   guint slice, num_slices;
-  gchar * volume_name;
+  gchar * name;
+  gchar * temp_name;
   gchar ** frags=NULL;
   time_t scan_time;
   gboolean two_dim_scale;
   realpoint_t temp_rp;
   data_format_t data_format;
+  Image_subheader * ish;
+  Scan_subheader * ssh;
+  Attn_subheader * ash;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("can't open file %s", cti_filename);
@@ -186,21 +190,48 @@ volume_t * cti_import(const gchar * cti_filename) {
   /* it's a CTI File, we'll guess it's PET data */
   temp_volume->modality = PET;
 
-  /* try figuring out the name */
-  if (cti_file->mhptr->original_file_name != NULL) {
-    volume_name = cti_file->mhptr->original_file_name;
-    volume_set_name(temp_volume,volume_name);
-  } else {/* no original filename? */
-    volume_name = g_strdup(g_basename(cti_filename));
+  /* try figuring out the name */  
+  if (cti_file->mhptr->study_name[0] != '\0')
+    name = g_strdup(cti_file->mhptr->study_name);
+  else if (cti_file->mhptr->original_file_name[0] != '\0')
+    name = g_strdup(cti_file->mhptr->original_file_name);
+  else {/* no original filename? */
+    temp_name = g_strdup(g_basename(cti_filename));
     /* remove the extension of the file */
-    g_strreverse(volume_name);
-    frags = g_strsplit(volume_name, ".", 2);
-    volume_name = frags[1];
-    volume_set_name(temp_volume,volume_name);
-    g_strreverse(volume_name);
+    g_strreverse(temp_name);
+    frags = g_strsplit(temp_name, ".", 2);
+    g_free(temp_name);
+    g_strreverse(frags[1]);
+    name = g_strdup_printf(frags[1]);
     g_strfreev(frags); /* free up now unused strings */
-    g_free(volume_name);
   }
+  /* try adding on the reconstruction method */
+  switch(cti_file->mhptr->file_type) {
+  case PetImage: 
+  case PetVolume: 
+  case InterfileImage:
+    ish = (Image_subheader *) cti_subheader->shptr;
+    temp_name = name;
+    if (ish->annotation[0] != '\0')
+      name = g_strdup_printf("%s - %s", temp_name, ish->annotation);
+    else
+      name = g_strdup_printf("%s, %d", temp_name, ish->recon_type);
+    g_free(temp_name);
+    break;
+  case AttenCor:
+    ash = (Attn_subheader *) cti_subheader->shptr;
+    temp_name = name;
+    name = g_strdup_printf("%s,%d", temp_name, ash->attenuation_type);
+    g_free(temp_name);
+    break;
+  case Sinogram:
+  default:
+    break; 
+  }
+
+
+  volume_set_name(temp_volume,name);
+  g_free(name);
 #ifdef AMIDE_DEBUG
   g_print("volume name %s\n",temp_volume->name);
   g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", 
@@ -232,9 +263,9 @@ volume_t * cti_import(const gchar * cti_filename) {
     temp_volume->voxel_size = temp_rp;
 
   /* get the offset */
-  temp_rp.x = 10*(((Image_subheader*)cti_subheader->shptr)->x_offset);
-  temp_rp.y = 10*(((Image_subheader*)cti_subheader->shptr)->y_offset);
-  temp_rp.z = 10*(((Image_subheader*)cti_subheader->shptr)->z_offset);
+  temp_rp.x = 10*cti_subheader->x_origin;
+  temp_rp.y = 10*cti_subheader->y_origin;
+  temp_rp.z = 10*cti_subheader->z_origin;
   if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) {    /*handle corrupted cti files */ 
     g_warning("detected corrupted CTI file, will try to continue by guessing offset");
     temp_rp = zero_rp;

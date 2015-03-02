@@ -647,7 +647,11 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, realpoint_t *position,
 
   /* update the other canvases accordingly */
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
-    outline_color = color_table_outline_color(ui_study->active_volume[i_view_mode]->color_table, FALSE);
+    if (ui_study->active_volume[i_view_mode] != NULL)
+      outline_color = color_table_outline_color(ui_study->active_volume[i_view_mode]->color_table, FALSE);
+    else
+      outline_color = color_table_outline_color(BW_LINEAR, TRUE);
+
     for (i_view=0; i_view<NUM_VIEWS; i_view++)
       if (canvas != ui_study->canvas[i_view_mode][i_view])
 	amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
@@ -1358,6 +1362,10 @@ void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
 
   type = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(button), "type"));
 
+  if (ui_study->view_mode != SINGLE_VIEW) {
+    g_warning("Can't remove objects while in linked view mode\n");
+    return;
+  }
 
   switch(type) {
   case VOLUME:
@@ -1448,6 +1456,7 @@ void ui_study_cb_delete_objects(GtkWidget * button, gpointer data) {
 
       volume = volume_ref(current_volumes->volume);
       amitk_tree_remove_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), current_volumes->volume, VOLUME);
+
 
       /* destroy the threshold window if it's open, and remove the active mark */
       if (ui_study->active_volume[SINGLE_VIEW]==volume)

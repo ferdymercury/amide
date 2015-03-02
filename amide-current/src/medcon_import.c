@@ -38,7 +38,7 @@
 
 static char * medcon_unknown = "Unknown";
 
-gchar * libmdc_menu_names[] = {
+gchar * libmdc_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
   "(_X)MedCon Guess",
   "_Raw",
   "A_SCII",
@@ -47,12 +47,13 @@ gchar * libmdc_menu_names[] = {
   "IN_W 1.0 (RUG)",
   "_Concorde/microPET",
   "_CTI 6.4",
+  "_CTI 7.2",
   "_InterFile 3.3",
   "_Analyze (SPM)",
   "_DICOM 3.0",
 };
   
-gchar * libmdc_menu_explanations[] = {
+gchar * libmdc_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
   "let (X)MedCon/libmdc guess file type",
   "Import a raw data file",
   "Import an ASCII data file",
@@ -61,6 +62,7 @@ gchar * libmdc_menu_explanations[] = {
   "Import a INW 1.0 (RUG) File",
   "Import a file from the Concorde microPET",
   "Import a CTI 6.4 file",
+  "Ipmort a CTI 7.2 file",
   "Import a InterFile 3.3 file"
   "Import an Analyze file"
   "Import a DICOM 3.0 file",
@@ -87,7 +89,10 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
   case LIBMDC_CONC:
     return_value = MDC_INCLUDE_CONC;
     break;
-  case LIBMDC_ECAT:
+  case LIBMDC_ECAT6:
+    return_value = MDC_INCLUDE_ECAT;
+    break;
+  case LIBMDC_ECAT7:
     return_value = MDC_INCLUDE_ECAT;
     break;
   case LIBMDC_INTF:
@@ -101,7 +106,7 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
     break;
   case LIBMDC_NONE:
   default:
-    return_value = TRUE;
+    return_value = FALSE;
     break;
   }
 
@@ -152,8 +157,11 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
     case LIBMDC_CONC:
       MDC_FALLBACK_FRMT = MDC_FRMT_CONC;
       break;
-    case LIBMDC_ECAT:
-      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT;
+    case LIBMDC_ECAT6:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT6;
+      break;
+    case LIBMDC_ECAT7:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT7;
       break;
     case LIBMDC_INTF:
       MDC_FALLBACK_FRMT = MDC_FRMT_INTF;

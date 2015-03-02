@@ -610,7 +610,7 @@ static void threshold_update_entries(AmitkThreshold * threshold) {
     gtk_entry_set_text(GTK_ENTRY(threshold->entry[i_ref][MAX_PERCENT]), string);
     g_free(string);
 
-    string = g_strdup_printf("%5.3f",threshold->volume->threshold_max[i_ref]);
+    string = g_strdup_printf("%5.3g",threshold->volume->threshold_max[i_ref]);
     gtk_entry_set_text(GTK_ENTRY(threshold->entry[i_ref][MAX_ABSOLUTE]), string);
     g_free(string);
 
@@ -625,7 +625,7 @@ static void threshold_update_entries(AmitkThreshold * threshold) {
     gtk_entry_set_text(GTK_ENTRY(threshold->entry[i_ref][MIN_PERCENT]), string);
     g_free(string);
 
-    string = g_strdup_printf("%5.3f", min);
+    string = g_strdup_printf("%5.3g", min);
     gtk_entry_set_text(GTK_ENTRY(threshold->entry[i_ref][MIN_ABSOLUTE]), string);
     g_free(string);
   }

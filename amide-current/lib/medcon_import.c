@@ -36,7 +36,9 @@
 #undef VERSION 
 #include "config.h"
 
-gchar * libmdc_menu_names[] = {
+static char * medcon_unknown = "Unknown";
+
+gchar * libmdc_menu_names[LIBMDC_NUM_IMPORT_METHODS] = {
   "(_X)MedCon Guess",
   "_Raw",
   "A_SCII",
@@ -45,12 +47,13 @@ gchar * libmdc_menu_names[] = {
   "IN_W 1.0 (RUG)",
   "_Concorde/microPET",
   "_CTI 6.4",
+  "_CTI 7.2",
   "_InterFile 3.3",
   "_Analyze (SPM)",
   "_DICOM 3.0",
 };
   
-gchar * libmdc_menu_explanations[] = {
+gchar * libmdc_menu_explanations[LIBMDC_NUM_IMPORT_METHODS] = {
   "let (X)MedCon/libmdc guess file type",
   "Import a raw data file",
   "Import an ASCII data file",
@@ -59,6 +62,7 @@ gchar * libmdc_menu_explanations[] = {
   "Import a INW 1.0 (RUG) File",
   "Import a file from the Concorde microPET",
   "Import a CTI 6.4 file",
+  "Ipmort a CTI 7.2 file",
   "Import a InterFile 3.3 file"
   "Import an Analyze file"
   "Import a DICOM 3.0 file",
@@ -85,7 +89,10 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
   case LIBMDC_CONC:
     return_value = MDC_INCLUDE_CONC;
     break;
-  case LIBMDC_ECAT:
+  case LIBMDC_ECAT6:
+    return_value = MDC_INCLUDE_ECAT;
+    break;
+  case LIBMDC_ECAT7:
     return_value = MDC_INCLUDE_ECAT;
     break;
   case LIBMDC_INTF:
@@ -99,7 +106,7 @@ gboolean medcon_import_supports(libmdc_import_method_t submethod) {
     break;
   case LIBMDC_NONE:
   default:
-    return_value = TRUE;
+    return_value = FALSE;
     break;
   }
 
@@ -113,7 +120,8 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   struct tm time_structure;
   voxelpoint_t i;
   volume_t * temp_volume;
-  gchar * volume_name;
+  gchar * name;
+  gchar * temp_string;
   gchar * import_filename;
   gchar ** frags=NULL;
   gboolean found_name=FALSE;
@@ -149,8 +157,11 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
     case LIBMDC_CONC:
       MDC_FALLBACK_FRMT = MDC_FRMT_CONC;
       break;
-    case LIBMDC_ECAT:
-      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT;
+    case LIBMDC_ECAT6:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT6;
+      break;
+    case LIBMDC_ECAT7:
+      MDC_FALLBACK_FRMT = MDC_FRMT_ECAT7;
       break;
     case LIBMDC_INTF:
       MDC_FALLBACK_FRMT = MDC_FRMT_INTF;
@@ -270,30 +281,40 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   else
     temp_volume->modality = CT;
 
+
   /* try figuring out the name, start with the study name */
-  if (strlen(medcon_file_info.study_name) > 0) {
-    volume_set_name(temp_volume,medcon_file_info.study_name);
-    found_name = TRUE;
+  name = NULL;
+  if (strlen(medcon_file_info.study_name) > 0) 
+    if (g_strcasecmp(medcon_file_info.study_name, medcon_unknown) != 0)
+      name = g_strdup(medcon_file_info.study_name);
+
+  if (name == NULL)
+    if (strlen(medcon_file_info.patient_name) > 0)
+      if (g_strcasecmp(medcon_file_info.patient_name, medcon_unknown) != 0) 
+	name = g_strdup(medcon_file_info.patient_name);
+
+  if (name == NULL) {/* no original filename? */
+    temp_string = g_strdup(g_basename(filename));
+    /* remove the extension of the file */
+    g_strreverse(temp_string);
+    frags = g_strsplit(temp_string, ".", 2);
+    g_free(temp_string);
+    g_strreverse(frags[1]);
+    name = g_strdup(frags[1]);
+    g_strfreev(frags); /* free up now unused strings */
   }
 
-  if (!found_name) 
-    if (strlen(medcon_file_info.patient_name) > 0) {
-      volume_set_name(temp_volume,medcon_file_info.patient_name);
-      found_name = TRUE;
+  /* append the reconstruction method */
+  if (strlen(medcon_file_info.recon_method) > 0)
+    if (g_strcasecmp(medcon_file_info.recon_method, medcon_unknown) != 0) {
+      temp_string = name;
+      name = g_strdup_printf("%s - %s", temp_string, medcon_file_info.recon_method);
+      g_free(temp_string);
     }
 
-  if (!found_name) {/* no original filename? */
-    volume_name = g_strdup(g_basename(filename));
-    /* remove the extension of the file */
-    g_strreverse(volume_name);
-    frags = g_strsplit(volume_name, ".", 2);
-    volume_set_name(temp_volume,frags[1]);
-    g_strreverse(temp_volume->name);
-    g_strfreev(frags); /* free up now unused strings */
-    g_free(volume_name);
-    found_name=TRUE;
-  }
-  
+  volume_set_name(temp_volume,name);
+  g_free(name);
+
 
   /* enter in the date the scan was performed */
   time_structure.tm_sec = medcon_file_info.study_time_second;
