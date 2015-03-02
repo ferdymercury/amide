@@ -25,7 +25,7 @@
 
 #include "amide_config.h"
 
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 
 #include <sys/stat.h>
 #include <gnome.h>
@@ -274,26 +274,15 @@ static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_fil
 
   guint i_frame;
   gint return_val = 1;
-  GTimeVal current_time;
-  guint i;
-  gchar * frame_filename = NULL;
-  const gchar * temp_dir = NULL;
-  struct stat file_info;
-  GList * file_list = NULL;
   gint num_frames;
   amide_real_t increment_z;
   AmitkPoint current_point;
-
-  /* figure out what the temp directory is */
-  temp_dir = g_get_tmp_dir();
+  gpointer mpeg_encode_context;
 
   /* gray out anything that could screw up the movie */
   gtk_widget_set_sensitive(GTK_WIDGET(ui_fly_through->canvas), FALSE);
 
   ui_fly_through->in_generation = TRUE;
-
-  /* get the current time, this is so we have a, "hopefully" unique file name */
-  g_get_current_time(&current_time);
 
   num_frames = ceil(ui_fly_through->duration*FRAMES_PER_SECOND);
   if (num_frames > 1)
@@ -304,6 +293,11 @@ static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_fil
   current_point = amitk_space_b2s(AMITK_SPACE(ui_fly_through->space),
 				  AMITK_STUDY_VIEW_CENTER(ui_fly_through->study));
   current_point.z = ui_fly_through->start_z;
+
+  mpeg_encode_context = mpeg_encode_setup(output_filename, ENCODE_MPEG1,
+					  gdk_pixbuf_get_width(AMITK_CANVAS_PIXBUF(ui_fly_through->canvas)),
+					  gdk_pixbuf_get_height(AMITK_CANVAS_PIXBUF(ui_fly_through->canvas)));
+  g_return_if_fail(mpeg_encode_context != NULL);
 
 #ifdef AMIDE_DEBUG
   g_print("Total number of movie frames to do: %d\tincrement %f\n",num_frames, increment_z);
@@ -325,40 +319,16 @@ static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_fil
       while (gtk_events_pending() || AMITK_CANVAS(ui_fly_through->canvas)->next_update)
 	gtk_main_iteration();
       
-      i = 0;
-      do {
-	if (i > 0) g_free(frame_filename);
-	i++;
-	frame_filename = g_strdup_printf("%s/%ld_%d_amide_rendering_%d.jpg",
-					  temp_dir, current_time.tv_sec, i, i_frame);
-      } while (stat(frame_filename, &file_info) == 0);
-      
-
-      if (gdk_pixbuf_save (AMITK_CANVAS_PIXBUF(ui_fly_through->canvas), frame_filename, 
-			   "jpeg", NULL, "quality", "100", NULL))
-	return_val = 1;
-      else
-	return_val = 0;
+      return_val = mpeg_encode_frame(mpeg_encode_context, AMITK_CANVAS_PIXBUF(ui_fly_through->canvas));
 
       if (return_val != 1) 
-	g_warning("saving of following jpeg file failed: %s\n\tAborting movie generation",
-		  frame_filename);
-      else
-	file_list = g_list_append(file_list, frame_filename);
-      
-      current_point.z += increment_z;
+	g_warning("encoding of frame %d failed", i_frame);
 
+      current_point.z += increment_z;
     }
   }
+  mpeg_encode_close(mpeg_encode_context);
 
-  /* do the mpeg stuff if no errors so far and we haven't closed the dialog box */
-  if ((return_val == 1) && ui_fly_through->in_generation) { 
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_fly_through->canvas));
-    mpeg_encode(temp_dir, file_list, output_filename, current_time, FALSE);
-    ui_common_remove_cursor(GTK_WIDGET(ui_fly_through->canvas));
-  } else
-    mpeg_encode(temp_dir, file_list, output_filename, current_time, TRUE);/* just cleanup the file list */
-    
   /* and remove the reference we added here*/
   ui_fly_through->in_generation = FALSE;
 
@@ -628,7 +598,7 @@ void ui_fly_through_create(GtkWidget * parent_app,
 
 
 
-#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
+#endif /* AMIDE_LIBFAME_SUPPORT */
 
 
 

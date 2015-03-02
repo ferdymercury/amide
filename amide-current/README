@@ -19,23 +19,24 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-3.1.  AMIDE is fairly unstable when compiled with
-versions of the gcc compiler previous to 3.0.2 when optimizations are
-used.
+I currently use gcc-3.2.  The 2.95 versions should also work well.
+Versions of gcc between these two versions will quite likely generate
+compilation errors (and make AMIDE unstable) if optimizations are used
+when compiling.  The 2.96 versions of gcc (which are not official
+releases!) are particularly notorious.
+
 
 
 2) Gtk+/Gnome:
 
-I'm developing on Gtk+-1.2.10/Gnome 1.4 at the moment (i.e. default
-Redhat 7.2 install with updates)
-
-
-3) libxml2
-
-Redhat 6.2 at least only comes with libxml.  AMIDE requires libxml2.
-Check out http://xmlsoft.org if your version of Linux doesn't have
-libxml2.
-
+The current development series of AMIDE requires Gtk+-2 and GNOME-2.
+I'm currently developing on a vanilla Redhat 8.0 system, although
+other distributions of Linux with equivalent library support should
+work also (i.e. Mandrake 9.0).  Any previous version of Redhat (and
+many distributions) will require extensive modification to get the
+current version of AMIDE to compile and run on it.  If you want to run
+AMIDE on such a system, I'd suggest going with the AMIDE 0.6.* series,
+which only needs Gtk+-1.2/Gnome-1.4.
 
 
 Optional Packages
@@ -44,9 +45,9 @@ Optional Packages
 1) (X)medcon/libmdc
 
 (X)medcon includes a library (libmdc) which allows AMIDE to import the
-following formats; Acr/Nema 2.0, Analyze (SPM), DICOM 3.0, Ecat/Matrix
-6.4, InterFile3.3 and Gif87a/89a.  Note that CTI format is done by
-libecat if available (see below).
+following formats; Acr/Nema 2.0, Analyze (SPM), Concorde microPET,
+DICOM 3.0, Ecat/Matrix 6.4, InterFile3.3 and Gif87a/89a.  Note that
+CTI format is done by libecat if available (see below).
 
 (X)medcon can be obtained from: 
 	http://xmedcon.sourceforge.net
@@ -56,8 +57,9 @@ libecat if available (see below).
 
 You will need this library if you want to import CTI 6.4 and 7.0 files
 [(X)medcon only can handle CTI 6.4].  This library is released under a
-non-free license (which is why it's not incuded with AMIDE).  It can
-be found on the AMIDE sourceforge website, or at it's original site:
+non-free license (which is why it's not incuded with (X)MedCon).  It
+can be found on the AMIDE sourceforge website, or at it's original
+site:
 
 	ftp://dormeur.topo.ucl.ac.be/pub/ecat/z_matrix_70/ecat.tar.gz
 
@@ -82,26 +84,21 @@ The version available on the AMIDE web site is preferable, as it's
 been updated to compile cleanly under Linux.  RPM packages are also
 available.
 
-4) mpeg_encode
+4) libfame
 
-Another optional package, the Berkeley MPEG-1 Video Encode
-(mpeg_encode) is used for generating MPEG-1 movies from series of
-rendered images.  
+Another optional package, the fame library is used for generating
+MPEG-1 movies from series of rendered images and for generating
+fly-through movies.
 
-The original version can be found at:
-	ftp://mm-ftp.cs.berkeley.edu/pub/mpeg
-
-The version available on the AMIDE web site is preferable, as it's
-been updated to compile cleanly under Linux.  RPM packages are also
-available.
-
+Information, code, and binaries for libfame can be found at:
+	http://fame.sourceforge.net
 
 
 
 Building
 --------
 
-see the file INSTALL for info on compiling and installing.  If you
+See the file INSTALL for info on compiling and installing.  If you
 don't feel like reading that, try:
 
 	./configure
@@ -109,7 +106,7 @@ don't feel like reading that, try:
 	make install
 
 
-if you're wondering about configuration options, a lot of information
+If you're wondering about configuration options, a lot of information
 can be obtained by running:
 
 	./configure --help

@@ -186,6 +186,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
+
       fprintf(file_pointer, "#\tVolume:\t%s\tscaling factor:\t%g\n",
 	      AMITK_OBJECT_NAME(volume_analyses->data_set),
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
@@ -317,7 +318,7 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
   gtk_entry_set_text(GTK_ENTRY(entry), amitk_roi_type_get_name(AMITK_ROI_TYPE(roi)));
   gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
   gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
- 
+
   /* try to get a reasonable estimate for how wide the statistics box should be */
   width = 0.9*gdk_screen_width();
   if (width > ROI_STATISTICS_WIDTH)
@@ -355,7 +356,7 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
   list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
   g_object_unref(store);
 
-  for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS-1; i_column++) {
+  for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS; i_column++) {
     renderer = gtk_cell_renderer_text_new ();
     column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
 						      "text", i_column, NULL);

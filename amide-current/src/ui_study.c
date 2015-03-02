@@ -137,6 +137,12 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
 
   /* if we've removed all reference's, free the structure */
   if (ui_study->reference_count == 0) {
+
+    /* these two lines forces any remaining spin button updates, so that we
+       don't call any spin button callbacks with invalid data */
+    gtk_widget_grab_focus(ui_study->app);
+    while (gtk_events_pending()) gtk_main_iteration();
+
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_study\n");
 #endif
@@ -145,7 +151,7 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
       g_object_unref(ui_study->study);
       ui_study->study = NULL;
     }
-      
+
     g_free(ui_study);
     ui_study = NULL;
   }
@@ -413,19 +419,16 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
 /* function to add an object into an amide study */
 void ui_study_add_data_set(ui_study_t * ui_study, AmitkDataSet * data_set) {
 
-  amide_real_t min_voxel_size;
+  amide_real_t vox_size;
 
   g_return_if_fail(AMITK_IS_DATA_SET(data_set));
 
   amitk_object_add_child(AMITK_OBJECT(ui_study->study), AMITK_OBJECT(data_set));
   amitk_tree_add_object(AMITK_TREE(ui_study->tree), AMITK_OBJECT(data_set), TRUE);
 
-  /* update the thickness if appropriate*/
-  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
-  if (min_voxel_size > AMITK_STUDY_VIEW_THICKNESS(ui_study->study)) {
-    amitk_study_set_view_thickness(ui_study->study, min_voxel_size);
-    ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
-  }
+  vox_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
+  amitk_study_set_view_thickness(ui_study->study, vox_size);
+
 
   if (ui_study->study_altered != TRUE) {
     ui_study->study_altered=TRUE;
@@ -567,17 +570,17 @@ void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
   /* there's no spin button if we don't create the toolbar at this moment */
   if (ui_study->thickness_spin == NULL) return;
 
+  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
+  max_size = amitk_volumes_get_max_size(AMITK_OBJECT_CHILDREN(ui_study->study));
+
+  if ((min_voxel_size < 0)  || (max_size < 0)) return; /* no valid objects */
+
   /* block signals to the spin button, as we only want to
      change the value of the spin button, it's up to the caller of this
      function to change anything on the actual canvases... we'll 
      unblock at the end of this function */
   g_signal_handlers_block_by_func(G_OBJECT(ui_study->thickness_spin), 
-				  G_CALLBACK(ui_study_cb_thickness), ui_study);
-
-  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
-  max_size = amitk_volumes_get_max_size(AMITK_OBJECT_CHILDREN(ui_study->study));
-
-  if ((min_voxel_size < 0)  || (max_size < 0)) return; /* no valid objects */
+    				  G_CALLBACK(ui_study_cb_thickness), ui_study);
 
   /* set the current thickness if it hasn't already been set or if it's no longer valid*/
   if (thickness < min_voxel_size)
@@ -589,8 +592,7 @@ void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
   gtk_spin_button_configure(GTK_SPIN_BUTTON(ui_study->thickness_spin),NULL, thickness, 2);
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->thickness_spin),
-				    G_CALLBACK(ui_study_cb_thickness), 
-				    ui_study);
+  				    G_CALLBACK(ui_study_cb_thickness), ui_study);
 
   return;
 }

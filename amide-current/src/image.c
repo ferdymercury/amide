@@ -186,7 +186,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   i.z = i.t = 0;
   for (i.y=0 ; i.y < dim.y; i.y++)
     for (i.x=0 ; i.x < dim.x; i.x++)
-      if (*AMITK_RAW_DATA_UBYTE_POINTER(intersection->raw_data, i) == 1) {
+      if (AMITK_RAW_DATA_UBYTE_CONTENT(intersection->raw_data, i) == 1) {
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = color.r;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = color.g;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = color.b;

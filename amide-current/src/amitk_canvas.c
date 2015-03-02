@@ -403,8 +403,10 @@ static void common_changed_cb(AmitkCanvas * canvas, AmitkObject * object) {
   else {
     found_item = canvas_find_item(canvas, object);
     if (found_item) {
-      canvas->next_update_items=g_list_append(canvas->next_update_items, found_item);
-      canvas_add_update(canvas, UPDATE_OBJECT);
+      if (g_list_index(canvas->next_update_items, found_item) < 0) {/* not yet in list */
+	canvas->next_update_items=g_list_append(canvas->next_update_items, found_item);
+	canvas_add_update(canvas, UPDATE_OBJECT);
+      }
     } else { /* updating an undrawn roi? */
       if (AMITK_IS_ROI(object))
 	if (AMITK_ROI_UNDRAWN(AMITK_ROI(object)))

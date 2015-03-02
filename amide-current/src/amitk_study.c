@@ -301,8 +301,10 @@ static void study_remove_child(AmitkObject *object, AmitkObject *child) {
 
   gboolean data_set = FALSE;
 
-  if (AMITK_IS_DATA_SET(child))
+  if (AMITK_IS_DATA_SET(child)) {
     data_set = TRUE; /* need to know now, child might get unrefed before recalc */
+    g_signal_handlers_disconnect_by_func(G_OBJECT(child), G_CALLBACK(study_recalc_voxel_dim), object);
+  }
 
   AMITK_OBJECT_CLASS(parent_class)->object_remove_child (object, child);
 

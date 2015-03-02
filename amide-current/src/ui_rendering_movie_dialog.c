@@ -26,15 +26,15 @@
 #include "amide_config.h"
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 
 #include <sys/stat.h>
 #include <gnome.h>
 #include <string.h>
-#include "mpeg_encode.h"
 #include "ui_common.h"
 #include "ui_rendering_movie_dialog.h"
 #include "amitk_type_builtins.h"
+#include "mpeg_encode.h"
 
 
 #define MOVIE_DEFAULT_DURATION 10.0
@@ -442,28 +442,18 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
   gdouble rotation_step[AMITK_AXIS_NUM];
   AmitkAxis i_axis;
   gint return_val = 1;
-  GTimeVal current_time;
-  guint i;
-  gchar * frame_filename = NULL;
-  const gchar * temp_dir = NULL;
-  struct stat file_info;
-  GList * file_list = NULL;
   amide_time_t initial_start, initial_duration;
+  amide_time_t start_time, end_time;
   ui_rendering_t * ui_rendering;
   AmitkDataSet * most_frames_ds=NULL;
   renderings_t * contexts;
   guint ds_frame=0;
   guint num_frames;
-
-  /* figure out what the temp directory is */
-  temp_dir = g_get_tmp_dir();
+  gpointer mpeg_encode_context;
 
   /* add a reference, we do this 'cause if there's only one reference left (i.e. this one), we 
      know that the user has hit a cancel button */
   ui_rendering_movie = movie_ref(ui_rendering_movie);
-
-  /* get the current time, this is so we have a, "hopefully" unique file name */
-  g_get_current_time(&current_time);
 
   /* save the initial times so we can set it back later */
   ui_rendering = ui_rendering_movie->ui_rendering;
@@ -489,6 +479,12 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
   ui_rendering->duration = 
     (ui_rendering_movie->end_time-ui_rendering_movie->start_time)
     /((amide_time_t) num_frames);
+
+  
+  mpeg_encode_context = mpeg_encode_setup(output_filename, ENCODE_MPEG1,
+					  gdk_pixbuf_get_width(ui_rendering->pixbuf),
+					  gdk_pixbuf_get_height(ui_rendering->pixbuf));
+  g_return_if_fail(mpeg_encode_context != NULL);
 
 #ifdef AMIDE_DEBUG
   g_print("Total number of movie frames to do:\t%d\n",num_frames);
@@ -516,9 +512,10 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
 	if (most_frames_ds) {
 	  ds_frame = floor((i_frame/((gdouble) num_frames)
 			    * AMITK_DATA_SET_NUM_FRAMES(most_frames_ds)));
-	  ui_rendering->start = amitk_data_set_get_start_time(most_frames_ds, ds_frame)*(1.0+EPSILON);
-	  ui_rendering->duration = 
-	    amitk_data_set_get_end_time(most_frames_ds, ds_frame)-ui_rendering->start*(1.0-EPSILON);
+	  start_time = amitk_data_set_get_start_time(most_frames_ds, ds_frame);
+	  end_time = amitk_data_set_get_end_time(most_frames_ds, ds_frame);
+	  ui_rendering->start = start_time + EPSILON*fabs(start_time);
+	  ui_rendering->duration = end_time - EPSILON*fabs(end_time);
 	} else { /* just have roi's.... doesn't make much sense if we get here */
 	  ui_rendering->start = 0.0;
 	  ui_rendering->duration = 1.0;
@@ -548,26 +545,10 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
       g_print("Writing   %d\r",i_frame);
 #endif
 
-      i = 0;
-      do {
-	if (i > 0) g_free(frame_filename);
-	i++;
-	frame_filename = g_strdup_printf("%s/%ld_%d_amide_rendering_%d.jpg",
-					  temp_dir, current_time.tv_sec, i, i_frame);
-      } while (stat(frame_filename, &file_info) == 0);
-      
-
-      if (gdk_pixbuf_save (ui_rendering->pixbuf, frame_filename, 
-			   "jpeg", NULL, "quality", "100", NULL))
-	return_val = 1;
-      else
-	return_val = 0;
+      return_val = mpeg_encode_frame(mpeg_encode_context, ui_rendering->pixbuf);
 
       if (return_val != 1) 
-	g_warning("saving of following jpeg file failed: %s\n\tAborting movie generation",
-		  frame_filename);
-      else
-	file_list = g_list_append(file_list, frame_filename);
+	g_warning("encoding of frame %d failed", i_frame);
       
       /* do any events pending, this allows the canvas to get displayed */
       while (gtk_events_pending()) 
@@ -582,22 +563,12 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
       
       /* update the progress bar */
       gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress),
-				    (gdouble) i_frame/((gdouble) num_frames*2.0));
+				    (gdouble) i_frame/((gdouble) num_frames));
     }
   }
 
+  mpeg_encode_close(mpeg_encode_context);
 
-
-  /* do the mpeg stuff if no errors so far and we haven't closed the dialog box */
-  if ((return_val == 1) && (ui_rendering_movie->reference_count > 1)) { 
-#ifdef AMIDE_DEBUG
-    g_print("\nEncoding the MPEG\n");
-#endif
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    mpeg_encode(temp_dir, file_list, output_filename, current_time, FALSE);
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  } else 
-    mpeg_encode(temp_dir, file_list, output_filename, current_time, TRUE); /* just cleanup file list */
 
   /* update the progress bar */
   gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress), 1.0);
@@ -855,5 +826,5 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
 }
 
 
-#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
+#endif /* AMIDE_LIBFAME_SUPPORT */
 #endif /* LIBVOLPACK_SUPPORT */

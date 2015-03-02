@@ -37,8 +37,6 @@
 #include "amide_limits.h"
 
 
-      
-
 /* function to setup the toolbar for the study ui */
 void ui_study_toolbar_create(ui_study_t * ui_study) {
 

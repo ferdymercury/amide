@@ -23,7 +23,7 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 
 #ifndef __UI_FLY_THROUGH_H__
 #define __UI_FLY_THROUGH_H__
@@ -41,6 +41,6 @@ void ui_fly_through_create(GtkWidget * parent_app,
 
 
 #endif /* UI_FLY_THROUGH_H */
-#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
+#endif /* AMIDE_LIBFAME_SUPPORT */
 
 

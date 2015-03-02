@@ -1,3 +1,13 @@
+0.7.4
+	* switched mpeg encoding to using libfame
+	* number of voxels now displayed on roi_analysis dialog
+	* fixed problem with spin_button callback's running on delete_event of program
+	* better medcon data set name guessing
+	* threshold doesn't crash now when dealing with negative values
+	* fixed multiple misuses of EPSILON
+	* isocontour drawing on dynamic scan frames > 0 caused crashes, fixed
+	* resizing of 2D isocontour's thickness now works
+
 0.7.3
 	* added median filtering to the filter dialog
 	* distribution data now saved in .xif file when available

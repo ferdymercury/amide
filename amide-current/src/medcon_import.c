@@ -36,6 +36,8 @@
 #undef PACKAGE 
 #undef VERSION 
 
+static char * medcon_unknown = "Unknown";
+
 gchar * libmdc_menu_names[] = {
   "(_X)MedCon Guess",
   "_Raw via (X)MedCon",
@@ -271,16 +273,18 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
     ds->modality = AMITK_MODALITY_CT;
 
   /* try figuring out the name, start with the study name */
-  if (strlen(medcon_file_info.study_name) > 0) {
-    amitk_object_set_name(AMITK_OBJECT(ds),medcon_file_info.study_name);
-    found_name = TRUE;
-  }
-
-  if (!found_name) 
-    if (strlen(medcon_file_info.patient_name) > 0) {
-      amitk_object_set_name(AMITK_OBJECT(ds),medcon_file_info.patient_name);
+  if (strlen(medcon_file_info.study_name) > 0) 
+    if (g_strcasecmp(medcon_file_info.study_name, medcon_unknown) != 0) {
+      amitk_object_set_name(AMITK_OBJECT(ds),medcon_file_info.study_name);
       found_name = TRUE;
     }
+
+  if (!found_name) 
+    if (strlen(medcon_file_info.patient_name) > 0)
+      if (g_strcasecmp(medcon_file_info.patient_name, medcon_unknown) != 0) {
+	amitk_object_set_name(AMITK_OBJECT(ds),medcon_file_info.patient_name);
+	found_name = TRUE;
+      }
 
   if (!found_name) {/* no original filename? */
     name = g_strdup(g_basename(filename));

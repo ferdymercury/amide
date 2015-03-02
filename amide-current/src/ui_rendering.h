@@ -41,7 +41,7 @@
 typedef struct ui_rendering_t {
   GnomeApp * app; 
   GtkWidget * parameter_dialog;
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
   gpointer movie; /* pointer to type ui_rendering_movie_t */
 #endif
   amide_time_t start;

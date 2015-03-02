@@ -6,6 +6,9 @@
 /* Define to 1 to compile with libecat */
 #undef AMIDE_LIBECAT_SUPPORT
 
+/* Define to 1 to compile with Libfame */
+#undef AMIDE_LIBFAME_SUPPORT
+
 /* Define to 1 to compile with the GNU Scientific Library */
 #undef AMIDE_LIBGSL_SUPPORT
 
@@ -14,12 +17,6 @@
 
 /* Define to 1 to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
-
-/* Name of the MPEG-1 encoding program */
-#undef AMIDE_MPEG_ENCODE_BIN
-
-/* Define to 1 to compile with mpeg encoding support */
-#undef AMIDE_MPEG_ENCODE_SUPPORT
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H

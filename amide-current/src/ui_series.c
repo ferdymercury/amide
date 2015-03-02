@@ -394,8 +394,8 @@ static void update_canvas(ui_series_t * ui_series) {
   pixbuf = image_from_data_sets(&(ui_series->slices[0]),
 				ui_series->objects,
 				ui_series->active_ds,
-				temp_time*(1.0+EPSILON),
-				temp_duration*(1.0-EPSILON),
+				temp_time+EPSILON*fabs(temp_time),
+				temp_duration-EPSILON*fabs(temp_duration),
 				ui_series->voxel_dim,
 				view_volume,
 				ui_series->fuse_type);
@@ -476,8 +476,8 @@ static void update_canvas(ui_series_t * ui_series) {
       pixbuf = image_from_data_sets(&(ui_series->slices[i]),
 				    ui_series->objects,
 				    ui_series->active_ds,
-				    temp_time*(1.0+EPSILON),
-				    temp_duration*(1.0-EPSILON),
+				    temp_time+EPSILON*fabs(temp_time),
+				    temp_duration-EPSILON*fabs(temp_duration),
 				    ui_series->voxel_dim,
 				    view_volume,
 				    ui_series->fuse_type);
@@ -661,8 +661,8 @@ void ui_series_create(AmitkStudy * study, GList * objects, AmitkDataSet * active
     while (temp_objects != NULL) {
       if (AMITK_IS_DATA_SET(temp_objects->data)) {
 	temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
-	if ((ui_series->start_time*(1.0-EPSILON) < temp_time) &&
-	    (ui_series->start_time*(1.0+EPSILON) > temp_time))
+	if ((ui_series->start_time-EPSILON*fabs(ui_series->start_time) < temp_time) &&
+	    (ui_series->start_time+EPSILON*fabs(ui_series->start_time) > temp_time))
 	  frames[i]++;
 	i++;
       }
@@ -719,8 +719,8 @@ void ui_series_create(AmitkStudy * study, GList * objects, AmitkDataSet * active
 	  if (AMITK_IS_DATA_SET(temp_objects->data)) {
 	    if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) != frames[i]) {
 	      temp_time = amitk_data_set_get_start_time(AMITK_DATA_SET(temp_objects->data), frames[i]);
-	      if ((current_start*(1.0-EPSILON) < temp_time) &&
-		  (current_start*(1.0+EPSILON) > temp_time))
+	      if ((current_start-EPSILON*fabs(current_start) < temp_time) &&
+		  (current_start+EPSILON*fabs(current_start) > temp_time))
 		frames[i]++;
 	    }
 	    i++;

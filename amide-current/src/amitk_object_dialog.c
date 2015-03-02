@@ -512,6 +512,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   /* ---------------------------
      Dimension adjustment page for ROI's
+
+     notes:
+     3D Isocontours have no adjustable dimensions
+     2D Isocontours can have their z dimension adjusted
      --------------------------- */
   
   if (AMITK_IS_ROI(object)) {
@@ -1120,7 +1124,12 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
   else
     g_return_if_reached();
 
-  for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
+  if (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D)
+    i_axis = AMITK_AXIS_Z;
+  else
+    i_axis = AMITK_AXIS_X;
+
+  for (; i_axis<AMITK_AXIS_NUM; i_axis++) {
     temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->dimension_spinner[i_axis]));
 
     switch(i_axis) {

@@ -1,4 +1,4 @@
-/* mpeg_encode.c - interface to the mpeg_encode application
+/* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2002 Andy Loening
@@ -23,21 +23,28 @@
   02111-1307, USA.
 */
 
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 
 #ifndef __MPEG_ENCODE_H__
 #define __MPEG_ENCODE_H__
 
 /* header files that are always associated with this header file */
 #include <amide.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #define FRAMES_PER_SECOND 30
 
+typedef enum {
+  ENCODE_MPEG1,
+  ENCODE_MPEG4
+} mpeg_encode_t;
 /* functions */
-void mpeg_encode(const gchar * temp_dir, GList * file_list, 
-		 gchar * output_filename, GTimeVal current_time,
-		 gboolean clean_only);
+
+
+gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsize, gint ysize);
+gboolean mpeg_encode_frame(gpointer mpeg_encode_context, GdkPixbuf * pixbuf);
+gpointer mpeg_encode_close(gpointer mpeg_encode_context);
 
 #endif /* __MPEG_ENCODE_H__ */
-#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
+#endif /* AMIDE_LIBFAME_SUPPORT */
 

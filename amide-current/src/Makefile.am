@@ -20,6 +20,7 @@ amide_LDADD = \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBMDC_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
+	$(AMIDE_LIBFAME_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
 	-L/usr/local/lib 
 

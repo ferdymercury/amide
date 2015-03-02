@@ -832,6 +832,7 @@ void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
   ui_study_t * ui_study = data;
   amide_real_t thickness;
 
+
   if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
   thickness = gtk_spin_button_get_value(spin_button);
 
@@ -878,7 +879,7 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
   return;
 }
 
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 void ui_study_cb_fly_through(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;

@@ -244,7 +244,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-#if AMIDE_MPEG_ENCODE_SUPPORT
+#if AMIDE_LIBFAME_SUPPORT
   GnomeUIInfo fly_through_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Generate a fly through using transaxial slices"),
@@ -273,7 +273,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  N_("guides you throw the processing of alignment"),
 			  ui_study_cb_alignment_selected,
 			  ui_study, NULL),
-#if AMIDE_MPEG_ENCODE_SUPPORT
+#if AMIDE_LIBFAME_SUPPORT
     GNOMEUIINFO_SUBTREE_HINT(N_("Generate _Fly Through"),
 			     N_("generate an mpeg fly through of the data sets"), 
 			     fly_through_menu),
@@ -375,7 +375,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 		      "view", GINT_TO_POINTER(i_view));
     g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
 		      "series_type", GINT_TO_POINTER(FRAMES));
-#if AMIDE_MPEG_ENCODE_SUPPORT
+#if AMIDE_LIBFAME_SUPPORT
     g_object_set_data(G_OBJECT(fly_through_menu[i_view].widget),
 		      "view", GINT_TO_POINTER(i_view));
 #endif

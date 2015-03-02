@@ -44,7 +44,7 @@ static void rotate_cb(GtkAdjustment * adjustment, gpointer data);
 static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data);
 static void export_cb(GtkWidget * widget, gpointer data);
 static void parameters_cb(GtkWidget * widget, gpointer data);
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 static void movie_cb(GtkWidget * widget, gpointer data);
 #endif
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
@@ -440,7 +440,7 @@ static void parameters_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 /* function called when the button to pop up a movie generation dialog */
 static void movie_cb(GtkWidget * widget, gpointer data) {
   ui_rendering_t * ui_rendering = data;
@@ -488,7 +488,7 @@ static void menus_create(ui_rendering_t * ui_rendering) {
 			  N_("Export the rendered image"),
 			  export_cb,
 			  ui_rendering, NULL),
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
     GNOMEUIINFO_ITEM_DATA(N_("_Create Movie"),
 			  N_("Create a movie out of a sequence of renderings"),
 			  movie_cb,
@@ -586,7 +586,7 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
   /* set any needed parameters */
   ui_rendering->app = NULL;
   ui_rendering->parameter_dialog = NULL;
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
   ui_rendering->movie = NULL;
 #endif
   ui_rendering->render_button = NULL;

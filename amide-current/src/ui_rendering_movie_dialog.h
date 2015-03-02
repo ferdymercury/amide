@@ -24,7 +24,7 @@
 */
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 
 /* header files that are always needed with this file */
 #include "ui_rendering.h"
@@ -58,7 +58,7 @@ typedef struct ui_rendering_movie_t {
 /* external functions */
 ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rendering);
 
-#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
+#endif /* AMIDE_LIBFAME_SUPPORT */
 #endif /* LIBVOLPACK_SUPPORT */
 
 

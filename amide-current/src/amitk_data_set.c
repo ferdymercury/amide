@@ -844,7 +844,8 @@ void amitk_data_set_set_threshold_max(AmitkDataSet * ds, guint which_reference, 
   if ((ds->threshold_max[which_reference] != value) && (value > AMITK_DATA_SET_GLOBAL_MIN(ds))) {
     ds->threshold_max[which_reference] = value;
     if (ds->threshold_max[which_reference] < ds->threshold_min[which_reference])
-      ds->threshold_min[which_reference] = ds->threshold_max[which_reference]*(1.0-EPSILON);
+      ds->threshold_min[which_reference] = 
+	ds->threshold_max[which_reference]-EPSILON*fabs(ds->threshold_max[which_reference]);
     g_signal_emit(G_OBJECT (ds), data_set_signals[THRESHOLDING_CHANGED], 0);
   }
 }
@@ -855,7 +856,8 @@ void amitk_data_set_set_threshold_min(AmitkDataSet * ds, guint which_reference, 
   if ((ds->threshold_min[which_reference] != value ) && (value < AMITK_DATA_SET_GLOBAL_MAX(ds))) {
     ds->threshold_min[which_reference] = value;
     if (ds->threshold_min[which_reference] > ds->threshold_max[which_reference])
-      ds->threshold_max[which_reference] = ds->threshold_min[which_reference]*(1.0+EPSILON);
+      ds->threshold_max[which_reference] = 
+	ds->threshold_min[which_reference]+EPSILON*fabs(ds->threshold_min[which_reference]);
     g_signal_emit(G_OBJECT (ds), data_set_signals[THRESHOLDING_CHANGED], 0);
   }
 }
@@ -957,9 +959,9 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
       for (i.z = 0; i.z < ds->current_scaling->dim.z; i.z++) 
 	for (i.y = 0; i.y < ds->current_scaling->dim.y; i.y++) 
 	  for (i.x = 0; i.x < ds->current_scaling->dim.x; i.x++) {
-	    *AMITK_RAW_DATA_DOUBLE_POINTER(ds->current_scaling, i) = 
+	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(ds->current_scaling, i) = 
 	      ds->scale_factor *
-	      *AMITK_RAW_DATA_DOUBLE_POINTER(ds->internal_scaling, i);
+	      AMITK_RAW_DATA_DOUBLE_CONTENT(ds->internal_scaling, i);
 	  }
     
     /* adjust all thresholds and other variables so they remain constant 

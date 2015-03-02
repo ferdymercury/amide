@@ -8,7 +8,7 @@ Source: 	%{name}-%{version}.tgz
 URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
 Packager: 	Andy Loening <loening@ucla.edu>
-BuildRequires: 	libecat7 xmedcon volpack libxml2-devel gtk-doc libgnomeui-devel libgnomecanvas-devel
+BuildRequires: 	libecat7 xmedcon volpack libxml2-devel gtk-doc libgnomeui-devel libgnomecanvas-devel libfame-devel
 
 %description 
 AMIDE is a tool for viewing and analyzing medical image data sets.
@@ -59,11 +59,5 @@ scrollkeeper-update
 %changelog
 * Tue Nov 05 2002 Andy Loening <loening@ucla.edu>
 - get it to work with scrollkeeper
-* Mon May 27 2002 Andy Loening <loening@ucla.edu>
-- stop building amide-lib package
-* Sun Sep 03 2001 Andy Loening <loening@ucla.edu>
-- make sure lib package files are owned by root
-* Wed Aug 22 2001 Andy Loening <loening@ucla.edu>
-- added the lib package
 * Sun Dec 19 2000 Andy Loening <loening@ucla.edu>
 - wrote this fool thing

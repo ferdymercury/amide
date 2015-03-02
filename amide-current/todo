@@ -1,15 +1,19 @@
 misc list of things todo:
 
-
 for next release?
 -----------------
 
+* get following error message on rpm install
+	cannot stat file: /usr/share/gnome/help/amide/C/file:/usr/share/gnome/help/amide/C/amide.xml : No such file or directory
+* rendering -> option to set values higher to zero
+* need progress bar popups, with cancel action!
 * finish dnd support:
 	-for some reason, the row_reordered signal isn't emitted, so I can't
 	detect what's been done.
 	-need to uncomment gtk_tree_view-set_reorderable line
 	-filtered/cropped object should be added right below the
 		predecessor object
+* see if valgrind can find anything
        
 big things:
 -----------
@@ -50,13 +54,11 @@ small things:
 * put the canvases in a scrolled widget?
 * make caching of slices smarter.  
 	We don't need to regenerate all slices when removing one slice from the list
-	slices shouldn't have to be the size of the largest dimensions
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * implement help buttons on most of the dialogs
 	-gnome_druid has an add help button function
 * add close button to threshold dialogs
-* ui_time_dialog shouldn't show so much precision on times
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
 * try to work in the max/min/distribution calculations into the loading loop
@@ -89,9 +91,7 @@ probably post 1.0 things:
 		each volume should be transfered using it's minimal voxel size, not the
 		group's maximum minimal voxel size.  the rendered images should then be scaled
 		and overlapped.  
-* change mpeg_encode to a library? 
-	would allow loss of "system" command, and proper 
-	progress reports, in ui_rendering_movie_dialog
+	MIP rendering would be nice....
 * aligning of data using automated registration?
 * preset thresholds (bone window, fat window, etc.)
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi

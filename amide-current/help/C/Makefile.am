@@ -7,7 +7,7 @@ locale = C
 omffile = amide-C.omf
 entities = 			\
 	basics.xml 		\
-	filehandling.xml 	\
+	handlingfiles.xml 	\
 	importing.xml 		\
 	rendering.xml 		\
 	rois.xml 		\

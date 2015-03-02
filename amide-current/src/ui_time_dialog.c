@@ -91,15 +91,15 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
   if (new_time->valid) {
     old_end = new_time->end;
     if (start < new_time->start)
-      new_time->start = start*(1.0+EPSILON);
+      new_time->start = start+EPSILON*fabs(start);
     if (end > old_end)
-      new_time->end = end*(1.0-EPSILON);
+      new_time->end = end-EPSILON*fabs(end);
     else
-      new_time->end = old_end*(1.0-EPSILON);
+      new_time->end = old_end-EPSILON*fabs(old_end);
   } else {
     new_time->valid = TRUE;
-    new_time->start = start*(1.0+EPSILON);
-    new_time->end = end*(1.0-EPSILON);
+    new_time->start = start+EPSILON*fabs(start);
+    new_time->end = end-EPSILON*fabs(end);
   }
   
   return;
@@ -225,14 +225,14 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
   
   switch(which_widget) {
   case ENTRY_START:
-    if (temp_val*(1.0-EPSILON) > new_time->end)
-      new_time->start = new_time->end*(1.0-EPSILON);
+    if (temp_val-EPSILON*fabs(temp_val) > new_time->end)
+      new_time->start = new_time->end-EPSILON*fabs(new_time->end);
     else
       new_time->start = temp_val;
     break;
   case ENTRY_END:
-    if (temp_val*(1.0+EPSILON) < new_time->start)
-      new_time->end = new_time->start*(1.0+EPSILON);
+    if (temp_val+EPSILON*fabs(temp_val) < new_time->start)
+      new_time->end = new_time->start+EPSILON*fabs(new_time->start);
     else
       new_time->end = temp_val;
     break;

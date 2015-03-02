@@ -4,7 +4,7 @@
 <!ENTITY app "AMIDE">
 <!ENTITY date "October 2002">
 <!ENTITY basics         SYSTEM "basics.xml">
-<!ENTITY filehandling   SYSTEM "filehandling.xml">
+<!ENTITY handlingfiles  SYSTEM "handlingfiles.xml">
 <!ENTITY importing      SYSTEM "importing.xml">
 <!ENTITY rendering      SYSTEM "rendering.xml">
 <!ENTITY rois           SYSTEM "rois.xml">
@@ -88,9 +88,9 @@
       &basics;
   </sect1>
 
-  <sect1 id="filehandling">
+  <sect1 id="handlingfiles">
     <title>Saving/Loading Files</title>
-    &filehandling;
+    &handlingfiles;
   </sect1>
 
   <sect1 id="importing">

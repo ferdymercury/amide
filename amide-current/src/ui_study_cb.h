@@ -64,7 +64,7 @@ void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_cb_series(GtkWidget * widget, gpointer ui_study);
-#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+#ifdef AMIDE_LIBFAME_SUPPORT
 void ui_study_cb_fly_through(GtkWidget * widget, gpointer ui_study);
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
