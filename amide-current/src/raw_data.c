@@ -78,28 +78,28 @@ volume_t * raw_data_read_file(gchar * file_name,
   gboolean bullshit_frame_durations;
 
   if (raw_data_volume == NULL) {
-    g_warning("%s: raw_data_read called with NULL volume\n",PACKAGE);
+    g_warning("%s: raw_data_read called with NULL volume",PACKAGE);
     return raw_data_volume;
   }
   
   /* malloc the space for the volume data */
   g_free(raw_data_volume->data); /* just in case */
   if ((raw_data_volume->data = volume_get_data_mem(raw_data_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the raw data volume\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the raw data volume",PACKAGE);
     raw_data_volume = volume_free(raw_data_volume);
     return raw_data_volume;
   }
 
   /* open the raw data file for reading */
   if ((file_pointer = fopen(file_name, "r")) == NULL) {
-    g_warning("%s: couldn't open raw data file %s\n", PACKAGE,file_name);
+    g_warning("%s: couldn't open raw data file %s", PACKAGE,file_name);
     raw_data_volume = volume_free(raw_data_volume);
     return raw_data_volume;
   }
   
   /* jump forward by the given offset */
   if (fseek(file_pointer, file_offset, SEEK_SET) != 0) {
-    g_warning("%s: could not seek forward %d bytes in raw data file:\n\t%s\n",
+    g_warning("%s: could not seek forward %d bytes in raw data file:\n\t%s",
 	      PACKAGE, file_offset, file_name);
     raw_data_volume = volume_free(raw_data_volume);
     fclose(file_pointer);
@@ -113,7 +113,7 @@ volume_t * raw_data_read_file(gchar * file_name,
   file_buffer = (void *) g_malloc(bytes_to_read);
   bytes_read = fread(file_buffer, 1, bytes_to_read, file_pointer );
   if (bytes_read != bytes_to_read) {
-    g_warning("%s: read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d\n", 
+    g_warning("%s: read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d", 
 	      PACKAGE,file_name, bytes_to_read, bytes_read);
     raw_data_volume = volume_free(raw_data_volume);
     g_free(file_buffer);
@@ -127,7 +127,7 @@ volume_t * raw_data_read_file(gchar * file_name,
   
     /* allocate space for the array containing info on the duration of the frames */
     if ((raw_data_volume->frame_duration = volume_get_frame_duration_mem(raw_data_volume)) == NULL) {
-      g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
       raw_data_volume = volume_free(raw_data_volume);
       g_free(file_buffer);
       return raw_data_volume;

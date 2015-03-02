@@ -42,6 +42,7 @@ voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor);
 volume_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor);
 volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_times);
 volume_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor);
+floatpoint_t xml_get_floatpoint(xmlNodePtr node, gchar * descriptor);
 gint xml_get_int(xmlNodePtr nodes, gchar * descriptor);
 realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor);
 void xml_save_string(xmlNodePtr node, gchar * descriptor, gchar * string);
@@ -50,6 +51,7 @@ void xml_save_voxelpoint(xmlNodePtr node, gchar * descriptor, voxelpoint_t vp);
 void xml_save_time(xmlNodePtr node, gchar * descriptor, volume_time_t num);
 void xml_save_times(xmlNodePtr node, gchar * descriptor, volume_time_t * numbers, int num);
 void xml_save_data(xmlNodePtr node, gchar * descriptor, volume_data_t num);
+void xml_save_floatpoint(xmlNodePtr node, gchar * descriptor, floatpoint_t num);
 void xml_save_int(xmlNodePtr node, gchar * descriptor, int num);
 void xml_save_realspace(xmlNodePtr node, gchar * descriptor, realspace_t coord_frame);
 

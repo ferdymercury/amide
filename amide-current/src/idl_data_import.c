@@ -55,13 +55,13 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
 
   /* acquire space for the volume structure */
   if ((idl_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure to hold IDL data\n", PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume structure to hold IDL data", PACKAGE);
     return idl_volume;
   }
 
   /* we need to read in the first 35 bytes of the IDL data file (the header) */
   if ((file_pointer = fopen(idl_data_filename, "r")) == NULL) {
-    g_warning("%s: couldn't open idl data file %s\n", PACKAGE,idl_data_filename);
+    g_warning("%s: couldn't open idl data file %s", PACKAGE,idl_data_filename);
     idl_volume = volume_free(idl_volume);
     return idl_volume;
   }
@@ -71,7 +71,7 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   file_buffer = (void *) g_malloc(bytes_to_read);
   bytes_read = fread(file_buffer, 1, bytes_to_read, file_pointer);
   if (bytes_read != bytes_to_read) {
-    g_warning("%s: read wrong number of elements from idl data file:\n\t%s\n\texpected %d\tgot %d\n", 
+    g_warning("%s: read wrong number of elements from idl data file:\n\t%s\n\texpected %d\tgot %d", 
 	      PACKAGE,idl_data_filename, bytes_to_read, bytes_read);
     idl_volume = volume_free(idl_volume);
     g_free(file_buffer);

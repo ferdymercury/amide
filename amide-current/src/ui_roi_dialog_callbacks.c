@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -235,15 +232,15 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   which_axis = realspace_get_orthogonal_which_axis(i_view);
   roi_new_info->coord_frame.axis[XAXIS] = 
     realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[XAXIS],
-			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     &study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   roi_new_info->coord_frame.axis[YAXIS] = 
     realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[YAXIS],
-			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     &study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   roi_new_info->coord_frame.axis[ZAXIS] = 
     realspace_rotate_on_axis(&roi_new_info->coord_frame.axis[ZAXIS],
-			     &study_get_coord_frame_axis(ui_study->study, which_axis),
+			     &study_coord_frame_axis(ui_study->study, which_axis),
 			     rotation);
   realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
 

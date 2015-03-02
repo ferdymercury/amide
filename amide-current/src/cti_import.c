@@ -55,14 +55,14 @@ volume_t * cti_import(gchar * cti_filename) {
   matnum = cti_file->dirlist->first->matnum;
 
   if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
-    g_warning("%s: can't get header info at matrix %x in file %s\n",\
+    g_warning("%s: can't get header info at matrix %x in file %s",\
 	      PACKAGE, matnum, cti_filename);
     return NULL;
   }
 
   /* start acquiring some useful information */
   if ((temp_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure\n", PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume structure", PACKAGE);
     return NULL;
   }
 
@@ -77,7 +77,7 @@ volume_t * cti_import(gchar * cti_filename) {
   
   /* malloc the space for the volume */
   if ((temp_volume->data = volume_get_data_mem(temp_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume",PACKAGE);
     temp_volume = volume_free(temp_volume);
     return temp_volume;
   }
@@ -133,7 +133,7 @@ volume_t * cti_import(gchar * cti_filename) {
 
     /* allocate space for the array containing info on the duration of the frames */
     if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
-      g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
       temp_volume = volume_free(temp_volume);
       return temp_volume;
     }
@@ -148,7 +148,7 @@ volume_t * cti_import(gchar * cti_filename) {
 
 	/* read in the corresponding cti slice */
 	if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	  g_warning("%s: can't get image matrix %x in file %s\n",\
+	  g_warning("%s: can't get image matrix %x in file %s",\
 		    PACKAGE, matnum, cti_filename);
 	  temp_volume = volume_free(temp_volume);
 	  return temp_volume;

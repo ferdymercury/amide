@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -72,7 +69,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   /* sanity checks */
   if (ui_study->current_mode == VOLUME_MODE) 
     return TRUE;
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return TRUE;
   for (i_view=0; i_view<NUM_VIEWS; i_view++)
     if (ui_study->current_slices[i_view] == NULL)
@@ -80,7 +77,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = study_get_first_volume(ui_study->study);
+    volume = study_first_volume(ui_study->study);
   else
     volume = ui_study->current_volume;
 		   
@@ -108,11 +105,11 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 		/ui_study->rgb_image[view_static]->rgb_width)*far_corner.x;
   temp_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
 		/ui_study->rgb_image[view_static]->rgb_height)*far_corner.y;
-  temp_loc.z = ui_study->current_thickness/2.0;
+  temp_loc.z = study_view_thickness(ui_study->study)/2.0;
 
   /* Convert the event location info to real units */
   real_loc = realspace_alt_coord_to_base(temp_loc, view_coord_frame);
-  view_loc = realspace_base_coord_to_alt(real_loc, study_get_coord_frame(ui_study->study));
+  view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
 
 
   /* switch on the event which called this */
@@ -454,7 +451,7 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
 
   /* get the list of roi's we're going to be calculating over */
   if (all)
-    current_roi_list = roi_list_copy(study_get_rois(ui_study->study));
+    current_roi_list = roi_list_copy(study_rois(ui_study->study));
   else {
     temp_ui_roi_list = ui_study->current_rois;
     current_roi_list = NULL;
@@ -465,7 +462,7 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   }
 
   /* start setting up the widget we'll display the info from */
-  title = g_strdup_printf("Roi Analysis: Study %s", study_get_name(ui_study->study));
+  title = g_strdup_printf("Roi Analysis: Study %s", study_name(ui_study->study));
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
 
@@ -488,7 +485,7 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   gtk_widget_set_usize(GTK_WIDGET(text), 700,0);
   
   line = g_strdup_printf("Roi Analysis:\t\tStudy: %s\n",
-			 study_get_name(ui_study->study));
+			 study_name(ui_study->study));
   gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
   g_free(line);
 
@@ -500,7 +497,9 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   while (current_ui_volume_list != NULL) {
 
     /*what volume we're calculating on */
-    line = g_strdup_printf("Calculating on Volume:\t%s\n", current_ui_volume_list->volume->name);
+    line = g_strdup_printf("Calculating on Volume:\t%s\t using conversion factor:\t%5.3f\n", 
+			   current_ui_volume_list->volume->name, 
+			   current_ui_volume_list->volume->conversion);
     gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
     g_free(line);
     

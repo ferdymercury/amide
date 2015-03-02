@@ -32,11 +32,9 @@
 #include <fnmatch.h>
 #include "amide.h"
 #include "color_table.h"
-#include "volume.h"
 #include "rendering.h"
 #include "medcon_import.h"
 #include "cti_import.h"
-#include "roi.h"
 #include "study.h"
 #include "image.h"
 #include "ui_threshold.h"
@@ -92,7 +90,7 @@ static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
       (strcmp(save_filename, "..") == 0) ||
       (strcmp(save_filename, "") == 0) ||
       (strcmp(save_filename, "/") == 0)) {
-    g_warning("%s: Inappropriate filename: %s\n",PACKAGE, save_filename);
+    g_warning("%s: Inappropriate filename: %s",PACKAGE, save_filename);
     return;
   }
 
@@ -116,34 +114,34 @@ static void ui_study_callbacks_save_as_ok(GtkWidget* widget, gpointer data) {
 
 	if (fnmatch("*.xml",directory_entry->d_name,FNM_NOESCAPE) == 0) 
 	  if (unlink(temp_string) != 0)
-	    g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, temp_string);
+	    g_warning("%s: Couldn't unlink file: %s",PACKAGE, temp_string);
 	if (fnmatch("*.dat",directory_entry->d_name,FNM_NOESCAPE) == 0) 
 	  if (unlink(temp_string) != 0)
-	    g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, temp_string);
+	    g_warning("%s: Couldn't unlink file: %s",PACKAGE, temp_string);
 
 	g_free(temp_string);
       }
 
     } else if (S_ISREG(file_info.st_mode)) {
       if (unlink(save_filename) != 0)
-	g_warning("%s: Couldn't unlink file: %s\n",PACKAGE, save_filename);
+	g_warning("%s: Couldn't unlink file: %s",PACKAGE, save_filename);
 
     } else {
-      g_warning("%s: Unrecognized file type for file: %s, couldn't delete\n",PACKAGE, save_filename);
+      g_warning("%s: Unrecognized file type for file: %s, couldn't delete",PACKAGE, save_filename);
       return;
     }
 
   } else {
     /* make the directory */
     if (mkdir(save_filename, mode) != 0) {
-      g_warning("%s: Couldn't create amide directory: %s\n",PACKAGE, save_filename);
+      g_warning("%s: Couldn't create amide directory: %s",PACKAGE, save_filename);
       return;
     }
   }
 
   /* allright, save our study */
   if (study_write_xml(ui_study->study, save_filename) == FALSE) {
-    g_warning("%s: Failure Saving File: %s\n",PACKAGE, save_filename);
+    g_warning("%s: Failure Saving File: %s",PACKAGE, save_filename);
     return;
   }
 
@@ -163,10 +161,10 @@ void ui_study_callbacks_save_as(GtkWidget * widget, gpointer data) {
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Save File")));
 
   /* take a guess at the filename */
-  if (study_get_filename(ui_study->study) == NULL) 
-    temp_string = g_strdup_printf("%s.xif", study_get_name(ui_study->study));
+  if (study_filename(ui_study->study) == NULL) 
+    temp_string = g_strdup_printf("%s.xif", study_name(ui_study->study));
   else
-    temp_string = g_strdup_printf("%s", study_get_filename(ui_study->study));
+    temp_string = g_strdup_printf("%s", study_filename(ui_study->study));
   gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
   g_free(temp_string); 
 
@@ -282,7 +280,7 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
       }
 #else
       { /* unrecognized file type */
-	g_warning("%s: Cannot recognize extension %s on file: %s\n", 
+	g_warning("%s: Cannot recognize extension %s on file: %s", 
 		  PACKAGE, import_filename_extension, import_filename);
       }
 #endif
@@ -290,8 +288,9 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
   } else { /* no filename */
     ; 
   }
-
+#ifdef AMIDE_DEBUG
   g_print("name %s\n",import_volume->name);
+#endif
   if (import_volume != NULL) {
 
     /* add the volume to the study structure */
@@ -311,8 +310,8 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
     ui_study_update_thickness_adjustment(ui_study);
 
     /* make sure we're pointing to something sensible */
-    if (ui_study->current_view_center.x < 0.0) {
-      ui_study->current_view_center = volume_calculate_center(import_volume);
+    if (study_view_center(ui_study->study).x < 0.0) {
+      study_set_view_center(ui_study->study, volume_calculate_center(import_volume));
     }
     
     /* update the ui_study cavases with the new volume */
@@ -388,6 +387,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
   GdkCursor * cursor;
   GnomeCanvas * canvas;
   realspace_t view_coord_frame;
+  realpoint_t view_center;
   realpoint_t far_corner;
   static realpoint_t picture_center,picture0,picture1;
   static realpoint_t center, p0,p1;
@@ -395,7 +395,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
   static gboolean dragging = FALSE;
   
   /* sanity checks */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return TRUE;
   if (ui_study->current_volumes == NULL)
     return TRUE;
@@ -428,11 +428,11 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 		/ui_study->rgb_image[view]->rgb_width)*far_corner.x;
   temp_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
 		/ui_study->rgb_image[view]->rgb_height)*far_corner.y;
-  temp_loc.z = ui_study->current_thickness/2.0;
+  temp_loc.z = study_view_thickness(ui_study->study)/2.0;
 
   /* Convert the event location info to real units */
   real_loc = realspace_alt_coord_to_base(temp_loc, view_coord_frame);
-  view_loc = realspace_base_coord_to_alt(real_loc, study_get_coord_frame(ui_study->study));
+  view_loc = realspace_base_coord_to_alt(real_loc, study_coord_frame(ui_study->study));
 
   /* switch on the event which called this */
   switch (event->type)
@@ -522,24 +522,30 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	switch (view)
 	  {
 	  case TRANSVERSE:
-	    ui_study->current_view_center.x = view_loc.x;
-	    ui_study->current_view_center.y = view_loc.y;
+	    view_center = study_view_center(ui_study->study);
+	    view_center.x = view_loc.x;
+	    view_center.y = view_loc.y;
+	    study_set_view_center(ui_study->study, view_center);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_PLANE_ADJUSTMENT);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ARROWS);
 	    break;
 	  case CORONAL:
-	    ui_study->current_view_center.x = view_loc.x;
-	    ui_study->current_view_center.z = view_loc.z;
+	    view_center = study_view_center(ui_study->study);
+	    view_center.x = view_loc.x;
+	    view_center.z = view_loc.z;
+	    study_set_view_center(ui_study->study, view_center);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_PLANE_ADJUSTMENT);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ARROWS);
 	    break;
 	  case SAGITTAL:
-	    ui_study->current_view_center.y = view_loc.y;
-	    ui_study->current_view_center.z = view_loc.z;
+	    view_center = study_view_center(ui_study->study);
+	    view_center.y = view_loc.y;
+	    view_center.z = view_loc.z;
+	    study_set_view_center(ui_study->study, view_center);
 	    ui_study_update_canvas(ui_study, TRANSVERSE, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, CORONAL, UPDATE_ALL);
 	    ui_study_update_canvas(ui_study, SAGITTAL, UPDATE_PLANE_ADJUSTMENT);
@@ -590,14 +596,14 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoin
 	  switch (view)
 	    {
 	    case TRANSVERSE:
-	      diff.z = ui_study->current_thickness/2.0;
+	      diff.z = study_view_thickness(ui_study->study)/2.0;
 	      break;
 	    case CORONAL:
-	      diff.y = ui_study->current_thickness/2.0;
+	      diff.y = study_view_thickness(ui_study->study)/2.0;
 	      break;
 	    case SAGITTAL:
 	    default:
-	      diff.x = ui_study->current_thickness/2.0;
+	      diff.x = study_view_thickness(ui_study->study)/2.0;
 	      break;
 	    }
 	  
@@ -647,9 +653,10 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
 
   ui_study_t * ui_study = data;
   view_t i_view;
+  realpoint_t view_center;
 
   /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
   if (ui_study->current_volumes == NULL)
     return;
@@ -659,19 +666,25 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
 
   switch(i_view) {
   case TRANSVERSE:
-    ui_study->current_view_center.z = adjustment->value;
+    view_center = study_view_center(ui_study->study);
+    view_center.z = adjustment->value;
+    study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ALL);
     ui_study_update_canvas(ui_study,CORONAL,UPDATE_ARROWS);
     ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ARROWS);
     break;
   case CORONAL:
-    ui_study->current_view_center.y = adjustment->value;
+    view_center = study_view_center(ui_study->study);
+    view_center.y = adjustment->value;
+    study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,CORONAL,UPDATE_ALL);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
     ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ARROWS);
     break;
   case SAGITTAL:
-    ui_study->current_view_center.x = adjustment->value;
+    view_center = study_view_center(ui_study->study);
+    view_center.x = adjustment->value;
+    study_set_view_center(ui_study->study, view_center);
     ui_study_update_canvas(ui_study,SAGITTAL,UPDATE_ALL);
     ui_study_update_canvas(ui_study,TRANSVERSE,UPDATE_ARROWS);
     ui_study_update_canvas(ui_study,CORONAL,UPDATE_ARROWS);
@@ -688,11 +701,11 @@ void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data) {
   ui_study_t * ui_study = data;
 
   /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
 
-  if (ui_study->current_zoom != adjustment->value) {
-    ui_study->current_zoom = adjustment->value;
+  if (study_zoom(ui_study->study) != adjustment->value) {
+    study_set_zoom(ui_study->study, adjustment->value);
     ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
 
@@ -717,11 +730,11 @@ void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data) {
   ui_study_t * ui_study = data;
 
   /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
 
-  if (ui_study->current_thickness != adjustment->value) {
-    ui_study->current_thickness = adjustment->value;
+  if (study_view_thickness(ui_study->study) != adjustment->value) {
+    study_set_view_thickness(ui_study->study, adjustment->value);
     ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
   }
 
@@ -769,8 +782,9 @@ void ui_study_callbacks_rendering(GtkWidget * widget, gpointer data) {
   volume_list_t * temp_volumes;
 
   temp_volumes = ui_volume_list_return_volume_list(ui_study->current_volumes);
-  ui_rendering_create(temp_volumes, study_get_coord_frame(ui_study->study),
-		      ui_study->current_time, ui_study->current_duration);
+  ui_rendering_create(temp_volumes, study_coord_frame(ui_study->study),
+		      study_view_time(ui_study->study), 
+		      study_view_duration(ui_study->study));
   temp_volumes = volume_list_free(temp_volumes);
 
   return;
@@ -794,10 +808,10 @@ void ui_study_callbacks_scaling(GtkWidget * widget, gpointer data) {
   i_scaling = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"scaling"));
 
   /* check if we actually changed values */
-  if (ui_study->scaling != i_scaling) {
+  if (study_scaling(ui_study->study) != i_scaling) {
     /* and inact the changes */
-    ui_study->scaling = i_scaling;
-    if (study_get_volumes(ui_study->study) != NULL)
+    study_set_scaling(ui_study->study, i_scaling);
+    if (study_volumes(ui_study->study) != NULL)
       ui_study_update_canvas(ui_study,NUM_VIEWS, REFRESH_IMAGE);
     if (ui_study->series != NULL)
       ui_series_update_canvas_image(ui_study);
@@ -821,7 +835,7 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
     volume = ui_threshold->volume;
   else
     if (ui_study->current_volume == NULL)
-      volume = study_get_first_volume(ui_study->study);
+      volume = study_first_volume(ui_study->study);
     else
       volume = ui_study->current_volume;
 
@@ -833,7 +847,7 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
   if (volume->color_table != i_color_table) {
     /* and inact the changes */
     volume->color_table = i_color_table;
-    if (study_get_volumes(ui_study->study) != NULL) {
+    if (study_volumes(ui_study->study) != NULL) {
       
       /* update the canvas */
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
@@ -926,8 +940,8 @@ void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node,
   volume_list_t * volume_list;
   roi_list_t * roi_list;
 
-  volume_list = study_get_volumes(ui_study->study);
-  roi_list = study_get_rois(ui_study->study);
+  volume_list = study_volumes(ui_study->study);
+  roi_list = study_rois(ui_study->study);
 
   /* figure out what this node corresponds to, if anything */
   node_pointer = gtk_ctree_node_get_row_data(ctree, GTK_CTREE_NODE(node));
@@ -989,8 +1003,8 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
   volume_list_t * volume_list;
   roi_list_t * roi_list;
 
-  volume_list = study_get_volumes(ui_study->study);
-  roi_list = study_get_rois(ui_study->study);
+  volume_list = study_volumes(ui_study->study);
+  roi_list = study_rois(ui_study->study);
 
   /* figure out what this node corresponds to, if anything */
   node_pointer = gtk_ctree_node_get_row_data(ctree, GTK_CTREE_NODE(node));
@@ -1049,14 +1063,15 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
   gpointer node_pointer = NULL;
   volume_list_t * volume_list; 
   roi_list_t * roi_list;
-  realpoint_t center;
+  realpoint_t view_center;
+  realpoint_t temp_p;
   GtkCTree * ctree = GTK_CTREE(widget);
   GtkCTreeNode * node = NULL;
   gint row = -1;
   gint col;
 
-  volume_list = study_get_volumes(ui_study->study);
-  roi_list = study_get_rois(ui_study->study);
+  volume_list = study_volumes(ui_study->study);
+  roi_list = study_rois(ui_study->study);
 
   /* we're really only interest in double clicks with button 1, or clicks
      with buttons 2 or 3 */
@@ -1085,14 +1100,10 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	    
 	    /* center the view on this roi, check first if the roi has been drawn */
 	    if ( !roi_undrawn(ui_study->current_roi)) {
-	      center = roi_calculate_center(ui_study->current_roi);
-	      center = realspace_base_coord_to_alt(center, study_get_coord_frame(ui_study->study));
-	      ui_study->current_view_center.x = center.x -
-		ui_study->current_thickness/2.0;
-	      ui_study->current_view_center.y = center.y -
-		ui_study->current_thickness/2.0;
-	      ui_study->current_view_center.z = center.z -
-		ui_study->current_thickness/2.0;
+	      view_center = roi_calculate_center(ui_study->current_roi);
+	      view_center = realspace_base_coord_to_alt(view_center, study_coord_frame(ui_study->study));
+	      temp_p.x = temp_p.y = temp_p.z = 0.5 * study_view_thickness(ui_study->study);
+	      study_set_view_center(ui_study->study, rp_sub(view_center, temp_p));
 	      ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
 	    } else {
 	      /* if this roi hasn't yet been drawn, at least update 
@@ -1203,7 +1214,7 @@ void ui_study_callbacks_delete_object_pressed(GtkWidget * button, gpointer data)
     /* destroy the threshold window if it's open and looking at this volume */
     /* figure out what's the current active volume */
     if (ui_study->current_volume == NULL)
-      current_volume = study_get_first_volume(ui_study->study);
+      current_volume = study_first_volume(ui_study->study);
     else
       current_volume = ui_study->current_volume;
     if (current_volume==volume)
@@ -1252,10 +1263,10 @@ void ui_study_callbacks_interpolation(GtkWidget * widget, gpointer data) {
   i_interpolation = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"interpolation"));
 
   /* check if we actually changed values */
-  if (ui_study->current_interpolation != i_interpolation) {
+  if (study_interpolation(ui_study->study) != i_interpolation) {
     /* and inact the changes */
-    ui_study->current_interpolation = i_interpolation;
-	if (study_get_volumes(ui_study->study) != NULL) {
+    study_set_interpolation(ui_study->study, i_interpolation);
+	if (study_volumes(ui_study->study) != NULL) {
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_IMAGE);
 	  //	  if (ui_study->threshold != NULL)
 	  //	    ui_threshold_update_canvas(ui_study, ui_study->threshold);

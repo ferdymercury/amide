@@ -30,6 +30,7 @@ typedef enum {XAXIS, YAXIS, ZAXIS, NUM_AXIS} axis_t;
 
 /* setup the types for various internal data formats */
 typedef gdouble floatpoint_t;
+#define SIZE_OF_FLOATPOINT_T 8
 typedef gint16 intpoint_t;
 
 /* pixel point is a point in pixel (integer) 2D space */
@@ -58,6 +59,7 @@ typedef struct realpoint_t {
 typedef struct realspace_t {
   realpoint_t offset;
   realpoint_t axis[NUM_AXIS];
+  //  realpoint_t inverse[NUM_AXIS];
 } realspace_t;
 
 /* constants */
@@ -127,7 +129,21 @@ typedef struct realspace_t {
 					   ((rp3).z = cm*(rp1).z+dm*(rp2).z)) 
 
 
+#define realspace_offset(rs) ((rs).offsetx)
+#define realspace_axis(rs) ((rs).axisx)
+
+
 /* external functions */
+
+/* note! the equivalent defines above are faster and should be used in any time critical spots */
+inline realpoint_t rp_abs(const realpoint_t rp1);
+inline realpoint_t rp_add(const realpoint_t rp1, const realpoint_t rp2);
+inline realpoint_t rp_sub(const realpoint_t rp1, const realpoint_t rp2);
+inline realpoint_t rp_mult(const realpoint_t rp1, const realpoint_t rp2);
+inline realpoint_t rp_diff(const realpoint_t rp1, const realpoint_t rp2);
+inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
+
+
 gboolean realpoint_in_box(const realpoint_t p,
 			  const realpoint_t p0,
 			  const realpoint_t p1);

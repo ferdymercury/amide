@@ -152,14 +152,14 @@ roi_t * roi_load_xml(gchar * file_name, gchar * directory) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(file_name)) == NULL) {
-    g_warning("%s: Couldn't Parse AMIDE ROI xml file %s/%s\n",PACKAGE, directory,file_name);
+    g_warning("%s: Couldn't Parse AMIDE ROI xml file %s/%s",PACKAGE, directory,file_name);
     roi_free(new_roi);
     return new_roi;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("%s: AMIDE ROI xml file doesn't appear to have a root: %s/%s\n",
+    g_warning("%s: AMIDE ROI xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, directory,file_name);
     roi_free(new_roi);
     return new_roi;
@@ -177,16 +177,18 @@ roi_t * roi_load_xml(gchar * file_name, gchar * directory) {
 
   /* figure out the type */
   temp_string = xml_get_string(nodes, "type");
-  for (i_roi_type=0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
-    if (g_strcasecmp(temp_string, roi_type_names[i_roi_type]) == 0)
-      new_roi->type = i_roi_type;
+  if (temp_string != NULL)
+    for (i_roi_type=0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
+      if (g_strcasecmp(temp_string, roi_type_names[i_roi_type]) == 0)
+	new_roi->type = i_roi_type;
   g_free(temp_string);
 
   /* figure out the grain */
   temp_string = xml_get_string(nodes, "grain");
-  for (i_roi_grain=0; i_roi_grain < NUM_GRAIN_TYPES; i_roi_grain++) 
-    if (g_strcasecmp(temp_string, roi_grain_names[i_roi_grain]) == 0)
-      new_roi->grain = i_roi_grain;
+  if (temp_string != NULL)
+    for (i_roi_grain=0; i_roi_grain < NUM_GRAIN_TYPES; i_roi_grain++) 
+      if (g_strcasecmp(temp_string, roi_grain_names[i_roi_grain]) == 0)
+	new_roi->grain = i_roi_grain;
   g_free(temp_string);
 
   /* and figure out the rest of the parameters */
@@ -748,7 +750,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 
   /* sanity checks */
   if (roi_undrawn(roi)) {
-    g_warning("%s: roi appears not to have been drawn\n",PACKAGE);
+    g_warning("%s: roi appears not to have been drawn",PACKAGE);
     return analysis;
   }
 

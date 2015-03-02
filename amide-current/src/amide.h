@@ -34,8 +34,11 @@ typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
 
 /* setup the types for various internal data formats */
 //typedef gdouble volume_data_t;
+//#define SIZE_OF_VOLUME_DATA_T 8
 typedef gfloat volume_data_t;
+#define SIZE_OF_VOLUME_DATA_T 4
 typedef gdouble volume_time_t;
+#define SIZE_OF_VOLUME_TIME_T 8
 
 
 /* external variables */

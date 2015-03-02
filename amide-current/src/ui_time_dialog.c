@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -84,12 +81,12 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   /* get space for the array that'll take care of which frame of which volume we're looking at*/
   frames = (guint *) g_malloc(num_volumes+sizeof(guint));
   if ((frames == NULL) && (num_volumes !=0)) {
-    g_warning("%s: can't count frames or allocate memory!\n",PACKAGE);
+    g_warning("%s: can't count frames or allocate memory!",PACKAGE);
     return;
   }
   volume_used = (gboolean *) g_malloc(num_volumes+sizeof(gboolean));
   if (volume_used == NULL) {
-    g_warning("%s: coudn't find memory for a dang boolean array?\n",PACKAGE);
+    g_warning("%s: coudn't find memory for a dang boolean array?",PACKAGE);
     g_free(frames);
     return;
   }
@@ -234,8 +231,8 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
   new_time = (ui_time_dialog_t *) g_malloc(sizeof(ui_time_dialog_t));
-  new_time->time = ui_study->current_time;
-  new_time->duration = ui_study->current_duration;
+  new_time->time = study_view_time(ui_study->study);
+  new_time->duration = study_view_duration(ui_study->study);
   gtk_object_set_data(GTK_OBJECT(time_dialog), "new_time", new_time);
   
 					   

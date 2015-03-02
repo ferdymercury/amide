@@ -31,6 +31,9 @@
 
 
 
+/* ----------------- the load functions ------------------ */
+
+
 /* go through a list of nodes, and return a pointer to the node
    matching the descriptor */
 xmlNodePtr xml_get_node(xmlNodePtr nodes, gchar * descriptor) {
@@ -62,14 +65,25 @@ realpoint_t xml_get_realpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   temp_string = xml_get_string(nodes, descriptor);
 
- /* convert to a floating point */
   if (temp_string != NULL) {
+#if (SIZE_OF_FLOATPOINT_T == 8)
+    /* convert to doubles */
     error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_point.x), &(return_point.y), &(return_point.z));
+#elif (SIZE_OF_FLOATPOINT_T == 4)
+    /* convert to float */
+    error = sscanf(temp_string, "%f\t%f\t%f", &(return_point.x), &(return_point.y), &(return_point.z));
+#else
+#error "Unknown size for SIZE_OF_FLOATPOINT_T"
+#endif
     g_free(temp_string);
-    if ((error == EOF)) return_point = realpoint_init;
-    return return_point;
-  } else
-    return realpoint_init;
+  }
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    return_point = realpoint_init;
+  }
+
+  return return_point;
 
 }
 
@@ -87,16 +101,21 @@ voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   temp_string = xml_get_string(nodes, descriptor);
 
-  /* convert to a voxelpoint */
-  error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
-  g_free(temp_string);
- 
-  if ((error == EOF))  
-    return_point.x = return_point.y = return_point.z = 0;
-  else {
+  if (temp_string != NULL) {
+
+    /* convert to a voxelpoint */
+    error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
+    g_free(temp_string);
+    
     return_point.x = x;
     return_point.y = y;
     return_point.z = z;
+
+  } 
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    return_point.x = return_point.y = return_point.z = 0;
   }
 
   return return_point;
@@ -112,11 +131,23 @@ volume_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
 
   temp_string = xml_get_string(nodes, descriptor);
 
-  /* convert to a float */
-  error = sscanf(temp_string, "%lf", &return_time);
-  g_free(temp_string);
-  if ((error == EOF)) {
-    g_warning("%s: error convertion time\n", PACKAGE);
+  if (temp_string != NULL) {
+
+#if (SIZE_OF_VOLUME_TIME_T == 8)
+    /* convert to doubles */
+    error = sscanf(temp_string, "%lf", &return_time);
+#elif (SIZE_OF_VOLUME_TIME_T == 4)
+    /* convert to float */
+    error = sscanf(temp_string, "%f", &return_time);
+#else
+#error "Unknown size for SIZE_OF_VOLUME_TIME_T"
+#endif
+    g_free(temp_string);
+  }
+  
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
     return_time = 0.0;
   }
 
@@ -134,22 +165,46 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
   guint i;
 
   temp_string = xml_get_string(nodes, descriptor);
-  if ((return_times = (volume_time_t * ) g_malloc(num_times*sizeof(volume_time_t))) == NULL) {
-    g_warning("%s: Couldn't allocate space for time data\n",PACKAGE);
-    return return_times;
+
+  if (temp_string != NULL) {
+
+    if ((return_times = (volume_time_t * ) g_malloc(num_times*sizeof(volume_time_t))) == NULL) {
+      g_warning("%s: Couldn't allocate space for time data",PACKAGE);
+      return return_times;
+    }
+    
+    /* split-up the string so we can process it */
+    string_chunks = g_strsplit(temp_string, "\t", num_times);
+    g_free(temp_string);
+    
+    for (i=0;i<num_times;i++) {
+
+#if (SIZE_OF_VOLUME_TIME_T == 8)
+      /* convert to doubles */
+      error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
+#elif (SIZE_OF_VOLUME_TIME_T == 4)
+      /* convert to float */
+      error = sscanf(string_chunks[i], "%f", &(return_times[i]));
+#else
+#error "Unknown size for SIZE_OF_VOLUME_TIME_T"
+#endif
+      
+      if ((error == EOF))  return_times[i] = 0.0;
+    }
+
+    g_strfreev(string_chunks);
+
   }
 
-  /* split-up the string so we can process it */
-  string_chunks = g_strsplit(temp_string, "\t", num_times);
-  g_free(temp_string);
-
-  for (i=0;i<num_times;i++) {
-    /* convert to a float */
-    error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
-    if ((error == EOF))  return_times[i] = 0.0;
+  if (temp_string == NULL) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    if ((return_times = (volume_time_t * ) g_malloc(1*sizeof(volume_time_t))) == NULL) {
+      g_warning("%s: Couldn't allocate space for time data",PACKAGE);
+      return return_times;
+    }
+    return_times[0] = 0.0;
   }
 
-  g_strfreev(string_chunks);
   return return_times;
 }
 
@@ -163,15 +218,57 @@ volume_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
 
   temp_string = xml_get_string(nodes, descriptor);
 
-  /* convert to a float */
-  error = sscanf(temp_string, "%f", &return_data);
-  g_free(temp_string);
+  if (temp_string != NULL) {
+
+#if (SIZE_OF_VOLUME_DATA_T == 8)
+    /* convert to doubles */
+    error = sscanf(temp_string, "%lf", &return_data);
+#elif (SIZE_OF_VOLUME_DATA_T == 4)
+    /* convert to float */
+    error = sscanf(temp_string, "%f", &return_data);
+#else
+#error "Unknown size for SIZE_OF_VOLUME_DATA_T"
+#endif
+    
+    g_free(temp_string);
  
-  if ((error == EOF))  return_data = 0.0;
+  }
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    return_data = 0.0;
+  }
 
   return return_data;
 }
 
+floatpoint_t xml_get_floatpoint(xmlNodePtr nodes, gchar * descriptor) {
+
+  gchar * temp_string;
+  floatpoint_t return_data;
+  gint error;
+
+  temp_string = xml_get_string(nodes, descriptor);
+  
+  if (temp_string != NULL) {
+
+#if (SIZE_OF_FLOATPOINT_T == 8)
+    /* convert to doubles */
+    error = sscanf(temp_string, "%lf", &return_data);
+#elif (SIZE_OF_FLOATPOINT_T == 4)
+    /* convert to float */
+    error = sscanf(temp_string, "%f", &return_data);
+#else
+#error "Unkown size for SIZE_OF_FLOATPOINT_T"
+#endif
+
+    g_free(temp_string);
+    if ((error == EOF))  return_data = 0.0;
+  } else
+    return_data = 0.0;
+
+  return return_data;
+}
 
 
 gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
@@ -182,11 +279,16 @@ gint xml_get_int(xmlNodePtr nodes, gchar * descriptor) {
 
   temp_string = xml_get_string(nodes, descriptor);
 
-  /* convert to an int */
-  error = sscanf(temp_string, "%d", &return_int);
-  g_free(temp_string);
- 
-  if ((error == EOF))  return_int = 0;
+  if (temp_string != NULL) {
+    /* convert to an int */
+    error = sscanf(temp_string, "%d", &return_int);
+    g_free(temp_string);
+  } 
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    return_int = 0;
+  }
 
   return return_int;
 }
@@ -228,11 +330,11 @@ realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-
+/* ----------------- the save functions ------------------ */
 
 
 void xml_save_string(xmlNodePtr node, gchar * descriptor, gchar * string) {
-
+  
   xmlNewChild(node, NULL, descriptor, string);
 
   return;
@@ -303,6 +405,18 @@ void xml_save_data(xmlNodePtr node, gchar * descriptor, volume_data_t num) {
 
   return;
 }
+
+void xml_save_floatpoint(xmlNodePtr node, gchar * descriptor, floatpoint_t num) {
+
+  gchar * temp_string;
+
+  temp_string = g_strdup_printf("%10.9f", num);
+  xml_save_string(node, descriptor, temp_string);
+  g_free(temp_string);
+
+  return;
+}
+
 
 void xml_save_int(xmlNodePtr node, gchar * descriptor, int num) {
 

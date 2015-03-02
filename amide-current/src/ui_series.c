@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -248,7 +245,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 		       ui_study->series->view_duration-CLOSE,
 		       ui_study->series->thickness,
 		       view_coord_frame,
-		       ui_study->scaling,
+		       study_scaling(ui_study->study),
 		       ui_study->series->zoom,
 		       ui_study->series->interpolation);
 
@@ -321,7 +318,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 			   ui_study->series->view_duration-CLOSE,
 			   ui_study->series->thickness,
 			   view_coord_frame,
-			   ui_study->scaling,
+			   study_scaling(ui_study->study),
 			   ui_study->series->zoom,
 			   ui_study->series->interpolation);
     
@@ -387,9 +384,9 @@ void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) 
   volume_time_t min_duration;
 
   /* sanity checks */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
-  if (study_get_first_volume(ui_study->study) == NULL)
+  if (study_first_volume(ui_study->study) == NULL)
     return;
   if (ui_study->series != NULL)
     return;
@@ -400,7 +397,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) 
   ui_study->series->type = series_type;
 
   title = g_strdup_printf("Series: %s (%s - %s)",
-			  study_get_name(ui_study->study), 
+			  study_name(ui_study->study), 
 			  view_names[view], 
 			  series_names[series_type]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
@@ -421,20 +418,21 @@ void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) 
 
   /* save the coord_frame of the series */
   ui_study->series->coord_frame = 
-    realspace_get_orthogonal_coord_frame(study_get_coord_frame(ui_study->study), view);
+    realspace_get_orthogonal_coord_frame(study_coord_frame(ui_study->study), view);
   ui_study->series->view_point = 
-    realspace_alt_coord_to_alt(ui_study->current_view_center,
-			       study_get_coord_frame(ui_study->study),
+    realspace_alt_coord_to_alt(study_view_center(ui_study->study),
+			       study_coord_frame(ui_study->study),
 			       ui_study->series->coord_frame);
 
   /* save some parameters */
-  ui_study->series->thickness = ui_study->current_thickness;
-  ui_study->series->interpolation = ui_study->current_interpolation;
-  ui_study->series->view_time = ui_study->current_time;
+  ui_study->series->thickness = study_view_thickness(ui_study->study);
+  ui_study->series->interpolation = study_interpolation(ui_study->study);
+  ui_study->series->view_time = study_view_time(ui_study->study);
   min_duration = volume_list_min_frame_duration(ui_study->series->volumes);
   ui_study->series->view_duration = 
-    (min_duration > ui_study->current_duration) ? min_duration : ui_study->current_duration;
-  ui_study->series->zoom = ui_study->current_zoom;
+    (min_duration > study_view_duration(ui_study->study)) ? 
+    min_duration : study_view_duration(ui_study->study);
+  ui_study->series->zoom = study_zoom(ui_study->study);
 
   /* setup the canvas */
   series_canvas = GNOME_CANVAS(gnome_canvas_new());

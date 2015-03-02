@@ -85,7 +85,7 @@ volume_t * volume_init(void) {
 
   if ((temp_volume = 
        (volume_t *) g_malloc(sizeof(volume_t))) == NULL) {
-    g_warning("%s: Couldn't allocate memory for the volume structure\n",PACKAGE);
+    g_warning("%s: Couldn't allocate memory for the volume structure",PACKAGE);
     return NULL;
   }
   temp_volume->reference_count = 1;
@@ -177,28 +177,31 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
   /* now to save the raw data */
 
   /* sanity check */
-  g_assert(sizeof(float) == sizeof(volume_data_t)); /* can't handle any other case */
+#if (SIZE_OF_VOLUME_DATA_T != 4)
+#error "Haven't yet written support for 8 byte (double) volume data in volume_write_xml"
+#endif
   
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
   /* first, transform it to little endian */
-  for (t = 0; t < raw_data_info->volume->num_frames; t++)
+  for (t = 0; t < volume->num_frames; t++)
     for (i.z = 0; i.z < volume->dim.z ; i.z++) 
       for (i.y = 0; i.y < volume->dim.y; i.y++) 
 	for (i.x = 0; i.x < volume->dim.x; i.x++)
 	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
-	    AMIDE_FLOAT_TO_LE(VOLUME_GET_CONTENT(volume,t,i));
+	    AMIDE_FLOAT_TO_LE(VOLUME_CONTENTS(volume,t,i));
 #endif
 
   /* write it on out */
   if ((file_pointer = fopen(raw_data_name, "w")) == NULL) {
-    g_warning("%s: couldn't save raw data file: %s\n",PACKAGE, raw_data_name);
+    g_warning("%s: couldn't save raw data file: %s",PACKAGE, raw_data_name);
     g_free(file_name);
     g_free(raw_data_name);
     return NULL;
   }
+
   num_elements = volume_size_data_mem(volume);
   if (fwrite(volume->data, 1, num_elements, file_pointer) != num_elements) {
-    g_warning("%s: incomplete save of raw data file: %s\n",PACKAGE, raw_data_name);
+    g_warning("%s: incomplete save of raw data file: %s",PACKAGE, raw_data_name);
     g_free(file_name);
     g_free(raw_data_name);
     return NULL;
@@ -207,12 +210,12 @@ gchar * volume_write_xml(volume_t * volume, gchar * directory) {
 
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
   /* and transform it on back */
-  for (t = 0; t < raw_data_info->volume->num_frames; t++)
+  for (t = 0; t < volume->num_frames; t++)
     for (i.z = 0; i.z < volume->dim.z ; i.z++) 
       for (i.y = 0; i.y < volume->dim.y; i.y++) 
 	for (i.x = 0; i.x < volume->dim.x; i.x++)
 	  VOLUME_SET_CONTENT(volume,t,i) = (gfloat)
-	    AMIDE_FLOAT_FROM_LE(VOLUME_GET_CONTENT(volume,t,i));
+	    AMIDE_FLOAT_FROM_LE(VOLUME_CONTENTS(volume,t,i));
 #endif
 
 
@@ -237,14 +240,14 @@ volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(file_name)) == NULL) {
-    g_warning("%s: Couldn't Parse AMIDE volume xml file %s/%s\n",PACKAGE, directory,file_name);
+    g_warning("%s: Couldn't Parse AMIDE volume xml file %s/%s",PACKAGE, directory,file_name);
     volume_free(new_volume);
     return new_volume;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("%s: AMIDE volume xml file doesn't appear to have a root: %s/%s\n",
+    g_warning("%s: AMIDE volume xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, directory,file_name);
     volume_free(new_volume);
     return new_volume;
@@ -262,16 +265,18 @@ volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
 
   /* figure out the modality */
   temp_string = xml_get_string(nodes, "modality");
-  for (i_modality=0; i_modality < NUM_MODALITIES; i_modality++) 
-    if (g_strcasecmp(temp_string, modality_names[i_modality]) == 0)
-      new_volume->modality = i_modality;
+  if (temp_string != NULL)
+    for (i_modality=0; i_modality < NUM_MODALITIES; i_modality++) 
+      if (g_strcasecmp(temp_string, modality_names[i_modality]) == 0)
+	new_volume->modality = i_modality;
   g_free(temp_string);
 
   /* figure out the color table */
   temp_string = xml_get_string(nodes, "color_table");
-  for (i_color_table=0; i_color_table < NUM_COLOR_TABLES; i_color_table++) 
-    if (g_strcasecmp(temp_string, color_table_names[i_color_table]) == 0)
-      new_volume->color_table = i_color_table;
+  if (temp_string != NULL)
+    for (i_color_table=0; i_color_table < NUM_COLOR_TABLES; i_color_table++) 
+      if (g_strcasecmp(temp_string, color_table_names[i_color_table]) == 0)
+	new_volume->color_table = i_color_table;
   g_free(temp_string);
 
   /* and figure out the rest of the parameters */
@@ -294,15 +299,20 @@ volume_t * volume_load_xml(gchar * file_name, gchar * directory) {
   /* and figure out the data format */
   temp_string = xml_get_string(nodes, "data_format");
   data_format = FLOAT_LE; /* sensible guess in case we don't figure it out from the file */
-  for (i_data_format=0; i_data_format < NUM_DATA_FORMATS; i_data_format++) 
-    if (g_strcasecmp(temp_string, data_format_names[i_data_format]) == 0)
-      data_format = i_data_format;
+  if (temp_string != NULL)
+    for (i_data_format=0; i_data_format < NUM_DATA_FORMATS; i_data_format++) 
+      if (g_strcasecmp(temp_string, data_format_names[i_data_format]) == 0)
+	data_format = i_data_format;
   g_free(temp_string);
 
   /* now load in the raw data */
+#ifdef AMIDE_DEBUG
+  g_print("reading volume %s from file %s\n", new_volume->name, raw_data_name);
+#endif
   new_volume = raw_data_read_file(raw_data_name, new_volume, data_format, 0);
    
   /* and we're done */
+  g_free(raw_data_name);
   xmlFreeDoc(doc);
 
   return new_volume;
@@ -343,7 +353,7 @@ volume_t * volume_copy(volume_t * src_volume) {
   /* make a separate copy in memory of the volume's frame durations */
   dest_volume->frame_duration = volume_get_frame_duration_mem(dest_volume);
   if (dest_volume->frame_duration == NULL) {
-    g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
     dest_volume = volume_free(dest_volume);
     return dest_volume;
   }
@@ -973,14 +983,14 @@ volume_t * volume_get_axis_volume(guint x_width, guint y_width, guint z_width) {
 
   
   if ((axis_volume->frame_duration = volume_get_frame_duration_mem(axis_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the axis volume frame duration array\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the axis volume frame duration array",PACKAGE);
     axis_volume = volume_free(axis_volume);
     return axis_volume;
   }
   axis_volume->frame_duration[0]=1.0;
 
   if ((axis_volume->data = volume_get_data_mem(axis_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
     axis_volume = volume_free(axis_volume);
     return axis_volume;
   }
@@ -1085,6 +1095,7 @@ volume_t * volume_get_slice(const volume_t * volume,
 
   /* sanity check */
   g_assert(volume != NULL);
+  g_return_val_if_fail(volume->data != NULL, NULL);
 
 
   /* ----- figure out what frames of this volume to include ----*/
@@ -1138,13 +1149,13 @@ volume_t * volume_get_slice(const volume_t * volume,
   g_free(temp_string);
 
   if ((slice->frame_duration = volume_get_frame_duration_mem(slice)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice frame duration array\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the slice frame duration array",PACKAGE);
     slice = volume_free(slice);
     return slice;
   }
   slice->frame_duration[0] = volume_end-volume_start;
   if ((slice->data = volume_get_data_mem(slice)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
     slice = volume_free(slice);
     return slice;
   }
@@ -1293,7 +1304,7 @@ volume_t * volume_get_slice(const volume_t * volume,
 	      
 	      if (l & 0x2) REALPOINT_SUB(temp_p, half_size[YAXIS], temp_p);
 	      else REALPOINT_ADD(temp_p, half_size[YAXIS],temp_p);
-
+	      
 	      if (l & 0x4) REALPOINT_SUB(temp_p, half_size[ZAXIS],temp_p);
 	      else REALPOINT_ADD(temp_p, half_size[ZAXIS],temp_p);
 	      

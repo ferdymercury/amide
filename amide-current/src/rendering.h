@@ -25,9 +25,12 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+#ifndef __RENDERING_H__
+#define __RENDERING_H__
 
-/* always need volpack when including this file, so I'll just put the include here */
+/* header files that are always needed with this file */
 #include <volpack.h>
+#include "volume.h"
 
 
 /* -------------- structures and such ------------- */
@@ -182,4 +185,5 @@ extern gchar * pixel_type_names[];
 /* external funnctions from render.c */
 //gboolean render_set_material_shinyness(gint material_num, gdouble shinyness);
 
-#endif
+#endif /*  __RENDERING_H__ */
+#endif /* AMIDE_LIBVOLPACK_SUPPORT */

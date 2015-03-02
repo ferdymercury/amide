@@ -23,6 +23,7 @@
   02111-1307, USA.
 */
 
+
 #define UI_STUDY_TRIANGLE_WIDTH 15
 #define UI_STUDY_TRIANGLE_HEIGHT 7.5
 #define UI_STUDY_PACKING_TABLE_HEIGHT 5
@@ -107,13 +108,13 @@ typedef struct ui_study_t {
   roi_t * current_roi; /* the last roi double clicked on */
   ui_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_roi_list_t * current_rois; /* the currently selected rois */
-  scaling_t scaling; /* scale on a slice or the whole volume */
-  volume_time_t current_time;
-  volume_time_t current_duration;
-  floatpoint_t current_thickness;
-  floatpoint_t current_zoom;
-  interpolation_t current_interpolation;
-  realpoint_t current_view_center; /* this is in the current_view coord frame */
+  //  scaling_t scaling; /* scale on a slice or the whole volume */
+  //  volume_time_t current_time;
+  //  volume_time_t current_duration;
+  //  floatpoint_t current_thickness;
+  //  floatpoint_t current_zoom;
+  //  interpolation_t current_interpolation;
+  //  realpoint_t current_view_center; /* this is in the current_view coord frame */
   volume_list_t * current_slices[NUM_VIEWS];
   roi_grain_t default_roi_grain;
   study_t * study; /* pointer to the study data structure */

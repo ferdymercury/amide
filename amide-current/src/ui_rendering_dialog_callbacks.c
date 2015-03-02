@@ -31,9 +31,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
 #include "rendering.h"
-#include "roi.h"
 #include "study.h"
 #include "image.h"
 #include "ui_rendering.h"
@@ -278,12 +276,12 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
 
   if ((ui_rendering->axis_context->density_ramp_x = 
        (gint *) g_malloc(ui_rendering->axis_context->num_density_points*sizeof(gint))) == NULL) {
-    g_warning("%s: couldn't allocate space for density ramp x\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for density ramp x",PACKAGE);
     return;
   }
   if ((ui_rendering->axis_context->density_ramp_y = 
        (gfloat *) g_malloc(ui_rendering->axis_context->num_density_points*sizeof(gfloat))) == NULL) {
-    g_warning("%s: couldn't allocate space for density ramp y\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for density ramp y",PACKAGE);
     return;
   }
 
@@ -328,12 +326,12 @@ void ui_rendering_dialog_callbacks_opacity_density(GtkWidget * widget, gpointer 
     /* allocate some new memory */
     if ((context->density_ramp_x = 
 	 (gint *) g_malloc(context->num_density_points*sizeof(gint))) == NULL) {
-      g_warning("%s: couldn't allocate space for density ramp x\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for density ramp x",PACKAGE);
       return;
     }
     if ((context->density_ramp_y = 
 	 (gfloat *) g_malloc(context->num_density_points*sizeof(gfloat))) == NULL) {
-      g_warning("%s: couldn't allocate space for density ramp y\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for density ramp y",PACKAGE);
       return;
     }
     
@@ -403,12 +401,12 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
 
   if ((ui_rendering->axis_context->gradient_ramp_x = 
        (gint *) g_malloc(ui_rendering->axis_context->num_gradient_points*sizeof(gint))) == NULL) {
-    g_warning("%s: couldn't allocate space for gradient ramp x\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for gradient ramp x",PACKAGE);
     return;
   }
   if ((ui_rendering->axis_context->gradient_ramp_y = 
        (gfloat *) g_malloc(ui_rendering->axis_context->num_gradient_points*sizeof(gfloat))) == NULL) {
-    g_warning("%s: couldn't allocate space for gradient ramp y\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for gradient ramp y",PACKAGE);
     return;
   }
 
@@ -453,12 +451,12 @@ void ui_rendering_dialog_callbacks_opacity_gradient(GtkWidget * widget, gpointer
     /* allocate some new memory */
     if ((context->gradient_ramp_x = 
 	 (gint *) g_malloc(context->num_gradient_points*sizeof(gint))) == NULL) {
-      g_warning("%s: couldn't allocate space for gradient ramp x\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for gradient ramp x",PACKAGE);
       return;
     }
     if ((context->gradient_ramp_y = 
 	 (gfloat *) g_malloc(context->num_gradient_points*sizeof(gfloat))) == NULL) {
-      g_warning("%s: couldn't allocate space for gradient ramp y\n",PACKAGE);
+      g_warning("%s: couldn't allocate space for gradient ramp y",PACKAGE);
       return;
     }
     

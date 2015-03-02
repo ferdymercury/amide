@@ -74,7 +74,7 @@ volume_t * medcon_import(gchar * filename) {
 
   /* start acquiring some useful information */
   if ((temp_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure\n", PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume structure", PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
     return temp_volume;
   }
@@ -133,7 +133,7 @@ volume_t * medcon_import(gchar * filename) {
 
   /* allocate space for the array containing info on the duration of the frames */
   if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
     temp_volume = volume_free(temp_volume);
     return temp_volume;
@@ -141,7 +141,7 @@ volume_t * medcon_import(gchar * filename) {
 
   /* malloc the space for the volume */
   if ((temp_volume->data = volume_get_data_mem(temp_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
     temp_volume = volume_free(temp_volume);
     return temp_volume;
@@ -162,7 +162,7 @@ volume_t * medcon_import(gchar * filename) {
 
       /* convert the image to a 32 bit float to begin with */
       if ((medcon_buffer = (gfloat *) MdcGetImgFLT32(&medcon_file_info, i.z+t*temp_volume->dim.z)) == NULL) {
-	g_warning("%s: medcon couldn't convert to a float... out of memory?\n",PACKAGE);
+	g_warning("%s: medcon couldn't convert to a float... out of memory?",PACKAGE);
 	temp_volume = volume_free(temp_volume);
 	MdcCleanUpFI(&medcon_file_info);
 	g_free(medcon_buffer);

@@ -23,6 +23,15 @@
   02111-1307, USA.
 */
 
+#ifndef __STUDY_H__
+#define __STUDY_H__
+
+/* header files that are always needed with this file */
+#include "volume.h"
+#include "roi.h"
+
+/* typedef's */
+typedef enum {SLICE, VOLUME, NUM_SCALINGS} scaling_t;
 
 typedef struct study_t {
   gchar * name; /* name of the study */
@@ -31,6 +40,15 @@ typedef struct study_t {
   volume_list_t * volumes; 
   roi_list_t * rois;
 
+  /* view parameters */
+  realpoint_t view_center; /* wrt the study coord_frame */
+  floatpoint_t view_thickness;
+  volume_time_t view_time;
+  volume_time_t view_duration;
+  floatpoint_t zoom;
+  interpolation_t interpolation;
+  scaling_t scaling; /* scale on a slice or the whole volume */
+
   /* stuff that doesn't need to be saved */
   guint reference_count;
 } study_t;
@@ -38,16 +56,31 @@ typedef struct study_t {
 /* defines */
 
 #define STUDY_FILE_NAME "Study.xml"
-#define study_get_volumes(study) ((study)->volumes)
-#define study_get_rois(study) ((study)->rois)
-#define study_get_name(study) ((study)->name)
-#define study_get_filename(study) ((study)->filename)
-#define study_get_first_volume(study) ((study)->volumes->volume)
-#define study_get_coord_frame(study) ((study)->coord_frame)
-#define study_get_coord_frame_axis(study, which) ((study)->coord_frame.axis[(which)])
+#define AMIDE_FILE_VERSION "1.1"
+#define study_volumes(study) ((study)->volumes)
+#define study_rois(study) ((study)->rois)
+#define study_name(study) ((study)->name)
+#define study_filename(study) ((study)->filename)
+#define study_first_volume(study) ((study)->volumes->volume)
+#define study_view_center(study) ((study)->view_center)
+#define study_view_thickness(study) ((study)->view_thickness)
+#define study_view_time(study) ((study)->view_time)
+#define study_view_duration(study) ((study)->view_duration)
+#define study_zoom(study) ((study)->zoom)
+#define study_interpolation(study) ((study)->interpolation)
+#define study_scaling(study) ((study)->scaling)
+#define study_coord_frame(study) ((study)->coord_frame)
+#define study_coord_frame_axis(study, which) ((study)->coord_frame.axis[(which)])
 #define study_set_coord_frame(study, new) ((study)->coord_frame = (new))
 #define study_set_coord_frame_offset(study, new) ((study)->coord_frame.offset = (new))
 #define study_set_coord_frame_axis(study, which, new) ((study)->coord_frame.axis[(which)] = (new))
+#define study_set_view_center(study, new) ((study)->view_center = (new))
+#define study_set_view_thickness(study, new) ((study)->view_thickness = (new))
+#define study_set_view_time(study, new) ((study)->view_time = (new))
+#define study_set_view_duration(study, new) ((study)->view_duration = (new))
+#define study_set_zoom(study, new) ((study)->zoom = (new))
+#define study_set_interpolation(study, new) ((study)->interpolation = (new))
+#define study_set_scaling(study, new) ((study)->scaling = (new))
 
 /* external functions */
 study_t * study_free(study_t * study);
@@ -58,13 +91,18 @@ study_t * study_copy(study_t * src_study);
 study_t * study_add_reference(study_t * study);
 void study_add_volume(study_t * study, volume_t * volume);
 void study_remove_volume(study_t * study, volume_t * volume);
+void study_add_volumes(study_t * study, volume_list_t * volumes);
 void study_add_roi(study_t * study, roi_t * roi);
 void study_remove_roi(study_t * study, roi_t * roi);
+void study_add_rois(study_t * study, roi_list_t * rois);
 void study_set_name(study_t * study, gchar * new_name);
 void study_set_filename(study_t * study, gchar * new_filename);
 
 
+/* external variables */
+extern gchar * scaling_names[];
 
 
+#endif /*__STUDY_H__ */
 
 

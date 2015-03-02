@@ -29,16 +29,8 @@
 #include <limits.h>
 #include <math.h>
 #include "amide.h"
-#include "color_table.h"
-#include "volume.h"
-#include "color_table2.h"
-#include "rendering.h"
 #include "image.h"
-
-/* external variables */
-gchar * scaling_names[] = {"per slice", "global"};
-
-
+#include "color_table2.h"
 
 /* function to return a blank image */
 GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height) {
@@ -349,7 +341,7 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
   if ((*pslices) == NULL) {
     if ((slices = volumes_get_slices(volumes, start, duration, thickness, view_coord_frame, 
 				     zoom, interpolation)) == NULL) {
-      g_warning("%s: returned slices are NULL?\n", PACKAGE);
+      g_warning("%s: returned slices are NULL?", PACKAGE);
       return NULL;
     } 
     (*pslices) = slices;

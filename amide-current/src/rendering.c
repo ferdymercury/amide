@@ -29,9 +29,7 @@
 
 #include <glib.h>
 #include <math.h>
-#include <volpack.h>
 #include "amide.h"
-#include "volume.h"
 #include "rendering.h"
 
 
@@ -99,7 +97,7 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
     return temp_context;
 
   if ((temp_context =  (rendering_t *) g_malloc(sizeof(rendering_t))) == NULL) {
-    g_warning("%s: couldn't allocate space for rendering context\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for rendering context",PACKAGE);
     return NULL;
   }
   temp_context->reference_count = 1;
@@ -121,12 +119,12 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
   temp_context->num_density_points = RENDERING_DENSITY_RAMP_POINTS;
   if ((temp_context->density_ramp_x = 
        (gint *) g_malloc(temp_context->num_density_points*sizeof(gint))) == NULL) {
-    g_warning("%s: couldn't allocate space for density ramp x\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for density ramp x",PACKAGE);
     return NULL;
   }
   if ((temp_context->density_ramp_y = 
        (gfloat *) g_malloc(temp_context->num_density_points*sizeof(gfloat))) == NULL) {
-    g_warning("%s: couldn't allocate space for density ramp y\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for density ramp y",PACKAGE);
     return NULL;
   }
   for (i=0;i<temp_context->num_density_points;i++) {
@@ -137,12 +135,12 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
   temp_context->num_gradient_points = RENDERING_GRADIENT_RAMP_POINTS;
   if ((temp_context->gradient_ramp_x = 
        (gint *) g_malloc(temp_context->num_gradient_points*sizeof(gint))) == NULL) {
-    g_warning("%s: couldn't allocate space for gradient ramp x\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for gradient ramp x",PACKAGE);
     return NULL;
   }
   if ((temp_context->gradient_ramp_y = 
        (gfloat *) g_malloc(temp_context->num_gradient_points*sizeof(gfloat))) == NULL) {
-    g_warning("%s: couldn't allocate space for gradient ramp y\n",PACKAGE);
+    g_warning("%s: couldn't allocate space for gradient ramp y",PACKAGE);
     return NULL;
   }
   for (i=0;i<temp_context->num_gradient_points;i++) {
@@ -172,7 +170,7 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
   /* tell the rendering context info on the voxel structure */
   if (vpSetVoxelSize(temp_context->vpc,  RENDERING_BYTES_PER_VOXEL, RENDERING_VOXEL_FIELDS, 
 		     RENDERING_SHADE_FIELDS, RENDERING_CLSFY_FIELDS) != VP_OK) {
-    g_warning("%s: Error Setting the Rendering Voxel Size (%s): %s\n", 
+    g_warning("%s: Error Setting the Rendering Voxel Size (%s): %s", 
 	      PACKAGE, temp_context->volume->name, 
 	      vpGetErrorString(vpGetError(temp_context->vpc)));
     temp_context = rendering_context_free(temp_context);
@@ -273,7 +271,7 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
      rendering_context->dim.z * RENDERING_BYTES_PER_VOXEL;
 
   if ((density = (rendering_density_t * ) g_malloc(density_size)) == NULL) {
-    g_warning("%s: Could not allocate space for density volume for %s\n", 
+    g_warning("%s: Could not allocate space for density volume for %s", 
 	      PACKAGE, rendering_context->volume->name);
     return;
   }
@@ -281,7 +279,7 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
 
   g_free(rendering_context->rendering_vol);
   if ((rendering_context->rendering_vol = (rendering_voxel_t * ) g_malloc(volume_size)) == NULL) {
-    g_warning("%s: Could not allocate space for rendering volume for %s\n", 
+    g_warning("%s: Could not allocate space for rendering volume for %s", 
 	      PACKAGE, rendering_context->volume->name);
     g_free(density);
     return;
@@ -298,7 +296,7 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
   }
 
 #if AMIDE_DEBUG
-  g_print("\tCopying Data into Rendering Volume\n");
+  g_print("\tCopying Data into Rendering Volume");
 #endif
 
 
@@ -515,7 +513,7 @@ void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type,
   g_free(context->image);
   if ((context->image = 
        (guchar * ) g_malloc(size_dim*size_dim*sizeof(guchar))) == NULL) {
-    g_warning("%s: Could not allocate space for Rendering Image for %s\n", 
+    g_warning("%s: Could not allocate space for Rendering Image for %s", 
 	      PACKAGE, context->volume->name);
     return;
   }

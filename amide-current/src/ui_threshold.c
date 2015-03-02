@@ -26,11 +26,7 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include "color_table.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -263,7 +259,7 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
     
 
   /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
   if (ui_study->threshold == NULL) { /* looks like we called the wrong function */
     ui_threshold_dialog_create(ui_study);
@@ -272,7 +268,7 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
 
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = study_get_first_volume(ui_study->study);
+    volume = study_first_volume(ui_study->study);
   else
     volume = ui_study->current_volume;
   ui_study->threshold->volume = volume_free(ui_study->threshold->volume);
@@ -552,7 +548,7 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
   ui_volume_list_t * ui_volume_list_item;
   
   /* sanity check */
-  if (study_get_volumes(ui_study->study) == NULL)
+  if (study_volumes(ui_study->study) == NULL)
     return;
   if (ui_study->threshold != NULL)
     return;
@@ -573,7 +569,7 @@ void ui_threshold_dialog_create(ui_study_t * ui_study) {
 
   ui_study->threshold = ui_threshold_init();
 
-  temp_string = g_strdup_printf("Threshold: %s",study_get_name(ui_study->study));
+  temp_string = g_strdup_printf("Threshold: %s",study_name(ui_study->study));
   app = GNOME_APP(gnome_app_new(PACKAGE, temp_string));
   g_free(temp_string);
   ui_study->threshold->app = app;

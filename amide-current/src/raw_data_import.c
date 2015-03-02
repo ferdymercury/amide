@@ -356,7 +356,7 @@ volume_t * raw_data_import(gchar * raw_data_filename) {
 
   /* get space for our raw_data_info structure */
   if ((raw_data_info = (raw_data_info_t * ) g_malloc(sizeof(raw_data_info_t))) == NULL) {
-    g_warning("%s: couldn't allocate space for raw_data_info structure to load in RAW file\n", PACKAGE);
+    g_warning("%s: couldn't allocate space for raw_data_info structure to load in RAW file", PACKAGE);
     return NULL;
   }
   raw_data_info->volume = NULL;
@@ -372,7 +372,7 @@ volume_t * raw_data_import(gchar * raw_data_filename) {
 
   /* acquire space for the volume structure */
   if ((raw_data_info->volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure to hold RAW data\n", PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume structure to hold RAW data", PACKAGE);
     g_free(raw_data_info->filename);
     g_free(raw_data_info);
     return NULL;

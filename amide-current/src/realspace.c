@@ -47,6 +47,60 @@ const realpoint_t realpoint_init = {0.0,0.0,0.0};
 
 const voxelpoint_t voxelpoint_init = {0,0,0};
 
+/* returns abs(rp1) for realpoint structures */
+inline realpoint_t rp_abs(const realpoint_t rp1) {
+  realpoint_t temp;
+  temp.x = fabs(rp1.x);
+  temp.y = fabs(rp1.y);
+  temp.z = fabs(rp1.z);
+  return temp;
+}
+
+/* returns rp1+rp2 for realpoint structures */
+inline realpoint_t rp_add(const realpoint_t rp1,const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = rp1.x+rp2.x;
+  temp.y = rp1.y+rp2.y;
+  temp.z = rp1.z+rp2.z;
+  return temp;
+}
+
+/* returns rp1-rp2 for realpoint structures */
+inline realpoint_t rp_sub(const realpoint_t rp1,const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = rp1.x-rp2.x;
+  temp.y = rp1.y-rp2.y;
+  temp.z = rp1.z-rp2.z;
+  return temp;
+}
+
+/* returns rp1.*rp2 for realpoint structures */
+inline realpoint_t rp_mult(const realpoint_t rp1,const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = rp1.x*rp2.x;
+  temp.y = rp1.y*rp2.y;
+  temp.z = rp1.z*rp2.z;
+  return temp;
+}
+
+/* returns rp_abs(rp1-rp2) for realpoint structures */
+inline realpoint_t rp_diff(const realpoint_t rp1,const realpoint_t rp2) {
+  realpoint_t temp;
+  temp.x = fabs(rp1.x-rp2.x);
+  temp.y = fabs(rp1.y-rp2.y);
+  temp.z = fabs(rp1.z-rp2.z);
+  return temp;
+}
+
+/* returns cm*rp1 for realpoint structures */
+inline realpoint_t rp_cmult(const floatpoint_t cmult,const realpoint_t rp1) {
+  realpoint_t temp;
+  temp.x = cmult*rp1.x;
+  temp.y = cmult*rp1.y;
+  temp.z = cmult*rp1.z;
+  return temp;
+}
+
 
 /* returns true if the realpoint is in the given box */
 gboolean realpoint_in_box(const realpoint_t p,

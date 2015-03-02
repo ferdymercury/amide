@@ -26,10 +26,7 @@
 #include "config.h"
 #include <gnome.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"

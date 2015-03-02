@@ -30,9 +30,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
 #include "rendering.h"
-#include "roi.h"
 #include "study.h"
 #include "image.h"
 #include "ui_rendering.h"

@@ -23,6 +23,9 @@
   02111-1307, USA.
 */
 
+#ifndef __VOLUME_H__
+#define __VOLUME_H__
+
 /* header files that are always needed with this file */
 #include "xml.h"
 #include "realspace.h"
@@ -159,3 +162,5 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
 extern gchar * interpolation_names[];
 extern gchar * modality_names[];
 
+
+#endif /* __VOLUME_H__ */

@@ -27,9 +27,16 @@
 #include <glib.h>
 #include <unistd.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
+
+
+/* external variables */
+gchar * scaling_names[] = {"per slice", "global"};
+
+
+
+/* functions */
+
 
 
 study_t * study_free(study_t * study) {
@@ -58,11 +65,12 @@ study_t * study_free(study_t * study) {
 }
 
 
-
+/* initialize a study structure with semi-sensible values */
 study_t * study_init(void) {
   
   study_t * study;
   axis_t i_axis;
+  realpoint_t init;
 
   /* alloc space for the data structure for passing ui info */
   if ((study = (study_t *) g_malloc(sizeof(study_t))) == NULL) {
@@ -79,6 +87,16 @@ study_t * study_init(void) {
   study->volumes = NULL;
   study->rois = NULL;
 
+  /* view parameters */
+  init.x = init.y = init.z = -1.0;
+  study_set_view_center(study, init);
+  study_set_view_thickness(study, -1.0);
+  study_set_view_time(study, 0.0+CLOSE);
+  study_set_view_duration(study, 1.0-CLOSE);
+  study_set_zoom(study, 1.0);
+  study_set_interpolation(study, NEAREST_NEIGHBOR);
+  study_set_scaling(study, SLICE);
+
   return study;
 }
 
@@ -93,33 +111,43 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
   /* switch into our new directory */
   old_dir = g_get_current_dir();
   if (chdir(directory) != 0) {
-    g_warning("%s: Couldn't change directories in writing study\n",PACKAGE);
+    g_warning("%s: Couldn't change directories in writing study",PACKAGE);
     return FALSE;
   }
 
 #ifdef AMIDE_DEBUG
-  g_print("Saving Study %s in %s\n",study->name, directory);
+  g_print("Saving Study %s in %s\n",study_name(study), directory);
 #endif
 
   /* start creating an xml document */
   doc = xmlNewDoc("1.0");
 
   /* place our study info into it */
-  doc->children = xmlNewDocNode(doc, NULL, "Study", study->name);
+  doc->children = xmlNewDocNode(doc, NULL, "Study", study_name(study));
 
   /* record our version */
-  xml_save_string(doc->children, "AMIDE_Data_File_Version", "1.0");
+  xml_save_string(doc->children, "AMIDE_Data_File_Version", AMIDE_FILE_VERSION);
 
   /* put in our coord frame */
-  xml_save_realspace(doc->children, "coord_frame", study->coord_frame);
+  xml_save_realspace(doc->children, "coord_frame", study_coord_frame(study));
 
   /* put in our volume info */
   volume_nodes = xmlNewChild(doc->children, NULL, "Volumes", NULL);
-  volume_list_write_xml(study->volumes, volume_nodes, directory);
+  volume_list_write_xml(study_volumes(study), volume_nodes, directory);
 
   /* put in our roi info */
   roi_nodes = xmlNewChild(doc->children, NULL, "ROIs", NULL);
-  roi_list_write_xml(study->rois, roi_nodes, directory);
+  roi_list_write_xml(study_rois(study), roi_nodes, directory);
+
+  /* record our viewing parameters */
+  xml_save_realpoint(doc->children, "view_center", study_view_center(study));
+  xml_save_floatpoint(doc->children, "view_thickness", study_view_thickness(study));
+  xml_save_time(doc->children, "view_time", study_view_time(study));
+  xml_save_time(doc->children, "view_duration", study_view_duration(study));
+  xml_save_string(doc->children, "interpolation", interpolation_names[study_interpolation(study)]);  
+  xml_save_floatpoint(doc->children, "zoom", study_zoom(study));
+  xml_save_string(doc->children, "scaling", scaling_names[study_scaling(study)]);
+
 
   /* and save */
   xmlSaveFile(STUDY_FILE_NAME, doc);
@@ -129,7 +157,7 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
 
   /* and return to the old directory */
   if (chdir(old_dir) != 0) {
-    g_warning("%s: Couldn't return to previous directory in writing study\n",PACKAGE);
+    g_warning("%s: Couldn't return to previous directory in writing study",PACKAGE);
     return FALSE;
   }
   g_free(old_dir);
@@ -145,28 +173,34 @@ study_t * study_load_xml(gchar * directory) {
   xmlNodePtr volume_nodes, roi_nodes;
   gchar * old_dir;
   gchar * temp_string;
+  gchar * file_version;
   study_t * new_study;
+  volume_list_t * new_volumes;
+  roi_list_t * new_rois;
+  interpolation_t i_interpolation;
+  scaling_t i_scaling;
+  
   
   new_study = study_init();
 
   /* switch into our new directory */
   old_dir = g_get_current_dir();
   if (chdir(directory) != 0) {
-    g_warning("%s: Couldn't change directories in loading study\n",PACKAGE);
+    g_warning("%s: Couldn't change directories in loading study",PACKAGE);
     study_free(new_study);
     return new_study;
   }
 
   /* parse the xml file */
   if ((doc = xmlParseFile(STUDY_FILE_NAME)) == NULL) {
-    g_warning("%s: Couldn't Parse AMIDE xml file %s/%s\n",PACKAGE, directory,STUDY_FILE_NAME);
+    g_warning("%s: Couldn't Parse AMIDE xml file %s/%s",PACKAGE, directory,STUDY_FILE_NAME);
     study_free(new_study);
     return new_study;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("%s: AMIDE xml file doesn't appear to have a root: %s/%s\n",
+    g_warning("%s: AMIDE xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, directory,STUDY_FILE_NAME);
     study_free(new_study);
     return new_study;
@@ -182,25 +216,69 @@ study_t * study_load_xml(gchar * directory) {
   /* get the document tree */
   nodes = nodes->children;
 
+  /* get the version of the data file */
+  file_version = xml_get_string(nodes, "AMIDE_Data_File_Version");
+
+  /* warn if this is an old file version */
+  if (file_version == NULL)
+    g_warning("%s: No file version for the data file.... is this an AMIDE data file?",PACKAGE);
+  else if (g_strcasecmp(file_version, AMIDE_FILE_VERSION) != 0)
+    g_warning("%s: data file versions don't match (expected %s but got %s).  Will try anyway",
+	      PACKAGE, AMIDE_FILE_VERSION, file_version);
+  g_free(file_version);
+
   /* get our study parameters */
-  new_study->coord_frame = xml_get_realspace(nodes, "coord_frame");
+  study_set_coord_frame(new_study, xml_get_realspace(nodes, "coord_frame"));
 
   /* load in the volumes */
   volume_nodes = xml_get_node(nodes, "Volumes");
   volume_nodes = volume_nodes->children;
-  new_study->volumes = volume_list_load_xml(volume_nodes, directory);
+  new_volumes = volume_list_load_xml(volume_nodes, directory);
+  study_add_volumes(new_study, new_volumes);
+  volume_list_free(new_volumes);
   
-  /* and load in the rois */
+  /* load in the rois */
   roi_nodes = xml_get_node(nodes, "ROIs");
   roi_nodes = roi_nodes->children;
-  new_study->rois = roi_list_load_xml(roi_nodes, directory);
+  new_rois = roi_list_load_xml(roi_nodes, directory);
+  study_add_rois(new_study, new_rois);
+  roi_list_free(new_rois);
     
+  /* get our view parameters */
+  study_set_view_center(new_study, xml_get_realpoint(nodes, "view_center"));
+  study_set_view_thickness(new_study, xml_get_floatpoint(nodes, "view_thickness"));
+  study_set_view_time(new_study, xml_get_time(nodes, "view_time"));
+  study_set_view_duration(new_study, xml_get_time(nodes, "view_duration"));
+  study_set_zoom(new_study, xml_get_floatpoint(nodes, "zoom"));
+ 
+  /* sanity check */
+  if (study_zoom(new_study) < SMALL) {
+    g_warning("%s: inappropriate zoom (%5.3f) for study, reseting to 1.0",PACKAGE, study_zoom(new_study));
+    study_set_zoom(new_study, 1.0);
+  }
+
+  /* figure out the interpolation */
+  temp_string = xml_get_string(nodes, "interpolation");
+  if (temp_string != NULL)
+    for (i_interpolation=0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++) 
+      if (g_strcasecmp(temp_string, interpolation_names[i_interpolation]) == 0)
+	study_set_interpolation(new_study, i_interpolation);
+  g_free(temp_string);
+
+  /* figure out the scaling */
+  temp_string = xml_get_string(nodes, "scaling");
+  if (temp_string != NULL)
+    for (i_scaling=0; i_scaling < NUM_SCALINGS; i_scaling++) 
+      if (g_strcasecmp(temp_string, scaling_names[i_scaling]) == 0)
+	study_set_scaling(new_study, i_scaling);
+  g_free(temp_string);
+
   /* and we're done */
   xmlFreeDoc(doc);
     
   /* and return to the old directory */
   if (chdir(old_dir) != 0) {
-    g_warning("%s: Couldn't return to previous directory in load study\n",PACKAGE);
+    g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
     g_free(old_dir);
     study_free(new_study);
     return new_study;
@@ -225,17 +303,26 @@ study_t * study_copy(study_t * src_study) {
   dest_study = study_init();
 
   /* copy the data elements */
-  dest_study->coord_frame = src_study->coord_frame;
+  study_set_coord_frame(dest_study, study_coord_frame(src_study));
+
+  /* copy the view information */
+  study_set_view_center(dest_study, study_view_center(src_study));
+  study_set_view_thickness(dest_study, study_view_thickness(src_study));
+  study_set_view_time(dest_study, study_view_time(src_study));
+  study_set_view_duration(dest_study, study_view_duration(src_study));
+  study_set_zoom(dest_study, study_zoom(src_study));
+  study_set_interpolation(dest_study, study_interpolation(src_study));
+  study_set_scaling(dest_study, study_scaling(src_study));
 
   /* make a copy of the study's ROIs and volumes */
-  if (src_study->rois != NULL)
-    dest_study->rois = roi_list_copy(src_study->rois);
-  if (src_study->volumes != NULL)
-    dest_study->volumes = volume_list_copy(src_study->volumes);
+  if (study_rois(src_study) != NULL)
+    dest_study->rois = roi_list_copy(study_rois(src_study));
+  if (study_volumes(src_study) != NULL)
+    dest_study->volumes = volume_list_copy(study_volumes(src_study));
 
   /* make a separate copy in memory of the study's name and filename */
-  study_set_name(dest_study, src_study->name);
-  study_set_filename(dest_study, src_study->filename);
+  study_set_name(dest_study, study_name(src_study));
+  study_set_filename(dest_study, study_filename(src_study));
 
   return dest_study;
 }
@@ -265,6 +352,17 @@ void study_remove_volume(study_t * study, volume_t * volume) {
   return;
 }
 
+/* add a list of volumes to a study */
+void study_add_volumes(study_t * study, volume_list_t * volumes) {
+
+  while (volumes != NULL) {
+    study_add_volume(study, volumes->volume);
+    volumes = volumes->next;
+  }
+
+  return;
+}
+
 /* add an roi to a study */
 void study_add_roi(study_t * study, roi_t * roi) {
 
@@ -278,6 +376,18 @@ void study_add_roi(study_t * study, roi_t * roi) {
 void study_remove_roi(study_t * study, roi_t * roi) {
 
   study->rois = roi_list_remove_roi(study->rois, roi);
+
+  return;
+}
+
+
+/* add a list of rois to a study */
+void study_add_rois(study_t * study, roi_list_t * rois) {
+
+  while (rois != NULL) {
+    study_add_roi(study, rois->roi);
+    rois = rois->next;
+  }
 
   return;
 }

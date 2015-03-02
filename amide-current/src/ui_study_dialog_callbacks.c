@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -95,10 +92,9 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   study_dialog =  gtk_object_get_data(GTK_OBJECT(adjustment), "study_dialog");
   /* we need the current view_axis so that we know what we're rotating around */
   ui_study = gtk_object_get_data(GTK_OBJECT(study_dialog), "ui_study"); 
-  center = ui_study->current_view_center;
 
   /* saving the center, as we're rotating the study around it's own center */
-  center = realspace_alt_coord_to_base(ui_study->current_view_center,
+  center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
 				       study_new_info->coord_frame);
 
   /* figure out which scale widget called me */
@@ -107,22 +103,22 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
   which_axis = realspace_get_orthogonal_which_axis(i_view);
   study_set_coord_frame_axis(study_new_info, XAXIS,
-			     realspace_rotate_on_axis(&study_get_coord_frame_axis(study_new_info, XAXIS),
-						      &study_get_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, XAXIS),
+						      &study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   study_set_coord_frame_axis(study_new_info, YAXIS,
-			     realspace_rotate_on_axis(&study_get_coord_frame_axis(study_new_info, YAXIS),
-						      &study_get_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, YAXIS),
+						      &study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   study_set_coord_frame_axis(study_new_info, ZAXIS,
-			     realspace_rotate_on_axis(&study_get_coord_frame_axis(study_new_info, ZAXIS),
-						      &study_get_coord_frame_axis(study_new_info, which_axis),
+			     realspace_rotate_on_axis(&study_coord_frame_axis(study_new_info, ZAXIS),
+						      &study_coord_frame_axis(study_new_info, which_axis),
 						      rotation));
   realspace_make_orthonormal(study_new_info->coord_frame.axis); /* orthonormalize*/
   
   /* recalculate the offset of this study based on the center we stored */
   study_set_coord_frame_offset(study_new_info, center);
-  temp = realspace_alt_coord_to_base(ui_study->current_view_center, study_new_info->coord_frame);
+  temp = realspace_alt_coord_to_base(study_view_center(ui_study->study), study_new_info->coord_frame);
   study_set_coord_frame_offset(study_new_info, temp);
 			       
 
@@ -153,7 +149,7 @@ void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   study_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "study_dialog");
   /* we need the current view_axis so that we know what we're rotating around */
   ui_study = gtk_object_get_data(GTK_OBJECT(study_dialog), "ui_study"); 
-  center = ui_study->current_view_center;
+  center = study_view_center(ui_study->study);
 
   /* reset the axis */
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
@@ -162,7 +158,7 @@ void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 
   /* recalculate the offset of this study based on the center we stored */
   study_set_coord_frame_offset(study_new_info, center);
-  temp = realspace_alt_coord_to_base(ui_study->current_view_center, study_new_info->coord_frame);
+  temp = realspace_alt_coord_to_base(study_view_center(ui_study->study), study_new_info->coord_frame);
   study_set_coord_frame_offset(study_new_info, temp);
 
   ui_study_dialog_set_axis_display(study_dialog);
@@ -193,8 +189,8 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
   study_new_info = gtk_object_get_data(GTK_OBJECT(ui_study->study_dialog),"study_new_info");
 
   /* save the old center so that we can rotate around it */
-  center = realspace_alt_coord_to_base(ui_study->current_view_center, 
-				       study_get_coord_frame(ui_study->study));
+  center = realspace_alt_coord_to_base(study_view_center(ui_study->study),
+				       study_coord_frame(ui_study->study));
 
   /* sanity check */
   if (study_new_info == NULL) {
@@ -203,9 +199,19 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
   }
 
   /* copy the new info on over */
-  study_set_name(ui_study->study, study_new_info->name);
-  study_set_filename(ui_study->study, study_new_info->filename);
-  study_set_coord_frame(ui_study->study, study_new_info->coord_frame);
+  study_set_name(ui_study->study, study_name(study_new_info));
+  study_set_filename(ui_study->study, study_filename(study_new_info));
+  study_set_coord_frame(ui_study->study, study_coord_frame(study_new_info));
+
+  /* copy the view information */
+  study_set_view_center(ui_study->study, study_view_center(study_new_info));
+  study_set_view_thickness(ui_study->study, study_view_thickness(study_new_info));
+  study_set_view_time(ui_study->study, study_view_time(study_new_info));
+  study_set_view_duration(ui_study->study, study_view_duration(study_new_info));
+  study_set_zoom(ui_study->study, study_zoom(study_new_info));
+  study_set_interpolation(ui_study->study, study_interpolation(study_new_info));
+  study_set_scaling(ui_study->study, study_scaling(study_new_info));
+
 
   /* apply any changes to the name of the widget */
   /* get the current pixmap and spacing in the line of the tree corresponding to the study */
@@ -214,15 +220,16 @@ void ui_study_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoint
 
   /* reset the text in that tree line */
   gtk_ctree_node_set_pixtext(GTK_CTREE(ui_study->tree), ui_study->tree_study, 0,
-  			     study_get_name(ui_study->study), spacing, pixmap, NULL);
+  			     study_name(ui_study->study), spacing, pixmap, NULL);
 
 
   /* redraw the canvas if needed*/
   if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(ui_study->study_dialog), "axis_changed"))) {
     gtk_object_set_data(GTK_OBJECT(ui_study->study_dialog), "axis_changed", GINT_TO_POINTER(FALSE));
 
-    ui_study->current_view_center =      /* recalculate the view center */
-      realspace_base_coord_to_alt(center, study_get_coord_frame(ui_study->study));
+    /* recalculate the view center */
+    study_set_view_center(ui_study->study,
+			  realspace_base_coord_to_alt(center, study_coord_frame(ui_study->study)));
 
     ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALL);
   }

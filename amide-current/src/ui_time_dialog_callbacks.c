@@ -27,10 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "amide.h"
-#include "volume.h"
-#include "roi.h"
 #include "study.h"
-#include "rendering.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
@@ -61,7 +58,7 @@ void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column
 
   /* the frame of the volume we've selected */
   if (gtk_clist_get_text(GTK_CLIST(clist), row, 2, &temp_string) == 0) {
-    g_warning("%s: Couldn't figure out the frame number\n",PACKAGE);
+    g_warning("%s: Couldn't figure out the frame number",PACKAGE);
     return;
   }
   /* convert string to an integer */
@@ -131,7 +128,7 @@ void ui_time_dialog_callbacks_unselect_row(GtkCList * clist, gint row, gint colu
 
     /* the frame of the volume we've selected */
     if (gtk_clist_get_text(GTK_CLIST(clist), selected_row, 2, &temp_string) == 0) {
-      g_warning("%s: Couldn't figure out the frame number\n",PACKAGE);
+      g_warning("%s: Couldn't figure out the frame number",PACKAGE);
       return;
     }
     /* convert string to an integer */
@@ -155,7 +152,7 @@ void ui_time_dialog_callbacks_unselect_row(GtkCList * clist, gint row, gint colu
 
     /* the frame of the volume we've selected */
     if (gtk_clist_get_text(GTK_CLIST(clist), selected_row, 2, &temp_string) == 0) {
-      g_warning("%s: Couldn't figure out the frame number\n",PACKAGE);
+      g_warning("%s: Couldn't figure out the frame number",PACKAGE);
       return;
     }
     /* convert string to an integer */
@@ -201,14 +198,14 @@ void ui_time_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointe
 
   /* reset the time */
   new_time = gtk_object_get_data(GTK_OBJECT(ui_study->time_dialog), "new_time");
-  ui_study->current_time = new_time->time;
-  ui_study->current_duration = new_time->duration;
+  study_set_view_time(ui_study->study, new_time->time);
+  study_set_view_duration(ui_study->study, new_time->duration);
 
   /* through some new text onto the time popup button */
   label = GTK_LABEL(GTK_BIN(ui_study->time_button)->child);
   temp_string = g_strdup_printf("%5.1f-%5.1fs",
-				ui_study->current_time,
-				ui_study->current_time+ui_study->current_duration);
+				study_view_time(ui_study->study),
+				study_view_time(ui_study->study)+study_view_duration(ui_study->study));
   gtk_label_set_text(label,temp_string);
   g_free(temp_string);
 

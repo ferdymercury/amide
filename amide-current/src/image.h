@@ -23,8 +23,9 @@
   02111-1307, USA.
 */
 
-/* typedef's */
-typedef enum {SLICE, VOLUME, NUM_SCALINGS} scaling_t;
+/* header files that are always needed with this file */
+#include "study.h"
+#include "rendering.h"
 
 /* external functions */
 GdkImlibImage * image_blank(const intpoint_t width, const intpoint_t height);
@@ -52,6 +53,3 @@ GdkImlibImage * image_from_volumes(volume_list_t ** pslices,
 				   const scaling_t scaling,
 				   const floatpoint_t zoom,
 				   const interpolation_t interpolation);
-
-/* external variables */
-extern gchar * scaling_names[];
