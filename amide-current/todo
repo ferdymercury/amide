@@ -2,9 +2,9 @@ misc list of things todo:
 
 for next release?
 -----------------
-* scroll wheel doesn't work on windows... may need to update
-  underlying GTK. Appears to be a bug in libgnomecanvas-2.30.1 that is
-  fixed in libgnomecanvas-2.30.3
+* gnome_canvas font looks bad on windows, switched to Tahoma looks a little better but not true type'd. Figure out what font gtk's using.
+* calling help on win32 creates coredump
+* g_win32_get_package_installation_subdirectoy in amide_gnome is deprecated
 * exporting gated studies via DICOM and reloading doesn't work. May be
   an error in exporting, or an error in importing gated DICOM
 * change wait cursor to be whole dialog, not just canvas
@@ -130,11 +130,15 @@ longer range things
 libgnomecanvas/pixbuf issues
 ---------------------
 
-these problems will probably never be rectified, as libgnomecanvas is
+These problems will probably never be rectified, as libgnomecanvas is
 now deprecated. More likely course of action will be likely to rewrite
-the parts that use libgnomecanvas to use a new canvas system (Cairo?).
-A new canvas system has not yet been agreed on for gtk (as of 2.14 at
-least).
+the parts that use libgnomecanvas to use a new canvas system.  A new
+canvas system has not yet been agreed on for gtk (as of 3.0 at
+least). Goocanvas would have seemed to be the obvious choice, as it's
+similar to libgnomecanvas but with cairo as the backend rather than
+libart, but development of this seems to have stalled. May need to go
+directly to cairo as the canvas.
+
 
 * antialiased canvases have been unstable in the past, due to
 	instabilities with ROI resizing starts spewing "*** attempt to

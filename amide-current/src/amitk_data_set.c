@@ -1407,11 +1407,11 @@ AmitkDataSet * amitk_data_set_new_with_data(AmitkPreferences * preferences,
   }
 
   data_set->internal_scaling_factor = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
-  amitk_raw_data_DOUBLE_initialize_data(data_set->internal_scaling_factor, 1.0);
   if (data_set->internal_scaling_factor == NULL) {
     amitk_object_unref(data_set);
     g_return_val_if_reached(NULL);
   }
+  amitk_raw_data_DOUBLE_initialize_data(data_set->internal_scaling_factor, 1.0);
 
   if (AMITK_DATA_SET_SCALING_HAS_INTERCEPT(data_set)) {
     data_set->internal_scaling_intercept = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, scaling_dim);
@@ -1419,6 +1419,7 @@ AmitkDataSet * amitk_data_set_new_with_data(AmitkPreferences * preferences,
       amitk_object_unref(data_set);
       g_return_val_if_reached(NULL);
     }
+    amitk_raw_data_DOUBLE_initialize_data(data_set->internal_scaling_intercept, 0.0);
   }
 
   return data_set;

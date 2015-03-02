@@ -999,20 +999,21 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
 	dim.z = num_slices;
 
       } else {
-	/* failure */
 	amitk_append_str_with_newline(perror_buf, 
 				      _("Cannot evenly divide the number of slices (%d) by the number of %s (%d) for data set %s - will load first %d slices"), 
 				      dim.z,
 				      num_frames > 1 ? _("frames") : _("gates"), 
 				      num_frames > 1 ? num_frames : num_gates,
 				      AMITK_OBJECT_NAME(slice_ds),
-				      x.quot);
+				      (x.quot > 0) ? x.quot : dim.z);
+
+	/* failure */
 	if (num_frames > 1) 
 	  dim.t = num_frames = 1;
 	else /* (num_gates > 1) */
 	  dim.g = num_gates = 1;
-	dim.z = num_slices;
-	dim.z = x.quot;
+	if (x.quot > 0)
+	  dim.z = x.quot;
       }
     }
   } /* dynamic/gated data */
@@ -1022,6 +1023,11 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
   /* unref and remalloc what we need */
   if (ds->raw_data != NULL) g_object_unref(ds->raw_data);
   ds->raw_data = amitk_raw_data_new_with_data(AMITK_DATA_SET_FORMAT(slice_ds), dim);
+  if (ds->raw_data == NULL) {
+    g_warning("Could not allocate memory for raw data with dimensions %d x %d x %d x %d x %d", dim.g, dim.t, dim.z, dim.y, dim.x);
+    goto error;
+  }
+
   if (ds->distribution != NULL) g_object_unref(ds->distribution);
   ds->distribution = NULL;
   

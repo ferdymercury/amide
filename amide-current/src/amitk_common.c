@@ -68,8 +68,12 @@ PangoFontDescription * amitk_fixed_font_desc;
 
 void amitk_common_font_init(void) {
 
-  
+
+#if defined (G_PLATFORM_WIN32)  
+  amitk_fixed_font_desc = pango_font_description_from_string("Tahoma 10");
+#else
   amitk_fixed_font_desc = pango_font_description_from_string("Monospace 9");
+#endif
   /* actually, these fonts aren't fixed width... but it's what I've been using */
   //  amitk_fixed_font_desc = pango_font_description_from_string("Sans 9");
   //  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
@@ -186,7 +190,7 @@ GdkPixbuf * amitk_get_pixbuf_from_canvas(GnomeCanvas * canvas, gint xoffset, gin
     buf.rect.x0 = xoffset;
     buf.rect.y0 = yoffset;
     buf.rect.x1 = xoffset+width;
-    buf.rect.y1 = yoffset+width;
+    buf.rect.y1 = yoffset+height;
     color = &GTK_WIDGET(canvas)->style->bg[GTK_STATE_NORMAL];
     buf.bg_color = (((color->red & 0xff00) << 8) | (color->green & 0xff00) | (color->blue >> 8));
     buf.is_bg = 1;

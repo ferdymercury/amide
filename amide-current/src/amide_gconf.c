@@ -612,7 +612,7 @@ gboolean amide_gconf_set_int(const gchar * group, const gchar *key, gint val) {
 
 gboolean amide_gconf_set_float(const gchar * group, const char *key, gdouble val) {
   g_return_val_if_fail(key_file != NULL, FALSE);
-  g_key_file_set_integer(key_file, group, key, val);
+  g_key_file_set_double(key_file, group, key, val);
   return TRUE;
 }
 

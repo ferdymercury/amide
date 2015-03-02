@@ -1,17 +1,17 @@
 #!/bin/sh
 
-if test "x$IGE_DEBUG_LAUNCHER" != x; then
+if test "x$GTK_DEBUG_LAUNCHER" != x; then
     set -x
 fi
 
-if test "x$IGE_DEBUG_GDB" != x; then
+if test "x$GTK_DEBUG_GDB" != x; then
     EXEC="gdb --args"
 else
     EXEC=exec
 fi
 
-name="`basename $0`"
-tmp="`pwd`/$0"
+name=`basename "$0"`
+tmp="$0"
 tmp=`dirname "$tmp"`
 tmp=`dirname "$tmp"`
 bundle=`dirname "$tmp"`
@@ -73,12 +73,15 @@ fi
 unset APPLELANGUAGES L
 
 # If we didn't get a language from the language list, try the Collation preference, in case it's the only setting that exists.
-APPLECOLLATION=`defaults read .GlobalPreferences AppleCollationOrder`
-if test -z ${LANG} -a -n $APPLECOLLATION; then
-    if test -f "$I18NDIR/${APPLECOLLATION:0:2}/LC_MESSAGES/$APP.mo"; then
-	export LANG=${APPLECOLLATION:0:2}
-    fi
-fi
+# AML doesn't seem to exist
+# APPLECOLLATION=`defaults read .GlobalPreferences AppleCollationOrder`
+# if test -z ${LANG}; then
+#    if test -a -n $APPLECOLLATION; then
+#	if test -f "$I18NDIR/${APPLECOLLATION:0:2}/LC_MESSAGES/$APP.mo"; then
+#	    export LANG=${APPLECOLLATION:0:2}
+#	fi
+#    fi
+#fi
 if test ! -z $APPLECOLLATION; then
     export LC_COLLATE=$APPLECOLLATION
 fi
@@ -108,7 +111,7 @@ if test -n $LANG; then
 	export LC_MESSAGES=$LANG
 #Next try if the Applelocale is longer than 2 chars and the language
 #bit matches $LANG
-    elif test $LANG == ${APPLELOCALE:0:2} -a $APPLELOCALE > ${APPLELOCALE:0:2}; then
+    elif [ $LANG == ${APPLELOCALE:0:2} ] && [[ ${APPLELOCALE} > ${APPLELOCALE:0:2} ]]; then
 	export LC_MESSAGES=${APPLELOCALE:0:5}
 #Fail. Get a list of the locales in $PREFIX/share/locale that match
 #our two letter language code and pick the first one, special casing
@@ -161,8 +164,8 @@ if test -f "$bundle_res/environment.sh"; then
 fi
 
 # Strip out the argument added by the OS.
-if [ x`echo "x$1" | sed -e "s/^x-psn_.*//"` == x ]; then
+if /bin/expr "x$1" : '^x-psn_' > /dev/null; then
     shift 1
 fi
 
-$EXEC "$bundle_contents/MacOS/$name-bin" $* $EXTRA_ARGS
+$EXEC "$bundle_contents/MacOS/$name-bin" "$@" $EXTRA_ARGS

@@ -469,6 +469,16 @@ static gboolean tree_view_button_press_event (GtkWidget      *widget,
   return return_value;
 }
 
+static path_compare(GtkTreePath * path1, GtkTreePath * path2) {
+
+  if ((path1 == NULL) && (path2 == NULL))
+    return 0;
+  else if ((path1 == NULL) || (path2 == NULL))
+    return 1;
+  else
+    return gtk_tree_path_compare(path1, path2);
+}
+
 static gboolean tree_view_button_release_event (GtkWidget      *widget,
 						GdkEventButton *event) {
   GtkTreePath * path=NULL;
@@ -496,7 +506,7 @@ static gboolean tree_view_button_release_event (GtkWidget      *widget,
        also check that we're doing a button release on the object we started
        the button press with */
     if (column != gtk_tree_view_get_expander_column(GTK_TREE_VIEW(tree_view)) &&
-	gtk_tree_path_compare(path, tree_view->current_path)==0) {
+	path_compare(path, tree_view->current_path)==0) {
       
       GtkTreeModel * model;
       GtkTreeIter iter;

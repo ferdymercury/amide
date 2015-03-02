@@ -846,6 +846,7 @@ void tb_roi_analysis(AmitkStudy * study, AmitkPreferences * preferences, GtkWind
 
  /* make the widgets for this dialog box */
   notebook = gtk_notebook_new();
+  gtk_notebook_set_scrollable(notebook, TRUE);
   gtk_container_set_border_width(GTK_CONTAINER(tb_roi_analysis->dialog), 10);
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_analysis->dialog)->vbox), notebook);
 

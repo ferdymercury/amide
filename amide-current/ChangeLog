@@ -1,4 +1,12 @@
-1.0.3
+1.0.4 2012.11.20
+	* fixed exporting views, height incorrectly substituted with width
+	* initialize scaling_intercept to 0 when creating new data set
+	  - was problem importing DICOM on Mac, as mem not init'ed to 0
+	* amide_gconf_set_float had bug on OS X, only saved integer value
+	  - seen as error in export dataset - wrong voxel size [1]
+	[1] Reported by Daniel Vonwil
+
+1.0.3 2012.10.04
 	* reinabling gnomecanvas antialiased support, hopefully now stable
 	  - roi's now filled in, alpha of fill can be customized
 	* resets view center if initial dataset loaded
@@ -9,14 +17,14 @@
 	* now keeps track of gate times (dicom trigger time)
 	* when reading in xmedcon, tries to use orientation/offset
 	  provided for DICM data, and orientation for ECAT.
-	* fixed scroll wheel on win32 (requires libgnomecanvas-2.30.3)
+	* fixed scroll wheel on win32 (required libgnomecanvas-2.30.3)
 	* now able to specify colors of ROIs and fiducial marks [1]
 	* added a tool for measuring distances between fiducials/ROIs [2]
 	* ffmpeg library fix, switch avcodec_init to avcodec_register_all [3]
 	[1] Requested by Ajay Kumar and Janet O'Sullivan
 	[2] Requested by Josef Vizkelety, Michael Braden, A. Mehranian, etc.
 	[3] Contributed by Peter Bloomfield
-	
+
 1.0.2 2012.04.27
 	* Added MIP and MINIP rendering methods for thick slices
 	* mac bundle now is able to export JPEG images [1]

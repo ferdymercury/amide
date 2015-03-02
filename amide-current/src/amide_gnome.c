@@ -265,10 +265,12 @@ static gchar ** amide_gnome_program_locate_help_file (const gchar *file_name, gb
   dirs[j] = g_strdup(AMIDE_DATADIR); /* first entry */
   j++;
 
+  /* FIXME, below function is now deprecated 
 #if defined (G_PLATFORM_WIN32)
   dirs[j] = g_win32_get_package_installation_subdirectory(NULL, NULL,"share");
   j++;
 #endif
+  */
 
   i=0;
   while (global_dirs[i] != NULL) { /* rest of the entries */

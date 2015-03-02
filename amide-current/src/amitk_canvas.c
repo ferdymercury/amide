@@ -3849,9 +3849,12 @@ GdkPixbuf * amitk_canvas_get_pixbuf(AmitkCanvas * canvas) {
 
   GdkPixbuf * pixbuf;
 
+  g_print("%d %d %d %d\n", canvas->border_width, canvas->border_width, 
+	  canvas->pixbuf_width, canvas->pixbuf_height);
   pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(canvas->canvas), 
 					canvas->border_width,canvas->border_width,
 					canvas->pixbuf_width, canvas->pixbuf_height);
+  
 
   return pixbuf;
 }
