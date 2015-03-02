@@ -24,6 +24,7 @@
 */
 
 #include "amide_config.h"
+#include <sys/types.h> /* needed for dirent.h on mac os */
 #include <dirent.h>
 #include <string.h>
 #include "amitk_xif_sel.h"
@@ -209,7 +210,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   ui_study_t * ui_study;
   gchar * filename;
   AmitkImportMethod method;
-  int submethod = 0;
+  int submethod;
   AmitkDataSet * import_ds;
 
 
@@ -219,12 +220,8 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   /* figure out how we want to import */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
 
-#ifdef AMIDE_LIBMDC_SUPPORT
   /* figure out the submethod if we're loading through libmdc */
-  if (method == AMITK_IMPORT_METHOD_LIBMDC) 
-    submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
-#endif
-
+  submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
 
   /* get the filename and import */
   filename = ui_common_file_selection_get_load_name(file_selection);
@@ -266,6 +263,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   GtkWidget * file_selection;
   AmitkImportMethod method;
+  int submethod;
 
   file_selection = gtk_file_selection_new(_("Import File"));
 
@@ -275,11 +273,10 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   /* and save which method of importing we want to use */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
   g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(method));
-#ifdef AMIDE_LIBMDC_SUPPORT
-  if (method == AMITK_IMPORT_METHOD_LIBMDC)
-    g_object_set_data(G_OBJECT(file_selection), "submethod",
-		      g_object_get_data(G_OBJECT(widget), "submethod"));
-#endif
+
+  /* figure out the submethod if we're loading through libmdc */
+  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
+  g_object_set_data(G_OBJECT(file_selection), "submethod", GINT_TO_POINTER(submethod));
 
   ui_common_file_selection_set_filename(file_selection, NULL);
 
@@ -348,7 +345,7 @@ static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
   ui_study_t * ui_study;
   gchar * filename;
   AmitkExportMethod method;
-  int submethod = 0;
+  int submethod;
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
@@ -356,11 +353,9 @@ static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
   /* figure out how we want to import */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
 
-#ifdef AMIDE_LIBMDC_SUPPORT
   /* figure out the submethod if we're loading through libmdc */
-  if (method == AMITK_EXPORT_METHOD_LIBMDC) 
-    submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
-#endif
+  submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
+
 
   /* get the filename and import */
   filename = ui_common_file_selection_get_save_name(file_selection);
@@ -384,6 +379,7 @@ void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   GtkWidget * file_selection;
   AmitkExportMethod method;
+  int submethod;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
     g_warning(_("There's currently no active data set to export"));
@@ -398,11 +394,11 @@ void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data) {
   /* and save which method of exporting we want to use */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
   g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(method));
-#ifdef AMIDE_LIBMDC_SUPPORT
-  if (method == AMITK_EXPORT_METHOD_LIBMDC)
-    g_object_set_data(G_OBJECT(file_selection), "submethod",
-		      g_object_get_data(G_OBJECT(widget), "submethod"));
-#endif
+
+  /* figure out submethod if using libmdc */
+  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
+  g_object_set_data(G_OBJECT(file_selection), "submethod",GINT_TO_POINTER(submethod));
+		    
 
   ui_common_file_selection_set_filename(file_selection, NULL);
 

@@ -360,12 +360,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_import_method = AMITK_IMPORT_METHOD_RAW; i_import_method < AMITK_IMPORT_METHOD_NUM; i_import_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
     if (i_import_method == AMITK_IMPORT_METHOD_LIBMDC) {
-      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) 
+      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) {
 	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) 
 	  fill_in_menuitem(&(import_specific_menu[counter++]),
 			   libmdc_import_menu_names[i_libmdc_import],
 			   libmdc_import_menu_explanations[i_libmdc_import],
 			   ui_study_cb_import, ui_study);
+      }
     } else 
 #endif
       fill_in_menuitem(&(import_specific_menu[counter++]),
@@ -380,13 +381,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_export_method = AMITK_EXPORT_METHOD_RAW; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
-      for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) 
+      for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) 
 	  fill_in_menuitem(&(export_data_set_menu[counter++]),
 			   libmdc_export_menu_names[i_libmdc_export],
 			   libmdc_export_menu_explanations[i_libmdc_export],
 			   ui_study_cb_export_data_set, ui_study);
-    
+      }
     } else 
 #endif
       fill_in_menuitem(&(export_data_set_menu[counter++]),
@@ -406,33 +407,44 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_import_method = AMITK_IMPORT_METHOD_RAW; i_import_method < AMITK_IMPORT_METHOD_NUM; i_import_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
     if (i_import_method == AMITK_IMPORT_METHOD_LIBMDC) {
-      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) 
-	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) 
+      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) {
+	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) {
 	  g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
 			    "method", GINT_TO_POINTER(i_import_method));
 	  g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
 			    "submethod", GINT_TO_POINTER(libmdc_import_to_format[i_libmdc_import]));
+	}
+      }
     } else 
 #endif
-      g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
-			"method", GINT_TO_POINTER(i_import_method));
+      {
+	g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
+			  "method", GINT_TO_POINTER(i_import_method));
+	g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
+			  "submethod", GINT_TO_POINTER(0));
+      }
   }
 
   counter = 0;
   for (i_export_method = 0; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
 #ifdef AMIDE_LIBMDC_SUPPORT
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
-      for (i_libmdc_export = 0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) 
+      for (i_libmdc_export = 0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
 	  g_object_set_data(G_OBJECT(export_data_set_menu[counter].widget),
 			    "method", GINT_TO_POINTER(i_export_method));
 	  g_object_set_data(G_OBJECT(export_data_set_menu[counter++].widget),
 			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
 	}
+      }
     } else
 #endif
-      g_object_set_data(G_OBJECT(import_specific_menu[counter++].widget),
-			"method", GINT_TO_POINTER(i_export_method));
+      {
+	g_object_set_data(G_OBJECT(export_data_set_menu[counter].widget),
+			  "method", GINT_TO_POINTER(i_export_method));
+	g_object_set_data(G_OBJECT(export_data_set_menu[counter++].widget),
+			  "submethod", GINT_TO_POINTER(0));
+      }
   }
   
   for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)

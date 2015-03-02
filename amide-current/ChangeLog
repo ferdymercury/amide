@@ -1,4 +1,8 @@
-0.8.0
+0.8.1 2004.01.13
+	* specifying import types was messed up [1]
+	[1] Found by Patrick Chow & Peter Bloomfield
+
+0.8.0 2004.01.11
 	* finally added a (much requested) profile tool
  	* improved (correct) loading of non-float data files via (X)MedCon
 	* can drag file's from Nautilus onto the tree

@@ -2,6 +2,7 @@ Package: amide
 Version: @VERSION@
 Revision: 1
 Source: http://osdn.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
+Source-MD5:
 Depends: volpack, xmedcon (>= 0.8.14), libfame1, libxml2, gsl, libgnomecanvas2, libgnomeui2, atk1, linc1
 BuildDepends: libgnomeui2-dev, gtk-doc, libgnome2-dev, libgnomecanvas2-dev, libbonobo2-dev, libbonoboui2-dev, bonobo-activation2-dev, gconf2-dev, gnome-vfs2-dev, libart2
 #Patch: %f.patch
