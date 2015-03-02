@@ -16,6 +16,9 @@ AmitkPreferences
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_PREFERENCES_WARNINGS_TO_CONSOLE ##### -->
 <para>
 
@@ -40,6 +43,14 @@ AmitkPreferences
 @object: 
 
 
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_DIRECTORY ##### -->
+<para>
+
+</para>
+
+@object: 
+
+
 <!-- ##### MACRO AMITK_PREFERENCES_CANVAS_ROI_WIDTH ##### -->
 <para>
 
@@ -49,6 +60,14 @@ AmitkPreferences
 
 
 <!-- ##### MACRO AMITK_PREFERENCES_CANVAS_LINE_STYLE ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_CANVAS_FILL_ROI ##### -->
 <para>
 
 </para>
@@ -80,7 +99,15 @@ AmitkPreferences
 @pref: 
 
 
-<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_COLOR_TABLE ##### -->
+<!-- ##### MACRO AMITK_PREFERENCES_PANEL_LAYOUT ##### -->
+<para>
+
+</para>
+
+@pref: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_COLOR_TABLE ##### -->
 <para>
 
 </para>
@@ -89,14 +116,22 @@ AmitkPreferences
 @modality: 
 
 
-<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_WINDOW ##### -->
+<!-- ##### MACRO AMITK_PREFERENCES_WINDOW ##### -->
 <para>
 
 </para>
 
 @pref: 
-@window: 
+@which_window: 
 @limit: 
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_THRESHOLD_STYLE ##### -->
+<para>
+
+</para>
+
+@pref: 
 
 
 <!-- ##### MACRO AMITK_PREFERENCES_DIALOG ##### -->
@@ -115,6 +150,13 @@ AmitkPreferences
 
 
 <!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI ##### -->
 <para>
 
 </para>
@@ -142,6 +184,13 @@ AmitkPreferences
 
 
 
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE ##### -->
 <para>
 
@@ -157,6 +206,20 @@ AmitkPreferences
 
 
 <!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE ##### -->
 <para>
 
 </para>
@@ -191,6 +254,33 @@ AmitkPreferences
 
 
 
+<!-- ##### STRUCT AmitkPreferences ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkPreferences::data-set-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkPreferences::misc-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkPreferences::study-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
 <!-- ##### FUNCTION amitk_preferences_new ##### -->
 <para>
 
@@ -215,6 +305,15 @@ AmitkPreferences
 
 @preferences: 
 @line_style: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_canvas_fill_roi ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@fill_roi: 
 
 
 <!-- ##### FUNCTION amitk_preferences_set_canvas_layout ##### -->
@@ -244,6 +343,15 @@ AmitkPreferences
 @target_empty_area: 
 
 
+<!-- ##### FUNCTION amitk_preferences_set_panel_layout ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@panel_layout: 
+
+
 <!-- ##### FUNCTION amitk_preferences_set_warnings_to_console ##### -->
 <para>
 
@@ -271,6 +379,15 @@ AmitkPreferences
 @new_value: 
 
 
+<!-- ##### FUNCTION amitk_preferences_set_default_directory ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@directory: 
+
+
 <!-- ##### FUNCTION amitk_preferences_set_color_table ##### -->
 <para>
 
@@ -290,6 +407,15 @@ AmitkPreferences
 @window: 
 @limit: 
 @value: 
+
+
+<!-- ##### FUNCTION amitk_preferences_set_threshold_style ##### -->
+<para>
+
+</para>
+
+@preferences: 
+@threshold_style: 
 
 
 <!-- ##### FUNCTION amitk_preferences_set_dialog ##### -->

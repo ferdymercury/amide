@@ -25,8 +25,9 @@
 
 
 #include "amide_config.h"
+#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <libgnomecanvas/libgnomecanvas.h>
-#include <libgnomeui/libgnomeui.h>
+#include "amide.h"
 #include "amitk_study.h"
 #include "tb_profile.h"
 #include "ui_common.h"
@@ -297,7 +298,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
 
   tb_profile = g_object_get_data(G_OBJECT(file_selection), "tb_profile");
 
-  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* allright, save the data */
@@ -1201,7 +1202,7 @@ void tb_profile(AmitkStudy * study, GtkWindow * parent) {
   g_free(title);
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
 
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), tb_profile);
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_profile);
   g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(destroy_cb), tb_profile);

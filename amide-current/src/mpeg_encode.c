@@ -29,7 +29,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "fame.h"
+#include "amide_intl.h"
+#include <fame.h>
 #include "mpeg_encode.h"
 
 #define BUFFER_MULT 8

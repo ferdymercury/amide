@@ -33,6 +33,8 @@
 #include "render.h"
 #include "amitk_study.h"
 
+#define GCONF_AMIDE_RENDERING "RENDERING/"
+
 /* defines */
 #define UI_RENDER_BLANK_WIDTH 200
 #define UI_RENDER_BLANK_HEIGHT 200
@@ -40,7 +42,8 @@
 
 /* ui_render data structures */
 typedef struct ui_render_t {
-  GnomeApp * app; 
+  GtkWindow * window;
+  GtkWidget * window_vbox;
   GtkWidget * parameter_dialog;
   GtkWidget * transfer_function_dialog;
 #ifdef AMIDE_LIBFAME_SUPPORT

@@ -1,89 +1,99 @@
 <refentry id="amitk-amitk-type-builtins">
 <refmeta>
-<refentrytitle>amitk_type_builtins</refentrytitle>
+<refentrytitle role="top_of_page">amitk_type_builtins</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_type_builtins</refname><refpurpose></refpurpose>
+<refname>amitk_type_builtins</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-<link linkend="GType">GType</link>       <link linkend="amitk-layout-get-type">amitk_layout_get_type</link>           (void);
-#define     <link linkend="AMITK-TYPE-LAYOUT-CAPS">AMITK_TYPE_LAYOUT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-eye-get-type">amitk_eye_get_type</link>              (void);
-#define     <link linkend="AMITK-TYPE-EYE-CAPS">AMITK_TYPE_EYE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-help-info-get-type">amitk_help_info_get_type</link>        (void);
-#define     <link linkend="AMITK-TYPE-HELP-INFO-CAPS">AMITK_TYPE_HELP_INFO</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-modality-get-type">amitk_modality_get_type</link>         (void);
-#define     <link linkend="AMITK-TYPE-MODALITY-CAPS">AMITK_TYPE_MODALITY</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-limit-get-type">amitk_limit_get_type</link>            (void);
-#define     <link linkend="AMITK-TYPE-LIMIT-CAPS">AMITK_TYPE_LIMIT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-window-get-type">amitk_window_get_type</link>           (void);
-#define     <link linkend="AMITK-TYPE-WINDOW-CAPS">AMITK_TYPE_WINDOW</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-canvas-type-get-type">amitk_canvas_type_get_type</link>      (void);
-#define     <link linkend="AMITK-TYPE-CANVAS-TYPE-CAPS">AMITK_TYPE_CANVAS_TYPE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-canvas-target-action-get-type">amitk_canvas_target_action_get_type</link>
-                                            (void);
-#define     <link linkend="AMITK-TYPE-CANVAS-TARGET-ACTION-CAPS">AMITK_TYPE_CANVAS_TARGET_ACTION</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-color-table-get-type">amitk_color_table_get_type</link>      (void);
-#define     <link linkend="AMITK-TYPE-COLOR-TABLE-CAPS">AMITK_TYPE_COLOR_TABLE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-interpolation-get-type">amitk_interpolation_get_type</link>    (void);
-#define     <link linkend="AMITK-TYPE-INTERPOLATION-CAPS">AMITK_TYPE_INTERPOLATION</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-thresholding-get-type">amitk_thresholding_get_type</link>     (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLDING-CAPS">AMITK_TYPE_THRESHOLDING</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-scaling-type-get-type">amitk_scaling_type_get_type</link>     (void);
-#define     <link linkend="AMITK-TYPE-SCALING-TYPE-CAPS">AMITK_TYPE_SCALING_TYPE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-conversion-get-type">amitk_conversion_get_type</link>       (void);
-#define     <link linkend="AMITK-TYPE-CONVERSION-CAPS">AMITK_TYPE_CONVERSION</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-weight-unit-get-type">amitk_weight_unit_get_type</link>      (void);
-#define     <link linkend="AMITK-TYPE-WEIGHT-UNIT-CAPS">AMITK_TYPE_WEIGHT_UNIT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-dose-unit-get-type">amitk_dose_unit_get_type</link>        (void);
-#define     <link linkend="AMITK-TYPE-DOSE-UNIT-CAPS">AMITK_TYPE_DOSE_UNIT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-cylinder-unit-get-type">amitk_cylinder_unit_get_type</link>    (void);
-#define     <link linkend="AMITK-TYPE-CYLINDER-UNIT-CAPS">AMITK_TYPE_CYLINDER_UNIT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-filter-get-type">amitk_filter_get_type</link>           (void);
-#define     <link linkend="AMITK-TYPE-FILTER-CAPS">AMITK_TYPE_FILTER</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-object-type-get-type">amitk_object_type_get_type</link>      (void);
-#define     <link linkend="AMITK-TYPE-OBJECT-TYPE-CAPS">AMITK_TYPE_OBJECT_TYPE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-selection-get-type">amitk_selection_get_type</link>        (void);
-#define     <link linkend="AMITK-TYPE-SELECTION-CAPS">AMITK_TYPE_SELECTION</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-view-get-type">amitk_view_get_type</link>             (void);
-#define     <link linkend="AMITK-TYPE-VIEW-CAPS">AMITK_TYPE_VIEW</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-axis-get-type">amitk_axis_get_type</link>             (void);
-#define     <link linkend="AMITK-TYPE-AXIS-CAPS">AMITK_TYPE_AXIS</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-dim-get-type">amitk_dim_get_type</link>              (void);
-#define     <link linkend="AMITK-TYPE-DIM-CAPS">AMITK_TYPE_DIM</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-length-unit-get-type">amitk_length_unit_get_type</link>      (void);
-#define     <link linkend="AMITK-TYPE-LENGTH-UNIT-CAPS">AMITK_TYPE_LENGTH_UNIT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-format-get-type">amitk_format_get_type</link>           (void);
-#define     <link linkend="AMITK-TYPE-FORMAT-CAPS">AMITK_TYPE_FORMAT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-raw-format-get-type">amitk_raw_format_get_type</link>       (void);
-#define     <link linkend="AMITK-TYPE-RAW-FORMAT-CAPS">AMITK_TYPE_RAW_FORMAT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-roi-type-get-type">amitk_roi_type_get_type</link>         (void);
-#define     <link linkend="AMITK-TYPE-ROI-TYPE-CAPS">AMITK_TYPE_ROI_TYPE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-fuse-type-get-type">amitk_fuse_type_get_type</link>        (void);
-#define     <link linkend="AMITK-TYPE-FUSE-TYPE-CAPS">AMITK_TYPE_FUSE_TYPE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-view-mode-get-type">amitk_view_mode_get_type</link>        (void);
-#define     <link linkend="AMITK-TYPE-VIEW-MODE-CAPS">AMITK_TYPE_VIEW_MODE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-threshold-scale-get-type">amitk_threshold_scale_get_type</link>  (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLD-SCALE-CAPS">AMITK_TYPE_THRESHOLD_SCALE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-threshold-arrow-get-type">amitk_threshold_arrow_get_type</link>  (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLD-ARROW-CAPS">AMITK_TYPE_THRESHOLD_ARROW</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-threshold-entry-get-type">amitk_threshold_entry_get_type</link>  (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLD-ENTRY-CAPS">AMITK_TYPE_THRESHOLD_ENTRY</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-threshold-line-get-type">amitk_threshold_line_get_type</link>   (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLD-LINE-CAPS">AMITK_TYPE_THRESHOLD_LINE</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-threshold-layout-get-type">amitk_threshold_layout_get_type</link> (void);
-#define     <link linkend="AMITK-TYPE-THRESHOLD-LAYOUT-CAPS">AMITK_TYPE_THRESHOLD_LAYOUT</link>
-<link linkend="GType">GType</link>       <link linkend="amitk-tree-view-mode-get-type">amitk_tree_view_mode_get_type</link>   (void);
-#define     <link linkend="AMITK-TYPE-TREE-VIEW-MODE-CAPS">AMITK_TYPE_TREE_VIEW_MODE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-canvas-type-get-type">amitk_canvas_type_get_type</link>          (void);
+#define             <link linkend="AMITK-TYPE-CANVAS-TYPE:CAPS">AMITK_TYPE_CANVAS_TYPE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-canvas-target-action-get-type">amitk_canvas_target_action_get_type</link> (void);
+#define             <link linkend="AMITK-TYPE-CANVAS-TARGET-ACTION:CAPS">AMITK_TYPE_CANVAS_TARGET_ACTION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-color-table-get-type">amitk_color_table_get_type</link>          (void);
+#define             <link linkend="AMITK-TYPE-COLOR-TABLE:CAPS">AMITK_TYPE_COLOR_TABLE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-layout-get-type">amitk_layout_get_type</link>               (void);
+#define             <link linkend="AMITK-TYPE-LAYOUT:CAPS">AMITK_TYPE_LAYOUT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-panel-layout-get-type">amitk_panel_layout_get_type</link>         (void);
+#define             <link linkend="AMITK-TYPE-PANEL-LAYOUT:CAPS">AMITK_TYPE_PANEL_LAYOUT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-view-mode-get-type">amitk_view_mode_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-VIEW-MODE:CAPS">AMITK_TYPE_VIEW_MODE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-modality-get-type">amitk_modality_get_type</link>             (void);
+#define             <link linkend="AMITK-TYPE-MODALITY:CAPS">AMITK_TYPE_MODALITY</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-limit-get-type">amitk_limit_get_type</link>                (void);
+#define             <link linkend="AMITK-TYPE-LIMIT:CAPS">AMITK_TYPE_LIMIT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-window-get-type">amitk_window_get_type</link>               (void);
+#define             <link linkend="AMITK-TYPE-WINDOW:CAPS">AMITK_TYPE_WINDOW</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-style-get-type">amitk_threshold_style_get_type</link>      (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-STYLE:CAPS">AMITK_TYPE_THRESHOLD_STYLE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-help-info-get-type">amitk_help_info_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-HELP-INFO:CAPS">AMITK_TYPE_HELP_INFO</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-operation-get-type">amitk_operation_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-OPERATION:CAPS">AMITK_TYPE_OPERATION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-interpolation-get-type">amitk_interpolation_get_type</link>        (void);
+#define             <link linkend="AMITK-TYPE-INTERPOLATION:CAPS">AMITK_TYPE_INTERPOLATION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-thresholding-get-type">amitk_thresholding_get_type</link>         (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLDING:CAPS">AMITK_TYPE_THRESHOLDING</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-scaling-type-get-type">amitk_scaling_type_get_type</link>         (void);
+#define             <link linkend="AMITK-TYPE-SCALING-TYPE:CAPS">AMITK_TYPE_SCALING_TYPE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-conversion-get-type">amitk_conversion_get_type</link>           (void);
+#define             <link linkend="AMITK-TYPE-CONVERSION:CAPS">AMITK_TYPE_CONVERSION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-weight-unit-get-type">amitk_weight_unit_get_type</link>          (void);
+#define             <link linkend="AMITK-TYPE-WEIGHT-UNIT:CAPS">AMITK_TYPE_WEIGHT_UNIT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-dose-unit-get-type">amitk_dose_unit_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-DOSE-UNIT:CAPS">AMITK_TYPE_DOSE_UNIT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-cylinder-unit-get-type">amitk_cylinder_unit_get_type</link>        (void);
+#define             <link linkend="AMITK-TYPE-CYLINDER-UNIT:CAPS">AMITK_TYPE_CYLINDER_UNIT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-subject-orientation-get-type">amitk_subject_orientation_get_type</link>  (void);
+#define             <link linkend="AMITK-TYPE-SUBJECT-ORIENTATION:CAPS">AMITK_TYPE_SUBJECT_ORIENTATION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-filter-get-type">amitk_filter_get_type</link>               (void);
+#define             <link linkend="AMITK-TYPE-FILTER:CAPS">AMITK_TYPE_FILTER</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-object-type-get-type">amitk_object_type_get_type</link>          (void);
+#define             <link linkend="AMITK-TYPE-OBJECT-TYPE:CAPS">AMITK_TYPE_OBJECT_TYPE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-selection-get-type">amitk_selection_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-SELECTION:CAPS">AMITK_TYPE_SELECTION</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-view-get-type">amitk_view_get_type</link>                 (void);
+#define             <link linkend="AMITK-TYPE-VIEW:CAPS">AMITK_TYPE_VIEW</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-axis-get-type">amitk_axis_get_type</link>                 (void);
+#define             <link linkend="AMITK-TYPE-AXIS:CAPS">AMITK_TYPE_AXIS</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-dim-get-type">amitk_dim_get_type</link>                  (void);
+#define             <link linkend="AMITK-TYPE-DIM:CAPS">AMITK_TYPE_DIM</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-length-unit-get-type">amitk_length_unit_get_type</link>          (void);
+#define             <link linkend="AMITK-TYPE-LENGTH-UNIT:CAPS">AMITK_TYPE_LENGTH_UNIT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-format-get-type">amitk_format_get_type</link>               (void);
+#define             <link linkend="AMITK-TYPE-FORMAT:CAPS">AMITK_TYPE_FORMAT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-raw-format-get-type">amitk_raw_format_get_type</link>           (void);
+#define             <link linkend="AMITK-TYPE-RAW-FORMAT:CAPS">AMITK_TYPE_RAW_FORMAT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-roi-type-get-type">amitk_roi_type_get_type</link>             (void);
+#define             <link linkend="AMITK-TYPE-ROI-TYPE:CAPS">AMITK_TYPE_ROI_TYPE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-roi-isocontour-range-get-type">amitk_roi_isocontour_range_get_type</link> (void);
+#define             <link linkend="AMITK-TYPE-ROI-ISOCONTOUR-RANGE:CAPS">AMITK_TYPE_ROI_ISOCONTOUR_RANGE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-fuse-type-get-type">amitk_fuse_type_get_type</link>            (void);
+#define             <link linkend="AMITK-TYPE-FUSE-TYPE:CAPS">AMITK_TYPE_FUSE_TYPE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-scale-get-type">amitk_threshold_scale_get_type</link>      (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-SCALE:CAPS">AMITK_TYPE_THRESHOLD_SCALE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-arrow-get-type">amitk_threshold_arrow_get_type</link>      (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-ARROW:CAPS">AMITK_TYPE_THRESHOLD_ARROW</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-entry-get-type">amitk_threshold_entry_get_type</link>      (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-ENTRY:CAPS">AMITK_TYPE_THRESHOLD_ENTRY</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-line-get-type">amitk_threshold_line_get_type</link>       (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-LINE:CAPS">AMITK_TYPE_THRESHOLD_LINE</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-threshold-layout-get-type">amitk_threshold_layout_get_type</link>     (void);
+#define             <link linkend="AMITK-TYPE-THRESHOLD-LAYOUT:CAPS">AMITK_TYPE_THRESHOLD_LAYOUT</link>
+<link linkend="GType">GType</link>               <link linkend="amitk-tree-view-mode-get-type">amitk_tree_view_mode_get_type</link>       (void);
+#define             <link linkend="AMITK-TYPE-TREE-VIEW-MODE:CAPS">AMITK_TYPE_TREE_VIEW_MODE</link>
 </synopsis>
 </refsynopsisdiv>
 
@@ -95,623 +105,694 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="amitk-layout-get-type"/>amitk_layout_get_type ()</title>
-<indexterm><primary>amitk_layout_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_layout_get_type           (void);</programlisting>
+<title><anchor id="amitk-canvas-type-get-type" role="function"/>amitk_canvas_type_get_type ()</title>
+<indexterm><primary>amitk_canvas_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_canvas_type_get_type          (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-LAYOUT-CAPS"/>AMITK_TYPE_LAYOUT</title>
-<indexterm><primary>AMITK_TYPE_LAYOUT</primary></indexterm><programlisting>#define AMITK_TYPE_LAYOUT (amitk_layout_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-eye-get-type"/>amitk_eye_get_type ()</title>
-<indexterm><primary>amitk_eye_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_eye_get_type              (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-EYE-CAPS"/>AMITK_TYPE_EYE</title>
-<indexterm><primary>AMITK_TYPE_EYE</primary></indexterm><programlisting>#define AMITK_TYPE_EYE (amitk_eye_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-help-info-get-type"/>amitk_help_info_get_type ()</title>
-<indexterm><primary>amitk_help_info_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_help_info_get_type        (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-HELP-INFO-CAPS"/>AMITK_TYPE_HELP_INFO</title>
-<indexterm><primary>AMITK_TYPE_HELP_INFO</primary></indexterm><programlisting>#define AMITK_TYPE_HELP_INFO (amitk_help_info_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-modality-get-type"/>amitk_modality_get_type ()</title>
-<indexterm><primary>amitk_modality_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_modality_get_type         (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-MODALITY-CAPS"/>AMITK_TYPE_MODALITY</title>
-<indexterm><primary>AMITK_TYPE_MODALITY</primary></indexterm><programlisting>#define AMITK_TYPE_MODALITY (amitk_modality_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-limit-get-type"/>amitk_limit_get_type ()</title>
-<indexterm><primary>amitk_limit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_limit_get_type            (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-LIMIT-CAPS"/>AMITK_TYPE_LIMIT</title>
-<indexterm><primary>AMITK_TYPE_LIMIT</primary></indexterm><programlisting>#define AMITK_TYPE_LIMIT (amitk_limit_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-window-get-type"/>amitk_window_get_type ()</title>
-<indexterm><primary>amitk_window_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_window_get_type           (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-WINDOW-CAPS"/>AMITK_TYPE_WINDOW</title>
-<indexterm><primary>AMITK_TYPE_WINDOW</primary></indexterm><programlisting>#define AMITK_TYPE_WINDOW (amitk_window_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-canvas-type-get-type"/>amitk_canvas_type_get_type ()</title>
-<indexterm><primary>amitk_canvas_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_canvas_type_get_type      (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-CANVAS-TYPE-CAPS"/>AMITK_TYPE_CANVAS_TYPE</title>
+<title><anchor id="AMITK-TYPE-CANVAS-TYPE:CAPS" role="macro"/>AMITK_TYPE_CANVAS_TYPE</title>
 <indexterm><primary>AMITK_TYPE_CANVAS_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_CANVAS_TYPE (amitk_canvas_type_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-target-action-get-type"/>amitk_canvas_target_action_get_type ()</title>
-<indexterm><primary>amitk_canvas_target_action_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_canvas_target_action_get_type
-                                            (void);</programlisting>
+<title><anchor id="amitk-canvas-target-action-get-type" role="function"/>amitk_canvas_target_action_get_type ()</title>
+<indexterm><primary>amitk_canvas_target_action_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_canvas_target_action_get_type (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-CANVAS-TARGET-ACTION-CAPS"/>AMITK_TYPE_CANVAS_TARGET_ACTION</title>
+<title><anchor id="AMITK-TYPE-CANVAS-TARGET-ACTION:CAPS" role="macro"/>AMITK_TYPE_CANVAS_TARGET_ACTION</title>
 <indexterm><primary>AMITK_TYPE_CANVAS_TARGET_ACTION</primary></indexterm><programlisting>#define AMITK_TYPE_CANVAS_TARGET_ACTION (amitk_canvas_target_action_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-color-table-get-type"/>amitk_color_table_get_type ()</title>
-<indexterm><primary>amitk_color_table_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_color_table_get_type      (void);</programlisting>
+<title><anchor id="amitk-color-table-get-type" role="function"/>amitk_color_table_get_type ()</title>
+<indexterm><primary>amitk_color_table_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_color_table_get_type          (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-COLOR-TABLE-CAPS"/>AMITK_TYPE_COLOR_TABLE</title>
+<title><anchor id="AMITK-TYPE-COLOR-TABLE:CAPS" role="macro"/>AMITK_TYPE_COLOR_TABLE</title>
 <indexterm><primary>AMITK_TYPE_COLOR_TABLE</primary></indexterm><programlisting>#define AMITK_TYPE_COLOR_TABLE (amitk_color_table_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-interpolation-get-type"/>amitk_interpolation_get_type ()</title>
-<indexterm><primary>amitk_interpolation_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_interpolation_get_type    (void);</programlisting>
+<title><anchor id="amitk-layout-get-type" role="function"/>amitk_layout_get_type ()</title>
+<indexterm><primary>amitk_layout_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_layout_get_type               (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-INTERPOLATION-CAPS"/>AMITK_TYPE_INTERPOLATION</title>
-<indexterm><primary>AMITK_TYPE_INTERPOLATION</primary></indexterm><programlisting>#define AMITK_TYPE_INTERPOLATION (amitk_interpolation_get_type())
+<title><anchor id="AMITK-TYPE-LAYOUT:CAPS" role="macro"/>AMITK_TYPE_LAYOUT</title>
+<indexterm><primary>AMITK_TYPE_LAYOUT</primary></indexterm><programlisting>#define AMITK_TYPE_LAYOUT (amitk_layout_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-thresholding-get-type"/>amitk_thresholding_get_type ()</title>
-<indexterm><primary>amitk_thresholding_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_thresholding_get_type     (void);</programlisting>
+<title><anchor id="amitk-panel-layout-get-type" role="function"/>amitk_panel_layout_get_type ()</title>
+<indexterm><primary>amitk_panel_layout_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_panel_layout_get_type         (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLDING-CAPS"/>AMITK_TYPE_THRESHOLDING</title>
-<indexterm><primary>AMITK_TYPE_THRESHOLDING</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLDING (amitk_thresholding_get_type())
+<title><anchor id="AMITK-TYPE-PANEL-LAYOUT:CAPS" role="macro"/>AMITK_TYPE_PANEL_LAYOUT</title>
+<indexterm><primary>AMITK_TYPE_PANEL_LAYOUT</primary></indexterm><programlisting>#define AMITK_TYPE_PANEL_LAYOUT (amitk_panel_layout_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-scaling-type-get-type"/>amitk_scaling_type_get_type ()</title>
-<indexterm><primary>amitk_scaling_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_scaling_type_get_type     (void);</programlisting>
+<title><anchor id="amitk-view-mode-get-type" role="function"/>amitk_view_mode_get_type ()</title>
+<indexterm><primary>amitk_view_mode_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_view_mode_get_type            (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-SCALING-TYPE-CAPS"/>AMITK_TYPE_SCALING_TYPE</title>
-<indexterm><primary>AMITK_TYPE_SCALING_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_SCALING_TYPE (amitk_scaling_type_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-conversion-get-type"/>amitk_conversion_get_type ()</title>
-<indexterm><primary>amitk_conversion_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_conversion_get_type       (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-CONVERSION-CAPS"/>AMITK_TYPE_CONVERSION</title>
-<indexterm><primary>AMITK_TYPE_CONVERSION</primary></indexterm><programlisting>#define AMITK_TYPE_CONVERSION (amitk_conversion_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-weight-unit-get-type"/>amitk_weight_unit_get_type ()</title>
-<indexterm><primary>amitk_weight_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_weight_unit_get_type      (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-WEIGHT-UNIT-CAPS"/>AMITK_TYPE_WEIGHT_UNIT</title>
-<indexterm><primary>AMITK_TYPE_WEIGHT_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_WEIGHT_UNIT (amitk_weight_unit_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-dose-unit-get-type"/>amitk_dose_unit_get_type ()</title>
-<indexterm><primary>amitk_dose_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_dose_unit_get_type        (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-DOSE-UNIT-CAPS"/>AMITK_TYPE_DOSE_UNIT</title>
-<indexterm><primary>AMITK_TYPE_DOSE_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_DOSE_UNIT (amitk_dose_unit_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-cylinder-unit-get-type"/>amitk_cylinder_unit_get_type ()</title>
-<indexterm><primary>amitk_cylinder_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_cylinder_unit_get_type    (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-CYLINDER-UNIT-CAPS"/>AMITK_TYPE_CYLINDER_UNIT</title>
-<indexterm><primary>AMITK_TYPE_CYLINDER_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_CYLINDER_UNIT (amitk_cylinder_unit_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-filter-get-type"/>amitk_filter_get_type ()</title>
-<indexterm><primary>amitk_filter_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_filter_get_type           (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-FILTER-CAPS"/>AMITK_TYPE_FILTER</title>
-<indexterm><primary>AMITK_TYPE_FILTER</primary></indexterm><programlisting>#define AMITK_TYPE_FILTER (amitk_filter_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-object-type-get-type"/>amitk_object_type_get_type ()</title>
-<indexterm><primary>amitk_object_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_object_type_get_type      (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-OBJECT-TYPE-CAPS"/>AMITK_TYPE_OBJECT_TYPE</title>
-<indexterm><primary>AMITK_TYPE_OBJECT_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_OBJECT_TYPE (amitk_object_type_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-selection-get-type"/>amitk_selection_get_type ()</title>
-<indexterm><primary>amitk_selection_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_selection_get_type        (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-SELECTION-CAPS"/>AMITK_TYPE_SELECTION</title>
-<indexterm><primary>AMITK_TYPE_SELECTION</primary></indexterm><programlisting>#define AMITK_TYPE_SELECTION (amitk_selection_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-view-get-type"/>amitk_view_get_type ()</title>
-<indexterm><primary>amitk_view_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_view_get_type             (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-VIEW-CAPS"/>AMITK_TYPE_VIEW</title>
-<indexterm><primary>AMITK_TYPE_VIEW</primary></indexterm><programlisting>#define AMITK_TYPE_VIEW (amitk_view_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-axis-get-type"/>amitk_axis_get_type ()</title>
-<indexterm><primary>amitk_axis_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_axis_get_type             (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-AXIS-CAPS"/>AMITK_TYPE_AXIS</title>
-<indexterm><primary>AMITK_TYPE_AXIS</primary></indexterm><programlisting>#define AMITK_TYPE_AXIS (amitk_axis_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-dim-get-type"/>amitk_dim_get_type ()</title>
-<indexterm><primary>amitk_dim_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_dim_get_type              (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-DIM-CAPS"/>AMITK_TYPE_DIM</title>
-<indexterm><primary>AMITK_TYPE_DIM</primary></indexterm><programlisting>#define AMITK_TYPE_DIM (amitk_dim_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-length-unit-get-type"/>amitk_length_unit_get_type ()</title>
-<indexterm><primary>amitk_length_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_length_unit_get_type      (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-LENGTH-UNIT-CAPS"/>AMITK_TYPE_LENGTH_UNIT</title>
-<indexterm><primary>AMITK_TYPE_LENGTH_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_LENGTH_UNIT (amitk_length_unit_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-format-get-type"/>amitk_format_get_type ()</title>
-<indexterm><primary>amitk_format_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_format_get_type           (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-FORMAT-CAPS"/>AMITK_TYPE_FORMAT</title>
-<indexterm><primary>AMITK_TYPE_FORMAT</primary></indexterm><programlisting>#define AMITK_TYPE_FORMAT (amitk_format_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-raw-format-get-type"/>amitk_raw_format_get_type ()</title>
-<indexterm><primary>amitk_raw_format_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_raw_format_get_type       (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-RAW-FORMAT-CAPS"/>AMITK_TYPE_RAW_FORMAT</title>
-<indexterm><primary>AMITK_TYPE_RAW_FORMAT</primary></indexterm><programlisting>#define AMITK_TYPE_RAW_FORMAT (amitk_raw_format_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-roi-type-get-type"/>amitk_roi_type_get_type ()</title>
-<indexterm><primary>amitk_roi_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_roi_type_get_type         (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-ROI-TYPE-CAPS"/>AMITK_TYPE_ROI_TYPE</title>
-<indexterm><primary>AMITK_TYPE_ROI_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_ROI_TYPE (amitk_roi_type_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-fuse-type-get-type"/>amitk_fuse_type_get_type ()</title>
-<indexterm><primary>amitk_fuse_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_fuse_type_get_type        (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-FUSE-TYPE-CAPS"/>AMITK_TYPE_FUSE_TYPE</title>
-<indexterm><primary>AMITK_TYPE_FUSE_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_FUSE_TYPE (amitk_fuse_type_get_type())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="amitk-view-mode-get-type"/>amitk_view_mode_get_type ()</title>
-<indexterm><primary>amitk_view_mode_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_view_mode_get_type        (void);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="AMITK-TYPE-VIEW-MODE-CAPS"/>AMITK_TYPE_VIEW_MODE</title>
+<title><anchor id="AMITK-TYPE-VIEW-MODE:CAPS" role="macro"/>AMITK_TYPE_VIEW_MODE</title>
 <indexterm><primary>AMITK_TYPE_VIEW_MODE</primary></indexterm><programlisting>#define AMITK_TYPE_VIEW_MODE (amitk_view_mode_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-threshold-scale-get-type"/>amitk_threshold_scale_get_type ()</title>
-<indexterm><primary>amitk_threshold_scale_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_threshold_scale_get_type  (void);</programlisting>
+<title><anchor id="amitk-modality-get-type" role="function"/>amitk_modality_get_type ()</title>
+<indexterm><primary>amitk_modality_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_modality_get_type             (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLD-SCALE-CAPS"/>AMITK_TYPE_THRESHOLD_SCALE</title>
+<title><anchor id="AMITK-TYPE-MODALITY:CAPS" role="macro"/>AMITK_TYPE_MODALITY</title>
+<indexterm><primary>AMITK_TYPE_MODALITY</primary></indexterm><programlisting>#define AMITK_TYPE_MODALITY (amitk_modality_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-limit-get-type" role="function"/>amitk_limit_get_type ()</title>
+<indexterm><primary>amitk_limit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_limit_get_type                (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-LIMIT:CAPS" role="macro"/>AMITK_TYPE_LIMIT</title>
+<indexterm><primary>AMITK_TYPE_LIMIT</primary></indexterm><programlisting>#define AMITK_TYPE_LIMIT (amitk_limit_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-window-get-type" role="function"/>amitk_window_get_type ()</title>
+<indexterm><primary>amitk_window_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_window_get_type               (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-WINDOW:CAPS" role="macro"/>AMITK_TYPE_WINDOW</title>
+<indexterm><primary>AMITK_TYPE_WINDOW</primary></indexterm><programlisting>#define AMITK_TYPE_WINDOW (amitk_window_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-threshold-style-get-type" role="function"/>amitk_threshold_style_get_type ()</title>
+<indexterm><primary>amitk_threshold_style_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_style_get_type      (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-THRESHOLD-STYLE:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_STYLE</title>
+<indexterm><primary>AMITK_TYPE_THRESHOLD_STYLE</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_STYLE (amitk_threshold_style_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-help-info-get-type" role="function"/>amitk_help_info_get_type ()</title>
+<indexterm><primary>amitk_help_info_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_help_info_get_type            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-HELP-INFO:CAPS" role="macro"/>AMITK_TYPE_HELP_INFO</title>
+<indexterm><primary>AMITK_TYPE_HELP_INFO</primary></indexterm><programlisting>#define AMITK_TYPE_HELP_INFO (amitk_help_info_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-operation-get-type" role="function"/>amitk_operation_get_type ()</title>
+<indexterm><primary>amitk_operation_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_operation_get_type            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-OPERATION:CAPS" role="macro"/>AMITK_TYPE_OPERATION</title>
+<indexterm><primary>AMITK_TYPE_OPERATION</primary></indexterm><programlisting>#define AMITK_TYPE_OPERATION (amitk_operation_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-interpolation-get-type" role="function"/>amitk_interpolation_get_type ()</title>
+<indexterm><primary>amitk_interpolation_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_interpolation_get_type        (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-INTERPOLATION:CAPS" role="macro"/>AMITK_TYPE_INTERPOLATION</title>
+<indexterm><primary>AMITK_TYPE_INTERPOLATION</primary></indexterm><programlisting>#define AMITK_TYPE_INTERPOLATION (amitk_interpolation_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-thresholding-get-type" role="function"/>amitk_thresholding_get_type ()</title>
+<indexterm><primary>amitk_thresholding_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_thresholding_get_type         (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-THRESHOLDING:CAPS" role="macro"/>AMITK_TYPE_THRESHOLDING</title>
+<indexterm><primary>AMITK_TYPE_THRESHOLDING</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLDING (amitk_thresholding_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-scaling-type-get-type" role="function"/>amitk_scaling_type_get_type ()</title>
+<indexterm><primary>amitk_scaling_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_scaling_type_get_type         (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-SCALING-TYPE:CAPS" role="macro"/>AMITK_TYPE_SCALING_TYPE</title>
+<indexterm><primary>AMITK_TYPE_SCALING_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_SCALING_TYPE (amitk_scaling_type_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-conversion-get-type" role="function"/>amitk_conversion_get_type ()</title>
+<indexterm><primary>amitk_conversion_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_conversion_get_type           (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-CONVERSION:CAPS" role="macro"/>AMITK_TYPE_CONVERSION</title>
+<indexterm><primary>AMITK_TYPE_CONVERSION</primary></indexterm><programlisting>#define AMITK_TYPE_CONVERSION (amitk_conversion_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-weight-unit-get-type" role="function"/>amitk_weight_unit_get_type ()</title>
+<indexterm><primary>amitk_weight_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_weight_unit_get_type          (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-WEIGHT-UNIT:CAPS" role="macro"/>AMITK_TYPE_WEIGHT_UNIT</title>
+<indexterm><primary>AMITK_TYPE_WEIGHT_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_WEIGHT_UNIT (amitk_weight_unit_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-dose-unit-get-type" role="function"/>amitk_dose_unit_get_type ()</title>
+<indexterm><primary>amitk_dose_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_dose_unit_get_type            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-DOSE-UNIT:CAPS" role="macro"/>AMITK_TYPE_DOSE_UNIT</title>
+<indexterm><primary>AMITK_TYPE_DOSE_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_DOSE_UNIT (amitk_dose_unit_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-cylinder-unit-get-type" role="function"/>amitk_cylinder_unit_get_type ()</title>
+<indexterm><primary>amitk_cylinder_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_cylinder_unit_get_type        (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-CYLINDER-UNIT:CAPS" role="macro"/>AMITK_TYPE_CYLINDER_UNIT</title>
+<indexterm><primary>AMITK_TYPE_CYLINDER_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_CYLINDER_UNIT (amitk_cylinder_unit_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-subject-orientation-get-type" role="function"/>amitk_subject_orientation_get_type ()</title>
+<indexterm><primary>amitk_subject_orientation_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_subject_orientation_get_type  (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-SUBJECT-ORIENTATION:CAPS" role="macro"/>AMITK_TYPE_SUBJECT_ORIENTATION</title>
+<indexterm><primary>AMITK_TYPE_SUBJECT_ORIENTATION</primary></indexterm><programlisting>#define AMITK_TYPE_SUBJECT_ORIENTATION (amitk_subject_orientation_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-filter-get-type" role="function"/>amitk_filter_get_type ()</title>
+<indexterm><primary>amitk_filter_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_filter_get_type               (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-FILTER:CAPS" role="macro"/>AMITK_TYPE_FILTER</title>
+<indexterm><primary>AMITK_TYPE_FILTER</primary></indexterm><programlisting>#define AMITK_TYPE_FILTER (amitk_filter_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-object-type-get-type" role="function"/>amitk_object_type_get_type ()</title>
+<indexterm><primary>amitk_object_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_object_type_get_type          (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-OBJECT-TYPE:CAPS" role="macro"/>AMITK_TYPE_OBJECT_TYPE</title>
+<indexterm><primary>AMITK_TYPE_OBJECT_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_OBJECT_TYPE (amitk_object_type_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-selection-get-type" role="function"/>amitk_selection_get_type ()</title>
+<indexterm><primary>amitk_selection_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_selection_get_type            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-SELECTION:CAPS" role="macro"/>AMITK_TYPE_SELECTION</title>
+<indexterm><primary>AMITK_TYPE_SELECTION</primary></indexterm><programlisting>#define AMITK_TYPE_SELECTION (amitk_selection_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-view-get-type" role="function"/>amitk_view_get_type ()</title>
+<indexterm><primary>amitk_view_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_view_get_type                 (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-VIEW:CAPS" role="macro"/>AMITK_TYPE_VIEW</title>
+<indexterm><primary>AMITK_TYPE_VIEW</primary></indexterm><programlisting>#define AMITK_TYPE_VIEW (amitk_view_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-axis-get-type" role="function"/>amitk_axis_get_type ()</title>
+<indexterm><primary>amitk_axis_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_axis_get_type                 (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-AXIS:CAPS" role="macro"/>AMITK_TYPE_AXIS</title>
+<indexterm><primary>AMITK_TYPE_AXIS</primary></indexterm><programlisting>#define AMITK_TYPE_AXIS (amitk_axis_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-dim-get-type" role="function"/>amitk_dim_get_type ()</title>
+<indexterm><primary>amitk_dim_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_dim_get_type                  (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-DIM:CAPS" role="macro"/>AMITK_TYPE_DIM</title>
+<indexterm><primary>AMITK_TYPE_DIM</primary></indexterm><programlisting>#define AMITK_TYPE_DIM (amitk_dim_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-length-unit-get-type" role="function"/>amitk_length_unit_get_type ()</title>
+<indexterm><primary>amitk_length_unit_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_length_unit_get_type          (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-LENGTH-UNIT:CAPS" role="macro"/>AMITK_TYPE_LENGTH_UNIT</title>
+<indexterm><primary>AMITK_TYPE_LENGTH_UNIT</primary></indexterm><programlisting>#define AMITK_TYPE_LENGTH_UNIT (amitk_length_unit_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-format-get-type" role="function"/>amitk_format_get_type ()</title>
+<indexterm><primary>amitk_format_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_format_get_type               (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-FORMAT:CAPS" role="macro"/>AMITK_TYPE_FORMAT</title>
+<indexterm><primary>AMITK_TYPE_FORMAT</primary></indexterm><programlisting>#define AMITK_TYPE_FORMAT (amitk_format_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-raw-format-get-type" role="function"/>amitk_raw_format_get_type ()</title>
+<indexterm><primary>amitk_raw_format_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_raw_format_get_type           (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-RAW-FORMAT:CAPS" role="macro"/>AMITK_TYPE_RAW_FORMAT</title>
+<indexterm><primary>AMITK_TYPE_RAW_FORMAT</primary></indexterm><programlisting>#define AMITK_TYPE_RAW_FORMAT (amitk_raw_format_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-type-get-type" role="function"/>amitk_roi_type_get_type ()</title>
+<indexterm><primary>amitk_roi_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_roi_type_get_type             (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-ROI-TYPE:CAPS" role="macro"/>AMITK_TYPE_ROI_TYPE</title>
+<indexterm><primary>AMITK_TYPE_ROI_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_ROI_TYPE (amitk_roi_type_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-roi-isocontour-range-get-type" role="function"/>amitk_roi_isocontour_range_get_type ()</title>
+<indexterm><primary>amitk_roi_isocontour_range_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_roi_isocontour_range_get_type (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-ROI-ISOCONTOUR-RANGE:CAPS" role="macro"/>AMITK_TYPE_ROI_ISOCONTOUR_RANGE</title>
+<indexterm><primary>AMITK_TYPE_ROI_ISOCONTOUR_RANGE</primary></indexterm><programlisting>#define AMITK_TYPE_ROI_ISOCONTOUR_RANGE (amitk_roi_isocontour_range_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-fuse-type-get-type" role="function"/>amitk_fuse_type_get_type ()</title>
+<indexterm><primary>amitk_fuse_type_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_fuse_type_get_type            (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-FUSE-TYPE:CAPS" role="macro"/>AMITK_TYPE_FUSE_TYPE</title>
+<indexterm><primary>AMITK_TYPE_FUSE_TYPE</primary></indexterm><programlisting>#define AMITK_TYPE_FUSE_TYPE (amitk_fuse_type_get_type())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-threshold-scale-get-type" role="function"/>amitk_threshold_scale_get_type ()</title>
+<indexterm><primary>amitk_threshold_scale_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_scale_get_type      (void);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="AMITK-TYPE-THRESHOLD-SCALE:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_SCALE</title>
 <indexterm><primary>AMITK_TYPE_THRESHOLD_SCALE</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_SCALE (amitk_threshold_scale_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-threshold-arrow-get-type"/>amitk_threshold_arrow_get_type ()</title>
-<indexterm><primary>amitk_threshold_arrow_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_threshold_arrow_get_type  (void);</programlisting>
+<title><anchor id="amitk-threshold-arrow-get-type" role="function"/>amitk_threshold_arrow_get_type ()</title>
+<indexterm><primary>amitk_threshold_arrow_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_arrow_get_type      (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLD-ARROW-CAPS"/>AMITK_TYPE_THRESHOLD_ARROW</title>
+<title><anchor id="AMITK-TYPE-THRESHOLD-ARROW:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_ARROW</title>
 <indexterm><primary>AMITK_TYPE_THRESHOLD_ARROW</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_ARROW (amitk_threshold_arrow_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-threshold-entry-get-type"/>amitk_threshold_entry_get_type ()</title>
-<indexterm><primary>amitk_threshold_entry_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_threshold_entry_get_type  (void);</programlisting>
+<title><anchor id="amitk-threshold-entry-get-type" role="function"/>amitk_threshold_entry_get_type ()</title>
+<indexterm><primary>amitk_threshold_entry_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_entry_get_type      (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLD-ENTRY-CAPS"/>AMITK_TYPE_THRESHOLD_ENTRY</title>
+<title><anchor id="AMITK-TYPE-THRESHOLD-ENTRY:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_ENTRY</title>
 <indexterm><primary>AMITK_TYPE_THRESHOLD_ENTRY</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_ENTRY (amitk_threshold_entry_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-threshold-line-get-type"/>amitk_threshold_line_get_type ()</title>
-<indexterm><primary>amitk_threshold_line_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_threshold_line_get_type   (void);</programlisting>
+<title><anchor id="amitk-threshold-line-get-type" role="function"/>amitk_threshold_line_get_type ()</title>
+<indexterm><primary>amitk_threshold_line_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_line_get_type       (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLD-LINE-CAPS"/>AMITK_TYPE_THRESHOLD_LINE</title>
+<title><anchor id="AMITK-TYPE-THRESHOLD-LINE:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_LINE</title>
 <indexterm><primary>AMITK_TYPE_THRESHOLD_LINE</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_LINE (amitk_threshold_line_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-threshold-layout-get-type"/>amitk_threshold_layout_get_type ()</title>
-<indexterm><primary>amitk_threshold_layout_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_threshold_layout_get_type (void);</programlisting>
+<title><anchor id="amitk-threshold-layout-get-type" role="function"/>amitk_threshold_layout_get_type ()</title>
+<indexterm><primary>amitk_threshold_layout_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_threshold_layout_get_type     (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-THRESHOLD-LAYOUT-CAPS"/>AMITK_TYPE_THRESHOLD_LAYOUT</title>
+<title><anchor id="AMITK-TYPE-THRESHOLD-LAYOUT:CAPS" role="macro"/>AMITK_TYPE_THRESHOLD_LAYOUT</title>
 <indexterm><primary>AMITK_TYPE_THRESHOLD_LAYOUT</primary></indexterm><programlisting>#define AMITK_TYPE_THRESHOLD_LAYOUT (amitk_threshold_layout_get_type())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-tree-view-mode-get-type"/>amitk_tree_view_mode_get_type ()</title>
-<indexterm><primary>amitk_tree_view_mode_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>       amitk_tree_view_mode_get_type   (void);</programlisting>
+<title><anchor id="amitk-tree-view-mode-get-type" role="function"/>amitk_tree_view_mode_get_type ()</title>
+<indexterm><primary>amitk_tree_view_mode_get_type</primary></indexterm><programlisting><link linkend="GType">GType</link>               amitk_tree_view_mode_get_type       (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-TREE-VIEW-MODE-CAPS"/>AMITK_TYPE_TREE_VIEW_MODE</title>
+<title><anchor id="AMITK-TYPE-TREE-VIEW-MODE:CAPS" role="macro"/>AMITK_TYPE_TREE_VIEW_MODE</title>
 <indexterm><primary>AMITK_TYPE_TREE_VIEW_MODE</primary></indexterm><programlisting>#define AMITK_TYPE_TREE_VIEW_MODE (amitk_tree_view_mode_get_type())
 </programlisting>
 <para>

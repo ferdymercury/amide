@@ -16,6 +16,9 @@ AmitkLineProfile
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_LINE_PROFILE_VIEW ##### -->
 <para>
 
@@ -55,6 +58,19 @@ AmitkLineProfile
 
 @linep: 
 
+
+<!-- ##### STRUCT AmitkLineProfile ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkLineProfile::line-profile-changed ##### -->
+<para>
+
+</para>
+
+@amitklineprofile: the object which received the signal.
 
 <!-- ##### STRUCT AmitkLineProfileDataElement ##### -->
 <para>

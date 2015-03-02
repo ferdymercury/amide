@@ -1,32 +1,37 @@
 <refentry id="amitk-amitk-canvas-object">
 <refmeta>
-<refentrytitle>amitk_canvas_object</refentrytitle>
+<refentrytitle role="top_of_page">amitk_canvas_object</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_canvas_object</refname><refpurpose></refpurpose>
+<refname>amitk_canvas_object</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-<link linkend="GnomeCanvasItem">GnomeCanvasItem</link>* <link linkend="amitk-canvas-object-draw">amitk_canvas_object_draw</link>   (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
-                                             <link linkend="AmitkVolume">AmitkVolume</link> *canvas_volume,
-                                             <link linkend="AmitkObject">AmitkObject</link> *object,
-                                             <link linkend="GnomeCanvasItem">GnomeCanvasItem</link> *item,
-                                             <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
-                                             <link linkend="gint">gint</link> width,
-                                             <link linkend="gint">gint</link> height,
-                                             <link linkend="gdouble">gdouble</link> x_offset,
-                                             <link linkend="gdouble">gdouble</link> y_offset,
-                                             <link linkend="rgba-t">rgba_t</link> roi_color,
-                                             <link linkend="gint">gint</link> roi_width,
-                                             <link linkend="GdkLineStyle">GdkLineStyle</link> line_style);
+<link linkend="GnomeCanvasItem">GnomeCanvasItem</link>*    <link linkend="amitk-canvas-object-draw">amitk_canvas_object_draw</link>            (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
+                                                         <link linkend="AmitkVolume">AmitkVolume</link> *canvas_volume,
+                                                         <link linkend="AmitkObject">AmitkObject</link> *object,
+                                                         <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
+                                                         <link linkend="GnomeCanvasItem">GnomeCanvasItem</link> *item,
+                                                         <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                                         <link linkend="gint">gint</link> width,
+                                                         <link linkend="gint">gint</link> height,
+                                                         <link linkend="gdouble">gdouble</link> x_offset,
+                                                         <link linkend="gdouble">gdouble</link> y_offset,
+                                                         <link linkend="rgba-t">rgba_t</link> roi_color,
+                                                         <link linkend="gint">gint</link> roi_width,
+                                                         <link linkend="GdkLineStyle">GdkLineStyle</link> line_style,
+                                                         <link linkend="gboolean">gboolean</link> fill_roi);
 </synopsis>
 </refsynopsisdiv>
 
@@ -38,29 +43,31 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="amitk-canvas-object-draw"/>amitk_canvas_object_draw ()</title>
-<indexterm><primary>amitk_canvas_object_draw</primary></indexterm><programlisting><link linkend="GnomeCanvasItem">GnomeCanvasItem</link>* amitk_canvas_object_draw   (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
-                                             <link linkend="AmitkVolume">AmitkVolume</link> *canvas_volume,
-                                             <link linkend="AmitkObject">AmitkObject</link> *object,
-                                             <link linkend="GnomeCanvasItem">GnomeCanvasItem</link> *item,
-                                             <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
-                                             <link linkend="gint">gint</link> width,
-                                             <link linkend="gint">gint</link> height,
-                                             <link linkend="gdouble">gdouble</link> x_offset,
-                                             <link linkend="gdouble">gdouble</link> y_offset,
-                                             <link linkend="rgba-t">rgba_t</link> roi_color,
-                                             <link linkend="gint">gint</link> roi_width,
-                                             <link linkend="GdkLineStyle">GdkLineStyle</link> line_style);</programlisting>
+<title><anchor id="amitk-canvas-object-draw" role="function"/>amitk_canvas_object_draw ()</title>
+<indexterm><primary>amitk_canvas_object_draw</primary></indexterm><programlisting><link linkend="GnomeCanvasItem">GnomeCanvasItem</link>*    amitk_canvas_object_draw            (<link linkend="GnomeCanvas">GnomeCanvas</link> *canvas,
+                                                         <link linkend="AmitkVolume">AmitkVolume</link> *canvas_volume,
+                                                         <link linkend="AmitkObject">AmitkObject</link> *object,
+                                                         <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
+                                                         <link linkend="GnomeCanvasItem">GnomeCanvasItem</link> *item,
+                                                         <link linkend="amide-real-t">amide_real_t</link> pixel_dim,
+                                                         <link linkend="gint">gint</link> width,
+                                                         <link linkend="gint">gint</link> height,
+                                                         <link linkend="gdouble">gdouble</link> x_offset,
+                                                         <link linkend="gdouble">gdouble</link> y_offset,
+                                                         <link linkend="rgba-t">rgba_t</link> roi_color,
+                                                         <link linkend="gint">gint</link> roi_width,
+                                                         <link linkend="GdkLineStyle">GdkLineStyle</link> line_style,
+                                                         <link linkend="gboolean">gboolean</link> fill_roi);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -71,6 +78,9 @@
 <listitem><simpara>
 </simpara></listitem></varlistentry>
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>view_mode</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
 <varlistentry><term><parameter>item</parameter>&nbsp;:</term>
@@ -100,7 +110,10 @@
 <varlistentry><term><parameter>line_style</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><parameter>fill_roi</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

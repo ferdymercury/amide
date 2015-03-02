@@ -24,19 +24,19 @@
 */
 
 #include "amide_config.h"
-#include <libgnomeui/libgnomeui.h>
 #include <string.h>
 #include "image.h"
 #include "ui_common.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
-#include "ui_study_menus.h"
 #include "ui_gate_dialog.h"
 #include "ui_time_dialog.h"
 #include "amitk_tree_view.h"
 #include "amitk_canvas.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
+#include "amitk_common.h"
+#include "libmdc_interface.h"
 
 
 #define HELP_INFO_LINE_HEIGHT 13
@@ -152,6 +152,7 @@ static void object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpoin
 static void object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer ui_study);
 static void add_object(ui_study_t * ui_study, AmitkObject * object);
 static void remove_object(ui_study_t * ui_study, AmitkObject * object);
+static void menus_toolbar_create(ui_study_t * ui_study);
 
 
 static void object_selection_changed_cb(AmitkObject * object, gpointer data) {
@@ -225,7 +226,7 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     ui_study_update_fov(ui_study);
     ui_study_update_canvas_target(ui_study);
     ui_study_update_title(ui_study);
-    ui_study_update_time_button(ui_study->study, ui_study->time_button);
+    ui_study_update_time_button(ui_study);
     ui_study_update_layout(ui_study);
     ui_study_update_canvas_visible_buttons(ui_study);
     ui_study_update_fuse_type(ui_study);
@@ -320,6 +321,438 @@ static void remove_object(ui_study_t * ui_study, AmitkObject * object) {
 }
 
 
+
+
+
+
+static const GtkActionEntry normal_items[] = {
+  /* Toplevel */
+  { "FileMenu", NULL, N_("_File") },
+  { "EditMenu", NULL, N_("_Edit") },
+  { "ViewMenu", NULL, N_("_View") },
+  { "ToolsMenu", NULL, N_("_Tools") },
+  { "HelpMenu", NULL, N_("_Help") },
+
+  /* submenus */
+  { "ImportSpecificMenu", NULL, N_("Import File (_specify)")},
+  //N_("Import an image data file into this study, specifying the import type"), 
+  { "ExportView", NULL, N_("_Export View")},
+  //N_("Export one of the views to a picture file")
+  { "AddRoi", NULL, N_("Add _ROI")},
+  //N_("Add a new ROI"),
+#if AMIDE_LIBFAME_SUPPORT
+  { "FlyThrough",NULL,N_("Generate _Fly Through")},
+  //N_("generate an mpeg fly through of the data sets")
+#endif
+  
+  /* FileMenu */
+  { "NewStudy", GTK_STOCK_NEW, N_("_New Study"), NULL, N_("Create a new study viewer window"), G_CALLBACK(ui_study_cb_new_study)},
+  { "OpenStudy", GTK_STOCK_OPEN, N_("_Open Study"), NULL, N_("Open a previously saved study in a new window"), G_CALLBACK(ui_study_cb_open_study)},
+  { "SaveStudyAs", GTK_STOCK_SAVE_AS, N_("Save Study As"), NULL, N_("Save current study"), G_CALLBACK(ui_study_cb_save_as)},
+  { "ImportGuess", NULL, N_("Import File (guess)"), NULL, N_("Import an image data file into this study, guessing at the file type"),G_CALLBACK(ui_study_cb_import)},
+  { "ImportObject", NULL, N_("Import _Object from Study"),NULL, N_("Import an object, such as an ROI, from a preexisting .xif file"),G_CALLBACK(ui_study_cb_import_object)},
+  { "ExportDataSet",NULL, N_("Export _Data Set"),NULL,N_("Export data set(s) to medical image formats"),G_CALLBACK(ui_study_cb_export_data_set)},
+  { "RecoverStudy",NULL,N_("_Recover Study"),NULL,N_("Try to recover a corrupted XIF flat file"),G_CALLBACK(ui_study_cb_recover_study)},
+  { "Close", GTK_STOCK_CLOSE, NULL, "<control>W", N_("Close the current study"), G_CALLBACK (ui_study_cb_close)},
+  { "Quit", GTK_STOCK_QUIT, NULL, "<control>Q", N_("Quit AMIDE"), G_CALLBACK (ui_study_cb_quit)},
+  
+  /* ExportView Submenu */
+  { "ExportViewTransverse", NULL, N_("_Transverse"),NULL,N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),G_CALLBACK(ui_study_cb_export_view)},
+  { "ExportViewCoronal",NULL, N_("_Coronal"),NULL,N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),G_CALLBACK(ui_study_cb_export_view)},
+  { "ExportViewSagittal",NULL, N_("_Sagittal"),NULL,N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),G_CALLBACK(ui_study_cb_export_view)},
+
+  /* EditMenu */
+  { "AddFiducial", NULL, N_("Add _Fiducial Mark"),NULL,N_("Add a new fiducial mark to the active data set"),G_CALLBACK(ui_study_cb_add_fiducial_mark)},
+  { "Preferences", GTK_STOCK_PREFERENCES,NULL, NULL,NULL,G_CALLBACK(ui_study_cb_preferences)},
+
+  /* ViewMenu */
+  { "ViewSeries", NULL, N_("_Series"),NULL,N_("Look at a series of images"), G_CALLBACK(ui_study_cb_series)},
+#if AMIDE_LIBVOLPACK_SUPPORT
+  { "ViewRendering",NULL,N_("_Volume Rendering"),NULL,N_("perform a volume rendering on the currently selected objects"),G_CALLBACK(ui_study_cb_render)},
+#endif
+
+  /* ToolsMenu */
+  { "AlignmentWizard",NULL,N_("_Alignment Wizard"),NULL,N_("guides you throw the processing of alignment"),G_CALLBACK(ui_study_cb_alignment_selected)},
+  { "CropWizard",NULL,N_("_Crop Active Data Set"),NULL,N_("allows you to crop the active data set"),G_CALLBACK(ui_study_cb_crop_selected)},
+  { "FactorAnalysisWizard", NULL,N_("_Factor Analysis"),NULL,N_("allows you to do factor analysis of dynamic data on the active data set"),G_CALLBACK(ui_study_cb_fads_selected)},
+  { "FilterWizard",NULL,N_("_Filter Active Data Set"),NULL,N_("allows you to filter the active data set"),G_CALLBACK(ui_study_cb_filter_selected)},
+  { "LineProfile",NULL,N_("Generate Line _Profile"),NULL,N_("allows generating a line profile between two fiducial marks"),G_CALLBACK(ui_study_cb_profile_selected)},
+  { "MathWizard",NULL,N_("Perform _Math on Data Sets"),NULL,N_("allows doing simple math operations between data sets"),G_CALLBACK(ui_study_cb_data_set_math_selected)},
+  { "RoiStats",NULL,N_("Calculate _ROI Statistics"),NULL,N_("caculate ROI statistics"),G_CALLBACK(ui_study_cb_roi_statistics)},
+
+  /* Flythrough Submenu */
+#if AMIDE_LIBFAME_SUPPORT
+  { "FlyThroughTransverse",NULL,N_("_Transverse"),NULL,N_("Generate a fly through using transaxial slices"),G_CALLBACK(ui_study_cb_fly_through)},
+  { "FlyThroughCoronal",NULL,N_("_Coronal"),NULL,N_("Generate a fly through using coronal slices"),G_CALLBACK(ui_study_cb_fly_through)},
+  { "FlyThroughSagittal",NULL,N_("_Sagittal"),NULL,N_("Generate a fly through using sagittal slices"),G_CALLBACK(ui_study_cb_fly_through)},
+#endif
+
+  /* Toolbar items */
+  { "Thresholding", "amide_icon_thresholding", N_("_Threshold"),NULL,N_("Set the thresholds and colormaps for the active data set"), G_CALLBACK(ui_study_cb_thresholding)},
+};
+
+
+static const GtkRadioActionEntry interpolation_radio_entries[AMITK_INTERPOLATION_NUM] = {
+  { "InterpolationNearestNeighbor", "amide_icon_interpolation_nearest_neighbor", N_("Near."), NULL,  N_("interpolate using nearest neighbor (fast)"),AMITK_INTERPOLATION_NEAREST_NEIGHBOR},
+  { "InterpolationTrilinear", "amide_icon_interpolation_trilinear", N_("Tri."), NULL, N_("interpolate using trilinear interpolation (slow)"), AMITK_INTERPOLATION_TRILINEAR},
+};
+ 
+static const GtkRadioActionEntry fuse_type_radio_entries[AMITK_FUSE_TYPE_NUM] = {
+  { "FuseTypeBlend", "amide_icon_fuse_type_blend", N_("Blend"), NULL,  N_("blend all data sets"), AMITK_FUSE_TYPE_BLEND },
+  { "FuseTypeOverlay", "amide_icon_fuse_type_overlay", N_("Overlay"), NULL, N_("overlay active data set on blended data sets"),AMITK_FUSE_TYPE_OVERLAY },
+};
+
+static const GtkRadioActionEntry view_mode_radio_entries[AMITK_VIEW_MODE_NUM] = {
+  { "CanvasViewModeSingle", "amide_icon_view_mode_single", N_("Single"), NULL, N_("All objects are shown in a single view"),AMITK_VIEW_MODE_SINGLE },
+  { "CanvasViewModeLinked2Way", "amide_icon_view_mode_linked_2way", N_("2-way"), NULL,N_("Objects are shown between 2 linked views"), AMITK_VIEW_MODE_LINKED_2WAY },
+  { "CanvasViewModeLinked3Way", "amide_icon_view_mode_linked_3way", N_("3-way"), NULL,N_("Objects are shown between 3 linked views"), AMITK_VIEW_MODE_LINKED_3WAY },
+};
+
+ 
+/* Toggle items */
+static const GtkToggleActionEntry toggle_entries[] = {
+  { "CanvasTarget", "amide_icon_canvas_target", N_("Target"), NULL, N_("Leave crosshairs on views"), G_CALLBACK(ui_study_cb_canvas_target), FALSE},
+  { "CanvasViewTransverse", "amide_icon_view_transverse", N_("Transverse"), NULL, N_("Enable transverse view"), G_CALLBACK(ui_study_cb_canvas_visible), FALSE},
+  { "CanvasViewCoronal", "amide_icon_view_coronal", N_("Coronal"), NULL, N_("Enable coronal view"), G_CALLBACK(ui_study_cb_canvas_visible), FALSE},
+  { "CanvasViewSagittal", "amide_icon_view_sagittal", N_("Sagittal"), NULL, N_("Enable sagittal view"), G_CALLBACK(ui_study_cb_canvas_visible), FALSE},
+};
+
+static const char *ui_description =
+"<ui>"
+"  <menubar name='MainMenu'>"
+"    <menu action='FileMenu'>"
+"      <menuitem action='NewStudy'/>"
+"      <menuitem action='OpenStudy'/>"
+"      <menuitem action='SaveStudyAs'/>"
+"      <separator/>"
+"      <menuitem action='ImportGuess'/>"
+"      <menu action='ImportSpecificMenu'>"
+  /* filled in the function */
+"      </menu>"
+"      <menuitem action='ImportObject'/>"
+"      <separator/>"
+"      <menu action='ExportView'>"
+"               <menuitem action='ExportViewTransverse'/>"
+"               <menuitem action='ExportViewCoronal'/>"
+"               <menuitem action='ExportViewSagittal'/>"
+"      </menu>"
+"      <menuitem action='ExportDataSet'/>"
+"      <separator/>"
+"      <menuitem action='RecoverStudy'/>"
+"      <separator/>"
+"      <menuitem action='Close'/>"
+"      <menuitem action='Quit'/>"
+"    </menu>"
+"    <menu action='EditMenu'>"
+"      <menu action='AddRoi'>"
+  /* filled in the function */
+"      </menu>"
+"      <menuitem action='AddFiducial'/>"
+"      <separator/>"
+"      <menuitem action='Preferences'/>"
+"    </menu>"
+"    <menu action='ViewMenu'>"
+"       <menuitem action='ViewSeries'/>"
+#if AMIDE_LIBVOLPACK_SUPPORT
+"       <menuitem action='ViewRendering'/>"
+#endif
+"    </menu>"
+"    <menu action='ToolsMenu'>"
+"       <menuitem action='AlignmentWizard'/>"
+"       <menuitem action='CropWizard'/>"
+"       <menuitem action='FactorAnalysisWizard'/>"
+"       <menuitem action='FilterWizard'/>"
+#if AMIDE_LIBFAME_SUPPORT
+"       <menu action='FlyThrough'>"
+"          <menuitem action='FlyThroughTransverse'/>"
+"          <menuitem action='FlyThroughCoronal'/>"
+"          <menuitem action='FlyThroughSagittal'/>"
+"       </menu>"
+#endif
+"       <menuitem action='LineProfile'/>"
+"       <menuitem action='MathWizard'/>"
+"       <menuitem action='RoiStats'/>"
+"    </menu>"
+HELP_MENU_UI_DESCRIPTION
+"  </menubar>"
+"  <toolbar name='ToolBar'>"
+"    <toolitem action='InterpolationNearestNeighbor'/>"
+"    <toolitem action='InterpolationTrilinear'/>"
+"    <separator/>"
+"    <toolitem action='FuseTypeBlend'/>"
+"    <toolitem action='FuseTypeOverlay'/>"
+"    <separator/>"
+"    <toolitem action='CanvasTarget'/>"
+"    <separator/>"
+"    <toolitem action='CanvasViewTransverse'/>"
+"    <toolitem action='CanvasViewCoronal'/>"
+"    <toolitem action='CanvasViewSagittal'/>"
+"    <separator/>"
+"    <toolitem action='CanvasViewModeSingle'/>"
+"    <toolitem action='CanvasViewModeLinked2Way'/>"
+"    <toolitem action='CanvasViewModeLinked3Way'/>"
+"    <separator/>"
+"    <toolitem action='Thresholding'/>"
+  /*"    <separator/>"  */
+  /* "    <placeholder name='Zoom' />" */
+"  </toolbar>"
+"</ui>";
+
+
+
+/* function to setup the menus for the study ui */
+static void menus_toolbar_create(ui_study_t * ui_study) {
+
+  GtkWidget *menubar;
+  GtkWidget *toolbar;
+  GtkActionGroup *action_group;
+  GtkUIManager *ui_manager;
+  GtkAccelGroup *accel_group;
+  GError *error;
+  GtkWidget * label;
+  AmitkImportMethod i_import_method;
+  GtkAction * action;
+  GtkWidget * menu;
+  GtkWidget * submenu;
+  GtkWidget * menu_item;
+#ifdef AMIDE_LIBMDC_SUPPORT
+  libmdc_import_t i_libmdc_import;
+#endif
+  AmitkRoiType i_roi_type;
+  GtkObject * adjustment;
+  
+  g_assert(ui_study!=NULL); /* sanity check */
+
+  /* create an action group with all the menu actions */
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions(action_group, normal_items, G_N_ELEMENTS(normal_items),ui_study);
+  gtk_action_group_add_actions(action_group, ui_common_help_menu_items, G_N_ELEMENTS(ui_common_help_menu_items),ui_study);
+  gtk_action_group_add_toggle_actions(action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), ui_study);
+  gtk_action_group_add_radio_actions(action_group, interpolation_radio_entries, G_N_ELEMENTS (interpolation_radio_entries), 
+				     0, G_CALLBACK(ui_study_cb_interpolation), ui_study);
+  gtk_action_group_add_radio_actions(action_group, fuse_type_radio_entries, G_N_ELEMENTS (fuse_type_radio_entries), 
+				     0, G_CALLBACK(ui_study_cb_fuse_type), ui_study);
+  gtk_action_group_add_radio_actions(action_group, view_mode_radio_entries, G_N_ELEMENTS (view_mode_radio_entries), 
+				     0, G_CALLBACK(ui_study_cb_view_mode), ui_study);
+
+  /* create the ui manager, and add the actions and accel's */
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (ui_study->window, accel_group);
+
+  /* create the actual menu/toolbar ui */
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, &error)) {
+    g_warning ("%s: building menus failed in %s: %s", PACKAGE, __FILE__, error->message);
+    g_error_free (error);
+    return;
+  }
+
+
+  /* set additional info so we can tell the menus apart */
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "ExportViewTransverse")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_TRANSVERSE));
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "ExportViewCoronal")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_CORONAL));
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "ExportViewSagittal")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_SAGITTAL));
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughTransverse")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_TRANSVERSE));
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughCoronal")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_CORONAL));
+  g_object_set_data(G_OBJECT(gtk_action_group_get_action (action_group, "FlyThroughSagittal")),
+		    "view", GINT_TO_POINTER(AMITK_VIEW_SAGITTAL));
+
+  /* build the import menu */
+  submenu = gtk_menu_new();
+  for (i_import_method = AMITK_IMPORT_METHOD_RAW; i_import_method < AMITK_IMPORT_METHOD_NUM; i_import_method++) {
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_import_method == AMITK_IMPORT_METHOD_LIBMDC) {
+      for (i_libmdc_import = 0; i_libmdc_import < LIBMDC_NUM_IMPORT_METHODS; i_libmdc_import++) {
+  	if (libmdc_supports(libmdc_import_to_format[i_libmdc_import])) {
+	  menu_item = gtk_menu_item_new_with_mnemonic(libmdc_import_menu_names[i_libmdc_import]);
+	  /* if tooltip support existed - libmdc_import_menu_explanations[i_libmdc_import] */
+	  gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menu_item);
+  	  g_object_set_data(G_OBJECT(menu_item), "method", GINT_TO_POINTER(i_import_method));
+  	  g_object_set_data(G_OBJECT(menu_item), "submethod", GINT_TO_POINTER(libmdc_import_to_format[i_libmdc_import]));
+	  g_signal_connect(G_OBJECT(menu_item), "activate",  G_CALLBACK(ui_study_cb_import), ui_study);
+	  gtk_widget_show(menu_item);
+	}
+      }
+    } else 
+#endif
+      {
+	menu_item = gtk_menu_item_new_with_mnemonic(amitk_import_menu_names[i_import_method]);
+	/* if tooltip support existed - amitk_import_menu_explanations[i_import_method] */
+	gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menu_item);
+  	g_object_set_data(G_OBJECT(menu_item), "method", GINT_TO_POINTER(i_import_method));
+  	g_object_set_data(G_OBJECT(menu_item), "submethod", GINT_TO_POINTER(0));
+	g_signal_connect(G_OBJECT(menu_item), "activate",  G_CALLBACK(ui_study_cb_import), ui_study);
+	gtk_widget_show(menu_item);
+      }
+  }
+  menu = gtk_ui_manager_get_widget(ui_manager, "ui/MainMenu/FileMenu/ImportSpecificMenu");
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu), submenu);
+  gtk_widget_show(submenu);
+  gtk_widget_show(menu);
+
+  /* build the add roi menu */
+  submenu = gtk_menu_new();
+  for (i_roi_type=0; i_roi_type<AMITK_ROI_TYPE_NUM; i_roi_type++) {
+    menu_item = gtk_menu_item_new_with_mnemonic(amitk_roi_menu_names[i_roi_type]);
+    /* if tooltip support existed - amitk_roi_menu_explanation[i_roi_type] */
+    gtk_menu_shell_append(GTK_MENU_SHELL(submenu), menu_item);
+    g_object_set_data(G_OBJECT(menu_item), "roi_type", GINT_TO_POINTER(i_roi_type)); 
+    g_signal_connect(G_OBJECT(menu_item), "activate",  G_CALLBACK(ui_study_cb_add_roi), ui_study);
+    gtk_widget_show(menu_item);
+  }
+  menu = gtk_ui_manager_get_widget(ui_manager, "ui/MainMenu/EditMenu/AddRoi");
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu), submenu);
+  gtk_widget_show(submenu);
+  gtk_widget_show(menu);
+
+  /* record the radio/toggle items so that we can change which one is depressed later */
+  ui_study->interpolation_action[AMITK_INTERPOLATION_NEAREST_NEIGHBOR] = 
+    gtk_action_group_get_action(action_group, "InterpolationNearestNeighbor");
+  ui_study->interpolation_action[AMITK_INTERPOLATION_TRILINEAR] = 
+    gtk_action_group_get_action(action_group, "InterpolationTrilinear");
+  g_assert(AMITK_INTERPOLATION_TRILINEAR+1 == AMITK_INTERPOLATION_NUM); /* make sure we handle all types */
+
+  ui_study->fuse_type_action[AMITK_FUSE_TYPE_BLEND] = 
+    gtk_action_group_get_action(action_group, "FuseTypeBlend");
+  ui_study->fuse_type_action[AMITK_FUSE_TYPE_OVERLAY] = 
+    gtk_action_group_get_action(action_group, "FuseTypeOverlay");
+  g_assert(AMITK_FUSE_TYPE_OVERLAY+1 == AMITK_FUSE_TYPE_NUM); /* make sure we handle all types */
+
+  ui_study->view_mode_action[AMITK_VIEW_MODE_SINGLE] = 
+    gtk_action_group_get_action(action_group, "CanvasViewModeSingle");
+  ui_study->view_mode_action[AMITK_VIEW_MODE_LINKED_2WAY] = 
+    gtk_action_group_get_action(action_group, "CanvasViewModeLinked2Way");
+  ui_study->view_mode_action[AMITK_VIEW_MODE_LINKED_3WAY] = 
+    gtk_action_group_get_action(action_group, "CanvasViewModeLinked3Way");
+  g_assert(AMITK_VIEW_MODE_LINKED_3WAY+1 == AMITK_VIEW_MODE_NUM); /* make sure we handle all types */
+
+  ui_study->canvas_target_action = 
+    gtk_action_group_get_action(action_group, "CanvasTarget");
+
+  action = gtk_action_group_get_action(action_group, "CanvasViewTransverse");
+  ui_study->canvas_visible_action[AMITK_VIEW_TRANSVERSE] = action;
+  g_object_set_data(G_OBJECT(action), "view", GINT_TO_POINTER(AMITK_VIEW_TRANSVERSE));
+    
+  action = gtk_action_group_get_action(action_group, "CanvasViewCoronal");
+  ui_study->canvas_visible_action[AMITK_VIEW_CORONAL] = action;
+  g_object_set_data(G_OBJECT(action), "view", GINT_TO_POINTER(AMITK_VIEW_CORONAL));
+    
+  action = gtk_action_group_get_action(action_group, "CanvasViewSagittal");
+  ui_study->canvas_visible_action[AMITK_VIEW_SAGITTAL] = action;
+  g_object_set_data(G_OBJECT(action), "view", GINT_TO_POINTER(AMITK_VIEW_SAGITTAL));
+
+  /* pack in the menu and toolbar */
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
+  gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), menubar, FALSE, FALSE, 0);
+
+  toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolBar");
+  gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), toolbar, FALSE, FALSE, 0);
+  gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+  gtk_toolbar_set_show_arrow(GTK_TOOLBAR(toolbar), FALSE);
+
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
+
+  /* add the zoom widget to our toolbar */
+  label = gtk_label_new(_("zoom:"));
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
+
+  adjustment = gtk_adjustment_new(1.0,
+				  AMIDE_LIMIT_ZOOM_LOWER,
+				  AMIDE_LIMIT_ZOOM_UPPER,
+				  AMIDE_LIMIT_ZOOM_STEP, 
+				  AMIDE_LIMIT_ZOOM_PAGE,
+				  AMIDE_LIMIT_ZOOM_PAGE);
+  ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 3);
+  gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->zoom_spin), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(ui_study->zoom_spin), "value_changed",G_CALLBACK(ui_study_cb_zoom), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->zoom_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  ui_common_toolbar_append_widget(toolbar,ui_study->zoom_spin,_("specify how much to magnify the images"));
+
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
+
+  /* add the field of view widget to our toolbar */
+  label = gtk_label_new(_("fov (%):"));
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
+
+  adjustment = gtk_adjustment_new(1.0,
+				  AMIDE_LIMIT_FOV_LOWER,
+				  AMIDE_LIMIT_FOV_UPPER,
+				  AMIDE_LIMIT_FOV_STEP, 
+				  AMIDE_LIMIT_FOV_PAGE,
+				  AMIDE_LIMIT_FOV_PAGE);
+  ui_study->fov_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 0);
+  gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->fov_spin),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->fov_spin), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->fov_spin), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(ui_study->fov_spin), "value_changed", G_CALLBACK(ui_study_cb_fov), ui_study);
+  ui_common_toolbar_append_widget(toolbar,ui_study->fov_spin,_("specify how much of the image field of view to display"));
+
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
+
+  /* add the slice thickness selector */
+  label = gtk_label_new(_("thickness (mm):"));
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
+
+  adjustment = gtk_adjustment_new(1.0,0.2,5.0,0.2,0.2, 0.2);
+  ui_study->thickness_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 3);
+  gtk_widget_set_size_request(ui_study->zoom_spin, 50,-1);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->thickness_spin),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
+  gtk_widget_set_size_request (ui_study->thickness_spin, 60, -1);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->thickness_spin), GTK_UPDATE_IF_VALID);
+  g_signal_connect(G_OBJECT(ui_study->thickness_spin), "value_changed", G_CALLBACK(ui_study_cb_thickness), ui_study);
+  g_signal_connect(G_OBJECT(ui_study->thickness_spin), "output", G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  ui_common_toolbar_append_widget(toolbar,ui_study->thickness_spin,_("specify how thick to make the slices (mm)"));
+
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
+
+  /* gate */
+  /* note, can't use gtk_tool_button, as no way to set the relief in gtk 2.10, and the default
+     is no relief so you can't tell that it's a button.... - */
+  label = gtk_label_new(_("gate:"));
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
+
+  ui_study->gate_button = gtk_button_new_with_label("?");
+  g_signal_connect(G_OBJECT(ui_study->gate_button), "clicked", G_CALLBACK(ui_study_cb_gate), ui_study);
+  ui_common_toolbar_append_widget(toolbar, ui_study->gate_button,
+				  _("the gate range over which to view the data"));
+
+
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
+
+  /* frame selector */
+  label = gtk_label_new(_("time:"));
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
+
+  ui_study->time_button = gtk_button_new_with_label("?"); 
+  g_signal_connect(G_OBJECT(ui_study->time_button), "clicked", G_CALLBACK(ui_study_cb_time), ui_study);
+  ui_common_toolbar_append_widget(toolbar, ui_study->time_button,
+				  _("the time range over which to view the data (s)"));
+
+  return;
+}
+
+
+
 /* destroy a ui_study data structure */
 ui_study_t * ui_study_free(ui_study_t * ui_study) {
 
@@ -339,7 +772,7 @@ ui_study_t * ui_study_free(ui_study_t * ui_study) {
 
     /* these two lines forces any remaining spin button updates, so that we
        don't call any spin button callbacks with invalid data */
-    gtk_widget_grab_focus(ui_study->app);
+    gtk_widget_grab_focus(GTK_WIDGET(ui_study->window));
     while (gtk_events_pending()) gtk_main_iteration();
 
 #ifdef AMIDE_DEBUG
@@ -506,7 +939,7 @@ void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_obje
 
   temp_string = g_strdup_printf(_("Adding fiducial mark for data set: %s\nEnter the mark's name:"),
 				AMITK_OBJECT_NAME(parent_object));
-  dialog = ui_common_entry_dialog(GTK_WINDOW(ui_study->app), temp_string, &return_str);
+  dialog = ui_common_entry_dialog(ui_study->window, temp_string, &return_str);
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   g_free(temp_string);
@@ -552,7 +985,7 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
 
   temp_string = g_strdup_printf(_("Adding ROI to: %s\nEnter ROI Name:"),
 				AMITK_OBJECT_NAME(parent_object));
-  dialog = ui_common_entry_dialog(GTK_WINDOW(ui_study->app), temp_string, &return_str);
+  dialog = ui_common_entry_dialog(ui_study->window, temp_string, &return_str);
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
   gtk_widget_destroy(dialog);
   g_free(temp_string);
@@ -588,11 +1021,11 @@ void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study) {
   AmitkView i_view;
 
   for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
-    g_signal_handlers_block_by_func(G_OBJECT(ui_study->canvas_visible_button[i_view]),
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->canvas_visible_action[i_view]),
 				    G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->canvas_visible_button[i_view]),
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(ui_study->canvas_visible_action[i_view]),
 				 AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view));
-    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->canvas_visible_button[i_view]),
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->canvas_visible_action[i_view]),
 				      G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
 
   }
@@ -613,24 +1046,22 @@ void ui_study_update_gate_button(ui_study_t * ui_study) {
   else
     temp_string = g_strdup_printf(_("N/A"));
 
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(ui_study->gate_button)->child),temp_string);
+  gtk_button_set_label(GTK_BUTTON(ui_study->gate_button),temp_string);
   g_free(temp_string);
 
   return;
 }
 
 /* function to update the text in the time dialog popup widget */
-void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {
+void ui_study_update_time_button(ui_study_t * ui_study) {
 
   gchar * temp_string;
   
-  g_return_if_fail(AMITK_IS_STUDY(study));
-
   temp_string = g_strdup_printf(_("%g-%g s"),
-				AMITK_STUDY_VIEW_START_TIME(study),
-				AMITK_STUDY_VIEW_START_TIME(study)+
-				AMITK_STUDY_VIEW_DURATION(study));
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(time_button)->child),temp_string);
+				AMITK_STUDY_VIEW_START_TIME(ui_study->study),
+				AMITK_STUDY_VIEW_START_TIME(ui_study->study)+
+				AMITK_STUDY_VIEW_DURATION(ui_study->study));
+  gtk_button_set_label(GTK_BUTTON(ui_study->time_button),temp_string);
   g_free(temp_string);
 
   return;
@@ -832,14 +1263,14 @@ void ui_study_update_fov(ui_study_t * ui_study) {
 /* updates the settings of the canvas target button */
 void ui_study_update_canvas_target(ui_study_t * ui_study) {
 
-  g_signal_handlers_block_by_func(G_OBJECT(ui_study->canvas_target_button),
-				  G_CALLBACK(ui_study_cb_target_pressed), ui_study);
+  g_signal_handlers_block_by_func(G_OBJECT(ui_study->canvas_target_action),
+				  G_CALLBACK(ui_study_cb_canvas_target), ui_study);
   
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->canvas_target_button),
+  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(ui_study->canvas_target_action),
 			       AMITK_STUDY_CANVAS_TARGET(ui_study->study));
   
-  g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->canvas_target_button),
-				    G_CALLBACK(ui_study_cb_target_pressed), ui_study);
+  g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->canvas_target_action),
+				    G_CALLBACK(ui_study_cb_canvas_target), ui_study);
 
   return;
 }
@@ -851,13 +1282,12 @@ void ui_study_update_interpolation(ui_study_t * ui_study) {
   AmitkInterpolation interpolation;
 
   
-
   if (AMITK_IS_STUDY(ui_study->active_object)) {
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
-      gtk_widget_set_sensitive(ui_study->interpolation_button[i_interpolation], FALSE);
+      gtk_action_set_sensitive(ui_study->interpolation_action[i_interpolation], FALSE);
   } else if (AMITK_IS_DATA_SET(ui_study->active_object)) {
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
-      gtk_widget_set_sensitive(ui_study->interpolation_button[i_interpolation], TRUE);
+      gtk_action_set_sensitive(ui_study->interpolation_action[i_interpolation], TRUE);
 
     interpolation = AMITK_DATA_SET_INTERPOLATION(ui_study->active_object);
 
@@ -865,16 +1295,14 @@ void ui_study_update_interpolation(ui_study_t * ui_study) {
        function to change anything on the actual canvases... 
        we'll unblock at the end of this function */
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
-      g_signal_handlers_block_by_func(G_OBJECT(ui_study->interpolation_button[i_interpolation]),
+      g_signal_handlers_block_by_func(G_OBJECT(ui_study->interpolation_action[i_interpolation]),
 				      G_CALLBACK(ui_study_cb_interpolation), ui_study);
 
-    /* need the button pressed to get the display to update correctly */
-    gtk_button_pressed(GTK_BUTTON(ui_study->interpolation_button[interpolation]));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->interpolation_button[interpolation]),
+    gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(ui_study->interpolation_action[interpolation]),
 				 TRUE);
 
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
-      g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->interpolation_button[i_interpolation]),
+      g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->interpolation_action[i_interpolation]),
 					G_CALLBACK(ui_study_cb_interpolation),  ui_study);
   }
 
@@ -886,14 +1314,15 @@ void ui_study_update_fuse_type(ui_study_t * ui_study) {
   
   g_return_if_fail(ui_study->study != NULL);
 
-  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) {
-    g_signal_handlers_block_by_func(G_OBJECT(ui_study->fuse_type_button[i_fuse_type]),
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) 
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->fuse_type_action[i_fuse_type]),
 				    G_CALLBACK(ui_study_cb_fuse_type), ui_study);
-  }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->fuse_type_button[AMITK_STUDY_FUSE_TYPE(ui_study->study)]),
+
+  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(ui_study->fuse_type_action[AMITK_STUDY_FUSE_TYPE(ui_study->study)]),
 			       TRUE);
+
   for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++)
-    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->fuse_type_button[i_fuse_type]),
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->fuse_type_action[i_fuse_type]),
 				      G_CALLBACK(ui_study_cb_fuse_type),  ui_study);
 
 }
@@ -905,14 +1334,14 @@ void ui_study_update_view_mode(ui_study_t * ui_study) {
   g_return_if_fail(ui_study->study != NULL);
 
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
-    g_signal_handlers_block_by_func(G_OBJECT(ui_study->view_mode_button[i_view_mode]),
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->view_mode_action[i_view_mode]),
 				   G_CALLBACK(ui_study_cb_view_mode), ui_study);
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->view_mode_button[AMITK_STUDY_VIEW_MODE(ui_study->study)]),
+  gtk_toggle_action_set_active(GTK_TOGGLE_ACTION(ui_study->view_mode_action[AMITK_STUDY_VIEW_MODE(ui_study->study)]),
 			       TRUE);
   
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
-    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->view_mode_button[i_view_mode]),
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->view_mode_action[i_view_mode]),
 				      G_CALLBACK(ui_study_cb_view_mode),ui_study);
 
 }
@@ -931,7 +1360,7 @@ void ui_study_update_title(ui_study_t * ui_study) {
 			    AMITK_STUDY_FILENAME(ui_study->study),
 			    ui_study->study_altered ? "*" : "");
   }
-  gtk_window_set_title(GTK_WINDOW(ui_study->app), title);
+  gtk_window_set_title(ui_study->window, title);
   g_free(title);
 
 }
@@ -1146,13 +1575,18 @@ void ui_study_update_layout(ui_study_t * ui_study) {
   return;
 }
 
-/* function to setup the widgets inside of the GnomeApp study */
+/* function to setup the widgets inside of the study ui */
 void ui_study_setup_widgets(ui_study_t * ui_study) {
 
   GtkWidget * scrolled;
   GtkWidget * left_vbox;
   GtkWidget * hbox;
   GtkWidget * handle_box;
+
+
+  /* the hbox that'll contain everything in the ui besides the menu and toolbar */
+  hbox = gtk_hbox_new(FALSE,0);
+  gtk_box_pack_start (GTK_BOX (ui_study->window_vbox), hbox, TRUE, TRUE, 0);
 
   /* make and add the left packing table */
   left_vbox = gtk_vbox_new(FALSE,0);
@@ -1162,13 +1596,11 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   gtk_handle_box_set_handle_position(GTK_HANDLE_BOX(handle_box), GTK_POS_TOP);
   gtk_container_add(GTK_CONTAINER(handle_box), left_vbox);
 
-  hbox = gtk_hbox_new(FALSE,0);
   gtk_box_pack_start(GTK_BOX(hbox), handle_box, FALSE, FALSE, X_PADDING);
-  gnome_app_set_contents(GNOME_APP(ui_study->app), hbox);
 
   /* connect the blank help signal */
-  g_object_set_data(G_OBJECT(ui_study->app), "which_help", GINT_TO_POINTER(AMITK_HELP_INFO_BLANK));
-  g_signal_connect(G_OBJECT(ui_study->app), "enter_notify_event",
+  g_object_set_data(G_OBJECT(ui_study->window), "which_help", GINT_TO_POINTER(AMITK_HELP_INFO_BLANK));
+  g_signal_connect(G_OBJECT(ui_study->window), "enter_notify_event",
 		   G_CALLBACK(ui_study_cb_update_help_info), ui_study);
 
   ui_study->tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MAIN,
@@ -1233,30 +1665,34 @@ void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study) {
 GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences) {
 
   ui_study_t * ui_study;
+  GdkPixbuf * pixbuf;
 
   g_return_val_if_fail(preferences != NULL, NULL);
 
   ui_study = ui_study_init(preferences);
 
   /* setup the study window */
-  ui_study->app=gnome_app_new(PACKAGE, NULL);
+  ui_study->window = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+  ui_study->window_vbox = gtk_vbox_new(FALSE,0);
+  gtk_container_add(GTK_CONTAINER (ui_study->window), ui_study->window_vbox);
 
-  /* disable user resizability, this allows the window to autoshrink */
-  gtk_window_set_resizable(GTK_WINDOW(ui_study->app), FALSE);
+  /* set the icon that the window manager knows about */
+  pixbuf = gtk_widget_render_icon(GTK_WIDGET(ui_study->window), "amide_icon_logo", -1, 0);
+  gtk_window_set_icon(ui_study->window, pixbuf);
+  gtk_window_set_default_icon(pixbuf); /* sets it as the default for all additional windows */
+  g_object_unref(pixbuf);
 
-  /* setup the callbacks for app */
-  g_signal_connect(G_OBJECT(ui_study->app), "realize", 
-		   G_CALLBACK(ui_common_window_realize_cb), NULL);
-  g_signal_connect(G_OBJECT(ui_study->app), "delete_event",  
+  /* disable user resizability, allows the window to autoshrink */  
+  gtk_window_set_resizable(ui_study->window, FALSE); 
+
+  /* setup the callbacks for the window */
+  g_signal_connect(G_OBJECT(ui_study->window), "delete_event",  
 		   G_CALLBACK(ui_study_cb_delete_event), ui_study);
 
-  ui_study->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_study->app));
+  ui_study->progress_dialog = amitk_progress_dialog_new(ui_study->window);
 
-  /* setup the study menu */
-  ui_study_menus_create(ui_study);
-
-  /* setup the toolbar */
-  ui_study_toolbar_create(ui_study);
+  /* setup the menu and toolbar */
+  menus_toolbar_create(ui_study);
 
   /* setup the rest of the study window */
   ui_study_setup_widgets(ui_study);
@@ -1281,9 +1717,9 @@ GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences) 
   ui_study_update_title(ui_study);
 
   /* get the study window running */
-  gtk_widget_show_all(ui_study->app);
-  amide_register_window((gpointer) ui_study->app);
+  gtk_widget_show_all(GTK_WIDGET(ui_study->window));
+  amide_register_window((gpointer) ui_study->window);
 
-  return ui_study->app;
+  return GTK_WIDGET(ui_study->window);
 }
  

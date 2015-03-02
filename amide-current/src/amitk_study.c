@@ -37,26 +37,6 @@
 #include "legacy.h"
 
 
-/* external variables */
-gchar * amitk_fuse_type_explanations[] = {
-  N_("blend all data sets"),
-  N_("overlay active data set on blended data sets")
-};
-
-gchar * view_mode_names[] = {
-  N_("single view"),
-  N_("linked view, 2 way"),
-  N_("linked view, 3 way")
-};
-
-gchar * view_mode_explanations[] = {
-  N_("All objects are shown in a single view"),
-  N_("Objects are shown between 2 linked views"),
-  N_("Objects are shown between 3 linked views"),
-};
-
-
-
 
 enum {
   FILENAME_CHANGED,
@@ -914,7 +894,7 @@ AmitkStudy * amitk_study_recover_xml(const gchar * study_filename, AmitkPreferen
   gint returned_char;
   gboolean have_start_location;
 
-  if (amide_is_xif_directory(study_filename, NULL, NULL)) {
+  if (amitk_is_xif_directory(study_filename, NULL, NULL)) {
     g_warning("Recover function only works with XIF flat files, not XIF directories");
     return NULL;
   }
@@ -1010,7 +990,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
 
 
   /* are we dealing with a xif directory */
-  if (amide_is_xif_directory(study_filename, &legacy1, &load_filename)) {
+  if (amitk_is_xif_directory(study_filename, &legacy1, &load_filename)) {
     xif_directory=TRUE;
 
     /* switch into our new directory */
@@ -1020,7 +1000,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
       return NULL;
     }
 
-  } else if (amide_is_xif_flat_file(study_filename, &location_le, &size_le)){ /* flat file */
+  } else if (amitk_is_xif_flat_file(study_filename, &location_le, &size_le)){ /* flat file */
     if ((study_file = fopen(study_filename, "rb")) == NULL) {
       g_warning(_("Couldn't open file %s\n"), study_filename);
       return NULL;
@@ -1085,7 +1065,6 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
   struct stat file_info;
   gchar * temp_string;
   DIR * directory;
-  mode_t mode = 0766;
   struct dirent * directory_entry;
   guint64 location, size;
   guint64 location_le, size_le;
@@ -1132,7 +1111,7 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
 #ifdef MKDIR_TAKES_ONE_ARG /* win32 */
       if (mkdir(study_filename) != 0) 
 #else /* unix */
-      if (mkdir(study_filename, mode) != 0) 
+      if (mkdir(study_filename, 0766) != 0) 
 #endif 
 	{
 	  g_warning(_("Couldn't create amide directory: %s"),study_filename);
@@ -1158,8 +1137,8 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
       return FALSE;
     }
     fprintf(study_file, "%s Version %s", 
-	    AMIDE_FLAT_FILE_MAGIC_STRING,
-	    AMIDE_FILE_VERSION);
+	    AMITK_FLAT_FILE_MAGIC_STRING,
+	    AMITK_FILE_VERSION);
     fseek(study_file, 64+2*sizeof(guint64), SEEK_SET);
   }
 

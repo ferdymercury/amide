@@ -1,177 +1,275 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>amitk_point</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk-AmitkObject.html" title="AmitkObject"><link rel="next" href="amitk-AmitkRawData.html" title="AmitkRawData"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkObject.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkRawData.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-amitk-point"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">amitk_point</span></h2><p>amitk_point &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>amitk_point</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="prev" href="amitk-AmitkObject.html" title="AmitkObject">
+<link rel="next" href="amitk-AmitkRawData.html" title="AmitkRawData">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-AmitkObject.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="amitk-AmitkRawData.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id360733" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id362616" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-amitk-point"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id360733"></a><span class="refentrytitle">amitk_point</span>
+</h2>
+<p>amitk_point</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-enum        <a href="amitk-amitk-point.html#AmitkView">AmitkView</a>;
-enum        <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a>;
-enum        <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a>;
-enum        <a href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a>;
-#define     <a href="amitk-amitk-point.html#AMITK-TYPE-POINT-CAPS">AMITK_TYPE_POINT</a>
-#define     <a href="amitk-amitk-point.html#AMITK-TYPE-VOXEL-CAPS">AMITK_TYPE_VOXEL</a>
-#define     <a href="amitk-amitk-point.html#AMITK-TYPE-PIXEL-CAPS">AMITK_TYPE_PIXEL</a>
-#define     <a href="amitk-amitk-point.html#AMITK-TYPE-CANVAS-POINT-CAPS">AMITK_TYPE_CANVAS_POINT</a>
-#define     <a href="amitk-amitk-point.html#AMITK-TYPE-AXES-CAPS">AMITK_TYPE_AXES</a>
-struct      <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>;
-struct      <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>;
-struct      <a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>;
-struct      <a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>;
-GType       <a href="amitk-amitk-point.html#amitk-point-get-type">amitk_point_get_type</a>            (void);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>* <a href="amitk-amitk-point.html#amitk-point-copy">amitk_point_copy</a>                (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);
-void        <a href="amitk-amitk-point.html#amitk-point-free">amitk_point_free</a>                (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-amitk-point.html#amitk-point-read-xml">amitk_point_read_xml</a>            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);
-void        <a href="amitk-amitk-point.html#amitk-point-write-xml">amitk_point_write_xml</a>           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);
-GType       <a href="amitk-amitk-point.html#amitk-voxel-get-type">amitk_voxel_get_type</a>            (void);
-<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>* <a href="amitk-amitk-point.html#amitk-voxel-copy">amitk_voxel_copy</a>                (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);
-void        <a href="amitk-amitk-point.html#amitk-voxel-free">amitk_voxel_free</a>                (<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);
-<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>  <a href="amitk-amitk-point.html#amitk-voxel-read-xml">amitk_voxel_read_xml</a>            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);
-void        <a href="amitk-amitk-point.html#amitk-voxel-write-xml">amitk_voxel_write_xml</a>           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);
-GType       <a href="amitk-amitk-point.html#amitk-pixel-get-type">amitk_pixel_get_type</a>            (void);
-<a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>* <a href="amitk-amitk-point.html#amitk-pixel-copy">amitk_pixel_copy</a>                (const <a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);
-void        <a href="amitk-amitk-point.html#amitk-pixel-free">amitk_pixel_free</a>                (<a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);
-GType       <a href="amitk-amitk-point.html#amitk-canvas-point-get-type">amitk_canvas_point_get_type</a>     (void);
-<a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>* <a href="amitk-amitk-point.html#amitk-canvas-point-copy">amitk_canvas_point_copy</a>   (const <a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);
-void        <a href="amitk-amitk-point.html#amitk-canvas-point-free">amitk_canvas_point_free</a>         (<a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);
-typedef     AmitkAxes[AMITK_AXIS_NUM];
-GType       <a href="amitk-amitk-point.html#amitk-axes-get-type">amitk_axes_get_type</a>             (void);
-AmitkAxes*  <a href="amitk-amitk-point.html#amitk-axes-copy">amitk_axes_copy</a>                 (const AmitkAxes *axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-free">amitk_axes_free</a>                 (AmitkAxes *axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-copy-in-place">amitk_axes_copy_in_place</a>        (AmitkAxes dest_axes,
-                                             const AmitkAxes src_axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-transpose">amitk_axes_transpose</a>            (AmitkAxes axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-mult">amitk_axes_mult</a>                 (const AmitkAxes const_axes1,
-                                             const AmitkAxes const_axes2,
-                                             AmitkAxes dest_axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-make-orthonormal">amitk_axes_make_orthonormal</a>     (AmitkAxes axes);
-void        <a href="amitk-amitk-point.html#amitk-axes-rotate-on-vector">amitk_axes_rotate_on_vector</a>     (AmitkAxes axes,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-amitk-point.html#amitk-axes-get-orthogonal-axis">amitk_axes_get_orthogonal_axis</a>  (const AmitkAxes axes,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view,
-                                             const AmitkLayout which_layout,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-amitk-point.html#amitk-axes-get-normal-axis">amitk_axes_get_normal_axis</a>      (const AmitkAxes axes,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view);
-typedef     AmitkCorners[2];
-GType       <a href="amitk-amitk-point.html#amitk-corners-get-type">amitk_corners_get_type</a>          (void);
-void        <a href="amitk-amitk-point.html#amitk-corners-free">amitk_corners_free</a>              (AmitkCorners *corners);
-AmitkCorners* <a href="amitk-amitk-point.html#amitk-corners-copy">amitk_corners_copy</a>            (const AmitkCorners *corners);
-#define     <a href="amitk-amitk-point.html#EPSILON-CAPS">EPSILON</a>
-#define     <a href="amitk-amitk-point.html#EMPTY-CAPS">EMPTY</a>
-#define     <a href="amitk-amitk-point.html#SIGMA-TO-FWHM-CAPS">SIGMA_TO_FWHM</a>
-#define     <a href="amitk-amitk-point.html#SIGMA-TO-FWTM-CAPS">SIGMA_TO_FWTM</a>
-#define     <a href="amitk-amitk-point.html#REAL-EQUAL-CAPS">REAL_EQUAL</a>                      (x,y)
-#define     <a href="amitk-amitk-point.html#EQUAL-ZERO-CAPS">EQUAL_ZERO</a>                      (fp1)
-#define     <a href="amitk-amitk-point.html#POINT-EQUAL-CAPS">POINT_EQUAL</a>                     (point1,point2)
-#define     <a href="amitk-amitk-point.html#VOXEL-EQUAL-CAPS">VOXEL_EQUAL</a>                     (voxel1,voxel2)
-#define     <a href="amitk-amitk-point.html#VOXEL-TO-POINT-CAPS">VOXEL_TO_POINT</a>                  (vox, vox_size, real)
-#define     <a href="amitk-amitk-point.html#POINT-TO-VOXEL-CAPS">POINT_TO_VOXEL</a>                  (real, vox_size, frame, gate, vox)
-#define     <a href="amitk-amitk-point.html#POINT-MAX-CAPS">POINT_MAX</a>                       (point1)
-#define     <a href="amitk-amitk-point.html#POINT-DOT-PRODUCT-CAPS">POINT_DOT_PRODUCT</a>               (point1,point2)
-#define     <a href="amitk-amitk-point.html#POINT-MAGNITUDE-CAPS">POINT_MAGNITUDE</a>                 (point)
-#define     <a href="amitk-amitk-point.html#POINT-ABS-CAPS">POINT_ABS</a>                       (point1,point2)
-#define     <a href="amitk-amitk-point.html#POINT-ADD-CAPS">POINT_ADD</a>                       (point1,point2,point3)
-#define     <a href="amitk-amitk-point.html#POINT-SUB-CAPS">POINT_SUB</a>                       (point1,point2,point3)
-#define     <a href="amitk-amitk-point.html#POINT-MULT-CAPS">POINT_MULT</a>                      (point1,point2,point3)
-#define     <a href="amitk-amitk-point.html#POINT-DIV-CAPS">POINT_DIV</a>                       (point1,point2,point3)
-#define     <a href="amitk-amitk-point.html#POINT-DIFF-CAPS">POINT_DIFF</a>                      (point1,point2,point3)
-#define     <a href="amitk-amitk-point.html#POINT-CMULT-CAPS">POINT_CMULT</a>                     (cm,point1,point3)
-#define     <a href="amitk-amitk-point.html#POINT-MADD-CAPS">POINT_MADD</a>                      (cm,point1,dm,point2,point3)
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-amitk-point.html#canvas-point-2-point">canvas_point_2_point</a>            (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
-                                             gint width,
-                                             gint height,
-                                             gdouble x_offset,
-                                             gdouble y_offset,
-                                             <a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> canvas_cpoint);
-<a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> <a href="amitk-amitk-point.html#point-2-canvas-point">point_2_canvas_point</a>       (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
-                                             gint width,
-                                             gint height,
-                                             gdouble x_offset,
-                                             gdouble y_offset,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> canvas_point);
-void        <a href="amitk-amitk-point.html#voxel-print">voxel_print</a>                     (gchar *message,
-                                             const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);
-<a href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> <a href="amitk-amitk-point.html#voxel-get-dim">voxel_get_dim</a>              (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel,
-                                             const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim);
-void        <a href="amitk-amitk-point.html#voxel-set-dim">voxel_set_dim</a>                   (<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel,
-                                             const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim,
-                                             <a href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> value);
-void        <a href="amitk-amitk-point.html#point-print">point_print</a>                     (gchar *message,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-amitk-point.html#point-rotate-on-vector">point_rotate_on_vector</a>          (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> in,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);
-<a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> <a href="amitk-amitk-point.html#point-get-component">point_get_component</a>            (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
-void        <a href="amitk-amitk-point.html#point-set-component">point_set_component</a>             (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> value);
-extern      const AmitkPoint <a href="amitk-amitk-point.html#zero-point">zero_point</a>;
-extern      const AmitkPoint <a href="amitk-amitk-point.html#one-point">one_point</a>;
-extern      const AmitkPoint <a href="amitk-amitk-point.html#ten-point">ten_point</a>;
-extern      const AmitkVoxel <a href="amitk-amitk-point.html#zero-voxel">zero_voxel</a>;
-extern      const AmitkVoxel <a href="amitk-amitk-point.html#one-voxel">one_voxel</a>;
-extern      const AmitkAxes <a href="amitk-amitk-point.html#base-axes">base_axes</a>;
-const gchar* <a href="amitk-amitk-point.html#amitk-view-get-name">amitk_view_get_name</a>            (const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view);
-const gchar* <a href="amitk-amitk-point.html#amitk-dim-get-name">amitk_dim_get_name</a>             (const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> dim);
-const gchar* <a href="amitk-amitk-point.html#amitk-axis-get-name">amitk_axis_get_name</a>            (const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> axis);
-const gchar* <a href="amitk-amitk-point.html#amitk-length-unit-get-name">amitk_length_unit_get_name</a>     (const <a href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a> length_unit);
-</pre></div><div class="refsect1" lang="en"><a name="id2631030"></a><h2>Description</h2><p>
+enum                <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a>;
+enum                <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a>;
+enum                <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a>;
+enum                <a class="link" href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a>;
+#define             <a class="link" href="amitk-amitk-point.html#AMITK-TYPE-POINT:CAPS">AMITK_TYPE_POINT</a>
+#define             <a class="link" href="amitk-amitk-point.html#AMITK-TYPE-VOXEL:CAPS">AMITK_TYPE_VOXEL</a>
+#define             <a class="link" href="amitk-amitk-point.html#AMITK-TYPE-PIXEL:CAPS">AMITK_TYPE_PIXEL</a>
+#define             <a class="link" href="amitk-amitk-point.html#AMITK-TYPE-CANVAS-POINT:CAPS">AMITK_TYPE_CANVAS_POINT</a>
+#define             <a class="link" href="amitk-amitk-point.html#AMITK-TYPE-AXES:CAPS">AMITK_TYPE_AXES</a>
+                    <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>;
+                    <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>;
+                    <a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>;
+                    <a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>;
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-point-get-type">amitk_point_get_type</a>                (void);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>*         <a class="link" href="amitk-amitk-point.html#amitk-point-copy">amitk_point_copy</a>                    (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);
+void                <a class="link" href="amitk-amitk-point.html#amitk-point-free">amitk_point_free</a>                    (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-amitk-point.html#amitk-point-read-xml">amitk_point_read_xml</a>                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);
+void                <a class="link" href="amitk-amitk-point.html#amitk-point-write-xml">amitk_point_write_xml</a>               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-voxel-get-type">amitk_voxel_get_type</a>                (void);
+<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>*         <a class="link" href="amitk-amitk-point.html#amitk-voxel-copy">amitk_voxel_copy</a>                    (const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);
+void                <a class="link" href="amitk-amitk-point.html#amitk-voxel-free">amitk_voxel_free</a>                    (<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);
+<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>          <a class="link" href="amitk-amitk-point.html#amitk-voxel-read-xml">amitk_voxel_read_xml</a>                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);
+void                <a class="link" href="amitk-amitk-point.html#amitk-voxel-write-xml">amitk_voxel_write_xml</a>               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-pixel-get-type">amitk_pixel_get_type</a>                (void);
+<a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>*         <a class="link" href="amitk-amitk-point.html#amitk-pixel-copy">amitk_pixel_copy</a>                    (const <a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);
+void                <a class="link" href="amitk-amitk-point.html#amitk-pixel-free">amitk_pixel_free</a>                    (<a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-canvas-point-get-type">amitk_canvas_point_get_type</a>         (void);
+<a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>*   <a class="link" href="amitk-amitk-point.html#amitk-canvas-point-copy">amitk_canvas_point_copy</a>             (const <a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);
+void                <a class="link" href="amitk-amitk-point.html#amitk-canvas-point-free">amitk_canvas_point_free</a>             (<a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);
+typedef             <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a>;
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-axes-get-type">amitk_axes_get_type</a>                 (void);
+<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a>*          <a class="link" href="amitk-amitk-point.html#amitk-axes-copy">amitk_axes_copy</a>                     (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> *axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-free">amitk_axes_free</a>                     (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> *axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-copy-in-place">amitk_axes_copy_in_place</a>            (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> dest_axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> src_axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-transpose">amitk_axes_transpose</a>                (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-mult">amitk_axes_mult</a>                     (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> const_axes1,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> const_axes2,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> dest_axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-make-orthonormal">amitk_axes_make_orthonormal</a>         (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes);
+void                <a class="link" href="amitk-amitk-point.html#amitk-axes-rotate-on-vector">amitk_axes_rotate_on_vector</a>         (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-amitk-point.html#amitk-axes-get-orthogonal-axis">amitk_axes_get_orthogonal_axis</a>      (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> which_layout,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-amitk-point.html#amitk-axes-get-normal-axis">amitk_axes_get_normal_axis</a>          (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view);
+typedef             <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a>;
+<a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               <a class="link" href="amitk-amitk-point.html#amitk-corners-get-type">amitk_corners_get_type</a>              (void);
+void                <a class="link" href="amitk-amitk-point.html#amitk-corners-free">amitk_corners_free</a>                  (<a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> *corners);
+<a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a>*       <a class="link" href="amitk-amitk-point.html#amitk-corners-copy">amitk_corners_copy</a>                  (const <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> *corners);
+#define             <a class="link" href="amitk-amitk-point.html#EPSILON:CAPS">EPSILON</a>
+#define             <a class="link" href="amitk-amitk-point.html#CLOSE:CAPS">CLOSE</a>
+#define             <a class="link" href="amitk-amitk-point.html#EMPTY:CAPS">EMPTY</a>
+#define             <a class="link" href="amitk-amitk-point.html#SIGMA-TO-FWHM:CAPS">SIGMA_TO_FWHM</a>
+#define             <a class="link" href="amitk-amitk-point.html#SIGMA-TO-FWTM:CAPS">SIGMA_TO_FWTM</a>
+#define             <a class="link" href="amitk-amitk-point.html#REAL-EQUAL:CAPS">REAL_EQUAL</a>                          (x,y)
+#define             <a class="link" href="amitk-amitk-point.html#EQUAL-ZERO:CAPS">EQUAL_ZERO</a>                          (fp1)
+#define             <a class="link" href="amitk-amitk-point.html#REAL-CLOSE:CAPS">REAL_CLOSE</a>                          (x,y)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-EQUAL:CAPS">POINT_EQUAL</a>                         (point1,point2)
+#define             <a class="link" href="amitk-amitk-point.html#VOXEL-EQUAL:CAPS">VOXEL_EQUAL</a>                         (voxel1,voxel2)
+#define             <a class="link" href="amitk-amitk-point.html#VOXEL-TO-POINT:CAPS">VOXEL_TO_POINT</a>                      (vox, vox_size, real)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-TO-VOXEL:CAPS">POINT_TO_VOXEL</a>                      (real, vox_size, frame, gate, vox)
+#define             <a class="link" href="amitk-amitk-point.html#VOXEL-CORNER:CAPS">VOXEL_CORNER</a>                        (vox, vox_size, corner)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-MAX:CAPS">POINT_MAX</a>                           (point1)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-DOT-PRODUCT:CAPS">POINT_DOT_PRODUCT</a>                   (point1,point2)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-MAGNITUDE:CAPS">POINT_MAGNITUDE</a>                     (point)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-ABS:CAPS">POINT_ABS</a>                           (point1,point2)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-ADD:CAPS">POINT_ADD</a>                           (point1,point2,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-SUB:CAPS">POINT_SUB</a>                           (point1,point2,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-MULT:CAPS">POINT_MULT</a>                          (point1,point2,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-DIV:CAPS">POINT_DIV</a>                           (point1,point2,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-DIFF:CAPS">POINT_DIFF</a>                          (point1,point2,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-CMULT:CAPS">POINT_CMULT</a>                         (cm,point1,point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-CROSS-PRODUCT:CAPS">POINT_CROSS_PRODUCT</a>                 (point1, point2, point3)
+#define             <a class="link" href="amitk-amitk-point.html#POINT-MADD:CAPS">POINT_MADD</a>                          (cm,point1,dm,point2,point3)
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-amitk-point.html#canvas-point-2-point">canvas_point_2_point</a>                (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> width,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> height,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> x_offset,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> y_offset,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> canvas_cpoint);
+<a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>    <a class="link" href="amitk-amitk-point.html#point-2-canvas-point">point_2_canvas_point</a>                (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> width,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> height,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> x_offset,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> y_offset,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> canvas_point);
+void                <a class="link" href="amitk-amitk-point.html#voxel-print">voxel_print</a>                         (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);
+<a class="link" href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a>    <a class="link" href="amitk-amitk-point.html#voxel-get-dim">voxel_get_dim</a>                       (const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim);
+void                <a class="link" href="amitk-amitk-point.html#voxel-set-dim">voxel_set_dim</a>                       (<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> value);
+void                <a class="link" href="amitk-amitk-point.html#point-print">point_print</a>                         (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-amitk-point.html#point-rotate-on-vector">point_rotate_on_vector</a>              (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> in,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);
+<a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a>        <a class="link" href="amitk-amitk-point.html#point-get-component">point_get_component</a>                 (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
+void                <a class="link" href="amitk-amitk-point.html#point-set-component">point_set_component</a>                 (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> value);
+extern              const AmitkPoint <a class="link" href="amitk-amitk-point.html#zero-point">zero_point</a>;
+#define             <a class="link" href="amitk-amitk-point.html#ONE-POINT:CAPS">ONE_POINT</a>
+extern              const AmitkPoint <a class="link" href="amitk-amitk-point.html#one-point">one_point</a>;
+extern              const AmitkPoint <a class="link" href="amitk-amitk-point.html#ten-point">ten_point</a>;
+extern              const AmitkVoxel <a class="link" href="amitk-amitk-point.html#zero-voxel">zero_voxel</a>;
+#define             <a class="link" href="amitk-amitk-point.html#ONE-VOXEL:CAPS">ONE_VOXEL</a>
+extern              const AmitkVoxel <a class="link" href="amitk-amitk-point.html#one-voxel">one_voxel</a>;
+extern              const AmitkAxes <a class="link" href="amitk-amitk-point.html#base-axes">base_axes</a>;
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-amitk-point.html#amitk-view-get-name">amitk_view_get_name</a>                 (const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-amitk-point.html#amitk-dim-get-name">amitk_dim_get_name</a>                  (const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> dim);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-amitk-point.html#amitk-axis-get-name">amitk_axis_get_name</a>                 (const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> axis);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-amitk-point.html#amitk-length-unit-get-name">amitk_length_unit_get_name</a>          (const <a class="link" href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a> length_unit);
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id362616"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2631040"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2631046"></a><h3><a name="AmitkView"></a>enum AmitkView</h3><a class="indexterm" name="id2631056"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id362631"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id362641"></a><h3>
+<a name="AmitkView"></a>enum AmitkView</h3>
+<a class="indexterm" name="id362653"></a><pre class="programlisting">typedef enum {
   AMITK_VIEW_TRANSVERSE, 
   AMITK_VIEW_CORONAL, 
   AMITK_VIEW_SAGITTAL, 
   AMITK_VIEW_NUM
 } AmitkView;
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631072"></a><h3><a name="AmitkAxis"></a>enum AmitkAxis</h3><a class="indexterm" name="id2631083"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362668"></a><h3>
+<a name="AmitkAxis"></a>enum AmitkAxis</h3>
+<a class="indexterm" name="id362681"></a><pre class="programlisting">typedef enum {
   AMITK_AXIS_X,
   AMITK_AXIS_Y,
   AMITK_AXIS_Z,
   AMITK_AXIS_NUM
 } AmitkAxis;
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631099"></a><h3><a name="AmitkDim"></a>enum AmitkDim</h3><a class="indexterm" name="id2631109"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362696"></a><h3>
+<a name="AmitkDim"></a>enum AmitkDim</h3>
+<a class="indexterm" name="id362708"></a><pre class="programlisting">typedef enum {
   AMITK_DIM_X,
   AMITK_DIM_Y,
   AMITK_DIM_Z,
@@ -179,9 +277,16 @@ const gchar* <a href="amitk-amitk-point.html#amitk-length-unit-get-name">amitk_l
   AMITK_DIM_T,
   AMITK_DIM_NUM
 } AmitkDim;
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631126"></a><h3><a name="AmitkLengthUnit"></a>enum AmitkLengthUnit</h3><a class="indexterm" name="id2631137"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362724"></a><h3>
+<a name="AmitkLengthUnit"></a>enum AmitkLengthUnit</h3>
+<a class="indexterm" name="id362736"></a><pre class="programlisting">typedef enum {
   AMITK_LENGTH_UNIT_MM,
   AMITK_LENGTH_UNIT_CM,
   AMITK_LENGTH_UNIT_M,
@@ -189,509 +294,2071 @@ const gchar* <a href="amitk-amitk-point.html#amitk-length-unit-get-name">amitk_l
   AMITK_LENGTH_UNIT_FEET,
   AMITK_LENGTH_UNIT_NUM
 } AmitkLengthUnit;
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631154"></a><h3><a name="AMITK-TYPE-POINT-CAPS"></a>AMITK_TYPE_POINT</h3><a class="indexterm" name="id2631166"></a><pre class="programlisting">#define	AMITK_TYPE_POINT		(amitk_point_get_type ())
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362752"></a><h3>
+<a name="AMITK-TYPE-POINT:CAPS"></a>AMITK_TYPE_POINT</h3>
+<a class="indexterm" name="id362764"></a><pre class="programlisting">#define	AMITK_TYPE_POINT		(amitk_point_get_type ())
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631181"></a><h3><a name="AMITK-TYPE-VOXEL-CAPS"></a>AMITK_TYPE_VOXEL</h3><a class="indexterm" name="id2631192"></a><pre class="programlisting">#define AMITK_TYPE_VOXEL                (amitk_voxel_get_type ())
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362779"></a><h3>
+<a name="AMITK-TYPE-VOXEL:CAPS"></a>AMITK_TYPE_VOXEL</h3>
+<a class="indexterm" name="id362791"></a><pre class="programlisting">#define AMITK_TYPE_VOXEL                (amitk_voxel_get_type ())
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631208"></a><h3><a name="AMITK-TYPE-PIXEL-CAPS"></a>AMITK_TYPE_PIXEL</h3><a class="indexterm" name="id2631219"></a><pre class="programlisting">#define AMITK_TYPE_PIXEL                (amitk_pixel_get_type ())
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362806"></a><h3>
+<a name="AMITK-TYPE-PIXEL:CAPS"></a>AMITK_TYPE_PIXEL</h3>
+<a class="indexterm" name="id362818"></a><pre class="programlisting">#define AMITK_TYPE_PIXEL                (amitk_pixel_get_type ())
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631235"></a><h3><a name="AMITK-TYPE-CANVAS-POINT-CAPS"></a>AMITK_TYPE_CANVAS_POINT</h3><a class="indexterm" name="id2631246"></a><pre class="programlisting">#define AMITK_TYPE_CANVAS_POINT         (amitk_canvas_point_get_type ())
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362833"></a><h3>
+<a name="AMITK-TYPE-CANVAS-POINT:CAPS"></a>AMITK_TYPE_CANVAS_POINT</h3>
+<a class="indexterm" name="id362846"></a><pre class="programlisting">#define AMITK_TYPE_CANVAS_POINT         (amitk_canvas_point_get_type ())
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631263"></a><h3><a name="AMITK-TYPE-AXES-CAPS"></a>AMITK_TYPE_AXES</h3><a class="indexterm" name="id2631274"></a><pre class="programlisting">#define AMITK_TYPE_AXES                 (amitk_axes_get_type ())
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362861"></a><h3>
+<a name="AMITK-TYPE-AXES:CAPS"></a>AMITK_TYPE_AXES</h3>
+<a class="indexterm" name="id362873"></a><pre class="programlisting">#define AMITK_TYPE_AXES                 (amitk_axes_get_type ())
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631290"></a><h3><a name="AmitkPoint"></a>struct AmitkPoint</h3><a class="indexterm" name="id2631300"></a><pre class="programlisting">struct AmitkPoint {
-
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362888"></a><h3>
+<a name="AmitkPoint"></a>AmitkPoint</h3>
+<a class="indexterm" name="id362900"></a><pre class="programlisting">typedef struct {
   amide_real_t x;
   amide_real_t y;
   amide_real_t z;
-};
-</pre><p>
+} AmitkPoint;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631316"></a><h3><a name="AmitkVoxel"></a>struct AmitkVoxel</h3><a class="indexterm" name="id2631326"></a><pre class="programlisting">struct AmitkVoxel {
-
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362915"></a><h3>
+<a name="AmitkVoxel"></a>AmitkVoxel</h3>
+<a class="indexterm" name="id362927"></a><pre class="programlisting">typedef struct {
   amide_intpoint_t x;
   amide_intpoint_t y;
   amide_intpoint_t z;
   amide_intpoint_t g;
   amide_intpoint_t t;
-};
-</pre><p>
+} AmitkVoxel;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631343"></a><h3><a name="AmitkPixel"></a>struct AmitkPixel</h3><a class="indexterm" name="id2631354"></a><pre class="programlisting">struct AmitkPixel {
-
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362943"></a><h3>
+<a name="AmitkPixel"></a>AmitkPixel</h3>
+<a class="indexterm" name="id362955"></a><pre class="programlisting">typedef struct {
   amide_intpoint_t x;
   amide_intpoint_t y;
-};
-</pre><p>
+} AmitkPixel;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631370"></a><h3><a name="AmitkCanvasPoint"></a>struct AmitkCanvasPoint</h3><a class="indexterm" name="id2631381"></a><pre class="programlisting">struct AmitkCanvasPoint {
-
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362970"></a><h3>
+<a name="AmitkCanvasPoint"></a>AmitkCanvasPoint</h3>
+<a class="indexterm" name="id362982"></a><pre class="programlisting">typedef struct {
   amide_real_t x;
   amide_real_t y;
-};
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2631396"></a><h3><a name="amitk-point-get-type"></a>amitk_point_get_type ()</h3><a class="indexterm" name="id2631408"></a><pre class="programlisting">GType       amitk_point_get_type            (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631443"></a><h3><a name="amitk-point-copy"></a>amitk_point_copy ()</h3><a class="indexterm" name="id2631454"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>* amitk_point_copy                (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631510"></a><h3><a name="amitk-point-free"></a>amitk_point_free ()</h3><a class="indexterm" name="id2631521"></a><pre class="programlisting">void        amitk_point_free                (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631567"></a><h3><a name="amitk-point-read-xml"></a>amitk_point_read_xml ()</h3><a class="indexterm" name="id2631578"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  amitk_point_read_xml            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>nodes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>perror_buf</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631676"></a><h3><a name="amitk-point-write-xml"></a>amitk_point_write_xml ()</h3><a class="indexterm" name="id2631687"></a><pre class="programlisting">void        amitk_point_write_xml           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>node</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631775"></a><h3><a name="amitk-voxel-get-type"></a>amitk_voxel_get_type ()</h3><a class="indexterm" name="id2631786"></a><pre class="programlisting">GType       amitk_voxel_get_type            (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631822"></a><h3><a name="amitk-voxel-copy"></a>amitk_voxel_copy ()</h3><a class="indexterm" name="id2631832"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>* amitk_voxel_copy                (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631888"></a><h3><a name="amitk-voxel-free"></a>amitk_voxel_free ()</h3><a class="indexterm" name="id2631899"></a><pre class="programlisting">void        amitk_voxel_free                (<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2631945"></a><h3><a name="amitk-voxel-read-xml"></a>amitk_voxel_read_xml ()</h3><a class="indexterm" name="id2631956"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>  amitk_voxel_read_xml            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>nodes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>perror_buf</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632054"></a><h3><a name="amitk-voxel-write-xml"></a>amitk_voxel_write_xml ()</h3><a class="indexterm" name="id2632066"></a><pre class="programlisting">void        amitk_voxel_write_xml           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>node</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632154"></a><h3><a name="amitk-pixel-get-type"></a>amitk_pixel_get_type ()</h3><a class="indexterm" name="id2632165"></a><pre class="programlisting">GType       amitk_pixel_get_type            (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632201"></a><h3><a name="amitk-pixel-copy"></a>amitk_pixel_copy ()</h3><a class="indexterm" name="id2632211"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>* amitk_pixel_copy                (const <a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>pixel</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632267"></a><h3><a name="amitk-pixel-free"></a>amitk_pixel_free ()</h3><a class="indexterm" name="id2632278"></a><pre class="programlisting">void        amitk_pixel_free                (<a href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>pixel</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632324"></a><h3><a name="amitk-canvas-point-get-type"></a>amitk_canvas_point_get_type ()</h3><a class="indexterm" name="id2632336"></a><pre class="programlisting">GType       amitk_canvas_point_get_type     (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632371"></a><h3><a name="amitk-canvas-point-copy"></a>amitk_canvas_point_copy ()</h3><a class="indexterm" name="id2632383"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>* amitk_canvas_point_copy   (const <a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632439"></a><h3><a name="amitk-canvas-point-free"></a>amitk_canvas_point_free ()</h3><a class="indexterm" name="id2632451"></a><pre class="programlisting">void        amitk_canvas_point_free         (<a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632497"></a><h3><a name="AmitkAxes[AMITK-AXIS-NUM]"></a>AmitkAxes[AMITK_AXIS_NUM]</h3><a class="indexterm" name="id2632508"></a><pre class="programlisting">typedef AmitkPoint AmitkAxes[AMITK_AXIS_NUM];
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2632524"></a><h3><a name="amitk-axes-get-type"></a>amitk_axes_get_type ()</h3><a class="indexterm" name="id2632535"></a><pre class="programlisting">GType       amitk_axes_get_type             (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632570"></a><h3><a name="amitk-axes-copy"></a>amitk_axes_copy ()</h3><a class="indexterm" name="id2632581"></a><pre class="programlisting">AmitkAxes*  amitk_axes_copy                 (const AmitkAxes *axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632636"></a><h3><a name="amitk-axes-free"></a>amitk_axes_free ()</h3><a class="indexterm" name="id2632647"></a><pre class="programlisting">void        amitk_axes_free                 (AmitkAxes *axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632693"></a><h3><a name="amitk-axes-copy-in-place"></a>amitk_axes_copy_in_place ()</h3><a class="indexterm" name="id2632704"></a><pre class="programlisting">void        amitk_axes_copy_in_place        (AmitkAxes dest_axes,
-                                             const AmitkAxes src_axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dest_axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>src_axes</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632772"></a><h3><a name="amitk-axes-transpose"></a>amitk_axes_transpose ()</h3><a class="indexterm" name="id2632783"></a><pre class="programlisting">void        amitk_axes_transpose            (AmitkAxes axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632829"></a><h3><a name="amitk-axes-mult"></a>amitk_axes_mult ()</h3><a class="indexterm" name="id2632839"></a><pre class="programlisting">void        amitk_axes_mult                 (const AmitkAxes const_axes1,
-                                             const AmitkAxes const_axes2,
-                                             AmitkAxes dest_axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>const_axes1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>const_axes2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>dest_axes</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632928"></a><h3><a name="amitk-axes-make-orthonormal"></a>amitk_axes_make_orthonormal ()</h3><a class="indexterm" name="id2632940"></a><pre class="programlisting">void        amitk_axes_make_orthonormal     (AmitkAxes axes);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2632986"></a><h3><a name="amitk-axes-rotate-on-vector"></a>amitk_axes_rotate_on_vector ()</h3><a class="indexterm" name="id2632998"></a><pre class="programlisting">void        amitk_axes_rotate_on_vector     (AmitkAxes axes,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vector</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>theta</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633086"></a><h3><a name="amitk-axes-get-orthogonal-axis"></a>amitk_axes_get_orthogonal_axis ()</h3><a class="indexterm" name="id2633097"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  amitk_axes_get_orthogonal_axis  (const AmitkAxes axes,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view,
-                                             const AmitkLayout which_layout,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_layout</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633218"></a><h3><a name="amitk-axes-get-normal-axis"></a>amitk_axes_get_normal_axis ()</h3><a class="indexterm" name="id2633229"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  amitk_axes_get_normal_axis      (const AmitkAxes axes,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633306"></a><h3><a name="AmitkCorners[2]"></a>AmitkCorners[2]</h3><a class="indexterm" name="id2633317"></a><pre class="programlisting">typedef AmitkPoint AmitkCorners[2];
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2633332"></a><h3><a name="amitk-corners-get-type"></a>amitk_corners_get_type ()</h3><a class="indexterm" name="id2633344"></a><pre class="programlisting">GType       amitk_corners_get_type          (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633379"></a><h3><a name="amitk-corners-free"></a>amitk_corners_free ()</h3><a class="indexterm" name="id2633391"></a><pre class="programlisting">void        amitk_corners_free              (AmitkCorners *corners);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>corners</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633437"></a><h3><a name="amitk-corners-copy"></a>amitk_corners_copy ()</h3><a class="indexterm" name="id2633448"></a><pre class="programlisting">AmitkCorners* amitk_corners_copy            (const AmitkCorners *corners);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>corners</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633504"></a><h3><a name="EPSILON-CAPS"></a>EPSILON</h3><a class="indexterm" name="id2633516"></a><pre class="programlisting">#define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2633531"></a><h3><a name="EMPTY-CAPS"></a>EMPTY</h3><a class="indexterm" name="id2633542"></a><pre class="programlisting">#define EMPTY 0.0
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2633557"></a><h3><a name="SIGMA-TO-FWHM-CAPS"></a>SIGMA_TO_FWHM</h3><a class="indexterm" name="id2633568"></a><pre class="programlisting">#define SIGMA_TO_FWHM 2.354820045 
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2633583"></a><h3><a name="SIGMA-TO-FWTM-CAPS"></a>SIGMA_TO_FWTM</h3><a class="indexterm" name="id2633594"></a><pre class="programlisting">#define SIGMA_TO_FWTM 4.291932053
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2633609"></a><h3><a name="REAL-EQUAL-CAPS"></a>REAL_EQUAL()</h3><a class="indexterm" name="id2633620"></a><pre class="programlisting">#define REAL_EQUAL(x,y) (fabs(x-y)/MAX(MAX(fabs(x),fabs(y)),DBL_MIN) &lt; EPSILON)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>x</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>y</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633667"></a><h3><a name="EQUAL-ZERO-CAPS"></a>EQUAL_ZERO()</h3><a class="indexterm" name="id2633678"></a><pre class="programlisting">#define EQUAL_ZERO(fp1) (REAL_EQUAL((fp1), 0.0))
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>fp1</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633712"></a><h3><a name="POINT-EQUAL-CAPS"></a>POINT_EQUAL()</h3><a class="indexterm" name="id2633723"></a><pre class="programlisting">#define     POINT_EQUAL(point1,point2)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633769"></a><h3><a name="VOXEL-EQUAL-CAPS"></a>VOXEL_EQUAL()</h3><a class="indexterm" name="id2633780"></a><pre class="programlisting">#define     VOXEL_EQUAL(voxel1,voxel2)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>voxel1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>voxel2</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633827"></a><h3><a name="VOXEL-TO-POINT-CAPS"></a>VOXEL_TO_POINT()</h3><a class="indexterm" name="id2633838"></a><pre class="programlisting">#define     VOXEL_TO_POINT(vox, vox_size, real)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>vox</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vox_size</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>real</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633899"></a><h3><a name="POINT-TO-VOXEL-CAPS"></a>POINT_TO_VOXEL()</h3><a class="indexterm" name="id2633909"></a><pre class="programlisting">#define     POINT_TO_VOXEL(real, vox_size, frame, gate, vox)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>real</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vox_size</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>frame</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>gate</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vox</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2633996"></a><h3><a name="POINT-MAX-CAPS"></a>POINT_MAX()</h3><a class="indexterm" name="id2634007"></a><pre class="programlisting">#define POINT_MAX(point1) (MAX( MAX((point1).x, (point1).y), (point1).z))
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634041"></a><h3><a name="POINT-DOT-PRODUCT-CAPS"></a>POINT_DOT_PRODUCT()</h3><a class="indexterm" name="id2634053"></a><pre class="programlisting">#define POINT_DOT_PRODUCT(point1,point2) ((point1).x*(point2).x+(point1).y*(point2).y+(point1).z*(point2).z)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634101"></a><h3><a name="POINT-MAGNITUDE-CAPS"></a>POINT_MAGNITUDE()</h3><a class="indexterm" name="id2634112"></a><pre class="programlisting">#define POINT_MAGNITUDE(point) (sqrt(POINT_DOT_PRODUCT((point), (point))))
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634145"></a><h3><a name="POINT-ABS-CAPS"></a>POINT_ABS()</h3><a class="indexterm" name="id2634156"></a><pre class="programlisting">#define     POINT_ABS(point1,point2)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634202"></a><h3><a name="POINT-ADD-CAPS"></a>POINT_ADD()</h3><a class="indexterm" name="id2634213"></a><pre class="programlisting">#define     POINT_ADD(point1,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634273"></a><h3><a name="POINT-SUB-CAPS"></a>POINT_SUB()</h3><a class="indexterm" name="id2634284"></a><pre class="programlisting">#define     POINT_SUB(point1,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634344"></a><h3><a name="POINT-MULT-CAPS"></a>POINT_MULT()</h3><a class="indexterm" name="id2634355"></a><pre class="programlisting">#define     POINT_MULT(point1,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634415"></a><h3><a name="POINT-DIV-CAPS"></a>POINT_DIV()</h3><a class="indexterm" name="id2634426"></a><pre class="programlisting">#define     POINT_DIV(point1,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634486"></a><h3><a name="POINT-DIFF-CAPS"></a>POINT_DIFF()</h3><a class="indexterm" name="id2634497"></a><pre class="programlisting">#define     POINT_DIFF(point1,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634557"></a><h3><a name="POINT-CMULT-CAPS"></a>POINT_CMULT()</h3><a class="indexterm" name="id2634568"></a><pre class="programlisting">#define     POINT_CMULT(cm,point1,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>cm</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634628"></a><h3><a name="POINT-MADD-CAPS"></a>POINT_MADD()</h3><a class="indexterm" name="id2634638"></a><pre class="programlisting">#define     POINT_MADD(cm,point1,dm,point2,point3)</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>cm</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>dm</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point3</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634725"></a><h3><a name="canvas-point-2-point"></a>canvas_point_2_point ()</h3><a class="indexterm" name="id2634736"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  canvas_point_2_point            (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
-                                             gint width,
-                                             gint height,
-                                             gdouble x_offset,
-                                             gdouble y_offset,
-                                             <a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> canvas_cpoint);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>volume_corner</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>width</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>height</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>x_offset</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>y_offset</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas_cpoint</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2634899"></a><h3><a name="point-2-canvas-point"></a>point_2_canvas_point ()</h3><a class="indexterm" name="id2634910"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> point_2_canvas_point       (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
-                                             gint width,
-                                             gint height,
-                                             gdouble x_offset,
-                                             gdouble y_offset,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> canvas_point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>volume_corner</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>width</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>height</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>x_offset</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>y_offset</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas_point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635073"></a><h3><a name="voxel-print"></a>voxel_print ()</h3><a class="indexterm" name="id2635083"></a><pre class="programlisting">void        voxel_print                     (gchar *message,
-                                             const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>message</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635150"></a><h3><a name="voxel-get-dim"></a>voxel_get_dim ()</h3><a class="indexterm" name="id2635161"></a><pre class="programlisting"><a href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> voxel_get_dim              (const <a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel,
-                                             const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_dim</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635238"></a><h3><a name="voxel-set-dim"></a>voxel_set_dim ()</h3><a class="indexterm" name="id2635248"></a><pre class="programlisting">void        voxel_set_dim                   (<a href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel,
-                                             const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim,
-                                             <a href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> value);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>voxel</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_dim</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>value</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635337"></a><h3><a name="point-print"></a>point_print ()</h3><a class="indexterm" name="id2635348"></a><pre class="programlisting">void        point_print                     (gchar *message,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>message</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635414"></a><h3><a name="point-rotate-on-vector"></a>point_rotate_on_vector ()</h3><a class="indexterm" name="id2635426"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  point_rotate_on_vector          (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> in,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>in</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vector</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>theta</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635524"></a><h3><a name="point-get-component"></a>point_get_component ()</h3><a class="indexterm" name="id2635536"></a><pre class="programlisting"><a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> point_get_component            (const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635613"></a><h3><a name="point-set-component"></a>point_set_component ()</h3><a class="indexterm" name="id2635624"></a><pre class="programlisting">void        point_set_component             (<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> value);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>value</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635712"></a><h3><a name="zero-point"></a>zero_point</h3><a class="indexterm" name="id2635722"></a><pre class="programlisting">extern const AmitkPoint zero_point;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635738"></a><h3><a name="one-point"></a>one_point</h3><a class="indexterm" name="id2635748"></a><pre class="programlisting">extern const AmitkPoint one_point;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635763"></a><h3><a name="ten-point"></a>ten_point</h3><a class="indexterm" name="id2635773"></a><pre class="programlisting">extern const AmitkPoint ten_point;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635788"></a><h3><a name="zero-voxel"></a>zero_voxel</h3><a class="indexterm" name="id2635798"></a><pre class="programlisting">extern const AmitkVoxel zero_voxel;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635814"></a><h3><a name="one-voxel"></a>one_voxel</h3><a class="indexterm" name="id2635824"></a><pre class="programlisting">extern const AmitkVoxel one_voxel;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635839"></a><h3><a name="base-axes"></a>base_axes</h3><a class="indexterm" name="id2635849"></a><pre class="programlisting">extern const AmitkAxes base_axes;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2635864"></a><h3><a name="amitk-view-get-name"></a>amitk_view_get_name ()</h3><a class="indexterm" name="id2635876"></a><pre class="programlisting">const gchar* amitk_view_get_name            (const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2635932"></a><h3><a name="amitk-dim-get-name"></a>amitk_dim_get_name ()</h3><a class="indexterm" name="id2635944"></a><pre class="programlisting">const gchar* amitk_dim_get_name             (const <a href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> dim);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dim</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2636000"></a><h3><a name="amitk-axis-get-name"></a>amitk_axis_get_name ()</h3><a class="indexterm" name="id2636012"></a><pre class="programlisting">const gchar* amitk_axis_get_name            (const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> axis);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2636068"></a><h3><a name="amitk-length-unit-get-name"></a>amitk_length_unit_get_name ()</h3><a class="indexterm" name="id2636080"></a><pre class="programlisting">const gchar* amitk_length_unit_get_name     (const <a href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a> length_unit);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>length_unit</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkObject.html"><b>&lt;&lt; AmitkObject</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkRawData.html"><b>AmitkRawData &gt;&gt;</b></a></td></tr></table></body></html>
+} AmitkCanvasPoint;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id362997"></a><h3>
+<a name="amitk-point-get-type"></a>amitk_point_get_type ()</h3>
+<a class="indexterm" name="id363009"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_point_get_type                (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363044"></a><h3>
+<a name="amitk-point-copy"></a>amitk_point_copy ()</h3>
+<a class="indexterm" name="id363056"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>*         amitk_point_copy                    (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363111"></a><h3>
+<a name="amitk-point-free"></a>amitk_point_free ()</h3>
+<a class="indexterm" name="id363124"></a><pre class="programlisting">void                amitk_point_free                    (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363169"></a><h3>
+<a name="amitk-point-read-xml"></a>amitk_point_read_xml ()</h3>
+<a class="indexterm" name="id363182"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          amitk_point_read_xml                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>nodes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>perror_buf</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363279"></a><h3>
+<a name="amitk-point-write-xml"></a>amitk_point_write_xml ()</h3>
+<a class="indexterm" name="id363292"></a><pre class="programlisting">void                amitk_point_write_xml               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363378"></a><h3>
+<a name="amitk-voxel-get-type"></a>amitk_voxel_get_type ()</h3>
+<a class="indexterm" name="id363390"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_voxel_get_type                (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363426"></a><h3>
+<a name="amitk-voxel-copy"></a>amitk_voxel_copy ()</h3>
+<a class="indexterm" name="id363438"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>*         amitk_voxel_copy                    (const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363494"></a><h3>
+<a name="amitk-voxel-free"></a>amitk_voxel_free ()</h3>
+<a class="indexterm" name="id363506"></a><pre class="programlisting">void                amitk_voxel_free                    (<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363551"></a><h3>
+<a name="amitk-voxel-read-xml"></a>amitk_voxel_read_xml ()</h3>
+<a class="indexterm" name="id363564"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a>          amitk_voxel_read_xml                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>nodes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>perror_buf</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363661"></a><h3>
+<a name="amitk-voxel-write-xml"></a>amitk_voxel_write_xml ()</h3>
+<a class="indexterm" name="id363673"></a><pre class="programlisting">void                amitk_voxel_write_xml               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363760"></a><h3>
+<a name="amitk-pixel-get-type"></a>amitk_pixel_get_type ()</h3>
+<a class="indexterm" name="id363772"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_pixel_get_type                (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363807"></a><h3>
+<a name="amitk-pixel-copy"></a>amitk_pixel_copy ()</h3>
+<a class="indexterm" name="id363819"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a>*         amitk_pixel_copy                    (const <a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>pixel</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363874"></a><h3>
+<a name="amitk-pixel-free"></a>amitk_pixel_free ()</h3>
+<a class="indexterm" name="id363886"></a><pre class="programlisting">void                amitk_pixel_free                    (<a class="link" href="amitk-amitk-point.html#AmitkPixel">AmitkPixel</a> *pixel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>pixel</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363932"></a><h3>
+<a name="amitk-canvas-point-get-type"></a>amitk_canvas_point_get_type ()</h3>
+<a class="indexterm" name="id363944"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_canvas_point_get_type         (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id363979"></a><h3>
+<a name="amitk-canvas-point-copy"></a>amitk_canvas_point_copy ()</h3>
+<a class="indexterm" name="id363992"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>*   amitk_canvas_point_copy             (const <a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364048"></a><h3>
+<a name="amitk-canvas-point-free"></a>amitk_canvas_point_free ()</h3>
+<a class="indexterm" name="id364060"></a><pre class="programlisting">void                amitk_canvas_point_free             (<a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> *point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364105"></a><h3>
+<a name="AmitkAxes"></a>AmitkAxes</h3>
+<a class="indexterm" name="id364117"></a><pre class="programlisting">typedef AmitkPoint AmitkAxes[AMITK_AXIS_NUM];
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364132"></a><h3>
+<a name="amitk-axes-get-type"></a>amitk_axes_get_type ()</h3>
+<a class="indexterm" name="id364144"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_axes_get_type                 (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364180"></a><h3>
+<a name="amitk-axes-copy"></a>amitk_axes_copy ()</h3>
+<a class="indexterm" name="id364192"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a>*          amitk_axes_copy                     (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> *axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364247"></a><h3>
+<a name="amitk-axes-free"></a>amitk_axes_free ()</h3>
+<a class="indexterm" name="id364260"></a><pre class="programlisting">void                amitk_axes_free                     (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> *axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364305"></a><h3>
+<a name="amitk-axes-copy-in-place"></a>amitk_axes_copy_in_place ()</h3>
+<a class="indexterm" name="id364317"></a><pre class="programlisting">void                amitk_axes_copy_in_place            (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> dest_axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> src_axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>dest_axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>src_axes</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364384"></a><h3>
+<a name="amitk-axes-transpose"></a>amitk_axes_transpose ()</h3>
+<a class="indexterm" name="id364396"></a><pre class="programlisting">void                amitk_axes_transpose                (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364441"></a><h3>
+<a name="amitk-axes-mult"></a>amitk_axes_mult ()</h3>
+<a class="indexterm" name="id364454"></a><pre class="programlisting">void                amitk_axes_mult                     (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> const_axes1,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> const_axes2,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> dest_axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>const_axes1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>const_axes2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>dest_axes</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364541"></a><h3>
+<a name="amitk-axes-make-orthonormal"></a>amitk_axes_make_orthonormal ()</h3>
+<a class="indexterm" name="id364553"></a><pre class="programlisting">void                amitk_axes_make_orthonormal         (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364599"></a><h3>
+<a name="amitk-axes-rotate-on-vector"></a>amitk_axes_rotate_on_vector ()</h3>
+<a class="indexterm" name="id364611"></a><pre class="programlisting">void                amitk_axes_rotate_on_vector         (<a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vector</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>theta</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364698"></a><h3>
+<a name="amitk-axes-get-orthogonal-axis"></a>amitk_axes_get_orthogonal_axis ()</h3>
+<a class="indexterm" name="id364711"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          amitk_axes_get_orthogonal_axis      (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> which_layout,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_layout</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364829"></a><h3>
+<a name="amitk-axes-get-normal-axis"></a>amitk_axes_get_normal_axis ()</h3>
+<a class="indexterm" name="id364841"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          amitk_axes_get_normal_axis          (const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> which_view);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364918"></a><h3>
+<a name="AmitkCorners"></a>AmitkCorners</h3>
+<a class="indexterm" name="id364930"></a><pre class="programlisting">typedef AmitkPoint AmitkCorners[2];
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364945"></a><h3>
+<a name="amitk-corners-get-type"></a>amitk_corners_get_type ()</h3>
+<a class="indexterm" name="id364958"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gobject/gobject-Type-Information.html#GType"
+>GType</a>               amitk_corners_get_type              (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id364993"></a><h3>
+<a name="amitk-corners-free"></a>amitk_corners_free ()</h3>
+<a class="indexterm" name="id365005"></a><pre class="programlisting">void                amitk_corners_free                  (<a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> *corners);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>corners</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365050"></a><h3>
+<a name="amitk-corners-copy"></a>amitk_corners_copy ()</h3>
+<a class="indexterm" name="id365062"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a>*       amitk_corners_copy                  (const <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> *corners);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>corners</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365118"></a><h3>
+<a name="EPSILON:CAPS"></a>EPSILON</h3>
+<a class="indexterm" name="id365130"></a><pre class="programlisting">#define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365145"></a><h3>
+<a name="CLOSE:CAPS"></a>CLOSE</h3>
+<a class="indexterm" name="id365158"></a><pre class="programlisting">#define CLOSE 0.0001 /* within 0.01% */
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365173"></a><h3>
+<a name="EMPTY:CAPS"></a>EMPTY</h3>
+<a class="indexterm" name="id365185"></a><pre class="programlisting">#define EMPTY 0.0
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365200"></a><h3>
+<a name="SIGMA-TO-FWHM:CAPS"></a>SIGMA_TO_FWHM</h3>
+<a class="indexterm" name="id365213"></a><pre class="programlisting">#define SIGMA_TO_FWHM 2.354820045 
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365227"></a><h3>
+<a name="SIGMA-TO-FWTM:CAPS"></a>SIGMA_TO_FWTM</h3>
+<a class="indexterm" name="id365239"></a><pre class="programlisting">#define SIGMA_TO_FWTM 4.291932053
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365254"></a><h3>
+<a name="REAL-EQUAL:CAPS"></a>REAL_EQUAL()</h3>
+<a class="indexterm" name="id365266"></a><pre class="programlisting">#define REAL_EQUAL(x,y) (fabs(x-y)/MAX(MAX(fabs(x),fabs(y)),DBL_MIN) &lt; EPSILON)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>x</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>y</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365313"></a><h3>
+<a name="EQUAL-ZERO:CAPS"></a>EQUAL_ZERO()</h3>
+<a class="indexterm" name="id365325"></a><pre class="programlisting">#define EQUAL_ZERO(fp1) (REAL_EQUAL((fp1), 0.0))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>fp1</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365357"></a><h3>
+<a name="REAL-CLOSE:CAPS"></a>REAL_CLOSE()</h3>
+<a class="indexterm" name="id365370"></a><pre class="programlisting">#define REAL_CLOSE(x,y) (fabs(x-y)/MAX(MAX(fabs(x),fabs(y)),DBL_MIN) &lt; CLOSE)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>x</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>y</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365416"></a><h3>
+<a name="POINT-EQUAL:CAPS"></a>POINT_EQUAL()</h3>
+<a class="indexterm" name="id365429"></a><pre class="programlisting">#define             POINT_EQUAL(point1,point2)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365475"></a><h3>
+<a name="VOXEL-EQUAL:CAPS"></a>VOXEL_EQUAL()</h3>
+<a class="indexterm" name="id365488"></a><pre class="programlisting">#define             VOXEL_EQUAL(voxel1,voxel2)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel2</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365534"></a><h3>
+<a name="VOXEL-TO-POINT:CAPS"></a>VOXEL_TO_POINT()</h3>
+<a class="indexterm" name="id365546"></a><pre class="programlisting">#define             VOXEL_TO_POINT(vox, vox_size, real)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox_size</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>real</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365606"></a><h3>
+<a name="POINT-TO-VOXEL:CAPS"></a>POINT_TO_VOXEL()</h3>
+<a class="indexterm" name="id365618"></a><pre class="programlisting">#define             POINT_TO_VOXEL(real, vox_size, frame, gate, vox)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>real</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox_size</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>frame</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>gate</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365704"></a><h3>
+<a name="VOXEL-CORNER:CAPS"></a>VOXEL_CORNER()</h3>
+<a class="indexterm" name="id365717"></a><pre class="programlisting">#define             VOXEL_CORNER(vox, vox_size, corner)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vox_size</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>corner</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365776"></a><h3>
+<a name="POINT-MAX:CAPS"></a>POINT_MAX()</h3>
+<a class="indexterm" name="id365788"></a><pre class="programlisting">#define POINT_MAX(point1) (MAX( MAX((point1).x, (point1).y), (point1).z))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365821"></a><h3>
+<a name="POINT-DOT-PRODUCT:CAPS"></a>POINT_DOT_PRODUCT()</h3>
+<a class="indexterm" name="id365834"></a><pre class="programlisting">#define POINT_DOT_PRODUCT(point1,point2) ((point1).x*(point2).x+(point1).y*(point2).y+(point1).z*(point2).z)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365881"></a><h3>
+<a name="POINT-MAGNITUDE:CAPS"></a>POINT_MAGNITUDE()</h3>
+<a class="indexterm" name="id365893"></a><pre class="programlisting">#define POINT_MAGNITUDE(point) (sqrt(POINT_DOT_PRODUCT((point), (point))))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365926"></a><h3>
+<a name="POINT-ABS:CAPS"></a>POINT_ABS()</h3>
+<a class="indexterm" name="id365939"></a><pre class="programlisting">#define             POINT_ABS(point1,point2)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id365985"></a><h3>
+<a name="POINT-ADD:CAPS"></a>POINT_ADD()</h3>
+<a class="indexterm" name="id365998"></a><pre class="programlisting">#define             POINT_ADD(point1,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366057"></a><h3>
+<a name="POINT-SUB:CAPS"></a>POINT_SUB()</h3>
+<a class="indexterm" name="id366069"></a><pre class="programlisting">#define             POINT_SUB(point1,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366129"></a><h3>
+<a name="POINT-MULT:CAPS"></a>POINT_MULT()</h3>
+<a class="indexterm" name="id366141"></a><pre class="programlisting">#define             POINT_MULT(point1,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366201"></a><h3>
+<a name="POINT-DIV:CAPS"></a>POINT_DIV()</h3>
+<a class="indexterm" name="id366213"></a><pre class="programlisting">#define             POINT_DIV(point1,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366273"></a><h3>
+<a name="POINT-DIFF:CAPS"></a>POINT_DIFF()</h3>
+<a class="indexterm" name="id366285"></a><pre class="programlisting">#define             POINT_DIFF(point1,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366345"></a><h3>
+<a name="POINT-CMULT:CAPS"></a>POINT_CMULT()</h3>
+<a class="indexterm" name="id366357"></a><pre class="programlisting">#define             POINT_CMULT(cm,point1,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>cm</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366417"></a><h3>
+<a name="POINT-CROSS-PRODUCT:CAPS"></a>POINT_CROSS_PRODUCT()</h3>
+<a class="indexterm" name="id366429"></a><pre class="programlisting">#define             POINT_CROSS_PRODUCT(point1, point2, point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366489"></a><h3>
+<a name="POINT-MADD:CAPS"></a>POINT_MADD()</h3>
+<a class="indexterm" name="id366502"></a><pre class="programlisting">#define             POINT_MADD(cm,point1,dm,point2,point3)</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>cm</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>dm</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point3</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366588"></a><h3>
+<a name="canvas-point-2-point"></a>canvas_point_2_point ()</h3>
+<a class="indexterm" name="id366601"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          canvas_point_2_point                (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> width,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> height,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> x_offset,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> y_offset,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a> canvas_cpoint);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>volume_corner</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>width</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>height</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>x_offset</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>y_offset</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>canvas_cpoint</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366760"></a><h3>
+<a name="point-2-canvas-point"></a>point_2_canvas_point ()</h3>
+<a class="indexterm" name="id366772"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkCanvasPoint">AmitkCanvasPoint</a>    point_2_canvas_point                (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> volume_corner,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> width,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> height,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> x_offset,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> y_offset,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> canvas_point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>volume_corner</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>width</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>height</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>x_offset</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>y_offset</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>canvas_point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id366931"></a><h3>
+<a name="voxel-print"></a>voxel_print ()</h3>
+<a class="indexterm" name="id366944"></a><pre class="programlisting">void                voxel_print                         (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>message</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367010"></a><h3>
+<a name="voxel-get-dim"></a>voxel_get_dim ()</h3>
+<a class="indexterm" name="id367023"></a><pre class="programlisting"><a class="link" href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a>    voxel_get_dim                       (const <a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> voxel,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_dim</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367099"></a><h3>
+<a name="voxel-set-dim"></a>voxel_set_dim ()</h3>
+<a class="indexterm" name="id367112"></a><pre class="programlisting">void                voxel_set_dim                       (<a class="link" href="amitk-amitk-point.html#AmitkVoxel">AmitkVoxel</a> *voxel,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> which_dim,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a> value);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>voxel</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_dim</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367199"></a><h3>
+<a name="point-print"></a>point_print ()</h3>
+<a class="indexterm" name="id367211"></a><pre class="programlisting">void                point_print                         (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>message</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367277"></a><h3>
+<a name="point-rotate-on-vector"></a>point_rotate_on_vector ()</h3>
+<a class="indexterm" name="id367290"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          point_rotate_on_vector              (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> in,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vector</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>theta</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367387"></a><h3>
+<a name="point-get-component"></a>point_get_component ()</h3>
+<a class="indexterm" name="id367399"></a><pre class="programlisting"><a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a>        point_get_component                 (const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> point,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367476"></a><h3>
+<a name="point-set-component"></a>point_set_component ()</h3>
+<a class="indexterm" name="id367488"></a><pre class="programlisting">void                point_set_component                 (<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> *point,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> value);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>value</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367575"></a><h3>
+<a name="zero-point"></a>zero_point</h3>
+<a class="indexterm" name="id367588"></a><pre class="programlisting">extern const AmitkPoint zero_point;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367603"></a><h3>
+<a name="ONE-POINT:CAPS"></a>ONE_POINT</h3>
+<a class="indexterm" name="id367615"></a><pre class="programlisting">#define ONE_POINT {1.0,1.0,1.0}
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367630"></a><h3>
+<a name="one-point"></a>one_point</h3>
+<a class="indexterm" name="id367642"></a><pre class="programlisting">extern const AmitkPoint one_point;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367657"></a><h3>
+<a name="ten-point"></a>ten_point</h3>
+<a class="indexterm" name="id367669"></a><pre class="programlisting">extern const AmitkPoint ten_point;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367684"></a><h3>
+<a name="zero-voxel"></a>zero_voxel</h3>
+<a class="indexterm" name="id367696"></a><pre class="programlisting">extern const AmitkVoxel zero_voxel;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367711"></a><h3>
+<a name="ONE-VOXEL:CAPS"></a>ONE_VOXEL</h3>
+<a class="indexterm" name="id367723"></a><pre class="programlisting">#define ONE_VOXEL {1,1,1,1,1}
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367738"></a><h3>
+<a name="one-voxel"></a>one_voxel</h3>
+<a class="indexterm" name="id367750"></a><pre class="programlisting">extern const AmitkVoxel one_voxel;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367765"></a><h3>
+<a name="base-axes"></a>base_axes</h3>
+<a class="indexterm" name="id367777"></a><pre class="programlisting">extern const AmitkAxes base_axes;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367792"></a><h3>
+<a name="amitk-view-get-name"></a>amitk_view_get_name ()</h3>
+<a class="indexterm" name="id367804"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_view_get_name                 (const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367861"></a><h3>
+<a name="amitk-dim-get-name"></a>amitk_dim_get_name ()</h3>
+<a class="indexterm" name="id367874"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_dim_get_name                  (const <a class="link" href="amitk-amitk-point.html#AmitkDim">AmitkDim</a> dim);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>dim</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367930"></a><h3>
+<a name="amitk-axis-get-name"></a>amitk_axis_get_name ()</h3>
+<a class="indexterm" name="id367942"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_axis_get_name                 (const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> axis);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id367999"></a><h3>
+<a name="amitk-length-unit-get-name"></a>amitk_length_unit_get_name ()</h3>
+<a class="indexterm" name="id368011"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_length_unit_get_name          (const <a class="link" href="amitk-amitk-point.html#AmitkLengthUnit">AmitkLengthUnit</a> length_unit);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>length_unit</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -55,6 +55,7 @@ static gchar * threshold_names[] = {
   "global"
 };
 
+#define LEGACY_COLOR_TABLE_NUM 22
 gchar * color_table_legacy_names[] = {
   "black/white linear", 
   "white/black linear", 
@@ -319,7 +320,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   /* figure out the color table */
   temp_string = xml_get_string(nodes, "color_table");
   if (temp_string != NULL)
-    for (i_color_table=0; i_color_table < AMITK_COLOR_TABLE_NUM; i_color_table++) 
+    for (i_color_table=0; i_color_table < LEGACY_COLOR_TABLE_NUM; i_color_table++) 
       if (g_ascii_strcasecmp(temp_string, color_table_legacy_names[i_color_table]) == 0)
 	for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
 	  new_volume->color_table[i_view_mode] = i_color_table;

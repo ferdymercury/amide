@@ -14,6 +14,9 @@ AmitkLineProfile
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_LINE_PROFILE_VIEW ##### -->
 <para>
 
@@ -53,6 +56,18 @@ AmitkLineProfile
 
 @linep: 
 
+
+<!-- ##### STRUCT AmitkLineProfile ##### -->
+<para>
+
+</para>
+
+@parent: 
+@view: 
+@angle: 
+@visible: 
+@start_point: 
+@end_point: 
 
 <!-- ##### STRUCT AmitkLineProfileDataElement ##### -->
 <para>

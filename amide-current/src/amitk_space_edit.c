@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include "amide.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 #include "amitk_space_edit.h"
@@ -116,7 +117,7 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   for (i_view=0;i_view< AMITK_VIEW_NUM;i_view++) {
 
     /* label */
-    label = gtk_label_new(view_names[i_view]);
+    label = gtk_label_new(amitk_view_get_name(i_view));
     gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 

@@ -1,3 +1,28 @@
+0.9.0
+	* removing gtk 2.2 dependencies, now dependent on gtk >= 2.10
+	 -gtk_option_menu switched to gtk_combo
+	 -gnome_config use switched to GConf on unix
+	 -config settings now saved in registry on win32
+	 -bug with dragging of off canvases now gone
+	* removed dependencies on libgnome and libgnomeui
+	 -GNOMEUI menu/toolbar switched to GtkAction
+	 -GnomeDruid replaced with GtkAssistant
+	 -gnome_program_init replaced with gtk_init
+	* amitk_space_transform now propagates correctly through children
+	* xpm icons removed, all icons now from .h pixbuf data
+	* dicom import now reads in full series date and time [1]
+	* now can export data sets via libdcmdata [2,3]
+	* fixed errors with cropping type conversion
+	* change Categories in .desktop file [4]
+	* extended math capabilities for multi-frame data sets [5]
+	* changed labeling of %ID/g to %ID/cc to make explicit [6]
+	[1] Requested by David Yerushalmi
+	[2] Requested by Aurlie Dutour
+	[3] Requested by Matthew Leonard
+	[4] Change by Dominique Belhachemi
+	[5] Requested by Michael Braden
+	[6] Requested by James Yu
+	
 0.8.23
 	* help window incorrect for freehand roi's [1]
 	* changed erase outside roi to shift-m3 from shift-ctrl-m3

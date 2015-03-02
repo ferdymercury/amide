@@ -16,6 +16,9 @@ AmitkRoi
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_ROI_TYPE ##### -->
 <para>
 
@@ -24,7 +27,23 @@ AmitkRoi
 @roi: 
 
 
-<!-- ##### MACRO AMITK_ROI_ISOCONTOUR_VALUE ##### -->
+<!-- ##### MACRO AMITK_ROI_ISOCONTOUR_MIN_VALUE ##### -->
+<para>
+
+</para>
+
+@roi: 
+
+
+<!-- ##### MACRO AMITK_ROI_ISOCONTOUR_MAX_VALUE ##### -->
+<para>
+
+</para>
+
+@roi: 
+
+
+<!-- ##### MACRO AMITK_ROI_ISOCONTOUR_RANGE ##### -->
 <para>
 
 </para>
@@ -56,6 +75,14 @@ AmitkRoi
 @roi: 
 
 
+<!-- ##### MACRO AMITK_ROI_TYPE_FREEHAND ##### -->
+<para>
+
+</para>
+
+@roi: 
+
+
 <!-- ##### MACRO AMITK_ROI_GRANULARITY ##### -->
 <para>
 
@@ -73,7 +100,39 @@ AmitkRoi
 @AMITK_ROI_TYPE_BOX: 
 @AMITK_ROI_TYPE_ISOCONTOUR_2D: 
 @AMITK_ROI_TYPE_ISOCONTOUR_3D: 
+@AMITK_ROI_TYPE_FREEHAND_2D: 
+@AMITK_ROI_TYPE_FREEHAND_3D: 
 @AMITK_ROI_TYPE_NUM: 
+
+<!-- ##### ENUM AmitkRoiIsocontourRange ##### -->
+<para>
+
+</para>
+
+@AMITK_ROI_ISOCONTOUR_RANGE_ABOVE_MIN: 
+@AMITK_ROI_ISOCONTOUR_RANGE_BELOW_MAX: 
+@AMITK_ROI_ISOCONTOUR_RANGE_BETWEEN_MIN_MAX: 
+@AMITK_ROI_ISOCONTOUR_RANGE_NUM: 
+
+<!-- ##### STRUCT AmitkRoi ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkRoi::roi-changed ##### -->
+<para>
+
+</para>
+
+@amitkroi: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkRoi::roi-type-changed ##### -->
+<para>
+
+</para>
+
+@amitkroi: the object which received the signal.
 
 <!-- ##### FUNCTION amitk_roi_new ##### -->
 <para>
@@ -112,10 +171,11 @@ AmitkRoi
 @roi: 
 @canvas_slice: 
 @pixel_dim: 
+@fill_map_roi: 
 @Returns: 
 
 
-<!-- ##### FUNCTION amitk_roi_isocontour_set_voxel_size ##### -->
+<!-- ##### FUNCTION amitk_roi_set_voxel_size ##### -->
 <para>
 
 </para>
@@ -124,7 +184,7 @@ AmitkRoi
 @voxel_size: 
 
 
-<!-- ##### FUNCTION amitk_roi_isocontour_calc_far_corner ##### -->
+<!-- ##### FUNCTION amitk_roi_calc_far_corner ##### -->
 <para>
 
 </para>
@@ -139,17 +199,30 @@ AmitkRoi
 
 @roi: 
 @ds: 
-@value_voxel: 
+@start_voxel: 
+@isocontour_min_value: 
+@isocontour_max_value: 
+@isocontour_range: 
 
 
-<!-- ##### FUNCTION amitk_roi_isocontour_erase_area ##### -->
+<!-- ##### FUNCTION amitk_roi_manipulate_area ##### -->
 <para>
 
 </para>
 
 @roi: 
+@erase: 
 @erase_voxel: 
 @area_size: 
+
+
+<!-- ##### FUNCTION amitk_roi_get_center_of_mass ##### -->
+<para>
+
+</para>
+
+@roi: 
+@Returns: 
 
 
 <!-- ##### FUNCTION amitk_roi_set_type ##### -->
@@ -171,6 +244,7 @@ AmitkRoi
 @frame: 
 @gate: 
 @inverse: 
+@accurate: 
 @calculation: 
 @data: 
 

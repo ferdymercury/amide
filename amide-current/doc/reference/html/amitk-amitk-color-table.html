@@ -1,52 +1,86 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>amitk_color_table</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="next" href="amitk-amitk-common.html" title="amitk_common"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk_base.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-amitk-common.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-amitk-color-table"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">amitk_color_table</span></h2><p>amitk_color_table &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>amitk_color_table</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="prev" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="next" href="amitk-amitk-common.html" title="amitk_common">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk_base.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="amitk-amitk-common.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id302550" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id341145" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-amitk-color-table"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id302550"></a><span class="refentrytitle">amitk_color_table</span>
+</h2>
+<p>amitk_color_table</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-enum        <a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a>;
-typedef     <a href="amitk-amitk-color-table.html#color-data-t">color_data_t</a>;
-typedef     <a href="amitk-amitk-color-table.html#color-data16-t">color_data16_t</a>;
-typedef     <a href="amitk-amitk-color-table.html#hsv-data-t">hsv_data_t</a>;
-#define     <a href="amitk-amitk-color-table.html#amitk-color-table-rgba-to-uint32">amitk_color_table_rgba_to_uint32</a>(rgba)
-rgba_t      <a href="amitk-amitk-color-table.html#amitk-color-table-outline-color">amitk_color_table_outline_color</a> (<a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
-                                             gboolean highlight);
-rgba_t      <a href="amitk-amitk-color-table.html#amitk-color-table-lookup">amitk_color_table_lookup</a>        (<a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> datum,
-                                             <a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
-                                             <a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> min,
-                                             <a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> max);
-const gchar* <a href="amitk-amitk-color-table.html#amitk-color-table-get-name">amitk_color_table_get_name</a>     (const <a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which);
-</pre></div><div class="refsect1" lang="en"><a name="id2613967"></a><h2>Description</h2><p>
+enum                <a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a>;
+typedef             <a class="link" href="amitk-amitk-color-table.html#color-data-t">color_data_t</a>;
+typedef             <a class="link" href="amitk-amitk-color-table.html#color-data16-t">color_data16_t</a>;
+typedef             <a class="link" href="amitk-amitk-color-table.html#hsv-data-t">hsv_data_t</a>;
+                    <a class="link" href="amitk-amitk-color-table.html#rgba-t">rgba_t</a>;
+                    <a class="link" href="amitk-amitk-color-table.html#rgba16-t">rgba16_t</a>;
+                    <a class="link" href="amitk-amitk-color-table.html#rgb-t">rgb_t</a>;
+                    <a class="link" href="amitk-amitk-color-table.html#hsv-t">hsv_t</a>;
+#define             <a class="link" href="amitk-amitk-color-table.html#amitk-color-table-rgba-to-uint32">amitk_color_table_rgba_to_uint32</a>    (rgba)
+<a class="link" href="amitk-amitk-color-table.html#rgba-t">rgba_t</a>              <a class="link" href="amitk-amitk-color-table.html#amitk-color-table-outline-color">amitk_color_table_outline_color</a>     (<a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> highlight);
+<a class="link" href="amitk-amitk-color-table.html#rgba-t">rgba_t</a>              <a class="link" href="amitk-amitk-color-table.html#amitk-color-table-lookup">amitk_color_table_lookup</a>            (<a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> datum,
+                                                         <a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> min,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> max);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-amitk-color-table.html#amitk-color-table-get-name">amitk_color_table_get_name</a>          (const <a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which);
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id341145"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2613977"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2613983"></a><h3><a name="AmitkColorTable"></a>enum AmitkColorTable</h3><a class="indexterm" name="id2613994"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id341159"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id341169"></a><h3>
+<a name="AmitkColorTable"></a>enum AmitkColorTable</h3>
+<a class="indexterm" name="id341181"></a><pre class="programlisting">typedef enum {
   AMITK_COLOR_TABLE_BW_LINEAR, 
   AMITK_COLOR_TABLE_WB_LINEAR, 
   AMITK_COLOR_TABLE_BWB_LINEAR,
@@ -59,6 +93,8 @@ const gchar* <a href="amitk-amitk-color-table.html#amitk-color-table-get-name">a
   AMITK_COLOR_TABLE_INV_GREEN_TEMP, 
   AMITK_COLOR_TABLE_HOT_METAL, 
   AMITK_COLOR_TABLE_INV_HOT_METAL, 
+  AMITK_COLOR_TABLE_HOT_METAL_CONTOUR,
+  AMITK_COLOR_TABLE_INV_HOT_METAL_CONTOUR,
   AMITK_COLOR_TABLE_HOT_BLUE, 
   AMITK_COLOR_TABLE_INV_HOT_BLUE, 
   AMITK_COLOR_TABLE_HOT_GREEN, 
@@ -71,47 +107,226 @@ const gchar* <a href="amitk-amitk-color-table.html#amitk-color-table-get-name">a
   AMITK_COLOR_TABLE_INV_NIH, 
   AMITK_COLOR_TABLE_NUM
 } AmitkColorTable; 
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2614021"></a><h3><a name="color-data-t"></a>color_data_t</h3><a class="indexterm" name="id2614032"></a><pre class="programlisting">typedef guint8 color_data_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341203"></a><h3>
+<a name="color-data-t"></a>color_data_t</h3>
+<a class="indexterm" name="id341215"></a><pre class="programlisting">typedef guint8 color_data_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2614047"></a><h3><a name="color-data16-t"></a>color_data16_t</h3><a class="indexterm" name="id2614058"></a><pre class="programlisting">typedef guint16 color_data16_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341230"></a><h3>
+<a name="color-data16-t"></a>color_data16_t</h3>
+<a class="indexterm" name="id341242"></a><pre class="programlisting">typedef guint16 color_data16_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2614073"></a><h3><a name="hsv-data-t"></a>hsv_data_t</h3><a class="indexterm" name="id2614083"></a><pre class="programlisting">typedef gdouble hsv_data_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341257"></a><h3>
+<a name="hsv-data-t"></a>hsv_data_t</h3>
+<a class="indexterm" name="id341269"></a><pre class="programlisting">typedef gdouble hsv_data_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2614098"></a><h3><a name="amitk-color-table-rgba-to-uint32"></a>amitk_color_table_rgba_to_uint32()</h3><a class="indexterm" name="id2614110"></a><pre class="programlisting">#define amitk_color_table_rgba_to_uint32(rgba) (((rgba).r&lt;&lt;24) | ((rgba).g&lt;&lt;16) | ((rgba).b&lt;&lt;8) | ((rgba).a&lt;&lt;0))
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341284"></a><h3>
+<a name="rgba-t"></a>rgba_t</h3>
+<a class="indexterm" name="id341296"></a><pre class="programlisting">typedef struct {
+  color_data_t r;
+  color_data_t g;
+  color_data_t b;
+  color_data_t a;
+} rgba_t;
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>rgba</tt></i> :</span></td><td>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341311"></a><h3>
+<a name="rgba16-t"></a>rgba16_t</h3>
+<a class="indexterm" name="id341323"></a><pre class="programlisting">typedef struct {
+  color_data16_t r;
+  color_data16_t g;
+  color_data16_t b;
+  color_data16_t a;
+} rgba16_t;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341338"></a><h3>
+<a name="rgb-t"></a>rgb_t</h3>
+<a class="indexterm" name="id341350"></a><pre class="programlisting">typedef struct {
+  color_data_t r;
+  color_data_t g;
+  color_data_t b;
+} rgb_t;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341366"></a><h3>
+<a name="hsv-t"></a>hsv_t</h3>
+<a class="indexterm" name="id341378"></a><pre class="programlisting">typedef struct {
+  hsv_data_t h;
+  hsv_data_t s;
+  hsv_data_t v;
+} hsv_t;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341393"></a><h3>
+<a name="amitk-color-table-rgba-to-uint32"></a>amitk_color_table_rgba_to_uint32()</h3>
+<a class="indexterm" name="id341405"></a><pre class="programlisting">#define amitk_color_table_rgba_to_uint32(rgba) (((rgba).r&lt;&lt;24) | ((rgba).g&lt;&lt;16) | ((rgba).b&lt;&lt;8) | ((rgba).a&lt;&lt;0))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>rgba</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2614142"></a><h3><a name="amitk-color-table-outline-color"></a>amitk_color_table_outline_color ()</h3><a class="indexterm" name="id2614156"></a><pre class="programlisting">rgba_t      amitk_color_table_outline_color (<a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
-                                             gboolean highlight);</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341437"></a><h3>
+<a name="amitk-color-table-outline-color"></a>amitk_color_table_outline_color ()</h3>
+<a class="indexterm" name="id341450"></a><pre class="programlisting"><a class="link" href="amitk-amitk-color-table.html#rgba-t">rgba_t</a>              amitk_color_table_outline_color     (<a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> highlight);</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>which</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>highlight</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>highlight</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2614237"></a><h3><a name="amitk-color-table-lookup"></a>amitk_color_table_lookup ()</h3><a class="indexterm" name="id2614248"></a><pre class="programlisting">rgba_t      amitk_color_table_lookup        (<a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> datum,
-                                             <a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
-                                             <a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> min,
-                                             <a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> max);</pre><p>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341529"></a><h3>
+<a name="amitk-color-table-lookup"></a>amitk_color_table_lookup ()</h3>
+<a class="indexterm" name="id341541"></a><pre class="programlisting"><a class="link" href="amitk-amitk-color-table.html#rgba-t">rgba_t</a>              amitk_color_table_lookup            (<a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> datum,
+                                                         <a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> min,
+                                                         <a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a> max);</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>datum</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>min</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>max</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>datum</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>min</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>max</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2614368"></a><h3><a name="amitk-color-table-get-name"></a>amitk_color_table_get_name ()</h3><a class="indexterm" name="id2614381"></a><pre class="programlisting">const gchar* amitk_color_table_get_name     (const <a href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which);</pre><p>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id341659"></a><h3>
+<a name="amitk-color-table-get-name"></a>amitk_color_table_get_name ()</h3>
+<a class="indexterm" name="id341672"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_color_table_get_name          (const <a class="link" href="amitk-amitk-color-table.html#AmitkColorTable">AmitkColorTable</a> which);</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>which</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk_base.html"><b>&lt;&lt; Part II. AMITK Core Objects</b></a></td><td align="right"><a accesskey="n" href="amitk-amitk-common.html"><b>amitk_common &gt;&gt;</b></a></td></tr></table></body></html>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

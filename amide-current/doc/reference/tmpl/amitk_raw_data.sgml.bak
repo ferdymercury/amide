@@ -16,6 +16,9 @@ AmitkRawData
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_RAW_DATA_FORMAT ##### -->
 <para>
 
@@ -192,6 +195,12 @@ AmitkRawData
 @AMITK_RAW_FORMAT_ASCII_8_NE: 
 @AMITK_RAW_FORMAT_NUM: 
 
+<!-- ##### STRUCT AmitkRawData ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### MACRO amitk_raw_data_includes_voxel ##### -->
 <para>
 
@@ -225,6 +234,14 @@ AmitkRawData
 @rd: 
 
 
+<!-- ##### MACRO amitk_raw_data_get_data_mem0 ##### -->
+<para>
+
+</para>
+
+@rd: 
+
+
 <!-- ##### FUNCTION amitk_raw_data_new ##### -->
 <para>
 
@@ -240,6 +257,39 @@ AmitkRawData
 
 @format: 
 @dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_new_with_data0 ##### -->
+<para>
+
+</para>
+
+@format: 
+@dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_new_2D_with_data0 ##### -->
+<para>
+
+</para>
+
+@format: 
+@y_dim: 
+@x_dim: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_raw_data_new_3D_with_data0 ##### -->
+<para>
+
+</para>
+
+@format: 
+@z_dim: 
+@y_dim: 
+@x_dim: 
 @Returns: 
 
 

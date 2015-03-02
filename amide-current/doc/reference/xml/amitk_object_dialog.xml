@@ -1,21 +1,25 @@
 <refentry id="amitk-AmitkObjectDialog">
 <refmeta>
-<refentrytitle>AmitkObjectDialog</refentrytitle>
+<refentrytitle role="top_of_page">AmitkObjectDialog</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>AmitkObjectDialog</refname><refpurpose></refpurpose>
+<refname>AmitkObjectDialog</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-object-dialog-new">amitk_object_dialog_new</link>         (<link linkend="AmitkObject">AmitkObject</link> *object);
+                    <link linkend="AmitkObjectDialog">AmitkObjectDialog</link>;
+<link linkend="GtkWidget">GtkWidget</link>*          <link linkend="amitk-object-dialog-new">amitk_object_dialog_new</link>             (<link linkend="AmitkObject">AmitkObject</link> *object);
 
 </synopsis>
 </refsynopsisdiv>
@@ -28,25 +32,82 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="amitk-object-dialog-new"/>amitk_object_dialog_new ()</title>
-<indexterm><primary>amitk_object_dialog_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_object_dialog_new         (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<title><anchor id="AmitkObjectDialog" role="struct"/>AmitkObjectDialog</title>
+<indexterm><primary>AmitkObjectDialog</primary></indexterm><programlisting>typedef struct {
+  GtkDialog parent;
+
+  AmitkObject * object;
+  AmitkObject * original_object;
+
+  gboolean aspect_ratio;
+  
+  GtkWidget * name_entry;
+  GtkWidget * roi_type_menu;
+  GtkWidget * scan_date_entry;
+  GtkWidget * subject_name_entry;
+  GtkWidget * subject_id_entry;
+  GtkWidget * subject_dob_entry;
+  GtkWidget * modality_menu;
+  GtkWidget * subject_orientation_menu;
+  GtkWidget * scaling_factor_spin;
+  GtkWidget * dose_spin;
+  GtkWidget * dose_unit_menu;
+  GtkWidget * weight_spin;
+  GtkWidget * weight_unit_menu;
+  GtkWidget * cylinder_spin;
+  GtkWidget * cylinder_unit_menu;
+  GtkWidget * creation_date_entry;
+  GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
+  GtkWidget * conversion_button[AMITK_CONVERSION_NUM];
+
+  GtkWidget * center_spin[AMITK_AXIS_NUM];
+  GtkWidget * voxel_size_spin[AMITK_AXIS_NUM];
+  GtkWidget * dimension_spin[AMITK_AXIS_NUM];
+
+  GtkWidget * start_spin;
+  GtkWidget * * duration_spins;
+
+  GtkWidget * isocontour_min_value_entry;
+  GtkWidget * isocontour_max_value_entry;
+  GtkWidget * voxel_dim_entry;
+
+  /* study preferences */
+  GtkWidget * roi_width_spin;
+  GnomeCanvasItem * roi_item;
+  GtkWidget * line_style_menu;
+  GtkWidget * fill_roi_button;
+  GtkWidget * layout_button1;
+  GtkWidget * layout_button2;
+  GtkWidget * panel_layout_button1;
+  GtkWidget * panel_layout_button2;
+  GtkWidget * panel_layout_button3;
+  GtkWidget * maintain_size_button;
+  GtkWidget * target_size_spin;
+} AmitkObjectDialog;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-object-dialog-new" role="function"/>amitk_object_dialog_new ()</title>
+<indexterm><primary>amitk_object_dialog_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*          amitk_object_dialog_new             (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

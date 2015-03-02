@@ -16,6 +16,9 @@ AmitkCanvas
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_CANVAS_VIEW ##### -->
 <para>
 
@@ -48,6 +51,59 @@ AmitkCanvas
 @AMITK_CANVAS_TARGET_ACTION_HIDE: 
 @AMITK_CANVAS_TARGET_ACTION_SHOW: 
 @AMITK_CANVAS_TARGET_ACTION_LEAVE: 
+
+<!-- ##### STRUCT AmitkCanvas ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkCanvas::erase-volume ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkCanvas::help-event ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkCanvas::new-object ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkCanvas::view-changed ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkCanvas::view-changing ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
 
 <!-- ##### FUNCTION amitk_canvas_new ##### -->
 <para>
@@ -88,6 +144,15 @@ AmitkCanvas
 @action: 
 @center: 
 @thickness: 
+
+
+<!-- ##### FUNCTION amitk_canvas_set_time_on_image ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@time_on_image: 
 
 
 <!-- ##### FUNCTION amitk_canvas_get_width ##### -->

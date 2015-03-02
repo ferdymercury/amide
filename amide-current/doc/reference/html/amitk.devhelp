@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE book PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "">
 <book xmlns="http://www.devhelp.net/book" title="AMITK Reference Manual" link="index.html" author="Andy Loening" name="amitk">
   <chapters>
     <sub name="AMITK+ Overview" link="amitk_intro.html">
@@ -14,7 +15,7 @@
       <sub name="AmitkRawData" link="amitk-AmitkRawData.html"/>
       <sub name="AmitkSpace" link="amitk-AmitkSpace.html"/>
       <sub name="amitk_type" link="amitk-amitk-type.html"/>
-      <sub name="amitk_volume" link="amitk-amitk-volume.html"/>
+      <sub name="AmitkVolume" link="amitk-AmitkVolume.html"/>
     </sub>
     <sub name="AMITK Objects" link="amitk_objects.html">
       <sub name="AMITK Object Hierarchy" link="ch01.html"/>
@@ -41,27 +42,64 @@
     <function name="color_data_t" link="amitk-amitk-color-table.html#color-data-t"/>
     <function name="color_data16_t" link="amitk-amitk-color-table.html#color-data16-t"/>
     <function name="hsv_data_t" link="amitk-amitk-color-table.html#hsv-data-t"/>
+    <function name="rgba_t" link="amitk-amitk-color-table.html#rgba-t"/>
+    <function name="rgba16_t" link="amitk-amitk-color-table.html#rgba16-t"/>
+    <function name="rgb_t" link="amitk-amitk-color-table.html#rgb-t"/>
+    <function name="hsv_t" link="amitk-amitk-color-table.html#hsv-t"/>
     <function name="amitk_color_table_rgba_to_uint32()" link="amitk-amitk-color-table.html#amitk-color-table-rgba-to-uint32"/>
     <function name="amitk_color_table_outline_color ()" link="amitk-amitk-color-table.html#amitk-color-table-outline-color"/>
     <function name="amitk_color_table_lookup ()" link="amitk-amitk-color-table.html#amitk-color-table-lookup"/>
     <function name="amitk_color_table_get_name ()" link="amitk-amitk-color-table.html#amitk-color-table-get-name"/>
+    <function name="AMITK_RESPONSE_EXECUTE" link="amitk-amitk-common.html#AMITK-RESPONSE-EXECUTE:CAPS"/>
+    <function name="AMITK_RESPONSE_COPY" link="amitk-amitk-common.html#AMITK-RESPONSE-COPY:CAPS"/>
+    <function name="AMITK_RESPONSE_SAVE_AS" link="amitk-amitk-common.html#AMITK-RESPONSE-SAVE-AS:CAPS"/>
+    <function name="AMITK_RESPONSE_SAVE_RAW_AS" link="amitk-amitk-common.html#AMITK-RESPONSE-SAVE-RAW-AS:CAPS"/>
+    <function name="AMITK_UPDATE_DIVIDER" link="amitk-amitk-common.html#AMITK-UPDATE-DIVIDER:CAPS"/>
+    <function name="AMITK_FILE_VERSION" link="amitk-amitk-common.html#AMITK-FILE-VERSION:CAPS"/>
+    <function name="AMITK_FLAT_FILE_MAGIC_STRING" link="amitk-amitk-common.html#AMITK-FLAT-FILE-MAGIC-STRING:CAPS"/>
+    <function name="enum AmitkLayout" link="amitk-amitk-common.html#AmitkLayout"/>
+    <function name="enum AmitkPanelLayout" link="amitk-amitk-common.html#AmitkPanelLayout"/>
+    <function name="enum AmitkViewMode" link="amitk-amitk-common.html#AmitkViewMode"/>
+    <function name="enum AmitkModality" link="amitk-amitk-common.html#AmitkModality"/>
+    <function name="enum AmitkLimit" link="amitk-amitk-common.html#AmitkLimit"/>
+    <function name="enum AmitkWindow" link="amitk-amitk-common.html#AmitkWindow"/>
+    <function name="enum AmitkThresholdStyle" link="amitk-amitk-common.html#AmitkThresholdStyle"/>
+    <function name="enum AmitkHelpInfo" link="amitk-amitk-common.html#AmitkHelpInfo"/>
+    <function name="amitk_fixed_font_desc" link="amitk-amitk-common.html#amitk-fixed-font-desc"/>
+    <function name="gconf_client" link="amitk-amitk-common.html#gconf-client"/>
+    <function name="amitk_common_font_init ()" link="amitk-amitk-common.html#amitk-common-font-init"/>
+    <function name="amitk_append_str_with_newline ()" link="amitk-amitk-common.html#amitk-append-str-with-newline"/>
+    <function name="amitk_append_str ()" link="amitk-amitk-common.html#amitk-append-str"/>
     <function name="amitk_real_cell_data_func ()" link="amitk-amitk-common.html#amitk-real-cell-data-func"/>
     <function name="amitk_spin_button_scientific_output ()" link="amitk-amitk-common.html#amitk-spin-button-scientific-output"/>
     <function name="amitk_get_pixbuf_from_canvas ()" link="amitk-amitk-common.html#amitk-get-pixbuf-from-canvas"/>
+    <function name="amitk_gconf_has_value ()" link="amitk-amitk-common.html#amitk-gconf-has-value"/>
+    <function name="amitk_gconf_get_int_with_default ()" link="amitk-amitk-common.html#amitk-gconf-get-int-with-default"/>
+    <function name="amitk_gconf_get_float_with_default ()" link="amitk-amitk-common.html#amitk-gconf-get-float-with-default"/>
+    <function name="amitk_gconf_get_bool_with_default ()" link="amitk-amitk-common.html#amitk-gconf-get-bool-with-default"/>
+    <function name="amitk_gconf_get_string_with_default ()" link="amitk-amitk-common.html#amitk-gconf-get-string-with-default"/>
+    <function name="amitk_is_xif_directory ()" link="amitk-amitk-common.html#amitk-is-xif-directory"/>
+    <function name="amitk_is_xif_flat_file ()" link="amitk-amitk-common.html#amitk-is-xif-flat-file"/>
+    <function name="amitk_layout_get_name ()" link="amitk-amitk-common.html#amitk-layout-get-name"/>
+    <function name="amitk_panel_layout_get_name ()" link="amitk-amitk-common.html#amitk-panel-layout-get-name"/>
+    <function name="amitk_limit_get_name ()" link="amitk-amitk-common.html#amitk-limit-get-name"/>
+    <function name="amitk_window_get_name ()" link="amitk-amitk-common.html#amitk-window-get-name"/>
+    <function name="amitk_modality_get_name ()" link="amitk-amitk-common.html#amitk-modality-get-name"/>
     <function name="enum AmitkFilter" link="amitk-amitk-filter.html#AmitkFilter"/>
-    <function name="AMITK_FILTER_FFT_SIZE" link="amitk-amitk-filter.html#AMITK-FILTER-FFT-SIZE-CAPS"/>
+    <function name="AMITK_FILTER_FFT_SIZE" link="amitk-amitk-filter.html#AMITK-FILTER-FFT-SIZE:CAPS"/>
     <function name="amitk_filter_calculate_gaussian_kernel_complex ()" link="amitk-amitk-filter.html#amitk-filter-calculate-gaussian-kernel-complex"/>
     <function name="amitk_filter_3D_FFT ()" link="amitk-amitk-filter.html#amitk-filter-3D-FFT"/>
     <function name="amitk_filter_inverse_3D_FFT ()" link="amitk-amitk-filter.html#amitk-filter-inverse-3D-FFT"/>
     <function name="amitk_filter_complex_mult ()" link="amitk-amitk-filter.html#amitk-filter-complex-mult"/>
     <function name="amitk_filter_find_median_by_partial_sort ()" link="amitk-amitk-filter.html#amitk-filter-find-median-by-partial-sort"/>
     <function name="amitk_filter_get_name ()" link="amitk-amitk-filter.html#amitk-filter-get-name"/>
-    <function name="AMITK_LINE_PROFILE_VIEW()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-VIEW-CAPS"/>
-    <function name="AMITK_LINE_PROFILE_ANGLE()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-ANGLE-CAPS"/>
-    <function name="AMITK_LINE_PROFILE_VISIBLE()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-VISIBLE-CAPS"/>
-    <function name="AMITK_LINE_PROFILE_START_POINT()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-START-POINT-CAPS"/>
-    <function name="AMITK_LINE_PROFILE_END_POINT()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-END-POINT-CAPS"/>
-    <function name="struct AmitkLineProfileDataElement" link="amitk-AmitkLineProfile.html#AmitkLineProfileDataElement"/>
+    <function name="AMITK_LINE_PROFILE_VIEW()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-VIEW:CAPS"/>
+    <function name="AMITK_LINE_PROFILE_ANGLE()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-ANGLE:CAPS"/>
+    <function name="AMITK_LINE_PROFILE_VISIBLE()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-VISIBLE:CAPS"/>
+    <function name="AMITK_LINE_PROFILE_START_POINT()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-START-POINT:CAPS"/>
+    <function name="AMITK_LINE_PROFILE_END_POINT()" link="amitk-AmitkLineProfile.html#AMITK-LINE-PROFILE-END-POINT:CAPS"/>
+    <function name="AmitkLineProfile" link="amitk-AmitkLineProfile.html#AmitkLineProfile"/>
+    <function name="AmitkLineProfileDataElement" link="amitk-AmitkLineProfile.html#AmitkLineProfileDataElement"/>
     <function name="amitk_line_profile_new ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-new"/>
     <function name="amitk_line_profile_copy_in_place ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-copy-in-place"/>
     <function name="amitk_line_profile_set_view ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-set-view"/>
@@ -69,11 +107,12 @@
     <function name="amitk_line_profile_set_visible ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-set-visible"/>
     <function name="amitk_line_profile_set_start_point ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-set-start-point"/>
     <function name="amitk_line_profile_set_end_point ()" link="amitk-AmitkLineProfile.html#amitk-line-profile-set-end-point"/>
-    <function name="AMITK_OBJECT_CHILDREN()" link="amitk-AmitkObject.html#AMITK-OBJECT-CHILDREN-CAPS"/>
-    <function name="AMITK_OBJECT_PARENT()" link="amitk-AmitkObject.html#AMITK-OBJECT-PARENT-CAPS"/>
-    <function name="AMITK_OBJECT_NAME()" link="amitk-AmitkObject.html#AMITK-OBJECT-NAME-CAPS"/>
+    <function name="AMITK_OBJECT_CHILDREN()" link="amitk-AmitkObject.html#AMITK-OBJECT-CHILDREN:CAPS"/>
+    <function name="AMITK_OBJECT_PARENT()" link="amitk-AmitkObject.html#AMITK-OBJECT-PARENT:CAPS"/>
+    <function name="AMITK_OBJECT_NAME()" link="amitk-AmitkObject.html#AMITK-OBJECT-NAME:CAPS"/>
     <function name="enum AmitkObjectType" link="amitk-AmitkObject.html#AmitkObjectType"/>
     <function name="enum AmitkSelection" link="amitk-AmitkObject.html#AmitkSelection"/>
+    <function name="AmitkObject" link="amitk-AmitkObject.html#AmitkObject"/>
     <function name="amitk_object_new ()" link="amitk-AmitkObject.html#amitk-object-new"/>
     <function name="amitk_object_write_xml ()" link="amitk-AmitkObject.html#amitk-object-write-xml"/>
     <function name="amitk_object_read_xml ()" link="amitk-AmitkObject.html#amitk-object-read-xml"/>
@@ -108,19 +147,22 @@
     <function name="amitk_objects_read_xml ()" link="amitk-AmitkObject.html#amitk-objects-read-xml"/>
     <function name="amitk_object_type_get_name ()" link="amitk-AmitkObject.html#amitk-object-type-get-name"/>
     <function name="amitk_selection_get_name ()" link="amitk-AmitkObject.html#amitk-selection-get-name"/>
+    <function name="amide_data_file_xml_tag" link="amitk-AmitkObject.html#amide-data-file-xml-tag"/>
+    <function name="amide_data_file_xml_start_tag" link="amitk-AmitkObject.html#amide-data-file-xml-start-tag"/>
+    <function name="amide_data_file_xml_end_tag" link="amitk-AmitkObject.html#amide-data-file-xml-end-tag"/>
     <function name="enum AmitkView" link="amitk-amitk-point.html#AmitkView"/>
     <function name="enum AmitkAxis" link="amitk-amitk-point.html#AmitkAxis"/>
     <function name="enum AmitkDim" link="amitk-amitk-point.html#AmitkDim"/>
     <function name="enum AmitkLengthUnit" link="amitk-amitk-point.html#AmitkLengthUnit"/>
-    <function name="AMITK_TYPE_POINT" link="amitk-amitk-point.html#AMITK-TYPE-POINT-CAPS"/>
-    <function name="AMITK_TYPE_VOXEL" link="amitk-amitk-point.html#AMITK-TYPE-VOXEL-CAPS"/>
-    <function name="AMITK_TYPE_PIXEL" link="amitk-amitk-point.html#AMITK-TYPE-PIXEL-CAPS"/>
-    <function name="AMITK_TYPE_CANVAS_POINT" link="amitk-amitk-point.html#AMITK-TYPE-CANVAS-POINT-CAPS"/>
-    <function name="AMITK_TYPE_AXES" link="amitk-amitk-point.html#AMITK-TYPE-AXES-CAPS"/>
-    <function name="struct AmitkPoint" link="amitk-amitk-point.html#AmitkPoint"/>
-    <function name="struct AmitkVoxel" link="amitk-amitk-point.html#AmitkVoxel"/>
-    <function name="struct AmitkPixel" link="amitk-amitk-point.html#AmitkPixel"/>
-    <function name="struct AmitkCanvasPoint" link="amitk-amitk-point.html#AmitkCanvasPoint"/>
+    <function name="AMITK_TYPE_POINT" link="amitk-amitk-point.html#AMITK-TYPE-POINT:CAPS"/>
+    <function name="AMITK_TYPE_VOXEL" link="amitk-amitk-point.html#AMITK-TYPE-VOXEL:CAPS"/>
+    <function name="AMITK_TYPE_PIXEL" link="amitk-amitk-point.html#AMITK-TYPE-PIXEL:CAPS"/>
+    <function name="AMITK_TYPE_CANVAS_POINT" link="amitk-amitk-point.html#AMITK-TYPE-CANVAS-POINT:CAPS"/>
+    <function name="AMITK_TYPE_AXES" link="amitk-amitk-point.html#AMITK-TYPE-AXES:CAPS"/>
+    <function name="AmitkPoint" link="amitk-amitk-point.html#AmitkPoint"/>
+    <function name="AmitkVoxel" link="amitk-amitk-point.html#AmitkVoxel"/>
+    <function name="AmitkPixel" link="amitk-amitk-point.html#AmitkPixel"/>
+    <function name="AmitkCanvasPoint" link="amitk-amitk-point.html#AmitkCanvasPoint"/>
     <function name="amitk_point_get_type ()" link="amitk-amitk-point.html#amitk-point-get-type"/>
     <function name="amitk_point_copy ()" link="amitk-amitk-point.html#amitk-point-copy"/>
     <function name="amitk_point_free ()" link="amitk-amitk-point.html#amitk-point-free"/>
@@ -137,7 +179,7 @@
     <function name="amitk_canvas_point_get_type ()" link="amitk-amitk-point.html#amitk-canvas-point-get-type"/>
     <function name="amitk_canvas_point_copy ()" link="amitk-amitk-point.html#amitk-canvas-point-copy"/>
     <function name="amitk_canvas_point_free ()" link="amitk-amitk-point.html#amitk-canvas-point-free"/>
-    <function name="AmitkAxes[AMITK_AXIS_NUM]" link="amitk-amitk-point.html#AmitkAxes[AMITK-AXIS-NUM]"/>
+    <function name="AmitkAxes" link="amitk-amitk-point.html#AmitkAxes"/>
     <function name="amitk_axes_get_type ()" link="amitk-amitk-point.html#amitk-axes-get-type"/>
     <function name="amitk_axes_copy ()" link="amitk-amitk-point.html#amitk-axes-copy"/>
     <function name="amitk_axes_free ()" link="amitk-amitk-point.html#amitk-axes-free"/>
@@ -148,31 +190,35 @@
     <function name="amitk_axes_rotate_on_vector ()" link="amitk-amitk-point.html#amitk-axes-rotate-on-vector"/>
     <function name="amitk_axes_get_orthogonal_axis ()" link="amitk-amitk-point.html#amitk-axes-get-orthogonal-axis"/>
     <function name="amitk_axes_get_normal_axis ()" link="amitk-amitk-point.html#amitk-axes-get-normal-axis"/>
-    <function name="AmitkCorners[2]" link="amitk-amitk-point.html#AmitkCorners[2]"/>
+    <function name="AmitkCorners" link="amitk-amitk-point.html#AmitkCorners"/>
     <function name="amitk_corners_get_type ()" link="amitk-amitk-point.html#amitk-corners-get-type"/>
     <function name="amitk_corners_free ()" link="amitk-amitk-point.html#amitk-corners-free"/>
     <function name="amitk_corners_copy ()" link="amitk-amitk-point.html#amitk-corners-copy"/>
-    <function name="EPSILON" link="amitk-amitk-point.html#EPSILON-CAPS"/>
-    <function name="EMPTY" link="amitk-amitk-point.html#EMPTY-CAPS"/>
-    <function name="SIGMA_TO_FWHM" link="amitk-amitk-point.html#SIGMA-TO-FWHM-CAPS"/>
-    <function name="SIGMA_TO_FWTM" link="amitk-amitk-point.html#SIGMA-TO-FWTM-CAPS"/>
-    <function name="REAL_EQUAL()" link="amitk-amitk-point.html#REAL-EQUAL-CAPS"/>
-    <function name="EQUAL_ZERO()" link="amitk-amitk-point.html#EQUAL-ZERO-CAPS"/>
-    <function name="POINT_EQUAL()" link="amitk-amitk-point.html#POINT-EQUAL-CAPS"/>
-    <function name="VOXEL_EQUAL()" link="amitk-amitk-point.html#VOXEL-EQUAL-CAPS"/>
-    <function name="VOXEL_TO_POINT()" link="amitk-amitk-point.html#VOXEL-TO-POINT-CAPS"/>
-    <function name="POINT_TO_VOXEL()" link="amitk-amitk-point.html#POINT-TO-VOXEL-CAPS"/>
-    <function name="POINT_MAX()" link="amitk-amitk-point.html#POINT-MAX-CAPS"/>
-    <function name="POINT_DOT_PRODUCT()" link="amitk-amitk-point.html#POINT-DOT-PRODUCT-CAPS"/>
-    <function name="POINT_MAGNITUDE()" link="amitk-amitk-point.html#POINT-MAGNITUDE-CAPS"/>
-    <function name="POINT_ABS()" link="amitk-amitk-point.html#POINT-ABS-CAPS"/>
-    <function name="POINT_ADD()" link="amitk-amitk-point.html#POINT-ADD-CAPS"/>
-    <function name="POINT_SUB()" link="amitk-amitk-point.html#POINT-SUB-CAPS"/>
-    <function name="POINT_MULT()" link="amitk-amitk-point.html#POINT-MULT-CAPS"/>
-    <function name="POINT_DIV()" link="amitk-amitk-point.html#POINT-DIV-CAPS"/>
-    <function name="POINT_DIFF()" link="amitk-amitk-point.html#POINT-DIFF-CAPS"/>
-    <function name="POINT_CMULT()" link="amitk-amitk-point.html#POINT-CMULT-CAPS"/>
-    <function name="POINT_MADD()" link="amitk-amitk-point.html#POINT-MADD-CAPS"/>
+    <function name="EPSILON" link="amitk-amitk-point.html#EPSILON:CAPS"/>
+    <function name="CLOSE" link="amitk-amitk-point.html#CLOSE:CAPS"/>
+    <function name="EMPTY" link="amitk-amitk-point.html#EMPTY:CAPS"/>
+    <function name="SIGMA_TO_FWHM" link="amitk-amitk-point.html#SIGMA-TO-FWHM:CAPS"/>
+    <function name="SIGMA_TO_FWTM" link="amitk-amitk-point.html#SIGMA-TO-FWTM:CAPS"/>
+    <function name="REAL_EQUAL()" link="amitk-amitk-point.html#REAL-EQUAL:CAPS"/>
+    <function name="EQUAL_ZERO()" link="amitk-amitk-point.html#EQUAL-ZERO:CAPS"/>
+    <function name="REAL_CLOSE()" link="amitk-amitk-point.html#REAL-CLOSE:CAPS"/>
+    <function name="POINT_EQUAL()" link="amitk-amitk-point.html#POINT-EQUAL:CAPS"/>
+    <function name="VOXEL_EQUAL()" link="amitk-amitk-point.html#VOXEL-EQUAL:CAPS"/>
+    <function name="VOXEL_TO_POINT()" link="amitk-amitk-point.html#VOXEL-TO-POINT:CAPS"/>
+    <function name="POINT_TO_VOXEL()" link="amitk-amitk-point.html#POINT-TO-VOXEL:CAPS"/>
+    <function name="VOXEL_CORNER()" link="amitk-amitk-point.html#VOXEL-CORNER:CAPS"/>
+    <function name="POINT_MAX()" link="amitk-amitk-point.html#POINT-MAX:CAPS"/>
+    <function name="POINT_DOT_PRODUCT()" link="amitk-amitk-point.html#POINT-DOT-PRODUCT:CAPS"/>
+    <function name="POINT_MAGNITUDE()" link="amitk-amitk-point.html#POINT-MAGNITUDE:CAPS"/>
+    <function name="POINT_ABS()" link="amitk-amitk-point.html#POINT-ABS:CAPS"/>
+    <function name="POINT_ADD()" link="amitk-amitk-point.html#POINT-ADD:CAPS"/>
+    <function name="POINT_SUB()" link="amitk-amitk-point.html#POINT-SUB:CAPS"/>
+    <function name="POINT_MULT()" link="amitk-amitk-point.html#POINT-MULT:CAPS"/>
+    <function name="POINT_DIV()" link="amitk-amitk-point.html#POINT-DIV:CAPS"/>
+    <function name="POINT_DIFF()" link="amitk-amitk-point.html#POINT-DIFF:CAPS"/>
+    <function name="POINT_CMULT()" link="amitk-amitk-point.html#POINT-CMULT:CAPS"/>
+    <function name="POINT_CROSS_PRODUCT()" link="amitk-amitk-point.html#POINT-CROSS-PRODUCT:CAPS"/>
+    <function name="POINT_MADD()" link="amitk-amitk-point.html#POINT-MADD:CAPS"/>
     <function name="canvas_point_2_point ()" link="amitk-amitk-point.html#canvas-point-2-point"/>
     <function name="point_2_canvas_point ()" link="amitk-amitk-point.html#point-2-canvas-point"/>
     <function name="voxel_print ()" link="amitk-amitk-point.html#voxel-print"/>
@@ -183,26 +229,28 @@
     <function name="point_get_component ()" link="amitk-amitk-point.html#point-get-component"/>
     <function name="point_set_component ()" link="amitk-amitk-point.html#point-set-component"/>
     <function name="zero_point" link="amitk-amitk-point.html#zero-point"/>
+    <function name="ONE_POINT" link="amitk-amitk-point.html#ONE-POINT:CAPS"/>
     <function name="one_point" link="amitk-amitk-point.html#one-point"/>
     <function name="ten_point" link="amitk-amitk-point.html#ten-point"/>
     <function name="zero_voxel" link="amitk-amitk-point.html#zero-voxel"/>
+    <function name="ONE_VOXEL" link="amitk-amitk-point.html#ONE-VOXEL:CAPS"/>
     <function name="one_voxel" link="amitk-amitk-point.html#one-voxel"/>
     <function name="base_axes" link="amitk-amitk-point.html#base-axes"/>
     <function name="amitk_view_get_name ()" link="amitk-amitk-point.html#amitk-view-get-name"/>
     <function name="amitk_dim_get_name ()" link="amitk-amitk-point.html#amitk-dim-get-name"/>
     <function name="amitk_axis_get_name ()" link="amitk-amitk-point.html#amitk-axis-get-name"/>
     <function name="amitk_length_unit_get_name ()" link="amitk-amitk-point.html#amitk-length-unit-get-name"/>
-    <function name="AMITK_RAW_DATA_FORMAT()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-FORMAT-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM_X()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-X-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM_Y()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-Y-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM_Z()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-Z-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM_G()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-G-CAPS"/>
-    <function name="AMITK_RAW_DATA_DIM_T()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-T-CAPS"/>
-    <function name="GINT32_TO_PDP()" link="amitk-AmitkRawData.html#GINT32-TO-PDP-CAPS"/>
-    <function name="GUINT32_TO_PDP()" link="amitk-AmitkRawData.html#GUINT32-TO-PDP-CAPS"/>
-    <function name="GINT32_FROM_PDP()" link="amitk-AmitkRawData.html#GINT32-FROM-PDP-CAPS"/>
-    <function name="GUINT32_FROM_PDP()" link="amitk-AmitkRawData.html#GUINT32-FROM-PDP-CAPS"/>
+    <function name="AMITK_RAW_DATA_FORMAT()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-FORMAT:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM_X()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-X:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM_Y()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-Y:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM_Z()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-Z:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM_G()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-G:CAPS"/>
+    <function name="AMITK_RAW_DATA_DIM_T()" link="amitk-AmitkRawData.html#AMITK-RAW-DATA-DIM-T:CAPS"/>
+    <function name="GINT32_TO_PDP()" link="amitk-AmitkRawData.html#GINT32-TO-PDP:CAPS"/>
+    <function name="GUINT32_TO_PDP()" link="amitk-AmitkRawData.html#GUINT32-TO-PDP:CAPS"/>
+    <function name="GINT32_FROM_PDP()" link="amitk-AmitkRawData.html#GINT32-FROM-PDP:CAPS"/>
+    <function name="GUINT32_FROM_PDP()" link="amitk-AmitkRawData.html#GUINT32-FROM-PDP:CAPS"/>
     <function name="enum AmitkFormat" link="amitk-AmitkRawData.html#AmitkFormat"/>
     <function name="amitk_format_UBYTE_t" link="amitk-AmitkRawData.html#amitk-format-UBYTE-t"/>
     <function name="amitk_format_SBYTE_t" link="amitk-AmitkRawData.html#amitk-format-SBYTE-t"/>
@@ -213,12 +261,17 @@
     <function name="amitk_format_FLOAT_t" link="amitk-AmitkRawData.html#amitk-format-FLOAT-t"/>
     <function name="amitk_format_DOUBLE_t" link="amitk-AmitkRawData.html#amitk-format-DOUBLE-t"/>
     <function name="enum AmitkRawFormat" link="amitk-AmitkRawData.html#AmitkRawFormat"/>
+    <function name="AmitkRawData" link="amitk-AmitkRawData.html#AmitkRawData"/>
     <function name="amitk_raw_data_includes_voxel()" link="amitk-AmitkRawData.html#amitk-raw-data-includes-voxel"/>
     <function name="amitk_raw_data_num_voxels()" link="amitk-AmitkRawData.html#amitk-raw-data-num-voxels"/>
     <function name="amitk_raw_data_size_data_mem()" link="amitk-AmitkRawData.html#amitk-raw-data-size-data-mem"/>
     <function name="amitk_raw_data_get_data_mem()" link="amitk-AmitkRawData.html#amitk-raw-data-get-data-mem"/>
+    <function name="amitk_raw_data_get_data_mem0()" link="amitk-AmitkRawData.html#amitk-raw-data-get-data-mem0"/>
     <function name="amitk_raw_data_new ()" link="amitk-AmitkRawData.html#amitk-raw-data-new"/>
     <function name="amitk_raw_data_new_with_data ()" link="amitk-AmitkRawData.html#amitk-raw-data-new-with-data"/>
+    <function name="amitk_raw_data_new_with_data0 ()" link="amitk-AmitkRawData.html#amitk-raw-data-new-with-data0"/>
+    <function name="amitk_raw_data_new_2D_with_data0 ()" link="amitk-AmitkRawData.html#amitk-raw-data-new-2D-with-data0"/>
+    <function name="amitk_raw_data_new_3D_with_data0 ()" link="amitk-AmitkRawData.html#amitk-raw-data-new-3D-with-data0"/>
     <function name="amitk_raw_data_import_raw_file ()" link="amitk-AmitkRawData.html#amitk-raw-data-import-raw-file"/>
     <function name="amitk_raw_data_write_xml ()" link="amitk-AmitkRawData.html#amitk-raw-data-write-xml"/>
     <function name="amitk_raw_data_read_xml ()" link="amitk-AmitkRawData.html#amitk-raw-data-read-xml"/>
@@ -229,9 +282,10 @@
     <function name="amitk_raw_format_calc_num_bytes_per_slice()" link="amitk-AmitkRawData.html#amitk-raw-format-calc-num-bytes-per-slice"/>
     <function name="amitk_raw_format_calc_num_bytes()" link="amitk-AmitkRawData.html#amitk-raw-format-calc-num-bytes"/>
     <function name="amitk_raw_format_get_name ()" link="amitk-AmitkRawData.html#amitk-raw-format-get-name"/>
-    <function name="AMITK_SPACE_AXES()" link="amitk-AmitkSpace.html#AMITK-SPACE-AXES-CAPS"/>
-    <function name="AMITK_SPACE_OFFSET()" link="amitk-AmitkSpace.html#AMITK-SPACE-OFFSET-CAPS"/>
-    <function name="AMITK_UNDO_LEVEL" link="amitk-AmitkSpace.html#AMITK-UNDO-LEVEL-CAPS"/>
+    <function name="AMITK_SPACE_AXES()" link="amitk-AmitkSpace.html#AMITK-SPACE-AXES:CAPS"/>
+    <function name="AMITK_SPACE_OFFSET()" link="amitk-AmitkSpace.html#AMITK-SPACE-OFFSET:CAPS"/>
+    <function name="AMITK_UNDO_LEVEL" link="amitk-AmitkSpace.html#AMITK-UNDO-LEVEL:CAPS"/>
+    <function name="AmitkSpace" link="amitk-AmitkSpace.html#AmitkSpace"/>
     <function name="amitk_space_new ()" link="amitk-AmitkSpace.html#amitk-space-new"/>
     <function name="amitk_space_write_xml ()" link="amitk-AmitkSpace.html#amitk-space-write-xml"/>
     <function name="amitk_space_read_xml ()" link="amitk-AmitkSpace.html#amitk-space-read-xml"/>
@@ -254,74 +308,86 @@
     <function name="amitk_space_s2s_dim()" link="amitk-AmitkSpace.html#amitk-space-s2s-dim"/>
     <function name="amitk_space_print ()" link="amitk-AmitkSpace.html#amitk-space-print"/>
     <function name="amide_data_t" link="amitk-amitk-type.html#amide-data-t"/>
-    <function name="SIZE_OF_AMIDE_DATA_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-DATA-T-CAPS"/>
-    <function name="AMITK_TYPE_DATA" link="amitk-amitk-type.html#AMITK-TYPE-DATA-CAPS"/>
+    <function name="SIZE_OF_AMIDE_DATA_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-DATA-T:CAPS"/>
+    <function name="AMITK_TYPE_DATA" link="amitk-amitk-type.html#AMITK-TYPE-DATA:CAPS"/>
     <function name="amide_time_t" link="amitk-amitk-type.html#amide-time-t"/>
-    <function name="SIZE_OF_AMIDE_TIME_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-TIME-T-CAPS"/>
-    <function name="AMITK_TYPE_TIME" link="amitk-amitk-type.html#AMITK-TYPE-TIME-CAPS"/>
+    <function name="SIZE_OF_AMIDE_TIME_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-TIME-T:CAPS"/>
+    <function name="AMITK_TYPE_TIME" link="amitk-amitk-type.html#AMITK-TYPE-TIME:CAPS"/>
     <function name="amide_real_t" link="amitk-amitk-type.html#amide-real-t"/>
-    <function name="SIZE_OF_AMIDE_REAL_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-REAL-T-CAPS"/>
-    <function name="AMITK_TYPE_REAL" link="amitk-amitk-type.html#AMITK-TYPE-REAL-CAPS"/>
+    <function name="SIZE_OF_AMIDE_REAL_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-REAL-T:CAPS"/>
+    <function name="AMITK_TYPE_REAL" link="amitk-amitk-type.html#AMITK-TYPE-REAL:CAPS"/>
     <function name="amide_intpoint_t" link="amitk-amitk-type.html#amide-intpoint-t"/>
-    <function name="SIZE_OF_AMIDE_INTPOINT_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-INTPOINT-T-CAPS"/>
-    <function name="AMITK_VOLUME_CORNER()" link="amitk-amitk-volume.html#AMITK-VOLUME-CORNER-CAPS"/>
-    <function name="AMITK_VOLUME_X_CORNER()" link="amitk-amitk-volume.html#AMITK-VOLUME-X-CORNER-CAPS"/>
-    <function name="AMITK_VOLUME_Y_CORNER()" link="amitk-amitk-volume.html#AMITK-VOLUME-Y-CORNER-CAPS"/>
-    <function name="AMITK_VOLUME_Z_CORNER()" link="amitk-amitk-volume.html#AMITK-VOLUME-Z-CORNER-CAPS"/>
-    <function name="AMITK_VOLUME_VALID()" link="amitk-amitk-volume.html#AMITK-VOLUME-VALID-CAPS"/>
-    <function name="amitk_volume_new ()" link="amitk-amitk-volume.html#amitk-volume-new"/>
-    <function name="amitk_volume_point_in_bounds ()" link="amitk-amitk-volume.html#amitk-volume-point-in-bounds"/>
-    <function name="amitk_volume_place_in_bounds ()" link="amitk-amitk-volume.html#amitk-volume-place-in-bounds"/>
-    <function name="amitk_volume_get_center ()" link="amitk-amitk-volume.html#amitk-volume-get-center"/>
-    <function name="amitk_volume_set_corner ()" link="amitk-amitk-volume.html#amitk-volume-set-corner"/>
-    <function name="amitk_volume_set_z_corner ()" link="amitk-amitk-volume.html#amitk-volume-set-z-corner"/>
-    <function name="amitk_volume_set_center ()" link="amitk-amitk-volume.html#amitk-volume-set-center"/>
-    <function name="amitk_volume_get_enclosing_corners ()" link="amitk-amitk-volume.html#amitk-volume-get-enclosing-corners"/>
-    <function name="amitk_volumes_get_enclosing_corners ()" link="amitk-amitk-volume.html#amitk-volumes-get-enclosing-corners"/>
-    <function name="amitk_volume_volume_intersection_corners ()" link="amitk-amitk-volume.html#amitk-volume-volume-intersection-corners"/>
-    <function name="amitk_volumes_get_max_size ()" link="amitk-amitk-volume.html#amitk-volumes-get-max-size"/>
-    <function name="AMITK_DATA_SET_MODALITY()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-MODALITY-CAPS"/>
-    <function name="AMITK_DATA_SET_VOXEL_SIZE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-CAPS"/>
-    <function name="AMITK_DATA_SET_VOXEL_SIZE_X()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-X-CAPS"/>
-    <function name="AMITK_DATA_SET_VOXEL_SIZE_Y()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-Y-CAPS"/>
-    <function name="AMITK_DATA_SET_VOXEL_SIZE_Z()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-Z-CAPS"/>
-    <function name="AMITK_DATA_SET_RAW_DATA()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-RAW-DATA-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM_X()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-X-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM_Y()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-Y-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM_Z()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-Z-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM_G()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-G-CAPS"/>
-    <function name="AMITK_DATA_SET_DIM_T()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-T-CAPS"/>
-    <function name="AMITK_DATA_SET_FORMAT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-FORMAT-CAPS"/>
-    <function name="AMITK_DATA_SET_NUM_GATES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-GATES-CAPS"/>
-    <function name="AMITK_DATA_SET_NUM_FRAMES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-FRAMES-CAPS"/>
-    <function name="AMITK_DATA_SET_TOTAL_PLANES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-TOTAL-PLANES-CAPS"/>
-    <function name="AMITK_DATA_SET_DISTRIBUTION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISTRIBUTION-CAPS"/>
-    <function name="AMITK_DATA_SET_COLOR_TABLE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-COLOR-TABLE-CAPS"/>
-    <function name="AMITK_DATA_SET_INTERPOLATION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-INTERPOLATION-CAPS"/>
-    <function name="AMITK_DATA_SET_DYNAMIC()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DYNAMIC-CAPS"/>
-    <function name="AMITK_DATA_SET_GATED()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-GATED-CAPS"/>
-    <function name="AMITK_DATA_SET_THRESHOLDING()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLDING-CAPS"/>
-    <function name="AMITK_DATA_SET_SLICE_PARENT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SLICE-PARENT-CAPS"/>
-    <function name="AMITK_DATA_SET_SCAN_DATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCAN-DATE-CAPS"/>
-    <function name="AMITK_DATA_SET_SCAN_START()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCAN-START-CAPS"/>
-    <function name="AMITK_DATA_SET_THRESHOLD_REF_FRAME()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-REF-FRAME-CAPS"/>
-    <function name="AMITK_DATA_SET_THRESHOLD_MAX()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-MAX-CAPS"/>
-    <function name="AMITK_DATA_SET_THRESHOLD_MIN()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-MIN-CAPS"/>
-    <function name="AMITK_DATA_SET_SCALING_TYPE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCALING-TYPE-CAPS"/>
-    <function name="AMITK_DATA_SET_CONVERSION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-CONVERSION-CAPS"/>
-    <function name="AMITK_DATA_SET_SCALE_FACTOR()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCALE-FACTOR-CAPS"/>
-    <function name="AMITK_DATA_SET_INJECTED_DOSE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-INJECTED-DOSE-CAPS"/>
-    <function name="AMITK_DATA_SET_DISPLAYED_DOSE_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-DOSE-UNIT-CAPS"/>
-    <function name="AMITK_DATA_SET_SUBJECT_WEIGHT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-WEIGHT-CAPS"/>
-    <function name="AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-WEIGHT-UNIT-CAPS"/>
-    <function name="AMITK_DATA_SET_CYLINDER_FACTOR()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-CYLINDER-FACTOR-CAPS"/>
-    <function name="AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-CYLINDER-UNIT-CAPS"/>
-    <function name="AMITK_DATA_SET_THRESHOLD_WINDOW()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-WINDOW-CAPS"/>
-    <function name="AMITK_DATA_SET_VIEW_START_GATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VIEW-START-GATE-CAPS"/>
-    <function name="AMITK_DATA_SET_VIEW_END_GATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VIEW-END-GATE-CAPS"/>
-    <function name="AMITK_DATA_SET_NUM_VIEW_GATES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-VIEW-GATES-CAPS"/>
-    <function name="AMITK_DATA_SET_DISTRIBUTION_SIZE" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISTRIBUTION-SIZE-CAPS"/>
+    <function name="SIZE_OF_AMIDE_INTPOINT_T" link="amitk-amitk-type.html#SIZE-OF-AMIDE-INTPOINT-T:CAPS"/>
+    <function name="AmitkUpdateFunc ()" link="amitk-amitk-type.html#AmitkUpdateFunc"/>
+    <function name="AMITK_VOLUME_CORNER()" link="amitk-AmitkVolume.html#AMITK-VOLUME-CORNER:CAPS"/>
+    <function name="AMITK_VOLUME_X_CORNER()" link="amitk-AmitkVolume.html#AMITK-VOLUME-X-CORNER:CAPS"/>
+    <function name="AMITK_VOLUME_Y_CORNER()" link="amitk-AmitkVolume.html#AMITK-VOLUME-Y-CORNER:CAPS"/>
+    <function name="AMITK_VOLUME_Z_CORNER()" link="amitk-AmitkVolume.html#AMITK-VOLUME-Z-CORNER:CAPS"/>
+    <function name="AMITK_VOLUME_VALID()" link="amitk-AmitkVolume.html#AMITK-VOLUME-VALID:CAPS"/>
+    <function name="AmitkVolume" link="amitk-AmitkVolume.html#AmitkVolume"/>
+    <function name="amitk_volume_new ()" link="amitk-AmitkVolume.html#amitk-volume-new"/>
+    <function name="amitk_volume_point_in_bounds ()" link="amitk-AmitkVolume.html#amitk-volume-point-in-bounds"/>
+    <function name="amitk_volume_place_in_bounds ()" link="amitk-AmitkVolume.html#amitk-volume-place-in-bounds"/>
+    <function name="amitk_volume_get_center ()" link="amitk-AmitkVolume.html#amitk-volume-get-center"/>
+    <function name="amitk_volume_set_corner ()" link="amitk-AmitkVolume.html#amitk-volume-set-corner"/>
+    <function name="amitk_volume_set_z_corner ()" link="amitk-AmitkVolume.html#amitk-volume-set-z-corner"/>
+    <function name="amitk_volume_set_center ()" link="amitk-AmitkVolume.html#amitk-volume-set-center"/>
+    <function name="amitk_volume_get_enclosing_corners ()" link="amitk-AmitkVolume.html#amitk-volume-get-enclosing-corners"/>
+    <function name="amitk_volumes_get_enclosing_corners ()" link="amitk-AmitkVolume.html#amitk-volumes-get-enclosing-corners"/>
+    <function name="amitk_volume_volume_intersection_corners ()" link="amitk-AmitkVolume.html#amitk-volume-volume-intersection-corners"/>
+    <function name="amitk_volumes_get_max_size ()" link="amitk-AmitkVolume.html#amitk-volumes-get-max-size"/>
+    <function name="amitk_volumes_calc_display_volume ()" link="amitk-AmitkVolume.html#amitk-volumes-calc-display-volume"/>
+    <function name="AMITK_DATA_SET_MODALITY()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-MODALITY:CAPS"/>
+    <function name="AMITK_DATA_SET_VOXEL_SIZE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE:CAPS"/>
+    <function name="AMITK_DATA_SET_VOXEL_SIZE_X()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-X:CAPS"/>
+    <function name="AMITK_DATA_SET_VOXEL_SIZE_Y()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-Y:CAPS"/>
+    <function name="AMITK_DATA_SET_VOXEL_SIZE_Z()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-SIZE-Z:CAPS"/>
+    <function name="AMITK_DATA_SET_VOXEL_VOLUME()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VOXEL-VOLUME:CAPS"/>
+    <function name="AMITK_DATA_SET_RAW_DATA()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-RAW-DATA:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM_X()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-X:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM_Y()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-Y:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM_Z()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-Z:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM_G()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-G:CAPS"/>
+    <function name="AMITK_DATA_SET_DIM_T()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DIM-T:CAPS"/>
+    <function name="AMITK_DATA_SET_FORMAT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-FORMAT:CAPS"/>
+    <function name="AMITK_DATA_SET_NUM_GATES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-GATES:CAPS"/>
+    <function name="AMITK_DATA_SET_NUM_FRAMES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-FRAMES:CAPS"/>
+    <function name="AMITK_DATA_SET_TOTAL_PLANES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-TOTAL-PLANES:CAPS"/>
+    <function name="AMITK_DATA_SET_DISTRIBUTION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISTRIBUTION:CAPS"/>
+    <function name="AMITK_DATA_SET_COLOR_TABLE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-COLOR-TABLE:CAPS"/>
+    <function name="AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-COLOR-TABLE-INDEPENDENT:CAPS"/>
+    <function name="AMITK_DATA_SET_INTERPOLATION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-INTERPOLATION:CAPS"/>
+    <function name="AMITK_DATA_SET_DYNAMIC()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DYNAMIC:CAPS"/>
+    <function name="AMITK_DATA_SET_GATED()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-GATED:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLDING()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLDING:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLD_STYLE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-STYLE:CAPS"/>
+    <function name="AMITK_DATA_SET_SLICE_PARENT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SLICE-PARENT:CAPS"/>
+    <function name="AMITK_DATA_SET_SCAN_DATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCAN-DATE:CAPS"/>
+    <function name="AMITK_DATA_SET_SUBJECT_NAME()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-NAME:CAPS"/>
+    <function name="AMITK_DATA_SET_SUBJECT_ID()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-ID:CAPS"/>
+    <function name="AMITK_DATA_SET_SUBJECT_DOB()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-DOB:CAPS"/>
+    <function name="AMITK_DATA_SET_SCAN_START()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCAN-START:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLD_REF_FRAME()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-REF-FRAME:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLD_MAX()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-MAX:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLD_MIN()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-MIN:CAPS"/>
+    <function name="AMITK_DATA_SET_SCALING_TYPE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCALING-TYPE:CAPS"/>
+    <function name="AMITK_DATA_SET_SCALING_HAS_INTERCEPT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCALING-HAS-INTERCEPT:CAPS"/>
+    <function name="AMITK_DATA_SET_SUBJECT_ORIENTATION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-ORIENTATION:CAPS"/>
+    <function name="AMITK_DATA_SET_CONVERSION()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-CONVERSION:CAPS"/>
+    <function name="AMITK_DATA_SET_SCALE_FACTOR()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SCALE-FACTOR:CAPS"/>
+    <function name="AMITK_DATA_SET_INJECTED_DOSE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-INJECTED-DOSE:CAPS"/>
+    <function name="AMITK_DATA_SET_DISPLAYED_DOSE_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-DOSE-UNIT:CAPS"/>
+    <function name="AMITK_DATA_SET_SUBJECT_WEIGHT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-SUBJECT-WEIGHT:CAPS"/>
+    <function name="AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-WEIGHT-UNIT:CAPS"/>
+    <function name="AMITK_DATA_SET_CYLINDER_FACTOR()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-CYLINDER-FACTOR:CAPS"/>
+    <function name="AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISPLAYED-CYLINDER-UNIT:CAPS"/>
+    <function name="AMITK_DATA_SET_THRESHOLD_WINDOW()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-THRESHOLD-WINDOW:CAPS"/>
+    <function name="AMITK_DATA_SET_VIEW_START_GATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VIEW-START-GATE:CAPS"/>
+    <function name="AMITK_DATA_SET_VIEW_END_GATE()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-VIEW-END-GATE:CAPS"/>
+    <function name="AMITK_DATA_SET_NUM_VIEW_GATES()" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-NUM-VIEW-GATES:CAPS"/>
+    <function name="AMITK_DATA_SET_DISTRIBUTION_SIZE" link="amitk-AmitkDataSet.html#AMITK-DATA-SET-DISTRIBUTION-SIZE:CAPS"/>
+    <function name="enum AmitkOperation" link="amitk-AmitkDataSet.html#AmitkOperation"/>
     <function name="enum AmitkInterpolation" link="amitk-AmitkDataSet.html#AmitkInterpolation"/>
     <function name="enum AmitkThresholding" link="amitk-AmitkDataSet.html#AmitkThresholding"/>
     <function name="enum AmitkScalingType" link="amitk-AmitkDataSet.html#AmitkScalingType"/>
@@ -329,28 +395,38 @@
     <function name="enum AmitkWeightUnit" link="amitk-AmitkDataSet.html#AmitkWeightUnit"/>
     <function name="enum AmitkDoseUnit" link="amitk-AmitkDataSet.html#AmitkDoseUnit"/>
     <function name="enum AmitkCylinderUnit" link="amitk-AmitkDataSet.html#AmitkCylinderUnit"/>
+    <function name="enum AmitkSubjectOrientation" link="amitk-AmitkDataSet.html#AmitkSubjectOrientation"/>
     <function name="enum AmitkImportMethod" link="amitk-AmitkDataSet.html#AmitkImportMethod"/>
     <function name="enum AmitkExportMethod" link="amitk-AmitkDataSet.html#AmitkExportMethod"/>
+    <function name="AmitkDataSet" link="amitk-AmitkDataSet.html#AmitkDataSet"/>
     <function name="amitk_data_set_new ()" link="amitk-AmitkDataSet.html#amitk-data-set-new"/>
     <function name="amitk_data_set_new_with_data ()" link="amitk-AmitkDataSet.html#amitk-data-set-new-with-data"/>
     <function name="amitk_data_set_import_raw_file ()" link="amitk-AmitkDataSet.html#amitk-data-set-import-raw-file"/>
     <function name="amitk_data_set_import_file ()" link="amitk-AmitkDataSet.html#amitk-data-set-import-file"/>
-    <function name="amitk_data_set_export_file ()" link="amitk-AmitkDataSet.html#amitk-data-set-export-file"/>
+    <function name="amitk_data_set_export_to_file ()" link="amitk-AmitkDataSet.html#amitk-data-set-export-to-file"/>
+    <function name="amitk_data_sets_export_to_file ()" link="amitk-AmitkDataSet.html#amitk-data-sets-export-to-file"/>
     <function name="amitk_data_set_get_global_max ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-global-max"/>
     <function name="amitk_data_set_get_global_min ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-global-min"/>
     <function name="amitk_data_set_get_frame_max ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-frame-max"/>
     <function name="amitk_data_set_get_frame_min ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-frame-min"/>
+    <function name="amitk_data_set_get_color_table_to_use ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-color-table-to-use"/>
     <function name="amitk_data_set_set_modality ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-modality"/>
     <function name="amitk_data_set_set_scan_start ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-scan-start"/>
     <function name="amitk_data_set_set_frame_duration ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-frame-duration"/>
     <function name="amitk_data_set_set_voxel_size ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-voxel-size"/>
     <function name="amitk_data_set_set_thresholding ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-thresholding"/>
+    <function name="amitk_data_set_set_threshold_style ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-threshold-style"/>
     <function name="amitk_data_set_set_threshold_max ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-threshold-max"/>
     <function name="amitk_data_set_set_threshold_min ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-threshold-min"/>
     <function name="amitk_data_set_set_threshold_ref_frame ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-threshold-ref-frame"/>
     <function name="amitk_data_set_set_color_table ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-color-table"/>
+    <function name="amitk_data_set_set_color_table_independent ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-color-table-independent"/>
     <function name="amitk_data_set_set_interpolation ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-interpolation"/>
+    <function name="amitk_data_set_set_subject_orientation ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-subject-orientation"/>
     <function name="amitk_data_set_set_scan_date ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-scan-date"/>
+    <function name="amitk_data_set_set_subject_name ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-subject-name"/>
+    <function name="amitk_data_set_set_subject_id ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-subject-id"/>
+    <function name="amitk_data_set_set_subject_dob ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-subject-dob"/>
     <function name="amitk_data_set_set_conversion ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-conversion"/>
     <function name="amitk_data_set_set_scale_factor ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-scale-factor"/>
     <function name="amitk_data_set_set_injected_dose ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-injected-dose"/>
@@ -376,7 +452,8 @@
     <function name="amitk_data_set_calc_distribution ()" link="amitk-AmitkDataSet.html#amitk-data-set-calc-distribution"/>
     <function name="amitk_data_set_get_internal_value ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-internal-value"/>
     <function name="amitk_data_set_get_value ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-value"/>
-    <function name="amitk_data_set_get_internal_scaling ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-internal-scaling"/>
+    <function name="amitk_data_set_get_internal_scaling_factor ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-internal-scaling-factor"/>
+    <function name="amitk_data_set_get_internal_scaling_intercept ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-internal-scaling-intercept"/>
     <function name="amitk_data_set_set_value ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-value"/>
     <function name="amitk_data_set_set_internal_value ()" link="amitk-AmitkDataSet.html#amitk-data-set-set-internal-value"/>
     <function name="amitk_data_set_get_projections ()" link="amitk-AmitkDataSet.html#amitk-data-set-get-projections"/>
@@ -391,12 +468,16 @@
     <function name="amitk_data_sets_get_slices ()" link="amitk-AmitkDataSet.html#amitk-data-sets-get-slices"/>
     <function name="amitk_data_sets_find_with_slice_parent ()" link="amitk-AmitkDataSet.html#amitk-data-sets-find-with-slice-parent"/>
     <function name="amitk_data_sets_remove_with_slice_parent ()" link="amitk-AmitkDataSet.html#amitk-data-sets-remove-with-slice-parent"/>
+    <function name="amitk_data_sets_math ()" link="amitk-AmitkDataSet.html#amitk-data-sets-math"/>
     <function name="amitk_data_set_get_frame_duration_mem()" link="amitk-AmitkDataSet.html#amitk-data-set-get-frame-duration-mem"/>
     <function name="amitk_data_set_get_frame_max_min_mem()" link="amitk-AmitkDataSet.html#amitk-data-set-get-frame-max-min-mem"/>
     <function name="amitk_data_set_dynamic()" link="amitk-AmitkDataSet.html#amitk-data-set-dynamic"/>
     <function name="amitk_scaling_type_get_name ()" link="amitk-AmitkDataSet.html#amitk-scaling-type-get-name"/>
+    <function name="amitk_operation_get_name ()" link="amitk-AmitkDataSet.html#amitk-operation-get-name"/>
     <function name="amitk_interpolation_get_name ()" link="amitk-AmitkDataSet.html#amitk-interpolation-get-name"/>
+    <function name="amitk_subject_orientation_get_name ()" link="amitk-AmitkDataSet.html#amitk-subject-orientation-get-name"/>
     <function name="amitk_thresholding_get_name ()" link="amitk-AmitkDataSet.html#amitk-thresholding-get-name"/>
+    <function name="amitk_threshold_style_get_name ()" link="amitk-AmitkDataSet.html#amitk-threshold-style-get-name"/>
     <function name="amitk_conversion_get_name ()" link="amitk-AmitkDataSet.html#amitk-conversion-get-name"/>
     <function name="amitk_weight_unit_get_name ()" link="amitk-AmitkDataSet.html#amitk-weight-unit-get-name"/>
     <function name="amitk_dose_unit_get_name ()" link="amitk-AmitkDataSet.html#amitk-dose-unit-get-name"/>
@@ -407,49 +488,60 @@
     <function name="amitk_dose_unit_convert_from ()" link="amitk-AmitkDataSet.html#amitk-dose-unit-convert-from"/>
     <function name="amitk_cylinder_unit_convert_to ()" link="amitk-AmitkDataSet.html#amitk-cylinder-unit-convert-to"/>
     <function name="amitk_cylinder_unit_convert_from ()" link="amitk-AmitkDataSet.html#amitk-cylinder-unit-convert-from"/>
-    <function name="AMITK_FIDUCIAL_MARK_GET()" link="amitk-AmitkFiducialMark.html#AMITK-FIDUCIAL-MARK-GET-CAPS"/>
+    <function name="AMITK_FIDUCIAL_MARK_GET()" link="amitk-AmitkFiducialMark.html#AMITK-FIDUCIAL-MARK-GET:CAPS"/>
+    <function name="AmitkFiducialMark" link="amitk-AmitkFiducialMark.html#AmitkFiducialMark"/>
     <function name="amitk_fiducial_mark_new ()" link="amitk-AmitkFiducialMark.html#amitk-fiducial-mark-new"/>
     <function name="amitk_fiducial_mark_set ()" link="amitk-AmitkFiducialMark.html#amitk-fiducial-mark-set"/>
-    <function name="AMITK_ROI_TYPE()" link="amitk-AmitkRoi.html#AMITK-ROI-TYPE-CAPS"/>
-    <function name="AMITK_ROI_ISOCONTOUR_VALUE()" link="amitk-AmitkRoi.html#AMITK-ROI-ISOCONTOUR-VALUE-CAPS"/>
-    <function name="AMITK_ROI_VOXEL_SIZE()" link="amitk-AmitkRoi.html#AMITK-ROI-VOXEL-SIZE-CAPS"/>
-    <function name="AMITK_ROI_UNDRAWN()" link="amitk-AmitkRoi.html#AMITK-ROI-UNDRAWN-CAPS"/>
-    <function name="AMITK_ROI_TYPE_ISOCONTOUR()" link="amitk-AmitkRoi.html#AMITK-ROI-TYPE-ISOCONTOUR-CAPS"/>
-    <function name="AMITK_ROI_GRANULARITY" link="amitk-AmitkRoi.html#AMITK-ROI-GRANULARITY-CAPS"/>
+    <function name="AMITK_ROI_TYPE()" link="amitk-AmitkRoi.html#AMITK-ROI-TYPE:CAPS"/>
+    <function name="AMITK_ROI_ISOCONTOUR_MIN_VALUE()" link="amitk-AmitkRoi.html#AMITK-ROI-ISOCONTOUR-MIN-VALUE:CAPS"/>
+    <function name="AMITK_ROI_ISOCONTOUR_MAX_VALUE()" link="amitk-AmitkRoi.html#AMITK-ROI-ISOCONTOUR-MAX-VALUE:CAPS"/>
+    <function name="AMITK_ROI_ISOCONTOUR_RANGE()" link="amitk-AmitkRoi.html#AMITK-ROI-ISOCONTOUR-RANGE:CAPS"/>
+    <function name="AMITK_ROI_VOXEL_SIZE()" link="amitk-AmitkRoi.html#AMITK-ROI-VOXEL-SIZE:CAPS"/>
+    <function name="AMITK_ROI_UNDRAWN()" link="amitk-AmitkRoi.html#AMITK-ROI-UNDRAWN:CAPS"/>
+    <function name="AMITK_ROI_TYPE_ISOCONTOUR()" link="amitk-AmitkRoi.html#AMITK-ROI-TYPE-ISOCONTOUR:CAPS"/>
+    <function name="AMITK_ROI_TYPE_FREEHAND()" link="amitk-AmitkRoi.html#AMITK-ROI-TYPE-FREEHAND:CAPS"/>
+    <function name="AMITK_ROI_GRANULARITY" link="amitk-AmitkRoi.html#AMITK-ROI-GRANULARITY:CAPS"/>
     <function name="enum AmitkRoiType" link="amitk-AmitkRoi.html#AmitkRoiType"/>
+    <function name="enum AmitkRoiIsocontourRange" link="amitk-AmitkRoi.html#AmitkRoiIsocontourRange"/>
+    <function name="AmitkRoi" link="amitk-AmitkRoi.html#AmitkRoi"/>
     <function name="amitk_roi_new ()" link="amitk-AmitkRoi.html#amitk-roi-new"/>
     <function name="amitk_roi_get_intersection_line ()" link="amitk-AmitkRoi.html#amitk-roi-get-intersection-line"/>
     <function name="amitk_roi_free_points_list ()" link="amitk-AmitkRoi.html#amitk-roi-free-points-list"/>
     <function name="amitk_roi_get_intersection_slice ()" link="amitk-AmitkRoi.html#amitk-roi-get-intersection-slice"/>
-    <function name="amitk_roi_isocontour_set_voxel_size ()" link="amitk-AmitkRoi.html#amitk-roi-isocontour-set-voxel-size"/>
-    <function name="amitk_roi_isocontour_calc_far_corner ()" link="amitk-AmitkRoi.html#amitk-roi-isocontour-calc-far-corner"/>
+    <function name="amitk_roi_set_voxel_size ()" link="amitk-AmitkRoi.html#amitk-roi-set-voxel-size"/>
+    <function name="amitk_roi_calc_far_corner ()" link="amitk-AmitkRoi.html#amitk-roi-calc-far-corner"/>
     <function name="amitk_roi_set_isocontour ()" link="amitk-AmitkRoi.html#amitk-roi-set-isocontour"/>
-    <function name="amitk_roi_isocontour_erase_area ()" link="amitk-AmitkRoi.html#amitk-roi-isocontour-erase-area"/>
+    <function name="amitk_roi_manipulate_area ()" link="amitk-AmitkRoi.html#amitk-roi-manipulate-area"/>
+    <function name="amitk_roi_get_center_of_mass ()" link="amitk-AmitkRoi.html#amitk-roi-get-center-of-mass"/>
     <function name="amitk_roi_set_type ()" link="amitk-AmitkRoi.html#amitk-roi-set-type"/>
     <function name="amitk_roi_calculate_on_data_set ()" link="amitk-AmitkRoi.html#amitk-roi-calculate-on-data-set"/>
     <function name="amitk_roi_erase_volume ()" link="amitk-AmitkRoi.html#amitk-roi-erase-volume"/>
     <function name="amitk_roi_type_get_name ()" link="amitk-AmitkRoi.html#amitk-roi-type-get-name"/>
     <function name="amitk_rois_get_max_min_voxel_size ()" link="amitk-AmitkRoi.html#amitk-rois-get-max-min-voxel-size"/>
-    <function name="AMITK_STUDY_VIEW_CENTER()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-CENTER-CAPS"/>
-    <function name="AMITK_STUDY_VIEW_THICKNESS()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-THICKNESS-CAPS"/>
-    <function name="AMITK_STUDY_ZOOM()" link="amitk-AmitkStudy.html#AMITK-STUDY-ZOOM-CAPS"/>
-    <function name="AMITK_STUDY_VIEW_START_TIME()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-START-TIME-CAPS"/>
-    <function name="AMITK_STUDY_VIEW_DURATION()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-DURATION-CAPS"/>
-    <function name="AMITK_STUDY_CREATION_DATE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CREATION-DATE-CAPS"/>
-    <function name="AMITK_STUDY_FILENAME()" link="amitk-AmitkStudy.html#AMITK-STUDY-FILENAME-CAPS"/>
-    <function name="AMITK_STUDY_VOXEL_DIM()" link="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM-CAPS"/>
-    <function name="AMITK_STUDY_FUSE_TYPE()" link="amitk-AmitkStudy.html#AMITK-STUDY-FUSE-TYPE-CAPS"/>
-    <function name="AMITK_STUDY_VIEW_MODE()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-MODE-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_VISIBLE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-VISIBLE-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_TARGET()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_ROI_WIDTH()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-ROI-WIDTH-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_LINE_STYLE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LINE-STYLE-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_LAYOUT()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LAYOUT-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_MAINTAIN_SIZE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-MAINTAIN-SIZE-CAPS"/>
-    <function name="AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA-CAPS"/>
-    <function name="AMITK_STUDY_LINE_PROFILE()" link="amitk-AmitkStudy.html#AMITK-STUDY-LINE-PROFILE-CAPS"/>
+    <function name="AMITK_STUDY_VIEW_CENTER()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-CENTER:CAPS"/>
+    <function name="AMITK_STUDY_VIEW_THICKNESS()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-THICKNESS:CAPS"/>
+    <function name="AMITK_STUDY_ZOOM()" link="amitk-AmitkStudy.html#AMITK-STUDY-ZOOM:CAPS"/>
+    <function name="AMITK_STUDY_FOV()" link="amitk-AmitkStudy.html#AMITK-STUDY-FOV:CAPS"/>
+    <function name="AMITK_STUDY_VIEW_START_TIME()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-START-TIME:CAPS"/>
+    <function name="AMITK_STUDY_VIEW_DURATION()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-DURATION:CAPS"/>
+    <function name="AMITK_STUDY_CREATION_DATE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CREATION-DATE:CAPS"/>
+    <function name="AMITK_STUDY_FILENAME()" link="amitk-AmitkStudy.html#AMITK-STUDY-FILENAME:CAPS"/>
+    <function name="AMITK_STUDY_VOXEL_DIM()" link="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM:CAPS"/>
+    <function name="AMITK_STUDY_VOXEL_DIM_VALID()" link="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM-VALID:CAPS"/>
+    <function name="AMITK_STUDY_FUSE_TYPE()" link="amitk-AmitkStudy.html#AMITK-STUDY-FUSE-TYPE:CAPS"/>
+    <function name="AMITK_STUDY_VIEW_MODE()" link="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-MODE:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_VISIBLE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-VISIBLE:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_TARGET()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_ROI_WIDTH()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-ROI-WIDTH:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_LINE_STYLE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LINE-STYLE:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_FILL_ROI()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-FILL-ROI:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_LAYOUT()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LAYOUT:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_MAINTAIN_SIZE()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-MAINTAIN-SIZE:CAPS"/>
+    <function name="AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA()" link="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA:CAPS"/>
+    <function name="AMITK_STUDY_PANEL_LAYOUT()" link="amitk-AmitkStudy.html#AMITK-STUDY-PANEL-LAYOUT:CAPS"/>
+    <function name="AMITK_STUDY_LINE_PROFILE()" link="amitk-AmitkStudy.html#AMITK-STUDY-LINE-PROFILE:CAPS"/>
     <function name="enum AmitkFuseType" link="amitk-AmitkStudy.html#AmitkFuseType"/>
-    <function name="enum AmitkViewMode" link="amitk-AmitkStudy.html#AmitkViewMode"/>
+    <function name="AmitkStudy" link="amitk-AmitkStudy.html#AmitkStudy"/>
     <function name="amitk_study_new ()" link="amitk-AmitkStudy.html#amitk-study-new"/>
     <function name="amitk_study_set_filename ()" link="amitk-AmitkStudy.html#amitk-study-set-filename"/>
     <function name="amitk_study_set_creation_date ()" link="amitk-AmitkStudy.html#amitk-study-set-creation-date"/>
@@ -461,61 +553,76 @@
     <function name="amitk_study_set_view_mode ()" link="amitk-AmitkStudy.html#amitk-study-set-view-mode"/>
     <function name="amitk_study_set_canvas_visible ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-visible"/>
     <function name="amitk_study_set_zoom ()" link="amitk-AmitkStudy.html#amitk-study-set-zoom"/>
+    <function name="amitk_study_set_fov ()" link="amitk-AmitkStudy.html#amitk-study-set-fov"/>
     <function name="amitk_study_set_canvas_target ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-target"/>
     <function name="amitk_study_set_canvas_roi_width ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-roi-width"/>
     <function name="amitk_study_set_canvas_line_style ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-line-style"/>
+    <function name="amitk_study_set_canvas_fill_roi ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-fill-roi"/>
     <function name="amitk_study_set_canvas_layout ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-layout"/>
     <function name="amitk_study_set_canvas_maintain_size ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-maintain-size"/>
     <function name="amitk_study_set_canvas_target_empty_area ()" link="amitk-AmitkStudy.html#amitk-study-set-canvas-target-empty-area"/>
+    <function name="amitk_study_set_panel_layout ()" link="amitk-AmitkStudy.html#amitk-study-set-panel-layout"/>
+    <function name="amitk_study_recover_xml ()" link="amitk-AmitkStudy.html#amitk-study-recover-xml"/>
     <function name="amitk_study_load_xml ()" link="amitk-AmitkStudy.html#amitk-study-load-xml"/>
     <function name="amitk_study_save_xml ()" link="amitk-AmitkStudy.html#amitk-study-save-xml"/>
     <function name="amitk_fuse_type_get_name ()" link="amitk-AmitkStudy.html#amitk-fuse-type-get-name"/>
     <function name="amitk_view_mode_get_name ()" link="amitk-AmitkStudy.html#amitk-view-mode-get-name"/>
-    <function name="AMITK_CANVAS_VIEW()" link="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW-CAPS"/>
-    <function name="AMITK_CANVAS_VIEW_MODE()" link="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW-MODE-CAPS"/>
+    <function name="AMITK_CANVAS_VIEW()" link="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW:CAPS"/>
+    <function name="AMITK_CANVAS_VIEW_MODE()" link="amitk-AmitkCanvas.html#AMITK-CANVAS-VIEW-MODE:CAPS"/>
     <function name="enum AmitkCanvasType" link="amitk-AmitkCanvas.html#AmitkCanvasType"/>
     <function name="enum AmitkCanvasTargetAction" link="amitk-AmitkCanvas.html#AmitkCanvasTargetAction"/>
+    <function name="AmitkCanvas" link="amitk-AmitkCanvas.html#AmitkCanvas"/>
     <function name="amitk_canvas_new ()" link="amitk-AmitkCanvas.html#amitk-canvas-new"/>
     <function name="amitk_canvas_set_study ()" link="amitk-AmitkCanvas.html#amitk-canvas-set-study"/>
     <function name="amitk_canvas_set_active_object ()" link="amitk-AmitkCanvas.html#amitk-canvas-set-active-object"/>
     <function name="amitk_canvas_update_target ()" link="amitk-AmitkCanvas.html#amitk-canvas-update-target"/>
+    <function name="amitk_canvas_set_time_on_image ()" link="amitk-AmitkCanvas.html#amitk-canvas-set-time-on-image"/>
     <function name="amitk_canvas_get_width ()" link="amitk-AmitkCanvas.html#amitk-canvas-get-width"/>
     <function name="amitk_canvas_get_height ()" link="amitk-AmitkCanvas.html#amitk-canvas-get-height"/>
     <function name="amitk_canvas_get_pixbuf ()" link="amitk-AmitkCanvas.html#amitk-canvas-get-pixbuf"/>
     <function name="amitk_canvas_object_draw ()" link="amitk-amitk-canvas-object.html#amitk-canvas-object-draw"/>
-    <function name="AMITK_COLOR_TABLE_MENU_COLOR_TABLE()" link="amitk-AmitkColorTableMenu.html#AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS"/>
+    <function name="AMITK_COLOR_TABLE_MENU_COLOR_TABLE()" link="amitk-AmitkColorTableMenu.html#AMITK-COLOR-TABLE-MENU-COLOR-TABLE:CAPS"/>
+    <function name="AmitkColorTableMenu" link="amitk-AmitkColorTableMenu.html#AmitkColorTableMenu"/>
     <function name="amitk_color_table_menu_new ()" link="amitk-AmitkColorTableMenu.html#amitk-color-table-menu-new"/>
+    <function name="AmitkObjectDialog" link="amitk-AmitkObjectDialog.html#AmitkObjectDialog"/>
     <function name="amitk_object_dialog_new ()" link="amitk-AmitkObjectDialog.html#amitk-object-dialog-new"/>
-    <function name="AMITK_PROGRESS_DIALOG_CAN_CONTINUE()" link="amitk-AmitkProgressDialog.html#AMITK-PROGRESS-DIALOG-CAN-CONTINUE-CAPS"/>
+    <function name="AMITK_PROGRESS_DIALOG_CAN_CONTINUE()" link="amitk-AmitkProgressDialog.html#AMITK-PROGRESS-DIALOG-CAN-CONTINUE:CAPS"/>
+    <function name="AmitkProgressDialog" link="amitk-AmitkProgressDialog.html#AmitkProgressDialog"/>
     <function name="amitk_progress_dialog_update ()" link="amitk-AmitkProgressDialog.html#amitk-progress-dialog-update"/>
     <function name="amitk_progress_dialog_set_text ()" link="amitk-AmitkProgressDialog.html#amitk-progress-dialog-set-text"/>
     <function name="amitk_progress_dialog_set_fraction ()" link="amitk-AmitkProgressDialog.html#amitk-progress-dialog-set-fraction"/>
     <function name="amitk_progress_dialog_new ()" link="amitk-AmitkProgressDialog.html#amitk-progress-dialog-new"/>
+    <function name="AmitkSpaceEdit" link="amitk-AmitkSpaceEdit.html#AmitkSpaceEdit"/>
     <function name="amitk_space_edit_new ()" link="amitk-AmitkSpaceEdit.html#amitk-space-edit-new"/>
     <function name="enum AmitkThresholdScale" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdScale"/>
     <function name="enum AmitkThresholdArrow" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdArrow"/>
     <function name="enum AmitkThresholdEntry" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdEntry"/>
     <function name="enum AmitkThresholdLine" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdLine"/>
     <function name="enum AmitkThresholdLayout" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdLayout"/>
+    <function name="AmitkThreshold" link="amitk-AmitkThresholdsDialog.html#AmitkThreshold"/>
     <function name="amitk_threshold_new ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-new"/>
     <function name="amitk_threshold_new_data_set ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-new-data-set"/>
-    <function name="AMITK_TYPE_THRESHOLD_DIALOG" link="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLD-DIALOG-CAPS"/>
-    <function name="AMITK_THRESHOLD_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG-CAPS"/>
-    <function name="AMITK_THRESHOLD_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG-CLASS-CAPS"/>
-    <function name="AMITK_IS_THRESHOLD_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG-CAPS"/>
-    <function name="AMITK_IS_THRESHOLD_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG-CLASS-CAPS"/>
+    <function name="amitk_threshold_style_widgets ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-style-widgets"/>
+    <function name="AMITK_TYPE_THRESHOLD_DIALOG" link="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLD-DIALOG:CAPS"/>
+    <function name="AMITK_THRESHOLD_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG:CAPS"/>
+    <function name="AMITK_THRESHOLD_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLD-DIALOG-CLASS:CAPS"/>
+    <function name="AMITK_IS_THRESHOLD_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG:CAPS"/>
+    <function name="AMITK_IS_THRESHOLD_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLD-DIALOG-CLASS:CAPS"/>
+    <function name="AmitkThresholdDialog" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdDialog"/>
     <function name="amitk_threshold_dialog_get_type ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-get-type"/>
     <function name="amitk_threshold_dialog_new ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-new"/>
     <function name="amitk_threshold_dialog_new_data_set ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-new-data-set"/>
     <function name="amitk_threshold_dialog_data_set ()" link="amitk-AmitkThresholdsDialog.html#amitk-threshold-dialog-data-set"/>
-    <function name="AMITK_TYPE_THRESHOLDS_DIALOG" link="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLDS-DIALOG-CAPS"/>
-    <function name="AMITK_THRESHOLDS_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG-CAPS"/>
-    <function name="AMITK_THRESHOLDS_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG-CLASS-CAPS"/>
-    <function name="AMITK_IS_THRESHOLDS_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG-CAPS"/>
-    <function name="AMITK_IS_THRESHOLDS_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG-CLASS-CAPS"/>
+    <function name="AMITK_TYPE_THRESHOLDS_DIALOG" link="amitk-AmitkThresholdsDialog.html#AMITK-TYPE-THRESHOLDS-DIALOG:CAPS"/>
+    <function name="AMITK_THRESHOLDS_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG:CAPS"/>
+    <function name="AMITK_THRESHOLDS_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-THRESHOLDS-DIALOG-CLASS:CAPS"/>
+    <function name="AMITK_IS_THRESHOLDS_DIALOG()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG:CAPS"/>
+    <function name="AMITK_IS_THRESHOLDS_DIALOG_CLASS()" link="amitk-AmitkThresholdsDialog.html#AMITK-IS-THRESHOLDS-DIALOG-CLASS:CAPS"/>
+    <function name="AmitkThresholdsDialog" link="amitk-AmitkThresholdsDialog.html#AmitkThresholdsDialog"/>
     <function name="amitk_thresholds_dialog_get_type ()" link="amitk-AmitkThresholdsDialog.html#amitk-thresholds-dialog-get-type"/>
     <function name="amitk_thresholds_dialog_new ()" link="amitk-AmitkThresholdsDialog.html#amitk-thresholds-dialog-new"/>
     <function name="enum AmitkTreeViewMode" link="amitk-AmitkTreeView.html#AmitkTreeViewMode"/>
+    <function name="AmitkTreeView" link="amitk-AmitkTreeView.html#AmitkTreeView"/>
     <function name="amitk_tree_view_new ()" link="amitk-AmitkTreeView.html#amitk-tree-view-new"/>
     <function name="amitk_tree_view_set_study ()" link="amitk-AmitkTreeView.html#amitk-tree-view-set-study"/>
     <function name="amitk_tree_view_expand_object ()" link="amitk-AmitkTreeView.html#amitk-tree-view-expand-object"/>

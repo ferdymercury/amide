@@ -14,6 +14,9 @@ AmitkSpace
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_SPACE_AXES ##### -->
 <para>
 
@@ -36,6 +39,15 @@ AmitkSpace
 </para>
 
 
+
+<!-- ##### STRUCT AmitkSpace ##### -->
+<para>
+
+</para>
+
+@parent: 
+@offset: 
+@axes: 
 
 <!-- ##### FUNCTION amitk_space_new ##### -->
 <para>

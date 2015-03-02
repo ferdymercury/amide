@@ -31,7 +31,6 @@
 #define _GNU_SOURCE /* use GNU extensions, i.e. NaN */
 #endif
 #include <math.h>
-#include "amide.h"
 #include "amitk_raw_data.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_fft_complex.h>

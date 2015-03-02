@@ -103,6 +103,7 @@ static void tree_view_emit_help_signal(AmitkTreeView * tree_view);
 static gboolean tree_view_motion_notify_event(GtkWidget *widget, GdkEventMotion *event);
 static gboolean tree_view_enter_notify_event(GtkWidget * tree_view,
 					     GdkEventCrossing *event);
+static GdkPixbuf * tree_view_get_object_pixbuf(AmitkTreeView * tree_view, AmitkObject * object);
 
 //static void tree_view_drop_cb(GtkWidget * menu, gpointer context);
 
@@ -778,6 +779,53 @@ static gboolean tree_view_enter_notify_event(GtkWidget * widget,
 }
 
 
+/* note, the contents of GdkPixbuf are shared, and should not be modified */
+static GdkPixbuf * tree_view_get_object_pixbuf(AmitkTreeView * tree_view, AmitkObject * object) {
+
+  GdkPixbuf * pixbuf=NULL;
+
+  if (AMITK_IS_ROI(object)) {
+    switch (AMITK_ROI_TYPE(object)) {
+    case AMITK_ROI_TYPE_ELLIPSOID:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_ellipsoid", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_CYLINDER:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_cylinder", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_BOX:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_box", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_ISOCONTOUR_2D:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_isocontour_2d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_isocontour_3d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_FREEHAND_2D:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_freehand_2d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    case AMITK_ROI_TYPE_FREEHAND_3D:
+      pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_roi_freehand_3d", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+      break;
+    default:
+      g_error("Unknown case in %s at %d\n", __FILE__, __LINE__);
+      break;
+    }
+
+  } else if (AMITK_IS_DATA_SET(object)) {
+    pixbuf = image_get_data_set_pixbuf(AMITK_DATA_SET(object));
+  } else if (AMITK_IS_STUDY(object)) {
+    pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_study", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+  } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
+    pixbuf = gtk_widget_render_icon(GTK_WIDGET(tree_view), "amide_icon_align_pt", GTK_ICON_SIZE_LARGE_TOOLBAR, 0);
+  } else {
+    g_error("Unknown case in %s at %d\n", __FILE__, __LINE__);
+  }
+
+  return pixbuf;
+}
+
+
 //static void tree_view_drop_cb(GtkWidget * menu, gpointer data) {
 
 //  GdkDragContext * context =data;
@@ -827,7 +875,7 @@ static void tree_view_drag_begin (GtkWidget *widget, GdkDragContext *context)
       //	  context = gtk_drag_begin(widget, tree_view->drag_list, 
       //				   GDK_ACTION_ASK, 1, (GdkEvent*)event);
 	  
-      //      pixbuf = image_get_object_pixbuf(object);
+      //      pixbuf = tree_view_get_object_pixbuf(tree_view, object);
       //      gtk_drag_set_icon_pixbuf(context, pixbuf, -10,-10);
       //      g_object_unref(pixbuf);
     }
@@ -1111,7 +1159,7 @@ static void tree_view_object_update_cb(AmitkObject * object, gpointer data) {
 
   if (tree_view_find_object(tree_view, object, &iter)) {
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree_view));
-    pixbuf = image_get_object_pixbuf(object);
+    pixbuf = tree_view_get_object_pixbuf(tree_view, object);
     gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
 		       COLUMN_ICON, pixbuf,
 		       COLUMN_NAME, AMITK_OBJECT_NAME(object), 
@@ -1237,7 +1285,7 @@ static void tree_view_add_object(AmitkTreeView * tree_view, AmitkObject * object
       g_return_if_reached();
   }
 
-  pixbuf = image_get_object_pixbuf(object);
+  pixbuf = tree_view_get_object_pixbuf(tree_view, object);
 
   gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
 		     COLUMN_MULTIPLE_SELECTION, amitk_object_get_selected(object, AMITK_SELECTION_SELECTED_0), /* default */

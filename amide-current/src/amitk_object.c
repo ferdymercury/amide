@@ -321,17 +321,41 @@ static void object_transform(AmitkSpace * space, AmitkSpace * transform_space) {
 
   AmitkObject * object;
   GList * children;
+  AmitkPoint shift, new_offset;
+  AmitkSpace * new_space;
+  AmitkSpace * child_transform_space;
 
   g_return_if_fail(AMITK_IS_OBJECT(space));
   object = AMITK_OBJECT(space);
 
   children = object->children;
-  while (children != NULL) {
-    g_print("transform children\n");
-    amitk_space_transform(children->data, transform_space);
-    children = children->next;
+  if (children != NULL) {
+
+    /* figure out what the parent's space is going to look like */
+    new_space = amitk_space_copy(space);
+    amitk_space_transform(new_space, transform_space);
+
+    while (children != NULL) {
+
+      /* need to compensate, as the children shoould rotate around the parent's origin, not their own */
+      new_offset = amitk_space_b2s(AMITK_SPACE(space), AMITK_SPACE_OFFSET(children->data)); /* child offset wrt the parent space */
+      new_offset = amitk_space_s2b(AMITK_SPACE(new_space), new_offset); /* child offset post transformation */
+      shift = point_sub(new_offset, AMITK_SPACE_OFFSET(children->data)); /* the required shift */
+
+      /* setup the new transform space */
+      child_transform_space = amitk_space_copy(transform_space);
+      amitk_space_set_offset(child_transform_space, shift);
+      
+      /* and apply */
+      amitk_space_transform(children->data, child_transform_space);
+      g_object_unref(child_transform_space);
+      children = children->next;
+    }
+
+    g_object_unref(new_space);
   }
 
+  /* and finally do the transformation on the actually object */
   AMITK_SPACE_CLASS(parent_class)->space_transform (space, transform_space);
 }
 
@@ -407,10 +431,15 @@ void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_obj
 			      i_selection);
   /* don't copy object->dialog, as that's the dialog for modifying the old object */
 
-  /* and recurse */
+  /* delete the old children */
+  // I need to do the below... but doesn't currently play nice with canvas...
+  //  amitk_object_remove_children(dest_object, dest_object->children);
+
+  /* and recurse to copy in the new children */
   children = src_object->children;
   while (children != NULL) {
     child = amitk_object_copy(children->data);
+    g_print("copying %s\n", AMITK_OBJECT_NAME(child));
     amitk_object_add_child(dest_object, child);
     amitk_object_unref(child);
     children = children->next;
@@ -552,7 +581,7 @@ void amitk_object_write_xml(AmitkObject * object, FILE * study_file,
   /* write the xml file */
   doc = xmlNewDoc((xmlChar *) "1.0");
 
-  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) amide_data_file_version_str, AMIDE_FILE_VERSION);
+  doc->children = xmlNewDocNode(doc, NULL, (xmlChar *) amide_data_file_version_str, AMITK_FILE_VERSION);
 
   nodes = xmlNewChild(doc->children, NULL, (xmlChar *) object_name, (xmlChar *) AMITK_OBJECT_NAME(object));
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_WRITE_XML], 0, nodes, study_file);
@@ -1099,6 +1128,9 @@ AmitkObject * amitk_objects_find_object_by_name(GList * objects, const gchar * n
 gint amitk_objects_count_pairs_by_name(GList * objects1, GList * objects2) {
   
   gint count=0;
+
+  g_return_val_if_fail(objects1 != NULL, 0);
+  g_return_val_if_fail(objects2 != NULL, 0);
 
   while (objects1 != NULL) {
 

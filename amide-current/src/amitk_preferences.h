@@ -28,7 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <gtk/gtk.h>
-#include "amide.h"
+#include "amitk_common.h"
 #include "amitk_color_table.h"
 
 G_BEGIN_DECLS

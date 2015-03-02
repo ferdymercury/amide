@@ -1,39 +1,45 @@
 <refentry id="amitk-AmitkCanvas">
 <refmeta>
-<refentrytitle>AmitkCanvas</refentrytitle>
+<refentrytitle role="top_of_page">AmitkCanvas</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>AmitkCanvas</refname><refpurpose></refpurpose>
+<refname>AmitkCanvas</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-#define     <link linkend="AMITK-CANVAS-VIEW-CAPS">AMITK_CANVAS_VIEW</link>               (obj)
-#define     <link linkend="AMITK-CANVAS-VIEW-MODE-CAPS">AMITK_CANVAS_VIEW_MODE</link>          (obj)
-enum        <link linkend="AmitkCanvasType">AmitkCanvasType</link>;
-enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link>;
-<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-canvas-new">amitk_canvas_new</link>                (<link linkend="AmitkStudy">AmitkStudy</link> *study,
-                                             <link linkend="AmitkView">AmitkView</link> view,
-                                             <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
-                                             <link linkend="AmitkCanvasType">AmitkCanvasType</link> type);
-<link linkend="void">void</link>        <link linkend="amitk-canvas-set-study">amitk_canvas_set_study</link>          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkStudy">AmitkStudy</link> *study);
-<link linkend="void">void</link>        <link linkend="amitk-canvas-set-active-object">amitk_canvas_set_active_object</link>  (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkObject">AmitkObject</link> *active_object);
-<link linkend="void">void</link>        <link linkend="amitk-canvas-update-target">amitk_canvas_update_target</link>      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link> action,
-                                             <link linkend="AmitkPoint">AmitkPoint</link> center,
-                                             <link linkend="amide-real-t">amide_real_t</link> thickness);
-<link linkend="gint">gint</link>        <link linkend="amitk-canvas-get-width">amitk_canvas_get_width</link>          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
-<link linkend="gint">gint</link>        <link linkend="amitk-canvas-get-height">amitk_canvas_get_height</link>         (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
-<link linkend="GdkPixbuf">GdkPixbuf</link>*  <link linkend="amitk-canvas-get-pixbuf">amitk_canvas_get_pixbuf</link>         (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
+#define             <link linkend="AMITK-CANVAS-VIEW:CAPS">AMITK_CANVAS_VIEW</link>                   (obj)
+#define             <link linkend="AMITK-CANVAS-VIEW-MODE:CAPS">AMITK_CANVAS_VIEW_MODE</link>              (obj)
+enum                <link linkend="AmitkCanvasType">AmitkCanvasType</link>;
+enum                <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link>;
+                    <link linkend="AmitkCanvas">AmitkCanvas</link>;
+<link linkend="GtkWidget">GtkWidget</link>*          <link linkend="amitk-canvas-new">amitk_canvas_new</link>                    (<link linkend="AmitkStudy">AmitkStudy</link> *study,
+                                                         <link linkend="AmitkView">AmitkView</link> view,
+                                                         <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
+                                                         <link linkend="AmitkCanvasType">AmitkCanvasType</link> type);
+<link linkend="void">void</link>                <link linkend="amitk-canvas-set-study">amitk_canvas_set_study</link>              (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkStudy">AmitkStudy</link> *study);
+<link linkend="void">void</link>                <link linkend="amitk-canvas-set-active-object">amitk_canvas_set_active_object</link>      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkObject">AmitkObject</link> *active_object);
+<link linkend="void">void</link>                <link linkend="amitk-canvas-update-target">amitk_canvas_update_target</link>          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link> action,
+                                                         <link linkend="AmitkPoint">AmitkPoint</link> center,
+                                                         <link linkend="amide-real-t">amide_real_t</link> thickness);
+<link linkend="void">void</link>                <link linkend="amitk-canvas-set-time-on-image">amitk_canvas_set_time_on_image</link>      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="gboolean">gboolean</link> time_on_image);
+<link linkend="gint">gint</link>                <link linkend="amitk-canvas-get-width">amitk_canvas_get_width</link>              (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
+<link linkend="gint">gint</link>                <link linkend="amitk-canvas-get-height">amitk_canvas_get_height</link>             (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
+<link linkend="GdkPixbuf">GdkPixbuf</link>*          <link linkend="amitk-canvas-get-pixbuf">amitk_canvas_get_pixbuf</link>             (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);
 
 </synopsis>
 </refsynopsisdiv>
@@ -46,17 +52,17 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="AMITK-CANVAS-VIEW-CAPS"/>AMITK_CANVAS_VIEW()</title>
+<title><anchor id="AMITK-CANVAS-VIEW:CAPS" role="macro"/>AMITK_CANVAS_VIEW()</title>
 <indexterm><primary>AMITK_CANVAS_VIEW</primary></indexterm><programlisting>#define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)-&gt;view)
 </programlisting>
 <para>
@@ -69,7 +75,7 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-CANVAS-VIEW-MODE-CAPS"/>AMITK_CANVAS_VIEW_MODE()</title>
+<title><anchor id="AMITK-CANVAS-VIEW-MODE:CAPS" role="macro"/>AMITK_CANVAS_VIEW_MODE()</title>
 <indexterm><primary>AMITK_CANVAS_VIEW_MODE</primary></indexterm><programlisting>#define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)-&gt;view_mode)
 </programlisting>
 <para>
@@ -82,7 +88,7 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AmitkCanvasType"/>enum AmitkCanvasType</title>
+<title><anchor id="AmitkCanvasType" role="enum"/>enum AmitkCanvasType</title>
 <indexterm><primary>AmitkCanvasType</primary></indexterm><programlisting>typedef enum {
   AMITK_CANVAS_TYPE_NORMAL,
   AMITK_CANVAS_TYPE_FLY_THROUGH
@@ -92,7 +98,7 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="AmitkCanvasTargetAction"/>enum AmitkCanvasTargetAction</title>
+<title><anchor id="AmitkCanvasTargetAction" role="enum"/>enum AmitkCanvasTargetAction</title>
 <indexterm><primary>AmitkCanvasTargetAction</primary></indexterm><programlisting>typedef enum {
   AMITK_CANVAS_TARGET_ACTION_HIDE,
   AMITK_CANVAS_TARGET_ACTION_SHOW,
@@ -103,11 +109,64 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-new"/>amitk_canvas_new ()</title>
-<indexterm><primary>amitk_canvas_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_canvas_new                (<link linkend="AmitkStudy">AmitkStudy</link> *study,
-                                             <link linkend="AmitkView">AmitkView</link> view,
-                                             <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
-                                             <link linkend="AmitkCanvasType">AmitkCanvasType</link> type);</programlisting>
+<title><anchor id="AmitkCanvas" role="struct"/>AmitkCanvas</title>
+<indexterm><primary>AmitkCanvas</primary></indexterm><programlisting>typedef struct {
+  GtkVBox vbox;
+
+  GtkWidget * canvas;
+  GtkWidget * label;
+  GtkWidget * scrollbar;
+  GtkObject * scrollbar_adjustment;
+  GnomeCanvasItem * arrows[4];
+  GnomeCanvasItem * orientation_label[4];
+  AmitkCanvasType type;
+
+  AmitkVolume * volume; /* the volume that this canvas slice displays */
+  AmitkPoint center; /* in base coordinate space */
+
+  AmitkView view;
+  AmitkViewMode view_mode;
+  gint roi_width;
+  AmitkObject * active_object;
+
+  GList * slices;
+  GList * slice_cache;
+  gint max_slice_cache_size;
+  gint pixbuf_width, pixbuf_height;
+  gdouble border_width;
+  GnomeCanvasItem * image;
+  GdkPixbuf * pixbuf;
+
+  gboolean time_on_image;
+  GnomeCanvasItem * time_label;
+
+  AmitkStudy * study;
+  GList * undrawn_rois;
+  GList * object_items;
+
+  guint next_update;
+  guint idle_handler_id;
+  GList * next_update_objects;
+
+  /* profile stuff */
+  GnomeCanvasItem * line_profile_item;
+
+  /* target stuff */
+  GnomeCanvasItem * target[8];
+  AmitkCanvasTargetAction next_target_action;
+  AmitkPoint next_target_center;
+  amide_real_t next_target_thickness;
+} AmitkCanvas;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-canvas-new" role="function"/>amitk_canvas_new ()</title>
+<indexterm><primary>amitk_canvas_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*          amitk_canvas_new                    (<link linkend="AmitkStudy">AmitkStudy</link> *study,
+                                                         <link linkend="AmitkView">AmitkView</link> view,
+                                                         <link linkend="AmitkViewMode">AmitkViewMode</link> view_mode,
+                                                         <link linkend="AmitkCanvasType">AmitkCanvasType</link> type);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -123,15 +182,15 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-set-study"/>amitk_canvas_set_study ()</title>
-<indexterm><primary>amitk_canvas_set_study</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_canvas_set_study          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkStudy">AmitkStudy</link> *study);</programlisting>
+<title><anchor id="amitk-canvas-set-study" role="function"/>amitk_canvas_set_study ()</title>
+<indexterm><primary>amitk_canvas_set_study</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_canvas_set_study              (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkStudy">AmitkStudy</link> *study);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -145,9 +204,9 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-set-active-object"/>amitk_canvas_set_active_object ()</title>
-<indexterm><primary>amitk_canvas_set_active_object</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_canvas_set_active_object  (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkObject">AmitkObject</link> *active_object);</programlisting>
+<title><anchor id="amitk-canvas-set-active-object" role="function"/>amitk_canvas_set_active_object ()</title>
+<indexterm><primary>amitk_canvas_set_active_object</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_canvas_set_active_object      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkObject">AmitkObject</link> *active_object);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -161,11 +220,11 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-update-target"/>amitk_canvas_update_target ()</title>
-<indexterm><primary>amitk_canvas_update_target</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_canvas_update_target      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
-                                             <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link> action,
-                                             <link linkend="AmitkPoint">AmitkPoint</link> center,
-                                             <link linkend="amide-real-t">amide_real_t</link> thickness);</programlisting>
+<title><anchor id="amitk-canvas-update-target" role="function"/>amitk_canvas_update_target ()</title>
+<indexterm><primary>amitk_canvas_update_target</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_canvas_update_target          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</link> action,
+                                                         <link linkend="AmitkPoint">AmitkPoint</link> center,
+                                                         <link linkend="amide-real-t">amide_real_t</link> thickness);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -185,43 +244,59 @@ enum        <link linkend="AmitkCanvasTargetAction">AmitkCanvasTargetAction</lin
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-get-width"/>amitk_canvas_get_width ()</title>
-<indexterm><primary>amitk_canvas_get_width</primary></indexterm><programlisting><link linkend="gint">gint</link>        amitk_canvas_get_width          (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
+<title><anchor id="amitk-canvas-set-time-on-image" role="function"/>amitk_canvas_set_time_on_image ()</title>
+<indexterm><primary>amitk_canvas_set_time_on_image</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_canvas_set_time_on_image      (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas,
+                                                         <link linkend="gboolean">gboolean</link> time_on_image);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>canvas</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><parameter>time_on_image</parameter>&nbsp;:</term>
+<listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-get-height"/>amitk_canvas_get_height ()</title>
-<indexterm><primary>amitk_canvas_get_height</primary></indexterm><programlisting><link linkend="gint">gint</link>        amitk_canvas_get_height         (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
+<title><anchor id="amitk-canvas-get-width" role="function"/>amitk_canvas_get_width ()</title>
+<indexterm><primary>amitk_canvas_get_width</primary></indexterm><programlisting><link linkend="gint">gint</link>                amitk_canvas_get_width              (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>canvas</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-canvas-get-pixbuf"/>amitk_canvas_get_pixbuf ()</title>
-<indexterm><primary>amitk_canvas_get_pixbuf</primary></indexterm><programlisting><link linkend="GdkPixbuf">GdkPixbuf</link>*  amitk_canvas_get_pixbuf         (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
+<title><anchor id="amitk-canvas-get-height" role="function"/>amitk_canvas_get_height ()</title>
+<indexterm><primary>amitk_canvas_get_height</primary></indexterm><programlisting><link linkend="gint">gint</link>                amitk_canvas_get_height             (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>canvas</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="amitk-canvas-get-pixbuf" role="function"/>amitk_canvas_get_pixbuf ()</title>
+<indexterm><primary>amitk_canvas_get_pixbuf</primary></indexterm><programlisting><link linkend="GdkPixbuf">GdkPixbuf</link>*          amitk_canvas_get_pixbuf             (<link linkend="AmitkCanvas">AmitkCanvas</link> *canvas);</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>canvas</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

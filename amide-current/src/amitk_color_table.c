@@ -26,8 +26,7 @@
 #include "amide_config.h"
 #include <limits.h>
 #include <math.h>
-#include <glib-object.h>
-#include "amide.h"
+#include "amitk_common.h"
 #include "amitk_color_table.h"
 #include "amitk_type_builtins.h"
 

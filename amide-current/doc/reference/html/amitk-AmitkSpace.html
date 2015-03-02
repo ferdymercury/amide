@@ -1,279 +1,857 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkSpace</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk-AmitkRawData.html" title="AmitkRawData"><link rel="next" href="amitk-amitk-type.html" title="amitk_type"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkRawData.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-amitk-type.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkSpace"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkSpace</span></h2><p>AmitkSpace &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
-
-
-
-#define     <a href="amitk-AmitkSpace.html#AMITK-SPACE-AXES-CAPS">AMITK_SPACE_AXES</a>                (space)
-#define     <a href="amitk-AmitkSpace.html#AMITK-SPACE-OFFSET-CAPS">AMITK_SPACE_OFFSET</a>              (space)
-#define     <a href="amitk-AmitkSpace.html#AMITK-UNDO-LEVEL-CAPS">AMITK_UNDO_LEVEL</a>
-AmitkSpace* <a href="amitk-AmitkSpace.html#amitk-space-new">amitk_space_new</a>                 (void);
-void        <a href="amitk-AmitkSpace.html#amitk-space-write-xml">amitk_space_write_xml</a>           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             AmitkSpace *space);
-AmitkSpace* <a href="amitk-AmitkSpace.html#amitk-space-read-xml">amitk_space_read_xml</a>            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);
-void        <a href="amitk-AmitkSpace.html#amitk-space-set-offset">amitk_space_set_offset</a>          (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_offset);
-void        <a href="amitk-AmitkSpace.html#amitk-space-shift-offset">amitk_space_shift_offset</a>        (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> shift);
-void        <a href="amitk-AmitkSpace.html#amitk-space-set-axes">amitk_space_set_axes</a>            (AmitkSpace *space,
-                                             const AmitkAxes new_axes,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
-void        <a href="amitk-AmitkSpace.html#amitk-space-transform">amitk_space_transform</a>           (AmitkSpace *space,
-                                             const AmitkSpace *transform_space);
-void        <a href="amitk-AmitkSpace.html#amitk-space-transform-axes">amitk_space_transform_axes</a>      (AmitkSpace *space,
-                                             const AmitkAxes transform_axes,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
-void        <a href="amitk-AmitkSpace.html#amitk-space-scale">amitk_space_scale</a>               (AmitkSpace *space,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> ref_point,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> scaling);
-<a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  <a href="amitk-AmitkSpace.html#amitk-space-get-axis">amitk_space_get_axis</a>            (const AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
-void        <a href="amitk-AmitkSpace.html#amitk-space-get-enclosing-corners">amitk_space_get_enclosing_corners</a>
-                                            (const AmitkSpace *in_space,
-                                             const AmitkCorners in_corners,
-                                             const AmitkSpace *out_space,
-                                             AmitkCorners out_corners);
-AmitkSpace* <a href="amitk-AmitkSpace.html#amitk-space-copy">amitk_space_copy</a>                (const AmitkSpace *space);
-void        <a href="amitk-AmitkSpace.html#amitk-space-copy-in-place">amitk_space_copy_in_place</a>       (AmitkSpace *dest_space,
-                                             const AmitkSpace *src_space);
-gboolean    <a href="amitk-AmitkSpace.html#amitk-space-equal">amitk_space_equal</a>               (const AmitkSpace *space1,
-                                             const AmitkSpace *space2);
-void        <a href="amitk-AmitkSpace.html#amitk-space-invert-axis">amitk_space_invert_axis</a>         (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_inversion);
-void        <a href="amitk-AmitkSpace.html#amitk-space-rotate-on-vector">amitk_space_rotate_on_vector</a>    (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
-AmitkSpace* <a href="amitk-AmitkSpace.html#amitk-space-get-view-space">amitk_space_get_view_space</a>      (const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const AmitkLayout layout);
-void        <a href="amitk-AmitkSpace.html#amitk-space-set-view-space">amitk_space_set_view_space</a>      (AmitkSpace *set_space,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const AmitkLayout layout);
-#define     <a href="amitk-AmitkSpace.html#amitk-space-s2s">amitk_space_s2s</a>                 (in_space, out_space, in)
-#define     <a href="amitk-AmitkSpace.html#amitk-space-s2s-dim">amitk_space_s2s_dim</a>             (in_space, out_space, in)
-void        <a href="amitk-AmitkSpace.html#amitk-space-print">amitk_space_print</a>               (AmitkSpace *space,
-                                             gchar *message);
-
-</pre></div><div class="refsect1" lang="en"><a name="id2649887"></a><h2>Description</h2><p>
-
-</p></div><div class="refsect1" lang="en"><a name="id2649897"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2649902"></a><h3><a name="AMITK-SPACE-AXES-CAPS"></a>AMITK_SPACE_AXES()</h3><a class="indexterm" name="id2649914"></a><pre class="programlisting">#define AMITK_SPACE_AXES(space)         (AMITK_SPACE(space)-&gt;axes)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2649948"></a><h3><a name="AMITK-SPACE-OFFSET-CAPS"></a>AMITK_SPACE_OFFSET()</h3><a class="indexterm" name="id2649960"></a><pre class="programlisting">#define AMITK_SPACE_OFFSET(space)       (AMITK_SPACE(space)-&gt;offset)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2649994"></a><h3><a name="AMITK-UNDO-LEVEL-CAPS"></a>AMITK_UNDO_LEVEL</h3><a class="indexterm" name="id2650006"></a><pre class="programlisting">#define AMITK_UNDO_LEVEL 10
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2650021"></a><h3><a name="amitk-space-new"></a>amitk_space_new ()</h3><a class="indexterm" name="id2650031"></a><pre class="programlisting">AmitkSpace* amitk_space_new                 (void);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650066"></a><h3><a name="amitk-space-write-xml"></a>amitk_space_write_xml ()</h3><a class="indexterm" name="id2650077"></a><pre class="programlisting">void        amitk_space_write_xml           (xmlNodePtr node,
-                                             gchar *descriptor,
-                                             AmitkSpace *space);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>node</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650166"></a><h3><a name="amitk-space-read-xml"></a>amitk_space_read_xml ()</h3><a class="indexterm" name="id2650177"></a><pre class="programlisting">AmitkSpace* amitk_space_read_xml            (xmlNodePtr nodes,
-                                             gchar *descriptor,
-                                             gchar **perror_buf);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>nodes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>descriptor</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>perror_buf</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650276"></a><h3><a name="amitk-space-set-offset"></a>amitk_space_set_offset ()</h3><a class="indexterm" name="id2650287"></a><pre class="programlisting">void        amitk_space_set_offset          (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_offset);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_offset</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650355"></a><h3><a name="amitk-space-shift-offset"></a>amitk_space_shift_offset ()</h3><a class="indexterm" name="id2650366"></a><pre class="programlisting">void        amitk_space_shift_offset        (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> shift);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>shift</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650433"></a><h3><a name="amitk-space-set-axes"></a>amitk_space_set_axes ()</h3><a class="indexterm" name="id2650444"></a><pre class="programlisting">void        amitk_space_set_axes            (AmitkSpace *space,
-                                             const AmitkAxes new_axes,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>center_of_rotation</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650533"></a><h3><a name="amitk-space-transform"></a>amitk_space_transform ()</h3><a class="indexterm" name="id2650545"></a><pre class="programlisting">void        amitk_space_transform           (AmitkSpace *space,
-                                             const AmitkSpace *transform_space);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>transform_space</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650612"></a><h3><a name="amitk-space-transform-axes"></a>amitk_space_transform_axes ()</h3><a class="indexterm" name="id2650624"></a><pre class="programlisting">void        amitk_space_transform_axes      (AmitkSpace *space,
-                                             const AmitkAxes transform_axes,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>transform_axes</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>center_of_rotation</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650713"></a><h3><a name="amitk-space-scale"></a>amitk_space_scale ()</h3><a class="indexterm" name="id2650724"></a><pre class="programlisting">void        amitk_space_scale               (AmitkSpace *space,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> ref_point,
-                                             <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> scaling);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>ref_point</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>scaling</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650812"></a><h3><a name="amitk-space-get-axis"></a>amitk_space_get_axis ()</h3><a class="indexterm" name="id2650823"></a><pre class="programlisting"><a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>  amitk_space_get_axis            (const AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2650901"></a><h3><a name="amitk-space-get-enclosing-corners"></a>amitk_space_get_enclosing_corners ()</h3><a class="indexterm" name="id2650914"></a><pre class="programlisting">void        amitk_space_get_enclosing_corners
-                                            (const AmitkSpace *in_space,
-                                             const AmitkCorners in_corners,
-                                             const AmitkSpace *out_space,
-                                             AmitkCorners out_corners);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>in_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>in_corners</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>out_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>out_corners</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651025"></a><h3><a name="amitk-space-copy"></a>amitk_space_copy ()</h3><a class="indexterm" name="id2651036"></a><pre class="programlisting">AmitkSpace* amitk_space_copy                (const AmitkSpace *space);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651092"></a><h3><a name="amitk-space-copy-in-place"></a>amitk_space_copy_in_place ()</h3><a class="indexterm" name="id2651103"></a><pre class="programlisting">void        amitk_space_copy_in_place       (AmitkSpace *dest_space,
-                                             const AmitkSpace *src_space);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>dest_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>src_space</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651170"></a><h3><a name="amitk-space-equal"></a>amitk_space_equal ()</h3><a class="indexterm" name="id2651182"></a><pre class="programlisting">gboolean    amitk_space_equal               (const AmitkSpace *space1,
-                                             const AmitkSpace *space2);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space1</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>space2</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651259"></a><h3><a name="amitk-space-invert-axis"></a>amitk_space_invert_axis ()</h3><a class="indexterm" name="id2651270"></a><pre class="programlisting">void        amitk_space_invert_axis         (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_inversion);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>which_axis</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>center_of_inversion</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651359"></a><h3><a name="amitk-space-rotate-on-vector"></a>amitk_space_rotate_on_vector ()</h3><a class="indexterm" name="id2651371"></a><pre class="programlisting">void        amitk_space_rotate_on_vector    (AmitkSpace *space,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>vector</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>theta</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>center_of_rotation</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651482"></a><h3><a name="amitk-space-get-view-space"></a>amitk_space_get_view_space ()</h3><a class="indexterm" name="id2651494"></a><pre class="programlisting">AmitkSpace* amitk_space_get_view_space      (const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const AmitkLayout layout);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>layout</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651570"></a><h3><a name="amitk-space-set-view-space"></a>amitk_space_set_view_space ()</h3><a class="indexterm" name="id2651583"></a><pre class="programlisting">void        amitk_space_set_view_space      (AmitkSpace *set_space,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const AmitkLayout layout);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>set_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>layout</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651671"></a><h3><a name="amitk-space-s2s"></a>amitk_space_s2s()</h3><a class="indexterm" name="id2651682"></a><pre class="programlisting">#define amitk_space_s2s(in_space, out_space, in) (amitk_space_b2s((out_space), amitk_space_s2b((in_space), (in))))
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>in_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>out_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>in</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651743"></a><h3><a name="amitk-space-s2s-dim"></a>amitk_space_s2s_dim()</h3><a class="indexterm" name="id2651754"></a><pre class="programlisting">#define amitk_space_s2s_dim(in_space, out_space, in) (amitk_space_b2s_dim((out_space), amitk_space_s2b_dim((in_space), (in))))
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>in_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>out_space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>in</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2651815"></a><h3><a name="amitk-space-print"></a>amitk_space_print ()</h3><a class="indexterm" name="id2651826"></a><pre class="programlisting">void        amitk_space_print               (AmitkSpace *space,
-                                             gchar *message);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>space</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>message</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkRawData.html"><b>&lt;&lt; AmitkRawData</b></a></td><td align="right"><a accesskey="n" href="amitk-amitk-type.html"><b>amitk_type &gt;&gt;</b></a></td></tr></table></body></html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>AmitkSpace</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="prev" href="amitk-AmitkRawData.html" title="AmitkRawData">
+<link rel="next" href="amitk-amitk-type.html" title="amitk_type">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-AmitkRawData.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="amitk-amitk-type.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id381191" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id382210" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-AmitkSpace"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id381191"></a><span class="refentrytitle">AmitkSpace</span>
+</h2>
+<p>AmitkSpace</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
+
+
+
+#define             <a class="link" href="amitk-AmitkSpace.html#AMITK-SPACE-AXES:CAPS">AMITK_SPACE_AXES</a>                    (space)
+#define             <a class="link" href="amitk-AmitkSpace.html#AMITK-SPACE-OFFSET:CAPS">AMITK_SPACE_OFFSET</a>                  (space)
+#define             <a class="link" href="amitk-AmitkSpace.html#AMITK-UNDO-LEVEL:CAPS">AMITK_UNDO_LEVEL</a>
+                    <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>;
+<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         <a class="link" href="amitk-AmitkSpace.html#amitk-space-new">amitk_space_new</a>                     (void);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-write-xml">amitk_space_write_xml</a>               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space);
+<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         <a class="link" href="amitk-AmitkSpace.html#amitk-space-read-xml">amitk_space_read_xml</a>                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-set-offset">amitk_space_set_offset</a>              (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_offset);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-shift-offset">amitk_space_shift_offset</a>            (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> shift);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-set-axes">amitk_space_set_axes</a>                (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> new_axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-transform">amitk_space_transform</a>               (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *transform_space);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-transform-axes">amitk_space_transform_axes</a>          (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> transform_axes,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-scale">amitk_space_scale</a>                   (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> ref_point,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> scaling);
+<a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          <a class="link" href="amitk-AmitkSpace.html#amitk-space-get-axis">amitk_space_get_axis</a>                (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-get-enclosing-corners">amitk_space_get_enclosing_corners</a>   (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *in_space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> in_corners,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *out_space,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> out_corners);
+<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         <a class="link" href="amitk-AmitkSpace.html#amitk-space-copy">amitk_space_copy</a>                    (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-copy-in-place">amitk_space_copy_in_place</a>           (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *dest_space,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *src_space);
+<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            <a class="link" href="amitk-AmitkSpace.html#amitk-space-equal">amitk_space_equal</a>                   (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space1,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space2);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-invert-axis">amitk_space_invert_axis</a>             (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_inversion);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-rotate-on-vector">amitk_space_rotate_on_vector</a>        (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);
+<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         <a class="link" href="amitk-AmitkSpace.html#amitk-space-get-view-space">amitk_space_get_view_space</a>          (const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-set-view-space">amitk_space_set_view_space</a>          (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *set_space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);
+#define             <a class="link" href="amitk-AmitkSpace.html#amitk-space-s2s">amitk_space_s2s</a>                     (in_space, out_space, in)
+#define             <a class="link" href="amitk-AmitkSpace.html#amitk-space-s2s-dim">amitk_space_s2s_dim</a>                 (in_space, out_space, in)
+void                <a class="link" href="amitk-AmitkSpace.html#amitk-space-print">amitk_space_print</a>                   (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message);
+
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id382210"></a><h2>Description</h2>
+<p>
+
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id382225"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id382235"></a><h3>
+<a name="AMITK-SPACE-AXES:CAPS"></a>AMITK_SPACE_AXES()</h3>
+<a class="indexterm" name="id382247"></a><pre class="programlisting">#define AMITK_SPACE_AXES(space)         (AMITK_SPACE(space)-&gt;axes)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382281"></a><h3>
+<a name="AMITK-SPACE-OFFSET:CAPS"></a>AMITK_SPACE_OFFSET()</h3>
+<a class="indexterm" name="id382293"></a><pre class="programlisting">#define AMITK_SPACE_OFFSET(space)       (AMITK_SPACE(space)-&gt;offset)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382326"></a><h3>
+<a name="AMITK-UNDO-LEVEL:CAPS"></a>AMITK_UNDO_LEVEL</h3>
+<a class="indexterm" name="id382339"></a><pre class="programlisting">#define AMITK_UNDO_LEVEL 10
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382354"></a><h3>
+<a name="AmitkSpace"></a>AmitkSpace</h3>
+<a class="indexterm" name="id382366"></a><pre class="programlisting">typedef struct {
+  GObject parent;
+
+
+  /* private info */
+  AmitkPoint offset; /* with respect to the base coordinate frame */
+  AmitkAxes axes;
+} AmitkSpace;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382382"></a><h3>
+<a name="amitk-space-new"></a>amitk_space_new ()</h3>
+<a class="indexterm" name="id382395"></a><pre class="programlisting"><a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         amitk_space_new                     (void);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382430"></a><h3>
+<a name="amitk-space-write-xml"></a>amitk_space_write_xml ()</h3>
+<a class="indexterm" name="id382442"></a><pre class="programlisting">void                amitk_space_write_xml               (xmlNodePtr node,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>node</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382529"></a><h3>
+<a name="amitk-space-read-xml"></a>amitk_space_read_xml ()</h3>
+<a class="indexterm" name="id382541"></a><pre class="programlisting"><a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         amitk_space_read_xml                (xmlNodePtr nodes,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *descriptor,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> **perror_buf);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>nodes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>descriptor</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>perror_buf</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382638"></a><h3>
+<a name="amitk-space-set-offset"></a>amitk_space_set_offset ()</h3>
+<a class="indexterm" name="id382650"></a><pre class="programlisting">void                amitk_space_set_offset              (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_offset);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_offset</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382717"></a><h3>
+<a name="amitk-space-shift-offset"></a>amitk_space_shift_offset ()</h3>
+<a class="indexterm" name="id382730"></a><pre class="programlisting">void                amitk_space_shift_offset            (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> shift);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>shift</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382796"></a><h3>
+<a name="amitk-space-set-axes"></a>amitk_space_set_axes ()</h3>
+<a class="indexterm" name="id382809"></a><pre class="programlisting">void                amitk_space_set_axes                (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> new_axes,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>center_of_rotation</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382896"></a><h3>
+<a name="amitk-space-transform"></a>amitk_space_transform ()</h3>
+<a class="indexterm" name="id382908"></a><pre class="programlisting">void                amitk_space_transform               (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *transform_space);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>transform_space</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id382974"></a><h3>
+<a name="amitk-space-transform-axes"></a>amitk_space_transform_axes ()</h3>
+<a class="indexterm" name="id382987"></a><pre class="programlisting">void                amitk_space_transform_axes          (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxes">AmitkAxes</a> transform_axes,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>transform_axes</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>center_of_rotation</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383074"></a><h3>
+<a name="amitk-space-scale"></a>amitk_space_scale ()</h3>
+<a class="indexterm" name="id383087"></a><pre class="programlisting">void                amitk_space_scale                   (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> ref_point,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> scaling);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>ref_point</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>scaling</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383174"></a><h3>
+<a name="amitk-space-get-axis"></a>amitk_space_get_axis ()</h3>
+<a class="indexterm" name="id383186"></a><pre class="programlisting"><a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a>          amitk_space_get_axis                (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383262"></a><h3>
+<a name="amitk-space-get-enclosing-corners"></a>amitk_space_get_enclosing_corners ()</h3>
+<a class="indexterm" name="id383275"></a><pre class="programlisting">void                amitk_space_get_enclosing_corners   (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *in_space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> in_corners,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *out_space,
+                                                         <a class="link" href="amitk-amitk-point.html#AmitkCorners">AmitkCorners</a> out_corners);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in_corners</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>out_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>out_corners</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383384"></a><h3>
+<a name="amitk-space-copy"></a>amitk_space_copy ()</h3>
+<a class="indexterm" name="id383396"></a><pre class="programlisting"><a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         amitk_space_copy                    (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383452"></a><h3>
+<a name="amitk-space-copy-in-place"></a>amitk_space_copy_in_place ()</h3>
+<a class="indexterm" name="id383464"></a><pre class="programlisting">void                amitk_space_copy_in_place           (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *dest_space,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *src_space);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>dest_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>src_space</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383531"></a><h3>
+<a name="amitk-space-equal"></a>amitk_space_equal ()</h3>
+<a class="indexterm" name="id383543"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            amitk_space_equal                   (const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space1,
+                                                         const <a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space2);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383619"></a><h3>
+<a name="amitk-space-invert-axis"></a>amitk_space_invert_axis ()</h3>
+<a class="indexterm" name="id383632"></a><pre class="programlisting">void                amitk_space_invert_axis             (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkAxis">AmitkAxis</a> which_axis,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_inversion);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>which_axis</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>center_of_inversion</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383719"></a><h3>
+<a name="amitk-space-rotate-on-vector"></a>amitk_space_rotate_on_vector ()</h3>
+<a class="indexterm" name="id383732"></a><pre class="programlisting">void                amitk_space_rotate_on_vector        (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> vector,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> theta,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> center_of_rotation);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>vector</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>theta</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>center_of_rotation</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383840"></a><h3>
+<a name="amitk-space-get-view-space"></a>amitk_space_get_view_space ()</h3>
+<a class="indexterm" name="id383853"></a><pre class="programlisting"><a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a>*         amitk_space_get_view_space          (const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>layout</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id383929"></a><h3>
+<a name="amitk-space-set-view-space"></a>amitk_space_set_view_space ()</h3>
+<a class="indexterm" name="id383941"></a><pre class="programlisting">void                amitk_space_set_view_space          (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *set_space,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>set_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>layout</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id384029"></a><h3>
+<a name="amitk-space-s2s"></a>amitk_space_s2s()</h3>
+<a class="indexterm" name="id384041"></a><pre class="programlisting">#define amitk_space_s2s(in_space, out_space, in) (amitk_space_b2s((out_space), amitk_space_s2b((in_space), (in))))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>out_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id384101"></a><h3>
+<a name="amitk-space-s2s-dim"></a>amitk_space_s2s_dim()</h3>
+<a class="indexterm" name="id384114"></a><pre class="programlisting">#define amitk_space_s2s_dim(in_space, out_space, in) (amitk_space_b2s_dim((out_space), amitk_space_s2b_dim((in_space), (in))))
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>out_space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>in</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id384174"></a><h3>
+<a name="amitk-space-print"></a>amitk_space_print ()</h3>
+<a class="indexterm" name="id384186"></a><pre class="programlisting">void                amitk_space_print                   (<a class="link" href="amitk-AmitkSpace.html#AmitkSpace">AmitkSpace</a> *space,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *message);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>space</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>message</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

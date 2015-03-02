@@ -24,7 +24,7 @@
 */
 
 #include "amide_config.h"
-#include <gtk/gtk.h>
+#include "amide.h"
 #include "amitk_common.h"
 #include "ui_gate_dialog.h"
 
@@ -350,7 +350,7 @@ GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent) {
   gd->ds = amitk_object_ref(ds);
   g_object_set_data(G_OBJECT(dialog), "gd", gd);
   
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), gd);
 
   /* start making the widgets for this dialog box */

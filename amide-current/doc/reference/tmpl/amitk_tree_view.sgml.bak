@@ -16,6 +16,9 @@ AmitkTreeView
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### ENUM AmitkTreeViewMode ##### -->
 <para>
 
@@ -24,6 +27,54 @@ AmitkTreeView
 @AMITK_TREE_VIEW_MODE_MAIN: 
 @AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION: 
 @AMITK_TREE_VIEW_MODE_NUM: 
+
+<!-- ##### STRUCT AmitkTreeView ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkTreeView::activate-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::add-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkTreeView::delete-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::help-event ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::popup-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
 
 <!-- ##### FUNCTION amitk_tree_view_new ##### -->
 <para>

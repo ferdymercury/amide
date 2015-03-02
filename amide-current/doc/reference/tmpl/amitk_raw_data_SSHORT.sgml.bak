@@ -16,6 +16,9 @@ amitk_raw_data_SSHORT
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_RAW_DATA_SSHORT_0D_SCALING_POINTER ##### -->
 <para>
 
@@ -139,29 +142,6 @@ amitk_raw_data_SSHORT
 </para>
 
 @init_value: 
-@Returns: 
-
-
-<!-- ##### FUNCTION amitk_raw_data_SSHORT_2D_init ##### -->
-<para>
-
-</para>
-
-@init_value: 
-@y_dim: 
-@x_dim: 
-@Returns: 
-
-
-<!-- ##### FUNCTION amitk_raw_data_SSHORT_3D_init ##### -->
-<para>
-
-</para>
-
-@init_value: 
-@z_dim: 
-@y_dim: 
-@x_dim: 
 @Returns: 
 
 

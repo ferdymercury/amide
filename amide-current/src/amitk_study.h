@@ -194,11 +194,6 @@ const gchar *   amitk_fuse_type_get_name            (const AmitkFuseType fuse_ty
 const gchar *   amitk_view_mode_get_name            (const AmitkViewMode view_mode);
 
 
-/* external variables */
-extern gchar * amitk_fuse_type_explanations[];
-extern gchar * view_mode_names[];
-extern gchar * view_mode_explanations[];
-
 G_END_DECLS
 
 #endif /* __AMITK_STUDY_H__ */

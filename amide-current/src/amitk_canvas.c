@@ -26,10 +26,9 @@
 
 #include "amide_config.h"
 #include "amitk_study.h"
-#include <libgnomecanvas/gnome-canvas-pixbuf.h>
+#include "amide.h"
 #include "amitk_canvas.h"
 #include "amitk_canvas_object.h"
-#include "amitk_common.h"
 #include "image.h"
 #include "ui_common.h"
 #include "amitk_marshal.h"
@@ -3378,7 +3377,7 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
   } else {
     first_time = TRUE;
 
-    temp_str = g_strdup_printf("%s %d\n", view_names[canvas->view], canvas->view_mode+1);
+    temp_str = g_strdup_printf("%s %d\n", amitk_view_get_name(canvas->view), canvas->view_mode+1);
     canvas->label = gtk_label_new(temp_str);
     g_free(temp_str);
 

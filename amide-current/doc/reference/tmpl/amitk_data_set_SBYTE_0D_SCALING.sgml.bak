@@ -16,7 +16,19 @@ amitk_data_set_SBYTE_0D_SCALING
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_CONTENT ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@i: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_INTERCEPT_CONTENT ##### -->
 <para>
 
 </para>
@@ -34,7 +46,26 @@ amitk_data_set_SBYTE_0D_SCALING
 @i: 
 
 
+<!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_INTERCEPT_INTERNAL_CONTENT ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@i: 
+
+
 <!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_SET_CONTENT ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@i: 
+@value: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_INTERCEPT_SET_CONTENT ##### -->
 <para>
 
 </para>
@@ -54,7 +85,27 @@ amitk_data_set_SBYTE_0D_SCALING
 @value: 
 
 
+<!-- ##### MACRO AMITK_DATA_SET_SBYTE_0D_SCALING_INTERCEPT_SET_INTERNAL_CONTENT ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@i: 
+@value: 
+
+
 <!-- ##### FUNCTION amitk_data_set_SBYTE_0D_SCALING_calc_frame_max_min ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@update_func: 
+@update_data: 
+
+
+<!-- ##### FUNCTION amitk_data_set_SBYTE_0D_SCALING_INTERCEPT_calc_frame_max_min ##### -->
 <para>
 
 </para>
@@ -74,6 +125,16 @@ amitk_data_set_SBYTE_0D_SCALING
 @update_data: 
 
 
+<!-- ##### FUNCTION amitk_data_set_SBYTE_0D_SCALING_INTERCEPT_calc_distribution ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@update_func: 
+@update_data: 
+
+
 <!-- ##### FUNCTION amitk_data_set_SBYTE_0D_SCALING_get_slice ##### -->
 <para>
 
@@ -83,7 +144,21 @@ amitk_data_set_SBYTE_0D_SCALING
 @start_time: 
 @duration: 
 @gate: 
-@pixel_dim: 
+@pixel_size: 
+@slice_volume: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_data_set_SBYTE_0D_SCALING_INTERCEPT_get_slice ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@start_time: 
+@duration: 
+@gate: 
+@pixel_size: 
 @slice_volume: 
 @Returns: 
 

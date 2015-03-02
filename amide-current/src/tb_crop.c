@@ -29,7 +29,6 @@
 #include "tb_crop.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
-#include "pixmaps.h"
 #include "ui_common.h"
 
 
@@ -37,8 +36,6 @@
 #define AXIS_HEIGHT 120
 #define CURSOR_SIZE 1
 #define NUM_ROWS 4
-
-static const char * wizard_name = N_("Data Set Cropping Wizard");
 
 static const char * finish_page_text = 
 N_("When the apply button is hit, a new data set will be created\n"
@@ -49,7 +46,7 @@ typedef enum {
   TRANSVERSE_PAGE,
   CORONAL_PAGE,
   SAGITTAL_PAGE,
-  DATA_CONVERSION_PAGE,
+  CONVERSION_PAGE,
   FINISH_PAGE,
   NUM_PAGES
 } which_page_t;
@@ -93,22 +90,23 @@ typedef struct tb_crop_t {
   GtkWidget * gate_spinner[AMITK_VIEW_NUM];
   GtkWidget * spinner[AMITK_VIEW_NUM][AMITK_DIM_NUM][NUM_RANGES];
   GtkWidget * mm_label[AMITK_VIEW_NUM][AMITK_AXIS_NUM][NUM_RANGES];
-  GtkWidget * table[NUM_PAGES];
+  GtkWidget * page[NUM_PAGES];
   GtkWidget * progress_dialog;
 
   guint reference_count;
 } tb_crop_t;
 
 
-static void cancel_cb(GtkWidget* widget, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
-static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void apply_cb(GtkAssistant * assistant, gpointer data);
+static void close_cb(GtkAssistant * assistant, gpointer data);
 
 static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop);
 static tb_crop_t * tb_crop_init(void);
 
 
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
+static GtkWidget * create_projection_page(tb_crop_t * tb_crop, AmitkView view);
+static GtkWidget * create_conversion_page(tb_crop_t * tb_crop);
+static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer data);
 
 static void zoom_spinner_cb(GtkSpinButton * button, gpointer data);
 static void frame_spinner_cb(GtkSpinButton * button, gpointer data);
@@ -125,348 +123,345 @@ static void update_crop_lines(tb_crop_t * tb_crop, AmitkView view);
 static void add_canvas_update(tb_crop_t * tb_crop, AmitkView view);
 static gboolean update_canvas_while_idle(gpointer tb_crop);
 
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
 
 
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
- 
+
+/* function called when the finish button is hit */
+static void apply_cb(GtkAssistant * assistant, gpointer data) {
+
   tb_crop_t * tb_crop = data;
-  which_page_t which_page;
-  AmitkView view;
+  AmitkDataSet * cropped;
+
+  /* disable the buttons */
+  gtk_widget_set_sensitive(GTK_WIDGET(assistant), FALSE);
+
+  /* generate the new data set */
+  cropped = amitk_data_set_get_cropped(tb_crop->data_set, 
+				       tb_crop->range[RANGE_MIN],
+				       tb_crop->range[RANGE_MAX],
+				       tb_crop->format,
+				       tb_crop->scaling_type,
+				       amitk_progress_dialog_update, 
+				       tb_crop->progress_dialog);
+
+  /* if successful, add the new data set to the study and quit*/
+  if (cropped != NULL) {
+    amitk_object_add_child(AMITK_OBJECT(tb_crop->study), 
+			   AMITK_OBJECT(cropped)); /* this adds a reference to the data set*/
+    amitk_object_unref(cropped); /* so remove a reference */
+  } else
+    g_warning("Failed to generate cropped data set");
+
+  /* close_cb gets run automatically on close */
+  return;
+}
+
+
+
+/* function called to cancel the dialog */
+static void close_cb(GtkAssistant * assistant, gpointer data) {
+
+  tb_crop_t * tb_crop = data;
+  GtkWidget * dialog = tb_crop->dialog;
+
+  tb_crop = tb_crop_free(tb_crop);
+  gtk_widget_destroy(dialog);
+
+  return;
+}
+
+
+
+static GtkWidget * create_projection_page(tb_crop_t * tb_crop, AmitkView view) {
+
+  GtkWidget * table;
   GtkWidget * label;
   GtkWidget * spin_button;
   gint table_row, m_table_row;
   gint table_column;
   AmitkDim i_dim;
-  AmitkFormat i_format;
-  AmitkScalingType i_scaling_type;
   range_t i_range;
   gchar * temp_string;
   GtkWidget * axis_canvas;
   GtkWidget * vseparator;
+  GtkWidget * middle_table;
+
+  table = gtk_table_new(NUM_ROWS,5,FALSE);
+      
+  table_row=0;
+  table_column=0;
+      
+  /* the zoom selection */
+  label = gtk_label_new(_("zoom"));
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   table_column,table_column+1, table_row,table_row+1,
+		   FALSE,FALSE, X_PADDING, 0);
+
+  spin_button =  gtk_spin_button_new_with_range(0.2,5.0,0.2);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),2);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_crop->zoom);
+  g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
+  g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		   G_CALLBACK(zoom_spinner_cb), tb_crop);
+  gtk_table_attach(GTK_TABLE(table), spin_button, 
+		   table_column+1,table_column+2, table_row,table_row+1,
+		   FALSE,FALSE, X_PADDING, 0);
+  tb_crop->zoom_spinner[view] = spin_button;
+  table_row++;
+      
+  /* the gate selection */
+  if (AMITK_DATA_SET_NUM_GATES(tb_crop->data_set) > 1) {
+    label = gtk_label_new(_("gate"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, 0);
+    
+    spin_button =  
+      gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_GATES(tb_crop->data_set)-1,1);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+    g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
+    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		     G_CALLBACK(gate_spinner_cb), tb_crop);
+    gtk_table_attach(GTK_TABLE(table), spin_button, 
+		     table_column+1,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, 0);
+    tb_crop->gate_spinner[view] = spin_button;
+    table_row++;
+  }
+  
+  /* the frame selection */
+  if (AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set) > 1) {
+    label = gtk_label_new(_("frame"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    spin_button =  
+      gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set)-1,1);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+    g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
+    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		     G_CALLBACK(frame_spinner_cb), tb_crop);
+    gtk_table_attach(GTK_TABLE(table), spin_button, 
+		     table_column+1,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    tb_crop->frame_spinner[view] = spin_button;
+    table_row++;
+  }
+      
+  /* the projection */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  tb_crop->canvas[view] = gnome_canvas_new_aa();
+#else
+  tb_crop->canvas[view] = gnome_canvas_new();
+#endif
+  gtk_table_attach(GTK_TABLE(table), tb_crop->canvas[view], 
+		   table_column,table_column+2,table_row,NUM_ROWS, 
+		   FALSE,FALSE, X_PADDING, Y_PADDING);
+  add_canvas_update(tb_crop, view);
+  /* wait for canvas to update, this allows the projection to get made */
+  while (tb_crop->idle_handler_id != 0) gtk_main_iteration();
+  
+  table_row=0;
+  table_column += 2;
+      
+  /* a separator for clarity */
+  vseparator = gtk_vseparator_new();
+  gtk_table_attach(GTK_TABLE(table), vseparator,
+		   table_column, table_column+1, table_row, NUM_ROWS, 
+		   0, GTK_FILL, X_PADDING, Y_PADDING);
+  
+  table_row=0;
+  table_column += 1;
+
+  /* the middle table */
+  middle_table = gtk_table_new(9, 3, FALSE);
+  gtk_table_attach(GTK_TABLE(table), middle_table,
+		   table_column, table_column+1, table_row, NUM_ROWS, 
+		   0, GTK_FILL, X_PADDING, Y_PADDING);
+  m_table_row=0;
+  /* the range selectors */
+  for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
+    
+    if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
+      
+      temp_string = g_strdup_printf(_("%s range:"), amitk_dim_get_name(i_dim));
+      label = gtk_label_new(temp_string);
+      gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+      g_free(temp_string);
+      gtk_table_attach(GTK_TABLE(middle_table), label, 
+		       0,1, m_table_row,m_table_row+1,
+		       GTK_FILL|GTK_EXPAND,FALSE, X_PADDING, 0);
+	  
+      for (i_range=0; i_range<NUM_RANGES; i_range++) {
+	spin_button =  
+	  gtk_spin_button_new_with_range(0,voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim)-1,1);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+	//	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
+	//				      voxel_get_dim(tb_crop->range[i_range], i_dim));
+	g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
+	g_object_set_data(G_OBJECT(spin_button), "which_dim", GINT_TO_POINTER(i_dim));
+	g_object_set_data(G_OBJECT(spin_button), "which_range", GINT_TO_POINTER(i_range));
+	g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+			 G_CALLBACK(spinner_cb), tb_crop);
+	gtk_table_attach(GTK_TABLE(middle_table), spin_button, 
+			 1+i_range,2+i_range, m_table_row,m_table_row+1,
+			 FALSE,FALSE, X_PADDING, 0);
+	tb_crop->spinner[view][i_dim][i_range] = spin_button;
+      }
+      m_table_row++;
+      
+      if (i_dim < AMITK_AXIS_NUM) {
+	label = gtk_label_new(_("(mm)"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+	gtk_table_attach(GTK_TABLE(middle_table), label, 
+			 0,1, m_table_row,m_table_row+1,
+			 GTK_FILL|GTK_EXPAND,FALSE, X_PADDING, 0);
+	
+	for (i_range=0; i_range<NUM_RANGES; i_range++) {
+	  g_assert(i_dim < AMITK_AXIS_NUM);
+	  tb_crop->mm_label[view][i_dim][i_range] = gtk_label_new("");
+	  gtk_table_attach(GTK_TABLE(middle_table), tb_crop->mm_label[view][i_dim][i_range],
+			   1+i_range,2+i_range, m_table_row,m_table_row+1,
+			   FALSE,FALSE, X_PADDING, 0);
+	}
+	m_table_row++;
+      }
+    }
+  }
+
+  /* the axis display */
+#ifdef AMIDE_LIBGNOMECANVAS_AA
+  axis_canvas = gnome_canvas_new_aa();
+#else
+  axis_canvas = gnome_canvas_new();
+#endif
+  ui_common_draw_view_axis(GNOME_CANVAS(axis_canvas), 0, 0, view, 
+			   AMITK_LAYOUT_LINEAR, AXIS_WIDTH, AXIS_HEIGHT);
+  gtk_widget_set_size_request(axis_canvas, AXIS_WIDTH, AXIS_HEIGHT);
+  gnome_canvas_set_scroll_region(GNOME_CANVAS(axis_canvas), 0.0, 0.0, 
+				 3.0*AXIS_WIDTH, AXIS_HEIGHT);
+  gtk_table_attach(GTK_TABLE(middle_table), axis_canvas, 
+		   0,3,m_table_row,m_table_row+1,
+		   FALSE,FALSE, X_PADDING, Y_PADDING);
+
+  table_row=0;
+  table_column+=1;
+      
+  /* a separator for clarity */
+  vseparator = gtk_vseparator_new();
+  gtk_table_attach(GTK_TABLE(table), vseparator,
+		   table_column, table_column+1, table_row, NUM_ROWS, 
+		   0, GTK_FILL, X_PADDING, Y_PADDING);
+    
+  table_row=0;
+  table_column += 1;
+  /* the threshold */
+  tb_crop->threshold[view] = amitk_threshold_new(tb_crop->projections[view], 
+						 AMITK_THRESHOLD_LINEAR_LAYOUT,
+						 GTK_WINDOW(tb_crop->dialog), TRUE);
+  gtk_table_attach(GTK_TABLE(table), tb_crop->threshold[view],
+		   table_column,table_column+1,table_row,NUM_ROWS, 
+		   FALSE,FALSE, X_PADDING, Y_PADDING);
+  gtk_widget_show_all(table);
+  
+  return table;
+}
+
+static GtkWidget * create_conversion_page(tb_crop_t * tb_crop) {
+
+  GtkWidget * table;
+  GtkWidget * label;
+  gint table_row;
+  gint table_column;
+  AmitkFormat i_format;
+  AmitkScalingType i_scaling_type;
   GtkWidget * entry;
   GtkWidget * menu;
-  GtkWidget * middle_table;
-#if 1
-  GtkWidget * option_menu;
-  GtkWidget * menuitem;
-#endif
   GtkWidget * hseparator;
+
+  table = gtk_table_new(3,3,FALSE);
+  table_row = 0;
+  table_column=0;
+  
+  /* widget to tell you the internal data format */
+  label = gtk_label_new(_("Current Data Format:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  
+  entry = gtk_entry_new();
+  gtk_entry_set_text(GTK_ENTRY(entry), 
+		     amitk_format_names[AMITK_DATA_SET_FORMAT(tb_crop->data_set)]);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(table), entry,
+		   1,2, table_row, table_row+1, 
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  
+  /* widget to tell you the scaling format */
+  label = gtk_label_new(_("Current Scale Format:"));
+  gtk_table_attach(GTK_TABLE(table), label, 3,4,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  
+  entry = gtk_entry_new();
+  gtk_entry_set_text(GTK_ENTRY(entry), 
+		     amitk_scaling_menu_names[AMITK_DATA_SET_SCALING_TYPE(tb_crop->data_set)]);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+  gtk_table_attach(GTK_TABLE(table), entry, 4,5, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+  
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(table), hseparator,0,5,
+		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  table_row++;
+  
+  /* widget to tell you the internal data format */
+  label = gtk_label_new(_("Output Data Format:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  
+  menu = gtk_combo_box_new_text();
+  for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) 
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_format_names[i_format]);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->format);
+  g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
+  gtk_table_attach(GTK_TABLE(table), menu,
+		   1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  
+  /* widget to tell you the scaling format */
+  label = gtk_label_new(_("Output Scale Format:"));
+  gtk_table_attach(GTK_TABLE(table), label, 3,4,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  
+  menu = gtk_combo_box_new_text();
+  for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) 
+    gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_scaling_menu_names[i_scaling_type]);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->scaling_type);
+  g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
+  gtk_table_attach(GTK_TABLE(table), menu,
+		   4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  
+  gtk_widget_show_all(table);
+
+  return table;
+}
+
+
+static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer data) {
+ 
+  tb_crop_t * tb_crop = data;
+  which_page_t which_page;
+  AmitkView view;
+  AmitkDim i_dim;
+  range_t i_range;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
   view = which_page-TRANSVERSE_PAGE;
-
-  /* -------------- set the buttons correctly ---------------- */
-  switch(which_page) {
-  case TRANSVERSE_PAGE:
-    gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), FALSE, TRUE, TRUE, TRUE);
-    gnome_druid_set_show_finish(GNOME_DRUID(druid), FALSE);
-    break;
-  default:
-    gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, TRUE, TRUE, TRUE);
-    gnome_druid_set_show_finish(GNOME_DRUID(druid), FALSE);
-    break;
-  }
-
-  /* ---------------- finish up the pages as needed ---------------- */
-  switch(which_page) {
-  case TRANSVERSE_PAGE:
-  case CORONAL_PAGE:
-  case SAGITTAL_PAGE:
-    if (tb_crop->table[view] == NULL) {
-      tb_crop->table[view] = gtk_table_new(NUM_ROWS,5,FALSE);
-      gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(page)->vbox), 
-			 tb_crop->table[view], TRUE, TRUE, 5);
-      
-      table_row=0;
-      table_column=0;
-      
-      /* the zoom selection */
-      label = gtk_label_new(_("zoom"));
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, 0);
-      
-      spin_button =  
-	gtk_spin_button_new_with_range(0.2,5.0,0.2);
-      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),2);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_crop->zoom);
-      g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-		       G_CALLBACK(zoom_spinner_cb), tb_crop);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), spin_button, 
-		       table_column+1,table_column+2, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, 0);
-      tb_crop->zoom_spinner[view] = spin_button;
-      table_row++;
-      
-      /* the gate selection */
-      if (AMITK_DATA_SET_NUM_GATES(tb_crop->data_set) > 1) {
-	label = gtk_label_new(_("gate"));
-	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
-			 table_column,table_column+1, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, 0);
-	
-	spin_button =  
-	  gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_GATES(tb_crop->data_set)-1,1);
-	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-	g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
-	g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-			 G_CALLBACK(gate_spinner_cb), tb_crop);
-	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, 0);
-	tb_crop->gate_spinner[view] = spin_button;
-	table_row++;
-      }
-      
-      /* the frame selection */
-      if (AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set) > 1) {
-	label = gtk_label_new(_("frame"));
-	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
-			 table_column,table_column+1, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
-	
-	spin_button =  
-	  gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set)-1,1);
-	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-	g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
-	g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-			 G_CALLBACK(frame_spinner_cb), tb_crop);
-	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
-	tb_crop->frame_spinner[view] = spin_button;
-	table_row++;
-      }
-      
-      /* the projection */
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-      tb_crop->canvas[view] = gnome_canvas_new_aa();
-#else
-      tb_crop->canvas[view] = gnome_canvas_new();
-#endif
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), tb_crop->canvas[view], 
-		       table_column,table_column+2,table_row,NUM_ROWS, 
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-      add_canvas_update(tb_crop, view);
-      /* wait for canvas to update, this allows the projection to get made */
-      while (tb_crop->idle_handler_id != 0) gtk_main_iteration();
-      
-      table_row=0;
-      table_column += 2;
-      
-      /* a separator for clarity */
-      vseparator = gtk_vseparator_new();
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), vseparator,
-		       table_column, table_column+1, table_row, NUM_ROWS, 
-		       0, GTK_FILL, X_PADDING, Y_PADDING);
-      
-      
-      table_row=0;
-      table_column += 1;
-
-      /* the middle table */
-      middle_table = gtk_table_new(9, 3, FALSE);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), middle_table,
-		       table_column, table_column+1, table_row, NUM_ROWS, 
-		       0, GTK_FILL, X_PADDING, Y_PADDING);
-      m_table_row=0;
-      /* the range selectors */
-      for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
-	
-	if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
-	  
-	  temp_string = g_strdup_printf(_("%s range:"), amitk_dim_get_name(i_dim));
-	  label = gtk_label_new(temp_string);
-	  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-	  g_free(temp_string);
-	  gtk_table_attach(GTK_TABLE(middle_table), label, 
-			   0,1, m_table_row,m_table_row+1,
-			   GTK_FILL|GTK_EXPAND,FALSE, X_PADDING, 0);
-	  
-	  for (i_range=0; i_range<NUM_RANGES; i_range++) {
-	    spin_button =  
-	      gtk_spin_button_new_with_range(0,voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim)-1,1);
-	    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-	    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-	    //	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
-	    //				      voxel_get_dim(tb_crop->range[i_range], i_dim));
-	    g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
-	    g_object_set_data(G_OBJECT(spin_button), "which_dim", GINT_TO_POINTER(i_dim));
-	    g_object_set_data(G_OBJECT(spin_button), "which_range", GINT_TO_POINTER(i_range));
-	    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-			     G_CALLBACK(spinner_cb), tb_crop);
-	    gtk_table_attach(GTK_TABLE(middle_table), spin_button, 
-			     1+i_range,2+i_range, m_table_row,m_table_row+1,
-			     FALSE,FALSE, X_PADDING, 0);
-	    tb_crop->spinner[view][i_dim][i_range] = spin_button;
-	  }
-	  m_table_row++;
-
-	  if (i_dim < AMITK_AXIS_NUM) {
-	    label = gtk_label_new(_("(mm)"));
-	    gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-	    gtk_table_attach(GTK_TABLE(middle_table), label, 
-			     0,1, m_table_row,m_table_row+1,
-			     GTK_FILL|GTK_EXPAND,FALSE, X_PADDING, 0);
-	  
-	    for (i_range=0; i_range<NUM_RANGES; i_range++) {
-	      g_assert(i_dim < AMITK_AXIS_NUM);
-	      tb_crop->mm_label[view][i_dim][i_range] = gtk_label_new("");
-	      gtk_table_attach(GTK_TABLE(middle_table), tb_crop->mm_label[view][i_dim][i_range],
-			       1+i_range,2+i_range, m_table_row,m_table_row+1,
-			       FALSE,FALSE, X_PADDING, 0);
-	    }
-	    m_table_row++;
-	  }
-	}
-      }
-
-      /* the axis display */
-#ifdef AMIDE_LIBGNOMECANVAS_AA
-      axis_canvas = gnome_canvas_new_aa();
-#else
-      axis_canvas = gnome_canvas_new();
-#endif
-      ui_common_draw_view_axis(GNOME_CANVAS(axis_canvas), 0, 0, view, 
-			       AMITK_LAYOUT_LINEAR, AXIS_WIDTH, AXIS_HEIGHT);
-      gtk_widget_set_size_request(axis_canvas, AXIS_WIDTH, AXIS_HEIGHT);
-      gnome_canvas_set_scroll_region(GNOME_CANVAS(axis_canvas), 0.0, 0.0, 
-				     3.0*AXIS_WIDTH, AXIS_HEIGHT);
-      gtk_table_attach(GTK_TABLE(middle_table), axis_canvas, 
-		       0,3,m_table_row,m_table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-
-
-      table_row=0;
-      table_column+=1;
-      
-      /* a separator for clarity */
-      vseparator = gtk_vseparator_new();
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), vseparator,
-		       table_column, table_column+1, table_row, NUM_ROWS, 
-		       0, GTK_FILL, X_PADDING, Y_PADDING);
-      
-      
-      table_row=0;
-      table_column += 1;
-      /* the threshold */
-      tb_crop->threshold[view] = amitk_threshold_new(tb_crop->projections[view], 
-						     AMITK_THRESHOLD_LINEAR_LAYOUT,
-						     GTK_WINDOW(tb_crop->dialog), TRUE);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[view]), tb_crop->threshold[view],
-		       table_column,table_column+1,table_row,NUM_ROWS, 
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-      gtk_widget_show_all(tb_crop->table[view]);
-    }
-    break;
-  case DATA_CONVERSION_PAGE:
-    if (tb_crop->table[DATA_CONVERSION_PAGE] == NULL) {
-      tb_crop->table[DATA_CONVERSION_PAGE] = gtk_table_new(3,3,FALSE);
-      table_row = 0;
-      table_column=0;
-      gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(page)->vbox), 
-			 tb_crop->table[view], TRUE, TRUE, 5);
-      
-      /* widget to tell you the internal data format */
-      label = gtk_label_new(_("Current Data Format:"));
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-      
-      entry = gtk_entry_new();
-      gtk_entry_set_text(GTK_ENTRY(entry), 
-			 amitk_format_names[AMITK_DATA_SET_FORMAT(tb_crop->data_set)]);
-      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), entry,
-		       1,2, table_row, table_row+1, 
-		       GTK_FILL, 0, X_PADDING, Y_PADDING);
-      
-      /* widget to tell you the scaling format */
-      label = gtk_label_new(_("Current Scale Format:"));
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-      
-      entry = gtk_entry_new();
-      gtk_entry_set_text(GTK_ENTRY(entry), 
-			 amitk_scaling_menu_names[AMITK_DATA_SET_SCALING_TYPE(tb_crop->data_set)]);
-      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), entry, 4,5, 
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-      table_row++;
-      
-      /* a separator for clarity */
-      hseparator = gtk_hseparator_new();
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), hseparator,0,5,
-		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
-      table_row++;
-      
-      /* widget to tell you the internal data format */
-      label = gtk_label_new(_("Output Data Format:"));
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 0,1,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-      
-#if 1
-      menu = gtk_menu_new();
-      for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) {
-	menuitem = gtk_menu_item_new_with_label(amitk_format_names[i_format]);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      }
-      
-      option_menu = gtk_option_menu_new();
-      gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-      gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->format);
-      g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
-		       1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-#else
-      menu = gtk_combo_box_new_text();
-      for (i_format=0; i_format<AMITK_FORMAT_NUM; i_format++) 
-	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_format_names[i_format]);
-      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->format);
-      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_format_cb), tb_crop);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
-		       1,2, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-#endif
-      
-      
-      /* widget to tell you the scaling format */
-      label = gtk_label_new(_("Output Scale Format:"));
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), label, 3,4,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-      
-#if 1
-      menu = gtk_menu_new();
-      for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) {
-	menuitem = gtk_menu_item_new_with_label(amitk_scaling_menu_names[i_scaling_type]);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      }
-      
-      option_menu = gtk_option_menu_new();
-      gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-      gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), tb_crop->scaling_type);
-      g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), option_menu,
-		       4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-#else
-      menu = gtk_combo_box_new_text();
-      for (i_scaling_type=0; i_scaling_type<AMITK_SCALING_TYPE_NUM; i_scaling_type++) 
-	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_scaling_menu_names[i_scaling_type]);
-      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_crop->scaling_type);
-      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_scaling_type_cb), tb_crop);
-      gtk_table_attach(GTK_TABLE(tb_crop->table[DATA_CONVERSION_PAGE]), menu,
-		       4,5, table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-#endif
-      
-      gtk_widget_show_all(tb_crop->table[DATA_CONVERSION_PAGE]);
-    }
-    break;
-  default:
-    break;
-  }
 
   /* ---------------- set entries appropriately ---------------- */
   switch(which_page) {
@@ -724,22 +719,14 @@ static void projection_color_table_changed_cb(AmitkDataSet * projection, AmitkVi
 /* function called to change the desired format */
 static void change_format_cb(GtkWidget * widget, gpointer data) {
   tb_crop_t * tb_crop = data;
-#if 1
-  tb_crop->format = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   tb_crop->format = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   return;
 }
 
 /* function called to change the desired scaling */
 static void change_scaling_type_cb(GtkWidget * widget, gpointer data) {
   tb_crop_t * tb_crop = data;
-#if 1
-  tb_crop->scaling_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   tb_crop->scaling_type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   return;
 }
 
@@ -940,74 +927,6 @@ static gboolean update_canvas_while_idle(gpointer data) {
   return FALSE;
 }
 
-/* function called when the finish button is hit */
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
-
-  tb_crop_t * tb_crop = data;
-  AmitkDataSet * cropped;
-
-  /* disable the buttons */
-  gtk_widget_set_sensitive(GTK_WIDGET(druid), FALSE);
-
-  /* generate the new data set */
-  cropped = amitk_data_set_get_cropped(tb_crop->data_set, 
-				       tb_crop->range[RANGE_MIN],
-				       tb_crop->range[RANGE_MAX],
-				       tb_crop->format,
-				       tb_crop->scaling_type,
-				       amitk_progress_dialog_update, 
-				       tb_crop->progress_dialog);
-
-  /* if successful, add the new data set to the study and quit*/
-  if (cropped != NULL) {
-    amitk_object_add_child(AMITK_OBJECT(tb_crop->study), 
-			   AMITK_OBJECT(cropped)); /* this adds a reference to the data set*/
-    amitk_object_unref(cropped); /* so remove a reference */
-
-    /* close the dialog box */
-    cancel_cb(widget, data);
-  } else {
-
-    /* reenable the buttons */
-    gtk_widget_set_sensitive(GTK_WIDGET(druid), TRUE);
-  }
-
-  return;
-}
-
-
-
-
-
-/* function called to cancel the dialog */
-static void cancel_cb(GtkWidget* widget, gpointer data) {
-
-  tb_crop_t * tb_crop = data;
-  GtkWidget * dialog = tb_crop->dialog;
-  gboolean return_val;
-
-  /* run the delete event function */
-  g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-  if (!return_val) gtk_widget_destroy(dialog);
-
-  return;
-}
-
-
-static void destroy_cb(GtkObject * object, gpointer data) {
-  tb_crop_t * tb_crop = data;
-  tb_crop = tb_crop_free(tb_crop);
-  return;
-}
-
-/* function called on a delete event */
-static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
-  return FALSE;
-}
-
-
-
-
 
 
 static tb_crop_t * tb_crop_free(tb_crop_t * tb_crop) {
@@ -1074,7 +993,6 @@ static tb_crop_t * tb_crop_init(void) {
   tb_crop_t * tb_crop;
   gint j;
   range_t i_range;
-  which_page_t i_page;
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_crop = g_try_new(tb_crop_t,1)) == NULL) {
@@ -1095,8 +1013,6 @@ static tb_crop_t * tb_crop_init(void) {
 
   for (i_range=0; i_range<NUM_RANGES; i_range++)
     tb_crop->range[i_range] = zero_voxel;
-  for (i_page=0; i_page < NUM_PAGES; i_page++)
-    tb_crop->table[i_page]=NULL;
   for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
     tb_crop->image[i_view] = NULL;
     tb_crop->projections[i_view] = NULL;
@@ -1118,16 +1034,12 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
   tb_crop_t * tb_crop;
   GdkPixbuf * logo;
   AmitkView i_view;
-  GtkWidget * druid;
-  GtkWidget * page;
+  gint i;
 
   if (active_ds == NULL) {
     g_warning(_("No data set is currently marked as active"));
     return;
   }
-  
-
-  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
 
   tb_crop = tb_crop_init();
   tb_crop->study = amitk_object_ref(study);
@@ -1137,46 +1049,49 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
   tb_crop->frame = amitk_data_set_get_frame(active_ds, AMITK_STUDY_VIEW_START_TIME(study));
   tb_crop->gate = AMITK_DATA_SET_VIEW_START_GATE(active_ds);
 
-  tb_crop->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  tb_crop->dialog = gtk_assistant_new();
   gtk_window_set_transient_for(GTK_WINDOW(tb_crop->dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_crop->dialog), TRUE);
-  g_signal_connect(G_OBJECT(tb_crop->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_crop);
-  g_signal_connect(G_OBJECT(tb_crop->dialog), "destroy", G_CALLBACK(destroy_cb), tb_crop);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "cancel", G_CALLBACK(close_cb), tb_crop);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "close", G_CALLBACK(close_cb), tb_crop);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "apply", G_CALLBACK(apply_cb), tb_crop);
+  g_signal_connect(G_OBJECT(tb_crop->dialog), "prepare",  G_CALLBACK(prepare_page_cb), tb_crop);
 
   tb_crop->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_crop->dialog));
-
-  druid = gnome_druid_new();
-  gtk_container_add(GTK_CONTAINER(tb_crop->dialog), druid);
-  g_signal_connect(G_OBJECT(druid), "cancel", 
-		   G_CALLBACK(cancel_cb), tb_crop);
-
-
   tb_crop->range[RANGE_MAX] = voxel_sub(AMITK_DATA_SET_DIM(tb_crop->data_set), one_voxel);
 
-  for (i_view=0; i_view<NUM_PAGES-1; i_view++) {
-    page = gnome_druid_page_standard_new_with_vals(wizard_name,logo,NULL);
-    g_object_set_data(G_OBJECT(page),"which_page", GINT_TO_POINTER(i_view+TRANSVERSE_PAGE));
-    
-    /* note, the _connect_after is a workaround, it should just be _connect */
-    /* the problem, is gnome_druid currently overwrites button sensitivity in its own prepare routine*/
-    g_signal_connect_after(G_OBJECT(page), "prepare", 
-			   G_CALLBACK(prepare_page_cb), tb_crop);
-    gnome_druid_append_page(GNOME_DRUID(druid), GNOME_DRUID_PAGE(page));
+  /* setup the projection pages */
+  for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++) {
+    tb_crop->page[i_view] = create_projection_page(tb_crop, i_view);
+    gtk_assistant_append_page(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[i_view]);
   }
 
-    
-    
+  /* setup the conversion page */
+  tb_crop->page[CONVERSION_PAGE] = create_conversion_page(tb_crop);
+  gtk_assistant_append_page(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[CONVERSION_PAGE]);
 
-    
-  /* ----------------  conclusion page ---------------------------------- */
-  page = gnome_druid_page_edge_new_with_vals(GNOME_EDGE_FINISH, TRUE,
-					     wizard_name,finish_page_text, logo,NULL, NULL);
-  g_signal_connect(G_OBJECT(page), "finish",
-		   G_CALLBACK(finish_cb), tb_crop);
-  gnome_druid_append_page(GNOME_DRUID(druid),  GNOME_DRUID_PAGE(page));
+  /* setup the conclusion page */
+  tb_crop->page[FINISH_PAGE] = gtk_label_new(finish_page_text);
+  gtk_assistant_append_page(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[FINISH_PAGE]);
+  gtk_assistant_set_page_type(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[FINISH_PAGE],
+			      GTK_ASSISTANT_PAGE_CONFIRM);
 
+
+  /* set the title, icon, and other info */
+  logo = gtk_widget_render_icon(GTK_WIDGET(tb_crop->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
+  for (i=0; i<NUM_PAGES; i++) {
+    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[i], _("Data Set Cropping Wizard"));
+    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[i], logo);
+    g_object_set_data(G_OBJECT(tb_crop->page[i]),"which_page", GINT_TO_POINTER(i));
+
+    /* by default, everything's finished in this wizard */
+    gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_crop->dialog), tb_crop->page[i], TRUE);
+  }
+    
   g_object_unref(logo);
+
   gtk_widget_show_all(tb_crop->dialog);
+
   return;
 }
 

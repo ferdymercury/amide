@@ -27,17 +27,10 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <libgnomecanvas/libgnomecanvas.h>
-#include <libgnomeui/libgnomeui.h>
 
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#else
-static gboolean strip_highs=FALSE;
-static gboolean optimize_rendering=TRUE;
-static gboolean initially_no_gradient_opacity=FALSE;
-#endif
-
+#include "amide_gconf.h"
 #include "image.h"
 #include "ui_common.h"
 #include "ui_render.h"
@@ -47,8 +40,6 @@ static gboolean initially_no_gradient_opacity=FALSE;
 #include "amitk_progress_dialog.h"
 #include "amitk_tree_view.h"
 #include "amitk_common.h"
-#include "pixmaps.h"
-
 
 
 #define UPDATE_NONE 0
@@ -56,23 +47,23 @@ static gboolean initially_no_gradient_opacity=FALSE;
 
 
 static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
-static void stereoscopic_cb(GtkWidget * widget, gpointer data);
+static void stereoscopic_cb(GtkRadioAction * action, GtkRadioAction * current, gpointer data);
 static void change_zoom_cb(GtkWidget * widget, gpointer data);
 static void rotate_cb(GtkAdjustment * adjustment, gpointer data);
 static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data);
-static void export_cb(GtkWidget * widget, gpointer data);
-static void parameters_cb(GtkWidget * widget, gpointer data);
-static void transfer_function_cb(GtkWidget * widget, gpointer data);
+static void export_cb(GtkAction * action, gpointer data);
+static void parameters_cb(GtkAction * action, gpointer data);
+static void transfer_function_cb(GtkAction * action, gpointer data);
 #ifdef AMIDE_LIBFAME_SUPPORT
-static void movie_cb(GtkWidget * widget, gpointer data);
+static void movie_cb(GtkAction * action, gpointer data);
 #endif
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
-static void close_cb(GtkWidget* widget, gpointer data);
+static void close_cb(GtkAction * action, gpointer data);
 
 
 static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
 			     gboolean * initially_no_gradient_opacity);
-static ui_render_t * ui_render_init(GnomeApp * app, AmitkStudy * study, GList * selected_objects);
+static ui_render_t * ui_render_init(GtkWindow * window, GtkWidget *window_vbox, AmitkStudy * study, GList * selected_objects);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
 
 
@@ -289,15 +280,10 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   
   return FALSE;
 }
-
-
 /* function to switch into stereoscopic rendering mode */
-static void stereoscopic_cb(GtkWidget * widget, gpointer data) {
+static void stereoscopic_cb(GtkRadioAction * action, GtkRadioAction * current, gpointer data) {
   ui_render_t * ui_render = data;
-
-  ui_render->stereoscopic = 
-    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "stereoscopic"));
-
+  ui_render->stereoscopic = gtk_radio_action_get_current_value((GTK_RADIO_ACTION(current)));
   ui_render_add_update(ui_render); 
   return;
 }
@@ -378,7 +364,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   /* get a pointer to ui_render */
   ui_render = g_object_get_data(G_OBJECT(file_selection), "ui_render");
 
-  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   pixbuf = ui_render_get_pixbuf(ui_render);
@@ -401,7 +387,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
 }
 
 /* function to save a rendering as an external data format */
-static void export_cb(GtkWidget * widget, gpointer data) {
+static void export_cb(GtkAction * action, gpointer data) {
 
   ui_render_t * ui_render = data;
   renderings_t * temp_renderings;
@@ -458,14 +444,14 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 
 
 /* function called when the button to pop up a rendering parameters modification dialog is hit */
-static void parameters_cb(GtkWidget * widget, gpointer data) {
+static void parameters_cb(GtkAction * action, gpointer data) {
   ui_render_t * ui_render = data;
   ui_render_dialog_create_parameters(ui_render);
   return;
 }
 
 /* function called when the button to pop up a transfer function dialog is hit */
-static void transfer_function_cb(GtkWidget * widget, gpointer data) {
+static void transfer_function_cb(GtkAction * action, gpointer data) {
   ui_render_t * ui_render = data;
   ui_render_dialog_create_transfer_function(ui_render);
   return;
@@ -474,7 +460,7 @@ static void transfer_function_cb(GtkWidget * widget, gpointer data) {
 
 #ifdef AMIDE_LIBFAME_SUPPORT
 /* function called when the button to pop up a movie generation dialog */
-static void movie_cb(GtkWidget * widget, gpointer data) {
+static void movie_cb(GtkAction * action, gpointer data) {
   ui_render_t * ui_render = data;
   ui_render->movie = ui_render_movie_dialog_create(ui_render);
   return;
@@ -485,118 +471,129 @@ static void movie_cb(GtkWidget * widget, gpointer data) {
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_render_t * ui_render = data;
-  GtkWidget * app = GTK_WIDGET(ui_render->app);
+  GtkWindow * window = ui_render->window;
 
   ui_render = ui_render_free(ui_render); /* free the associated data structure */
-  amide_unregister_window((gpointer) app); /* tell amide this window is no longer */
+  amide_unregister_window((gpointer) window); /* tell amide this window is no longer */
 
   return FALSE;
 }
 
 /* function ran when closing the rendering window */
-static void close_cb(GtkWidget* widget, gpointer data) {
+static void close_cb(GtkAction* widget, gpointer data) {
 
   ui_render_t * ui_render = data;
-  GtkWidget * app = GTK_WIDGET(ui_render->app);
+  GtkWindow * window = ui_render->window;
   gboolean return_val;
 
   /* run the delete event function */
-  g_signal_emit_by_name(G_OBJECT(app), "delete_event", NULL, &return_val);
-  if (!return_val) gtk_widget_destroy(app);
+  g_signal_emit_by_name(G_OBJECT(window), "delete_event", NULL, &return_val);
+  if (!return_val) gtk_widget_destroy(GTK_WIDGET(window));
 
   return;
 }
 
 
 
-
-
-/* function to setup the menus for the rendering ui */
-static void menus_create(ui_render_t * ui_render) {
-
-
-  GnomeUIInfo file_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Export Rendering"),
-			  N_("Export the rendered image"),
-			  export_cb,
-			  ui_render, NULL),
+static const GtkActionEntry normal_items[] = {
+  /* Toplevel */
+  { "FileMenu", NULL, N_("_File") },
+  { "EditMenu", NULL, N_("_Edit") },
+  { "HelpMenu", NULL, N_("_Help") },
+  
+  /* File menu */
+  { "ExportRendering", NULL, N_("_Export Rendering"), NULL, N_("Export the rendered image"), G_CALLBACK(export_cb)},
 #ifdef AMIDE_LIBFAME_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_Create Movie"),
-			  N_("Create a movie out of a sequence of renderings"),
-			  movie_cb,
-			  ui_render, NULL),
+  { "CreateMovie", NULL, N_("_Create Movie"), NULL, N_("Create a movie out of a sequence of renderings"), G_CALLBACK(movie_cb)},
 #endif
-    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_MENU_CLOSE_ITEM(close_cb, ui_render),
-    GNOMEUIINFO_END
-  };
+  { "Close", GTK_STOCK_CLOSE, NULL, "<control>W", N_("Close the rendering dialog"), G_CALLBACK (close_cb)},
+  
+  /* Edit menu */
+  { "Parameters", NULL, N_("_Rendering Parameters"), NULL, N_("Adjust parameters pertinent to the rendered image"), G_CALLBACK(parameters_cb)},
+  
+  /* Toolbar items */
+  { "TransferFunctions", "amide_icon_transfer_function", N_("X-fer"), NULL, N_("Opacity and density transfer functions"), G_CALLBACK(transfer_function_cb)}
+};
 
-  GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Rendering Parameters"),
-			  N_("Adjust parameters pertinent to the rendered image"),
-			  parameters_cb,
-			  ui_render, NULL),
-    GNOMEUIINFO_END
-  };
+static const GtkRadioActionEntry stereoscopic_radio_entries[] = {
+  { "MonoscopicRendering", "amide_icon_view_mode_single", N_("Mono"), NULL,  N_("Monoscopic rendering"), 0},
+  { "StereoscopicRendering", "amide_icon_view_mode_linked_2way", N_("Stereo"), NULL,  N_("Stereoscopic rendering"), 1},
+};
 
-  /* and the main menu definition */
-  GnomeUIInfo ui_render_main_menu[] = {
-    GNOMEUIINFO_MENU_FILE_TREE(file_menu),
-    GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
-    GNOMEUIINFO_MENU_HELP_TREE(ui_common_help_menu),
-    GNOMEUIINFO_END
-  };
+static const char *ui_description =
+"<ui>"
+"  <menubar name='MainMenu'>"
+"    <menu action='FileMenu'>"
+"      <menuitem action='ExportRendering'/>"
+"      <menuitem action='CreateMovie'/>"
+"      <separator/>"
+"      <menuitem action='Close'/>"
+"    </menu>"
+"    <menu action='EditMenu'>"
+"      <menuitem action='Parameters'/>"
+"    </menu>"
+HELP_MENU_UI_DESCRIPTION
+"  </menubar>"
+"  <toolbar name='ToolBar'>"
+"    <toolitem action='TransferFunctions'/>"
+"    <separator/>"
+"    <toolitem action='MonoscopicRendering'/>"
+"    <toolitem action='StereoscopicRendering'/>"
+  /* "    <separator/>" */
+  /* "    <placeholder name='Zoom' />" */
+"  </toolbar>"
+"</ui>";
 
+/* function to setup the menus and toolbars for the rendering ui */
+static void menus_toolbar_create(ui_render_t * ui_render) {
+
+  GtkWidget *menubar;
+  GtkWidget *toolbar;
+  GtkActionGroup *action_group;
+  GtkUIManager *ui_manager;
+  GtkAccelGroup *accel_group;
+  GtkWidget * label;
+  GtkWidget * spin_button;
+  GError * error;
 
   /* sanity check */
   g_assert(ui_render !=NULL);
 
-  /* make the menu */
-  gnome_app_create_menus(GNOME_APP(ui_render->app), ui_render_main_menu);
+  /* create an action group with all the menu actions */
+  action_group = gtk_action_group_new ("MenuActions");
+  gtk_action_group_add_actions(action_group, normal_items, G_N_ELEMENTS(normal_items),ui_render);
+  gtk_action_group_add_actions(action_group, ui_common_help_menu_items, G_N_ELEMENTS(ui_common_help_menu_items),ui_render);
+  gtk_action_group_add_radio_actions(action_group, stereoscopic_radio_entries, G_N_ELEMENTS (stereoscopic_radio_entries), 
+				     0, G_CALLBACK(stereoscopic_cb), ui_render);
 
-  return;
+  /* create the ui manager, and add the actions and accel's */
+  ui_manager = gtk_ui_manager_new ();
+  gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+  accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+  gtk_window_add_accel_group (ui_render->window, accel_group);
 
-}
+  /* create the actual menu/toolbar ui */
+  error = NULL;
+  if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, &error)) {
+    g_warning ("%s: building menus failed in %s: %s", PACKAGE, __FILE__, error->message);
+    g_error_free (error);
+    return;
+  }
 
+  /* pack in the menu and toolbar */
+  menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
+  gtk_box_pack_start (GTK_BOX (ui_render->window_vbox), menubar, FALSE, FALSE, 0);
 
-static void toolbar_create(ui_render_t * ui_render) {
+  toolbar = gtk_ui_manager_get_widget (ui_manager, "/ToolBar");
+  gtk_box_pack_start (GTK_BOX (ui_render->window_vbox), toolbar, FALSE, FALSE, 0);
+  gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
 
-  GtkWidget * toolbar;
-  GtkWidget * label;
-  GtkWidget * spin_button;
-
-  GnomeUIInfo stereoscopic_list[] = {
-    GNOMEUIINFO_RADIOITEM_DATA(NULL, N_("Monoscopic rendering"), stereoscopic_cb, 
-			       ui_render, icon_view_mode[0]),
-    GNOMEUIINFO_RADIOITEM_DATA(NULL, N_("Stereoscopic rendering"), stereoscopic_cb, 
-			       ui_render, icon_view_mode[1]),
-    GNOMEUIINFO_END
-  };
-
-  GnomeUIInfo rendering_toolbar[] = {
-    GNOMEUIINFO_ITEM_DATA(NULL, N_("Opacity and density transfer functions"), 
-			  transfer_function_cb, ui_render,
-			  icon_transfer_function_xpm),
-    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_RADIOLIST(stereoscopic_list),
-    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_END
-  };
-
-  /* make the toolbar */
-  toolbar = gtk_toolbar_new();
-  gnome_app_fill_toolbar(GTK_TOOLBAR(toolbar), rendering_toolbar, NULL);
-
-
-  /* finish setting up items */
-  g_object_set_data(G_OBJECT(stereoscopic_list[0].widget), "stereoscopic", GINT_TO_POINTER(FALSE));
-  g_object_set_data(G_OBJECT(stereoscopic_list[1].widget), "stereoscopic", GINT_TO_POINTER(TRUE));
-
+  /* a separator for clarity */
+  ui_common_toolbar_append_separator(toolbar);
 
   /* add the zoom widget to our toolbar */
   label = gtk_label_new(_("zoom:"));
-  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
-  gtk_widget_show(label);
+  ui_common_toolbar_append_widget(toolbar, label, NULL);
 
   spin_button = gtk_spin_button_new_with_range(0.1, 10.0, 0.2);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
@@ -606,17 +603,11 @@ static void toolbar_create(ui_render_t * ui_render) {
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
   gtk_widget_set_size_request (spin_button, 60, -1);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_zoom_cb), ui_render);
-  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), spin_button, 
-  			    _("specify how much to magnify the rendering"), NULL);
-  gtk_widget_show(spin_button);
+  ui_common_toolbar_append_widget(toolbar, spin_button,_("specify how much to magnify the rendering"));
 			      
-  //  gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
-
-
-  /* add our toolbar to our app */
-  gnome_app_set_toolbar(GNOME_APP(ui_render->app), GTK_TOOLBAR(toolbar));
-
+  return;
 }
+
 
 
 /* destroy a ui_render data structure */
@@ -672,33 +663,29 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings,
 			     gboolean * initially_no_gradient_opacity) {
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-
-  *strip_highs = gnome_config_get_int("RENDERING/StripHighs");
-  *optimize_renderings = gnome_config_get_int("RENDERING/OptimizeRendering");
-  *initially_no_gradient_opacity = gnome_config_get_int("RENDERING/InitiallyNoGradientOpacity");
-
-  gnome_config_pop_prefix();
-#endif
+  *strip_highs = 
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"StripHighs");
+  *optimize_renderings = 
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"OptimizeRendering");
+  *initially_no_gradient_opacity = 
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"InitiallyNoGradientOpacity");
 
   return;
 }
 
 
 /* allocate and initialize a ui_render data structure */
-static ui_render_t * ui_render_init(GnomeApp * app,
+static ui_render_t * ui_render_init(GtkWindow * window,
+				    GtkWidget * window_vbox,
 				    AmitkStudy * study,
 				    GList * selected_objects) {
 
   ui_render_t * ui_render;
-#ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
   gboolean initially_no_gradient_opacity;
 
   read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
-#endif
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
@@ -708,7 +695,8 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->reference_count = 1;
 
   /* set any needed parameters */
-  ui_render->app = app;
+  ui_render->window = window;
+  ui_render->window_vbox = window_vbox;
   ui_render->parameter_dialog = NULL;
   ui_render->transfer_function_dialog = NULL;
 #ifdef AMIDE_LIBFAME_SUPPORT
@@ -732,32 +720,25 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->fov = AMITK_STUDY_FOV(study);
   ui_render->view_center = AMITK_STUDY_VIEW_CENTER(study);
   ui_render->box_space = amitk_space_new();
-  ui_render->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render->app));
+  ui_render->progress_dialog = amitk_progress_dialog_new(ui_render->window);
   ui_render->disable_progress_dialog=FALSE;
   ui_render->next_update= UPDATE_NONE;
   ui_render->idle_handler_id = 0;
   ui_render->rendered_successfully=FALSE;
 
   /* load in saved preferences */
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
+  ui_render->update_without_release = 
+    amide_gconf_get_bool(GCONF_AMIDE_RENDERING"UpdateWithoutRelease");
 
-  ui_render->update_without_release = gnome_config_get_int("RENDERING/UpdateWithoutRelease");
-
-  ui_render->stereo_eye_width = gnome_config_get_int("RENDERING/EyeWidth");
+  ui_render->stereo_eye_width = 
+    amide_gconf_get_int(GCONF_AMIDE_RENDERING"EyeWidth");
   if (ui_render->stereo_eye_width == 0)  /* if no config file, put in sane value */
     ui_render->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
 
-  ui_render->stereo_eye_angle = gnome_config_get_float("RENDERING/EyeAngle");
+  ui_render->stereo_eye_angle = 
+    amide_gconf_get_float(GCONF_AMIDE_RENDERING"EyeAngle");
   if ((ui_render->stereo_eye_angle <= 0.1) || (ui_render->stereo_eye_angle > 45.0))
     ui_render->stereo_eye_angle = 5.0; /* degrees */
-
-  gnome_config_pop_prefix();
-#else
-  ui_render->update_without_release = FALSE;
-  ui_render->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
-  ui_render->stereo_eye_angle = 5.0; /* degrees */
-#endif
 
   /* initialize the rendering contexts */
   ui_render->renderings = renderings_init(selected_objects, 
@@ -801,7 +782,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
   ui_render_t * ui_render = data;
   amide_intpoint_t size_dim; 
-  AmitkEye eyes;
+  AmideEye eyes;
   gboolean return_val=TRUE;
   amide_time_t midpt_time;
   gint hours, minutes, seconds;
@@ -823,7 +804,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
   /* -------- render our objects ------------ */
 
-  if (ui_render->stereoscopic) eyes = AMITK_EYE_NUM;
+  if (ui_render->stereoscopic) eyes = AMIDE_EYE_NUM;
   else eyes = 1;
 
   if (ui_render->pixbuf != NULL) {
@@ -919,37 +900,39 @@ void ui_render_create(AmitkStudy * study, GList * selected_objects) {
   GtkWidget * dial;
   GtkWidget * label;
   ui_render_t * ui_render;
-  GtkWidget * app;
+  GtkWindow * window;
+  GtkWidget * window_vbox;
   gboolean return_val;
 
   /* sanity checks */
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  app = gnome_app_new(PACKAGE, _("Rendering Window"));
-  gtk_window_set_resizable(GTK_WINDOW(app), FALSE);
-  ui_render = ui_render_init(GNOME_APP(app), study, selected_objects);
+  /* setup the window with a vbox container in it */
+  window = GTK_WINDOW(gtk_window_new(GTK_WINDOW_TOPLEVEL));
+  gtk_window_set_title(window, _("Rendering Window"));
+  gtk_window_set_resizable(window, FALSE);
+  window_vbox = gtk_vbox_new(FALSE,0);
+  gtk_container_add (GTK_CONTAINER (window), window_vbox);
+  ui_render = ui_render_init(window, window_vbox, study, selected_objects);
 
   /* check we actually have something */
   if (ui_render->renderings == NULL) {
     /* run the delete event function */
-    g_signal_emit_by_name(G_OBJECT(app), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(app);
+    g_signal_emit_by_name(G_OBJECT(window), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(window));
     return;
   }
     
-  /* setup the callbacks for app */
-  g_signal_connect(G_OBJECT(app), "realize", 
-		   G_CALLBACK(ui_common_window_realize_cb), NULL);
-  g_signal_connect(G_OBJECT(app), "delete_event",
+  /* setup the callbacks for the window */
+  g_signal_connect(G_OBJECT(ui_render->window), "delete_event",
 		   G_CALLBACK(delete_event_cb), ui_render);
 
   /* setup the menus and toolbar */
-  menus_create(ui_render);
-  toolbar_create(ui_render);
+  menus_toolbar_create(ui_render);
 
   /* make the widgets for this dialog box */
   packing_table = gtk_table_new(3,3,FALSE);
-  gnome_app_set_contents(ui_render->app, packing_table);
+  gtk_box_pack_start (GTK_BOX (ui_render->window_vbox), packing_table, TRUE,TRUE, 0);
 
   /* setup the main canvas */
 #ifdef AMIDE_LIBGNOMECANVAS_AA
@@ -1020,10 +1003,9 @@ void ui_render_create(AmitkStudy * study, GList * selected_objects) {
 		   G_CALLBACK(reset_axis_pressed_cb), ui_render);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
-
   /* and show all our widgets */
-  gtk_widget_show_all(GTK_WIDGET(ui_render->app));
-  amide_register_window((gpointer) ui_render->app);
+  gtk_widget_show_all(GTK_WIDGET(ui_render->window));
+  amide_register_window((gpointer) ui_render->window);
 
   return;
 }
@@ -1038,50 +1020,20 @@ static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data);
 
 
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
-#ifndef AMIDE_WIN32_HACKS
-  gboolean strip_highs;
-#endif
-
-  strip_highs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("RENDERING/StripHighs", strip_highs);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"StripHighs", 
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
-#ifndef AMIDE_WIN32_HACKS
-  gboolean optimize_rendering;
-#endif
-
-  optimize_rendering =gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("RENDERING/OptimizeRendering", optimize_rendering);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"OptimizeRendering", 
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void init_no_gradient_opacity_cb(GtkWidget * widget, gpointer data) {
-#ifndef AMIDE_WIN32_HACKS
-  gboolean initially_no_gradient_opacity;
-#endif
-
-  initially_no_gradient_opacity =gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("RENDERING/InitiallyNoGradientOpacity", initially_no_gradient_opacity);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_RENDERING"InitiallyNoGradientOpacity", 
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
@@ -1096,13 +1048,11 @@ GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   guint table_row;
   GtkWidget * tree_view;
   GtkWidget * scrolled;
-#ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
   gboolean initially_no_gradient_opacity;
 
   read_preferences(&strip_highs, &optimize_rendering, &initially_no_gradient_opacity);
-#endif
 
   temp_string = g_strdup_printf(_("%s: Rendering Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,

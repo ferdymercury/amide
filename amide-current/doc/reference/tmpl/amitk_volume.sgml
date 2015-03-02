@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-amitk_volume
+AmitkVolume
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -13,6 +13,9 @@ amitk_volume
 <para>
 
 </para>
+
+<!-- ##### SECTION Stability_Level ##### -->
+
 
 <!-- ##### MACRO AMITK_VOLUME_CORNER ##### -->
 <para>
@@ -52,6 +55,12 @@ amitk_volume
 </para>
 
 @vol: 
+
+
+<!-- ##### TYPEDEF AmitkVolume ##### -->
+<para>
+
+</para>
 
 
 <!-- ##### FUNCTION amitk_volume_new ##### -->
@@ -156,6 +165,20 @@ amitk_volume
 </para>
 
 @objects: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volumes_calc_display_volume ##### -->
+<para>
+
+</para>
+
+@volumes: 
+@space: 
+@view_center: 
+@thickness: 
+@fov: 
+@volume: 
 @Returns: 
 
 

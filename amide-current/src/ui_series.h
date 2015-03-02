@@ -30,7 +30,6 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "amitk_study.h"
 
-
 #define UI_SERIES_L_MARGIN 2.0
 #define UI_SERIES_R_MARGIN UI_SERIES_L_MARGIN
 #define UI_SERIES_TOP_MARGIN 2.0

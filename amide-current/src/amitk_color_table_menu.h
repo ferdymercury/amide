@@ -45,19 +45,11 @@ typedef struct _AmitkColorTableMenuClass        AmitkColorTableMenuClass;
 
 
 struct _AmitkColorTableMenu {
-#if 1
-  GtkOptionMenu option_menu;
-#else
   GtkComboBox combo_box;
-#endif
 };
 
 struct _AmitkColorTableMenuClass {
-#if 1
-  GtkOptionMenuClass parent_class;
-#else
   GtkComboBoxClass parent_class;
-#endif
 };  
 
 

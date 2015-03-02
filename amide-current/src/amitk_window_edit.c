@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include "amide.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 #include "amitk_window_edit.h"
@@ -102,7 +103,7 @@ static void window_edit_init (AmitkWindowEdit *window_edit)
   table_row++;
 
   for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) {
-    label = gtk_label_new(window_names[i_window]);
+    label = gtk_label_new(amitk_window_names[i_window]);
     gtk_table_attach(GTK_TABLE(table), label, 0,1, 
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -257,7 +258,7 @@ static void window_edit_update_entries(AmitkWindowEdit * window_edit) {
 
   for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
     gtk_label_set_text(GTK_LABEL(window_edit->limit_label[i_limit]),
-		       limit_names[threshold_style][i_limit]);
+		       amitk_limit_names[threshold_style][i_limit]);
   }
 
 

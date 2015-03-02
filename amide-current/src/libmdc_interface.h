@@ -75,7 +75,7 @@ typedef enum {
 /* external functions */
 gboolean libmdc_supports(libmdc_format_t format);
 AmitkDataSet * libmdc_import(const gchar * filename, 
-			     libmdc_format_t libmdc_format,
+			     const libmdc_format_t libmdc_format,
 			     AmitkPreferences * preferences,
 			     AmitkUpdateFunc update_func,
 			     gpointer update_data);
@@ -84,8 +84,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 /* if bounding_box == NULL, will create its own using the minimal necessary */
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
-		   libmdc_format_t libmdc_format,
-		   gboolean resliced,
+		   const libmdc_format_t libmdc_format,
+		   const gboolean resliced,
 		   const AmitkPoint voxel_size,
 		   const AmitkVolume * bounding_box,
 		   AmitkUpdateFunc update_func,

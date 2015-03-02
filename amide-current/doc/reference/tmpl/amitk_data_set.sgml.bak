@@ -16,6 +16,9 @@ AmitkDataSet
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_DATA_SET_MODALITY ##### -->
 <para>
 
@@ -49,6 +52,14 @@ AmitkDataSet
 
 
 <!-- ##### MACRO AMITK_DATA_SET_VOXEL_SIZE_Z ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_VOXEL_VOLUME ##### -->
 <para>
 
 </para>
@@ -158,6 +169,16 @@ AmitkDataSet
 </para>
 
 @ds: 
+@view_mode: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_COLOR_TABLE_INDEPENDENT ##### -->
+<para>
+
+</para>
+
+@ds: 
+@view_mode: 
 
 
 <!-- ##### MACRO AMITK_DATA_SET_INTERPOLATION ##### -->
@@ -192,6 +213,14 @@ AmitkDataSet
 @ds: 
 
 
+<!-- ##### MACRO AMITK_DATA_SET_THRESHOLD_STYLE ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
 <!-- ##### MACRO AMITK_DATA_SET_SLICE_PARENT ##### -->
 <para>
 
@@ -201,6 +230,30 @@ AmitkDataSet
 
 
 <!-- ##### MACRO AMITK_DATA_SET_SCAN_DATE ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SUBJECT_NAME ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SUBJECT_ID ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SUBJECT_DOB ##### -->
 <para>
 
 </para>
@@ -244,6 +297,22 @@ AmitkDataSet
 
 
 <!-- ##### MACRO AMITK_DATA_SET_SCALING_TYPE ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SCALING_HAS_INTERCEPT ##### -->
+<para>
+
+</para>
+
+@ds: 
+
+
+<!-- ##### MACRO AMITK_DATA_SET_SUBJECT_ORIENTATION ##### -->
 <para>
 
 </para>
@@ -356,6 +425,15 @@ AmitkDataSet
 
 
 
+<!-- ##### ENUM AmitkOperation ##### -->
+<para>
+
+</para>
+
+@AMITK_OPERATION_ADD: 
+@AMITK_OPERATION_SUB: 
+@AMITK_OPERATION_NUM: 
+
 <!-- ##### ENUM AmitkInterpolation ##### -->
 <para>
 
@@ -384,6 +462,9 @@ AmitkDataSet
 @AMITK_SCALING_TYPE_0D: 
 @AMITK_SCALING_TYPE_1D: 
 @AMITK_SCALING_TYPE_2D: 
+@AMITK_SCALING_TYPE_0D_WITH_INTERCEPT: 
+@AMITK_SCALING_TYPE_1D_WITH_INTERCEPT: 
+@AMITK_SCALING_TYPE_2D_WITH_INTERCEPT: 
 @AMITK_SCALING_TYPE_NUM: 
 
 <!-- ##### ENUM AmitkConversion ##### -->
@@ -433,6 +514,22 @@ AmitkDataSet
 @AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE: 
 @AMITK_CYLINDER_UNIT_NUM: 
 
+<!-- ##### ENUM AmitkSubjectOrientation ##### -->
+<para>
+
+</para>
+
+@AMITK_SUBJECT_ORIENTATION_UNKNOWN: 
+@AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST: 
+@AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST: 
+@AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST: 
+@AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST: 
+@AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST: 
+@AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST: 
+@AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST: 
+@AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST: 
+@AMITK_SUBJECT_ORIENTATION_NUM: 
+
 <!-- ##### ENUM AmitkImportMethod ##### -->
 <para>
 
@@ -447,6 +544,126 @@ AmitkDataSet
 </para>
 
 @AMITK_EXPORT_METHOD_RAW: 
+
+<!-- ##### STRUCT AmitkDataSet ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkDataSet::color-table-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkDataSet::color-table-independent-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkDataSet::conversion-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::data-set-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::interpolation-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::invalidate-slice-cache ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::modality-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::scale-factor-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::subject-orientation-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::threshold-style-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::thresholding-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::thresholds-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::time-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::view-gates-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::voxel-size-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::windows-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
 
 <!-- ##### FUNCTION amitk_data_set_new ##### -->
 <para>
@@ -504,7 +721,7 @@ AmitkDataSet
 @Returns: 
 
 
-<!-- ##### FUNCTION amitk_data_set_export_file ##### -->
+<!-- ##### FUNCTION amitk_data_set_export_to_file ##### -->
 <para>
 
 </para>
@@ -514,6 +731,23 @@ AmitkDataSet
 @submethod: 
 @filename: 
 @resliced: 
+@voxel_size: 
+@bounding_box: 
+@update_func: 
+@update_data: 
+
+
+<!-- ##### FUNCTION amitk_data_sets_export_to_file ##### -->
+<para>
+
+</para>
+
+@data_sets: 
+@method: 
+@submethod: 
+@filename: 
+@voxel_size: 
+@bounding_box: 
 @update_func: 
 @update_data: 
 
@@ -553,6 +787,16 @@ AmitkDataSet
 
 @ds: 
 @frame: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_data_set_get_color_table_to_use ##### -->
+<para>
+
+</para>
+
+@ds: 
+@view_mode: 
 @Returns: 
 
 
@@ -602,6 +846,15 @@ AmitkDataSet
 @thresholding: 
 
 
+<!-- ##### FUNCTION amitk_data_set_set_threshold_style ##### -->
+<para>
+
+</para>
+
+@ds: 
+@threshold_style: 
+
+
 <!-- ##### FUNCTION amitk_data_set_set_threshold_max ##### -->
 <para>
 
@@ -638,7 +891,18 @@ AmitkDataSet
 </para>
 
 @ds: 
+@view_mode: 
 @new_color_table: 
+
+
+<!-- ##### FUNCTION amitk_data_set_set_color_table_independent ##### -->
+<para>
+
+</para>
+
+@ds: 
+@view_mode: 
+@independent: 
 
 
 <!-- ##### FUNCTION amitk_data_set_set_interpolation ##### -->
@@ -650,6 +914,15 @@ AmitkDataSet
 @new_interpolation: 
 
 
+<!-- ##### FUNCTION amitk_data_set_set_subject_orientation ##### -->
+<para>
+
+</para>
+
+@ds: 
+@subject_orientation: 
+
+
 <!-- ##### FUNCTION amitk_data_set_set_scan_date ##### -->
 <para>
 
@@ -657,6 +930,33 @@ AmitkDataSet
 
 @ds: 
 @new_date: 
+
+
+<!-- ##### FUNCTION amitk_data_set_set_subject_name ##### -->
+<para>
+
+</para>
+
+@ds: 
+@new_name: 
+
+
+<!-- ##### FUNCTION amitk_data_set_set_subject_id ##### -->
+<para>
+
+</para>
+
+@ds: 
+@new_id: 
+
+
+<!-- ##### FUNCTION amitk_data_set_set_subject_dob ##### -->
+<para>
+
+</para>
+
+@ds: 
+@new_dob: 
 
 
 <!-- ##### FUNCTION amitk_data_set_set_conversion ##### -->
@@ -902,7 +1202,17 @@ AmitkDataSet
 @Returns: 
 
 
-<!-- ##### FUNCTION amitk_data_set_get_internal_scaling ##### -->
+<!-- ##### FUNCTION amitk_data_set_get_internal_scaling_factor ##### -->
+<para>
+
+</para>
+
+@ds: 
+@i: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_data_set_get_internal_scaling_intercept ##### -->
 <para>
 
 </para>
@@ -985,7 +1295,7 @@ AmitkDataSet
 @start: 
 @duration: 
 @gate: 
-@pixel_dim: 
+@pixel_size: 
 @slice_volume: 
 @Returns: 
 
@@ -1051,7 +1361,7 @@ AmitkDataSet
 @start: 
 @duration: 
 @gate: 
-@pixel_dim: 
+@pixel_size: 
 @view_volume: 
 @Returns: 
 
@@ -1073,6 +1383,17 @@ AmitkDataSet
 
 @slices: 
 @slice_parent: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_data_sets_math ##### -->
+<para>
+
+</para>
+
+@ds1: 
+@ds2: 
+@operation: 
 @Returns: 
 
 
@@ -1109,6 +1430,15 @@ AmitkDataSet
 @Returns: 
 
 
+<!-- ##### FUNCTION amitk_operation_get_name ##### -->
+<para>
+
+</para>
+
+@operation: 
+@Returns: 
+
+
 <!-- ##### FUNCTION amitk_interpolation_get_name ##### -->
 <para>
 
@@ -1118,12 +1448,30 @@ AmitkDataSet
 @Returns: 
 
 
+<!-- ##### FUNCTION amitk_subject_orientation_get_name ##### -->
+<para>
+
+</para>
+
+@subject_orientation: 
+@Returns: 
+
+
 <!-- ##### FUNCTION amitk_thresholding_get_name ##### -->
 <para>
 
 </para>
 
 @thresholding: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_threshold_style_get_name ##### -->
+<para>
+
+</para>
+
+@threshold_style: 
 @Returns: 
 
 

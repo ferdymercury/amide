@@ -1,0 +1,506 @@
+<!-- ##### SIGNAL AmitkCanvas::erase-volume ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkCanvas::help-event ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkCanvas::new-object ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkCanvas::view-changed ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkCanvas::view-changing ##### -->
+<para>
+
+</para>
+
+@amitkcanvas: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkDataSet::color-table-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkDataSet::color-table-independent-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkDataSet::conversion-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::data-set-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::interpolation-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::invalidate-slice-cache ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::modality-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::scale-factor-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::subject-orientation-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::threshold-style-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::thresholding-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::thresholds-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::time-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::view-gates-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::voxel-size-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkDataSet::windows-changed ##### -->
+<para>
+
+</para>
+
+@amitkdataset: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkLineProfile::line-profile-changed ##### -->
+<para>
+
+</para>
+
+@amitklineprofile: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-add-child ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-child-selection-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-copy ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@Returns: 
+
+<!-- ##### SIGNAL AmitkObject::object-copy-in-place ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-name-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-read-xml ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+@Returns: 
+
+<!-- ##### SIGNAL AmitkObject::object-remove-child ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-selection-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-write-xml ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkPreferences::data-set-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkPreferences::misc-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkPreferences::study-preferences-changed ##### -->
+<para>
+
+</para>
+
+@amitkpreferences: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkRoi::roi-changed ##### -->
+<para>
+
+</para>
+
+@amitkroi: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkRoi::roi-type-changed ##### -->
+<para>
+
+</para>
+
+@amitkroi: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkSpace::space-changed ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkSpace::space-invert ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkSpace::space-rotate ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkSpace::space-scale ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkSpace::space-shift ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkSpace::space-transform ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkSpace::space-transform-axes ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkStudy::canvas-general-preference-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::canvas-layout-preference-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::canvas-roi-preference-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::canvas-target-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::canvas-target-preference-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::canvas-visible-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::filename-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::fov-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::fuse-type-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::panel-layout-preference-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::thickness-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::time-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::view-center-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::view-mode-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkStudy::voxel-dim-or-zoom-changed ##### -->
+<para>
+
+</para>
+
+@amitkstudy: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkTreeView::activate-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::add-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkTreeView::delete-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::help-event ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkTreeView::popup-object ##### -->
+<para>
+
+</para>
+
+@amitktreeview: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkVolume::volume-changed ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkVolume::volume-corner-changed ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkVolume::volume-get-center ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+@arg1: 
+

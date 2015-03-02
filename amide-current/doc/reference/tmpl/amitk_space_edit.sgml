@@ -14,6 +14,18 @@ AmitkSpaceEdit
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT AmitkSpaceEdit ##### -->
+<para>
+
+</para>
+
+@vbox: 
+@entry: 
+@object: 
+
 <!-- ##### FUNCTION amitk_space_edit_new ##### -->
 <para>
 

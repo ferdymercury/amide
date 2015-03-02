@@ -25,7 +25,7 @@
 
 #include "amide_config.h"
 #include <gtk/gtk.h>
-#include "amitk_common.h"
+#include "amide.h"
 #include "ui_time_dialog.h"
 
 
@@ -473,7 +473,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   td->data_sets = NULL;
   g_object_set_data(G_OBJECT(dialog), "td", td);
   
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), td);
 
 

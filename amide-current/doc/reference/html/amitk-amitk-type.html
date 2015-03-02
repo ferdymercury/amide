@@ -1,81 +1,236 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>amitk_type</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="amitk_base.html" title="Part II. AMITK Core Objects"><link rel="previous" href="amitk-AmitkSpace.html" title="AmitkSpace"><link rel="next" href="amitk-amitk-volume.html" title="amitk_volume"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkSpace.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-amitk-volume.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-amitk-type"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">amitk_type</span></h2><p>amitk_type &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>amitk_type</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="prev" href="amitk-AmitkSpace.html" title="AmitkSpace">
+<link rel="next" href="amitk-AmitkVolume.html" title="AmitkVolume">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-AmitkSpace.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="amitk_base.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="amitk-AmitkVolume.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id386604" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id387079" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-amitk-type"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id386604"></a><span class="refentrytitle">amitk_type</span>
+</h2>
+<p>amitk_type</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-typedef     <a href="amitk-amitk-type.html#amide-data-t">amide_data_t</a>;
-#define     <a href="amitk-amitk-type.html#SIZE-OF-AMIDE-DATA-T-CAPS">SIZE_OF_AMIDE_DATA_T</a>
-#define     <a href="amitk-amitk-type.html#AMITK-TYPE-DATA-CAPS">AMITK_TYPE_DATA</a>
-typedef     <a href="amitk-amitk-type.html#amide-time-t">amide_time_t</a>;
-#define     <a href="amitk-amitk-type.html#SIZE-OF-AMIDE-TIME-T-CAPS">SIZE_OF_AMIDE_TIME_T</a>
-#define     <a href="amitk-amitk-type.html#AMITK-TYPE-TIME-CAPS">AMITK_TYPE_TIME</a>
-typedef     <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a>;
-#define     <a href="amitk-amitk-type.html#SIZE-OF-AMIDE-REAL-T-CAPS">SIZE_OF_AMIDE_REAL_T</a>
-#define     <a href="amitk-amitk-type.html#AMITK-TYPE-REAL-CAPS">AMITK_TYPE_REAL</a>
-typedef     <a href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a>;
-#define     <a href="amitk-amitk-type.html#SIZE-OF-AMIDE-INTPOINT-T-CAPS">SIZE_OF_AMIDE_INTPOINT_T</a>
-</pre></div><div class="refsect1" lang="en"><a name="id2654916"></a><h2>Description</h2><p>
+typedef             <a class="link" href="amitk-amitk-type.html#amide-data-t">amide_data_t</a>;
+#define             <a class="link" href="amitk-amitk-type.html#SIZE-OF-AMIDE-DATA-T:CAPS">SIZE_OF_AMIDE_DATA_T</a>
+#define             <a class="link" href="amitk-amitk-type.html#AMITK-TYPE-DATA:CAPS">AMITK_TYPE_DATA</a>
+typedef             <a class="link" href="amitk-amitk-type.html#amide-time-t">amide_time_t</a>;
+#define             <a class="link" href="amitk-amitk-type.html#SIZE-OF-AMIDE-TIME-T:CAPS">SIZE_OF_AMIDE_TIME_T</a>
+#define             <a class="link" href="amitk-amitk-type.html#AMITK-TYPE-TIME:CAPS">AMITK_TYPE_TIME</a>
+typedef             <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a>;
+#define             <a class="link" href="amitk-amitk-type.html#SIZE-OF-AMIDE-REAL-T:CAPS">SIZE_OF_AMIDE_REAL_T</a>
+#define             <a class="link" href="amitk-amitk-type.html#AMITK-TYPE-REAL:CAPS">AMITK_TYPE_REAL</a>
+typedef             <a class="link" href="amitk-amitk-type.html#amide-intpoint-t">amide_intpoint_t</a>;
+#define             <a class="link" href="amitk-amitk-type.html#SIZE-OF-AMIDE-INTPOINT-T:CAPS">SIZE_OF_AMIDE_INTPOINT_T</a>
+<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            (<a class="link" href="amitk-amitk-type.html#AmitkUpdateFunc">*AmitkUpdateFunc</a>)                  (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"
+>gpointer</a> ,
+                                                         char *,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> );
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id387079"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2654926"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2654931"></a><h3><a name="amide-data-t"></a>amide_data_t</h3><a class="indexterm" name="id2654942"></a><pre class="programlisting">typedef gdouble amide_data_t;
-</pre><p>
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id387093"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id387104"></a><h3>
+<a name="amide-data-t"></a>amide_data_t</h3>
+<a class="indexterm" name="id387116"></a><pre class="programlisting">typedef gdouble amide_data_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2654957"></a><h3><a name="SIZE-OF-AMIDE-DATA-T-CAPS"></a>SIZE_OF_AMIDE_DATA_T</h3><a class="indexterm" name="id2654969"></a><pre class="programlisting">#define SIZE_OF_AMIDE_DATA_T 8
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387130"></a><h3>
+<a name="SIZE-OF-AMIDE-DATA-T:CAPS"></a>SIZE_OF_AMIDE_DATA_T</h3>
+<a class="indexterm" name="id387143"></a><pre class="programlisting">#define SIZE_OF_AMIDE_DATA_T 8
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2654984"></a><h3><a name="AMITK-TYPE-DATA-CAPS"></a>AMITK_TYPE_DATA</h3><a class="indexterm" name="id2654996"></a><pre class="programlisting">#define AMITK_TYPE_DATA G_TYPE_DOUBLE
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387157"></a><h3>
+<a name="AMITK-TYPE-DATA:CAPS"></a>AMITK_TYPE_DATA</h3>
+<a class="indexterm" name="id387169"></a><pre class="programlisting">#define AMITK_TYPE_DATA G_TYPE_DOUBLE
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655012"></a><h3><a name="amide-time-t"></a>amide_time_t</h3><a class="indexterm" name="id2655022"></a><pre class="programlisting">typedef gdouble amide_time_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387184"></a><h3>
+<a name="amide-time-t"></a>amide_time_t</h3>
+<a class="indexterm" name="id387197"></a><pre class="programlisting">typedef gdouble amide_time_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655037"></a><h3><a name="SIZE-OF-AMIDE-TIME-T-CAPS"></a>SIZE_OF_AMIDE_TIME_T</h3><a class="indexterm" name="id2655049"></a><pre class="programlisting">#define SIZE_OF_AMIDE_TIME_T 8
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387212"></a><h3>
+<a name="SIZE-OF-AMIDE-TIME-T:CAPS"></a>SIZE_OF_AMIDE_TIME_T</h3>
+<a class="indexterm" name="id387225"></a><pre class="programlisting">#define SIZE_OF_AMIDE_TIME_T 8
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655064"></a><h3><a name="AMITK-TYPE-TIME-CAPS"></a>AMITK_TYPE_TIME</h3><a class="indexterm" name="id2655076"></a><pre class="programlisting">#define AMITK_TYPE_TIME G_TYPE_DOUBLE
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387239"></a><h3>
+<a name="AMITK-TYPE-TIME:CAPS"></a>AMITK_TYPE_TIME</h3>
+<a class="indexterm" name="id387251"></a><pre class="programlisting">#define AMITK_TYPE_TIME G_TYPE_DOUBLE
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655092"></a><h3><a name="amide-real-t"></a>amide_real_t</h3><a class="indexterm" name="id2655102"></a><pre class="programlisting">typedef gdouble amide_real_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387266"></a><h3>
+<a name="amide-real-t"></a>amide_real_t</h3>
+<a class="indexterm" name="id387278"></a><pre class="programlisting">typedef gdouble amide_real_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655117"></a><h3><a name="SIZE-OF-AMIDE-REAL-T-CAPS"></a>SIZE_OF_AMIDE_REAL_T</h3><a class="indexterm" name="id2655129"></a><pre class="programlisting">#define SIZE_OF_AMIDE_REAL_T 8
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387293"></a><h3>
+<a name="SIZE-OF-AMIDE-REAL-T:CAPS"></a>SIZE_OF_AMIDE_REAL_T</h3>
+<a class="indexterm" name="id387306"></a><pre class="programlisting">#define SIZE_OF_AMIDE_REAL_T 8
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655144"></a><h3><a name="AMITK-TYPE-REAL-CAPS"></a>AMITK_TYPE_REAL</h3><a class="indexterm" name="id2655156"></a><pre class="programlisting">#define AMITK_TYPE_REAL G_TYPE_DOUBLE
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387321"></a><h3>
+<a name="AMITK-TYPE-REAL:CAPS"></a>AMITK_TYPE_REAL</h3>
+<a class="indexterm" name="id387333"></a><pre class="programlisting">#define AMITK_TYPE_REAL G_TYPE_DOUBLE
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655172"></a><h3><a name="amide-intpoint-t"></a>amide_intpoint_t</h3><a class="indexterm" name="id2655182"></a><pre class="programlisting">typedef gint16 amide_intpoint_t;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387348"></a><h3>
+<a name="amide-intpoint-t"></a>amide_intpoint_t</h3>
+<a class="indexterm" name="id387361"></a><pre class="programlisting">typedef gint16 amide_intpoint_t;
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2655197"></a><h3><a name="SIZE-OF-AMIDE-INTPOINT-T-CAPS"></a>SIZE_OF_AMIDE_INTPOINT_T</h3><a class="indexterm" name="id2655209"></a><pre class="programlisting">#define SIZE_OF_AMIDE_INTPOINT_T 2;
-</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387376"></a><h3>
+<a name="SIZE-OF-AMIDE-INTPOINT-T:CAPS"></a>SIZE_OF_AMIDE_INTPOINT_T</h3>
+<a class="indexterm" name="id387388"></a><pre class="programlisting">#define SIZE_OF_AMIDE_INTPOINT_T 2;
+</pre>
+<p>
 
-</p></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkSpace.html"><b>&lt;&lt; AmitkSpace</b></a></td><td align="right"><a accesskey="n" href="amitk-amitk-volume.html"><b>amitk_volume &gt;&gt;</b></a></td></tr></table></body></html>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id387403"></a><h3>
+<a name="AmitkUpdateFunc"></a>AmitkUpdateFunc ()</h3>
+<a class="indexterm" name="id387416"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            (*AmitkUpdateFunc)                  (<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gpointer"
+>gpointer</a> ,
+                                                         char *,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gdouble"
+>gdouble</a> );</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>Param1</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>Param2</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>Param3</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

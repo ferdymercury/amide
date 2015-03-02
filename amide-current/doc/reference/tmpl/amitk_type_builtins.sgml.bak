@@ -16,6 +16,54 @@ amitk_type_builtins
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### FUNCTION amitk_canvas_type_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_CANVAS_TYPE ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_canvas_target_action_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_CANVAS_TARGET_ACTION ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_color_table_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_COLOR_TABLE ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### FUNCTION amitk_layout_get_type ##### -->
 <para>
 
@@ -31,7 +79,7 @@ amitk_type_builtins
 
 
 
-<!-- ##### FUNCTION amitk_eye_get_type ##### -->
+<!-- ##### FUNCTION amitk_panel_layout_get_type ##### -->
 <para>
 
 </para>
@@ -39,14 +87,14 @@ amitk_type_builtins
 @Returns: 
 
 
-<!-- ##### MACRO AMITK_TYPE_EYE ##### -->
+<!-- ##### MACRO AMITK_TYPE_PANEL_LAYOUT ##### -->
 <para>
 
 </para>
 
 
 
-<!-- ##### FUNCTION amitk_help_info_get_type ##### -->
+<!-- ##### FUNCTION amitk_view_mode_get_type ##### -->
 <para>
 
 </para>
@@ -54,7 +102,7 @@ amitk_type_builtins
 @Returns: 
 
 
-<!-- ##### MACRO AMITK_TYPE_HELP_INFO ##### -->
+<!-- ##### MACRO AMITK_TYPE_VIEW_MODE ##### -->
 <para>
 
 </para>
@@ -106,7 +154,7 @@ amitk_type_builtins
 
 
 
-<!-- ##### FUNCTION amitk_canvas_type_get_type ##### -->
+<!-- ##### FUNCTION amitk_threshold_style_get_type ##### -->
 <para>
 
 </para>
@@ -114,29 +162,14 @@ amitk_type_builtins
 @Returns: 
 
 
-<!-- ##### MACRO AMITK_TYPE_CANVAS_TYPE ##### -->
+<!-- ##### MACRO AMITK_TYPE_THRESHOLD_STYLE ##### -->
 <para>
 
 </para>
 
 
 
-<!-- ##### FUNCTION amitk_canvas_target_action_get_type ##### -->
-<para>
-
-</para>
-
-@Returns: 
-
-
-<!-- ##### MACRO AMITK_TYPE_CANVAS_TARGET_ACTION ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION amitk_color_table_get_type ##### -->
+<!-- ##### FUNCTION amitk_help_info_get_type ##### -->
 <para>
 
 </para>
@@ -144,7 +177,22 @@ amitk_type_builtins
 @Returns: 
 
 
-<!-- ##### MACRO AMITK_TYPE_COLOR_TABLE ##### -->
+<!-- ##### MACRO AMITK_TYPE_HELP_INFO ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_operation_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_OPERATION ##### -->
 <para>
 
 </para>
@@ -250,6 +298,21 @@ amitk_type_builtins
 
 
 <!-- ##### MACRO AMITK_TYPE_CYLINDER_UNIT ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### FUNCTION amitk_subject_orientation_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_SUBJECT_ORIENTATION ##### -->
 <para>
 
 </para>
@@ -406,6 +469,21 @@ amitk_type_builtins
 
 
 
+<!-- ##### FUNCTION amitk_roi_isocontour_range_get_type ##### -->
+<para>
+
+</para>
+
+@Returns: 
+
+
+<!-- ##### MACRO AMITK_TYPE_ROI_ISOCONTOUR_RANGE ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### FUNCTION amitk_fuse_type_get_type ##### -->
 <para>
 
@@ -415,21 +493,6 @@ amitk_type_builtins
 
 
 <!-- ##### MACRO AMITK_TYPE_FUSE_TYPE ##### -->
-<para>
-
-</para>
-
-
-
-<!-- ##### FUNCTION amitk_view_mode_get_type ##### -->
-<para>
-
-</para>
-
-@Returns: 
-
-
-<!-- ##### MACRO AMITK_TYPE_VIEW_MODE ##### -->
 <para>
 
 </para>

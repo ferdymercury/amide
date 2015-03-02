@@ -1,4 +1,4 @@
-if AMIDE_WIN32_HACKS
+if AMIDE_OS_WIN32
 
 BUILT_SOURCES = \
         amide.ico \

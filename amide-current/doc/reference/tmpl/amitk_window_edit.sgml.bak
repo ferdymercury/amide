@@ -1,0 +1,37 @@
+<!-- ##### SECTION Title ##### -->
+AmitkWindowEdit
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT AmitkWindowEdit ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION amitk_window_edit_new ##### -->
+<para>
+
+</para>
+
+@data_set: 
+@preferences: 
+@Returns: 
+
+

@@ -29,7 +29,6 @@
 #define __MPEG_ENCODE_H__
 
 /* header files that are always associated with this header file */
-#include <amide.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 #define FRAMES_PER_SECOND 30

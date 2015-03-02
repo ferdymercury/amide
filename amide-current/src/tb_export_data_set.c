@@ -24,26 +24,19 @@
 */
 
 #include "amide_config.h"
+#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <gtk/gtk.h>
+#include "amide.h"
+#include "amide_gconf.h"
 #include "amitk_progress_dialog.h"
 
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
 #include "tb_export_data_set.h"
 #include "ui_common.h"
 #ifdef AMIDE_LIBMDC_SUPPORT
 #include "libmdc_interface.h"
 #endif
 
-#ifdef AMIDE_WIN32_HACKS
-static gboolean resliced=FALSE;
-static gboolean all_visible=FALSE;
-static gboolean inclusive_bounding_box=FALSE;
-static AmitkExportMethod method=0;
-static gint submethod=0;
-static AmitkPoint voxel_size=ONE_POINT;
-#endif
+#define GCONF_AMIDE_EXPORT "EXPORT/"
 
 typedef struct tb_export_t {
   AmitkStudy * study;
@@ -133,7 +126,6 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 }
 
 
-#ifndef AMIDE_WIN32_HACKS
 static void read_preferences(gboolean * resliced,
 			     gboolean * all_visible,
 			     gboolean * inclusive_bounding_box,
@@ -141,31 +133,26 @@ static void read_preferences(gboolean * resliced,
 			     gint * submethod,
 			     AmitkPoint * voxel_size) {
 
-  gfloat temp_float;
-  gint default_value;
+  *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"ResliceDataSet");
+  *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets");
+  *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox");
+  *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Method");
+  *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Submethod");
 
-  gnome_config_push_prefix("/"PACKAGE"/");
+  (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeZ");
+  if (EQUAL_ZERO((*voxel_size).z))
+    (*voxel_size).z =  1.0;
 
-  *resliced = gnome_config_get_int("EXPORT/ResliceDataSet");
-  *all_visible = gnome_config_get_int("EXPORT/AllVisibleDataSets");
-  *inclusive_bounding_box = gnome_config_get_int("EXPORT/InclusiveBoundingBox");
-  *method = gnome_config_get_int("EXPORT/Method");
-  *submethod = gnome_config_get_int("EXPORT/Submethod");
+  (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeY");
+  if (EQUAL_ZERO((*voxel_size).y)) 
+    (*voxel_size).y =  1.0;
 
-  temp_float = gnome_config_get_float_with_default("EXPORT/VoxelSizeZ",&default_value);
-  (*voxel_size).z =  default_value ? 1.0 : temp_float;
-  temp_float = gnome_config_get_float_with_default("EXPORT/VoxelSizeY",&default_value);
-  (*voxel_size).y =  default_value ? 1.0 : temp_float;
-  temp_float = gnome_config_get_float_with_default("EXPORT/VoxelSizeX",&default_value);
-  (*voxel_size).x =  default_value ? 1.0 : temp_float;
-
-  //  *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
-
-  gnome_config_pop_prefix();
+  (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeX");
+  if (EQUAL_ZERO((*voxel_size).x)) 
+    (*voxel_size).x =  1.0;
 
   return;
 }
-#endif
 
 
 /* function called when we hit "ok" on the export file dialog */
@@ -176,7 +163,6 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
   GList * data_sets;
   tb_export_t * tb_export;
   AmitkVolume * bounding_box = NULL;
-#ifndef AMIDE_WIN32_HACKS
   gboolean resliced;
   gboolean all_visible;
   gboolean inclusive_bounding_box;
@@ -185,13 +171,15 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
   AmitkPoint voxel_size;
 
   read_preferences(&resliced, &all_visible, &inclusive_bounding_box, &method, &submethod, &voxel_size);
-#endif
 
   /* save a pointer to the export_data_set data, so we can use it in the callbacks */
   tb_export = g_object_get_data(G_OBJECT(file_selection), "tb_export");
 
-  /* get the filename and import */
-  filename = ui_common_file_selection_get_save_name(file_selection);
+  /* get the filename and import - note DCMTK dicom files we don't want to 
+     complain about file existing, as we might be appending */
+  filename = ui_common_file_selection_get_save_name(file_selection,
+						    method!=AMITK_EXPORT_METHOD_DCMTK);
+  
   if (filename == NULL) return;
 
   /* get total bounding box if needed */
@@ -297,31 +285,22 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
 
 
-#ifndef AMIDE_WIN32_HACKS
 static void write_voxel_size(AmitkPoint voxel_size) {
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_float("EXPORT/VoxelSizeZ", voxel_size.z);
-  gnome_config_set_float("EXPORT/VoxelSizeY", voxel_size.y);
-  gnome_config_set_float("EXPORT/VoxelSizeX", voxel_size.x);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeZ", voxel_size.z);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeY", voxel_size.y);
+  amide_gconf_set_float(GCONF_AMIDE_EXPORT"VoxelSizeX", voxel_size.x);
   return;
 }
 
 static void write_inclusive_bounding_box(gboolean inclusive) {
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("EXPORT/InclusiveBoundingBox", inclusive);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox", inclusive);
   return;
 }
-#endif
 
 static void change_voxel_size_cb(GtkWidget * widget, gpointer data) {
 
   gdouble size;
   AmitkAxis which_axis;
-#ifndef AMIDE_WIN32_HACKS
   gboolean resliced;
   gboolean all_visible;
   gboolean inclusive_bounding_box;
@@ -330,7 +309,6 @@ static void change_voxel_size_cb(GtkWidget * widget, gpointer data) {
   AmitkPoint voxel_size;
 
   read_preferences(&resliced, &all_visible, &inclusive_bounding_box, &method, &submethod, &voxel_size);
-#endif
 
   /* figure out which widget this is */
   which_axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
@@ -351,9 +329,7 @@ static void change_voxel_size_cb(GtkWidget * widget, gpointer data) {
     break; /* do nothing */
   }
 
-#ifndef AMIDE_WIN32_HACKS
   write_voxel_size(voxel_size);
-#endif
 
   return;
 }
@@ -362,7 +338,6 @@ static void change_voxel_size_cb(GtkWidget * widget, gpointer data) {
 static void recommend_voxel_size(tb_export_t * tb_export) {
   GList * data_sets;
   AmitkAxis i_axis;
-#ifndef AMIDE_WIN32_HACKS
   gboolean resliced;
   gboolean all_visible;
   gboolean inclusive_bounding_box;
@@ -371,7 +346,6 @@ static void recommend_voxel_size(tb_export_t * tb_export) {
   AmitkPoint voxel_size;
 
   read_preferences(&resliced, &all_visible, &inclusive_bounding_box, &method, &submethod, &voxel_size);
-#endif
 
   if (all_visible) {
     data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(tb_export->study), 
@@ -394,9 +368,7 @@ static void recommend_voxel_size(tb_export_t * tb_export) {
     voxel_size = AMITK_DATA_SET_VOXEL_SIZE(tb_export->active_ds);
   }
 
-#ifndef AMIDE_WIN32_HACKS
   write_voxel_size(voxel_size);
-#endif
 
   /* update entries */
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
@@ -413,23 +385,15 @@ static void reslice_radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
   tb_export_t * tb_export = data;
   AmitkAxis i_axis;
-#ifndef AMIDE_WIN32_HACKS
   gboolean resliced;
   gboolean all_visible;
   gboolean inclusive_bounding_box;
-#endif
 
   resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
   all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_visible"));
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("EXPORT/ResliceDataSet", resliced);
-  gnome_config_set_int("EXPORT/AllVisibleDataSets", all_visible);
-
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"ResliceDataSet", resliced);
+  amide_gconf_set_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets", all_visible);
 
   /* recalculate voxel sizes */
   recommend_voxel_size(tb_export);
@@ -445,9 +409,7 @@ static void reslice_radio_buttons_cb(GtkWidget * widget, gpointer data) {
   if (!resliced && !all_visible) {
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tb_export->bb_radio_button[0]), TRUE);
     inclusive_bounding_box=FALSE;
-#ifndef AMIDE_WIN32_HACKS
     write_inclusive_bounding_box(inclusive_bounding_box);
-#endif
   }
 
   return;
@@ -455,15 +417,11 @@ static void reslice_radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
 static void bb_radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   gboolean inclusive_bounding_box;
-#endif
 
   inclusive_bounding_box = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "inclusive_bounding_box"));
 
-#ifndef AMIDE_WIN32_HACKS
   write_inclusive_bounding_box(inclusive_bounding_box);
-#endif
 
   return;
 }
@@ -471,19 +429,16 @@ static void bb_radio_buttons_cb(GtkWidget * widget, gpointer data) {
 /* function called when the export type of a data set gets changed */
 static void change_export_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   AmitkExportMethod method=0;
   gint submethod=0;
-#endif
   gint counter;
-  gint history;
+  gint combo_method;
   AmitkImportMethod i_export_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_export_t i_libmdc_export;
 #endif
 
-  /* figure out which menu item called me */
-  history = gtk_option_menu_get_history (GTK_OPTION_MENU(widget));
+  combo_method = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
 
   counter = 0;
   for (i_export_method = AMITK_EXPORT_METHOD_RAW; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
@@ -491,7 +446,7 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
       for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
-	  if (counter == history) {
+	  if (counter == combo_method) {
 	    method = i_export_method;
 	    submethod = libmdc_export_to_format[i_libmdc_export];
 	  }
@@ -501,7 +456,7 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
     } else 
 #endif
       {
-	if (counter == history) {
+	if (counter == combo_method) {
 	  method = i_export_method;
 	  submethod = 0;
 	}
@@ -509,14 +464,8 @@ static void change_export_cb(GtkWidget * widget, gpointer data) {
       }  
   }
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("EXPORT/Method", method);
-  gnome_config_set_int("EXPORT/Submethod", submethod);
-
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT"Method", method);
+  amide_gconf_set_int(GCONF_AMIDE_EXPORT"Submethod", submethod);
 
   return;
 }
@@ -535,10 +484,6 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
   GtkWidget * hseparator;
   GtkWidget * export_menu;
   //  GtkObject * adjustment;
-#if 1
-  GtkWidget * menu;
-  GtkWidget * menuitem;
-#endif
   //  GtkWidget * spin_buttons[3];
   gint counter;
   gint current;
@@ -548,7 +493,6 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_export_t i_libmdc_export;
 #endif
-#ifndef AMIDE_WIN32_HACKS
   gboolean resliced;
   gboolean all_visible;
   gboolean inclusive_bounding_box;
@@ -557,7 +501,6 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
   AmitkPoint voxel_size;
 
   read_preferences(&resliced, &all_visible, &inclusive_bounding_box, &method, &submethod, &voxel_size); 
-#endif
 
 
   /* sanity checks */
@@ -651,12 +594,7 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
 
   label = gtk_label_new(_("export format:"));
   /* select the export type */
-#if 1
-  menu = gtk_menu_new();
-#else
-  FIXME_FOR_GTK24;
-  // dialog->modality_menu = gtk_combo_box_new_text();
-#endif
+  export_menu = gtk_combo_box_new_text();
 
   counter = 0;
   current = 0;
@@ -665,16 +603,9 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
     if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
       for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
 	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
-#if 1
-	  menuitem = gtk_menu_item_new_with_label(libmdc_export_menu_names[i_libmdc_export]);
-	  gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	  gtk_widget_show(menuitem);
+	  gtk_combo_box_append_text(GTK_COMBO_BOX(export_menu),
+				    libmdc_export_menu_names[i_libmdc_export]);
 	  // add tooltips at some point libmdc_export_menu_explanations[i_libmdc_export]
-#else
-	  FIXME_FOR_GTK24;
-	  //	  gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->modality_menu),
-	  //				    libmdc_export_menu_names[i_libmdc_export]);
-#endif
 	  if ((method == i_export_method) && (submethod == libmdc_export_to_format[i_libmdc_export]))
 	    current = counter;
 	  counter++;
@@ -683,16 +614,9 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
     } else 
 #endif
       {
-#if 1
-	menuitem = gtk_menu_item_new_with_label(amitk_export_menu_names[i_export_method]);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-	gtk_widget_show(menuitem);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(export_menu),
+				  amitk_export_menu_names[i_export_method]);
 	// add tooltips at some point amitk_export_menu_explanations[i_export_method],
-#else
-	FIXME_FOR_GTK24;
-	//	gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->modality_menu),
-	//				  amitk_modality_get_name(i_modality));
-#endif
 	
 	if (method == i_export_method)
 	  current = counter;
@@ -700,13 +624,8 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
       }  
   }
 
-#if 1    
-  export_menu = gtk_option_menu_new();
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(export_menu), menu);
-  gtk_widget_show(menu);
-#endif
   g_signal_connect(G_OBJECT(export_menu), "changed", G_CALLBACK(change_export_cb), NULL);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(export_menu), current); /* done after signal attachment, in case current never got matched and is still zero */
+  gtk_combo_box_set_active(GTK_COMBO_BOX(export_menu), current); /* done after signal attachment, in case current never got matched and is still zero */
   gtk_table_attach(GTK_TABLE(table), export_menu, 1,4, 
 		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(export_menu);

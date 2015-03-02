@@ -58,7 +58,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_f
     g_free(temp_string);
   }
   total_planes = AMITK_DATA_SET_TOTAL_PLANES(data_set);
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
   i = zero_voxel;
   i_plane=0;
@@ -146,7 +146,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_d
     g_free(temp_string);
   }
   total_planes = AMITK_DATA_SET_TOTAL_PLANES(data_set);
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
   /* now "bin" the data */
   j = zero_voxel;

@@ -30,7 +30,17 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "amitk_study.h"
 #include <libgnomecanvas/libgnomecanvas.h>
-#include <libgnomeui/libgnomeui.h>
+
+#define AMIDE_LIMIT_ZOOM_UPPER 10.0
+#define AMIDE_LIMIT_ZOOM_LOWER 0.2
+#define AMIDE_LIMIT_ZOOM_STEP 0.2
+#define AMIDE_LIMIT_ZOOM_PAGE 0.25
+
+/* in percent */
+#define AMIDE_LIMIT_FOV_UPPER 100.0
+#define AMIDE_LIMIT_FOV_LOWER 10.0
+#define AMIDE_LIMIT_FOV_STEP 10.0
+#define AMIDE_LIMIT_FOV_PAGE 10.0
 
 typedef enum {
   HELP_INFO_LINE_1,
@@ -51,15 +61,17 @@ typedef enum {
 
 /* ui_study data structures */
 typedef struct ui_study_t {
-  GtkWidget * app; /* pointer to the window managing this study */
+  GtkWindow * window; /* pointer to the window managing this study */
+  GtkWidget * window_vbox;
+
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
   GtkWidget * fov_spin;
-  GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
-  GtkWidget * canvas_target_button;
-  GtkWidget * canvas_visible_button[AMITK_VIEW_NUM];
-  GtkWidget * view_mode_button[AMITK_VIEW_MODE_NUM];
-  GtkWidget * fuse_type_button[AMITK_FUSE_TYPE_NUM];
+  GtkAction * interpolation_action[AMITK_INTERPOLATION_NUM];
+  GtkAction * canvas_target_action;
+  GtkAction * canvas_visible_action[AMITK_VIEW_NUM];
+  GtkAction * view_mode_action[AMITK_VIEW_MODE_NUM];
+  GtkAction * fuse_type_action[AMITK_FUSE_TYPE_NUM];
   GtkWidget * tree_view; /* the tree showing the study data structure info */
   GtkWidget * gate_dialog;
   GtkWidget * gate_button;
@@ -105,7 +117,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 			       AmitkPoint point, amide_data_t value);
 void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study);
 void ui_study_update_gate_button(ui_study_t * ui_study);
-void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
+void ui_study_update_time_button(ui_study_t * ui_study);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
 void ui_study_update_fov(ui_study_t * ui_study);

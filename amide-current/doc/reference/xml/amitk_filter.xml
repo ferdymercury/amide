@@ -1,38 +1,41 @@
 <refentry id="amitk-amitk-filter">
 <refmeta>
-<refentrytitle>amitk_filter</refentrytitle>
+<refentrytitle role="top_of_page">amitk_filter</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_filter</refname><refpurpose></refpurpose>
+<refname>amitk_filter</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-enum        <link linkend="AmitkFilter">AmitkFilter</link>;
-#define     <link linkend="AMITK-FILTER-FFT-SIZE-CAPS">AMITK_FILTER_FFT_SIZE</link>
-<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-filter-calculate-gaussian-kernel-complex">amitk_filter_calculate_gaussian_kernel_complex</link>
-                                            (const <link linkend="AmitkVoxel">AmitkVoxel</link> kernel_size,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
-                                             const <link linkend="amide-real-t">amide_real_t</link> fwhm);
-<link linkend="void">void</link>        <link linkend="amitk-filter-3D-FFT">amitk_filter_3D_FFT</link>             (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
-                                             <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);
-<link linkend="void">void</link>        <link linkend="amitk-filter-inverse-3D-FFT">amitk_filter_inverse_3D_FFT</link>     (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
-                                             <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);
-<link linkend="void">void</link>        <link linkend="amitk-filter-complex-mult">amitk_filter_complex_mult</link>       (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="AmitkRawData">AmitkRawData</link> *kernel);
-<link linkend="amide-data-t">amide_data_t</link> <link linkend="amitk-filter-find-median-by-partial-sort">amitk_filter_find_median_by_partial_sort</link>
-                                            (<link linkend="amide-data-t">amide_data_t</link> *partial_sort_data,
-                                             <link linkend="gint">gint</link> size);
-const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">amitk_filter_get_name</link>          (const <link linkend="AmitkFilter">AmitkFilter</link> filter);
+enum                <link linkend="AmitkFilter">AmitkFilter</link>;
+#define             <link linkend="AMITK-FILTER-FFT-SIZE:CAPS">AMITK_FILTER_FFT_SIZE</link>
+<link linkend="AmitkRawData">AmitkRawData</link>*       <link linkend="amitk-filter-calculate-gaussian-kernel-complex">amitk_filter_calculate_gaussian_kernel_complex</link>
+                                                        (const <link linkend="AmitkVoxel">AmitkVoxel</link> kernel_size,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
+                                                         const <link linkend="amide-real-t">amide_real_t</link> fwhm);
+<link linkend="void">void</link>                <link linkend="amitk-filter-3D-FFT">amitk_filter_3D_FFT</link>                 (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
+                                                         <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);
+<link linkend="void">void</link>                <link linkend="amitk-filter-inverse-3D-FFT">amitk_filter_inverse_3D_FFT</link>         (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
+                                                         <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);
+<link linkend="void">void</link>                <link linkend="amitk-filter-complex-mult">amitk_filter_complex_mult</link>           (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="AmitkRawData">AmitkRawData</link> *kernel);
+<link linkend="amide-data-t">amide_data_t</link>        <link linkend="amitk-filter-find-median-by-partial-sort">amitk_filter_find_median_by_partial_sort</link>
+                                                        (<link linkend="amide-data-t">amide_data_t</link> *partial_sort_data,
+                                                         <link linkend="gint">gint</link> size);
+const <link linkend="gchar">gchar</link>*        <link linkend="amitk-filter-get-name">amitk_filter_get_name</link>               (const <link linkend="AmitkFilter">AmitkFilter</link> filter);
 </synopsis>
 </refsynopsisdiv>
 
@@ -44,17 +47,17 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="AmitkFilter"/>enum AmitkFilter</title>
+<title><anchor id="AmitkFilter" role="enum"/>enum AmitkFilter</title>
 <indexterm><primary>AmitkFilter</primary></indexterm><programlisting>typedef enum {
   AMITK_FILTER_GAUSSIAN,
   AMITK_FILTER_MEDIAN_LINEAR,
@@ -66,18 +69,18 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="AMITK-FILTER-FFT-SIZE-CAPS"/>AMITK_FILTER_FFT_SIZE</title>
+<title><anchor id="AMITK-FILTER-FFT-SIZE:CAPS" role="macro"/>AMITK_FILTER_FFT_SIZE</title>
 <indexterm><primary>AMITK_FILTER_FFT_SIZE</primary></indexterm><programlisting>#define AMITK_FILTER_FFT_SIZE 64
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-calculate-gaussian-kernel-complex"/>amitk_filter_calculate_gaussian_kernel_complex ()</title>
-<indexterm><primary>amitk_filter_calculate_gaussian_kernel_complex</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_filter_calculate_gaussian_kernel_complex
-                                            (const <link linkend="AmitkVoxel">AmitkVoxel</link> kernel_size,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
-                                             const <link linkend="amide-real-t">amide_real_t</link> fwhm);</programlisting>
+<title><anchor id="amitk-filter-calculate-gaussian-kernel-complex" role="function"/>amitk_filter_calculate_gaussian_kernel_complex ()</title>
+<indexterm><primary>amitk_filter_calculate_gaussian_kernel_complex</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>*       amitk_filter_calculate_gaussian_kernel_complex
+                                                        (const <link linkend="AmitkVoxel">AmitkVoxel</link> kernel_size,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> voxel_size,
+                                                         const <link linkend="amide-real-t">amide_real_t</link> fwhm);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -90,16 +93,16 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 <varlistentry><term><parameter>fwhm</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-3D-FFT"/>amitk_filter_3D_FFT ()</title>
-<indexterm><primary>amitk_filter_3D_FFT</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_filter_3D_FFT             (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
-                                             <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);</programlisting>
+<title><anchor id="amitk-filter-3D-FFT" role="function"/>amitk_filter_3D_FFT ()</title>
+<indexterm><primary>amitk_filter_3D_FFT</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_filter_3D_FFT                 (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
+                                                         <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -116,10 +119,10 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-inverse-3D-FFT"/>amitk_filter_inverse_3D_FFT ()</title>
-<indexterm><primary>amitk_filter_inverse_3D_FFT</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_filter_inverse_3D_FFT     (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
-                                             <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);</programlisting>
+<title><anchor id="amitk-filter-inverse-3D-FFT" role="function"/>amitk_filter_inverse_3D_FFT ()</title>
+<indexterm><primary>amitk_filter_inverse_3D_FFT</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_filter_inverse_3D_FFT         (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="gsl-fft-complex-wavetable">gsl_fft_complex_wavetable</link> *wavetable,
+                                                         <link linkend="gsl-fft-complex-workspace">gsl_fft_complex_workspace</link> *workspace);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -136,9 +139,9 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-complex-mult"/>amitk_filter_complex_mult ()</title>
-<indexterm><primary>amitk_filter_complex_mult</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_filter_complex_mult       (<link linkend="AmitkRawData">AmitkRawData</link> *data,
-                                             <link linkend="AmitkRawData">AmitkRawData</link> *kernel);</programlisting>
+<title><anchor id="amitk-filter-complex-mult" role="function"/>amitk_filter_complex_mult ()</title>
+<indexterm><primary>amitk_filter_complex_mult</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_filter_complex_mult           (<link linkend="AmitkRawData">AmitkRawData</link> *data,
+                                                         <link linkend="AmitkRawData">AmitkRawData</link> *kernel);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -152,10 +155,10 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-find-median-by-partial-sort"/>amitk_filter_find_median_by_partial_sort ()</title>
-<indexterm><primary>amitk_filter_find_median_by_partial_sort</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link> amitk_filter_find_median_by_partial_sort
-                                            (<link linkend="amide-data-t">amide_data_t</link> *partial_sort_data,
-                                             <link linkend="gint">gint</link> size);</programlisting>
+<title><anchor id="amitk-filter-find-median-by-partial-sort" role="function"/>amitk_filter_find_median_by_partial_sort ()</title>
+<indexterm><primary>amitk_filter_find_median_by_partial_sort</primary></indexterm><programlisting><link linkend="amide-data-t">amide_data_t</link>        amitk_filter_find_median_by_partial_sort
+                                                        (<link linkend="amide-data-t">amide_data_t</link> *partial_sort_data,
+                                                         <link linkend="gint">gint</link> size);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -165,21 +168,21 @@ const <link linkend="gchar">gchar</link>* <link linkend="amitk-filter-get-name">
 <varlistentry><term><parameter>size</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-filter-get-name"/>amitk_filter_get_name ()</title>
-<indexterm><primary>amitk_filter_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>* amitk_filter_get_name          (const <link linkend="AmitkFilter">AmitkFilter</link> filter);</programlisting>
+<title><anchor id="amitk-filter-get-name" role="function"/>amitk_filter_get_name ()</title>
+<indexterm><primary>amitk_filter_get_name</primary></indexterm><programlisting>const <link linkend="gchar">gchar</link>*        amitk_filter_get_name               (const <link linkend="AmitkFilter">AmitkFilter</link> filter);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

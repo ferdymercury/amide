@@ -1,21 +1,24 @@
 <refentry id="amitk-amitk-roi-variable-type">
 <refmeta>
-<refentrytitle>amitk_roi_variable_type</refentrytitle>
+<refentrytitle role="top_of_page">amitk_roi_variable_type</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_roi_variable_type</refname><refpurpose></refpurpose>
+<refname>amitk_roi_variable_type</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-#define     <link linkend="ROI-TYPE--CAPS">ROI_TYPE_</link>
+#define             <link linkend="ROI-TYPE-:CAPS">ROI_TYPE_</link>
 </synopsis>
 </refsynopsisdiv>
 
@@ -27,17 +30,17 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="ROI-TYPE--CAPS"/>ROI_TYPE_</title>
+<title><anchor id="ROI-TYPE-:CAPS" role="macro"/>ROI_TYPE_</title>
 <indexterm><primary>ROI_TYPE_</primary></indexterm><programlisting>#define ROI_TYPE_`'m4_Variable_Type`'
 </programlisting>
 <para>

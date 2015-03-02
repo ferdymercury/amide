@@ -1,42 +1,43 @@
 <refentry id="amitk-AmitkLineProfile">
 <refmeta>
-<refentrytitle>AmitkLineProfile</refentrytitle>
+<refentrytitle role="top_of_page">AmitkLineProfile</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>AmitkLineProfile</refname><refpurpose></refpurpose>
+<refname>AmitkLineProfile</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-#define     <link linkend="AMITK-LINE-PROFILE-VIEW-CAPS">AMITK_LINE_PROFILE_VIEW</link>         (linep)
-#define     <link linkend="AMITK-LINE-PROFILE-ANGLE-CAPS">AMITK_LINE_PROFILE_ANGLE</link>        (linep)
-#define     <link linkend="AMITK-LINE-PROFILE-VISIBLE-CAPS">AMITK_LINE_PROFILE_VISIBLE</link>      (linep)
-#define     <link linkend="AMITK-LINE-PROFILE-START-POINT-CAPS">AMITK_LINE_PROFILE_START_POINT</link>  (linep)
-#define     <link linkend="AMITK-LINE-PROFILE-END-POINT-CAPS">AMITK_LINE_PROFILE_END_POINT</link>    (linep)
-struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElement</link>;
-<link linkend="AmitkLineProfile">AmitkLineProfile</link>* <link linkend="amitk-line-profile-new">amitk_line_profile_new</link>    (void);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-copy-in-place">amitk_line_profile_copy_in_place</link>
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *dest_profile,
-                                             const <link linkend="AmitkLineProfile">AmitkLineProfile</link> *src_profile);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-set-view">amitk_line_profile_set_view</link>     (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkView">AmitkView</link> view);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-set-angle">amitk_line_profile_set_angle</link>    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="amide-real-t">amide_real_t</link> angle);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-set-visible">amitk_line_profile_set_visible</link>  (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="gboolean">gboolean</link> visible);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-set-start-point">amitk_line_profile_set_start_point</link>
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> start_point);
-<link linkend="void">void</link>        <link linkend="amitk-line-profile-set-end-point">amitk_line_profile_set_end_point</link>
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> end_point);
+#define             <link linkend="AMITK-LINE-PROFILE-VIEW:CAPS">AMITK_LINE_PROFILE_VIEW</link>             (linep)
+#define             <link linkend="AMITK-LINE-PROFILE-ANGLE:CAPS">AMITK_LINE_PROFILE_ANGLE</link>            (linep)
+#define             <link linkend="AMITK-LINE-PROFILE-VISIBLE:CAPS">AMITK_LINE_PROFILE_VISIBLE</link>          (linep)
+#define             <link linkend="AMITK-LINE-PROFILE-START-POINT:CAPS">AMITK_LINE_PROFILE_START_POINT</link>      (linep)
+#define             <link linkend="AMITK-LINE-PROFILE-END-POINT:CAPS">AMITK_LINE_PROFILE_END_POINT</link>        (linep)
+                    <link linkend="AmitkLineProfile">AmitkLineProfile</link>;
+                    <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElement</link>;
+<link linkend="AmitkLineProfile">AmitkLineProfile</link>*   <link linkend="amitk-line-profile-new">amitk_line_profile_new</link>              (void);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-copy-in-place">amitk_line_profile_copy_in_place</link>    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *dest_profile,
+                                                         const <link linkend="AmitkLineProfile">AmitkLineProfile</link> *src_profile);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-set-view">amitk_line_profile_set_view</link>         (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkView">AmitkView</link> view);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-set-angle">amitk_line_profile_set_angle</link>        (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="amide-real-t">amide_real_t</link> angle);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-set-visible">amitk_line_profile_set_visible</link>      (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="gboolean">gboolean</link> visible);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-set-start-point">amitk_line_profile_set_start_point</link>  (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> start_point);
+<link linkend="void">void</link>                <link linkend="amitk-line-profile-set-end-point">amitk_line_profile_set_end_point</link>    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> end_point);
 
 </synopsis>
 </refsynopsisdiv>
@@ -49,17 +50,17 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="AMITK-LINE-PROFILE-VIEW-CAPS"/>AMITK_LINE_PROFILE_VIEW()</title>
+<title><anchor id="AMITK-LINE-PROFILE-VIEW:CAPS" role="macro"/>AMITK_LINE_PROFILE_VIEW()</title>
 <indexterm><primary>AMITK_LINE_PROFILE_VIEW</primary></indexterm><programlisting>#define AMITK_LINE_PROFILE_VIEW(linep)        (AMITK_LINE_PROFILE(linep)-&gt;view)
 </programlisting>
 <para>
@@ -72,7 +73,7 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-LINE-PROFILE-ANGLE-CAPS"/>AMITK_LINE_PROFILE_ANGLE()</title>
+<title><anchor id="AMITK-LINE-PROFILE-ANGLE:CAPS" role="macro"/>AMITK_LINE_PROFILE_ANGLE()</title>
 <indexterm><primary>AMITK_LINE_PROFILE_ANGLE</primary></indexterm><programlisting>#define AMITK_LINE_PROFILE_ANGLE(linep)       (AMITK_LINE_PROFILE(linep)-&gt;angle)
 </programlisting>
 <para>
@@ -85,7 +86,7 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-LINE-PROFILE-VISIBLE-CAPS"/>AMITK_LINE_PROFILE_VISIBLE()</title>
+<title><anchor id="AMITK-LINE-PROFILE-VISIBLE:CAPS" role="macro"/>AMITK_LINE_PROFILE_VISIBLE()</title>
 <indexterm><primary>AMITK_LINE_PROFILE_VISIBLE</primary></indexterm><programlisting>#define AMITK_LINE_PROFILE_VISIBLE(linep)     (AMITK_LINE_PROFILE(linep)-&gt;visible)
 </programlisting>
 <para>
@@ -98,7 +99,7 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-LINE-PROFILE-START-POINT-CAPS"/>AMITK_LINE_PROFILE_START_POINT()</title>
+<title><anchor id="AMITK-LINE-PROFILE-START-POINT:CAPS" role="macro"/>AMITK_LINE_PROFILE_START_POINT()</title>
 <indexterm><primary>AMITK_LINE_PROFILE_START_POINT</primary></indexterm><programlisting>#define AMITK_LINE_PROFILE_START_POINT(linep) (AMITK_LINE_PROFILE(linep)-&gt;start_point)
 </programlisting>
 <para>
@@ -111,7 +112,7 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-LINE-PROFILE-END-POINT-CAPS"/>AMITK_LINE_PROFILE_END_POINT()</title>
+<title><anchor id="AMITK-LINE-PROFILE-END-POINT:CAPS" role="macro"/>AMITK_LINE_PROFILE_END_POINT()</title>
 <indexterm><primary>AMITK_LINE_PROFILE_END_POINT</primary></indexterm><programlisting>#define AMITK_LINE_PROFILE_END_POINT(linep)   (AMITK_LINE_PROFILE(linep)-&gt;end_point)
 </programlisting>
 <para>
@@ -124,32 +125,47 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AmitkLineProfileDataElement"/>struct AmitkLineProfileDataElement</title>
-<indexterm><primary>AmitkLineProfileDataElement</primary></indexterm><programlisting>struct AmitkLineProfileDataElement {
+<title><anchor id="AmitkLineProfile" role="struct"/>AmitkLineProfile</title>
+<indexterm><primary>AmitkLineProfile</primary></indexterm><programlisting>typedef struct {
+  GObject parent;
 
-  amide_real_t value;
-  amide_real_t location;
-};
+  AmitkView view;
+  amide_real_t angle; /* in radians */
+  gboolean visible;
+
+  /* in base coordinate frame.  These are updated by the canvas */
+  AmitkPoint start_point;
+  AmitkPoint end_point;
+} AmitkLineProfile;
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-new"/>amitk_line_profile_new ()</title>
-<indexterm><primary>amitk_line_profile_new</primary></indexterm><programlisting><link linkend="AmitkLineProfile">AmitkLineProfile</link>* amitk_line_profile_new    (void);</programlisting>
+<title><anchor id="AmitkLineProfileDataElement" role="struct"/>AmitkLineProfileDataElement</title>
+<indexterm><primary>AmitkLineProfileDataElement</primary></indexterm><programlisting>typedef struct {
+  amide_real_t value;
+  amide_real_t location;
+} AmitkLineProfileDataElement;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-line-profile-new" role="function"/>amitk_line_profile_new ()</title>
+<indexterm><primary>amitk_line_profile_new</primary></indexterm><programlisting><link linkend="AmitkLineProfile">AmitkLineProfile</link>*   amitk_line_profile_new              (void);</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-copy-in-place"/>amitk_line_profile_copy_in_place ()</title>
-<indexterm><primary>amitk_line_profile_copy_in_place</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_copy_in_place
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *dest_profile,
-                                             const <link linkend="AmitkLineProfile">AmitkLineProfile</link> *src_profile);</programlisting>
+<title><anchor id="amitk-line-profile-copy-in-place" role="function"/>amitk_line_profile_copy_in_place ()</title>
+<indexterm><primary>amitk_line_profile_copy_in_place</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_copy_in_place    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *dest_profile,
+                                                         const <link linkend="AmitkLineProfile">AmitkLineProfile</link> *src_profile);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -163,9 +179,9 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-set-view"/>amitk_line_profile_set_view ()</title>
-<indexterm><primary>amitk_line_profile_set_view</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_set_view     (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkView">AmitkView</link> view);</programlisting>
+<title><anchor id="amitk-line-profile-set-view" role="function"/>amitk_line_profile_set_view ()</title>
+<indexterm><primary>amitk_line_profile_set_view</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_set_view         (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkView">AmitkView</link> view);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -179,9 +195,9 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-set-angle"/>amitk_line_profile_set_angle ()</title>
-<indexterm><primary>amitk_line_profile_set_angle</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_set_angle    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="amide-real-t">amide_real_t</link> angle);</programlisting>
+<title><anchor id="amitk-line-profile-set-angle" role="function"/>amitk_line_profile_set_angle ()</title>
+<indexterm><primary>amitk_line_profile_set_angle</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_set_angle        (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="amide-real-t">amide_real_t</link> angle);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -195,9 +211,9 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-set-visible"/>amitk_line_profile_set_visible ()</title>
-<indexterm><primary>amitk_line_profile_set_visible</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_set_visible  (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="gboolean">gboolean</link> visible);</programlisting>
+<title><anchor id="amitk-line-profile-set-visible" role="function"/>amitk_line_profile_set_visible ()</title>
+<indexterm><primary>amitk_line_profile_set_visible</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_set_visible      (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="gboolean">gboolean</link> visible);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -211,10 +227,9 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-set-start-point"/>amitk_line_profile_set_start_point ()</title>
-<indexterm><primary>amitk_line_profile_set_start_point</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_set_start_point
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> start_point);</programlisting>
+<title><anchor id="amitk-line-profile-set-start-point" role="function"/>amitk_line_profile_set_start_point ()</title>
+<indexterm><primary>amitk_line_profile_set_start_point</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_set_start_point  (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> start_point);</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -228,10 +243,9 @@ struct      <link linkend="AmitkLineProfileDataElement">AmitkLineProfileDataElem
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-line-profile-set-end-point"/>amitk_line_profile_set_end_point ()</title>
-<indexterm><primary>amitk_line_profile_set_end_point</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_line_profile_set_end_point
-                                            (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
-                                             const <link linkend="AmitkPoint">AmitkPoint</link> end_point);</programlisting>
+<title><anchor id="amitk-line-profile-set-end-point" role="function"/>amitk_line_profile_set_end_point ()</title>
+<indexterm><primary>amitk_line_profile_set_end_point</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_line_profile_set_end_point    (<link linkend="AmitkLineProfile">AmitkLineProfile</link> *line_profile,
+                                                         const <link linkend="AmitkPoint">AmitkPoint</link> end_point);</programlisting>
 <para>
 
 </para><variablelist role="params">

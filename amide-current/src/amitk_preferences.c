@@ -25,16 +25,19 @@
 
 #include "amide_config.h"
 #include <string.h>
-
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
+#include "amide.h"
+#include "amide_gconf.h"
 
 #include "amitk_preferences.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 #include "amitk_data_set.h"
 
+#define GCONF_AMIDE_ROI "ROI/"
+#define GCONF_AMIDE_CANVAS "CANVAS/"
+#define GCONF_AMIDE_MISC "MISC/"
+#define GCONF_AMIDE_DATASETS "DATASETS/"
+#define GCONF_AMIDE_WINDOWS "WINDOWS/"
 
 enum {
   DATA_SET_PREFERENCES_CHANGED,
@@ -111,113 +114,62 @@ static void preferences_class_init (AmitkPreferencesClass * class) {
 
 static void preferences_init (AmitkPreferences * preferences) {
 
-#ifndef AMIDE_WIN32_HACKS
-  gchar * temp_string;
-  gint default_value;
-  gfloat temp_float;
-  gint temp_int;
   gchar * temp_str;
-#endif
   AmitkLimit i_limit;
   AmitkWindow i_window;
   AmitkModality i_modality;
 
 
   /* load in saved preferences */
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
+  preferences->canvas_roi_width = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_ROI"Width", AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH);
 
-  temp_int = gnome_config_get_int_with_default("ROI/Width", &default_value);
-  preferences->canvas_roi_width = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH : temp_int;
+  preferences->canvas_line_style = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_ROI"LineStyle",AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE);
 
-  temp_int = gnome_config_get_int_with_default("ROI/LineStyle", &default_value); 
-  preferences->canvas_line_style = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE : temp_int;
+  preferences->canvas_fill_roi = 
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_ROI"FillIsocontour", AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI);
 
-  temp_int = gnome_config_get_int_with_default("ROI/FillIsocontour", &default_value); 
-  preferences->canvas_fill_roi = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI : temp_int;
+  preferences->canvas_layout = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS"Layout", AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT);
 
-  temp_int = gnome_config_get_int_with_default("CANVAS/Layout", &default_value);
-  preferences->canvas_layout = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT : temp_int;
+  preferences->canvas_maintain_size = 
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_CANVAS"MaintainSize", AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE);
 
-  temp_int = !gnome_config_get_int_with_default("CANVAS/MinimizeSize", &default_value);
-  preferences->canvas_maintain_size = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_MAINTAIN_SIZE : temp_int;
+  preferences->canvas_target_empty_area = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS"TargetEmptyArea", AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA);
 
-  temp_int = gnome_config_get_int_with_default("CANVAS/TargetEmptyArea", &default_value); 
-  preferences->canvas_target_empty_area = default_value ? AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA : temp_int;
+  preferences->panel_layout = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_CANVAS"PanelLayout", AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT);
 
-  temp_int = gnome_config_get_int_with_default("CANVAS/PanelLayout", &default_value);
-  preferences->panel_layout = default_value ? AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT : temp_int;
+  preferences->warnings_to_console = 
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC"WarningsToConsole", AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE);
 
-  temp_int = gnome_config_get_int_with_default("MISC/WarningsToConsole", &default_value); 
-  preferences->warnings_to_console = default_value ? AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE : temp_int;
+  preferences->prompt_for_save_on_exit = 
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC"PromptForSaveOnExit", AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT);
 
-  temp_int = !gnome_config_get_int_with_default("MISC/DontPromptForSaveOnExit", &default_value); 
-  preferences->prompt_for_save_on_exit = default_value ? AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT : temp_int;
+  preferences->save_xif_as_directory = 
+    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC"SaveXifAsDirectory", AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY);
 
-  temp_int = gnome_config_get_int_with_default("MISC/SaveXifAsDirectory", &default_value); 
-  preferences->save_xif_as_directory = default_value ? AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY : temp_int;
-
-  temp_str = gnome_config_get_string_with_default("MISC/DefaultDirectory", &default_value);
-  if ((temp_str == NULL) || default_value)
-    preferences->default_directory = AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY;
-  else
-    preferences->default_directory = g_strdup(temp_str);
-  if (temp_str != NULL) g_free(temp_str);
+  preferences->default_directory = 
+    amide_gconf_get_string_with_default(GCONF_AMIDE_MISC"DefaultDirectory", AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY);
 
   for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", amitk_modality_get_name(i_modality));
-    temp_int = gnome_config_get_int_with_default(temp_string, &default_value);
-    g_free(temp_string);
+    temp_str = g_strdup_printf(GCONF_AMIDE_DATASETS"DefaultColorTable%s", amitk_modality_get_name(i_modality));
     preferences->color_table[i_modality] = 
-      default_value ? amitk_modality_default_color_table[i_modality] : temp_int;
+      amide_gconf_get_int_with_default(temp_str, amitk_modality_default_color_table[i_modality]);
+    g_free(temp_str);
   }
 
   for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) 
     for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) {
-      temp_string = g_strdup_printf("WINDOWS/%s-%s", amitk_window_get_name(i_window),
-				    amitk_limit_get_name(i_limit));
-      temp_float = gnome_config_get_float_with_default(temp_string,&default_value);
-      g_free(temp_string);
+      temp_str = g_strdup_printf(GCONF_AMIDE_WINDOWS"%s-%s", amitk_window_get_name(i_window), amitk_limit_get_name(i_limit));
       preferences->window[i_window][i_limit] =
-	default_value ? amitk_window_default[i_window][i_limit] : temp_float;
-  }
+	amide_gconf_get_float_with_default(temp_str, amitk_window_default[i_window][i_limit]);
+    }
 
-  temp_int = gnome_config_get_int_with_default("DATASETS/ThresholdStyle", &default_value); 
-  preferences->threshold_style = default_value ? AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE : temp_int;
-
-  gnome_config_pop_prefix();
-
-#else /* AMIDE_WIN32_HACKS */
-
-  /* canvas preferences */
-  preferences->canvas_roi_width = AMITK_PREFERENCES_DEFAULT_CANVAS_ROI_WIDTH;
-  preferences->canvas_line_style = AMITK_PREFERENCES_DEFAULT_CANVAS_LINE_STYLE;
-  preferences->canvas_fill_roi = AMITK_PREFERENCES_DEFAULT_CANVAS_FILL_ROI;
-  preferences->canvas_layout = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
-  preferences->canvas_maintain_size = AMITK_PREFERENCES_DEFAULT_CANVAS_LAYOUT;
-  preferences->canvas_target_empty_area = AMITK_PREFERENCES_DEFAULT_CANVAS_TARGET_EMPTY_AREA; 
-  preferences->panel_layout = AMITK_PREFERENCES_DEFAULT_PANEL_LAYOUT;
-
-  /* debug preferences */
-  preferences->warnings_to_console = AMITK_PREFERENCES_DEFAULT_WARNINGS_TO_CONSOLE;
-
-  /* file preferences */
-  preferences->prompt_for_save_on_exit = AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT;
-  preferences->save_xif_as_directory = AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY;
-  preferences->default_directory = AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY;
-
-  /* data set preferences */
-  for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-    preferences->color_table[i_modality] = amitk_modality_default_color_table[i_modality];
-  }
-  for (i_window = 0; i_window < AMITK_WINDOW_NUM; i_window++) 
-    for (i_limit = 0; i_limit < AMITK_LIMIT_NUM; i_limit++) 
-      preferences->window[i_window][i_limit] = amitk_window_default[i_window][i_limit];
-
-  preferences->threshold_style = AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE;
-
-#endif /* AMIDE_WIN32_HACKS */
-
+  preferences->threshold_style = 
+    amide_gconf_get_int_with_default(GCONF_AMIDE_DATASETS"ThresholdStyle", AMITK_PREFERENCES_DEFAULT_THRESHOLD_STYLE);
 
   preferences->dialog = NULL;
 
@@ -253,12 +205,7 @@ void amitk_preferences_set_canvas_roi_width(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_ROI_WIDTH(preferences) != roi_width) {
     preferences->canvas_roi_width = roi_width;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("ROI/Width", roi_width);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_ROI"Width", roi_width);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -272,12 +219,7 @@ void amitk_preferences_set_canvas_line_style(AmitkPreferences * preferences, Gdk
 
   if (AMITK_PREFERENCES_CANVAS_LINE_STYLE(preferences) != line_style) {
     preferences->canvas_line_style = line_style;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("ROI/LineStyle",line_style);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_ROI"LineStyle",line_style);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -290,12 +232,7 @@ void amitk_preferences_set_canvas_fill_roi(AmitkPreferences * preferences, gbool
 
   if (AMITK_PREFERENCES_CANVAS_FILL_ROI(preferences) != fill_roi) {
     preferences->canvas_fill_roi = fill_roi;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("ROI/FillIsocontour",fill_roi);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_ROI"FillIsocontour",fill_roi);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -309,12 +246,7 @@ void amitk_preferences_set_canvas_layout(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_LAYOUT(preferences) != layout) {
     preferences->canvas_layout = layout;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("CANVAS/Layout", layout);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_CANVAS"Layout", layout);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -328,12 +260,7 @@ void amitk_preferences_set_canvas_maintain_size(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_CANVAS_MAINTAIN_SIZE(preferences) != maintain_size) {
     preferences->canvas_maintain_size = maintain_size;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("CANVAS/MinimizeSize",!maintain_size);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_CANVAS"MaintainSize",maintain_size);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -354,12 +281,7 @@ void amitk_preferences_set_canvas_target_empty_area(AmitkPreferences * preferenc
 
 if (AMITK_PREFERENCES_CANVAS_TARGET_EMPTY_AREA(preferences) != target_empty_area) {
     preferences->canvas_target_empty_area = target_empty_area;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("CANVAS/TargetEmptyArea", target_empty_area);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_CANVAS"TargetEmptyArea", target_empty_area);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -374,12 +296,7 @@ void amitk_preferences_set_panel_layout(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_PANEL_LAYOUT(preferences) != panel_layout) {
     preferences->panel_layout = panel_layout;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("CANVAS/PanelLayout", panel_layout);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_CANVAS"PanelLayout", panel_layout);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[STUDY_PREFERENCES_CHANGED], 0);
   }
 
@@ -394,12 +311,7 @@ void amitk_preferences_set_warnings_to_console(AmitkPreferences * preferences, g
 
   if (AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(preferences) != new_value) {
     preferences->warnings_to_console = new_value;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("MISC/WarningsToConsole",new_value);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_MISC"WarningsToConsole",new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -411,12 +323,7 @@ void amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferences * preference
 
   if (AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(preferences) != new_value) {
     preferences->prompt_for_save_on_exit = new_value;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("MISC/DontPromptForSaveOnExit",!new_value);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_MISC"PromptForSaveOnExit",new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -428,12 +335,7 @@ void amitk_preferences_set_xif_as_directory(AmitkPreferences * preferences, gboo
 
   if (AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(preferences) != new_value) {
     preferences->save_xif_as_directory = new_value;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("MISC/SaveXifAsDirectory", new_value);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_bool(GCONF_AMIDE_MISC"SaveXifAsDirectory", new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -456,12 +358,7 @@ void amitk_preferences_set_default_directory(AmitkPreferences * preferences, con
       g_free(preferences->default_directory);
     if (new_directory != NULL)
       preferences->default_directory = g_strdup(new_directory);
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_string("MISC/DefaultDirectory", new_directory);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_string(GCONF_AMIDE_MISC"DefaultDirectory", new_directory);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;
@@ -470,9 +367,7 @@ void amitk_preferences_set_default_directory(AmitkPreferences * preferences, con
 void amitk_preferences_set_color_table(AmitkPreferences * preferences,
 				       AmitkModality modality,
 				       AmitkColorTable color_table) {
-#ifndef AMIDE_WIN32_HACKS
   gchar * temp_string;
-#endif
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
   g_return_if_fail((modality >= 0) && (modality < AMITK_MODALITY_NUM));
@@ -481,15 +376,10 @@ void amitk_preferences_set_color_table(AmitkPreferences * preferences,
   if (AMITK_PREFERENCES_COLOR_TABLE(preferences,modality) != color_table) {
     preferences->color_table[modality] = color_table;
 
-#ifndef AMIDE_WIN32_HACKS
-    temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", 
+    temp_string = g_strdup_printf(GCONF_AMIDE_DATASETS"DefaultColorTable%s", 
 				  amitk_modality_get_name(modality));
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int(temp_string, color_table);
-    gnome_config_pop_prefix();
+    amide_gconf_set_int(temp_string, color_table);
     g_free(temp_string);
-    gnome_config_sync();
-#endif
     g_signal_emit(G_OBJECT(preferences), preferences_signals[DATA_SET_PREFERENCES_CHANGED], 0);
   }
 
@@ -501,9 +391,7 @@ void amitk_preferences_set_default_window(AmitkPreferences * preferences,
 					  const AmitkLimit limit,
 					  const amide_data_t value) {
 
-#ifndef AMIDE_WIN32_HACKS
   gchar * temp_string;
-#endif
 
   g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
   g_return_if_fail((window >= 0) && (window < AMITK_WINDOW_NUM));
@@ -512,15 +400,10 @@ void amitk_preferences_set_default_window(AmitkPreferences * preferences,
   if (!REAL_EQUAL(AMITK_PREFERENCES_WINDOW(preferences, window, limit), value)) {
     preferences->window[window][limit] = value;
 
-#ifndef AMIDE_WIN32_HACKS
-    temp_string = g_strdup_printf("WINDOWS/%s-%s", amitk_window_get_name(window),
+    temp_string = g_strdup_printf(GCONF_AMIDE_WINDOWS"%s-%s", amitk_window_get_name(window),
 				  amitk_limit_get_name(limit));
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_float(temp_string,value);
+    amide_gconf_set_float(temp_string,value);
     g_free(temp_string);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
     g_signal_emit(G_OBJECT(preferences), preferences_signals[DATA_SET_PREFERENCES_CHANGED], 0);
   }
 
@@ -534,12 +417,7 @@ void amitk_preferences_set_threshold_style(AmitkPreferences * preferences,
 
   if (AMITK_PREFERENCES_THRESHOLD_STYLE(preferences) != threshold_style) {
     preferences->threshold_style = threshold_style;
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("DATASETS/ThresholdStyle", threshold_style);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_DATASETS"ThresholdStyle", threshold_style);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[DATA_SET_PREFERENCES_CHANGED], 0);
   }
 }

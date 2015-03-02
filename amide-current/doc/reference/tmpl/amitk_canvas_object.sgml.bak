@@ -16,6 +16,9 @@ amitk_canvas_object
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### FUNCTION amitk_canvas_object_draw ##### -->
 <para>
 
@@ -24,6 +27,7 @@ amitk_canvas_object
 @canvas: 
 @canvas_volume: 
 @object: 
+@view_mode: 
 @item: 
 @pixel_dim: 
 @width: 
@@ -33,6 +37,7 @@ amitk_canvas_object
 @roi_color: 
 @roi_width: 
 @line_style: 
+@fill_roi: 
 @Returns: 
 
 

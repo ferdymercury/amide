@@ -16,6 +16,9 @@ amitk_color_table
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### ENUM AmitkColorTable ##### -->
 <para>
 
@@ -33,6 +36,8 @@ amitk_color_table
 @AMITK_COLOR_TABLE_INV_GREEN_TEMP: 
 @AMITK_COLOR_TABLE_HOT_METAL: 
 @AMITK_COLOR_TABLE_INV_HOT_METAL: 
+@AMITK_COLOR_TABLE_HOT_METAL_CONTOUR: 
+@AMITK_COLOR_TABLE_INV_HOT_METAL_CONTOUR: 
 @AMITK_COLOR_TABLE_HOT_BLUE: 
 @AMITK_COLOR_TABLE_INV_HOT_BLUE: 
 @AMITK_COLOR_TABLE_HOT_GREEN: 
@@ -62,6 +67,44 @@ amitk_color_table
 
 </para>
 
+
+<!-- ##### STRUCT rgba_t ##### -->
+<para>
+
+</para>
+
+@r: 
+@g: 
+@b: 
+@a: 
+
+<!-- ##### STRUCT rgba16_t ##### -->
+<para>
+
+</para>
+
+@r: 
+@g: 
+@b: 
+@a: 
+
+<!-- ##### STRUCT rgb_t ##### -->
+<para>
+
+</para>
+
+@r: 
+@g: 
+@b: 
+
+<!-- ##### STRUCT hsv_t ##### -->
+<para>
+
+</para>
+
+@h: 
+@s: 
+@v: 
 
 <!-- ##### MACRO amitk_color_table_rgba_to_uint32 ##### -->
 <para>

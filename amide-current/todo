@@ -1,49 +1,47 @@
 misc list of things todo:
 
+
 for next release?
 -----------------
-
+* help works in cygwin setup, but not in installed package. Probably doesn't know
+  exactly where to look, will need to add to amide_gnome.c. Probably want to use
+  g_win32_get_package_installation_directory (NULL, NULL);
+* internationalization is still somewhat broken on win32, this mainly impacts reading in
+ concorde files via xmedcon.
+* revert on dialogs doesn't work correctly... children get readded
 * some sort of way to easily measure distances between fiducials [1]
-* add/expand support for multiple frames/gates in mathematical operations tool [1]
  [1] suggested by Michael Braden
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
  [2] noticed by Mark Huisman
-* look careful at use of amitk_space_transform, and see if this function is
-	really needed/used correctly - as I don't think this operation 
-	propogates correctly to an object's children
-* add progress bar for image math toolbox
-* add dcmtk export - requred by Matthew Leonard
 * dcmtk shouldn't be required for mac os x install - figure out how to embed
   dicom.dic
 * view_thickness isn't read in from .xif file - gets overridden at some point
 * Gate picker -> multiple selection still screwed up
 
 
-for 0.9.0 release
------------------
-* had to disable -DGNOME_DEPRECATED - gnome_config is now deprecated.
-	replace with gconf system
-* switch from libfame to ffmpeg for mpeg encoding
+remaining things to do now that we're using gtk 2.10
+----------------------------------------------------
+1. combine open and import menu items onto same file dialog.
+	There's no reason this can't currently be done on the AMIDE side.  There's a function
+	for detecting if a file/directory is a XIF, and if it's not, we just hand it off to
+	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4) that allows
+	specifying our own filters for figuring out what goes in the lists... XIF 
+	directories need to go on the "files" side.  And also would need a drop down for 
+	switching from "guess" to "import particular", like in gimp.
+	- similarly, the export data set functions should work similarly, with an additional
+	option on whether or not we want the data resliced.
+	* amitk_xif_sel uses deprecated GtkOptionMenu (gtkfilesel uses this also)
+	  remove amitk_xif_sel when conversion to the new file selection is done
+        * should probably offer an option for displaying a default "/volumes" directory
+2 as of 2.12, gtk_file_selection deprecated. have undef GTK_DISABLE_DEPRECATED in 
+  tb_export_data_set.c, tb_fly_through.c, tb_profile.c, tb_roi_analysis.c, ui_common.c, ui_render.c,
+  ui_render_movie.c, ui_series.c, ui_study_cb.c
 
 
 windows todo
 ------------
-* gate and time dialog buttons are not beveled when using the GTK ms-windows
-	theme... makes them hard to discover
-* icons still look like crap....
-	may need better program than png2ico
-	may need more sizes
+* check if internationalization of the application works, see if I can get it working
 * zdial on rendering doesn't work
-* preferences aren't currently saved between amide sessions -
-	will be fixed with gtk2.8 and gnome2.12 (runs on windows)
-* help buttons don't work.
-* clicking and dragging roi off canvas yields bad behavior
-	(program interaction is frozen until same roi is clicked and released)
-	doesn't occur under linux
-	looks like gtk2.8 has a new event - need to upgrade and
-	  see if still needed
-* calculate over highest % of voxels crashes if the value is 100%
-	has this been fixed?
 
 
 factor analysis things:
@@ -60,6 +58,7 @@ factor analysis things:
 
 big things:
 -----------
+* switch from libfame to ffmpeg for mpeg encoding
 * add drag-n-drop capabilities between study windows
 	don't use treeview reorderable stuff, too limited,
 * toolbox dialog for generating polar maps
@@ -100,6 +99,10 @@ big things:
                        
 small things:
 -------------
+* data set icons in amitk_tree could be generated from the actual respective data sets
+* .xif files should try to compress data.
+* amitk_preferences.c : default color table, panel layout, layout should be saved in gconf as they 
+  associated strings for these values, not as the enumerated numbers
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the
 	initial popup letting you change which data set will be used
 * export ROI's to external file? and allow import?
@@ -129,8 +132,6 @@ pre 1.0 things:
 * check README's, INSTALL guides, etc.
 * add tooltips to everything....
 * add more help buttons to the dialogs 
-  -gnome_druid has an add help button function
-
 
 
 probably post 1.0 things:
@@ -147,51 +148,18 @@ probably post 1.0 things:
 		group's maximum minimal voxel size.  the rendered images should then be scaled
 		and overlapped.  
 	MIP rendering would be nice....
+	More likely, will switch to using VTK at some point
 * aligning of data using automated registration?
 
 
-things dependent on other things: 
--------------- 
+libgnomecanvas/pixbuf issues
+---------------------
 
-* not currently implemented in gtk:
-	handle_box's don't get minimized with the main window...
-	but no way to minimize them independently...
-
-* dependent on requring glib >= 2.8 
-	remove g_try_malloc0 and g_try_new definitions in amide.h/amide.c
-
-* dependent on gtk 2.4 support for windows and fink
-1. combine open and import menu items onto same file dialog.
-	There's no reason this can't currently be done on the AMIDE side.  There's a function
-	for detecting if a file/directory is a XIF, and if it's not, we just hand it off to
-	libmdc.  Need to wait on a new version of the file dialog (gtk 2.4) that allows
-	specifying our own filters for figuring out what goes in the lists... XIF 
-	directories need to go on the "files" side.  And also would need a drop down for 
-	switching from "guess" to "import particular", like in gimp.
-	- similarly, the export data set functions should work similarly, with an additional
-	option on whether or not we want the data resliced.
-	* amitk_xif_sel uses deprecated GtkOptionMenu (gtkfilesel uses this also)
-	  remove amitk_xif_sel when conversion to the new file selection is done
-        * should probably offer an option for displaying a default "/volumes" directory
-2. switch away from the GNOMEUIINFO method of toolbar/menu generation in favor
-	of GtkAction.  Conversion process is descriped in the gtk api documentation.
-3. switch from GtkOptionMenu to GtkComboBox.  Work's already done, just need to 
-	uncomment the relevant code.  GtkComboBox is not avaliable in gtk 2.2
-4. Add -DGTK_DISABLE_DEPRECATED back into src/Makefile.am
-5. analysis.c use of g_ptr_array_foreach is disabled, as this isn't in glib 2.2
-
-* when switching to gnome 2.12 stuff on windows
-  can rip out all of the WIN32_HACKS stuff - only need the one G_PLATFORM_WIN32 thing in xml.c
-
-* dependent on upgrading to gtk 2.6
-1. update about dialog in ui_common.c to GtkAboutDialog
-   documentation on switching available in gtk api documentation on www.gtk.org
-2. update Default Directory bit in ui_preferences_dialog to be a GtkFileChooserButton
-
-
-* I'd like to change the icons on the toolbar to pixbuf data structures generated from
-	.png files.  Currently, I'm using xpm data structures.  The gnome-app-helper toolbar
-	functions currently only support xpm data, holding up the change.
+these problems will probably never be rectified, as libgnomecanvas is
+now deprecated. More likely course of action will be likely to rewrite
+the parts that use libgnomecanvas to use a new canvas system, but a
+new canvas system has not yet been agreed on for gtk (as of 2.14 at
+least).
 
 * antialiased canvases have been disabled again, due to instabilities with ROI resizing
 	starts spewing "*** attempt to put segment in horiz list twice" errors
@@ -205,15 +173,54 @@ things dependent on other things:
 	-make sure to check that lines in tb_crop are placed correctly
 	-need to check that the export jpeg functions work, they have not been tested
 
-* AMIDE_OSX_HACKS, on OS X we currently
-	1- Disable interaction with ESD (enlightenment sound daemon).
-           If amide crashed, ESD was locking files....  This is as of
-	   fink 0.5.2, OS X 10.2.5
 
 * anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
         -ui_preferences_dialog, and amitk_object_dialog define out the appropriate code 
 	when antialiasing support is cmopiled in.  Add back in once anti-aliased
 	canvases support line styles.
+
+* currently, alpha blending is done inside of image.c, a single pixbuf is generated,
+	and this is handed to gnome_canvas.  It'd be nice to use separate pixbuf's but 
+	each data set, and throwing them on the canvas.  The single biggest problem with this is 
+	that the background buffer in gnome_canvas is RGB, not RGBA, so the buffer has an effective
+	alpha of 0xFF, and you're just blending the image with whatever that background is, 
+	screwing up the color levels.  may have to rewrite libgnomecanvas to use
+	a 32bit buffer
+	-would allow the use of cursor keys for moving data sets around each other
+
+
+* using the gdk_pixbuf_scale functions
+	Slicing from all data sets at zoom=1.0, and then scaling using
+	the gdk_pixbuf_scale type functions doesn't work well, as the
+	scale functions don't do a great job of interpolation (circa
+	gdk-pixbuf-0.18.0).
+
+
+things dependent on other things: 
+-------------- 
+
+* dependent on requiring gtk 2.12
+ -update Default Directory bit in ui_preferences_dialog to be a
+  GtkFileChooserButton
+
+
+* dependent on gtk > 2.14:
+  -gtk (as of 2.14) doesn't have any version of gnome_help_display. As
+  such, the relevant code from libgnome has been copied into
+  amide_gnome.c. When gtk has this capability, the code in
+  amide_gnome.c can be deleted.
+
+* not currently implemented in gtk (at least as of 2.12):
+	handle_box's don't get minimized with the main window...
+	but no way to minimize them independently...
+
+* amide_gconf.c is used to encapsulate configuration support (based on
+       gconf for unix, based on code stolen from gnumeric for
+       win32). GConf is likely to be deprecated at some point in the
+       future, and replaced with DConf. If DConf ever emerges, and
+       looks useable, will switch to using it.
+
+
 
 * ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of
 	AMITK_TYPE_OBJECT when setting up gtk_list_store - this is due
@@ -234,42 +241,12 @@ things dependent on other things:
 	I haven't tested gcc 3.1 for this bug, and other people may be using
 	old versions of gcc.
 
-* currently, alpha blending is done inside of image.c, a single pixbuf is generated,
-	and this is handed to gnome_canvas.  It'd be nice to use separate pixbuf's but 
-	each data set, and throwing them on the canvas.  The single biggest problem with this is 
-	that the background buffer in gnome_canvas is RGB, not RGBA, so the buffer has an effective
-	alpha of 0xFF, and you're just blending the image with whatever that background is, 
-	screwing up the color levels.  may have to rewrite libgnomecanvas to use
-	a 32bit buffer
-	-would allow the use of cursor keys for moving data sets around each other
-
-
-* using the gdk_pixbuf_scale functions
-	Slicing from all data sets at zoom=1.0, and then scaling using
-	the gdk_pixbuf_scale type functions doesn't work well, as the
-	scale functions don't do a great job of interpolation (circa
-	gdk-pixbuf-0.18.0).
-
 * Current implementation is cooperative multitasking, if that.  Should turn
 	program into a true, multi-threaded design.  Note that gtk for windows
 	(as of 2003.04.30) does not handle multi-threaded program.... so will
 	have to wait for that.
 
-
-* libmdc currently links against glib1.  When (X)MedCon switches to
-	GTK2/GLib2, remove the line in configure.in that overwrites
-	the XMEDCON_LIBS entry.  Also, XMEDCON_CFLAGS can probably
-	be includes in src/Makefile.am
-	-2005.11.19 renabled these, doesn't seem to be a problem right now
-
-* drawing graphics of ROI statistics, etc.
-	Can't use Guppi, it's unmaintained and deprecated.  Hopefully the 
-	gnumeric project will come out with a library for drawing charts/etc 
-	at some point in the future.
-	-this is really low priority... people can draw their own graphs in
-	gnumeric/excel etc.
-
-* in xml.c and amitk_point.c, have a bunch of AMIDE_WIN32_HACK
+* in xml.c and amitk_point.c, have a bunch of G_PLATFORM_WIN32
 	ifdef's, because g_strdup_printf
 	wasn't obeying the setlocale command on windows as of glib 2.2
 	This was causing errors in locales that use a comma as the

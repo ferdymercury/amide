@@ -1,21 +1,25 @@
 <refentry id="amitk-AmitkSpaceEdit">
 <refmeta>
-<refentrytitle>AmitkSpaceEdit</refentrytitle>
+<refentrytitle role="top_of_page">AmitkSpaceEdit</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>AmitkSpaceEdit</refname><refpurpose></refpurpose>
+<refname>AmitkSpaceEdit</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-space-edit-new">amitk_space_edit_new</link>            (<link linkend="AmitkObject">AmitkObject</link> *object);
+                    <link linkend="AmitkSpaceEdit">AmitkSpaceEdit</link>;
+<link linkend="GtkWidget">GtkWidget</link>*          <link linkend="amitk-space-edit-new">amitk_space_edit_new</link>                (<link linkend="AmitkObject">AmitkObject</link> *object);
 
 </synopsis>
 </refsynopsisdiv>
@@ -28,25 +32,38 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="amitk-space-edit-new"/>amitk_space_edit_new ()</title>
-<indexterm><primary>amitk_space_edit_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_space_edit_new            (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
+<title><anchor id="AmitkSpaceEdit" role="struct"/>AmitkSpaceEdit</title>
+<indexterm><primary>AmitkSpaceEdit</primary></indexterm><programlisting>typedef struct {
+  GtkVBox vbox;
+
+  GtkWidget * entry[AMITK_AXIS_NUM][AMITK_AXIS_NUM];
+
+  AmitkObject * object;
+} AmitkSpaceEdit;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-space-edit-new" role="function"/>amitk_space_edit_new ()</title>
+<indexterm><primary>amitk_space_edit_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*          amitk_space_edit_new                (<link linkend="AmitkObject">AmitkObject</link> *object);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

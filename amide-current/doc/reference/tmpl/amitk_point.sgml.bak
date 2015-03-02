@@ -16,6 +16,9 @@ amitk_point
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### ENUM AmitkView ##### -->
 <para>
 
@@ -273,7 +276,7 @@ amitk_point
 @point: 
 
 
-<!-- ##### TYPEDEF AmitkAxes[AMITK_AXIS_NUM] ##### -->
+<!-- ##### TYPEDEF AmitkAxes ##### -->
 <para>
 
 </para>
@@ -371,7 +374,7 @@ amitk_point
 @Returns: 
 
 
-<!-- ##### TYPEDEF AmitkCorners[2] ##### -->
+<!-- ##### TYPEDEF AmitkCorners ##### -->
 <para>
 
 </para>
@@ -403,6 +406,13 @@ amitk_point
 
 
 <!-- ##### MACRO EPSILON ##### -->
+<para>
+
+</para>
+
+
+
+<!-- ##### MACRO CLOSE ##### -->
 <para>
 
 </para>
@@ -447,6 +457,15 @@ amitk_point
 @fp1: 
 
 
+<!-- ##### MACRO REAL_CLOSE ##### -->
+<para>
+
+</para>
+
+@x: 
+@y: 
+
+
 <!-- ##### MACRO POINT_EQUAL ##### -->
 <para>
 
@@ -485,6 +504,16 @@ amitk_point
 @frame: 
 @gate: 
 @vox: 
+
+
+<!-- ##### MACRO VOXEL_CORNER ##### -->
+<para>
+
+</para>
+
+@vox: 
+@vox_size: 
+@corner: 
 
 
 <!-- ##### MACRO POINT_MAX ##### -->
@@ -578,6 +607,16 @@ amitk_point
 
 @cm: 
 @point1: 
+@point3: 
+
+
+<!-- ##### MACRO POINT_CROSS_PRODUCT ##### -->
+<para>
+
+</para>
+
+@point1: 
+@point2: 
 @point3: 
 
 
@@ -696,6 +735,13 @@ amitk_point
 </para>
 
 
+<!-- ##### MACRO ONE_POINT ##### -->
+<para>
+
+</para>
+
+
+
 <!-- ##### VARIABLE one_point ##### -->
 <para>
 
@@ -712,6 +758,13 @@ amitk_point
 <para>
 
 </para>
+
+
+<!-- ##### MACRO ONE_VOXEL ##### -->
+<para>
+
+</para>
+
 
 
 <!-- ##### VARIABLE one_voxel ##### -->

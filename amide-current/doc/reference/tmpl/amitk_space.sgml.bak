@@ -16,6 +16,9 @@ AmitkSpace
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_SPACE_AXES ##### -->
 <para>
 
@@ -38,6 +41,72 @@ AmitkSpace
 </para>
 
 
+
+<!-- ##### STRUCT AmitkSpace ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkSpace::space-changed ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkSpace::space-invert ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkSpace::space-rotate ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+
+<!-- ##### SIGNAL AmitkSpace::space-scale ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
+
+<!-- ##### SIGNAL AmitkSpace::space-shift ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkSpace::space-transform ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkSpace::space-transform-axes ##### -->
+<para>
+
+</para>
+
+@amitkspace: the object which received the signal.
+@arg1: 
+@arg2: 
 
 <!-- ##### FUNCTION amitk_space_new ##### -->
 <para>

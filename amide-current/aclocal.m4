@@ -1,7 +1,7 @@
-# generated automatically by aclocal 1.9.6 -*- Autoconf -*-
+# generated automatically by aclocal 1.10 -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-# 2005  Free Software Foundation, Inc.
+# 2005, 2006  Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -10,6 +10,11 @@
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
+
+m4_if(m4_PACKAGE_VERSION, [2.61],,
+[m4_fatal([this file was generated for autoconf 2.61.
+You have another version of autoconf.  If you want to use that,
+you should regenerate the build system entirely.], [63])])
 
 # Copyright (C) 1995-2002 Free Software Foundation, Inc.
 # Copyright (C) 2001-2003,2004 Red Hat, Inc.
@@ -219,6 +224,20 @@ glib_DEFUN([GLIB_WITH_NLS],
           glib_save_LIBS="$LIBS"
           LIBS="$LIBS $INTLLIBS"
 	  AC_CHECK_FUNCS(dcgettext)
+	  MSGFMT_OPTS=
+	  AC_MSG_CHECKING([if msgfmt accepts -c])
+	  GLIB_RUN_PROG([$MSGFMT -c -o /dev/null],[
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Project-Id-Version: test 1.0\n"
+"PO-Revision-Date: 2007-02-15 12:01+0100\n"
+"Last-Translator: test <foo@bar.xx>\n"
+"Language-Team: C <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+], [MSGFMT_OPTS=-c; AC_MSG_RESULT([yes])], [AC_MSG_RESULT([no])])
+	  AC_SUBST(MSGFMT_OPTS)
 	  AC_PATH_PROG(GMSGFMT, gmsgfmt, $MSGFMT)
 	  GLIB_PATH_PROG_WITH_TEST(XGETTEXT, xgettext,
 	    [test -z "`$ac_dir/$ac_word -h 2>&1 | grep '(HELP)'`"], :)
@@ -413,6 +432,72 @@ ifdef(glib_configure_in,[],[
 AC_DEFUN([AM_GLIB_GNU_GETTEXT],[GLIB_GNU_GETTEXT($@)])
 AC_DEFUN([AM_GLIB_DEFINE_LOCALEDIR],[GLIB_DEFINE_LOCALEDIR($@)])
 ])dnl
+
+# GLIB_RUN_PROG(PROGRAM, TEST-FILE, [ACTION-IF-PASS], [ACTION-IF-FAIL])
+# 
+# Create a temporary file with TEST-FILE as its contents and pass the
+# file name to PROGRAM.  Perform ACTION-IF-PASS if PROGRAM exits with
+# 0 and perform ACTION-IF-FAIL for any other exit status.
+AC_DEFUN([GLIB_RUN_PROG],
+[cat >conftest.foo <<_ACEOF
+$2
+_ACEOF
+if AC_RUN_LOG([$1 conftest.foo]); then
+  m4_ifval([$3], [$3], [:])
+m4_ifvaln([$4], [else $4])dnl
+echo "$as_me: failed input was:" >&AS_MESSAGE_LOG_FD
+sed 's/^/| /' conftest.foo >&AS_MESSAGE_LOG_FD
+fi])
+
+
+dnl Do not call GNOME_DOC_DEFINES directly.  It is split out from
+dnl GNOME_DOC_INIT to allow gnome-doc-utils to bootstrap off itself.
+AC_DEFUN([GNOME_DOC_DEFINES],
+[
+AC_ARG_WITH([help-dir],
+  AC_HELP_STRING([--with-help-dir=DIR], [path to help docs]),,
+  [with_help_dir='${datadir}/gnome/help'])
+HELP_DIR="$with_help_dir"
+AC_SUBST(HELP_DIR)
+
+AC_ARG_WITH([omf-dir],
+  AC_HELP_STRING([--with-omf-dir=DIR], [path to OMF files]),,
+  [with_omf_dir='${datadir}/omf'])
+OMF_DIR="$with_omf_dir"
+AC_SUBST(OMF_DIR)
+
+AC_ARG_WITH([help-formats],
+  AC_HELP_STRING([--with-help-formats=FORMATS], [list of formats]),,
+  [with_help_formats=''])
+DOC_USER_FORMATS="$with_help_formats"
+AC_SUBST(DOC_USER_FORMATS)
+
+AC_ARG_ENABLE([scrollkeeper],
+	[AC_HELP_STRING([--disable-scrollkeeper],
+			[do not make updates to the scrollkeeper database])],,
+	enable_scrollkeeper=yes)
+AM_CONDITIONAL([ENABLE_SK],[test "$gdu_cv_have_gdu" = "yes" -a "$enable_scrollkeeper" = "yes"])
+
+AM_CONDITIONAL([HAVE_GNOME_DOC_UTILS],[test "$gdu_cv_have_gdu" = "yes"])
+])
+
+# GNOME_DOC_INIT ([MINIMUM-VERSION],[ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])
+#
+AC_DEFUN([GNOME_DOC_INIT],
+[
+ifelse([$1],,[gdu_cv_version_required=0.3.2],[gdu_cv_version_required=$1])
+
+PKG_CHECK_EXISTS([gnome-doc-utils >= $gdu_cv_version_required],
+	[gdu_cv_have_gdu=yes],[gdu_cv_have_gdu=no])
+
+if test "$gdu_cv_have_gdu" = "yes"; then
+	ifelse([$2],,[:],[$2])
+else
+	ifelse([$3],,[AC_MSG_ERROR([gnome-doc-utils >= $gdu_cv_version_required not found])],[$3])
+fi
+
+GNOME_DOC_DEFINES
+])
 
 # Configure path for the GNU Scientific Library
 # Christopher R. Gabriel <cgabriel@linux.it>, April 2000
@@ -729,7 +814,30 @@ AC_PATH_PROG(INTLTOOL_XGETTEXT, xgettext, xgettext)
 
 # Substitute ALL_LINGUAS so we can use it in po/Makefile
 AC_SUBST(ALL_LINGUAS)
-    
+
+# Set DATADIRNAME correctly if it is not set yet
+# (copied from glib-gettext.m4)
+if test -z "$DATADIRNAME"; then
+  AC_TRY_LINK(, [extern int _nl_msg_cat_cntr;
+                 return _nl_msg_cat_cntr],
+    [DATADIRNAME=share],
+    [case $host in
+    *-*-solaris*)
+    dnl On Solaris, if bind_textdomain_codeset is in libc,
+    dnl GNU format message catalog is always supported,
+    dnl since both are added to the libc all together.
+    dnl Hence, we'd like to go with DATADIRNAME=share
+    dnl in this case.
+    AC_CHECK_FUNC(bind_textdomain_codeset,
+      [DATADIRNAME=share], [DATADIRNAME=lib])
+    ;;
+    *)
+    [DATADIRNAME=lib]
+    ;;
+    esac])
+fi
+AC_SUBST(DATADIRNAME)
+
 IT_PO_SUBDIR([po])
 
 dnl The following is very similar to
@@ -821,6 +929,7 @@ AU_ALIAS([AC_PROG_INTLTOOL], [IT_PROG_INTLTOOL])
 
 dnl AM_PATH_LIBFAME([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
 dnl Test for libfame, and define LIBFAME_CFLAGS and LIBFAME_LIBS
+dnl stolen from Erik Nolf 10/28/2007
 dnl Vivien Chappelier 12/11/00
 dnl stolen from ORBit autoconf
 dnl
@@ -829,22 +938,22 @@ AC_DEFUN([AM_PATH_LIBFAME],
 dnl Get the cflags and libraries from the libfame-config script
 dnl
 AC_ARG_WITH(libfame-prefix,[  --with-libfame-prefix=PFX   Prefix where libfame is installed (optional)],
-            libfame_config_prefix="$withval", libfame_config_prefix="")
+            libfame_prefix="$withval", libfame_prefix="")
 AC_ARG_WITH(libfame-exec-prefix,[  --with-libfame-exec-prefix=PFX Exec prefix where libfame is installed (optional)],
-            libfame_config_exec_prefix="$withval", libfame_config_exec_prefix="")
+            libfame_exec_prefix="$withval", libfame_exec_prefix="")
 AC_ARG_ENABLE(libfametest, [  --disable-libfametest       Do not try to compile and run a test libfame program],
 		    , enable_libfametest=yes)
 
-  if test x$libfame_config_exec_prefix != x ; then
-     libfame_config_args="$libfame_config_args --exec-prefix=$libfame_config_exec_prefix"
+  if test x$libfame_exec_prefix != x ; then
+     libfame_config_args="$libfame_config_args --exec-prefix=$libfame_exec_prefix"
      if test x${LIBFAME_CONFIG+set} != xset ; then
-        LIBFAME_CONFIG=$libfame_config_exec_prefix/bin/libfame-config
+        LIBFAME_CONFIG=$libfame_exec_prefix/bin/libfame-config
      fi
   fi
-  if test x$libfame_config_prefix != x ; then
-     libfame_config_args="$libfame_config_args --prefix=$libfame_config_prefix"
+  if test x$libfame_prefix != x ; then
+     libfame_config_args="$libfame_config_args --prefix=$libfame_prefix"
      if test x${LIBFAME_CONFIG+set} != xset ; then
-        LIBFAME_CONFIG=$libfame_config_prefix/bin/libfame-config
+        LIBFAME_CONFIG=$libfame_prefix/bin/libfame-config
      fi
   fi
 
@@ -857,12 +966,12 @@ AC_ARG_ENABLE(libfametest, [  --disable-libfametest       Do not try to compile 
   else
     LIBFAME_CFLAGS=`$LIBFAME_CONFIG $libfame_config_args --cflags`
     LIBFAME_LIBS=`$LIBFAME_CONFIG $libfame_config_args --libs`
-    libfame_config_major_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
-	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    libfame_config_minor_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
-	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    libfame_config_micro_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
-	   sed -e 's,[[^0-9.]],,g' -e 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    libfame_major_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
+           sed 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\1/'`
+    libfame_minor_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
+           sed 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\2/'`
+    libfame_micro_version=`$LIBFAME_CONFIG $libfame_config_args --version | \
+           sed 's/^\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\).*/\3/'`
     if test "x$enable_libfametest" = "xyes" ; then
       ac_save_CFLAGS="$CFLAGS"
       ac_save_LIBS="$LIBS"
@@ -874,12 +983,28 @@ dnl checks the results of libfame-config to some extent
 dnl
       rm -f conf.libfametest
       AC_TRY_RUN([
-#include <fame.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <fame.h>
 
-int 
-main ()
+char*
+my_strdup (char *str)
+{
+  char *new_str;
+  
+  if (str)
+    {
+      new_str = (char *) malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+  
+  return new_str;
+}
+
+int main ()
 {
   int major, minor, micro;
   char *tmp_version;
@@ -887,66 +1012,30 @@ main ()
   system ("touch conf.libfametest");
 
   /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = strdup("$min_libfame_version");
+  tmp_version = my_strdup("$min_libfame_version");
   if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
      printf("%s, bad version string\n", "$min_libfame_version");
      exit(1);
    }
 
-  if ((libfame_major_version != $libfame_config_major_version) ||
-      (libfame_minor_version != $libfame_config_minor_version) ||
-      (libfame_micro_version != $libfame_config_micro_version))
+   if (($libfame_major_version > major) ||
+      (($libfame_major_version == major) && ($libfame_minor_version > minor)) ||
+      (($libfame_major_version == major) && ($libfame_minor_version == minor) && ($libfame_micro_version >= micro)))
     {
-      printf("\n*** 'libfame-config --version' returned %d.%d.%d, but Libfame (%d.%d.%d)\n", 
-             $libfame_config_major_version, $libfame_config_minor_version, $libfame_config_micro_version,
-             libfame_major_version, libfame_minor_version, libfame_micro_version);
-      printf ("*** was found! If libfame-config was correct, then it is best\n");
-      printf ("*** to remove the old version of libfame. You may also be able to fix the error\n");
-      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
-      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
-      printf("*** required on your system.\n");
-      printf("*** If libfame-config was wrong, set the environment variable LIBFAME_CONFIG\n");
-      printf("*** to point to the correct copy of libfame-config, and remove the file config.cache\n");
-      printf("*** before re-running configure\n");
-    } 
-#if defined (LIBFAME_MAJOR_VERSION) && defined (LIBFAME_MINOR_VERSION) && defined (LIBFAME_MICRO_VERSION)
-  else if ((libfame_major_version != LIBFAME_MAJOR_VERSION) ||
-	   (libfame_minor_version != LIBFAME_MINOR_VERSION) ||
-           (libfame_micro_version != LIBFAME_MICRO_VERSION))
-    {
-      printf("*** libfame header files (version %d.%d.%d) do not match\n",
-	     LIBFAME_MAJOR_VERSION, LIBFAME_MINOR_VERSION, LIBFAME_MICRO_VERSION);
-      printf("*** library (version %d.%d.%d)\n",
-	     libfame_major_version, libfame_minor_version, libfame_micro_version);
+      return 0;
     }
-#endif /* defined (LIBFAME_MAJOR_VERSION) ... */
   else
     {
-      if ((libfame_major_version > major) ||
-        ((libfame_major_version == major) && (libfame_minor_version > minor)) ||
-        ((libfame_major_version == major) && (libfame_minor_version == minor) && (libfame_micro_version >= micro)))
-      {
-        return 0;
-       }
-     else
-      {
-        printf("\n*** An old version of libfame (%d.%d.%d) was found.\n",
-               libfame_major_version, libfame_minor_version, libfame_micro_version);
-        printf("*** You need a version of libfame newer than %d.%d.%d. The latest version of\n",
-	       major, minor, micro);
-        printf("*** libfame is always available from http://www-eleves.enst-bretagne.fr/~chappeli/fame\n");
-        printf("***\n");
-        printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the libfame-config shell script is\n");
-        printf("*** being found. The easiest way to fix this is to remove the old version\n");
-        printf("*** of libfame, but you can also set the LIBFAME_CONFIG environment to point to the\n");
-        printf("*** correct copy of libfame-config. (In this case, you will have to\n");
-        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-        printf("*** so that the correct libraries are found at run-time))\n");
-      }
+      printf("\n*** 'libfame-config --version' returned %d.%d.%d, but the minimum version\n", $libfame_major_version, $libfame_minor_version, $libfame_micro_version);
+      printf("*** of LIBFAME required is %d.%d.%d. If libfame-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If libfame-config was wrong, set the environment variable LIBFAME_CONFIG\n");
+      printf("*** to point to the correct copy of libfame-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      return 1;
     }
-  return 1;
 }
+
 ],, no_libfame=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
        CFLAGS="$ac_save_CFLAGS"
        LIBS="$ac_save_LIBS"
@@ -970,19 +1059,18 @@ main ()
           CFLAGS="$CFLAGS $LIBFAME_CFLAGS"
           LIBS="$LIBS $LIBFAME_LIBS"
           AC_TRY_LINK([
-#include <fame.h>
 #include <stdio.h>
-],      [ return ((libfame_major_version) || (libfame_minor_version) || (libfame_micro_version)); ],
+#include <fame.h>
+],      [ return 0; ],
         [ echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding libfame or finding the wrong"
-          echo "*** version of LIBFAME. If it is not finding libfame, you'll need to set your"
+          echo "*** version of libfame. If it is not finding libfame, you'll need to set your"
           echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
           echo "*** to the installed location  Also, make sure you have run ldconfig if that"
           echo "*** is required on your system"
 	  echo "***"
           echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
-          echo "***" ],
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
           echo "*** exact error that occured. This usually means libfame was incorrectly installed"
           echo "*** or that you have moved libfame since it was installed. In the latter case, you"
@@ -995,7 +1083,6 @@ main ()
      LIBFAME_LIBS=""
      ifelse([$3], , :, [$3])
   fi
-
   AC_SUBST(LIBFAME_CFLAGS)
   AC_SUBST(LIBFAME_LIBS)
   rm -f conf.libfametest
@@ -2587,7 +2674,7 @@ linux*)
 
   # Append ld.so.conf contents to the search path
   if test -f /etc/ld.so.conf; then
-    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/#.*//;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
+    lt_ld_extra=`awk '/^include / { system(sprintf("cd /etc; cat %s 2>/dev/null", \[$]2)); skip = 1; } { if (!skip) print \[$]0; skip = 0; }' < /etc/ld.so.conf | $SED -e 's/^[	 ]*//;s/#.*//;/^[^\/]/d;s/[:,	]/ /g;s/=[^=]*$//;s/=[^= ]* / /g;/^$/d' | tr '\n' ' '`
     sys_lib_dlsearch_path_spec="/lib${libsuff} /usr/lib${libsuff} $lt_ld_extra"
   fi
 
@@ -5295,9 +5382,6 @@ CC=$lt_[]_LT_AC_TAGVAR(compiler, $1)
 # Is the compiler the GNU C compiler?
 with_gcc=$_LT_AC_TAGVAR(GCC, $1)
 
-gcc_dir=\`gcc -print-file-name=. | $SED 's,/\.$,,'\`
-gcc_ver=\`gcc -dumpversion\`
-
 # An ERE matcher.
 EGREP=$lt_EGREP
 
@@ -5431,11 +5515,11 @@ striplib=$lt_striplib
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects=\`echo $lt_[]_LT_AC_TAGVAR(predep_objects, $1) | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
+predep_objects=$lt_[]_LT_AC_TAGVAR(predep_objects, $1)
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects=\`echo $lt_[]_LT_AC_TAGVAR(postdep_objects, $1) | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
+postdep_objects=$lt_[]_LT_AC_TAGVAR(postdep_objects, $1)
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -5447,7 +5531,7 @@ postdeps=$lt_[]_LT_AC_TAGVAR(postdeps, $1)
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path=\`echo $lt_[]_LT_AC_TAGVAR(compiler_lib_search_path, $1) | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
+compiler_lib_search_path=$lt_[]_LT_AC_TAGVAR(compiler_lib_search_path, $1)
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method=$lt_deplibs_check_method
@@ -5527,7 +5611,7 @@ variables_saved_for_relink="$variables_saved_for_relink"
 link_all_deplibs=$_LT_AC_TAGVAR(link_all_deplibs, $1)
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=\`echo $lt_sys_lib_search_path_spec | \$SED -e "s@\${gcc_dir}@\\\${gcc_dir}@g;s@\${gcc_ver}@\\\${gcc_ver}@g"\`
+sys_lib_search_path_spec=$lt_sys_lib_search_path_spec
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec=$lt_sys_lib_dlsearch_path_spec
@@ -7570,7 +7654,7 @@ fi[]dnl
 dnl AM_PATH_XMEDCON([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for XMEDCON, and define XMEDCON_CFLAGS and XMEDCON_LIBS
 dnl
-AC_DEFUN(AM_PATH_XMEDCON,
+AC_DEFUN([AM_PATH_XMEDCON],
 [dnl 
 dnl Get the cflags and libraries from the xmedcon-config script
 dnl
@@ -7726,7 +7810,7 @@ int main ()
   rm -f conf.xmedcontest
 ])
 
-# Copyright (C) 2002, 2003, 2005  Free Software Foundation, Inc.
+# Copyright (C) 2002, 2003, 2005, 2006  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -7736,14 +7820,29 @@ int main ()
 # ----------------------------
 # Automake X.Y traces this macro to ensure aclocal.m4 has been
 # generated from the m4 files accompanying Automake X.Y.
-AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version="1.9"])
+# (This private macro should not be called outside this file.)
+AC_DEFUN([AM_AUTOMAKE_VERSION],
+[am__api_version='1.10'
+dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
+dnl require some minimum version.  Point them to the right macro.
+m4_if([$1], [1.10], [],
+      [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
+])
+
+# _AM_AUTOCONF_VERSION(VERSION)
+# -----------------------------
+# aclocal traces this macro to find the Autoconf version.
+# This is a private macro too.  Using m4_define simplifies
+# the logic in aclocal, which can simply ignore this definition.
+m4_define([_AM_AUTOCONF_VERSION], [])
 
 # AM_SET_CURRENT_AUTOMAKE_VERSION
 # -------------------------------
-# Call AM_AUTOMAKE_VERSION so it can be traced.
+# Call AM_AUTOMAKE_VERSION and AM_AUTOMAKE_VERSION so they can be traced.
 # This function is AC_REQUIREd by AC_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-	 [AM_AUTOMAKE_VERSION([1.9.6])])
+[AM_AUTOMAKE_VERSION([1.10])dnl
+_AM_AUTOCONF_VERSION(m4_PACKAGE_VERSION)])
 
 # AM_AUX_DIR_EXPAND                                         -*- Autoconf -*-
 
@@ -7800,14 +7899,14 @@ am_aux_dir=`cd $ac_aux_dir && pwd`
 
 # AM_CONDITIONAL                                            -*- Autoconf -*-
 
-# Copyright (C) 1997, 2000, 2001, 2003, 2004, 2005
+# Copyright (C) 1997, 2000, 2001, 2003, 2004, 2005, 2006
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 7
+# serial 8
 
 # AM_CONDITIONAL(NAME, SHELL-CONDITION)
 # -------------------------------------
@@ -7816,8 +7915,10 @@ AC_DEFUN([AM_CONDITIONAL],
 [AC_PREREQ(2.52)dnl
  ifelse([$1], [TRUE],  [AC_FATAL([$0: invalid condition: $1])],
 	[$1], [FALSE], [AC_FATAL([$0: invalid condition: $1])])dnl
-AC_SUBST([$1_TRUE])
-AC_SUBST([$1_FALSE])
+AC_SUBST([$1_TRUE])dnl
+AC_SUBST([$1_FALSE])dnl
+_AM_SUBST_NOTMAKE([$1_TRUE])dnl
+_AM_SUBST_NOTMAKE([$1_FALSE])dnl
 if $2; then
   $1_TRUE=
   $1_FALSE='#'
@@ -7831,15 +7932,14 @@ AC_CONFIG_COMMANDS_PRE(
 Usually this means the macro was only invoked conditionally.]])
 fi])])
 
-
-# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005
+# Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 8
+# serial 9
 
 # There are a few dirty hacks below to avoid letting `AC_PROG_CC' be
 # written in clear, in which case automake, when reading aclocal.m4,
@@ -7867,6 +7967,7 @@ AC_REQUIRE([AM_DEP_TRACK])dnl
 ifelse([$1], CC,   [depcc="$CC"   am_compiler_list=],
        [$1], CXX,  [depcc="$CXX"  am_compiler_list=],
        [$1], OBJC, [depcc="$OBJC" am_compiler_list='gcc3 gcc'],
+       [$1], UPC,  [depcc="$UPC"  am_compiler_list=],
        [$1], GCJ,  [depcc="$GCJ"  am_compiler_list='gcc3 gcc'],
                    [depcc="$$1"   am_compiler_list=])
 
@@ -7932,6 +8033,7 @@ AC_CACHE_CHECK([dependency style of $depcc],
        depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
        $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
          >/dev/null 2>conftest.err &&
+       grep sub/conftst1.h sub/conftest.Po > /dev/null 2>&1 &&
        grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
        grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
        ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
@@ -7984,7 +8086,8 @@ if test "x$enable_dependency_tracking" != xno; then
   AMDEPBACKSLASH='\'
 fi
 AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
-AC_SUBST([AMDEPBACKSLASH])
+AC_SUBST([AMDEPBACKSLASH])dnl
+_AM_SUBST_NOTMAKE([AMDEPBACKSLASH])dnl
 ])
 
 # Generate code to set up dependency tracking.              -*- Autoconf -*-
@@ -8009,8 +8112,9 @@ AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
   # some people rename them; so instead we look at the file content.
   # Grep'ing the first line is not enough: some people post-process
   # each Makefile.in and add a new line on top of each file to say so.
-  # So let's grep whole file.
-  if grep '^#.*generated by automake' $mf > /dev/null 2>&1; then
+  # Grep'ing the whole file is not good either: AIX grep has a line
+  # limit of 2048, but all sed's we know have understand at least 4000.
+  if sed 10q "$mf" | grep '^#.*generated by automake' > /dev/null 2>&1; then
     dirpart=`AS_DIRNAME("$mf")`
   else
     continue
@@ -8055,22 +8159,10 @@ AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
      [AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"])
 ])
 
-# Copyright (C) 1996, 1997, 2000, 2001, 2003, 2005
-# Free Software Foundation, Inc.
-#
-# This file is free software; the Free Software Foundation
-# gives unlimited permission to copy and/or distribute it,
-# with or without modifications, as long as this notice is preserved.
-
-# serial 8
-
-# AM_CONFIG_HEADER is obsolete.  It has been replaced by AC_CONFIG_HEADERS.
-AU_DEFUN([AM_CONFIG_HEADER], [AC_CONFIG_HEADERS($@)])
-
 # Do all the work for Automake.                             -*- Autoconf -*-
 
-# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
-# Free Software Foundation, Inc.
+# Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
+# 2005, 2006 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -8093,16 +8185,20 @@ AU_DEFUN([AM_CONFIG_HEADER], [AC_CONFIG_HEADERS($@)])
 # arguments mandatory, and then we can depend on a new Autoconf
 # release and drop the old call support.
 AC_DEFUN([AM_INIT_AUTOMAKE],
-[AC_PREREQ([2.58])dnl
+[AC_PREREQ([2.60])dnl
 dnl Autoconf wants to disallow AM_ names.  We explicitly allow
 dnl the ones we care about.
 m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
 AC_REQUIRE([AM_SET_CURRENT_AUTOMAKE_VERSION])dnl
 AC_REQUIRE([AC_PROG_INSTALL])dnl
-# test to see if srcdir already configured
-if test "`cd $srcdir && pwd`" != "`pwd`" &&
-   test -f $srcdir/config.status; then
-  AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
+if test "`cd $srcdir && pwd`" != "`pwd`"; then
+  # Use -I$(srcdir) only when $(srcdir) != ., so that make's output
+  # is not polluted with repeated "-I."
+  AC_SUBST([am__isrc], [' -I$(srcdir)'])_AM_SUBST_NOTMAKE([am__isrc])dnl
+  # test to see if srcdir already configured
+  if test -f $srcdir/config.status; then
+    AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
+  fi
 fi
 
 # test whether we have cygpath
@@ -8122,6 +8218,9 @@ m4_ifval([$2],
  AC_SUBST([PACKAGE], [$1])dnl
  AC_SUBST([VERSION], [$2])],
 [_AM_SET_OPTIONS([$1])dnl
+dnl Diagnose old-style AC_INIT with new-style AM_AUTOMAKE_INIT.
+m4_if(m4_ifdef([AC_PACKAGE_NAME], 1)m4_ifdef([AC_PACKAGE_VERSION], 1), 11,,
+  [m4_fatal([AC_INIT should be called with package and version arguments])])dnl
  AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
  AC_SUBST([VERSION], ['AC_PACKAGE_VERSION'])])dnl
 
@@ -8157,6 +8256,10 @@ AC_PROVIDE_IFELSE([AC_PROG_CXX],
                   [_AM_DEPENDENCIES(CXX)],
                   [define([AC_PROG_CXX],
                           defn([AC_PROG_CXX])[_AM_DEPENDENCIES(CXX)])])dnl
+AC_PROVIDE_IFELSE([AC_PROG_OBJC],
+                  [_AM_DEPENDENCIES(OBJC)],
+                  [define([AC_PROG_OBJC],
+                          defn([AC_PROG_OBJC])[_AM_DEPENDENCIES(OBJC)])])dnl
 ])
 ])
 
@@ -8192,7 +8295,7 @@ echo "timestamp for $1" >`AS_DIRNAME([$1])`/stamp-h[]$_am_stamp_count])
 # Define $install_sh.
 AC_DEFUN([AM_PROG_INSTALL_SH],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
-install_sh=${install_sh-"$am_aux_dir/install-sh"}
+install_sh=${install_sh-"\$(SHELL) $am_aux_dir/install-sh"}
 AC_SUBST(install_sh)])
 
 # Copyright (C) 2003, 2005  Free Software Foundation, Inc.
@@ -8299,14 +8402,14 @@ rm -f confinc confmf
 
 # Fake the existence of programs that GNU maintainers use.  -*- Autoconf -*-
 
-# Copyright (C) 1997, 1999, 2000, 2001, 2003, 2005
+# Copyright (C) 1997, 1999, 2000, 2001, 2003, 2004, 2005
 # Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
 
-# serial 4
+# serial 5
 
 # AM_MISSING_PROG(NAME, PROGRAM)
 # ------------------------------
@@ -8322,6 +8425,7 @@ AC_SUBST($1)])
 # If it does, set am_missing_run to use it, otherwise, to nothing.
 AC_DEFUN([AM_MISSING_HAS_RUN],
 [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+AC_REQUIRE_AUX_FILE([missing])dnl
 test x"${MISSING+set}" = xset || MISSING="\${SHELL} $am_aux_dir/missing"
 # Use eval to expand $SHELL
 if eval "$MISSING --run true"; then
@@ -8332,7 +8436,7 @@ else
 fi
 ])
 
-# Copyright (C) 2003, 2004, 2005  Free Software Foundation, Inc.
+# Copyright (C) 2003, 2004, 2005, 2006  Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -8340,60 +8444,23 @@ fi
 
 # AM_PROG_MKDIR_P
 # ---------------
-# Check whether `mkdir -p' is supported, fallback to mkinstalldirs otherwise.
-#
-# Automake 1.8 used `mkdir -m 0755 -p --' to ensure that directories
-# created by `make install' are always world readable, even if the
-# installer happens to have an overly restrictive umask (e.g. 077).
-# This was a mistake.  There are at least two reasons why we must not
-# use `-m 0755':
-#   - it causes special bits like SGID to be ignored,
-#   - it may be too restrictive (some setups expect 775 directories).
-#
-# Do not use -m 0755 and let people choose whatever they expect by
-# setting umask.
-#
-# We cannot accept any implementation of `mkdir' that recognizes `-p'.
-# Some implementations (such as Solaris 8's) are not thread-safe: if a
-# parallel make tries to run `mkdir -p a/b' and `mkdir -p a/c'
-# concurrently, both version can detect that a/ is missing, but only
-# one can create it and the other will error out.  Consequently we
-# restrict ourselves to GNU make (using the --version option ensures
-# this.)
+# Check for `mkdir -p'.
 AC_DEFUN([AM_PROG_MKDIR_P],
-[if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
-  # We used to keeping the `.' as first argument, in order to
-  # allow $(mkdir_p) to be used without argument.  As in
-  #   $(mkdir_p) $(somedir)
-  # where $(somedir) is conditionally defined.  However this is wrong
-  # for two reasons:
-  #  1. if the package is installed by a user who cannot write `.'
-  #     make install will fail,
-  #  2. the above comment should most certainly read
-  #     $(mkdir_p) $(DESTDIR)$(somedir)
-  #     so it does not work when $(somedir) is undefined and
-  #     $(DESTDIR) is not.
-  #  To support the latter case, we have to write
-  #     test -z "$(somedir)" || $(mkdir_p) $(DESTDIR)$(somedir),
-  #  so the `.' trick is pointless.
-  mkdir_p='mkdir -p --'
-else
-  # On NextStep and OpenStep, the `mkdir' command does not
-  # recognize any option.  It will interpret all options as
-  # directories to create, and then abort because `.' already
-  # exists.
-  for d in ./-p ./--version;
-  do
-    test -d $d && rmdir $d
-  done
-  # $(mkinstalldirs) is defined by Automake if mkinstalldirs exists.
-  if test -f "$ac_aux_dir/mkinstalldirs"; then
-    mkdir_p='$(mkinstalldirs)'
-  else
-    mkdir_p='$(install_sh) -d'
-  fi
-fi
-AC_SUBST([mkdir_p])])
+[AC_PREREQ([2.60])dnl
+AC_REQUIRE([AC_PROG_MKDIR_P])dnl
+dnl Automake 1.8 to 1.9.6 used to define mkdir_p.  We now use MKDIR_P,
+dnl while keeping a definition of mkdir_p for backward compatibility.
+dnl @MKDIR_P@ is magic: AC_OUTPUT adjusts its value for each Makefile.
+dnl However we cannot define mkdir_p as $(MKDIR_P) for the sake of
+dnl Makefile.ins that do not define MKDIR_P, so we do our own
+dnl adjustment using top_builddir (which is defined more often than
+dnl MKDIR_P).
+AC_SUBST([mkdir_p], ["$MKDIR_P"])dnl
+case $mkdir_p in
+  [[\\/$]]* | ?:[[\\/]]*) ;;
+  */*) mkdir_p="\$(top_builddir)/$mkdir_p" ;;
+esac
+])
 
 # Helper functions for option handling.                     -*- Autoconf -*-
 
@@ -8505,8 +8572,20 @@ dnl Don't test for $cross_compiling = yes, because it might be `maybe'.
 if test "$cross_compiling" != no; then
   AC_CHECK_TOOL([STRIP], [strip], :)
 fi
-INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
+INSTALL_STRIP_PROGRAM="\$(install_sh) -c -s"
 AC_SUBST([INSTALL_STRIP_PROGRAM])])
+
+# Copyright (C) 2006  Free Software Foundation, Inc.
+#
+# This file is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# _AM_SUBST_NOTMAKE(VARIABLE)
+# ---------------------------
+# Prevent Automake from outputing VARIABLE = @VARIABLE@ in Makefile.in.
+# This macro is traced by Automake.
+AC_DEFUN([_AM_SUBST_NOTMAKE])
 
 # Check how to create a tarball.                            -*- Autoconf -*-
 

@@ -27,10 +27,8 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
-
+#include "amide.h"
+#include "amide_gconf.h"
 #include "ui_common.h"
 #include "ui_render_dialog.h"
 #include "amitk_color_table_menu.h"
@@ -63,11 +61,7 @@ static void change_quality_cb(GtkWidget * widget, gpointer data) {
   ui_render_t * ui_render = data;
   rendering_quality_t new_quality;
 
-#if 1
-  new_quality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   new_quality = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (ui_render->quality != new_quality) {
     ui_render->quality = new_quality;
@@ -93,11 +87,7 @@ static void change_pixel_type_cb(GtkWidget * widget, gpointer data) {
 
   ui_render = g_object_get_data(G_OBJECT(widget), "ui_render");
 
-#if 1
-  new_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   new_type = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (rendering->pixel_type != new_type) {
     rendering->pixel_type = new_type;
@@ -126,14 +116,9 @@ static void update_without_release_toggle_cb(GtkWidget * widget, gpointer data) 
   if (ui_render->update_without_release != update_without_release) {
     ui_render->update_without_release = update_without_release;
 
-#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_float("RENDERING/UpdateWithoutRelease", ui_render->update_without_release);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
-
+    amide_gconf_set_bool(GCONF_AMIDE_RENDERING"UpdateWithoutRelease", 
+			 ui_render->update_without_release);
   }
 
   return;
@@ -155,13 +140,9 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
   if (!REAL_EQUAL(ui_render->stereo_eye_angle, temp_val)) {
     ui_render->stereo_eye_angle = temp_val;
     
-#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_float("RENDERING/EyeAngle", ui_render->stereo_eye_angle);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_float(GCONF_AMIDE_RENDERING"EyeAngle", 
+			  ui_render->stereo_eye_angle);
     
     /* do updating */
     ui_render_add_update(ui_render); 
@@ -188,13 +169,9 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
     
     ui_render->stereo_eye_width = temp_val;
     
-#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("RENDERING/EyeWidth", ui_render->stereo_eye_width);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
+    amide_gconf_set_int(GCONF_AMIDE_RENDERING"EyeWidth", 
+			ui_render->stereo_eye_width);
     
     /* do updating */
     ui_render_add_update(ui_render); 
@@ -284,11 +261,7 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
 
   ui_render = g_object_get_data(G_OBJECT(widget), "ui_render");
 
-#if 1
-  i_color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   i_color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (rendering->color_table != i_color_table) {
     /* set the color table */
@@ -481,10 +454,6 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   GtkWidget * packing_table;
   GtkWidget * label;
    GtkWidget * menu;
-#if 1
-  GtkWidget * option_menu;
-  GtkWidget * menuitem;
-#endif
   GtkWidget * check_button;
   GtkWidget * spin_button;
   GtkWidget * hseparator;
@@ -494,7 +463,7 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   if (ui_render->parameter_dialog != NULL)
     return;
   temp_string = g_strdup_printf(_("%s: Rendering Parameters Dialog"),PACKAGE);
-  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
+  dialog = gtk_dialog_new_with_buttons (temp_string,  ui_render->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
@@ -520,28 +489,12 @@ void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
-#if 1
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_quality=0; i_quality<NUM_QUALITIES; i_quality++) {
-    menuitem = gtk_menu_item_new_with_label(rendering_quality_names[i_quality]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_object_set_data(G_OBJECT(menuitem), "quality", GINT_TO_POINTER(i_quality)); 
-  }
-  
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_render->quality);
-  g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_quality_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, 
-#else
   menu = gtk_combo_box_new_text();
   for (i_quality=0; i_quality<NUM_QUALITIES; i_quality++) 
     gtk_combo_box_append_text(GTK_COMBO_BOX(menu), rendering_quality_names[i_quality]);
   gtk_combo_box_set_active(GTK_COMBO_BOX(menu), ui_render->quality);
   g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_quality_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, 
-#endif
 		   table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, 
 		   X_PADDING, Y_PADDING);
   table_row++;
@@ -650,10 +603,6 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
   GtkWidget * packing_table;
   GtkWidget * label;
   GtkWidget * menu;
-#if 1
-  GtkWidget * option_menu;
-  GtkWidget * menuitem;
-#endif
   GtkWidget * gamma_curve[2];
   GtkWidget * button;
   GtkWidget * notebook;
@@ -667,7 +616,7 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
   if (ui_render->transfer_function_dialog != NULL)
     return;
   temp_string = g_strdup_printf(_("%s: Transfer Function Dialog"),PACKAGE);
-  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
+  dialog = gtk_dialog_new_with_buttons (temp_string,  ui_render->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
@@ -696,20 +645,6 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
-#if 1
-    option_menu = gtk_option_menu_new();
-    menu = gtk_menu_new();
-    for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) {
-      menuitem = gtk_menu_item_new_with_label(pixel_type_names[i_pixel_type]);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    }
-  
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-    g_object_set_data(G_OBJECT(option_menu), "ui_render", ui_render);
-    gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), temp_list->rendering->pixel_type);
-    g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_pixel_type_cb), temp_list->rendering);
-    gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, 
-#else
     menu = gtk_combo_box_new_text();
     for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(menu), pixel_type_names[i_pixel_type]);
@@ -717,7 +652,6 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu), temp_list->rendering->pixel_type);
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(change_pixel_type_cb), temp_list->rendering);
     gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, 
-#endif
 		     table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, X_PADDING, Y_PADDING);
     table_row++;
 
@@ -731,12 +665,7 @@ void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
     g_object_set_data(G_OBJECT(menu), "ui_render", ui_render);
     gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
-				temp_list->rendering->color_table);
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu),temp_list->rendering->color_table);
-#endif
     g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(color_table_cb), 
 		     temp_list->rendering);
     gtk_widget_show(menu);

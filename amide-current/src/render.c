@@ -453,7 +453,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  divider = ((rendering->dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (rendering->dim.z/AMIDE_UPDATE_DIVIDER);
+  divider = ((rendering->dim.z/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (rendering->dim.z/AMITK_UPDATE_DIVIDER);
 
   if (AMITK_IS_ROI(rendering->object)) {
 

@@ -14,6 +14,9 @@ amitk_type
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### TYPEDEF amide_data_t ##### -->
 <para>
 
@@ -85,5 +88,16 @@ amitk_type
 
 </para>
 
+
+
+<!-- ##### USER_FUNCTION AmitkUpdateFunc ##### -->
+<para>
+
+</para>
+
+@Param1: 
+@Param2: 
+@Param3: 
+@Returns: 
 
 

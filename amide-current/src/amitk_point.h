@@ -31,8 +31,7 @@
 #endif
 #include <math.h>
 
-#include <glib-object.h>
-#include "amide.h"
+#include "amitk_common.h"
 #include "amitk_type.h"
 #include "xml.h"
 

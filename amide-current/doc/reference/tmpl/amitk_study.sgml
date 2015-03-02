@@ -14,6 +14,9 @@ AmitkStudy
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_STUDY_VIEW_CENTER ##### -->
 <para>
 
@@ -31,6 +34,14 @@ AmitkStudy
 
 
 <!-- ##### MACRO AMITK_STUDY_ZOOM ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_FOV ##### -->
 <para>
 
 </para>
@@ -71,6 +82,14 @@ AmitkStudy
 
 
 <!-- ##### MACRO AMITK_STUDY_VOXEL_DIM ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
+<!-- ##### MACRO AMITK_STUDY_VOXEL_DIM_VALID ##### -->
 <para>
 
 </para>
@@ -127,6 +146,14 @@ AmitkStudy
 @stu: 
 
 
+<!-- ##### MACRO AMITK_STUDY_CANVAS_FILL_ROI ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
 <!-- ##### MACRO AMITK_STUDY_CANVAS_LAYOUT ##### -->
 <para>
 
@@ -151,6 +178,14 @@ AmitkStudy
 @stu: 
 
 
+<!-- ##### MACRO AMITK_STUDY_PANEL_LAYOUT ##### -->
+<para>
+
+</para>
+
+@stu: 
+
+
 <!-- ##### MACRO AMITK_STUDY_LINE_PROFILE ##### -->
 <para>
 
@@ -168,15 +203,34 @@ AmitkStudy
 @AMITK_FUSE_TYPE_OVERLAY: 
 @AMITK_FUSE_TYPE_NUM: 
 
-<!-- ##### ENUM AmitkViewMode ##### -->
+<!-- ##### STRUCT AmitkStudy ##### -->
 <para>
 
 </para>
 
-@AMITK_VIEW_MODE_SINGLE: 
-@AMITK_VIEW_MODE_LINKED_2WAY: 
-@AMITK_VIEW_MODE_LINKED_3WAY: 
-@AMITK_VIEW_MODE_NUM: 
+@parent: 
+@creation_date: 
+@view_center: 
+@view_thickness: 
+@view_start_time: 
+@view_duration: 
+@zoom: 
+@fov: 
+@fuse_type: 
+@view_mode: 
+@canvas_visible: 
+@canvas_target: 
+@canvas_roi_width: 
+@canvas_line_style: 
+@canvas_fill_roi: 
+@canvas_layout: 
+@canvas_maintain_size: 
+@canvas_target_empty_area: 
+@panel_layout: 
+@voxel_dim: 
+@voxel_dim_valid: 
+@line_profile: 
+@filename: 
 
 <!-- ##### FUNCTION amitk_study_new ##### -->
 <para>
@@ -278,6 +332,15 @@ AmitkStudy
 @new_zoom: 
 
 
+<!-- ##### FUNCTION amitk_study_set_fov ##### -->
+<para>
+
+</para>
+
+@study: 
+@new_fov: 
+
+
 <!-- ##### FUNCTION amitk_study_set_canvas_target ##### -->
 <para>
 
@@ -305,6 +368,15 @@ AmitkStudy
 @line_style: 
 
 
+<!-- ##### FUNCTION amitk_study_set_canvas_fill_roi ##### -->
+<para>
+
+</para>
+
+@study: 
+@fill_roi: 
+
+
 <!-- ##### FUNCTION amitk_study_set_canvas_layout ##### -->
 <para>
 
@@ -330,6 +402,25 @@ AmitkStudy
 
 @study: 
 @target_empty_area: 
+
+
+<!-- ##### FUNCTION amitk_study_set_panel_layout ##### -->
+<para>
+
+</para>
+
+@study: 
+@panel_layout: 
+
+
+<!-- ##### FUNCTION amitk_study_recover_xml ##### -->
+<para>
+
+</para>
+
+@study_filename: 
+@preferences: 
+@Returns: 
 
 
 <!-- ##### FUNCTION amitk_study_load_xml ##### -->

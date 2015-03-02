@@ -24,15 +24,15 @@
 */
 
 #include "amide_config.h"
+#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <sys/stat.h>
 #include <string.h>
 #include "amide.h"
+#include "amide_gnome.h"
 #include "ui_common.h"
 #include "amitk_space.h"
 #include "amitk_xif_sel.h"
-#include "pixmaps.h"
 #include "amitk_color_table.h"
-#include "amitk_common.h"
 #include "amitk_preferences.h"
 #include "amitk_threshold.h"
 #include "amitk_tree_view.h"
@@ -53,8 +53,6 @@
 #endif
 
 
-
-
 #define AXIS_WIDTH 120
 #define AXIS_HEADER 20
 #define AXIS_MARGIN 10
@@ -65,12 +63,14 @@
 #define AXIS_ARROW_EDGE 7
 #define AXIS_ARROW_WIDTH 6
 
+static void manual_cb(GtkAction *action, gpointer * caller);
+static void about_cb(GtkAction *action, gpointer * caller);
+
 /* our help menu... */
-GnomeUIInfo ui_common_help_menu[]= {
-  GNOMEUIINFO_HELP(PACKAGE),
-  GNOMEUIINFO_SEPARATOR,
-  GNOMEUIINFO_MENU_ABOUT_ITEM(ui_common_about_cb, NULL), 
-  GNOMEUIINFO_END
+GtkActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM] = {
+  /* Help menu */
+  {"HelpContents", GTK_STOCK_HELP, N_("_Contents"), "F1", N_("Open the AMIDE manual"), G_CALLBACK (manual_cb) },
+  {"HelpAbout", GTK_STOCK_ABOUT, NULL, NULL, N_("About AMIDE"), G_CALLBACK (about_cb) },
 };
 
 
@@ -92,6 +92,75 @@ static gchar * line_style_names[] = {
 
 
 
+
+static void manual_cb(GtkAction *action, gpointer * caller) {
+  amide_call_help(NULL);
+}
+
+
+/* the about dialog */
+static void about_cb(GtkAction *action, gpointer * caller) {
+
+  const gchar *authors[] = {
+    "Andreas Loening <loening@alum.mit.edu>",
+    NULL
+  };
+
+  const gchar *translators = {
+    "Spanish Manual Translation: Pablo Sau <psau@cadpet.es>\n"
+    "Chinese (Simplified) Interface Translation: wormwang@holdfastgroup.com"
+  };
+
+  gchar * comments;
+  comments = g_strjoin("", 
+		       _("AMIDE's a Medical Image Data Examiner\n"),
+		       "\n",
+		       _("Email bug reports to: "), PACKAGE_BUGREPORT,"\n",
+		       "\n",
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBDCMDATA_SUPPRT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_LIBFAME_SUPPORT)
+		       _("Compiled with support for the following libraries:\n"),
+#endif
+#ifdef AMIDE_LIBECAT_SUPPORT
+		       _("libecat: CTI File library by Merence Sibomona\n"),
+#endif
+#ifdef AMIDE_LIBGSL_SUPPORT
+		       _("libgsl: GNU Scientific Library by the GSL Team (version "),GSL_VERSION,")\n",
+#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+		       _("libmdc: Medical Imaging File library by Erik Nolf (version "),MDC_VERSION,")\n",
+#endif
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+		       _("libdcmdata: OFFIS DICOM Toolkit DCMTK (C) 1993-2004, OFFIS e.V. (version "),dcmtk_version,")\n",
+#endif
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
+#endif
+#ifdef AMIDE_LIBFAME_SUPPORT
+		       _("libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "), LIBFAME_VERSION, ")\n",
+#endif
+		       NULL);
+
+  gtk_show_about_dialog(NULL, 
+			"name", PACKAGE,
+			"version", VERSION,
+			"copyright", "Copyright (c) 2000-2007 Andreas Loening",
+			"license", "GNU General Public License, Version 2",
+			"authors", authors,
+			"comments", comments,
+			/* "documenters", documenters, */
+			/* "artists", artists, */
+			/* "logo", uses default window icon we've already set*/
+			"translator-credits", translators,
+			/* "translator-credits, _("translator-credits"), */ /* this would mark the string for translation by the translator*/
+			"website", "http://amide.sourceforge.net",
+			NULL);
+
+  g_free(comments);
+
+  return;
+}
+
+
 /* returns TRUE for OK */
 gboolean ui_common_check_filename(const gchar * filename) {
 
@@ -111,7 +180,8 @@ void ui_common_set_last_path_used(const gchar * path) {
   return;
 }
 
-static gchar * save_name_common(GtkWidget * file_selection, const gchar * filename) {
+static gchar * save_name_common(GtkWidget * file_selection, const gchar * filename,
+				gboolean check_for_existing) {
 
   struct stat file_info;
   GtkWidget * question;
@@ -128,32 +198,34 @@ static gchar * save_name_common(GtkWidget * file_selection, const gchar * filena
 
 
   /* check with user if filename already exists */
-  if (stat(filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      _("Overwrite file: %s"), filename);
+  if (check_for_existing) {
+    if (stat(filename, &file_info) == 0) {
+      /* check if it's okay to writeover the file */
+      question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_OK_CANCEL,
+					_("Overwrite file: %s"), filename);
 
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
+      /* and wait for the question to return */
+      return_val = gtk_dialog_run(GTK_DIALOG(question));
 
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK) {
-      return NULL; /* we don't want to overwrite the file.... */
+      gtk_widget_destroy(question);
+      if (return_val != GTK_RESPONSE_OK) {
+	return NULL; /* we don't want to overwrite the file.... */
+      }
     }
-    
     /* unlinking the file doesn't occur here */
   }
 
   return g_strdup(filename);
 }
 
-gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection) {
+gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection,
+					       gboolean check_for_existing) {
   const gchar * filename;
   filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-  return save_name_common(file_selection, filename);
+  return save_name_common(file_selection, filename,check_for_existing);
 }
 
 gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection) {
@@ -181,7 +253,7 @@ gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection) {
   g_strfreev(frags1);
 
   prev_filename = save_filename;
-  save_filename = save_name_common(xif_selection, prev_filename);
+  save_filename = save_name_common(xif_selection, prev_filename, TRUE);
   g_free(prev_filename);
 
   return save_filename;
@@ -290,60 +362,7 @@ void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
 
 /* function which brings up an about box */
 void ui_common_about_cb(GtkWidget * button, gpointer data) {
-
-  GtkWidget *about;
-  GdkPixbuf * logo;
-
-  const gchar *authors[] = {
-    "Andy Loening <loening@alum.mit.edu>",
-    NULL
-  };
-
-  gchar * contents;
-
-
-  contents = g_strjoin("", 
-		       _("AMIDE's a Medical Image Data Examiner\n"),
-		       "\n",
-		       _("Email bug reports to: "), PACKAGE_BUGREPORT,"\n",
-		       "\n",
-#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_LIBFAME_SUPPORT)
-		       _("Compiled with support for the following libraries:\n"),
-#endif
-#ifdef AMIDE_LIBECAT_SUPPORT
-		       _("libecat: CTI File library by Merence Sibomona\n"),
-#endif
-#ifdef AMIDE_LIBGSL_SUPPORT
-		       _("libgsl: GNU Scientific Library by the GSL Team (version "),GSL_VERSION,")\n",
-#endif
-#ifdef AMIDE_LIBMDC_SUPPORT
-		       _("libmdc: Medical Imaging File library by Erik Nolf (version "),MDC_VERSION,")\n",
-#endif
-#ifdef AMIDE_LIBDCMDATA_SUPPORT
-		       _("libdcmdata: OFFIS DICOM Toolkit DCMTK (C) 1993-2004, OFFIS e.V. (version "),dcmtk_version,")\n",
-#endif
-#ifdef AMIDE_LIBVOLPACK_SUPPORT
-		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
-#endif
-#ifdef AMIDE_LIBFAME_SUPPORT
-		       _("libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "), LIBFAME_VERSION, ")\n",
-#endif
-		       NULL);
-
-  logo = gdk_pixbuf_new_from_inline(-1, amide_logo, FALSE, NULL);
-  about = gnome_about_new(PACKAGE, VERSION, 
-			  _("Copyright (c) 2000-2007 Andy Loening"),
-			  contents,
-			  authors, NULL, NULL, logo);
-  g_object_unref(logo);
-
-  gtk_window_set_modal(GTK_WINDOW(about), FALSE);
-
-  gtk_widget_show(about);
-
-  g_free(contents);
-
-  return;
+  about_cb(NULL, NULL);
 }
 
 
@@ -466,7 +485,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 
   /* the view label */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH, "text", view_names[view],
+			"anchor", GTK_ANCHOR_NORTH, "text", amitk_view_get_name(view),
 			"x", (gdouble) (column+0.5)*axis_width,
 			"y", (gdouble) (row+0.5)*axis_height, 
 			"fill_color", "black", 
@@ -528,14 +547,9 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   GtkWidget * roi_canvas;
   GnomeCanvasPoints * roi_line_points;
   rgba_t outline_color;
-  GdkPixbuf * pixbuf;
   GtkWidget * image;
   GtkWidget * hseparator;
 #ifndef AMIDE_LIBGNOMECANVAS_AA
-#if 1
-  GtkWidget * menuitem;
-  GtkWidget * menu;
-#endif
   GdkLineStyle i_line_style;
 #endif
 
@@ -603,24 +617,10 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
 
-#if 1  
-  menu = gtk_menu_new();
-  for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) {
-    menuitem = gtk_menu_item_new_with_label(line_style_names[i_line_style]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_object_set_data(G_OBJECT(menuitem), "line_style", GINT_TO_POINTER(i_line_style)); 
-    gtk_widget_show(menuitem);
-  }
-  
-  *pline_style_menu = gtk_option_menu_new();
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(*pline_style_menu), menu);
-  gtk_widget_show(menu);
-#else
   *pline_style_menu = gtk_combo_box_new_text();
   for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) 
      gtk_combo_box_append_text(GTK_COMBO_BOX(*pline_style_menu),
 			       line_style_names[i_line_style]);
-#endif
   gtk_widget_set_size_request (*pline_style_menu, 125, -1);
   gtk_table_attach(GTK_TABLE(packing_table),  *pline_style_menu, 1,2, 
   		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
@@ -657,11 +657,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
   /* the radio buttons */
   *playout_button1 = gtk_radio_button_new(NULL);
-  pixbuf = gdk_pixbuf_new_from_xpm_data(linear_layout_xpm);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-  gtk_container_add(GTK_CONTAINER(*playout_button1), image);
-  gtk_widget_show(image);
+  image = gtk_image_new_from_stock("amide_icon_layout_linear",GTK_ICON_SIZE_DIALOG);
+  gtk_button_set_image(GTK_BUTTON(*playout_button1), image);
   gtk_table_attach(GTK_TABLE(packing_table), *playout_button1,
   		   1,2, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
@@ -671,11 +668,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   *playout_button2 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*playout_button2), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*playout_button1)));
-  pixbuf = gdk_pixbuf_new_from_xpm_data(orthogonal_layout_xpm);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-  gtk_container_add(GTK_CONTAINER(*playout_button2), image);
-  gtk_widget_show(image);
+  image = gtk_image_new_from_stock("amide_icon_layout_orthogonal",GTK_ICON_SIZE_DIALOG);
+  gtk_button_set_image(GTK_BUTTON(*playout_button2), image);
   gtk_table_attach(GTK_TABLE(packing_table), *playout_button2, 2,3, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(*playout_button2), "layout", GINT_TO_POINTER(AMITK_LAYOUT_ORTHOGONAL));
@@ -692,11 +686,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 
   /* the radio buttons */
   *ppanel_layout_button1 = gtk_radio_button_new(NULL);
-  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_mixed, FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button1), image);
-  gtk_widget_show(image);
+  image = gtk_image_new_from_stock("amide_icon_panels_mixed", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button1), image);
   gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button1,
   		   1,2, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
@@ -706,11 +697,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   *ppanel_layout_button2 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button2), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
-  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_linear_x, FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button2), image);
-  gtk_widget_show(image);
+  image = gtk_image_new_from_stock("amide_icon_panels_linear_x", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button2), image);
   gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button2,
   		   2,3, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
@@ -720,11 +708,8 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
   *ppanel_layout_button3 = gtk_radio_button_new(NULL);
   gtk_radio_button_set_group(GTK_RADIO_BUTTON(*ppanel_layout_button3), 
 			     gtk_radio_button_get_group(GTK_RADIO_BUTTON(*ppanel_layout_button1)));
-  pixbuf = gdk_pixbuf_new_from_inline(-1, panels_linear_y, FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-  gtk_container_add(GTK_CONTAINER(*ppanel_layout_button3), image);
-  gtk_widget_show(image);
+  image = gtk_image_new_from_stock("amide_icon_panels_linear_y", GTK_ICON_SIZE_LARGE_TOOLBAR);
+  gtk_button_set_image(GTK_BUTTON(*ppanel_layout_button3), image);
   gtk_table_attach(GTK_TABLE(packing_table), *ppanel_layout_button3,
   		   3,4, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
@@ -849,21 +834,6 @@ static void ui_common_cursor_init(void) {
 
  
   ui_common_cursors_initialized = TRUE;
-  return;
-}
-
-
-/* callback to add the window's icon when the window gets realized */
-void ui_common_window_realize_cb(GtkWidget * widget, gpointer data) {
-
-  GdkPixbuf * pixbuf;
-
-  g_return_if_fail(GTK_IS_WINDOW(widget));
-
-  pixbuf = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
-  gtk_window_set_icon(GTK_WINDOW(widget), pixbuf);
-  g_object_unref(pixbuf);
-
   return;
 }
 
@@ -1010,7 +980,6 @@ void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gp
   return;
 }
 
-
 GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog) {
 
   GList * objects;
@@ -1021,5 +990,94 @@ GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog) {
 
   return objects;
 }
+
+
+void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip) {
+
+  GtkToolItem * toolbar_item;
+
+  toolbar_item = gtk_tool_item_new();
+  gtk_container_add(GTK_CONTAINER(toolbar_item), widget);
+#if (GTK_MINOR_VERSION >= 12)
+  if (tooltip != NULL)
+    gtk_tool_item_set_tooltip_text(toolbar_item,tooltip);
+#endif
+  gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, -1);
+
+  return;
+}
+
+void ui_common_toolbar_append_separator(GtkWidget * toolbar) {
+  GtkToolItem * toolbar_item;
+  toolbar_item =  gtk_separator_tool_item_new();
+  gtk_tool_item_set_homogeneous(toolbar_item, FALSE);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolbar_item, -1);
+  return;
+}
+
+
+
+
+/* internal variables */
+static GList * windows = NULL;
+
+/* keep track of open windows */
+void amide_register_window(gpointer * widget) {
+
+  g_return_if_fail(widget != NULL);
+  
+  windows = g_list_append(windows, widget);
+
+  return;
+}
+
+
+/* keep track of open windows */
+void amide_unregister_window(gpointer * widget) {
+
+  g_return_if_fail(widget != NULL);
+
+  windows = g_list_remove(windows, widget);
+
+  if (windows == NULL) gtk_main_quit();
+
+  return;
+}
+
+
+/* this should cleanly exit the program */
+void amide_unregister_all_windows(void) {
+
+  gboolean return_val;
+  gint number_to_leave=0;
+
+  while (g_list_nth(windows, number_to_leave) != NULL) {
+    /* this works, because each delete event should call amide_unregister_window */
+    g_signal_emit_by_name(G_OBJECT(windows->data), "delete_event", NULL, &return_val);
+    if (return_val == TRUE) number_to_leave++;
+  }
+
+  return;
+}
+
+
+void amide_call_help(const gchar * link_id) {
+
+#ifndef OLD_WIN32_HACKS
+  GError *error=NULL;
+  amide_gnome_help_display(PACKAGE, link_id, &error);
+  if (error != NULL) {
+    g_warning("couldn't open help file, error: %s", error->message);
+    g_error_free(error);
+  }
+
+#else
+  g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net, or in the AMIDE install folder");
+#endif
+
+  return;
+}
+
 
 

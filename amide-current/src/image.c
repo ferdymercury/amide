@@ -25,7 +25,6 @@
 
 #include "amide_config.h"
 #include "image.h"
-#include "pixmaps.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
 #include "amitk_study.h"
 
@@ -280,7 +279,7 @@ GdkPixbuf * image_from_8bit(const guchar * image,
 /* function returns a GdkPixbuf from a rendering context */
 GdkPixbuf * image_from_renderings(renderings_t * renderings, 
 				gint16 image_width, gint16 image_height,
-				AmitkEye eyes, 
+				AmideEye eyes, 
 				gdouble eye_angle, 
 				gint16 eye_width) {
 
@@ -294,7 +293,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
   GdkPixbuf * temp_image;
   gint total_width;
   gdouble rot;
-  AmitkEye i_eye;
+  AmideEye i_eye;
   gint j;
 
   total_width = image_width+(eyes-1)*eye_width;
@@ -822,46 +821,32 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 
 
 /* get the icon to use for this modality */
-GdkPixbuf * image_get_object_pixbuf(AmitkObject * object) {
+GdkPixbuf * image_get_data_set_pixbuf(AmitkDataSet * ds) {
 
   GdkPixbuf * pixbuf;
   guchar * object_icon_data;
 
-  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
 
-  if (AMITK_IS_ROI(object)) {
-    pixbuf = gdk_pixbuf_new_from_inline(-1, roi_icons[AMITK_ROI_TYPE(object)], FALSE, NULL);
-
-  } else if (AMITK_IS_DATA_SET(object)) {
-
-    switch (AMITK_DATA_SET_MODALITY(object)) {
-    case AMITK_MODALITY_SPECT:
-      object_icon_data = SPECT_icon_data;
+  switch (AMITK_DATA_SET_MODALITY(ds)) {
+  case AMITK_MODALITY_SPECT:
+    object_icon_data = SPECT_icon_data;
+    break;
+  case AMITK_MODALITY_MRI:
+    object_icon_data = MRI_icon_data;
+    break;
+  case AMITK_MODALITY_PET:
+    object_icon_data = PET_icon_data;
+    break;
+  case AMITK_MODALITY_CT:
+  case AMITK_MODALITY_OTHER:
+  default:
+    object_icon_data = CT_icon_data;
       break;
-    case AMITK_MODALITY_MRI:
-      object_icon_data = MRI_icon_data;
-      break;
-    case AMITK_MODALITY_PET:
-      object_icon_data = PET_icon_data;
-      break;
-    case AMITK_MODALITY_CT:
-    case AMITK_MODALITY_OTHER:
-    default:
-      object_icon_data = CT_icon_data;
-      break;
-    }
-    pixbuf = image_from_8bit(object_icon_data, 
-			     OBJECT_ICON_XSIZE,OBJECT_ICON_YSIZE,
-			     AMITK_DATA_SET_COLOR_TABLE(object, AMITK_VIEW_MODE_SINGLE));
-
-  } else if (AMITK_IS_STUDY(object)) {
-    pixbuf = gdk_pixbuf_new_from_inline(-1, study_icon, FALSE, NULL);
-  } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    pixbuf = gdk_pixbuf_new_from_inline(-1, align_pt_icon, FALSE, NULL);
-  } else {
-    pixbuf = NULL;
-    g_print("Unknown case in %s at %d\n", __FILE__, __LINE__);
   }
+  pixbuf = image_from_8bit(object_icon_data, 
+			   OBJECT_ICON_XSIZE,OBJECT_ICON_YSIZE,
+			   AMITK_DATA_SET_COLOR_TABLE(ds, AMITK_VIEW_MODE_SINGLE));
 
   return pixbuf;
 

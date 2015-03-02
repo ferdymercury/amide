@@ -149,53 +149,11 @@ static gint libmdc_format_number(libmdc_format_t format) {
 }
 
 
-/* old code used for xmedcon versions <= 0.9.9.6.2 */
-#if 0 
-gboolean libmdc_supports(libmdc_format_t format) {
-
-  switch(format) {
-  case LIBMDC_RAW: 
-  case LIBMDC_ASCII:
-    return TRUE;
-    break;
-  case LIBMDC_GIF:
-    return MDC_INCLUDE_GIF;
-    break;
-  case LIBMDC_ACR:
-    return MDC_INCLUDE_ACR;
-    break;
-  case LIBMDC_CONC:
-    return MDC_INCLUDE_CONC;
-    break;
-  case LIBMDC_ECAT6:
-  case LIBMDC_ECAT7:
-    return MDC_INCLUDE_ECAT;
-    break;
-  case LIBMDC_INTF:
-    return MDC_INCLUDE_INTF;
-    break;
-  case LIBMDC_ANLZ:
-    return MDC_INCLUDE_ANLZ;
-    break;
-  case LIBMDC_DICM:
-    return MDC_INCLUDE_DICM;
-    break;
-  case LIBMDC_NIFTI:
-    return MDC_INCLUDE_NIFTI;
-    break;
-  case LIBMDC_NONE:
-  default:
-    return TRUE;
-    break;
-  }
-}
-#endif
-
-gboolean libmdc_supports(libmdc_format_t format) {
+gboolean libmdc_supports(const libmdc_format_t format) {
   return FrmtSupported[libmdc_format_number(format)];
 }
 
-static gint libmdc_type_number(AmitkFormat format) {
+static gint libmdc_type_number(const AmitkFormat format) {
 
   switch(format) {
   case AMITK_FORMAT_UBYTE:
@@ -230,7 +188,7 @@ static gint libmdc_type_number(AmitkFormat format) {
 }
 
 AmitkDataSet * libmdc_import(const gchar * filename, 
-			     libmdc_format_t libmdc_format,
+			     const libmdc_format_t libmdc_format,
 			     AmitkPreferences * preferences,
 			     AmitkUpdateFunc update_func,
 			     gpointer update_data) {
@@ -580,7 +538,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     g_free(temp_string);
   }
   total_planes = dim.z*dim.g*dim.t;
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
   /* and load in the data */
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
@@ -835,8 +793,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
-		   libmdc_format_t libmdc_format,
-		   gboolean resliced,
+		   const libmdc_format_t libmdc_format,
+		   const gboolean resliced,
 		   const AmitkPoint voxel_size,
 		   const AmitkVolume * bounding_box,
 		   AmitkUpdateFunc update_func,
@@ -982,7 +940,7 @@ void libmdc_export(AmitkDataSet * ds,
 #ifdef AMIDE_DEBUG
     g_print("output dimensions %d %d %d, voxel size %f %f %f\n", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #else
-    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
+    g_warning(_("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f"), dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #endif
   }
 
@@ -1041,13 +999,13 @@ void libmdc_export(AmitkDataSet * ds,
 
   /* fill in dynamic data struct */
   if (!MdcGetStructDD(&fi,dim.t)) {
-    g_warning("couldn't malloc DYNAMIC_DATA structs");
+    g_warning(_("couldn't malloc DYNAMIC_DATA structs"));
     goto cleanup;
   }
 
 
   if (!MdcGetStructID(&fi,fi.number)) {
-    g_warning("couldn't malloc img_data structs");
+    g_warning(_("couldn't malloc img_data structs"));
     goto cleanup;
   }
 
@@ -1058,7 +1016,7 @@ void libmdc_export(AmitkDataSet * ds,
     g_free(temp_string);
   }
   total_planes = dim.z*dim.g*dim.t;
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
 
   image_num=0;
@@ -1107,12 +1065,12 @@ void libmdc_export(AmitkDataSet * ds,
 	    AMITK_DATA_SET_SCALE_FACTOR(ds)*
 	    amitk_data_set_get_internal_scaling_factor(ds, i);
 	  plane->intercept = 
-	    amitk_data_set_get_internal_scaling_intercept(ds,i);
+	    amitk_data_set_get_scaling_intercept(ds,i);
 	}
 	plane->calibr_fctr = 1.0;
 	
 	if ((plane->buf = MdcGetImgBuffer(bytes_per_plane)) == NULL) {
-	  g_warning("couldn't alloc %d bytes for plane\n", bytes_per_plane);
+	  g_warning(_("couldn't alloc %d bytes for plane"), bytes_per_plane);
 	  goto cleanup;
 	}
 	
@@ -1159,14 +1117,14 @@ void libmdc_export(AmitkDataSet * ds,
   /* make sure everything's kosher */
   err_str = MdcImagesPixelFiddle(&fi);
   if (err_str != NULL) {
-    g_warning("couldn't pixel fiddle, error: %s\n", err_str);
+    g_warning(_("couldn't pixel fiddle, error: %s"), err_str);
     goto cleanup;
   }
 
   /* and writeout the file */
   err_num = MdcWriteFile(&fi, libmdc_format_num, 0, NULL);
   if (err_num != MDC_OK) {
-    g_warning("couldn't write out file %s, error %d\n", fi.ofname, err_num);
+    g_warning(_("couldn't write out file %s, error %d"), fi.ofname, err_num);
     goto cleanup;
   }
 

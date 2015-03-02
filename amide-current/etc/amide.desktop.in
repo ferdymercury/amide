@@ -7,6 +7,6 @@ Exec=amide
 Icon=amide_logo.png
 Terminal=false
 Type=Application
-Categories=Application;Graphics;
+Categories=Graphics;MedicalSoftware;
 
 

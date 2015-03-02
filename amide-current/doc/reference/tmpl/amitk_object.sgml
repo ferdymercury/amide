@@ -14,6 +14,9 @@ AmitkObject
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_OBJECT_CHILDREN ##### -->
 <para>
 
@@ -61,6 +64,18 @@ AmitkObject
 @AMITK_SELECTION_NUM: 
 @AMITK_SELECTION_ANY: 
 @AMITK_SELECTION_ALL: 
+
+<!-- ##### STRUCT AmitkObject ##### -->
+<para>
+
+</para>
+
+@space: 
+@name: 
+@selected: 
+@parent: 
+@children: 
+@dialog: 
 
 <!-- ##### FUNCTION amitk_object_new ##### -->
 <para>
@@ -396,5 +411,23 @@ AmitkObject
 
 @type: 
 @Returns: 
+
+
+<!-- ##### VARIABLE amide_data_file_xml_tag ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE amide_data_file_xml_start_tag ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE amide_data_file_xml_end_tag ##### -->
+<para>
+
+</para>
 
 

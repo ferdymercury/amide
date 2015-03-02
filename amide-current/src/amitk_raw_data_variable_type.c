@@ -56,3 +56,44 @@ void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_ra
   return;
 }
 
+void amitk_raw_data_`'m4_Variable_Type`'_slice_calc_min_max(AmitkRawData * amitk_raw_data, 
+							    const amide_intpoint_t frame,
+							    const amide_intpoint_t gate,
+							    const amide_intpoint_t z,
+							    amitk_format_DOUBLE_t * pmin,
+							    amitk_format_DOUBLE_t * pmax) {
+
+  amitk_format_DOUBLE_t min;  
+  amitk_format_DOUBLE_t max;  
+  amitk_format_`'m4_Variable_Type`'_t value;  
+
+  AmitkVoxel i;
+
+  i.t = frame;
+  i.g = gate;
+  i.z = z;
+  i.y = 0;
+  i.x = 0;
+  
+  min = max = AMITK_RAW_DATA_`'m4_Variable_Type`'_CONTENT(amitk_raw_data,i);
+
+
+  for (i.y = 0; i.y < amitk_raw_data->dim.y; i.y++) {
+    for (i.x = 0; i.x < amitk_raw_data->dim.x; i.x++) {
+      value = AMITK_RAW_DATA_`'m4_Variable_Type`'_CONTENT(amitk_raw_data,i);
+      if (finite(value)) {
+	if (value < min) min = value;
+	if (value > max) max = value;
+      }
+    }
+  }
+
+  if (pmin != NULL)
+    *pmin = min;
+
+  if (pmax != NULL)
+    *pmax = max;
+
+  return;
+}
+

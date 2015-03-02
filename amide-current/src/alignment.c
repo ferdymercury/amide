@@ -267,14 +267,14 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
   amitk_space_set_axes(transform_space, axis, AMITK_SPACE_OFFSET(transform_space));
 
   /* and figure out the shift: t = fixed_centroid - R*moving_centroid,
-     but we also need to compensate because the transformation space will rotate
-     relative to the moving_ds's center, not the fixed_centroid (hence offset_shift) */
+     but we also need to compensate because amitk_space_transform will rotate
+     relative to the moving_ds's offset, not the fixed_centroid (hence offset_shift) */
   shift = point_sub(fixed_centroid, matrix_mult_point(matrix_r, moving_centroid));
-  offset_shift = matrix_mult_point(matrix_r,amitk_volume_get_center(AMITK_VOLUME(moving_ds)));
-  offset_shift = point_sub(offset_shift, amitk_volume_get_center(AMITK_VOLUME(moving_ds)));
+  offset_shift = matrix_mult_point(matrix_r,AMITK_SPACE_OFFSET(moving_ds));
+  offset_shift = point_sub(offset_shift, AMITK_SPACE_OFFSET(moving_ds));
   shift = point_add(offset_shift, shift);
   amitk_space_set_offset(transform_space, shift); 
-  
+
 #if AMIDE_DEBUG		     
   g_print("determinante is %f\n",det);
   amitk_space_print(transform_space, "transform space");
@@ -287,6 +287,7 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
     new_space = amitk_space_copy(AMITK_SPACE(moving_ds));
     amitk_space_transform(new_space, transform_space);
+
     moving_temp_list = moving_fiducial_marks;
     fixed_temp_list = fixed_fiducial_marks;
     

@@ -25,11 +25,11 @@
 
 
 #include "amide_config.h"
-#include "amide.h"
 #include "xml.h"
 #include <errno.h>
 #include <string.h>
 #include <locale.h>
+#include "amitk_common.h"
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
 static char * true_string = "true";
@@ -453,7 +453,7 @@ void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * st
 
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num) {
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   gchar temp_str[128];
 #else
   gchar * temp_str;
@@ -463,13 +463,13 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"POSIX");
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
 #else
   temp_str = g_strdup_printf("%10.9f", num);
 #endif
   xml_save_string(node, descriptor, temp_str);
-#ifndef AMIDE_WIN32_HACKS
+#ifndef OLD_WIN32_HACKS
   g_free(temp_str);
 #endif
 
@@ -548,7 +548,7 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
 
 void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num) {
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   gchar temp_str[128];
 #else
   gchar * temp_str;
@@ -558,13 +558,13 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"POSIX");
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
 #else
   temp_str = g_strdup_printf("%10.9f", num);
 #endif
   xml_save_string(node, descriptor, temp_str);
-#ifndef AMIDE_WIN32_HACKS
+#ifndef OLD_WIN32_HACKS
   g_free(temp_str);
 #endif
 
@@ -575,7 +575,7 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
 
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num) {
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   gchar temp_str[128];
 #else
   gchar * temp_str;
@@ -585,13 +585,13 @@ void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"POSIX");
 
-#ifdef AMIDE_WIN32_HACKS
+#ifdef OLD_WIN32_HACKS
   snprintf(temp_str, 128, "%10.9f", num);
 #else
   temp_str = g_strdup_printf("%10.9f", num);
 #endif
   xml_save_string(node, descriptor, temp_str);
-#ifndef AMIDE_WIN32_HACKS
+#ifndef OLD_WIN32_HACKS
   g_free(temp_str);
 #endif
 

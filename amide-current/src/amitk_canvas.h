@@ -28,9 +28,9 @@
 #define __AMITK_CANVAS_H__
 
 /* includes we always need with this widget */
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gtk/gtk.h>
-#include <libgnomecanvas/libgnomecanvas.h>
+//#include <gdk-pixbuf/gdk-pixbuf.h>
+//#include <gtk/gtk.h>
+//#include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_study.h"
 
 G_BEGIN_DECLS

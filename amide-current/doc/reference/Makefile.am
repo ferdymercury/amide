@@ -13,13 +13,20 @@ DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
 DOC_SOURCE_DIR=../../src
 
 # Extra options to pass to gtkdoc-scangobj
-SCANGOBJ_OPTIONS=--type-init-func="gtk_type_init(0)" 
+# SCANGOBJ_OPTIONS=--type-init-func="gtk_type_init(0)" 
+SCANGOBJ_OPTIONS=
 
 # Extra options to supply to gtkdoc-mkdb
-MKDB_OPTIONS=--main-sgml-file=$(DOC_MAIN_SGML_FILE) --sgml-mode --output-format=xml
+#MKDB_OPTIONS=--main-sgml-file=$(DOC_MAIN_SGML_FILE) --sgml-mode --output-format=xml
+MKDB_OPTIONS=--sgml-mode --output-format=xml
+
+# Extra options to supply to gtkdoc-mktmpl
+# e.g. MKTMPL_OPTIONS=--only-section-tmpl
+MKTMPL_OPTIONS=
 
 # Extra options to supply to gtkdoc-fixref
 #FIXXREF_OPTIONS=--extra-dir=../gdk-pixbuf/html --extra-dir=../gdk/html
+FIXREF_OPTIONS=
 
 # Used for dependencies
 HFILE_GLOB=$(top_srcdir)/src/*.h
@@ -32,6 +39,7 @@ IGNORE_HFILES=			\
 	amitk_xif_sel.h         \
 	amitk_dial.h            \
 	analysis.h		\
+	dcmtk_interface.h	\
 	fads.h			\
 	image.h			\
 	legacy.h		\
@@ -61,6 +69,8 @@ IGNORE_HFILES=			\
 	ui_time_dialog.h	\
 	xml.h
 
+IGNORE_OBJ_FILES = \
+	${top_srcdir}/src/amide.o 
 
 # Images to copy into HTML directory
 HTML_IMAGES = 
@@ -69,6 +79,34 @@ HTML_IMAGES =
 content_files = \
 	version.xml \
 	theory.sgml
+
+# CFLAGS and LDFLAGS for compiling gtkdoc-scangobj with your library.
+# Only needed if you are using gtkdoc-scangobj to dynamically query widget
+# signals and properties.
+GTKDOC_CFLAGS=	\
+	-I$(top_srcdir)/src	\
+	-I$(top_builddir)/src \
+	-I$(top_srcdir)		\
+	-I$(top_builddir)	\
+	$(GSL_CFLAGS) \
+	$(LIBFAME_CFLAGS) \
+	$(AMIDE_GTK_CFLAGS) \
+	$(AMIDE_DEBUG_CFLAGS) \
+	-I/usr/local/include \
+	$(XMEDCON_CFLAGS) \
+	-DG_DISABLE_DEPRECATED  \
+	-UAMIDE_LIBDCMDATA_SUPPORT
+
+GTKDOC_LIBS=	\
+	$(GSL_LIBS) \
+	$(LIBFAME_LIBS) \
+	$(AMIDE_LIBECAT_LIBS) \
+	$(AMIDE_LIBVOLPACK_LIBS) \
+	$(AMIDE_GTK_LIBS) \
+	$(XMEDCON_LIBS) \
+	$(AMIDE_LDADD_WIN32)  \
+	$(filter-out $(IGNORE_OBJ_FILES),$(wildcard ${top_srcdir}/src/*.o))
+
 
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
 # if $(DOC_MODULE).types is non-empty.
@@ -87,9 +125,13 @@ include $(top_srcdir)/doc/gtk-doc.make
 # Other files to distribute
 EXTRA_DIST += version.xml.in
 
+
 DISTCLEANFILES = \
 	*~ \
 	amitk-sections.txt \
 	amitk-undocumented.txt \
 	amitk-decl.txt \
-	amitk-decl-list.txt
+	amitk-decl-list.txt \
+	amitk-scan.c \
+	amitk-scan.o \
+	amitk.types

@@ -63,7 +63,7 @@
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
-#ifndef AMIDE_WIN32_HACKS
+#ifndef G_PLATFORM_WIN32
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -85,13 +85,13 @@ AmitkColorTable amitk_modality_default_color_table[AMITK_MODALITY_NUM] = {
   AMITK_COLOR_TABLE_BW_LINEAR /* OTHER */
 };
 
-gchar * amitk_interpolation_explanations[] = {
-  N_("interpolate using nearest neighbhor (fast)"), 
+const gchar * amitk_interpolation_explanations[AMITK_INTERPOLATION_NUM] = {
+  N_("interpolate using nearest neighbor (fast)"), 
   N_("interpolate using trilinear interpolation (slow)")
 };
 
 
-gchar * amitk_import_menu_names[] = {
+const gchar * amitk_import_menu_names[] = {
   "", /* place holder for AMITK_IMPORT_METHOD_GUESS */
   N_("_Raw Data"), 
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
@@ -106,67 +106,73 @@ gchar * amitk_import_menu_names[] = {
 };
   
 
-gchar * amitk_import_menu_explanations[] = {
+const gchar * amitk_import_menu_explanations[] = {
   "",
   N_("Import file as raw data"),
-#ifdef AMIDE_LIBECAT_SUPPORT
-  N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
-#endif
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   N_("Import a DICOM file or directory file using the DCMTK library"),
+#endif
+#ifdef AMIDE_LIBECAT_SUPPORT
+  N_("Import a CTI 6.4 or 7.0 file using the libecat library"),
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   N_("Import via the (X)medcon library (libmdc)"),
 #endif
 };
 
-gchar * amitk_export_menu_names[] = {
+const gchar * amitk_export_menu_names[] = {
   N_("Raw Data"), 
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  N_("DICOM via dcmtk"),
+#endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   "" /* place holder for AMITK_EXPORT_METHOD_LIBMDC */
 #endif
 };
   
 
-gchar * amitk_export_menu_explanations[] = {
+const gchar * amitk_export_menu_explanations[] = {
   N_("Export file as raw data"),
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  N_("Export a DICOM file or directory file using the DCMTK library"),
+#endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   N_("Export via the (X)medcon library (libmdc)"),
 #endif
 };
 
-gchar * amitk_conversion_names[] = {
+const gchar * amitk_conversion_names[] = {
   N_("Direct"),
-  N_("%ID/g"),
+  N_("%ID/cc"),
   N_("SUV")
 };
 
-gchar * amitk_dose_unit_names[] = {
+const gchar * amitk_dose_unit_names[] = {
   N_("MBq"),
   N_("mCi"),
   N_("uCi"),
   N_("nCi")
 };
 
-gchar * amitk_weight_unit_names[] = {
+const gchar * amitk_weight_unit_names[] = {
   N_("Kg"),
   N_("g"),
   N_("lbs"),
   N_("ounces"),
 };
 
-gchar * amitk_cylinder_unit_names[] = {
+const gchar * amitk_cylinder_unit_names[] = {
   N_("MBq/cc/Image Units"),
-  N_("Image Units/(MBq/CC)"),
   N_("mCi/cc/Image Units"),
-  N_("Image Units/(mCi/cc)"),
   N_("uCi/cc/Image Units"),
-  N_("Image Units/(uCi/cc)"),
   N_("nCi/cc/Image Units"),
+  N_("Image Units/(MBq/cc)"),
+  N_("Image Units/(mCi/cc)"),
+  N_("Image Units/(uCi/cc)"),
   N_("Image Units/(nCi/cc)"),
 };
 
-gchar * amitk_scaling_menu_names[] = {
+const gchar * amitk_scaling_menu_names[] = {
   N_("Single Scale Factor"),
   N_("Per Frame Scale Factor"),
   N_("Per Plane Scale Factor"),
@@ -1036,10 +1042,13 @@ static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes,
   ds->cylinder_factor = xml_get_data(nodes, "cylinder_factor", &error_buf);
 
   temp_string = xml_get_string(nodes, "conversion");
-  if (temp_string != NULL)
+  if (temp_string != NULL) {
     for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
       if (g_ascii_strcasecmp(temp_string, amitk_conversion_get_name(i_conversion)) == 0)
 	ds->conversion = i_conversion;
+    if (g_ascii_strcasecmp(temp_string,"percent-id-per-g") == 0) /* in 0.9.0 changed to percent-id-per-cc */
+      ds->conversion = AMITK_CONVERSION_PERCENT_ID_PER_CC;
+  }
   g_free(temp_string);
 
   temp_string = xml_get_string(nodes, "displayed_dose_unit");
@@ -1662,7 +1671,7 @@ static void export_raw(AmitkDataSet *ds,
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  divider = ((dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMIDE_UPDATE_DIVIDER);
+  divider = ((dim.z/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMITK_UPDATE_DIVIDER);
 
 
   j = zero_voxel;
@@ -1709,7 +1718,9 @@ static void export_raw(AmitkDataSet *ds,
 		  max = value;
 	      }
 	    }
+#ifdef AMIDE_DEBUG
 	    g_print("slice max %f\tstart-duration %f %f\n", max, frame_start, frame_duration);
+#endif
 	  }
 	}
 	
@@ -1772,6 +1783,11 @@ void amitk_data_set_export_to_file(AmitkDataSet *ds,
 				   gpointer update_data) {
   
   switch (method) {
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  case AMITK_EXPORT_METHOD_DCMTK:
+    dcmtk_export(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
+    break;
+#endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   case AMITK_EXPORT_METHOD_LIBMDC:
     libmdc_export(ds, filename, submethod, resliced, voxel_size, bounding_box, update_func, update_data);
@@ -1911,7 +1927,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
   j_voxel.t = j_voxel.g = j_voxel.z = 0;
   num_planes = dim.g*dim.t*dim.z;
   plane=0;
-  divider = ((num_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (num_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((num_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (num_planes/AMITK_UPDATE_DIVIDER);
 
   for (i_voxel.t=0; (i_voxel.t< dim.t) && continue_work; i_voxel.t++)
     for (i_voxel.g=0; (i_voxel.g<dim.g) && continue_work; i_voxel.g++) 
@@ -1961,6 +1977,11 @@ void amitk_data_sets_export_to_file(GList * data_sets,
 
   /* export data set */
   switch (method) {
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  case AMITK_EXPORT_METHOD_DCMTK:
+    dcmtk_export(export_ds, filename, FALSE, zero_point, volume, update_func, update_data);
+    break;
+#endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   case AMITK_EXPORT_METHOD_LIBMDC:
     /* clean - libmdc handles infinities, etc. badly */
@@ -2543,7 +2564,7 @@ static amide_data_t calculate_scale_factor(AmitkDataSet * ds) {
   case AMITK_CONVERSION_STRAIGHT:
     value = AMITK_DATA_SET_SCALE_FACTOR(ds);
     break;
-  case AMITK_CONVERSION_PERCENT_ID_PER_G:
+  case AMITK_CONVERSION_PERCENT_ID_PER_CC:
     if (EQUAL_ZERO(ds->injected_dose))
       value = 1.0;
     else
@@ -3538,7 +3559,29 @@ amide_data_t amitk_data_set_get_internal_scaling_factor(const AmitkDataSet * ds,
   }
 }
 
-amide_data_t amitk_data_set_get_internal_scaling_intercept(const AmitkDataSet * ds, const AmitkVoxel i) {
+
+amide_data_t amitk_data_set_get_scaling_factor(const AmitkDataSet * ds, const AmitkVoxel i) {
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), EMPTY);
+  g_return_val_if_fail(ds->current_scaling_factor != NULL, EMPTY);
+  g_return_val_if_fail(ds->current_scaling_factor->format == AMITK_FORMAT_DOUBLE, EMPTY);
+
+  switch(ds->scaling_type) {
+  case AMITK_SCALING_TYPE_2D:
+  case AMITK_SCALING_TYPE_2D_WITH_INTERCEPT:
+    return *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->current_scaling_factor,i);
+    break;
+  case AMITK_SCALING_TYPE_1D:
+  case AMITK_SCALING_TYPE_1D_WITH_INTERCEPT:
+    return *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->current_scaling_factor,i);
+    break;
+  default:
+    return *AMITK_RAW_DATA_DOUBLE_0D_SCALING_POINTER(ds->current_scaling_factor,i);
+  }
+
+}
+
+amide_data_t amitk_data_set_get_scaling_intercept(const AmitkDataSet * ds, const AmitkVoxel i) {
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds), EMPTY);
   
@@ -3937,7 +3980,7 @@ void amitk_data_set_get_projections(AmitkDataSet * ds,
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  divider = ((dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMIDE_UPDATE_DIVIDER);
+  divider = ((dim.z/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMITK_UPDATE_DIVIDER);
 
   /* initialize the 3 projections */
   for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
@@ -4141,7 +4184,7 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
   else scaling_progress = 0;
   total_progress = total_planes + scaling_progress;
   
-  divider = ((total_progress/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_progress/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_progress/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_progress/AMITK_UPDATE_DIVIDER);
 
   cropped = AMITK_DATA_SET(amitk_object_copy(AMITK_OBJECT(ds)));
 
@@ -4347,13 +4390,13 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
     switch(scaling_type) {
     case AMITK_SCALING_TYPE_2D:
       for (i.t=0; i.t < dim.t; i.t++)
-	for (i.g=0; i.g < dim.g; i.t++) 
+	for (i.g=0; i.g < dim.g; i.g++) 
 	  for (i.z=0; i.z < dim.z; i.z++) 
 	    (*AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
       break;
     case AMITK_SCALING_TYPE_2D_WITH_INTERCEPT:
       for (i.t=0; i.t < dim.t; i.t++)
-	for (i.g=0; i.g < dim.g; i.t++) 
+	for (i.g=0; i.g < dim.g; i.g++) 
 	  for (i.z=0; i.z < dim.z; i.z++) {
 	    (*AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
 	    (*AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(cropped->internal_scaling_intercept, i)) = 0.0;
@@ -4361,18 +4404,18 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
       break;
     case AMITK_SCALING_TYPE_1D:
       for (i.t=0; i.t < dim.t; i.t++)
-	for (i.g=0; i.g < dim.g; i.t++) 
+	for (i.g=0; i.g < dim.g; i.g++) 
 	  (*AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
       break;
     case AMITK_SCALING_TYPE_1D_WITH_INTERCEPT:
       for (i.t=0; i.t < dim.t; i.t++)
-	for (i.g=0; i.g < dim.g; i.t++) {
+	for (i.g=0; i.g < dim.g; i.g++) {
 	  (*AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
 	  (*AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(cropped->internal_scaling_intercept, i)) = 0.0;
 	}
       break;
     case AMITK_SCALING_TYPE_0D:
-      (*AMITK_RAW_DATA_DOUBLE_0D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 0.0;
+      (*AMITK_RAW_DATA_DOUBLE_0D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
       break;
     case AMITK_SCALING_TYPE_0D_WITH_INTERCEPT:
       (*AMITK_RAW_DATA_DOUBLE_0D_SCALING_POINTER(cropped->internal_scaling_factor, i)) = 1.0;
@@ -4743,7 +4786,7 @@ static gboolean filter_median_3D(const AmitkDataSet * data_set, AmitkDataSet * f
     g_free(temp_string);
   }
   total_planes = ds_dim.z*ds_dim.t*ds_dim.g;
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
 
   /* iterate over all the voxels in the data_set */
@@ -5310,16 +5353,22 @@ GList * amitk_data_sets_get_slices(GList * objects,
 }
 
 /* function to perform the given operation between the given data sets */
-AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, AmitkOperation operation) {
+AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, 
+				    AmitkDataSet * ds2, 
+				    AmitkOperation operation,
+				    gboolean by_frames,
+				    AmitkUpdateFunc update_func,
+				    gpointer update_data) {
 
   GList * data_sets;
   AmitkCorners corner;
   AmitkVolume * volume;
   amide_real_t voxel_size;
   AmitkCanvasPoint pixel_size;
-  AmitkVoxel dim;
+  AmitkVoxel i_dim,j_dim;
+  amide_time_t frame_start, frame_duration;
   AmitkDataSet * output_ds;
-  AmitkVoxel i_voxel, j_voxel;
+  AmitkVoxel i_voxel, j_voxel, k_voxel;
   AmitkPoint new_offset;
   AmitkDataSet * slice1=NULL;
   AmitkDataSet * slice2=NULL;
@@ -5327,6 +5376,9 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
   gdouble op1=1.0;
   gchar * temp_string;
   AmitkViewMode i_view_mode;
+  div_t x;
+  gint divider, total_planes,image_num;
+  gboolean continue_work=TRUE;
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds1), NULL);
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds2), NULL);
@@ -5357,20 +5409,36 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
   /* Set up the voxel dimensions for the output data set */
   voxel_size = amitk_data_sets_get_min_voxel_size(data_sets);
   pixel_size.x = pixel_size.y = voxel_size;
-  dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(volume) ) / voxel_size );
-  dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(volume) ) / voxel_size );
-  dim.z = ceil(fabs(AMITK_VOLUME_Z_CORNER(volume) ) / voxel_size );
-  if ((AMITK_DATA_SET_DIM_T(ds1) > 1) ||
-      (AMITK_DATA_SET_DIM_T(ds2) > 1) ||
-      (AMITK_DATA_SET_DIM_G(ds1) > 1) ||
-      (AMITK_DATA_SET_DIM_G(ds2) > 1))
-    g_warning("Can't currently handle multi-frame/multi-gate studies - calculations will be for only the first frame/gate");
-  dim.t = dim.g = 1;
+  i_dim.x = j_dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(volume) ) / voxel_size );
+  i_dim.y = j_dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(volume) ) / voxel_size );
+  i_dim.z = j_dim.z = ceil(fabs(AMITK_VOLUME_Z_CORNER(volume) ) / voxel_size );
+
+  i_dim.t = j_dim.t = AMITK_DATA_SET_DIM_T(ds1);
+  if (AMITK_DATA_SET_DIM_T(ds1) != AMITK_DATA_SET_DIM_T(ds2)) {
+    if (by_frames) {
+      g_warning(_("Can't handle 'by frame' operations with data sets with unequal frame numbers, will use all frames of %s and the first gate of %s"),
+		AMITK_OBJECT_NAME(ds1), AMITK_OBJECT_NAME(ds2));
+      j_dim.t = 1;
+    } else {
+      g_warning(_("Output data set will have the same number of frames as %s"),
+		AMITK_OBJECT_NAME(ds1));
+    }
+  }
+    
+      
+  /* figure out what muti-gate studies we can handle */
+  i_dim.g = j_dim.g = AMITK_DATA_SET_DIM_G(ds1);
+  if (AMITK_DATA_SET_DIM_G(ds1) != AMITK_DATA_SET_DIM_G(ds2)) {
+    g_warning(_("Can't handle studies with different numbers of gates, will use all gates of %s and the first gate of %s "),
+	      AMITK_OBJECT_NAME(ds1), AMITK_OBJECT_NAME(ds2));
+    j_dim.g = 1;
+  }
 
   output_ds = amitk_data_set_new_with_data(NULL, AMITK_DATA_SET_MODALITY(ds1), 
-					   AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
+					   AMITK_FORMAT_FLOAT, i_dim, AMITK_SCALING_TYPE_0D);
   if (output_ds == NULL) {
-    g_warning(_("couldn't allocate memory space for the output_ds data set structure"));
+    g_warning(_("couldn't allocate %d MB for the output_ds data set structure"),
+	      amitk_raw_format_calc_num_bytes(i_dim, AMITK_FORMAT_FLOAT)/(1024*1024));
     goto error;
   }
 
@@ -5392,31 +5460,57 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
   g_free(temp_string);
 
 
+  if (update_func != NULL) {
+    temp_string = g_strdup_printf(_("Performing math operation"));
+    continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
+    g_free(temp_string);
+  }
+  total_planes = i_dim.z*i_dim.t*i_dim.g;
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
+
   /* fill in output_ds by performing the operation on the data sets */
   corner[0] = AMITK_VOLUME_CORNER(volume);
   corner[0].z = voxel_size;
   amitk_volume_set_corner(volume, corner[0]); /* set the z dim of the slices */
-  j_voxel = zero_voxel;
+  k_voxel = zero_voxel;
   new_offset = zero_point;
 
-  for (i_voxel.t = 0; i_voxel.t < dim.t; i_voxel.t++) {
-    for (i_voxel.g = 0; i_voxel.g < dim.g; i_voxel.g++) {
-      for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++) {
+  for (i_voxel.t = 0; (i_voxel.t < i_dim.t) && continue_work; i_voxel.t++) {
+    j_voxel.t = (i_voxel.t >= j_dim.t) ? 0 : i_voxel.t; /* only used if by_frames is true */
+
+    frame_start = amitk_data_set_get_start_time(ds1, i_voxel.t);
+    frame_duration = amitk_data_set_get_frame_duration(ds1, i_voxel.t);
+
+    if (i_voxel.t == 0)
+      amitk_data_set_set_scan_start(output_ds, frame_start);
+    amitk_data_set_set_frame_duration(output_ds, i_voxel.t, frame_duration);
+
+    for (i_voxel.g = 0; (i_voxel.g < i_dim.g) && continue_work; i_voxel.g++) {
+      j_voxel.g = (i_voxel.g >= j_dim.g) ? 0 : i_voxel.g;
+
+      for (i_voxel.z = 0; (i_voxel.z < i_dim.z) && continue_work; i_voxel.z++) {
+	j_voxel.z = i_voxel.z;
 	new_offset.z = i_voxel.z * voxel_size;
+
+	if (update_func != NULL) {
+	  image_num = i_voxel.z+i_voxel.t*i_dim.z+i_voxel.g*i_dim.z*i_dim.t;
+	  x = div(image_num,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, ((gdouble) image_num)/((gdouble) total_planes));
+	}
 
 	/* advance the requested slice volume */
 	amitk_space_set_offset( AMITK_SPACE(volume), amitk_space_s2b(AMITK_SPACE(output_ds), new_offset));
 
 	slice1 = amitk_data_set_get_slice(ds1,
-					  amitk_data_set_get_start_time(ds1, i_voxel.t),
-					  amitk_data_set_get_frame_duration(ds1, i_voxel.t),
+					  frame_start, frame_duration,
 					  i_voxel.g,
 					  pixel_size,
 					  volume);
 	slice2 = amitk_data_set_get_slice(ds2,
-					  amitk_data_set_get_start_time(ds2, i_voxel.t ),
-					  amitk_data_set_get_frame_duration(ds2, i_voxel.t),
-					  i_voxel.g,
+					  by_frames ? amitk_data_set_get_start_time(ds2, j_voxel.t) : frame_start,
+					  by_frames ? amitk_data_set_get_frame_duration(ds2, j_voxel.t) : frame_duration,
+					  j_voxel.g,
 					  pixel_size,
 					  volume);
 
@@ -5425,9 +5519,9 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
 	  goto error;
 	}
 
-	for (i_voxel.y = 0, j_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++, j_voxel.y++) {
-	  for (i_voxel.x = 0, j_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, j_voxel.x++) {
-	    value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), j_voxel ) + op1*AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), j_voxel);
+	for (i_voxel.y = 0, k_voxel.y = 0; i_voxel.y < i_dim.y; i_voxel.y++, k_voxel.y++) {
+	  for (i_voxel.x = 0, k_voxel.x = 0; i_voxel.x < i_dim.x; i_voxel.x++, k_voxel.x++) {
+	    value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(AMITK_DATA_SET(slice1), k_voxel ) + op1*AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT( AMITK_DATA_SET(slice2), k_voxel);
 	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_ds->raw_data, i_voxel) = value;
 	  }
 	}
@@ -5438,6 +5532,9 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
       }
     }
   }
+
+  if (!continue_work)
+    goto error;
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_max_min(output_ds, NULL, NULL);
@@ -5452,14 +5549,19 @@ AmitkDataSet * amitk_data_sets_math(AmitkDataSet * ds1, AmitkDataSet * ds2, Amit
   goto exit;
 
  error:
-  amitk_object_unref(output_ds);
-  output_ds = NULL;
+  if (output_ds != NULL) {
+    amitk_object_unref(output_ds);
+    output_ds = NULL;
+  }
 
  exit:
   amitk_object_unref(volume);
   g_list_free(data_sets);
   if (slice1 != NULL) amitk_object_unref(slice1);
   if (slice2 != NULL) amitk_object_unref(slice2);
+
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
 
   return output_ds;
 }

@@ -32,7 +32,7 @@
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
 
-#define DATA_CONTENT(data, dim, i) ((data)[(i).x + (dim).x*(i).y])
+#define DATA_CONTENT(data, dim, voxel) ((data)[(voxel).x + (dim).x*(voxel).y])
 
 /* external variables */
 guint amitk_format_sizes[] = {
@@ -47,7 +47,18 @@ guint amitk_format_sizes[] = {
   1
 };
 
-gchar * amitk_format_names[] = {
+gboolean amitk_format_signed[AMITK_FORMAT_NUM] = {
+  FALSE,
+  TRUE,
+  FALSE,
+  TRUE,
+  FALSE,
+  TRUE,
+  TRUE,
+  TRUE
+};
+
+gchar * amitk_format_names[AMITK_FORMAT_NUM] = {
   N_("Unsigned Byte (8 bit)"), 
   N_("Signed Byte (8 bit)"), 
   N_("Unsigned Short (16 bit)"), 
@@ -58,7 +69,7 @@ gchar * amitk_format_names[] = {
   N_("Double (64 bit)")
 };
 
-amide_data_t amitk_format_max[] = {
+amide_data_t amitk_format_max[AMITK_FORMAT_NUM] = {
   255.0,
   127.0,
   G_MAXUSHORT,
@@ -69,7 +80,7 @@ amide_data_t amitk_format_max[] = {
   G_MAXDOUBLE
 };
 
-amide_data_t amitk_format_min[] = {
+amide_data_t amitk_format_min[AMITK_FORMAT_NUM] = {
   0.0,
   -128.0,
   0.0,
@@ -352,7 +363,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
     g_free(temp_string);
   }
   total_planes = dim.z*dim.t*dim.g;
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
   raw_data = amitk_raw_data_new_with_data(amitk_raw_format_to_format(raw_format), dim);
   if (raw_data == NULL) {
@@ -518,6 +529,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 		temp = GUINT64_FROM_BE(DATA_CONTENT(data, dim, i));
 		double_p = (void *) &temp;
+		if (i.x == -1) g_print("no op\n"); /* gets around compiler bug in gcc 4.1.2-27 */
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
 #else /* G_BIG_ENDIAN */
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
@@ -544,6 +556,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 		temp = GUINT32_FROM_BE(DATA_CONTENT(data, dim, i));
 		float_p = (void *) &temp;
+		if (i.x == -1) g_print("no op\n"); /* gets around compiler bug in gcc 4.1.2-27 */
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
 #else /* G_BIG_ENDIAN */
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
@@ -619,11 +632,13 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 		temp = GUINT64_FROM_LE(DATA_CONTENT(data, dim, i));
 		double_p = (void *) &temp;
+		if (i.x == -1) g_print("no op\n"); /* gets around compiler bug in gcc 4.1.2-27 */
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
 #else /* G_LITTLE_ENDIAN */
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 #endif
 	      }
+
 	  }
 	  break;
 	  
@@ -650,6 +665,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 		temp = GUINT32_FROM_LE(DATA_CONTENT(data, dim, i));
 		float_p = (void *) &temp;
+		if (i.x == -1) g_print("no op\n"); /* gets around compiler bug in gcc 4.1.2-27 */
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
@@ -935,12 +951,12 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 	raw_format = i_raw_format;
 
   /* also need to check against legacy names for files created before amide version 0.7.11 */
-    for (i_raw_format=0; i_raw_format < AMITK_RAW_FORMAT_NUM; i_raw_format++) 
-      if (g_ascii_strcasecmp(temp_string, amitk_raw_format_legacy_names[i_raw_format]) == 0)
-	raw_format = i_raw_format;
+  for (i_raw_format=0; i_raw_format < AMITK_RAW_FORMAT_NUM; i_raw_format++) 
+    if (g_ascii_strcasecmp(temp_string, amitk_raw_format_legacy_names[i_raw_format]) == 0)
+      raw_format = i_raw_format;
 
   g_free(temp_string);
-
+  
   /* get the filename or location of our associated data */
   if (study_file == NULL) {
     raw_filename = xml_get_string(nodes, "raw_data_file");
@@ -977,7 +993,7 @@ amide_data_t amitk_raw_data_get_value(const AmitkRawData * rd, const AmitkVoxel 
   if (!amitk_raw_data_includes_voxel(rd, i)) return EMPTY;
 
   /* hand everything off to the data type specific function */
-  switch(rd->format) {
+  switch(AMITK_RAW_DATA_FORMAT(rd)) {
   case AMITK_FORMAT_UBYTE:
     return AMITK_RAW_DATA_UBYTE_CONTENT(rd, i);
   case AMITK_FORMAT_SBYTE:
@@ -1006,7 +1022,7 @@ gpointer amitk_raw_data_get_pointer(const AmitkRawData * rd, const AmitkVoxel i)
   g_return_val_if_fail(amitk_raw_data_includes_voxel(rd, i), NULL);
 
   /* hand everything off to the data type specific function */
-  switch(rd->format) {
+  switch(AMITK_RAW_DATA_FORMAT(rd)) {
   case AMITK_FORMAT_UBYTE:
     return AMITK_RAW_DATA_UBYTE_POINTER(rd, i);
   case AMITK_FORMAT_SBYTE:
@@ -1156,6 +1172,39 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat format) {
   return raw_format;
 }
 
+
+void amitk_raw_data_slice_calc_min_max(AmitkRawData * amitk_raw_data, 
+				       const amide_intpoint_t frame,
+				       const amide_intpoint_t gate,
+				       const amide_intpoint_t z,
+				       amitk_format_DOUBLE_t * min_value,
+				       amitk_format_DOUBLE_t * max_value) {
+
+  g_return_if_fail(AMITK_IS_RAW_DATA(amitk_raw_data));
+  
+  /* hand everything off to the data type specific function */
+  switch(AMITK_RAW_DATA_FORMAT(amitk_raw_data)) {
+  case AMITK_FORMAT_UBYTE:
+    return amitk_raw_data_UBYTE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_SBYTE:
+    return amitk_raw_data_SBYTE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_USHORT:
+    return amitk_raw_data_USHORT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_SSHORT:
+    return amitk_raw_data_SSHORT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_UINT:
+    return amitk_raw_data_UINT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_SINT:
+    return amitk_raw_data_SINT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_FLOAT:
+    return amitk_raw_data_FLOAT_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  case AMITK_FORMAT_DOUBLE:
+    return amitk_raw_data_DOUBLE_slice_calc_min_max(amitk_raw_data, frame, gate, z, min_value, max_value);
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    return;
+  }
+}
 
 
 const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format) {

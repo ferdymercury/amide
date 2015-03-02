@@ -27,7 +27,6 @@
 #define __AMITK_SPACE_H__
 
 #include "amitk_point.h"
-#include <glib-object.h>
 
 G_BEGIN_DECLS
 

@@ -1,44 +1,40 @@
 <refentry id="amitk-amitk-raw-data-FLOAT">
 <refmeta>
-<refentrytitle>amitk_raw_data_FLOAT</refentrytitle>
+<refentrytitle role="top_of_page">amitk_raw_data_FLOAT</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_raw_data_FLOAT</refname><refpurpose></refpurpose>
+<refname>amitk_raw_data_FLOAT</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-0D-SCALING-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER</link>(amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-1D-SCALING-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER</link>(amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-2D-SCALING-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER</link>(amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_POINTER</link>    (amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-3D-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_3D_POINTER</link> (amitk_raw_data,iz,iy,ix)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-2D-POINTER-CAPS">AMITK_RAW_DATA_FLOAT_2D_POINTER</link> (amitk_raw_data,iy,ix)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-SET-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_SET_CONTENT</link>(amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_CONTENT</link>    (amitk_raw_data,i)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-2D-SET-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT</link>(amitk_raw_data,iy,ix)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-2D-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_2D_CONTENT</link> (amitk_raw_data,iy,ix)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-3D-SET-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT</link>(amitk_raw_data,iz,iy,ix)
-#define     <link linkend="AMITK-RAW-DATA-FLOAT-3D-CONTENT-CAPS">AMITK_RAW_DATA_FLOAT_3D_CONTENT</link> (amitk_raw_data,iz,iy,ix)
-<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-FLOAT-0D-SCALING-init">amitk_raw_data_FLOAT_0D_SCALING_init</link>
-                                            (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);
-<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-FLOAT-2D-init">amitk_raw_data_FLOAT_2D_init</link>  (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> y_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> x_dim);
-<link linkend="AmitkRawData">AmitkRawData</link>* <link linkend="amitk-raw-data-FLOAT-3D-init">amitk_raw_data_FLOAT_3D_init</link>  (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> z_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> y_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> x_dim);
-<link linkend="void">void</link>        <link linkend="amitk-raw-data-FLOAT-initialize-data">amitk_raw_data_FLOAT_initialize_data</link>
-                                            (<link linkend="AmitkRawData">AmitkRawData</link> *amitk_raw_data,
-                                             <link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-0D-SCALING-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER</link>(amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-1D-SCALING-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER</link>(amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-2D-SCALING-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER</link>(amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_POINTER</link>        (amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-3D-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_3D_POINTER</link>     (amitk_raw_data,iz,iy,ix)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-2D-POINTER:CAPS">AMITK_RAW_DATA_FLOAT_2D_POINTER</link>     (amitk_raw_data,iy,ix)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-SET-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_SET_CONTENT</link>    (amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_CONTENT</link>        (amitk_raw_data,i)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-2D-SET-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT</link> (amitk_raw_data,iy,ix)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-2D-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_2D_CONTENT</link>     (amitk_raw_data,iy,ix)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-3D-SET-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT</link> (amitk_raw_data,iz,iy,ix)
+#define             <link linkend="AMITK-RAW-DATA-FLOAT-3D-CONTENT:CAPS">AMITK_RAW_DATA_FLOAT_3D_CONTENT</link>     (amitk_raw_data,iz,iy,ix)
+<link linkend="AmitkRawData">AmitkRawData</link>*       <link linkend="amitk-raw-data-FLOAT-0D-SCALING-init">amitk_raw_data_FLOAT_0D_SCALING_init</link>
+                                                        (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);
+<link linkend="void">void</link>                <link linkend="amitk-raw-data-FLOAT-initialize-data">amitk_raw_data_FLOAT_initialize_data</link>
+                                                        (<link linkend="AmitkRawData">AmitkRawData</link> *amitk_raw_data,
+                                                         <link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);
 </synopsis>
 </refsynopsisdiv>
 
@@ -50,18 +46,18 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-0D-SCALING-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-0D-SCALING-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -75,8 +71,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-1D-SCALING-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-1D-SCALING-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -90,8 +86,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-SCALING-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-SCALING-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -105,8 +101,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_POINTER(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_POINTER(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -120,8 +116,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_3D_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_3D_POINTER(amitk_raw_data,iz,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_3D_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_3D_POINTER(amitk_raw_data,iz,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -141,8 +137,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-POINTER-CAPS"/>AMITK_RAW_DATA_FLOAT_2D_POINTER()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_POINTER</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_2D_POINTER(amitk_raw_data,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-POINTER:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_2D_POINTER()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_POINTER</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_2D_POINTER(amitk_raw_data,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -159,8 +155,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-SET-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_SET_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_SET_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_SET_CONTENT(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-SET-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_SET_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_SET_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_SET_CONTENT(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -174,8 +170,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_CONTENT(amitk_raw_data,i)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_CONTENT(amitk_raw_data,i)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -189,8 +185,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-SET-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT(amitk_raw_data,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-SET-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_2D_SET_CONTENT(amitk_raw_data,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -207,8 +203,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_2D_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_2D_CONTENT(amitk_raw_data,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-2D-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_2D_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_2D_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_2D_CONTENT(amitk_raw_data,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -225,8 +221,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-SET-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT(amitk_raw_data,iz,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-SET-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_3D_SET_CONTENT(amitk_raw_data,iz,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -246,8 +242,8 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-CONTENT-CAPS"/>AMITK_RAW_DATA_FLOAT_3D_CONTENT()</title>
-<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_CONTENT</primary></indexterm><programlisting>#define     AMITK_RAW_DATA_FLOAT_3D_CONTENT(amitk_raw_data,iz,iy,ix)</programlisting>
+<title><anchor id="AMITK-RAW-DATA-FLOAT-3D-CONTENT:CAPS" role="macro"/>AMITK_RAW_DATA_FLOAT_3D_CONTENT()</title>
+<indexterm><primary>AMITK_RAW_DATA_FLOAT_3D_CONTENT</primary></indexterm><programlisting>#define             AMITK_RAW_DATA_FLOAT_3D_CONTENT(amitk_raw_data,iz,iy,ix)</programlisting>
 <para>
 
 </para><variablelist role="params">
@@ -267,73 +263,25 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-raw-data-FLOAT-0D-SCALING-init"/>amitk_raw_data_FLOAT_0D_SCALING_init ()</title>
-<indexterm><primary>amitk_raw_data_FLOAT_0D_SCALING_init</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_FLOAT_0D_SCALING_init
-                                            (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);</programlisting>
+<title><anchor id="amitk-raw-data-FLOAT-0D-SCALING-init" role="function"/>amitk_raw_data_FLOAT_0D_SCALING_init ()</title>
+<indexterm><primary>amitk_raw_data_FLOAT_0D_SCALING_init</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>*       amitk_raw_data_FLOAT_0D_SCALING_init
+                                                        (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);</programlisting>
 <para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>init_value</parameter>&nbsp;:</term>
 <listitem><simpara>
 </simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-raw-data-FLOAT-2D-init"/>amitk_raw_data_FLOAT_2D_init ()</title>
-<indexterm><primary>amitk_raw_data_FLOAT_2D_init</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_FLOAT_2D_init  (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> y_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> x_dim);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><parameter>init_value</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><parameter>y_dim</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><parameter>x_dim</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="amitk-raw-data-FLOAT-3D-init"/>amitk_raw_data_FLOAT_3D_init ()</title>
-<indexterm><primary>amitk_raw_data_FLOAT_3D_init</primary></indexterm><programlisting><link linkend="AmitkRawData">AmitkRawData</link>* amitk_raw_data_FLOAT_3D_init  (<link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> z_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> y_dim,
-                                             <link linkend="amide-intpoint-t">amide_intpoint_t</link> x_dim);</programlisting>
-<para>
-
-</para><variablelist role="params">
-<varlistentry><term><parameter>init_value</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><parameter>z_dim</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><parameter>y_dim</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><parameter>x_dim</parameter>&nbsp;:</term>
-<listitem><simpara>
-</simpara></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
-
-
-</simpara></listitem></varlistentry>
-</variablelist></refsect2>
-<refsect2>
-<title><anchor id="amitk-raw-data-FLOAT-initialize-data"/>amitk_raw_data_FLOAT_initialize_data ()</title>
-<indexterm><primary>amitk_raw_data_FLOAT_initialize_data</primary></indexterm><programlisting><link linkend="void">void</link>        amitk_raw_data_FLOAT_initialize_data
-                                            (<link linkend="AmitkRawData">AmitkRawData</link> *amitk_raw_data,
-                                             <link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);</programlisting>
+<title><anchor id="amitk-raw-data-FLOAT-initialize-data" role="function"/>amitk_raw_data_FLOAT_initialize_data ()</title>
+<indexterm><primary>amitk_raw_data_FLOAT_initialize_data</primary></indexterm><programlisting><link linkend="void">void</link>                amitk_raw_data_FLOAT_initialize_data
+                                                        (<link linkend="AmitkRawData">AmitkRawData</link> *amitk_raw_data,
+                                                         <link linkend="amitk-format-FLOAT-t">amitk_format_FLOAT_t</link> init_value);</programlisting>
 <para>
 
 </para><variablelist role="params">

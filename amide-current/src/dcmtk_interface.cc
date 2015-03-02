@@ -25,12 +25,17 @@
 
 #include "amide_config.h"
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
-
-#ifdef AMIDE_WIN32_HACKS
+#ifdef HAVE_STRPTIME
+#define __USE_XOPEN_EXTENDED
+#endif
+#ifdef OLD_WIN32_HACKS
 #include <unistd.h>
 #endif
-#include "dcmtk_interface.h"
+#include "dcmtk_interface.h" 
+#include "dcddirif.h"     /* for class DicomDirInterface */
 #include <dirent.h>
+#include <sys/stat.h>
+#include "amitk_data_set_DOUBLE_0D_SCALING.h"
 
 /* dcmtk redefines a lot of things that they shouldn't... */
 #undef PACKAGE_BUGREPORT
@@ -41,7 +46,6 @@
 #include <dctk.h>
 //#include <dcostrmb.h>
 const gchar * dcmtk_version = OFFIS_DCMTK_VERSION;
-
 
 /* based on dcmftest.cc - part of dcmtk */
 gboolean dcmtk_test_dicom(const gchar * filename) {
@@ -87,6 +91,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   Uint16 bits_allocated;
   Uint16 pixel_representation;
   const char * return_str=NULL;
+  const char * scan_date=NULL;
+  const char * scan_time=NULL;
+  gchar * temp_str;
+  gboolean valid;
 
   AmitkPoint voxel_size = one_point;
   AmitkDataSet * ds=NULL;
@@ -109,6 +117,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   gdouble half_life=-1.0;
   gint hours, minutes, seconds;
   gchar * object_name;
+  struct tm time_structure;
 
   /* note - dcmtk always uses POSIX locale - look to setlocale stuff in libmdc_interface.c if this ever comes up*/
 
@@ -135,32 +144,32 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     if (return_str != NULL) {
       
       /* first, process modalities we know we don't read */
-      if ((g_strcasecmp(return_str, "PR") == 0)) {
+      if ((g_ascii_strcasecmp(return_str, "PR") == 0)) {
 	amitk_append_str_with_newline(perror_buf, _("Modality %s is not understood.  Ignoring File %s"), return_str, filename);
 	goto error;
       }
       
       /* now to modalities we think we understand */
-      if ((g_strcasecmp(return_str, "CR") == 0) ||
-	  (g_strcasecmp(return_str, "CT") == 0) ||
-	  (g_strcasecmp(return_str, "DF") == 0) ||
-	  (g_strcasecmp(return_str, "DS") == 0) ||
-	  (g_strcasecmp(return_str, "DX") == 0) ||
-	  (g_strcasecmp(return_str, "MG") == 0) ||
-	  (g_strcasecmp(return_str, "PX") == 0) ||
-	  (g_strcasecmp(return_str, "RF") == 0) ||
-	  (g_strcasecmp(return_str, "RG") == 0) ||
-	  (g_strcasecmp(return_str, "XA") == 0) ||
-	  (g_strcasecmp(return_str, "XA") == 0))
+      if ((g_ascii_strcasecmp(return_str, "CR") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "CT") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "DF") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "DS") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "DX") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "MG") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "PX") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "RF") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "RG") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "XA") == 0) ||
+	  (g_ascii_strcasecmp(return_str, "XA") == 0))
 	modality = AMITK_MODALITY_CT;
-      else if ((g_strcasecmp(return_str, "MA") == 0) ||
-	       (g_strcasecmp(return_str, "MR") == 0) ||
-	       (g_strcasecmp(return_str, "MS") == 0)) 
+      else if ((g_ascii_strcasecmp(return_str, "MA") == 0) ||
+	       (g_ascii_strcasecmp(return_str, "MR") == 0) ||
+	       (g_ascii_strcasecmp(return_str, "MS") == 0)) 
 	modality = AMITK_MODALITY_MRI;
-      else if ((g_strcasecmp(return_str, "ST") == 0) ||
-	       (g_strcasecmp(return_str, "NM") == 0))
+      else if ((g_ascii_strcasecmp(return_str, "ST") == 0) ||
+	       (g_ascii_strcasecmp(return_str, "NM") == 0))
 	modality = AMITK_MODALITY_SPECT;
-      else if ((g_strcasecmp(return_str, "PT") == 0))
+      else if ((g_ascii_strcasecmp(return_str, "PT") == 0))
 	modality = AMITK_MODALITY_PET;
     }
   }
@@ -224,6 +233,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     else format = AMITK_FORMAT_USHORT;
     break;
   case 32:
+    /* DICOM doesn't actually support anything but 8 and 16bit */
     if (pixel_representation) format = AMITK_FORMAT_SINT;
     else format = AMITK_FORMAT_UINT;
     break;
@@ -327,7 +337,9 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
       /* if no ImagePositionPatient, try using SliceLocation */
       new_offset.x = new_offset.y = 0.0;
-      new_offset.z = -1.0*(return_float64+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
+      //this looks wrong 2007.11.21 - doing what's done in the DCM_ImagePositionPatient case
+      // new_offset.z = -1.0*(return_float64+voxel_size.z*dim.z); /* DICOM specifies z axis in wrong direction */
+      new_offset.z = -1.0*return_float64; /* DICOM specifies z axis in wrong direction */
       amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
     }
   }
@@ -352,8 +364,8 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
   /* find the most relevant start time */
   return_str = NULL;
-  if (!dcm_dataset->findAndGetString(DCM_AcquisitionTime, return_str, OFTrue).good()) 
-    if (!dcm_dataset->findAndGetString(DCM_SeriesTime, return_str, OFTrue).good()) 
+  if (!dcm_dataset->findAndGetString(DCM_SeriesTime, return_str, OFTrue).good()) 
+    if (!dcm_dataset->findAndGetString(DCM_AcquisitionTime, return_str, OFTrue).good()) 
       dcm_dataset->findAndGetString(DCM_StudyTime, return_str, OFTrue);
   if (return_str != NULL) {
     if (sscanf(return_str, "%2d%2d%2d\n", &hours, &minutes, &seconds)==3) {
@@ -422,39 +434,93 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       amitk_data_set_set_subject_name(ds, return_str);
   }
 
-  if (dcm_dataset->findAndGetString(DCM_StudyDate, return_str, OFTrue).good()) 
-    amitk_data_set_set_scan_date(ds, return_str);
-  else if (dcm_dataset->findAndGetString(DCM_SeriesDate, return_str, OFTrue).good()) 
-    amitk_data_set_set_scan_date(ds, return_str);
+  if (dcm_dataset->findAndGetString(DCM_SeriesDate, return_str, OFTrue).good()) 
+    scan_date = return_str;
   else if (dcm_dataset->findAndGetString(DCM_AcquisitionDate, return_str, OFTrue).good()) 
-    amitk_data_set_set_scan_date(ds, return_str);
+    scan_date = return_str;
+  else if (dcm_dataset->findAndGetString(DCM_StudyDate, return_str, OFTrue).good()) 
+    scan_date = return_str;
+
+  if (dcm_dataset->findAndGetString(DCM_SeriesTime, return_str, OFTrue).good()) 
+    scan_time = return_str;
+  else if (dcm_dataset->findAndGetString(DCM_AcquisitionTime, return_str, OFTrue).good()) 
+    scan_time = return_str;
+  else if (dcm_dataset->findAndGetString(DCM_StudyTime, return_str, OFTrue).good()) 
+    scan_time = return_str;
+
+  valid=FALSE;
+  if (scan_date != NULL) {
+    if (3 == sscanf(scan_date, "%4d%2d%2d", 
+		    &(time_structure.tm_year),
+		    &(time_structure.tm_mon),
+		    &(time_structure.tm_mday))) {
+      time_structure.tm_year -= 1900; /* years start from 1900 */
+      if (time_structure.tm_mon > 0)
+	time_structure.tm_mon -= 1; /* now from 0-11 */
+
+      if (scan_time != NULL) 
+	if (3 == sscanf(scan_time, "%2d%2d%2d",
+			&(time_structure.tm_hour),
+			&(time_structure.tm_min),
+			&(time_structure.tm_sec)))
+	  valid = TRUE;
+
+      if (!valid) {
+	time_structure.tm_hour = 0;
+	time_structure.tm_min = 0;
+	time_structure.tm_sec = 0;
+      }
+    }
+
+    time_structure.tm_isdst = -1; /* "-1" is suppose to let the system figure it out */
+
+    if (mktime(&time_structure) != -1) {
+      amitk_data_set_set_scan_date(ds, asctime(&time_structure));
+      valid = TRUE;
+    } else {
+      valid = FALSE;
+    }
+  }
+
+  if (!valid) {
+    if ((scan_date != NULL) && (scan_time != NULL)) {
+      temp_str = g_strdup_printf("%s %s\n",scan_date,scan_time);
+      amitk_data_set_set_scan_date(ds,temp_str);
+      g_free(temp_str);
+    } else if (scan_date != NULL) {
+      amitk_data_set_set_scan_date(ds,scan_date);
+    } else if (scan_time != NULL) {
+      amitk_data_set_set_scan_date(ds,scan_time);
+    }
+  }
 
   if (dcm_dataset->findAndGetString(DCM_PatientsBirthDate, return_str, OFTrue).good()) 
     amitk_data_set_set_subject_dob(ds, return_str);
 
   /* because of how the dicom coordinates are setup, after reading in the patient slices, 
      they should all be oriented as SUPINE_HEADFIRST in AMIDE */
-  amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
-  //  if (dcm_dataset->findAndGetString(DCM_PatientPosition, return_str, OFTrue).good()) {
-  //    if (return_str != NULL) {
-  //      if (g_strcasecmp(return_str, "HFS")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
-  //      else if (g_strcasecmp(return_str, "FFS")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
-  //      else if (g_strcasecmp(return_str, "HFP")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
-  //      else if (g_strcasecmp(return_str, "FFP")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
-  //      else if (g_strcasecmp(return_str, "HFDR")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
-  //      else if (g_strcasecmp(return_str, "FFDR")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
-  //      else if (g_strcasecmp(return_str, "HFDL")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
-  //      else if (g_strcasecmp(return_str, "FFDL")==0)
-  //	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
-  //    }
-  //  }
+  /* 20071121 - renabled following code, not sure if above statement is true */
+  //  amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+  if (dcm_dataset->findAndGetString(DCM_PatientPosition, return_str, OFTrue).good()) {
+    if (return_str != NULL) {
+      if (g_ascii_strcasecmp(return_str, "HFS")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST);
+      else if (g_ascii_strcasecmp(return_str, "FFS")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST);
+      else if (g_ascii_strcasecmp(return_str, "HFP")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST);
+      else if (g_ascii_strcasecmp(return_str, "FFP")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST);
+      else if (g_ascii_strcasecmp(return_str, "HFDR")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST);
+      else if (g_ascii_strcasecmp(return_str, "FFDR")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST);
+      else if (g_ascii_strcasecmp(return_str, "HFDL")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST);
+      else if (g_ascii_strcasecmp(return_str, "FFDL")==0)
+  	amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST);
+    }
+  }
 
   format_size = amitk_format_sizes[format];
   num_bytes = amitk_raw_format_calc_num_bytes(dim, amitk_format_to_raw_format(format));
@@ -483,6 +549,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     {
       const Uint32 * temp_buffer;
       result = dcm_dataset->findAndGetUint32Array(DCM_PixelData, temp_buffer);
+      //      result = dcm_dataset->findAndGetUint16Array(DCM_PixelData, temp_buffer);
       buffer = (void *) temp_buffer;
       break;
     }
@@ -573,7 +640,7 @@ void transfer_slice(AmitkDataSet * ds, AmitkDataSet * slice_ds, AmitkVoxel i) {
   *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_factor, i) = 
     amitk_data_set_get_internal_scaling_factor(slice_ds, zero_voxel);
   *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling_intercept, i) = 
-    amitk_data_set_get_internal_scaling_intercept(slice_ds, zero_voxel);
+    amitk_data_set_get_scaling_intercept(slice_ds, zero_voxel);
 
   return;
 }
@@ -762,7 +829,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
       if (num_frames > 1) {
 	x = div(num_images, num_frames);
 	if (x.rem != 0) {
- 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), AMITK_OBJECT_NAME(slice_ds));
+	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), AMITK_OBJECT_NAME(slice_ds));
 	  dim.t = num_frames=1;
 	} else {
 	  dim.t = num_frames;
@@ -771,7 +838,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
       } else if (num_gates > 1) {
 	x = div(num_images, num_gates);
 	if (x.rem != 0) {
- 	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), AMITK_OBJECT_NAME(slice_ds));
+	  amitk_append_str_with_newline(perror_buf, _("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), AMITK_OBJECT_NAME(slice_ds));
 	  dim.g = num_gates=1;
 	} else {
 	  dim.g = num_gates;
@@ -1026,7 +1093,7 @@ static GList * import_files_as_datasets(GList * image_files,
 
   if (update_func != NULL) 
     continue_work = (*update_func)(update_data, _("Importing File(s) Through DCMTK"), (gdouble) 0.0);
-  divider = (num_files/AMIDE_UPDATE_DIVIDER < 1.0) ? 1 : (gint) rint(num_files/AMIDE_UPDATE_DIVIDER);
+  divider = (num_files/AMITK_UPDATE_DIVIDER < 1.0) ? 1 : (gint) rint(num_files/AMITK_UPDATE_DIVIDER);
 
   for (image=0; (image < num_files) && (continue_work); image++) {
     
@@ -1556,7 +1623,6 @@ static GList * import_dir(const gchar * filename,
   return data_sets;
 }
 
-
 GList * dcmtk_import(const gchar * filename,
 		     AmitkPreferences * preferences,
 		     AmitkUpdateFunc update_func,
@@ -1602,11 +1668,652 @@ GList * dcmtk_import(const gchar * filename,
 }
 
 
+static void insert_str(DcmDataset * dcm_ds, const DcmTag& tag, const gchar * str) {
+  OFCondition status;
+
+  status = dcm_ds->putAndInsertString(tag, str);
+
+  if (status.bad()) 
+    g_error("Error %s: failed writing tag of type %s\n",
+	    status.text(), tag.getVRName());
+  return;
+}
+
+static void insert_int(DcmDataset * dcm_ds, const DcmTag& tag, gint value) {
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%d",value);
+  insert_str(dcm_ds, tag, temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+static void insert_double(DcmDataset * dcm_ds, const DcmTag& tag, gdouble value) {
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%f",value);
+  insert_str(dcm_ds,tag,temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+static void insert_double2(DcmDataset * dcm_ds, const DcmTag& tag, gdouble value1, gdouble value2) {
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%f\\%f",value1,value2);
+  insert_str(dcm_ds,tag,temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+static void insert_double3(DcmDataset * dcm_ds, const DcmTag& tag, 
+			   gdouble value1, gdouble value2, gdouble value3) {
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%f\\%f\\%f",value1,value2,value3);
+  insert_str(dcm_ds,tag,temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+static void insert_double6(DcmDataset * dcm_ds, const DcmTag& tag, 
+			   gdouble value1, gdouble value2, gdouble value3,
+			   gdouble value4, gdouble value5, gdouble value6) {
+  gchar * temp_str;
+
+  temp_str = g_strdup_printf("%f\\%f\\%f\\%f\\%f\\%f",
+			     value1,value2,value3,value4,value5,value6);
+  insert_str(dcm_ds,tag,temp_str);
+  g_free(temp_str);
+
+  return;
+}
+
+
+void dcmtk_export(AmitkDataSet * ds, 
+		  const gchar * dirname,
+		  const gboolean resliced,
+		  const AmitkPoint resliced_voxel_size,
+		  const AmitkVolume * bounding_box,
+		  AmitkUpdateFunc update_func,
+		  gpointer update_data) {
+
+  DicomDirInterface dcm_dir;
+  DcmDataset * dcm_ds;
+  DcmFileFormat dcm_format;
+  DcmMetaInfo * dcm_metainfo;
+  char uid[100];
+  OFCondition status;
+  struct stat file_info;
+  gchar * subdirname=NULL;
+  gchar * full_subdirname=NULL;
+  gchar * filename=NULL;
+  gchar * full_filename=NULL;
+  gchar * temp_str=NULL;
+  gint i;
+  AmitkVolume * output_volume=NULL;
+  AmitkDataSet * slice = NULL;
+  AmitkVoxel dim;
+  AmitkPoint corner;
+  AmitkVoxel i_voxel, j_voxel;
+  gboolean format_changing;
+  gboolean format_size_short;
+  gpointer buffer = NULL;
+  amitk_format_SSHORT_t * sshort_buffer;
+  gdouble min,max;
+  gint buffer_size;
+  div_t x;
+  gint divider;
+  gint total_planes;
+  gboolean continue_work=TRUE;
+  gboolean valid;
+  AmitkPoint output_start_pt;
+  AmitkCanvasPoint pixel_size;
+  AmitkPoint new_offset;
+  amide_data_t value;
+  gint image_num;
+  gchar * saved_time_locale;
+  gchar * saved_numeric_locale;
+  AmitkAxes axes;
+  AmitkPoint dicom_offset;
+  AmitkPoint voxel_size;
+  struct tm time_structure;
+
+  saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
+  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+  setlocale(LC_TIME,"POSIX");  
+  setlocale(LC_NUMERIC,"POSIX");  
+
+  /* make the directory we'll output the dicom data in if it doesn't already exist */
+  if (stat(dirname, &file_info) == 0) {
+    if (!S_ISDIR(file_info.st_mode)) {
+      g_warning(_("File already exists with name: %s"), dirname);
+      goto cleanup;
+    }
+
+  } else {
+    if (
+#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
+	(mkdir(dirname) != 0) 
+#else /* unix */
+	(mkdir(dirname,0766) != 0) 
+#endif 
+	) {
+      g_warning(_("Couldn't create directory: %s"),dirname);
+      goto cleanup;
+    }
+  }
+
+#ifdef AMIDE_DEBUG  
+  dcm_dir.enableVerboseMode(TRUE);
+  dcm_dir.setLogStream(&ofConsole);
+#endif
+
+  /* create the DICOMDIR, unless already made in which case we'll append to it */
+  temp_str = g_strdup_printf("%s/DICOMDIR",dirname);
+  if (stat(temp_str,&file_info) == 0) {
+    if (!S_ISREG(file_info.st_mode)) {
+      g_warning(_("Existing DICOMDIR file %s is not a regular file"),temp_str);
+      g_free(temp_str);
+      goto cleanup;
+    }
+    status = dcm_dir.appendToDicomDir(DicomDirInterface::AP_Default,temp_str);
+    if (status.bad()) {
+      g_warning(_("Existing DICOMDIR file %s exists but is not appendable, error %s"),temp_str, status.text());
+      g_free(temp_str);
+      goto cleanup;
+    }
+  } else {
+    status = dcm_dir.createNewDicomDir(DicomDirInterface::AP_Default,temp_str);
+    if (status.bad()) {
+      g_warning(_("Could not create DICOMDIR file %s, error %s"),temp_str, status.text());
+      g_free(temp_str);
+      goto cleanup;
+    }
+  }
+  g_free(temp_str);
+
+  /* find a unique directory name */
+  i=0;
+  temp_str = NULL;
+  do {
+    if (subdirname != NULL) g_free(subdirname);
+    if (full_subdirname != NULL) g_free(full_subdirname);
+    subdirname = g_strdup_printf("DCM%03d", i);
+    full_subdirname = g_strdup_printf("%s%s%s",dirname,G_DIR_SEPARATOR_S,subdirname);
+    i++;
+  } while (stat(full_subdirname, &file_info) == 0);
+
+#if AMIDE_DEBUG
+  g_print("selected subdirname %s\n", subdirname);
+#endif
+
+  if (
+#ifdef MKDIR_TAKES_ONE_ARG /* win32 */
+      (mkdir(full_subdirname) != 0) 
+#else /* unix */
+      (mkdir(full_subdirname,0766) != 0) 
+#endif 
+      ) {
+    g_warning(_("Couldn't create directory: %s"),full_subdirname);
+  }
+
+
+  /* figure out our dimensions */
+  dim = AMITK_DATA_SET_DIM(ds);
+  if (resliced) {
+    if (bounding_box != NULL) 
+      output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(bounding_box)));
+    else
+      output_volume = amitk_volume_new();
+    if (output_volume == NULL) goto cleanup;
+
+    if (bounding_box != NULL) {
+      corner = AMITK_VOLUME_CORNER(output_volume);
+    } else {
+      AmitkCorners corners;
+      amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
+      corner = point_diff(corners[0], corners[1]);
+      amitk_space_set_offset(AMITK_SPACE(output_volume), 
+			     amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
+    }
+
+    voxel_size = resliced_voxel_size;
+    pixel_size.x = voxel_size.x;
+    pixel_size.y = voxel_size.y;
+    dim.x = (amide_intpoint_t) ceil(corner.x/voxel_size.x);
+    dim.y = (amide_intpoint_t) ceil(corner.y/voxel_size.y);
+    dim.z = (amide_intpoint_t) ceil(corner.z/voxel_size.z);
+    corner.z = voxel_size.z;
+#ifdef AMIDE_DEBUG
+    g_print("output dimensions %d %d %d, voxel size %f %f %f\n", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
+#else
+    g_warning(_("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f"), dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
+#endif
+  } else {
+    output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ds)));
+    voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
+    corner = AMITK_VOLUME_CORNER(ds);
+  }
+  amitk_volume_set_corner(output_volume, corner);
+  output_start_pt = AMITK_SPACE_OFFSET(output_volume);
+
+
+  /* create the dicom data structure */
+  dcm_ds = dcm_format.getDataset();
+  dcm_metainfo = dcm_format.getMetaInfo();
+  dcm_metainfo->putAndInsertString(DCM_SOPClassUID, UID_SecondaryCaptureImageStorage);
+  insert_str(dcm_ds,DCM_SeriesInstanceUID,
+	     dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT));
+
+  /* required dicom entries */
+  insert_str(dcm_ds,DCM_StudyInstanceUID, 
+	     dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT));
+  insert_str(dcm_ds, DCM_StudyID,"0");
+  insert_str(dcm_ds, DCM_SeriesNumber,"0");
+
+  /* other stuff */
+  if (AMITK_DATA_SET_SUBJECT_NAME(ds) != NULL) 
+    insert_str(dcm_ds,DCM_PatientsName, AMITK_DATA_SET_SUBJECT_NAME(ds));
+  if (AMITK_DATA_SET_SUBJECT_ID(ds) != NULL) 
+    insert_str(dcm_ds,DCM_PatientID, AMITK_DATA_SET_SUBJECT_ID(ds));
+  if (AMITK_DATA_SET_SUBJECT_DOB(ds) != NULL) 
+    insert_str(dcm_ds,DCM_PatientsBirthDate, AMITK_DATA_SET_SUBJECT_DOB(ds));
+  if (AMITK_OBJECT_NAME(ds) != NULL)
+    insert_str(dcm_ds,DCM_StudyDescription, AMITK_OBJECT_NAME(ds));
+  insert_double(dcm_ds,DCM_RadionuclideTotalDose, AMITK_DATA_SET_INJECTED_DOSE(ds));
+  insert_double(dcm_ds,DCM_PatientsWeight, AMITK_DATA_SET_SUBJECT_WEIGHT(ds));
+
+  switch(AMITK_DATA_SET_SUBJECT_ORIENTATION(ds)) {
+  case AMITK_SUBJECT_ORIENTATION_SUPINE_HEADFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "HFS"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_SUPINE_FEETFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "FFS"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_PRONE_HEADFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "HFP"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_PRONE_FEETFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "FFP"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_HEADFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "HFDR"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_RIGHT_DECUBITUS_FEETFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "FFDR"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_HEADFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "HFDL"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_LEFT_DECUBITUS_FEETFIRST:
+    insert_str(dcm_ds,DCM_PatientPosition, "FFDL"); 
+    break;
+  case AMITK_SUBJECT_ORIENTATION_UNKNOWN:
+  default:
+    break;
+  }
+
+  switch(AMITK_DATA_SET_MODALITY(ds)) {
+  case AMITK_MODALITY_PET:
+    insert_str(dcm_ds,DCM_Modality, "PT");
+    dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPClassUID,
+				     UID_PETImageStorage);
+    break;
+  case AMITK_MODALITY_SPECT:
+    insert_str(dcm_ds,DCM_Modality, "ST");
+    dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPClassUID,
+				     UID_NuclearMedicineImageStorage);
+    break;
+  case AMITK_MODALITY_CT:
+    insert_str(dcm_ds,DCM_Modality, "CT");
+    dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPClassUID,
+				     UID_CTImageStorage);
+    break;
+  case AMITK_MODALITY_MRI:
+    insert_str(dcm_ds,DCM_Modality, "MR");
+    dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPClassUID,
+				     UID_MRImageStorage);
+    break;
+  case AMITK_MODALITY_OTHER:
+  default:
+    insert_str(dcm_ds,DCM_Modality, "OT");
+    dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPClassUID,
+				     UID_SecondaryCaptureImageStorage);
+    break;
+  }
+
+  dcm_ds->putAndInsertUint16(DCM_Columns, dim.x);
+  dcm_ds->putAndInsertUint16(DCM_Rows, dim.y);
+  // dcm_ds->putAndInsertUint16(DCM_Planes, 1); /* we save one plane per file */
+
+  if (AMITK_DATA_SET_DIM_G(ds) > 1) 
+    insert_str(dcm_ds,DCM_SeriesType, "GATED\\IMAGE");
+  dcm_ds->putAndInsertUint16(DCM_NumberOfTimeSlots, AMITK_DATA_SET_DIM_G(ds));
+  
+  if (AMITK_DATA_SET_DIM_T(ds) > 1)
+    insert_str(dcm_ds,DCM_SeriesType, "DYNAMIC");
+  dcm_ds->putAndInsertUint16(DCM_NumberOfTimeSlices, AMITK_DATA_SET_DIM_T(ds));
+
+  /* figure out the format we'll be saving in */
+  if (!resliced) {
+    switch (AMITK_DATA_SET_FORMAT(ds)) {
+    case AMITK_FORMAT_SBYTE:
+    case AMITK_FORMAT_UBYTE:
+      format_changing=FALSE;
+      format_size_short=FALSE;
+      break;
+    case AMITK_FORMAT_SSHORT:
+    case AMITK_FORMAT_USHORT:
+      format_changing=FALSE;
+      format_size_short=TRUE;
+      break;
+    case AMITK_FORMAT_FLOAT:
+    case AMITK_FORMAT_DOUBLE:
+    case AMITK_FORMAT_SINT:
+    case AMITK_FORMAT_UINT:
+      format_changing=TRUE; /* well save as signed shorts */
+      format_size_short=TRUE;
+      break;
+    default:
+      format_changing=TRUE; 
+      format_size_short=TRUE;
+      g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+      break;
+    }
+  } else {
+    format_changing=TRUE; 
+    format_size_short=TRUE;
+  }
+
+  dcm_ds->putAndInsertUint16(DCM_BitsAllocated,
+			     format_changing ? 
+			     8*amitk_format_sizes[AMITK_FORMAT_SSHORT] :
+			     8*amitk_format_sizes[AMITK_DATA_SET_FORMAT(ds)]);
+  dcm_ds->putAndInsertUint16(DCM_BitsStored,
+			     format_changing ? 
+			     8*amitk_format_sizes[AMITK_FORMAT_SSHORT] :
+			     8*amitk_format_sizes[AMITK_DATA_SET_FORMAT(ds)]);
+  dcm_ds->putAndInsertUint16(DCM_HighBit,
+			     format_changing ? 
+			     8*amitk_format_sizes[AMITK_FORMAT_SSHORT]-1 :
+			     8*amitk_format_sizes[AMITK_DATA_SET_FORMAT(ds)]-1);
+  dcm_ds->putAndInsertUint16(DCM_PixelRepresentation,
+			     format_changing ?
+			     amitk_format_signed[AMITK_FORMAT_SSHORT] :
+			     amitk_format_signed[AMITK_DATA_SET_FORMAT(ds)]);
+  buffer_size = dim.y*dim.x*(format_changing ? 
+			     amitk_format_sizes[AMITK_FORMAT_SSHORT] :
+			     amitk_format_sizes[AMITK_DATA_SET_FORMAT(ds)]);
+
+  insert_double2(dcm_ds, DCM_PixelSpacing,voxel_size.y,voxel_size.x);
+
+  insert_double(dcm_ds, DCM_SpacingBetweenSlices, voxel_size.z);
+  insert_double(dcm_ds, DCM_SliceThickness, voxel_size.z);
+
+  /* take a stab at converting the study date and putting it into the dicom header */
+  if (AMITK_DATA_SET_SCAN_DATE(ds) != NULL) {
+#ifdef HAVE_STRPTIME
+    valid = (strptime(AMITK_DATA_SET_SCAN_DATE(ds),"%c",&time_structure) != NULL);
+    if (!valid) /* try a less locale specific format string */
+      valid = (strptime(AMITK_DATA_SET_SCAN_DATE(ds),"%a %b %d %T %Y",&time_structure) != NULL);
+#else
+    valid = FALSE;
+#endif
+
+    if (valid) {
+      temp_str = g_strdup_printf("%04d%02d%02d",
+				 time_structure.tm_year+1900,
+				 time_structure.tm_mon+1,
+				 time_structure.tm_mday);
+      insert_str(dcm_ds, DCM_SeriesDate, temp_str);
+      insert_str(dcm_ds, DCM_AcquisitionDate, temp_str);
+      insert_str(dcm_ds, DCM_StudyDate, temp_str);
+      g_free(temp_str);
+      
+      temp_str = g_strdup_printf("%02d%02d%02d",
+				 time_structure.tm_hour,
+				 time_structure.tm_min,
+				 time_structure.tm_sec);
+      insert_str(dcm_ds, DCM_SeriesTime, temp_str);
+      insert_str(dcm_ds, DCM_AcquisitionTime, temp_str);
+      insert_str(dcm_ds, DCM_StudyTime, temp_str);
+      insert_str(dcm_ds, DCM_RadiopharmaceuticalStartTime,temp_str); /* dose already corrected to start time */
+      g_free(temp_str);
+    } else {
+      insert_str(dcm_ds,DCM_StudyDate, AMITK_DATA_SET_SCAN_DATE(ds));
+      insert_str(dcm_ds, DCM_StudyTime, "000000");
+      insert_str(dcm_ds,DCM_RadiopharmaceuticalStartTime,"00000");
+    }
+  }
+
+  /* put in orientation - see note in read_dicom_file about AMIDE versus DICOM orientation */
+  /* do flips for dicom convention */
+  amitk_axes_copy_in_place(axes, AMITK_SPACE_AXES(ds));
+  axes[AMITK_AXIS_X].y *= -1.0;
+  axes[AMITK_AXIS_X].z *= -1.0;
+  axes[AMITK_AXIS_Y].y *= -1.0;
+  axes[AMITK_AXIS_Y].z *= -1.0;
+  insert_double6(dcm_ds, DCM_ImageOrientationPatient,
+		 axes[AMITK_AXIS_X].x,axes[AMITK_AXIS_X].y,axes[AMITK_AXIS_X].z,
+		 axes[AMITK_AXIS_Y].x,axes[AMITK_AXIS_Y].y,axes[AMITK_AXIS_Y].z);
+
+
+  /* and finally, get to the real work */
+  if (update_func != NULL) {
+    temp_str = g_strdup_printf(_("Exporting File Through DCMTK:\n   %s"), dirname);
+    continue_work = (*update_func)(update_data, temp_str, (gdouble) 0.0);
+    g_free(temp_str);
+  }
+  total_planes = dim.z*dim.g*dim.t;
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (gint) rint(total_planes/AMITK_UPDATE_DIVIDER);
+
+  image_num=0;
+  j_voxel = zero_voxel;
+  i_voxel = zero_voxel;
+  for (i_voxel.t = 0; (i_voxel.t < dim.t) && (continue_work); i_voxel.t++) {
+
+    insert_int(dcm_ds, DCM_ActualFrameDuration,
+	       (int) (1000*amitk_data_set_get_frame_duration(ds,i_voxel.t))); /* into ms */
+    insert_double(dcm_ds,DCM_FrameReferenceTime,
+		  1000.0*amitk_data_set_get_start_time(ds,i_voxel.t));
+
+    for (i_voxel.g = 0 ; (i_voxel.g < dim.g) && (continue_work); i_voxel.g++) {
+
+      /* reset the output slice */
+      amitk_space_set_offset(AMITK_SPACE(output_volume), output_start_pt);
+
+      for (i_voxel.z = 0 ; (i_voxel.z < dim.z) && (continue_work); i_voxel.z++, image_num++) {
+
+	if (update_func != NULL) {
+	  x = div(image_num,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, ((gdouble) image_num)/((gdouble) total_planes));
+
+	}
+	
+	/* get our transfer buffer */
+	buffer = g_try_malloc0(buffer_size);
+	if (buffer == NULL) {
+	  g_warning(_("Could not malloc transfer buffer"));
+	  goto cleanup;
+	}
+
+	/* set things up if resliced or format changing */
+	if (resliced) {
+	  slice = amitk_data_set_get_slice(ds, 
+					   amitk_data_set_get_start_time(ds,i_voxel.t), 
+					   amitk_data_set_get_frame_duration(ds,i_voxel.t), 
+					   i_voxel.g, pixel_size, output_volume);
+
+	  if ((AMITK_DATA_SET_DIM_X(slice) != dim.x) || (AMITK_DATA_SET_DIM_Y(slice) != dim.y)) {
+	    g_warning(_("Error in generating resliced data, %dx%d != %dx%d"),
+		      AMITK_DATA_SET_DIM_X(slice), AMITK_DATA_SET_DIM_Y(slice),
+		      dim.x, dim.y);
+	    goto cleanup;
+	  }
+
+	  min = amitk_data_set_get_global_min(slice);
+	  max = amitk_data_set_get_global_max(slice);
+	  g_print("min max %f %f\n",min,max);
+
+	} else if (format_changing) { 
+	  amitk_raw_data_slice_calc_min_max(AMITK_DATA_SET_RAW_DATA(ds),
+					    i_voxel.t,
+					    i_voxel.g,
+					    i_voxel.z,
+					    &min, &max);
+
+	} 
+
+	/* transfer into the new buffer */
+	if (format_changing) {
+	  max = MAX(fabs(min), max);
+	  sshort_buffer = (amitk_format_SSHORT_t *) buffer;
+	  i=0;
+
+	  for (i_voxel.y=0, j_voxel.y=0; i_voxel.y < dim.y; i_voxel.y++, j_voxel.y++)
+	    for (i_voxel.x=0, j_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, j_voxel.x++,i++) {
+	      if (resliced) 
+		value = AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice, j_voxel);
+	      else
+		value = amitk_data_set_get_value(ds, i_voxel);
+	      sshort_buffer[i] = (amitk_format_SSHORT_t) rint(amitk_format_max[AMITK_FORMAT_SSHORT]*value/max);
+	    }
+
+	} else { /* short or char type */
+	  i_voxel.y = 0;
+	  i_voxel.x = 0;
+	  memcpy(buffer, amitk_raw_data_get_pointer(AMITK_DATA_SET_RAW_DATA(ds), i_voxel), buffer_size);
+	}
+
+	/* convert to little endian */
+	/* note, ushort conversion is exactly the same as sshort, so the below works */
+	if (format_size_short) {
+	  i=0;
+	  sshort_buffer = (amitk_format_SSHORT_t *) buffer;
+	  for (i_voxel.y=0; i_voxel.y < dim.y; i_voxel.y++)
+	    for (i_voxel.x=0; i_voxel.x < dim.x; i_voxel.x++,i++) 
+	      sshort_buffer[i] = GINT16_TO_LE(sshort_buffer[i]);
+	}
+
+	/* and store */
+	dcm_ds->putAndInsertUint8Array(DCM_PixelData, (Uint8*) buffer, buffer_size);
+
+	/* store the scaling factor and offset */
+	insert_double(dcm_ds,DCM_RescaleSlope, 
+		      (resliced || format_changing) ? 
+		      max/amitk_format_max[AMITK_FORMAT_SSHORT] :
+		      amitk_data_set_get_scaling_factor(ds,i_voxel));
+
+	insert_double(dcm_ds,DCM_RescaleIntercept, 
+		      (resliced || format_changing) ? 0.0 :
+		      amitk_data_set_get_scaling_intercept(ds,i_voxel));
+
+	/* and get it an identifier */
+	dcmGenerateUniqueIdentifier(uid, SITE_INSTANCE_UID_ROOT);
+	insert_str(dcm_ds,DCM_SOPInstanceUID,uid);
+	
+	/* set the meta info as well */
+	dcm_metainfo->putAndInsertString(DCM_MediaStorageSOPInstanceUID,uid);
+
+	/* and some other data */
+	insert_int(dcm_ds,DCM_InstanceNumber, image_num);
+
+	/* and save it's position in space - 
+	   see note in dicom_read_file about DICOM versus AMIDE conventions */
+	dicom_offset = AMITK_SPACE_OFFSET(output_volume);
+	dicom_offset.y = -1.0*dicom_offset.y; /* DICOM specifies y axis in wrong direction */
+	dicom_offset.z = -1.0*dicom_offset.z; /* DICOM specifies z axis in wrong direction */
+	insert_double3(dcm_ds, DCM_ImagePositionPatient,
+		       dicom_offset.x,dicom_offset.y, dicom_offset.z);
+	insert_double(dcm_ds, DCM_SliceLocation, dicom_offset.z);
+
+	/* and write it on out */
+	filename = g_strdup_printf("%s%sIMG%05d",subdirname,G_DIR_SEPARATOR_S,image_num);
+	full_filename = g_strdup_printf("%s%s%s",dirname, G_DIR_SEPARATOR_S,filename);
+	status = dcm_format.saveFile(full_filename, EXS_LittleEndianExplicit);
+	if (status.bad()) {
+	  g_warning(_("couldn't write out file %s, error %s"), full_filename, status.text());
+	  goto cleanup;
+	}
+
+	/* add it to the DICOMDIR file */
+	status = dcm_dir.addDicomFile(filename,dirname);
+	if (status.bad()) {
+	  g_warning(_("couldn't append file %s to DICOMDIR, error %s"), filename, status.text());
+	  goto cleanup;
+	}
+
+	/* cleanups */
+	if (filename != NULL) {
+	  g_free(filename);
+	  filename = NULL;
+	}
+
+	if (full_filename != NULL) {
+	  g_free(full_filename);
+	  full_filename = NULL;
+	}
+
+	if (buffer != NULL) {
+	  g_free(buffer);
+	  buffer = NULL;
+	}
+
+	if (slice != NULL) 
+	  slice = AMITK_DATA_SET(amitk_object_unref(slice));
+
+	/* advance for next iteration */
+	new_offset = AMITK_SPACE_OFFSET(output_volume);
+	new_offset.z += voxel_size.z;
+	amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
+
+      } /* i_voxel.z */
+    } /* i_voxel.g */
+  } /* i_voxel.t */
+
+  status = dcm_dir.writeDicomDir();
+  if (status.bad()) {
+    g_warning(_("Failed to write DICOMDIR file, error %s\n"), status.text());
+    goto cleanup;
+  }
+
+ cleanup:
+
+  if (output_volume != NULL)
+    output_volume = AMITK_VOLUME(amitk_object_unref(output_volume));
+
+  if (slice != NULL)
+    slice = AMITK_DATA_SET(amitk_object_unref(slice));
+  
+  if (buffer != NULL)
+    g_free(buffer);
+
+  if (filename != NULL)
+    g_free(filename);
+
+  if (full_filename != NULL)
+    g_free(full_filename);
+
+  if (subdirname != NULL)
+    g_free(subdirname);
+
+  if (full_subdirname != NULL)
+    g_free(full_subdirname);
+
+  if (update_func != NULL) /* remove progress bar */
+    (*update_func)(update_data, NULL, (gdouble) 2.0); 
+
+  setlocale(LC_NUMERIC, saved_time_locale);
+  setlocale(LC_NUMERIC, saved_numeric_locale);
+  g_free(saved_time_locale);
+  g_free(saved_numeric_locale);
+  return;
+}
 
 #endif /* AMIDE_LIBDCMDATA_SUPPORT */
-
-
-
-
-
-

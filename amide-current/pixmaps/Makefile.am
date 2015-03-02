@@ -11,17 +11,42 @@ EXTRA_DIST  = $(pixmap_DATA)
 
 pixbuf_csource=$(GDK_PIXBUF_CSOURCE)
 BUILT_SOURCES = \
+	align_pt.h \
 	amide_logo.h \
-	amide_logo_small.h \
+	fuse_type_blend.h \
+	fuse_type_overlay.h \
+	interpolation_nearest_neighbor.h \
+	interpolation_trilinear.h \
+	layout_linear.h \
+	layout_orthogonal.h \
 	panels_linear_x.h \
 	panels_linear_y.h \
 	panels_mixed.h \
-	thresholding_per_slice_icon.h \
-	thresholding_per_frame_icon.h \
-	thresholding_interpolate_frames_icon.h \
-	thresholding_global_icon.h \
+	roi_box.h \
+	roi_cylinder.h \
+	roi_ellipsoid.h \
+	roi_isocontour_2d.h \
+	roi_isocontour_3d.h \
+	roi_freehand_2d.h \
+	roi_freehand_3d.h \
+	study.h \
+	target.h \
+	threshold_style_min_max.h \
+	threshold_style_center_width.h \
+	thresholding.h \
+	thresholding_per_slice.h \
+	thresholding_per_frame.h \
+	thresholding_interpolate_frames.h \
+	thresholding_global.h \
 	three_compartment.h \
+	transfer_function.h \
 	two_compartment.h \
+	view_transverse.h \
+	view_coronal.h \
+	view_sagittal.h \
+	view_single.h \
+	view_linked.h \
+	view_linked3.h \
 	window_abdomen.h \
 	window_brain.h \
 	window_extremities.h \
@@ -31,18 +56,8 @@ BUILT_SOURCES = \
 	window_skull_base.h \
 	window_spine_a.h \
 	window_spine_b.h \
-	window_thorax_soft_tissue.h \
-	align_pt_icon.h \
-	study_icon.h \
-	box_icon.h \
-	cylinder_icon.h \
-	ellipsoid_icon.h \
-	isocontour_2d_icon.h \
-	isocontour_3d_icon.h \
-	freehand_2d_icon.h \
-	freehand_3d_icon.h \
-	min_max_icon.h \
-	center_width_icon.h
+	window_thorax_soft_tissue.h
+
 ##	window_bone_icon.h \
 ##	window_soft_tissue_icon.h \
 

@@ -25,12 +25,9 @@
 
 
 #include "amide_config.h"
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
+#include "amide.h"
 #include "ui_study.h"
 #include "ui_preferences_dialog.h"
-#include "pixmaps.h"
 #include "amitk_canvas.h"
 #include "amitk_color_table_menu.h"
 #include "amitk_threshold.h"
@@ -50,7 +47,6 @@ N_("These preferences are used only for new data sets.  \n"
 
 
 
-#ifndef AMIDE_WIN32_HACKS /* don't get saved anyway, so no sense in showing them */
 static void roi_width_cb(GtkWidget * widget, gpointer data);
 #ifndef AMIDE_LIBGNOMECANVAS_AA
 static void line_style_cb(GtkWidget * widget, gpointer data);
@@ -61,19 +57,16 @@ static void panel_layout_cb(GtkWidget * widget, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
 static void threshold_style_cb(GtkWidget * widget, gpointer data);
-#endif
 
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data);
-#ifndef AMIDE_WIN32_HACKS
 static void change_default_directory_cb(GtkWidget * widget, gpointer data);
-#endif
+/*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data);*/
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer preferences);
 
 
-#ifndef AMIDE_WIN32_HACKS
 
 /* function called when the roi width has been changed */
 static void roi_width_cb(GtkWidget * widget, gpointer data) {
@@ -108,11 +101,7 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   g_return_if_fail(ui_study->study != NULL);
 
   /* figure out which menu item called me */
-#if 1
-  new_line_style = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   new_line_style = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   amitk_preferences_set_canvas_line_style(ui_study->preferences, new_line_style);
 
   /* update the roi indicator */
@@ -193,10 +182,6 @@ static void threshold_style_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-#endif /* AMIDE_WIN32_HACKS */
-
-
-
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
@@ -231,19 +216,19 @@ static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-#ifndef AMIDE_WIN32_HACKS
+/*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data) { */
 static void change_default_directory_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   gchar * str;
 
+  /*  str = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc)); */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
   amitk_preferences_set_default_directory(ui_study->preferences, str);
   g_free(str);
 
   return;
 }
-#endif
 
 
 /* changing the color table of a rendering context */
@@ -254,11 +239,7 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
   AmitkColorTable color_table;
 
   modality = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "modality"));
-#if 1
-  color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   amitk_preferences_set_color_table(ui_study->preferences, modality, color_table);
 
   return;
@@ -310,7 +291,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * notebook;
   guint table_row;
 
-#ifndef AMIDE_WIN32_HACKS
   GtkWidget * maintain_size_button;
   GtkWidget * roi_width_spin;
   GtkWidget * target_size_spin;
@@ -331,10 +311,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   AmitkThresholdStyle i_threshold_style;
   GtkWidget * style_buttons[AMITK_THRESHOLD_STYLE_NUM];
   GtkWidget * hbox;
-#endif
-
-
-
 
   /* sanity checks */
   g_return_if_fail(ui_study != NULL);
@@ -347,7 +323,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   }
     
   temp_string = g_strdup_printf(_("%s: Preferences Dialog"), PACKAGE);
-  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_study->app),
+  dialog = gtk_dialog_new_with_buttons (temp_string,  ui_study->window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_HELP, GTK_RESPONSE_HELP,
 					GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
@@ -364,7 +340,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), notebook);
 
   
-#ifndef AMIDE_WIN32_HACKS
 
   /* ---------------------------
      ROI/Canvas page 
@@ -411,13 +386,8 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_object_set_data(G_OBJECT(dialog), "roi_item", roi_item);
 
 #ifndef AMIDE_LIBGNOMECANVAS_AA
-#if 1
-  gtk_option_menu_set_history(GTK_OPTION_MENU(line_style_menu),
-			      AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
-#else
   gtk_combo_box_set_active(GTK_COMBO_BOX(line_style_menu),
 			   AMITK_PREFERENCES_CANVAS_LINE_STYLE(ui_study->preferences));
-#endif
   g_signal_connect(G_OBJECT(line_style_menu), "changed", G_CALLBACK(line_style_cb), ui_study);
 #endif
 
@@ -544,13 +514,8 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
     menu = amitk_color_table_menu_new();
     gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
-				AMITK_PREFERENCES_COLOR_TABLE(ui_study->preferences, i_modality));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(menu),
 			     AMITK_PREFERENCES_COLOR_TABLE(ui_study->preferences, i_modality));
-#endif
     g_object_set_data(G_OBJECT(menu), "modality", GINT_TO_POINTER(i_modality));
     g_signal_connect(G_OBJECT(menu), "changed",  G_CALLBACK(color_table_cb), ui_study);
     gtk_widget_show(menu);
@@ -559,8 +524,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   }
 
   gtk_widget_show_all(packing_table);
-
-#endif /* AMIDE_WIN32_HACKS */
 
 
   /* ---------------------------
@@ -590,7 +553,7 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
 
-  label = gtk_label_new(_("Don't Prompt for \"Save Changes\" on Exit:"));
+  label = gtk_label_new(_("Prompt for \"Save Changes\" on Exit:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -620,22 +583,32 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
 
-#ifndef AMIDE_WIN32_HACKS
   label = gtk_label_new(_("Default Directory on Startup:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  /* gtk_file_chooser isn't really workable until the signal file-set is implemented
+     in gtk version 2.12. Will need to figure out a way to set this as "blank" as well
+     to allow behavior without a specified default-directory */
+  /*  entry =  gtk_file_chooser_button_new(_("Default Directory on Startup:"),
+  				       GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER);
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (entry),
+  				      (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) != NULL) ?
+  				      AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
+    g_signal_connect(G_OBJECT(entry), "file-set", G_CALLBACK(change_default_directory_cb), ui_study);
+  */
   entry = gtk_entry_new();
   gtk_entry_set_text(GTK_ENTRY(entry), (AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) != NULL) ?
-		     AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
+  		     AMITK_PREFERENCES_DEFAULT_DIRECTORY(ui_study->preferences) : "");
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_default_directory_cb), ui_study);
+
   gtk_table_attach(GTK_TABLE(packing_table), entry, 
 		   1,2, table_row, table_row+1,
 		   GTK_FILL|GTK_EXPAND, 0, X_PADDING, Y_PADDING);
 
   table_row++;
-#endif
 
   gtk_widget_show_all(packing_table);
 

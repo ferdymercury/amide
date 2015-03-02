@@ -1,6 +1,6 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
-Version: 	0.8.23
+Version: 	0.9.0
 Release: 	1
 License: 	GPL
 Group: 		Applications/Engineering
@@ -9,26 +9,28 @@ URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
 Packager: 	Andy Loening <loening at alum dot mit dot edu>
 
-Requires:	xmedcon >= 0.9.9.7
+Requires:	xmedcon >= 0.10.0
 Requires:	gsl
 Requires:	volpack
 Requires:	libfame >= 0.9.1
 Requires:	dcmtk >= 3.5.4
+Requires:       gtk2 >= 2.10
+Requires:	gnome-vfs2
 
-PreReq:		scrollkeeper >= 0.1.4
+Requires(post):	scrollkeeper >= 0.1.4
 
 BuildRequires:  xmedcon-devel
 BuildRequires:  volpack-devel 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gtk-doc 
-BuildRequires:  libgnomeui-devel 
 BuildRequires:  libgnomecanvas-devel 
 BuildRequires:  libfame-devel >= 0.9.1 
 BuildRequires:  gsl-devel
 BuildRequires:  dcmtk-devel
 BuildRequires:  perl-XML-Parser
 BuildRequires:  glib2-devel
-BuildRequires:  gtk2-devel
+BuildRequires:  gtk2-devel >= 2.10
+BuildRequires:	gnome-vfs2-devel
 
 %description 
 AMIDE is a tool for viewing and analyzing medical image data sets.

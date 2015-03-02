@@ -76,7 +76,6 @@ void free_array_element(gpointer data, gpointer user_data) {
 static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
 
   analysis_gate_t * return_list;
-  guint i;
 
   if (gate_analysis == NULL)
     return gate_analysis;
@@ -90,10 +89,7 @@ static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
   /* if we've removed all reference's, free the roi */
   if (gate_analysis->ref_count == 0) {
 
-    /* g_ptr_array is a glib 2.4 function.... */
-    //  g_ptr_array_foreach(data_array, free_array_element, NULL); /* free the elements */
-    for (i = 0; i < gate_analysis->data_array->len; i++)
-      free_array_element(gate_analysis->data_array->pdata[i], NULL);
+    g_ptr_array_foreach(gate_analysis->data_array, free_array_element, NULL); /* free the elements */
     g_ptr_array_free(gate_analysis->data_array, TRUE); /* TRUE frees the array of pointers to elements as well */
 
     /* recursively delete rest of list */

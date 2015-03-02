@@ -16,6 +16,15 @@ AmitkObjectDialog
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### STRUCT AmitkObjectDialog ##### -->
+<para>
+
+</para>
+
+
 <!-- ##### FUNCTION amitk_object_dialog_new ##### -->
 <para>
 

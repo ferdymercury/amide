@@ -14,6 +14,9 @@ AmitkTreeView
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### ENUM AmitkTreeViewMode ##### -->
 <para>
 
@@ -22,6 +25,29 @@ AmitkTreeView
 @AMITK_TREE_VIEW_MODE_MAIN: 
 @AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION: 
 @AMITK_TREE_VIEW_MODE_NUM: 
+
+<!-- ##### STRUCT AmitkTreeView ##### -->
+<para>
+
+</para>
+
+@tree_view: 
+@mode: 
+@study: 
+@active_object: 
+@preferences: 
+@progress_dialog: 
+@select_column: 
+@prev_view_mode: 
+@mouse_x: 
+@mouse_y: 
+@current_path: 
+@drag_begin_possible: 
+@press_x: 
+@press_y: 
+@src_object: 
+@dest_object: 
+@drag_list: 
 
 <!-- ##### FUNCTION amitk_tree_view_new ##### -->
 <para>

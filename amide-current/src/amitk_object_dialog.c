@@ -27,6 +27,7 @@
 
 
 #include "amide_config.h"
+#include "amide.h"
 #include "amitk_marshal.h"
 #include "amitk_object_dialog.h"
 #include "amitk_study.h"
@@ -35,7 +36,6 @@
 #include "amitk_window_edit.h"
 #include "amitk_common.h"
 #include "ui_common.h"
-#include "pixmaps.h"
 
 
 #define AMITK_RESPONSE_REVERT 2
@@ -51,7 +51,6 @@ static void dialog_update_entries  (AmitkObjectDialog * dialog);
 static void dialog_update_interpolation(AmitkObjectDialog * dialog);
 static void dialog_update_conversion(AmitkObjectDialog * dialog);
 
-static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer data);
 static void dialog_response_cb        (GtkDialog * dialog,
 				       gint        response_id,
 				       gpointer    data);
@@ -190,19 +189,18 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
   GtkWidget * label;
-#if 1
-  GtkWidget * menu;
-  GtkWidget * menuitem;
-#endif
   GtkWidget * hseparator;
   GtkWidget * axis_indicator;
   GtkWidget * check_button;
   GtkWidget * notebook;
   GtkWidget * space_edit;
   GtkWidget * hbox;
-  GtkWidget * pix_box;
+  GtkWidget * image;
   GtkWidget * button;
+#if (GTK_MINOR_VERSION >= 12)
+#else
   GtkTooltips * radio_button_tips;
+#endif
   gint table_row;
   gint inner_table_row;
   gint table_column;
@@ -221,7 +219,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   dialog->original_object = amitk_object_copy(object);
   dialog->object = amitk_object_ref(object);
 
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "response",
   		   G_CALLBACK(dialog_response_cb), NULL);
 
@@ -270,12 +268,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
     
-#if 1
-    dialog->roi_type_menu = gtk_option_menu_new();
-    menu = gtk_menu_new();
-#else
     dialog->roi_type_menu = gtk_combo_box_new_text();
-#endif
 
     switch(AMITK_ROI_TYPE(object)) {
     case AMITK_ROI_TYPE_ELLIPSOID:
@@ -296,19 +289,9 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       break;
     }
 
-#if 1
-    for (i_roi_type=type_start; i_roi_type<=type_end; i_roi_type++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_roi_type_get_name(i_roi_type));
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->roi_type_menu), menu);
-    gtk_widget_show(menu);
-#else
     for (i_roi_type=type_start; i_roi_type<=type_end; i_roi_type++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->roi_type_menu),
     				amitk_roi_type_get_name(i_roi_type));
-#endif
     if (type_start != type_end)
       g_signal_connect(G_OBJECT(dialog->roi_type_menu), "changed", G_CALLBACK(dialog_change_roi_type_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->roi_type_menu, 1,2, 
@@ -348,23 +331,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-#if 1
-    menu = gtk_menu_new();
-    for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_modality_get_name(i_modality));
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    
-    dialog->modality_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->modality_menu), menu);
-    gtk_widget_show(menu);
-#else
     dialog->modality_menu = gtk_combo_box_new_text();
     for (i_modality=0; i_modality<AMITK_MODALITY_NUM; i_modality++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->modality_menu),
 				amitk_modality_get_name(i_modality));
-#endif
     g_signal_connect(G_OBJECT(dialog->modality_menu), "changed", G_CALLBACK(dialog_change_modality_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->modality_menu, 3,4, 
 		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -382,7 +352,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(hbox);
 
+#if (GTK_MINOR_VERSION >= 12)
+#else
     radio_button_tips = gtk_tooltips_new();
+#endif
 
     for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) {
 
@@ -392,18 +365,30 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	dialog->interpolation_button[i_interpolation] = 
 	  gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(dialog->interpolation_button[0]));
 
-      pix_box = gtk_hbox_new(FALSE, 0);
-      gtk_container_add(GTK_CONTAINER(dialog->interpolation_button[i_interpolation]), pix_box);
-      gtk_widget_show(pix_box);
-      g_signal_connect(G_OBJECT(pix_box), "realize", 
-		       G_CALLBACK(dialog_realize_interpolation_icon_cb), 
-		       GINT_TO_POINTER(i_interpolation));
+      switch (i_interpolation) {
+      case AMITK_INTERPOLATION_NEAREST_NEIGHBOR:
+	image = gtk_image_new_from_stock("amide_icon_interpolation_nearest_neighbor",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      case AMITK_INTERPOLATION_TRILINEAR:
+	image = gtk_image_new_from_stock("amide_icon_interpolation_trilinear",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      default:
+	g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+	break;
+      }
+      gtk_button_set_image(GTK_BUTTON(dialog->interpolation_button[i_interpolation]), image);
+
       
       gtk_box_pack_start(GTK_BOX(hbox), dialog->interpolation_button[i_interpolation], FALSE, FALSE, 3);
       gtk_widget_show(dialog->interpolation_button[i_interpolation]);
+#if (GTK_MINOR_VERSION >= 12)
+      gtk_widget_set_tooltip_text(dialog->interpolation_button[i_interpolation],
+				  amitk_interpolation_explanations[i_interpolation]);
+#else
       gtk_tooltips_set_tip(radio_button_tips, dialog->interpolation_button[i_interpolation], 
 			   amitk_interpolation_get_name(i_interpolation),
 			   amitk_interpolation_explanations[i_interpolation]);
+#endif
       
       g_object_set_data(G_OBJECT(dialog->interpolation_button[i_interpolation]), "interpolation", 
 			GINT_TO_POINTER(i_interpolation));
@@ -471,23 +456,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-#if 1
-    menu = gtk_menu_new();
-    for (i_subject_orientation=0; i_subject_orientation<AMITK_SUBJECT_ORIENTATION_NUM; i_subject_orientation++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_subject_orientation_get_name(i_subject_orientation));
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    
-    dialog->subject_orientation_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->subject_orientation_menu), menu);
-    gtk_widget_show(menu);
-#else
     dialog->subject_orientation_menu = gtk_combo_box_new_text();
     for (i_subject_orientation=0; i_subject_orientation<AMITK_SUBJECT_ORIENTATION_NUM; i_subject_orientation++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->subject_orientation_menu),
 				amitk_subject_orientation_get_name(i_subject_orientation));
-#endif
     g_signal_connect(G_OBJECT(dialog->subject_orientation_menu), "changed", G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->subject_orientation_menu, 1,2, 
 		     table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -584,23 +556,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_widget_show(dialog->dose_spin);
 
     /* injected dose units */
-#if 1
-    menu = gtk_menu_new();
-    for (i_dose_unit=0; i_dose_unit<AMITK_DOSE_UNIT_NUM; i_dose_unit++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_dose_unit_names[i_dose_unit]);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    
-    dialog->dose_unit_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->dose_unit_menu), menu);
-    gtk_widget_show(menu);
-#else
     dialog->dose_unit_menu = gtk_combo_box_new_text();
     for (i_dose_unit=0; i_dose_unit<AMITK_DOSE_UNIT_NUM; i_dose_unit++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->dose_unit_menu),
 				amitk_dose_unit_names[i_dose_unit]);				
-#endif
     g_signal_connect(G_OBJECT(dialog->dose_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_dose_unit_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->dose_unit_menu, 
@@ -629,23 +588,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_widget_show(dialog->weight_spin);
 
     /* subject weight units */
-#if 1
-    menu = gtk_menu_new();
-    for (i_weight_unit=0; i_weight_unit<AMITK_WEIGHT_UNIT_NUM; i_weight_unit++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_weight_unit_names[i_weight_unit]);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    
-    dialog->weight_unit_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->weight_unit_menu), menu);
-    gtk_widget_show(menu);
-#else
     dialog->weight_unit_menu = gtk_combo_box_new_text();
     for (i_weight_unit=0; i_weight_unit<AMITK_WEIGHT_UNIT_NUM; i_weight_unit++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->weight_unit_menu),
 				amitk_weight_unit_names[i_weight_unit]);
-#endif
     g_signal_connect(G_OBJECT(dialog->weight_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_weight_unit_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->weight_unit_menu, 
@@ -674,23 +620,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_widget_show(dialog->cylinder_spin);
 
     /* cylinder factor units */
-#if 1
-    menu = gtk_menu_new();
-    for (i_cylinder_unit=0; i_cylinder_unit<AMITK_CYLINDER_UNIT_NUM; i_cylinder_unit++) {
-      menuitem = gtk_menu_item_new_with_label(amitk_cylinder_unit_names[i_cylinder_unit]);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      gtk_widget_show(menuitem);
-    }
-    
-    dialog->cylinder_unit_menu = gtk_option_menu_new();
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(dialog->cylinder_unit_menu), menu);
-    gtk_widget_show(menu);
-#else
     dialog->cylinder_unit_menu = gtk_combo_box_new_text();
     for (i_cylinder_unit=0; i_cylinder_unit<AMITK_CYLINDER_UNIT_NUM; i_cylinder_unit++) 
       gtk_combo_box_append_text(GTK_COMBO_BOX(dialog->cylinder_unit_menu),
 				amitk_cylinder_unit_names[i_cylinder_unit]);				
-#endif
     g_signal_connect(G_OBJECT(dialog->cylinder_unit_menu), "changed", 
 		     G_CALLBACK(dialog_change_cylinder_unit_cb), dialog);
     gtk_table_attach(GTK_TABLE(packing_table), dialog->cylinder_unit_menu, 
@@ -1347,11 +1280,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   if (AMITK_IS_ROI(dialog->object)) {
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->roi_type_menu),G_CALLBACK(dialog_change_roi_type_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->roi_type_menu), AMITK_ROI_TYPE(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->roi_type_menu), AMITK_ROI_TYPE(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->roi_type_menu),G_CALLBACK(dialog_change_roi_type_cb), dialog);
 
   } else if (AMITK_IS_DATA_SET(dialog->object)) {
@@ -1373,19 +1302,11 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->subject_dob_entry),G_CALLBACK(dialog_change_subject_dob_cb), dialog);
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->modality_menu),G_CALLBACK(dialog_change_modality_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->modality_menu), AMITK_DATA_SET_MODALITY(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->modality_menu), AMITK_DATA_SET_MODALITY(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->modality_menu),G_CALLBACK(dialog_change_modality_cb), dialog);
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->subject_orientation_menu),G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->subject_orientation_menu), AMITK_DATA_SET_SUBJECT_ORIENTATION(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->subject_orientation_menu), AMITK_DATA_SET_SUBJECT_ORIENTATION(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->subject_orientation_menu),G_CALLBACK(dialog_change_subject_orientation_cb), dialog);
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->scaling_factor_spin),
@@ -1404,13 +1325,8 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 				      G_CALLBACK(dialog_change_dose_cb), dialog);
     g_signal_handlers_block_by_func(G_OBJECT(dialog->dose_unit_menu),
 				    G_CALLBACK(dialog_change_dose_unit_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->dose_unit_menu), 
-				AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->dose_unit_menu), 
 			     AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->dose_unit_menu),
 				      G_CALLBACK(dialog_change_dose_unit_cb), dialog);
 
@@ -1424,13 +1340,8 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 				      G_CALLBACK(dialog_change_weight_cb), dialog);
     g_signal_handlers_block_by_func(G_OBJECT(dialog->weight_unit_menu),
 				    G_CALLBACK(dialog_change_weight_unit_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->weight_unit_menu), 
-				AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->weight_unit_menu), 
 			     AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->weight_unit_menu),
 				      G_CALLBACK(dialog_change_weight_unit_cb), dialog);
 
@@ -1443,13 +1354,8 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 				      G_CALLBACK(dialog_change_cylinder_cb), dialog);
     g_signal_handlers_block_by_func(G_OBJECT(dialog->cylinder_unit_menu),
 				    G_CALLBACK(dialog_change_cylinder_unit_cb), dialog);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->cylinder_unit_menu), 
-				AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(dialog->object));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->cylinder_unit_menu), 
 			     AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(dialog->object));
-#endif
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->cylinder_unit_menu),
 				      G_CALLBACK(dialog_change_cylinder_unit_cb), dialog);
 
@@ -1528,11 +1434,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 
 #ifndef AMIDE_LIBGNOMECANVAS_AA
       g_signal_handlers_block_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
-#if 1
-      gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->line_style_menu), AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object));
-#else
       gtk_combo_box_set_active(GTK_COMBO_BOX(dialog->line_style_menu), AMITK_STUDY_CANVAS_LINE_STYLE(dialog->object));
-#endif
       g_signal_handlers_unblock_by_func(G_OBJECT(dialog->line_style_menu), G_CALLBACK(dialog_change_line_style_cb), dialog);
 #endif
       g_signal_handlers_block_by_func(G_OBJECT(dialog->fill_roi_button), G_CALLBACK(dialog_change_fill_roi_cb), dialog);
@@ -1671,7 +1573,7 @@ static void dialog_update_conversion(AmitkObjectDialog * dialog) {
 				      G_CALLBACK(dialog_conversion_cb), dialog);
 
   switch (conversion) {
-  case AMITK_CONVERSION_PERCENT_ID_PER_G:
+  case AMITK_CONVERSION_PERCENT_ID_PER_CC:
     gtk_widget_set_sensitive(dialog->scaling_factor_spin, FALSE);
     gtk_widget_set_sensitive(dialog->dose_spin, TRUE);
     gtk_widget_set_sensitive(dialog->weight_spin, FALSE);
@@ -1694,27 +1596,6 @@ static void dialog_update_conversion(AmitkObjectDialog * dialog) {
 
 }
   
-
-static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer data) {
-
-  AmitkInterpolation interpolation = GPOINTER_TO_INT(data);
-  GdkPixbuf * pixbuf;
-  GtkWidget * image;
-
-  g_return_if_fail(pix_box != NULL);
-
-  /* make sure we don't get called again */
-  if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
-
-  pixbuf = gdk_pixbuf_new_from_xpm_data(interpolation_icon[interpolation]);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-
-  gtk_box_pack_start(GTK_BOX(pix_box), image, FALSE, FALSE, 0);
-  gtk_widget_show(image);
-
-  return;
-}
 
 static void dialog_interpolation_cb(GtkWidget * widget, gpointer data) {
 
@@ -1765,11 +1646,9 @@ static void dialog_set_view_center_to_origin_cb(GtkWidget * widget, gpointer dat
 static void dialog_aspect_ratio_cb(GtkWidget * widget, gpointer data) {
 
   AmitkObjectDialog * dialog=data;
-  gboolean state;
 
-  /* get the state of the button */
-  state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  dialog->aspect_ratio = state;
+  dialog->aspect_ratio = 
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
   return;
 }
@@ -2132,13 +2011,8 @@ static void dialog_change_roi_type_cb(GtkWidget * widget, gpointer data) {
 
   AmitkObjectDialog * dialog = data;
 
-#if 1
-  amitk_roi_set_type(AMITK_ROI(dialog->object), 
-		     gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
-#else
   amitk_roi_set_type(AMITK_ROI(dialog->object), 
 		     gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
-#endif
   return;
 }
 
@@ -2150,13 +2024,8 @@ static void dialog_change_modality_cb(GtkWidget * widget, gpointer data) {
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
 
   /* figure out which menu item called me */
-#if 1
-  amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
-			      gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
-#else
   amitk_data_set_set_modality(AMITK_DATA_SET(dialog->object), 
 			      gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
-#endif
 
   return;
 }
@@ -2169,13 +2038,8 @@ static void dialog_change_subject_orientation_cb(GtkWidget * widget, gpointer da
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
 
   /* figure out which menu item called me */
-#if 1
-  amitk_data_set_set_subject_orientation(AMITK_DATA_SET(dialog->object), 
-					 gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
-#else
   amitk_data_set_set_subject_orientation(AMITK_DATA_SET(dialog->object), 
 					 gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
-#endif
 
   return;
 }
@@ -2188,11 +2052,7 @@ static void dialog_change_dose_unit_cb(GtkWidget * widget, gpointer data) {
   amide_data_t injected_dose;
 
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
-#if 1
-  dose_unit = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   dose_unit = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (dose_unit != AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(dialog->object)) {
     injected_dose = amitk_dose_unit_convert_to(AMITK_DATA_SET_INJECTED_DOSE(dialog->object),
@@ -2213,11 +2073,7 @@ static void dialog_change_weight_unit_cb(GtkWidget * widget, gpointer data) {
   amide_data_t subject_weight;
 
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
-#if 1
-  weight_unit = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   weight_unit = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (weight_unit != AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(dialog->object)) {
     subject_weight = amitk_weight_unit_convert_to(AMITK_DATA_SET_SUBJECT_WEIGHT(dialog->object),
@@ -2238,11 +2094,7 @@ static void dialog_change_cylinder_unit_cb(GtkWidget * widget, gpointer data) {
   amide_data_t cylinder_factor;
 
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
-#if 1
-  cylinder_unit = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   cylinder_unit = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   if (cylinder_unit != AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(dialog->object)) {
     cylinder_factor = amitk_cylinder_unit_convert_to(AMITK_DATA_SET_CYLINDER_FACTOR(dialog->object),
@@ -2269,13 +2121,8 @@ static void dialog_change_roi_width_cb(GtkWidget * widget, gpointer data){
 static void dialog_change_line_style_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog = data;
   g_return_if_fail(AMITK_IS_STUDY(dialog->object));
-#if 1
-  amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
-				    gtk_option_menu_get_history(GTK_OPTION_MENU(widget)));
-#else
   amitk_study_set_canvas_line_style(AMITK_STUDY(dialog->object), 
 				    gtk_combo_box_get_active(GTK_COMBO_BOX(widget)));
-#endif
   return;
 }
 #endif

@@ -1,37 +1,40 @@
-if AMIDE_WIN32_HACKS
+if AMIDE_OS_WIN32
 
 AMIDE_LDADD_WIN32 = -lwsock32 ../win32/amiderc.o
 AMIDE_LDFLAGS_WIN32 = -mwindows
-INCLUDES = \
-	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
+#INCLUDES = \
+#	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 
 else
 
 AMIDE_LDADD_WIN32 = 
 AMIDE_LDFLAGS_WIN32 = 
-INCLUDES = \
-	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
-	-DPREFIX=\""$(prefix)"\"			        \
-	-DSYSCONFDIR=\""$(sysconfdir)"\"		        \
-	-DDATADIR=\""$(datadir)"\"			        \
-	-DLIBDIR=\""$(libdir)"\"			
 
 endif
+
+INCLUDES = \
+	-DAMIDE_PREFIX=\""$(prefix)"\"		\
+	-DAMIDE_SYSCONFDIR=\""$(sysconfdir)"\"	\
+	-DAMIDE_DATADIR=\""$(datadir)"\"	\
+	-DAMIDE_LIBDIR=\""$(libdir)"\"			
+##	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 
 AM_CFLAGS = \
 	$(GSL_CFLAGS) \
 	$(LIBFAME_CFLAGS) \
-	$(AMIDE_GNOME_CFLAGS) \
+	$(AMIDE_GTK_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	$(AMIDE_LIBDCMDATA_CFLAGS) \
 	-I/usr/local/include \
-	$(XMEDCON_CFLAGS)
+	$(XMEDCON_CFLAGS) \
+	-DG_DISABLE_DEPRECATED \
+	-DGTK_DISABLE_DEPRECATED 
 
-#	-I/usr/local/xmedcon/include 
-#	-DGNOME_DISABLE_DEPRECATED \
-#	-DGTK_DISABLE_DEPRECATED 
+##	-DGNOME_DISABLE_DEPRECATED 
 
-## make sure that c++ gets the same includes
+
+
+## c++ gets the same includes
 AM_CXXFLAGS = $(AM_CFLAGS)
 
 
@@ -50,23 +53,25 @@ amide_LDADD = \
 	$(LIBFAME_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
-	$(AMIDE_GNOME_LIBS) \
+	$(AMIDE_GTK_LIBS) \
 	$(XMEDCON_LIBS) \
 	$(AMIDE_LIBDCMDATA_LIBS) \
 	$(AMIDE_LDADD_WIN32) 
 
-## note, for some reason, if XMEDCON_LIBS is before AMIDE_GNOME_LIBS,
+## 2007.10.28, gcc 3.4.4 the below may no longer be an issue, as 
+## xmedcon can now be glib2/gtk2 based. But haven't tested
+##
+## 2005.01.08, gcc 3.3.3
+## note, for some reason, if XMEDCON_LIBS is before AMIDE_GTK_LIBS,
 ## an executable is made that dumps core on startup....
 ## this is probably because xmedcon is linked with glib 1.2... while 
 ## amide needs glib 2.*, and something is clashing in name space
-## 2005.01.08, gcc 3.3.3
+
 
 
 amide_LDFLAGS = \
 	$(AMIDE_LDFLAGS_WIN32)
 
-## note - c++ files have to go first, or else (for whatever reasons) automake/make just
-## uses gcc for everything and never calls g++
 amide_SOURCES = \
 	$(MARSHAL_SOURCES) \
 	$(TYPE_BUILTINS_SOURCES) \
@@ -77,9 +82,13 @@ amide_SOURCES = \
 	$(AMITK_ROI_VARIABLE_H) \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_H_SOURCES) \
+	amide.h \
 	amide.c \
-	amide_limits.h \
 	amide_intl.h \
+	amide_gconf.c \
+	amide_gconf.h \
+	amide_gnome.c \
+	amide_gnome.h \
 	amitk_common.c \
 	amitk_common.h \
 	alignment.c \
@@ -166,19 +175,17 @@ amide_SOURCES = \
 	ui_study.h \
 	ui_study_cb.c \
 	ui_study_cb.h \
-	ui_study_menus.c \
-	ui_study_menus.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
 	xml.c \
 	xml.h
 
 AMITK_H_SOURCES = \
-	amide.h \
 	amitk_canvas.h \
 	amitk_canvas_object.h \
 	amitk_color_table.h \
 	amitk_color_table_menu.h \
+	amitk_common.h \
 	amitk_dial.h \
 	amitk_xif_sel.h \
 	amitk_data_set.h \
@@ -430,7 +437,7 @@ $(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
 	@true
 stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	( cd $(srcdir) && glib-mkenums \
-		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amide.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n#include \"amitk_tree_view.h\"\n" \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_common.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n#include \"amitk_tree_view.h\"\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
 		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \

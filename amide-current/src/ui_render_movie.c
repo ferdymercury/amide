@@ -28,9 +28,10 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 #ifdef AMIDE_LIBFAME_SUPPORT
 
+#include "amide.h"
+#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <sys/stat.h>
 #include <string.h>
-#include "amitk_common.h"
 #include "ui_common.h"
 #include "ui_render_movie.h"
 #include "amitk_type_builtins.h"
@@ -113,7 +114,7 @@ static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
 
   ui_render_movie = g_object_get_data(G_OBJECT(file_selection), "ui_movie");
 
-  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* close the file selection box */
@@ -639,7 +640,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
     
   temp_string = g_strdup_printf(_("%s: Rendering Movie Generation Dialog"),PACKAGE);
   ui_render_movie->dialog = 
-    gtk_dialog_new_with_buttons(temp_string,  GTK_WINDOW(ui_render->app),
+    gtk_dialog_new_with_buttons(temp_string, ui_render->window,
 				GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
 				GTK_STOCK_HELP, GTK_RESPONSE_HELP,				
@@ -647,7 +648,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 				NULL);
   g_free(temp_string);
 
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(ui_render_movie->dialog), 
 		   "response", G_CALLBACK(response_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(ui_render_movie->dialog), 

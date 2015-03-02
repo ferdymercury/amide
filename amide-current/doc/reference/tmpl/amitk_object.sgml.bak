@@ -16,6 +16,9 @@ AmitkObject
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_OBJECT_CHILDREN ##### -->
 <para>
 
@@ -63,6 +66,85 @@ AmitkObject
 @AMITK_SELECTION_NUM: 
 @AMITK_SELECTION_ANY: 
 @AMITK_SELECTION_ALL: 
+
+<!-- ##### STRUCT AmitkObject ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkObject::object-add-child ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-child-selection-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-copy ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@Returns: 
+
+<!-- ##### SIGNAL AmitkObject::object-copy-in-place ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-name-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-read-xml ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+@arg2: 
+@arg3: 
+@Returns: 
+
+<!-- ##### SIGNAL AmitkObject::object-remove-child ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkObject::object-selection-changed ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkObject::object-write-xml ##### -->
+<para>
+
+</para>
+
+@amitkobject: the object which received the signal.
+@arg1: 
+@arg2: 
 
 <!-- ##### FUNCTION amitk_object_new ##### -->
 <para>
@@ -398,5 +480,23 @@ AmitkObject
 
 @type: 
 @Returns: 
+
+
+<!-- ##### VARIABLE amide_data_file_xml_tag ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE amide_data_file_xml_start_tag ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### VARIABLE amide_data_file_xml_end_tag ##### -->
+<para>
+
+</para>
 
 

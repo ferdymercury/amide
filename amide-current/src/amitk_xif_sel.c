@@ -30,7 +30,7 @@
  */
 
 #include "amide_config.h"
-#include "amide.h"
+#include "amitk_common.h"
 #include "amitk_xif_sel.h"
 
 #include <stdio.h>
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 #endif
 #include <stdlib.h>
-#ifndef AMIDE_WIN32_HACKS
+#ifndef G_PLATFORM_WIN32
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -1001,7 +1001,7 @@ filenames_drag_get (GtkWidget        *widget,
   gchar *uri_list;
   char hostname[256];
   int res;
-  GError *error;
+  GError *error=NULL;
 
   file = amitk_xif_selection_get_filename (filesel);
 
@@ -2129,8 +2129,8 @@ amitk_xif_selection_populate (AmitkXifSelection *fs,
 	  if (strcmp (filename, "." G_DIR_SEPARATOR_S) != 0 &&
 	      strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0)  {
 
-	    if ( amide_is_xif_flat_file(fullname, NULL, NULL) ||
-		 amide_is_xif_directory(fullname, NULL, NULL)) {
+	    if ( amitk_is_xif_flat_file(fullname, NULL, NULL) ||
+		 amitk_is_xif_directory(fullname, NULL, NULL)) {
 	      gchar *xifname;
 	      gint length;
 

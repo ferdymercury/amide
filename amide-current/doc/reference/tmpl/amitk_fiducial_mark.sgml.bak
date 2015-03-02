@@ -16,12 +16,21 @@ AmitkFiducialMark
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_FIDUCIAL_MARK_GET ##### -->
 <para>
 
 </para>
 
 @mark: 
+
+
+<!-- ##### STRUCT AmitkFiducialMark ##### -->
+<para>
+
+</para>
 
 
 <!-- ##### FUNCTION amitk_fiducial_mark_new ##### -->

@@ -17,11 +17,14 @@ SUBDIRS = \
 EXTRA_DIST = \
 	intltool-extract.in \
 	intltool-merge.in    \
-	intltool-update.in
+	intltool-update.in \
+	gnome-doc-utils.make    
 
 CLEANFILES = \
 	intltool-extract \
 	intltool-merge \
-	intltool-update
+	intltool-update \
+	gnome-doc-utils.make	
+
 
 DISTCLEANFILES = *~ 

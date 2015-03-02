@@ -14,6 +14,9 @@ amitk_raw_data_FLOAT
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_RAW_DATA_FLOAT_0D_SCALING_POINTER ##### -->
 <para>
 
@@ -137,29 +140,6 @@ amitk_raw_data_FLOAT
 </para>
 
 @init_value: 
-@Returns: 
-
-
-<!-- ##### FUNCTION amitk_raw_data_FLOAT_2D_init ##### -->
-<para>
-
-</para>
-
-@init_value: 
-@y_dim: 
-@x_dim: 
-@Returns: 
-
-
-<!-- ##### FUNCTION amitk_raw_data_FLOAT_3D_init ##### -->
-<para>
-
-</para>
-
-@init_value: 
-@z_dim: 
-@y_dim: 
-@x_dim: 
 @Returns: 
 
 

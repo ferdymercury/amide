@@ -1,31 +1,37 @@
 <refentry id="amitk-amitk-type">
 <refmeta>
-<refentrytitle>amitk_type</refentrytitle>
+<refentrytitle role="top_of_page">amitk_type</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>amitk_type</refname><refpurpose></refpurpose>
+<refname>amitk_type</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-typedef     <link linkend="amide-data-t">amide_data_t</link>;
-#define     <link linkend="SIZE-OF-AMIDE-DATA-T-CAPS">SIZE_OF_AMIDE_DATA_T</link>
-#define     <link linkend="AMITK-TYPE-DATA-CAPS">AMITK_TYPE_DATA</link>
-typedef     <link linkend="amide-time-t">amide_time_t</link>;
-#define     <link linkend="SIZE-OF-AMIDE-TIME-T-CAPS">SIZE_OF_AMIDE_TIME_T</link>
-#define     <link linkend="AMITK-TYPE-TIME-CAPS">AMITK_TYPE_TIME</link>
-typedef     <link linkend="amide-real-t">amide_real_t</link>;
-#define     <link linkend="SIZE-OF-AMIDE-REAL-T-CAPS">SIZE_OF_AMIDE_REAL_T</link>
-#define     <link linkend="AMITK-TYPE-REAL-CAPS">AMITK_TYPE_REAL</link>
-typedef     <link linkend="amide-intpoint-t">amide_intpoint_t</link>;
-#define     <link linkend="SIZE-OF-AMIDE-INTPOINT-T-CAPS">SIZE_OF_AMIDE_INTPOINT_T</link>
+typedef             <link linkend="amide-data-t">amide_data_t</link>;
+#define             <link linkend="SIZE-OF-AMIDE-DATA-T:CAPS">SIZE_OF_AMIDE_DATA_T</link>
+#define             <link linkend="AMITK-TYPE-DATA:CAPS">AMITK_TYPE_DATA</link>
+typedef             <link linkend="amide-time-t">amide_time_t</link>;
+#define             <link linkend="SIZE-OF-AMIDE-TIME-T:CAPS">SIZE_OF_AMIDE_TIME_T</link>
+#define             <link linkend="AMITK-TYPE-TIME:CAPS">AMITK_TYPE_TIME</link>
+typedef             <link linkend="amide-real-t">amide_real_t</link>;
+#define             <link linkend="SIZE-OF-AMIDE-REAL-T:CAPS">SIZE_OF_AMIDE_REAL_T</link>
+#define             <link linkend="AMITK-TYPE-REAL:CAPS">AMITK_TYPE_REAL</link>
+typedef             <link linkend="amide-intpoint-t">amide_intpoint_t</link>;
+#define             <link linkend="SIZE-OF-AMIDE-INTPOINT-T:CAPS">SIZE_OF_AMIDE_INTPOINT_T</link>
+<link linkend="gboolean">gboolean</link>            (<link linkend="AmitkUpdateFunc">*AmitkUpdateFunc</link>)                  (<link linkend="gpointer">gpointer</link> ,
+                                                         <link linkend="char">char</link> *,
+                                                         <link linkend="gdouble">gdouble</link> );
 </synopsis>
 </refsynopsisdiv>
 
@@ -37,92 +43,114 @@ typedef     <link linkend="amide-intpoint-t">amide_intpoint_t</link>;
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="amide-data-t"/>amide_data_t</title>
+<title><anchor id="amide-data-t" role="typedef"/>amide_data_t</title>
 <indexterm><primary>amide_data_t</primary></indexterm><programlisting>typedef gdouble amide_data_t;
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="SIZE-OF-AMIDE-DATA-T-CAPS"/>SIZE_OF_AMIDE_DATA_T</title>
+<title><anchor id="SIZE-OF-AMIDE-DATA-T:CAPS" role="macro"/>SIZE_OF_AMIDE_DATA_T</title>
 <indexterm><primary>SIZE_OF_AMIDE_DATA_T</primary></indexterm><programlisting>#define SIZE_OF_AMIDE_DATA_T 8
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-DATA-CAPS"/>AMITK_TYPE_DATA</title>
+<title><anchor id="AMITK-TYPE-DATA:CAPS" role="macro"/>AMITK_TYPE_DATA</title>
 <indexterm><primary>AMITK_TYPE_DATA</primary></indexterm><programlisting>#define AMITK_TYPE_DATA G_TYPE_DOUBLE
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amide-time-t"/>amide_time_t</title>
+<title><anchor id="amide-time-t" role="typedef"/>amide_time_t</title>
 <indexterm><primary>amide_time_t</primary></indexterm><programlisting>typedef gdouble amide_time_t;
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="SIZE-OF-AMIDE-TIME-T-CAPS"/>SIZE_OF_AMIDE_TIME_T</title>
+<title><anchor id="SIZE-OF-AMIDE-TIME-T:CAPS" role="macro"/>SIZE_OF_AMIDE_TIME_T</title>
 <indexterm><primary>SIZE_OF_AMIDE_TIME_T</primary></indexterm><programlisting>#define SIZE_OF_AMIDE_TIME_T 8
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-TIME-CAPS"/>AMITK_TYPE_TIME</title>
+<title><anchor id="AMITK-TYPE-TIME:CAPS" role="macro"/>AMITK_TYPE_TIME</title>
 <indexterm><primary>AMITK_TYPE_TIME</primary></indexterm><programlisting>#define AMITK_TYPE_TIME G_TYPE_DOUBLE
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amide-real-t"/>amide_real_t</title>
+<title><anchor id="amide-real-t" role="typedef"/>amide_real_t</title>
 <indexterm><primary>amide_real_t</primary></indexterm><programlisting>typedef gdouble amide_real_t;
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="SIZE-OF-AMIDE-REAL-T-CAPS"/>SIZE_OF_AMIDE_REAL_T</title>
+<title><anchor id="SIZE-OF-AMIDE-REAL-T:CAPS" role="macro"/>SIZE_OF_AMIDE_REAL_T</title>
 <indexterm><primary>SIZE_OF_AMIDE_REAL_T</primary></indexterm><programlisting>#define SIZE_OF_AMIDE_REAL_T 8
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="AMITK-TYPE-REAL-CAPS"/>AMITK_TYPE_REAL</title>
+<title><anchor id="AMITK-TYPE-REAL:CAPS" role="macro"/>AMITK_TYPE_REAL</title>
 <indexterm><primary>AMITK_TYPE_REAL</primary></indexterm><programlisting>#define AMITK_TYPE_REAL G_TYPE_DOUBLE
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="amide-intpoint-t"/>amide_intpoint_t</title>
+<title><anchor id="amide-intpoint-t" role="typedef"/>amide_intpoint_t</title>
 <indexterm><primary>amide_intpoint_t</primary></indexterm><programlisting>typedef gint16 amide_intpoint_t;
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="SIZE-OF-AMIDE-INTPOINT-T-CAPS"/>SIZE_OF_AMIDE_INTPOINT_T</title>
+<title><anchor id="SIZE-OF-AMIDE-INTPOINT-T:CAPS" role="macro"/>SIZE_OF_AMIDE_INTPOINT_T</title>
 <indexterm><primary>SIZE_OF_AMIDE_INTPOINT_T</primary></indexterm><programlisting>#define SIZE_OF_AMIDE_INTPOINT_T 2;
 </programlisting>
 <para>
 
 </para></refsect2>
+<refsect2>
+<title><anchor id="AmitkUpdateFunc" role="function"/>AmitkUpdateFunc ()</title>
+<indexterm><primary>AmitkUpdateFunc</primary></indexterm><programlisting><link linkend="gboolean">gboolean</link>            (*AmitkUpdateFunc)                  (<link linkend="gpointer">gpointer</link> ,
+                                                         <link linkend="char">char</link> *,
+                                                         <link linkend="gdouble">gdouble</link> );</programlisting>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>Param1</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>Param2</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><parameter>Param3</parameter>&nbsp;:</term>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
+
+
+</simpara></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

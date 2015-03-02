@@ -16,12 +16,21 @@ AmitkProgressDialog
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_PROGRESS_DIALOG_CAN_CONTINUE ##### -->
 <para>
 
 </para>
 
 @obj: 
+
+
+<!-- ##### STRUCT AmitkProgressDialog ##### -->
+<para>
+
+</para>
 
 
 <!-- ##### FUNCTION amitk_progress_dialog_update ##### -->

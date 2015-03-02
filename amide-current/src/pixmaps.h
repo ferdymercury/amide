@@ -25,43 +25,6 @@
 
 /* header files that are always needed with this file */
 
-extern const guint8 amide_logo[];
-extern const guint8 amide_logo_small[];
+extern const gchar * windowing_icons[];
 
-extern const char * icon_transfer_function_xpm[];
-
-extern const char ** interpolation_icon[];
-
-extern const char * icon_fuse_type_blend_xpm[];
-extern const char * icon_fuse_type_overlay_xpm[];
-extern const char ** icon_fuse_type[];
-
-extern const char * icon_view_single_xpm[];
-extern const char * icon_view_linked_xpm[];
-extern const char * icon_view_linked3_xpm[];
-extern const char ** icon_view_mode[];
-extern const char * icon_target_xpm[];
-
-extern const char * icon_transverse_xpm[];
-extern const char * icon_coronal_xpm[];
-extern const char * icon_sagittal_xpm[];
-extern const char ** icon_view[];
-
-extern const char * icon_threshold_xpm[];
-extern const guint8 * thresholding_icons[];
-
-extern const guint8 * threshold_style_icons[];
-
-extern const guint8 * windowing_icons[];
-
-extern const guint8 * roi_icons[];
-extern const guint8 study_icon[];
-extern const guint8 align_pt_icon[];
-
-extern const char * linear_layout_xpm[];
-extern const char * orthogonal_layout_xpm[];
-
-extern const guint8 panels_mixed[];
-extern const guint8 panels_linear_x[];
-extern const guint8 panels_linear_y[];
-
+void pixmaps_initialize_icons();

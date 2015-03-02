@@ -1,97 +1,279 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkTreeView</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="amitk-AmitkThresholdsDialog.html" title="AmitkThresholdsDialog"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkThresholdsDialog.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkTreeView"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkTreeView</span></h2><p>AmitkTreeView &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>AmitkTreeView</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="AmitkWidgets.html" title="Amitk Widgets">
+<link rel="prev" href="amitk-AmitkThresholdsDialog.html" title="AmitkThresholdsDialog">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-AmitkThresholdsDialog.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td>&#160;</td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id444520" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id445038" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-AmitkTreeView"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id444520"></a><span class="refentrytitle">AmitkTreeView</span>
+</h2>
+<p>AmitkTreeView</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-enum        <a href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a>;
-GtkWidget*  <a href="amitk-AmitkTreeView.html#amitk-tree-view-new">amitk_tree_view_new</a>             (<a href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a> tree_mode,
-                                             AmitkPreferences *preferences,
-                                             GtkWidget *progress_dialog);
-void        <a href="amitk-AmitkTreeView.html#amitk-tree-view-set-study">amitk_tree_view_set_study</a>       (AmitkTreeView *tree_view,
-                                             AmitkStudy *study);
-void        <a href="amitk-AmitkTreeView.html#amitk-tree-view-expand-object">amitk_tree_view_expand_object</a>   (AmitkTreeView *tree_view,
-                                             AmitkObject *object);
-void        <a href="amitk-AmitkTreeView.html#amitk-tree-view-set-active-object">amitk_tree_view_set_active_object</a>
-                                            (AmitkTreeView *tree_view,
-                                             AmitkObject *object);
-GList*      <a href="amitk-AmitkTreeView.html#amitk-tree-view-get-multiple-selection-objects">amitk_tree_view_get_multiple_selection_objects</a>
-                                            (AmitkTreeView *tree_view);
+enum                <a class="link" href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a>;
+                    <a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a>;
+<a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a>*          <a class="link" href="amitk-AmitkTreeView.html#amitk-tree-view-new">amitk_tree_view_new</a>                 (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a> tree_mode,
+                                                         AmitkPreferences *preferences,
+                                                         <a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a> *progress_dialog);
+void                <a class="link" href="amitk-AmitkTreeView.html#amitk-tree-view-set-study">amitk_tree_view_set_study</a>           (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study);
+void                <a class="link" href="amitk-AmitkTreeView.html#amitk-tree-view-expand-object">amitk_tree_view_expand_object</a>       (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkObject.html#AmitkObject">AmitkObject</a> *object);
+void                <a class="link" href="amitk-AmitkTreeView.html#amitk-tree-view-set-active-object">amitk_tree_view_set_active_object</a>   (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkObject.html#AmitkObject">AmitkObject</a> *object);
+<a
+href="/usr/share/gtk-doc/html/glib/glib-Doubly-Linked-Lists.html#GList"
+>GList</a>*              <a class="link" href="amitk-AmitkTreeView.html#amitk-tree-view-get-multiple-selection-objects">amitk_tree_view_get_multiple_selection_objects</a>
+                                                        (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view);
 
-</pre></div><div class="refsect1" lang="en"><a name="id2706929"></a><h2>Description</h2><p>
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id445038"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2706939"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2706945"></a><h3><a name="AmitkTreeViewMode"></a>enum AmitkTreeViewMode</h3><a class="indexterm" name="id2706956"></a><pre class="programlisting">typedef enum {
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id445052"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id445063"></a><h3>
+<a name="AmitkTreeViewMode"></a>enum AmitkTreeViewMode</h3>
+<a class="indexterm" name="id445075"></a><pre class="programlisting">typedef enum {
   AMITK_TREE_VIEW_MODE_MAIN,
   AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,
   AMITK_TREE_VIEW_MODE_NUM
 } AmitkTreeViewMode;
-</pre><p>
+</pre>
+<p>
 
-</p></div><hr><div class="refsect2" lang="en"><a name="id2706973"></a><h3><a name="amitk-tree-view-new"></a>amitk_tree_view_new ()</h3><a class="indexterm" name="id2706985"></a><pre class="programlisting">GtkWidget*  amitk_tree_view_new             (<a href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a> tree_mode,
-                                             AmitkPreferences *preferences,
-                                             GtkWidget *progress_dialog);</pre><p>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445091"></a><h3>
+<a name="AmitkTreeView"></a>AmitkTreeView</h3>
+<a class="indexterm" name="id445103"></a><pre class="programlisting">typedef struct {
+  GtkTreeView tree_view;
+  AmitkTreeViewMode mode;
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>tree_mode</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>preferences</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>progress_dialog</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+  AmitkStudy * study;
+  AmitkObject * active_object;
+  AmitkPreferences * preferences;
+  GtkWidget * progress_dialog;
+
+  GtkTreeViewColumn * select_column[AMITK_VIEW_MODE_NUM];
+  AmitkViewMode prev_view_mode;
+  gint mouse_x; /* the current mouse position */
+  gint mouse_y; 
+  GtkTreePath * current_path;
+
+  /* drag-n-drop info */
+  gboolean drag_begin_possible;
+  gint press_x;
+  gint press_y;
+  AmitkObject * src_object; /* not referenced */
+  AmitkObject * dest_object; /* not referenced */
+  GtkTargetList * drag_list;
+} AmitkTreeView;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445123"></a><h3>
+<a name="amitk-tree-view-new"></a>amitk_tree_view_new ()</h3>
+<a class="indexterm" name="id445135"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a>*          amitk_tree_view_new                 (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeViewMode">AmitkTreeViewMode</a> tree_mode,
+                                                         AmitkPreferences *preferences,
+                                                         <a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a> *progress_dialog);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>tree_mode</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>preferences</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>progress_dialog</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2707084"></a><h3><a name="amitk-tree-view-set-study"></a>amitk_tree_view_set_study ()</h3><a class="indexterm" name="id2707096"></a><pre class="programlisting">void        amitk_tree_view_set_study       (AmitkTreeView *tree_view,
-                                             AmitkStudy *study);</pre><p>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445233"></a><h3>
+<a name="amitk-tree-view-set-study"></a>amitk_tree_view_set_study ()</h3>
+<a class="indexterm" name="id445245"></a><pre class="programlisting">void                amitk_tree_view_set_study           (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study);</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>tree_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2707163"></a><h3><a name="amitk-tree-view-expand-object"></a>amitk_tree_view_expand_object ()</h3><a class="indexterm" name="id2707175"></a><pre class="programlisting">void        amitk_tree_view_expand_object   (AmitkTreeView *tree_view,
-                                             AmitkObject *object);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>tree_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2707243"></a><h3><a name="amitk-tree-view-set-active-object"></a>amitk_tree_view_set_active_object ()</h3><a class="indexterm" name="id2707256"></a><pre class="programlisting">void        amitk_tree_view_set_active_object
-                                            (AmitkTreeView *tree_view,
-                                             AmitkObject *object);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>tree_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>object</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2707324"></a><h3><a name="amitk-tree-view-get-multiple-selection-objects"></a>amitk_tree_view_get_multiple_selection_objects ()</h3><a class="indexterm" name="id2707337"></a><pre class="programlisting">GList*      amitk_tree_view_get_multiple_selection_objects
-                                            (AmitkTreeView *tree_view);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>tree_view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>tree_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkThresholdsDialog.html"><b>&lt;&lt; AmitkThresholdsDialog</b></a></td><td align="right"></td></tr></table></body></html>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445311"></a><h3>
+<a name="amitk-tree-view-expand-object"></a>amitk_tree_view_expand_object ()</h3>
+<a class="indexterm" name="id445324"></a><pre class="programlisting">void                amitk_tree_view_expand_object       (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkObject.html#AmitkObject">AmitkObject</a> *object);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>tree_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445390"></a><h3>
+<a name="amitk-tree-view-set-active-object"></a>amitk_tree_view_set_active_object ()</h3>
+<a class="indexterm" name="id445403"></a><pre class="programlisting">void                amitk_tree_view_set_active_object   (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view,
+                                                         <a class="link" href="amitk-AmitkObject.html#AmitkObject">AmitkObject</a> *object);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>tree_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>object</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id445470"></a><h3>
+<a name="amitk-tree-view-get-multiple-selection-objects"></a>amitk_tree_view_get_multiple_selection_objects ()</h3>
+<a class="indexterm" name="id445483"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/glib/glib-Doubly-Linked-Lists.html#GList"
+>GList</a>*              amitk_tree_view_get_multiple_selection_objects
+                                                        (<a class="link" href="amitk-AmitkTreeView.html#AmitkTreeView">AmitkTreeView</a> *tree_view);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>tree_view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

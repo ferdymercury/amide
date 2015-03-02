@@ -1,22 +1,26 @@
 <refentry id="amitk-AmitkColorTableMenu">
 <refmeta>
-<refentrytitle>AmitkColorTableMenu</refentrytitle>
+<refentrytitle role="top_of_page">AmitkColorTableMenu</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>AMITK Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>AmitkColorTableMenu</refname><refpurpose></refpurpose>
+<refname>AmitkColorTableMenu</refname>
+<refpurpose></refpurpose>
+<!--[<xref linkend="desc" endterm="desc.title"/>]-->
 </refnamediv>
 
-<refsynopsisdiv><title>Synopsis</title>
+<refsynopsisdiv role="synopsis">
+<title role="synopsis.title">Synopsis</title>
 
 <synopsis>
 
 
 
-#define     <link linkend="AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS">AMITK_COLOR_TABLE_MENU_COLOR_TABLE</link>(obj)
-<link linkend="GtkWidget">GtkWidget</link>*  <link linkend="amitk-color-table-menu-new">amitk_color_table_menu_new</link>      ();
+#define             <link linkend="AMITK-COLOR-TABLE-MENU-COLOR-TABLE:CAPS">AMITK_COLOR_TABLE_MENU_COLOR_TABLE</link>  (obj)
+                    <link linkend="AmitkColorTableMenu">AmitkColorTableMenu</link>;
+<link linkend="GtkWidget">GtkWidget</link>*          <link linkend="amitk-color-table-menu-new">amitk_color_table_menu_new</link>          ();
 
 </synopsis>
 </refsynopsisdiv>
@@ -29,17 +33,17 @@
 
 
 
-<refsect1>
-<title>Description</title>
+<refsect1 role="desc">
+<title role="desc.title">Description</title>
 <para>
 
 </para>
 </refsect1>
 
-<refsect1>
-<title>Details</title>
+<refsect1 role="details">
+<title role="details.title">Details</title>
 <refsect2>
-<title><anchor id="AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS"/>AMITK_COLOR_TABLE_MENU_COLOR_TABLE()</title>
+<title><anchor id="AMITK-COLOR-TABLE-MENU-COLOR-TABLE:CAPS" role="macro"/>AMITK_COLOR_TABLE_MENU_COLOR_TABLE()</title>
 <indexterm><primary>AMITK_COLOR_TABLE_MENU_COLOR_TABLE</primary></indexterm><programlisting>#define AMITK_COLOR_TABLE_MENU_COLOR_TABLE(obj) (AMITK_COLOR_TABLE_MENU(obj)-&gt;color_table)
 </programlisting>
 <para>
@@ -52,12 +56,21 @@
 </simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
-<title><anchor id="amitk-color-table-menu-new"/>amitk_color_table_menu_new ()</title>
-<indexterm><primary>amitk_color_table_menu_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*  amitk_color_table_menu_new      ();</programlisting>
+<title><anchor id="AmitkColorTableMenu" role="struct"/>AmitkColorTableMenu</title>
+<indexterm><primary>AmitkColorTableMenu</primary></indexterm><programlisting>typedef struct {
+  GtkComboBox combo_box;
+} AmitkColorTableMenu;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="amitk-color-table-menu-new" role="function"/>amitk_color_table_menu_new ()</title>
+<indexterm><primary>amitk_color_table_menu_new</primary></indexterm><programlisting><link linkend="GtkWidget">GtkWidget</link>*          amitk_color_table_menu_new          ();</programlisting>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>
+<varlistentry><term><emphasis>Returns</emphasis>&nbsp;:</term><listitem><simpara>
 
 
 </simpara></listitem></varlistentry>

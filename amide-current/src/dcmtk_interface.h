@@ -41,6 +41,13 @@ GList * dcmtk_import(const gchar * filename,
 		     AmitkPreferences * preferences,
 		     AmitkUpdateFunc update_func,
 		     gpointer update_data);
+void dcmtk_export(AmitkDataSet * ds, 
+		  const gchar * dirname,
+		  const gboolean resliced,
+		  const AmitkPoint voxel_size,
+		  const AmitkVolume * bounding_box,
+		  AmitkUpdateFunc update_func,
+		  gpointer update_data);
 
 G_END_DECLS
 

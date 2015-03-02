@@ -131,7 +131,7 @@ typedef enum {
 
 typedef enum {
   AMITK_CONVERSION_STRAIGHT,
-  AMITK_CONVERSION_PERCENT_ID_PER_G,
+  AMITK_CONVERSION_PERCENT_ID_PER_CC,
   AMITK_CONVERSION_SUV,
   AMITK_CONVERSION_NUM
 } AmitkConversion;
@@ -154,12 +154,12 @@ typedef enum {
 
 typedef enum {
   AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT,
-  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL,
   AMITK_CYLINDER_UNIT_MILLICURIE_PER_CC_IMAGE_UNIT,
-  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE,
   AMITK_CYLINDER_UNIT_MICROCURIE_PER_CC_IMAGE_UNIT,
-  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE,
   AMITK_CYLINDER_UNIT_NANOCURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE,
   AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE,
   AMITK_CYLINDER_UNIT_NUM
 } AmitkCylinderUnit;
@@ -197,6 +197,9 @@ typedef enum { /*< skip >*/
 /* the skip is for glib-mkenums, it doesn't know how to handle ifdef's */
 typedef enum { /*< skip >*/
   AMITK_EXPORT_METHOD_RAW, 
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+  AMITK_EXPORT_METHOD_DCMTK,
+#endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   AMITK_EXPORT_METHOD_LIBMDC,
 #endif
@@ -455,8 +458,10 @@ amide_data_t   amitk_data_set_get_value           (const AmitkDataSet * ds,
 						   const AmitkVoxel i);
 amide_data_t   amitk_data_set_get_internal_scaling_factor(const AmitkDataSet * ds, 
 							  const AmitkVoxel i);
-amide_data_t   amitk_data_set_get_internal_scaling_intercept(const AmitkDataSet * ds, 
-							     const AmitkVoxel i);
+amide_data_t   amitk_data_set_get_scaling_factor  (const AmitkDataSet * ds,
+						   const AmitkVoxel i);
+amide_data_t   amitk_data_set_get_scaling_intercept(const AmitkDataSet * ds, 
+						    const AmitkVoxel i);
 void           amitk_data_set_set_value           (AmitkDataSet *ds,
 						   const AmitkVoxel i,
 						   const amide_data_t value,
@@ -516,7 +521,12 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 						      const AmitkDataSet * slice_parent);
 GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
 							const AmitkDataSet * slice_parent);
-AmitkDataSet * amitk_data_sets_math                   (AmitkDataSet * ds1, AmitkDataSet * ds2, AmitkOperation operation);
+AmitkDataSet * amitk_data_sets_math                  (AmitkDataSet * ds1, 
+						      AmitkDataSet * ds2, 
+						      AmitkOperation operation,
+						      gboolean by_frame,
+						      AmitkUpdateFunc update_func,
+						      gpointer update_data);
 
 
 
@@ -557,16 +567,16 @@ amide_data_t amitk_cylinder_unit_convert_from     (const amide_data_t cylinder_f
 
 /* external variables */
 extern AmitkColorTable amitk_modality_default_color_table[];
-extern gchar * amitk_interpolation_explanations[];
-extern gchar * amitk_import_menu_names[];
-extern gchar * amitk_import_menu_explanations[];
-extern gchar * amitk_export_menu_names[];
-extern gchar * amitk_export_menu_explanations[];
-extern gchar * amitk_conversion_names[];
-extern gchar * amitk_dose_unit_names[];
-extern gchar * amitk_weight_unit_names[];
-extern gchar * amitk_cylinder_unit_names[];
-extern gchar * amitk_scaling_menu_names[];
+extern const gchar * amitk_interpolation_explanations[];
+extern const gchar * amitk_import_menu_names[];
+extern const gchar * amitk_import_menu_explanations[];
+extern const gchar * amitk_export_menu_names[];
+extern const gchar * amitk_export_menu_explanations[];
+extern const gchar * amitk_conversion_names[];
+extern const gchar * amitk_dose_unit_names[];
+extern const gchar * amitk_weight_unit_names[];
+extern const gchar * amitk_cylinder_unit_names[];
+extern const gchar * amitk_scaling_menu_names[];
 extern amide_data_t amitk_window_default[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
 
 /* external variables */

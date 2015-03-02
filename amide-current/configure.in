@@ -2,10 +2,10 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.23],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.9.0],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
-AM_CONFIG_HEADER(amide_config.h)
+AC_CONFIG_HEADERS(amide_config.h)
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 
 
@@ -19,6 +19,8 @@ AC_FUNC_MKDIR
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 AC_CHECK_SIZEOF(long,8)
 AC_CHECK_SIZEOF(long long,8)
+
+AC_CHECK_FUNCS(strptime)
 
 dnl ================= translation =============================================
 
@@ -77,57 +79,6 @@ fi
 
 
 
-PKG_CHECK_MODULES(AMIDE_GNOME,[
-	glib-2.0	>= 2.0.0
-	gobject-2.0	>= 2.0.0
-	gtk+-2.0	>= 2.0.0
-	libxml-2.0	>= 2.4.12
-	libgnomecanvas-2.0 >= 2.0.0
-	libgnomeui-2.0  >= 2.0.0
-])
-
-AC_SUBST(AMIDE_GNOME_LIBS)
-AC_SUBST(AMIDE_GNOME_CFLAGS)
-
-dnl glib-genmarshal
-AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
-
-dnl This is installed from GTK+ 2.0's gdk-pixbuf
-AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource)
-test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
-*** You need the gdk-pixbuf-csource tool which is installed
-*** from GTK+ 2's gdk-pixbuf.
-***
-*** Either the location where you installed your GTK+ 2 is
-*** not in your PATH or something is screwed up with your
-*** GTK+ 2 installation
-])
-
-
-dnl record if our version of libgnomecanvas can handle anti-aliasing
-PKG_CHECK_MODULES(dummy, 
-	[libgnomecanvas-2.0 >= 2.2.0], 
-	 enable_antialiasing=yes, enable_antialiasing=no)
-dnl if test $enable_antialiasing = yes; then
-dnl	echo "Compiling with libgnomecanvas antialiasing support"
-dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
-dnl else
-	echo "Compiling without libgnomecanvas antialiasing support"
-dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
-dnl fi
-
-
-
-################################################################
-# Checks for gtk-doc and docbook-tools, from gtk's configure.in
-################################################################
-
-GTK_DOC_CHECK([1.0])
-
-AC_CHECK_PROG(DB2HTML, db2html, true, false)
-AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
-
-
 
 
 
@@ -142,22 +93,23 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
-AM_PATH_XMEDCON(0.9.10, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
-AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
+AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+AM_PATH_LIBFAME(0.9.1, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
+dnl AC_CHECK_LIB(libfame, fame_init, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
 AC_LANG_CPLUSPLUS
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
 AC_CHECK_LIB(dcmdata, main, FOUND_DCMDATA=yes, FOUND_DCMDATA=no, -lofstd  -lz -L/usr/local/dicom/lib -L/sw/lib $THREAD_LIBS)
 
-
-dnl add the -no-cpp-precomp for macintosh os x
-case "$host_os" in
-darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
-		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" 
-	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to compile with hacks for OS X)
-		;;
-esac
+dnl now obsolete
+dnl dnl add the -no-cpp-precomp for macintosh os x
+dnl case "$host_os" in
+dnl darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
+dnl		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" 
+dnl	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to compile with hacks for OS X)
+dnl		;;
+dnl esac
 
 
 
@@ -177,19 +129,33 @@ else
 	echo "Compiling without AMIDE debugging messages"
 fi
 
-dnl Enable stripped down version for Windows
-AC_ARG_ENABLE(
-	mswin-hacks,
-	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
-	mswin_hacks="$enableval", 
-	mswin_hacks=no)
+dnl no longer needed with better gnome support on windows
+dnl dnl Enable stripped down version for Windows
+dnl AC_ARG_ENABLE(
+dnl 	mswin-hacks,
+dnl	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
+dnl	mswin_hacks="$enableval", 
+dnl	mswin_hacks=no)
+dnl
+dnl if (test $mswin_hacks = yes); then
+dnl	echo "Enabling hacks to support MS Windows compilation"
+dnl	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
+dnl fi
+dnl AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
 
-if (test $mswin_hacks = yes); then
-	echo "Enabling hacks to support MS Windows compilation"
-	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to compile with Win32 Hacks)
-fi
-AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
-
+dnl check if we're building on windows
+AC_MSG_CHECKING([for native Win32])
+case "$host" in
+  *-*-mingw*)
+    native_win32=yes
+    ;;
+  *)
+    native_win32=no
+    ;;
+esac
+AC_MSG_RESULT([$native_win32])
+AM_CONDITIONAL(AMIDE_OS_WIN32, test "$native_win32" = yes)
+dnl if you need to know os in .c code, use G_PLATFORM_WIN32
 
 dnl let people compile without the GNU Scientific Library
 AC_ARG_ENABLE(
@@ -237,10 +203,8 @@ if (test $enable_libmdc = yes) && (test $FOUND_XMEDCON = yes); then
 	echo "Compiling with xmedcon/libmdc file support"
 	AC_DEFINE(AMIDE_LIBMDC_SUPPORT, 1, Define to compile with (X)MedCon)
 
-	dnl redefine the xmedcon libs line, as otherwise we'll get errors from linking to glib1
-	dnl 2005.11.19 - doesn't seem to be a problem anymore
-	dnl 2006.03.29 - it's a problem again
-	XMEDCON_LIBS="-L/usr/local/lib -L/usr/local/xmedcon/lib -lmdc"
+	dnl 2007.10.28 - new xmedcon's should be using glib2/gtk2, dont' have to overwrite XMEDCON_LIBS
+	dnl XMEDCON_LIBS="-L/usr/local/lib -L/usr/local/xmedcon/lib -lmdc"
 	AC_SUBST(XMEDCON_LIBS)
 else
 	echo "Compiling without xmedcon/libmdc file support"
@@ -281,7 +245,7 @@ fi
 dnl Let people compile without the DCMTK library
 AC_ARG_ENABLE(
 	libdcmdata,
-	[  --enable-dcmtk	Compile with DCMTK support for DICOM files [default=yes]], 
+	[  --enable-libdcmdata	Compile with DCMTK support for DICOM files [default=yes]], 
 	enable_libdcmdata="$enableval", 
 	enable_libdcmdata=yes)
 
@@ -298,9 +262,75 @@ fi
 
 
 
+###############################
+# Check for gtk/gnome stuff
+##############################
 
-AC_SUBST(EXTRA_GNOME_LIBS)
-AC_SUBST(EXTRA_GNOME_CFLAGS)
+PKG_CHECK_MODULES(AMIDE_GTK,[
+	glib-2.0	>= 2.10.0
+	gobject-2.0	>= 2.10.0
+	gtk+-2.0	>= 2.10.0
+	libxml-2.0	>= 2.4.12
+	libgnomecanvas-2.0 >= 2.0.0
+])
+dnl	libgnomeui-2.0  >= 2.0.0
+
+## add in gnome-vfs and gconf if not on win32 
+## gnome-vfs is only used by amide_gnome.c and only on unix
+## gconf stuff is encapsulated in amide_gconf.c
+if (test $native_win32 = no); then
+   PKG_CHECK_MODULES(AMIDE_GTK_EXTRA,[
+		gnome-vfs-2.0   >= 2.18.0
+		gconf-2.0	>= 2.18.0
+   ])
+   AMIDE_GTK_LIBS="$AMIDE_GTK_LIBS $AMIDE_GTK_EXTRA_LIBS"
+   AMIDE_GTK_CFLAGS="$AMIDE_GTK_CFLAGS $AMIDE_GTK_EXTRA_CFLAGS"
+fi
+
+AC_SUBST(AMIDE_GTK_LIBS)
+AC_SUBST(AMIDE_GTK_CFLAGS)
+
+dnl glib-genmarshal
+AC_PATH_PROG(GLIB_GENMARSHAL, glib-genmarshal)
+
+dnl This is installed from GTK+ 2.0's gdk-pixbuf
+AC_PATH_PROG(GDK_PIXBUF_CSOURCE, gdk-pixbuf-csource)
+test -z "$GDK_PIXBUF_CSOURCE" && AC_MSG_ERROR([
+*** You need the gdk-pixbuf-csource tool which is installed
+*** from GTK+ 2's gdk-pixbuf.
+***
+*** Either the location where you installed your GTK+ 2 is
+*** not in your PATH or something is screwed up with your
+*** GTK+ 2 installation
+])
+
+
+dnl record if our version of libgnomecanvas can handle anti-aliasing
+PKG_CHECK_MODULES(dummy, 
+	[libgnomecanvas-2.0 >= 2.2.0], 
+	 enable_antialiasing=yes, enable_antialiasing=no)
+dnl if test $enable_antialiasing = yes; then
+dnl	echo "Compiling with libgnomecanvas antialiasing support"
+dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 1, Define to compile AMIDE with an antialiased canvas)
+dnl else
+	echo "Compiling without libgnomecanvas antialiasing support"
+dnl	AC_DEFINE(AMIDE_LIBGNOMECANVAS_AA, 0, Define to compile AMIDE with an antialiased canvas)
+dnl fi
+
+
+################################################################
+# Checks for gtk-doc and docbook-tools, from gtk's configure.in
+################################################################
+
+GNOME_DOC_INIT
+GTK_DOC_CHECK([1.0])
+
+AC_CHECK_PROG(DB2HTML, db2html, true, false)
+AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
+
+
+
+
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
@@ -322,6 +352,8 @@ etc/amide-$VERSION-1.iss:etc/amide.iss.in
 etc/amide.spec
 po/Makefile.in])
 AC_OUTPUT 
+dnl help/C/Makefile
+dnl help/es/Makefile
 
 dnl Move the spec file so it won't get eaten by make distclean
 echo "Moving SPEC file to base directory"

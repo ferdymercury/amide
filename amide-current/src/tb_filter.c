@@ -25,13 +25,13 @@
 
 
 #include "amide_config.h"
-#include <libgnomeui/libgnomeui.h>
-#include "amitk_common.h"
+#include "amide.h"
 #include "amitk_data_set.h"
 #include "amitk_progress_dialog.h"
 #include "tb_filter.h"
-#include "pixmaps.h"
 
+
+#define LABEL_WIDTH 375
 
 #define MIN_FIR_FILTER_SIZE 7
 #define MAX_FIR_FILTER_SIZE 31
@@ -83,7 +83,7 @@ typedef enum {
   GAUSSIAN_FILTER_PAGE,
   MEDIAN_LINEAR_FILTER_PAGE,
   MEDIAN_3D_FILTER_PAGE,
-  OUTPUT_PAGE,
+  CONCLUSION_PAGE,
   NUM_PAGES
 } which_page_t;
 
@@ -98,7 +98,6 @@ typedef struct tb_filter_t {
   AmitkDataSet * data_set;
   AmitkStudy * study;
 
-  GtkWidget * table[NUM_PAGES];
   GtkWidget * page[NUM_PAGES];
   GtkWidget * progress_dialog;
 
@@ -106,248 +105,26 @@ typedef struct tb_filter_t {
 } tb_filter_t;
 
 
-static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
-static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
-
 static void filter_cb(GtkWidget * widget, gpointer data);
 static void kernel_size_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void fwhm_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
-static void cancel_cb(GtkWidget* widget, gpointer data);
-static void destroy_cb(GtkObject * object, gpointer data);
-static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data);
+static void apply_cb(GtkAssistant * assistant, gpointer data);
+static void close_cb(GtkAssistant * assistant, gpointer data);
+static gint forward_page_function (gint current_page, gpointer data);
 
 static tb_filter_t * tb_filter_free(tb_filter_t * tb_filter);
 static tb_filter_t * tb_filter_init(void);
 
+static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page);
 
 
-
-static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
-
-  tb_filter_t * tb_filter = data;
-  which_page_t which_page;
-
-  which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
-
-  switch(which_page) {
-  case PICK_FILTER_PAGE:
-    gnome_druid_set_page(GNOME_DRUID(druid), 
-			 GNOME_DRUID_PAGE(tb_filter->page[GAUSSIAN_FILTER_PAGE+tb_filter->filter]));
-
-    break;
-  default:
-    gnome_druid_set_page(GNOME_DRUID(druid), 
-			 GNOME_DRUID_PAGE(tb_filter->page[OUTPUT_PAGE]));
-    break;
-  }
-
-  return TRUE;
-}
-
-static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
-
-  tb_filter_t * tb_filter = data;
-  which_page_t which_page;
-
-  which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
-
-  switch(which_page) {
-  case OUTPUT_PAGE:
-    gnome_druid_set_page(GNOME_DRUID(druid), 
-			 GNOME_DRUID_PAGE(tb_filter->page[GAUSSIAN_FILTER_PAGE+tb_filter->filter]));
-    break;
-  default:
-    gnome_druid_set_page(GNOME_DRUID(druid), 
-			 GNOME_DRUID_PAGE(tb_filter->page[PICK_FILTER_PAGE]));
-    break;
-  }
-
-  return TRUE;
-}
-
-
-static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
- 
-  tb_filter_t * tb_filter = data;
-  which_page_t which_page;
-  GtkWidget * label;
-  GtkWidget * spin_button;
-  gint table_row;
-  gint table_column;
-  AmitkFilter i_filter;
-  GtkWidget * table;
-  GtkWidget * menu;
-  GtkWidget * option_menu;
-  GtkWidget * menuitem;
-
-  which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
-
-
-  /* -------------- set the buttons correctly ---------------- */
-  switch(which_page) {
-  case PICK_FILTER_PAGE:
-    gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), FALSE, TRUE, TRUE, TRUE);
-    break;
-  default:
-    gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, TRUE, TRUE, TRUE);
-    break;
-  }
-
-  /* --- create the widgets for the pages as needed */
-  if (tb_filter->table[which_page] == NULL) {
-    table = gtk_table_new(3,3,FALSE);
-    gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(page)->vbox), 
-		       table, TRUE, TRUE, 5);
-    tb_filter->table[which_page]=table;
-    
-    table_row=0;
-    table_column=0;
-      
-    switch(which_page) {
-    case PICK_FILTER_PAGE:
-      label = gtk_label_new(_("Which Filter"));
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-
-#if 1
-      option_menu = gtk_option_menu_new();
-      menu = gtk_menu_new();
-
-      for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) {
-	menuitem = gtk_menu_item_new_with_label(amitk_filter_get_name(i_filter));
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      }
-
-      gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-      g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(filter_cb), tb_filter);
-      gtk_table_attach(GTK_TABLE(table), option_menu, 
-		       table_column+1, table_column+2, table_row, table_row+1,
-		       FALSE, FALSE, X_PADDING, Y_PADDING);
-#else
-      menu = gtk_combo_box_new_text();
-      for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) 
-	gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_filter_get_name(i_filter));
-      gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_filter->filter);
-      g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(filter_cb), tb_filter);
-      gtk_table_attach(GTK_TABLE(table), menu, 
-		       table_column+1, table_column+2, table_row, table_row+1,
-		       FALSE, FALSE, X_PADDING, Y_PADDING);
-#endif
-#if 1
-      gtk_widget_show_all(option_menu);
-#endif
-      gtk_widget_show_all(menu);
-      table_row++;
-      
-      break;
-    case GAUSSIAN_FILTER_PAGE:
-#ifdef AMIDE_LIBGSL_SUPPORT
-      tb_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
-
-      label = gtk_label_new(gaussian_filter_text);
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+2, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-      table_row++;
-
-      /* the kernel selection */
-      label = gtk_label_new(_("Kernel Size"));
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-	
-      spin_button =  gtk_spin_button_new_with_range(MIN_FIR_FILTER_SIZE, 
-						    MAX_FIR_FILTER_SIZE,2);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
-				tb_filter->kernel_size);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-      			 G_CALLBACK(kernel_size_spinner_cb), tb_filter);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
-      table_row++;
-
-      label = gtk_label_new(_("FWHM (mm)"));
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-	
-      spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
-      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_filter->fwhm);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-      			 G_CALLBACK(fwhm_spinner_cb), tb_filter);
-      g_signal_connect(G_OBJECT(spin_button), "output",
-		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
-#else /* no libgsl support */
-      label = gtk_label_new(no_libgsl_text);
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+2, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-      table_row++;
-      
-      gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, FALSE, TRUE, TRUE);
-#endif
-      break;
-    case MEDIAN_3D_FILTER_PAGE:
-    case MEDIAN_LINEAR_FILTER_PAGE:
-      tb_filter->kernel_size = DEFAULT_MEDIAN_FILTER_SIZE;
-
-      if (which_page == MEDIAN_3D_FILTER_PAGE)
-	label = gtk_label_new(median_3d_filter_text);
-      else
-	label = gtk_label_new(median_linear_filter_text);
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+2, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-      table_row++;
-
-      /* the kernel selection */
-      label = gtk_label_new(_("Kernel Size"));
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-	
-      spin_button =  gtk_spin_button_new_with_range(MIN_NONLINEAR_FILTER_SIZE, 
-						    MAX_NONLINEAR_FILTER_SIZE,2);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
-				tb_filter->kernel_size);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-      			 G_CALLBACK(kernel_size_spinner_cb), tb_filter);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
-      table_row++;
-      break;
-    case OUTPUT_PAGE:
-    default:
-      table = NULL;
-      g_error("unhandled case in %s at line %d\n", __FILE__, __LINE__);
-      break;
-    }
-    gtk_widget_show_all(table);
-  }
-
-}
 
 /* function to change the color table */
 static void filter_cb(GtkWidget * widget, gpointer data) {
 
   tb_filter_t * tb_filter = data;
-#if 1
-  tb_filter->filter = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   tb_filter->filter = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   return;
 }
 
@@ -395,14 +172,16 @@ static void fwhm_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 }
 
 
+
+
 /* function called when the finish button is hit */
-static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
+static void apply_cb(GtkAssistant * assistant, gpointer data) {
 
   tb_filter_t * tb_filter = data;
   AmitkDataSet * filtered;
 
   /* disable the buttons */
-  gtk_widget_set_sensitive(GTK_WIDGET(druid), FALSE);
+  gtk_widget_set_sensitive(GTK_WIDGET(assistant), FALSE);
 
   /* generate the new data set */
   filtered = amitk_data_set_get_filtered(tb_filter->data_set, 
@@ -416,52 +195,43 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
     /* and add the new data set to the study */
     amitk_object_add_child(AMITK_OBJECT(tb_filter->study), AMITK_OBJECT(filtered)); /* this adds a reference to the data set*/
     amitk_object_unref(filtered); /* so remove a reference */
-
-    /* close the dialog box */
-    cancel_cb(widget, data);
-  } else {
-
-    /* enable the buttons */
-    gtk_widget_set_sensitive(GTK_WIDGET(druid), TRUE);
-  }
+  } else 
+    g_warning("Failed to generate filtered data set");
 
   return;
 }
-
-
 
 
 /* function called to cancel the dialog */
-static void cancel_cb(GtkWidget* widget, gpointer data) {
+static void close_cb(GtkAssistant * assistant, gpointer data) {
 
   tb_filter_t * tb_filter = data;
   GtkWidget * dialog = tb_filter->dialog;
-  gboolean return_val;
 
-  /* run the delete event function */
-  g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-  if (!return_val) gtk_widget_destroy(dialog);
+  tb_filter = tb_filter_free(tb_filter); /* trash collection */
+  gtk_widget_destroy(dialog);
 
   return;
 }
 
-static void destroy_cb(GtkObject * object, gpointer data) {
-  tb_filter_t * tb_filter = data;
-  
-  /* trash collection */
-  tb_filter = tb_filter_free(tb_filter);
-  return;
+static gint forward_page_function (gint current_page, gpointer data) {
+
+  tb_filter_t * tb_filter=data;
+
+  switch(current_page) {
+  case PICK_FILTER_PAGE:
+    return GAUSSIAN_FILTER_PAGE+tb_filter->filter;
+    break;
+  case GAUSSIAN_FILTER_PAGE:
+  case MEDIAN_LINEAR_FILTER_PAGE:
+  case MEDIAN_3D_FILTER_PAGE:
+    return CONCLUSION_PAGE;
+    break;
+  default:
+    return current_page+1;
+    break;
+  }
 }
-
-
-/* function called on a delete event */
-static gboolean delete_event_cb(GtkWidget * widget, GdkEvent * event, gpointer data) {
-  return FALSE;
-}
-
-
-
-
 
 
 static tb_filter_t * tb_filter_free(tb_filter_t * tb_filter) {
@@ -505,7 +275,6 @@ static tb_filter_t * tb_filter_free(tb_filter_t * tb_filter) {
 
 static tb_filter_t * tb_filter_init(void) {
 
-  which_page_t i_page;
   tb_filter_t * tb_filter;
 
   /* alloc space for the data structure for passing ui info */
@@ -520,19 +289,140 @@ static tb_filter_t * tb_filter_init(void) {
   tb_filter->study = NULL;
   tb_filter->kernel_size=3;
   tb_filter->fwhm = 1.0;
-  for (i_page=0; i_page<NUM_PAGES; i_page++)
-    tb_filter->table[i_page] = NULL;
-
 
   return tb_filter;
 }
+
+
+
+static GtkWidget * create_page(tb_filter_t * tb_filter, which_page_t i_page) {
+
+  GtkWidget * label;
+  GtkWidget * spin_button;
+  gint table_row;
+  gint table_column;
+  AmitkFilter i_filter;
+  GtkWidget * table;
+  GtkWidget * menu;
+
+  table = gtk_table_new(3,3,FALSE);
+    
+  table_row=0;
+  table_column=0;
+      
+  switch(i_page) {
+  case PICK_FILTER_PAGE:
+    label = gtk_label_new(_("Which Filter"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    menu = gtk_combo_box_new_text();
+    for (i_filter=0; i_filter<AMITK_FILTER_NUM; i_filter++) 
+      gtk_combo_box_append_text(GTK_COMBO_BOX(menu), amitk_filter_get_name(i_filter));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(menu), tb_filter->filter);
+    g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(filter_cb), tb_filter);
+    gtk_table_attach(GTK_TABLE(table), menu, 
+		     table_column+1, table_column+2, table_row, table_row+1,
+		     FALSE, FALSE, X_PADDING, Y_PADDING);
+    gtk_widget_show_all(menu);
+    table_row++;
+    
+    break;
+  case GAUSSIAN_FILTER_PAGE:
+#ifdef AMIDE_LIBGSL_SUPPORT
+    tb_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
+    
+    label = gtk_label_new(gaussian_filter_text);
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+    
+    /* the kernel selection */
+    label = gtk_label_new(_("Kernel Size"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    spin_button =  gtk_spin_button_new_with_range(MIN_FIR_FILTER_SIZE, 
+						  MAX_FIR_FILTER_SIZE,2);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
+			      tb_filter->kernel_size);
+    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		     G_CALLBACK(kernel_size_spinner_cb), tb_filter);
+    gtk_table_attach(GTK_TABLE(table), spin_button, 
+		     table_column+1,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+    
+    label = gtk_label_new(_("FWHM (mm)"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_filter->fwhm);
+    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		     G_CALLBACK(fwhm_spinner_cb), tb_filter);
+    g_signal_connect(G_OBJECT(spin_button), "output",
+		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+    gtk_table_attach(GTK_TABLE(table), spin_button, 
+		     table_column+1,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+#else /* no libgsl support */
+    label = gtk_label_new(no_libgsl_text);
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+#endif
+    break;
+  case MEDIAN_3D_FILTER_PAGE:
+  case MEDIAN_LINEAR_FILTER_PAGE:
+    tb_filter->kernel_size = DEFAULT_MEDIAN_FILTER_SIZE;
+    
+    label = gtk_label_new((i_page == MEDIAN_3D_FILTER_PAGE) ? median_3d_filter_text : median_linear_filter_text);
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+    
+    /* the kernel selection */
+    label = gtk_label_new(_("Kernel Size"));
+    gtk_table_attach(GTK_TABLE(table), label, 
+		     table_column,table_column+1, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    
+    spin_button =  gtk_spin_button_new_with_range(MIN_NONLINEAR_FILTER_SIZE, 
+						  MAX_NONLINEAR_FILTER_SIZE,2);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
+			      tb_filter->kernel_size);
+    g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+		     G_CALLBACK(kernel_size_spinner_cb), tb_filter);
+    gtk_table_attach(GTK_TABLE(table), spin_button, 
+		     table_column+1,table_column+2, table_row,table_row+1,
+		     FALSE,FALSE, X_PADDING, Y_PADDING);
+    table_row++;
+    break;
+  default:
+    table = NULL;
+    g_error("unhandled case in %s at line %d\n", __FILE__, __LINE__);
+    break;
+  }
+
+  return table;
+}
+
 
 
 void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent) {
 
   tb_filter_t * tb_filter;
   GdkPixbuf * logo;
-  GtkWidget * druid;
   which_page_t i_page;
 
   if (active_ds == NULL) {
@@ -540,8 +430,6 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent)
     return;
   }
   
-  logo = gdk_pixbuf_new_from_inline(-1, amide_logo_small, FALSE, NULL);
-
   tb_filter = tb_filter_init();
   tb_filter->study = amitk_object_ref(study);
   tb_filter->data_set = amitk_object_ref(active_ds);
@@ -549,43 +437,49 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds, GtkWindow * parent)
   /* take a guess at a good fwhm */
   tb_filter->fwhm = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(tb_filter->data_set));
 
-  tb_filter->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  tb_filter->dialog = gtk_assistant_new();
   gtk_window_set_transient_for(GTK_WINDOW(tb_filter->dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(tb_filter->dialog), TRUE);
-  g_signal_connect(G_OBJECT(tb_filter->dialog), "delete_event", G_CALLBACK(delete_event_cb), tb_filter);
-  g_signal_connect(G_OBJECT(tb_filter->dialog), "destroy", G_CALLBACK(destroy_cb), tb_filter);
+  g_signal_connect(G_OBJECT(tb_filter->dialog), "cancel", G_CALLBACK(close_cb), tb_filter);
+  g_signal_connect(G_OBJECT(tb_filter->dialog), "close", G_CALLBACK(close_cb), tb_filter);
+  g_signal_connect(G_OBJECT(tb_filter->dialog), "apply", G_CALLBACK(apply_cb), tb_filter);
+  gtk_assistant_set_forward_page_func(GTK_ASSISTANT(tb_filter->dialog),
+				      forward_page_function,
+				      tb_filter, NULL);
 
   tb_filter->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_filter->dialog));
 
-  druid = gnome_druid_new();
-  gtk_container_add(GTK_CONTAINER(tb_filter->dialog), druid);
-  g_signal_connect(G_OBJECT(druid), "cancel", G_CALLBACK(cancel_cb), tb_filter);
 
-
-  for (i_page=PICK_FILTER_PAGE; i_page<OUTPUT_PAGE; i_page++) {
-    tb_filter->page[i_page] = gnome_druid_page_standard_new_with_vals(wizard_name,logo,NULL);
-    g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
-    
-    /* note, the _connect_after is a workaround, it should just be _connect */
-    /* the problem, is gnome_druid currently overwrites button sensitivity in its own prepare routine*/
-    g_signal_connect_after(G_OBJECT(tb_filter->page[i_page]), "prepare", 
-			   G_CALLBACK(prepare_page_cb), tb_filter);
-    g_signal_connect(G_OBJECT(tb_filter->page[i_page]), "next", G_CALLBACK(next_page_cb), tb_filter);
-    g_signal_connect(G_OBJECT(tb_filter->page[i_page]), "back", G_CALLBACK(back_page_cb), tb_filter);
-    gnome_druid_append_page(GNOME_DRUID(druid), GNOME_DRUID_PAGE(tb_filter->page[i_page]));
+  /* --------------intro page and the various filter pages ------------------- */
+  for (i_page=PICK_FILTER_PAGE; i_page<CONCLUSION_PAGE; i_page++) {
+    tb_filter->page[i_page] = create_page(tb_filter, i_page);
+    gtk_assistant_append_page(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page]);
   }
-
     
-  /* ----------------  conclusion page ---------------------------------- */
-  tb_filter->page[OUTPUT_PAGE] = 
-    gnome_druid_page_edge_new_with_vals(GNOME_EDGE_FINISH, TRUE,
-					wizard_name,finish_page_text, logo,NULL, NULL);
-  g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
-  g_signal_connect(G_OBJECT(tb_filter->page[OUTPUT_PAGE]), "finish", G_CALLBACK(finish_cb), tb_filter);
-  g_signal_connect(G_OBJECT(tb_filter->page[OUTPUT_PAGE]), "back", G_CALLBACK(back_page_cb), tb_filter);
-  gnome_druid_append_page(GNOME_DRUID(druid),  GNOME_DRUID_PAGE(tb_filter->page[OUTPUT_PAGE]));
 
+  /* ----------------  conclusion page ---------------------------------- */
+  tb_filter->page[CONCLUSION_PAGE] = gtk_label_new(finish_page_text);
+  gtk_widget_set_size_request(tb_filter->page[CONCLUSION_PAGE],LABEL_WIDTH, -1);
+  gtk_label_set_line_wrap(GTK_LABEL(tb_filter->page[CONCLUSION_PAGE]), TRUE);
+  gtk_assistant_append_page(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[CONCLUSION_PAGE]);
+  gtk_assistant_set_page_type(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[CONCLUSION_PAGE],
+			      GTK_ASSISTANT_PAGE_CONFIRM);
+
+
+  /* things for all pages */
+  logo = gtk_widget_render_icon(GTK_WIDGET(tb_filter->dialog), "amide_icon_logo", GTK_ICON_SIZE_DIALOG, 0);
+  for (i_page=0; i_page<NUM_PAGES; i_page++) {
+    gtk_assistant_set_page_header_image(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], logo);
+    gtk_assistant_set_page_title(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], wizard_name);
+    gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[i_page], TRUE); /* all pages have default values */
+    g_object_set_data(G_OBJECT(tb_filter->page[i_page]),"which_page", GINT_TO_POINTER(i_page));
+  }
   g_object_unref(logo);
+
+#ifndef AMIDE_LIBGSL_SUPPORT
+  gtk_assistant_set_page_complete(GTK_ASSISTANT(tb_filter->dialog), tb_filter->page[GAUSSIAN_FILTER_PAGE], FALSE);
+#endif
+
   gtk_widget_show_all(tb_filter->dialog);
 
   return;

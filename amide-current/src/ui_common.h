@@ -26,8 +26,9 @@
 /* header files that are always needed with this file */
 #include <gtk/gtk.h>
 #include <libgnomecanvas/libgnomecanvas.h>
-#include <libgnomeui/libgnomeui.h>
 #include "amitk_point.h"
+
+#define HELP_MENU_UI_DESCRIPTION  "<menu action='HelpMenu'> <menuitem action='HelpContents'/> <separator/> <menuitem action='HelpAbout'/> </menu>"
 
 typedef enum {
   UI_CURSOR_DEFAULT,
@@ -46,12 +47,19 @@ typedef enum {
   NUM_CURSORS
 } ui_common_cursor_t;
 
+typedef enum {
+  UI_COMMON_HELP_MENU_CONTENTS,
+  UI_COMMON_HELP_MENU_ABOUT,
+  UI_COMMON_HELP_MENU_NUM
+} ui_common_help_menu_t;
+
 /* external functions */
 gboolean ui_common_check_filename(const gchar * filename);
 void ui_common_set_last_path_used(const gchar * last_path_used);
 void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
 void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data);
-gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection);
+gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection,
+					       gboolean check_for_existing_file);
 gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection);
 gchar * ui_common_file_selection_get_load_name(GtkWidget * file_selection);
 gchar * ui_common_xif_selection_get_load_name(GtkWidget * xif_selection);
@@ -75,16 +83,22 @@ void ui_common_study_preferences_widgets(GtkWidget * packing_table,
 					 GtkWidget ** pmaintain_size_button,
 					 GtkWidget ** ptarget_size_spin);
 GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout);
-void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_wait_cursor(GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr);
 void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog);
+void ui_common_toolbar_append_widget(GtkWidget * toolbar, GtkWidget * widget, const gchar * tooltip);
+void ui_common_toolbar_append_separator(GtkWidget * toolbar);
 
+void amide_call_help(const gchar * link_id);
+void amide_register_window(gpointer * widget);
+void amide_unregister_window(gpointer * widget);
+void amide_unregister_all_windows(void);
 
 
 /* external variables */
-extern GnomeUIInfo ui_common_help_menu[];
+extern GtkActionEntry ui_common_help_menu_items[UI_COMMON_HELP_MENU_NUM];
 extern GdkCursor * ui_common_cursor[NUM_CURSORS];
+

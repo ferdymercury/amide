@@ -1,378 +1,1400 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkStudy</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="SpaceObjects.html" title="Medical Image Objects"><link rel="previous" href="amitk-AmitkRoi.html" title="AmitkRoi"><link rel="next" href="AmitkWidgets.html" title="Amitk Widgets"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-AmitkRoi.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="SpaceObjects.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="AmitkWidgets.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkStudy"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkStudy</span></h2><p>AmitkStudy &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>AmitkStudy</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="prev" href="amitk-AmitkRoi.html" title="AmitkRoi">
+<link rel="next" href="AmitkWidgets.html" title="Amitk Widgets">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-AmitkRoi.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="SpaceObjects.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="AmitkWidgets.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id426797" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id428086" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-AmitkStudy"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id426797"></a><span class="refentrytitle">AmitkStudy</span>
+</h2>
+<p>AmitkStudy</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-CENTER-CAPS">AMITK_STUDY_VIEW_CENTER</a>         (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-THICKNESS-CAPS">AMITK_STUDY_VIEW_THICKNESS</a>      (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-ZOOM-CAPS">AMITK_STUDY_ZOOM</a>                (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-START-TIME-CAPS">AMITK_STUDY_VIEW_START_TIME</a>     (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-DURATION-CAPS">AMITK_STUDY_VIEW_DURATION</a>       (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CREATION-DATE-CAPS">AMITK_STUDY_CREATION_DATE</a>       (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-FILENAME-CAPS">AMITK_STUDY_FILENAME</a>            (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM-CAPS">AMITK_STUDY_VOXEL_DIM</a>           (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-FUSE-TYPE-CAPS">AMITK_STUDY_FUSE_TYPE</a>           (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-MODE-CAPS">AMITK_STUDY_VIEW_MODE</a>           (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-VISIBLE-CAPS">AMITK_STUDY_CANVAS_VISIBLE</a>      (stu, canvas)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-CAPS">AMITK_STUDY_CANVAS_TARGET</a>       (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-ROI-WIDTH-CAPS">AMITK_STUDY_CANVAS_ROI_WIDTH</a>    (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LINE-STYLE-CAPS">AMITK_STUDY_CANVAS_LINE_STYLE</a>   (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LAYOUT-CAPS">AMITK_STUDY_CANVAS_LAYOUT</a>       (stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-MAINTAIN-SIZE-CAPS">AMITK_STUDY_CANVAS_MAINTAIN_SIZE</a>(stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA-CAPS">AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA</a>(stu)
-#define     <a href="amitk-AmitkStudy.html#AMITK-STUDY-LINE-PROFILE-CAPS">AMITK_STUDY_LINE_PROFILE</a>        (stu)
-enum        <a href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a>;
-enum        <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a>;
-AmitkStudy* <a href="amitk-AmitkStudy.html#amitk-study-new">amitk_study_new</a>                 (AmitkPreferences *preferences);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-filename">amitk_study_set_filename</a>        (AmitkStudy *study,
-                                             const gchar *new_filename);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-creation-date">amitk_study_set_creation_date</a>   (AmitkStudy *study,
-                                             const gchar *new_date);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-view-thickness">amitk_study_set_view_thickness</a>  (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_thickness);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-view-center">amitk_study_set_view_center</a>     (AmitkStudy *study,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_center);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-view-start-time">amitk_study_set_view_start_time</a> (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_start);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-view-duration">amitk_study_set_view_duration</a>   (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_duration);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-fuse-type">amitk_study_set_fuse_type</a>       (AmitkStudy *study,
-                                             const <a href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> new_fuse_type);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-view-mode">amitk_study_set_view_mode</a>       (AmitkStudy *study,
-                                             const <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> new_view_mode);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-visible">amitk_study_set_canvas_visible</a>  (AmitkStudy *study,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const gboolean visible);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-zoom">amitk_study_set_zoom</a>            (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_zoom);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-target">amitk_study_set_canvas_target</a>   (AmitkStudy *study,
-                                             const gboolean always_on);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-roi-width">amitk_study_set_canvas_roi_width</a>
-                                            (AmitkStudy *study,
-                                             gint roi_width);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-line-style">amitk_study_set_canvas_line_style</a>
-                                            (AmitkStudy *study,
-                                             const GdkLineStyle line_style);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-layout">amitk_study_set_canvas_layout</a>   (AmitkStudy *study,
-                                             const AmitkLayout layout);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-maintain-size">amitk_study_set_canvas_maintain_size</a>
-                                            (AmitkStudy *study,
-                                             const gboolean maintain_size);
-void        <a href="amitk-AmitkStudy.html#amitk-study-set-canvas-target-empty-area">amitk_study_set_canvas_target_empty_area</a>
-                                            (AmitkStudy *study,
-                                             gint target_empty_area);
-AmitkStudy* <a href="amitk-AmitkStudy.html#amitk-study-load-xml">amitk_study_load_xml</a>            (const gchar *study_filename);
-gboolean    <a href="amitk-AmitkStudy.html#amitk-study-save-xml">amitk_study_save_xml</a>            (AmitkStudy *study,
-                                             const gchar *study_filename,
-                                             const gboolean save_as_directory);
-const gchar* <a href="amitk-AmitkStudy.html#amitk-fuse-type-get-name">amitk_fuse_type_get_name</a>       (const <a href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> fuse_type);
-const gchar* <a href="amitk-AmitkStudy.html#amitk-view-mode-get-name">amitk_view_mode_get_name</a>       (const <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> view_mode);
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-CENTER:CAPS">AMITK_STUDY_VIEW_CENTER</a>             (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-THICKNESS:CAPS">AMITK_STUDY_VIEW_THICKNESS</a>          (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-ZOOM:CAPS">AMITK_STUDY_ZOOM</a>                    (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-FOV:CAPS">AMITK_STUDY_FOV</a>                     (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-START-TIME:CAPS">AMITK_STUDY_VIEW_START_TIME</a>         (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-DURATION:CAPS">AMITK_STUDY_VIEW_DURATION</a>           (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CREATION-DATE:CAPS">AMITK_STUDY_CREATION_DATE</a>           (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-FILENAME:CAPS">AMITK_STUDY_FILENAME</a>                (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM:CAPS">AMITK_STUDY_VOXEL_DIM</a>               (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VOXEL-DIM-VALID:CAPS">AMITK_STUDY_VOXEL_DIM_VALID</a>         (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-FUSE-TYPE:CAPS">AMITK_STUDY_FUSE_TYPE</a>               (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-VIEW-MODE:CAPS">AMITK_STUDY_VIEW_MODE</a>               (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-VISIBLE:CAPS">AMITK_STUDY_CANVAS_VISIBLE</a>          (stu, canvas)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET:CAPS">AMITK_STUDY_CANVAS_TARGET</a>           (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-ROI-WIDTH:CAPS">AMITK_STUDY_CANVAS_ROI_WIDTH</a>        (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LINE-STYLE:CAPS">AMITK_STUDY_CANVAS_LINE_STYLE</a>       (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-FILL-ROI:CAPS">AMITK_STUDY_CANVAS_FILL_ROI</a>         (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-LAYOUT:CAPS">AMITK_STUDY_CANVAS_LAYOUT</a>           (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-MAINTAIN-SIZE:CAPS">AMITK_STUDY_CANVAS_MAINTAIN_SIZE</a>    (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA:CAPS">AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA</a>(stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-PANEL-LAYOUT:CAPS">AMITK_STUDY_PANEL_LAYOUT</a>            (stu)
+#define             <a class="link" href="amitk-AmitkStudy.html#AMITK-STUDY-LINE-PROFILE:CAPS">AMITK_STUDY_LINE_PROFILE</a>            (stu)
+enum                <a class="link" href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a>;
+                    <a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>;
+<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         <a class="link" href="amitk-AmitkStudy.html#amitk-study-new">amitk_study_new</a>                     (AmitkPreferences *preferences);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-filename">amitk_study_set_filename</a>            (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *new_filename);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-creation-date">amitk_study_set_creation_date</a>       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *new_date);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-view-thickness">amitk_study_set_view_thickness</a>      (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_thickness);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-view-center">amitk_study_set_view_center</a>         (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_center);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-view-start-time">amitk_study_set_view_start_time</a>     (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_start);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-view-duration">amitk_study_set_view_duration</a>       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_duration);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-fuse-type">amitk_study_set_fuse_type</a>           (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> new_fuse_type);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-view-mode">amitk_study_set_view_mode</a>           (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkViewMode">AmitkViewMode</a> new_view_mode);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-visible">amitk_study_set_canvas_visible</a>      (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> visible);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-zoom">amitk_study_set_zoom</a>                (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_zoom);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-fov">amitk_study_set_fov</a>                 (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_fov);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-target">amitk_study_set_canvas_target</a>       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> always_on);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-roi-width">amitk_study_set_canvas_roi_width</a>    (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> roi_width);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-line-style">amitk_study_set_canvas_line_style</a>   (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/gdk/gdk-Graphics-Contexts.html#GdkLineStyle"
+>GdkLineStyle</a> line_style);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-fill-roi">amitk_study_set_canvas_fill_roi</a>     (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> fill_roi);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-layout">amitk_study_set_canvas_layout</a>       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-maintain-size">amitk_study_set_canvas_maintain_size</a>
+                                                        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> maintain_size);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-canvas-target-empty-area">amitk_study_set_canvas_target_empty_area</a>
+                                                        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> target_empty_area);
+void                <a class="link" href="amitk-AmitkStudy.html#amitk-study-set-panel-layout">amitk_study_set_panel_layout</a>        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkPanelLayout">AmitkPanelLayout</a> panel_layout);
+<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         <a class="link" href="amitk-AmitkStudy.html#amitk-study-recover-xml">amitk_study_recover_xml</a>             (const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename,
+                                                         AmitkPreferences *preferences);
+<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         <a class="link" href="amitk-AmitkStudy.html#amitk-study-load-xml">amitk_study_load_xml</a>                (const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename);
+<a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            <a class="link" href="amitk-AmitkStudy.html#amitk-study-save-xml">amitk_study_save_xml</a>                (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> save_as_directory);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-AmitkStudy.html#amitk-fuse-type-get-name">amitk_fuse_type_get_name</a>            (const <a class="link" href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> fuse_type);
+const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        <a class="link" href="amitk-AmitkStudy.html#amitk-view-mode-get-name">amitk_view_mode_get_name</a>            (const <a class="link" href="amitk-amitk-common.html#AmitkViewMode">AmitkViewMode</a> view_mode);
 
-</pre></div><div class="refsect1" lang="en"><a name="id2691701"></a><h2>Description</h2><p>
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id428086"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2691711"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2691716"></a><h3><a name="AMITK-STUDY-VIEW-CENTER-CAPS"></a>AMITK_STUDY_VIEW_CENTER()</h3><a class="indexterm" name="id2691729"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_CENTER(stu)              (amitk_space_s2b(AMITK_SPACE(stu), AMITK_STUDY(stu)-&gt;view_center))
-</pre><p>
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id428100"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id428111"></a><h3>
+<a name="AMITK-STUDY-VIEW-CENTER:CAPS"></a>AMITK_STUDY_VIEW_CENTER()</h3>
+<a class="indexterm" name="id428124"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_CENTER(stu)              (amitk_space_s2b(AMITK_SPACE(stu), AMITK_STUDY(stu)-&gt;view_center))
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691765"></a><h3><a name="AMITK-STUDY-VIEW-THICKNESS-CAPS"></a>AMITK_STUDY_VIEW_THICKNESS()</h3><a class="indexterm" name="id2691776"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_THICKNESS(stu)           (AMITK_STUDY(stu)-&gt;view_thickness)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691811"></a><h3><a name="AMITK-STUDY-ZOOM-CAPS"></a>AMITK_STUDY_ZOOM()</h3><a class="indexterm" name="id2691823"></a><pre class="programlisting">#define AMITK_STUDY_ZOOM(stu)                     (AMITK_STUDY(stu)-&gt;zoom)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691858"></a><h3><a name="AMITK-STUDY-VIEW-START-TIME-CAPS"></a>AMITK_STUDY_VIEW_START_TIME()</h3><a class="indexterm" name="id2691870"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_START_TIME(stu)          (AMITK_STUDY(stu)-&gt;view_start_time)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691904"></a><h3><a name="AMITK-STUDY-VIEW-DURATION-CAPS"></a>AMITK_STUDY_VIEW_DURATION()</h3><a class="indexterm" name="id2691917"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_DURATION(stu)            (AMITK_STUDY(stu)-&gt;view_duration)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691952"></a><h3><a name="AMITK-STUDY-CREATION-DATE-CAPS"></a>AMITK_STUDY_CREATION_DATE()</h3><a class="indexterm" name="id2691964"></a><pre class="programlisting">#define AMITK_STUDY_CREATION_DATE(stu)            (AMITK_STUDY(stu)-&gt;creation_date)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2691999"></a><h3><a name="AMITK-STUDY-FILENAME-CAPS"></a>AMITK_STUDY_FILENAME()</h3><a class="indexterm" name="id2692010"></a><pre class="programlisting">#define AMITK_STUDY_FILENAME(stu)                 (AMITK_STUDY(stu)-&gt;filename)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692045"></a><h3><a name="AMITK-STUDY-VOXEL-DIM-CAPS"></a>AMITK_STUDY_VOXEL_DIM()</h3><a class="indexterm" name="id2692056"></a><pre class="programlisting">#define AMITK_STUDY_VOXEL_DIM(stu)                (AMITK_STUDY(stu)-&gt;voxel_dim)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692091"></a><h3><a name="AMITK-STUDY-FUSE-TYPE-CAPS"></a>AMITK_STUDY_FUSE_TYPE()</h3><a class="indexterm" name="id2692102"></a><pre class="programlisting">#define AMITK_STUDY_FUSE_TYPE(stu)                (AMITK_STUDY(stu)-&gt;fuse_type)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692137"></a><h3><a name="AMITK-STUDY-VIEW-MODE-CAPS"></a>AMITK_STUDY_VIEW_MODE()</h3><a class="indexterm" name="id2692148"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_MODE(stu)                (AMITK_STUDY(stu)-&gt;view_mode)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692183"></a><h3><a name="AMITK-STUDY-CANVAS-VISIBLE-CAPS"></a>AMITK_STUDY_CANVAS_VISIBLE()</h3><a class="indexterm" name="id2692195"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)-&gt;canvas_visible[canvas])
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>canvas</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692243"></a><h3><a name="AMITK-STUDY-CANVAS-TARGET-CAPS"></a>AMITK_STUDY_CANVAS_TARGET()</h3><a class="indexterm" name="id2692256"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)-&gt;canvas_target)
-</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428157"></a><h3>
+<a name="AMITK-STUDY-VIEW-THICKNESS:CAPS"></a>AMITK_STUDY_VIEW_THICKNESS()</h3>
+<a class="indexterm" name="id428170"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_THICKNESS(stu)           (AMITK_STUDY(stu)-&gt;view_thickness)
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692290"></a><h3><a name="AMITK-STUDY-CANVAS-ROI-WIDTH-CAPS"></a>AMITK_STUDY_CANVAS_ROI_WIDTH()</h3><a class="indexterm" name="id2692302"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)-&gt;canvas_roi_width)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692337"></a><h3><a name="AMITK-STUDY-CANVAS-LINE-STYLE-CAPS"></a>AMITK_STUDY_CANVAS_LINE_STYLE()</h3><a class="indexterm" name="id2692348"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)-&gt;canvas_line_style)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692383"></a><h3><a name="AMITK-STUDY-CANVAS-LAYOUT-CAPS"></a>AMITK_STUDY_CANVAS_LAYOUT()</h3><a class="indexterm" name="id2692396"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)-&gt;canvas_layout)
-</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692431"></a><h3><a name="AMITK-STUDY-CANVAS-MAINTAIN-SIZE-CAPS"></a>AMITK_STUDY_CANVAS_MAINTAIN_SIZE()</h3><a class="indexterm" name="id2692443"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)-&gt;canvas_maintain_size)
-</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428203"></a><h3>
+<a name="AMITK-STUDY-ZOOM:CAPS"></a>AMITK_STUDY_ZOOM()</h3>
+<a class="indexterm" name="id428216"></a><pre class="programlisting">#define AMITK_STUDY_ZOOM(stu)                     (AMITK_STUDY(stu)-&gt;zoom)
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692478"></a><h3><a name="AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA-CAPS"></a>AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA()</h3><a class="indexterm" name="id2692490"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)-&gt;canvas_target_empty_area)
-</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428249"></a><h3>
+<a name="AMITK-STUDY-FOV:CAPS"></a>AMITK_STUDY_FOV()</h3>
+<a class="indexterm" name="id428262"></a><pre class="programlisting">#define AMITK_STUDY_FOV(stu)                      (AMITK_STUDY(stu)-&gt;fov)
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692525"></a><h3><a name="AMITK-STUDY-LINE-PROFILE-CAPS"></a>AMITK_STUDY_LINE_PROFILE()</h3><a class="indexterm" name="id2692538"></a><pre class="programlisting">#define AMITK_STUDY_LINE_PROFILE(stu)             (AMITK_STUDY(stu)-&gt;line_profile)
-</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428295"></a><h3>
+<a name="AMITK-STUDY-VIEW-START-TIME:CAPS"></a>AMITK_STUDY_VIEW_START_TIME()</h3>
+<a class="indexterm" name="id428307"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_START_TIME(stu)          (AMITK_STUDY(stu)-&gt;view_start_time)
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>stu</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692573"></a><h3><a name="AmitkFuseType"></a>enum AmitkFuseType</h3><a class="indexterm" name="id2692584"></a><pre class="programlisting">typedef enum {
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428341"></a><h3>
+<a name="AMITK-STUDY-VIEW-DURATION:CAPS"></a>AMITK_STUDY_VIEW_DURATION()</h3>
+<a class="indexterm" name="id428354"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_DURATION(stu)            (AMITK_STUDY(stu)-&gt;view_duration)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428387"></a><h3>
+<a name="AMITK-STUDY-CREATION-DATE:CAPS"></a>AMITK_STUDY_CREATION_DATE()</h3>
+<a class="indexterm" name="id428400"></a><pre class="programlisting">#define AMITK_STUDY_CREATION_DATE(stu)            (AMITK_STUDY(stu)-&gt;creation_date)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428434"></a><h3>
+<a name="AMITK-STUDY-FILENAME:CAPS"></a>AMITK_STUDY_FILENAME()</h3>
+<a class="indexterm" name="id428447"></a><pre class="programlisting">#define AMITK_STUDY_FILENAME(stu)                 (AMITK_STUDY(stu)-&gt;filename)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428480"></a><h3>
+<a name="AMITK-STUDY-VOXEL-DIM:CAPS"></a>AMITK_STUDY_VOXEL_DIM()</h3>
+<a class="indexterm" name="id428493"></a><pre class="programlisting">#define AMITK_STUDY_VOXEL_DIM(stu)                (AMITK_STUDY(stu)-&gt;voxel_dim)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428526"></a><h3>
+<a name="AMITK-STUDY-VOXEL-DIM-VALID:CAPS"></a>AMITK_STUDY_VOXEL_DIM_VALID()</h3>
+<a class="indexterm" name="id428539"></a><pre class="programlisting">#define AMITK_STUDY_VOXEL_DIM_VALID(stu)          (AMITK_STUDY(stu)-&gt;voxel_dim_valid)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428572"></a><h3>
+<a name="AMITK-STUDY-FUSE-TYPE:CAPS"></a>AMITK_STUDY_FUSE_TYPE()</h3>
+<a class="indexterm" name="id428586"></a><pre class="programlisting">#define AMITK_STUDY_FUSE_TYPE(stu)                (AMITK_STUDY(stu)-&gt;fuse_type)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428619"></a><h3>
+<a name="AMITK-STUDY-VIEW-MODE:CAPS"></a>AMITK_STUDY_VIEW_MODE()</h3>
+<a class="indexterm" name="id428632"></a><pre class="programlisting">#define AMITK_STUDY_VIEW_MODE(stu)                (AMITK_STUDY(stu)-&gt;view_mode)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428665"></a><h3>
+<a name="AMITK-STUDY-CANVAS-VISIBLE:CAPS"></a>AMITK_STUDY_CANVAS_VISIBLE()</h3>
+<a class="indexterm" name="id428678"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)-&gt;canvas_visible[canvas])
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>canvas</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428724"></a><h3>
+<a name="AMITK-STUDY-CANVAS-TARGET:CAPS"></a>AMITK_STUDY_CANVAS_TARGET()</h3>
+<a class="indexterm" name="id428737"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)-&gt;canvas_target)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428771"></a><h3>
+<a name="AMITK-STUDY-CANVAS-ROI-WIDTH:CAPS"></a>AMITK_STUDY_CANVAS_ROI_WIDTH()</h3>
+<a class="indexterm" name="id428784"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_ROI_WIDTH(stu)         (AMITK_STUDY(stu)-&gt;canvas_roi_width)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428817"></a><h3>
+<a name="AMITK-STUDY-CANVAS-LINE-STYLE:CAPS"></a>AMITK_STUDY_CANVAS_LINE_STYLE()</h3>
+<a class="indexterm" name="id428830"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_LINE_STYLE(stu)        (AMITK_STUDY(stu)-&gt;canvas_line_style)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428864"></a><h3>
+<a name="AMITK-STUDY-CANVAS-FILL-ROI:CAPS"></a>AMITK_STUDY_CANVAS_FILL_ROI()</h3>
+<a class="indexterm" name="id428877"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_FILL_ROI(stu)          (AMITK_STUDY(stu)-&gt;canvas_fill_roi)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428910"></a><h3>
+<a name="AMITK-STUDY-CANVAS-LAYOUT:CAPS"></a>AMITK_STUDY_CANVAS_LAYOUT()</h3>
+<a class="indexterm" name="id428923"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_LAYOUT(stu)            (AMITK_STUDY(stu)-&gt;canvas_layout)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id428956"></a><h3>
+<a name="AMITK-STUDY-CANVAS-MAINTAIN-SIZE:CAPS"></a>AMITK_STUDY_CANVAS_MAINTAIN_SIZE()</h3>
+<a class="indexterm" name="id428969"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_MAINTAIN_SIZE(stu)     (AMITK_STUDY(stu)-&gt;canvas_maintain_size)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429003"></a><h3>
+<a name="AMITK-STUDY-CANVAS-TARGET-EMPTY-AREA:CAPS"></a>AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA()</h3>
+<a class="indexterm" name="id429017"></a><pre class="programlisting">#define AMITK_STUDY_CANVAS_TARGET_EMPTY_AREA(stu) (AMITK_STUDY(stu)-&gt;canvas_target_empty_area)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429050"></a><h3>
+<a name="AMITK-STUDY-PANEL-LAYOUT:CAPS"></a>AMITK_STUDY_PANEL_LAYOUT()</h3>
+<a class="indexterm" name="id429062"></a><pre class="programlisting">#define AMITK_STUDY_PANEL_LAYOUT(stu)             (AMITK_STUDY(stu)-&gt;panel_layout)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429096"></a><h3>
+<a name="AMITK-STUDY-LINE-PROFILE:CAPS"></a>AMITK_STUDY_LINE_PROFILE()</h3>
+<a class="indexterm" name="id429109"></a><pre class="programlisting">#define AMITK_STUDY_LINE_PROFILE(stu)             (AMITK_STUDY(stu)-&gt;line_profile)
+</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>stu</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429142"></a><h3>
+<a name="AmitkFuseType"></a>enum AmitkFuseType</h3>
+<a class="indexterm" name="id429155"></a><pre class="programlisting">typedef enum {
   AMITK_FUSE_TYPE_BLEND,
   AMITK_FUSE_TYPE_OVERLAY,
   AMITK_FUSE_TYPE_NUM
 } AmitkFuseType;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2692600"></a><h3><a name="AmitkViewMode"></a>enum AmitkViewMode</h3><a class="indexterm" name="id2692611"></a><pre class="programlisting">typedef enum {
-  AMITK_VIEW_MODE_SINGLE,
-  AMITK_VIEW_MODE_LINKED_2WAY,
-  AMITK_VIEW_MODE_LINKED_3WAY,
-  AMITK_VIEW_MODE_NUM
-} AmitkViewMode;
-</pre><p>
-
-</p></div><hr><div class="refsect2" lang="en"><a name="id2692629"></a><h3><a name="amitk-study-new"></a>amitk_study_new ()</h3><a class="indexterm" name="id2692640"></a><pre class="programlisting">AmitkStudy* amitk_study_new                 (AmitkPreferences *preferences);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>preferences</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692695"></a><h3><a name="amitk-study-set-filename"></a>amitk_study_set_filename ()</h3><a class="indexterm" name="id2692706"></a><pre class="programlisting">void        amitk_study_set_filename        (AmitkStudy *study,
-                                             const gchar *new_filename);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_filename</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692774"></a><h3><a name="amitk-study-set-creation-date"></a>amitk_study_set_creation_date ()</h3><a class="indexterm" name="id2692785"></a><pre class="programlisting">void        amitk_study_set_creation_date   (AmitkStudy *study,
-                                             const gchar *new_date);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_date</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692853"></a><h3><a name="amitk-study-set-view-thickness"></a>amitk_study_set_view_thickness ()</h3><a class="indexterm" name="id2692865"></a><pre class="programlisting">void        amitk_study_set_view_thickness  (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_thickness);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_thickness</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2692933"></a><h3><a name="amitk-study-set-view-center"></a>amitk_study_set_view_center ()</h3><a class="indexterm" name="id2692945"></a><pre class="programlisting">void        amitk_study_set_view_center     (AmitkStudy *study,
-                                             const <a href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_center);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_center</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693012"></a><h3><a name="amitk-study-set-view-start-time"></a>amitk_study_set_view_start_time ()</h3><a class="indexterm" name="id2693024"></a><pre class="programlisting">void        amitk_study_set_view_start_time (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_start);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_start</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693092"></a><h3><a name="amitk-study-set-view-duration"></a>amitk_study_set_view_duration ()</h3><a class="indexterm" name="id2693104"></a><pre class="programlisting">void        amitk_study_set_view_duration   (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_duration);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_duration</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693172"></a><h3><a name="amitk-study-set-fuse-type"></a>amitk_study_set_fuse_type ()</h3><a class="indexterm" name="id2693184"></a><pre class="programlisting">void        amitk_study_set_fuse_type       (AmitkStudy *study,
-                                             const <a href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> new_fuse_type);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_fuse_type</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693252"></a><h3><a name="amitk-study-set-view-mode"></a>amitk_study_set_view_mode ()</h3><a class="indexterm" name="id2693264"></a><pre class="programlisting">void        amitk_study_set_view_mode       (AmitkStudy *study,
-                                             const <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> new_view_mode);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_view_mode</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693331"></a><h3><a name="amitk-study-set-canvas-visible"></a>amitk_study_set_canvas_visible ()</h3><a class="indexterm" name="id2693343"></a><pre class="programlisting">void        amitk_study_set_canvas_visible  (AmitkStudy *study,
-                                             const <a href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
-                                             const gboolean visible);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>view</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>visible</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693432"></a><h3><a name="amitk-study-set-zoom"></a>amitk_study_set_zoom ()</h3><a class="indexterm" name="id2693443"></a><pre class="programlisting">void        amitk_study_set_zoom            (AmitkStudy *study,
-                                             const <a href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_zoom);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>new_zoom</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693511"></a><h3><a name="amitk-study-set-canvas-target"></a>amitk_study_set_canvas_target ()</h3><a class="indexterm" name="id2693523"></a><pre class="programlisting">void        amitk_study_set_canvas_target   (AmitkStudy *study,
-                                             const gboolean always_on);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>always_on</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693591"></a><h3><a name="amitk-study-set-canvas-roi-width"></a>amitk_study_set_canvas_roi_width ()</h3><a class="indexterm" name="id2693603"></a><pre class="programlisting">void        amitk_study_set_canvas_roi_width
-                                            (AmitkStudy *study,
-                                             gint roi_width);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>roi_width</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693671"></a><h3><a name="amitk-study-set-canvas-line-style"></a>amitk_study_set_canvas_line_style ()</h3><a class="indexterm" name="id2693684"></a><pre class="programlisting">void        amitk_study_set_canvas_line_style
-                                            (AmitkStudy *study,
-                                             const GdkLineStyle line_style);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>line_style</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693752"></a><h3><a name="amitk-study-set-canvas-layout"></a>amitk_study_set_canvas_layout ()</h3><a class="indexterm" name="id2693764"></a><pre class="programlisting">void        amitk_study_set_canvas_layout   (AmitkStudy *study,
-                                             const AmitkLayout layout);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>layout</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693832"></a><h3><a name="amitk-study-set-canvas-maintain-size"></a>amitk_study_set_canvas_maintain_size ()</h3><a class="indexterm" name="id2693844"></a><pre class="programlisting">void        amitk_study_set_canvas_maintain_size
-                                            (AmitkStudy *study,
-                                             const gboolean maintain_size);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>maintain_size</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693913"></a><h3><a name="amitk-study-set-canvas-target-empty-area"></a>amitk_study_set_canvas_target_empty_area ()</h3><a class="indexterm" name="id2693926"></a><pre class="programlisting">void        amitk_study_set_canvas_target_empty_area
-                                            (AmitkStudy *study,
-                                             gint target_empty_area);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>target_empty_area</tt></i> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2693994"></a><h3><a name="amitk-study-load-xml"></a>amitk_study_load_xml ()</h3><a class="indexterm" name="id2694006"></a><pre class="programlisting">AmitkStudy* amitk_study_load_xml            (const gchar *study_filename);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study_filename</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2694062"></a><h3><a name="amitk-study-save-xml"></a>amitk_study_save_xml ()</h3><a class="indexterm" name="id2694074"></a><pre class="programlisting">gboolean    amitk_study_save_xml            (AmitkStudy *study,
-                                             const gchar *study_filename,
-                                             const gboolean save_as_directory);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>study</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>study_filename</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><i class="parameter"><tt>save_as_directory</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2694173"></a><h3><a name="amitk-fuse-type-get-name"></a>amitk_fuse_type_get_name ()</h3><a class="indexterm" name="id2694185"></a><pre class="programlisting">const gchar* amitk_fuse_type_get_name       (const <a href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> fuse_type);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>fuse_type</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2694242"></a><h3><a name="amitk-view-mode-get-name"></a>amitk_view_mode_get_name ()</h3><a class="indexterm" name="id2694254"></a><pre class="programlisting">const gchar* amitk_view_mode_get_name       (const <a href="amitk-AmitkStudy.html#AmitkViewMode">AmitkViewMode</a> view_mode);</pre><p>
-
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>view_mode</tt></i> :</span></td><td>
-</td></tr><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
-
-
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-AmitkRoi.html"><b>&lt;&lt; AmitkRoi</b></a></td><td align="right"><a accesskey="n" href="AmitkWidgets.html"><b>Amitk Widgets &gt;&gt;</b></a></td></tr></table></body></html>
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429170"></a><h3>
+<a name="AmitkStudy"></a>AmitkStudy</h3>
+<a class="indexterm" name="id429183"></a><pre class="programlisting">typedef struct {
+  AmitkObject parent;
+
+  gchar * creation_date; /* when this study was created */
+
+  /* canvas view parameters */
+  AmitkPoint view_center; /* wrt the study coordinate space */
+  amide_real_t view_thickness;
+  amide_time_t view_start_time;
+  amide_time_t view_duration;
+  amide_real_t zoom;
+  amide_real_t fov; /* field of view, in percent */
+  AmitkFuseType fuse_type;
+  AmitkViewMode view_mode;
+  gboolean canvas_visible[AMITK_VIEW_NUM];
+  gboolean canvas_target; /* target on/off */
+
+  /* canvas preferences */
+  gint canvas_roi_width;
+  GdkLineStyle canvas_line_style;
+  gboolean canvas_fill_roi;
+  AmitkLayout canvas_layout;
+  gboolean canvas_maintain_size;
+  gint canvas_target_empty_area; /* in pixels */
+  AmitkPanelLayout panel_layout;
+
+  /* stuff calculated when file is loaded and stored */
+  amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
+  gboolean voxel_dim_valid;
+
+  /* stuff that doesn't need to be saved */
+  AmitkLineProfile * line_profile;
+  gchar * filename; /* file name of the study */
+} AmitkStudy;
+</pre>
+<p>
+
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429206"></a><h3>
+<a name="amitk-study-new"></a>amitk_study_new ()</h3>
+<a class="indexterm" name="id429219"></a><pre class="programlisting"><a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         amitk_study_new                     (AmitkPreferences *preferences);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>preferences</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429274"></a><h3>
+<a name="amitk-study-set-filename"></a>amitk_study_set_filename ()</h3>
+<a class="indexterm" name="id429287"></a><pre class="programlisting">void                amitk_study_set_filename            (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *new_filename);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_filename</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429354"></a><h3>
+<a name="amitk-study-set-creation-date"></a>amitk_study_set_creation_date ()</h3>
+<a class="indexterm" name="id429367"></a><pre class="programlisting">void                amitk_study_set_creation_date       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *new_date);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_date</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429433"></a><h3>
+<a name="amitk-study-set-view-thickness"></a>amitk_study_set_view_thickness ()</h3>
+<a class="indexterm" name="id429446"></a><pre class="programlisting">void                amitk_study_set_view_thickness      (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_thickness);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_thickness</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429512"></a><h3>
+<a name="amitk-study-set-view-center"></a>amitk_study_set_view_center ()</h3>
+<a class="indexterm" name="id429525"></a><pre class="programlisting">void                amitk_study_set_view_center         (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkPoint">AmitkPoint</a> new_center);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_center</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429592"></a><h3>
+<a name="amitk-study-set-view-start-time"></a>amitk_study_set_view_start_time ()</h3>
+<a class="indexterm" name="id429605"></a><pre class="programlisting">void                amitk_study_set_view_start_time     (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_start);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_start</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429671"></a><h3>
+<a name="amitk-study-set-view-duration"></a>amitk_study_set_view_duration ()</h3>
+<a class="indexterm" name="id429684"></a><pre class="programlisting">void                amitk_study_set_view_duration       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-time-t">amide_time_t</a> new_duration);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_duration</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429750"></a><h3>
+<a name="amitk-study-set-fuse-type"></a>amitk_study_set_fuse_type ()</h3>
+<a class="indexterm" name="id429763"></a><pre class="programlisting">void                amitk_study_set_fuse_type           (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> new_fuse_type);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_fuse_type</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429830"></a><h3>
+<a name="amitk-study-set-view-mode"></a>amitk_study_set_view_mode ()</h3>
+<a class="indexterm" name="id429843"></a><pre class="programlisting">void                amitk_study_set_view_mode           (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkViewMode">AmitkViewMode</a> new_view_mode);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_view_mode</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id429909"></a><h3>
+<a name="amitk-study-set-canvas-visible"></a>amitk_study_set_canvas_visible ()</h3>
+<a class="indexterm" name="id429922"></a><pre class="programlisting">void                amitk_study_set_canvas_visible      (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-point.html#AmitkView">AmitkView</a> view,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> visible);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>view</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>visible</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430009"></a><h3>
+<a name="amitk-study-set-zoom"></a>amitk_study_set_zoom ()</h3>
+<a class="indexterm" name="id430022"></a><pre class="programlisting">void                amitk_study_set_zoom                (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_zoom);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_zoom</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430088"></a><h3>
+<a name="amitk-study-set-fov"></a>amitk_study_set_fov ()</h3>
+<a class="indexterm" name="id430100"></a><pre class="programlisting">void                amitk_study_set_fov                 (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-type.html#amide-real-t">amide_real_t</a> new_fov);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>new_fov</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430167"></a><h3>
+<a name="amitk-study-set-canvas-target"></a>amitk_study_set_canvas_target ()</h3>
+<a class="indexterm" name="id430180"></a><pre class="programlisting">void                amitk_study_set_canvas_target       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> always_on);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>always_on</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430246"></a><h3>
+<a name="amitk-study-set-canvas-roi-width"></a>amitk_study_set_canvas_roi_width ()</h3>
+<a class="indexterm" name="id430259"></a><pre class="programlisting">void                amitk_study_set_canvas_roi_width    (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> roi_width);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>roi_width</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430325"></a><h3>
+<a name="amitk-study-set-canvas-line-style"></a>amitk_study_set_canvas_line_style ()</h3>
+<a class="indexterm" name="id430338"></a><pre class="programlisting">void                amitk_study_set_canvas_line_style   (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/gdk/gdk-Graphics-Contexts.html#GdkLineStyle"
+>GdkLineStyle</a> line_style);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>line_style</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430405"></a><h3>
+<a name="amitk-study-set-canvas-fill-roi"></a>amitk_study_set_canvas_fill_roi ()</h3>
+<a class="indexterm" name="id430418"></a><pre class="programlisting">void                amitk_study_set_canvas_fill_roi     (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> fill_roi);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>fill_roi</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430484"></a><h3>
+<a name="amitk-study-set-canvas-layout"></a>amitk_study_set_canvas_layout ()</h3>
+<a class="indexterm" name="id430497"></a><pre class="programlisting">void                amitk_study_set_canvas_layout       (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkLayout">AmitkLayout</a> layout);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>layout</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430563"></a><h3>
+<a name="amitk-study-set-canvas-maintain-size"></a>amitk_study_set_canvas_maintain_size ()</h3>
+<a class="indexterm" name="id430576"></a><pre class="programlisting">void                amitk_study_set_canvas_maintain_size
+                                                        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> maintain_size);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>maintain_size</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430643"></a><h3>
+<a name="amitk-study-set-canvas-target-empty-area"></a>amitk_study_set_canvas_target_empty_area ()</h3>
+<a class="indexterm" name="id430656"></a><pre class="programlisting">void                amitk_study_set_canvas_target_empty_area
+                                                        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gint"
+>gint</a> target_empty_area);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>target_empty_area</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430723"></a><h3>
+<a name="amitk-study-set-panel-layout"></a>amitk_study_set_panel_layout ()</h3>
+<a class="indexterm" name="id430736"></a><pre class="programlisting">void                amitk_study_set_panel_layout        (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a class="link" href="amitk-amitk-common.html#AmitkPanelLayout">AmitkPanelLayout</a> panel_layout);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>panel_layout</code></em>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430803"></a><h3>
+<a name="amitk-study-recover-xml"></a>amitk_study_recover_xml ()</h3>
+<a class="indexterm" name="id430815"></a><pre class="programlisting"><a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         amitk_study_recover_xml             (const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename,
+                                                         AmitkPreferences *preferences);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study_filename</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>preferences</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430891"></a><h3>
+<a name="amitk-study-load-xml"></a>amitk_study_load_xml ()</h3>
+<a class="indexterm" name="id430904"></a><pre class="programlisting"><a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a>*         amitk_study_load_xml                (const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study_filename</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id430959"></a><h3>
+<a name="amitk-study-save-xml"></a>amitk_study_save_xml ()</h3>
+<a class="indexterm" name="id430972"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a>            amitk_study_save_xml                (<a class="link" href="amitk-AmitkStudy.html#AmitkStudy">AmitkStudy</a> *study,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a> *study_filename,
+                                                         const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gboolean"
+>gboolean</a> save_as_directory);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>study_filename</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>save_as_directory</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id431069"></a><h3>
+<a name="amitk-fuse-type-get-name"></a>amitk_fuse_type_get_name ()</h3>
+<a class="indexterm" name="id431082"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_fuse_type_get_name            (const <a class="link" href="amitk-AmitkStudy.html#AmitkFuseType">AmitkFuseType</a> fuse_type);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>fuse_type</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id431138"></a><h3>
+<a name="amitk-view-mode-get-name"></a>amitk_view_mode_get_name ()</h3>
+<a class="indexterm" name="id431151"></a><pre class="programlisting">const <a
+href="/usr/share/gtk-doc/html/glib/glib-Basic-Types.html#gchar"
+>gchar</a>*        amitk_view_mode_get_name            (const <a class="link" href="amitk-amitk-common.html#AmitkViewMode">AmitkViewMode</a> view_mode);</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody>
+<tr>
+<td><p><span class="term"><em class="parameter"><code>view_mode</code></em>&#160;:</span></p></td>
+<td>
+</td>
+</tr>
+<tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
+
+
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -27,9 +27,10 @@
 
 #ifdef AMIDE_LIBFAME_SUPPORT
 
+#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <sys/stat.h>
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
-#include "amitk_common.h"
+#include "amide.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "mpeg_encode.h"
@@ -301,7 +302,7 @@ static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
 
   tb_fly_through = g_object_get_data(G_OBJECT(file_selection), "tb_fly_through");
 
-  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* close the file selection box */

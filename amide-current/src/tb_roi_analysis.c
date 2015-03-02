@@ -24,28 +24,19 @@
 */
 
 #include "amide_config.h"
+#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <gtk/gtk.h>
 #include <string.h>
 
-#ifndef AMIDE_WIN32_HACKS
-#include <libgnome/libgnome.h>
-#endif
+#include "amide.h"
+#include "amide_gconf.h"
 #include "amitk_common.h"
 #include "analysis.h"
 #include "tb_roi_analysis.h"
 #include "ui_common.h"
 
-#ifdef AMIDE_WIN32_HACKS
-static gboolean all_data_sets=FALSE;
-static gboolean all_rois=FALSE;
-static analysis_calculation_t calculation_type=ALL_VOXELS;
-static gboolean accurate=FALSE;
-static gdouble subfraction=50.0;
-static gdouble threshold_percentage=50.0;
-static gdouble threshold_value=50.0;
-#endif
 
-
+#define GCONF_AMIDE_ANALYSIS "ANALYSIS/"
 
 #define ROI_STATISTICS_WIDTH 950
 
@@ -142,7 +133,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
   /* do we want stats or raw data */
   raw_data = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "raw_data"));
 
-  save_filename = ui_common_file_selection_get_save_name(file_selection);
+  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
   if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
   /* allright, save the data */
@@ -288,7 +279,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
 
       switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
-      case AMITK_CONVERSION_PERCENT_ID_PER_G:
+      case AMITK_CONVERSION_PERCENT_ID_PER_CC:
       case AMITK_CONVERSION_SUV:
 	fprintf(file_pointer, _("#      Output Data Units: %s\n"),
 		amitk_conversion_names[AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)]);
@@ -737,19 +728,13 @@ static void read_preferences(gboolean * all_data_sets,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value) {
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-
-  *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
-  *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
-  *calculation_type = gnome_config_get_int("ANALYSIS/CalculationType");
-  *accurate = gnome_config_get_int("ANALYSIS/Accurate");
-  *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
-  *threshold_percentage = gnome_config_get_float("ANALYSIS/ThresholdPercentage");
-  *threshold_value = gnome_config_get_float("ANALYSIS/ThresholdValue");
-
-  gnome_config_pop_prefix();
-#endif
+  *all_data_sets = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"CalculateAllDataSets");
+  *all_rois = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"CalculateAllRois");
+  *calculation_type = amide_gconf_get_int(GCONF_AMIDE_ANALYSIS"CalculationType");
+  *accurate = amide_gconf_get_bool(GCONF_AMIDE_ANALYSIS"Accurate");
+  *subfraction = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"SubFraction");
+  *threshold_percentage = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"ThresholdPercentage");
+  *threshold_value = amide_gconf_get_float(GCONF_AMIDE_ANALYSIS"ThresholdValue");
 
   return;
 }
@@ -765,7 +750,6 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   GList * data_sets;
   analysis_roi_t * roi_analyses;
 
-#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   analysis_calculation_t calculation_type;
@@ -776,7 +760,6 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 
   read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, &subfraction, 
 		   &threshold_percentage, &threshold_value);
-#endif
 
   /* figure out which data sets we're dealing with */
   if (all_data_sets)
@@ -825,7 +808,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 				       NULL);
   g_free(title);
 
-  /* setup the callbacks for app */
+  /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), roi_analyses);
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
   g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(destroy_cb), roi_analyses);
@@ -859,30 +842,21 @@ static void threshold_value_cb(GtkWidget * widget, gpointer data);
 
 static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
-#endif
 
   all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
   all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("ANALYSIS/CalculateAllDataSets",all_data_sets);
-  gnome_config_set_int("ANALYSIS/CalculateAllRois",all_rois);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"CalculateAllDataSets",all_data_sets);
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"CalculateAllRois",all_rois);
 
   return;
 }
 
 static void calculation_type_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   analysis_calculation_t calculation_type;
-#endif
   GtkWidget * spin_buttons[3];
 
   calculation_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "calculation_type"));
@@ -893,63 +867,33 @@ static void calculation_type_cb(GtkWidget * widget, gpointer data) {
   gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
   gtk_widget_set_sensitive(spin_buttons[2], calculation_type == VOXELS_GREATER_THAN_VALUE);
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("ANALYSIS/CalculationType", calculation_type);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
-
+  amide_gconf_set_int(GCONF_AMIDE_ANALYSIS"CalculationType", calculation_type);
 }
 
 static void accurate_cb(GtkWidget * widget, gpointer data) {
-#ifndef AMIDE_WIN32_HACKS
-  gboolean accurate;
-#endif
-
-  accurate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("ANALYSIS/Accurate", accurate);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_bool(GCONF_AMIDE_ANALYSIS"Accurate", 
+		       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
   return;
 }
 
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   gdouble subfraction;
-#endif
 
   subfraction = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_float("ANALYSIS/SubFraction", subfraction);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"SubFraction", subfraction);
 
   return;
 }
 
 static void threshold_percentage_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   gdouble threshold_percentage;
-#endif
 
   threshold_percentage = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_float("ANALYSIS/ThresholdPercentage", threshold_percentage);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"ThresholdPercentage", threshold_percentage);
 
   return;
 }
@@ -957,18 +901,11 @@ static void threshold_percentage_cb(GtkWidget * widget, gpointer data) {
 
 static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 
-#ifndef AMIDE_WIN32_HACKS
   gdouble threshold_value;
-#endif
 
   threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-#ifndef AMIDE_WIN32_HACKS
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_float("ANALYSIS/ThresholdValue", threshold_value);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-#endif
+  amide_gconf_set_float(GCONF_AMIDE_ANALYSIS"ThresholdValue", threshold_value);
 
   return;
 }
@@ -988,7 +925,6 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   GtkWidget * spin_buttons[3];
   GtkWidget * check_button;
   analysis_calculation_t i_calculation_type;
-#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   analysis_calculation_t calculation_type;
@@ -999,7 +935,6 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 
   read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, 
 		   &subfraction, &threshold_percentage, &threshold_value);
-#endif
 
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,

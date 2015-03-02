@@ -21,10 +21,12 @@ ChangesAssociations=yes
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
 
 [Registry]
-; This adds the GTK+ libraries to amide.exe's path
+; This adds the dll's in the bin directory to amide.exe's path
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; Flags: uninsdeletekeyifempty
 Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueData: "{app}\@PACKAGE@.exe"; Flags: uninsdeletevalue
-Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app};{app}\bin;{code:GetGtkPath}\lib"; Flags: uninsdeletevalue
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app};{app}\bin"; Flags: uninsdeletevalue
+; old line below, this was prior to 0.9.0, when we used an external gtk runtime package
+; Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\App Paths\@PACKAGE@.exe"; ValueType: string; ValueName: "Path"; ValueData: "{app};{app}\bin;{code:GetGtkPath}\lib"; Flags: uninsdeletevalue
 
 ; This allows .xif files to get sent to AMIDE
 Root: HKCR; Subkey: ".xif"; ValueType: string; ValueName: ""; ValueData: "AmideXmlImageFormat"; Flags: uninsdeletevalue
@@ -36,10 +38,10 @@ Root: HKCR; Subkey: "AmideXmlImageFormat\shell\open\command"; ValueType: string;
 
 [Files]
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\amide.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\help\*"; DestDir: "{app}\help\"; Flags: ignoreversion recursesubdirs
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\*"; DestDir: "{app}\bin"; Flags: ignoreversion
+; Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\help\*"; DestDir: "{app}\help\"; Flags: ignoreversion recursesubdirs
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
-Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\man\*"; DestDir: "{app}\man"; Flags: ignoreversion recursesubdirs
+; Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\man\*"; DestDir: "{app}\man"; Flags: ignoreversion recursesubdirs
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
@@ -49,32 +51,32 @@ Name: "{userdesktop}\amide"; Filename: "{app}\amide.exe"; Tasks: desktopicon
 
 
 
-
-; CODE is taken from the example on the dropline page
-[Code]
-
-var
-  Exists: Boolean;
-  GtkPath: String;
-
-function GetGtkInstalled (): Boolean;
-begin
-  Exists := RegQueryStringValue (HKLM, 'Software\GTK\2.0', 'Path', GtkPath);
-  if not Exists then begin
-    Exists := RegQueryStringValue (HKCU, 'Software\GTK\2.0', 'Path', GtkPath);
-  end;
-   Result := Exists
-end;
-
-function GetGtkPath (S: String): String;
-begin
-    Result := GtkPath;
-end;
-
-function InitializeSetup(): Boolean;
-begin
-  Result := GetGtkInstalled ();
-  if not Result then begin
-    MsgBox ('Please install the GTK+ 2.0 Runtime Environment before installing AMIDE.  You can obtain GTK+ from http://www.dropline.net/gtk.', mbError, MB_OK);
-  end;
-end;
+; no longer used as of 0.9.0, see above note
+;; CODE is taken from the example on the dropline page
+;[Code]
+;
+;var
+;  Exists: Boolean;
+;  GtkPath: String;
+;
+;function GetGtkInstalled (): Boolean;
+;begin
+;  Exists := RegQueryStringValue (HKLM, 'Software\GTK\2.0', 'Path', GtkPath);
+;  if not Exists then begin
+;    Exists := RegQueryStringValue (HKCU, 'Software\GTK\2.0', 'Path', GtkPath);
+;  end;
+;   Result := Exists
+;end;
+;
+;function GetGtkPath (S: String): String;
+;begin
+;    Result := GtkPath;
+;end;
+;
+;function InitializeSetup(): Boolean;
+;begin
+;  Result := GetGtkInstalled ();
+;  if not Result then begin
+;    MsgBox ('Please install the GTK+ 2.0 Runtime Environment before installing AMIDE.  You can obtain GTK+ from http://www.dropline.net/gtk.', mbError, MB_OK);
+;  end;
+;end;

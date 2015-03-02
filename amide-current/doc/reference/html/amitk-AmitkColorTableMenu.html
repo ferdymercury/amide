@@ -1,51 +1,121 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>AmitkColorTableMenu</title><meta name="generator" content="DocBook XSL Stylesheets V1.65.1"><link rel="home" href="index.html" title="AMITK Reference Manual"><link rel="up" href="AmitkWidgets.html" title="Amitk Widgets"><link rel="previous" href="amitk-amitk-canvas-object.html" title="amitk_canvas_object"><link rel="next" href="amitk-AmitkObjectDialog.html" title="AmitkObjectDialog"><meta name="generator" content="GTK-Doc V1.2 (XML mode)"><style type="text/css">
-        .synopsis, .classsynopsis {
-            background: #eeeeee;
-            border: solid 1px #aaaaaa;
-            padding: 0.5em;
-        }
-        .programlisting {
-            background: #eeeeff;
-            border: solid 1px #aaaaff;
-            padding: 0.5em;
-        }
-        .variablelist {
-            padding: 4px;
-            margin-left: 3em;
-        }
-        .navigation {
-            background: #ffeeee;
-            border: solid 1px #ffaaaa;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-        .navigation a {
-            color: #770000;
-        }
-        .navigation a:visited {
-            color: #550000;
-        }
-        .navigation .title {
-            font-size: 200%;
-        }
-      </style></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2"><tr valign="middle"><td><a accesskey="p" href="amitk-amitk-canvas-object.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td><td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td><td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td><th width="100%" align="center">AMITK Reference Manual</th><td><a accesskey="n" href="amitk-AmitkObjectDialog.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td></tr></table><div class="refentry" lang="en"><a name="amitk-AmitkColorTableMenu"></a><div class="titlepage"><div></div><div></div></div><div class="refnamediv"><h2><span class="refentrytitle">AmitkColorTableMenu</span></h2><p>AmitkColorTableMenu &#8212; </p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><pre class="synopsis">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>AmitkColorTableMenu</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.73.2">
+<link rel="start" href="index.html" title="AMITK Reference Manual">
+<link rel="up" href="AmitkWidgets.html" title="Amitk Widgets">
+<link rel="prev" href="amitk-amitk-canvas-object.html" title="amitk_canvas_object">
+<link rel="next" href="amitk-AmitkObjectDialog.html" title="AmitkObjectDialog">
+<meta name="generator" content="GTK-Doc V1.8 (XML mode)">
+<link rel="stylesheet" href="style.css" type="text/css">
+<link rel="part" href="amitk_intro.html" title="Part&#160;I.&#160;AMITK+ Overview">
+<link rel="part" href="amitk_base.html" title="Part&#160;II.&#160;AMITK Core Objects">
+<link rel="part" href="amitk_objects.html" title="Part&#160;III.&#160;AMITK Objects">
+<link rel="chapter" href="ch01.html" title="AMITK Object Hierarchy">
+<link rel="chapter" href="SpaceObjects.html" title="Medical Image Objects">
+<link rel="chapter" href="AmitkWidgets.html" title="Amitk Widgets">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="amitk-amitk-canvas-object.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="AmitkWidgets.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">AMITK Reference Manual</th>
+<td><a accesskey="n" href="amitk-AmitkObjectDialog.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts"><nobr><a href="#id438336" class="shortcut">Top</a>
+                  &#160;|&#160;
+                  <a href="#id438722" class="shortcut">Description</a></nobr></td></tr>
+</table>
+<div class="refentry" lang="en">
+<a name="amitk-AmitkColorTableMenu"></a><div class="titlepage"></div>
+<div class="refnamediv"><table width="100%"><tr>
+<td valign="top">
+<h2>
+<a name="id438336"></a><span class="refentrytitle">AmitkColorTableMenu</span>
+</h2>
+<p>AmitkColorTableMenu</p>
+</td>
+<td valign="top" align="right"></td>
+</tr></table></div>
+<div class="refsynopsisdiv">
+<h2>Synopsis</h2>
+<pre class="synopsis">
 
 
 
-#define     <a href="amitk-AmitkColorTableMenu.html#AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS">AMITK_COLOR_TABLE_MENU_COLOR_TABLE</a>(obj)
-GtkWidget*  <a href="amitk-AmitkColorTableMenu.html#amitk-color-table-menu-new">amitk_color_table_menu_new</a>      ();
+#define             <a class="link" href="amitk-AmitkColorTableMenu.html#AMITK-COLOR-TABLE-MENU-COLOR-TABLE:CAPS">AMITK_COLOR_TABLE_MENU_COLOR_TABLE</a>  (obj)
+                    <a class="link" href="amitk-AmitkColorTableMenu.html#AmitkColorTableMenu">AmitkColorTableMenu</a>;
+<a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a>*          <a class="link" href="amitk-AmitkColorTableMenu.html#amitk-color-table-menu-new">amitk_color_table_menu_new</a>          ();
 
-</pre></div><div class="refsect1" lang="en"><a name="id2701213"></a><h2>Description</h2><p>
+</pre>
+</div>
+<div class="refsect1" lang="en">
+<a name="id438722"></a><h2>Description</h2>
+<p>
 
-</p></div><div class="refsect1" lang="en"><a name="id2701223"></a><h2>Details</h2><div class="refsect2" lang="en"><a name="id2701229"></a><h3><a name="AMITK-COLOR-TABLE-MENU-COLOR-TABLE-CAPS"></a>AMITK_COLOR_TABLE_MENU_COLOR_TABLE()</h3><a class="indexterm" name="id2701241"></a><pre class="programlisting">#define AMITK_COLOR_TABLE_MENU_COLOR_TABLE(obj) (AMITK_COLOR_TABLE_MENU(obj)-&gt;color_table)
-</pre><p>
+</p>
+</div>
+<div class="refsect1" lang="en">
+<a name="id438736"></a><h2>Details</h2>
+<div class="refsect2" lang="en">
+<a name="id438746"></a><h3>
+<a name="AMITK-COLOR-TABLE-MENU-COLOR-TABLE:CAPS"></a>AMITK_COLOR_TABLE_MENU_COLOR_TABLE()</h3>
+<a class="indexterm" name="id438759"></a><pre class="programlisting">#define AMITK_COLOR_TABLE_MENU_COLOR_TABLE(obj) (AMITK_COLOR_TABLE_MENU(obj)-&gt;color_table)
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><i class="parameter"><tt>obj</tt></i> :</span></td><td>
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><em class="parameter"><code>obj</code></em>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div><hr><div class="refsect2" lang="en"><a name="id2701276"></a><h3><a name="amitk-color-table-menu-new"></a>amitk_color_table_menu_new ()</h3><a class="indexterm" name="id2701288"></a><pre class="programlisting">GtkWidget*  amitk_color_table_menu_new      ();</pre><p>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id438793"></a><h3>
+<a name="AmitkColorTableMenu"></a>AmitkColorTableMenu</h3>
+<a class="indexterm" name="id438805"></a><pre class="programlisting">typedef struct {
+  GtkComboBox combo_box;
+} AmitkColorTableMenu;
+</pre>
+<p>
 
-</p><div class="variablelist"><table border="0"><col align="left" valign="top"><tbody><tr><td><span class="term"><span class="emphasis"><em>Returns</em></span> :</span></td><td>
+</p>
+</div>
+<hr>
+<div class="refsect2" lang="en">
+<a name="id438820"></a><h3>
+<a name="amitk-color-table-menu-new"></a>amitk_color_table_menu_new ()</h3>
+<a class="indexterm" name="id438833"></a><pre class="programlisting"><a
+href="/usr/share/gtk-doc/html/gtk/GtkWidget.html"
+>GtkWidget</a>*          amitk_color_table_menu_new          ();</pre>
+<p>
+
+</p>
+<div class="variablelist"><table border="0">
+<col align="left" valign="top">
+<tbody><tr>
+<td><p><span class="term"><span class="emphasis"><em>Returns</em></span>&#160;:</span></p></td>
+<td>
 
 
-</td></tr></tbody></table></div></div></div></div><table class="navigation" width="100%" summary="Navigation footer" cellpadding="2" cellspacing="0"><tr valign="middle"><td align="left"><a accesskey="p" href="amitk-amitk-canvas-object.html"><b>&lt;&lt; amitk_canvas_object</b></a></td><td align="right"><a accesskey="n" href="amitk-AmitkObjectDialog.html"><b>AmitkObjectDialog &gt;&gt;</b></a></td></tr></table></body></html>
+</td>
+</tr></tbody>
+</table></div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -28,6 +28,8 @@
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include "amide.h"
+#include "amitk_common.h"
 #include "amitk_study.h"
 #include "amitk_roi.h"
 #include "render.h"
@@ -52,7 +54,7 @@ GdkPixbuf * image_from_8bit(const guchar * image,
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_renderings(renderings_t * renderings, 
 				  gint16 image_width, gint16 image_height,
-				  AmitkEye eyes, 
+				  AmideEye eyes, 
 				  gdouble eye_angle, 
 				  gint16 eye_width);
 #endif
@@ -82,7 +84,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const AmitkVolume * view_volume,
 				 const AmitkFuseType fuse_type,
 				 const AmitkViewMode view_mode);
-GdkPixbuf * image_get_object_pixbuf(AmitkObject * object);
+GdkPixbuf * image_get_data_set_pixbuf(AmitkDataSet * ds);
 
 #endif /*  __IMAGE_H__ */
 

@@ -14,6 +14,9 @@ AmitkCanvas
 
 </para>
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_CANVAS_VIEW ##### -->
 <para>
 
@@ -46,6 +49,47 @@ AmitkCanvas
 @AMITK_CANVAS_TARGET_ACTION_HIDE: 
 @AMITK_CANVAS_TARGET_ACTION_SHOW: 
 @AMITK_CANVAS_TARGET_ACTION_LEAVE: 
+
+<!-- ##### STRUCT AmitkCanvas ##### -->
+<para>
+
+</para>
+
+@vbox: 
+@canvas: 
+@label: 
+@scrollbar: 
+@scrollbar_adjustment: 
+@arrows: 
+@orientation_label: 
+@type: 
+@volume: 
+@center: 
+@view: 
+@view_mode: 
+@roi_width: 
+@active_object: 
+@slices: 
+@slice_cache: 
+@max_slice_cache_size: 
+@pixbuf_width: 
+@pixbuf_height: 
+@border_width: 
+@image: 
+@pixbuf: 
+@time_on_image: 
+@time_label: 
+@study: 
+@undrawn_rois: 
+@object_items: 
+@next_update: 
+@idle_handler_id: 
+@next_update_objects: 
+@line_profile_item: 
+@target: 
+@next_target_action: 
+@next_target_center: 
+@next_target_thickness: 
 
 <!-- ##### FUNCTION amitk_canvas_new ##### -->
 <para>
@@ -86,6 +130,15 @@ AmitkCanvas
 @action: 
 @center: 
 @thickness: 
+
+
+<!-- ##### FUNCTION amitk_canvas_set_time_on_image ##### -->
+<para>
+
+</para>
+
+@canvas: 
+@time_on_image: 
 
 
 <!-- ##### FUNCTION amitk_canvas_get_width ##### -->

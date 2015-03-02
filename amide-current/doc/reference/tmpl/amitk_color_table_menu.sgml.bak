@@ -16,12 +16,21 @@ AmitkColorTableMenu
 </para>
 
 
+<!-- ##### SECTION Stability_Level ##### -->
+
+
 <!-- ##### MACRO AMITK_COLOR_TABLE_MENU_COLOR_TABLE ##### -->
 <para>
 
 </para>
 
 @obj: 
+
+
+<!-- ##### STRUCT AmitkColorTableMenu ##### -->
+<para>
+
+</para>
 
 
 <!-- ##### FUNCTION amitk_color_table_menu_new ##### -->

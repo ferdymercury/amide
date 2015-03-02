@@ -21,12 +21,6 @@
 /* Define to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 
-/* Define to compile with hacks for OS X */
-#undef AMIDE_OSX_HACKS
-
-/* Define to compile with Win32 Hacks */
-#undef AMIDE_WIN32_HACKS
-
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
@@ -72,6 +66,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -105,10 +102,10 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
 /* Define to 1 if you have the ANSI C header files. */

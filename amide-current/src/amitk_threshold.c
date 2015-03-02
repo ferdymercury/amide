@@ -77,9 +77,6 @@ static void threshold_show_all (GtkWidget * widget);
 static void threshold_construct(AmitkThreshold * threshold, AmitkThresholdLayout layout);
 static void threshold_add_data_set(AmitkThreshold * threshold, AmitkDataSet * ds);
 static void threshold_remove_data_set(AmitkThreshold * threshold);
-static void threshold_realize_type_icon_cb(GtkWidget * hbox, gpointer data);
-static void threshold_realize_style_icon_cb(GtkWidget * hbox, gpointer data);
-static void threshold_realize_windowing_button_cb(GtkWidget * button, gpointer data);
 static gint threshold_visible_refs(AmitkDataSet * data_set);
 static void threshold_update_histogram(AmitkThreshold * threshold);
 static void threshold_update_spin_buttons(AmitkThreshold * threshold);
@@ -112,10 +109,11 @@ static void thresholding_cb(GtkWidget * widget, gpointer data);
 static void threshold_style_cb(GtkWidget * widget, gpointer data);
 static void windowing_cb(GtkWidget * widget, gpointer data);
 
+static void init_common(GtkWindow * threshold_dialog);
+
 static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass);
 static void threshold_dialog_init (AmitkThresholdDialog *threshold_dialog);
 static void threshold_dialog_construct(AmitkThresholdDialog * dialog, GtkWindow * parent, AmitkDataSet * data_set);
-static void threshold_dialog_realize_cb(GtkWidget * dialog, gpointer data);
 
 static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass);
 static void thresholds_dialog_init (AmitkThresholdsDialog *thresholds_dialog);
@@ -223,26 +221,45 @@ static void threshold_show_all (GtkWidget * widget) {
 
 void amitk_threshold_style_widgets(GtkWidget ** radio_buttons, GtkWidget * hbox) {
 
+#if (GTK_MINOR_VERSION >= 12)
+#else
   GtkTooltips * tips=NULL;
+#endif
   AmitkThresholdStyle i_threshold_style;
-  GtkWidget * pix_box;
+  GtkWidget * image;
 
+#if (GTK_MINOR_VERSION >= 12)
+#else
   tips = gtk_tooltips_new();
+#endif
 
   for (i_threshold_style = 0; i_threshold_style < AMITK_THRESHOLD_STYLE_NUM; i_threshold_style++) {
       
     radio_buttons[i_threshold_style] = gtk_radio_button_new(NULL);
-    pix_box = gtk_hbox_new(FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(radio_buttons[i_threshold_style]), pix_box);
-    gtk_widget_show(pix_box);
-    g_signal_connect(G_OBJECT(pix_box), "realize", 
-		     G_CALLBACK(threshold_realize_style_icon_cb), GINT_TO_POINTER(i_threshold_style));
+    switch(i_threshold_style) {
+    case AMITK_THRESHOLD_STYLE_MIN_MAX:
+      image = gtk_image_new_from_stock("amide_icon_threshold_style_min_max",GTK_ICON_SIZE_LARGE_TOOLBAR);
+      break;
+    case AMITK_THRESHOLD_STYLE_CENTER_WIDTH:
+      image = gtk_image_new_from_stock("amide_icon_threshold_style_center_width",GTK_ICON_SIZE_LARGE_TOOLBAR);
+      break;
+    default:
+      image = NULL;
+      g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+      break;
+    }
+    gtk_button_set_image(GTK_BUTTON(radio_buttons[i_threshold_style]), image);
       
     gtk_box_pack_start(GTK_BOX(hbox), radio_buttons[i_threshold_style], FALSE, FALSE, 3);
     gtk_widget_show(radio_buttons[i_threshold_style]);
+#if (GTK_MINOR_VERSION >= 12)
+    gtk_widget_set_tooltip_text(radio_buttons[i_threshold_style],
+				threshold_style_names[i_threshold_style]);
+#else
     gtk_tooltips_set_tip(tips, radio_buttons[i_threshold_style], 
 			 threshold_style_names[i_threshold_style],
 			 threshold_style_explanations[i_threshold_style]);
+#endif
       
     g_object_set_data(G_OBJECT(radio_buttons[i_threshold_style]), "threshold_style", 
 		      GINT_TO_POINTER(i_threshold_style));
@@ -267,19 +284,25 @@ static void threshold_construct(AmitkThreshold * threshold,
   guint left_row;
   gchar * temp_string;
   GtkWidget * label;
-  GtkWidget * pix_box;
   GtkWidget * button;
+  GtkWidget * image;
   AmitkThresholding i_thresholding;
   AmitkWindow i_window;
   guint i_ref;
   AmitkThresholdEntry i_entry;
+#if (GTK_MINOR_VERSION >= 12)
+#else
   GtkTooltips * tips=NULL;
+#endif
   AmitkThresholdStyle i_threshold_style;
   AmitkLimit i_limit;
   AmitkViewMode i_view_mode;
   div_t x;
 
+#if (GTK_MINOR_VERSION >= 12)
+#else
   tips = gtk_tooltips_new();
+#endif
 
   /* we're using two tables packed into a box */
   if (layout == AMITK_THRESHOLD_BOX_LAYOUT)
@@ -384,9 +407,14 @@ static void threshold_construct(AmitkThreshold * threshold,
       g_signal_connect(G_OBJECT(threshold->color_table_independent[i_view_mode]), "toggled", G_CALLBACK(color_table_independent_cb), threshold);
       gtk_box_pack_start(GTK_BOX(threshold->color_table_hbox[i_view_mode]), 
 			 threshold->color_table_independent[i_view_mode], FALSE, FALSE, 0);
+#if (GTK_MINOR_VERSION >= 12)
+      gtk_widget_set_tooltip_text(threshold->color_table_independent[i_view_mode],
+				  _("if not enabled, the primary color table will be used for this set of views"));
+#else
       gtk_tooltips_set_tip(tips, threshold->color_table_independent[i_view_mode],
 			   _("enable color table"),
 			   _("if not enabled, the primary color table will be used for this set of views"));
+#endif
       gtk_widget_show(threshold->color_table_independent[i_view_mode]);
     } 
 
@@ -415,17 +443,35 @@ static void threshold_construct(AmitkThreshold * threshold,
     for (i_thresholding = 0; i_thresholding < AMITK_THRESHOLDING_NUM; i_thresholding++) {
       
       threshold->type_button[i_thresholding] = gtk_radio_button_new(NULL);
-      pix_box = gtk_hbox_new(FALSE, 0);
-      gtk_container_add(GTK_CONTAINER(threshold->type_button[i_thresholding]), pix_box);
-      gtk_widget_show(pix_box);
-      g_signal_connect(G_OBJECT(pix_box), "realize", 
-		       G_CALLBACK(threshold_realize_type_icon_cb), GINT_TO_POINTER(i_thresholding));
-      
+      switch(i_thresholding) {
+      case AMITK_THRESHOLDING_PER_SLICE:
+	image = gtk_image_new_from_stock("amide_icon_thresholding_per_slice",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      case AMITK_THRESHOLDING_PER_FRAME:
+	image = gtk_image_new_from_stock("amide_icon_thresholding_per_frame",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      case AMITK_THRESHOLDING_INTERPOLATE_FRAMES:
+	image = gtk_image_new_from_stock("amide_icon_thresholding_interpolate_frames",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      case AMITK_THRESHOLDING_GLOBAL:
+	image = gtk_image_new_from_stock("amide_icon_thresholding_global",GTK_ICON_SIZE_LARGE_TOOLBAR);
+	break;
+      default:
+	image = NULL;
+	g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+	break;
+      }
+      gtk_button_set_image(GTK_BUTTON(threshold->type_button[i_thresholding]), image);
       gtk_box_pack_start(GTK_BOX(hbox), threshold->type_button[i_thresholding], FALSE, FALSE, 3);
       gtk_widget_show(threshold->type_button[i_thresholding]);
+#if (GTK_MINOR_VERSION >= 12)
+      gtk_widget_set_tooltip_text(threshold->type_button[i_thresholding], 
+				  thresholding_names[i_thresholding]);
+#else
       gtk_tooltips_set_tip(tips, threshold->type_button[i_thresholding], 
 			   thresholding_names[i_thresholding],
 			   thresholding_explanations[i_thresholding]);
+#endif
       
       g_object_set_data(G_OBJECT(threshold->type_button[i_thresholding]), "thresholding", 
 			GINT_TO_POINTER(i_thresholding));
@@ -480,16 +526,19 @@ static void threshold_construct(AmitkThreshold * threshold,
 	gtk_widget_show(hbox);
       }
       button = gtk_button_new();
+      image = gtk_image_new_from_stock(windowing_icons[i_window],GTK_ICON_SIZE_LARGE_TOOLBAR);
+      gtk_button_set_image(GTK_BUTTON(button), image);
       g_object_set_data(G_OBJECT(button), "which_window",GINT_TO_POINTER(i_window));
-      g_signal_connect(G_OBJECT(button), "realize", 
-		       G_CALLBACK(threshold_realize_windowing_button_cb), NULL);
       gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 3);
       gtk_widget_show(button);
 
-      g_signal_connect(G_OBJECT(button), "clicked",  
-      		       G_CALLBACK(windowing_cb), threshold);
+      g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(windowing_cb), threshold);
+#if (GTK_MINOR_VERSION >= 12)
+      gtk_widget_set_tooltip_text(button, amitk_window_names[i_window]);
+#else
       if (tips != NULL)
-	gtk_tooltips_set_tip(tips, button, window_names[i_window], window_names[i_window]);
+	gtk_tooltips_set_tip(tips, button, amitk_window_names[i_window], amitk_window_names[i_window]);
+#endif
     }
 
     left_row++;
@@ -514,21 +563,15 @@ static void threshold_construct(AmitkThreshold * threshold,
   /* show/hide taken care of by threshold_update_layout */
 
   for (i_ref=0; i_ref<2; i_ref++) {
-#if 1
-    threshold->threshold_ref_frame_menu[i_ref] = gtk_option_menu_new();
-#else
     threshold->threshold_ref_frame_menu[i_ref] = gtk_combo_box_new_text();
-#endif
     gtk_table_attach(GTK_TABLE(right_table), threshold->threshold_ref_frame_menu[i_ref],
 		     2+i_ref*2,3+i_ref*2, right_row,right_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_set_size_request(threshold->threshold_ref_frame_menu[i_ref], 50, -1);
-#if 0
     g_object_set_data(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]), 
 		      "which_ref", GINT_TO_POINTER(i_ref));
     g_signal_connect(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]), "changed", 
 		     G_CALLBACK(threshold_ref_frame_cb), threshold);
-#endif
     /* show/hide taken care of by threshold_update_layout */
   }
 
@@ -671,75 +714,6 @@ static void threshold_remove_data_set(AmitkThreshold * threshold) {
   return;
 }
 
-
-/* this gets called when the hbox inside one of the threshold_type radio buttons is realized */
-static void threshold_realize_type_icon_cb(GtkWidget * pix_box, gpointer data) {
-
-  AmitkThresholding thresholding = GPOINTER_TO_INT(data);
-  GdkPixbuf * pixbuf;
-  GtkWidget * image;
-
-  g_return_if_fail(pix_box != NULL);
-
-  /* make sure we don't get called again */
-  if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
-
-  pixbuf = gdk_pixbuf_new_from_inline(-1, thresholding_icons[thresholding], FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-
-  gtk_box_pack_start(GTK_BOX(pix_box), image, FALSE, FALSE, 0);
-  gtk_widget_show(image);
-
-  return;
-}
-
-/* this gets called when the hbox inside one of the threshold_style radio buttons is realized */
-static void threshold_realize_style_icon_cb(GtkWidget * pix_box, gpointer data) {
-
-  AmitkThresholdStyle threshold_style = GPOINTER_TO_INT(data);
-  GdkPixbuf * pixbuf;
-  GtkWidget * image;
-
-  g_return_if_fail(pix_box != NULL);
-
-  /* make sure we don't get called again */
-  if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
-
-  pixbuf = gdk_pixbuf_new_from_inline(-1, threshold_style_icons[threshold_style], FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-
-  gtk_box_pack_start(GTK_BOX(pix_box), image, FALSE, FALSE, 0);
-  gtk_widget_show(image);
-
-  return;
-}
-
-
-/* this gets called when a windowing button is realized */
-static void threshold_realize_windowing_button_cb(GtkWidget * button, gpointer data) {
-
-  AmitkWindow window;
-  GdkPixbuf * pixbuf;
-  GtkWidget * image;
-
-  g_return_if_fail(button != NULL);
-
-  /* make sure we don't get called twice */
-  if (gtk_container_get_children(GTK_CONTAINER(button)) != NULL) return;
-
-  window = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "which_window"));
-
-  pixbuf = gdk_pixbuf_new_from_inline(-1, windowing_icons[window], FALSE, NULL);
-  image = gtk_image_new_from_pixbuf(pixbuf);
-  g_object_unref(pixbuf);
-
-  gtk_container_add(GTK_CONTAINER(button), image);
-  gtk_widget_show(image);
-
-  return;
-}
 
 /* return how many visible reference points we should have */
 static gint threshold_visible_refs(AmitkDataSet * data_set) {
@@ -1358,7 +1332,7 @@ static void threshold_update_absolute_label(AmitkThreshold * threshold) {
 
     switch (AMITK_DATA_SET_CONVERSION(threshold->data_set)) {
     case AMITK_CONVERSION_SUV:
-    case AMITK_CONVERSION_PERCENT_ID_PER_G:
+    case AMITK_CONVERSION_PERCENT_ID_PER_CC:
       gtk_label_set_text(GTK_LABEL(threshold->absolute_label[i_ref]), 
 			 amitk_conversion_names[AMITK_DATA_SET_CONVERSION(threshold->data_set)]);
       break;
@@ -1393,12 +1367,7 @@ static void threshold_update_windowing(AmitkThreshold * threshold) {
 /* function to update what are in the ref frame menus */
 static void threshold_update_ref_frames(AmitkThreshold * threshold) {
 
-#if 1
-  GtkWidget * menu;
-  GtkWidget * menuitem;
-#else
   GtkTreeModel * model;
-#endif
   guint i_ref, i_frame;
   gchar * temp_string;
 
@@ -1407,13 +1376,6 @@ static void threshold_update_ref_frames(AmitkThreshold * threshold) {
 
   for (i_ref=0; i_ref<2; i_ref++) {
 
-#if 1
-    /* remove the old menu */
-    gtk_option_menu_remove_menu(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]));
-
-    /* make new menus */
-    menu = gtk_menu_new();
-#else
     g_signal_handlers_block_by_func(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]),
 				    G_CALLBACK(threshold_ref_frame_cb), threshold);
 
@@ -1422,35 +1384,17 @@ static void threshold_update_ref_frames(AmitkThreshold * threshold) {
     gtk_list_store_clear(GTK_LIST_STORE(model));
 
     /* make new menu */
-#endif
     for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(threshold->data_set); i_frame++) {
       temp_string = g_strdup_printf("%d",i_frame);
-#if 1
-      menuitem = gtk_menu_item_new_with_label(temp_string);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-      g_object_set_data(G_OBJECT(menuitem), "frame", GINT_TO_POINTER(i_frame));
-      g_object_set_data(G_OBJECT(menuitem), "which_ref", GINT_TO_POINTER(i_ref));
-      g_signal_connect(G_OBJECT(menuitem), "activate", 
-		       G_CALLBACK(threshold_ref_frame_cb), threshold);
-#else
       gtk_combo_box_append_text(GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]),
 				temp_string);
-#endif
       g_free(temp_string);
      }
-#if 1
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]), menu);
-    gtk_widget_show_all(menu);
-
-    gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[i_ref]), 
-				AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,i_ref));
-#else
     gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->threshold_ref_frame_menu[i_ref]), 
 			     AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,i_ref));
 				 
     g_signal_handlers_unblock_by_func(G_OBJECT(threshold->threshold_ref_frame_menu[i_ref]),
 				      G_CALLBACK(threshold_ref_frame_cb), threshold);
-#endif
   }
 
   return;
@@ -1462,13 +1406,8 @@ static void threshold_update_color_table(AmitkThreshold * threshold, AmitkViewMo
 
 
   g_signal_handlers_block_by_func(G_OBJECT(threshold->color_table_menu[view_mode]), G_CALLBACK(color_table_cb), threshold);
-#if 1
-  gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->color_table_menu[view_mode]), 
-			      AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, view_mode));
-#else
   gtk_combo_box_set_active(GTK_COMBO_BOX(threshold->color_table_menu[view_mode]), 
 			   AMITK_DATA_SET_COLOR_TABLE(threshold->data_set, view_mode));
-#endif
   g_signal_handlers_unblock_by_func(G_OBJECT(threshold->color_table_menu[view_mode]), G_CALLBACK(color_table_cb), threshold);
 
   if (view_mode == AMITK_VIEW_MODE_SINGLE) {
@@ -1848,11 +1787,7 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
   AmitkThreshold * threshold = data;
   AmitkViewMode view_mode;
 
-#if 1
-  i_color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
-#else
   i_color_table = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
   view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view_mode"));
 
   /* check if we actually changed values */
@@ -1887,11 +1822,7 @@ static void threshold_ref_frame_cb(GtkWidget * widget, gpointer data) {
 
   /* figure out which menu item called me */
   which_ref = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"which_ref"));
-#if 1
-  frame = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"frame"));
-#else
   frame = gtk_combo_box_get_active(GTK_COMBO_BOX(widget));
-#endif
 
   /* check if we actually changed values */
   if (frame != AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set, which_ref)) {
@@ -1900,9 +1831,6 @@ static void threshold_ref_frame_cb(GtkWidget * widget, gpointer data) {
       frame =AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,1);
     else if ((which_ref==1) && (frame < AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,0)))
       frame = AMITK_DATA_SET_THRESHOLD_REF_FRAME(threshold->data_set,0);
-#if 1
-    gtk_option_menu_set_history(GTK_OPTION_MENU(threshold->threshold_ref_frame_menu[which_ref]), frame);
-#endif
 
     /* and inact the changes */
     amitk_data_set_set_threshold_ref_frame(threshold->data_set, which_ref, frame);
@@ -2145,8 +2073,24 @@ static void threshold_dialog_class_init (AmitkThresholdDialogClass *klass)
 
 }
 
-static void threshold_dialog_init (AmitkThresholdDialog * dialog)
-{
+static void init_common(GtkWindow * dialog) {
+
+  GdkPixbuf * pixbuf;
+
+  g_return_if_fail(GTK_IS_WINDOW(dialog));
+
+  pixbuf =  
+    gtk_widget_render_icon(GTK_WIDGET(dialog), "amide_icon_thresholding", -1, 0);
+  gtk_window_set_icon(dialog, pixbuf);
+  g_object_unref(pixbuf);
+
+  return;
+}
+
+
+static void threshold_dialog_init (AmitkThresholdDialog * dialog) {
+
+  init_common(GTK_WINDOW(dialog));
 
   gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
 
@@ -2159,10 +2103,7 @@ static void threshold_dialog_init (AmitkThresholdDialog * dialog)
   dialog->data_set_label = gtk_label_new(NULL);
   gtk_box_pack_start(GTK_BOX(dialog->vbox), dialog->data_set_label, FALSE, FALSE,0);
   gtk_widget_show(dialog->data_set_label);
-
-  /* hookup a callback to load in a pixmap icon when realized */
-  g_signal_connect(G_OBJECT(dialog), "realize", G_CALLBACK(threshold_dialog_realize_cb), NULL);
-
+  
   return;
 }
 
@@ -2182,22 +2123,6 @@ static void threshold_dialog_construct(AmitkThresholdDialog * dialog,
   temp_string = g_strdup_printf(_("Data Set: %s\n"),AMITK_OBJECT_NAME(data_set));
   gtk_label_set_text (GTK_LABEL(dialog->data_set_label), temp_string);
   g_free(temp_string);
-
-  return;
-}
-
-
-/* this gets called when the threshold is realized */
-static void threshold_dialog_realize_cb(GtkWidget * dialog, gpointer data) {
-
-  GdkPixbuf * pixbuf;
-
-  g_return_if_fail(GTK_IS_WINDOW(dialog));
-
-  /* setup the threshold's icon */
-  pixbuf = gdk_pixbuf_new_from_xpm_data(icon_threshold_xpm);
-  gtk_window_set_icon(GTK_WINDOW(dialog), pixbuf);
-  g_object_unref(pixbuf);
 
   return;
 }
@@ -2296,6 +2221,8 @@ static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
 {
   GtkWidget * main_vbox;
 
+  init_common(GTK_WINDOW(dialog));
+
   dialog->thresholds = NULL;
 
   gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
@@ -2308,8 +2235,6 @@ static void thresholds_dialog_init (AmitkThresholdsDialog * dialog)
   gtk_container_add (GTK_CONTAINER (main_vbox), dialog->notebook);
   gtk_widget_show (dialog->notebook);
 
-  /* hookup a callback to load in a pixmap icon when realized */
-  g_signal_connect(G_OBJECT(dialog), "realize", G_CALLBACK(threshold_dialog_realize_cb), NULL);
 }
 
 /* this gets called after we have a list of data set */

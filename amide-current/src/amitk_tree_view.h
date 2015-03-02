@@ -28,7 +28,6 @@
 
 /* includes we always need with this widget */
 #include <gtk/gtk.h>
-#include "amide.h"
 #include "amitk_type_builtins.h"
 #include "amitk_study.h"
 

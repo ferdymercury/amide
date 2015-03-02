@@ -81,6 +81,12 @@
 AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_`'m4_Variable_Type`'_t init_value);
 void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_raw_data, 
 							 amitk_format_`'m4_Variable_Type`'_t init_value);
+void amitk_raw_data_`'m4_Variable_Type`'_slice_calc_min_max(AmitkRawData * amitk_raw_data, 
+							    const amide_intpoint_t frame,
+							    const amide_intpoint_t gate,
+							    const amide_intpoint_t z,
+							    amitk_format_DOUBLE_t * min_value,
+							    amitk_format_DOUBLE_t * max_value);
 
 #endif /* __AMITK_RAW_DATA_`'m4_Variable_Type`'__ */
 

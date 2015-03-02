@@ -1,5 +1,5 @@
 <!-- ##### SECTION Title ##### -->
-amitk_volume
+AmitkVolume
 
 <!-- ##### SECTION Short_Description ##### -->
 
@@ -14,6 +14,9 @@ amitk_volume
 <para>
 
 </para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
 
 
 <!-- ##### MACRO AMITK_VOLUME_CORNER ##### -->
@@ -55,6 +58,35 @@ amitk_volume
 
 @vol: 
 
+
+<!-- ##### TYPEDEF AmitkVolume ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SIGNAL AmitkVolume::volume-changed ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+
+<!-- ##### SIGNAL AmitkVolume::volume-corner-changed ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+@arg1: 
+
+<!-- ##### SIGNAL AmitkVolume::volume-get-center ##### -->
+<para>
+
+</para>
+
+@amitkvolume: the object which received the signal.
+@arg1: 
 
 <!-- ##### FUNCTION amitk_volume_new ##### -->
 <para>
@@ -158,6 +190,20 @@ amitk_volume
 </para>
 
 @objects: 
+@Returns: 
+
+
+<!-- ##### FUNCTION amitk_volumes_calc_display_volume ##### -->
+<para>
+
+</para>
+
+@volumes: 
+@space: 
+@view_center: 
+@thickness: 
+@fov: 
+@volume: 
 @Returns: 
 
 

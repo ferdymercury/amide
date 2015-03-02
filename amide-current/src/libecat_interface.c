@@ -325,7 +325,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
     g_free(temp_string);
   }
   total_planes = dim.z*dim.g*dim.t;
-  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
+  divider = ((total_planes/AMITK_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMITK_UPDATE_DIVIDER);
 
 
   /* and load in the data */
