@@ -1,3 +1,6 @@
+0.6.2
+	* fixed brown bag type error concerning active volume
+
 0.6.1
 	* added a "linked" view mode, so that data sets can be looked at 
 	  simultaneously but not superimposed

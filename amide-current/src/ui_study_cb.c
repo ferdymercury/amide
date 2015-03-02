@@ -856,7 +856,8 @@ void ui_study_cb_tree_select_object(GtkWidget * tree, gpointer object, object_t 
   switch(type) {
   case VOLUME:
     ui_time_dialog_set_times(ui_study);
-    ui_study_make_active_volume(ui_study, view_mode, object);
+    if (ui_study->active_volume[view_mode] == NULL)
+      ui_study_make_active_volume(ui_study, view_mode, object);
     break;
   default:
     break;
@@ -880,7 +881,7 @@ void ui_study_cb_tree_unselect_object(GtkWidget * tree, gpointer object, object_
   switch(type) {
   case VOLUME:
     ui_time_dialog_set_times(ui_study);
-    if (ui_study->active_volume == object)
+    if (ui_study->active_volume[view_mode] == object)
       ui_study_make_active_volume(ui_study, view_mode, NULL);
     break;
   default:
