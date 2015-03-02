@@ -2,10 +2,11 @@ Package: amide
 Version: @VERSION@
 Revision: 1
 Source: http://osdn.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
-Depends: libecat7, volpack, xmedcon, libfame, libxml2, gsl, libgnomecanvas2, libgnomeui2
-BuildDepends: libgnomeui2-dev
+Depends: volpack, xmedcon, libfame1, libxml2, gsl, libgnomecanvas2, libgnomeui2
+BuildDepends: libgnomeui2-dev, gtk-doc
 #Patch: %f.patch
 InstallScript: make install PREFIX=%p DESTDIR=%d
+ConfigureParams: --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
 #DocFiles: README COPYING AUTHORS
 Description: program for viewing and analyzing medical image data sets
 DescDetail: <<

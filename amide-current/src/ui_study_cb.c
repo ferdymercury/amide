@@ -26,6 +26,9 @@
 #include "amide_config.h"
 #include <gnome.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <dirent.h>
 #include <string.h>
 #include "amitk_dir_sel.h"
@@ -296,6 +299,14 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   AmitkImportMethod import_method;
   int submethod = 0;
   AmitkDataSet * import_ds;
+  GtkWidget * question;
+  struct stat file_info;
+  gint return_val;
+  gchar * raw_filename;
+  gchar * temp_string;
+  gboolean incorrect_permissions=FALSE;
+  gboolean incorrect_raw_permissions=FALSE;
+
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
@@ -316,6 +327,63 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   g_print("file to import: %s\n",import_filename);
 #endif
 
+  /* hack for illogical permission problems... 
+     we get this sometimes at UCLA as one of our disk servers is a windows machine */
+  incorrect_permissions = (access(import_filename, R_OK) != 0);
+
+  /* try to figure out if this is a header file */
+  temp_string = g_strdup(import_filename);
+  g_strreverse(temp_string);
+  raw_filename = strstr(temp_string, "rdh."); /* .hdr backwards */
+  if (raw_filename != NULL) {
+    raw_filename = g_strdup(raw_filename+4);
+    g_strreverse(raw_filename);
+  }
+  g_free(temp_string);
+
+  if (raw_filename != NULL)
+    if (stat(raw_filename, &file_info) == 0) /* does file exist?*/
+      incorrect_raw_permissions = (access(raw_filename, R_OK) != 0);
+	
+  if (incorrect_permissions || incorrect_raw_permissions) {
+
+    /* check if it's okay to change permission of file */
+    question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
+				      GTK_DIALOG_DESTROY_WITH_PARENT,
+				      GTK_MESSAGE_QUESTION,
+				      GTK_BUTTONS_OK_CANCEL,
+				      "File has incorrect permissions for reading\nCan I try changing access permissions on:\n   %s?", 
+				      import_filename);
+
+    /* and wait for the question to return */
+    return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+    gtk_widget_destroy(question);
+    if (return_val == GTK_RESPONSE_OK) {
+
+      if (incorrect_permissions) {
+	stat(import_filename, &file_info);
+	if (chmod(import_filename, 0400 | file_info.st_mode) != 0) 
+	  g_warning("failed to change read permissions, you're probably not the owner");
+	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
+      }
+
+      if (incorrect_raw_permissions) {
+	stat(raw_filename, &file_info);
+	if (chmod(raw_filename, 0400 | file_info.st_mode) != 0) 
+	  g_warning("failed to change read permissions on raw data file, you're probably not the owner");
+	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
+      }
+
+    } else { /* we hit cancel */
+      return;
+    }
+  }
+
+  if (raw_filename != NULL)  g_free(raw_filename);
+    
+
+
   /* now, what we need to do if we've successfully loaded an image */
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   if ((import_ds = amitk_data_set_import_file(import_method, submethod, import_filename,
@@ -328,7 +396,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
     g_object_unref(import_ds); /* so remove a reference */
   }
 
-  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
@@ -564,70 +632,6 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
 }
 
 
-void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
-					      AmitkPoint *position, gpointer data) {
-  ui_study_t * ui_study = data;
-  AmitkPoint temp_point;
-  AmitkVoxel temp_voxel;
-  GtkWidget * question;
-  amide_time_t start_time, end_time;
-  gint return_val;
-  AmitkObject * parent_ds;
-
-  g_return_if_fail(AMITK_IS_ROI(roi));
-  g_return_if_fail(AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D);
-
-  /* figure out the data set we're drawing on */
-  parent_ds = amitk_object_get_parent_of_type(AMITK_OBJECT(roi), AMITK_OBJECT_TYPE_DATA_SET);
-  if (parent_ds == NULL) {
-    g_return_if_fail(ui_study->active_ds != NULL);
-    parent_ds = g_object_ref(ui_study->active_ds);
-  }
-
-  start_time = AMITK_STUDY_VIEW_START_TIME(ui_study->study);
-  end_time = start_time + AMITK_STUDY_VIEW_DURATION(ui_study->study);
-  temp_point = amitk_space_b2s(AMITK_SPACE(parent_ds), *position);
-  POINT_TO_VOXEL(temp_point, AMITK_DATA_SET_VOXEL_SIZE(parent_ds),
-		 amitk_data_set_get_frame(AMITK_DATA_SET(parent_ds), start_time),
-		 temp_voxel);
-
-  if (!amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(parent_ds),temp_voxel)) {
-    g_warning("designanted voxel not in data set %s\n", AMITK_OBJECT_NAME(parent_ds));
-    goto isocontour_3d_changed_end; /* cancel */
-  }
-
-  /* complain if more then one frame is currently showing */
-  if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(parent_ds), end_time)) {
-
-    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      "%s: %s\n%s %d",
-				      "Multiple data frames are currently being shown from",
-				      AMITK_OBJECT_NAME(parent_ds),
-				      "The isocontour will only be drawn over frame",
-				      temp_voxel.t);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK) { 
-      goto isocontour_3d_changed_end; /* cancel */
-    }
-  }
-
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-  amitk_roi_set_isocontour(roi, AMITK_DATA_SET(parent_ds), temp_voxel);
-  ui_common_remove_cursor(GTK_WIDGET(canvas));
-
-  isocontour_3d_changed_end:
-
-  g_object_unref(parent_ds);
-
-  return;
-}
 
 
 void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, 
@@ -696,10 +700,11 @@ void ui_study_cb_tree_activate_object(GtkWidget * tree, AmitkObject * object, gp
     ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
 
   } else if (AMITK_IS_ROI(object)) {
-    center = amitk_volume_get_center(AMITK_VOLUME(object));
-    if (!AMITK_ROI_UNDRAWN(AMITK_ROI(object)) && 
-	!POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
-      amitk_study_set_view_center(ui_study->study, center);
+    if (!AMITK_ROI_UNDRAWN(AMITK_ROI(object))) {
+      center = amitk_volume_get_center(AMITK_VOLUME(object));
+      if (!POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
+	amitk_study_set_view_center(ui_study->study, center);
+    }
   } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
     center = AMITK_FIDUCIAL_MARK_GET(object);
     if ( !POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
@@ -727,7 +732,7 @@ void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpoin
   dialog = amitk_object_dialog_new(object, ui_study->canvas_layout);
 
   if (AMITK_IS_DATA_SET(object))
-    ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   if (dialog != NULL) 
     gtk_widget_show(dialog);
@@ -775,7 +780,7 @@ void ui_study_cb_tree_delete_object(GtkWidget * tree, AmitkObject * object, gpoi
 
   gtk_widget_destroy(question);
   if (return_val != GTK_RESPONSE_OK)
-    return; /* we don't want to overwrite the file.... */
+    return; 
 
   amitk_object_remove_child(AMITK_OBJECT_PARENT(object), object);
 
@@ -802,8 +807,8 @@ void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer data) {
   amide_real_t zoom;
 
   if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
-  zoom = gtk_spin_button_get_value(spin_button);
 
+  zoom = gtk_spin_button_get_value(spin_button);
   amitk_study_set_zoom(ui_study->study, zoom);
     
   return;
@@ -815,10 +820,9 @@ void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
   ui_study_t * ui_study = data;
   amide_real_t thickness;
 
-
   if (AMITK_OBJECT_CHILDREN(ui_study->study)==NULL) return;
-  thickness = gtk_spin_button_get_value(spin_button);
 
+  thickness = gtk_spin_button_get_value(spin_button);
   amitk_study_set_view_thickness(ui_study->study, thickness);
   
   return;
@@ -870,7 +874,7 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume,
 		   ui_study->roi_width, ui_study->line_style,
 		   series_type);
-  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
 }
@@ -915,7 +919,7 @@ void ui_study_cb_render(GtkWidget * widget, gpointer data) {
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_render_create(ui_study->study);
-  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
 }
@@ -940,7 +944,7 @@ void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   tb_roi_analysis(ui_study->study, GTK_WINDOW(ui_study->app));
-  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
 }
@@ -995,7 +999,7 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
     ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
     ui_study->threshold_dialog = amitk_threshold_dialog_new(ui_study->active_ds,
 							    GTK_WINDOW(ui_study->app));
-    ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
     g_signal_connect(G_OBJECT(ui_study->threshold_dialog), "delete_event",
 		     G_CALLBACK(threshold_delete_event), ui_study);
     gtk_widget_show(GTK_WIDGET(ui_study->threshold_dialog));
@@ -1087,10 +1091,9 @@ void ui_study_cb_fuse_type(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   AmitkFuseType fuse_type;
 
-  /* figure out which fuse_type menu item called me */
   fuse_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"fuse_type"));
-
   amitk_study_set_fuse_type(ui_study->study,  fuse_type);
+  ui_study_update_fuse_type(ui_study);
 				
   return;
 }
@@ -1100,7 +1103,6 @@ void ui_study_cb_canvas_visible(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   AmitkView view;
 
-  /* figure out which view item called me */
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view"));
   amitk_study_set_canvas_visible(ui_study->study, view, 
 				 gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
@@ -1113,9 +1115,12 @@ void ui_study_cb_canvas_visible(GtkWidget * widget, gpointer data) {
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
+  AmitkViewMode view_mode;
 
-  amitk_study_set_view_mode(ui_study->study, 
-			    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode")));
+  view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode"));
+  amitk_study_set_view_mode(ui_study->study, view_mode);
+  ui_study_update_view_mode(ui_study);
+
   return;
 }
 

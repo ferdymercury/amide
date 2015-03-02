@@ -58,7 +58,7 @@ static gchar * threshold_names[] = {
 #define NUM_THRESHOLDS 4
 
 
-static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **perror_buf) {
 
   gchar * temp_string;
   AmitkVoxel return_vp;
@@ -82,8 +82,8 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
   if ((temp_string == NULL) || (error == EOF)) {
     return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
-    g_warning("Couldn't read value for %s, substituting [%d %d %d %d]",descriptor,
-	      return_vp.x, return_vp.y, return_vp.z, return_vp.t);
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
+		     descriptor, return_vp.x, return_vp.y, return_vp.z, return_vp.t);
   }
 
   return return_vp;
@@ -91,7 +91,7 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
 
 /* function to load in a raw_data structure from a legacy file */
-static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
+static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename, gchar **perror_buf) {
 
   xmlDocPtr doc;
   AmitkRawData * new_data_set;
@@ -103,13 +103,13 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(data_set_xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE data_set xml file %s",data_set_xml_filename);
+    amitk_append_str(perror_buf,"Couldn't Parse AMIDE data_set xml file %s",data_set_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("Data Set xml file doesn't appear to have a root: %s", data_set_xml_filename);
+    amitk_append_str(perror_buf,"Data Set xml file doesn't appear to have a root: %s", data_set_xml_filename);
     return NULL;
   }
 
@@ -130,7 +130,7 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
   g_free(temp_string);
 
   /* get the rest of the parameters */
-  dim = amitk_voxel_read_xml(nodes, "dim");
+  dim = amitk_voxel_read_xml(nodes, "dim", perror_buf);
 
   /* get the name of our associated data file */
   data_set_raw_filename = xml_get_string(nodes, "raw_data_file");
@@ -149,7 +149,7 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
 }
 
 /* function to load in an alignment point xml file */
-static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename) {
+static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **perror_buf) {
 
   xmlDocPtr doc;
   AmitkFiducialMark * new_pt;
@@ -159,13 +159,13 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(pt_xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE alignment point xml file %s",pt_xml_filename);
+    amitk_append_str(perror_buf, "Couldn't Parse AMIDE alignment point xml file %s",pt_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("AMIDE alignment point xml file doesn't appear to have a root: %s",pt_xml_filename);
+    amitk_append_str(perror_buf,"AMIDE alignment point xml file doesn't appear to have a root: %s",pt_xml_filename);
     return NULL;
   }
 
@@ -182,7 +182,7 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename) {
   nodes = nodes->children;
 
   /* get the point */
-  new_pt->point = amitk_point_read_xml(nodes, "point");
+  new_pt->point = amitk_point_read_xml(nodes, "point", perror_buf);
   /* and we're done */
   xmlFreeDoc(doc);
   
@@ -191,7 +191,7 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename) {
 
 
 /* function to load in a list of alignment point xml nodes */
-static GList * align_pts_load_xml(xmlNodePtr node_list) {
+static GList * align_pts_load_xml(xmlNodePtr node_list, gchar **perror_buf) {
 
   gchar * file_name;
   GList * new_pts;
@@ -199,11 +199,11 @@ static GList * align_pts_load_xml(xmlNodePtr node_list) {
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_pts = align_pts_load_xml(node_list->next);
+    new_pts = align_pts_load_xml(node_list->next, perror_buf);
 
     /* load in this node */
     file_name = xml_get_string(node_list->children, "text");
-    new_pt = align_pt_load_xml(file_name);
+    new_pt = align_pt_load_xml(file_name, perror_buf);
     new_pts = g_list_prepend(new_pts, new_pt);
     g_free(file_name);
 
@@ -216,7 +216,7 @@ static GList * align_pts_load_xml(xmlNodePtr node_list) {
 
 
 /* function to load in a volume xml file */
-static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpolation interpolation) {
+static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpolation interpolation, gchar ** perror_buf) {
 
   xmlDocPtr doc;
   AmitkDataSet * new_volume;
@@ -235,13 +235,13 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 
   /* parse the xml file */
   if ((doc = xmlParseFile(volume_xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE volume xml file %s",volume_xml_filename);
+    amitk_append_str(perror_buf,"Couldn't Parse AMIDE volume xml file %s",volume_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("AMIDE volume xml file doesn't appear to have a root: %s", volume_xml_filename);
+    amitk_append_str(perror_buf,"AMIDE volume xml file doesn't appear to have a root: %s", volume_xml_filename);
     return NULL;
   }
 
@@ -283,8 +283,8 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   data_set_xml_filename = xml_get_string(nodes, "data_set_file");
   internal_scaling_xml_filename = xml_get_string(nodes, "internal_scaling_file");
   if ((data_set_xml_filename != NULL) && (internal_scaling_xml_filename != NULL)) {
-    new_volume->raw_data = data_set_load_xml(data_set_xml_filename);
-    new_volume->internal_scaling = data_set_load_xml(internal_scaling_xml_filename);
+    new_volume->raw_data = data_set_load_xml(data_set_xml_filename, perror_buf);
+    new_volume->internal_scaling = data_set_load_xml(internal_scaling_xml_filename, perror_buf);
 
     /* the type of internal_scaling has been changed to double
        as of amide 0.7.1 */
@@ -292,12 +292,12 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
       AmitkRawData * old_scaling;
       AmitkVoxel i;
 
-      g_warning("wrong type found on internal scaling, converting to double");
+      amitk_append_str(perror_buf,"wrong type found on internal scaling, converting to double");
       old_scaling = new_volume->internal_scaling;
 
       new_volume->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
       if (new_volume->internal_scaling == NULL) {
-	g_warning("couldn't allocate space for the new scaling structure");
+	amitk_append_str(perror_buf,"couldn't allocate space for the new scaling structure");
 	g_object_unref(new_volume);
 	return NULL;
       }
@@ -313,7 +313,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     }
 
     /* parameters that aren't in older versions and default values aren't good enough*/
-    amitk_data_set_set_scale_factor(new_volume, xml_get_data(nodes, "external_scaling"));
+    amitk_data_set_set_scale_factor(new_volume, xml_get_data(nodes, "external_scaling", perror_buf));
 
   } else {
     /* ---- legacy cruft previous to .xif version 1.4 ----- */
@@ -322,7 +322,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     AmitkRawFormat i_raw_data_format, raw_data_format;
     AmitkVoxel temp_dim;
 
-    g_warning("no data_set file, will continue with the assumption of a .xif format previous to 1.4");
+    amitk_append_str(perror_buf,"no data_set file, will continue with the assumption of a .xif format previous to 1.4");
 
     /* get the name of our associated data file */
     raw_data_filename = xml_get_string(nodes, "raw_data");
@@ -340,9 +340,9 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 	  raw_data_format = i_raw_data_format;
     g_free(temp_string);
 
-    temp_dim = voxel3d_read_xml(nodes, "dim");
-    temp_dim.t = xml_get_int(nodes, "num_frames");
-    amitk_data_set_set_scale_factor(new_volume,  xml_get_data(nodes, "conversion"));
+    temp_dim = voxel3d_read_xml(nodes, "dim", perror_buf);
+    temp_dim.t = xml_get_int(nodes, "num_frames", perror_buf);
+    amitk_data_set_set_scale_factor(new_volume,  xml_get_data(nodes, "conversion", perror_buf));
     
     /* now load in the raw data */
     new_volume->raw_data = amitk_raw_data_import_raw_file(raw_data_filename, raw_data_format, temp_dim, 0, NULL, NULL);
@@ -356,7 +356,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   if (pts_nodes != NULL) {
     pts_nodes = pts_nodes->children;
     if (pts_nodes != NULL) {
-      align_pts = align_pts_load_xml(pts_nodes);
+      align_pts = align_pts_load_xml(pts_nodes, perror_buf);
       temp_pts = align_pts;
       while (temp_pts != NULL) {
 	amitk_space_copy_in_place(AMITK_SPACE(temp_pts->data), AMITK_SPACE(new_volume));
@@ -368,18 +368,19 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   }
 
   /* and figure out the rest of the parameters */
-  new_volume->voxel_size = amitk_point_read_xml(nodes, "voxel_size");
-  new_volume->scan_start = xml_get_time(nodes, "scan_start");
+  new_volume->voxel_size = amitk_point_read_xml(nodes, "voxel_size", perror_buf);
+  new_volume->scan_start = xml_get_time(nodes, "scan_start", perror_buf);
   new_volume->frame_duration = xml_get_times(nodes, "frame_duration", 
-					     AMITK_DATA_SET_NUM_FRAMES(new_volume));
-  new_volume->threshold_max[0] =  xml_get_data(nodes, "threshold_max");
-  new_volume->threshold_min[0] =  xml_get_data(nodes, "threshold_min");
-  new_volume->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1");
-  new_volume->threshold_min[1] =  xml_get_data(nodes, "threshold_min_1");
-  new_volume->threshold_ref_frame[0] = xml_get_int(nodes,"threshold_ref_frame_0");
-  new_volume->threshold_ref_frame[1] = xml_get_int(nodes,"threshold_ref_frame_1");
+					     AMITK_DATA_SET_NUM_FRAMES(new_volume),
+					     perror_buf);
+  new_volume->threshold_max[0] =  xml_get_data(nodes, "threshold_max", perror_buf);
+  new_volume->threshold_min[0] =  xml_get_data(nodes, "threshold_min", perror_buf);
+  new_volume->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1", perror_buf);
+  new_volume->threshold_min[1] =  xml_get_data(nodes, "threshold_min_1", perror_buf);
+  new_volume->threshold_ref_frame[0] = xml_get_int(nodes,"threshold_ref_frame_0", perror_buf);
+  new_volume->threshold_ref_frame[1] = xml_get_int(nodes,"threshold_ref_frame_1", perror_buf);
 
-  space = amitk_space_read_xml(nodes, "coord_frame");
+  space = amitk_space_read_xml(nodes, "coord_frame", perror_buf);
   amitk_space_copy_in_place(AMITK_SPACE(new_volume), space);
   g_object_unref(space);
 
@@ -411,7 +412,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
 
 
 /* function to load in a list of volume xml nodes */
-static GList * volumes_load_xml(xmlNodePtr node_list, AmitkInterpolation interpolation) {
+static GList * volumes_load_xml(xmlNodePtr node_list, AmitkInterpolation interpolation, gchar **perror_buf) {
 
   gchar * file_name;
   GList * new_data_sets;
@@ -419,11 +420,11 @@ static GList * volumes_load_xml(xmlNodePtr node_list, AmitkInterpolation interpo
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_data_sets = volumes_load_xml(node_list->next, interpolation);
+    new_data_sets = volumes_load_xml(node_list->next, interpolation, perror_buf);
 
     /* load in this node */
     file_name = xml_get_string(node_list->children, "text");
-    new_ds = volume_load_xml(file_name, interpolation);
+    new_ds = volume_load_xml(file_name, interpolation, perror_buf);
     new_data_sets = g_list_prepend(new_data_sets, new_ds);
     g_free(file_name);
 
@@ -435,7 +436,7 @@ static GList * volumes_load_xml(xmlNodePtr node_list, AmitkInterpolation interpo
 
 
 /* function to load in an ROI xml file */
-AmitkRoi * roi_load_xml(gchar * roi_xml_filename) {
+AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
 
   xmlDocPtr doc;
   AmitkRoi * new_roi;
@@ -448,13 +449,13 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(roi_xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE ROI xml file %s",roi_xml_filename);
+    amitk_append_str(perror_buf,"Couldn't Parse AMIDE ROI xml file %s",roi_xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("AMIDE ROI xml file doesn't appear to have a root: %s", roi_xml_filename);
+    amitk_append_str(perror_buf,"AMIDE ROI xml file doesn't appear to have a root: %s", roi_xml_filename);
     return NULL;
   }
   
@@ -479,21 +480,21 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename) {
   g_free(temp_string);
 
   /* and figure out the rest of the parameters */
-  space = amitk_space_read_xml(nodes, "coord_frame");
+  space = amitk_space_read_xml(nodes, "coord_frame", perror_buf);
   amitk_space_copy_in_place(AMITK_SPACE(new_roi), space);
   g_object_unref(space);
 
-  amitk_volume_set_corner(AMITK_VOLUME(new_roi), amitk_point_read_xml(nodes, "corner"));
+  amitk_volume_set_corner(AMITK_VOLUME(new_roi), amitk_point_read_xml(nodes, "corner", perror_buf));
 
   /* isocontour specific stuff */
   if ((AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
       (AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
-    new_roi->voxel_size = amitk_point_read_xml(nodes, "voxel_size");
-    new_roi->isocontour_value = xml_get_real(nodes, "isocontour_value");
+    new_roi->voxel_size = amitk_point_read_xml(nodes, "voxel_size", perror_buf);
+    new_roi->isocontour_value = xml_get_real(nodes, "isocontour_value", perror_buf);
 
     isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
     if (isocontour_xml_filename != NULL)
-      new_roi->isocontour = data_set_load_xml(isocontour_xml_filename);
+      new_roi->isocontour = data_set_load_xml(isocontour_xml_filename, perror_buf);
   }
 
   /* children were never used */
@@ -517,7 +518,7 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename) {
 
 
 /* function to load in a list of ROI xml nodes */
-static GList * rois_load_xml(xmlNodePtr node_list) {
+static GList * rois_load_xml(xmlNodePtr node_list, gchar **perror_buf) {
 
   gchar * roi_xml_filename;
   GList * new_rois;
@@ -525,11 +526,11 @@ static GList * rois_load_xml(xmlNodePtr node_list) {
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_rois = rois_load_xml(node_list->next);
+    new_rois = rois_load_xml(node_list->next, perror_buf);
 
     /* load in this node */
     roi_xml_filename = xml_get_string(node_list->children, "text");
-    new_roi = roi_load_xml(roi_xml_filename);
+    new_roi = roi_load_xml(roi_xml_filename, perror_buf);
     new_rois = g_list_prepend(new_rois, new_roi);
     g_free(roi_xml_filename);
   } else
@@ -538,7 +539,7 @@ static GList * rois_load_xml(xmlNodePtr node_list) {
   return new_rois;
 }
 
-AmitkStudy * legacy_load_xml(void) {
+AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
 
   AmitkStudy * study = NULL;
   AmitkSpace * space;
@@ -554,19 +555,19 @@ AmitkStudy * legacy_load_xml(void) {
   
 
   /* warn that this is an old file version */
-  g_warning("A .xif file previous to file version 2.0 found.\n"
-	    "Invoking legacy loader, please resave file as soon as possible");
+  amitk_append_str(perror_buf,"A .xif file previous to file version 2.0 found.\n"
+		   "Invoking legacy loader, please resave file as soon as possible");
 
 
   /* parse the xml file */
   if ((doc = xmlParseFile("Study.xml")) == NULL) {
-    g_warning("Couldn't Parse AMIDE xml file:\n\tStudy.xml");
+    amitk_append_str(perror_buf,"Couldn't Parse AMIDE xml file:\n\tStudy.xml");
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("AMIDE xml file doesn't appear to have a root:\n\tStudy.xml");
+    amitk_append_str(perror_buf,"AMIDE xml file doesn't appear to have a root:\n\tStudy.xml");
     return NULL;
   }
 
@@ -592,7 +593,7 @@ AmitkStudy * legacy_load_xml(void) {
   g_free(creation_date);
 
   /* get our study parameters */
-  space = amitk_space_read_xml(nodes, "coord_frame");
+  space = amitk_space_read_xml(nodes, "coord_frame", perror_buf);
   amitk_space_copy_in_place(AMITK_SPACE(study), space);
   g_object_unref(space);
 
@@ -607,28 +608,28 @@ AmitkStudy * legacy_load_xml(void) {
   /* load in the volumes */
   object_nodes = xml_get_node(nodes, "Volumes");
   object_nodes = object_nodes->children;
-  objects = volumes_load_xml(object_nodes, interpolation);
+  objects = volumes_load_xml(object_nodes, interpolation, perror_buf);
   amitk_object_add_children(AMITK_OBJECT(study), objects);
   amitk_objects_unref(objects);
 
   /* load in the rois */
   object_nodes = xml_get_node(nodes, "ROIs");
   object_nodes = object_nodes->children;
-  objects = rois_load_xml(object_nodes);
+  objects = rois_load_xml(object_nodes, perror_buf);
   amitk_object_add_children(AMITK_OBJECT(study), objects);
   amitk_objects_unref(objects);
 
   /* get our view parameters */
-  view_center = amitk_point_read_xml(nodes, "view_center");
+  view_center = amitk_point_read_xml(nodes, "view_center", perror_buf);
   amitk_study_set_view_center(study, amitk_space_s2b(AMITK_SPACE(study), view_center));
-  amitk_study_set_view_thickness(study, xml_get_real(nodes, "view_thickness"));
-  amitk_study_set_view_start_time(study, xml_get_time(nodes, "view_time"));
-  amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration"));
-  amitk_study_set_zoom(study, xml_get_real(nodes, "zoom"));
+  amitk_study_set_view_thickness(study, xml_get_real(nodes, "view_thickness", perror_buf));
+  amitk_study_set_view_start_time(study, xml_get_time(nodes, "view_time", perror_buf));
+  amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration", perror_buf));
+  amitk_study_set_zoom(study, xml_get_real(nodes, "zoom", perror_buf));
  
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < SMALL_DISTANCE) {
-    g_warning("inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
+    amitk_append_str(perror_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
 
@@ -644,7 +645,7 @@ AmitkStudy * legacy_load_xml(void) {
     AmitkPoint new_offset;
     AmitkAxis i_axis;
 
-    g_warning("detected file version previous to 1.3, compensating for coordinate errors");
+    amitk_append_str(perror_buf,"detected file version previous to 1.3, compensating for coordinate errors");
 
     view_center = AMITK_STUDY_VIEW_CENTER(study);
     view_center.y = -view_center.y;

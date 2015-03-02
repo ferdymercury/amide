@@ -119,7 +119,8 @@ typedef struct _rendering_t {
   pixel_type_t pixel_type;
   amide_time_t start;
   amide_time_t duration;
-  AmitkVolume * volume; /* volume in which the data resides */
+  AmitkVolume * transformed_volume; /* volume in rendering space in which the data resides  */
+  AmitkVolume * extraction_volume; /* set on init, used for extracting data into the context */
   rendering_voxel_t * rendering_data;
   amide_real_t voxel_size; /* volpack needs isotropic voxels */
   AmitkVoxel dim; /* dimensions of our rendering_data and image */

@@ -201,6 +201,8 @@ static void add_object(ui_study_t * ui_study, AmitkObject * object) {
     ui_study_update_time_button(ui_study->study, ui_study->time_button);
     ui_study_update_layout(ui_study);
     ui_study_update_canvas_visible_buttons(ui_study);
+    ui_study_update_fuse_type(ui_study);
+    ui_study_update_view_mode(ui_study);
 
     amitk_tree_set_study(AMITK_TREE(ui_study->tree), AMITK_STUDY(object));
     amitk_tree_expand_object(AMITK_TREE(ui_study->tree), object);
@@ -328,10 +330,9 @@ ui_study_t * ui_study_init(void) {
   help_info_line_t i_line;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_study = g_try_new(ui_study_t,1)) == NULL) {
-    g_warning("couldn't allocate space for ui_study_t");
-    return NULL;
-  }
+  ui_study = g_try_new(ui_study_t,1);
+  g_return_val_if_fail(ui_study != NULL, NULL);
+
   ui_study->reference_count = 1;
 
   ui_study->study = NULL;
@@ -468,9 +469,7 @@ void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_obje
 				AMITK_OBJECT_NAME(parent_object));
   entry = gnome_request_dialog(FALSE, temp_string, "", 256, 
 			       ui_common_entry_name_cb,
-			       &pt_name, 
-			       (GNOME_IS_APP(ui_study->app) ? 
-				GTK_WINDOW(ui_study->app) : NULL));
+			       &pt_name, GTK_WINDOW(ui_study->app));
   entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
   g_free(temp_string);
   
@@ -513,9 +512,7 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
 				AMITK_OBJECT_NAME(parent_object));
   entry = gnome_request_dialog(FALSE, temp_string, "", 256, 
 			       ui_common_entry_name_cb,
-			       &roi_name, 
-			       (GNOME_IS_APP(ui_study->app) ? 
-				GTK_WINDOW(ui_study->app) : NULL));
+			       &roi_name, GTK_WINDOW(ui_study->app));
   entry_return = gnome_dialog_run_and_close(GNOME_DIALOG(entry));
   g_free(temp_string);
   
@@ -557,6 +554,7 @@ void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study) {
   return;
 }
 
+
 /* function to update the text in the time dialog popup widget */
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {
 
@@ -588,7 +586,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
   if (which_info == AMITK_HELP_INFO_UPDATE_LOCATION) {
     location_text[0] = g_strdup_printf("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f]", 
 				       new_point.x, new_point.y, new_point.z);
-    location_text[1] = g_strdup_printf("value  = % 5.3f", value);
+    location_text[1] = g_strdup_printf("value  = % 5.3g", value);
   } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
     location_text[0] = g_strdup_printf("shift (x,y,z) =");
     location_text[1] = g_strdup_printf("[% 5.2f,% 5.2f,% 5.2f]", 
@@ -681,7 +679,6 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 /* updates the settings of the thickness spin button, will not change anything about the canvas */
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
 
-
   amide_real_t min_voxel_size, max_size;
 
   /* there's no spin button if we don't create the toolbar at this moment */
@@ -689,27 +686,28 @@ void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
 
   min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(ui_study->study));
   max_size = amitk_volumes_get_max_size(AMITK_OBJECT_CHILDREN(ui_study->study));
-
+    
   if ((min_voxel_size < 0)  || (max_size < 0)) return; /* no valid objects */
-
+  
   /* block signals to the spin button, as we only want to
      change the value of the spin button, it's up to the caller of this
      function to change anything on the actual canvases... we'll 
      unblock at the end of this function */
   g_signal_handlers_block_by_func(G_OBJECT(ui_study->thickness_spin), 
-    				  G_CALLBACK(ui_study_cb_thickness), ui_study);
-
+				  G_CALLBACK(ui_study_cb_thickness), ui_study);
+  
   /* set the current thickness if it hasn't already been set or if it's no longer valid*/
   if (thickness < min_voxel_size)
     thickness = min_voxel_size;
-
+  
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->thickness_spin), thickness);
   gtk_spin_button_set_increments(GTK_SPIN_BUTTON(ui_study->thickness_spin), min_voxel_size, min_voxel_size);
   gtk_spin_button_set_range(GTK_SPIN_BUTTON(ui_study->thickness_spin), min_voxel_size, max_size);
-  gtk_spin_button_configure(GTK_SPIN_BUTTON(ui_study->thickness_spin),NULL, thickness, 2);
+  gtk_spin_button_configure(GTK_SPIN_BUTTON(ui_study->thickness_spin),NULL, thickness, 
+			    gtk_spin_button_get_digits(GTK_SPIN_BUTTON(ui_study->thickness_spin)));
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->thickness_spin),
-  				    G_CALLBACK(ui_study_cb_thickness), ui_study);
+				    G_CALLBACK(ui_study_cb_thickness), ui_study);
 
   return;
 }
@@ -726,13 +724,14 @@ void ui_study_update_zoom(ui_study_t * ui_study) {
      unblock at the end of this function */
   g_signal_handlers_block_by_func(G_OBJECT(ui_study->zoom_spin),
 				  G_CALLBACK(ui_study_cb_zoom), ui_study);
-
+  
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), 
 			    AMITK_STUDY_ZOOM(ui_study->study));
-
+  
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->zoom_spin),
 				    G_CALLBACK(ui_study_cb_zoom), ui_study);
+
   return;
 }
 
@@ -767,6 +766,24 @@ void ui_study_update_interpolation(ui_study_t * ui_study) {
       g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->interpolation_button[i_interpolation]),
 					G_CALLBACK(ui_study_cb_interpolation),  ui_study);
   }
+
+}
+
+void ui_study_update_fuse_type(ui_study_t * ui_study) {
+
+  AmitkFuseType i_fuse_type;
+  
+  g_return_if_fail(ui_study->study != NULL);
+
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) {
+    g_signal_handlers_block_by_func(G_OBJECT(ui_study->fuse_type_button[i_fuse_type]),
+				    G_CALLBACK(ui_study_cb_fuse_type), ui_study);
+  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->fuse_type_button[AMITK_STUDY_FUSE_TYPE(ui_study->study)]),
+			       TRUE);
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++)
+    g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->fuse_type_button[i_fuse_type]),
+				      G_CALLBACK(ui_study_cb_fuse_type),  ui_study);
 
 }
 
@@ -871,8 +888,6 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 			   G_CALLBACK(ui_study_cb_canvas_view_changing), ui_study);
 	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_changed",
 			   G_CALLBACK(ui_study_cb_canvas_view_changed), ui_study);
-	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "isocontour_3d_changed",
-			   G_CALLBACK(ui_study_cb_canvas_isocontour_3d_changed), ui_study);
 	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "erase_volume",
 			   G_CALLBACK(ui_study_cb_canvas_erase_volume), ui_study);
 	  g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "new_object",
@@ -1029,10 +1044,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
 
   /* make and add the main packing table */
   ui_study->main_table = gtk_table_new(3,2,FALSE);
-  if (GNOME_IS_APP(ui_study->app)) 
-    gnome_app_set_contents(GNOME_APP(ui_study->app), ui_study->main_table);
-  else
-    gtk_container_add(GTK_CONTAINER(ui_study->app), ui_study->main_table);
+  gnome_app_set_contents(GNOME_APP(ui_study->app), ui_study->main_table);
 
   /* connect the blank help signal */
   g_object_set_data(G_OBJECT(ui_study->app), "which_help", GINT_TO_POINTER(AMITK_HELP_INFO_BLANK));
@@ -1109,24 +1121,11 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
 
   ui_study_t * ui_study;
   gchar * temp_string;
-  gboolean virgin;
-
 
   ui_study = ui_study_init();
 
   /* setup the study window */
   ui_study->app=gnome_app_new(PACKAGE, NULL);
-
-  if (study == NULL) {
-    study = amitk_study_new();
-    temp_string = g_strdup_printf("temp_%d",next_study_num++);
-    amitk_object_set_name(AMITK_OBJECT(study), temp_string);
-    g_free(temp_string);
-    virgin = TRUE;
-  } else {
-    g_object_ref(study); /* add another, as we'll be removing it below */
-    virgin=FALSE;
-  }
 
   //  gtk_window_set_policy (GTK_WINDOW(ui_study->app), TRUE, TRUE, TRUE);
 
@@ -1142,19 +1141,34 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
   ui_study->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_study->app));
 
   /* setup the study menu */
-  if (GNOME_IS_APP(ui_study->app)) ui_study_menus_create(ui_study);
+  ui_study_menus_create(ui_study);
 
   /* setup the toolbar */
-  if (GNOME_IS_APP(ui_study->app)) ui_study_toolbar_create(ui_study, study);
+  ui_study_toolbar_create(ui_study);
 
   /* setup the rest of the study window */
   ui_study_setup_widgets(ui_study);
 
+
   /* add the study to the ui_study */
-  ui_study_set_study(ui_study, study);
-  ui_study->study_virgin=virgin;
+  if (study == NULL) {
+
+    study = amitk_study_new();
+    temp_string = g_strdup_printf("temp_%d",next_study_num++);
+    amitk_object_set_name(AMITK_OBJECT(study), temp_string);
+    g_free(temp_string);
+
+    ui_study_set_study(ui_study, study);
+    g_object_unref(study);
+    ui_study->study_virgin=TRUE;
+
+  } else {
+
+    ui_study_set_study(ui_study, study);
+    ui_study->study_virgin=FALSE;
+
+  }
   ui_study_update_title(ui_study);
-  g_object_unref(study);
 
   /* get the study window running */
   gtk_widget_show_all(ui_study->app);

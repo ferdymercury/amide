@@ -67,7 +67,7 @@ static void          object_transform_axes      (AmitkSpace * space,
 static AmitkObject * object_copy                (const AmitkObject * object);
 static void          object_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          object_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static void          object_read_xml            (AmitkObject * object, xmlNodePtr nodes);
+static gchar *       object_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
 static void          object_add_child           (AmitkObject * object, AmitkObject * child);
 static void          object_remove_child        (AmitkObject * object, AmitkObject * child);
 
@@ -169,9 +169,9 @@ static void object_class_init (AmitkObjectClass * class) {
   		  G_TYPE_FROM_CLASS(class),
   		  G_SIGNAL_RUN_LAST,
   		  G_STRUCT_OFFSET(AmitkObjectClass, object_read_xml),
-  		  NULL, NULL, amitk_marshal_NONE__POINTER,
-		  G_TYPE_NONE, 1,
-		  G_TYPE_POINTER);
+    		  NULL, NULL, amitk_marshal_POINTER__POINTER_POINTER,
+  		  G_TYPE_POINTER, 2,
+  		  G_TYPE_POINTER, G_TYPE_POINTER); /* for some reason, G_TYPE_STRING is a no no */
   object_signals[OBJECT_ADD_CHILD] =
     g_signal_new ("object_add_child",
   		  G_TYPE_FROM_CLASS(class),
@@ -347,11 +347,27 @@ static AmitkObject * object_copy (const AmitkObject * object) {
 }
 
 void object_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_object) {
+
+  AmitkSelection i_selection;
+  GList * children;
+  AmitkObject * child;
  
   amitk_space_copy_in_place(AMITK_SPACE(dest_object), AMITK_SPACE(src_object));
   amitk_object_set_name(dest_object, AMITK_OBJECT_NAME(src_object));
-
+  for (i_selection=0; i_selection<AMITK_SELECTION_NUM; i_selection++)
+    amitk_object_set_selected(dest_object, 
+			      amitk_object_get_selected(src_object, i_selection), 
+			      i_selection);
   /* don't copy object->dialog, as that's the dialog for modifying the old object */
+
+  /* and recurse */
+  children = src_object->children;
+  while (children != NULL) {
+    child = amitk_object_copy(children->data);
+    amitk_object_add_child(dest_object, child);
+    g_object_unref(child);
+    children = children->next;
+  }
   
   return;
 }
@@ -373,26 +389,28 @@ static void object_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static void object_read_xml (AmitkObject * object, xmlNodePtr nodes) {
+static gchar * object_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf) {
 
   AmitkSpace * space;
   xmlNodePtr children_nodes;
   GList * children;
   AmitkSelection i_selection;
 
-  space = amitk_space_read_xml(nodes, "coordinate_space");
+  space = amitk_space_read_xml(nodes, "coordinate_space", &error_buf);
   amitk_space_copy_in_place(AMITK_SPACE(object), space);
   g_object_unref(space);
 
   children_nodes = xml_get_node(nodes, "children");
-  children = amitk_objects_read_xml(children_nodes->children);
+  children = amitk_objects_read_xml(children_nodes->children, &error_buf);
   amitk_object_add_children(object, children);
   children = amitk_objects_unref(children);
 
   for (i_selection = 0; i_selection < AMITK_SELECTION_NUM; i_selection++)
-    object->selected[i_selection] = xml_get_boolean(nodes, amitk_selection_get_name(i_selection));
+    object->selected[i_selection] = xml_get_boolean(nodes, 
+						    amitk_selection_get_name(i_selection),
+						    &error_buf);
 
-  return;
+  return error_buf;
 }
 
 static void object_add_child(AmitkObject * object, AmitkObject * child) {
@@ -479,7 +497,10 @@ gchar * amitk_object_write_xml(AmitkObject * object) {
   return xml_filename;
 }
 
-AmitkObject * amitk_object_read_xml(gchar * xml_filename) {
+
+
+
+AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
 
   AmitkObject * new_object;
   xmlDocPtr doc;
@@ -489,17 +510,22 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename) {
   xmlNodePtr object_node;
   gchar * version;
   gchar * name;
+  gchar * error_str;
   AmitkObjectType i_type, type;
 
   /* parse the xml file */
   if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE xml file:\t%s", xml_filename);
+    error_str = g_strdup_printf("Couldn't Parse AMIDE xml file:\t%s", xml_filename);
+    amitk_append_str(perror_buf, error_str);
+    g_free(error_str);
     return NULL;
   }
 
   /* get the root of our document */
   if ((doc_nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("AMIDE xml file doesn't appear to have a root:\n\t%s", xml_filename);
+    error_str = g_strdup_printf("AMIDE xml file doesn't appear to have a root:\n\t%s", xml_filename);
+    amitk_append_str(perror_buf, error_str);
+    g_free(error_str);
     return NULL;
   }
   version_node = doc_nodes->children;
@@ -552,9 +578,11 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename) {
 	  amitk_object_type_get_name(type), version);
 #endif
 
-  g_signal_emit(G_OBJECT(new_object), object_signals[OBJECT_READ_XML], 0, object_node);
+  g_signal_emit(G_OBJECT(new_object), object_signals[OBJECT_READ_XML], 0, object_node, *perror_buf, perror_buf);
 
   g_free(version);
+
+  xmlFreeDoc(doc);
 
   return new_object;
 }
@@ -592,7 +620,7 @@ void amitk_object_set_name(AmitkObject * object, const gchar * new_name) {
 }
 
 /* note, AMITK_SELECTION_ALL means all selections */
-gboolean amitk_object_get_selected(AmitkObject * object, const AmitkSelection which_selection) {
+gboolean amitk_object_get_selected(const AmitkObject * object, const AmitkSelection which_selection) {
 
   AmitkSelection i_selection;
   gboolean return_val = FALSE;
@@ -682,6 +710,9 @@ void amitk_object_add_child(AmitkObject * object, AmitkObject * child) {
 
   /* check that it's not already in the list */
   g_return_if_fail(g_list_find(object->children, child) == NULL);
+
+  /* check that it doesn't already have a parent */
+  g_return_if_fail(AMITK_OBJECT_PARENT(child) == NULL);
 
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_ADD_CHILD], 0, child);
 
@@ -833,7 +864,7 @@ gboolean amitk_object_selected_children(AmitkObject * object,
   return FALSE;
 }
 
-/* returns a referenced list of selected objects of type "type" that are children
+/* returns a referenced list of selected objects that are children
    of the given node (usually the study object). Will recurse if specified*/
 GList * amitk_object_get_selected_children(AmitkObject * object, 
 					   const AmitkSelection which_selection,
@@ -997,7 +1028,7 @@ void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list) {
 
   object_filename = amitk_object_write_xml(objects->data);
   xmlNewChild(node_list, NULL, "object_file", object_filename);
-  free(object_filename);
+  g_free(object_filename);
 
   /* and recurse */
   amitk_objects_write_xml(objects->next, node_list);
@@ -1005,7 +1036,7 @@ void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list) {
   return;
 }
 
-GList * amitk_objects_read_xml(xmlNodePtr node_list) {
+GList * amitk_objects_read_xml(xmlNodePtr node_list, gchar **perror_buf) {
 
   GList * objects;
   AmitkObject * object;
@@ -1014,11 +1045,11 @@ GList * amitk_objects_read_xml(xmlNodePtr node_list) {
   if (node_list == NULL) return NULL;
 
   /* recurse */
-  objects = amitk_objects_read_xml(node_list->next);
+  objects = amitk_objects_read_xml(node_list->next, perror_buf);
 
   /* and add this node */
   filename = xml_get_string(node_list, "object_file");
-  object = amitk_object_read_xml(filename);
+  object = amitk_object_read_xml(filename, perror_buf);
   g_free(filename);
 
   if (object != NULL)

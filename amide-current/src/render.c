@@ -33,6 +33,13 @@
 #include "amitk_roi.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
 
+#include <sys/time.h>
+#include <time.h>
+#ifdef AMIDE_DEBUG
+#include <sys/timeb.h>
+#endif
+
+
 
 /* external variables */
 gchar * rendering_quality_names[] = {"Highest Quality and Slowest",
@@ -41,8 +48,7 @@ gchar * rendering_quality_names[] = {"Highest Quality and Slowest",
 				     "Low Quality and Fastest"};
 gchar * pixel_type_names[] = {"Opacity",
 			      "Grayscale"};
-			      
-static void classify_volume(rendering_t * rendering);
+
 
 rendering_t * rendering_unref(rendering_t * rendering) {
   
@@ -93,9 +99,14 @@ rendering_t * rendering_unref(rendering_t * rendering) {
       g_free(rendering->ramp_y[i_class]);
     }
     
-    if (rendering->volume != NULL) {
-      g_object_unref(rendering->volume);
-      rendering->volume = NULL;
+    if (rendering->transformed_volume != NULL) {
+      g_object_unref(rendering->transformed_volume);
+      rendering->transformed_volume = NULL;
+    }
+
+    if (rendering->extraction_volume != NULL) {
+      g_object_unref(rendering->extraction_volume);
+      rendering->extraction_volume = NULL;
     }
 
     g_free(rendering);
@@ -150,7 +161,8 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->rendering_data = NULL;
   new_rendering->curve_type[DENSITY_CLASSIFICATION] = CURVE_LINEAR;
   new_rendering->curve_type[GRADIENT_CLASSIFICATION] = CURVE_LINEAR;
-  new_rendering->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_volume)));
+  new_rendering->transformed_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_volume)));
+  new_rendering->extraction_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_volume)));
   new_rendering->start = start;
   new_rendering->duration = duration;
   new_rendering->zero_fill = zero_fill;
@@ -328,6 +340,7 @@ gboolean rendering_reload_object(rendering_t * rendering,
   /* allright, reload the rendering context's data */
   rendering->need_rerender = TRUE;
   rendering->need_reclassify = TRUE; 
+
   return rendering_load_object(rendering, update_func, update_data);
 }
 
@@ -345,6 +358,16 @@ gboolean rendering_load_object(rendering_t * rendering,
   gint divider;
   gchar * temp_string;
   gboolean continue_work=TRUE;
+#ifdef AMIDE_DEBUG
+  struct timeval tv1;
+  struct timeval tv2;
+  gdouble time1;
+  gdouble time2;
+
+  /* let's do some timing */
+  gettimeofday(&tv1, NULL);
+#endif
+
 
   /* tell the volpack context the dimensions of our rendering context */
   if (vpSetVolumeSize(rendering->vpc, rendering->dim.x, 
@@ -413,7 +436,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     j_voxel.t = j_voxel.z=i_voxel.t=0;
 
     /* figure out the intersection between the rendering volume and the roi */
-    if (!amitk_volume_volume_intersection_corners(rendering->volume, 
+    if (!amitk_volume_volume_intersection_corners(rendering->extraction_volume, 
 						  AMITK_VOLUME(rendering->object), 
 						  intersection_corners)) {
       end = zero_voxel;
@@ -436,7 +459,7 @@ gboolean rendering_load_object(rendering_t * rendering,
       for (i_voxel.y = start.y; i_voxel.y <=  end.y; i_voxel.y++)
 	for (i_voxel.x = start.x; i_voxel.x <=  end.x; i_voxel.x++) {
 	  VOXEL_TO_POINT(i_voxel, voxel_size, temp_point);
-	  temp_point = amitk_space_s2s(AMITK_SPACE(rendering->volume),
+	  temp_point = amitk_space_s2s(AMITK_SPACE(rendering->extraction_volume),
 				       AMITK_SPACE(rendering->object),temp_point);
 	  switch(AMITK_ROI_TYPE(rendering->object)) {
 	  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
@@ -491,7 +514,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     amide_data_t max, min;
 
     
-    slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering->volume)));
+    slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering->extraction_volume)));
 
     /* define the slice that we're trying to pull out of the data set */
     temp_corner = AMITK_VOLUME_CORNER(slice_volume);
@@ -520,6 +543,7 @@ gboolean rendering_load_object(rendering_t * rendering,
 					      AMITK_DATA_SET(slice),
 					      rendering->start, 
 					      rendering->duration, &max, &min);
+
       scale = ((amide_data_t) RENDERING_DENSITY_MAX) / (max-min);
 
       /* note, volpack needs a mirror reversal on the z axis */
@@ -573,6 +597,15 @@ gboolean rendering_load_object(rendering_t * rendering,
 
   /* we're now done with the density volume, free it */
   g_free(density);
+
+#ifdef AMIDE_DEBUG
+  /* and wrapup our timing */
+  gettimeofday(&tv2, NULL);
+  time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
+  time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
+  g_print("######## Loading object %s took %5.3f (s) #########\n",
+	  AMITK_OBJECT_NAME(rendering->object), time2-time1);
+#endif
 
   /* we'll be using min-max octree's as the classifying functions will probably be changed a lot */
   /* octrees supposedly allow faster classification */
@@ -651,10 +684,6 @@ gboolean rendering_load_object(rendering_t * rendering,
   return TRUE;
 }
 
-static void classify_volume(rendering_t * rendering) {
-
-  return;
-}
 
 
 static void set_space(rendering_t * rendering) {
@@ -673,7 +702,7 @@ static void set_space(rendering_t * rendering) {
 
   /* and setup the matrix we're feeding into volpack */
   for (i=0;i<3;i++) {
-    axis = amitk_space_get_axis(AMITK_SPACE(rendering->volume), i);
+    axis = amitk_space_get_axis(AMITK_SPACE(rendering->transformed_volume), i);
     m[i][0] = axis.x;
     m[i][1] = axis.y;
     m[i][2] = axis.z;
@@ -695,7 +724,7 @@ static void set_space(rendering_t * rendering) {
 void rendering_set_space(rendering_t * rendering, AmitkSpace * space) {
 
   rendering->need_rerender = TRUE;
-  amitk_space_copy_in_place(AMITK_SPACE(rendering->volume), space);
+  amitk_space_copy_in_place(AMITK_SPACE(rendering->transformed_volume), space);
   set_space(rendering);
   return;
 }
@@ -706,8 +735,8 @@ void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rota
   rendering->need_rerender = TRUE;
 
   /* rotate the axis */
-  amitk_space_rotate_on_vector(AMITK_SPACE(rendering->volume),
-			       amitk_space_get_axis(AMITK_SPACE(rendering->volume), dir),
+  amitk_space_rotate_on_vector(AMITK_SPACE(rendering->transformed_volume),
+			       amitk_space_get_axis(AMITK_SPACE(rendering->transformed_volume), dir),
 			       rotation, zero_point);
   set_space(rendering);
   return;
@@ -722,7 +751,7 @@ void rendering_reset_rotation(rendering_t * rendering) {
 
   /* reset the coord frame */
   new_space = amitk_space_new(); /* base space */
-  amitk_space_copy_in_place(AMITK_SPACE(rendering->volume), new_space);
+  amitk_space_copy_in_place(AMITK_SPACE(rendering->transformed_volume), new_space);
   g_object_unref(new_space);
 
   /* reset the rotation */
@@ -848,6 +877,16 @@ void rendering_set_depth_cueing_parameters(rendering_t * rendering,
 void rendering_render(rendering_t * rendering)
 {
 
+#ifdef AMIDE_DEBUG
+  struct timeval tv1;
+  struct timeval tv2;
+  gdouble time1;
+  gdouble time2;
+
+  /* let's do some timing */
+  gettimeofday(&tv1, NULL);
+#endif
+
   if (rendering->need_rerender) {
     if (rendering->vpc != NULL) {
       if (rendering->optimize_rendering) {
@@ -875,6 +914,16 @@ void rendering_render(rendering_t * rendering)
       }
     }
   }
+
+#ifdef AMIDE_DEBUG
+ /* and wrapup our timing */
+ gettimeofday(&tv2, NULL);
+ time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
+ time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
+ g_print("######## Rendering object %s took %5.3f (s) #########\n",
+	 AMITK_OBJECT_NAME(rendering->object), time2-time1);
+#endif
+
   
   rendering->need_rerender = FALSE;
   rendering->need_reclassify = FALSE;
@@ -991,7 +1040,7 @@ gboolean renderings_reload_objects(renderings_t * renderings,
 				   const amide_time_t duration,
 				   gboolean (* update_func)(), 
 				   gpointer update_data) {
-
+  
   gboolean correct=TRUE;
 
   if (renderings != NULL) {
@@ -1095,10 +1144,9 @@ void renderings_set_depth_cueing_parameters(renderings_t * renderings,
 
 
 /* to render a list of rendering contexts... */
-void renderings_render(renderings_t * renderings)
-{
+void renderings_render(renderings_t * renderings) {
 
-  while (renderings != NULL) {
+ while (renderings != NULL) {
     rendering_render(renderings->rendering);
     renderings = renderings->next;
   }

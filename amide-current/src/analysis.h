@@ -43,7 +43,8 @@ struct _analysis_frame_t {
   /* stats */
   amide_data_t mean;
   amide_data_t median;
-  amide_real_t voxels;
+  guint voxels;
+  amide_real_t fractional_voxels;
   amide_data_t var;
   amide_data_t min;
   amide_data_t max;

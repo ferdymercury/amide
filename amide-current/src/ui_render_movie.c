@@ -627,6 +627,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   ui_render_movie->duration_spin_button  = 
     gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button), 
 			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->duration_spin_button),
@@ -654,6 +655,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 
     ui_render_movie->axis_spin_button[i_axis] = 
       gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]), FALSE);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]), 
 			       SPIN_BUTTON_DIGITS);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->axis_spin_button[i_axis]),
@@ -713,6 +715,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 
   ui_render_movie->start_time_spin_button = 
     gtk_spin_button_new_with_range(ui_render_movie->start_time, ui_render_movie->end_time, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button),
 			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->start_time_spin_button),
@@ -743,6 +746,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 
   ui_render_movie->end_time_spin_button =
     gtk_spin_button_new_with_range(ui_render_movie->start_time, ui_render_movie->end_time, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button),
 			     SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_render_movie->end_time_spin_button),

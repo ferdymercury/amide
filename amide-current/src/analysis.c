@@ -28,6 +28,12 @@
 #include <sys/stat.h>
 #include "analysis.h"
 
+#include <sys/time.h>
+#include <time.h>
+#ifdef AMIDE_DEBUG
+#include <sys/timeb.h>
+#endif
+
 
 /* make sure we have NAN defined to at least something */
 #ifndef NAN
@@ -117,22 +123,25 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   analysis_frame_t * frame_analysis;
   guint num_frames;
   GPtrArray * data_array;
-  guint total_voxels;
   guint subfraction_voxels;
   guint i;
   element_t * element;
   amide_data_t temp;
+#ifdef AMIDE_DEBUG
+  struct timeval tv1;
+  struct timeval tv2;
+  gdouble time1;
+  gdouble time2;
+
+  /* let's do some timing */
+  gettimeofday(&tv1, NULL);
+#endif
 
   num_frames = AMITK_DATA_SET_NUM_FRAMES(ds);
   if (frame == num_frames) return NULL; /* check if we're done */
   g_assert(frame < num_frames); /* sanity check */
 
   /* and now calculate this frame's data */
-#ifdef AMIDE_DEBUG
-  g_print("Calculating ROI: %s on Data Set: %s Frame %d\n", 
-	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame);
-#endif
-
   if ((data_array = g_ptr_array_new()) == NULL) {
     g_warning("couldn't allocate space for data array for frame %d", frame);
     return NULL;
@@ -149,9 +158,8 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, record_stats, data_array);
   g_ptr_array_sort(data_array, array_comparison);
 
-  total_voxels = data_array->len;
-  subfraction_voxels = ceil(subfraction*total_voxels);
-  if ((subfraction_voxels == 0) && (total_voxels > 0))
+  subfraction_voxels = ceil(subfraction*data_array->len);
+  if ((subfraction_voxels == 0) && (data_array->len > 0))
     subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
 
 
@@ -168,7 +176,8 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   frame_analysis->total = 0.0;
   frame_analysis->median = 0.0;
   frame_analysis->total = 0.0;
-  frame_analysis->voxels = 0.0;
+  frame_analysis->voxels = subfraction_voxels;
+  frame_analysis->fractional_voxels = 0.0;
   frame_analysis->correction = 0.0;
   frame_analysis->var = 0.0;
 
@@ -200,31 +209,28 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
       frame_analysis->median += 0.5*element->value;
     }
 
-    /* total and #voxels */
+    /* total and #fractional_voxels */
     for (i=0; i<subfraction_voxels; i++) {
       element = g_ptr_array_index(data_array, i);
       frame_analysis->total += element->weight*element->value;
-      frame_analysis->voxels += element->weight;
+      frame_analysis->fractional_voxels += element->weight;
     }
 
     /* calculate the mean */
-    frame_analysis->mean = frame_analysis->total/frame_analysis->voxels;
+    frame_analysis->mean = frame_analysis->total/frame_analysis->fractional_voxels;
 
     /* calculate variance */
     for (i=0; i<subfraction_voxels; i++) {
       element = g_ptr_array_index(data_array, i);
       temp = (element->value-frame_analysis->mean);
-      frame_analysis->correction += element->weight*temp;
-      frame_analysis->var += element->weight*temp*temp;
+      frame_analysis->correction += temp;
+      frame_analysis->var += temp*temp;
     }
     /* and divide to get the final var, note I'm using N-1, as the mean
        in a sense is being "estimated" from the data set....  If anyone
        else with more statistical experience disagrees, please speak up */
     /* the "total correction" parameter is to correct roundoff error,
        for a discussion, see "the art of computer programming" */
-    /* strictly, using frame_analysis->voxels < 2.0 is overly conservative,
-       could use subfraction_voxels < 2, but if anyone really needs variance
-       for such a small volume, they should probably rethink their study... */
     if (frame_analysis->voxels < 2.0)
       frame_analysis->var = NAN; /* variance is nonsensical */
     else
@@ -234,6 +240,17 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   }
 
   g_ptr_array_free(data_array, TRUE); /* TRUE frees elements too */
+
+#ifdef AMIDE_DEBUG
+  /* and wrapup our timing */
+  gettimeofday(&tv2, NULL);
+  time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
+  time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
+
+  g_print("Calculated ROI: %s on Data Set: %s Frame %d.  Took %5.3f (s) \n", 
+	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame, time2-time1);
+#endif
+
 
   /* now let's recurse  */
   frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, subfraction, frame+1);

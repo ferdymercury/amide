@@ -420,9 +420,8 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 
 /* function to setup the toolbar for the study ui */
-/* takes a separate study parameter, as the ui_study->study variable 
-   isn't usually set when these function is called */
-void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
+/* remember, ui_study->study is usually not set by the time this function is called */
+void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   AmitkInterpolation i_interpolation;
   AmitkFuseType i_fuse_type;
@@ -523,32 +522,16 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
 
   /* finish setting up the fuse types items */
   for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) {
+    ui_study->fuse_type_button[i_fuse_type] = fuse_type_list[i_fuse_type].widget;
     g_object_set_data(G_OBJECT(fuse_type_list[i_fuse_type].widget), 
 		      "fuse_type", GINT_TO_POINTER(i_fuse_type));
-    g_signal_handlers_block_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
-				    G_CALLBACK(ui_study_cb_fuse_type), ui_study);
   }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fuse_type_list[AMITK_STUDY_FUSE_TYPE(study)].widget),
-			       TRUE);
-  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++)
-    g_signal_handlers_unblock_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
-				      G_CALLBACK(ui_study_cb_fuse_type),  ui_study);
-  
+
   /* and the view visible buttons */
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
     ui_study->canvas_visible_button[i_view] = canvas_visible_list[i_view].widget;
     g_object_set_data(G_OBJECT(canvas_visible_list[i_view].widget), 
 		      "view", GINT_TO_POINTER(i_view));
-    g_signal_handlers_block_by_func(G_OBJECT(canvas_visible_list[i_view].widget),
-				    G_CALLBACK(ui_study_cb_canvas_visible), ui_study);
-    if (ui_study->study != NULL) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(canvas_visible_list[i_view].widget),
-				   AMITK_STUDY_CANVAS_VISIBLE(ui_study->study, i_view));
-    } else {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(canvas_visible_list[i_view].widget), TRUE);
-    }
-    g_signal_handlers_unblock_by_func(G_OBJECT(canvas_visible_list[i_view].widget),
-				      G_CALLBACK(ui_study_cb_canvas_visible),ui_study);
   }
   
 
@@ -558,23 +541,23 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
     g_object_set_data(G_OBJECT(view_mode_list[i_view_mode].widget), 
 		      "view_mode", GINT_TO_POINTER(i_view_mode));
   }
-
+  
   /* add the zoom widget to our toolbar */
   label = gtk_label_new("zoom:");
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 
-  adjustment = gtk_adjustment_new(AMITK_STUDY_ZOOM(study),
+  adjustment = gtk_adjustment_new(1.0,
 				  AMIDE_LIMIT_ZOOM_LOWER,
 				  AMIDE_LIMIT_ZOOM_UPPER,
 				  AMIDE_LIMIT_ZOOM_STEP, 
 				  AMIDE_LIMIT_ZOOM_PAGE,
 				  AMIDE_LIMIT_ZOOM_PAGE);
-  ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 2);
+  ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 3);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->zoom_spin), TRUE);
-  gtk_widget_set_size_request (ui_study->zoom_spin, 50, -1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
+  gtk_widget_set_size_request (ui_study->zoom_spin, 75, -1);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->zoom_spin), GTK_UPDATE_ALWAYS);
 
   g_signal_connect(G_OBJECT(ui_study->zoom_spin), "value_changed",  
@@ -592,11 +575,11 @@ void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study) {
   gtk_widget_show(label);
 
   adjustment = gtk_adjustment_new(1.0,0.2,5.0,0.2,0.2, 0.2);
-  ui_study->thickness_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 2);
+  ui_study->thickness_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment),1.0, 3);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->thickness_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->thickness_spin), TRUE);
-  gtk_widget_set_size_request (ui_study->thickness_spin, 50, -1);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(ui_study->thickness_spin), FALSE);
+  gtk_widget_set_size_request (ui_study->thickness_spin, 75, -1);
 
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(ui_study->thickness_spin), 
 				    GTK_UPDATE_IF_VALID);

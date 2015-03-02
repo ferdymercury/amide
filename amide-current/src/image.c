@@ -593,6 +593,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   AmitkVoxel dim;
   amide_data_t max,min;
   GdkPixbuf * temp_image;
+  guint index;
   rgba_t rgba_temp;
   AmitkColorTable color_table;
   
@@ -615,16 +616,17 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
 
   i.t = i.z = 0;
-  for (i.y = 0; i.y < dim.y; i.y++) 
-    for (i.x = 0; i.x < dim.x; i.x++) {
+  index=0;
+  /* compensate for the fact that X defines the origin as top left, not bottom left */
+  for (i.y = dim.y-1; i.y >= 0; i.y--) 
+    for (i.x = 0; i.x < dim.x; i.x++, index+=4) {
       rgba_temp =
 	amitk_color_table_lookup(AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,i), color_table,min, max);
-	  
-      /* compensate for the fact that X defines the origin as top left, not bottom left */
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = rgba_temp.r;
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = rgba_temp.g;
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = rgba_temp.b;
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = rgba_temp.a;
+      
+	rgba_data[index+0] = rgba_temp.r;
+	rgba_data[index+1] = rgba_temp.g;
+	rgba_data[index+2] = rgba_temp.b;
+	rgba_data[index+3] = rgba_temp.a;
     }
 
   /* from the rgb_data, generate a GdkPixbuf */
@@ -710,13 +712,13 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
       color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
       /* now add this slice into the rgba16 data */
       i.t = i.z = 0;
-      for (i.y = 0; i.y < dim.y; i.y++) 
-	for (i.x = 0; i.x < dim.x; i.x++) {
+      location=0;
+      /* compensate for the fact that X defines the origin as top left, not bottom left */
+      for (i.y = dim.y-1; i.y >= 0; i.y--) 
+	for (i.x = 0; i.x < dim.x; i.x++, location++) {
 	  rgba_temp = 
 	    amitk_color_table_lookup(AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,i), color_table,min, max);
 	  
-	  /* compensate for the fact that X defines the origin as top left, not bottom left */
-	  location = (dim.y - i.y - 1)*dim.x+i.x;
 	  total_alpha = rgba16_data[location].a + rgba_temp.a;
 	  if (total_alpha == 0) {
 	    rgba16_data[location].r = (((slice_num-1)*rgba16_data[location].r + 
@@ -758,9 +760,9 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
 
   /* now convert our temp rgb data to real rgb data */
   i.z = 0;
+  location=0;
   for (i.y = 0; i.y < dim.y; i.y++) 
-    for (i.x = 0; i.x < dim.x; i.x++) {
-      location = i.y*dim.x+i.x;
+    for (i.x = 0; i.x < dim.x; i.x++, location++) {
       rgb_data[3*location+0] = rgba16_data[location].r < 0xFF ? rgba16_data[location].r : 0xFF;
       rgb_data[3*location+1] = rgba16_data[location].g < 0xFF ? rgba16_data[location].g : 0xFF;
       rgb_data[3*location+2] = rgba16_data[location].b < 0xFF ? rgba16_data[location].b : 0xFF;

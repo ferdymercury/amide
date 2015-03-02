@@ -41,7 +41,7 @@ static void          fiducial_mark_finalize            (GObject              *ob
 static AmitkObject * fiducial_mark_copy                (const AmitkObject          *object);
 static void          fiducial_mark_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          fiducial_mark_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static void          fiducial_mark_read_xml            (AmitkObject * object, xmlNodePtr nodes);
+static gchar *       fiducial_mark_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf);
 
 static AmitkObjectClass * parent_class;
 static guint        fiducial_mark_signals[LAST_SIGNAL];
@@ -127,10 +127,16 @@ static AmitkObject * fiducial_mark_copy (const AmitkObject * object ) {
 
 static void fiducial_mark_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_object) {
  
+  AmitkFiducialMark * dest_mark;
+  AmitkFiducialMark * src_mark;
+
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(src_object));
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(dest_object));
+  src_mark = AMITK_FIDUCIAL_MARK(src_object);
+  dest_mark = AMITK_FIDUCIAL_MARK(dest_object);
 
-  amitk_fiducial_mark_set(AMITK_FIDUCIAL_MARK(dest_object), AMITK_FIDUCIAL_MARK_GET(src_object));
+  /* can't use amitk_fiducial_mark_set, as the AmitkSpace component hasn't yet been set */
+  dest_mark->point = src_mark->point; 
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 
@@ -149,17 +155,17 @@ static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes
   return;
 }
 
-static void fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes) {
+static gchar * fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf ) {
 
   AmitkFiducialMark * mark;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
 
   mark = AMITK_FIDUCIAL_MARK(object);
 
-  mark->point = amitk_point_read_xml(nodes, "point");
+  mark->point = amitk_point_read_xml(nodes, "point", &error_buf);
 
-  return;
+  return error_buf;
 }
 
 

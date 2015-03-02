@@ -272,7 +272,7 @@ void amitk_space_write_xml(xmlNodePtr node, gchar * descriptor, AmitkSpace * spa
   return;
 }
 
-AmitkSpace * amitk_space_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+AmitkSpace * amitk_space_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **perror_buf) {
 
   gchar * temp_string;
   AmitkAxis i_axis;
@@ -282,13 +282,13 @@ AmitkSpace * amitk_space_read_xml(xmlNodePtr nodes, gchar * descriptor) {
   new_space = amitk_space_new();
 
   temp_string = g_strdup_printf("%s_offset", descriptor);
-  amitk_space_set_offset(new_space, amitk_point_read_xml(nodes,temp_string));
+  amitk_space_set_offset(new_space, amitk_point_read_xml(nodes,temp_string, perror_buf));
   g_free(temp_string);
 
   for (i_axis=0;i_axis<AMITK_AXIS_NUM; i_axis++) {
     temp_string = g_strdup_printf("%s_%s", descriptor, amitk_axis_get_name(i_axis));
 
-    new_axes[i_axis] = amitk_point_read_xml(nodes,temp_string);
+    new_axes[i_axis] = amitk_point_read_xml(nodes,temp_string, perror_buf);
     if (POINT_EQUAL(new_axes[i_axis], zero_point))
 	new_axes[i_axis] = base_axes[i_axis];
     g_free(temp_string);

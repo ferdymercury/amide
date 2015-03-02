@@ -67,7 +67,7 @@ static void          roi_finalize            (GObject          *object);
 static AmitkObject * roi_copy                (const AmitkObject * object);
 static void          roi_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          roi_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static void          roi_read_xml            (AmitkObject * object, xmlNodePtr nodes);
+static gchar *       roi_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
 static AmitkVolumeClass * parent_class;
 static guint        roi_signals[LAST_SIGNAL];
 
@@ -222,14 +222,14 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
 }
 
 
-static void roi_read_xml (AmitkObject * object, xmlNodePtr nodes) {
+static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
 
   AmitkRoi * roi;
   AmitkRoiType i_roi_type;
   gchar * temp_string;
   gchar * isocontour_xml_filename;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
 
   roi = AMITK_ROI(object);
 
@@ -244,12 +244,12 @@ static void roi_read_xml (AmitkObject * object, xmlNodePtr nodes) {
   /* isocontour specific stuff */
   if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
       (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
-    amitk_roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size"));
-    roi->isocontour_value = xml_get_real(nodes, "isocontour_value");
+    amitk_roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
+    roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
 
     isocontour_xml_filename = xml_get_string(nodes, "isocontour_file");
     if (isocontour_xml_filename != NULL)
-      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, NULL, NULL);
+      roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename, &error_buf, NULL, NULL);
   }
 
   /* make sure to mark the roi as undrawn if needed */
@@ -263,7 +263,7 @@ static void roi_read_xml (AmitkObject * object, xmlNodePtr nodes) {
     }
   }
 
-  return;
+  return error_buf;
 }
 
 

@@ -29,7 +29,7 @@
 /* header files that are always needed with this file */
 #include "amitk_study.h"
 
-AmitkStudy * legacy_load_xml(void);
+AmitkStudy * legacy_load_xml(gchar ** perror_buf);
 
 #endif /*  __LEGACY_H__ */
 

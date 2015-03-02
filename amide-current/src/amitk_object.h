@@ -86,7 +86,7 @@ struct _AmitkObjectClass
   AmitkObject * (* object_copy)         (const AmitkObject * object);
   void (* object_copy_in_place)         (AmitkObject * dest_object, const AmitkObject * src_object);
   void (* object_write_xml)             (const AmitkObject * object, xmlNodePtr nodes);
-  void (* object_read_xml)              (AmitkObject * object, xmlNodePtr nodes);
+  gchar * (* object_read_xml)           (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
   void (* object_add_child)             (AmitkObject * object, AmitkObject * child);
   void (* object_remove_child)          (AmitkObject * object, AmitkObject * child);
        
@@ -99,13 +99,14 @@ struct _AmitkObjectClass
 GType	        amitk_object_get_type	             (void);
 AmitkObject *   amitk_object_new                     (void);
 gchar *         amitk_object_write_xml               (AmitkObject * object);
-AmitkObject *   amitk_object_read_xml                (gchar * xml_filename);
+AmitkObject *   amitk_object_read_xml                (gchar * xml_filename,
+						      gchar ** perror_buf);
 AmitkObject *   amitk_object_copy                    (const AmitkObject * object);
 void            amitk_object_copy_in_place           (AmitkObject * dest_object,
 						      const AmitkObject * src_object);
 void            amitk_object_set_name                (AmitkObject * object, 
 						      const gchar * new_name);
-gboolean        amitk_object_get_selected            (AmitkObject * object,
+gboolean        amitk_object_get_selected            (const AmitkObject * object,
 						      const AmitkSelection which_selection);
 void            amitk_object_set_selected            (AmitkObject * object, 
 						      const gboolean selection, 
@@ -145,7 +146,8 @@ gint            amitk_objects_count                  (GList * objects);
 AmitkObject *   amitk_objects_find_object_by_name    (GList * objects, const gchar * name);
 gint            amitk_objects_count_pairs_by_name    (GList * objects1, GList * objects2);
 void            amitk_objects_write_xml              (GList * objects, xmlNodePtr node_list);
-GList *         amitk_objects_read_xml               (xmlNodePtr node_list);
+GList *         amitk_objects_read_xml               (xmlNodePtr node_list, 
+						      gchar **perror_buf);
 const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);
 const gchar *   amitk_selection_get_name             (const AmitkSelection type);
 

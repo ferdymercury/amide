@@ -75,8 +75,9 @@ static AmitkObject * study_copy                (const AmitkObject   *object);
 static void          study_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          study_write_xml           (const AmitkObject   *object, 
 						xmlNodePtr           nodes);
-static void          study_read_xml            (AmitkObject         *object,
-						xmlNodePtr           nodes);
+static gchar *       study_read_xml            (AmitkObject         *object,
+						xmlNodePtr           nodes,
+						gchar               *error_buf);
 static void          study_recalc_voxel_dim    (AmitkStudy          *study);
 static void          study_add_child           (AmitkObject         *object,
 						AmitkObject         *child);
@@ -287,7 +288,7 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
+static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
 
   AmitkStudy * study;
   gchar * creation_date;
@@ -297,7 +298,7 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   AmitkView i_view;
   gboolean all_false;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
 
   study = AMITK_STUDY(object);
 
@@ -306,15 +307,15 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   g_free(creation_date);
 
   /* get our view parameters */
-  amitk_study_set_view_center(study, amitk_point_read_xml(nodes, "view_center"));
-  amitk_study_set_view_thickness(study, xml_get_real(nodes, "view_thickness"));
-  amitk_study_set_view_start_time(study, xml_get_time(nodes, "view_start_time"));
-  amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration"));
-  amitk_study_set_zoom(study, xml_get_real(nodes, "zoom"));
+  amitk_study_set_view_center(study, amitk_point_read_xml(nodes, "view_center", &error_buf));
+  amitk_study_set_view_thickness(study, xml_get_real(nodes, "view_thickness", &error_buf));
+  amitk_study_set_view_start_time(study, xml_get_time(nodes, "view_start_time", &error_buf));
+  amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration", &error_buf));
+  amitk_study_set_zoom(study, xml_get_real(nodes, "zoom", &error_buf));
  
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
-    g_warning("inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
+    amitk_append_str(&error_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
 
@@ -337,7 +338,7 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   /* figure out which canvases are visible */
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
     temp_string = g_strdup_printf("%s_canvas_visible", amitk_view_get_name(i_view));
-    study->canvas_visible[i_view] = xml_get_boolean(nodes, temp_string);
+    study->canvas_visible[i_view] = xml_get_boolean(nodes, temp_string, &error_buf);
     g_free(temp_string);
   }
 
@@ -353,7 +354,7 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
     for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) study->canvas_visible[i_view] = TRUE;
   
 
-  return;
+  return error_buf;
 }
 
 
@@ -599,6 +600,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
   struct stat file_info;
   DIR * directory;
   struct dirent * directory_entry;
+  gchar * error_buf=NULL;
   
   
   /* switch into our new directory */
@@ -610,7 +612,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
 
   /* check for legacy .xif file (< 2.0 version) */
   if (stat("Study.xml", &file_info) == 0) {
-    study = legacy_load_xml();
+    study = legacy_load_xml(&error_buf);
   } else {
 
     /* figure out the name of the study file */
@@ -626,8 +628,14 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
     closedir(directory);
     
     /* load in the study */
-    study = AMITK_STUDY(amitk_object_read_xml(xml_filename));
+    study = AMITK_STUDY(amitk_object_read_xml(xml_filename, &error_buf));
     g_free(xml_filename);
+  }
+
+  /* display accumulated warning messages */
+  if (error_buf != NULL) {
+    g_warning(error_buf);
+    g_free(error_buf);
   }
 
   /* remember the name of the directory for convience */

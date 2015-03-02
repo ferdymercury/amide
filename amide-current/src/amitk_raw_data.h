@@ -156,6 +156,7 @@ AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name,
 						     gpointer update_data);
 gchar *         amitk_raw_data_write_xml            (AmitkRawData  * raw_data, const gchar * name);
 AmitkRawData *  amitk_raw_data_read_xml             (gchar * xml_filename,
+						     gchar ** perror_buf,
 						     gboolean (*update_func)(),
 						     gpointer update_data);
 amide_data_t    amitk_raw_data_get_value            (const AmitkRawData * rd, 

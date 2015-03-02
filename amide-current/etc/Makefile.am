@@ -9,4 +9,4 @@ Applications_DATA = \
 
 DISTCLEANFILES = \
 	*~ 	\
-	amide-$(VERSION)-1.info
+	amide-*.info

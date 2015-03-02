@@ -70,7 +70,7 @@ GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout);
 void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
-void ui_common_remove_cursor(GtkWidget * widget);
+void ui_common_remove_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 
 
 

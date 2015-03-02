@@ -59,31 +59,31 @@ void amitk_point_free (AmitkPoint * point) {
 
 
 
-AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   AmitkPoint return_rp;
   gint error;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 #if (SIZE_OF_AMIDE_REAL_T == 8)
     /* convert to doubles */
-    error = sscanf(temp_string, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
+    error = sscanf(temp_str, "%lf\t%lf\t%lf", &(return_rp.x), &(return_rp.y), &(return_rp.z));
 #elif (SIZE_OF_AMIDE_REAL_T == 4)
     /* convert to float */
-    error = sscanf(temp_string, "%f\t%f\t%f", &(return_rp.x), &(return_rp.y), &(return_rp.z));
+    error = sscanf(temp_str, "%f\t%f\t%f", &(return_rp.x), &(return_rp.y), &(return_rp.z));
 #else
 #error "Unknown size for SIZE_OF_AMIDE_REAL_T"
 #endif
-    g_free(temp_string);
+    g_free(temp_str);
   }
 
-  if ((temp_string == NULL) || (error == EOF)) {
+  if ((temp_str == NULL) || (error == EOF)) {
     return_rp = zero_point;
-    g_warning("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",descriptor,
-	      return_rp.x, return_rp.y, return_rp.z);
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",
+		     descriptor, return_rp.x, return_rp.y, return_rp.z);
   }
 
   return return_rp;
@@ -92,11 +92,11 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
 void amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%10.9f\t%10.9f\t%10.9f",point.x, point.y,point.z);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%10.9f\t%10.9f\t%10.9f",point.x, point.y,point.z);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }
@@ -128,20 +128,20 @@ void amitk_voxel_free (AmitkVoxel * voxel) {
   g_free(voxel);
 }
 
-AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor) {
+AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   AmitkVoxel voxel;
   gint x,y,z,t;
   gint error=0;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 
     /* convert to a voxel */
-    error = sscanf(temp_string,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
-    g_free(temp_string);
+    error = sscanf(temp_str,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
+    g_free(temp_str);
     
     voxel.x = x;
     voxel.y = y;
@@ -150,15 +150,16 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
   } 
 
-  if ((temp_string == NULL) || (error == EOF)) {
+  if ((temp_str == NULL) || (error == EOF)) {
     voxel = zero_voxel;
-    g_warning("Couldn't read value for %s, substituting [%d %d %d %d]",descriptor,
-	      voxel.x, voxel.y,voxel.z,voxel.z);
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
+		     descriptor, voxel.x, voxel.y,voxel.z,voxel.z);
   }
 
   if (error < 4) {
     voxel.t = 0;
-    g_warning("Couldn't read frame value for %s, substituting %d",descriptor, voxel.t);
+    amitk_append_str(perror_buf,"Couldn't read frame value for %s, substituting %d",
+		     descriptor, voxel.t);
   }
 
   return voxel;
@@ -167,11 +168,11 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
 void amitk_voxel_write_xml(xmlNodePtr node, gchar * descriptor, AmitkVoxel voxel) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%d\t%d\t%d\t%d",voxel.x, voxel.y, voxel.z, voxel.t);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%d\t%d\t%d\t%d",voxel.x, voxel.y, voxel.z, voxel.t);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }
@@ -831,6 +832,26 @@ amide_real_t point_get_component(const AmitkPoint point,
   }
 
 }
+void point_set_component(AmitkPoint * point,
+			 const AmitkAxis which_axis,
+			 const amide_real_t value) {
+
+  switch(which_axis) {
+  case AMITK_AXIS_X:
+    point->x = value;
+    break;
+  case AMITK_AXIS_Y:
+    point->y = value;
+    break;
+  case AMITK_AXIS_Z:
+    point->z = value;
+    break;
+  default:
+    g_return_if_reached();
+  }
+
+  return;
+}
 
 
 const gchar * amitk_view_get_name(const AmitkView view) {
@@ -863,6 +884,18 @@ const gchar * amitk_axis_get_name(const AmitkAxis axis) {
 
   enum_class = g_type_class_ref(AMITK_TYPE_AXIS);
   enum_value = g_enum_get_value(enum_class, axis);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_length_unit_get_name(const AmitkLengthUnit length_unit) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_LENGTH_UNIT);
+  enum_value = g_enum_get_value(enum_class, length_unit);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

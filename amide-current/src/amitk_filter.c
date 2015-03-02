@@ -103,7 +103,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel(const gint kernel_size,
   /* renormalize, as the tails are cut, and we've discretized the gaussian */
   for (i_voxel.z = 0; i_voxel.z < kernel->dim.z; i_voxel.z++)
     for (i_voxel.y = 0; i_voxel.y < kernel->dim.y; i_voxel.y++)
-      for (i_voxel.x = 0; i_voxel.x < kernel->dim.x; i_voxel.x++)
+      for (i_voxel.x = 0; i_voxel.x < kernel->dim.x; i_voxel.x++) 
 	AMITK_RAW_DATA_DOUBLE_SET_CONTENT(kernel, i_voxel) = 
 	  AMITK_RAW_DATA_DOUBLE_CONTENT(kernel, i_voxel)/total;
 

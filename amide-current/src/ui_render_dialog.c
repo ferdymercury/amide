@@ -109,12 +109,12 @@ static void change_zoom_cb(GtkWidget * widget, gpointer data) {
   gdouble temp_val;
 
   temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-
+  
   if (temp_val < 0.1)
     return;
   if (temp_val > 10) /* 10x zoom seems like quite a bit... */
     return;
-
+  
   /* set the zoom */
   if (!REAL_EQUAL(ui_render->zoom, temp_val)) {
     ui_render->zoom = temp_val;
@@ -163,7 +163,7 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
 
   if (temp_val > 90) /* 90 degrees seems like quite a bit... */
     return;
-
+  
   if (!REAL_EQUAL(ui_render->stereo_eye_angle, temp_val)) {
     ui_render->stereo_eye_angle = temp_val;
     
@@ -193,9 +193,9 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
     return;
   if (temp_val > 1000) /* just plain wrong? */
     return;
-
+  
   if (!REAL_EQUAL(ui_render->stereo_eye_width, temp_val)) {
-
+    
     ui_render->stereo_eye_width = temp_val;
     
     /* save user preferences */
@@ -245,10 +245,10 @@ static void change_front_factor_cb(GtkWidget * widget, gpointer data) {
   temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
   if (!REAL_EQUAL(ui_render->front_factor, temp_val)) {
-
+    
     /* set the front factor */
     ui_render->front_factor = temp_val;
-
+    
     renderings_set_depth_cueing_parameters(ui_render->renderings,
 					   ui_render->front_factor,
 					   ui_render->density);
@@ -270,9 +270,9 @@ static void change_density_cb(GtkWidget * widget, gpointer data) {
   temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
   if (!REAL_EQUAL(ui_render->density, temp_val)) {
-  
+    
     ui_render->density = temp_val; /* set the density */
-
+    
     renderings_set_depth_cueing_parameters(ui_render->renderings,
 					   ui_render->front_factor,
 					   ui_render->density);
@@ -542,17 +542,12 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   spin_button = gtk_spin_button_new_with_range(0.1, 10.0, 0.2);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->zoom);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_zoom_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-  /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
-		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
   table_row++;
 
   /* allow rendering to be click and drag */
@@ -563,6 +558,12 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
+		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  table_row++;
+
 
   /* widget for the stereo eye angle */
   label = gtk_label_new("Stereo Angle");
@@ -570,6 +571,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   spin_button = gtk_spin_button_new_with_range(-90.0, 90.0, 0.2);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->stereo_eye_angle);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_eye_angle_cb), ui_render);
@@ -583,6 +585,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   spin_button = gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
 			    gdk_screen_width_mm()*ui_render->stereo_eye_width/
@@ -612,6 +615,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->front_factor);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_front_factor_cb), ui_render);
@@ -624,6 +628,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 0.2);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->density);
   g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_density_cb), ui_render);

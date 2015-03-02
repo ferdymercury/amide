@@ -93,6 +93,8 @@ struct _AmitkCanvas
   GList * undrawn_rois;
   GList * object_items;
 
+  GList * cursor_stack;
+
   guint next_update;
   guint idle_handler_id;
   GList * next_update_objects;
@@ -120,9 +122,6 @@ struct _AmitkCanvasClass
   void (* view_changed)              (AmitkCanvas *Canvas,
 				      AmitkPoint *position,
 				      amide_real_t thickness);
-  void (* isocontour_3d_changed)     (AmitkCanvas *Canvas,
-				      AmitkRoi * roi,
-				      AmitkPoint *position);
   void (* erase_volume)              (AmitkCanvas *Canvas,
 				      AmitkRoi *roi,
 				      gboolean outside);

@@ -733,6 +733,7 @@ gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
 
 /* function to load in a raw data xml file */
 AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
+				       gchar ** perror_buf,
 				       gboolean (*update_func)(),
 				       gpointer update_data) {
 
@@ -746,20 +747,20 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 
   /* parse the xml file */
   if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    g_warning("Couldn't Parse AMIDE raw_data xml file %s",xml_filename);
+    amitk_append_str(perror_buf,"Couldn't Parse AMIDE raw_data xml file %s",xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    g_warning("Raw data xml file doesn't appear to have a root: %s", xml_filename);
+    amitk_append_str(perror_buf,"Raw data xml file doesn't appear to have a root: %s", xml_filename);
     return NULL;
   }
 
   /* get the document tree */
   nodes = nodes->children;
 
-  dim = amitk_voxel_read_xml(nodes, "dim");
+  dim = amitk_voxel_read_xml(nodes, "dim", perror_buf);
 
   /* figure out the data format */
   temp_string = xml_get_string(nodes, "raw_format");

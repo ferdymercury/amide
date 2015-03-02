@@ -165,6 +165,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       
       spin_button =  
 	gtk_spin_button_new_with_range(0.2,5.0,0.2);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),2);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_crop->zoom);
       g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
@@ -185,6 +186,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 	
 	spin_button =  
 	  gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set)-1,1);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
 	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
 	g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
 	g_signal_connect(G_OBJECT(spin_button), "value_changed",  
@@ -232,6 +234,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 	  for (i_range=0; i_range<NUM_RANGES; i_range++) {
 	    spin_button =  
 	      gtk_spin_button_new_with_range(0,voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim)-1,1);
+	    gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
 	    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
 				      voxel_get_dim(tb_crop->range[i_range], i_dim));
@@ -359,11 +362,12 @@ static void zoom_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
     tb_crop->zoom = 5.0;
   else
     tb_crop->zoom = value;
-
+  
   gnome_canvas_set_pixels_per_unit(GNOME_CANVAS(tb_crop->canvas[view]), tb_crop->zoom);
   gtk_widget_set_size_request(tb_crop->canvas[view], 
 			      tb_crop->zoom*tb_crop->image_width[view],
 			      tb_crop->zoom*tb_crop->image_height[view]);
+
   return;
 }
 
@@ -381,25 +385,25 @@ static void frame_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
     int_value = 0;
   else if (int_value >= AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set))
     int_value = AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set)-1;
-
-
+  
+  
   if (int_value != tb_crop->frame) {
     tb_crop->frame = int_value;
-  
+    
     g_signal_handlers_block_by_func(G_OBJECT(tb_crop->frame_spinner[view]), 
 				    G_CALLBACK(frame_spinner_cb), tb_crop);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_crop->frame_spinner[view]), 
 			      tb_crop->frame);
     g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->frame_spinner[view]), 
-				    G_CALLBACK(frame_spinner_cb), tb_crop);
-
+				      G_CALLBACK(frame_spinner_cb), tb_crop);
+    
     /* unref all the computed projections */
     for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) {
       if (tb_crop->projection[i_view] != NULL)
 	g_object_unref(tb_crop->projection[i_view]);
       tb_crop->projection[i_view] = NULL;
     }
-
+    
     /* just update the current projection for now */
     add_canvas_update(tb_crop, view);
   }
@@ -414,17 +418,17 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_crop_t * tb_crop = data;
   AmitkView view;
   AmitkDim dim;
-  range_t range;
+  range_t which_range;
   gint int_value;
   gboolean valid = FALSE;
 
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_view"));
   dim = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_dim"));
-  range = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_range"));
+  which_range = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_range"));
 
   int_value = gtk_spin_button_get_value_as_int(spin_button);
   
-  if (range == RANGE_MIN) {
+  if (which_range == RANGE_MIN) {
     if (int_value <= voxel_get_dim(tb_crop->range[RANGE_MAX], dim)) {
       valid = TRUE;
     } else {
@@ -437,15 +441,15 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
       int_value = voxel_get_dim(tb_crop->range[RANGE_MIN], dim);
     }
   }
-
-  voxel_set_dim(&(tb_crop->range[range]), dim, int_value);
   
-
-  g_signal_handlers_block_by_func(G_OBJECT(tb_crop->spinner[view][dim][range]), 
+  voxel_set_dim(&(tb_crop->range[which_range]), dim, int_value);
+  
+  
+  g_signal_handlers_block_by_func(G_OBJECT(tb_crop->spinner[view][dim][which_range]), 
 				  G_CALLBACK(spinner_cb), tb_crop);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_crop->spinner[view][dim][range]), 
-			    voxel_get_dim(tb_crop->range[range], dim));
-  g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->spinner[view][dim][range]), 
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_crop->spinner[view][dim][which_range]), 
+			    voxel_get_dim(tb_crop->range[which_range], dim));
+  g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->spinner[view][dim][which_range]), 
 				    G_CALLBACK(spinner_cb), tb_crop);
   
   update_crop_lines(tb_crop, view);

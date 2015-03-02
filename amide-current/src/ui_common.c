@@ -55,8 +55,7 @@ GdkCursor * ui_common_cursor[NUM_CURSORS];
 
 /* internal variables */
 static gboolean ui_common_cursors_initialized = FALSE;
-static GSList * ui_common_cursor_stack=NULL;
-static GSList * ui_common_pending_cursors=NULL;
+static GList * ui_common_cursor_stack=NULL;
 
 
 
@@ -139,7 +138,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 		       "\n",
 		       "Email bug reports to: ", PACKAGE_BUGREPORT,"\n",
 		       "\n",
-#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 		       "Compiled with support for the following libraries:\n",
 #endif
 #ifdef AMIDE_LIBECAT_SUPPORT
@@ -153,6 +152,9 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 		       "libvolpack: Volume Rendering library by Philippe Lacroute\n",
+#endif
+#ifdef AMIDE_LIBFAME_SUPPORT
+		       "libfame: Fast Assembly Mpeg Encoding library by the FAME Team\n",
 #endif
 		       NULL);
 
@@ -297,8 +299,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			"anchor", GTK_ANCHOR_NORTH, "text", view_names[view],
 			"x", (gdouble) (column+0.5)*axis_width,
 			"y", (gdouble) (row+0.5)*axis_height, 
-			"fill_color", "black",
-			"font", "fixed", NULL);
+			"fill_color", "black", NULL);
 
   /* the x axis */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
@@ -315,7 +316,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
 			"anchor", x_axis_label_anchor,"text", x_axis_label,
 			"x", x_axis_label_x_location, "y", x_axis_label_y_location,
-			"fill_color", "black","font", "fixed", NULL);
+			"fill_color", "black", NULL); 
 
   /* the y axis */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
@@ -331,7 +332,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
   gnome_canvas_item_new(gnome_canvas_root(canvas),gnome_canvas_text_get_type(),
 			"anchor", y_axis_label_anchor, "text", y_axis_label,
 			"x", y_axis_label_x_location,"y", y_axis_label_y_location,
-			"fill_color", "black", "font", "fixed", NULL);
+			"fill_color", "black", NULL); 
 
   return;
 }
@@ -413,8 +414,9 @@ void ui_common_window_realize_cb(GtkWidget * widget, gpointer data) {
 /* replaces the current cursor with the specified cursor */
 void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget) {
 
+  GList * cursors;
+  gboolean reached_spot;
   GdkCursor * cursor;
-  GdkCursor * current_cursor;
 
   /* make sure we have cursors */
   if (!ui_common_cursors_initialized) ui_common_cursor_init();
@@ -425,16 +427,23 @@ void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget *
   
   cursor = ui_common_cursor[which_cursor];
 
-  /* check that we don't currently have the wait cursor up */
-  current_cursor = g_slist_nth_data(ui_common_cursor_stack, 0);
-  if (current_cursor != ui_common_cursor[UI_CURSOR_WAIT]) {
-    /* push our desired cursor onto the cursor stack */
-    ui_common_cursor_stack = g_slist_prepend(ui_common_cursor_stack,cursor);
-    gdk_window_set_cursor(gtk_widget_get_parent_window(widget), cursor);
-  } else {
-    /* if we're waiting for something, save this cursor for later */
-    ui_common_pending_cursors = g_slist_append(ui_common_pending_cursors,cursor);
+  cursors = ui_common_cursor_stack;
+  /* if the requested cursor isn't the wait cursor, push req. cursor behind the wait cursors */
+  if (which_cursor != UI_CURSOR_WAIT) {
+    reached_spot = FALSE;
+    while (!reached_spot) {
+      if (cursors == NULL)
+	reached_spot = TRUE;
+      else if (cursors->data != ui_common_cursor[UI_CURSOR_WAIT])
+	reached_spot = TRUE;
+      else
+	cursors = cursors->next;
+    }
   }
+
+  /* put the cursor on the stack */
+  ui_common_cursor_stack = g_list_insert_before(ui_common_cursor_stack,  cursors, cursor);
+  gdk_window_set_cursor(gtk_widget_get_parent_window(widget), cursor);
 
   return;
 }
@@ -452,7 +461,7 @@ void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget)
 }
 
 /* removes the cursor, going back to the previous cursor (or default cursor if no previous */
-void ui_common_remove_cursor(GtkWidget * widget) {
+void ui_common_remove_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget) {
 
   GdkCursor * cursor;
 
@@ -461,16 +470,11 @@ void ui_common_remove_cursor(GtkWidget * widget) {
   if (!GTK_WIDGET_REALIZED(widget)) return;
 
   /* pop the previous cursor off the stack */
-  cursor = g_slist_nth_data(ui_common_cursor_stack, 0);
-  ui_common_cursor_stack = g_slist_remove(ui_common_cursor_stack, cursor);
-  
-  /* if we have any pending cursors, add them to the stack */
-  while ((cursor = g_slist_nth_data(ui_common_pending_cursors, 0)) != NULL) {
-    ui_common_cursor_stack = g_slist_prepend(ui_common_cursor_stack,cursor);
-    ui_common_pending_cursors = g_slist_remove(ui_common_pending_cursors, cursor);
-  }
+  cursor = ui_common_cursor[which_cursor];
+  ui_common_cursor_stack = g_list_remove(ui_common_cursor_stack, cursor);
 
-  cursor = g_slist_nth_data(ui_common_cursor_stack, 0);
+  /* use the next cursor on the stack */
+  cursor =  g_list_nth_data(ui_common_cursor_stack, 0);
   gdk_window_set_cursor(gtk_widget_get_parent_window(widget), cursor);
 
   return;

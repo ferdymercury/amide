@@ -62,6 +62,7 @@ typedef struct ui_study_t {
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
   GtkWidget * canvas_visible_button[AMITK_VIEW_NUM];
   GtkWidget * view_mode_button[AMITK_VIEW_MODE_NUM];
+  GtkWidget * fuse_type_button[AMITK_FUSE_TYPE_NUM];
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * time_dialog;
   GtkWidget * time_button;
@@ -112,6 +113,8 @@ void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
 void ui_study_update_interpolation(ui_study_t * ui_study);
+void ui_study_update_fuse_type(ui_study_t * ui_study);
+void ui_study_update_view_mode(ui_study_t * ui_study);
 void ui_study_update_title(ui_study_t * ui_study);
 void ui_study_update_layout(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);

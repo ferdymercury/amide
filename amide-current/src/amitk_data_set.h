@@ -41,32 +41,40 @@ G_BEGIN_DECLS
 #define AMITK_IS_DATA_SET_CLASS(klass)	        (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_DATA_SET))
 #define	AMITK_DATA_SET_GET_CLASS(object)	(G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_DATA_SET, AmitkDataSetClass))
 
-#define AMITK_DATA_SET_MODALITY(ds)             (AMITK_DATA_SET(ds)->modality)
-#define AMITK_DATA_SET_VOXEL_SIZE(ds)           (AMITK_DATA_SET(ds)->voxel_size)
-#define AMITK_DATA_SET_RAW_DATA(ds)             (AMITK_DATA_SET(ds)->raw_data)
-#define AMITK_DATA_SET_DIM(ds)                  (AMITK_RAW_DATA_DIM(AMITK_DATA_SET_RAW_DATA(ds)))
-#define AMITK_DATA_SET_DIM_X(ds)                (AMITK_RAW_DATA_DIM_X(AMITK_DATA_SET_RAW_DATA(ds)))
-#define AMITK_DATA_SET_DIM_Y(ds)                (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
-#define AMITK_DATA_SET_DIM_Z(ds)                (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
-#define AMITK_DATA_SET_DIM_T(ds)                (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
-#define AMITK_DATA_SET_NUM_FRAMES(ds)           (AMITK_DATA_SET_DIM_T(ds))
-#define AMITK_DATA_SET_DISTRIBUTION(ds)         (AMITK_DATA_SET(ds)->distribution)
-#define AMITK_DATA_SET_COLOR_TABLE(ds)          (AMITK_DATA_SET(ds)->color_table)
-#define AMITK_DATA_SET_INTERPOLATION(ds)        (AMITK_DATA_SET(ds)->interpolation)
-#define AMITK_DATA_SET_DYNAMIC(ds)              (AMITK_DATA_SET(ds)->raw_data->dim.t > 1)
-#define AMITK_DATA_SET_THRESHOLDING(ds)         (AMITK_DATA_SET(ds)->thresholding)
-#define AMITK_DATA_SET_SLICE_PARENT(ds)         (AMITK_DATA_SET(ds)->slice_parent)
-#define AMITK_DATA_SET_SCAN_DATE(ds)            (AMITK_DATA_SET(ds)->scan_date)
-#define AMITK_DATA_SET_SCALE_FACTOR(ds)         (AMITK_DATA_SET(ds)->scale_factor)
-#define AMITK_DATA_SET_SCAN_START(ds)           (AMITK_DATA_SET(ds)->scan_start)
-#define AMITK_DATA_SET_GLOBAL_MAX(ds)           (AMITK_DATA_SET(ds)->global_max)
-#define AMITK_DATA_SET_GLOBAL_MIN(ds)           (AMITK_DATA_SET(ds)->global_min)
-#define AMITK_DATA_SET_FRAME_MAX(ds, i)         (AMITK_DATA_SET(ds)->frame_max[(i)])
-#define AMITK_DATA_SET_FRAME_MIN(ds, i)         (AMITK_DATA_SET(ds)->frame_min[(i)])
+#define AMITK_DATA_SET_MODALITY(ds)                (AMITK_DATA_SET(ds)->modality)
+#define AMITK_DATA_SET_VOXEL_SIZE(ds)              (AMITK_DATA_SET(ds)->voxel_size)
+#define AMITK_DATA_SET_RAW_DATA(ds)                (AMITK_DATA_SET(ds)->raw_data)
+#define AMITK_DATA_SET_DIM(ds)                     (AMITK_RAW_DATA_DIM(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_X(ds)                   (AMITK_RAW_DATA_DIM_X(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_Y(ds)                   (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_Z(ds)                   (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_T(ds)                   (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_NUM_FRAMES(ds)              (AMITK_DATA_SET_DIM_T(ds))
+#define AMITK_DATA_SET_DISTRIBUTION(ds)            (AMITK_DATA_SET(ds)->distribution)
+#define AMITK_DATA_SET_COLOR_TABLE(ds)             (AMITK_DATA_SET(ds)->color_table)
+#define AMITK_DATA_SET_INTERPOLATION(ds)           (AMITK_DATA_SET(ds)->interpolation)
+#define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET(ds)->raw_data->dim.t > 1)
+#define AMITK_DATA_SET_THRESHOLDING(ds)            (AMITK_DATA_SET(ds)->thresholding)
+#define AMITK_DATA_SET_SLICE_PARENT(ds)            (AMITK_DATA_SET(ds)->slice_parent)
+#define AMITK_DATA_SET_SCAN_DATE(ds)               (AMITK_DATA_SET(ds)->scan_date)
+#define AMITK_DATA_SET_SCAN_START(ds)              (AMITK_DATA_SET(ds)->scan_start)
+#define AMITK_DATA_SET_GLOBAL_MAX(ds)              (AMITK_DATA_SET(ds)->global_max)
+#define AMITK_DATA_SET_GLOBAL_MIN(ds)              (AMITK_DATA_SET(ds)->global_min)
+#define AMITK_DATA_SET_FRAME_MAX(ds, i)            (AMITK_DATA_SET(ds)->frame_max[(i)])
+#define AMITK_DATA_SET_FRAME_MIN(ds, i)            (AMITK_DATA_SET(ds)->frame_min[(i)])
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
-#define AMITK_DATA_SET_SCALING_TYPE(ds)         (AMITK_DATA_SET(ds)->scaling_type)
+#define AMITK_DATA_SET_SCALING_TYPE(ds)            (AMITK_DATA_SET(ds)->scaling_type)
+
+#define AMITK_DATA_SET_CONVERSION(ds)              (AMITK_DATA_SET(ds)->conversion)
+#define AMITK_DATA_SET_SCALE_FACTOR(ds)            (AMITK_DATA_SET(ds)->scale_factor)
+#define AMITK_DATA_SET_INJECTED_DOSE(ds)           (AMITK_DATA_SET(ds)->injected_dose)
+#define AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(ds)     (AMITK_DATA_SET(ds)->displayed_dose_unit)
+#define AMITK_DATA_SET_SUBJECT_WEIGHT(ds)          (AMITK_DATA_SET(ds)->subject_weight)
+#define AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(ds)   (AMITK_DATA_SET(ds)->displayed_weight_unit)
+#define AMITK_DATA_SET_CYLINDER_FACTOR(ds)         (AMITK_DATA_SET(ds)->cylinder_factor)
+#define AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(ds) (AMITK_DATA_SET(ds)->displayed_cylinder_unit)
 
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
 
@@ -100,6 +108,42 @@ typedef enum {
   AMITK_SCALING_TYPE_NUM
 } AmitkScalingType;
 
+typedef enum {
+  AMITK_CONVERSION_STRAIGHT,
+  AMITK_CONVERSION_PERCENT_ID_PER_G,
+  AMITK_CONVERSION_SUV,
+  AMITK_CONVERSION_NUM
+} AmitkConversion;
+
+typedef enum {
+  AMITK_WEIGHT_UNIT_KILOGRAM,
+  AMITK_WEIGHT_UNIT_GRAM,
+  AMITK_WEIGHT_UNIT_POUND,
+  AMITK_WEIGHT_UNIT_OUNCE,
+  AMITK_WEIGHT_UNIT_NUM
+} AmitkWeightUnit;
+
+typedef enum {
+  AMITK_DOSE_UNIT_MEGABECQUEREL,
+  AMITK_DOSE_UNIT_MILLICURIE,
+  AMITK_DOSE_UNIT_MICROCURIE,
+  AMITK_DOSE_UNIT_NANOCURIE,
+  AMITK_DOSE_UNIT_NUM
+} AmitkDoseUnit;
+
+typedef enum {
+  AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL,
+  AMITK_CYLINDER_UNIT_MILLICURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE,
+  AMITK_CYLINDER_UNIT_MICROCURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE,
+  AMITK_CYLINDER_UNIT_NANOCURIE_PER_CC_IMAGE_UNIT,
+  AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE,
+  AMITK_CYLINDER_UNIT_NUM
+} AmitkCylinderUnit;
+  
+
 /* the skip is for glib-mkenums, it doesn't know how to handle ifdef's */
 typedef enum { /*< skip >*/
   AMITK_IMPORT_METHOD_GUESS, 
@@ -126,13 +170,22 @@ struct _AmitkDataSet
   AmitkModality modality;
   AmitkPoint voxel_size;  /* in mm */
   AmitkRawData * raw_data;
-  amide_data_t scale_factor; /* user specified factor to multiply data set by */
   AmitkScalingType scaling_type; /*  dimensions of internal scaling */
   AmitkRawData * internal_scaling; /* internally (data set) supplied scaling factor */
   amide_time_t scan_start;
   amide_time_t * frame_duration; /* array of the duration of each frame */
   AmitkColorTable color_table; /* the color table to draw this volume in */
   AmitkInterpolation interpolation;
+
+  amide_data_t scale_factor; /* user specified factor to multiply data set by */
+  AmitkConversion conversion;
+  amide_data_t injected_dose;  /* in MBq */
+  AmitkDoseUnit displayed_dose_unit;
+  amide_data_t subject_weight; /* in KG */
+  AmitkWeightUnit displayed_weight_unit;
+  amide_data_t cylinder_factor; /* (MBq/cc)/Image Unit */
+  AmitkCylinderUnit displayed_cylinder_unit;
+
 
   AmitkThresholding thresholding; /* what sort of thresholding we're using (per slice, global, etc.) */
   amide_data_t threshold_max[2]; /* the thresholds to use for this volume */
@@ -159,6 +212,7 @@ struct _AmitkDataSetClass
   void (* thresholding_changed)  (AmitkDataSet * ds);
   void (* color_table_changed)   (AmitkDataSet * ds);
   void (* interpolation_changed) (AmitkDataSet * ds);
+  void (* conversion_changed)    (AmitkDataSet * ds);
   void (* scale_factor_changed)  (AmitkDataSet * ds);
   void (* modality_changed)      (AmitkDataSet * ds);
   void (* time_changed)          (AmitkDataSet * ds);
@@ -193,7 +247,7 @@ void           amitk_data_set_set_scan_start     (AmitkDataSet * ds,
 						  const amide_time_t start);
 void           amitk_data_set_set_frame_duration (AmitkDataSet * ds, 
 						  const guint frame,
-						  const amide_time_t duration);
+						  amide_time_t duration);
 void           amitk_data_set_set_voxel_size     (AmitkDataSet * ds,
 						  const AmitkPoint voxel_size);
 void           amitk_data_set_set_thresholding   (AmitkDataSet * ds, 
@@ -213,8 +267,22 @@ void           amitk_data_set_set_interpolation  (AmitkDataSet * ds,
 						  const AmitkInterpolation new_interpolation);
 void           amitk_data_set_set_scan_date      (AmitkDataSet * ds, 
 						  const gchar * new_date);
+void           amitk_data_set_set_conversion     (AmitkDataSet * ds,
+						  AmitkConversion new_conversion);
 void           amitk_data_set_set_scale_factor   (AmitkDataSet * ds, 
 						  amide_data_t new_scale_factor);
+void           amitk_data_set_set_injected_dose  (AmitkDataSet * ds,
+						  amide_data_t new_injected_dose);
+void           amitk_data_set_set_subject_weight (AmitkDataSet * ds,
+						  amide_data_t new_subject_weight);
+void           amitk_data_set_set_cylinder_factor(AmitkDataSet * ds,
+						  amide_data_t new_cylinder_factor);
+void           amitk_data_set_set_displayed_dose_unit    (AmitkDataSet * ds,
+						          AmitkDoseUnit new_dose_unit);
+void           amitk_data_set_set_displayed_weight_unit  (AmitkDataSet * ds,
+						          AmitkWeightUnit new_weight_unit);
+void           amitk_data_set_set_displayed_cylinder_unit(AmitkDataSet * ds,
+						          AmitkCylinderUnit new_cylinder_unit);
 amide_time_t   amitk_data_set_get_start_time     (const AmitkDataSet * ds, 
 						  const guint frame);
 amide_time_t   amitk_data_set_get_end_time       (const AmitkDataSet * ds, 
@@ -305,12 +373,34 @@ const gchar *   amitk_scaling_type_get_name       (const AmitkScalingType scalin
 const gchar *   amitk_modality_get_name           (const AmitkModality modality);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);
+const gchar *   amitk_conversion_get_name         (const AmitkConversion conversion);
+const gchar *   amitk_weight_unit_get_name        (const AmitkWeightUnit weight_unit);
+const gchar *   amitk_dose_unit_get_name          (const AmitkDoseUnit dose_unit);
+const gchar *   amitk_cylinder_unit_get_name      (const AmitkCylinderUnit cylinder_unit);
+
+
+amide_data_t amitk_weight_unit_convert_to         (const amide_data_t kg, 
+						   const AmitkWeightUnit weight_unit);
+amide_data_t amitk_weight_unit_convert_from       (const amide_data_t weight, 
+						   const AmitkWeightUnit weight_unit);
+amide_data_t amitk_dose_unit_convert_to           (const amide_data_t MBq, 
+						   const AmitkDoseUnit dose_unit);
+amide_data_t amitk_dose_unit_convert_from         (const amide_data_t dose, 
+						   const AmitkDoseUnit dose_unit);
+amide_data_t amitk_cylinder_unit_convert_to       (const amide_data_t MBq_cc_image_units, 
+						   const AmitkCylinderUnit cylinder_unit);
+amide_data_t amitk_cylinder_unit_convert_from     (const amide_data_t cylinder_factor,
+						   const AmitkCylinderUnit cylinder_unit);
 
 
 /* external variables */
 extern gchar * amitk_interpolation_explanations[];
 extern gchar * amitk_import_menu_names[];
 extern gchar * amitk_import_menu_explanations[];
+extern gchar * amitk_conversion_names[];
+extern gchar * amitk_dose_unit_names[];
+extern gchar * amitk_weight_unit_names[];
+extern gchar * amitk_cylinder_unit_names[];
 
 G_END_DECLS
 

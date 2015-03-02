@@ -76,7 +76,7 @@ gchar * amitk_import_menu_names[] = {
   "",
   "_Raw Data", 
 #ifdef AMIDE_LIBECAT_SUPPORT
-  "_CTI 6.4/7.0 via libecat",
+  "_ECAT 6/7 via libecat",
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   "(_X)medcon importing"
@@ -91,13 +91,43 @@ gchar * amitk_import_menu_explanations[] = {
   "Import via the (X)medcon importing library (libmdc)",
 };
 
+gchar * amitk_conversion_names[] = {
+  "Direct",
+  "%ID/G",
+  "SUV"
+};
 
+gchar * amitk_dose_unit_names[] = {
+  "MBq",
+  "mCi",
+  "uCi",
+  "nCi"
+};
+
+gchar * amitk_weight_unit_names[] = {
+  "Kg",
+  "g",
+  "lbs",
+  "ounces",
+};
+
+gchar * amitk_cylinder_unit_names[] = {
+  "MBq/cc/Image Units",
+  "Image Units/(MBq/CC)",
+  "mCi/cc/Image Units",
+  "Image Units/(mCi/cc)",
+  "uCi/cc/Image Units",
+  "Image Units/(uCi/cc)",
+  "nCi/cc/Image Units",
+  "Image Units/(nCi/cc)",
+};
 
 
 enum {
   THRESHOLDING_CHANGED,
   COLOR_TABLE_CHANGED,
   INTERPOLATION_CHANGED,
+  CONVERSION_CHANGED,
   SCALE_FACTOR_CHANGED,
   MODALITY_CHANGED,
   TIME_CHANGED,
@@ -112,11 +142,12 @@ static void          data_set_finalize            (GObject          *object);
 static AmitkObject * data_set_copy                (const AmitkObject * object);
 static void          data_set_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          data_set_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
-static void          data_set_read_xml            (AmitkObject * object, xmlNodePtr nodes);
+static gchar *       data_set_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf);
 static AmitkVolumeClass * parent_class;
 static guint         data_set_signals[LAST_SIGNAL];
 
 
+static amide_data_t calculate_scale_factor(AmitkDataSet * ds);
 
 GType amitk_data_set_get_type(void) {
 
@@ -180,6 +211,13 @@ static void data_set_class_init (AmitkDataSetClass * class) {
 		  G_STRUCT_OFFSET (AmitkDataSetClass, interpolation_changed),
 		  NULL, NULL,
 		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
+  data_set_signals[CONVERSION_CHANGED] =
+    g_signal_new ("conversion_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET (AmitkDataSetClass, conversion_changed),
+		  NULL, NULL,
+		  amitk_marshal_NONE__NONE, G_TYPE_NONE, 0);
   data_set_signals[SCALE_FACTOR_CHANGED] = 
     g_signal_new ("scale_factor_changed",
 		  G_TYPE_FROM_CLASS(class),
@@ -240,7 +278,16 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->scaling_type = AMITK_SCALING_TYPE_0D;
   data_set->internal_scaling = amitk_raw_data_DOUBLE_0D_SCALING_init(1.0);
   g_assert(data_set->internal_scaling!=NULL);
+
   amitk_data_set_set_scale_factor(data_set, 1.0);
+  data_set->conversion = AMITK_CONVERSION_STRAIGHT;
+  data_set->injected_dose = 1.0;
+  data_set->displayed_dose_unit = AMITK_DOSE_UNIT_MEGABECQUEREL;
+  data_set->subject_weight = 1.0;
+  data_set->displayed_weight_unit = AMITK_WEIGHT_UNIT_KILOGRAM;
+  data_set->cylinder_factor = 1.0;
+  data_set->displayed_cylinder_unit = AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT;
+  
   data_set->scan_start = 0.0;
   data_set->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
   data_set->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
@@ -365,6 +412,13 @@ static void data_set_copy_in_place (AmitkObject * dest_object, const AmitkObject
     dest_ds->distribution = g_object_ref(src_ds->distribution);
   }
   amitk_data_set_set_scale_factor(dest_ds, AMITK_DATA_SET_SCALE_FACTOR(src_object));
+  dest_ds->conversion = AMITK_DATA_SET_CONVERSION(src_object);
+  dest_ds->injected_dose = AMITK_DATA_SET_INJECTED_DOSE(src_object);
+  dest_ds->displayed_dose_unit = AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(src_object);
+  dest_ds->subject_weight = AMITK_DATA_SET_SUBJECT_WEIGHT(src_object);
+  dest_ds->displayed_weight_unit = AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(src_object);
+  dest_ds->cylinder_factor = AMITK_DATA_SET_CYLINDER_FACTOR(src_object);
+  dest_ds->displayed_cylinder_unit = AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(src_object);
 
   amitk_data_set_set_color_table(dest_ds, AMITK_DATA_SET_COLOR_TABLE(src_object));
   amitk_data_set_set_interpolation(dest_ds, AMITK_DATA_SET_INTERPOLATION(src_object));
@@ -445,6 +499,14 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
 
   xml_save_string(nodes, "scaling_type", amitk_scaling_type_get_name(ds->scaling_type));
   xml_save_data(nodes, "scale_factor", AMITK_DATA_SET_SCALE_FACTOR(ds));
+  xml_save_string(nodes, "conversion", amitk_conversion_get_name(ds->conversion));
+  xml_save_data(nodes, "injected_dose", AMITK_DATA_SET_INJECTED_DOSE(ds));
+  xml_save_string(nodes, "displayed_dose_unit", amitk_dose_unit_get_name(ds->displayed_dose_unit));
+  xml_save_data(nodes, "subject_weight", AMITK_DATA_SET_SUBJECT_WEIGHT(ds));
+  xml_save_string(nodes, "displayed_weight_unit", amitk_weight_unit_get_name(ds->displayed_weight_unit));
+  xml_save_data(nodes, "cylinder_factor", AMITK_DATA_SET_CYLINDER_FACTOR(ds));
+  xml_save_string(nodes, "displayed_cylinder_unit", amitk_cylinder_unit_get_name(ds->displayed_cylinder_unit));
+		  
   xml_save_time(nodes, "scan_start", AMITK_DATA_SET_SCAN_START(ds));
   xml_save_times(nodes, "frame_duration", ds->frame_duration, AMITK_DATA_SET_NUM_FRAMES(ds));
   xml_save_string(nodes, "color_table", amitk_color_table_get_name(AMITK_DATA_SET_COLOR_TABLE(ds)));
@@ -461,7 +523,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
+static gchar * data_set_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
 
   AmitkDataSet * ds;
   AmitkModality i_modality;
@@ -469,11 +531,15 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   AmitkThresholding i_thresholding;
   AmitkInterpolation i_interpolation;
   AmitkScalingType i_scaling_type;
+  AmitkConversion i_conversion;
+  AmitkDoseUnit i_dose_unit;
+  AmitkWeightUnit i_weight_unit;
+  AmitkCylinderUnit i_cylinder_unit;
   gchar * temp_string;
   gchar * scan_date;
   gchar * filename;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
 
   ds = AMITK_DATA_SET(object);
 
@@ -488,23 +554,23 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
 	amitk_data_set_set_modality(ds, i_modality);
   g_free(temp_string);
 
-  ds->voxel_size = amitk_point_read_xml(nodes, "voxel_size");
+  ds->voxel_size = amitk_point_read_xml(nodes, "voxel_size", &error_buf);
 
   filename = xml_get_string(nodes, "raw_data_file");
-  ds->raw_data = amitk_raw_data_read_xml(filename, NULL, NULL);
+  ds->raw_data = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
   g_free(filename);
 
   filename = xml_get_string(nodes, "internal_scaling_file");
   if (ds->internal_scaling != NULL)
     g_object_unref(ds->internal_scaling);
-  ds->internal_scaling = amitk_raw_data_read_xml(filename, NULL, NULL);
+  ds->internal_scaling = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
   g_free(filename);
 
   filename = xml_get_string(nodes, "distribution_file");
   if (filename != NULL) {
     if (ds->distribution != NULL)
       g_object_unref(ds->distribution);
-    ds->distribution = amitk_raw_data_read_xml(filename, NULL, NULL);
+    ds->distribution = amitk_raw_data_read_xml(filename, &error_buf, NULL, NULL);
     g_free(filename);
   }
 
@@ -530,13 +596,13 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
     AmitkRawData * old_scaling;
     AmitkVoxel i;
 
-    g_warning("wrong type found on internal scaling, converting to double");
+    amitk_append_str(&error_buf, "wrong type found on internal scaling, converting to double");
     old_scaling = ds->internal_scaling;
 
     ds->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
     if (ds->internal_scaling == NULL) {
-      g_warning("Couldn't allocate space for the new scaling factors");
-      return;
+      amitk_append_str(&error_buf, "Couldn't allocate space for the new scaling factors");
+      return error_buf;
     }
 
     for (i.t=0; i.t<ds->internal_scaling->dim.t; i.t++)
@@ -551,9 +617,42 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   /* end legacy cruft */
 
 
-  amitk_data_set_set_scale_factor(ds, xml_get_data(nodes, "scale_factor"));
-  ds->scan_start = xml_get_time(nodes, "scan_start");
-  ds->frame_duration = xml_get_times(nodes, "frame_duration", AMITK_DATA_SET_NUM_FRAMES(ds));
+  amitk_data_set_set_scale_factor(ds, xml_get_data(nodes, "scale_factor", &error_buf));
+  ds->injected_dose = xml_get_data(nodes, "injected_dose", &error_buf);
+  ds->subject_weight = xml_get_data(nodes, "subject_weight", &error_buf); 
+  ds->cylinder_factor = xml_get_data(nodes, "cylinder_factor", &error_buf);
+
+  temp_string = xml_get_string(nodes, "conversion");
+  if (temp_string != NULL)
+    for (i_conversion=0; i_conversion < AMITK_CONVERSION_NUM; i_conversion++)
+      if (g_strcasecmp(temp_string, amitk_conversion_get_name(i_conversion)) == 0)
+	ds->conversion = i_conversion;
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "displayed_dose_unit");
+  if (temp_string != NULL)
+    for (i_dose_unit=0; i_dose_unit < AMITK_DOSE_UNIT_NUM; i_dose_unit++)
+      if (g_strcasecmp(temp_string, amitk_dose_unit_get_name(i_dose_unit)) == 0)
+	ds->displayed_dose_unit = i_dose_unit;
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "displayed_weight_unit");
+  if (temp_string != NULL)
+    for (i_weight_unit=0; i_weight_unit < AMITK_WEIGHT_UNIT_NUM; i_weight_unit++)
+      if (g_strcasecmp(temp_string, amitk_weight_unit_get_name(i_weight_unit)) == 0)
+	ds->displayed_weight_unit = i_weight_unit;
+  g_free(temp_string);
+
+  temp_string = xml_get_string(nodes, "displayed_cylinder_unit");
+  if (temp_string != NULL)
+    for (i_cylinder_unit=0; i_cylinder_unit < AMITK_CYLINDER_UNIT_NUM; i_cylinder_unit++)
+      if (g_strcasecmp(temp_string, amitk_cylinder_unit_get_name(i_cylinder_unit)) == 0)
+	ds->displayed_cylinder_unit = i_cylinder_unit;
+  g_free(temp_string);
+
+
+  ds->scan_start = xml_get_time(nodes, "scan_start", &error_buf);
+  ds->frame_duration = xml_get_times(nodes, "frame_duration", AMITK_DATA_SET_NUM_FRAMES(ds), &error_buf);
 
   temp_string = xml_get_string(nodes, "color_table");
   if (temp_string != NULL)
@@ -577,18 +676,18 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
 	amitk_data_set_set_thresholding(ds, i_thresholding);
   g_free(temp_string);
 
-  ds->threshold_max[0] =  xml_get_data(nodes, "threshold_max_0");
-  ds->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1");
-  ds->threshold_ref_frame[0] = xml_get_int(nodes,"threshold_ref_frame_0");
-  ds->threshold_min[0] =  xml_get_data(nodes, "threshold_min_0");
-  ds->threshold_min[1] =  xml_get_data(nodes, "threshold_min_1");
-  ds->threshold_ref_frame[1] = xml_get_int(nodes,"threshold_ref_frame_1");
+  ds->threshold_max[0] =  xml_get_data(nodes, "threshold_max_0", &error_buf);
+  ds->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1", &error_buf);
+  ds->threshold_ref_frame[0] = xml_get_int(nodes,"threshold_ref_frame_0", &error_buf);
+  ds->threshold_min[0] =  xml_get_data(nodes, "threshold_min_0", &error_buf);
+  ds->threshold_min[1] =  xml_get_data(nodes, "threshold_min_1", &error_buf);
+  ds->threshold_ref_frame[1] = xml_get_int(nodes,"threshold_ref_frame_1", &error_buf);
 
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(ds);
   amitk_data_set_calc_max_min(ds, NULL, NULL);
 
-  return;
+  return error_buf;
 }
 
 
@@ -773,20 +872,17 @@ AmitkDataSet * amitk_data_set_import_file(AmitkImportMethod import_method,
 
 #ifdef AMIDE_LIBECAT_SUPPORT      
   case AMITK_IMPORT_METHOD_LIBECAT:
-    if ((import_ds =cti_import(import_filename, update_func, update_data)) == NULL) 
-      g_warning("Could not interpret as a CTI file using libecat:\n\t%s",import_filename);
+    import_ds =cti_import(import_filename, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   case AMITK_IMPORT_METHOD_LIBMDC:
-    if ((import_ds=medcon_import(import_filename, submethod, update_func, update_data)) == NULL) 
-      g_warning("Could not interpret using (X)medcon/libmdc file:\n\t%s",import_filename);
+    import_ds=medcon_import(import_filename, submethod, update_func, update_data);
     break;
 #endif
   case AMITK_IMPORT_METHOD_RAW:
   default:
-    if ((import_ds= raw_data_import(import_filename)) == NULL)
-      g_warning("Could not interpret as a raw data file:\n\t%s", import_filename);
+    import_ds= raw_data_import(import_filename);
     break;
   }
 
@@ -824,10 +920,13 @@ void amitk_data_set_set_scan_start (AmitkDataSet * ds, const amide_time_t start)
 
 
 void amitk_data_set_set_frame_duration(AmitkDataSet * ds, const guint frame,
-				       const amide_time_t duration) {
+				       amide_time_t duration) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   g_return_if_fail(frame < AMITK_DATA_SET_NUM_FRAMES(ds));
+
+  if (duration < SMALL_TIME)
+    duration = SMALL_TIME; /* guard against bad values */
 
   if (ds->frame_duration[frame] != duration) {
     ds->frame_duration[frame] = duration;
@@ -932,6 +1031,9 @@ void amitk_data_set_set_scan_date(AmitkDataSet * ds, const gchar * new_date) {
   return;
 }
 
+
+
+
 /* used when changing the external scale factor, so that we can keep a pregenerated scaling factor */
 void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_factor) {
 
@@ -1018,6 +1120,90 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
 
   return;
 }
+
+
+static amide_data_t calculate_scale_factor(AmitkDataSet * ds) {
+
+  amide_data_t value;
+
+  switch(ds->conversion) {
+  case AMITK_CONVERSION_STRAIGHT:
+    value = AMITK_DATA_SET_SCALE_FACTOR(ds);
+    break;
+  case AMITK_CONVERSION_PERCENT_ID_PER_G:
+    if (EQUAL_ZERO(ds->injected_dose))
+      value = 1.0;
+    else
+      value = 100.0*ds->cylinder_factor/ds->injected_dose;
+    break;
+  case AMITK_CONVERSION_SUV:
+    if (EQUAL_ZERO(ds->subject_weight)) 
+      value = 1.0;
+    else if (EQUAL_ZERO(ds->injected_dose))
+      value = 1.0;
+    else
+      value = ds->cylinder_factor/(ds->injected_dose/ds->subject_weight);
+    break;
+  default:
+    value = 1.0;
+    g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+    break;
+  }
+
+  return value;
+}
+
+void amitk_data_set_set_conversion(AmitkDataSet * ds, AmitkConversion new_conversion) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->conversion != new_conversion) {
+    ds->conversion = new_conversion;
+    amitk_data_set_set_scale_factor(ds, calculate_scale_factor(ds));
+    g_signal_emit(G_OBJECT (ds), data_set_signals[CONVERSION_CHANGED], 0);
+  }
+}
+
+void amitk_data_set_set_injected_dose(AmitkDataSet * ds,amide_data_t new_injected_dose) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->injected_dose != new_injected_dose) {
+    ds->injected_dose = new_injected_dose;
+    amitk_data_set_set_scale_factor(ds, calculate_scale_factor(ds));
+  }
+}
+
+void amitk_data_set_set_subject_weight(AmitkDataSet * ds,amide_data_t new_subject_weight) {
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->subject_weight != new_subject_weight) {
+    ds->subject_weight = new_subject_weight;
+    amitk_data_set_set_scale_factor(ds, calculate_scale_factor(ds));
+  }
+}
+
+void amitk_data_set_set_cylinder_factor(AmitkDataSet * ds, amide_data_t new_cylinder_factor) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+
+  if (ds->cylinder_factor != new_cylinder_factor) {
+    ds->cylinder_factor = new_cylinder_factor;
+    amitk_data_set_set_scale_factor(ds, calculate_scale_factor(ds));
+  }
+}
+
+void amitk_data_set_set_displayed_dose_unit(AmitkDataSet * ds, AmitkDoseUnit new_dose_unit) {
+  ds->displayed_dose_unit = new_dose_unit;
+}
+
+void amitk_data_set_set_displayed_weight_unit(AmitkDataSet * ds, AmitkWeightUnit new_weight_unit) {
+  ds->displayed_weight_unit = new_weight_unit;
+}
+
+void amitk_data_set_set_displayed_cylinder_unit(AmitkDataSet * ds, AmitkCylinderUnit new_cylinder_unit) {
+  ds->displayed_cylinder_unit = new_cylinder_unit;
+}
+
 
 
 /* returns the start time of the given frame */
@@ -1243,7 +1429,8 @@ void amitk_data_set_calc_max_min(AmitkDataSet * ds,
   }
 
 #ifdef AMIDE_DEBUG
-  g_print("\tglobal max %5.3f global min %5.3f\n",ds->global_max,ds->global_min);
+  if (AMITK_DATA_SET_DIM_Z(ds) > 1) /* don't print for slices */
+    g_print("\tglobal max %5.3f global min %5.3f\n",ds->global_max,ds->global_min);
 #endif
    
   return;
@@ -2051,6 +2238,8 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
     goto error;
   }
   
+  /* setup the scaling factor */
+  filtered->scaling_type = AMITK_SCALING_TYPE_0D;
   filtered->internal_scaling = amitk_raw_data_DOUBLE_0D_SCALING_init(1.0);
   amitk_data_set_set_scale_factor(filtered, 1.0); /* reset the current scaling array */
 
@@ -2424,7 +2613,7 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const Amit
 
 
 
-/* give a list ov data_sets, returns a list of slices of equal size and orientation
+/* give a list of data_sets, returns a list of slices of equal size and orientation
    intersecting these data_sets */
 GList * amitk_data_sets_get_slices(GList * objects,
 				   const amide_time_t start,
@@ -2437,12 +2626,11 @@ GList * amitk_data_sets_get_slices(GList * objects,
   GList * slices=NULL;
   AmitkDataSet * slice;
 
-#ifdef AMIDE_DEBUG
+#ifdef AMIDE_COMMENT_OUT
   struct timeval tv1;
   struct timeval tv2;
   gdouble time1;
   gdouble time2;
-  gdouble total_time;
 
   /* let's do some timing */
   gettimeofday(&tv1, NULL);
@@ -2463,13 +2651,12 @@ GList * amitk_data_sets_get_slices(GList * objects,
     objects = objects->next;
   }
 
-#ifdef AMIDE_DEBUG
+#ifdef AMIDE_COMMENT_OUT
   /* and wrapup our timing */
   gettimeofday(&tv2, NULL);
   time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
   time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
-  total_time = time2-time1;
-  g_print("######## Slice Generating Took %5.3f (s) #########\n",total_time);
+  g_print("######## Slice Generating Took %5.3f (s) #########\n",time2-time1);
 #endif
 
   return slices;
@@ -2527,6 +2714,222 @@ const gchar * amitk_thresholding_get_name(const AmitkThresholding thresholding) 
   return enum_value->value_nick;
 }
 
+const gchar * amitk_conversion_get_name(const AmitkConversion conversion) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_CONVERSION);
+  enum_value = g_enum_get_value(enum_class, conversion);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+const gchar * amitk_weight_unit_get_name(const AmitkWeightUnit weight_unit) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_WEIGHT_UNIT);
+  enum_value = g_enum_get_value(enum_class, weight_unit);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+
+const gchar * amitk_dose_unit_get_name(const AmitkDoseUnit dose_unit) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_DOSE_UNIT);
+  enum_value = g_enum_get_value(enum_class, dose_unit);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
+
+
+const gchar * amitk_cylinder_unit_get_name(const AmitkCylinderUnit cylinder_unit) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_CYLINDER_UNIT);
+  enum_value = g_enum_get_value(enum_class, cylinder_unit);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
 
 
 
+
+amide_data_t amitk_weight_unit_convert_to         (const amide_data_t kg, 
+						   const AmitkWeightUnit weight_unit) {
+
+  switch(weight_unit) {
+  case AMITK_WEIGHT_UNIT_KILOGRAM:
+    return kg;
+    break;
+  case AMITK_WEIGHT_UNIT_GRAM:
+    return kg*1000.0;
+    break;
+  case AMITK_WEIGHT_UNIT_POUND:
+    return kg*2.2046226;
+    break;
+  case AMITK_WEIGHT_UNIT_OUNCE:
+    return kg*35.273962;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}
+
+
+amide_data_t amitk_weight_unit_convert_from       (const amide_data_t weight, 
+						   const AmitkWeightUnit weight_unit) {
+  switch(weight_unit) {
+  case AMITK_WEIGHT_UNIT_KILOGRAM:
+    return weight;
+    break;
+  case AMITK_WEIGHT_UNIT_GRAM:
+    return weight/1000.0;
+    break;
+  case AMITK_WEIGHT_UNIT_POUND:
+    return weight/2.2046226;
+    break;
+  case AMITK_WEIGHT_UNIT_OUNCE:
+    return weight/35.273962;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}
+
+amide_data_t amitk_dose_unit_convert_to           (const amide_data_t MBq, 
+						   const AmitkDoseUnit dose_unit) {
+
+  switch(dose_unit) {
+  case AMITK_DOSE_UNIT_MEGABECQUEREL:
+    return MBq;
+    break;
+  case AMITK_DOSE_UNIT_MILLICURIE:
+    return MBq/37.0;
+    break;
+  case AMITK_DOSE_UNIT_MICROCURIE:
+    return MBq/0.037;
+    break;
+  case AMITK_DOSE_UNIT_NANOCURIE:
+    return MBq/0.000037;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}
+
+amide_data_t amitk_dose_unit_convert_from         (const amide_data_t dose, 
+						   const AmitkDoseUnit dose_unit) {
+
+  switch(dose_unit) {
+  case AMITK_DOSE_UNIT_MEGABECQUEREL:
+    return dose;
+    break;
+  case AMITK_DOSE_UNIT_MILLICURIE:
+    return dose*37.0;
+    break;
+  case AMITK_DOSE_UNIT_MICROCURIE:
+    return dose*0.037;
+    break;
+  case AMITK_DOSE_UNIT_NANOCURIE:
+    return dose*0.000037;
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}
+
+amide_data_t amitk_cylinder_unit_convert_to       (const amide_data_t MBq_cc_image_units, 
+						   const AmitkCylinderUnit cylinder_unit) {
+
+  switch(cylinder_unit) {
+  case AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT:
+    return MBq_cc_image_units;
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL:
+    return 1.0/MBq_cc_image_units;
+  case AMITK_CYLINDER_UNIT_MILLICURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_MILLICURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE:
+    return 1.0/amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_MILLICURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_MICROCURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_MICROCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE:
+    return 1.0/amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_MICROCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_NANOCURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_NANOCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE:
+    return 1.0/amitk_dose_unit_convert_to(MBq_cc_image_units, AMITK_DOSE_UNIT_NANOCURIE);
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}
+
+amide_data_t amitk_cylinder_unit_convert_from     (const amide_data_t cylinder_factor,
+						   const AmitkCylinderUnit cylinder_unit) {
+
+  switch(cylinder_unit) {
+  case AMITK_CYLINDER_UNIT_MEGABECQUEREL_PER_CC_IMAGE_UNIT:
+    return cylinder_factor;
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MEGABECQUEREL:
+    return 1.0/cylinder_factor;
+    break;
+  case AMITK_CYLINDER_UNIT_MILLICURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_from(cylinder_factor, AMITK_DOSE_UNIT_MILLICURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MILLICURIE:
+    return amitk_dose_unit_convert_from(1.0/cylinder_factor, AMITK_DOSE_UNIT_MILLICURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_MICROCURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_from(cylinder_factor, AMITK_DOSE_UNIT_MICROCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_MICROCURIE:
+    return amitk_dose_unit_convert_from(1.0/cylinder_factor, AMITK_DOSE_UNIT_MICROCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_NANOCURIE_PER_CC_IMAGE_UNIT:
+    return amitk_dose_unit_convert_from(cylinder_factor, AMITK_DOSE_UNIT_NANOCURIE);
+    break;
+  case AMITK_CYLINDER_UNIT_IMAGE_UNIT_CC_PER_NANOCURIE:
+    return amitk_dose_unit_convert_from(1.0/cylinder_factor, AMITK_DOSE_UNIT_NANOCURIE);
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return 0.0;
+}

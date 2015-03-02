@@ -110,6 +110,7 @@ extern gchar * view_names[];
 extern gchar * object_menu_names[];
 
 /* external functions */
+void amitk_append_str(gchar ** pstr, const gchar * format, ...);
 void amide_register_window(gpointer * widget);
 void amide_unregister_window(gpointer * widget);
 void amide_unregister_all_windows(void);

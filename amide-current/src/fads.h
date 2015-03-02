@@ -33,12 +33,21 @@
 
 typedef enum {
   FADS_TYPE_PCA,
-  //  FADS_TYPE_FADS,
   FADS_TYPE_PLS,
-  //  FADS_TYPE_TWO_COMPARTMENT,
+  FADS_TYPE_TWO_COMPARTMENT,
   NUM_FADS_TYPES
 } fads_type_t;
 
+typedef enum {
+  //  FADS_MINIMIZER_STEEPEST_DESCENT,
+  FADS_MINIMIZER_CONJUGATE_FR,
+  FADS_MINIMIZER_CONJUGATE_PR,
+  //  FADS_MINIMIZER_VECTOR_BFGS,
+  NUM_FADS_MINIMIZERS
+} fads_minimizer_algorithm_t;
+
+
+extern gchar * fads_minimizer_algorithm_name[];
 extern gchar * fads_type_name[];
 extern gchar * fads_type_explanation[];
 extern const char ** fads_type_xpm[];
@@ -51,20 +60,12 @@ void fads_pca(AmitkDataSet * data_set,
 	      gchar * output_filename,
 	      gboolean (*update_func)(),
 	      gpointer update_data);
-void fads_fads(AmitkDataSet * data_set,
-	       gint num_factors,
-	       gint max_iterations,
-	       gdouble stopping_criteria,
-	       gchar * output_filename,
-	       gint num_blood_curve_constraints,
-	       gint * blood_curve_constraint_frame,
-	       gdouble * blood_curve_constraint_val,
-	       gboolean (*update_func)(),
-	       gpointer update_data);
 void fads_pls(AmitkDataSet * data_set, 
 	      gint num_factors, 
+	      fads_minimizer_algorithm_t minimizer_algorithm,
 	      gint max_iterations,
 	      gdouble stopping_criteria,
+	      gdouble beta,
 	      gchar * output_filename,
 	      gint num_blood_curve_constraints,
 	      gint * blood_curve_constraint_frame,
@@ -72,7 +73,11 @@ void fads_pls(AmitkDataSet * data_set,
 	      gboolean (*update_func)(), 
 	      gpointer update_data);
 void fads_two_comp(AmitkDataSet * data_set, 
+		   fads_minimizer_algorithm_t minimizer_algorithm,
 		   gint max_iterations,
+		   gint tissue_types,
+		   gdouble k12,
+		   gdouble k21,
 		   gdouble stopping_criteria,
 		   gchar * output_filename,
 		   gint num_blood_curve_constraints,

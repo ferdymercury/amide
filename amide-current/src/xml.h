@@ -36,12 +36,12 @@
 
 xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor);
 gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor);
-amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor);
-amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times);
-amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor);
-amide_real_t xml_get_real(xmlNodePtr node, const gchar * descriptor);
-gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor);
-gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor);
+amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times, gchar **perror_buf);
+amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+amide_real_t xml_get_real(xmlNodePtr node, const gchar * descriptor, gchar **perror_buf);
+gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
+gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);
 void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string);
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num);
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num);

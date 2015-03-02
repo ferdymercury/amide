@@ -33,7 +33,7 @@
 
 
 #define SPIN_BUTTON_X_SIZE 100
-#define MAX_ITERATIONS 1000000
+#define MAX_ITERATIONS 1e8
 static const char * wizard_name = "Factor Analysis Wizard";
 
 
@@ -92,14 +92,24 @@ typedef struct tb_fads_t {
   gint num_factors;
   gint max_iterations;
   gdouble stopping_criteria;
+  gdouble beta;
+  gdouble k12;
+  gdouble k21;
+  gdouble k23;
+  gdouble k32;
   fads_type_t fads_type;
+  fads_minimizer_algorithm_t algorithm;
 
   GtkWidget * table[NUM_PAGES];
   GtkWidget * page[NUM_PAGES];
   GtkWidget * progress_dialog;
+  GtkWidget * algorithm_menu;
   GtkWidget * num_factors_spin;
   GtkWidget * num_iterations_spin;
   GtkWidget * stopping_criteria_spin;
+  GtkWidget * beta_spin;
+  GtkWidget * k12_spin;
+  GtkWidget * k21_spin;
   GtkWidget * svd_tree;
   GtkWidget * blood_add_button;
   GtkWidget * blood_remove_button;
@@ -116,6 +126,7 @@ static gchar * get_filename(tb_fads_t * tb_fads);
 static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
 
 static void fads_type_cb(GtkWidget * widget, gpointer data);
+static void algorithm_cb(GtkWidget * widget, gpointer data);
 static void svd_pressed_cb(GtkButton * button, gpointer data);
 static void blood_cell_edited(GtkCellRendererText *cellrenderertext,
 			      gchar *arg1, gchar *arg2,gpointer data);
@@ -124,6 +135,10 @@ static void remove_blood_pressed_cb(GtkButton * button, gpointer data);
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+static void beta_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+static void k12_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+static void k21_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+
 
 static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
 static void cancel_cb(GtkWidget* widget, gpointer data);
@@ -199,6 +214,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
  
   tb_fads_t * tb_fads = data;
   fads_type_t i_fads_type;
+  fads_minimizer_algorithm_t i_algorithm;
   which_page_t which_page;
   GtkWidget * label;
   GtkWidget * button;
@@ -207,6 +223,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   GtkTreeSelection *selection;
   GtkListStore * store;
   gint table_row;
+  gint max_table_row;
   GtkWidget * table;
   GtkWidget * scrolled;
   GtkWidget * option_menu;
@@ -219,6 +236,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   gboolean num_factors;
   gboolean blood_entries;
   gboolean num_iterations;
+  gboolean k_values;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
 
@@ -234,7 +252,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 
   /* --- create the widgets for the pages as needed */
   if (tb_fads->table[which_page] == NULL) {
-    table = gtk_table_new(6,6,FALSE);
+    table = gtk_table_new(8,6,FALSE);
     gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(page)->vbox), 
 		       table, TRUE, TRUE, 5);
     tb_fads->table[which_page]=table;
@@ -318,7 +336,6 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       table_row++;
 
 
-      /* a separator for clarity */
       hseparator = gtk_hseparator_new();
       gtk_table_attach(GTK_TABLE(table), hseparator, 0,2,table_row, table_row+1,
 		       GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -341,6 +358,29 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       break;
 
     case PARAMETERS_PAGE:
+      /* ask for the minimizer algorithm to use */
+      label = gtk_label_new("Minimization Algorithm:");
+      gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+
+      menu = gtk_menu_new();
+	
+      for (i_algorithm = 0; i_algorithm < NUM_FADS_MINIMIZERS; i_algorithm++) {
+	menuitem = gtk_menu_item_new_with_label(fads_minimizer_algorithm_name[i_algorithm]);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+	gtk_widget_show(menuitem);
+      }
+
+      
+      tb_fads->algorithm_menu = gtk_option_menu_new();
+      gtk_option_menu_set_menu(GTK_OPTION_MENU(tb_fads->algorithm_menu), menu);
+      gtk_option_menu_set_history(GTK_OPTION_MENU(tb_fads->algorithm_menu), tb_fads->algorithm);
+      g_signal_connect(G_OBJECT(tb_fads->algorithm_menu), "changed", G_CALLBACK(algorithm_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->algorithm_menu, 1,2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+
+
       /* max # of iterations */
       label = gtk_label_new("Max. # of iterations:");
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
@@ -362,11 +402,28 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
       tb_fads->stopping_criteria_spin = gtk_spin_button_new_with_range(EPSILON, 1.0, tb_fads->stopping_criteria);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), FALSE);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), 7);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), tb_fads->stopping_criteria);
       gtk_widget_set_size_request(tb_fads->stopping_criteria_spin, SPIN_BUTTON_X_SIZE, -1);
       g_signal_connect(G_OBJECT(tb_fads->stopping_criteria_spin), "value_changed",  
 		       G_CALLBACK(stopping_criteria_spinner_cb), tb_fads);
       gtk_table_attach(GTK_TABLE(table), tb_fads->stopping_criteria_spin, 1,2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+
+      /* stopping criteria */
+      label = gtk_label_new("Beta:");
+      gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+
+      tb_fads->beta_spin = gtk_spin_button_new_with_range(0.0, 1.0, 0.01);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->beta_spin), FALSE);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->beta_spin), tb_fads->beta);
+      gtk_widget_set_size_request(tb_fads->beta_spin, SPIN_BUTTON_X_SIZE, -1);
+      g_signal_connect(G_OBJECT(tb_fads->beta_spin), "value_changed",  
+		       G_CALLBACK(beta_spinner_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->beta_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
@@ -387,6 +444,40 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 
 
 
+      /* k12 criteria */
+      label = gtk_label_new("initial k12 (1/s):");
+      gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+
+      tb_fads->k12_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k12_spin), FALSE);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->k12_spin), tb_fads->k12);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->k12_spin), 7);
+      gtk_widget_set_size_request(tb_fads->k12_spin, SPIN_BUTTON_X_SIZE, -1);
+      g_signal_connect(G_OBJECT(tb_fads->k12_spin), "value_changed",  
+		       G_CALLBACK(k12_spinner_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->k12_spin, 1,2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+
+      /* k21 criteria */
+      label = gtk_label_new("initial K21 (1/s):");
+      gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+
+      tb_fads->k21_spin = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 0.01);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(tb_fads->k21_spin), FALSE);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->k21_spin), tb_fads->k21);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->k21_spin), 7);
+      gtk_widget_set_size_request(tb_fads->k21_spin, SPIN_BUTTON_X_SIZE, -1);
+      g_signal_connect(G_OBJECT(tb_fads->k21_spin), "value_changed",  
+		       G_CALLBACK(k21_spinner_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->k21_spin, 1,2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      // table_row++;
+
+
+      max_table_row = table_row;
       table_row = 0;
       /* a separator for clarity */
       vseparator = gtk_vseparator_new();
@@ -407,7 +498,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
 				     GTK_POLICY_AUTOMATIC,
 				     GTK_POLICY_AUTOMATIC);
-      gtk_table_attach(GTK_TABLE(table), scrolled, 3, 4, table_row, table_row+4, 
+      gtk_table_attach(GTK_TABLE(table), scrolled, 3, 4, table_row, max_table_row, 
 		       X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, X_PADDING, Y_PADDING);
 
       /* the table itself */
@@ -457,30 +548,42 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 
     switch(tb_fads->fads_type) {
     case FADS_TYPE_PCA:
+      k_values = FALSE;
       blood_entries = FALSE;
       num_factors = TRUE;
       num_iterations = FALSE;
       break;
-      //    case FADS_TYPE_FADS:
+    case FADS_TYPE_TWO_COMPARTMENT:
+      k_values = TRUE;
+      blood_entries = TRUE;
+      num_factors = TRUE;
+      num_iterations = TRUE;
+      break;
     case FADS_TYPE_PLS:
+      k_values = FALSE;
       blood_entries = TRUE;
       num_factors = TRUE;
       num_iterations = TRUE;
       break;
     default:
       g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+      k_values = FALSE;
       blood_entries = TRUE;
       num_factors = TRUE;
       num_iterations = TRUE;
       break;
     }
-    
+
     gtk_widget_set_sensitive(tb_fads->blood_tree, blood_entries);
     gtk_widget_set_sensitive(tb_fads->blood_remove_button, blood_entries);
     gtk_widget_set_sensitive(tb_fads->blood_add_button, blood_entries);
+    gtk_widget_set_sensitive(tb_fads->algorithm_menu, num_iterations);
     gtk_widget_set_sensitive(tb_fads->num_factors_spin, num_factors);
     gtk_widget_set_sensitive(tb_fads->num_iterations_spin, num_iterations);
     gtk_widget_set_sensitive(tb_fads->stopping_criteria_spin, num_iterations);
+    gtk_widget_set_sensitive(tb_fads->beta_spin, num_iterations);
+    gtk_widget_set_sensitive(tb_fads->k12_spin, k_values);
+    gtk_widget_set_sensitive(tb_fads->k21_spin, k_values);
 
   default:
     break;
@@ -504,7 +607,7 @@ static void svd_pressed_cb(GtkButton * button, gpointer data) {
   /* calculate factors */
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
   fads_svd_factors(tb_fads->data_set, &num_factors, &factors);
-  ui_common_remove_cursor(tb_fads->table[PARAMETERS_PAGE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
 
   for (i=0; i<num_factors; i++) {
     gtk_list_store_append (GTK_LIST_STORE(model), &iter);  /* Acquire an iterator */
@@ -598,6 +701,13 @@ static void fads_type_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+static void algorithm_cb(GtkWidget * widget, gpointer data) {
+  tb_fads_t * tb_fads = data;
+  tb_fads->algorithm = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+  set_text(tb_fads);
+  return;
+}
+
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_fads_t * tb_fads = data;
   tb_fads->num_factors = gtk_spin_button_get_value_as_int(spin_button);
@@ -613,6 +723,24 @@ static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data
 static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_fads_t * tb_fads = data;
   tb_fads->stopping_criteria = gtk_spin_button_get_value(spin_button);
+  return;
+}
+
+static void beta_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
+  tb_fads_t * tb_fads = data;
+  tb_fads->beta = gtk_spin_button_get_value(spin_button);
+  return;
+}
+
+static void k12_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
+  tb_fads_t * tb_fads = data;
+  tb_fads->k12 = gtk_spin_button_get_value(spin_button);
+  return;
+}
+
+static void k21_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
+  tb_fads_t * tb_fads = data;
+  tb_fads->k21 = gtk_spin_button_get_value(spin_button);
   return;
 }
 
@@ -678,23 +806,22 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
     fads_pca(tb_fads->data_set, tb_fads->num_factors, output_filename,
 	     amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
-    //  case FADS_TYPE_FADS:
-    //    fads_fads(tb_fads->data_set, tb_fads->num_factors, tb_fads->max_iterations,tb_fads->stopping_criteria,
-    //	      output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
-    //    break;
   case FADS_TYPE_PLS:
-    fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->max_iterations,tb_fads->stopping_criteria,
-	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
+    fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->algorithm, tb_fads->max_iterations,
+	     tb_fads->stopping_criteria,
+	     tb_fads->beta, output_filename, num, frames, vals, 
+	     amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
-    //  case FADS_TYPE_TWO_COMPARTMENT:
-    //    fads_two_comp(tb_fads->data_set, tb_fads->max_iterations,tb_fads->stopping_criteria,
-    //	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
-    //    break;
+  case FADS_TYPE_TWO_COMPARTMENT:
+    fads_two_comp(tb_fads->data_set, tb_fads->algorithm, tb_fads->max_iterations, 
+		  tb_fads->num_factors-1, tb_fads->k12, tb_fads->k21, tb_fads->stopping_criteria,
+		  output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
+    break;
   default:
     g_warning("fads type %d not defined", tb_fads->fads_type);
     break;
   }
-  ui_common_remove_cursor(tb_fads->table[PARAMETERS_PAGE]);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
 #endif      
 
   if (frames != NULL) {
@@ -794,10 +921,17 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->reference_count = 1;
   tb_fads->dialog = NULL;
   tb_fads->data_set = NULL;
-  tb_fads->num_factors = 3;
-  tb_fads->max_iterations = 20000;
-  tb_fads->stopping_criteria = 1e-3;
+  tb_fads->num_factors = 2;
+  tb_fads->max_iterations = 1e6;
+  tb_fads->stopping_criteria = 1e-2;
+  tb_fads->beta = 0.0;
+  tb_fads->k12 = 0.01;
+  tb_fads->k21 = 0.1;
+  tb_fads->k23 = 0.01;
+  tb_fads->k32 = 0.1;
   tb_fads->fads_type = FADS_TYPE_PCA;
+  //  tb_fads->algorithm = FADS_MINIMIZER_VECTOR_BFGS;
+  tb_fads->algorithm = FADS_MINIMIZER_CONJUGATE_PR;
   tb_fads->explanation_buffer = NULL;
   for (i_page=0; i_page<NUM_PAGES; i_page++)
     tb_fads->table[i_page] = NULL;

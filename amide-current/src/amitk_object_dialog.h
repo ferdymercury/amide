@@ -60,16 +60,23 @@ struct _AmitkObjectDialog
   GtkWidget * roi_type_menu;
   GtkWidget * scan_date_entry;
   GtkWidget * modality_menu;
-  GtkWidget * scaling_factor_spin_button;
+  GtkWidget * scaling_factor_spin;
+  GtkWidget * dose_spin;
+  GtkWidget * dose_unit_menu;
+  GtkWidget * weight_spin;
+  GtkWidget * weight_unit_menu;
+  GtkWidget * cylinder_spin;
+  GtkWidget * cylinder_unit_menu;
   GtkWidget * creation_date_entry;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
+  GtkWidget * conversion_button[AMITK_CONVERSION_NUM];
 
-  GtkWidget * center_spinner[AMITK_AXIS_NUM];
-  GtkWidget * voxel_size_spinner[AMITK_AXIS_NUM];
-  GtkWidget * dimension_spinner[AMITK_AXIS_NUM];
+  GtkWidget * center_spin[AMITK_AXIS_NUM];
+  GtkWidget * voxel_size_spin[AMITK_AXIS_NUM];
+  GtkWidget * dimension_spin[AMITK_AXIS_NUM];
 
-  GtkWidget * start_spin_button;
-  GtkWidget * * duration_spin_buttons;
+  GtkWidget * start_spin;
+  GtkWidget * * duration_spins;
 
   GtkWidget * isocontour_value_entry;
   GtkWidget * voxel_dim_entry;

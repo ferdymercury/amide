@@ -92,7 +92,8 @@ void            amitk_space_write_xml               (xmlNodePtr node,
 						     gchar * descriptor, 
 						     AmitkSpace * space);
 AmitkSpace *    amitk_space_read_xml                (xmlNodePtr nodes, 
-						     gchar * descriptor);
+						     gchar * descriptor,
+						     gchar ** perror_buf);
 void            amitk_space_set_offset              (AmitkSpace * space, 
 						     const AmitkPoint new_offset);
 void            amitk_space_shift_offset            (AmitkSpace * space, 

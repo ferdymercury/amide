@@ -26,7 +26,7 @@
 #include "amide_config.h"
 #include <gtk/gtk.h>
 #include "ui_time_dialog.h"
-#include "amitk_canvas.h"
+
 
 
 #define SPIN_BUTTON_X_SIZE 100
@@ -174,10 +174,11 @@ static void change_spin_cb(GtkSpinButton * spin_button, gpointer data) {
   ui_time_dialog_t * td;
   GtkTreeSelection *selection;
   GtkTreeModel * model;
+
   
   which_widget = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "type")); 
   td = g_object_get_data(G_OBJECT(dialog), "td");
-  
+
   temp_val = gtk_spin_button_get_value(spin_button);
 
   switch(which_widget) {
@@ -194,12 +195,12 @@ static void change_spin_cb(GtkSpinButton * spin_button, gpointer data) {
       td->end = temp_val;
     break;
   }
-
+  
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(td->tree_view));
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(td->tree_view));
   update_selections(model, selection, dialog, td);
   update_entries(dialog, td);
-
+  
   amitk_study_set_view_start_time(td->study, td->start);
   amitk_study_set_view_duration(td->study, td->end-td->start);
 
@@ -490,6 +491,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   td->start_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(td->start_spin), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(td->start_spin),2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(td->start_spin), td->start);
   g_object_set_data(G_OBJECT(td->start_spin), "type", GINT_TO_POINTER(ENTRY_START));
@@ -507,6 +509,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     
   td->end_spin = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(td->end_spin), FALSE);
   gtk_spin_button_set_digits(GTK_SPIN_BUTTON(td->end_spin),2);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(td->end_spin), td->end);
   g_object_set_data(G_OBJECT(td->end_spin), "type", GINT_TO_POINTER(ENTRY_END));

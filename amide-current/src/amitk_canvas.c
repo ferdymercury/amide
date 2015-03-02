@@ -71,7 +71,6 @@ enum {
   HELP_EVENT,
   VIEW_CHANGING,
   VIEW_CHANGED,
-  ISOCONTOUR_3D_CHANGED,
   ERASE_VOLUME,
   NEW_OBJECT,
   LAST_SIGNAL
@@ -154,6 +153,9 @@ static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer canvas);
 static void canvas_thresholding_changed_cb(AmitkDataSet * ds, gpointer data);
 static void canvas_color_table_changed_cb(AmitkDataSet * ds, gpointer data);
 static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * mark, gpointer data);
+static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t z);
+static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi, 
+					 AmitkPoint position, AmitkDataSet * active_slice);
 static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
 static void canvas_scrollbar_cb(GtkObject * adjustment, gpointer data);
 
@@ -247,16 +249,6 @@ static void canvas_class_init (AmitkCanvasClass *klass)
 		  G_TYPE_NONE, 2,
 		  AMITK_TYPE_POINT,
 		  AMITK_TYPE_REAL);
-  canvas_signals[ISOCONTOUR_3D_CHANGED] =
-    g_signal_new ("isocontour_3d_changed",
-		  G_TYPE_FROM_CLASS(klass),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET (AmitkCanvasClass, isocontour_3d_changed),
-		  NULL,NULL,
-		  amitk_marshal_NONE__OBJECT_BOXED,
-		  G_TYPE_NONE, 2,
-		  AMITK_TYPE_ROI,
-		  AMITK_TYPE_POINT);
   canvas_signals[ERASE_VOLUME] =
     g_signal_new("erase_volume", 
 		 G_TYPE_FROM_CLASS(klass),
@@ -313,6 +305,8 @@ static void canvas_init (AmitkCanvas *canvas)
   canvas->study = NULL;
   canvas->undrawn_rois = NULL;
   canvas->object_items=NULL;
+
+  canvas->cursor_stack = NULL;
 
   canvas->next_update = 0;
   canvas->idle_handler_id = 0;
@@ -386,9 +380,9 @@ static GnomeCanvasItem * canvas_find_item(AmitkCanvas * canvas, AmitkObject * ob
   return NULL;
 }
 
-/* returns a reference list of all the objects that currently have items on display.
-   If objects != NULL, the returned list will be the concatenation of objects and 
-   currently appearing items not in objects */
+/* returns a referenced list of all the objects that currently have items on display.
+   If objects != NULL, the returned list will be the concatenation of "objects" and 
+   currently appearing items not in "objects" */
 static GList * canvas_add_current_objects(AmitkCanvas * canvas, GList * objects) {
 
   AmitkObject * object;
@@ -662,6 +656,173 @@ static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * mark, gpointer d
   return;
 }
 
+
+static void z_spin_cb(GtkWidget * widget, gpointer data) {
+  gdouble * z = data;
+  *z = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  return;
+}
+
+static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t z) {
+
+  GtkWindow * window;
+  GtkWidget * toplevel;
+  GtkWidget * dialog;
+  GtkWidget * table;
+  GtkWidget * label;
+  GtkWidget * spin_button;
+
+  g_return_val_if_fail(AMITK_IS_CANVAS(canvas), z);
+
+  toplevel = gtk_widget_get_toplevel (GTK_WIDGET(canvas));
+  if (toplevel != NULL) 
+    window = GTK_WINDOW(toplevel);
+  else
+    window = NULL;
+      
+  dialog = gtk_dialog_new_with_buttons ("ROI Depth Selection",
+					window,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+
+
+
+
+  table = gtk_table_new(2,2,FALSE);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+
+  /* what subfraction */
+  label = gtk_label_new("Please pick depth of ROI (mm):");
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   0,1, 0,1, 0, 0, X_PADDING, Y_PADDING);
+
+  spin_button = gtk_spin_button_new_with_range(z, G_MAXDOUBLE, z);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), z);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),3);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(z_spin_cb), &z);
+  gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, 0,1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  gtk_widget_show_all(dialog);
+  gtk_dialog_run(GTK_DIALOG(dialog)); /* let the user input */
+  gtk_widget_destroy(dialog);
+
+  return z;
+}
+
+static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi, 
+					 AmitkPoint position, AmitkDataSet * active_slice) {
+
+  AmitkPoint temp_point;
+  AmitkVoxel temp_voxel;
+  GtkWidget * question;
+  amide_time_t start_time, end_time;
+  gint return_val;
+  AmitkObject * parent_ds;
+  AmitkObject * draw_on_ds=NULL;
+  GList * slices;
+  GtkWindow * window;
+  GtkWidget * toplevel;
+	
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  g_return_if_fail((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
+		   (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D));
+
+  /* figure out the data set we're drawing on, this function adds a reference  */
+  parent_ds = amitk_object_get_parent_of_type(AMITK_OBJECT(roi), AMITK_OBJECT_TYPE_DATA_SET);
+
+
+  if (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
+    if (parent_ds != NULL) {
+      slices = canvas->slices;
+      while ((slices != NULL)  && (draw_on_ds == NULL)){
+	if (AMITK_DATA_SET_SLICE_PARENT(slices->data) == AMITK_DATA_SET(parent_ds))
+	  draw_on_ds = g_object_ref(slices->data);
+	slices = slices->next;
+      }
+      if (draw_on_ds == NULL) {
+	g_warning("Parent of isocontour not currently displayed, can't draw isocontour");
+	goto exit_strategy;
+      }
+    } else if (active_slice != NULL) { /* if no data set parent, just use the active slice */
+      draw_on_ds = g_object_ref(active_slice);
+    }
+
+
+  } else { /* ISOCONTOUR_3D */
+    if (parent_ds != NULL) 
+      draw_on_ds = parent_ds;
+    else if (canvas->active_ds != NULL) 
+      draw_on_ds = g_object_ref(canvas->active_ds);
+  }
+
+  if (draw_on_ds == NULL) {
+    g_warning("No data set found to draw isocontour on");
+    goto exit_strategy;
+  }
+
+
+  start_time = AMITK_STUDY_VIEW_START_TIME(canvas->study);
+  temp_point = amitk_space_b2s(AMITK_SPACE(draw_on_ds), position);
+  POINT_TO_VOXEL(temp_point, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds),
+		 amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), start_time),
+		 temp_voxel);
+
+  if (!amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(draw_on_ds),temp_voxel)) {
+    g_warning("designanted voxel not in data set %s", AMITK_OBJECT_NAME(draw_on_ds));
+    goto exit_strategy; 
+  }
+
+  /* complain if more then one frame is currently showing for ISOCONTOUR_3D */
+  if (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D) {
+    end_time = start_time + AMITK_STUDY_VIEW_DURATION(canvas->study);
+
+    if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), end_time)) {
+      toplevel = gtk_widget_get_toplevel (GTK_WIDGET(canvas));
+      if (toplevel != NULL) 
+	window = GTK_WINDOW(toplevel);
+      else
+	window = NULL;
+      
+      question = gtk_message_dialog_new(window,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_OK_CANCEL,
+					"%s: %s\n%s %d",
+					"Multiple data frames are currently being shown from",
+					AMITK_OBJECT_NAME(draw_on_ds),
+					"The isocontour will only be drawn over frame",
+					temp_voxel.t);
+
+      return_val = gtk_dialog_run(GTK_DIALOG(question));
+      
+      gtk_widget_destroy(question);
+      if (return_val != GTK_RESPONSE_OK) { 
+	goto exit_strategy; /* cancel */
+      }
+    }
+  }
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+  amitk_roi_set_isocontour(roi, AMITK_DATA_SET(draw_on_ds), temp_voxel);
+  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+
+  exit_strategy:
+
+  if (draw_on_ds != NULL) 
+    g_object_unref(draw_on_ds);
+
+
+  return;
+}
+
+
+
 /* function called when an event occurs on the canvas */
 static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data) {
 
@@ -678,7 +839,6 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   AmitkDataSet * active_slice;
   AmitkVoxel temp_voxel;
   AmitkColorTable color_table;
-  GList * data_sets;
   amide_real_t corner;
   AmitkPoint center;
   amide_data_t voxel_value;
@@ -995,6 +1155,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_DATA_SET, &base_point, 0.0);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_DATA_SET_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_DATA_SET_MODE));
     break;
 
   case CANVAS_EVENT_ENTER_FIDUCIAL_MARK:
@@ -1003,6 +1165,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK, &base_point, 0.0);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_FIDUCIAL_MARK_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_FIDUCIAL_MARK_MODE));
     break;
     
   case CANVAS_EVENT_ENTER_NEW_NORMAL_ROI:
@@ -1011,6 +1175,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_NEW_ROI, &base_point, 0.0);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_NEW_ROI_MODE));
     break;
 
     
@@ -1020,6 +1186,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI, &base_point, 0.0);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_NEW_ROI_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_NEW_ROI_MODE));
     break;
 
     
@@ -1029,6 +1197,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_HELP_INFO_CANVAS_ROI, &base_point, 0.0);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_OLD_ROI_MODE));
     break;
 
     
@@ -1041,15 +1211,25 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		  AMITK_ROI(object)->isocontour_value);
     gtk_widget_grab_focus(GTK_WIDGET(canvas)); /* move the keyboard entry focus into the canvas */
     ui_common_place_cursor(UI_CURSOR_OLD_ROI_MODE, GTK_WIDGET(canvas));
+    canvas->cursor_stack = g_list_prepend(canvas->cursor_stack, 
+					  GINT_TO_POINTER(UI_CURSOR_OLD_ROI_MODE));
     break;
     
     
   case CANVAS_EVENT_LEAVE:
-    ui_common_remove_cursor(GTK_WIDGET(canvas)); 
+    if (canvas->cursor_stack != NULL) {
+      ui_common_remove_cursor(GPOINTER_TO_INT(canvas->cursor_stack->data), GTK_WIDGET(canvas)); 
+      canvas->cursor_stack = g_list_delete_link(canvas->cursor_stack, 
+						canvas->cursor_stack);
+    }
 
     /* yes, do it twice if we're leaving the canvas, there's a bug where if the canvas gets 
        covered by a menu, no GDK_LEAVE_NOTIFY is called for the GDK_ENTER_NOTIFY */
-    if (AMITK_IS_DATA_SET(object)) ui_common_remove_cursor(GTK_WIDGET(canvas));
+    if ((AMITK_IS_DATA_SET(object)) && (canvas->cursor_stack != NULL)) {
+      ui_common_remove_cursor(GPOINTER_TO_INT(canvas->cursor_stack->data), GTK_WIDGET(canvas)); 
+      canvas->cursor_stack = g_list_delete_link(canvas->cursor_stack, 
+						canvas->cursor_stack);
+    }
 
     /* yep, we don't seem to get an EVENT_ENTER corresponding to the EVENT_LEAVE for a canvas_item */
     if (in_object) 
@@ -1063,14 +1243,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_PRESS_MOVE_VIEW:
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point,voxel_value);
-    if (canvas_event_type == CANVAS_EVENT_PRESS_MINIMIZE_VIEW) {
-      data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study), 
-							     AMITK_OBJECT_TYPE_DATA_SET,
-							     canvas->view_mode,
-							     TRUE);
-      corner = amitk_data_sets_get_min_voxel_size(data_sets);
-      amitk_objects_unref(data_sets);
-    } else
+    if (canvas_event_type == CANVAS_EVENT_PRESS_MINIMIZE_VIEW) 
+      corner = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(canvas->study));
+    else
       corner = AMITK_VOLUME_Z_CORNER(canvas->volume);
     grab_on = TRUE;
     outline_color = amitk_color_table_outline_color(color_table, FALSE);
@@ -1271,12 +1446,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       corner = AMITK_VOLUME_Z_CORNER(canvas->volume);
       center = base_point;
     } else { /* CANVAS_EVENT_MOTION_MINIMIZE_VIEW */
-      data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study), 
-							     AMITK_OBJECT_TYPE_DATA_SET,
-							     canvas->view_mode,
-							     TRUE);
-      corner = amitk_data_sets_get_min_voxel_size(data_sets);
-      amitk_objects_unref(data_sets);
+      corner = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(canvas->study));
       center = base_point;
     }
 
@@ -1545,14 +1715,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     else
       center = base_point;
 
-    if (canvas_event_type == CANVAS_EVENT_RELEASE_MINIMIZE_VIEW) {
-      data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(canvas->study), 
-							     AMITK_OBJECT_TYPE_DATA_SET,
-							     canvas->view_mode,
-							     TRUE);
-      corner = amitk_data_sets_get_min_voxel_size(data_sets);
-      amitk_objects_unref(data_sets);
-    } else if (canvas_event_type == CANVAS_EVENT_RELEASE_RESIZE_VIEW)
+    if (canvas_event_type == CANVAS_EVENT_RELEASE_MINIMIZE_VIEW) 
+      corner = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(canvas->study));
+    else if (canvas_event_type == CANVAS_EVENT_RELEASE_RESIZE_VIEW)
       corner = point_max_dim(point_diff(base_point, initial_base_point));
     else
       corner = AMITK_VOLUME_Z_CORNER(canvas->volume);
@@ -1629,10 +1794,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     case AMITK_ROI_TYPE_BOX:
     case AMITK_ROI_TYPE_ELLIPSOID:  
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(canvas_item), event->button.time);
+
+      diff_point = point_diff(initial_canvas_point, canvas_point);
+      diff_point.z = canvas_check_z_dimension(canvas, AMITK_VOLUME_Z_CORNER(canvas->volume));
+      diff_point.z /= 2;
+
       gtk_object_destroy(GTK_OBJECT(canvas_item)); /* get rid of the roi drawn on the canvas */
       
-      diff_point = point_diff(initial_canvas_point, canvas_point);
-      diff_point.z = AMITK_VOLUME_Z_CORNER(canvas->volume)/2.0;
+
       temp_point[0] = point_sub(initial_canvas_point, diff_point);
       temp_point[1] = point_add(initial_canvas_point, diff_point);
 
@@ -1640,6 +1809,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       amitk_space_copy_in_place(AMITK_SPACE(object), AMITK_SPACE(canvas->volume));
       amitk_space_set_offset(AMITK_SPACE(object),
 			     amitk_space_s2b(AMITK_SPACE(canvas->volume), temp_point[0]));
+
       
       /* and set the far corner of the roi */
       amitk_volume_set_corner(AMITK_VOLUME(object),
@@ -1649,41 +1819,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D: 
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-      if (AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
-
-	AmitkObject * parent_ds;
-	AmitkDataSet * parent_slice=NULL;
-	GList * slices;
-	
-	parent_ds = amitk_object_get_parent_of_type(object, AMITK_OBJECT_TYPE_DATA_SET);
-	if (parent_ds == NULL) { /* if no data set parent, just use the active slice */
-	  parent_slice = active_slice;
-	} else {
-	  slices = canvas->slices;
-	  while ((slices != NULL)  && (parent_slice == NULL)){
-	    if (AMITK_DATA_SET_SLICE_PARENT(slices->data) == AMITK_DATA_SET(parent_ds))
-	      parent_slice = slices->data;
-	    slices = slices->next;
-	  }
-	  if (parent_slice == NULL) {
-	    g_warning("Parent of isocontour not currently displayed, can't draw isocontour\n");
-	    return FALSE;
-	  }
-	}
-	
-	g_return_val_if_fail(parent_slice != NULL, FALSE);
-	temp_point[0] = amitk_space_b2s(AMITK_SPACE(parent_slice), base_point);
-	POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(parent_slice),0,temp_voxel);
-	ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-	if (amitk_raw_data_includes_voxel(parent_slice->raw_data,temp_voxel))
-	  amitk_roi_set_isocontour(AMITK_ROI(object),parent_slice, temp_voxel);
-	ui_common_remove_cursor(GTK_WIDGET(canvas));
-	
-      } else { /* ISOCONTOUR_3D */
-	g_signal_emit(G_OBJECT (canvas), canvas_signals[ISOCONTOUR_3D_CHANGED], 0,
-		      object, &base_point);
-      }
-
+      canvas_create_isocontour_roi(canvas, AMITK_ROI(object), base_point, active_slice);
       break;
     default:
       g_error("unexpected case in %s at line %d, roi_type %d", 
@@ -1744,40 +1880,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
     grab_on = FALSE;
     gtk_object_destroy(GTK_OBJECT(canvas_item));
-
-    if (AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
-      AmitkObject * parent_ds;
-      AmitkDataSet * parent_slice=NULL;
-      GList * slices;
-
-      parent_ds = amitk_object_get_parent_of_type(object, AMITK_OBJECT_TYPE_DATA_SET);
-      if (parent_ds == NULL) { /* if no data set parent, just use the active slice */
-	parent_slice = active_slice;
-      } else {
-	slices = canvas->slices;
-	while ((slices != NULL)  && (parent_slice == NULL)){
-	  if (AMITK_DATA_SET_SLICE_PARENT(slices->data) == AMITK_DATA_SET(parent_ds))
-	    parent_slice = slices->data;
-	  slices = slices->next;
-	}
-	if (parent_slice == NULL) {
-	  g_warning("Parent of isocontour not currently displayed, can't draw isocontour\n");
-	  return FALSE;
-	}
-      }
-      
-      g_return_val_if_fail(parent_slice != NULL, FALSE);
-      temp_point[0] = amitk_space_b2s(AMITK_SPACE(parent_slice), base_point);
-      POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(parent_slice),0,temp_voxel);
-      ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-      if (amitk_raw_data_includes_voxel(parent_slice->raw_data,temp_voxel))
-	amitk_roi_set_isocontour(AMITK_ROI(object),parent_slice, temp_voxel);
-      ui_common_remove_cursor(GTK_WIDGET(canvas));
-    } else { /* ISOCONTOUR_3D */
-      g_signal_emit(G_OBJECT (canvas), canvas_signals[ISOCONTOUR_3D_CHANGED], 0,
-		    object, &base_point);
-    }
-
+    canvas_create_isocontour_roi(canvas, AMITK_ROI(object), base_point, active_slice);
     break;
 
   case CANVAS_EVENT_NONE:
@@ -2461,7 +2564,7 @@ static gboolean canvas_update_while_idle(gpointer data) {
   canvas->idle_handler_id=0;
 
   if (canvas->next_update & UPDATE_DATA_SETS) /* remove the cursor on slow updates */
-    ui_common_remove_cursor(GTK_WIDGET(canvas));
+    ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
   canvas->next_update = UPDATE_NONE;
 
   return FALSE;

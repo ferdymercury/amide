@@ -38,8 +38,6 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
 				      amide_real_t thickness, gpointer ui_study);
 void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
 				     amide_real_t thickness, gpointer ui_study);
-void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
-					      AmitkPoint *position, gpointer ui_study);
 void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, 
 				     gboolean outside, gpointer ui_study);
 void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type, 

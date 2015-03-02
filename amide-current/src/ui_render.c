@@ -39,8 +39,6 @@
 
 
 
-
-
 #define UPDATE_NONE 0
 #define UPDATE_RENDERING 0x1
 
@@ -116,7 +114,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
 
      case GDK_LEAVE_NOTIFY:
-       ui_common_remove_cursor(GTK_WIDGET(canvas));
+       ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
        break;
 
 
@@ -715,6 +713,7 @@ gboolean ui_render_update_immediate(gpointer data) {
     goto function_end;
   }
 
+
   /* -------- render our objects ------------ */
 
   if (ui_render->stereoscopic) eyes = AMITK_EYE_NUM;
@@ -731,7 +730,8 @@ gboolean ui_render_update_immediate(gpointer data) {
 					    size_dim, size_dim, eyes,
 					    ui_render->stereo_eye_angle, 
 					    ui_render->stereo_eye_width); 
-  
+
+
   /* put up the image */
   if (ui_render->canvas_image != NULL) 
     gnome_canvas_item_set(ui_render->canvas_image,
@@ -754,7 +754,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
  function_end:
 
-  ui_common_remove_cursor(GTK_WIDGET(ui_render->canvas));
+  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_render->canvas));
   ui_render->next_update = UPDATE_NONE;
 
   if (ui_render->idle_handler_id != 0) {
@@ -863,8 +863,7 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "x",
 			"x", (gdouble) 80.0,
 			"y", (gdouble) 65.0,
-			"fill_color", "black",
-			"font", "fixed", NULL);
+			"fill_color", "black", NULL);
 
   /* the y axis */
   axis_line_points = gnome_canvas_points_new(2);
@@ -887,8 +886,7 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "y",
 			"x", (gdouble) 45.0,
 			"y", (gdouble) 20.0,
-			"fill_color", "black",
-			"font", "fixed", NULL);
+			"fill_color", "black", NULL);
 
   /* the z axis */
   axis_line_points = gnome_canvas_points_new(2);
@@ -911,8 +909,7 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "z",
 			"x", (gdouble) 20.0,
 			"y", (gdouble) 80.0,
-			"fill_color", "black",
-			"font", "fixed", NULL);
+			"fill_color", "black", NULL);
 
   /* button to reset the axis */
   button = gtk_button_new_with_label("Reset Axis");

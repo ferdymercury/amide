@@ -31,6 +31,8 @@
 static char * true_string = "true";
 static char * false_string = "false";
 
+
+
 /* ----------------- the load functions ------------------ */
 
 
@@ -52,7 +54,18 @@ xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor) {
 
 /* go through a list of nodes, and return the text which matches the descriptor */
 gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor) {
-  return xmlNodeGetContent(xml_get_node(nodes, descriptor));
+
+  xmlChar * xml_str;
+  gchar * return_str;
+
+  xml_str = xmlNodeGetContent(xml_get_node(nodes, descriptor));
+  if (xml_str != NULL)
+    return_str = g_strdup_printf("%s", xml_str);
+  else
+    return_str = NULL;
+  free(xml_str);
+
+  return return_str;
 }
 
 
@@ -60,33 +73,32 @@ gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor) {
 
 
 
-amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor) {
+amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   amide_time_t return_time;
   gint error;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 
 #if (SIZE_OF_AMIDE_TIME_T == 8)
     /* convert to double */
-    error = sscanf(temp_string, "%lf", &return_time);
+    error = sscanf(temp_str, "%lf", &return_time);
 #elif (SIZE_OF_AMIDE_TIME_T == 4)
     /* convert to float */
-    error = sscanf(temp_string, "%f", &return_time);
+    error = sscanf(temp_str, "%f", &return_time);
 #else
 #error "Unknown size for SIZE_OF_AMIDE_TIME_T"
 #endif
-    g_free(temp_string);
+    g_free(temp_str);
   }
   
-
-  if ((temp_string == NULL) || (error == EOF)) {
+  if ((temp_str == NULL) || (error == EOF)) {
     return_time = 0.0;
-    g_warning("Couldn't read time value for %s, substituting %5.3f",descriptor,
-	      return_time);
+    amitk_append_str(perror_buf,"Couldn't read time value for %s, substituting %5.3f",
+		     descriptor, return_time);
   }
 
   return return_time;
@@ -94,26 +106,26 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor) {
 
 
 
-amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times) {
+amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times, gchar ** perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   gchar ** string_chunks;
   amide_time_t * return_times;
   gint error;
   guint i;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 
     if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
-      g_warning("Couldn't allocate space for time data");
+      amitk_append_str(perror_buf, "Couldn't allocate space for time data");
       return return_times;
     }
     
     /* split-up the string so we can process it */
-    string_chunks = g_strsplit(temp_string, "\t", num_times);
-    g_free(temp_string);
+    string_chunks = g_strsplit(temp_str, "\t", num_times);
+    g_free(temp_str);
     
     for (i=0;i<num_times;i++) {
 
@@ -134,10 +146,10 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   }
 
-  if (temp_string == NULL) {
-    g_warning("Couldn't read value for %s, substituting zero",descriptor);
+  if (temp_str == NULL) {
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting zero",descriptor);
     if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
-      g_warning("Couldn't allocate space for time data");
+      amitk_append_str(perror_buf, "Couldn't allocate space for time data");
       return return_times;
     }
     return_times[0] = 0.0;
@@ -148,59 +160,60 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
 
 
-amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor) {
+amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   amide_data_t return_data;
   gint error;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 
 #if (SIZE_OF_AMIDE_DATA_T == 8)
     /* convert to doubles */
-    error = sscanf(temp_string, "%lf", &return_data);
+    error = sscanf(temp_str, "%lf", &return_data);
 #elif (SIZE_OF_AMIDE_DATA_T == 4)
     /* convert to float */
-    error = sscanf(temp_string, "%f", &return_data);
+    error = sscanf(temp_str, "%f", &return_data);
 #else
 #error "Unknown size for SIZE_OF_AMIDE_DATA_T"
 #endif
     
-    g_free(temp_string);
+    g_free(temp_str);
  
   }
 
-  if ((temp_string == NULL) || (error == EOF)) {
+  if ((temp_str == NULL) || (error == EOF)) {
     return_data = 0.0;
-    g_warning("Couldn't read value for %s, substituting %5.3f",descriptor, return_data);
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting %5.3f",
+		     descriptor, return_data);
   }
 
   return return_data;
 }
 
-amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor) {
+amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   amide_real_t return_data;
   gint error;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
   
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
 
 #if (SIZE_OF_AMIDE_REAL_T == 8)
     /* convert to doubles */
-    error = sscanf(temp_string, "%lf", &return_data);
+    error = sscanf(temp_str, "%lf", &return_data);
 #elif (SIZE_OF_AMIDE_REAL_T == 4)
     /* convert to float */
-    error = sscanf(temp_string, "%f", &return_data);
+    error = sscanf(temp_str, "%f", &return_data);
 #else
 #error "Unkown size for SIZE_OF_AMIDE_REAL_T"
 #endif
 
-    g_free(temp_string);
+    g_free(temp_str);
     if ((error == EOF))  return_data = 0.0;
   } else
     return_data = 0.0;
@@ -208,42 +221,43 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor) {
   return return_data;
 }
 
-gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor) {
-  gchar * temp_string;
+gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
+
+  gchar * temp_str;
   gboolean value;
   
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string == NULL) {
-    g_warning("Couldn't read value for %s, substituting FALSE",descriptor);
+  if (temp_str == NULL) {
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting FALSE",descriptor);
     return FALSE;
   }
-  if (g_ascii_strncasecmp(temp_string, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
+  if (g_ascii_strncasecmp(temp_str, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
     value = TRUE;
   else 
     value = FALSE;
-  g_free(temp_string);
+  g_free(temp_str);
 
   return value;
 }
 
-gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor) {
+gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   gint return_int;
   gint error;
 
-  temp_string = xml_get_string(nodes, descriptor);
+  temp_str = xml_get_string(nodes, descriptor);
 
-  if (temp_string != NULL) {
+  if (temp_str != NULL) {
     /* convert to an int */
-    error = sscanf(temp_string, "%d", &return_int);
-    g_free(temp_string);
+    error = sscanf(temp_str, "%d", &return_int);
+    g_free(temp_str);
   } 
 
-  if ((temp_string == NULL) || (error == EOF)) {
+  if ((temp_str == NULL) || (error == EOF)) {
     return_int = 0;
-    g_warning("Couldn't read value for %s, substituting %d",descriptor, return_int);
+    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting %d",descriptor, return_int);
   }
 
   return return_int;
@@ -272,11 +286,11 @@ void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * st
 
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%10.9f", num);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%10.9f", num);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }
@@ -284,18 +298,18 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
 
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num) {
 
-  gchar * temp_string;
+  gchar * temp_str;
   int i;
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
   else {
-    temp_string = g_strdup_printf("%10.9f", numbers[0]);
+    temp_str = g_strdup_printf("%10.9f", numbers[0]);
     for (i=1; i < num; i++) {
-      temp_string = g_strdup_printf("%s\t%10.9f", temp_string, numbers[i]);
+      temp_str = g_strdup_printf("%s\t%10.9f", temp_str, numbers[i]);
     }
-    xml_save_string(node, descriptor, temp_string);
-    g_free(temp_string);
+    xml_save_string(node, descriptor, temp_str);
+    g_free(temp_str);
   }
 
   return;
@@ -303,22 +317,22 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
 
 void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%10.9f", num);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%10.9f", num);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }
 
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%10.9f", num);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%10.9f", num);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }
@@ -334,11 +348,11 @@ void xml_save_boolean(xmlNodePtr node, const gchar * descriptor, const gboolean 
 
 void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num) {
 
-  gchar * temp_string;
+  gchar * temp_str;
 
-  temp_string = g_strdup_printf("%d", num);
-  xml_save_string(node, descriptor, temp_string);
-  g_free(temp_string);
+  temp_str = g_strdup_printf("%d", num);
+  xml_save_string(node, descriptor, temp_str);
+  g_free(temp_str);
 
   return;
 }

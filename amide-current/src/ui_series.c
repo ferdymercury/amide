@@ -164,7 +164,7 @@ static void threshold_cb(GtkWidget * widget, gpointer data) {
 		   G_CALLBACK(thresholds_delete_event), ui_series);
   gtk_widget_show(ui_series->thresholds_dialog);
 
-  ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
+  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
 
   return;
 }
@@ -729,7 +729,7 @@ static gboolean update_immediate(gpointer data) {
  exit_update:
 
   amitk_progress_dialog_set_fraction(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), 2.0); /* hide progress dialog */
-  ui_common_remove_cursor(GTK_WIDGET(ui_series->canvas));
+  ui_common_remove_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
 
   ui_series->next_update = UPDATE_NONE;
   if (ui_series->idle_handler_id != 0) {
@@ -786,8 +786,7 @@ void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
   min_duration = amitk_data_sets_get_min_frame_duration(ui_series->objects);
   ui_series->view_duration =  
     (min_duration > AMITK_STUDY_VIEW_DURATION(study)) ?  min_duration : AMITK_STUDY_VIEW_DURATION(study);
-  ui_series->pixel_dim = (1/AMITK_STUDY_ZOOM(study)) * 
-    amitk_data_sets_get_max_min_voxel_size(ui_series->objects);
+  ui_series->pixel_dim = (1/AMITK_STUDY_ZOOM(study)) * AMITK_STUDY_VOXEL_DIM(study);
 
 
   /* do some initial calculations */

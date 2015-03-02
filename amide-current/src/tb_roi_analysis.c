@@ -33,7 +33,7 @@
 
 
 #define AMITK_RESPONSE_SAVE_AS 3
-#define ROI_STATISTICS_WIDTH 1024
+#define ROI_STATISTICS_WIDTH 1100
 
 typedef enum {
   COLUMN_NAME,
@@ -49,6 +49,7 @@ typedef enum {
   COLUMN_MIN,
   COLUMN_MAX,
   COLUMN_SIZE,
+  COLUMN_FRAC_VOXELS,
   COLUMN_VOXELS,
   NUM_ANALYSIS_COLUMNS,
 } column_t;
@@ -67,6 +68,7 @@ static gchar * analysis_titles[] = {
   "Min",
   "Max",
   "Size (mm^3)",
+  "Frac. Voxels",
   "Voxels"
 };
 
@@ -197,9 +199,38 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
 
-      fprintf(file_pointer, "#\tVolume:\t%s\tscaling factor:\t%g\n",
+      fprintf(file_pointer, "#\tVolume:\t%s\tScaling Factor:\t%g\n",
 	      AMITK_OBJECT_NAME(volume_analyses->data_set),
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
+
+      switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
+      case AMITK_CONVERSION_PERCENT_ID_PER_G:
+      case AMITK_CONVERSION_SUV:
+	fprintf(file_pointer, "#\t\tOutput Data Units: %s\n",
+		amitk_conversion_names[AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)]);
+	fprintf(file_pointer, "#\t\t\tInjected Dose: %g [%s]\n",
+		amitk_dose_unit_convert_to(AMITK_DATA_SET_INJECTED_DOSE(volume_analyses->data_set),
+					   AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)),
+		amitk_dose_unit_names[AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)]);
+	fprintf(file_pointer, "#\t\t\tCylinder Factor: %g [%s]\n",
+ 		amitk_cylinder_unit_convert_to(AMITK_DATA_SET_CYLINDER_FACTOR(volume_analyses->data_set),
+					       AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)),
+		amitk_cylinder_unit_names[AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)]);
+	break;
+      default:
+	break;
+      }
+
+      switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
+      case AMITK_CONVERSION_SUV:
+	fprintf(file_pointer, "#\t\t\tSubject Weight: %g [%s]\n",
+ 		amitk_weight_unit_convert_to(AMITK_DATA_SET_SUBJECT_WEIGHT(volume_analyses->data_set),
+					       AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)),
+		amitk_weight_unit_names[AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)]);
+	break;
+      default:
+	break;
+      }
 
       if (!title_printed) {
 	fprintf(file_pointer, "#\t\t%s", analysis_titles[1]);
@@ -226,8 +257,9 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var/frame_analyses->voxels));
 	fprintf(file_pointer, "\t% 12g", frame_analyses->min);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->max);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->voxels*voxel_volume);
-	fprintf(file_pointer, "\t% 12.2f", frame_analyses->voxels);
+	fprintf(file_pointer, "\t% 12g", frame_analyses->fractional_voxels*voxel_volume);
+	fprintf(file_pointer, "\t% 12.2f", frame_analyses->fractional_voxels);
+	fprintf(file_pointer, "\t% d", frame_analyses->voxels);
 	fprintf(file_pointer, "\n");
 
 	frame_analyses = frame_analyses->next_frame_analysis;
@@ -363,7 +395,8 @@ static void add_page(GtkWidget * notebook, AmitkStudy * study,
 			     AMITK_TYPE_DATA,
 			     AMITK_TYPE_DATA,
 			     AMITK_TYPE_REAL,
-			     AMITK_TYPE_REAL);
+			     AMITK_TYPE_REAL,
+			     G_TYPE_INT);
   list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
   g_object_unref(store);
 
@@ -398,8 +431,9 @@ static void add_page(GtkWidget * notebook, AmitkStudy * study,
 			  COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels),
 			  COLUMN_MIN,frame_analyses->min,
 			  COLUMN_MAX,frame_analyses->max,
-			  COLUMN_SIZE,frame_analyses->voxels*voxel_volume,
-			  COLUMN_VOXELS,frame_analyses->voxels,
+			  COLUMN_SIZE,frame_analyses->fractional_voxels*voxel_volume,
+			  COLUMN_FRAC_VOXELS,frame_analyses->fractional_voxels,
+			  COLUMN_VOXELS, frame_analyses->voxels,
 			  -1);
       frame++;
       frame_analyses = frame_analyses->next_frame_analysis;
@@ -727,7 +761,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(subfraction_precentage_cb), NULL);
   gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, 

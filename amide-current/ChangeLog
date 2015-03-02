@@ -1,3 +1,33 @@
+0.7.9
+	* added subject_weight, injected_dose, and cylinder_factor to data_set object
+	* can now easily calculate scale factor for %ID/g and SUV
+	* amitk_object_copy now recurses, children also copied 
+	* dynamic, rotating rendered movies now generated correctly
+	  - was due to a problem with handling of context volume
+	* series now keeps the correct zoom even if all data sets not shown
+	* canvas now minimizes thickness correctly if not all data sets shown
+	* threshold widget more bullet proof, good for retarded data sets
+	* spin buttons can now accept scientific notation input
+	* ROI's now calculated correctly for data sets with one of the dim ==1 
+	* fixed filtering (got screwed up in 0.7.7 with add. of scaling_type)
+	* fixed filtering of dynamic data sets
+	* fixes for initializing the toolbar 
+	* was not removing the active_object ref. appropriately in amitk_tree
+	* fixed selection incorrectly going to study row in amitk_tree
+	* slightly less idiotic handling of cursors
+	* now requests to change read permissions if import file can't be read
+	* more intelligent CTI/ECAT data set naming
+	* more intelligent medcon data set naming
+	* remove iscontour_3d signal from amitk_canvas by moving code from ui_study_cb.c
+	* user now asked to specify the depth of geometric ROI's on drawing
+	* all warnings on reading xml are condensed into a single warning message
+	* stats now point out difference between voxels and fractional voxels
+	* variance now calculated using voxels, not fractional voxels
+	* building rpm/deb files without libecat by default
+	  - xmedcon now supports ECAT 7
+	* building rpm with enable-amide-debug=no
+	* fixed help window not popping up problem
+	
 0.7.8
 	* fixed "crazy spin button" bug, again
 	* stats can now be calculated on only a percentile of the voxels in an ROI

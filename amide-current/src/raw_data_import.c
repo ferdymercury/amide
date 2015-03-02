@@ -534,7 +534,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 
   /* get space for our raw_data_info structure */
   if ((raw_data_info = g_try_new(raw_data_info_t,1)) == NULL) {
-    g_warning("couldn't allocate space for raw_data_info structure to load in RAW file");
+    g_warning("Couldn't allocate space for raw_data_info structure for raw data import");
     return NULL;
   }
   raw_data_info->scale_factor = 1.0;
@@ -542,7 +542,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 
   /* figure out the file size in bytes (file_info.st_size) */
   if (stat(raw_data_info->filename, &file_info) != 0) {
-    g_warning("couldn't get stat's on file %s", raw_data_info->filename);
+    g_warning("Couldn't get stat's on file %s for raw data import", raw_data_info->filename);
     g_free(raw_data_info);
     return NULL;
   }
@@ -568,11 +568,13 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 					progress_dialog);
     
     /* set remaining parameters */
-    amitk_object_set_name(AMITK_OBJECT(ds),raw_data_info->name);
-    ds->voxel_size = raw_data_info->voxel_size;
-    amitk_data_set_calc_far_corner(ds);
-    ds->modality = raw_data_info->modality;
-    amitk_data_set_set_scale_factor(ds, raw_data_info->scale_factor);
+    if (ds != NULL) {
+      amitk_object_set_name(AMITK_OBJECT(ds),raw_data_info->name);
+      ds->voxel_size = raw_data_info->voxel_size;
+      amitk_data_set_calc_far_corner(ds);
+      ds->modality = raw_data_info->modality;
+      amitk_data_set_set_scale_factor(ds, raw_data_info->scale_factor);
+    }
   } else /* we hit the cancel button */
     ds = NULL;
 

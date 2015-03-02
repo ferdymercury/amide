@@ -113,9 +113,7 @@ INCLUDES = \
 	-DLIBDIR=\""$(libdir)"\"			
 
 
-#	-DGNOMELOCALEDIR=\""$(datadir)/locale\""
-CFLAGS = \
-	@CFLAGS@ \
+AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	 -DGTK_DISABLE_DEPRECATED 
@@ -548,6 +546,7 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+CFLAGS = @CFLAGS@
 DIST_SOURCES = $(amide_SOURCES)
 DIST_COMMON = Makefile.am Makefile.in
 SOURCES = $(amide_SOURCES)

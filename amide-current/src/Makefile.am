@@ -4,10 +4,8 @@ INCLUDES = \
 	-DSYSCONFDIR=\""$(sysconfdir)"\"		\
 	-DDATADIR=\""$(datadir)"\"			\
 	-DLIBDIR=\""$(libdir)"\"			
-#	-DGNOMELOCALEDIR=\""$(datadir)/locale\""
 
-CFLAGS = \
-	@CFLAGS@ \
+AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	 -DGTK_DISABLE_DEPRECATED 

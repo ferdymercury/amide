@@ -53,7 +53,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   gint matnum;
   AmitkDataSet * ds=NULL;
   guint slice, num_slices;
-  gchar * temp_name;
+  gchar * name;
   gchar ** frags=NULL;
   time_t scan_time;
   AmitkPoint temp_point;
@@ -65,9 +65,12 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   gint t_times_z;
   gboolean continue_work=TRUE;
   gchar * temp_string;
+  Image_subheader * ish;
+  Scan_subheader * ssh;
+  Attn_subheader * ash;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
-    g_warning("can't open file %s", cti_filename);
+    g_warning("Can't open file %s using libecat", cti_filename);
     goto error;
   }
 
@@ -91,7 +94,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ByteImage:
   case ByteVolume:
   default:
-    g_warning("can't open this CTI file type: %d", cti_file->mhptr->file_type);
+    g_warning("Can't open this CTI file type: %d", cti_file->mhptr->file_type);
     goto error;
     break;
   }
@@ -101,7 +104,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   matnum = cti_file->dirlist->first->matnum;
 
   if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
-    g_warning("can't get header info at matrix %x in file %s", matnum, cti_filename);
+    g_warning("Libecat can't get header info at matrix %x in file %s", matnum, cti_filename);
     goto error;
   }
 
@@ -123,7 +126,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ColorData:
   case BitData:
   default:
-    g_warning("no support for importing CTI files with data type of: %d (%s)", 
+    g_warning("No support for importing CTI files with data type of: %d (%s)", 
 	      cti_subheader->data_type,
 	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
 			     cti_subheader->data_type : 0]);
@@ -149,7 +152,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   /* init our data structures */
   ds = amitk_data_set_new_with_data(format, dim, scaling_type);
   if (ds == NULL) {
-    g_warning("couldn't allocate space for the data set structure to hold CTI data");
+    g_warning("Couldn't allocate space for the data set structure to hold CTI data");
     goto error;
   }
   
@@ -157,18 +160,46 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   ds->modality = AMITK_MODALITY_PET;
 
   /* try figuring out the name */
-  if (cti_file->mhptr->original_file_name != NULL) {
-    amitk_object_set_name(AMITK_OBJECT(ds),cti_file->mhptr->original_file_name);
-  } else {/* no original filename? */
-    temp_name = g_strdup(g_basename(cti_filename));
+  if (cti_file->mhptr->study_name[0] != '\0')
+    name = g_strdup(cti_file->mhptr->study_name);
+  else if (cti_file->mhptr->original_file_name[0] != '\0')
+    name = g_strdup(cti_file->mhptr->original_file_name);
+  else {/* no original filename? */
+    temp_string = g_strdup(g_basename(cti_filename));
     /* remove the extension of the file */
-    g_strreverse(temp_name);
-    frags = g_strsplit(temp_name, ".", 2);
-    g_free(temp_name);
+    g_strreverse(temp_string);
+    frags = g_strsplit(temp_string, ".", 2);
+    g_free(temp_string);
     g_strreverse(frags[1]);
-    amitk_object_set_name(AMITK_OBJECT(ds),frags[1]);
+    name = g_strdup(frags[1]);
     g_strfreev(frags); /* free up now unused strings */
   }
+  /* try adding on the reconstruction method */
+  switch(cti_file->mhptr->file_type) {
+  case PetImage: 
+  case PetVolume: 
+  case InterfileImage:
+    ish = (Image_subheader *) cti_subheader->shptr;
+    temp_string = name;
+    if (ish->annotation[0] != '\0')
+      name = g_strdup_printf("%s - %s", temp_string, ish->annotation);
+    else
+      name = g_strdup_printf("%s, %d", temp_string, ish->recon_type);
+    g_free(temp_string);
+    break;
+  case AttenCor:
+    ash = (Attn_subheader *) cti_subheader->shptr;
+    temp_string = name;
+    name = g_strdup_printf("%s,%d", temp_string, ash->attenuation_type);
+    g_free(temp_string);
+    break;
+  case Sinogram:
+  default:
+    break; 
+  }
+
+
+  amitk_object_set_name(AMITK_OBJECT(ds),name);
 #ifdef AMIDE_DEBUG
   g_print("data set name %s\n",AMITK_OBJECT_NAME(ds));
   g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", dim.x, dim.y, dim.z, dim.t);
@@ -185,20 +216,20 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   temp_point.y = 10*cti_subheader->y_size;
   temp_point.z = 10*cti_subheader->z_size;
   if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {/*handle corrupted cti files */ 
-    g_warning("dectected corrupted CTI file, will try to continue by guessing voxel_size");
+    g_warning("Detected corrupted CTI file, will try to continue by guessing voxel_size");
     ds->voxel_size = one_point;
   } else if (EQUAL_ZERO(temp_point.x) || EQUAL_ZERO(temp_point.y) || EQUAL_ZERO(temp_point.z)) {
-    g_warning("detected zero voxel size in CTI file, will try to continue by guessing voxel_size");
+    g_warning("Detected zero voxel size in CTI file, will try to continue by guessing voxel_size");
     ds->voxel_size = one_point;
   } else
     ds->voxel_size = temp_point;
 
-  /* get the offset */
-  temp_point.x = 10*(((Image_subheader*)cti_subheader->shptr)->x_offset);
-  temp_point.y = 10*(((Image_subheader*)cti_subheader->shptr)->y_offset);
-  temp_point.z = 10*(((Image_subheader*)cti_subheader->shptr)->z_offset);
+  temp_point.x = 10*cti_subheader->x_origin;
+  temp_point.y = 10*cti_subheader->y_origin;
+  temp_point.z = 10*cti_subheader->z_origin;
+
   if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {    /*handle corrupted cti files */ 
-    g_warning("detected corrupted CTI file, will try to continue by guessing offset");
+    g_warning("Detected corrupted CTI file, will try to continue by guessing offset");
     temp_point = zero_point;
   }
   amitk_space_set_offset(AMITK_SPACE(ds), temp_point);
@@ -210,13 +241,15 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case PetImage: 
   case PetVolume: 
   case InterfileImage:
-    ds->scan_start = (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    ish =  (Image_subheader *) cti_subheader->shptr;
+    ds->scan_start = ish->frame_start_time/1000.0;
     break;
   case AttenCor:
     ds->scan_start = 0.0; /* doesn't mean anything */
     break;
   case Sinogram:
-    ds->scan_start = (((Scan_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    ssh = (Scan_subheader *) cti_subheader->shptr;
+    ds->scan_start = ssh->frame_start_time/1000.0;
     break;
   default:
     break; /* should never get here */
@@ -244,7 +277,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
       
       /* read in the corresponding cti slice */
       if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	g_warning("can't get image matrix %x in file %s", matnum, cti_filename);
+	g_warning("Libecat can't get image matrix %x in file %s", matnum, cti_filename);
 	goto error;
       }
       
@@ -253,13 +286,15 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
       case PetImage: 
       case PetVolume: 
       case InterfileImage:
-	ds->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
+	ish = (Image_subheader *) cti_subheader->shptr;
+	ds->frame_duration[i.t] = ish->frame_duration/1000.0;
 	break;
       case AttenCor:
 	ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
 	break;
       case Sinogram:
-	ds->frame_duration[i.t] = (((Scan_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
+	ssh = (Scan_subheader *) cti_subheader->shptr;
+	ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
 	break;
       default:
 	break; /* should never get here */
@@ -326,6 +361,9 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   if (!continue_work) goto error;
 
   /* setup remaining volume parameters */
+  amitk_data_set_set_injected_dose(ds, amitk_dose_unit_convert_from(cti_file->mhptr->dosage, 
+								    AMITK_DOSE_UNIT_MILLICURIE));
+  amitk_data_set_set_subject_weight(ds, cti_file->mhptr->patient_weight);
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);

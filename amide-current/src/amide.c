@@ -49,6 +49,7 @@ gchar * object_menu_names[] = {
 static GList * windows = NULL;
 
 
+
 void amide_log_handler(const gchar *log_domain,
 		       GLogLevelFlags log_level,
 		       const gchar *message,
@@ -77,6 +78,29 @@ void amide_log_handler(const gchar *log_domain,
 
 
 
+/* little utility function, appends str to pstr,
+   handles case of pstr pointing to NULL */
+void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
+
+  va_list args;
+  gchar * temp_str;
+  gchar * error_str;
+
+  if (pstr == NULL) return;
+
+  va_start (args, format);
+  error_str = g_strdup_vprintf(format, args);
+  va_end (args);
+
+  if (*pstr != NULL) {
+    temp_str = g_strdup_printf("%s\n%s", *pstr, error_str);
+    g_free(*pstr);
+    *pstr = temp_str;
+  } else {
+    *pstr = g_strdup(error_str);
+  }
+  g_free(error_str);
+}
 
 
 int main (int argc, char *argv []) {

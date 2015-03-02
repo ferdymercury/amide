@@ -600,7 +600,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   amide_data_t value;
   amide_real_t voxel_fraction;
   AmitkVoxel i,j, k;
-  AmitkVoxel start, dim;
+  AmitkVoxel start, dim, ds_dim;
   gboolean voxel_in;
   AmitkRawData * next_plane_in;
   AmitkRawData * curr_plane_in;
@@ -635,13 +635,14 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 
   ds_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
   sub_voxel_size = point_cmult(1.0/AMITK_ROI_GRANULARITY, ds_voxel_size);
+  ds_dim = AMITK_DATA_SET_DIM(ds);
 
   grain_size = 1.0/(AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY);
 
   /* figure out the intersection between the data set and the roi */
   if (inverse) {
     start = zero_voxel;
-    dim = AMITK_DATA_SET_DIM(ds);
+    dim = ds_dim;
   } else {
     if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds),  AMITK_VOLUME(roi), 
 						  intersection_corners)) {
@@ -661,9 +662,11 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   }
 
   /* if we have any small dimensions, make sure we always iterate over sub voxels */
-  small_dimensions = FALSE;
-  if ((dim.x == 1) || (dim.y == 1) || (dim.z == 1))
+  if ((dim.x == 1) || (dim.y == 1) || (dim.z == 1) ||
+      (ds_dim.x == 1) || (ds_dim.y == 1) || (ds_dim.z == 1))
     small_dimensions = TRUE;
+  else
+    small_dimensions = FALSE;
 
   /* over-iterate, as our initial edges will always be considered out of the roi */
   start.x -= 1;

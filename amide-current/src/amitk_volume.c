@@ -44,7 +44,7 @@ static void          volume_corner_changed   (AmitkVolume      *volume,
 static AmitkObject * volume_copy             (const AmitkObject * object);
 static void          volume_copy_in_place    (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          volume_write_xml        (const AmitkObject * object, xmlNodePtr nodes);
-static void          volume_read_xml         (AmitkObject * object, xmlNodePtr nodes);
+static gchar *       volume_read_xml         (AmitkObject * object, xmlNodePtr nodes, gchar * error_buf);
 
 
 static AmitkObjectClass* parent_class;
@@ -170,23 +170,23 @@ static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   return;
 }
 
-static void volume_read_xml(AmitkObject * object, xmlNodePtr nodes) {
+static gchar * volume_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf) {
 
   AmitkVolume * volume;
 
-  AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
   
   volume = AMITK_VOLUME(object);
 
-  volume->corner = amitk_point_read_xml(nodes, "corner");
-  volume->valid = xml_get_boolean(nodes, "valid");
+  volume->corner = amitk_point_read_xml(nodes, "corner", &error_buf);
+  volume->valid = xml_get_boolean(nodes, "valid", &error_buf);
 
   /* legacy, "valid" is a new parameter */
   if (!volume->valid)
     if (!POINT_EQUAL(volume->corner, zero_point))
       volume->valid = TRUE;
 
-  return;
+  return error_buf;
 }
 
 AmitkVolume * amitk_volume_new (void) {
@@ -286,20 +286,20 @@ void amitk_volume_get_enclosing_corners(const AmitkVolume * volume,
 }
 
 
-/* takes a list of volumes and a view coordinate space, give the corners
+/* takes a list of objects and a view coordinate space, give the corners
    necessary to totally encompass the volumes in the given space */
-gboolean amitk_volumes_get_enclosing_corners(GList * volumes,
+gboolean amitk_volumes_get_enclosing_corners(GList * objects,
 					 const AmitkSpace * space,
 					 AmitkCorners return_corners) {
 
   AmitkCorners temp_corners;
   gboolean valid=FALSE;
 
-  while (volumes != NULL) {
+  while (objects != NULL) {
 
-    if (AMITK_IS_VOLUME(volumes->data)) {
-      if (AMITK_VOLUME_VALID(volumes->data)) {
-	amitk_volume_get_enclosing_corners(AMITK_VOLUME(volumes->data),space,temp_corners);
+    if (AMITK_IS_VOLUME(objects->data)) {
+      if (AMITK_VOLUME_VALID(objects->data)) {
+	amitk_volume_get_enclosing_corners(AMITK_VOLUME(objects->data),space,temp_corners);
 	if (!valid) {
 	  valid = TRUE;
 	  return_corners[0] = temp_corners[0];
@@ -314,7 +314,7 @@ gboolean amitk_volumes_get_enclosing_corners(GList * volumes,
 	}
       }
     }
-    volumes = volumes->next;
+    objects = objects->next;
   }
 
   if (!valid)

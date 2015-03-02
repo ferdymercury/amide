@@ -253,6 +253,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 	
       spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
+      gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),3);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_filter->fwhm);
       g_signal_connect(G_OBJECT(spin_button), "value_changed",  
@@ -317,11 +318,11 @@ static void kernel_size_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   gint int_value;
 
   int_value = gtk_spin_button_get_value_as_int(spin_button);
-
+  
   if (!(int_value & 0x1)) {
     int_value++; /* make it odd */
   }
-
+  
   tb_filter->kernel_size = int_value;
   g_signal_handlers_block_by_func(G_OBJECT(spin_button),
 				  G_CALLBACK(kernel_size_spinner_cb), tb_filter);
@@ -343,7 +344,7 @@ static void fwhm_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
     value = MIN_FWHM;
   else if (value > MAX_FWHM) 
     value = MAX_FWHM;
-
+  
   tb_filter->fwhm = value;
   g_signal_handlers_block_by_func(G_OBJECT(spin_button),
 				  G_CALLBACK(fwhm_spinner_cb), tb_filter);

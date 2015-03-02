@@ -56,6 +56,16 @@ typedef enum {
   AMITK_DIM_NUM
 } AmitkDim;
 
+typedef enum {
+  AMITK_LENGTH_UNIT_MM,
+  AMITK_LENGTH_UNIT_CM,
+  AMITK_LENGTH_UNIT_M,
+  AMITK_LENGTH_UNIT_INCHES,
+  AMITK_LENGTH_UNIT_FEET,
+  AMITK_LENGTH_UNIT_NUM
+} AmitkLengthUnit;
+
+
 #define	AMITK_TYPE_POINT		(amitk_point_get_type ())
 #define AMITK_TYPE_VOXEL                (amitk_voxel_get_type ())
 #define AMITK_TYPE_PIXEL                (amitk_pixel_get_type ())
@@ -78,7 +88,7 @@ struct _AmitkPoint {
 GType              amitk_point_get_type (void);
 AmitkPoint *       amitk_point_copy(const AmitkPoint * point);
 void               amitk_point_free (AmitkPoint * point);
-AmitkPoint         amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor);
+AmitkPoint         amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **perror_buf);
 void               amitk_point_write_xml(xmlNodePtr node, gchar * descriptor, AmitkPoint point);
 
 
@@ -93,7 +103,7 @@ struct _AmitkVoxel {
 GType              amitk_voxel_get_type (void);
 AmitkVoxel *       amitk_voxel_copy(const AmitkVoxel * voxel);
 void               amitk_voxel_free (AmitkVoxel * voxel);
-AmitkVoxel         amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor);
+AmitkVoxel         amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar ** perror_buf);
 void               amitk_voxel_write_xml(xmlNodePtr node, gchar * descriptor, AmitkVoxel voxel);
 
 
@@ -296,6 +306,9 @@ AmitkPoint point_rotate_on_vector(const AmitkPoint in,
 				const amide_real_t theta);
 amide_real_t point_get_component(const AmitkPoint point,
 				 const AmitkAxis which_axis);
+void point_set_component(AmitkPoint * point,
+			 const AmitkAxis which_axis,
+			 const amide_real_t value);
 
 extern const AmitkPoint zero_point;
 extern const AmitkPoint one_point;
@@ -308,6 +321,7 @@ extern const AmitkAxes base_axes;
 const gchar * amitk_view_get_name(const AmitkView view);
 const gchar * amitk_dim_get_name(const AmitkDim dim);
 const gchar * amitk_axis_get_name(const AmitkAxis axis);
+const gchar * amitk_length_unit_get_name(const AmitkLengthUnit length_unit);
 
 
 G_END_DECLS

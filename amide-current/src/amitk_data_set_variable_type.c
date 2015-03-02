@@ -32,6 +32,7 @@
 #include "amitk_data_set_FLOAT_0D_SCALING.h"
 
 #define DIM_TYPE_`'m4_Scale_Dim`'
+#define DATA_TYPE_`'m4_Variable_Type`'
 
 
 /* function to recalcule the max and min values of a data set */
@@ -86,7 +87,8 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
     data_set->frame_min[i.t] = min;
     
 #ifdef AMIDE_DEBUG
-    g_print("\tframe %d max %5.3f frame min %5.3f\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
+    if (dim.z > 1) /* don't print for slices */
+      g_print("\tframe %d max %5.3f frame min %5.3f\n",i.t, data_set->frame_max[i.t],data_set->frame_min[i.t]);
 #endif
   }
 
@@ -559,10 +561,10 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const Ami
     g_warning("couldn't alloc space for FIR filter internal data");
     return;
   }
-  amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
 
   /* convolve the kernel with the data set */
   for (j.t=0; j.t < AMITK_DATA_SET_NUM_FRAMES(data_set); j.t++) {
+    amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
 
 #ifdef AMIDE_DEBUG
     divider = ((ds_dim.z/20.0) < 1) ? 1 : (ds_dim.z/20.0);
@@ -634,7 +636,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const Ami
 #ifdef AMIDE_DEBUG
     g_print("\n");
 #endif 
-  }
+  } /* j.t */
 
 
   g_object_unref(output_data); /* cleanup */
@@ -768,7 +770,7 @@ static amide_data_t find_median_by_partial_sort(amide_data_t * partial_sort_data
  */	    
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const AmitkDataSet * data_set,
 									   AmitkDataSet * filtered_ds,
-									   const AmitkVoxel kernel_dim) {
+									   AmitkVoxel kernel_dim) {
 
   amide_data_t * partial_sort_data;
   AmitkVoxel i,j, mid_dim, output_dim;
@@ -795,6 +797,20 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const
   g_return_if_fail(kernel_dim.y & 0x1);
   g_return_if_fail(kernel_dim.z & 0x1);
 
+  ds_dim = AMITK_DATA_SET_DIM(data_set);
+  if (ds_dim.z < kernel_dim.z) {
+    kernel_dim.z = 1;
+    g_warning("data set z dimension to small for kernel, setting kernel dimension to 1");
+  }
+  if (ds_dim.y < kernel_dim.y) {
+    kernel_dim.y = 1;
+    g_warning("data set y dimension to small for kernel, setting kernel dimension to 1");
+  }
+  if (ds_dim.x < kernel_dim.x) {
+    kernel_dim.x = 1;
+    g_warning("data set x dimension to small for kernel, setting kernel dimension to 1");
+  }
+
   mid_dim.t = 0;
   mid_dim.z = kernel_dim.z >> 1;
   mid_dim.y = kernel_dim.y >> 1;
@@ -802,7 +818,6 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const
 
   median_size = kernel_dim.z*kernel_dim.y*kernel_dim.x;
 
-  ds_dim = AMITK_DATA_SET_DIM(data_set);
   output_dim = ds_dim;
   output_dim.t = 1;
   if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, output_dim)) == NULL) {
@@ -948,7 +963,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   amide_data_t time_weight;
   amide_intpoint_t start_frame, end_frame, i_frame;
   amide_time_t start_time, end_time;
-  gchar * temp_string;
   AmitkPoint box_point[8];
   AmitkVoxel box_voxel[8];
   AmitkVoxel start, end;
@@ -957,6 +971,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   AmitkSpace * slice_space;
   AmitkSpace * data_set_space;
 #if AMIDE_DEBUG
+  gchar * temp_string;
   AmitkPoint center_point;
 #endif
   AmitkVoxel ds_voxel;
@@ -1067,7 +1082,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   if (end.y >= dim.y) end.y = dim.y-1;
 
   /* empty is what we fill voxels with that aren't in the data set*/
-  empty = AMITK_DATA_SET_GLOBAL_MIN(data_set);
+  if (AMITK_DATA_SET_GLOBAL_MIN(data_set) < 0)
+    empty = AMITK_DATA_SET_GLOBAL_MIN(data_set);
+  else
+    empty = 0;
 
   /* iterate over those voxels that we didn't cover, and set them to empty */
   i_voxel.t = i_voxel.z = 0;
