@@ -223,7 +223,7 @@ void ui_volume_list_get_view_corners(ui_volume_list_t * ui_volume_list,
   
   g_assert(ui_volume_list != NULL);
 
-  /* first, generate a volume_list we can pass to volumes_get_width */
+  /* first, generate a volume_list we can pass to volumes_get_view_corners */
   temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
   
   volumes_get_view_corners(temp_volumes, view_coord_frame, view_corner); 
@@ -231,64 +231,6 @@ void ui_volume_list_get_view_corners(ui_volume_list_t * ui_volume_list,
   temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
 
   return;
-}
-
-
-/* returns the width of the assembly of volumes wrt the given axis */
-floatpoint_t ui_volume_list_get_width(ui_volume_list_t * ui_volume_list, 
-				      const realspace_t view_coord_frame) {
-
-  volume_list_t * temp_volumes;
-  floatpoint_t value;
-  
-  g_assert(ui_volume_list != NULL);
-
-  /* first, generate a volume_list we can pass to volumes_get_width */
-  temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
-
-  value=volumes_get_width(temp_volumes, view_coord_frame); 
-  
-  temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
-
-  return value;
-}
-
-/* returns the height of the assembly of volumes wrt the given axis */
-floatpoint_t ui_volume_list_get_height(ui_volume_list_t * ui_volume_list, 
-				       const realspace_t view_coord_frame) {
-
-  volume_list_t * temp_volumes;
-  floatpoint_t value;
-  
-  g_assert(ui_volume_list != NULL);
-
-  /* first, generate a volume_list we can pass to volumes_get_width */
-  temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
-
-  value=volumes_get_height(temp_volumes, view_coord_frame); 
-  
-  temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
-
-  return value;
-}
-
-/* returns the length of the assembly of volumes wrt the given axis */
-floatpoint_t ui_volume_list_get_length(ui_volume_list_t * ui_volume_list, 
-					 const realspace_t view_coord_frame) {
-
-  volume_list_t * temp_volumes;
-  floatpoint_t value;
-  
-  g_assert(ui_volume_list != NULL);
-
-  /* first, generate a volume_list we can pass to volumes_get_width */
-  temp_volumes = ui_volume_list_return_volume_list(ui_volume_list);
-  
-  value=volumes_get_length(temp_volumes, view_coord_frame); 
-
-  temp_volumes = volume_list_free(temp_volumes); /* and delete the volume_list */
-
-  return value;
 }
 
 

@@ -96,26 +96,32 @@ voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
   voxelpoint_t return_point;
-  gint x,y,z;
-  gint error;
+  gint x,y,z,t;
+  gint error=0;
 
   temp_string = xml_get_string(nodes, descriptor);
 
   if (temp_string != NULL) {
 
     /* convert to a voxelpoint */
-    error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
+    error = sscanf(temp_string,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
     g_free(temp_string);
     
     return_point.x = x;
     return_point.y = y;
     return_point.z = z;
+    return_point.t = t;
 
   } 
 
   if ((temp_string == NULL) || (error == EOF)) {
     g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    return_point.x = return_point.y = return_point.z = 0;
+    return_point.x = return_point.y = return_point.z = return_point.t = 0;
+  }
+
+  if (error < 4) {
+    g_warning("%s: Couldn't read frame value for %s, substituting null",PACKAGE, descriptor);
+    return_point.t = 0;
   }
 
   return return_point;
@@ -123,24 +129,24 @@ voxelpoint_t xml_get_voxelpoint(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-volume_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
+amide_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
-  volume_time_t return_time;
+  amide_time_t return_time;
   gint error;
 
   temp_string = xml_get_string(nodes, descriptor);
 
   if (temp_string != NULL) {
 
-#if (SIZE_OF_VOLUME_TIME_T == 8)
+#if (SIZE_OF_AMIDE_TIME_T == 8)
     /* convert to doubles */
     error = sscanf(temp_string, "%lf", &return_time);
-#elif (SIZE_OF_VOLUME_TIME_T == 4)
+#elif (SIZE_OF_AMIDE_TIME_T == 4)
     /* convert to float */
     error = sscanf(temp_string, "%f", &return_time);
 #else
-#error "Unknown size for SIZE_OF_VOLUME_TIME_T"
+#error "Unknown size for SIZE_OF_AMIDE_TIME_T"
 #endif
     g_free(temp_string);
   }
@@ -156,11 +162,11 @@ volume_time_t xml_get_time(xmlNodePtr nodes, gchar * descriptor) {
 
 
 
-volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_times) {
+amide_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_times) {
 
   gchar * temp_string;
   gchar ** string_chunks;
-  volume_time_t * return_times;
+  amide_time_t * return_times;
   gint error;
   guint i;
 
@@ -168,7 +174,7 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
 
   if (temp_string != NULL) {
 
-    if ((return_times = (volume_time_t * ) g_malloc(num_times*sizeof(volume_time_t))) == NULL) {
+    if ((return_times = (amide_time_t * ) g_malloc(num_times*sizeof(amide_time_t))) == NULL) {
       g_warning("%s: Couldn't allocate space for time data",PACKAGE);
       return return_times;
     }
@@ -179,14 +185,14 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
     
     for (i=0;i<num_times;i++) {
 
-#if (SIZE_OF_VOLUME_TIME_T == 8)
+#if (SIZE_OF_AMIDE_TIME_T == 8)
       /* convert to doubles */
       error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
-#elif (SIZE_OF_VOLUME_TIME_T == 4)
+#elif (SIZE_OF_AMIDE_TIME_T == 4)
       /* convert to float */
       error = sscanf(string_chunks[i], "%f", &(return_times[i]));
 #else
-#error "Unknown size for SIZE_OF_VOLUME_TIME_T"
+#error "Unknown size for SIZE_OF_AMIDE_TIME_T"
 #endif
       
       if ((error == EOF))  return_times[i] = 0.0;
@@ -198,7 +204,7 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
 
   if (temp_string == NULL) {
     g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
-    if ((return_times = (volume_time_t * ) g_malloc(1*sizeof(volume_time_t))) == NULL) {
+    if ((return_times = (amide_time_t * ) g_malloc(1*sizeof(amide_time_t))) == NULL) {
       g_warning("%s: Couldn't allocate space for time data",PACKAGE);
       return return_times;
     }
@@ -210,24 +216,24 @@ volume_time_t * xml_get_times(xmlNodePtr nodes, gchar * descriptor, guint num_ti
 
 
 
-volume_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
+amide_data_t xml_get_data(xmlNodePtr nodes, gchar * descriptor) {
 
   gchar * temp_string;
-  volume_data_t return_data;
+  amide_data_t return_data;
   gint error;
 
   temp_string = xml_get_string(nodes, descriptor);
 
   if (temp_string != NULL) {
 
-#if (SIZE_OF_VOLUME_DATA_T == 8)
+#if (SIZE_OF_AMIDE_DATA_T == 8)
     /* convert to doubles */
     error = sscanf(temp_string, "%lf", &return_data);
-#elif (SIZE_OF_VOLUME_DATA_T == 4)
+#elif (SIZE_OF_AMIDE_DATA_T == 4)
     /* convert to float */
     error = sscanf(temp_string, "%f", &return_data);
 #else
-#error "Unknown size for SIZE_OF_VOLUME_DATA_T"
+#error "Unknown size for SIZE_OF_AMIDE_DATA_T"
 #endif
     
     g_free(temp_string);
@@ -301,18 +307,20 @@ realspace_t xml_get_realspace(xmlNodePtr nodes, gchar * descriptor) {
   gchar * temp_string;
   axis_t i_axis;
   realspace_t new_space;
+  realpoint_t new_axis[NUM_AXIS];
 
   temp_string = g_strdup_printf("%s_offset", descriptor);
-  new_space.offset = xml_get_realpoint(nodes,temp_string);
+  rs_set_offset(&new_space, xml_get_realpoint(nodes,temp_string));
   g_free(temp_string);
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
     temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
-    new_space.axis[i_axis] = xml_get_realpoint(nodes,temp_string);
-    if (REALPOINT_EQUAL(new_space.axis[i_axis], realpoint_init))
-	new_space.axis[i_axis] = default_axis[i_axis];
+    new_axis[i_axis] = xml_get_realpoint(nodes,temp_string);
+    if (REALPOINT_EQUAL(new_axis[i_axis], realpoint_init))
+	new_axis[i_axis] = default_axis[i_axis];
     g_free(temp_string);
   }
+  rs_set_axis(&new_space, new_axis);
 
   return new_space;
 }
@@ -355,7 +363,7 @@ void xml_save_voxelpoint(xmlNodePtr node, gchar * descriptor, voxelpoint_t vp) {
 
   gchar * temp_string;
 
-  temp_string = g_strdup_printf("%d\t%d\t%d",vp.x, vp.y,vp.z);
+  temp_string = g_strdup_printf("%d\t%d\t%d\t%d",vp.x, vp.y,vp.z,vp.t);
   xml_save_string(node, descriptor, temp_string);
   g_free(temp_string);
 
@@ -364,7 +372,7 @@ void xml_save_voxelpoint(xmlNodePtr node, gchar * descriptor, voxelpoint_t vp) {
 
 
 
-void xml_save_time(xmlNodePtr node, gchar * descriptor, volume_time_t num) {
+void xml_save_time(xmlNodePtr node, gchar * descriptor, amide_time_t num) {
 
   gchar * temp_string;
 
@@ -376,7 +384,7 @@ void xml_save_time(xmlNodePtr node, gchar * descriptor, volume_time_t num) {
 }
 
 
-void xml_save_times(xmlNodePtr node, gchar * descriptor, volume_time_t * numbers, int num) {
+void xml_save_times(xmlNodePtr node, gchar * descriptor, amide_time_t * numbers, int num) {
 
   gchar * temp_string;
   int i;
@@ -395,7 +403,7 @@ void xml_save_times(xmlNodePtr node, gchar * descriptor, volume_time_t * numbers
   return;
 }
 
-void xml_save_data(xmlNodePtr node, gchar * descriptor, volume_data_t num) {
+void xml_save_data(xmlNodePtr node, gchar * descriptor, amide_data_t num) {
 
   gchar * temp_string;
 
@@ -437,12 +445,12 @@ void xml_save_realspace(xmlNodePtr node, gchar * descriptor, realspace_t coord_f
   axis_t i_axis;
 
   temp_string = g_strdup_printf("%s_offset", descriptor);
-  xml_save_realpoint(node,temp_string, coord_frame.offset);
+  xml_save_realpoint(node,temp_string, rs_offset(coord_frame));
   g_free(temp_string);
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
     temp_string = g_strdup_printf("%s_%s", descriptor, axis_names[i_axis]);
-    xml_save_realpoint(node,temp_string, coord_frame.axis[i_axis]);
+    xml_save_realpoint(node,temp_string, rs_specific_axis(coord_frame, i_axis));
     g_free(temp_string);
   }
 
@@ -453,3 +461,38 @@ void xml_save_realspace(xmlNodePtr node, gchar * descriptor, realspace_t coord_f
 
 
 
+
+
+
+
+
+/* -------------- legacy cruft ----------------- */
+voxelpoint_t xml_get_voxelpoint3D(xmlNodePtr nodes, gchar * descriptor) {
+
+  gchar * temp_string;
+  voxelpoint_t return_point;
+  gint x,y,z;
+  gint error;
+
+  temp_string = xml_get_string(nodes, descriptor);
+
+  if (temp_string != NULL) {
+
+    /* convert to a voxelpoint */
+    error = sscanf(temp_string,"%d\t%d\t%d", &x,&y,&z);
+    g_free(temp_string);
+    
+    return_point.x = x;
+    return_point.y = y;
+    return_point.z = z;
+    return_point.t = 1;
+
+  } 
+
+  if ((temp_string == NULL) || (error == EOF)) {
+    g_warning("%s: Couldn't read value for %s, substituting null",PACKAGE, descriptor);
+    return_point.x = return_point.y = return_point.z = return_point.t = 0;
+  }
+
+  return return_point;
+}

@@ -28,188 +28,323 @@
 #include <gnome.h>
 #include "amide.h"
 #include <matrix.h>
-#include "volume.h"
+#include "raw_data.h"
 #include <sys/stat.h>
 #include "raw_data_import.h"
 #include "raw_data_import_callbacks.h"
+ 
+/* external variables */        
+gchar * raw_data_format_names[] = {"Unsigned Byte (8 bit)", \
+				   "Signed Byte (8 bit)", \
+				   "Unsigned Short, Little Endian (16 bit)", \
+				   "Signed Short, Little Endian (16 bit)", \
+				   "Unsigned Integer, Little Endian (32 bit)", \
+				   "Signed Integer, Little Endian (32 bit)", \
+				   "Float, Little Endian (32 bit)", \
+				   "Double, Little Endian (64 bit)", \
+				   "Unsigned Short, Big Endian (16 bit)", \
+				   "Signed Short, Big Endian (16 bit)", \
+				   "Unsigned Integer, Big Endian (32 bit)", \
+				   "Signed Integer, Big Endian (32 bit)", \
+				   "Float, Big Endian (32 bit)", \
+				   "Double, Big Endian (64 bit)", \
+				   "ASCII (8 bit)"};
 
-/* external variables */
-gchar * data_format_names[] = {"Unsigned Byte (8 bit)", \
-			       "Signed Byte (8 bit)", \
-			       "Unsigned Short, Little Endian (16 bit)", \
-			       "Signed Short, Little Endian (16 bit)", \
-			       "Unsigned Integer, Little Endian (32 bit)", \
-			       "Signed Integer, Little Endian (32 bit)", \
-			       "Float, Little Endian (32 bit)", \
-			       "Double, Little Endian (64 bit)", \
-			       "Unsigned Short, Big Endian (16 bit)", \
-			       "Signed Short, Big Endian (16 bit)", \
-			       "Unsigned Integer, Big Endian (32 bit)", \
-			       "Signed Integer, Big Endian (32 bit)", \
-			       "Float, Big Endian (32 bit)", \
-			       "Double, Big Endian (64 bit)", \
-			       "ASCII"};
+guint raw_data_sizes[] = {sizeof(guint8),
+			  sizeof(gint8),
+			  sizeof(guint16),
+			  sizeof(gint16),
+			  sizeof(guint32),
+			  sizeof(gint32),
+			  sizeof(gfloat),
+			  sizeof(gdouble),
+			  sizeof(guint16),
+			  sizeof(gint16),
+			  sizeof(guint32),
+			  sizeof(gint32),
+			  sizeof(gfloat),
+			  sizeof(gdouble), 
+			  1};
 
-guint data_sizes[] = {sizeof(guint8),
-		      sizeof(gint8),
-		      sizeof(guint16),
-		      sizeof(gint16),
-		      sizeof(guint32),
-		      sizeof(gint32),
-		      sizeof(gfloat),
-		      sizeof(gdouble),
-		      sizeof(guint16),
-		      sizeof(gint16),
-		      sizeof(guint32),
-		      sizeof(gint32),
-		      sizeof(gfloat),
-		      sizeof(gdouble), 
-		      1};
+
+
+/* take in one of the raw data formats, and return the corresponding data format */
+data_format_t raw_data_format_data(raw_data_format_t raw_data_format) {
+
+  data_format_t data_format;
+
+  switch(raw_data_format) {
+
+  case UBYTE_NE: 
+    {
+      data_format = UBYTE;
+      break;
+    }
+  case SBYTE_NE: 
+    {
+      data_format = SBYTE;
+      break;
+    }
+  case USHORT_LE: 
+  case USHORT_BE: 
+    {
+      data_format = USHORT;
+      break;
+    }
+  case SSHORT_LE:
+  case SSHORT_BE:
+    {
+      data_format = SSHORT;
+      break;
+    }
+  case UINT_LE:
+  case UINT_BE:
+    {
+      data_format = UINT;
+      break;
+    }
+  case SINT_LE:
+  case SINT_BE:
+    {
+      data_format = SINT;
+      break;
+    }
+  case FLOAT_LE:
+  case FLOAT_BE:
+    {
+      data_format = FLOAT;
+      break;
+    }
+  case DOUBLE_LE:
+  case DOUBLE_BE:
+  case ASCII_NE:
+    {
+      data_format = DOUBLE;
+      break;
+    }
+  default:
+    {
+      g_warning("PACKAGE: unexpected case condition in __FILE__ at line __LINE__");
+      data_format = FLOAT; /* take a wild guess */
+      break;
+    }
+  }
+   
+  return data_format;
+}
+
+
+
+/* take in one of the data formats, and return the corresponding raw data format's */
+raw_data_format_t raw_data_format_raw(data_format_t data_format) {
+
+  raw_data_format_t raw_data_format;
+
+  switch(data_format) {
+
+  case UBYTE: 
+    {
+      raw_data_format = UBYTE_NE;
+      break;
+    }
+  case SBYTE: 
+    {
+      raw_data_format = SBYTE_NE;
+      break;
+    }
+  case USHORT: 
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = USHORT_BE;
+#else
+#if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+      raw_data_format = USHORT_LE;
+#else
+#error "must specify G_LITTLE_ENDIAN or G_BIG_ENDIAN)"
+#endif
+#endif
+      break;
+    }
+  case SSHORT:
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = SSHORT_BE;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+      raw_data_format = SSHORT_LE;
+#endif
+      break;
+    }
+  case UINT:
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = UINT_BE;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+      raw_data_format = UINT_LE;
+#endif
+      break;
+    }
+  case SINT:
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = SINT_BE;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+      raw_data_format = SINT_LE;
+#endif
+      break;
+    }
+  case FLOAT:
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = FLOAT_BE;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+      raw_data_format = FLOAT_LE;
+#endif
+      break;
+    }
+  case DOUBLE:
+    {
+#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+      raw_data_format = DOUBLE_BE;
+#else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
+      raw_data_format = DOUBLE_LE;
+#endif
+      break;
+    }
+  default:
+    {
+      g_warning("PACKAGE: unexpected case condition in __FILE__ at line __LINE__");
+      raw_data_format = UBYTE_NE; /* take a wild guess */
+      break;
+    }
+  }
+   
+  return raw_data_format;
+}
 
 
 
 /* calculate the number of bytes that will be read from the file*/
-guint raw_data_calc_num_bytes(voxelpoint_t dim, guint num_frames, data_format_t data_format) {
+guint raw_data_calc_num_bytes(voxelpoint_t dim, raw_data_format_t raw_data_format) {
 
-  return (dim.x * dim.y * dim.z * num_frames *  data_sizes[data_format]);
+  return (dim.x * dim.y * dim.z * dim.t *  raw_data_sizes[raw_data_format]);
 
 }
 
-/* reads the contents of a raw data file into an amide volume data structure,
-   note: raw_data_volume should be pre initialized with the appropriate dim 
-   note: if raw_data_volume->frame_duration is null, fake values will be entered
+
+
+
+/* reads the contents of a raw data file into an amide data_set structure,
+   note: raw_data_set should be pre initialized with the appropriate dim
+         and conversion,  but format will be filled in 
    note: file_offset is bytes for a binary file, lines for an ascii file
 */
-volume_t * raw_data_read_file(gchar * file_name, 
-			      volume_t * raw_data_volume,
-			      data_format_t data_format,
+data_set_t * raw_data_read_file(gchar * file_name, 
+			      data_set_t * raw_data_set,
+			      raw_data_format_t raw_data_format,
 			      guint file_offset) {
 
   FILE * file_pointer;
   void * file_buffer=NULL;
   size_t bytes_read;
   size_t bytes_to_read;
-  volume_data_t max,min,temp;
-  guint t;
   voxelpoint_t i;
-  gboolean bullshit_frame_durations;
   gint error, j;
 
-  if (raw_data_volume == NULL) {
-    g_warning("%s: raw_data_read called with NULL volume",PACKAGE);
-    return raw_data_volume;
+  if (raw_data_set == NULL) {
+    g_warning("%s: raw_data_read called with NULL data_set",PACKAGE);
+    return raw_data_set;
   }
+
+  if (file_name == NULL) {
+    g_warning("%s: raw_data_read called with no filename",PACKAGE);
+    return data_set_free(raw_data_set);
+  }
+
+  /* figure out what internal data format we should be using */
+  raw_data_set->format =  raw_data_format_data(raw_data_format);
   
-  /* malloc the space for the volume data */
-  g_free(raw_data_volume->data); /* just in case */
-  if ((raw_data_volume->data = volume_get_data_mem(raw_data_volume)) == NULL) {
-    g_warning("%s: couldn't allocate space for the raw data volume",PACKAGE);
-    raw_data_volume = volume_free(raw_data_volume);
-    return raw_data_volume;
+  /* malloc the space for the data set */
+  g_free(raw_data_set->data); /* just in case */
+  if ((raw_data_set->data = data_set_get_data_mem(raw_data_set)) == NULL) {
+    g_warning("%s: couldn't allocate space for the raw data",PACKAGE);
+    return data_set_free(raw_data_set);
   }
 
   /* open the raw data file for reading */
-  if (data_format == ASCII) {
+  if (raw_data_format == ASCII_NE) {
     if ((file_pointer = fopen(file_name, "r")) == NULL) {
       g_warning("%s: couldn't open raw data file %s", PACKAGE,file_name);
-      raw_data_volume = volume_free(raw_data_volume);
-      return raw_data_volume;
+      return data_set_free(raw_data_set);
     }
   } else { /* note, rb==r on any POSIX compliant system (i.e. Linux). */
     if ((file_pointer = fopen(file_name, "rb")) == NULL) {
       g_warning("%s: couldn't open raw data file %s", PACKAGE,file_name);
-      raw_data_volume = volume_free(raw_data_volume);
-      return raw_data_volume;
+      return data_set_free(raw_data_set);
     }
   }
   
   /* jump forward by the given offset */
-  if (data_format == ASCII) {
+  if (raw_data_format == ASCII_NE) {
     for (j=0; j<file_offset; j++)
       if ((error = fscanf(file_pointer, "%*f")) < 0) { /*EOF is usually -1 */
 	g_warning("%s: could not step forward %d elements in raw data file:\n\t%s\n\treturned error: %d",
 		  PACKAGE, j+1, file_name, error);
-	raw_data_volume = volume_free(raw_data_volume);
 	fclose(file_pointer);
-	return raw_data_volume;
+	return data_set_free(raw_data_set);
     }
   } else { /* binary */
     if (fseek(file_pointer, file_offset, SEEK_SET) != 0) {
       g_warning("%s: could not seek forward %d bytes in raw data file:\n\t%s",
 		PACKAGE, file_offset, file_name);
-      raw_data_volume = volume_free(raw_data_volume);
       fclose(file_pointer);
-      return raw_data_volume;
+      return data_set_free(raw_data_set);
     }
   }
     
   /* read in the contents of the file */
-  if (data_format == ASCII) {
+  if (raw_data_format == ASCII_NE) {
     ; /* this case is handled in the loop below */
   } else {
-    bytes_to_read = raw_data_calc_num_bytes(raw_data_volume->dim, 
-					    raw_data_volume->num_frames, 
-					    data_format);
+    bytes_to_read = raw_data_calc_num_bytes(raw_data_set->dim, raw_data_format);
     file_buffer = (void *) g_malloc(bytes_to_read);
     bytes_read = fread(file_buffer, 1, bytes_to_read, file_pointer );
     if (bytes_read != bytes_to_read) {
       g_warning("%s: read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d", 
 		PACKAGE,file_name, bytes_to_read, bytes_read);
-      raw_data_volume = volume_free(raw_data_volume);
       g_free(file_buffer);
       fclose(file_pointer);
-      return raw_data_volume;
+      return data_set_free(raw_data_set);
     }
     fclose(file_pointer);
   }
   
-  if (raw_data_volume->frame_duration == NULL) {
-    bullshit_frame_durations = TRUE;
-  
-    /* allocate space for the array containing info on the duration of the frames */
-    if ((raw_data_volume->frame_duration = 
-	 volume_get_frame_duration_mem(raw_data_volume)) == NULL) {
-      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
-      raw_data_volume = volume_free(raw_data_volume);
-      g_free(file_buffer);
-      return raw_data_volume;
-    }
-  } else
-    bullshit_frame_durations = FALSE;
-  
   /* iterate over the # of frames */
-  for (t = 0; t < raw_data_volume->num_frames; t++) {
+  for (i.t = 0; i.t < raw_data_set->dim.t; i.t++) {
 #ifdef AMIDE_DEBUG
-    g_print("\tloading frame %d\n",t);
+    g_print("\tloading frame %d\n",i.t);
 #endif
-
-    /* set the duration of this frame if needed */
-    if (bullshit_frame_durations)
-      raw_data_volume->frame_duration[t] = 1.0;
     
     /* and convert the data */
-    switch (data_format) {
+    switch (raw_data_format) {
 
-    case ASCII:
+    case ASCII_NE:
       error = 1;
 
-      /* copy this frame into the volume */
-      for (i.z = 0; (i.z < raw_data_volume->dim.z) && (error >= 0) ; i.z++) {
-	for (i.y = 0; (i.y < raw_data_volume->dim.y) && (error >= 0); i.y++) {
-	  for (i.x = 0; (i.x < raw_data_volume->dim.x) && (error >= 0); i.x++) {
-#if (SIZE_OF_VOLUME_DATA_T == 8)
+      /* copy this frame into the data set */
+      for (i.z = 0; (i.z < raw_data_set->dim.z) && (error >= 0) ; i.z++) {
+	for (i.y = 0; (i.y < raw_data_set->dim.y) && (error >= 0); i.y++) {
+	  for (i.x = 0; (i.x < raw_data_set->dim.x) && (error >= 0); i.x++) {
+#if (SIZE_OF_AMIDE_DATA_T == 8)
 	    /* convert to doubles */
-	    error = fscanf(file_pointer, "%lf", VOLUME_POINTER(raw_data_volume,t,i));
-#elif (SIZE_OF_VOLUME_DATA_T == 4)
+	    error = fscanf(file_pointer, "%lf", DATA_SET_FLOAT_POINTER(raw_data_set,i));
+#elif (SIZE_OF_AMIDE_DATA_T == 4)
 	    /* convert to float */
-	    error = fscanf(file_pointer, "%f", VOLUME_POINTER(raw_data_volume,t,i));
+	    error = fscanf(file_pointer, "%f", DATA_SET_FLOAT_POINTER(raw_data_set,i));
 #else
 #error "Unknown size for SIZE_OF_FLOATPOINT_T"
 #endif
 	    if (error == 0) error = EOF; /* if we couldn't read, may as well be EOF*/
 	  }
-	  //	  if (error >= 0)
-	  //	    error = fscanf(file_pointer, "%*s\n");
 	}
       }
 
@@ -218,9 +353,9 @@ volume_t * raw_data_read_file(gchar * file_name,
 	g_warning("%s: could not read ascii file after %d elements, file or parameters are erroneous:\n\t%s",
 		  PACKAGE, 
 		  i.x + 
-		  raw_data_volume->dim.x*i.y +
-		  raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		  raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t,
+		  raw_data_set->dim.x*i.y +
+		  raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		  raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t,
 		  file_name);
       }
 
@@ -240,24 +375,24 @@ volume_t * raw_data_read_file(gchar * file_name,
 #endif
 #endif
 
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	      temp = 
 		GUINT64_FROM_BE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	      double_p = (void *) &temp;
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *double_p;
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_BIG_ENDIAN */
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = 
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 
 #endif
               }
@@ -273,24 +408,24 @@ volume_t * raw_data_read_file(gchar * file_name,
 	gfloat * data = file_buffer;
 #endif
 
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	      temp = 
 		GUINT32_FROM_BE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	      float_p = (void *) &temp;
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *float_p;
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_BIG_ENDIAN */
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = 
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 
 #endif
 	    }
@@ -300,15 +435,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	gint32 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data_set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) =
 		GINT32_FROM_BE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	  
       }
       break;
@@ -316,15 +451,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	guint32 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) =
 		GUINT32_FROM_BE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
@@ -332,15 +467,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	gint16 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) =
 		GINT16_FROM_BE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
@@ -348,15 +483,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	guint16 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
 		GUINT16_FROM_BE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
@@ -374,24 +509,24 @@ volume_t * raw_data_read_file(gchar * file_name,
 	gdouble * data = file_buffer;
 #endif
 
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 	      temp = 
 		GUINT64_FROM_LE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	      double_p = (void *) &temp;
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *double_p;
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_LITTLE_ENDIAN */
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = 
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 
 #endif
                }
@@ -411,24 +546,24 @@ volume_t * raw_data_read_file(gchar * file_name,
 	gfloat * data = file_buffer;
 #endif
 
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 	      temp = 
 		GUINT32_FROM_LE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	      float_p = (void *) &temp;
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = *float_p;
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) = 
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = 
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 
 #endif
 	    }
@@ -442,15 +577,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	gint32 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) =
 		GINT32_FROM_LE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 	  
       }
       break;
@@ -458,15 +593,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	guint32 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) =
 		GUINT32_FROM_LE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
@@ -474,15 +609,15 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	gint16 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) =
 		GINT16_FROM_LE(data[i.x + 
-				   raw_data_volume->dim.x*i.y +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				   raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				   raw_data_set->dim.x*i.y +
+				   raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				   raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
@@ -490,83 +625,114 @@ volume_t * raw_data_read_file(gchar * file_name,
       {
 	guint16 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
 		GUINT16_FROM_LE(data[i.x + 
-				    raw_data_volume->dim.x*i.y +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-				    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t]);
+				    raw_data_set->dim.x*i.y +
+				    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+				    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t]);
 
       }
       break;
-    case SBYTE:
+    case SBYTE_NE:
       {
 	gint8 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_SBYTE_SET_CONTENT(raw_data_set,i) =
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 
       }
       break;
-    case UBYTE:
+    case UBYTE_NE:
     default:
       {
 	guint8 * data=file_buffer;
 	  
-	/* copy this frame into the volume */
-	for (i.z = 0; i.z < raw_data_volume->dim.z ; i.z++) 
-	  for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++)
-	      VOLUME_SET_CONTENT(raw_data_volume,t,i) =
+	/* copy this frame into the data set */
+	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
+	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	      DATA_SET_UBYTE_SET_CONTENT(raw_data_set,i) =
 		data[i.x + 
-		    raw_data_volume->dim.x*i.y +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*i.z +
-		    raw_data_volume->dim.x*raw_data_volume->dim.y*raw_data_volume->dim.z*t];
+		    raw_data_set->dim.x*i.y +
+		    raw_data_set->dim.x*raw_data_set->dim.y*i.z +
+		    raw_data_set->dim.x*raw_data_set->dim.y*raw_data_set->dim.z*i.t];
 	  
       }
       break;
     }
   }      
 
-  /* set the max/min values in the volume */
-#ifdef AMIDE_DEBUG
-  g_print("\tcalculating max & min");
-#endif
-  max = 0.0;
-  min = 0.0;
-  for(t = 0; t < raw_data_volume->num_frames; t++) {
-    for (i.z = 0; i.z < raw_data_volume->dim.z; i.z++) 
-      for (i.y = 0; i.y < raw_data_volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < raw_data_volume->dim.x; i.x++) {
-	  temp = VOLUME_CONTENTS(raw_data_volume, t, i);
-	  if (temp > max)
-	    max = temp;
-	  else if (temp < min)
-	    min = temp;
-	}
-#ifdef AMIDE_DEBUG
-    g_print(".");
-#endif
-  }
-  raw_data_volume->max = max;
-  raw_data_volume->min = min;
-
-#ifdef AMIDE_DEBUG
-  g_print("\tmax %5.3f min %5.3f\n",max,min);
-#endif
-
   /* garbage collection */
   g_free(file_buffer);
 
+  return raw_data_set;
+}
+
+
+
+
+
+
+/* reads the contents of a raw data file into an amide volume data structure,
+   note: raw_data_volume->data_set should be pre initialized with the appropriate dim 
+   note: conversion factors should also be appropriately pre-initialized if needed
+   note: if raw_data_volume->frame_duration is null, fake values will be entered
+   note: file_offset is bytes for a binary file, lines for an ascii file
+*/
+volume_t * raw_data_read_volume(gchar * file_name, 
+				volume_t * raw_data_volume,
+				raw_data_format_t raw_data_format,
+				guint file_offset) {
+
+  guint t;
+
+  if (raw_data_volume == NULL) {
+    g_warning("%s: raw_data_read called with NULL volume",PACKAGE);
+    return raw_data_volume;
+  }
+
+  /* read in the data set */
+  raw_data_volume->data_set = 
+    raw_data_read_file(file_name, raw_data_volume->data_set, raw_data_format, file_offset);
+  if (raw_data_volume->data_set == NULL) {
+    g_warning("%s: raw_data_read_file failed returning NULL data set",PACKAGE);
+    return raw_data_volume;
+  }
+
+
+  /* put in fake frame durations if needed */
+  if (raw_data_volume->frame_duration == NULL) {
+  
+    /* allocate space for the array containing info on the duration of the frames */
+    if ((raw_data_volume->frame_duration = 
+	 volume_get_frame_duration_mem(raw_data_volume)) == NULL) {
+      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
+      raw_data_volume = volume_free(raw_data_volume);
+      return raw_data_volume;
+    }
+
+    /* iterate over the # of frames */
+    for (t = 0; t < raw_data_volume->data_set->dim.t; t++)
+      raw_data_volume->frame_duration[t] = 1.0;
+  }
+
+  /* set the max/min values in the volume */
+  volume_recalc_max_min(raw_data_volume);
+
   return raw_data_volume;
 }
+
+
+
+

@@ -38,9 +38,6 @@
 #undef VERSION 
 #include "config.h"
 
-#define SIZEOF_SHORT 2
-#define SIZEOF_INT 4
-
 volume_t * medcon_import(gchar * filename) {
 
   FILEINFO medcon_file_info;
@@ -48,16 +45,13 @@ volume_t * medcon_import(gchar * filename) {
   struct tm time_structure;
   voxelpoint_t i;
   volume_t * temp_volume;
-  guint t;
-  volume_data_t max,min,temp;
   gchar * volume_name;
   gchar ** frags=NULL;
-  gfloat * medcon_buffer;
-
   
-  XMDC_MEDCON = MDC_NO;            /* make sure it is command line driven    */
-
   /* setup some defaults */
+  XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
+  MDC_INFO=MDC_NO;       /* don't print stuff */
+  MDC_VERBOSE=MDC_NO;    /* and don't print stuff */
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
 
   /* open the file */
@@ -75,9 +69,14 @@ volume_t * medcon_import(gchar * filename) {
 
   /* start acquiring some useful information */
   if ((temp_volume = volume_init()) == NULL) {
-    g_warning("%s: couldn't allocate space for the volume structure", PACKAGE);
+    g_warning("%s: couldn't allocate space for the volume structure to hold medcon data", PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
     return temp_volume;
+  }
+  if ((temp_volume->data_set = data_set_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the data set structure to hold medcon data", PACKAGE);
+    MdcCleanUpFI(&medcon_file_info);
+    return volume_free(temp_volume);
   }
 
   /* start figuring out information */
@@ -93,10 +92,46 @@ volume_t * medcon_import(gchar * filename) {
 	  medcon_file_info.dim[5],medcon_file_info.dim[6]);
   g_print("\tbits: %d\ttype: %d\n",medcon_file_info.bits,medcon_file_info.type);
 #endif
-  temp_volume->dim.x = medcon_file_info.dim[1];
-  temp_volume->dim.y = medcon_file_info.dim[2];
-  temp_volume->dim.z = medcon_file_info.dim[3];
-  temp_volume->num_frames = medcon_file_info.dim[4];
+  temp_volume->data_set->dim.x = medcon_file_info.dim[1];
+  temp_volume->data_set->dim.y = medcon_file_info.dim[2];
+  temp_volume->data_set->dim.z = medcon_file_info.dim[3];
+  temp_volume->data_set->dim.t = medcon_file_info.dim[4];
+
+  /* pick our internal data format */
+  switch(medcon_file_info.type) {
+    /* note: which types are supported are determined by what MdcGetImg* functions are available */
+  case BIT1: /* 1 */
+  case BIT8_S: /* 2 */
+    g_warning("%s: Importing type %d file through medcon unsupported, trying as unsigned byte",
+	      PACKAGE, medcon_file_info.type);
+  case BIT8_U: /* 3 */
+    temp_volume->data_set->format = UBYTE;
+    break;
+  case BIT16_U: /*  5 */
+    g_warning("%s: Importing type %d file through medcon unsupported, trying as signed short",
+	      PACKAGE, medcon_file_info.type);
+  case BIT16_S: /* 4 */
+    temp_volume->data_set->format = SSHORT;
+    break;
+  case BIT32_U: /* 7 */
+    g_warning("%s: Importing type %d file through medcon unsupported, trying as signed int",
+	      PACKAGE, medcon_file_info.type);
+  case BIT32_S: /* 6 */
+    temp_volume->data_set->format = SINT;
+    break;
+  default:
+  case BIT64_U: /* 9 */
+  case BIT64_S: /* 8 */
+  case FLT64: /* 11 */
+  case ASCII: /* 12 */
+  case VAXFL32: /* 13 */
+    g_warning("%s: Importing type %d file through medcon unsupported, trying as float",
+	      PACKAGE, medcon_file_info.type);
+  case FLT32: /* 10 */
+    temp_volume->data_set->format = FLOAT;
+    break;
+  }
+
   temp_volume->voxel_size.x = medcon_file_info.pixdim[1];
   temp_volume->voxel_size.y = medcon_file_info.pixdim[2];
   temp_volume->voxel_size.z = medcon_file_info.pixdim[3];
@@ -159,52 +194,151 @@ volume_t * medcon_import(gchar * filename) {
   if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
     g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    temp_volume = volume_free(temp_volume);
-    return temp_volume;
+    return volume_free(temp_volume);
   }
 
   /* malloc the space for the volume */
-  if ((temp_volume->data = volume_get_data_mem(temp_volume)) == NULL) {
+  if ((temp_volume->data_set->data = data_set_get_data_mem(temp_volume->data_set)) == NULL) {
     g_warning("%s: couldn't allocate space for the volume",PACKAGE);
     MdcCleanUpFI(&medcon_file_info);
-    temp_volume = volume_free(temp_volume);
-    return temp_volume;
+    return volume_free(temp_volume);
+  }
+
+  /* setup the internal scaling factor array */
+  temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
+  temp_volume->internal_scaling->dim.z = temp_volume->data_set->dim.z;
+  /* malloc the space for the scaling factors */
+  g_free(temp_volume->internal_scaling->data); /* get rid of any old scaling factors */
+  if ((temp_volume->internal_scaling->data = data_set_get_data_mem(temp_volume->internal_scaling)) == NULL) {
+    g_warning("%s: couldn't allocate space for the scaling factors for the (X)medcon data",PACKAGE);
+    MdcCleanUpFI(&medcon_file_info);
+    return volume_free(temp_volume);
   }
 
   /* and load in the data */
-  for (t = 0; t < temp_volume->num_frames; t++) {
+  for (i.t = 0; i.t < temp_volume->data_set->dim.t; i.t++) {
 #ifdef AMIDE_DEBUG
-    g_print("\tloading frame %d",t);
+    g_print("\tloading frame %d",i.t);
 #endif
 
     /* set the frame duration, note, medcon/libMDC specifies time as float in msecs */
-    temp_volume->frame_duration[t] = 
-      medcon_file_info.image[t*temp_volume->dim.z].frame_duration/1000;
+    temp_volume->frame_duration[i.t] = 
+      medcon_file_info.image[i.t*temp_volume->data_set->dim.z].frame_duration/1000;
 
     /* copy the data into the volume */
-    for (i.z = 0 ; i.z < temp_volume->dim.z; i.z++) {
+    for (i.z = 0 ; i.z < temp_volume->data_set->dim.z; i.z++) {
 
-      /* convert the image to a 32 bit float to begin with */
-      if ((medcon_buffer = (gfloat *) MdcGetImgFLT32(&medcon_file_info, i.z+t*temp_volume->dim.z)) == NULL) {
-	g_warning("%s: medcon couldn't convert to a float... out of memory?",PACKAGE);
-	temp_volume = volume_free(temp_volume);
+      /* store the scaling factor... I think this is the right scaling factor... */
+      *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, i) = 
+	medcon_file_info.image[i.t*temp_volume->data_set->dim.z + i.z].rescale_fctr;
+
+      switch(temp_volume->data_set->format) {
+      case UBYTE:
+	{
+	  data_set_UBYTE_t * medcon_buffer;
+
+	  /* convert the image to a 16 bit signed in to begin with */
+	  if ((medcon_buffer = 
+	       (data_set_UBYTE_t *) MdcGetImgBIT8_U(&medcon_file_info, 
+						    i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){
+	    g_warning("%s: medcon couldn't convert to an unsigned byte... out of memory?",PACKAGE);
+	    MdcCleanUpFI(&medcon_file_info);
+	    g_free(medcon_buffer);
+	    return volume_free(temp_volume);
+	  }
+	  
+	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
+	      DATA_SET_UBYTE_SET_CONTENT(temp_volume->data_set,i) =
+		medcon_buffer[(temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)+i.x)];
+	  
+	  /* done with the temporary float buffer */
+	  g_free(medcon_buffer);
+	}
+	break;
+      case SSHORT:
+	{
+	  data_set_SSHORT_t * medcon_buffer;
+
+	  /* convert the image to a 16 bit signed in to begin with */
+	  if ((medcon_buffer = 
+	       (data_set_SSHORT_t *) MdcGetImgBIT16_S(&medcon_file_info, 
+						      i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){
+	    g_warning("%s: medcon couldn't convert to a signed short... out of memory?",PACKAGE);
+	    MdcCleanUpFI(&medcon_file_info);
+	    g_free(medcon_buffer);
+	    return volume_free(temp_volume);
+	  }
+	  
+	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
+	      DATA_SET_SSHORT_SET_CONTENT(temp_volume->data_set,i) =
+		medcon_buffer[(temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)+i.x)];
+	  
+	  /* done with the temporary float buffer */
+	  g_free(medcon_buffer);
+	}
+	break;
+      case SINT:
+	{
+	  data_set_SINT_t * medcon_buffer;
+
+	  /* convert the image to a 16 bit signed in to begin with */
+	  if ((medcon_buffer = 
+	       (data_set_SINT_t *) MdcGetImgBIT32_S(&medcon_file_info, 
+						    i.z+i.t*temp_volume->data_set->dim.z)) == NULL ){
+	    g_warning("%s: medcon couldn't convert to a signed int... out of memory?",PACKAGE);
+	    MdcCleanUpFI(&medcon_file_info);
+	    g_free(medcon_buffer);
+	    return volume_free(temp_volume);
+	  }
+	  
+	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
+	      DATA_SET_SINT_SET_CONTENT(temp_volume->data_set,i) =
+		medcon_buffer[(temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)+i.x)];
+	  
+	  /* done with the temporary float buffer */
+	  g_free(medcon_buffer);
+	}
+	break;
+      case FLOAT: 
+	{
+	  data_set_FLOAT_t * medcon_buffer;
+
+	  /* convert the image to a 32 bit float to begin with */
+	  if ((medcon_buffer = 
+	       (data_set_FLOAT_t *) MdcGetImgFLT32(&medcon_file_info, 
+						   i.z+i.t*temp_volume->data_set->dim.z)) == NULL){
+	    g_warning("%s: medcon couldn't convert to a float... out of memory?",PACKAGE);
+	    MdcCleanUpFI(&medcon_file_info);
+	    g_free(medcon_buffer);
+	    return volume_free(temp_volume);
+	  }
+	  
+	  /* transfer over the medcon buffer, compensate for our origin being bottom left */
+	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
+	      DATA_SET_FLOAT_SET_CONTENT(temp_volume->data_set,i) =
+		medcon_buffer[(temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)+i.x)];
+	  
+	  /* done with the temporary float buffer */
+	  g_free(medcon_buffer);
+	}
+	break;
+      default:
+	g_warning("PACKAGE: unexpected case in __FILE__ at line __LINE__");
 	MdcCleanUpFI(&medcon_file_info);
-	g_free(medcon_buffer);
-	return temp_volume;
+	return volume_free(temp_volume);
+	break;
       }
-
-      /* transfer over the medcon buffer, compensate for our origin being bottom left */
-      for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < temp_volume->dim.x; i.x++)
-	  VOLUME_SET_CONTENT(temp_volume,t,i) =
-	    medcon_buffer[(temp_volume->dim.x*(temp_volume->dim.y-i.y-1)+i.x)];
-    
-      /* done with the temporary float buffer */
-      g_free(medcon_buffer);
     }
-
+    
 #ifdef AMIDE_DEBUG
-    g_print("\tduration %5.3f\n",temp_volume->frame_duration[t]);
+    g_print("\tduration %5.3f\n",temp_volume->frame_duration[i.t]);
 #endif
   }    
 
@@ -213,41 +347,10 @@ volume_t * medcon_import(gchar * filename) {
   MdcCleanUpFI(&medcon_file_info);
 
 
-  /* set the far corner of the volume */
-  temp_volume->corner.x = temp_volume->dim.x*temp_volume->voxel_size.x;
-  temp_volume->corner.y = temp_volume->dim.y*temp_volume->voxel_size.y;
-  temp_volume->corner.z = temp_volume->dim.z*temp_volume->voxel_size.z;
-  
-  /* set the max/min values in the volume */
-#ifdef AMIDE_DEBUG
-  g_print("\tcalculating max & min");
-#endif
-  max = 0.0;
-  min = 0.0;
-  for(t = 0; t < temp_volume->num_frames; t++) {
-    for (i.z = 0; i.z < temp_volume->dim.z; i.z++) 
-      for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < temp_volume->dim.x; i.x++) {
-	  temp = VOLUME_CONTENTS(temp_volume, t, i);
-	  if (temp > max)
-	    max = temp;
-	  else if (temp < min)
-	    min = temp;
-	}
-#ifdef AMIDE_DEBUG
-  g_print(".");
-#endif
-  }
-  temp_volume->max = max;
-  temp_volume->min = min;
-
-#ifdef AMIDE_DEBUG
-  g_print("\tmax %5.3f min %5.3f\n",max,min);
-#endif
-
-
-
-
+  /* setup remaining volume parameters */
+  volume_set_scaling(temp_volume, 1.0); /* set the external scaling factor */
+  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
+  volume_recalc_max_min(temp_volume); /* set the max/min values in the volume */
 
   return temp_volume;
 }

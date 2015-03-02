@@ -23,6 +23,11 @@
   02111-1307, USA.
 */
 
+
+/* defines */
+
+#define IDL_RAW_DATA_FORMAT UBYTE_NE
+
 /* internal functions */
 
 

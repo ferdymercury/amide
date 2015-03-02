@@ -4,4 +4,5 @@ SUBDIRS = C
 
 EXTRA_DIST = 
 
+DISTCLEANFILES = *~
 

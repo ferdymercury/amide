@@ -166,9 +166,9 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   case CENTER_Z:
     new_center.z = temp_val;
     break;
-  case CONVERSION_FACTOR:
+  case SCALING_FACTOR:
     if (fabs(temp_val) > CLOSE) /* avoid zero... */
-      volume_new_info->conversion = temp_val;
+      volume_set_scaling(volume_new_info, temp_val);
     break;
   case SCAN_START:
     volume_new_info->scan_start = temp_val;
@@ -184,10 +184,10 @@ void ui_volume_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) 
   }
   
   /* recalculate the volume's offset based on the new center */
-  REALPOINT_SUB(new_center, old_center, shift);
+  shift = rp_sub(new_center, old_center);
 
   /* and save any changes to the coord frame */
-  REALPOINT_ADD(volume_new_info->coord_frame.offset, shift, volume_new_info->coord_frame.offset);
+  rs_set_offset(&volume_new_info->coord_frame, rp_add(rs_offset(volume_new_info->coord_frame), shift));
 
   /* update the entry widgets as necessary */
   if (update_size_x) {
@@ -279,7 +279,6 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
   ui_study_t * ui_study;
   volume_t * volume_new_info = data;
   view_t i_view;
-  axis_t i_axis;
   floatpoint_t rotation;
   GtkWidget * volume_dialog;
   realpoint_t center, temp;
@@ -299,19 +298,16 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
   if (i_view == SAGITTAL)
     rotation = -rotation; 
 
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
-    volume_new_info->coord_frame.axis[i_axis] = 
-      realspace_rotate_on_axis(volume_new_info->coord_frame.axis[i_axis],
-			       realspace_get_view_normal(study_coord_frame_axis(ui_study->study), i_view),
-			       rotation);
-  realspace_make_orthonormal(volume_new_info->coord_frame.axis); /* orthonormalize*/
-
+  /* rotate the axis */
+  realspace_rotate_on_axis(&volume_new_info->coord_frame,
+			   realspace_get_view_normal(study_coord_frame_axis(ui_study->study), i_view),
+			   rotation);
   
   /* recalculate the offset of this volume based on the center we stored */
   REALPOINT_CMULT(-0.5,volume_new_info->corner,temp);
-  volume_new_info->coord_frame.offset = center;
-  volume_new_info->coord_frame.offset = 
-    realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
+  rs_set_offset(&volume_new_info->coord_frame, center);
+  rs_set_offset(&volume_new_info->coord_frame, 
+		realspace_alt_coord_to_base(temp, volume_new_info->coord_frame));
 
   /* return adjustment back to normal */
   adjustment->value = 0.0;
@@ -330,7 +326,6 @@ void ui_volume_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer
 void ui_volume_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 
   volume_t * volume_new_info = data;
-  axis_t i_axis;
   GtkWidget * volume_dialog;
   realpoint_t center, temp;
 
@@ -338,14 +333,13 @@ void ui_volume_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   center = volume_calculate_center(volume_new_info); 
 
   /* reset the axis */
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    volume_new_info->coord_frame.axis[i_axis] = default_axis[i_axis];
-  }
+  rs_set_axis(&volume_new_info->coord_frame, default_axis);
 
   /* recalculate the offset of this volume based on the center we stored */
   REALPOINT_CMULT(-0.5,volume_new_info->corner,temp);
-  volume_new_info->coord_frame.offset = center;
-  volume_new_info->coord_frame.offset = realspace_alt_coord_to_base(temp, volume_new_info->coord_frame);
+  rs_set_offset(&volume_new_info->coord_frame, center);
+  rs_set_offset(&volume_new_info->coord_frame, 
+		realspace_alt_coord_to_base(temp, volume_new_info->coord_frame));
 
   /* now tell the volume_dialog that we've changed */
   volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
@@ -361,7 +355,7 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   ui_volume_list_t * ui_volume_list_item = data;
   ui_study_t * ui_study;
   volume_t * volume_new_info;
-  volume_data_t scale;
+  amide_data_t scale;
   guint i;
   GtkWidget * label;
   GtkWidget * pixmap;
@@ -390,10 +384,10 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   ui_volume_list_item->volume->voxel_size = volume_new_info->voxel_size;
   volume_set_name(ui_volume_list_item->volume, volume_new_info->name);
 
-  /* apply any changes in the conversion factor */
-  if (!FLOATPOINT_EQUAL(ui_volume_list_item->volume->conversion, volume_new_info->conversion)) {
-    scale = (volume_new_info->conversion)/(ui_volume_list_item->volume->conversion);
-    ui_volume_list_item->volume->conversion = scale * ui_volume_list_item->volume->conversion;
+  /* apply any changes in the scaling factor */
+  if (!FLOATPOINT_EQUAL(ui_volume_list_item->volume->external_scaling, volume_new_info->external_scaling)) {
+    scale = (volume_new_info->external_scaling)/(ui_volume_list_item->volume->external_scaling);
+    volume_set_scaling(ui_volume_list_item->volume, volume_new_info->external_scaling);
     ui_volume_list_item->volume->max = scale *  ui_volume_list_item->volume->max;
     ui_volume_list_item->volume->min = scale *  ui_volume_list_item->volume->min;
     ui_volume_list_item->volume->threshold_max = scale *  ui_volume_list_item->volume->threshold_max;
@@ -404,13 +398,12 @@ void ui_volume_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpoin
   }
 
   /* reset the far corner */
-  REALPOINT_MULT(ui_volume_list_item->volume->dim,ui_volume_list_item->volume->voxel_size,
-		 ui_volume_list_item->volume->corner);
+  volume_recalc_far_corner(ui_volume_list_item->volume);
 
   /* apply any time changes, and recalculate the frame selection
      widget in case any timing information in this volume has changed */
   ui_volume_list_item->volume->scan_start = volume_new_info->scan_start;
-  for (i=0;i<ui_volume_list_item->volume->num_frames;i++)
+  for (i=0;i<ui_volume_list_item->volume->data_set->dim.t;i++)
     ui_volume_list_item->volume->frame_duration[i] = volume_new_info->frame_duration[i];
   ui_time_dialog_set_times(ui_study);
 

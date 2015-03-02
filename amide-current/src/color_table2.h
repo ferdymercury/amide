@@ -28,6 +28,9 @@
    color_table.h */
 
 /* external functions */
-color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
-				 volume_data_t min, volume_data_t max);
+rgba_t color_table_lookup(amide_data_t datum, color_table_t which,
+			  amide_data_t min, amide_data_t max);
+
+
+
 

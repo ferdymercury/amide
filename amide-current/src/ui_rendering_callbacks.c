@@ -27,6 +27,7 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
+#include <sys/stat.h>
 #include <gnome.h>
 #include "amide.h"
 #include "rendering.h"
@@ -36,6 +37,7 @@
 #include "ui_rendering_callbacks.h"
 #include "ui_rendering_dialog.h"
 #include "ui_rendering_movie_dialog.h"
+#include "ui_study_callbacks.h"
 
 
 /* function callback for the "render" button */
@@ -91,7 +93,7 @@ void ui_rendering_callbacks_rotate(GtkAdjustment * adjustment, gpointer data) {
 
   /* update the rotation values */
   rendering_context_set_rotation(ui_rendering->axis_context, i_axis, rotation);
-  rendering_lists_set_rotation(ui_rendering->contexts, i_axis, rotation);
+  rendering_list_set_rotation(ui_rendering->contexts, i_axis, rotation);
 
   /* render now if appropriate*/
   if (ui_rendering->immediate)
@@ -104,9 +106,155 @@ void ui_rendering_callbacks_rotate(GtkAdjustment * adjustment, gpointer data) {
   return;
 }
 
+/* function called to snap the axis back to the default */
+void ui_rendering_callbacks_reset_axis_pressed(GtkWidget * widget, gpointer data) {
+  ui_rendering_t * ui_rendering = data;
+
+  /* reset the rotations */
+  rendering_context_reset_rotation(ui_rendering->axis_context);
+  rendering_list_reset_rotation(ui_rendering->contexts);
+
+  /* render now if appropriate*/
+  if (ui_rendering->immediate)
+    ui_rendering_update_canvases(ui_rendering); 
+
+  return;
+}
+
+
+/* function to handle exporting a view */
+static void ui_rendering_callbacks_export_ok(GtkWidget* widget, gpointer data) {
+
+  GtkWidget * file_selection = data;
+  GtkWidget * question;
+  ui_rendering_t * ui_rendering;
+  gchar * save_filename;
+  gchar * temp_string;
+  struct stat file_info;
+  GdkImlibImage * export_image;
+
+  /* get a pointer to ui_rendering */
+  ui_rendering = gtk_object_get_data(GTK_OBJECT(file_selection), "ui_rendering");
+
+  /* get the filename */
+  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
+  /* some sanity checks */
+  if ((strcmp(save_filename, ".") == 0) ||
+      (strcmp(save_filename, "..") == 0) ||
+      (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "/") == 0)) {
+    g_warning("%s: Inappropriate filename: %s",PACKAGE, save_filename);
+    return;
+  }
+
+  /* see if the filename already exists */
+  if (stat(save_filename, &file_info) == 0) {
+    /* check if it's okay to writeover the file */
+    temp_string = g_strdup_printf("Overwrite file: %s", save_filename);
+    if (GNOME_IS_APP(ui_rendering->app))
+      question = gnome_question_dialog_modal_parented(temp_string, NULL, NULL, 
+						      GTK_WINDOW(ui_rendering->app));
+    else
+      question = gnome_question_dialog_modal(temp_string, NULL, NULL);
+    g_free(temp_string);
+
+    /* and wait for the question to return */
+    if (gnome_dialog_run_and_close(GNOME_DIALOG(question)) == 1)
+      return; /* we don't want to overwrite the file.... */
+  }
+
+
+  /* yep, we still need to use imlib for the moment for generating output images,
+     maybe gdk_pixbuf will have this functionality at some point */
+  export_image = gdk_imlib_create_image_from_data(gdk_pixbuf_get_pixels(ui_rendering->main_image), NULL, 
+						  gdk_pixbuf_get_width(ui_rendering->main_image),
+						  gdk_pixbuf_get_height(ui_rendering->main_image));
+  if (export_image == NULL) {
+    g_warning("%s: Failure converting pixbuf to imlib image for exporting image file",PACKAGE);
+    return;
+  }
+
+  /* allright, export the view */
+  if (gdk_imlib_save_image(export_image, save_filename, NULL) == FALSE) {
+    g_warning("%s: Failure Saving File: %s",PACKAGE, save_filename);
+    gdk_imlib_destroy_image(export_image);
+    return;
+  }
+  gdk_imlib_destroy_image(export_image);
+
+  /* close the file selection box */
+  ui_study_callbacks_file_selection_cancel(widget, file_selection);
+
+  return;
+}
+
+/* function to save a rendering as an external data format */
+void ui_rendering_callbacks_export_pressed(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_t * ui_rendering = data;
+  rendering_list_t * temp_contexts;
+  GtkFileSelection * file_selection;
+  gchar * temp_string;
+  gchar * data_set_names = NULL;
+  static guint save_image_num = 0;
+
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+
+  /* take a guess at the filename */
+  temp_contexts = ui_rendering->contexts;
+  data_set_names = g_strdup(temp_contexts->rendering_context->volume->name);
+  temp_contexts = temp_contexts->next;
+  while (temp_contexts != NULL) {
+    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->volume->name);
+    g_free(data_set_names);
+    data_set_names = temp_string;
+    temp_contexts = temp_contexts->next;
+  }
+  temp_string = g_strdup_printf("Rendering_{%s}_%d.jpg", 
+				data_set_names,save_image_num);
+  gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
+  g_free(data_set_names);
+  g_free(temp_string); 
+
+  /* save a pointer to ui_rendering */
+  gtk_object_set_data(GTK_OBJECT(file_selection), "ui_rendering", ui_rendering);
+    
+  /* don't want anything else going on till this window is gone */
+  //  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+  // for some reason, this modal's the application permanently...
+
+  /* connect the signals */
+  gtk_signal_connect(GTK_OBJECT(file_selection->ok_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_export_ok),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "clicked",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+  gtk_signal_connect(GTK_OBJECT(file_selection->cancel_button),
+		     "delete_event",
+		     GTK_SIGNAL_FUNC(ui_study_callbacks_file_selection_cancel),
+		     file_selection);
+
+  /* set the position of the dialog */
+  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+
+  /* run the dialog */
+  gtk_widget_show(GTK_WIDGET(file_selection));
+
+
+  /* increment this number, so each guessed image name is unique */
+  save_image_num++;
+
+  return;
+}
+
+
 
 /* function called when the button to pop up a rendering parameters modification dialog is hit */
-void ui_rendering_parameters_pressed(GtkWidget * widget, gpointer data) {
+void ui_rendering_callbacks_parameters_pressed(GtkWidget * widget, gpointer data) {
   
   ui_rendering_t * ui_rendering = data;
 
@@ -115,9 +263,10 @@ void ui_rendering_parameters_pressed(GtkWidget * widget, gpointer data) {
   return;
 }
 
+
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
 /* function called when the button to pop up a movie generation dialog */
-void ui_rendering_movie_pressed(GtkWidget * widget, gpointer data) {
+void ui_rendering_callbacks_movie_pressed(GtkWidget * widget, gpointer data) {
   
   ui_rendering_t * ui_rendering = data;
 

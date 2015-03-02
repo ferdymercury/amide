@@ -28,7 +28,7 @@
 #define PEM_DATA_Y 30
 #define PEM_DATA_Z 24
 #define PEM_DATA_FRAMES 1
-#define PEM_DATA_FORMAT ASCII
+#define PEM_DATA_FORMAT ASCII_NE
 #define PEM_FILE_OFFSET 1
 #define PEM_VOXEL_SIZE_X 2.0;
 #define PEM_VOXEL_SIZE_Y 2.0;

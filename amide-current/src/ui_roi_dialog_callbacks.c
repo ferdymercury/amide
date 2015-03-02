@@ -69,15 +69,11 @@ void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) {
   realpoint_t temp_dim;
   realspace_t temp_coord_frame;
   realpoint_t temp;
-  axis_t i_axis;
   GtkWidget * roi_dialog;
 
   /* initialize the center and dimension variables based on the old roi info */
   temp_center = roi_calculate_center(roi_new_info); /* in real coords */
   temp_dim = roi_new_info->corner; /* in roi's coords */
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    temp_coord_frame.axis[i_axis] = roi_new_info->coord_frame.axis[i_axis];
-  temp_coord_frame.offset = realpoint_init;
 
   /* figure out which widget this is */
   which_widget = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "type")); 
@@ -112,41 +108,18 @@ void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data) {
   case DIM_Z:
     temp_dim.z = fabs(temp_val);
     break;
-  case AXIS_X_X:
-    temp_coord_frame.axis[XAXIS].x = temp_val;
-    break;
-  case AXIS_X_Y:
-    temp_coord_frame.axis[XAXIS].y = temp_val;
-    break;
-  case AXIS_X_Z:
-    temp_coord_frame.axis[XAXIS].z = temp_val;
-    break;
-  case AXIS_Y_X:
-    temp_coord_frame.axis[YAXIS].x = temp_val;
-    break;
-  case AXIS_Y_Y:
-    temp_coord_frame.axis[YAXIS].y = temp_val;
-    break;
-  case AXIS_Y_Z:
-    temp_coord_frame.axis[YAXIS].z = temp_val;
-    break;
-  case AXIS_Z_X:
-    temp_coord_frame.axis[ZAXIS].x = temp_val;
-    break;
-  case AXIS_Z_Y:
-    temp_coord_frame.axis[ZAXIS].y = temp_val;
-    break;
-  case AXIS_Z_Z:
-    temp_coord_frame.axis[ZAXIS].z = temp_val;
-    break;
   default:
+    return;
     break; /* do nothing */
   }
-  
+
+  temp_coord_frame = roi_new_info->coord_frame;
+  rs_set_offset(&temp_coord_frame, realpoint_init);
 
   /* recalculate the roi's offset based on the new dimensions/center/and axis */
-  temp = realspace_alt_dim_to_base(temp_dim, temp_coord_frame);
-  REALPOINT_MADD(-0.5,temp,1,temp_center,temp_coord_frame.offset);
+  temp = realspace_base_coord_to_alt(temp_center, temp_coord_frame);
+  temp = realspace_alt_coord_to_base(rp_add(rp_cmult(-0.5, temp_dim), temp), temp_coord_frame);
+  rs_set_offset(&temp_coord_frame, temp);
 
   /* reset the far corner based on the new coord frame */
   roi_new_info->corner = realspace_alt_dim_to_alt(temp_dim, 
@@ -215,7 +188,6 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   ui_study_t * ui_study;
   roi_t * roi_new_info = data;
   view_t i_view;
-  axis_t i_axis;
   floatpoint_t rotation;
   GtkWidget * roi_dialog;
   realpoint_t center, temp;
@@ -235,19 +207,16 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
   if (i_view == SAGITTAL)
     rotation = -rotation; 
 
-  for (i_axis=0; i_axis<NUM_AXIS; i_axis++) 
-    roi_new_info->coord_frame.axis[i_axis] = 
-      realspace_rotate_on_axis(roi_new_info->coord_frame.axis[i_axis],
-			       realspace_get_view_normal(study_coord_frame_axis(ui_study->study),i_view),
-			       rotation);
-  realspace_make_orthonormal(roi_new_info->coord_frame.axis); /* orthonormalize*/
-
+  /* rotate the axis */
+  realspace_rotate_on_axis(&roi_new_info->coord_frame,
+			   realspace_get_view_normal(study_coord_frame_axis(ui_study->study), i_view),
+			   rotation);
   
   /* recalculate the offset of this roi based on the center we stored */
   REALPOINT_CMULT(-0.5,roi_new_info->corner,temp);
-  roi_new_info->coord_frame.offset = center;
-  roi_new_info->coord_frame.offset = 
-    realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);
+  rs_set_offset(&roi_new_info->coord_frame,center);
+  rs_set_offset(&roi_new_info->coord_frame, 
+		realspace_alt_coord_to_base(temp, roi_new_info->coord_frame));
 
   /* return adjustment back to normal */
   adjustment->value = 0.0;
@@ -266,7 +235,6 @@ void ui_roi_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer da
 void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 
   roi_t * roi_new_info = data;
-  axis_t i_axis;
   GtkWidget * roi_dialog;
   realpoint_t center, temp;
 
@@ -274,15 +242,12 @@ void ui_roi_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   center = roi_calculate_center(roi_new_info); 
 
   /* reset the axis */
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    roi_new_info->coord_frame.axis[i_axis] = default_axis[i_axis];
-  }
+  rs_set_axis(&roi_new_info->coord_frame, default_axis);
 
   /* recalculate the offset of this roi based on the center we stored */
-  REALPOINT_CMULT(-0.5,roi_new_info->corner,temp);
-  roi_new_info->coord_frame.offset = center;
-  roi_new_info->coord_frame.offset = 
-    realspace_alt_coord_to_base(temp, roi_new_info->coord_frame);
+  temp = rp_cmult(-0.5,roi_new_info->corner);
+  rs_set_offset(&roi_new_info->coord_frame, center);
+  rs_set_offset(&roi_new_info->coord_frame, realspace_alt_coord_to_base(temp, roi_new_info->coord_frame));
 
   /* now tell the roi_dialog that we've changed */
   roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");

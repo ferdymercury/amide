@@ -1,1 +1,3 @@
 EXTRA_DIST = amide.spec
+
+DISTCLEANFILES = *~

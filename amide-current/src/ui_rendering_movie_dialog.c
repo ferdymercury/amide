@@ -136,8 +136,8 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
 	  / ui_rendering_movie->num_frames;
 	rendering_context_set_rotation(ui_rendering_movie->ui_rendering->axis_context, 
 				       i_axis, rotation_step[i_axis]);
-	rendering_lists_set_rotation(ui_rendering_movie->ui_rendering->contexts, 
-				     i_axis, rotation_step[i_axis]);
+	rendering_list_set_rotation(ui_rendering_movie->ui_rendering->contexts, 
+				    i_axis, rotation_step[i_axis]);
       }
       
 #ifdef AMIDE_DEBUG
@@ -186,8 +186,8 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       for (i_axis = NUM_AXIS; i_axis > 0 ; i_axis--) {
 	rendering_context_set_rotation(ui_rendering_movie->ui_rendering->axis_context, 
 				       i_axis-1, -rotation_step[i_axis-1]);
-	rendering_lists_set_rotation(ui_rendering_movie->ui_rendering->contexts, 
-				     i_axis-1, -rotation_step[i_axis-1]);
+	rendering_list_set_rotation(ui_rendering_movie->ui_rendering->contexts, 
+				    i_axis-1, -rotation_step[i_axis-1]);
       }
     }
   }

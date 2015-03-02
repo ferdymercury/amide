@@ -74,7 +74,7 @@ ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
 
 /* malloc and initialize a ui_rendering data structure */
 ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_frame, 
-				   volume_time_t start, volume_time_t duration) {
+				   amide_time_t start, amide_time_t duration, interpolation_t interpolation) {
 
   ui_rendering_t * ui_rendering;
   volume_t * axis_volume;
@@ -112,11 +112,11 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
   ui_rendering->axis_context = 
     rendering_context_init(axis_volume, axis_volume->coord_frame,
   			   axis_volume->corner, REALPOINT_MIN_DIM(axis_volume->voxel_size),
-  			   REALPOINT_MAX_DIM(axis_volume->corner), start, duration);
+  			   REALPOINT_MAX_DIM(axis_volume->corner), start, duration, interpolation);
   volume_free(axis_volume);
 
   /* initialize the rendering contexts */
-  ui_rendering->contexts = rendering_list_init(volumes, coord_frame, start, duration );
+  ui_rendering->contexts = rendering_list_init(volumes, coord_frame, start, duration, interpolation );
 
   return ui_rendering;
 }
@@ -127,9 +127,10 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
 /* render our volumes and place into the canvases */
 void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
-  color_point_t blank_color;
+  rgba_t blank_rgba;
 
-  blank_color.r = blank_color.g = blank_color.b = 0;
+  blank_rgba.r = blank_rgba.g = blank_rgba.b = 0;
+  blank_rgba.a = 0xFF;
 
   if (ui_rendering == NULL) {
     g_warning("%s: called ui_rendering_update_canvases with NULL ui_rendering....?",PACKAGE);
@@ -141,7 +142,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
     gdk_pixbuf_unref(ui_rendering->axis_image);
 
   if (ui_rendering->axis_context == NULL) {
-    ui_rendering->axis_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
+    ui_rendering->axis_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_rgba);
   } else {
     rendering_context_render(ui_rendering->axis_context);
     ui_rendering->axis_image = 
@@ -185,7 +186,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
     gdk_pixbuf_unref(ui_rendering->main_image);
 
   if (ui_rendering->contexts == NULL)
-    ui_rendering->main_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_color);
+    ui_rendering->main_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_rgba);
   else {
     rendering_list_render(ui_rendering->contexts);
     /* base the dimensions on the first context in the list.... */
@@ -230,7 +231,7 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
 /* function that sets up the rendering dialog */
 void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame, 
-			 volume_time_t start, volume_time_t duration) {
+			 amide_time_t start, amide_time_t duration, interpolation_t interpolation) {
   
   GtkWidget * packing_table;
   GtkWidget * check_button;
@@ -240,6 +241,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   GtkWidget * scale;
   GtkWidget * vbox;
   GtkWidget * hbox;
+  GtkWidget * hseparator;
   axis_t i_axis;
   ui_rendering_t * ui_rendering;
   gchar * temp_string;
@@ -248,7 +250,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   if (volumes == NULL)
     return;
 
-  ui_rendering = ui_rendering_init(volumes, coord_frame, start, duration);
+  ui_rendering = ui_rendering_init(volumes, coord_frame, start, duration, interpolation);
   ui_rendering->app = GNOME_APP(gnome_app_new(PACKAGE, "Rendering Window"));
 
   /* setup the callbacks for app */
@@ -300,6 +302,9 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   		     ui_rendering);
   gtk_box_pack_start(GTK_BOX(vbox), check_button, FALSE, FALSE, 0);
 
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(vbox), hseparator, FALSE, FALSE, 0);
  
   /* create the x, y, and z rotation dials */
  
@@ -319,19 +324,37 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 			GTK_SIGNAL_FUNC (ui_rendering_callbacks_rotate), ui_rendering);
   }
 
-  /* button to get the rendering parameters modification dialog */
-  button = gtk_button_new_with_label("rendering parameters");
+  /* button to reset the axis */
+  button = gtk_button_new_with_label("Reset Axis");
   gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_rendering_parameters_pressed),
+		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_reset_axis_pressed),
+		     ui_rendering);
+  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(vbox),hseparator, FALSE, FALSE, 0);
+
+  /* button to export an image */
+  button = gtk_button_new_with_label("Export Rendering");
+  gtk_signal_connect(GTK_OBJECT(button), "pressed",
+		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_export_pressed),
+		     ui_rendering);
+  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
+
+  /* button to get the rendering parameters modification dialog */
+  button = gtk_button_new_with_label("Rendering Parameters");
+  gtk_signal_connect(GTK_OBJECT(button), "pressed",
+		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_parameters_pressed),
 		     ui_rendering);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
 
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
   /* button to get the rendering parameters modification dialog */
-  button = gtk_button_new_with_label("create movie");
+  button = gtk_button_new_with_label("Create Movie");
   gtk_signal_connect(GTK_OBJECT(button), "pressed",
-		     GTK_SIGNAL_FUNC(ui_rendering_movie_pressed),
+		     GTK_SIGNAL_FUNC(ui_rendering_callbacks_movie_pressed),
 		     ui_rendering);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 #endif

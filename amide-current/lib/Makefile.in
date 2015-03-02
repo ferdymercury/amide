@@ -59,6 +59,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+AMIDE_CFLAGS = @AMIDE_CFLAGS@
+AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
@@ -93,6 +95,7 @@ GTK_LIBS = @GTK_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
+M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
@@ -110,20 +113,43 @@ ZVT_LIBS = @ZVT_LIBS@
 cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 
-INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
-CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS)
+SUBDIRS =  	lib_src
 
-lib_LTLIBRARIES = libamide.la
-libamideincludedir = $(includedir)/amide
+
+@BUILD_LIBAMIDE_TRUE@INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+@BUILD_LIBAMIDE_TRUE@CFLAGS = $(AMIDE_CFLAGS) @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
+@BUILD_LIBAMIDE_TRUE@lib_LTLIBRARIES = libamide.la
+@BUILD_LIBAMIDE_TRUE@libamideincludedir = $(includedir)/amide
 
 libamide_la_LDFLAGS = -version-info 1:0:0
+
 libamideinclude_HEADERS =  	amide_export.h
 
 
-libamide_la_SOURCES =  	amide_export.c 	$(amide_SOURCES)
+libamide_la_SOURCES =  	$(amide_SOURCES) 	amide_export.c 
 
 
-amide_SOURCES =  	amide.c 	amide.h 	amide_export.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	realspace.c 	realspace.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	amide.c 	amide.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
+
+
+DATA_SET_VARIABLE_SRCS =  	data_set_UBYTE.c 	data_set_UBYTE.h 	data_set_SBYTE.c 	data_set_SBYTE.h 	data_set_USHORT.c 	data_set_USHORT.h 	data_set_SSHORT.c 	data_set_SSHORT.h 	data_set_UINT.c 	data_set_UINT.h 	data_set_SINT.c 	data_set_SINT.h 	data_set_FLOAT.c 	data_set_FLOAT.h 	data_set_DOUBLE.c 	data_set_DOUBLE.h 
+
+
+VOLUME_VARIABLE_SRCS =  	volume_UBYTE_0D_SCALING.c 	volume_UBYTE_0D_SCALING.h 	volume_UBYTE_1D_SCALING.c 	volume_UBYTE_1D_SCALING.h 	volume_UBYTE_2D_SCALING.c 	volume_UBYTE_2D_SCALING.h 	volume_SBYTE_0D_SCALING.c 	volume_SBYTE_0D_SCALING.h 	volume_SBYTE_1D_SCALING.c 	volume_SBYTE_1D_SCALING.h 	volume_SBYTE_2D_SCALING.c 	volume_SBYTE_2D_SCALING.h 	volume_USHORT_0D_SCALING.c 	volume_USHORT_0D_SCALING.h 	volume_USHORT_1D_SCALING.c 	volume_USHORT_1D_SCALING.h 	volume_USHORT_2D_SCALING.c 	volume_USHORT_2D_SCALING.h 	volume_SSHORT_0D_SCALING.c 	volume_SSHORT_0D_SCALING.h 	volume_SSHORT_1D_SCALING.c 	volume_SSHORT_1D_SCALING.h 	volume_SSHORT_2D_SCALING.c 	volume_SSHORT_2D_SCALING.h 	volume_UINT_0D_SCALING.c 	volume_UINT_0D_SCALING.h 	volume_UINT_1D_SCALING.c 	volume_UINT_1D_SCALING.h 	volume_UINT_2D_SCALING.c 	volume_UINT_2D_SCALING.h 	volume_SINT_0D_SCALING.c 	volume_SINT_0D_SCALING.h 	volume_SINT_1D_SCALING.c 	volume_SINT_1D_SCALING.h 	volume_SINT_2D_SCALING.c 	volume_SINT_2D_SCALING.h 	volume_FLOAT_0D_SCALING.c 	volume_FLOAT_0D_SCALING.h 	volume_FLOAT_1D_SCALING.c 	volume_FLOAT_1D_SCALING.h 	volume_FLOAT_2D_SCALING.c 	volume_FLOAT_2D_SCALING.h 	volume_DOUBLE_0D_SCALING.c 	volume_DOUBLE_0D_SCALING.h 	volume_DOUBLE_1D_SCALING.c 	volume_DOUBLE_1D_SCALING.h 	volume_DOUBLE_2D_SCALING.c 	volume_DOUBLE_2D_SCALING.h 
+
+
+VARIABLE_INPUT =  	variable_type.m4
+
+
+DATA_SET_VARIABLE_INCLUDES =  	data_set_variable_type.c 	data_set_variable_type.h 
+
+
+VOLUME_VARIABLE_INCLUDES =  	volume_variable_type.c 	volume_variable_type.h 
+
+
+CLEANFILES = $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
+
+DISTCLEANFILES =  	$(libamide_la_SOURCES) 	$(libamideinclude_HEADERS) 	$(VARIABLE_INPUT) 	$(DATA_SET_VARIABLE_INCLUDES) 	$(VOLUME_VARIABLE_INCLUDES) 	*~
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -134,10 +160,24 @@ LTLIBRARIES =  $(lib_LTLIBRARIES)
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
 libamide_la_LIBADD = 
-libamide_la_OBJECTS =  amide_export.lo amide.lo color_table.lo \
-cti_import.lo idl_data_import.lo image.lo medcon_import.lo objects.lo \
-pem_data_import.lo realspace.lo raw_data.lo raw_data_import.lo \
-raw_data_import_callbacks.lo rendering.lo roi.lo study.lo \
+libamide_la_OBJECTS =  data_set_UBYTE.lo data_set_SBYTE.lo \
+data_set_USHORT.lo data_set_SSHORT.lo data_set_UINT.lo data_set_SINT.lo \
+data_set_FLOAT.lo data_set_DOUBLE.lo volume_UBYTE_0D_SCALING.lo \
+volume_UBYTE_1D_SCALING.lo volume_UBYTE_2D_SCALING.lo \
+volume_SBYTE_0D_SCALING.lo volume_SBYTE_1D_SCALING.lo \
+volume_SBYTE_2D_SCALING.lo volume_USHORT_0D_SCALING.lo \
+volume_USHORT_1D_SCALING.lo volume_USHORT_2D_SCALING.lo \
+volume_SSHORT_0D_SCALING.lo volume_SSHORT_1D_SCALING.lo \
+volume_SSHORT_2D_SCALING.lo volume_UINT_0D_SCALING.lo \
+volume_UINT_1D_SCALING.lo volume_UINT_2D_SCALING.lo \
+volume_SINT_0D_SCALING.lo volume_SINT_1D_SCALING.lo \
+volume_SINT_2D_SCALING.lo volume_FLOAT_0D_SCALING.lo \
+volume_FLOAT_1D_SCALING.lo volume_FLOAT_2D_SCALING.lo \
+volume_DOUBLE_0D_SCALING.lo volume_DOUBLE_1D_SCALING.lo \
+volume_DOUBLE_2D_SCALING.lo amide.lo color_table.lo cti_import.lo \
+data_set.lo idl_data_import.lo image.lo medcon_import.lo objects.lo \
+pem_data_import.lo raw_data.lo raw_data_import.lo \
+raw_data_import_callbacks.lo realspace.lo rendering.lo roi.lo study.lo \
 ui_rendering.lo ui_rendering_callbacks.lo ui_rendering_dialog.lo \
 ui_rendering_dialog_callbacks.lo ui_rendering_movie_dialog.lo \
 ui_rendering_movie_dialog_callbacks.lo ui_roi.lo ui_roi_dialog.lo \
@@ -146,7 +186,8 @@ ui_study.lo ui_study_callbacks.lo ui_study_dialog.lo \
 ui_study_dialog_callbacks.lo ui_study_menus.lo ui_study_toolbar.lo \
 ui_study_rois_callbacks.lo ui_threshold.lo ui_threshold_callbacks.lo \
 ui_time_dialog.lo ui_time_dialog_callbacks.lo ui_volume.lo \
-ui_volume_dialog.lo ui_volume_dialog_callbacks.lo volume.lo xml.lo
+ui_volume_dialog.lo ui_volume_dialog_callbacks.lo volume.lo xml.lo \
+amide_export.lo
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
@@ -161,7 +202,10 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/amide.P .deps/amide_export.P .deps/color_table.P \
-.deps/cti_import.P .deps/idl_data_import.P .deps/image.P \
+.deps/cti_import.P .deps/data_set.P .deps/data_set_DOUBLE.P \
+.deps/data_set_FLOAT.P .deps/data_set_SBYTE.P .deps/data_set_SINT.P \
+.deps/data_set_SSHORT.P .deps/data_set_UBYTE.P .deps/data_set_UINT.P \
+.deps/data_set_USHORT.P .deps/idl_data_import.P .deps/image.P \
 .deps/medcon_import.P .deps/objects.P .deps/pem_data_import.P \
 .deps/raw_data.P .deps/raw_data_import.P \
 .deps/raw_data_import_callbacks.P .deps/realspace.P .deps/rendering.P \
@@ -177,7 +221,19 @@ DEP_FILES =  .deps/amide.P .deps/amide_export.P .deps/color_table.P \
 .deps/ui_threshold_callbacks.P .deps/ui_time_dialog.P \
 .deps/ui_time_dialog_callbacks.P .deps/ui_volume.P \
 .deps/ui_volume_dialog.P .deps/ui_volume_dialog_callbacks.P \
-.deps/volume.P .deps/xml.P
+.deps/volume.P .deps/volume_DOUBLE_0D_SCALING.P \
+.deps/volume_DOUBLE_1D_SCALING.P .deps/volume_DOUBLE_2D_SCALING.P \
+.deps/volume_FLOAT_0D_SCALING.P .deps/volume_FLOAT_1D_SCALING.P \
+.deps/volume_FLOAT_2D_SCALING.P .deps/volume_SBYTE_0D_SCALING.P \
+.deps/volume_SBYTE_1D_SCALING.P .deps/volume_SBYTE_2D_SCALING.P \
+.deps/volume_SINT_0D_SCALING.P .deps/volume_SINT_1D_SCALING.P \
+.deps/volume_SINT_2D_SCALING.P .deps/volume_SSHORT_0D_SCALING.P \
+.deps/volume_SSHORT_1D_SCALING.P .deps/volume_SSHORT_2D_SCALING.P \
+.deps/volume_UBYTE_0D_SCALING.P .deps/volume_UBYTE_1D_SCALING.P \
+.deps/volume_UBYTE_2D_SCALING.P .deps/volume_UINT_0D_SCALING.P \
+.deps/volume_UINT_1D_SCALING.P .deps/volume_UINT_2D_SCALING.P \
+.deps/volume_USHORT_0D_SCALING.P .deps/volume_USHORT_1D_SCALING.P \
+.deps/volume_USHORT_2D_SCALING.P .deps/xml.P
 SOURCES = $(libamide_la_SOURCES)
 OBJECTS = $(libamide_la_OBJECTS)
 
@@ -273,6 +329,61 @@ uninstall-libamideincludeHEADERS:
 	  rm -f $(DESTDIR)$(libamideincludedir)/$$p; \
 	done
 
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+
+@SET_MAKE@
+
+all-recursive install-data-recursive install-exec-recursive \
+installdirs-recursive install-recursive uninstall-recursive  \
+check-recursive installcheck-recursive info-recursive dvi-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	dot_seen=no; \
+	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
+	  rev="$$subdir $$rev"; \
+	  test "$$subdir" != "." || dot_seen=yes; \
+	done; \
+	test "$$dot_seen" = "no" && rev=". $$rev"; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
+	done
+
 tags: TAGS
 
 ID: $(HEADERS) $(SOURCES) $(LISP)
@@ -283,9 +394,14 @@ ID: $(HEADERS) $(SOURCES) $(LISP)
 	here=`pwd` && cd $(srcdir) \
 	  && mkid -f$$here/ID $$unique $(LISP)
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
 	tags=; \
 	here=`pwd`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+   if test "$$subdir" = .; then :; else \
+	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+   fi; \
+	done; \
 	list='$(SOURCES) $(HEADERS)'; \
 	unique=`for i in $$list; do echo $$i; done | \
 	  awk '    { files[$$0] = 1; } \
@@ -322,6 +438,16 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
+	for subdir in $(SUBDIRS); do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d $(distdir)/$$subdir \
+	    || mkdir $(distdir)/$$subdir \
+	    || exit 1; \
+	    chmod 777 $(distdir)/$$subdir; \
+	    (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir=../$(top_distdir) distdir=../$(distdir)/$$subdir distdir) \
+	      || exit 1; \
+	  fi; \
+	done
 
 DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
 
@@ -355,58 +481,61 @@ maintainer-clean-depend:
 	    >> .deps/$(*F).P; \
 	rm -f .deps/$(*F).pp
 info-am:
-info: info-am
+info: info-recursive
 dvi-am:
-dvi: dvi-am
+dvi: dvi-recursive
 check-am: all-am
-check: check-am
+check: check-recursive
 installcheck-am:
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-exec-am: install-libLTLIBRARIES
-install-exec: install-exec-am
+install-exec: install-exec-recursive
 
 install-data-am: install-libamideincludeHEADERS
-install-data: install-data-am
+install-data: install-data-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
-install: install-am
+install: install-recursive
 uninstall-am: uninstall-libLTLIBRARIES uninstall-libamideincludeHEADERS
-uninstall: uninstall-am
+uninstall: uninstall-recursive
 all-am: Makefile $(LTLIBRARIES) $(HEADERS)
-all-redirect: all-am
+all-redirect: all-recursive
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
-installdirs:
+installdirs: installdirs-recursive
+installdirs-am:
 	$(mkinstalldirs)  $(DESTDIR)$(libdir) $(DESTDIR)$(libamideincludedir)
 
 
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 mostlyclean-am:  mostlyclean-libLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-tags mostlyclean-depend \
 		mostlyclean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
 clean-am:  clean-libLTLIBRARIES clean-compile clean-libtool clean-tags \
 		clean-depend clean-generic mostlyclean-am
 
-clean: clean-am
+clean: clean-recursive
 
 distclean-am:  distclean-libLTLIBRARIES distclean-compile \
 		distclean-libtool distclean-tags distclean-depend \
 		distclean-generic clean-am
 	-rm -f libtool
 
-distclean: distclean-am
+distclean: distclean-recursive
 
 maintainer-clean-am:  maintainer-clean-libLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
@@ -415,7 +544,7 @@ maintainer-clean-am:  maintainer-clean-libLTLIBRARIES \
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 
 .PHONY: mostlyclean-libLTLIBRARIES distclean-libLTLIBRARIES \
 clean-libLTLIBRARIES maintainer-clean-libLTLIBRARIES \
@@ -423,15 +552,39 @@ uninstall-libLTLIBRARIES install-libLTLIBRARIES mostlyclean-compile \
 distclean-compile clean-compile maintainer-clean-compile \
 mostlyclean-libtool distclean-libtool clean-libtool \
 maintainer-clean-libtool uninstall-libamideincludeHEADERS \
-install-libamideincludeHEADERS tags mostlyclean-tags distclean-tags \
-clean-tags maintainer-clean-tags distdir mostlyclean-depend \
-distclean-depend clean-depend maintainer-clean-depend info-am info \
-dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
-install-exec install-data-am install-data install-am install \
-uninstall-am uninstall all-redirect all-am all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+install-libamideincludeHEADERS install-data-recursive \
+uninstall-data-recursive install-exec-recursive \
+uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
+all-recursive check-recursive installcheck-recursive info-recursive \
+dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
+maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
+distclean-tags clean-tags maintainer-clean-tags distdir \
+mostlyclean-depend distclean-depend clean-depend \
+maintainer-clean-depend info-am info dvi-am dvi check check-am \
+installcheck-am installcheck install-exec-am install-exec \
+install-data-am install-data install-am install uninstall-am uninstall \
+all-redirect all-am all installdirs-am installdirs mostlyclean-generic \
+distclean-generic clean-generic maintainer-clean-generic clean \
+mostlyclean distclean maintainer-clean
 
+
+$(DATA_SET_VARIABLE_SRCS): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_INCLUDES)
+	@for i in $(DATA_SET_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(VOLUME_VARIABLE_SRCS): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_INCLUDES)
+	@for i in $(VOLUME_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

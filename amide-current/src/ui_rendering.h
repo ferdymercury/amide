@@ -42,8 +42,8 @@ typedef struct ui_rendering_t {
   gpointer movie; /* pointer to type ui_rendering_movie_t */
 #endif
   realspace_t coord_frame;
-  volume_time_t start;
-  volume_time_t duration;
+  amide_time_t start;
+  amide_time_t duration;
   GnomeCanvas * axis_canvas;
   GnomeCanvasItem * axis_canvas_image;
   GdkPixbuf * axis_image;
@@ -66,11 +66,12 @@ typedef struct ui_rendering_t {
 /* external functions */
 ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering);
 ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_frame, 
-				   volume_time_t start, volume_time_t duration);
+				   amide_time_t start, amide_time_t duration, interpolation_t interpolation);
 void ui_rendering_update_canvases(ui_rendering_t * ui_rendering);
 void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame, 
-			 volume_time_t start, volume_time_t duration);
+			 amide_time_t start, amide_time_t duration, interpolation_t interpolation);
 
 #endif
+
 
 

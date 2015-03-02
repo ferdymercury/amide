@@ -73,7 +73,6 @@ roi_t * roi_free(roi_t * roi) {
 roi_t * roi_init(void) {
   
   roi_t * temp_roi;
-  axis_t i;
   
   if ((temp_roi = 
        (roi_t *) g_malloc(sizeof(roi_t))) == NULL) {
@@ -83,10 +82,9 @@ roi_t * roi_init(void) {
   
   temp_roi->name = NULL;
   temp_roi->corner = realpoint_init;
-  temp_roi->coord_frame.offset = realpoint_init;
+  rs_set_offset(&temp_roi->coord_frame, realpoint_init);
   temp_roi->grain = GRAINS_1;
-  for (i=0;i<NUM_AXIS;i++)
-    temp_roi->coord_frame.axis[i] = default_axis[i];
+  rs_set_axis(&temp_roi->coord_frame, default_axis);
   temp_roi->parent = NULL;
   temp_roi->children = NULL;
   
@@ -95,9 +93,9 @@ roi_t * roi_init(void) {
 
 /* function to write out the information content of an roi into an xml
    file.  Returns a string containing the name of the file. */
-gchar * roi_write_xml(roi_t * roi, gchar * directory) {
+gchar * roi_write_xml(roi_t * roi, gchar * study_directory) {
 
-  gchar * file_name;
+  gchar * roi_xml_filename;
   guint count;
   struct stat file_info;
   xmlDocPtr doc;
@@ -105,18 +103,18 @@ gchar * roi_write_xml(roi_t * roi, gchar * directory) {
 
   /* make a guess as to our filename */
   count = 1;
-  file_name = g_strdup_printf("ROI_%s.xml", roi->name);
+  roi_xml_filename = g_strdup_printf("ROI_%s.xml", roi->name);
 
   /* see if this file already exists */
-  while (stat(file_name, &file_info) == 0) {
-    g_free(file_name);
+  while (stat(roi_xml_filename, &file_info) == 0) {
+    g_free(roi_xml_filename);
     count++;
-    file_name = g_strdup_printf("ROI_%s_%d.xml", roi->name, count);
+    roi_xml_filename = g_strdup_printf("ROI_%s_%d.xml", roi->name, count);
   }
 
   /* and we now have a unique filename */
 #ifdef AMIDE_DEBUG
-  g_print("\t- saving roi %s in roi %s\n",roi->name, file_name);
+  g_print("\t- saving roi %s in roi %s\n",roi->name, roi_xml_filename);
 #endif
 
   /* write the roi xml file */
@@ -129,19 +127,19 @@ gchar * roi_write_xml(roi_t * roi, gchar * directory) {
 
   /* save our children */
   roi_nodes = xmlNewChild(doc->children, NULL, "Children", NULL);
-  roi_list_write_xml(roi->children, roi_nodes, directory);
+  roi_list_write_xml(roi->children, roi_nodes, study_directory);
 
   /* and save */
-  xmlSaveFile(file_name, doc);
+  xmlSaveFile(roi_xml_filename, doc);
 
   /* and we're done */
   xmlFreeDoc(doc);
 
-  return file_name;
+  return roi_xml_filename;
 }
 
 /* function to load in an ROI xml file */
-roi_t * roi_load_xml(gchar * file_name, const gchar * directory) {
+roi_t * roi_load_xml(gchar * roi_xml_filename, const gchar * study_directory) {
 
   xmlDocPtr doc;
   roi_t * new_roi;
@@ -154,8 +152,8 @@ roi_t * roi_load_xml(gchar * file_name, const gchar * directory) {
   new_roi = roi_init();
 
   /* parse the xml file */
-  if ((doc = xmlParseFile(file_name)) == NULL) {
-    g_warning("%s: Couldn't Parse AMIDE ROI xml file %s/%s",PACKAGE, directory,file_name);
+  if ((doc = xmlParseFile(roi_xml_filename)) == NULL) {
+    g_warning("%s: Couldn't Parse AMIDE ROI xml file %s/%s",PACKAGE, study_directory,roi_xml_filename);
     roi_free(new_roi);
     return new_roi;
   }
@@ -163,7 +161,7 @@ roi_t * roi_load_xml(gchar * file_name, const gchar * directory) {
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE ROI xml file doesn't appear to have a root: %s/%s",
-	      PACKAGE, directory,file_name);
+	      PACKAGE, study_directory,roi_xml_filename);
     roi_free(new_roi);
     return new_roi;
   }
@@ -202,7 +200,7 @@ roi_t * roi_load_xml(gchar * file_name, const gchar * directory) {
   temp_string = xml_get_string(nodes->children, "Children");
   if (temp_string != NULL) {
     children_nodes = xml_get_node(nodes->children, "Children");
-    new_roi->children = roi_list_load_xml(children_nodes, directory);
+    new_roi->children = roi_list_load_xml(children_nodes, study_directory);
   }
   g_free(temp_string);
    
@@ -266,7 +264,7 @@ realpoint_t roi_calculate_center(const roi_t * roi) {
   realpoint_t corner[2];
 
   /* get the far corner (in roi coords) */
-  corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
+  corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame), roi->coord_frame);
   corner[1] = roi->corner;
  
   /* the center in roi coords is then just half the far corner */
@@ -327,39 +325,39 @@ roi_list_t * roi_list_init(void) {
 /* function to write a list of rois as xml data.  Function calls
    roi_write_xml to writeout each roi, and adds information about the
    roi file to the node_list. */
-void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * directory) {
+void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * study_directory) {
 
-  gchar * file_name;
+  gchar * roi_xml_filename;
 
   if (list != NULL) { 
-    file_name = roi_write_xml(list->roi, directory);
-    xmlNewChild(node_list, NULL, "ROI_file", file_name);
-    g_free(file_name);
+    roi_xml_filename = roi_write_xml(list->roi, study_directory);
+    xmlNewChild(node_list, NULL, "ROI_file", roi_xml_filename);
+    g_free(roi_xml_filename);
     
     /* and recurse */
-    roi_list_write_xml(list->next, node_list, directory);
+    roi_list_write_xml(list->next, node_list, study_directory);
   }
 
   return;
 }
 
 /* function to load in a list of ROI xml nodes */
-roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * directory) {
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * study_directory) {
 
-  gchar * file_name;
+  gchar * roi_xml_filename;
   roi_list_t * new_roi_list;
   roi_t * new_roi;
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_roi_list = roi_list_load_xml(node_list->next, directory);
+    new_roi_list = roi_list_load_xml(node_list->next, study_directory);
 
     /* load in this node */
-    file_name = xml_get_string(node_list->children, "text");
-    new_roi = roi_load_xml(file_name,directory);
+    roi_xml_filename = xml_get_string(node_list->children, "text");
+    new_roi = roi_load_xml(roi_xml_filename,study_directory);
     new_roi_list = roi_list_add_roi_first(new_roi_list, new_roi);
     new_roi = roi_free(new_roi);
-    g_free(file_name);
+    g_free(roi_xml_filename);
 
   } else
     new_roi_list = NULL;
@@ -482,7 +480,7 @@ void roi_free_points_list(GSList ** plist) {
 gboolean roi_undrawn(const roi_t * roi) {
   
   return 
-    REALPOINT_EQUAL(roi->coord_frame.offset,realpoint_init) &&
+    REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_init) &&
     REALPOINT_EQUAL(roi->corner,realpoint_init);
 }
     
@@ -503,7 +501,7 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
   gboolean voxel_in=FALSE, prev_voxel_intersection, saved=TRUE;
 
   /* sanity checks */
-  g_assert(view_slice->dim.z == 1);
+  g_assert(view_slice->data_set->dim.z == 1);
 
   /* make sure we've already defined this guy */
   if (roi_undrawn(roi))
@@ -511,10 +509,10 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
 
 #ifdef AMIDE_DEBUG
   g_print("roi %s --------------------\n",roi->name);
-  g_print("\t\toffset\tx %5.3f\ty %5.3f\tz %5.3f\n",
-	  roi->coord_frame.offset.x,
-	  roi->coord_frame.offset.y,
-	  roi->coord_frame.offset.z);
+  //  g_print("\t\toffset\tx %5.3f\ty %5.3f\tz %5.3f\n",
+  //	  roi->coord_frame.offset.x,
+  //	  roi->coord_frame.offset.y,
+  //	  roi->coord_frame.offset.z);
   g_print("\t\tcorner\tx %5.3f\ty %5.3f\tz %5.3f\n",
 	     roi->corner.x,roi->corner.y,roi->corner.z);
 #endif
@@ -528,7 +526,7 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
 	      of interest */
 
     /* get the roi corners in roi space */
-    roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
+    roi_corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame), roi->coord_frame);
     roi_corner[1] = roi->corner;
 
     /* figure out the center of the object in it's space*/
@@ -542,20 +540,20 @@ GSList * roi_get_volume_intersection_points(const volume_t * view_slice,
     height = fabs(roi_corner[1].z-roi_corner[0].z);
 
     /* get the corners of the view slice in view coordinate space */
-    slice_corner[0] = realspace_base_coord_to_alt(view_slice->coord_frame.offset,
+    slice_corner[0] = realspace_base_coord_to_alt(rs_offset(view_slice->coord_frame),
 						  view_slice->coord_frame);
     slice_corner[1] = view_slice->corner;
 
     /* iterate through the slice, putting all edge points in the list */
-    i.z=0;
+    i.t = i.z=0;
     view_p.z = (slice_corner[0].z+slice_corner[1].z)/2.0;
     view_p.y = slice_corner[0].y+view_slice->voxel_size.y/2.0;
 
-    for (i.y=0; i.y < view_slice->dim.y ; i.y++) {
+    for (i.y=0; i.y < view_slice->data_set->dim.y ; i.y++) {
       view_p.x = slice_corner[0].x+view_slice->voxel_size.x/2.0;
       prev_voxel_intersection = FALSE;
 
-      for (i.x=0; i.x < view_slice->dim.x ; i.x++) {
+      for (i.x=0; i.x < view_slice->data_set->dim.x ; i.x++) {
 	temp_p = realspace_alt_coord_to_alt(view_p, 
 					    view_slice->coord_frame,
 					    roi->coord_frame);
@@ -663,7 +661,7 @@ void roi_subset_of_volume(roi_t * roi,
   g_assert(roi != NULL);
 
   /* set some values */
-  roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset,
+  roi_corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame),
 					      roi->coord_frame);
   roi_corner[1] = roi->corner;
 
@@ -673,22 +671,24 @@ void roi_subset_of_volume(roi_t * roi,
 				  
 
   /* and convert the subset_corners into indexes */
-  subset_index[0] = volume_realpoint_to_voxel(volume,subset_corner[0]);
-  subset_index[1] = volume_realpoint_to_voxel(volume,subset_corner[1]);
+  //  subset_index[0] = volume_realpoint_to_voxel(volume,subset_corner[0],0);
+  VOLUME_REALPOINT_TO_VOXEL(volume, subset_corner[0], 0, subset_index[0]);
+  //subset_index[1] = volume_realpoint_to_voxel(volume,subset_corner[1],0);
+  VOLUME_REALPOINT_TO_VOXEL(volume, subset_corner[1], 0, subset_index[1]);
 
   /* sanity checks */
   if (subset_index[0].x < 0) subset_index[0].x = 0;
-  if (subset_index[0].x > volume->dim.x) subset_index[0].x = volume->dim.x;
+  if (subset_index[0].x > volume->data_set->dim.x) subset_index[0].x = volume->data_set->dim.x;
   if (subset_index[0].y < 0) subset_index[0].y = 0;
-  if (subset_index[0].y > volume->dim.y) subset_index[0].y = volume->dim.y;
+  if (subset_index[0].y > volume->data_set->dim.y) subset_index[0].y = volume->data_set->dim.y;
   if (subset_index[0].z < 0) subset_index[0].z = 0;
-  if (subset_index[0].z > volume->dim.z) subset_index[0].z = volume->dim.z;
+  if (subset_index[0].z > volume->data_set->dim.z) subset_index[0].z = volume->data_set->dim.z;
   if (subset_index[1].x < 0) subset_index[1].x = 0;
-  if (subset_index[1].x > volume->dim.x) subset_index[1].x = volume->dim.x;
+  if (subset_index[1].x > volume->data_set->dim.x) subset_index[1].x = volume->data_set->dim.x;
   if (subset_index[1].y < 0) subset_index[1].y = 0;
-  if (subset_index[1].y > volume->dim.y) subset_index[1].y = volume->dim.y;
+  if (subset_index[1].y > volume->data_set->dim.y) subset_index[1].y = volume->data_set->dim.y;
   if (subset_index[1].z < 0) subset_index[1].z = 0;
-  if (subset_index[1].z > volume->dim.z) subset_index[1].z = volume->dim.z;
+  if (subset_index[1].z > volume->data_set->dim.z) subset_index[1].z = volume->data_set->dim.z;
 
   /* and calculate the return values */
   *subset_start = subset_index[0];
@@ -714,7 +714,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   realpoint_t center, radius,roi_p, volume_p;
   floatpoint_t height;
   intpoint_t voxel_grain_steps;
-  volume_data_t temp_data, voxel_grain_size;
+  amide_data_t temp_data, voxel_grain_size;
   voxelpoint_t i,j;
   voxelpoint_t init,dim;
   gboolean voxel_in;
@@ -725,7 +725,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 #endif
   
   /* get the roi corners in roi space */
-  roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset,
+  roi_corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame),
 					      roi->coord_frame);
   roi_corner[1] = roi->corner;
 
@@ -740,8 +740,9 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   
   /* initialize the analysis data structure based on the center of the roi */
   volume_p =  realspace_alt_coord_to_alt(center, roi->coord_frame, volume->coord_frame);
-  i = volume_realpoint_to_voxel(volume,volume_p);
-  temp_data = (volume_includes_voxel(volume,i)) ? VOLUME_CONTENTS(volume,frame,i) : EMPTY;
+  //i = volume_realpoint_to_voxel(volume,volume_p, frame);
+  VOLUME_REALPOINT_TO_VOXEL(volume, volume_p, frame, i);
+  temp_data = (data_set_includes_voxel(volume->data_set,i)) ? volume_value(volume,i): EMPTY;
 
   /* initialize values */
   analysis.voxels = 0.0; 
@@ -782,6 +783,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
   /* alright, iterate through the roi space and calculate our analysis values
    * the index i corresponds to the voxel, the index j corresponds to the 
    * subvoxel within that voxel */
+  i.t = frame;
   for (i.z = init.z; i.z<(init.z+dim.z);i.z++) {
     for (j.z = 0 ; j.z < voxel_grain_steps ; j.z++) {
       volume_p.z = i.z*volume->voxel_size.z + 
@@ -821,8 +823,8 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 	      };
 	      
 	      if (voxel_in) {
-		if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
-		else temp_data = VOLUME_CONTENTS(volume,frame,i);
+		if (!data_set_includes_voxel(volume->data_set,i)) temp_data = EMPTY;
+		else temp_data = volume_value(volume,i);
 	  
 		analysis.mean += temp_data*voxel_grain_size;
 		analysis.voxels += voxel_grain_size;
@@ -845,6 +847,7 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
     analysis.mean /= CLOSE;
   
   /* now iterate over the volume again to calculate the variance.... */
+  i.t = frame;
   for (i.z = init.z; i.z<(init.z+dim.z);i.z++) {
     for (j.z = 0 ; j.z < voxel_grain_steps ; j.z++) {
       volume_p.z = i.z*volume->voxel_size.z + 
@@ -884,8 +887,8 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 	      };
 	      
 	      if (voxel_in) {
-		if (!volume_includes_voxel(volume,i)) temp_data = EMPTY;
-		else temp_data = VOLUME_CONTENTS(volume,frame,i);
+		if (!data_set_includes_voxel(volume->data_set,i)) temp_data = EMPTY;
+		else temp_data = volume_value(volume,i);
 		
 		analysis.var += 
 		  voxel_grain_size*

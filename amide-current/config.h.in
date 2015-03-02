@@ -10,6 +10,9 @@
 #undef AMIDE_MPEG_ENCODE_BIN
 #undef GNOME_XML2_SUPPORT
 
+/* Define if you have the <dlfcn.h> header file.  */
+#undef HAVE_DLFCN_H
+
 /* Name of package */
 #undef PACKAGE
 

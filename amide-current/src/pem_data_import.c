@@ -42,13 +42,18 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
   gchar * volume_name;
   gchar ** frags;
   voxelpoint_t i;
-  guint t;
-  volume_data_t max,min,temp;
+  realpoint_t new_offset;
+  realpoint_t new_axis[NUM_AXIS];
+  axis_t i_axis;
 
   /* acquire space for the volume structure */
   if ((pem_volume = volume_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the volume structure to hold PEM data", PACKAGE);
     return pem_volume;
+  }
+  if ((pem_volume->data_set = data_set_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the data set structure to hold PEM data", PACKAGE);
+    return volume_free(pem_volume);
   }
 
 
@@ -59,15 +64,14 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
 
   /* set the parameters of the volume structure */
   pem_volume->modality = PET;
-  pem_volume->conversion = 1.0;
-  pem_volume->dim.x = PEM_DATA_X;
-  pem_volume->dim.y = PEM_DATA_Y;
-  pem_volume->dim.z = PEM_DATA_Z;
-  pem_volume->num_frames = PEM_DATA_FRAMES;
+  pem_volume->data_set->dim.x = PEM_DATA_X;
+  pem_volume->data_set->dim.y = PEM_DATA_Y;
+  pem_volume->data_set->dim.z = PEM_DATA_Z;
+  pem_volume->data_set->dim.t = PEM_DATA_FRAMES;
   pem_volume->voxel_size.x = PEM_VOXEL_SIZE_X;
   pem_volume->voxel_size.y = PEM_VOXEL_SIZE_Y;
   pem_volume->voxel_size.z = PEM_VOXEL_SIZE_Z;
-  REALPOINT_MULT(pem_volume->dim, pem_volume->voxel_size, pem_volume->corner);
+  volume_recalc_far_corner(pem_volume);
   
   /* figure out an initial name for the data */
   volume_name = g_strdup(g_basename(pem_data_filename));
@@ -82,8 +86,8 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
   g_free(volume_name);
 
   /* now that we've figured out the header info, read in the PEM files */
-  pem_volume = raw_data_read_file(pem_data_filename, pem_volume, 
-				  PEM_DATA_FORMAT, PEM_FILE_OFFSET);
+  pem_volume = raw_data_read_volume(pem_data_filename, pem_volume, 
+				    PEM_DATA_FORMAT, PEM_FILE_OFFSET);
   /* correct the pem volume based on the model */
   if (pem_model_filename != NULL) {
 
@@ -94,21 +98,25 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
     /* acquire space for the volume structure */
     if ((pem_model = volume_init()) == NULL) {
       g_warning("%s: couldn't allocate space for the volume structure to hold the PEM model", PACKAGE);
-      pem_volume = volume_free(pem_volume);
-      return pem_volume;
+      return volume_free(pem_volume);
+    }
+    if ((pem_model->data_set = data_set_init()) == NULL) {
+      g_warning("%s: couldn't allocate space for the data set structure to hold PEM model", PACKAGE);
+      pem_model = volume_free(pem_model);
+      return volume_free(pem_volume);
     }
 
     /* set the parameters of the volume structure */
     pem_model->modality = PET;
-    pem_model->conversion = 1.0;
-    pem_model->dim.x = PEM_DATA_X;
-    pem_model->dim.y = PEM_DATA_Y;
-    pem_model->dim.z = PEM_DATA_Z;
-    pem_model->num_frames = PEM_DATA_FRAMES;
+    pem_model->data_set->dim.x = PEM_DATA_X;
+    pem_model->data_set->dim.y = PEM_DATA_Y;
+    pem_model->data_set->dim.z = PEM_DATA_Z;
+    pem_model->data_set->dim.t = PEM_DATA_FRAMES;
+    pem_model->data_set->format = FLOAT;
     pem_model->voxel_size.x = PEM_VOXEL_SIZE_X;
     pem_model->voxel_size.y = PEM_VOXEL_SIZE_Y;
     pem_model->voxel_size.z = PEM_VOXEL_SIZE_Z;
-    REALPOINT_MULT(pem_model->dim, pem_model->voxel_size, pem_model->corner);
+    volume_recalc_far_corner(pem_model);
     
     /* figure out an initial name for the model */
     volume_name = g_strdup(g_basename(pem_model_filename));
@@ -122,59 +130,39 @@ volume_t * pem_data_import(gchar * pem_data_filename, gchar * pem_model_filename
     g_strfreev(frags); /* free up now unused strings */
     g_free(volume_name);
 
-    pem_model = raw_data_read_file(pem_model_filename, pem_model, 
-				   PEM_DATA_FORMAT, PEM_FILE_OFFSET);
+    pem_model = raw_data_read_volume(pem_model_filename, pem_model, 
+				     PEM_DATA_FORMAT, PEM_FILE_OFFSET);
 
-    for (t = 0; t < pem_volume->num_frames; t++) 
-      for (i.z = 0; i.z < pem_volume->dim.z ; i.z++) 
-	for (i.y = 0; i.y < pem_volume->dim.y; i.y++) 
-	  for (i.x = 0; i.x < pem_volume->dim.x; i.x++) 
-	    if (VOLUME_CONTENTS(pem_model, t, i) > 1.0)
-	      VOLUME_SET_CONTENT(pem_volume,t,i) 
-		= VOLUME_CONTENTS(pem_volume, t, i) 
-		/ VOLUME_CONTENTS(pem_model, t, i);
+    for (i.t = 0; i.t < pem_volume->data_set->dim.t; i.t++) 
+      for (i.z = 0; i.z < pem_volume->data_set->dim.z ; i.z++) 
+	for (i.y = 0; i.y < pem_volume->data_set->dim.y; i.y++) 
+	  for (i.x = 0; i.x < pem_volume->data_set->dim.x; i.x++) 
+	    if (VOLUME_FLOAT_0D_SCALING_CONTENTS(pem_model, i) > 1.0)
+	      DATA_SET_FLOAT_SET_CONTENT(pem_volume->data_set,i) 
+		= VOLUME_FLOAT_0D_SCALING_CONTENTS(pem_volume, i) 
+		/ VOLUME_FLOAT_0D_SCALING_CONTENTS(pem_model, i);
 	    else
-	      VOLUME_SET_CONTENT(pem_volume,t,i) = 0.0;
+	      DATA_SET_FLOAT_SET_CONTENT(pem_volume->data_set,i) = 0.0;
 
     /* free the model, as we no longer need it */
     pem_model = volume_free(pem_model);
 
     /* and recalculate the max/min of the volume */
-
-#ifdef AMIDE_DEBUG
-    g_print("\trecalculating max & min");
-#endif
-    max = 0.0;
-    min = 0.0;
-    for(t = 0; t < pem_volume->num_frames; t++) {
-      for (i.z = 0; i.z < pem_volume->dim.z; i.z++) 
-	for (i.y = 0; i.y < pem_volume->dim.y; i.y++) 
-	  for (i.x = 0; i.x < pem_volume->dim.x; i.x++) {
-	    temp = VOLUME_CONTENTS(pem_volume, t, i);
-	    if (temp > max)
-	      max = temp;
-	    else if (temp < min)
-	      min = temp;
-	  }
-#ifdef AMIDE_DEBUG
-      g_print(".");
-#endif
-  }
-    pem_volume->max = max;
-    pem_volume->min = min;
-
-#ifdef AMIDE_DEBUG
-    g_print("\tnew max %5.3f min %5.3f\n",max,min);
-#endif
+    volume_recalc_max_min(pem_volume);
 
   }
 
   /* and set the coordinate axis empirically */
   if (pem_volume != NULL) {
-    pem_volume->coord_frame.axis[XAXIS].x = -1.0;
-    pem_volume->coord_frame.axis[XAXIS].y = 0.0;
-    pem_volume->coord_frame.axis[XAXIS].z = 0.0;
-    pem_volume->coord_frame.offset.x = pem_volume->dim.x*pem_volume->voxel_size.x;
+    for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+      new_axis[i_axis] = rs_specific_axis(pem_volume->coord_frame, i_axis);
+    new_axis[XAXIS].x = -1.0;
+    new_axis[XAXIS].y = 0.0;
+    new_axis[XAXIS].z = 0.0;
+    new_offset = rs_offset(pem_volume->coord_frame);
+    new_offset.x = pem_volume->data_set->dim.x*pem_volume->voxel_size.x;
+    rs_set_offset(&pem_volume->coord_frame, new_offset);
+    rs_set_axis(&pem_volume->coord_frame, new_axis);
   }
 
   return pem_volume; 

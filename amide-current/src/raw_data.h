@@ -26,33 +26,39 @@
 #ifndef __RAW_DATA_H__
 #define __RAW_DATA_H__
 
-/* typedefs, structs, etc. */
 
-typedef enum {UBYTE, SBYTE, 
+/* header files that are always needed with this file */
+#include "data_set.h"
+#include "volume.h"
+
+/* raw_data_format is the formats that data can take on disk */
+typedef enum {UBYTE_NE, SBYTE_NE, 
 	      USHORT_LE, SSHORT_LE, 
 	      UINT_LE, SINT_LE, 
 	      FLOAT_LE, DOUBLE_LE, 
 	      USHORT_BE, SSHORT_BE, 
 	      UINT_BE, SINT_BE,
 	      FLOAT_BE, DOUBLE_BE,
-	      ASCII,
-	      NUM_DATA_FORMATS} data_format_t;
-
-
-#define raw_data_calc_num_entries(dim, frames) ((dim).x * (dim).y * (dim).z * (frames))
+	      ASCII_NE,
+	      NUM_RAW_DATA_FORMATS} raw_data_format_t;
 
 /* external functions */
+data_format_t raw_data_format_data(raw_data_format_t raw_data_format);
+raw_data_format_t raw_data_format_raw(data_format_t data_format);
 guint raw_data_calc_num_bytes(voxelpoint_t dim, 
-			      guint num_frames, 
-			      data_format_t data_format);
-volume_t * raw_data_read_file(gchar * file_name, 
-			      volume_t * raw_data_volume,
-			      data_format_t data_format,
-			      guint file_offset);
+			      raw_data_format_t raw_data_format);
+data_set_t * raw_data_read_file(gchar * file_name, 
+				data_set_t * raw_data_set,
+				raw_data_format_t raw_data_format,
+				guint file_offset);
+volume_t * raw_data_read_volume(gchar * file_name, 
+				volume_t * raw_data_volume,
+				raw_data_format_t raw_data_format,
+				guint file_offset);
 
 /* external variables */
-extern gchar * data_format_names[];
-extern guint data_sizes[];
+extern gchar * raw_data_format_names[];
+extern guint raw_data_sizes[];
 
 #endif /* __RAW_DATA_H__ */
 

@@ -29,10 +29,10 @@
 
 /* functions */
 void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coord_frame,
-			     realpoint_t center, realpoint_t radius, volume_data_t level);
+			     realpoint_t center, realpoint_t radius, amide_data_t level);
 void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t object_coord_frame,
 				     realpoint_t center, realpoint_t radius, floatpoint_t height,
-				     volume_data_t level);
+				     amide_data_t level);
 
 #endif /* __OBJECTS_H__ */
 

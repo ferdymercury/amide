@@ -190,7 +190,7 @@ void ui_rendering_movie_dialog_callbacks_apply(GtkWidget* widget, gint page_numb
 
   /* save a pointer to the ui_rendering_movie data, so we can use it in the callbacks */
   gtk_object_set_data(GTK_OBJECT(file_selection), "ui_rendering_movie", ui_rendering_movie);
-  g_print("pointer %p\n", ui_rendering_movie);
+  //g_print("pointer %p\n", ui_rendering_movie);
 
   //  g_print("0 num_frames %d\n",ui_rendering_movie->num_frames);
 
@@ -212,6 +212,7 @@ void ui_rendering_movie_dialog_callbacks_apply(GtkWidget* widget, gint page_numb
   gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
 
   /* run the dialog */
+  // core dumps for some reason... sigh...
   //gtk_widget_show(file_selection);
 
   ui_rendering_movie_dialog_perform(ui_rendering_movie, "out.mpg");

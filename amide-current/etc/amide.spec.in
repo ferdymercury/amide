@@ -33,7 +33,7 @@ desire to use elements of AMIDE within their program.
 %prep
 %setup -n %{name}-%{version}
 %build
-./configure --prefix=%{prefix}
+./configure --prefix=%{prefix} --enable-libamide=yes
 make
 
 %install

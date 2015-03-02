@@ -46,8 +46,8 @@ void raw_data_import_callbacks_change_name(GtkWidget * widget, gpointer data) {
   return;
 }
 
-/* function called to change the conversion factor */
-void raw_data_import_callbacks_change_conversion(GtkWidget * widget, gpointer data) {
+/* function called to change the scaling factor */
+void raw_data_import_callbacks_change_scaling(GtkWidget * widget, gpointer data) {
 
   gchar * str;
   gint error;
@@ -64,7 +64,7 @@ void raw_data_import_callbacks_change_conversion(GtkWidget * widget, gpointer da
   g_free(str);
 
   /* and save the value */
-  raw_data_info->volume->conversion = temp_real;
+  volume_set_scaling(raw_data_info->volume, temp_real);
 
   return;
 }
@@ -107,16 +107,16 @@ void raw_data_import_callbacks_change_entry(GtkWidget * widget, gpointer data) {
   /* and save the value in our temporary volume structure */
   switch(which_widget) {
   case XDIM:
-    raw_data_info->volume->dim.x = temp_int;
+    raw_data_info->volume->data_set->dim.x = temp_int;
     break;
   case YDIM:
-    raw_data_info->volume->dim.y = temp_int;
+    raw_data_info->volume->data_set->dim.y = temp_int;
     break;
   case ZDIM:
-    raw_data_info->volume->dim.z = temp_int;
+    raw_data_info->volume->data_set->dim.z = temp_int;
     break;
   case TDIM:
-    raw_data_info->volume->num_frames = temp_int;
+    raw_data_info->volume->data_set->dim.t = temp_int;
     break;
   case (NUM_DIMS+XAXIS):
     raw_data_info->volume->voxel_size.x = temp_real;
@@ -157,15 +157,15 @@ void raw_data_import_callbacks_change_modality(GtkWidget * widget, gpointer data
 }
 
 /* function to change the raw data file's data format */
-void raw_data_import_callbacks_change_data_format(GtkWidget * widget, gpointer data) {
+void raw_data_import_callbacks_change_raw_data_format(GtkWidget * widget, gpointer data) {
 
   raw_data_info_t * raw_data_info = data;
-  data_format_t i_data_format;
+  raw_data_format_t i_raw_data_format;
 
   /* figure out which menu item called me */
-  for (i_data_format=0;i_data_format<NUM_DATA_FORMATS;i_data_format++)       
-    if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"data_format")) == i_data_format)
-      raw_data_info->data_format = i_data_format; /* save the new data format */
+  for (i_raw_data_format=0;i_raw_data_format<NUM_RAW_DATA_FORMATS;i_raw_data_format++)       
+    if (GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"raw_data_format")) == i_raw_data_format)
+      raw_data_info->raw_data_format = i_raw_data_format; /* save the new data format */
 
   /* recalculate the total number of bytes to be read and have it displayed*/
   raw_data_update_num_bytes(raw_data_info);

@@ -38,7 +38,7 @@ const realpoint_t default_axis[NUM_AXIS] = {{1.0,0.0,0.0},
 
 const realpoint_t realpoint_init = {0.0,0.0,0.0};
 
-const voxelpoint_t voxelpoint_init = {0,0,0};
+const voxelpoint_t voxelpoint_init = {0,0,0,0};
 
 /* returns abs(rp1) for realpoint structures */
 inline realpoint_t rp_abs(const realpoint_t rp1) {
@@ -94,7 +94,7 @@ inline realpoint_t rp_div(const realpoint_t rp1,const realpoint_t rp2) {
   return temp;
 }
 
-/* returns rp_abs(rp1-rp2) for realpoint structures */
+/* returns abs(rp1-rp2) for realpoint structures */
 inline realpoint_t rp_diff(const realpoint_t rp1,const realpoint_t rp2) {
   realpoint_t temp;
   temp.x = fabs(rp1.x-rp2.x);
@@ -111,6 +111,36 @@ inline realpoint_t rp_cmult(const floatpoint_t cmult,const realpoint_t rp1) {
   temp.z = cmult*rp1.z;
   return temp;
 }
+
+
+
+
+
+
+/* returns abs(cp1-cp2) for canvaspoint structures */
+inline canvaspoint_t cp_diff(const canvaspoint_t cp1,const canvaspoint_t cp2) {
+  canvaspoint_t temp;
+  temp.x = fabs(cp1.x-cp2.x);
+  temp.y = fabs(cp1.y-cp2.y);
+  return temp;
+}
+/* returns cp1-cp2 for canvaspoint structures */
+inline canvaspoint_t cp_sub(const canvaspoint_t cp1,const canvaspoint_t cp2) {
+  canvaspoint_t temp;
+  temp.x = cp1.x-cp2.x;
+  temp.y = cp1.y-cp2.y;
+  return temp;
+}
+/* returns cp1+cp2 for canvaspoint structures */
+inline canvaspoint_t cp_add(const canvaspoint_t cp1,const canvaspoint_t cp2) {
+  canvaspoint_t temp;
+  temp.x = cp1.x+cp2.x;
+  temp.y = cp1.y+cp2.y;
+  return temp;
+}
+
+
+
 
 
 /* returns true if the realpoint is in the given box */
@@ -165,6 +195,70 @@ gboolean realpoint_in_ellipsoid(const realpoint_t p,
 }
 
 
+/* sets the axis, and also recalculates the inverse, for a coordinate frame (rs) */
+void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]) {
+
+  floatpoint_t detA;
+  axis_t i_axis, j_axis, k_axis;
+  floatpoint_t adjoint[NUM_AXIS][NUM_AXIS];
+  gboolean nan_detected = FALSE;
+
+  /* keep the old offset */
+
+  /* set the axis of the realspace */
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    rs->axis[i_axis]=new_axis[i_axis];
+
+  /* recalculate the inverse axis */
+
+  /* figure out the determinate of the new axis */
+  detA = 0.0
+    + new_axis[XAXIS].x*new_axis[YAXIS].y*new_axis[ZAXIS].z    
+    + new_axis[YAXIS].x*new_axis[ZAXIS].y*new_axis[XAXIS].z    
+    + new_axis[ZAXIS].x*new_axis[XAXIS].y*new_axis[YAXIS].z    
+    - new_axis[XAXIS].x*new_axis[ZAXIS].y*new_axis[YAXIS].z    
+    - new_axis[YAXIS].x*new_axis[XAXIS].y*new_axis[ZAXIS].z    
+    - new_axis[ZAXIS].x*new_axis[YAXIS].y*new_axis[XAXIS].z;
+
+  if (isnan(detA)) { /* gcc does some funkyness at times .... */
+    detA=1.0; 
+    g_warning("PACKAGE: NaN generated for determinate, weirdness may follow");
+  }
+
+  /* figure out the adjoint matrix */
+  for (i_axis=0; i_axis < NUM_AXIS; i_axis++) {
+    j_axis = (i_axis+1) == NUM_AXIS ? 0 : i_axis+1;
+    k_axis = (j_axis+1) == NUM_AXIS ? 0 : j_axis+1;
+    adjoint[i_axis][XAXIS] = 
+      (new_axis[j_axis].y * new_axis[k_axis].z - new_axis[j_axis].z*new_axis[k_axis].y);
+    adjoint[i_axis][YAXIS] = 
+      (new_axis[j_axis].z * new_axis[k_axis].x - new_axis[j_axis].x*new_axis[k_axis].z);
+    adjoint[i_axis][ZAXIS] = 
+      (new_axis[j_axis].x * new_axis[k_axis].y - new_axis[j_axis].y*new_axis[k_axis].x);
+  }
+  /* place the transpose of the adjunt, scalled by the detemrminante, into the inverse */
+  for (i_axis=0; i_axis < NUM_AXIS; i_axis++) {
+    rs->inverse[i_axis].x = adjoint[XAXIS][i_axis]/detA;
+    rs->inverse[i_axis].y = adjoint[YAXIS][i_axis]/detA;
+    rs->inverse[i_axis].z = adjoint[ZAXIS][i_axis]/detA;
+  }
+
+
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
+    if (isnan(rs->inverse[i_axis].x) ||
+	isnan(rs->inverse[i_axis].y) ||
+	isnan(rs->inverse[i_axis].z))
+      nan_detected = TRUE;
+  if (nan_detected) {
+    g_warning("PACKAGE: NaN detected when generating inverse matrix, weirdness will likely follow");
+    for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
+      rs->inverse[i_axis] = default_axis[i_axis];
+  }
+
+  return;
+}
+
+
 /* given the ordered corners[] (i.e corner[0].x < corner[1].x, etc.)
    and the coord_space of those corners, this function will return an
    ordered set of corners in a new coord space that completely enclose
@@ -204,7 +298,7 @@ void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const rea
 
 
 /* adjusts the given axis into an orthogonal set */
-void realspace_make_orthogonal(realpoint_t axis[]) {
+static void realspace_make_orthogonal(realpoint_t axis[]) {
 
   realpoint_t temp;
 
@@ -237,7 +331,7 @@ void realspace_make_orthogonal(realpoint_t axis[]) {
 }
 
 /* adjusts the given axis into a true orthonormal axis set */
-void realspace_make_orthonormal(realpoint_t axis[]) {
+static void realspace_make_orthonormal(realpoint_t axis[]) {
 
   /* make orthogonal via gram-schmidt */
   realspace_make_orthogonal(axis);
@@ -257,7 +351,7 @@ void realspace_make_orthonormal(realpoint_t axis[]) {
 }
 
 /* rotate the vector on the given axis by the given rotation */
-realpoint_t realspace_rotate_on_axis(const realpoint_t in,
+realpoint_t realpoint_rotate_on_axis(const realpoint_t in,
 				     const realpoint_t axis,
 				     const floatpoint_t theta) {
 
@@ -279,20 +373,35 @@ realpoint_t realspace_rotate_on_axis(const realpoint_t in,
   return return_vector;
 }
 
+/* rotate the entire coordinate frame on the given axis */
+void realspace_rotate_on_axis(realspace_t * rs,
+			      const realpoint_t axis,
+			      const floatpoint_t theta) {
+  axis_t i_axis;
+  realpoint_t new_axis[NUM_AXIS];
 
-/* returns the normal axis vector for the given view */
-realpoint_t realspace_get_view_normal(const realpoint_t axis[],
-				      const view_t view) {
-  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS);
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    new_axis[i_axis] = realpoint_rotate_on_axis(rs_specific_axis(*rs, i_axis), axis, theta);
+
+  /* make sure the result is orthonomal */
+  realspace_make_orthonormal(new_axis);
+
+  /* and setup the returned coordinate frame */
+  rs_set_offset(rs, rs_offset(*rs));
+  rs_set_axis(rs, new_axis);
+
+  return;
 }
+
+
 
 /* returns an axis vector which corresponds to the orthogonal axis (specified
    by ax) in the given view (i.e. coronal, sagittal, etc.) given the current
    axis */
-realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
-					       const view_t view,
-					       const axis_t ax) {
-
+static realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
+						      const view_t view,
+						      const axis_t ax) {
+  
   switch(view) {
   case CORONAL:
     switch (ax) {
@@ -340,19 +449,26 @@ realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
   }
 }
 
+/* returns the normal axis vector for the given view */
+realpoint_t realspace_get_view_normal(const realpoint_t axis[],
+				      const view_t view) {
+  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS);
+}
+
 /* given a coordinate frame, and a view, return the appropriate coordinate frame */
 realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
 					   const view_t view) {
 
   realspace_t return_coord_frame;
   axis_t i_axis;
+  realpoint_t new_axis[NUM_AXIS];
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    return_coord_frame.axis[i_axis] = 
-      realspace_get_orthogonal_view_axis(in_coord_frame.axis,view,i_axis);
+    new_axis[i_axis] =  realspace_get_orthogonal_view_axis(rs_all_axis(in_coord_frame),view,i_axis);
 
   /* the offset of the coord frame stays the same */
-  return_coord_frame.offset = in_coord_frame.offset;
+  rs_set_offset(&return_coord_frame, rs_offset(in_coord_frame));
+  rs_set_axis(&return_coord_frame, new_axis);
 
   return return_coord_frame;
 }
@@ -383,79 +499,31 @@ inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
   return return_point;
 }
 
-/* convert the given point from base coordinates to the given alternate
-   coordinate frame */
+/* convert a point from the base coordinates to the given alternative coordinate frame */
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
 					       const realspace_t out_alt_coord_frame) {
 
   realpoint_t return_point;
-  floatpoint_t detA,detBx,detBy,detBz;
+
 
   /* compensate the inpoint for the offset of the new coordinate frame */
-  REALPOINT_SUB(in, out_alt_coord_frame.offset, in);
-  
-  /* figure out the determinate of the view_axis */
-  detA = 0.0
-    + out_alt_coord_frame.axis[XAXIS].x*out_alt_coord_frame.axis[YAXIS].y*out_alt_coord_frame.axis[ZAXIS].z    
-    + out_alt_coord_frame.axis[YAXIS].x*out_alt_coord_frame.axis[ZAXIS].y*out_alt_coord_frame.axis[XAXIS].z    
-    + out_alt_coord_frame.axis[ZAXIS].x*out_alt_coord_frame.axis[XAXIS].y*out_alt_coord_frame.axis[YAXIS].z    
-    - out_alt_coord_frame.axis[XAXIS].x*out_alt_coord_frame.axis[ZAXIS].y*out_alt_coord_frame.axis[YAXIS].z    
-    - out_alt_coord_frame.axis[YAXIS].x*out_alt_coord_frame.axis[XAXIS].y*out_alt_coord_frame.axis[ZAXIS].z    
-    - out_alt_coord_frame.axis[ZAXIS].x*out_alt_coord_frame.axis[YAXIS].y*out_alt_coord_frame.axis[XAXIS].z;
+  REALPOINT_SUB(in, rs_offset(out_alt_coord_frame), in); 
 
-  /* and figure out the "determinates" to use for cramer's rule */
-  detBx = 0.0
-    + in.x*out_alt_coord_frame.axis[YAXIS].y*out_alt_coord_frame.axis[ZAXIS].z 
-    + out_alt_coord_frame.axis[YAXIS].x*out_alt_coord_frame.axis[ZAXIS].y*in.z
-    + out_alt_coord_frame.axis[ZAXIS].x*in.y*out_alt_coord_frame.axis[YAXIS].z
-    - in.x*out_alt_coord_frame.axis[ZAXIS].y*out_alt_coord_frame.axis[YAXIS].z
-    - out_alt_coord_frame.axis[YAXIS].x*in.y*out_alt_coord_frame.axis[ZAXIS].z
-    - out_alt_coord_frame.axis[ZAXIS].x*out_alt_coord_frame.axis[YAXIS].y*in.z;
-  detBy = 0.0
-    + out_alt_coord_frame.axis[XAXIS].x*in.y*out_alt_coord_frame.axis[ZAXIS].z 
-    + in.x*out_alt_coord_frame.axis[ZAXIS].y*out_alt_coord_frame.axis[XAXIS].z
-    + out_alt_coord_frame.axis[ZAXIS].x*out_alt_coord_frame.axis[XAXIS].y*in.z
-    - out_alt_coord_frame.axis[XAXIS].x*out_alt_coord_frame.axis[ZAXIS].y*in.z
-    - in.x*out_alt_coord_frame.axis[XAXIS].y*out_alt_coord_frame.axis[ZAXIS].z
-    - out_alt_coord_frame.axis[ZAXIS].x*in.y*out_alt_coord_frame.axis[XAXIS].z;
-  detBz = 0.0 
-    + out_alt_coord_frame.axis[XAXIS].x*out_alt_coord_frame.axis[YAXIS].y*in.z 
-    + out_alt_coord_frame.axis[YAXIS].x*in.y*out_alt_coord_frame.axis[XAXIS].z
-    + in.x*out_alt_coord_frame.axis[XAXIS].y*out_alt_coord_frame.axis[YAXIS].z
-    - out_alt_coord_frame.axis[XAXIS].x*in.y*out_alt_coord_frame.axis[YAXIS].z
-    - out_alt_coord_frame.axis[YAXIS].x*out_alt_coord_frame.axis[XAXIS].y*in.z
-    - in.x*out_alt_coord_frame.axis[YAXIS].y*out_alt_coord_frame.axis[XAXIS].z;
-
-  /* get around some obscure compile bug.... */
-  if (isnan(detA)!= 0) detA = 1.0;
-  if (isnan(detBx)!= 0) detBx = 0.0;
-  if (isnan(detBy)!= 0) detBy = 0.0;
-  if (isnan(detBz)!= 0) detBz = 0.0;
-  /* try removing these four previous lines when something beyond gcc 2.95.2 
-     comes out */
-
-  /* do our inverse via Cramer's Rule */
-  return_point.x = detBx/detA;
-  return_point.y = detBy/detA;
-  return_point.z = detBz/detA;
-
+  return_point.x = 
+    in.x * out_alt_coord_frame.inverse[XAXIS].x +
+    in.y * out_alt_coord_frame.inverse[YAXIS].x +
+    in.z * out_alt_coord_frame.inverse[ZAXIS].x;
+  return_point.y = 
+    in.x * out_alt_coord_frame.inverse[XAXIS].y +
+    in.y * out_alt_coord_frame.inverse[YAXIS].y +
+    in.z * out_alt_coord_frame.inverse[ZAXIS].y;
+  return_point.z = 
+    in.x * out_alt_coord_frame.inverse[XAXIS].z +
+    in.y * out_alt_coord_frame.inverse[YAXIS].z +
+    in.z * out_alt_coord_frame.inverse[ZAXIS].z;
 
   return return_point;
 }
-
-/* converts a point from one coordinate frame to another */
-inline realpoint_t realspace_alt_coord_to_alt(const realpoint_t in,
-					      const realspace_t in_alt_coord_frame,
-					      const realspace_t out_alt_coord_frame) {
-
-  realpoint_t return_point;
-
-  return_point = realspace_alt_coord_to_base(in,in_alt_coord_frame);
-  return_point = realspace_base_coord_to_alt(return_point,out_alt_coord_frame);
-
-  return return_point;
-}
-
 
 /* converts a "dimensional" quantity (i.e. the size of a voxel) from a
    given coordinate system to the base coordinate system */

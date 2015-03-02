@@ -52,30 +52,37 @@ typedef enum {BW_LINEAR, \
 typedef guint8 color_data_t;
 typedef gdouble hsv_data_t;
 
-typedef struct color_point_t {
+typedef struct rgba_t {
   color_data_t r;
   color_data_t g;
   color_data_t b;
-} color_point_t;
+  color_data_t a;
+} rgba_t;
+
+typedef struct rgb_t {
+  color_data_t r;
+  color_data_t g;
+  color_data_t b;
+} rgb_t;
   
-typedef struct hsv_point_t {
+typedef struct hsv_t {
   hsv_data_t h;
   hsv_data_t s;
   hsv_data_t v;
-} hsv_point_t;
+} hsv_t;
 
 /* external functions */
 guint32 color_table_outline_color(color_table_t which, gboolean highlight);
 
 /* in color_table2.h 
-   color_point_t color_table_lookup */
+   rgba_t color_table_lookup */
 
 /* external variables */
 extern gchar * color_table_names[];
 
 
 /* internal functions */
-color_point_t color_table_hsv_to_rgb(hsv_point_t * hsv);
+rgb_t color_table_hsv_to_rgb(hsv_t * hsv);
 
 
 #endif /* __COLOR_TABLE_H__ */

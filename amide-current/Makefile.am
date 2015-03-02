@@ -6,4 +6,5 @@ SUBDIRS = \
 	etc
 
 
+DISTCLEANFILES = *~
 

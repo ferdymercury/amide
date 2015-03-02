@@ -112,8 +112,8 @@ rendering_voxel_t * dummy_voxel;
 typedef struct _rendering_t {
   vpContext * vpc;      /*  VolPack rendering Context */
   volume_t * volume;
-  volume_time_t start;
-  volume_time_t duration;
+  amide_time_t start;
+  amide_time_t duration;
   rendering_voxel_t * rendering_vol;
   voxelpoint_t dim; /* dimensions of our rendering_vol and image */
   guchar * image;
@@ -149,11 +149,13 @@ struct _rendering_list_t {
 rendering_t * rendering_context_free(rendering_t * context);
 rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord_frame, 
 				     realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				     intpoint_t max_dim, volume_time_t start, volume_time_t duration);
+				     intpoint_t max_dim, amide_time_t start, amide_time_t duration,
+				     interpolation_t interpolation);
 void rendering_context_load_volume(rendering_t * rendering_context, realspace_t render_coord_frame,
 				   realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				   volume_time_t start, volume_time_t duration);
+				   amide_time_t start, amide_time_t duration, interpolation_t interpolation);
 void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble rotation);
+void rendering_context_reset_rotation(rendering_t * context);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
 void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type, gdouble zoom);
 void rendering_context_set_depth_cueing(rendering_t * context, gboolean state);
@@ -163,10 +165,13 @@ void rendering_context_render(rendering_t * context);
 rendering_list_t * rendering_list_free(rendering_list_t * rendering_list);
 rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspace_t render_coord_frame,
 					       realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-					       intpoint_t max_dim, volume_time_t start, volume_time_t duration);
+					       intpoint_t max_dim, amide_time_t start, amide_time_t duration,
+					       interpolation_t interpolation);
 rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
-				       volume_time_t start, volume_time_t duration);
-void rendering_lists_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);
+				       amide_time_t start, amide_time_t duration, 
+				       interpolation_t interpolation);
+void rendering_list_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);
+void rendering_list_reset_rotation(rendering_list_t * contexts);
 void rendering_list_set_quality(rendering_list_t * renderling_list, rendering_quality_t quality);
 void rendering_list_set_image(rendering_list_t * rendering_list, pixel_type_t pixel_type, gdouble zoom);
 void rendering_list_set_depth_cueing(rendering_list_t * rendering_list, gboolean state);

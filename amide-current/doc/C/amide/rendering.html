@@ -96,14 +96,18 @@ HREF="rendering-movie-dialog-help.html"
   abilities of most other packages.&#13;</P
 ><P
 >&#13;  To start a rendering dialog, select the images that you would like
-  to render, and then hit the "View-&#62;Analysis" menu item.  The program
-  will reslice the data set into a data structure that the volpack
-  library can handle, and then perform some initial rendering
-  calculations which are used to speed up later renderings.  This
-  whole process will take some time, so be patient.  Please also note
-  that, when converting the data set, the data is scaled between 0 and
-  1, with all data above the current maximum threshold set to 1, and
-  all data below the current minimum threshold set to 0.&#13;</P
+  to render, and then hit the "View-&#62;Rendering" menu item.  Since the
+  program needs to reslice the data set into a data structure that the
+  volpack library can handle, you need to decide if you want to use a
+  nearest neighbor (Fast, lower quality) or trilinear (Slow, higher
+  quality) interpolation.  The program will then reslice the data set
+  and perform some initial rendering calculations which are used to
+  speed up later renderings.  This whole process will take some time,
+  so be patient.  Please also note that, when converting the data set,
+  the data is scaled between the current minimum and maximum
+  threshold, with all data above the current maximum threshold set to
+  the maximum threshold value, and all data below the current minimum
+  threshold set to the minimum threshold.&#13;</P
 ><P
 >&#13;  When this is completed, the rendering dialog should pop-up.  It's
   use is described below.&#13;</P
@@ -186,6 +190,35 @@ CLASS="SECT2"
 CLASS="SECT2"
 ><A
 NAME="AEN228"
+>Reset Axis</A
+></H2
+><P
+>      This button will reset the data set's orientation back to the
+      default orientation.
+    </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN231"
+>Export Rendering</A
+></H2
+><P
+>      This button allows you to export the rendered image to
+      anexternal image file.  The saved data format is determined by
+      the extension of the specified filename.  A large variety of
+      image data formats can be saved, including JPEG [.jpg], TIFF
+      [.tiff], Postscript [.ps], Encapsulated Postscript [.eps], and
+      PNG [.png].  </P
+></DIV
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN234"
 >"Rendering Parameters" Button</A
 ></H2
 ><P
@@ -198,7 +231,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN231"
+NAME="AEN237"
 >"Create Movie" Button</A
 ></H2
 ><P
@@ -211,7 +244,7 @@ CLASS="SECT2"
 ><H2
 CLASS="SECT2"
 ><A
-NAME="AEN234"
+NAME="AEN240"
 >Data Set Rendering Window</A
 ></H2
 ><P

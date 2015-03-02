@@ -1,3 +1,30 @@
+0.4.3
+	* multiple speed improvements (at least 2x faster now for slice generation)
+	  -changed multiple functions to defines (based on profiling)
+	  -inverse matrix is now pregenerated and stored
+	  -default compile is now -O6
+	* now have multiple internal data representations (not just float)
+	* can have multi-dimensional scaling constants, useful for CTI files 
+	  and such that have a scaling constant for each plane (let alone frame)
+	* changed color compositing to an alpha based method, so that
+	  colormaps with white backgrounds can be composited together
+	* changed voxelpoint_t to 4D, volumes are now considered 4D, 
+	  rather than 3D with multiple frames
+	* new data type, data_set_t.  The volume's data set and distribution
+	  array are kept in this format
+	* interpolation type used for conversion to a rendering context can
+	  now be specified
+	* can now export renderings to graphics files
+	* added "reset axis" button to rendering dialog
+	* fixed a bunch of stupid bugs with the threshold widget
+	* no longer save max/min in xml files, as these are regenerated 
+	* no longer save far corner in volume .xml files, redundant information
+	* fixed stupid bug with the raw data import dialog box
+	* fixed problem with adjusting the dimension of ROI's that were not lined
+	  up with the transverse plane
+	* wait cursor no longer stays on erroneously when series widget used
+	* library no longer built by default
+
 0.4.2
 	* global scaling is now default for new studies
 	* threshold arrows now move better with relation to the cursor

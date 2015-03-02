@@ -39,8 +39,8 @@ typedef struct ui_series_t {
   realspace_t coord_frame;
   realpoint_t view_point;
   floatpoint_t thickness;
-  volume_time_t view_time;
-  volume_time_t view_duration;
+  amide_time_t view_time;
+  amide_time_t view_duration;
   interpolation_t interpolation;
   floatpoint_t zoom;
   series_t type;

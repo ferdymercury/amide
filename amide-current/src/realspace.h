@@ -28,18 +28,26 @@
 
 typedef enum {XAXIS, YAXIS, ZAXIS, NUM_AXIS} axis_t;
 
+/* canvas point is a point in canvas (real) 2D space */
+typedef struct canvaspoint_t {
+  floatpoint_t x;
+  floatpoint_t y;
+} canvaspoint_t;
+
 /* pixel point is a point in pixel (integer) 2D space */
 typedef struct pixelpoint_t {
   intpoint_t x;
   intpoint_t y;
 } pixelpoint_t;
 
-/* voxel point is a point in voxel (integer) 3D space */
+/* voxel point is a point in voxel (integer) 4D space */
 typedef struct voxelpoint_t {
   intpoint_t x;
   intpoint_t y;
   intpoint_t z;
+  intpoint_t t;
 } voxelpoint_t;
+
 
 /* realpoint is a point in real (float) 3D space */
 typedef struct realpoint_t {
@@ -48,13 +56,15 @@ typedef struct realpoint_t {
   floatpoint_t z;
 } realpoint_t;
 
-/* a realspace is the description of an alternative coordinate frame 
-   wrt to the base coordinate space.  note: offset is in the base
-   coordinate frame*/
+/* a realspace is the description of an alternative coordinate frame
+   wrt to the base coordinate space.  Offset is in the base coordinate
+   frame.  Inverse is the inverse of the axis, and should be
+   precalculated from the axis.  All of these items should be accessed
+   using the proper functions */
 typedef struct realspace_t {
   realpoint_t offset;
   realpoint_t axis[NUM_AXIS];
-  //  realpoint_t inverse[NUM_AXIS];
+  realpoint_t inverse[NUM_AXIS];
 } realspace_t;
 
 /* constants */
@@ -63,6 +73,12 @@ typedef struct realspace_t {
 
 
 /* convenience functions */
+
+/* returns the offset of a realspace */
+#define rs_offset(rs) ((rs).offset)
+#define rs_set_offset(rs, new_off) ((rs)->offset = (new_off))
+#define rs_specific_axis(rs, which) ((rs).axis[(which)])
+#define rs_all_axis(rs) ((rs).axis)
 
 /* returns the boolean value of fp1==fp2 (within a factor of CLOSE) */
 #define FLOATPOINT_EQUAL(fp1,fp2) (((fp1) > ((1.00-CLOSE)*(fp2)-CLOSE)) && \
@@ -129,10 +145,7 @@ typedef struct realspace_t {
 					   ((rp3).y = cm*(rp1).y+dm*(rp2).y), \
 					   ((rp3).z = cm*(rp1).z+dm*(rp2).z)) 
 
-
-#define realspace_offset(rs) ((rs).offsetx)
-#define realspace_axis(rs) ((rs).axisx)
-
+#define realspace_alt_coord_to_alt(in, in_frame, out_frame) (realspace_base_coord_to_alt(realspace_alt_coord_to_base((in),(in_frame)),(out_frame)))
 
 /* external functions */
 
@@ -147,6 +160,10 @@ inline realpoint_t rp_diff(const realpoint_t rp1, const realpoint_t rp2);
 inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
 
 
+inline canvaspoint_t cp_diff(const canvaspoint_t cp1,const canvaspoint_t cp2);
+inline canvaspoint_t cp_sub(const canvaspoint_t cp1,const canvaspoint_t cp2);
+inline canvaspoint_t cp_add(const canvaspoint_t cp1,const canvaspoint_t cp2);
+
 gboolean realpoint_in_box(const realpoint_t p,
 			  const realpoint_t p0,
 			  const realpoint_t p1);
@@ -157,27 +174,19 @@ gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
 gboolean realpoint_in_ellipsoid(const realpoint_t p,
 				const realpoint_t center,
 				const realpoint_t radius);
+void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]);
 void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const realpoint_t in_corner[], 
 				     const realspace_t out_coord_frame, realpoint_t out_corner[] );
-void realspace_make_orthogonal(realpoint_t axis[]);
-void realspace_make_orthonormal(realpoint_t axis[]);
-realpoint_t realspace_rotate_on_axis(const realpoint_t in,
-				     const realpoint_t axis,
-				     const floatpoint_t theta);
-realpoint_t realspace_get_view_normal(const realpoint_t axis[],
-				      const view_t view);
-realpoint_t realspace_get_orthogonal_view_axis(const realpoint_t axis[],
-					       const view_t view,
-					       const axis_t ax);
+void realspace_rotate_on_axis(realspace_t * rs, 
+			      const realpoint_t axis, 
+			      const floatpoint_t theta);
+realpoint_t realspace_get_view_normal(const realpoint_t axis[], const view_t view);
 realspace_t realspace_get_view_coord_frame(const realspace_t in_coord_frame,
 					   const view_t view);
 inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 					       const realspace_t in_alt_coord_frame);
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
 					       const realspace_t out_alt_coord_frame);
-inline realpoint_t realspace_alt_coord_to_alt(const realpoint_t in,
-					      const realspace_t in_alt_coord_frame,
-					      const realspace_t out_alt_coord_frame);
 inline realpoint_t realspace_alt_dim_to_base(const realpoint_t in,
 					     const realspace_t in_alt_coord_frame);
 inline realpoint_t realspace_base_dim_to_alt(const realpoint_t in,
@@ -188,9 +197,7 @@ inline realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
 
 /* external variables */
 extern const gchar * axis_names[];
-//extern const realpoint_t default_normal[NUM_AXIS];
 extern const realpoint_t default_axis[NUM_AXIS];
-//extern const realpoint_t default_rotation[NUM_AXIS];
 extern const realpoint_t realpoint_init;
 extern const voxelpoint_t voxelpoint_init;
 

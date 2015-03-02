@@ -1,1 +1,0 @@
-../src/color_table2.h

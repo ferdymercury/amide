@@ -29,9 +29,11 @@
 void ui_rendering_callbacks_render(GtkWidget * widget, gpointer data);
 void ui_rendering_callbacks_immediate(GtkWidget * widget, gpointer data);
 void ui_rendering_callbacks_rotate(GtkAdjustment * adjustment, gpointer data);
-void ui_rendering_parameters_pressed(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_reset_axis_pressed(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_export_pressed(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_parameters_pressed(GtkWidget * widget, gpointer data);
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
-void ui_rendering_movie_pressed(GtkWidget * widget, gpointer data);
+void ui_rendering_callbacks_movie_pressed(GtkWidget * widget, gpointer data);
 #endif
 void ui_rendering_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
 

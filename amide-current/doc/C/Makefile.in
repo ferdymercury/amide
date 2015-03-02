@@ -59,12 +59,13 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+AMIDE_CFLAGS = @AMIDE_CFLAGS@
+AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AS = @AS@
 CC = @CC@
-CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 DLLTOOL = @DLLTOOL@
 ECHO = @ECHO@
@@ -94,6 +95,7 @@ GTK_LIBS = @GTK_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
+M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
@@ -124,6 +126,8 @@ PERL_FILES =  	make-index.pl			make-docbook.pl
 
 EXTRA_DIST =  	$(SGML_FILES)			$(PERL_FILES)			topic.dat
 
+
+DISTCLEANFILES = *~
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../config.h
 CONFIG_CLEAN_FILES = 
@@ -223,6 +227,7 @@ clean-generic:
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 mostlyclean-am:  mostlyclean-generic

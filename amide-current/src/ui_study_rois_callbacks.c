@@ -44,11 +44,9 @@
 gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
-  realpoint_t real_loc, canvas_loc; 
+  realpoint_t real_loc, canvas_rp; 
   view_t i_view;
-  axis_t i_axis;
-  realpoint_t item, diff;
-  volume_t * volume;
+  canvaspoint_t canvas_cp, diff;
   realpoint_t t[3]; /* temp variables */
   realpoint_t new_center, new_radius, roi_center, roi_radius;
   realspace_t * canvas_coord_frame_p;
@@ -61,8 +59,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
   static realpoint_t center, radius;
   static view_t view_static;
   static realpoint_t initial_real_loc;
-  static realpoint_t initial_canvas_loc;
-  static realpoint_t last_pic_loc;
+  static realpoint_t initial_canvas_rp;
+  static canvaspoint_t last_pic_cp;
   static gboolean dragging = FALSE;
   static ui_roi_list_t * current_roi_list_item = NULL;
   static GnomeCanvasItem * roi_item = NULL;
@@ -74,6 +72,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
   /* sanity checks */
   if (ui_study->current_mode == VOLUME_MODE) 
     return TRUE;
+  if (ui_study->current_volume == NULL)
+    return TRUE; 
   if (study_volumes(ui_study->study) == NULL)
     return TRUE;
   for (i_view=0; i_view<NUM_VIEWS; i_view++) {
@@ -84,11 +84,6 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
     }
   }
 
-  /* figure out which volume we're dealing with */
-  if (ui_study->current_volume == NULL)
-    return TRUE; 
-  else
-    volume = ui_study->current_volume;
 		   
   /* iterate through all the currently drawn roi's to figure out which
      roi this item corresponds to and what canvas it's on */
@@ -98,11 +93,9 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
     current_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
   }
       
-  /* get the location of the event, and convert it to the gnome image system 
-     coordinates */
-  item.x = event->button.x;
-  item.y = event->button.y;
-  gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item.x, &item.y);
+  /* get the location of the event, and convert it to the canvas coordinates */
+  gnome_canvas_w2c_d(ui_study->canvas[view_static], event->button.x, event->button.y, 
+		     &canvas_cp.x, &canvas_cp.y);
 
   /* get the coordinate frame and the far corner for the current canvas,
      the canvas_corner is in the canvas_coord_frame.  Also get the rgb_image
@@ -114,14 +107,11 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
   rgb_height = gdk_pixbuf_get_height(rgb_image);
 
 
-  /* convert the event location to view space units */
-  canvas_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)/rgb_width)*(*canvas_far_corner).x;
-  canvas_loc.y = ((rgb_height - (item.y-UI_STUDY_TRIANGLE_HEIGHT))
-		  /rgb_height)*(*canvas_far_corner).y;
-  canvas_loc.z = study_view_thickness(ui_study->study)/2.0;
 
   /* Convert the event location info to real units */
-  real_loc = realspace_alt_coord_to_base(canvas_loc, *canvas_coord_frame_p);
+  canvas_rp = ui_study_cp_2_rp(ui_study->canvas[view_static], canvas_cp, 
+				study_view_thickness(ui_study->study));
+  real_loc = realspace_alt_coord_to_base(canvas_rp, *canvas_coord_frame_p);
 
   /* switch on the event which called this */
   switch (event->type)
@@ -173,14 +163,14 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 
       /* save some values in static variables for future use */
       initial_real_loc = real_loc;
-      initial_canvas_loc = canvas_loc;
-      last_pic_loc = item;
+      initial_canvas_rp = canvas_rp;
+      last_pic_cp = canvas_cp;
       theta = 0.0;
       roi_zoom.x = roi_zoom.y = roi_zoom.z = 1.0;
       shift = realpoint_init;
 
       t[0] = 
-	realspace_base_coord_to_alt(current_roi_list_item->roi->coord_frame.offset,
+	realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
 				    current_roi_list_item->roi->coord_frame);
       t[1] = current_roi_list_item->roi->corner;
       REALPOINT_MADD(0.5,t[1],0.5,t[0],center);
@@ -218,8 +208,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 						*canvas_coord_frame_p);
 	  roi_center = realspace_alt_coord_to_alt(center, current_roi_list_item->roi->coord_frame,
 						  *canvas_coord_frame_p);
-	  t[0] = rp_diff(initial_canvas_loc, roi_center);
-	  t[1] = rp_diff(canvas_loc,roi_center);
+	  t[0] = rp_diff(initial_canvas_rp, roi_center);
+	  t[1] = rp_diff(canvas_rp,roi_center);
 	  
 	  /* figure out what the center of the roi is in gnome_canvas_item coords */
 	  /* compensate for X's origin being top left (not bottom left) */
@@ -243,8 +233,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	  t[2].x = t[2].y = t[2].z = 1.0;
 	  REALPOINT_SUB(canvas_zoom,t[2],roi_zoom);
 	  roi_zoom =  realspace_alt_coord_to_base(roi_zoom, *canvas_coord_frame_p);
-	  REALPOINT_SUB(roi_zoom, (*canvas_coord_frame_p).offset, roi_zoom); 
-	  REALPOINT_ADD(roi_zoom, current_roi_list_item->roi->coord_frame.offset, roi_zoom);
+	  roi_zoom = rp_sub(roi_zoom, rs_offset(*canvas_coord_frame_p)); 
+	  roi_zoom = rp_add(roi_zoom, rs_offset(current_roi_list_item->roi->coord_frame));
 	  roi_zoom = realspace_base_coord_to_alt(roi_zoom, current_roi_list_item->roi->coord_frame);
 	  REALPOINT_ADD(roi_zoom,t[2],roi_zoom);
 	  //	  g_print("roi_zoom\t%5.3f %5.3f %5.3f\n",roi_zoom.x,roi_zoom.y,roi_zoom.z);
@@ -287,8 +277,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	  roi_center = realspace_alt_coord_to_alt(center,
 						  current_roi_list_item->roi->coord_frame,
 						  *canvas_coord_frame_p);
-	  t[0] = rp_sub(initial_canvas_loc,roi_center);
-	  t[1] = rp_sub(canvas_loc,roi_center);
+	  t[0] = rp_sub(initial_canvas_rp,roi_center);
+	  t[1] = rp_sub(canvas_rp,roi_center);
 
 	  /* figure out theta */
 	  theta = acos(REALPOINT_DOT_PRODUCT(t[0],t[1])/
@@ -320,7 +310,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	  /* shift button pressed, we're shifting the object */
 	  /* do movement calculations */
 	  shift = rp_sub(real_loc, initial_real_loc);
-	  diff = rp_sub(item, last_pic_loc);
+	  diff = cp_sub(canvas_cp, last_pic_cp);
 	  /* convert the location back to world coordiantes */
 	  gnome_canvas_item_i2w(GNOME_CANVAS_ITEM(roi_item)->parent, &diff.x, &diff.y);
 	  gnome_canvas_item_move(GNOME_CANVAS_ITEM(roi_item),diff.x,diff.y); 
@@ -329,7 +319,7 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	  dragging = FALSE;
 	  return TRUE;
 	}
-	last_pic_loc = item;
+	last_pic_cp = canvas_cp;
       }
       break;
       
@@ -361,8 +351,8 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 
       if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
 	/* ------------- apply any shift done -------------- */
-	current_roi_list_item->roi->coord_frame.offset = 
-	  rp_add(shift, current_roi_list_item->roi->coord_frame.offset);
+	rs_set_offset(&current_roi_list_item->roi->coord_frame,
+		      rp_add(shift, rs_offset(current_roi_list_item->roi->coord_frame)));
       } else if (event->button.button == UI_STUDY_ROIS_RESIZE_BUTTON) {
 	/* ------------- apply any zoom done -------------- */
 	REALPOINT_MULT(roi_zoom,radius,new_radius); 
@@ -371,9 +361,9 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	REALPOINT_SUB(center, new_radius, t[0]);
 	
 	/* the new roi offset will be the new lower left corner */
-	current_roi_list_item->roi->coord_frame.offset =
-	  realspace_alt_coord_to_base(t[0],
-				      current_roi_list_item->roi->coord_frame);
+	rs_set_offset(&current_roi_list_item->roi->coord_frame,
+		      realspace_alt_coord_to_base(t[0],
+						  current_roi_list_item->roi->coord_frame));
 	
 	/* and the new upper right corner is simply twice the radius */
 	REALPOINT_CMULT(2,new_radius,t[1]);
@@ -387,15 +377,12 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 				      current_roi_list_item->roi->coord_frame);
 	
 	/* reset the offset of the roi coord_frame to the object's center */
-	current_roi_list_item->roi->coord_frame.offset = new_center;
+	rs_set_offset(&current_roi_list_item->roi->coord_frame, new_center);
 
 	/* now rotate the roi coord_frame axis */
-	for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-	  current_roi_list_item->roi->coord_frame.axis[i_axis] =
-	    realspace_rotate_on_axis((current_roi_list_item->roi->coord_frame.axis[i_axis]),
-				     (canvas_coord_frame_p->axis[ZAXIS]),
-				     theta);
-	realspace_make_orthonormal(current_roi_list_item->roi->coord_frame.axis);
+	realspace_rotate_on_axis(&current_roi_list_item->roi->coord_frame,
+				 rs_specific_axis(*canvas_coord_frame_p, ZAXIS),
+				 theta);
 	
 	/* and recaculate the offset */
 	new_center = /* get the center in roi coords */
@@ -405,14 +392,14 @@ gboolean ui_study_rois_callbacks_roi_event(GtkWidget* widget, GdkEvent * event, 
 	t[0] = /* get the new offset in real coords */
 	  realspace_alt_coord_to_base(t[0],
 				      current_roi_list_item->roi->coord_frame);
-	current_roi_list_item->roi->coord_frame.offset = t[0]; 
+	rs_set_offset(&current_roi_list_item->roi->coord_frame, t[0]); 
 	
       } else 
 	return TRUE; /* shouldn't get here */
 
       if (event->button.button == UI_STUDY_ROIS_SHIFT_BUTTON) {
 	/* if we were moving the ROI, reset the view_center to the center of the current roi */
-	t[0] = realspace_base_coord_to_alt(current_roi_list_item->roi->coord_frame.offset,
+	t[0] = realspace_base_coord_to_alt(rs_offset(current_roi_list_item->roi->coord_frame),
 					   current_roi_list_item->roi->coord_frame);
 	t[1] = current_roi_list_item->roi->corner;
 	center = rp_add(rp_cmult(0.5, t[0]), rp_cmult(0.5, t[1]));
@@ -537,9 +524,9 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
   while (current_ui_volume_list != NULL) {
 
     /*what volume we're calculating on */
-    line = g_strdup_printf("Calculating on Volume:\t%s\t using conversion factor:\t%5.3f\n", 
+    line = g_strdup_printf("Calculating on Volume:\t%s\t using external scaling factor:\t%5.3f\n", 
 			   current_ui_volume_list->volume->name, 
-			   current_ui_volume_list->volume->conversion);
+			   current_ui_volume_list->volume->external_scaling);
     gtk_text_insert(GTK_TEXT(text), courier_font, NULL, NULL, line, -1);
     g_free(line);
     
@@ -561,7 +548,7 @@ void ui_study_rois_callbacks_calculate(ui_study_t * ui_study, gboolean all) {
       g_free(line);
       
       /* iterate over the volume's frames */
-      for (j=0;j<current_ui_volume_list->volume->num_frames;j++) {
+      for (j=0;j<current_ui_volume_list->volume->data_set->dim.t;j++) {
 	/* calculate the info for this roi */
 	analysis = roi_calculate_analysis(temp_roi_list->roi,current_ui_volume_list->volume,temp_roi_list->roi->grain,j);
 	

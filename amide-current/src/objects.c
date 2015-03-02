@@ -47,11 +47,11 @@
 
 
 void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coord_frame,
-			     realpoint_t center, realpoint_t radius, volume_data_t level) {
+			     realpoint_t center, realpoint_t radius, amide_data_t level) {
 
   voxelpoint_t i, j, low, high;
   realpoint_t real_p, temp;
-  volume_data_t weight;
+  amide_data_t weight;
   floatpoint_t min_dim;
   realpoint_t object_corner[2];
   realpoint_t volume_corner[2];
@@ -65,7 +65,7 @@ void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coor
   temp = realspace_alt_coord_to_alt(center, volume->coord_frame, object_coord_frame);
   REALPOINT_SUB(temp, radius, temp);
   temp = realspace_alt_coord_to_base(temp, object_coord_frame);
-  object_coord_frame.offset = temp;
+  rs_set_offset(&object_coord_frame,temp);
   
   min_dim = REALPOINT_MIN_DIM(volume->voxel_size);
 
@@ -112,10 +112,11 @@ void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coor
   if (volume_corner[1].z > volume->corner.z)
     volume_corner[1].z = volume->corner.z;
 
-  low = volume_realpoint_to_voxel(volume, volume_corner[0]);
-  high = volume_realpoint_to_voxel(volume, volume_corner[1]);
+  VOLUME_REALPOINT_TO_VOXEL(volume, volume_corner[0], frame, low);
+  VOLUME_REALPOINT_TO_VOXEL(volume, volume_corner[1], frame, high);
 
   /* iterate around the dimensions */
+  i.t = frame;
   for (i.x = low.x; i.x < high.x ; i.x++) 
     for (i.y = low.y; i.y < high.y ; i.y++) 
       for (i.z = low.z; i.z < high.z ; i.z++) {
@@ -126,13 +127,13 @@ void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coor
 	  j.x = (corner & 0x1) ? i.x+1 : i.x;
 	  j.y = (corner & 0x2) ? i.y+1 : i.y;
 	  j.z = (corner & 0x4) ? i.z+1 : i.z;
-	  real_p = volume_voxel_to_realpoint(volume,j);
+	  VOLUME_VOXEL_TO_REALPOINT(volume, j, real_p);
 	  real_p = realspace_alt_coord_to_alt(real_p, volume->coord_frame, object_coord_frame);
 	  if (realpoint_in_ellipsoid(real_p,center,radius)) {
 	    weight += 0.125;
 	  }
 	}
-	VOLUME_SET_CONTENT(volume,frame,i) += weight*level;
+	DATA_SET_FLOAT_SET_CONTENT(volume->data_set,i) += weight*level;
       }
 
   return;
@@ -143,10 +144,10 @@ void objects_place_ellipsoid(volume_t * volume, guint frame, realspace_t in_coor
 /* this function places a cylinder on a volume */
 void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t in_coord_frame,
 				     realpoint_t center, realpoint_t radius, floatpoint_t height,
-				     volume_data_t level) {
+				     amide_data_t level) {
 
   voxelpoint_t i, j, low, high;
-  volume_data_t weight;
+  amide_data_t weight;
   floatpoint_t min_dim;
   realpoint_t real_p, temp;
   realpoint_t object_corner[2];
@@ -163,7 +164,7 @@ void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t
   temp.y = temp.y-radius.y;
   temp.z = temp.z-height/2.0;
   temp = realspace_alt_coord_to_base(temp, object_coord_frame);
-  object_coord_frame.offset = temp;
+  rs_set_offset(&object_coord_frame,temp);
   
   min_dim = REALPOINT_MIN_DIM(volume->voxel_size);
 
@@ -213,10 +214,11 @@ void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t
   if (volume_corner[1].z > volume->corner.z)
     volume_corner[1].z = volume->corner.z;
 
-  low = volume_realpoint_to_voxel(volume, volume_corner[0]);
-  high = volume_realpoint_to_voxel(volume, volume_corner[1]);
+  VOLUME_REALPOINT_TO_VOXEL(volume, volume_corner[0], frame, low);
+  VOLUME_REALPOINT_TO_VOXEL(volume, volume_corner[1], frame, high);
 
   /* iterate around the dimensions */
+  i.t = frame;
   for (i.x = low.x; i.x < high.x ; i.x++) 
     for (i.y = low.y; i.y < high.y ; i.y++) 
       for (i.z = low.z; i.z < high.z ; i.z++) {
@@ -227,12 +229,12 @@ void objects_place_elliptic_cylinder(volume_t * volume, guint frame, realspace_t
 	  j.x = (corner & 0x1) ? i.x+1 : i.x;
 	  j.y = (corner & 0x2) ? i.y+1 : i.y;
 	  j.z = (corner & 0x4) ? i.z+1 : i.z;
-	  real_p = volume_voxel_to_realpoint(volume,j);
+	  VOLUME_VOXEL_TO_REALPOINT(volume, j, real_p);
 	  real_p = realspace_alt_coord_to_alt(real_p, volume->coord_frame, object_coord_frame);
 	  if (realpoint_in_elliptic_cylinder(real_p,center,height, radius))
 	    weight += 0.125;
 	}
-	VOLUME_SET_CONTENT(volume,frame,i) += weight*level;
+	DATA_SET_FLOAT_SET_CONTENT(volume->data_set,i) += weight*level;
       }
 
   return;

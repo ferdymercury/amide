@@ -49,12 +49,13 @@ typedef enum {
 
 
 /* setup the types for various internal data formats */
-//typedef gdouble volume_data_t;
-//#define SIZE_OF_VOLUME_DATA_T 8
-typedef gfloat volume_data_t;
-#define SIZE_OF_VOLUME_DATA_T 4
-typedef gdouble volume_time_t;
-#define SIZE_OF_VOLUME_TIME_T 8
+/* note, don't change the amide_data_t unless you want to do a 
+   lot of digging through the code, a lot of assumptions are
+   based on the data type being float */
+typedef gfloat amide_data_t;
+#define SIZE_OF_AMIDE_DATA_T 4
+typedef gdouble amide_time_t;
+#define SIZE_OF_AMIDE_TIME_T 8
 typedef gdouble floatpoint_t;
 #define SIZE_OF_FLOATPOINT_T 8
 typedef gint16 intpoint_t;

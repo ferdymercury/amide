@@ -12,3 +12,7 @@ BITMAPS     = \
 pixmap_DATA = $(BITMAPS)
 
 EXTRA_DIST  = $(BITMAPS) 
+
+
+
+DISTCLEANFILES = *~

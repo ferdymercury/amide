@@ -31,7 +31,7 @@
 typedef struct raw_data_info_t {
   gchar * filename;
   guint total_file_size;
-  data_format_t data_format;
+  raw_data_format_t raw_data_format;
   guint offset;
   GtkWidget * num_bytes_label1;
   GtkWidget * num_bytes_label2;

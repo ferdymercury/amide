@@ -46,11 +46,11 @@ void ui_study_callbacks_transverse_series_frames(GtkWidget * widget, gpointer ui
 void ui_study_callbacks_coronal_series_frames(GtkWidget * widget, gpointer ui_study_p);
 void ui_study_callbacks_sagittal_series_frames(GtkWidget * widget, gpointer ui_study_p);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-void ui_study_callbacks_rendering(GtkWidget * widget, gpointer data);
+void ui_study_callbacks_rendering_nearest_neighbor(GtkWidget * widget, gpointer data);
+void ui_study_callbacks_rendering_trilinear(GtkWidget * widget, gpointer data);
 #endif
 void ui_study_callbacks_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_callbacks_scaling(GtkWidget * adjustment, gpointer data);
-void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_entry_name(gchar * entry_string, gpointer data);
 void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_tree_leaf_clicked(GtkWidget * leaf, GdkEventButton * event, gpointer data);

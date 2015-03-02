@@ -42,7 +42,11 @@ gchar * pixel_type_names[] = {"Opacity",
 			      "Grayscale"};
 			      
 
-
+/* internal variables */
+vpMatrix4 identity_m4 = {{1.0, 0.0, 0.0, 0.0}, 
+			 {0.0, 1.0, 0.0, 0.0},
+			 {0.0, 0.0, 1.0, 0.0},
+			 {0.0, 0.0, 0.0, 1.0}};
 
 rendering_t * rendering_context_free(rendering_t * context) {
   
@@ -86,7 +90,8 @@ rendering_t * rendering_context_free(rendering_t * context) {
 
 rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord_frame, 
 				     realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				     intpoint_t max_dim, volume_time_t start, volume_time_t duration) {
+				     intpoint_t max_dim, amide_time_t start, amide_time_t duration,
+				     interpolation_t interpolation) {
 
   rendering_t * temp_context = NULL;
   gint i;
@@ -229,7 +234,7 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
 
   /* now copy the volume data into the rendering context */
   rendering_context_load_volume(temp_context,  render_coord_frame, render_far_corner, 
-				min_voxel_size, start, duration);
+				min_voxel_size, start, duration, interpolation);
 
   return temp_context;
 }
@@ -240,17 +245,18 @@ rendering_t * rendering_context_init(volume_t * volume, realspace_t render_coord
 /* function to update the rendering structure's concept of the volume */
 void rendering_context_load_volume(rendering_t * rendering_context, realspace_t render_coord_frame,
 				   realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-				   volume_time_t start, volume_time_t duration) {
+				   amide_time_t start, amide_time_t duration, interpolation_t interpolation) {
 
   voxelpoint_t i_voxel, j_voxel;
   realpoint_t voxel_size;
   volume_t * slice;
-  volume_data_t temp, scale;
+  amide_data_t temp, scale;
   rendering_density_t * density; /* buffer for density data */
   guint density_size;/* size of density data */
   guint volume_size;/* size of volume */
   realspace_t slice_coord_frame;
   realpoint_t slice_far_corner;
+  realpoint_t new_offset;
 
   /* figure out the size of our volume */
   rendering_context->dim.x = ceil(render_far_corner.x/min_voxel_size);
@@ -307,19 +313,22 @@ void rendering_context_load_volume(rendering_t * rendering_context, realspace_t 
     (rendering_context->volume->threshold_max-rendering_context->volume->threshold_min);
 
   /* copy the info from a volume structure into our rendering_volume structure */
-  j_voxel.z=0;
+  j_voxel.t = j_voxel.z=0;
   slice_coord_frame = render_coord_frame;
   slice_far_corner = render_far_corner;
   slice_far_corner.z = 0.0;
+  new_offset = rs_offset(slice_coord_frame);
+  new_offset.z -= min_voxel_size;
   for (i_voxel.z = 0; i_voxel.z < rendering_context->dim.z; i_voxel.z++) {
     /* use volume_get_slice to slice out our needed data */
     slice_far_corner.z += min_voxel_size;
-    slice_coord_frame.offset.z += min_voxel_size;
+    new_offset.z += min_voxel_size;
+    rs_set_offset(&slice_coord_frame, new_offset);
     slice = volume_get_slice(rendering_context->volume, start, duration, voxel_size, 
-			     slice_coord_frame, slice_far_corner, NEAREST_NEIGHBOR);
+			     slice_coord_frame, slice_far_corner, interpolation, FALSE);
     for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering_context->dim.y; j_voxel.y++, i_voxel.y++)
       for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  rendering_context->dim.x; j_voxel.x++, i_voxel.x++) {
-	temp = scale * (VOLUME_CONTENTS(slice,0,j_voxel)-rendering_context->volume->threshold_min);
+	temp = scale * (VOLUME_FLOAT_0D_SCALING_CONTENTS(slice,j_voxel)-rendering_context->volume->threshold_min);
 	if (temp > RENDERING_DENSITY_MAX) temp = RENDERING_DENSITY_MAX;
 	if (temp < 0.0) temp = 0.0;
 	density[i_voxel.x+i_voxel.y* rendering_context->dim.x+
@@ -445,6 +454,17 @@ void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble r
   /* set the rotation */
   if (vpRotate(context->vpc, dir, degrees) != VP_OK)
     g_warning("%s: Error Rotating Axis (%s): %s",
+	      PACKAGE, context->volume->name, vpGetErrorString(vpGetError(context->vpc)));
+
+  return;
+}
+
+/* reset the rotation transform for a rendering context */
+void rendering_context_reset_rotation(rendering_t * context) {
+
+  /* reset the matrix */
+  if (vpSetMatrix(context->vpc, identity_m4) != VP_OK)
+    g_warning("%s: Error Resetting Axis (%s): %s",
 	      PACKAGE, context->volume->name, vpGetErrorString(vpGetError(context->vpc)));
 
   return;
@@ -605,8 +625,9 @@ rendering_list_t * rendering_list_free(rendering_list_t * rendering_list) {
 
 /* the recursive part of rendering_list_init */
 rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspace_t render_coord_frame,
-					      realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
-					       intpoint_t max_dim, volume_time_t start, volume_time_t duration) {
+					       realpoint_t render_far_corner, floatpoint_t min_voxel_size, 
+					       intpoint_t max_dim, amide_time_t start, amide_time_t duration,
+					       interpolation_t interpolation) {
 
   rendering_list_t * temp_rendering_list = NULL;
 
@@ -620,10 +641,10 @@ rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspac
   
   temp_rendering_list->rendering_context = 
     rendering_context_init(volumes->volume, render_coord_frame, render_far_corner,
-			   min_voxel_size, max_dim, start, duration);
+			   min_voxel_size, max_dim, start, duration, interpolation);
   temp_rendering_list->next = 
     rendering_list_init_recurse(volumes->next, render_coord_frame, render_far_corner,
-				min_voxel_size, max_dim, start, duration);
+				min_voxel_size, max_dim, start, duration, interpolation);
 
   return temp_rendering_list;
 }
@@ -632,7 +653,8 @@ rendering_list_t * rendering_list_init_recurse(volume_list_t * volumes, realspac
 
 /* returns an initialized rendering list */
 rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
-				       volume_time_t start, volume_time_t duration) {
+				       amide_time_t start, amide_time_t duration,
+				       interpolation_t interpolation) {
   
   rendering_list_t * temp_rendering_list = NULL;
   floatpoint_t min_voxel_size;
@@ -652,22 +674,34 @@ rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t rend
   volumes_get_view_corners(volumes, render_coord_frame, render_corner);
   REALPOINT_SUB(render_corner[1], render_corner[0], size);
   max_dim = ceil(REALPOINT_MAX(size)/min_voxel_size); /* what our largest dimension could possibly be */
-  render_coord_frame.offset = render_corner[0];
+  rs_set_offset(&render_coord_frame, render_corner[0]);
   render_far_corner = realspace_base_coord_to_alt(render_corner[1], render_coord_frame);
 
   /* and generate our rendering list */
   return  rendering_list_init_recurse(volumes, render_coord_frame, render_far_corner,
-				      min_voxel_size, max_dim, start, duration);
+				      min_voxel_size, max_dim, start, duration, interpolation);
 }
 
 
 
 /* sets the rotation transform for a list of rendering context */
-void rendering_lists_set_rotation(rendering_list_t * rendering_list, axis_t dir, gdouble rotation) {
+void rendering_list_set_rotation(rendering_list_t * rendering_list, axis_t dir, gdouble rotation) {
 
 
   while (rendering_list != NULL) {
     rendering_context_set_rotation(rendering_list->rendering_context, dir, rotation);
+    rendering_list = rendering_list->next;
+  }
+
+  return;
+}
+
+/* resets the rotation transform for a list of rendering context */
+void rendering_list_reset_rotation(rendering_list_t * rendering_list) {
+
+
+  while (rendering_list != NULL) {
+    rendering_context_reset_rotation(rendering_list->rendering_context);
     rendering_list = rendering_list->next;
   }
 

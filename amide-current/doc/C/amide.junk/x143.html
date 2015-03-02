@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->IDL Data Files</TITLE
+>Raw Data Files</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,10 +12,10 @@ REL="UP"
 TITLE="Importing Data "
 HREF="importing.html"><LINK
 REL="PREVIOUS"
-TITLE="Importing Data "
-HREF="importing.html"><LINK
+TITLE="IDL Data Files"
+HREF="x140.html"><LINK
 REL="NEXT"
-TITLE="Raw Data Files"
+TITLE="DICOM Files"
 HREF="x146.html"></HEAD
 ><BODY
 CLASS="SECT1"
@@ -38,7 +38,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="importing.html"
+HREF="x140.html"
 >Prev</A
 ></TD
 ><TD
@@ -65,12 +65,17 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN143"
->IDL Data Files</A
+>Raw Data Files</A
 ></H1
 ><P
->    AMIDE will attempt to load any file ending in ".idl" or ".ucat"
-    as an IDL data file.  An IDL data file consists of a 35 byte
-    header followed by the volume data.
+>    AMIDE will attempt to load any file ending in ".dat" or ".raw"
+    as a raw data file.  The user will be prompted for the
+    dimensions of the study, the offset of the data in the file, and
+    the data format of the data in the file.  Both big endian and
+    little endian files can be loaded, with the following data
+    formats supported: 8 bit integer, 16 bit signed or unsigned
+    integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
+    point, and 64 bit IEEE floating point.
   </P
 ></DIV
 ><DIV
@@ -88,7 +93,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="importing.html"
+HREF="x140.html"
 >Prev</A
 ></TD
 ><TD
@@ -113,7 +118,7 @@ HREF="x146.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Importing Data</TD
+>IDL Data Files</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -126,7 +131,7 @@ HREF="importing.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Raw Data Files</TD
+>DICOM Files</TD
 ></TR
 ></TABLE
 ></DIV

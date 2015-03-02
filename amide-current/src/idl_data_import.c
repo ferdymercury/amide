@@ -44,25 +44,28 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   size_t bytes_to_read;
   guint8 * bytes;
   guint32 * uints;
-  guint num_frames;
   guint dimensions;
   voxelpoint_t dim;
   gchar * volume_name;
   gchar ** frags;
   guint file_offset = 35; /* the idl header is 35 bytes */
-  data_format_t data_format = UBYTE; /* data type of idl files */
+  realpoint_t new_offset;
+  realpoint_t new_axis[NUM_AXIS];
 
   /* acquire space for the volume structure */
   if ((idl_volume = volume_init()) == NULL) {
     g_warning("%s: couldn't allocate space for the volume structure to hold IDL data", PACKAGE);
     return idl_volume;
   }
+  if ((idl_volume->data_set = data_set_init()) == NULL) {
+    g_warning("%s: couldn't allocate space for the data set structure to hold IDL data", PACKAGE);
+    return volume_free(idl_volume);
+  }
 
   /* we need to read in the first 35 bytes of the IDL data file (the header) */
   if ((file_pointer = fopen(idl_data_filename, "r")) == NULL) {
     g_warning("%s: couldn't open idl data file %s", PACKAGE,idl_data_filename);
-    idl_volume = volume_free(idl_volume);
-    return idl_volume;
+    return volume_free(idl_volume);
   }
     
   /* read in the header of the file */
@@ -72,10 +75,9 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   if (bytes_read != bytes_to_read) {
     g_warning("%s: read wrong number of elements from idl data file:\n\t%s\n\texpected %d\tgot %d", 
 	      PACKAGE,idl_data_filename, bytes_to_read, bytes_read);
-    idl_volume = volume_free(idl_volume);
     g_free(file_buffer);
     fclose(file_pointer);
-    return NULL;
+    return volume_free(idl_volume);
   }
   fclose(file_pointer);
 
@@ -100,22 +102,21 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   dim.x = GUINT32_FROM_BE(uints[0]); /* bytes 1-4 */
   dim.y = GUINT32_FROM_BE(uints[1]); /* bytes 5-8 */
   dim.z = GUINT32_FROM_BE(uints[2]); /* bytes 9-12 */
-  num_frames = GUINT32_FROM_BE(uints[3]); /* bytes 13-16 */
+  dim.t = GUINT32_FROM_BE(uints[3]); /* bytes 13-16 */
 
 #ifdef AMIDE_DEBUG
   g_print("IDL File %s\n",idl_data_filename);
   g_print("\tdimensions %d\n",dimensions);
-  g_print("\tdim\tx %d\ty %d\tz %d\tframes %d\n",dim.x,dim.y,dim.z, num_frames);
+  g_print("\tdim\tx %d\ty %d\tz %d\tframes %d\n",dim.x,dim.y,dim.z, dim.t);
 #endif
 
   /* set the parameters of the volume structure */
   idl_volume->modality = CT; /* guess CT... */
-  idl_volume->dim = dim;
-  idl_volume->num_frames = num_frames;
+  idl_volume->data_set->dim = dim;
   idl_volume->voxel_size.x = 1.0;
   idl_volume->voxel_size.y = 1.0;
   idl_volume->voxel_size.z = 1.0;
-  REALPOINT_MULT(idl_volume->dim, idl_volume->voxel_size, idl_volume->corner);
+  volume_recalc_far_corner(idl_volume);
   
   /* figure out an initial name for the data */
   volume_name = g_strdup(g_basename(idl_data_filename));
@@ -130,21 +131,24 @@ volume_t * idl_data_import(gchar * idl_data_filename) {
   g_free(volume_name);
 
   /* now that we've figured out the header info, read in the rest of the idl data file */
-  idl_volume = raw_data_read_file(idl_data_filename, idl_volume, data_format, file_offset);
+  idl_volume = raw_data_read_volume(idl_data_filename, idl_volume, IDL_RAW_DATA_FORMAT, file_offset);
 
   /* set the axis such that transverse/coronal/sagittal match up correctly */
   /* this is all derived empirically */
   if (idl_volume != NULL) {
-    idl_volume->coord_frame.axis[0].x = -1.0;
-    idl_volume->coord_frame.axis[0].y = 0.0;
-    idl_volume->coord_frame.axis[0].z = 0.0;
-    idl_volume->coord_frame.axis[1].x = 0.0;
-    idl_volume->coord_frame.axis[1].y = 0.0;
-    idl_volume->coord_frame.axis[1].z = 1.0;
-    idl_volume->coord_frame.axis[2].x = 0.0;
-    idl_volume->coord_frame.axis[2].y = 1.0;
-    idl_volume->coord_frame.axis[2].z = 0.0;
-    idl_volume->coord_frame.offset.x = idl_volume->dim.x*idl_volume->voxel_size.x;
+    new_axis[0].x = -1.0;
+    new_axis[0].y = 0.0;
+    new_axis[0].z = 0.0;
+    new_axis[1].x = 0.0;
+    new_axis[1].y = 0.0;
+    new_axis[1].z = 1.0;
+    new_axis[2].x = 0.0;
+    new_axis[2].y = 1.0;
+    new_axis[2].z = 0.0;
+    new_offset = rs_offset(idl_volume->coord_frame);
+    new_offset.x = idl_volume->data_set->dim.x*idl_volume->voxel_size.x;
+    rs_set_axis(&(idl_volume->coord_frame), new_axis);
+    rs_set_offset(&(idl_volume->coord_frame), new_offset);
   }
 
   /* garbage collection */

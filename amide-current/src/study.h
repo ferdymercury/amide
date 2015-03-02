@@ -43,8 +43,8 @@ typedef struct study_t {
   /* view parameters */
   realpoint_t view_center; /* wrt the study coord_frame */
   floatpoint_t view_thickness;
-  volume_time_t view_time;
-  volume_time_t view_duration;
+  amide_time_t view_time;
+  amide_time_t view_duration;
   floatpoint_t zoom;
   interpolation_t interpolation;
   scaling_t scaling; /* scale on a slice or the whole volume */
@@ -57,8 +57,8 @@ typedef struct study_t {
 
 /* defines */
 
-#define STUDY_FILE_NAME "Study.xml"
-#define AMIDE_FILE_VERSION "1.3"
+#define STUDY_FILENAME "Study.xml"
+#define AMIDE_FILE_VERSION "1.4"
 #define study_volumes(study) ((study)->volumes)
 #define study_rois(study) ((study)->rois)
 #define study_name(study) ((study)->name)
@@ -73,10 +73,9 @@ typedef struct study_t {
 #define study_interpolation(study) ((study)->interpolation)
 #define study_scaling(study) ((study)->scaling)
 #define study_coord_frame(study) ((study)->coord_frame)
-#define study_coord_frame_axis(study) ((study)->coord_frame.axis)
+#define study_coord_frame_axis(study) (rs_all_axis((study)->coord_frame))
 #define study_set_coord_frame(study, new) ((study)->coord_frame = (new))
-#define study_set_coord_frame_offset(study, new) ((study)->coord_frame.offset = (new))
-#define study_set_coord_frame_axis(study, which, new) ((study)->coord_frame.axis[(which)] = (new))
+#define study_set_coord_frame_offset(study, new) (rs_set_offset(&((study)->coord_frame),(new)))
 #define study_set_view_center(study, new) ((study)->view_center = (new))
 #define study_set_view_thickness(study, new) ((study)->view_thickness = (new))
 #define study_set_view_time(study, new) ((study)->view_time = (new))
@@ -88,8 +87,8 @@ typedef struct study_t {
 /* external functions */
 study_t * study_free(study_t * study);
 study_t * study_init(void);
-gboolean study_write_xml(study_t * study, gchar * directory);
-study_t * study_load_xml(const gchar * directory);
+gboolean study_write_xml(study_t * study, gchar * study_directory);
+study_t * study_load_xml(const gchar * study_directory);
 study_t * study_copy(study_t * src_study);
 study_t * study_add_reference(study_t * study);
 void study_add_volume(study_t * study, volume_t * volume);

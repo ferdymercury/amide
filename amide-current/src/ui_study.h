@@ -24,8 +24,8 @@
 */
 
 
-#define UI_STUDY_TRIANGLE_WIDTH 15
-#define UI_STUDY_TRIANGLE_HEIGHT 7.5
+#define UI_STUDY_TRIANGLE_WIDTH 13.0
+#define UI_STUDY_TRIANGLE_HEIGHT 8.0
 #define UI_STUDY_MAIN_TABLE_HEIGHT 1
 #define UI_STUDY_MAIN_TABLE_WIDTH 2
 #define UI_STUDY_MIDDLE_TABLE_HEIGHT 3
@@ -115,10 +115,7 @@ typedef enum {
   DIM_X, DIM_Y, DIM_Z,
   CENTER_X, CENTER_Y, CENTER_Z,
   VOXEL_SIZE_X, VOXEL_SIZE_Y, VOXEL_SIZE_Z,
-  AXIS_X_X, AXIS_X_Y, AXIS_X_Z,
-  AXIS_Y_X, AXIS_Y_Y, AXIS_Y_Z,
-  AXIS_Z_X, AXIS_Z_Y, AXIS_Z_Z,
-  CONVERSION_FACTOR, SCAN_START, FRAME_DURATION,
+  SCALING_FACTOR, SCAN_START, FRAME_DURATION,
 } which_entry_widget_t;
 
 typedef enum {
@@ -160,6 +157,9 @@ void ui_study_import_file(ui_study_t * ui_study, gchar * import_filename,
 			  gchar * model_filename, import_method_t import_method);
 GtkWidget * ui_study_create(study_t * study, GtkWidget * parent_bin);
 void ui_study_update_help_info(ui_study_t * ui_study, ui_study_help_info_t which_info, realpoint_t new_point);
+realpoint_t ui_study_cp_2_rp(GnomeCanvas * canvas, canvaspoint_t canvas_cp,
+			     floatpoint_t view_thickness);
+canvaspoint_t ui_study_rp_2_cp(GnomeCanvas * canvas, realpoint_t canvas_rp);
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view);
 void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t action,
 			     realpoint_t center, guint32 outline_color);

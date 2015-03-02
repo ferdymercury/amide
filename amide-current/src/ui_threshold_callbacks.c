@@ -49,9 +49,9 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
   gdouble item_x, item_y;
   gdouble delta;
   static gdouble initial_y;
-  static volume_data_t initial_threshold_min;
-  static volume_data_t initial_threshold_max;
-  volume_data_t temp;
+  static amide_data_t initial_threshold_min;
+  static amide_data_t initial_threshold_max;
+  amide_data_t temp;
   volume_t * volume;
   which_threshold_widget_t which_threshold_widget;
   
@@ -87,9 +87,10 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
 
     case GDK_MOTION_NOTIFY:
       delta = initial_y - item_y;
+
       if (event->motion.state & GDK_BUTTON1_MASK) {
 	delta = (delta / ((gdouble) UI_THRESHOLD_COLOR_STRIP_HEIGHT)) *
-	  (volume->max - volume->min)+volume->min;
+	  (volume->max - volume->min);
 
 	switch (which_threshold_widget) 
 	  {
@@ -133,6 +134,45 @@ gint ui_threshold_callbacks_arrow(GtkWidget* widget,
     }
       
   return FALSE;
+}
+
+
+/* function to change the color table */
+void ui_threshold_callbacks_color_table(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study;
+  color_table_t i_color_table;
+  volume_t * volume;
+  ui_threshold_t * ui_threshold = data;
+
+  /* figure out which volume we're dealing with */
+  volume = ui_threshold->volume;
+
+  /* figure out which scaling menu item called me */
+  i_color_table = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"color_table"));
+  ui_study = gtk_object_get_data(GTK_OBJECT(widget), "ui_study");
+
+  /* check if we actually changed values */
+  if (volume->color_table != i_color_table) {
+
+    /* and inact the changes */
+    volume->color_table = i_color_table;
+    if (study_volumes(ui_study->study) != NULL) {
+      
+      /* update the canvas */
+      ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
+      ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
+      
+      /* update the threshold's canvas */
+      ui_threshold_update_canvas(ui_study, ui_threshold);
+
+      /* update the series if needed */
+      if (ui_study->series != NULL)
+	ui_series_update_canvas_image(ui_study);
+    }
+  }
+  
+  return;
 }
 
 

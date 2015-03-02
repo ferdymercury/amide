@@ -59,6 +59,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+AMIDE_CFLAGS = @AMIDE_CFLAGS@
+AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
@@ -93,6 +95,7 @@ GTK_LIBS = @GTK_LIBS@
 LDFLAGS = @LDFLAGS@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
+M4 = @M4@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 OBJDUMP = @OBJDUMP@
@@ -111,15 +114,33 @@ cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 
 INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
-CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS)
+CFLAGS = $(AMIDE_CFLAGS) @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
 
 bin_PROGRAMS = amide
 
-amide_SOURCES =  	amide.c 	amide.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	realspace.c 	realspace.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	$(DATA_SET_VARIABLE_SRCS) 	$(VOLUME_VARIABLE_SRCS) 	amide.c 	amide.h 	color_table.c 	color_table.h 	color_table2.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	objects.c 	objects.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_callbacks.c 	raw_data_import_callbacks.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_callbacks.c 	ui_rendering_callbacks.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_callbacks.c 	ui_rendering_dialog_callbacks.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_callbacks.c 	ui_rendering_movie_dialog_callbacks.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_callbacks.c 	ui_roi_dialog_callbacks.h 	ui_series.c 	ui_series.h 	ui_series2.h 	ui_series_callbacks.c 	ui_series_callbacks.h 	ui_study.c 	ui_study.h 	ui_study_callbacks.c 	ui_study_callbacks.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_callbacks.c 	ui_study_dialog_callbacks.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_study_rois_callbacks.c 	ui_study_rois_callbacks.h 	ui_threshold.c 	ui_threshold.h 	ui_threshold2.h 	ui_threshold_callbacks.c 	ui_threshold_callbacks.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_callbacks.c 	ui_time_dialog_callbacks.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_callbacks.c 	ui_volume_dialog_callbacks.h 	volume.c 	volume.h 	xml.c 	xml.h
 
 
 amide_LDADD =  	$(GNOMEUI_LIBS) 	$(GNOME_LIBDIR) 	$(GNOME_XML2_LIBS) 	$(AMIDE_LIBECAT_LIBS) 	$(AMIDE_LIBMDC_LIBS) 	$(AMIDE_LIBVOLPACK_LIBS) 	$(EXTRA_GNOME_LIBS) 	-L/usr/local/lib 
 
+
+DATA_SET_VARIABLE_SRCS =  	data_set_UBYTE.c 	data_set_UBYTE.h 	data_set_SBYTE.c 	data_set_SBYTE.h 	data_set_USHORT.c 	data_set_USHORT.h 	data_set_SSHORT.c 	data_set_SSHORT.h 	data_set_UINT.c 	data_set_UINT.h 	data_set_SINT.c 	data_set_SINT.h 	data_set_FLOAT.c 	data_set_FLOAT.h 	data_set_DOUBLE.c 	data_set_DOUBLE.h 
+
+
+VOLUME_VARIABLE_SRCS =  	volume_UBYTE_0D_SCALING.c 	volume_UBYTE_0D_SCALING.h 	volume_UBYTE_1D_SCALING.c 	volume_UBYTE_1D_SCALING.h 	volume_UBYTE_2D_SCALING.c 	volume_UBYTE_2D_SCALING.h 	volume_SBYTE_0D_SCALING.c 	volume_SBYTE_0D_SCALING.h 	volume_SBYTE_1D_SCALING.c 	volume_SBYTE_1D_SCALING.h 	volume_SBYTE_2D_SCALING.c 	volume_SBYTE_2D_SCALING.h 	volume_USHORT_0D_SCALING.c 	volume_USHORT_0D_SCALING.h 	volume_USHORT_1D_SCALING.c 	volume_USHORT_1D_SCALING.h 	volume_USHORT_2D_SCALING.c 	volume_USHORT_2D_SCALING.h 	volume_SSHORT_0D_SCALING.c 	volume_SSHORT_0D_SCALING.h 	volume_SSHORT_1D_SCALING.c 	volume_SSHORT_1D_SCALING.h 	volume_SSHORT_2D_SCALING.c 	volume_SSHORT_2D_SCALING.h 	volume_UINT_0D_SCALING.c 	volume_UINT_0D_SCALING.h 	volume_UINT_1D_SCALING.c 	volume_UINT_1D_SCALING.h 	volume_UINT_2D_SCALING.c 	volume_UINT_2D_SCALING.h 	volume_SINT_0D_SCALING.c 	volume_SINT_0D_SCALING.h 	volume_SINT_1D_SCALING.c 	volume_SINT_1D_SCALING.h 	volume_SINT_2D_SCALING.c 	volume_SINT_2D_SCALING.h 	volume_FLOAT_0D_SCALING.c 	volume_FLOAT_0D_SCALING.h 	volume_FLOAT_1D_SCALING.c 	volume_FLOAT_1D_SCALING.h 	volume_FLOAT_2D_SCALING.c 	volume_FLOAT_2D_SCALING.h 	volume_DOUBLE_0D_SCALING.c 	volume_DOUBLE_0D_SCALING.h 	volume_DOUBLE_1D_SCALING.c 	volume_DOUBLE_1D_SCALING.h 	volume_DOUBLE_2D_SCALING.c 	volume_DOUBLE_2D_SCALING.h 
+
+
+VARIABLE_INPUT =  	variable_type.m4
+
+
+DATA_SET_VARIABLE_INCLUDES =  	data_set_variable_type.c 	data_set_variable_type.h 
+
+
+VOLUME_VARIABLE_INCLUDES =  	volume_variable_type.c 	volume_variable_type.h 
+
+
+CLEANFILES = $(VOLUME_VARIABLE_SRCS) $(DATA_SET_VARIABLE_SRCS)
+DISTCLEANFILES = *~
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -129,12 +150,29 @@ PROGRAMS =  $(bin_PROGRAMS)
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
-amide_OBJECTS =  amide.$(OBJEXT) color_table.$(OBJEXT) \
-cti_import.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
+amide_OBJECTS =  data_set_UBYTE.$(OBJEXT) data_set_SBYTE.$(OBJEXT) \
+data_set_USHORT.$(OBJEXT) data_set_SSHORT.$(OBJEXT) \
+data_set_UINT.$(OBJEXT) data_set_SINT.$(OBJEXT) \
+data_set_FLOAT.$(OBJEXT) data_set_DOUBLE.$(OBJEXT) \
+volume_UBYTE_0D_SCALING.$(OBJEXT) volume_UBYTE_1D_SCALING.$(OBJEXT) \
+volume_UBYTE_2D_SCALING.$(OBJEXT) volume_SBYTE_0D_SCALING.$(OBJEXT) \
+volume_SBYTE_1D_SCALING.$(OBJEXT) volume_SBYTE_2D_SCALING.$(OBJEXT) \
+volume_USHORT_0D_SCALING.$(OBJEXT) volume_USHORT_1D_SCALING.$(OBJEXT) \
+volume_USHORT_2D_SCALING.$(OBJEXT) volume_SSHORT_0D_SCALING.$(OBJEXT) \
+volume_SSHORT_1D_SCALING.$(OBJEXT) volume_SSHORT_2D_SCALING.$(OBJEXT) \
+volume_UINT_0D_SCALING.$(OBJEXT) volume_UINT_1D_SCALING.$(OBJEXT) \
+volume_UINT_2D_SCALING.$(OBJEXT) volume_SINT_0D_SCALING.$(OBJEXT) \
+volume_SINT_1D_SCALING.$(OBJEXT) volume_SINT_2D_SCALING.$(OBJEXT) \
+volume_FLOAT_0D_SCALING.$(OBJEXT) volume_FLOAT_1D_SCALING.$(OBJEXT) \
+volume_FLOAT_2D_SCALING.$(OBJEXT) volume_DOUBLE_0D_SCALING.$(OBJEXT) \
+volume_DOUBLE_1D_SCALING.$(OBJEXT) volume_DOUBLE_2D_SCALING.$(OBJEXT) \
+amide.$(OBJEXT) color_table.$(OBJEXT) cti_import.$(OBJEXT) \
+data_set.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
 medcon_import.$(OBJEXT) objects.$(OBJEXT) pem_data_import.$(OBJEXT) \
-realspace.$(OBJEXT) raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
-raw_data_import_callbacks.$(OBJEXT) rendering.$(OBJEXT) roi.$(OBJEXT) \
-study.$(OBJEXT) ui_rendering.$(OBJEXT) ui_rendering_callbacks.$(OBJEXT) \
+raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
+raw_data_import_callbacks.$(OBJEXT) realspace.$(OBJEXT) \
+rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
+ui_rendering.$(OBJEXT) ui_rendering_callbacks.$(OBJEXT) \
 ui_rendering_dialog.$(OBJEXT) ui_rendering_dialog_callbacks.$(OBJEXT) \
 ui_rendering_movie_dialog.$(OBJEXT) \
 ui_rendering_movie_dialog_callbacks.$(OBJEXT) ui_roi.$(OBJEXT) \
@@ -161,6 +199,9 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/amide.P .deps/color_table.P .deps/cti_import.P \
+.deps/data_set.P .deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P \
+.deps/data_set_SBYTE.P .deps/data_set_SINT.P .deps/data_set_SSHORT.P \
+.deps/data_set_UBYTE.P .deps/data_set_UINT.P .deps/data_set_USHORT.P \
 .deps/idl_data_import.P .deps/image.P .deps/medcon_import.P \
 .deps/objects.P .deps/pem_data_import.P .deps/raw_data.P \
 .deps/raw_data_import.P .deps/raw_data_import_callbacks.P \
@@ -177,7 +218,19 @@ DEP_FILES =  .deps/amide.P .deps/color_table.P .deps/cti_import.P \
 .deps/ui_threshold_callbacks.P .deps/ui_time_dialog.P \
 .deps/ui_time_dialog_callbacks.P .deps/ui_volume.P \
 .deps/ui_volume_dialog.P .deps/ui_volume_dialog_callbacks.P \
-.deps/volume.P .deps/xml.P
+.deps/volume.P .deps/volume_DOUBLE_0D_SCALING.P \
+.deps/volume_DOUBLE_1D_SCALING.P .deps/volume_DOUBLE_2D_SCALING.P \
+.deps/volume_FLOAT_0D_SCALING.P .deps/volume_FLOAT_1D_SCALING.P \
+.deps/volume_FLOAT_2D_SCALING.P .deps/volume_SBYTE_0D_SCALING.P \
+.deps/volume_SBYTE_1D_SCALING.P .deps/volume_SBYTE_2D_SCALING.P \
+.deps/volume_SINT_0D_SCALING.P .deps/volume_SINT_1D_SCALING.P \
+.deps/volume_SINT_2D_SCALING.P .deps/volume_SSHORT_0D_SCALING.P \
+.deps/volume_SSHORT_1D_SCALING.P .deps/volume_SSHORT_2D_SCALING.P \
+.deps/volume_UBYTE_0D_SCALING.P .deps/volume_UBYTE_1D_SCALING.P \
+.deps/volume_UBYTE_2D_SCALING.P .deps/volume_UINT_0D_SCALING.P \
+.deps/volume_UINT_1D_SCALING.P .deps/volume_UINT_2D_SCALING.P \
+.deps/volume_USHORT_0D_SCALING.P .deps/volume_USHORT_1D_SCALING.P \
+.deps/volume_USHORT_2D_SCALING.P .deps/xml.P
 SOURCES = $(amide_SOURCES)
 OBJECTS = $(amide_OBJECTS)
 
@@ -370,10 +423,12 @@ installdirs:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 mostlyclean-am:  mostlyclean-binPROGRAMS mostlyclean-compile \
@@ -417,6 +472,24 @@ all-redirect all-am all installdirs mostlyclean-generic \
 distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
+
+$(DATA_SET_VARIABLE_SRCS): $(VARIABLE_INPUT) $(DATA_SET_VARIABLE_INCLUDES)
+	@for i in $(DATA_SET_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
+
+$(VOLUME_VARIABLE_SRCS): $(VARIABLE_INPUT) $(VOLUME_VARIABLE_INCLUDES)
+	@for i in $(VOLUME_VARIABLE_SRCS) ; \
+            do \
+                rm -f $$i ;\
+                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
+                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
+                chmod -w $$i; \
+            done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

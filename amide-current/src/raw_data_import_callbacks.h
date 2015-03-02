@@ -25,10 +25,10 @@
 
 
 void raw_data_import_callbacks_change_name(GtkWidget * widget, gpointer data);
-void raw_data_import_callbacks_change_conversion(GtkWidget * widget, gpointer data);
+void raw_data_import_callbacks_change_scaling(GtkWidget * widget, gpointer data);
 void raw_data_import_callbacks_change_entry(GtkWidget * widget, gpointer data);
 void raw_data_import_callbacks_change_modality(GtkWidget * widget, gpointer data);
-void raw_data_import_callbacks_change_data_format(GtkWidget * widget, gpointer data);
+void raw_data_import_callbacks_change_raw_data_format(GtkWidget * widget, gpointer data);
 void raw_data_import_callbacks_ok(GtkWidget * widget, gpointer data);
 void raw_data_import_callbacks_cancel(GtkWidget * widget, gpointer data);
 

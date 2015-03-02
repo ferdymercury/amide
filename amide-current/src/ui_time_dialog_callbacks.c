@@ -44,7 +44,7 @@ void ui_time_dialog_callbacks_select_row(GtkCList * clist, gint row, gint column
 
   ui_study_t * ui_study = data;
   volume_t * volume;
-  volume_time_t start, end, old_end;
+  amide_time_t start, end, old_end;
   ui_time_dialog_t * new_time;
   guint frame;
   gchar * temp_string;
@@ -110,7 +110,7 @@ void ui_time_dialog_callbacks_unselect_row(GtkCList * clist, gint row, gint colu
   gint selected_row;
   volume_t * volume;
   ui_time_dialog_t * new_time;
-  volume_time_t start,end;
+  amide_time_t start,end;
   gint error;
   gchar * temp_string;
   guint frame;

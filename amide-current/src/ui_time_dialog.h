@@ -25,8 +25,8 @@
 
 
 typedef struct ui_time_dialog_t {
-  volume_time_t time;
-  volume_time_t duration;
+  amide_time_t time;
+  amide_time_t duration;
 } ui_time_dialog_t;
 
 void ui_time_dialog_set_times(ui_study_t * ui_study);

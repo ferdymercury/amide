@@ -23,6 +23,8 @@
   02111-1307, USA.
 */
 
+#ifndef __ROI__
+#define __ROI__
 
 /* header files that are always needed with this file */
 #include "xml.h"
@@ -57,27 +59,27 @@ struct _roi_list_t {
 
 /* structure containing the results of an roi analysis */
 typedef struct roi_analysis_t {
-  volume_time_t time_midpoint;
-  volume_data_t mean;
-  volume_data_t voxels;
-  volume_data_t var;
-  volume_data_t min;
-  volume_data_t max;
+  amide_time_t time_midpoint;
+  amide_data_t mean;
+  amide_data_t voxels;
+  amide_data_t var;
+  amide_data_t min;
+  amide_data_t max;
 } roi_analysis_t;
 
 /* external functions */
 roi_t * roi_free(roi_t * roi);
 roi_t * roi_init(void);
-gchar * roi_write_xml(roi_t * roi, gchar * directory);
-roi_t * roi_load_xml(gchar * file_name, const gchar * directory);
+gchar * roi_write_xml(roi_t * roi, gchar * study_directory);
+roi_t * roi_load_xml(gchar * roi_xml_file_name, const gchar * study_directory);
 roi_t * roi_copy(roi_t * src_roi);
 roi_t * roi_add_reference(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
 realpoint_t roi_calculate_center(const roi_t * roi);
 roi_list_t * roi_list_free(roi_list_t *roi_list);
 roi_list_t * roi_list_init(void);
-void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * directory);
-roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * directory);
+void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * study_directory);
+roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
 gboolean roi_list_includes_roi(roi_list_t *list, roi_t * roi);
 roi_list_t * roi_list_add_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
@@ -92,7 +94,6 @@ roi_analysis_t roi_calculate_analysis(roi_t * roi,
 				      roi_grain_t grain,
 				      guint frame);
 
-
 /* internal functions */
 void roi_subset_of_volume(roi_t * roi,
 			  const volume_t * volume,
@@ -105,6 +106,8 @@ extern gchar * roi_grain_names[];
 
 
 
+
+#endif /* __ROI__ */
 
 
 

@@ -83,7 +83,6 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   ui_study_t * ui_study;
   study_t * study_new_info = data;
   view_t i_view;
-  axis_t i_axis;
   floatpoint_t rotation;
   GtkWidget * study_dialog;
   realpoint_t center, temp;
@@ -106,14 +105,10 @@ void ui_study_dialog_callbacks_change_axis(GtkAdjustment * adjustment, gpointer 
   if (i_view == SAGITTAL)
     rotation = -rotation; 
 
-
-  for (i_axis=0; i_axis < NUM_AXIS; i_axis++)
-    study_set_coord_frame_axis(study_new_info, i_axis,
-			       realspace_rotate_on_axis(study_coord_frame_axis(study_new_info)[i_axis],
-							realspace_get_view_normal(study_coord_frame_axis(study_new_info),
-										  i_view),
-							rotation));
-  realspace_make_orthonormal(study_new_info->coord_frame.axis); /* orthonormalize*/
+  /* rotate the axis */
+  realspace_rotate_on_axis(&study_coord_frame(study_new_info),
+			   realspace_get_view_normal(study_coord_frame_axis(study_new_info), i_view),
+			   rotation);
   
   /* recalculate the offset of this study based on the center we stored */
   study_set_coord_frame_offset(study_new_info, center);
@@ -140,7 +135,6 @@ void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study;
   study_t * study_new_info = data;
-  axis_t i_axis;
   GtkWidget * study_dialog;
   realpoint_t center, temp;
 
@@ -151,9 +145,7 @@ void ui_study_dialog_callbacks_reset_axis(GtkWidget* widget, gpointer data) {
   center = study_view_center(ui_study->study);
 
   /* reset the axis */
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
-    study_new_info->coord_frame.axis[i_axis] = default_axis[i_axis];
-  }
+  rs_set_axis(&study_new_info->coord_frame, default_axis);
 
   /* recalculate the offset of this study based on the center we stored */
   study_set_coord_frame_offset(study_new_info, center);

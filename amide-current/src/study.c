@@ -75,7 +75,6 @@ study_t * study_free(study_t * study) {
 study_t * study_init(void) {
   
   study_t * study;
-  axis_t i_axis;
   realpoint_t init;
   time_t current_time;
 
@@ -88,9 +87,8 @@ study_t * study_init(void) {
 
   study->name = NULL;
   study->filename = NULL;
-  study->coord_frame.offset=realpoint_init;
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
-    study->coord_frame.axis[i_axis] = default_axis[i_axis];
+  rs_set_offset(&study->coord_frame,realpoint_init);
+  rs_set_axis(&study->coord_frame, default_axis);
   study->volumes = NULL;
   study->rois = NULL;
 
@@ -116,7 +114,7 @@ study_t * study_init(void) {
 
 
 /* function to writeout the study to disk in xml format */
-gboolean study_write_xml(study_t * study, gchar * directory) {
+gboolean study_write_xml(study_t * study, gchar * study_directory) {
 
   xmlDocPtr doc;
   xmlNodePtr volume_nodes, roi_nodes;
@@ -124,13 +122,13 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
 
   /* switch into our new directory */
   old_dir = g_get_current_dir();
-  if (chdir(directory) != 0) {
+  if (chdir(study_directory) != 0) {
     g_warning("%s: Couldn't change directories in writing study",PACKAGE);
     return FALSE;
   }
 
 #ifdef AMIDE_DEBUG
-  g_print("Saving Study %s in %s\n",study_name(study), directory);
+  g_print("Saving Study %s in %s\n",study_name(study), study_directory);
 #endif
 
   /* start creating an xml document */
@@ -150,11 +148,11 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
 
   /* put in our volume info */
   volume_nodes = xmlNewChild(doc->children, NULL, "Volumes", NULL);
-  volume_list_write_xml(study_volumes(study), volume_nodes, directory);
+  volume_list_write_xml(study_volumes(study), volume_nodes, study_directory);
 
   /* put in our roi info */
   roi_nodes = xmlNewChild(doc->children, NULL, "ROIs", NULL);
-  roi_list_write_xml(study_rois(study), roi_nodes, directory);
+  roi_list_write_xml(study_rois(study), roi_nodes, study_directory);
 
   /* record our viewing parameters */
   xml_save_realpoint(doc->children, "view_center", study_view_center(study));
@@ -167,7 +165,7 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
 
 
   /* and save */
-  xmlSaveFile(STUDY_FILE_NAME, doc);
+  xmlSaveFile(STUDY_FILENAME, doc);
 
   /* and we're done */
   xmlFreeDoc(doc);
@@ -180,13 +178,13 @@ gboolean study_write_xml(study_t * study, gchar * directory) {
   g_free(old_dir);
 
   /* remember the name of the directory of this study */
-  study_set_filename(study, directory);
+  study_set_filename(study, study_directory);
 
   return TRUE;
 }
 
 /* function to load in a study from disk in xml format */
-study_t * study_load_xml(const gchar * directory) {
+study_t * study_load_xml(const gchar * study_directory) {
 
   xmlDocPtr doc;
   xmlNodePtr nodes;
@@ -208,16 +206,16 @@ study_t * study_load_xml(const gchar * directory) {
 
   /* switch into our new directory */
   old_dir = g_get_current_dir();
-  if (chdir(directory) != 0) {
+  if (chdir(study_directory) != 0) {
     g_warning("%s: Couldn't change directories in loading study",PACKAGE);
     study_free(new_study);
     return new_study;
   }
 
   /* parse the xml file */
-  if ((doc = xmlParseFile(STUDY_FILE_NAME)) == NULL) {
+  if ((doc = xmlParseFile(STUDY_FILENAME)) == NULL) {
     g_warning("%s: Couldn't Parse AMIDE xml file:\n\t%s/%s",
-	      PACKAGE, directory,STUDY_FILE_NAME);
+	      PACKAGE, study_directory,STUDY_FILENAME);
     /* and return to the old directory */
     if (chdir(old_dir) != 0) {
       g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
@@ -230,7 +228,7 @@ study_t * study_load_xml(const gchar * directory) {
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE xml file doesn't appear to have a root:\n\t%s/%s",
-	      PACKAGE, directory,STUDY_FILE_NAME);
+	      PACKAGE, study_directory,STUDY_FILENAME);
     /* and return to the old directory */
     if (chdir(old_dir) != 0) {
       g_warning("%s: Couldn't return to previous directory in load study",PACKAGE);
@@ -266,7 +264,7 @@ study_t * study_load_xml(const gchar * directory) {
   /* put in the last time the study file was modified,
      if no creation date was specified */
   if (creation_date == NULL) {
-    stat(STUDY_FILE_NAME, &file_info);
+    stat(STUDY_FILENAME, &file_info);
     modification_time = file_info.st_mtime;
     creation_date = g_strdup(ctime(&modification_time));
     g_strdelimit(creation_date, "\n", ' '); /* turns newlines to white space */
@@ -286,14 +284,14 @@ study_t * study_load_xml(const gchar * directory) {
   /* load in the volumes */
   volume_nodes = xml_get_node(nodes, "Volumes");
   volume_nodes = volume_nodes->children;
-  new_volumes = volume_list_load_xml(volume_nodes, directory);
+  new_volumes = volume_list_load_xml(volume_nodes, study_directory);
   study_add_volumes(new_study, new_volumes);
   volume_list_free(new_volumes);
   
   /* load in the rois */
   roi_nodes = xml_get_node(nodes, "ROIs");
   roi_nodes = roi_nodes->children;
-  new_rois = roi_list_load_xml(roi_nodes, directory);
+  new_rois = roi_list_load_xml(roi_nodes, study_directory);
   study_add_rois(new_study, new_rois);
   roi_list_free(new_rois);
 
@@ -337,6 +335,9 @@ study_t * study_load_xml(const gchar * directory) {
     roi_list_t * rois;
     roi_t * roi;
     realpoint_t view_center;
+    realpoint_t new_axis[NUM_AXIS];
+    realpoint_t new_offset;
+    axis_t i_axis;
 
     g_warning("%s: detected file version previous to 1.3, compensating for coordinate errors",
 	      PACKAGE);
@@ -348,20 +349,36 @@ study_t * study_load_xml(const gchar * directory) {
     volumes = study_volumes(new_study);
     while (volumes != NULL) {
       volume = volumes->volume;
-      volume->coord_frame.axis[XAXIS].y = -volume->coord_frame.axis[XAXIS].y;
-      volume->coord_frame.axis[YAXIS].y = -volume->coord_frame.axis[YAXIS].y;
-      volume->coord_frame.axis[ZAXIS].y = -volume->coord_frame.axis[ZAXIS].y;
-      volume->coord_frame.offset.y = -volume->coord_frame.offset.y;
+
+      for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+	new_axis[i_axis] = rs_specific_axis(volume->coord_frame, i_axis);
+      new_axis[XAXIS].y = -new_axis[XAXIS].y;
+      new_axis[YAXIS].y = -new_axis[YAXIS].y;
+      new_axis[ZAXIS].y = -new_axis[ZAXIS].y;
+      rs_set_axis(&volume->coord_frame, new_axis);
+
+      new_offset = rs_offset(volume->coord_frame);
+      new_offset.y = -new_offset.y;
+      rs_set_offset(&volume->coord_frame, new_offset);
+
       volumes = volumes->next;
     }
 
     rois = study_rois(new_study);
     while (rois != NULL) {
       roi = rois->roi;
-      roi->coord_frame.axis[XAXIS].y = -roi->coord_frame.axis[XAXIS].y;
-      roi->coord_frame.axis[YAXIS].y = -roi->coord_frame.axis[YAXIS].y;
-      roi->coord_frame.axis[ZAXIS].y = -roi->coord_frame.axis[ZAXIS].y;
-      roi->coord_frame.offset.y = -roi->coord_frame.offset.y;
+
+      for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+	new_axis[i_axis] = rs_specific_axis(roi->coord_frame, i_axis);
+      new_axis[XAXIS].y = -new_axis[XAXIS].y;
+      new_axis[YAXIS].y = -new_axis[YAXIS].y;
+      new_axis[ZAXIS].y = -new_axis[ZAXIS].y;
+      rs_set_axis(&roi->coord_frame, new_axis);
+
+      new_offset = rs_offset(roi->coord_frame);
+      new_offset.y = -new_offset.y;
+      rs_set_offset(&roi->coord_frame, new_offset);
+
       rois = rois->next;
     }
   }
@@ -379,7 +396,7 @@ study_t * study_load_xml(const gchar * directory) {
   g_free(old_dir);
 
   /* and remember the name of the directory for convience */
-  study_set_filename(new_study, directory);
+  study_set_filename(new_study, study_directory);
 
 
   return new_study;

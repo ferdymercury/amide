@@ -136,7 +136,7 @@ GtkAdjustment * ui_series_create_scroll_adjustment(ui_study_t * ui_study) {
 					     ui_study->series->thickness,
 					     ui_study->series->thickness));
   } else { /* FRAMES */
-    volume_time_t start_time, end_time;
+    amide_time_t start_time, end_time;
     start_time = volume_list_start_time(ui_study->series->volumes);
     end_time = volume_list_end_time(ui_study->series->volumes);
 
@@ -154,32 +154,15 @@ GtkAdjustment * ui_series_create_scroll_adjustment(ui_study_t * ui_study) {
 void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
   floatpoint_t view_start, view_end;
-  volume_time_t time_start, time_end, temp_time;
+  amide_time_t time_start, time_end, temp_time;
   realpoint_t temp_point;
   guint i, start_i;
   gint width, height;
   gdouble x, y;
   GtkRequisition requisition;
-  GdkCursor * cursor;
-  GdkWindow * parent=NULL;
   realspace_t view_coord_frame;
   realpoint_t view_corner[2];
   gint rgb_width, rgb_height;
-
-
-  /* push our desired cursor onto the cursor stack */
-  cursor = ui_study->cursor[UI_STUDY_WAIT];
-  ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-
-  if (GTK_WIDGET_REALIZED(GTK_WIDGET(ui_study->series->canvas)))
-    parent = gtk_widget_get_parent_window(GTK_WIDGET(ui_study->series->canvas));
-  if (parent == NULL)
-    parent = gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[0]));
-  gdk_window_set_cursor(parent, cursor);
-  
-  /* do any events pending, this allows the cursor to get displayed */
-  while (gtk_events_pending()) 
-    gtk_main_iteration();
 
 
   /* get the view axis to use*/
@@ -237,7 +220,8 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   else /* FRAMES */
     temp_time = time_start;
   view_coord_frame = ui_study->series->coord_frame;
-  view_coord_frame.offset = realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame);
+  rs_set_offset(&view_coord_frame,
+		realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame));
   ui_study->series->rgb_images[0] = 
     image_from_volumes(&(ui_study->series->slices[0]),
 		       ui_study->series->volumes,
@@ -300,12 +284,13 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 	 && (i < ui_study->series->num_slices); i++) {
     temp_point = ui_study->series->view_point;
     temp_time = ui_study->series->view_time;
-    if (ui_study->series->type == PLANES) 
+    if (ui_study->series->type == PLANES)
       temp_point.z = i*ui_study->series->thickness+view_start;
-    else
+    else /* frames */
       temp_time = i*ui_study->series->view_duration + time_start;
     view_coord_frame = ui_study->series->coord_frame;
-    view_coord_frame.offset = realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame);
+    rs_set_offset(&view_coord_frame, 
+		  realspace_alt_coord_to_base(temp_point, ui_study->series->coord_frame));
 
     if (i != 0) /* we've already done image 0 */
       if (ui_study->series->rgb_images[i] != NULL)
@@ -359,12 +344,6 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   gtk_widget_set_usize(GTK_WIDGET(ui_study->series->canvas), width, height);
   /* the requisition thing should work.... I'll use usize for now... */
 
-  /* pop the previous cursor off the stack */
-  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-  ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
-  cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-  gdk_window_set_cursor(parent, cursor);
-
   return;
 }
 
@@ -377,7 +356,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view, series_t series_type) 
   GnomeCanvas * series_canvas;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
-  volume_time_t min_duration;
+  amide_time_t min_duration;
 
   /* sanity checks */
   if (study_volumes(ui_study->study) == NULL)

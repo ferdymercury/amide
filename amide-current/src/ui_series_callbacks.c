@@ -47,7 +47,9 @@ void ui_series_callbacks_scroll_change(GtkAdjustment* adjustment, gpointer data)
   else
     ui_study->series->view_time = adjustment->value;
 
+  ui_study_place_cursor(ui_study, UI_STUDY_WAIT, GTK_WIDGET(ui_study->series->canvas));
   ui_series_update_canvas_image(ui_study);
+  ui_study_remove_cursor(ui_study, GTK_WIDGET(ui_study->series->canvas));
 
   return;
 }

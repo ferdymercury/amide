@@ -228,6 +228,20 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
+#if AMIDE_LIBVOLPACK_SUPPORT
+  /* the submenu under the rendering button */
+  GnomeUIInfo rendering_type_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Nearest Neighbor Conversion"),
+			  N_("convert image data for rendering using nearest neighbor interpolation (Fast)"),
+			  ui_study_callbacks_rendering_nearest_neighbor,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Trilinear Conversion"),
+			  N_("convert image data for rendering using trilinear interpolation (Slow, High Quality)"),
+			  ui_study_callbacks_rendering_trilinear,
+			  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
+#endif
 
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
@@ -235,10 +249,9 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Look at a series of images"), 
 			     series_type_menu),
 #if AMIDE_LIBVOLPACK_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_Rendering"),
-			  N_("perform volume renderings on the currently selected volumes"),
-			  ui_study_callbacks_rendering,
-			  ui_study, NULL),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Rendering"),
+			     N_("perform volume renderings on the currently select volumes"),
+			     rendering_type_menu),
 #endif
     GNOMEUIINFO_END
   };

@@ -253,7 +253,7 @@ void ui_study_import_file(ui_study_t * ui_study,
   if (import_volume != NULL) {
 
 #ifdef AMIDE_DEBUG
-    g_print("name %s\n",import_volume->name);
+    g_print("imported volume name %s\n",import_volume->name);
 #endif
 
     /* add the volume to the study structure */
@@ -292,11 +292,61 @@ void ui_study_import_file(ui_study_t * ui_study,
 }    
 
 
+/* this function converts a gnome canvas event location to a location in the canvas's coord frame */
+realpoint_t ui_study_cp_2_rp(GnomeCanvas * canvas, canvaspoint_t canvas_cp,
+			     floatpoint_t view_thickness) {
+
+  realpoint_t canvas_rp;
+  realpoint_t * canvas_far_corner_p;
+  GdkPixbuf * rgb_image;
+  gint rgb_width, rgb_height;
+
+  /* get the far corner of this canvas */
+  canvas_far_corner_p = gtk_object_get_data(GTK_OBJECT(canvas), "far_corner");
+
+  /* need the heigth and width of the rgb_image */
+  rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
+  rgb_width = gdk_pixbuf_get_width(rgb_image);
+  rgb_height = gdk_pixbuf_get_height(rgb_image);
+
+  /* and convert */
+  canvas_rp.x = ((canvas_cp.x-UI_STUDY_TRIANGLE_HEIGHT)/rgb_width)*(*canvas_far_corner_p).x;
+  canvas_rp.y = ((rgb_height - (canvas_cp.y-UI_STUDY_TRIANGLE_HEIGHT))/rgb_height)*(*canvas_far_corner_p).y;
+  canvas_rp.z = view_thickness/2.0;
+
+  return canvas_rp;
+}
+
+/* this function converts a point in the canvas's coord frame to a gnome canvas event location */
+canvaspoint_t ui_study_rp_2_cp(GnomeCanvas * canvas, realpoint_t canvas_rp) {
+
+  canvaspoint_t canvas_cp;
+  realpoint_t * canvas_far_corner_p;
+  GdkPixbuf * rgb_image;
+  gint rgb_width, rgb_height;
+
+  /* get the far corner of this canvas */
+  canvas_far_corner_p = gtk_object_get_data(GTK_OBJECT(canvas), "far_corner");
+
+  /* need the heigth and width of the rgb_image */
+  rgb_image = gtk_object_get_data(GTK_OBJECT(canvas), "rgb_image");
+  rgb_width = gdk_pixbuf_get_width(rgb_image);
+  rgb_height = gdk_pixbuf_get_height(rgb_image);
+
+  /* and convert */
+  canvas_cp.x = rgb_width * canvas_rp.x/(*canvas_far_corner_p).x 
+    + UI_STUDY_TRIANGLE_HEIGHT;
+  canvas_cp.y = rgb_height * ((*canvas_far_corner_p).y - canvas_rp.y)/(*canvas_far_corner_p).y 
+    + UI_STUDY_TRIANGLE_HEIGHT;
+
+  return canvas_cp;
+}
+
 /* function to update the coordinate frame associated with one of our canvases.
    this is a coord_frame encompasing all the slices associated with one of the orthogonal views */
 void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view) {
 
-  realspace_t * canvas_coord_frame;
+  realspace_t * canvas_coord_frame_p;
   realpoint_t * far_corner;
 
   volume_list_t * current_slices;
@@ -306,24 +356,24 @@ void ui_study_update_coords_current_view(ui_study_t * ui_study, view_t view) {
   current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "slices");
 
   /* get the pointers to the view's coordinate frame and far corner structures */
-  canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
+  canvas_coord_frame_p = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
   far_corner = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "far_corner");
 
   /* set the origin of the canvas_coord_frame to the current view locations */
-  *canvas_coord_frame = study_coord_frame(ui_study->study);
-  *canvas_coord_frame = realspace_get_view_coord_frame(*canvas_coord_frame, view);
+  *canvas_coord_frame_p = realspace_get_view_coord_frame(study_coord_frame(ui_study->study), view);
   
   /* figure out the corners */
-  volumes_get_view_corners(current_slices, *canvas_coord_frame, temp_corner);
+  volumes_get_view_corners(current_slices, *canvas_coord_frame_p, temp_corner);
 
   /* allright, reset the offset of the view frame to the lower left front corner */
-  (*canvas_coord_frame).offset = temp_corner[0];
+  rs_set_offset(canvas_coord_frame_p, temp_corner[0]);
 
   /* and set the upper right back corner */
-  *far_corner = realspace_base_coord_to_alt(temp_corner[1],*canvas_coord_frame);
+  *far_corner = realspace_base_coord_to_alt(temp_corner[1],*canvas_coord_frame_p);
 
   return;
 }
+
 
 /* This function updates the little info box which tells us what the different 
    mouse buttons will do */
@@ -402,10 +452,9 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
   guint i;
   GnomeCanvasPoints * target_line_points;
   GnomeCanvasItem ** target_lines;
-  realpoint_t point0, point1;
+  canvaspoint_t point0, point1;
   realpoint_t start, end;
   realspace_t * canvas_coord_frame;
-  realpoint_t * canvas_far_corner;
   GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
 
@@ -430,7 +479,6 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
        the canvas_corner is in the canvas_coord_frame.  Also need rgb_image
        for height and width of the canvas */
     canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "coord_frame");
-    canvas_far_corner = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "far_corner");
     rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[i_view]), "rgb_image");
     rgb_width = gdk_pixbuf_get_width(rgb_image);
     rgb_height = gdk_pixbuf_get_height(rgb_image);
@@ -451,22 +499,13 @@ void ui_study_update_targets(ui_study_t * ui_study, ui_study_target_action_t act
     start = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),*canvas_coord_frame);
     start.x -= study_view_thickness(ui_study->study)/2.0;
     start.y -= study_view_thickness(ui_study->study)/2.0;
-    start.z -= study_view_thickness(ui_study->study)/2.0;
     end = realspace_alt_coord_to_alt(center, study_coord_frame(ui_study->study),*canvas_coord_frame);
     end.x += study_view_thickness(ui_study->study)/2.0;
     end.y += study_view_thickness(ui_study->study)/2.0;
-    end.z += study_view_thickness(ui_study->study)/2.0;
 
-    /* note, compensate for our coordinate frames starting bottom left, and X's are top left */
-    point0.x = start.x/(*canvas_far_corner).x
-      * rgb_width  + UI_STUDY_TRIANGLE_HEIGHT;
-    point0.y = ((*canvas_far_corner).y - start.y)/(*canvas_far_corner).y 
-      * rgb_height + UI_STUDY_TRIANGLE_HEIGHT;
-    
-    point1.x = end.x/(*canvas_far_corner).x 
-      * rgb_width + UI_STUDY_TRIANGLE_HEIGHT;
-    point1.y = ((*canvas_far_corner).y - end.y)/(*canvas_far_corner).y 
-      * rgb_height + UI_STUDY_TRIANGLE_HEIGHT;
+    /* get the canvas locations corresponding to the start and end coordinates */
+    point0 = ui_study_rp_2_cp(ui_study->canvas[i_view], start);
+    point1 = ui_study_rp_2_cp(ui_study->canvas[i_view], end);
     
     /* line segment 0 */
     target_line_points = gnome_canvas_points_new(3);
@@ -591,7 +630,6 @@ GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view)
       view_center = realspace_alt_coord_to_alt(zp_start,
 					       view_coord_frame,
 					       study_coord_frame(ui_study->study));
-      //      view_center = realspace_coord_from_orthogonal_view(zp_start, view);
       study_set_view_center(ui_study->study, view_center); /* save the updated view coords */
 
     } else if (zp_start.z > upper) {
@@ -603,7 +641,6 @@ GtkObject * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view)
       view_center = realspace_alt_coord_to_alt(zp_start,
 					       view_coord_frame,
 					       study_coord_frame(ui_study->study));
-      //      view_center = realspace_coord_from_orthogonal_view(zp_start, view);
       study_set_view_center(ui_study->study, view_center); /* save the updated view coords */
 
     }
@@ -693,46 +730,13 @@ void ui_study_update_thickness_adjustment(ui_study_t * ui_study) {
 void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
 
   GnomeCanvasPoints * points[4];
-  floatpoint_t x1,y1,x2,y2;
-  floatpoint_t width=0.0, height=0.0;
+  canvaspoint_t point0, point1;
+  realpoint_t start, end;
   realspace_t * canvas_coord_frame;
-  realpoint_t view_center, start, temp_p;
-  realpoint_t offset;
+  realpoint_t view_center;
   GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
   GnomeCanvasItem * canvas_arrow[4];
-
-  points[0] = gnome_canvas_points_new(4);
-  points[1] = gnome_canvas_points_new(4);
-  points[2] = gnome_canvas_points_new(4);
-  points[3] = gnome_canvas_points_new(4);
-
-  if ((study_volumes(ui_study->study) == NULL) || (ui_study->current_volumes == NULL)) {
-    x1 = y1 = x2 = y2 = 0.5;
-  } else {
-
-    canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
-    width = ui_volume_list_get_width(ui_study->current_volumes, *canvas_coord_frame);
-    height = ui_volume_list_get_height(ui_study->current_volumes, *canvas_coord_frame);
-    offset = realspace_base_coord_to_alt((*canvas_coord_frame).offset, *canvas_coord_frame);
-
-    /* figure out the x and y coordinantes we're currently pointing to */
-    view_center = study_view_center(ui_study->study);
-    temp_p.x = temp_p.y = temp_p.z = 0.5*study_view_thickness(ui_study->study);
-    start = rp_sub(view_center, temp_p);
-    start = realspace_alt_coord_to_alt(start, study_coord_frame(ui_study->study),*canvas_coord_frame);
-    x1 = start.x-offset.x;
-    y1 = start.y-offset.y;
-  }
-
-  x2 = x1+study_view_thickness(ui_study->study);
-  y2 = y1+study_view_thickness(ui_study->study);
-
-  /* notes:
-     1) even coords are the x coordinate, odd coords are the y
-     2) drawing coordinate frame starts from the top left
-     3) X's origin is top left, ours is bottom left
-  */
 
   /* get points to the previous arrows (if they exist */
   canvas_arrow[0] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow0");
@@ -740,85 +744,95 @@ void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view) {
   canvas_arrow[2] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow2");
   canvas_arrow[3] = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow3");
 
-  /* need to get rgb_image for the height and width, and canvas_arrows obviously */
+  /* if no images, destroy the arrows */
+  if ((study_volumes(ui_study->study) == NULL) || (ui_study->current_volumes == NULL)) {
+    if (canvas_arrow[0] != NULL)
+      gtk_object_destroy(GTK_OBJECT(canvas_arrow[0]));
+    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow0", NULL);
+    if (canvas_arrow[1] != NULL)
+      gtk_object_destroy(GTK_OBJECT(canvas_arrow[1]));
+    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow1", NULL);
+    if (canvas_arrow[2] != NULL)
+      gtk_object_destroy(GTK_OBJECT(canvas_arrow[2]));
+    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow2", NULL);
+    if (canvas_arrow[3] != NULL)
+      gtk_object_destroy(GTK_OBJECT(canvas_arrow[3]));
+    gtk_object_set_data(GTK_OBJECT(ui_study->canvas[view]), "canvas_arrow3", NULL);
+    return;
+  }   /* otherwise, create/redraw the arrows */
+
+  canvas_coord_frame = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "coord_frame");
+  
+  /* figure out the dimensions of the view "box" */
+  view_center = study_view_center(ui_study->study);
+  start = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+  start.x -= study_view_thickness(ui_study->study)/2.0;
+  start.y -= study_view_thickness(ui_study->study)/2.0;
+  end = realspace_alt_coord_to_alt(view_center, study_coord_frame(ui_study->study),*canvas_coord_frame);
+  end.x += study_view_thickness(ui_study->study)/2.0;
+  end.y += study_view_thickness(ui_study->study)/2.0;
+  
+  /* get the canvas locations corresponding to the start and end coordinates */
+  point0 = ui_study_rp_2_cp(ui_study->canvas[view], start);
+  point1 = ui_study_rp_2_cp(ui_study->canvas[view], end);
+
+  /* need to get rgb_image for the height and width */
   rgb_image = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "rgb_image");
   rgb_width = gdk_pixbuf_get_width(rgb_image);
   rgb_height = gdk_pixbuf_get_height(rgb_image);
 
 
+  /* notes:
+     1) even coords are the x coordinate, odd coords are the y
+     2) drawing coordinate frame starts from the top left
+     3) X's origin is top left, ours is bottom left
+  */
+
+  points[0] = gnome_canvas_points_new(4);
+  points[1] = gnome_canvas_points_new(4);
+  points[2] = gnome_canvas_points_new(4);
+  points[3] = gnome_canvas_points_new(4);
+
   /* left arrow */
-  points[0]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT-1;
-  points[0]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_height * ((height-y2)/height);
-  points[0]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT-1;
-  points[0]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_height * ((height-y1)/height);
+  points[0]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT-1.0;
+  points[0]->coords[1] = point1.y;
+  points[0]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT-1.0;
+  points[0]->coords[3] = point0.y;
   points[0]->coords[4] = 0;
-  points[0]->coords[5] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    UI_STUDY_TRIANGLE_WIDTH/2 +
-    rgb_height * ((height-y1)/height);
+  points[0]->coords[5] = point0.y + UI_STUDY_TRIANGLE_WIDTH/2.0;
   points[0]->coords[6] = 0;
-  points[0]->coords[7] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    (-UI_STUDY_TRIANGLE_WIDTH/2) +
-    rgb_height * ((height-y2)/height);
+  points[0]->coords[7] = point1.y - UI_STUDY_TRIANGLE_WIDTH/2.0;
 
   /* top arrow */
-  points[1]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_width * (x1/width);
-  points[1]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT-1;
-  points[1]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_width * (x2/width);
-  points[1]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT-1;
-  points[1]->coords[4] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    UI_STUDY_TRIANGLE_WIDTH/2 +
-    rgb_width * (x2/width);
+  points[1]->coords[0] = point0.x;
+  points[1]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT-1.0;
+  points[1]->coords[2] = point1.x;
+  points[1]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT-1.0;
+  points[1]->coords[4] = point1.x + UI_STUDY_TRIANGLE_WIDTH/2.0;
   points[1]->coords[5] = 0;
-  points[1]->coords[6] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    (-UI_STUDY_TRIANGLE_WIDTH/2) +
-    rgb_width * (x1/width);
+  points[1]->coords[6] = point0.x - UI_STUDY_TRIANGLE_WIDTH/2.0;
   points[1]->coords[7] = 0;
 
 
   /* right arrow */
-  points[2]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_width;
-  points[2]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_height * ((height-y2)/height);
-  points[2]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_width;
-  points[2]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_height * ((height-y1)/height);
-  points[2]->coords[4] = 2*UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_width;
-  points[2]->coords[5] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    UI_STUDY_TRIANGLE_WIDTH/2 +
-    rgb_height * ((height-y1)/height);
-  points[2]->coords[6] = 2*UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_width;
-  points[2]->coords[7] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    (-UI_STUDY_TRIANGLE_WIDTH/2) +
-    rgb_height * ((height-y2)/height);
-
+  points[2]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT + rgb_width;
+  points[2]->coords[1] = point1.y;
+  points[2]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT + rgb_width;
+  points[2]->coords[3] = point0.y;
+  points[2]->coords[4] = 2*(UI_STUDY_TRIANGLE_HEIGHT)-1.0 + rgb_width;
+  points[2]->coords[5] = point0.y + UI_STUDY_TRIANGLE_WIDTH/2;
+  points[2]->coords[6] = 2*(UI_STUDY_TRIANGLE_HEIGHT)-1.0 + rgb_width;
+  points[2]->coords[7] = point1.y - UI_STUDY_TRIANGLE_WIDTH/2;
 
   /* bottom arrow */
-  points[3]->coords[0] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_width * (x1/width);
-  points[3]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_height;
-  points[3]->coords[2] = UI_STUDY_TRIANGLE_HEIGHT-1 + 
-    rgb_width * (x2/width);
-  points[3]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_height;
-  points[3]->coords[4] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    UI_STUDY_TRIANGLE_WIDTH/2 +
-    rgb_width * (x2/width);
-  points[3]->coords[5] = 2*UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_height;
-  points[3]->coords[6] = UI_STUDY_TRIANGLE_HEIGHT-1 +
-    (-UI_STUDY_TRIANGLE_WIDTH/2) +
-    rgb_width * (x1/width);
-  points[3]->coords[7] =  2*UI_STUDY_TRIANGLE_HEIGHT-1 +
-    rgb_height;
+  points[3]->coords[0] = point0.x;
+  points[3]->coords[1] = UI_STUDY_TRIANGLE_HEIGHT + rgb_height;
+  points[3]->coords[2] = point1.x;
+  points[3]->coords[3] = UI_STUDY_TRIANGLE_HEIGHT + rgb_height;
+  points[3]->coords[4] = point1.x + UI_STUDY_TRIANGLE_WIDTH/2;
+  points[3]->coords[5] = 2*(UI_STUDY_TRIANGLE_HEIGHT)-1.0 + rgb_height;
+  points[3]->coords[6] = point0.x - UI_STUDY_TRIANGLE_WIDTH/2;
+  points[3]->coords[7] =  2*(UI_STUDY_TRIANGLE_HEIGHT)-1.0 + rgb_height;
 
   if (canvas_arrow[0] != NULL ) {
     /* update the little arrow thingies */
@@ -880,7 +894,7 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
   GnomeCanvasItem * canvas_image;
   GdkPixbuf * rgb_image;
   gint rgb_width, rgb_height;
-  color_point_t blank_color;
+  rgba_t blank_rgba;
   GtkStyle * widget_style;
 
   /* get points to the canvas image and rgb image associated with the current canvas */
@@ -906,19 +920,19 @@ void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view) {
       widget_style = gtk_style_new();
     }
 
-    blank_color.r = widget_style->bg[GTK_STATE_NORMAL].red >> 8;
-    blank_color.g = widget_style->bg[GTK_STATE_NORMAL].green >> 8;
-    blank_color.b = widget_style->bg[GTK_STATE_NORMAL].blue >> 8;
+    blank_rgba.r = widget_style->bg[GTK_STATE_NORMAL].red >> 8;
+    blank_rgba.g = widget_style->bg[GTK_STATE_NORMAL].green >> 8;
+    blank_rgba.b = widget_style->bg[GTK_STATE_NORMAL].blue >> 8;
+    blank_rgba.a = 0xFF;
 
-    rgb_image = image_blank(width,height, blank_color);
+    rgb_image = image_blank(width,height, blank_rgba);
 
   } else {
     /* figure out our view coordinate frame */
     temp_p.x = temp_p.y = temp_p.z = 0.5*study_view_thickness(ui_study->study);
     temp_p = rp_sub(study_view_center(ui_study->study), temp_p);
     view_coord_frame = study_coord_frame(ui_study->study);
-    view_coord_frame.offset = 
-      realspace_alt_coord_to_base(temp_p,view_coord_frame);
+    rs_set_offset(&view_coord_frame, realspace_alt_coord_to_base(temp_p,view_coord_frame));
     view_coord_frame = realspace_get_view_coord_frame(view_coord_frame, view);
     
     /* first, generate a volume_list we can pass to image_from_volumes */
@@ -1039,6 +1053,7 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
   gint rgb_width, rgb_height;
   double affine[6];
   gboolean highlight;
+  canvaspoint_t roi_cp;
 
   /* get a pointer to the canvas's slices and the rgb_image */
   current_slices = gtk_object_get_data(GTK_OBJECT(ui_study->canvas[view]), "slices");
@@ -1080,31 +1095,28 @@ GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,
     j++;
   }
 
+  /* if not enough points for a line, destroy the old roi_item */
   if (j<=1) {
-    if (roi_item != NULL) /* if no points, destroy the old roi_item */
+    if (roi_item != NULL) 
       gtk_object_destroy(GTK_OBJECT(roi_item));
     return NULL;
   }
 
 
   /* get some needed information */
-  width = current_slices->volume->dim.x* current_slices->volume->voxel_size.x;
-  height = current_slices->volume->dim.y* current_slices->volume->voxel_size.y;
-  offset =  realspace_base_coord_to_alt(current_slices->volume->coord_frame.offset,
+  width = current_slices->volume->data_set->dim.x* current_slices->volume->voxel_size.x;
+  height = current_slices->volume->data_set->dim.y* current_slices->volume->voxel_size.y;
+  offset = realspace_base_coord_to_alt(rs_offset(current_slices->volume->coord_frame),
 					current_slices->volume->coord_frame);
 
   /* transfer the points list to what we'll be using to construction the figure */
-  /* note, we compensate here for the origin in X being top left, while ours is bottom left */
   item_points = gnome_canvas_points_new(j);
   temp=roi_points;
   j=0;
   while(temp!=NULL) {
-    item_points->coords[j] = 
-      ((((realpoint_t * ) temp->data)->x-offset.x)/width) 
-      *rgb_width + UI_STUDY_TRIANGLE_HEIGHT;
-    item_points->coords[j+1] = 
-      (((height - ((realpoint_t * ) temp->data)->y-offset.y))/height)
-      *rgb_height + UI_STUDY_TRIANGLE_HEIGHT;
+    roi_cp = ui_study_rp_2_cp(ui_study->canvas[view], *((realpoint_t *) temp->data));
+    item_points->coords[j] = roi_cp.x;
+    item_points->coords[j+1] = roi_cp.y;
     temp=temp->next;
     j += 2;
   }

@@ -55,7 +55,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   gboolean * volume_used;
   guint total_frames=0;
   guint current_frames;
-  volume_time_t min, temp;
+  amide_time_t min, temp;
   gchar * temp_strings[4];
   ui_time_dialog_t * new_time;
 
@@ -74,7 +74,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
   num_volumes=0;
   while (ui_volume_list != NULL) {
     num_volumes++;
-    total_frames += ui_volume_list->volume->num_frames;
+    total_frames += ui_volume_list->volume->data_set->dim.t;
     ui_volume_list = ui_volume_list->next;
   }
 
@@ -113,7 +113,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
 
     /* initialize the variables with the first volume on the volumes list */
     i_volume=0;
-    while (ui_volume_list->volume->num_frames <= frames[i_volume]) {
+    while (ui_volume_list->volume->data_set->dim.t <= frames[i_volume]) {
       ui_volume_list = ui_volume_list->next; /* advancing to a volume that still has frames left */
       i_volume++;
     }
@@ -124,7 +124,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
     ui_volume_list = ui_volume_list->next;
     i_volume++;
     while (ui_volume_list != NULL) {
-      if (frames[i_volume] < ui_volume_list->volume->num_frames) {
+      if (frames[i_volume] < ui_volume_list->volume->data_set->dim.t) {
 	temp = volume_start_time(ui_volume_list->volume, frames[i_volume]);
 	if (temp < min) {
 	  min_volume = ui_volume_list->volume;
@@ -179,7 +179,7 @@ void ui_time_dialog_set_times(ui_study_t * ui_study) {
     /* special case #2
        this is the last frame in the volume and no other frame has been selected, so select this one anyway */
     if ((!volume_used[min_volume_num]) && 
-	(frames[min_volume_num] == min_volume->num_frames-1) && 
+	(frames[min_volume_num] == min_volume->data_set->dim.t-1) && 
 	(new_time->time > min + min_volume->frame_duration[frames[min_volume_num]])) {
       gtk_clist_select_row(GTK_CLIST(clist), current_frames,0);
       volume_used[min_volume_num]=TRUE;

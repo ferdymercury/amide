@@ -55,5 +55,6 @@ amide.rtf: amide.sgml
 
 
 
+DISTCLEANFILES = *~
 
 

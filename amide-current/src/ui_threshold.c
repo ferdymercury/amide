@@ -122,7 +122,7 @@ void ui_threshold_update_canvas(ui_study_t * ui_study, ui_threshold_t * ui_thres
 
   GnomeCanvasPoints * min_points;
   GnomeCanvasPoints * max_points;
-  volume_data_t max;
+  amide_data_t max;
   volume_t * volume;
 
   volume = ui_threshold->volume;
@@ -270,16 +270,21 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
   /* remove a reference to the old volume we were pointing to */
   ui_study->threshold->volume = volume_free(ui_study->threshold->volume);
 
-  /* figure out which volume we're dealing with, and add a reference */
   if (ui_study->current_volume == NULL)
     return;
-  else
-    ui_study->threshold->volume = volume_add_reference(ui_study->current_volume);
+  
+  /* add a reference to the volume we're looking at */
+  ui_study->threshold->volume = volume_add_reference(ui_study->current_volume);
 
   /* reset the label which holds the volume name */
   temp_string = g_strdup_printf("data set: %s\n",ui_study->threshold->volume->name);
   gtk_label_set_text(GTK_LABEL(ui_study->threshold->name_label), temp_string);
   g_free(temp_string);
+
+
+  /* update what's on the pull down menu */
+  gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->threshold->color_table_menu),
+			      ui_study->threshold->volume->color_table);
 
 
   /* reset the color strip */
@@ -289,9 +294,7 @@ void ui_threshold_dialog_update(ui_study_t * ui_study) {
   if (ui_study->threshold->bar_graph_rgb_image != NULL)
     gdk_pixbuf_unref(ui_study->threshold->bar_graph_rgb_image);
 
-  ui_study->threshold->bar_graph_rgb_image = image_of_distribution(ui_study->threshold->volume,
-							    UI_THRESHOLD_BAR_GRAPH_WIDTH,
-							    UI_THRESHOLD_COLOR_STRIP_HEIGHT);
+  ui_study->threshold->bar_graph_rgb_image = image_of_distribution(ui_study->threshold->volume);
   gnome_canvas_item_set(ui_study->threshold->bar_graph_item,
 			"pixbuf", ui_study->threshold->bar_graph_rgb_image, NULL);
 
@@ -444,9 +447,9 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
     menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", GINT_TO_POINTER(i_color_table));
-    gtk_object_set_data(GTK_OBJECT(menuitem),"threshold", ui_threshold);
+    gtk_object_set_data(GTK_OBJECT(menuitem), "ui_study", ui_study);
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
-    		       GTK_SIGNAL_FUNC(ui_study_callbacks_color_table), ui_study);
+    		       GTK_SIGNAL_FUNC(ui_threshold_callbacks_color_table), ui_threshold);
   }
 
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
@@ -474,7 +477,7 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
   gtk_box_pack_start(GTK_BOX(main_box), right_table, TRUE,TRUE,0);
 
 
-  label = gtk_label_new("distribution (log)");
+  label = gtk_label_new("distribution (log scale)");
   gtk_table_attach(GTK_TABLE(right_table), 
 		   GTK_WIDGET(label), 0,1, right_row, right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL,
@@ -485,9 +488,8 @@ GtkWidget * ui_threshold_create(ui_study_t * ui_study, ui_threshold_t * ui_thres
 
 
   /* the distribution image */
-  ui_threshold->bar_graph_rgb_image = image_of_distribution(ui_threshold->volume,
-							    UI_THRESHOLD_BAR_GRAPH_WIDTH,
-							    UI_THRESHOLD_COLOR_STRIP_HEIGHT);
+  ui_threshold->bar_graph_rgb_image = image_of_distribution(ui_threshold->volume);
+
   bar_graph = GNOME_CANVAS(gnome_canvas_new());
   gnome_canvas_set_scroll_region(bar_graph, 
 				 0.0, UI_THRESHOLD_TRIANGLE_WIDTH/2,

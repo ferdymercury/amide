@@ -53,24 +53,28 @@ void ui_roi_dialog_set_axis_display(GtkWidget * roi_dialog) {
   gchar * temp_string;
   roi_t * roi_new_info;
   axis_t i_axis;
+  realpoint_t one_axis;
 
   roi_new_info = gtk_object_get_data(GTK_OBJECT(roi_dialog), "roi_new_info");
+  
 
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++) {
+    one_axis = rs_specific_axis(roi_new_info->coord_frame, i_axis);
+
     label = gtk_object_get_data(GTK_OBJECT(roi_dialog), axis_names[i_axis]);
 
     entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[XAXIS]);
-    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].x);
+    temp_string = g_strdup_printf("%f", one_axis.x);
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
 
     entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[YAXIS]);
-    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].y);
+    temp_string = g_strdup_printf("%f", one_axis.y);
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
 
     entry = gtk_object_get_data(GTK_OBJECT(label), axis_names[ZAXIS]);
-    temp_string = g_strdup_printf("%f", roi_new_info->coord_frame.axis[i_axis].z);
+    temp_string = g_strdup_printf("%f", one_axis.z);
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
 

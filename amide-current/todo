@@ -1,5 +1,9 @@
 misc list of things todo:
 
+to be done for next release:
+----------------------------
+
+
 big things:
 -----------
 * aligning of data sets by specifying three points in each
@@ -7,18 +11,25 @@ big things:
 * guppi? interface for drawing graphs of ROI statistics
 	-plotutils instead?
 * allow looking at only a subset of the data (i.e. cropping)
-* change color compositing to an alpha based method, so that
-	colormaps with white backgrounds can be composited together
+* progress bar
+* rendering alterations -> 
+	allow the user to grap the imag and spin it,
+	replace x,y,z rotations with bottom and side of image rotations
+	3D red/green imaging
+	movie? are we rotating relative or absolute?
+	allow rotation of light source and view in addition to object
+* work around and remove the whole notion of "grains" for roi's
 
 small things:
 -------------
-* work around and remove the whole notion of "grains" for roi's
+* change realpoint to 4D?
+* add quad-linear interpolation for short time periods?
+* figure out what to do with the extraneous study if you start
+	amide, and then load in a file...
+* put in markers on the series widget
 * add drag-n-drop capabilities between study windows
-* add more interpolation methods when converting volumes for rendering.  currently only
-	nearest neighbor, which doesn't work well when converting non-isometric voxels
-	to the isometric voxels used by volpack
 * add axis indications somewhere, so user knows which way x,y,z is on each canvas 
-	ask Anna how this should be setup....
+	this should go on the volume dialog
 * add to documentation 
 	- how to align
 	- rotating in volume dialog rotates around current view center
@@ -34,19 +45,21 @@ small things:
 * add ability to change material properties, lighting? for rendering
 * make caching of slices smarter.  We don't need to regenerate all slices
 	when removing one slice from the list...
-* re-write realspace functions so that a pregenerated inverse matrix can be used
-	also change realspace_function to rs_function
 * continue header file inclusion cleaning-up
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * program preferences box?
 	-width of roi lines
-
+* add wait cursors to ui_rendering, probably want to make ui_study_place_cursor, etc.
+	amide.c functions
+* when moving roi, should probably update roi dialog, same thing with volumes
+* get libamide compiling correctly under OS X
 
 future things:
 --------------
 * figure out how to remove the last two uses of imlib (for exporting ppm files, and exporting
-	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities....
+	files of any type).  gdk_pixbuf doesn't seem to have "write" capabilities
+	- I believe this will be added in GTK 2.0
 
 * gtk_spin_button -> multiple value_changed are emitted when the callback takes
 	to long.  This is a gtk+ bug.
@@ -54,3 +67,9 @@ future things:
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
 	delete the following line from amide.c so we can have bug reporting
 	"signal(SIGSEGV, SIG_DFL);"
+
+
+polish things:
+--------------
+* if we're not compiling in debug mode, have warning messages go to 
+	popup windows

@@ -26,5 +26,6 @@
 /* external functions */
 gint ui_threshold_callbacks_arrow(GtkWidget* widget, GdkEvent * event,
 				  gpointer data);
+void ui_threshold_callbacks_color_table(GtkWidget * widget, gpointer data);
 void ui_threshold_callbacks_entry(GtkWidget* widget, gpointer data);
 void ui_threshold_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data);
