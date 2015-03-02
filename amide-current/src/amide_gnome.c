@@ -1,7 +1,7 @@
 /* amide_gnome.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2007-2009 Andy Loening
+ * Copyright (C) 2007-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  * Code directly copied from libgnome
@@ -36,7 +36,7 @@ at some point in the future */
 #include "amitk_common.h"
 #include "amide_gnome.h"
 
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX)
 #include <libgnomevfs/gnome-vfs-utils.h>
 #include <libgnomevfs/gnome-vfs-uri.h>
 //#else
@@ -66,7 +66,7 @@ GQuark amide_gnome_url_error_quark (void) {
 
 
 static gboolean amide_gnome_url_show_with_env (const char  *url,  char       **envp, GError     **error) {
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(AMIDE_NATIVE_GTK_OSX)
 	GnomeVFSResult result;
 	GnomeVFSURI *vfs_uri;
 

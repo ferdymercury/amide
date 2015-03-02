@@ -1,7 +1,7 @@
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
 Version: 	@VERSION@
-Release: 	1
+Release: 	1%{?dist}
 License: 	GPL
 Group: 		Applications/Engineering
 Source: 	%{name}-%{version}.tgz
@@ -13,8 +13,8 @@ Requires:	xmedcon >= 0.10.0
 Requires:	gsl
 Requires:	volpack
 Requires:	ffmpeg-libs >= 0.4.9
-Requires:	dcmtk >= 3.5.4
-Requires:       gtk2 >= 2.10
+Requires:	dcmtk >= 3.6.0
+Requires:       gtk2 >= 2.16
 Requires:	gnome-vfs2
 Requires:	libgnomecanvas
 

@@ -1,7 +1,7 @@
 /* ui_common.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,14 +24,11 @@
 */
 
 #include "amide_config.h"
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
-#include <sys/stat.h>
 #include <string.h>
 #include "amide.h"
 #include "amide_gnome.h"
 #include "ui_common.h"
 #include "amitk_space.h"
-#include "amitk_xif_sel.h"
 #include "amitk_color_table.h"
 #include "amitk_preferences.h"
 #include "amitk_threshold.h"
@@ -46,7 +43,7 @@
 #include <medcon.h>
 #endif
 #ifdef AMIDE_FFMPEG_SUPPORT
-#include <ffmpeg/libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
 #endif
 #ifdef AMIDE_LIBFAME_SUPPORT
 #include <fame_version.h>
@@ -149,7 +146,7 @@ static void about_cb(GtkAction *action, gpointer * caller) {
   gtk_show_about_dialog(NULL, 
 			"name", PACKAGE,
 			"version", VERSION,
-			"copyright", "Copyright (c) 2000-2009 Andreas Loening",
+			"copyright", "Copyright (c) 2000-2011 Andreas Loening",
 			"license", "GNU General Public License, Version 2",
 			"authors", authors,
 			"comments", comments,
@@ -182,196 +179,32 @@ gboolean ui_common_check_filename(const gchar * filename) {
 
 
 void ui_common_set_last_path_used(const gchar * path) {
+
+  if (last_path_used != NULL) g_free(last_path_used);
   last_path_used = g_strdup(path);
+
   return;
 }
 
-static gchar * save_name_common(GtkWidget * file_selection, const gchar * filename,
-				gboolean check_for_existing) {
 
-  struct stat file_info;
-  GtkWidget * question;
-  gint return_val;
-
-  /* sanity checks */
-  if (!ui_common_check_filename(filename)) {
-    g_warning(_("Inappropriate filename: %s"),filename);
-    return NULL;
-  }
-
-  if (last_path_used != NULL) g_free(last_path_used);
-  last_path_used = g_strdup(filename);
-
-
-  /* check with user if filename already exists */
-  if (check_for_existing) {
-    if (stat(filename, &file_info) == 0) {
-      /* check if it's okay to writeover the file */
-      question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
-					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_MESSAGE_QUESTION,
-					GTK_BUTTONS_OK_CANCEL,
-					_("Overwrite file: %s"), filename);
-
-      /* and wait for the question to return */
-      return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-      gtk_widget_destroy(question);
-      if (return_val != GTK_RESPONSE_OK) {
-	return NULL; /* we don't want to overwrite the file.... */
-      }
-    }
-    /* unlinking the file doesn't occur here */
-  }
-
-  return g_strdup(filename);
-}
-
-gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection,
-					       gboolean check_for_existing) {
-  const gchar * filename;
-  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-  return save_name_common(file_selection, filename,check_for_existing);
-}
-
-gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection) {
-  const gchar * filename;
-  gchar * save_filename;
-  gchar * prev_filename;
-  gchar ** frags1=NULL;
-  gchar ** frags2=NULL;
-
-  filename = amitk_xif_selection_get_filename(AMITK_XIF_SELECTION(xif_selection));
-
-  /* make sure the filename ends with .xif */
-  save_filename = g_strdup(filename);
-  g_strreverse(save_filename);
-  frags1 = g_strsplit(save_filename, ".", 2);
-  g_strreverse(save_filename);
-  g_strreverse(frags1[0]);
-  frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
-  if (g_ascii_strcasecmp(frags2[0], "xif") != 0) {
-    prev_filename = save_filename;
-    save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
-    g_free(prev_filename);
-  }    
-  g_strfreev(frags2);
-  g_strfreev(frags1);
-
-  prev_filename = save_filename;
-  save_filename = save_name_common(xif_selection, prev_filename, TRUE);
-  g_free(prev_filename);
-
-  return save_filename;
-}
-
-
-
-
-
-
-
-static gchar * load_name_common(const gchar * filename) {
-
-  /* sanity checks */
-  if (!ui_common_check_filename(filename)) {
-    g_warning(_("Inappropriate filename: %s"),filename);
-    return NULL;
-  }
-
-  if (last_path_used != NULL) g_free(last_path_used);
-  last_path_used = g_strdup(filename);
-
-  return g_strdup(filename);
-}
-
-gchar * ui_common_file_selection_get_load_name(GtkWidget * file_selection) {
-  const gchar * filename;
-  filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-  return load_name_common(filename);
-}
-
-gchar * ui_common_xif_selection_get_load_name(GtkWidget * xif_selection) {
-  const gchar * filename;
-  filename = amitk_xif_selection_get_filename(AMITK_XIF_SELECTION(xif_selection));
-  return load_name_common(filename);
-}
-
-
-
-
-
-static gchar * set_filename_common(gchar * suggested_name) {
+/* Returns a suggested path to save a file in. Returned path needs to be free'd */
+gchar * ui_common_suggest_path(void) {
 
   gchar * dir_string;
-  gchar * base_string;
-  gchar * return_string;
 
   if (last_path_used != NULL)
     dir_string = g_path_get_dirname(last_path_used);
   else
     dir_string = g_strdup(".");;
 
-  if (suggested_name != NULL) {
-    base_string = g_path_get_basename(suggested_name);
-    return_string = g_strdup_printf("%s%s%s", dir_string, G_DIR_SEPARATOR_S, base_string);
-    g_free(base_string);
-  } else {
-    return_string = g_strdup_printf("%s%s",dir_string, G_DIR_SEPARATOR_S);
-  }
+  return dir_string;
 
-  g_free(dir_string);
-
-  return return_string;
-}
-
-
-void ui_common_file_selection_set_filename(GtkWidget * file_selection, gchar * suggested_name) {
-  gchar * temp_string;
-  temp_string = set_filename_common(suggested_name);
-
-  if (temp_string != NULL) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
-    g_free(temp_string); 
-  }
-
-  return;
-}
-
-
-void ui_common_xif_selection_set_filename(GtkWidget * xif_selection, gchar * suggested_name) {
-  gchar * temp_string;
-  temp_string = set_filename_common(suggested_name);
-
-  if (temp_string != NULL) {
-    amitk_xif_selection_set_filename(AMITK_XIF_SELECTION(xif_selection), temp_string);
-    g_free(temp_string); 
-  }
-
-  return;
-}
-
-
-
-/* function to close a file selection widget */
-void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data) {
-
-  GtkFileSelection * file_selection = data;
-
-  gtk_widget_destroy(GTK_WIDGET(file_selection));
-
-  /* do any events pending, this allows the dialog to be removed immediately */
-  while (gtk_events_pending()) gtk_main_iteration();
-
-  return;
 }
 
 /* function which brings up an about box */
 void ui_common_about_cb(GtkWidget * button, gpointer data) {
   about_cb(NULL, NULL);
 }
-
-
 
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 
@@ -818,8 +651,8 @@ static void ui_common_cursor_init(void) {
   source = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
   mask = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
   small_dot = gdk_cursor_new_from_pixmap (source, mask, &fg, &bg, 2,2);
-  gdk_pixmap_unref (source);
-  gdk_pixmap_unref (mask);
+  g_object_unref (source);
+  g_object_unref (mask);
                                      
   /* load in the cursors */
 

@@ -1,7 +1,7 @@
 /* libmdc_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -82,14 +82,14 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
 /* voxel_size only used if resliced=TRUE */
 /* if bounding_box == NULL, will create its own using the minimal necessary */
-void libmdc_export(AmitkDataSet * ds,
-		   const gchar * filename, 
-		   const libmdc_format_t libmdc_format,
-		   const gboolean resliced,
-		   const AmitkPoint voxel_size,
-		   const AmitkVolume * bounding_box,
-		   AmitkUpdateFunc update_func,
-		   gpointer update_data);
+gboolean libmdc_export(AmitkDataSet * ds,
+		       const gchar * filename, 
+		       const libmdc_format_t libmdc_format,
+		       const gboolean resliced,
+		       const AmitkPoint voxel_size,
+		       const AmitkVolume * bounding_box,
+		       AmitkUpdateFunc update_func,
+		       gpointer update_data);
 
 extern libmdc_format_t libmdc_import_to_format[];
 extern gchar * libmdc_import_menu_names[];

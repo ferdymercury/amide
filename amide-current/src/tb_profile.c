@@ -1,7 +1,7 @@
 /* tb_profile.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2009 Andy Loening
+ * Copyright (C) 2003-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -25,7 +25,6 @@
 
 
 #include "amide_config.h"
-#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <libgnomecanvas/libgnomecanvas.h>
 #include "amide.h"
 #include "amitk_study.h"
@@ -115,7 +114,6 @@ static int gaussian_fdf (const gsl_vector * func_p, void *params, gsl_vector * f
 static void fit_gaussian(tb_profile_t * tb_profile);
 static void display_gaussian_fit(tb_profile_t * tb_profile);
 #endif
-static void export_ok_cb(GtkWidget* widget, gpointer data);
 static void export_profiles(tb_profile_t * tb_profile);
 static void save_profiles(const gchar * save_filename, tb_profile_t * tb_profile);
 static void recalc_profiles(tb_profile_t * tb_profile);
@@ -289,35 +287,15 @@ static gchar * results_as_string(tb_profile_t * tb_profile) {
 }
 
 
-/* function to handle exporting the profile */
-static void export_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  tb_profile_t * tb_profile;
-  const gchar * save_filename;
-
-  tb_profile = g_object_get_data(G_OBJECT(file_selection), "tb_profile");
-
-  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  /* allright, save the data */
-  save_profiles(save_filename, tb_profile);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  return;
-}
 
 /* function to save the generated profile */
 static void export_profiles(tb_profile_t * tb_profile) {
   
-  GtkWidget * file_selection;
+  GtkWidget * file_chooser;
   gchar * temp_string;
   GList * data_sets;
   GList * temp_data_sets;
-  gchar * profile_name;
+  gchar * filename;
 
   /* sanity checks */
   g_return_if_fail(tb_profile != NULL);
@@ -326,46 +304,47 @@ static void export_profiles(tb_profile_t * tb_profile) {
 					       AMITK_OBJECT_TYPE_DATA_SET, AMITK_SELECTION_ANY, TRUE);
   g_return_if_fail(data_sets != NULL);
 
-  file_selection = gtk_file_selection_new(_("Export Profile"));
+  /* the rest of this function runs the file selection dialog box */
+  file_chooser = gtk_file_chooser_dialog_new(_("Export Profile"), 
+					     GTK_WINDOW(tb_profile->dialog), /* parent window */
+					     GTK_FILE_CHOOSER_ACTION_SAVE,
+					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
 
   /* take a guess at the filename */
-  profile_name = g_strdup_printf("%s_profile_{%s",
-				  AMITK_OBJECT_NAME(tb_profile->study),
-				  AMITK_OBJECT_NAME(data_sets->data));
+  filename = g_strdup_printf("%s_profile_{%s",
+				 AMITK_OBJECT_NAME(tb_profile->study),
+				 AMITK_OBJECT_NAME(data_sets->data));
   temp_data_sets = data_sets->next;
   while (temp_data_sets != NULL) {
-    temp_string = g_strdup_printf("%s+%s",profile_name,AMITK_OBJECT_NAME(temp_data_sets->data));
-    g_free(profile_name);
-    profile_name = temp_string;
+    temp_string = g_strdup_printf("%s+%s",filename,AMITK_OBJECT_NAME(temp_data_sets->data));
+    g_free(filename);
+    filename = temp_string;
     temp_data_sets = temp_data_sets->next;
   }
-  temp_string = g_strdup_printf("%s}.tsv",profile_name);
-  g_free(profile_name);
-  profile_name = temp_string;
+  temp_string = g_strdup_printf("%s}.tsv",filename);
+  g_free(filename);
+  filename = temp_string;
   amitk_objects_unref(data_sets);
 
-  ui_common_file_selection_set_filename(file_selection, profile_name);
-  g_free(profile_name);
+  gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_chooser), filename);
+  g_free(filename);
 
-  /* save a pointer to the analyses */
-  g_object_set_data(G_OBJECT(file_selection), "tb_profile", tb_profile);
+  /* run the save dialog */
+  if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+  else
+    filename = NULL;
+  gtk_widget_destroy(file_chooser);
 
-  /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-
-  /* connect the signals */
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(export_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-
-  /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-
-  /* run the dialog */
-  gtk_widget_show(file_selection);
+  if (filename != NULL) {
+    /* allright, save the data */
+    save_profiles(filename, tb_profile);
+    g_free(filename);
+  }
 
   return;
 }

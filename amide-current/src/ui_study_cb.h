@@ -1,7 +1,7 @@
 /* ui_study_cb.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2009 Andy Loening
+ * Copyright (C) 2000-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,16 +24,18 @@
 */
 
 
-
 /* external functions */
+void ui_study_cb_open_xif_file(GtkAction * action, gpointer ui_study);
+void ui_study_cb_open_xif_dir(GtkAction * action, gpointer ui_study);
+void ui_study_cb_import_object_from_xif_file(GtkAction * action, gpointer data);
+void ui_study_cb_import_object_from_xif_dir(GtkAction * action, gpointer data);
+void ui_study_cb_recover_xif_file(GtkAction * action, gpointer data);
 void ui_study_cb_new_study(GtkAction * action, gpointer ui_study);
-void ui_study_cb_open_study(GtkAction * action, gpointer ui_study);
-void ui_study_cb_import_object(GtkAction * action, gpointer data);
-void ui_study_cb_save_as(GtkAction * action, gpointer data);
+void ui_study_cb_save_as_xif_file(GtkAction * action, gpointer data);
+void ui_study_cb_save_as_xif_dir(GtkAction * action, gpointer data);
 void ui_study_cb_import(GtkAction * action, gpointer data);
 void ui_study_cb_export_view(GtkAction * action, gpointer data);
 void ui_study_cb_export_data_set(GtkAction * action, gpointer data);
-void ui_study_cb_recover_study(GtkAction * action, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
 void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
 				   AmitkPoint *location, amide_data_t value, gpointer ui_study);

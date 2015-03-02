@@ -1,7 +1,7 @@
 /* libmdc_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -222,6 +222,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   AmitkAxis i_axis;
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
+  gboolean use_pixdim_duration = FALSE;
 
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -523,7 +524,11 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     ds->scan_start = libmdc_fi.dyndata[0].time_frame_start/1000.0;
   else if (libmdc_fi.image[0].sdata != NULL) 
     ds->scan_start = 0.0;
-  else {
+  else if ((libmdc_fi.iformat == MDC_FRMT_ANLZ) && (!EQUAL_ZERO(libmdc_fi.pixdim[4]/1000.0))) {
+    /* analyze files sometimes have duration in pixdim[4] */
+    use_pixdim_duration = TRUE;
+    ds->scan_start = 0.0;
+  } else {
     g_warning(_("(X)MedCon returned no duration information.  Frame durations will be incorrect"));
     ds->scan_start = 0.0;
   }
@@ -562,6 +567,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
       amitk_data_set_set_frame_duration(ds, i.t, libmdc_fi.dyndata[i.t].time_frame_duration/1000.0);
     else if (libmdc_fi.image[0].sdata != NULL) 
       amitk_data_set_set_frame_duration(ds, i.t, libmdc_fi.image[0].sdata->image_duration/1000.0);
+    else if (use_pixdim_duration)
+      amitk_data_set_set_frame_duration(ds, i.t, libmdc_fi.pixdim[4]/1000.0);
     else
       amitk_data_set_set_frame_duration(ds, i.t, 1.0);
 
@@ -807,14 +814,14 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 
 
 
-void libmdc_export(AmitkDataSet * ds,
-		   const gchar * filename, 
-		   const libmdc_format_t libmdc_format,
-		   const gboolean resliced,
-		   const AmitkPoint voxel_size,
-		   const AmitkVolume * bounding_box,
-		   AmitkUpdateFunc update_func,
-		   gpointer update_data) {
+gboolean libmdc_export(AmitkDataSet * ds,
+		       const gchar * filename, 
+		       const libmdc_format_t libmdc_format,
+		       const gboolean resliced,
+		       const AmitkPoint voxel_size,
+		       const AmitkVolume * bounding_box,
+		       AmitkUpdateFunc update_func,
+		       gpointer update_data) {
 
 
 
@@ -846,6 +853,7 @@ void libmdc_export(AmitkDataSet * ds,
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
   amide_data_t value;
+  gboolean successful = FALSE;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -1144,7 +1152,7 @@ void libmdc_export(AmitkDataSet * ds,
     goto cleanup;
   }
 
-
+  successful = TRUE; /* made it through! */
 
  cleanup:
 
@@ -1164,7 +1172,7 @@ void libmdc_export(AmitkDataSet * ds,
   setlocale(LC_NUMERIC, saved_numeric_locale);
   g_free(saved_time_locale);
   g_free(saved_numeric_locale);
-  return;
+  return successful;
 
 }
 

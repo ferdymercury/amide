@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

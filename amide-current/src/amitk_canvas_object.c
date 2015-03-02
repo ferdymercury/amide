@@ -1,7 +1,7 @@
 /* amitk_canvas_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2009 Andy Loening
+ * Copyright (C) 2002-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -65,7 +65,7 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
     /* make sure to reset any affine translations we've done */
     gnome_canvas_item_i2w_affine(item,affine);
     affine[0] = affine[3] = 1.0;
-    affine[1] = affine[2] = affine[4] = affine[5] = affine[6] = 0.0;
+    affine[1] = affine[2] = affine[4] = affine[5] = 0.0;
     gnome_canvas_item_affine_absolute(item,affine);
   }
 

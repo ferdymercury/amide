@@ -13,6 +13,7 @@ endif
 SUBDIRS = \
 	pixmaps \
 	win32 \
+	macosx \
 	src \
 	doc \
 	man \

@@ -1,7 +1,7 @@
 /* mpeg_encode.c - interface to the mpeg encoding library
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -141,7 +141,7 @@ static void convert_rgb_pixbuf_to_yuv(yuv_t * yuv, GdkPixbuf * pixbuf) {
 /* -------------------------------------------------------- */
 #ifdef AMIDE_FFMPEG_SUPPORT
 
-#include <ffmpeg/libavcodec/avcodec.h>
+#include <libavcodec/avcodec.h>
 
 
 typedef struct {
@@ -296,7 +296,7 @@ gpointer mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint xsi
   /* encoding parameters */
   encode->context->sample_aspect_ratio= (AVRational){1,1}; /* our pixels are square */
   encode->context->me_method=5; /* 5 is epzs */
-  encode->context->trellis=1; /* turn trellis quantization on */
+  encode->context->trellis=2; /* turn trellis quantization on */
 
   /* open it */
   if (avcodec_open(encode->context, encode->codec) < 0) {

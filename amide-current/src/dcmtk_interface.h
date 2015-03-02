@@ -1,7 +1,7 @@
 /* dcmtk_interface.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2009 Andy Loening
+ * Copyright (C) 2005-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -41,13 +41,13 @@ GList * dcmtk_import(const gchar * filename,
 		     AmitkPreferences * preferences,
 		     AmitkUpdateFunc update_func,
 		     gpointer update_data);
-void dcmtk_export(AmitkDataSet * ds, 
-		  const gchar * dirname,
-		  const gboolean resliced,
-		  const AmitkPoint voxel_size,
-		  const AmitkVolume * bounding_box,
-		  AmitkUpdateFunc update_func,
-		  gpointer update_data);
+gboolean dcmtk_export(AmitkDataSet * ds, 
+		      const gchar * dir_or_filename,
+		      const gboolean resliced,
+		      const AmitkPoint voxel_size,
+		      const AmitkVolume * bounding_box,
+		      AmitkUpdateFunc update_func,
+		      gpointer update_data);
 
 G_END_DECLS
 

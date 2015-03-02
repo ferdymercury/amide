@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -27,7 +27,6 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <libgnomecanvas/libgnomecanvas.h>
 
 #include "amide_gconf.h"
@@ -353,90 +352,65 @@ static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-/* function to handle exporting a view */
-static void export_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  ui_render_t * ui_render;
-  const gchar * save_filename;
-  GdkPixbuf * pixbuf;
-
-  /* get a pointer to ui_render */
-  ui_render = g_object_get_data(G_OBJECT(file_selection), "ui_render");
-
-  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  pixbuf = ui_render_get_pixbuf(ui_render);
-  if (pixbuf == NULL) {
-    g_warning(_("Canvas failed to return a valid image\n"));
-    return;
-  }
-
-  if (gdk_pixbuf_save (pixbuf, save_filename, "jpeg", NULL, 
-		       "quality", "100", NULL) == FALSE) 
-    g_warning(_("Failure Saving File: %s"),save_filename);
-
-
-  g_object_unref(pixbuf);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  return;
-}
 
 /* function to save a rendering as an external data format */
 static void export_cb(GtkAction * action, gpointer data) {
 
   ui_render_t * ui_render = data;
   renderings_t * temp_renderings;
-  GtkWidget * file_selection;
-  gchar * temp_string;
+  GtkWidget * file_chooser;
   gchar * data_set_names = NULL;
+  gchar * filename;
   static guint save_image_num = 0;
+  GdkPixbuf * pixbuf;
 
   g_return_if_fail(ui_render->pixbuf != NULL);
 
-  file_selection = gtk_file_selection_new(_("Export File"));
+  file_chooser = gtk_file_chooser_dialog_new(_("Export File"),
+					     GTK_WINDOW(ui_render->window), /* parent window */
+					     GTK_FILE_CHOOSER_ACTION_SAVE,
+					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
 
   /* take a guess at the filename */
   temp_renderings = ui_render->renderings;
   data_set_names = g_strdup(temp_renderings->rendering->name);
   temp_renderings = temp_renderings->next;
   while (temp_renderings != NULL) {
-    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_renderings->rendering->name);
+    filename = g_strdup_printf("%s+%s",data_set_names, temp_renderings->rendering->name);
     g_free(data_set_names);
-    data_set_names = temp_string;
+    data_set_names = filename;
     temp_renderings = temp_renderings->next;
   }
-  temp_string = g_strdup_printf("Rendering%s{%s}_%d.jpg", 
-				ui_render->stereoscopic ? "_stereo_" : "_", 
-				data_set_names,save_image_num++);
-  ui_common_file_selection_set_filename(file_selection, temp_string);
+  filename = g_strdup_printf("Rendering%s{%s}_%d.jpg", 
+			     ui_render->stereoscopic ? "_stereo_" : "_", 
+			     data_set_names,save_image_num++);
+  gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (file_chooser), filename);
   g_free(data_set_names);
-  g_free(temp_string); 
-
-  /* save a pointer to ui_render */
-  g_object_set_data(G_OBJECT(file_selection), "ui_render", ui_render);
-    
-  /* don't want anything else going on till this window is gone */
-  //  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-  // for some reason, this modal's the application permanently...
-
-  /* connect the signals */
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(export_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-
-  /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+  g_free(filename); 
 
   /* run the dialog */
-  gtk_widget_show(file_selection);
+  if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+  else
+    filename = NULL;
+  gtk_widget_destroy (file_chooser);
+
+  /* save out the image if we have a filename */
+  if (filename != NULL) {
+    pixbuf = ui_render_get_pixbuf(ui_render);
+    if (pixbuf != NULL) {
+      if (gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, "quality", "100", NULL) == FALSE) 
+	g_warning(_("Failure Saving File: %s"), filename);
+      g_object_unref(pixbuf);
+    } else {
+      g_warning(_("Canvas failed to return a valid image\n"));
+    }
+    g_free(filename);
+  }
 
   return;
 }
@@ -1057,8 +1031,9 @@ GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   temp_string = g_strdup_printf(_("%s: Rendering Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
 					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+					NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
 

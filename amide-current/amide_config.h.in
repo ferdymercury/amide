@@ -27,6 +27,9 @@
 /* Define to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 
+/* Define to compile with native GTK support on Mac OS X */
+#undef AMIDE_NATIVE_GTK_OSX
+
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
@@ -99,6 +102,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

@@ -1,7 +1,7 @@
 /* tb_export_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2009 Andy Loening
+ * Copyright (C) 2006-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,16 +24,17 @@
 */
 
 #include "amide_config.h"
-#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <gtk/gtk.h>
 #include "amide.h"
 #include "amide_gconf.h"
 #include "amitk_progress_dialog.h"
 
 #include "tb_export_data_set.h"
-#include "ui_common.h"
 #ifdef AMIDE_LIBMDC_SUPPORT
 #include "libmdc_interface.h"
+#endif
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+#include "dcmtk_interface.h"
 #endif
 
 #define GCONF_AMIDE_EXPORT "EXPORT/"
@@ -133,35 +134,39 @@ static void read_preferences(gboolean * resliced,
 			     gint * submethod,
 			     AmitkPoint * voxel_size) {
 
-  *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"ResliceDataSet");
-  *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets");
-  *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox");
-  *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Method");
-  *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Submethod");
+  if (resliced != NULL)
+    *resliced = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"ResliceDataSet");
+  if (all_visible != NULL)
+    *all_visible = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"AllVisibleDataSets");
+  if (inclusive_bounding_box != NULL)
+    *inclusive_bounding_box = amide_gconf_get_bool(GCONF_AMIDE_EXPORT"InclusiveBoundingBox");
+  if (method != NULL)
+    *method = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Method");
+  if (submethod != NULL)
+    *submethod = amide_gconf_get_int(GCONF_AMIDE_EXPORT"Submethod");
 
-  (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeZ");
-  if (EQUAL_ZERO((*voxel_size).z))
-    (*voxel_size).z =  1.0;
-
-  (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeY");
-  if (EQUAL_ZERO((*voxel_size).y)) 
-    (*voxel_size).y =  1.0;
-
-  (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeX");
-  if (EQUAL_ZERO((*voxel_size).x)) 
-    (*voxel_size).x =  1.0;
+  if (voxel_size != NULL) {
+    (*voxel_size).z = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeZ");
+    if (EQUAL_ZERO((*voxel_size).z))
+      (*voxel_size).z =  1.0;
+    
+    (*voxel_size).y = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeY");
+    if (EQUAL_ZERO((*voxel_size).y)) 
+      (*voxel_size).y =  1.0;
+    
+    (*voxel_size).x = amide_gconf_get_float(GCONF_AMIDE_EXPORT"VoxelSizeX");
+    if (EQUAL_ZERO((*voxel_size).x)) 
+      (*voxel_size).x =  1.0;
+  }
 
   return;
 }
 
 
 /* function called when we hit "ok" on the export file dialog */
-static void export_data_set_ok(GtkWidget* widget, gpointer data) {
+static gboolean export_data_set(tb_export_t * tb_export, gchar * filename) {
 
-  GtkWidget * file_selection = data;
-  gchar * filename;
   GList * data_sets;
-  tb_export_t * tb_export;
   AmitkVolume * bounding_box = NULL;
   gboolean resliced;
   gboolean all_visible;
@@ -169,29 +174,17 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
   AmitkExportMethod method;
   gint submethod;
   AmitkPoint voxel_size;
+  gboolean successful = FALSE;
+
+  g_return_val_if_fail(filename != NULL, FALSE);
 
   read_preferences(&resliced, &all_visible, &inclusive_bounding_box, &method, &submethod, &voxel_size);
-
-  /* save a pointer to the export_data_set data, so we can use it in the callbacks */
-  tb_export = g_object_get_data(G_OBJECT(file_selection), "tb_export");
-
-  /* get the filename and import - note DCMTK dicom files we don't want to 
-     complain about file existing, as we might be appending */
-  filename = ui_common_file_selection_get_save_name(file_selection,
-#ifdef AMIDE_LIBDCMDATA_SUPPORT
-						    method!=AMITK_EXPORT_METHOD_DCMTK
-#else
-						    TRUE
-#endif
-						    );
-  
-  if (filename == NULL) return;
 
   /* get total bounding box if needed */
   if (inclusive_bounding_box) {
     AmitkCorners corner;
     bounding_box = amitk_volume_new(); /* in base coordinate frame */
-    g_return_if_fail(bounding_box != NULL);
+    g_return_val_if_fail(bounding_box != NULL, FALSE);
     data_sets = amitk_object_get_children_of_type(AMITK_OBJECT(tb_export->study), 
 						  AMITK_OBJECT_TYPE_DATA_SET, TRUE);
     amitk_volumes_get_enclosing_corners(data_sets, AMITK_SPACE(bounding_box), corner);
@@ -202,11 +195,11 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
 
 
   if (!all_visible) {
-    amitk_data_set_export_to_file(tb_export->active_ds, 
-				  method, submethod, filename, resliced,
-				  voxel_size, bounding_box,
-				  amitk_progress_dialog_update,
-				  tb_export->progress_dialog);
+    successful = amitk_data_set_export_to_file(tb_export->active_ds, 
+					       method, submethod, filename, resliced,
+					       voxel_size, bounding_box,
+					       amitk_progress_dialog_update,
+					       tb_export->progress_dialog);
   } else {
     data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(tb_export->study), 
 							   AMITK_OBJECT_TYPE_DATA_SET, 
@@ -214,71 +207,80 @@ static void export_data_set_ok(GtkWidget* widget, gpointer data) {
     if (data_sets == NULL) {
       g_warning(_("No Data Sets are current visible"));
     } else {
-      amitk_data_sets_export_to_file(data_sets, method, submethod, filename, 
-				     voxel_size, bounding_box,
-				     amitk_progress_dialog_update,
-				     tb_export->progress_dialog);
+      successful = amitk_data_sets_export_to_file(data_sets, method, submethod, filename, 
+						  voxel_size, bounding_box,
+						  amitk_progress_dialog_update,
+						  tb_export->progress_dialog);
       amitk_objects_unref(data_sets);
     }
   }
 
-  /* close the file selection box and cleanup*/
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-  g_free(filename);
 
   if (bounding_box != NULL) 
     bounding_box = amitk_object_unref(bounding_box);
 
-  return;
+  return successful;
 }
 
 
-static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+
+static void response_cb (GtkDialog * main_dialog, gint response_id, gpointer data) {
   
   tb_export_t * tb_export = data;
-  GtkWidget * file_selection;
+  GtkWidget * file_chooser;
   gint return_val;
-  gboolean end_dialog=FALSE;
-  
+  gchar * filename;
+  AmitkExportMethod method;
+  gboolean close_dialog=FALSE;
+
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
-    /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new(_("Export to File"));
-    ui_common_file_selection_set_filename(file_selection, NULL);
-    
-    /* don't want anything else going on till this window is gone */
-    gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-    
-    /* save a pointer to the export_data_set data, so we can use it in the callbacks */
-    g_object_set_data(G_OBJECT(file_selection), "tb_export", tb_export);
-    
-    /* connect the signals */
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		     G_CALLBACK(export_data_set_ok), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		     G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),"delete_event",
-		     G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-    /* set the position of the dialog */
-    gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-    
-    /* run the dialog */
-    return_val = gtk_dialog_run(GTK_DIALOG(file_selection));
-    if (return_val != GTK_RESPONSE_CANCEL) end_dialog=TRUE;
 
+    /* the rest of this function runs the file selection dialog box */
+    file_chooser = gtk_file_chooser_dialog_new(_("Export to File"),
+					       GTK_WINDOW(main_dialog), /* parent window */
+					       GTK_FILE_CHOOSER_ACTION_SAVE,
+					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       NULL);
+    gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+
+    /* for DCMTK dicom files we don't want to  complain about file existing, as we might be appending */
+    read_preferences(NULL, NULL, NULL, &method, NULL, NULL);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), 
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+						   method!=AMITK_EXPORT_METHOD_DCMTK
+#else
+						   TRUE
+#endif
+						   );
+
+
+    if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+      filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+    else
+      filename = NULL;
+    gtk_widget_destroy(file_chooser);
+
+    if (filename == NULL)
+      return; /* return to export dialog */
+    else { /* export the dataset */
+      close_dialog = export_data_set(tb_export, filename); /* close if successful */
+      g_free(filename);
+    }
     break;
 
   case GTK_RESPONSE_CANCEL:
-    end_dialog = TRUE;
+    close_dialog = TRUE;
     break;
 
   default:
     break;
   }
 
-  if (end_dialog) {
-    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+  if (close_dialog) {
+    g_signal_emit_by_name(G_OBJECT(main_dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(main_dialog));
   }
 
   return;
@@ -518,9 +520,10 @@ void tb_export_data_set(AmitkStudy * study, AmitkDataSet * active_ds,
 
   temp_string = g_strdup_printf(_("%s: Export Data Set Dialog"), PACKAGE);
   tb_export->dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
-							    GTK_DIALOG_DESTROY_WITH_PARENT,
-							    GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-							    GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, NULL);
+						   GTK_DIALOG_DESTROY_WITH_PARENT,
+						   GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL, 
+						   GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+						   NULL);
   gtk_window_set_title(GTK_WINDOW(tb_export->dialog), temp_string);
   g_free(temp_string);
 

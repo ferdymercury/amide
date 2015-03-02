@@ -1,7 +1,7 @@
 /* amitk_data_set.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2009 Andy Loening
+ * Copyright (C) 2000-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1436,21 +1436,21 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
 	stat(filename, &file_info);
 	if (chmod(filename, 0400 | file_info.st_mode) != 0) 
 	  g_warning(_("failed to change read permissions, you're probably not the owner"));
-	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
+	/* we'll go ahead and try reading anyway, even if chmod was unsuccessful  */
       }
 
       if (incorrect_hdr_permissions) {
 	stat(header_filename, &file_info);
 	if (chmod(header_filename, 0400 | file_info.st_mode) != 0) 
 	  g_warning(_("failed to change read permissions, you're probably not the owner"));
-	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
+	/* we'll go ahead and try reading anyway, even if chmod was unsuccessful  */
       }
       
       if (incorrect_raw_permissions) {
 	stat(raw_filename, &file_info);
 	if (chmod(raw_filename, 0400 | file_info.st_mode) != 0) 
 	  g_warning(_("failed to change read permissions on raw data file, you're probably not the owner"));
-	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
+	/* we'll go ahead and try reading anyway, even if chmod was unsuccessful  */
       }
 
     } else { /* we hit cancel */
@@ -1592,13 +1592,13 @@ GList * amitk_data_set_import_file(AmitkImportMethod method,
 
 /* voxel_size only used if resliced=TRUE */
 /* if bounding_box == NULL, will create its own using the minimal necessary */
-static void export_raw(AmitkDataSet *ds,
-		       const gchar * filename,
-		       const gboolean resliced,
-		       const AmitkPoint voxel_size,
-		       const AmitkVolume * bounding_box,
-		       AmitkUpdateFunc update_func,
-		       gpointer update_data) {
+static gboolean export_raw(AmitkDataSet *ds,
+			   const gchar * filename,
+			   const gboolean resliced,
+			   const AmitkPoint voxel_size,
+			   const AmitkVolume * bounding_box,
+			   AmitkUpdateFunc update_func,
+			   gpointer update_data) {
 
   AmitkVoxel i,j;
   FILE * file_pointer=NULL;
@@ -1617,6 +1617,7 @@ static void export_raw(AmitkDataSet *ds,
   AmitkDataSet * slice = NULL;
   AmitkPoint new_offset;
   AmitkCanvasPoint pixel_size;
+  gboolean successful = FALSE;
 
 #ifdef AMIDE_DEBUG
   g_print("\t- exporting raw data to file %s\n",filename);
@@ -1750,6 +1751,7 @@ static void export_raw(AmitkDataSet *ds,
   if (update_func != NULL) /* remove progress bar */
     continue_work = (*update_func)(update_data, NULL, (gdouble) 2.0); 
   /*  if (!continue_work) goto exit_strategy; */
+  successful = TRUE;
 
  exit_strategy:
 
@@ -1765,12 +1767,12 @@ static void export_raw(AmitkDataSet *ds,
   if (slice != NULL)
     slice = amitk_object_unref(slice);
 
-  return;
+  return successful;
 }
 
 
 /* if bounding_box == NULL, will create its own using the minimal necessary */
-void amitk_data_set_export_to_file(AmitkDataSet *ds,
+gboolean amitk_data_set_export_to_file(AmitkDataSet *ds,
 				   const AmitkExportMethod method, 
 				   const int submethod,
 				   const gchar * filename,
@@ -1779,26 +1781,28 @@ void amitk_data_set_export_to_file(AmitkDataSet *ds,
 				   const AmitkVolume * bounding_box,
 				   AmitkUpdateFunc update_func,
 				   gpointer update_data) {
+
+  gboolean successful = FALSE;
   
   switch (method) {
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   case AMITK_EXPORT_METHOD_DCMTK:
-    dcmtk_export(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
+    successful = dcmtk_export(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
   case AMITK_EXPORT_METHOD_LIBMDC:
-    libmdc_export(ds, filename, submethod, resliced, voxel_size, bounding_box, update_func, update_data);
+    successful = libmdc_export(ds, filename, submethod, resliced, voxel_size, bounding_box, update_func, update_data);
     break;
 #endif
   case AMITK_EXPORT_METHOD_RAW:
   default:
-    export_raw(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
+    successful = export_raw(ds, filename, resliced, voxel_size, bounding_box, update_func, update_data);
     break;
   }
 
 
-  return;
+  return successful;
 }
 
 
@@ -1806,14 +1810,14 @@ void amitk_data_set_export_to_file(AmitkDataSet *ds,
    sets in, it'll just take the one with the most frames, and use those frame
    durations */
 /* if bounding_box == NULL, will create its own using the minimal necessary */
-void amitk_data_sets_export_to_file(GList * data_sets,
-				    const AmitkExportMethod method, 
-				    const int submethod,
-				    const gchar * filename,
-				    const AmitkPoint voxel_size,
-				    const AmitkVolume * bounding_box,
-				    AmitkUpdateFunc update_func,
-				    gpointer update_data) {
+gboolean amitk_data_sets_export_to_file(GList * data_sets,
+					const AmitkExportMethod method, 
+					const int submethod,
+					const gchar * filename,
+					const AmitkPoint voxel_size,
+					const AmitkVolume * bounding_box,
+					AmitkUpdateFunc update_func,
+					gpointer update_data) {
 
 
   AmitkDataSet * export_ds=NULL;
@@ -1835,6 +1839,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
   gchar * export_name;
   AmitkCanvasPoint pixel_size;
   AmitkPoint corner;
+  gboolean successful = FALSE;
 
   /* setup the wait dialog */
   if (update_func != NULL) {
@@ -1977,7 +1982,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
   switch (method) {
 #ifdef AMIDE_LIBDCMDATA_SUPPORT
   case AMITK_EXPORT_METHOD_DCMTK:
-    dcmtk_export(export_ds, filename, FALSE, zero_point, volume, update_func, update_data);
+    successful = dcmtk_export(export_ds, filename, FALSE, zero_point, volume, update_func, update_data);
     break;
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
@@ -1992,12 +1997,12 @@ void amitk_data_sets_export_to_file(GList * data_sets,
 		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(export_ds->raw_data, i_voxel) = 0.0;
 
 
-    libmdc_export(export_ds, filename, submethod, FALSE, zero_point, volume, update_func, update_data);
+    successful = libmdc_export(export_ds, filename, submethod, FALSE, zero_point, volume, update_func, update_data);
     break;
 #endif
   case AMITK_EXPORT_METHOD_RAW:
   default:
-    export_raw(export_ds, filename, FALSE, AMITK_DATA_SET_VOXEL_SIZE(export_ds), volume, update_func, update_data);
+    successful = export_raw(export_ds, filename, FALSE, AMITK_DATA_SET_VOXEL_SIZE(export_ds), volume, update_func, update_data);
     break;
   }
 
@@ -2020,7 +2025,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
     slices = NULL;
   }
 
-  return;
+  return successful;
 }
 
 

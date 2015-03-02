@@ -1,7 +1,7 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -56,15 +56,8 @@ typedef enum {
 /* external functions */
 gboolean ui_common_check_filename(const gchar * filename);
 void ui_common_set_last_path_used(const gchar * last_path_used);
+gchar * ui_common_suggest_path(void);
 void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
-void ui_common_file_selection_cancel_cb(GtkWidget* widget, gpointer data);
-gchar * ui_common_file_selection_get_save_name(GtkWidget * file_selection,
-					       gboolean check_for_existing_file);
-gchar * ui_common_xif_selection_get_save_name(GtkWidget * xif_selection);
-gchar * ui_common_file_selection_get_load_name(GtkWidget * file_selection);
-gchar * ui_common_xif_selection_get_load_name(GtkWidget * xif_selection);
-void ui_common_file_selection_set_filename(GtkWidget * file_selection, gchar * suggested_name);
-void ui_common_xif_selection_set_filename(GtkWidget * xif_selection, gchar * suggested_name);
 void ui_common_about_cb(GtkWidget * button, gpointer data);
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 

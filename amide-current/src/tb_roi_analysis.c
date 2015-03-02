@@ -1,7 +1,7 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -24,7 +24,6 @@
 */
 
 #include "amide_config.h"
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <gtk/gtk.h>
 #include <string.h>
 
@@ -100,12 +99,11 @@ static gchar * analysis_titles[] = {
 };
 
 
-static void export_ok_cb(GtkWidget* widget, gpointer data);
-static void export_data(analysis_roi_t * roi_analyses, gboolean raw_values);
+static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses, gboolean raw_values);
 static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses,
 			    gboolean raw_data);
 static gchar * analyses_as_string(analysis_roi_t * roi_analyses);
-static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer data);
 static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void add_pages(GtkWidget * notebook, AmitkStudy * study,
@@ -119,47 +117,26 @@ static void read_preferences(gboolean * all_data_sets,
 			     gdouble * threshold_value);
 
 
-/* function to handle exporting the roi analyses */
-static void export_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  analysis_roi_t * roi_analyses;
-  const gchar * save_filename;
-  gboolean raw_data;
-
-  /* get a pointer to the analysis */
-  roi_analyses = g_object_get_data(G_OBJECT(file_selection), "roi_analyses");
-
-  /* do we want stats or raw data */
-  raw_data = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "raw_data"));
-
-  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  /* allright, save the data */
-  export_analyses(save_filename, roi_analyses, raw_data);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  return;
-}
 
 /* function to save the generated roi statistics */
-static void export_data(analysis_roi_t * roi_analyses, gboolean raw_data) {
+static void export_data(GtkDialog * tb_roi_dialog, analysis_roi_t * roi_analyses, gboolean raw_data) {
   
   analysis_roi_t * temp_analyses = roi_analyses;
-  GtkWidget * file_selection;
+  GtkWidget * file_chooser;
   gchar * temp_string;
   gchar * filename = NULL;
 
   /* sanity checks */
   g_return_if_fail(roi_analyses != NULL);
 
-  if (!raw_data)
-    file_selection = gtk_file_selection_new(_("Export Statistics"));
-  else
-    file_selection = gtk_file_selection_new(_("Export ROI Raw Data Values"));
+  file_chooser = gtk_file_chooser_dialog_new ((!raw_data) ? _("Export Statistics") : _("Export ROI Raw Data Values"),
+					      GTK_WINDOW(tb_roi_dialog), /* parent window */
+					      GTK_FILE_CHOOSER_ACTION_SAVE,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
 
   /* take a guess at the filename */
   filename = g_strdup_printf("%s_%s_{%s",
@@ -177,31 +154,15 @@ static void export_data(analysis_roi_t * roi_analyses, gboolean raw_data) {
   temp_string = g_strdup_printf("%s}.tsv",filename);
   g_free(filename);
   filename = temp_string;
-  ui_common_file_selection_set_filename(file_selection, filename);
+  gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (file_chooser), filename);
   g_free(filename);
 
-  /* save a pointer to the analyses */
-  g_object_set_data(G_OBJECT(file_selection), "roi_analyses", roi_analyses);
-
-  /* do we want the stats, or the raw data */
-  g_object_set_data(G_OBJECT(file_selection), "raw_data", GINT_TO_POINTER(raw_data));
-
-  /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-
-  /* connect the signals */
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(export_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-
-  /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-
-  /* run the dialog */
-  gtk_widget_show(file_selection);
+  if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT)  {
+    filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
+    export_analyses(filename, roi_analyses, raw_data); /* allright, save the data */
+    g_free (filename);
+  }
+  gtk_widget_destroy (file_chooser);
 
   return;
 }
@@ -221,6 +182,9 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   gboolean title_printed;
   AmitkPoint location;
   analysis_element_t * element;
+
+  /* sanity checks */
+  g_return_if_fail(save_filename != NULL);
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
     g_warning(_("couldn't open: %s for writing roi data"), save_filename);
@@ -446,7 +410,7 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
   return roi_stats;
 }
 
-static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+static void response_cb (GtkDialog * tb_roi_dialog, gint response_id, gpointer data) {
   
   analysis_roi_t * roi_analyses = data;
   gint return_val;
@@ -455,11 +419,11 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
   switch(response_id) {
   case AMITK_RESPONSE_SAVE_AS:
-    export_data(roi_analyses, FALSE);
+    export_data(tb_roi_dialog, roi_analyses, FALSE);
     break;
 
   case AMITK_RESPONSE_SAVE_RAW_AS:
-    export_data(roi_analyses, TRUE);
+    export_data(tb_roi_dialog, roi_analyses, TRUE);
     break;
 
   case AMITK_RESPONSE_COPY:
@@ -481,8 +445,8 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     break;
 
   case GTK_RESPONSE_CLOSE:
-    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    g_signal_emit_by_name(G_OBJECT(tb_roi_dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(tb_roi_dialog));
     break;
 
   default:
@@ -743,7 +707,7 @@ static void read_preferences(gboolean * all_data_sets,
 
 void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 
-  GtkWidget * dialog;
+  GtkWidget * tb_roi_dialog;
   GtkWidget * notebook;
   gchar * title;
   GList * rois;
@@ -798,7 +762,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   /* start setting up the widget we'll display the info from */
   title = g_strdup_printf(_("%s Roi Analysis: Study %s"), PACKAGE, 
 			  AMITK_OBJECT_NAME(study));
-  dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
+  tb_roi_dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
 				       GTK_STOCK_SAVE_AS, AMITK_RESPONSE_SAVE_AS,
 				       GTK_STOCK_COPY, AMITK_RESPONSE_COPY,
@@ -809,23 +773,23 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   g_free(title);
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), roi_analyses);
-  g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
-  g_signal_connect(G_OBJECT(dialog), "destroy", G_CALLBACK(destroy_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(tb_roi_dialog), "response", G_CALLBACK(response_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(tb_roi_dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
+  g_signal_connect(G_OBJECT(tb_roi_dialog), "destroy", G_CALLBACK(destroy_cb), roi_analyses);
 
-  gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_resizable(GTK_WINDOW(tb_roi_dialog), TRUE);
 
 
  /* make the widgets for this dialog box */
   notebook = gtk_notebook_new();
-  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), notebook);
+  gtk_container_set_border_width(GTK_CONTAINER(tb_roi_dialog), 10);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_dialog)->vbox), notebook);
 
   /* add the data pages */
   add_pages(notebook, study, roi_analyses);
 
   /* and show all our widgets */
-  gtk_widget_show_all(dialog);
+  gtk_widget_show_all(tb_roi_dialog);
 
   return;
 }
@@ -914,7 +878,7 @@ static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 /* function to setup a dialog to allow us to choice options for rendering */
 GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   
-  GtkWidget * dialog;
+  GtkWidget * tb_roi_init_dialog;
   gchar * temp_string;
   GtkWidget * table;
   GtkWidget * label;
@@ -937,23 +901,24 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 		   &subfraction, &threshold_percentage, &threshold_value);
 
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
-  dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
-					GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
-  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
+  tb_roi_init_dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
+						    GTK_DIALOG_DESTROY_WITH_PARENT,
+						    GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
+						    GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+						    NULL);
+  gtk_window_set_title(GTK_WINDOW(tb_roi_init_dialog), temp_string);
   g_free(temp_string);
 
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(ui_common_init_dialog_response_cb), NULL);
+  g_signal_connect(G_OBJECT(tb_roi_init_dialog), "response", G_CALLBACK(ui_common_init_dialog_response_cb), NULL);
 
-  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+  gtk_container_set_border_width(GTK_CONTAINER(tb_roi_init_dialog), 10);
 
   /* start making the widgets for this dialog box */
   table = gtk_table_new(5,3,FALSE);
   table_row=0;
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(tb_roi_init_dialog)->vbox), table);
 
   label = gtk_label_new(_("Calculate:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, 
@@ -1126,13 +1091,13 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), accurate);
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(accurate_cb), dialog);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(accurate_cb), tb_roi_init_dialog);
   table_row++;
 
   /* and show all our widgets */
-  gtk_widget_show_all(dialog);
+  gtk_widget_show_all(tb_roi_init_dialog);
 
-  return dialog;
+  return tb_roi_init_dialog;
 }
 
 

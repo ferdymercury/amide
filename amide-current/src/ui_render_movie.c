@@ -1,7 +1,7 @@
 /* ui_render_movie_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -29,7 +29,6 @@
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
 #include "amide.h"
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include <sys/stat.h>
 #include <string.h>
 #include "ui_common.h"
@@ -103,29 +102,6 @@ static void dialog_set_sensitive(ui_render_movie_t * ui_render_movie, gboolean s
 static ui_render_movie_t * movie_unref(ui_render_movie_t * ui_render_movie);
 static ui_render_movie_t * movie_init(void);
 static void movie_generate(ui_render_movie_t * ui_render_movie, char * output_file_name);
-
-
-/* function to handle picking an output mpeg file name */
-static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  ui_render_movie_t * ui_render_movie;
-  gchar * save_filename;
-
-  ui_render_movie = g_object_get_data(G_OBJECT(file_selection), "ui_movie");
-
-  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  /* and generate our movie */
-  movie_generate(ui_render_movie, save_filename);
-  g_free(save_filename);
-
-  return;
-}
 
 
 
@@ -247,53 +223,60 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
   ui_render_movie_t * ui_render_movie = data;
   renderings_t * temp_renderings;
-  GtkWidget * file_selection;
-  gchar * temp_string;
+  GtkWidget * file_chooser;
+  gchar * filename;
   gchar * data_set_names = NULL;
   static guint save_image_num = 0;
   gboolean return_val;
   
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
-    /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new(_("Output MPEG As"));
     
+    /* the rest of this function runs the file selection dialog box */
+    file_chooser = gtk_file_chooser_dialog_new(_("Output MPEG As"),
+					       GTK_WINDOW(dialog), /* parent window */
+					       GTK_FILE_CHOOSER_ACTION_SAVE,
+					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       NULL);
+    gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER (file_chooser), TRUE);
+
     /* take a guess at the filename */
     temp_renderings = ui_render_movie->ui_render->renderings;
     data_set_names = g_strdup(temp_renderings->rendering->name);
     temp_renderings = temp_renderings->next;
     while (temp_renderings != NULL) {
-      temp_string = g_strdup_printf("%s+%s",data_set_names, temp_renderings->rendering->name);
+      filename = g_strdup_printf("%s+%s",data_set_names, temp_renderings->rendering->name);
       g_free(data_set_names);
-      data_set_names = temp_string;
+      data_set_names = filename;
       temp_renderings = temp_renderings->next;
     }
-    temp_string = g_strdup_printf("Rendering%s%s_%d.mpg", 
+    filename = g_strdup_printf("Rendering%s%s_%d.mpg", 
 				  ui_render_movie->ui_render->stereoscopic ? "_stereo_" : "_", 
 				  data_set_names,save_image_num++);
-    ui_common_file_selection_set_filename(file_selection, temp_string);
-    g_free(temp_string); 
-    
-    /* don't want anything else going on till this window is gone */
-    gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-    
-    /* save a pointer to the ui_render_movie data, so we can use it in the callbacks */
-    g_object_set_data(G_OBJECT(file_selection), "ui_movie", ui_render_movie);
-    
-    /* connect the signals */
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),
-		     "clicked", G_CALLBACK(save_as_ok_cb), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
-		     "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
-		     "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb),  file_selection);
-    
-    /* set the position of the dialog */
-    gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-    
-    /* run the dialog */
-    gtk_widget_show(file_selection);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER (file_chooser), filename);
+    g_free(filename); 
 
+
+    /* run the dialog */
+    if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+      filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+    else
+      filename = NULL;
+    gtk_widget_destroy (file_chooser);
+
+    if (filename == NULL) 
+      return; /* return to movie generate dialog */
+    else {  /* generate the movie */
+      movie_generate(ui_render_movie, filename);
+      g_free(filename);
+    } 
+    /* and fall through to close out the dialog */
+
+  case GTK_RESPONSE_CANCEL:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
     break;
 
   case GTK_RESPONSE_HELP:
@@ -301,10 +284,6 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     break;
 
 
-  case GTK_RESPONSE_CANCEL:
-    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
-    break;
 
   default:
     break;
@@ -642,9 +621,9 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   ui_render_movie->dialog = 
     gtk_dialog_new_with_buttons(temp_string, ui_render->window,
 				GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
 				GTK_STOCK_HELP, GTK_RESPONSE_HELP,				
 				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				_("_Generate Movie"), AMITK_RESPONSE_EXECUTE,
 				NULL);
   g_free(temp_string);
 

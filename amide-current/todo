@@ -8,7 +8,7 @@ for next release?
   right place to look, just isn't doing something correctly....
 * revert on dialogs doesn't work correctly... children get readded
 * some sort of way to easily measure distances between fiducials [1]
- [1] suggested by Michael Braden
+ [1] suggested by Michael Braden, A. Mehranian
 * freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
  [2] noticed by Mark Huisman
 * dcmtk shouldn't be required for mac os x install - figure out how to embed
@@ -33,35 +33,17 @@ remaining things to do now that we're using gtk 2.10
 	switching from "guess" to "import particular", like in gimp.
 	- similarly, the export data set functions should work similarly, with an additional
 	option on whether or not we want the data resliced.
-	* amitk_xif_sel uses deprecated GtkOptionMenu (gtkfilesel uses this also)
-	  remove amitk_xif_sel when conversion to the new file selection is done
-        * should probably offer an option for displaying a default "/volumes" directory
-2 as of 2.12, gtk_file_selection deprecated. have undef GTK_DISABLE_DEPRECATED in 
-  tb_export_data_set.c, tb_fly_through.c, tb_profile.c, tb_roi_analysis.c, ui_common.c, ui_render.c,
-  ui_render_movie.c, ui_series.c, ui_study_cb.c
-
 
 windows todo
 ------------
 * zdial on rendering doesn't work
-
-factor analysis things:
------------------------       
-* factor analysis -> should be able to do from ROI's too.
-	should be simple.  1 iteration to find the # of voxels,
-	second iteration to fill in 
-	probable use weight >=0.5 as cutoff
-* need to add orthogonality component back into PLS
-* principle component analysis should probably be demeaned
-* need to extend 2 comp to 3 comp (or n-comp)
-* should be able to combine main function for fads and comp models
-
 
 big things:
 -----------
 * figuring out orientation from files loaded from xmedcon isn't strictly correct, and screws up with NIFTI format
   look at notes in libmdc_interface.c. Also would likely need fixes in libmdc itself (see
   0.10.3_nifti_unsubmitted changes)
+* polygonal ROI's (requested by A.Mehranian)
 * add drag-n-drop capabilities between study windows
 	don't use treeview reorderable stuff, too limited,
 * toolbox dialog for generating polar maps (requested by Jeff Arkles and others)
@@ -102,6 +84,8 @@ big things:
                        
 small things:
 -------------
+* boolean operators between ROI's, would allow subtracting one from another (requested by A. Mehranian)
+* be able to export the color scale (with appropriate numerical values) to a image file (requested by Frezghi Habte)
 * pop-up widget allowing value underneath cursor to be shown for all data sets (not just active). (requested by Axel Moeller)
 * hot key to cycle through time frames (requested by Michael Braden)
 * allow direct entry of transformation matrix in amitk_space_edit
@@ -128,6 +112,8 @@ small things:
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
 * add key combination that sets current pixel value to max/min threshold
+* rendered movies aren't smooth when looping in an external player, this happened when switching to ffmpeg
+
                                                                                 
 
 
@@ -209,6 +195,11 @@ things dependent on other things:
  -update Default Directory bit in ui_preferences_dialog to be a
   GtkFileChooserButton
 
+* dependent on gtk fixing the GTK_FILE_CHOOSER_CREATE_FOLDER properties of gtkfilechooser.
+  Currently, the gtkfilechooser widget puts out an error if you try to select
+  a folder that's currently a filename (rather than allowing overwriting). This comes
+  up really only when trying to overwrite a .xif file as a .xif directory using
+  the same name.
 
 * dependent on gtk > 2.14:
   -gtk (as of 2.14) doesn't have any version of gnome_help_display. As
@@ -231,6 +222,13 @@ things dependent on other things:
   commands seem to be ignored, and so reading in text hdr files
   (e.g. Concorde format ) gets screwed up for locales that use the
   comma for the radix. This is as of mingw 3.13 at least.
+
+* in xml.c and amitk_point.c, have a bunch of G_PLATFORM_WIN32
+	ifdef's, because g_strdup_printf
+	wasn't obeying the setlocale command on windows as of glib 2.2
+	This was causing errors in locales that use a comma as the
+	radix sign.  Need to test if g_strdup_printf will work with later
+	versions of glib.
 
 
 * ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of
@@ -257,13 +255,6 @@ things dependent on other things:
 	(as of 2003.04.30) does not handle multi-threaded program.... so will
 	have to wait for that.
 
-* in xml.c and amitk_point.c, have a bunch of G_PLATFORM_WIN32
-	ifdef's, because g_strdup_printf
-	wasn't obeying the setlocale command on windows as of glib 2.2
-	This was causing errors in locales that use a comma as the
-	radix sign.  Need to test if g_strdup_printf will work with later
-	versions of glib.
-
 * amitk_data_sets_export_to_file is very wasteful of memory.  It reslices the requisite
 	data sets into a new data set, and then an additional copy data set is made
 	inside of libmdc.  If medcon/libmdc ever supports slice-by-slice saving
@@ -271,5 +262,18 @@ things dependent on other things:
 	to allocate one slice in amide, and one slice in libmdc, rather than
 	one volume in amide, and one volume in libmdc.
 	
+
+
+factor analysis things:
+-----------------------       
+* factor analysis -> should be able to do from ROI's too.
+	should be simple.  1 iteration to find the # of voxels,
+	second iteration to fill in 
+	probable use weight >=0.5 as cutoff
+* need to add orthogonality component back into PLS
+* principle component analysis should probably be demeaned
+* need to extend 2 comp to 3 comp (or n-comp)
+* should be able to combine main function for fads and comp models
+
 
 

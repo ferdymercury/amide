@@ -1,7 +1,7 @@
 /* amide_gconf.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2007-2009 Andy Loening
+ * Copyright (C) 2007-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  * win32 gconf code is derived directly from gnumeric

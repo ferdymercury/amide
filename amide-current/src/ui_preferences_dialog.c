@@ -1,7 +1,7 @@
 /* ui_preferences_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -60,7 +60,6 @@ static void threshold_style_cb(GtkWidget * widget, gpointer data);
 
 static void warnings_to_console_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
-static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data);
 static void change_default_directory_cb(GtkWidget * widget, gpointer data);
 /*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data);*/
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
@@ -205,16 +204,6 @@ static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void save_xif_as_directory_cb(GtkWidget * widget, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  gboolean save_as_directory;
-
-  save_as_directory = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  amitk_preferences_set_xif_as_directory(ui_study->preferences, save_as_directory);
-
-  return;
-}
 
 /*static void change_default_directory_cb(GtkFileChooser * fc, gpointer data) { */
 static void change_default_directory_cb(GtkWidget * widget, gpointer data) {
@@ -562,21 +551,6 @@ void ui_preferences_dialog_create(ui_study_t * ui_study) {
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(ui_study->preferences));
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_on_exit_cb), ui_study);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   1,2, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
-
-  label = gtk_label_new(_("Save .XIF file as directory:"));
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1,
-		   GTK_FILL, 0, X_PADDING, Y_PADDING);
-
-  check_button = gtk_check_button_new();
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
-			       AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(ui_study->preferences));
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_xif_as_directory_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 
 		   1,2, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);

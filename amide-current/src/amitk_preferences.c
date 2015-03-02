@@ -1,7 +1,7 @@
 /* amitk_preferences.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2009 Andy Loening
+ * Copyright (C) 2003-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -147,9 +147,6 @@ static void preferences_init (AmitkPreferences * preferences) {
 
   preferences->prompt_for_save_on_exit = 
     amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC"PromptForSaveOnExit", AMITK_PREFERENCES_DEFAULT_PROMPT_FOR_SAVE_ON_EXIT);
-
-  preferences->save_xif_as_directory = 
-    amide_gconf_get_bool_with_default(GCONF_AMIDE_MISC"SaveXifAsDirectory", AMITK_PREFERENCES_DEFAULT_SAVE_XIF_AS_DIRECTORY);
 
   preferences->default_directory = 
     amide_gconf_get_string_with_default(GCONF_AMIDE_MISC"DefaultDirectory", AMITK_PREFERENCES_DEFAULT_DEFAULT_DIRECTORY);
@@ -324,18 +321,6 @@ void amitk_preferences_set_prompt_for_save_on_exit(AmitkPreferences * preference
   if (AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(preferences) != new_value) {
     preferences->prompt_for_save_on_exit = new_value;
     amide_gconf_set_bool(GCONF_AMIDE_MISC"PromptForSaveOnExit",new_value);
-    g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
-  }
-  return;
-}
-
-void amitk_preferences_set_xif_as_directory(AmitkPreferences * preferences, gboolean new_value) {
-
-  g_return_if_fail(AMITK_IS_PREFERENCES(preferences));
-
-  if (AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(preferences) != new_value) {
-    preferences->save_xif_as_directory = new_value;
-    amide_gconf_set_bool(GCONF_AMIDE_MISC"SaveXifAsDirectory", new_value);
     g_signal_emit(G_OBJECT(preferences), preferences_signals[MISC_PREFERENCES_CHANGED], 0);
   }
   return;

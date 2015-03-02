@@ -1,7 +1,7 @@
 /* analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2009 Andy Loening
+ * Copyright (C) 2001-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -395,6 +395,8 @@ static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis
     /* recursively delete rest of list */
     return_list = analysis_frame_unref(frame_analysis->next_frame_analysis);
     frame_analysis->next_frame_analysis = NULL;
+
+    frame_analysis->gate_analyses = analysis_gate_unref(frame_analysis->gate_analyses);
     g_free(frame_analysis);
     frame_analysis = NULL;
   } else

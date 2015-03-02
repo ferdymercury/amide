@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2009 Andy Loening
+ * Copyright (C) 2000-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -30,6 +30,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <glib/gstdio.h> /* for g_mkdir */
 
 #include "amitk_study.h"
 #include "amitk_marshal.h"

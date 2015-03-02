@@ -1,7 +1,7 @@
 /* amitk_tree_view.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2009 Andy Loening
+ * Copyright (C) 2002-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -643,6 +643,7 @@ static gboolean tree_view_key_press_event(GtkWidget * widget,
   g_return_val_if_fail(AMITK_IS_TREE_VIEW(widget), FALSE);
   tree_view = AMITK_TREE_VIEW(widget);
 
+
   switch (tree_view->mode) {
 
   case AMITK_TREE_VIEW_MODE_MAIN:
@@ -750,9 +751,6 @@ static gboolean tree_view_enter_notify_event(GtkWidget * widget,
 
   g_return_val_if_fail(AMITK_IS_TREE_VIEW(widget), FALSE);
   tree_view = AMITK_TREE_VIEW(widget);
-
-  tree_view->mouse_x = event->x;
-  tree_view->mouse_y = event->y;
 
   switch(tree_view->mode) {
   case AMITK_TREE_VIEW_MODE_MAIN:

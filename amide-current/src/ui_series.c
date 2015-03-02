@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2009 Andy Loening
+ * Copyright (C) 2000-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -25,7 +25,6 @@
 
 #include "amide_config.h"
 #include "amide_gconf.h"
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include "amitk_common.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
@@ -117,7 +116,6 @@ typedef struct ui_series_t {
 
 static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data);
 static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation, gpointer ui_series);
-static void export_series_ok_cb(GtkWidget* widget, gpointer data);
 static void export_cb(GtkAction * action, gpointer data);
 static void changed_cb(gpointer dummy, gpointer ui_series);
 static void color_table_changed_cb(gpointer dummy, AmitkViewMode view_mode, gpointer ui_series);
@@ -170,67 +168,38 @@ static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation
 }
 
 
-/* function to handle exporting a view */
-static void export_series_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  ui_series_t * ui_series;
-  const gchar * filename;
-  GdkPixbuf * pixbuf;
-
-  /* get a pointer to ui_series */
-  ui_series = g_object_get_data(G_OBJECT(file_selection), "ui_series");
-
-  /* get the filename */
-  filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(ui_series->canvas),0,0,
-					ui_series->columns*(ui_series->pixbuf_width+UI_SERIES_R_MARGIN+UI_SERIES_L_MARGIN),
-					ui_series->rows*(ui_series->pixbuf_height+UI_SERIES_TOP_MARGIN+UI_SERIES_BOTTOM_MARGIN));
-
-  if (pixbuf == NULL) {
-    g_warning(_("ui_series canvas failed to return a valid image\n"));
-    return;
-  }
-  
-  if (gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, 
-  		       "quality", "100", NULL) == FALSE) {
-    g_warning(_("Failure Saving File: %s"),filename);
-    return;
-  }
-
-  g_object_unref(pixbuf);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  return;
-}
 
 
-/* function to save the series as an external data format */
+/* function to save the series as an image */
 static void export_cb(GtkAction * action, gpointer data) {
   
   ui_series_t * ui_series = data;
   GList * objects;
-  GtkWidget * file_selection;
-  gchar * temp_string=NULL;
+  GtkWidget * file_chooser;
+  gchar * filename=NULL;
   gchar * data_set_names = NULL;
+  GdkPixbuf * pixbuf;
 
-  file_selection = gtk_file_selection_new(_("Export File"));
+  file_chooser = gtk_file_chooser_dialog_new(_("Export to Image"),
+					     GTK_WINDOW(ui_series->window), /* parent window */
+					     GTK_FILE_CHOOSER_ACTION_SAVE,
+					     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					     GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					     NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
 
   /* take a guess at the filename */
   objects = ui_series->objects;
   while (objects != NULL) {
     if (AMITK_IS_DATA_SET(objects->data)) {
       if (data_set_names == NULL)
-	temp_string = g_strdup(AMITK_OBJECT_NAME(objects->data));
+	filename = g_strdup(AMITK_OBJECT_NAME(objects->data));
       else
-	temp_string = g_strdup_printf("%s+%s",data_set_names, 
+	filename = g_strdup_printf("%s+%s",data_set_names, 
 				      AMITK_OBJECT_NAME(objects->data));
       g_free(data_set_names);
-      data_set_names = temp_string;
+      data_set_names = filename;
     }
     objects = objects->next;
   }
@@ -239,49 +208,53 @@ static void export_cb(GtkAction * action, gpointer data) {
     objects = ui_series->objects;
     while (objects != NULL) {
       if (data_set_names == NULL)
-	temp_string = g_strdup(AMITK_OBJECT_NAME(objects->data));
+	filename = g_strdup(AMITK_OBJECT_NAME(objects->data));
       else
-	temp_string = g_strdup_printf("%s+%s",data_set_names, 
+	filename = g_strdup_printf("%s+%s",data_set_names, 
 				      AMITK_OBJECT_NAME(objects->data));
       g_free(data_set_names);
-      data_set_names = temp_string;
+      data_set_names = filename;
       objects = objects->next;
     }
   }
 
   switch(ui_series->series_type) {
   case OVER_GATES:
-    temp_string = g_strdup_printf("%s_gated.jpg",  data_set_names);
+    filename = g_strdup_printf("%s_gated.jpg",  data_set_names);
     break;
   case OVER_FRAMES:
   case OVER_SPACE:
   default:
-    temp_string = g_strdup_printf("%s.jpg", data_set_names);
+    filename = g_strdup_printf("%s.jpg", data_set_names);
     break;
   }
-  ui_common_file_selection_set_filename(file_selection, temp_string);
+  gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_chooser), filename);
   g_free(data_set_names);
-  g_free(temp_string); 
+  g_free(filename); 
 
-  /* save a pointer to ui_series */
-  g_object_set_data(G_OBJECT(file_selection), "ui_series", ui_series);
+  if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+  else
+    filename = NULL;
+  gtk_widget_destroy(file_chooser);
 
-  /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
+  if (filename == NULL) return; /* inappropriate name or don't want to overwrite */
 
-  /* connect the signals */
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(export_series_ok_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
+  pixbuf = amitk_get_pixbuf_from_canvas(GNOME_CANVAS(ui_series->canvas),0,0,
+					ui_series->columns*(ui_series->pixbuf_width+UI_SERIES_R_MARGIN+UI_SERIES_L_MARGIN),
+					ui_series->rows*(ui_series->pixbuf_height+UI_SERIES_TOP_MARGIN+UI_SERIES_BOTTOM_MARGIN));
 
-  /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
+  if (pixbuf == NULL) {
+    g_warning(_("ui_series canvas failed to return a valid image"));
+    return;
+  }
+  
+  if (gdk_pixbuf_save (pixbuf, filename, "jpeg", NULL, "quality", "100", NULL) == FALSE) {
+    g_warning(_("Failure Saving File: %s"),filename);
+    return;
+  }
 
-  /* run the dialog */
-  gtk_widget_show(file_selection);
+  g_object_unref(pixbuf);
 
   return;
 }
@@ -1345,8 +1318,9 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   temp_string = g_strdup_printf(_("%s: Series Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
 					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+					NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
 

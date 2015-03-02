@@ -1,7 +1,7 @@
 /* amitk_preferences.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2003-2009 Andy Loening
+ * Copyright (C) 2003-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -43,7 +43,6 @@ G_BEGIN_DECLS
 #define AMITK_PREFERENCES_WARNINGS_TO_CONSOLE(object)     (AMITK_PREFERENCES(object)->warnings_to_console)
 
 #define AMITK_PREFERENCES_PROMPT_FOR_SAVE_ON_EXIT(object) (AMITK_PREFERENCES(object)->prompt_for_save_on_exit)
-#define AMITK_PREFERENCES_SAVE_XIF_AS_DIRECTORY(object)   (AMITK_PREFERENCES(object)->save_xif_as_directory)
 #define AMITK_PREFERENCES_DEFAULT_DIRECTORY(object)       (AMITK_PREFERENCES(object)->default_directory)
 
 #define AMITK_PREFERENCES_CANVAS_ROI_WIDTH(pref)                (AMITK_PREFERENCES(pref)->canvas_roi_width)

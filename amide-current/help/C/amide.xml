@@ -649,11 +649,6 @@
        changes done on the study when exiting an AMIDE session.
        </para>
 
-       <para> The 'Save .XIF file as directory' option allows AMIDE's
-       XIF file's to be saved in a directory structure, instead of as
-       a single flat file (the default).  This option is of interest
-       mainly to developers
-      </para>
      </listitem>
     </varlistentry>
 
@@ -765,11 +760,13 @@
  <para> AMIDE saves studies in an extensible XML based format called
   XIF (Xml Image Format).  This format can be stored as either a
   single file (flat file format XIF) or as a XIF directory.  The flat
-  file format is the default, and simplifies file moving and handling.
-  The directory format on the other hand allows easy access to the raw
+  file format is the default, and simplifies file moving and handling.</para>
+
+  <para> The directory format on the other hand allows easy access to the raw
   study data external to the AMIDE program, and will be of interest to
-  developers.  Which of these two formats you wish to save in can be
-  selected from the preferences dialog.</para>
+  developers.  The directory format can be utilized via the "Save as
+  XIF Directory" and "Open XIF Directory" menu items under the File
+  menu. </para>
 
  <para> In any case, these files or directories will
   characteristically end with ".xif", and are treated identically
@@ -828,7 +825,7 @@
   <para> The flat file format is basically a concatenation of the
   information enclosed within the directory format.  It is not meant
   to be editable or developer friendly.  Instead, it allows easy
-  manigment of studies for casual users.  If you wish to access the
+  management of studies for casual users.  If you wish to access the
   information in a XIF flat file external to AMIDE, you'll be much
   better off resaving the data as in XIF directory format.</para>
 

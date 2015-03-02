@@ -1,7 +1,7 @@
 /* tb_fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2009 Andy Loening
+ * Copyright (C) 2003-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,7 +26,6 @@
 
 #include "amide_config.h"
 #include "amide.h"
-#undef GTK_DISABLE_DEPRECATED  /* gtk_file_selection deprecated as of 2.12 */
 #include "amitk_progress_dialog.h"
 #include "fads.h"
 #include "tb_fads.h"
@@ -115,7 +114,7 @@ typedef struct tb_fads_t {
 
 
 static void set_text(tb_fads_t * tb_fads);
-static gchar * get_filename(tb_fads_t * tb_fads);
+static gchar * get_filename(GtkWidget * parent_dialog, AmitkDataSet * ds);
 
 static void fads_type_cb(GtkWidget * widget, gpointer data);
 static void algorithm_cb(GtkWidget * widget, gpointer data);
@@ -176,30 +175,37 @@ static void set_text(tb_fads_t * tb_fads) {
   return;
 }
 
-/* function to save the generated roi statistics */
-static gchar * get_filename(tb_fads_t * tb_fads) {
+/* function to get a name to save the output as: 
+   returned string will need to be free'd if not NULL */
+static gchar * get_filename(GtkWidget * parent_dialog, AmitkDataSet * data_set) {
   
-  GtkWidget * fs;
+  GtkWidget * file_chooser;
   gchar * analysis_name;
-  gint response_id;
   gchar * save_filename;
 
-  fs = gtk_file_selection_new(_("Filename for Factor Data"));
+  file_chooser = gtk_file_chooser_dialog_new (_("Filename for Factor Data"),
+					      GTK_WINDOW(parent_dialog), /* parent window */
+					      GTK_FILE_CHOOSER_ACTION_SAVE,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+  gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (file_chooser), TRUE);
 
   /* take a guess at the filename */
-  analysis_name = g_strdup_printf("%s_fads_analysis.tsv",AMITK_OBJECT_NAME(tb_fads->data_set));
-  ui_common_file_selection_set_filename(fs, analysis_name);
+  analysis_name = g_strdup_printf("%s_fads_analysis.tsv",AMITK_OBJECT_NAME(data_set));
+  gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (file_chooser), analysis_name);
   g_free(analysis_name);
 
   /* run the dialog */
-  response_id = gtk_dialog_run(GTK_DIALOG(fs));
-  save_filename = ui_common_file_selection_get_save_name(fs, TRUE);
-  gtk_widget_destroy(GTK_WIDGET(fs));
-
-  if (response_id == GTK_RESPONSE_OK)
-    return save_filename;
+  if (gtk_dialog_run (GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+    save_filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (file_chooser));
   else
-    return NULL;
+    save_filename = NULL;
+  gtk_widget_destroy (file_chooser);
+
+  return save_filename;
+
 }
 
 
@@ -369,7 +375,7 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
   GtkTreeIter iter;
     
 
-  output_filename = get_filename(tb_fads);
+  output_filename = get_filename(tb_fads->dialog, tb_fads->data_set);
   if (output_filename == NULL) return; /* no filename, no go */
 
   /* get the blood values */
@@ -442,6 +448,11 @@ static void apply_cb(GtkAssistant * assistant, gpointer data) {
     vals = NULL;
   }
 
+  if (output_filename != NULL) {
+    g_free(output_filename);
+    output_filename = NULL;
+  }
+
   return;
 }
 
@@ -488,7 +499,7 @@ static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads) {
       g_signal_emit_by_name(G_OBJECT(tb_fads->progress_dialog), "delete_event", NULL, &return_val);
       tb_fads->progress_dialog = NULL;
     }
-    
+
     g_free(tb_fads);
     tb_fads = NULL;
   }

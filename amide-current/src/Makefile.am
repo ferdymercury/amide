@@ -93,7 +93,6 @@ amide_SOURCES = \
 	amitk_color_table_menu.c \
 	amitk_data_set.c \
 	amitk_dial.c \
-	amitk_xif_sel.c \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
 	amitk_line_profile.c \
@@ -179,7 +178,6 @@ AMITK_H_SOURCES = \
 	amitk_color_table_menu.h \
 	amitk_common.h \
 	amitk_dial.h \
-	amitk_xif_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \
 	amitk_filter.h \

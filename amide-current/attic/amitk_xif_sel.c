@@ -32,6 +32,7 @@
 #include "amide_config.h"
 #include "amitk_common.h"
 #include "amitk_xif_sel.h"
+#include <glib/gstdio.h> /* for g_mkdir */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -4250,3 +4251,123 @@ _amitk_fnmatch (const char *pattern,
 {
   return amitk_fnmatch_intern (pattern, string, TRUE);
 }
+
+
+
+#if 0
+
+  /* the rest of this function runs the file selection dialog box */
+    file_chooser = gtk_file_chooser_dialog_new(_("Export to File"),
+					       GTK_WINDOW(main_dialog), /* parent window */
+					       GTK_FILE_CHOOSER_ACTION_SAVE,
+					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					       GTK_STOCK_SAVE, AMITK_RESPONSE_EXECUTE, /* intercept the save signal */
+					       NULL);
+  gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+    gtk_dialog_set_default_response (GTK_DIALOG (file_chooser), AMITK_RESPONSE_EXECUTE);
+
+
+/* notes from failed attempt */
+
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+gboolean check_if_dicom_dir(gchar * path) {
+  gchar * test_path;
+  gboolean result;
+  
+  test_path = g_strdup_printf("%s%s%s",path, G_DIR_SEPARATOR_S, "DICOMDIR");
+  result = dcmtk_test_dicom(test_path);
+  g_print("dicom test %d\n", result);
+  g_free(test_path);
+  return result;
+}
+
+static void fc_response_cb(GObject * file_chooser, gint response_id, gpointer data) {
+
+  gchar * current_folder;
+  gboolean is_dicom_dir=FALSE;
+  gchar * filename;
+
+  g_print("response id %d\n", response_id);
+
+
+  /* intercept the AMITK_RESPONSE_ACCEPT, and resend a GTK_RESPONSE_ACCEPT to
+     get normal GtkFileChooserDialog functionality unless this a DCMTK 
+     directory */
+  if (response_id == AMITK_RESPONSE_EXECUTE) {
+    g_signal_stop_emission_by_name (GTK_DIALOG(file_chooser), "response"); /* kill this emission */
+
+    /* see if we've got a folder containing a DICOMDIR file */
+    current_folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(file_chooser));
+    is_dicom_dir = check_if_dicom_dir(current_folder);
+
+#if 0
+    /* shove the DICOMDIR filename into the dialog box */
+    if (is_dicom_dir) {
+      filename = g_strdup_printf("%s%s%s",current_folder, G_DIR_SEPARATOR_S, "DICOMDIR");
+      gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(file_chooser), filename);
+      g_free(filename);
+    }
+#endif 
+
+    if (current_folder != NULL) g_free(current_folder);
+
+    /* and go down the usual pathway */
+  
+    if (!is_dicom_dir) 
+      gtk_dialog_response(GTK_DIALOG(file_chooser), GTK_RESPONSE_ACCEPT);
+  }
+
+
+  return;
+}
+
+static void fc_file_activated(GObject * file_chooser, gpointer data) {
+  g_print("activated\n");
+  gtk_dialog_response(GTK_DIALOG(file_chooser), GTK_RESPONSE_ACCEPT);
+  return;
+}
+
+
+static gboolean avoid_first_signal=TRUE;
+/* when we change to a folder that has a DICOMDIR file in it, we just go ahead and
+   send the AMITK_RESPONSE_EXECUTE response signal to the dialog */
+static void fc_folder_changed(GObject * file_chooser, gpointer data) {
+  gchar * current_folder;
+  gboolean is_dicom_dir;
+
+  /* this prevents automatically exporting the DICOM file if we've started in a
+     DICOMDIR containing directory */
+  if (avoid_first_signal) {
+    avoid_first_signal=FALSE;
+    return;
+  }
+  g_print("folder change\n");
+
+  current_folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(file_chooser));
+  is_dicom_dir = check_if_dicom_dir(current_folder);
+  if (current_folder != NULL) g_free(current_folder);
+
+  if (is_dicom_dir) {
+    g_signal_stop_emission_by_name(G_OBJECT(file_chooser), "current_folder_changed");
+    gtk_dialog_response(GTK_DIALOG(file_chooser), AMITK_RESPONSE_EXECUTE);
+  }
+
+  return;
+}
+#endif
+
+#ifdef AMIDE_LIBDCMDATA_SUPPORT
+    /* for DCMTK dicom directories, we might be selecting a preexisting folder */
+    if (method == AMITK_EXPORT_METHOD_DCMTK) {
+      g_signal_connect(file_chooser, "response",
+		       G_CALLBACK (fc_response_cb), NULL);
+      /* this next one is needed as we're using AMITK_RESPONSE_EXECUTE for the save button */
+      g_signal_connect(GTK_FILE_CHOOSER(file_chooser), "file_activated",  
+		       G_CALLBACK(fc_file_activated), NULL);
+      /* and this next one monitors if we double click on a DICOMDIR containing folder */
+      g_signal_connect(GTK_FILE_CHOOSER(file_chooser), "current_folder_changed", 
+		       G_CALLBACK(fc_folder_changed), NULL);
+    }
+#endif
+
+#endif

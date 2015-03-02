@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2009 Andy Loening
+ * Copyright (C) 2000-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -346,15 +346,18 @@ static const GtkActionEntry normal_items[] = {
 #endif
   
   /* FileMenu */
-  { "NewStudy", GTK_STOCK_NEW, N_("_New Study"), NULL, N_("Create a new study viewer window"), G_CALLBACK(ui_study_cb_new_study)},
-  { "OpenStudy", GTK_STOCK_OPEN, N_("_Open Study"), NULL, N_("Open a previously saved study in a new window"), G_CALLBACK(ui_study_cb_open_study)},
-  { "SaveStudyAs", GTK_STOCK_SAVE_AS, N_("Save Study As"), NULL, N_("Save current study"), G_CALLBACK(ui_study_cb_save_as)},
-  { "ImportGuess", NULL, N_("Import File (guess)"), NULL, N_("Import an image data file into this study, guessing at the file type"),G_CALLBACK(ui_study_cb_import)},
-  { "ImportObject", NULL, N_("Import _Object from Study"),NULL, N_("Import an object, such as an ROI, from a preexisting .xif file"),G_CALLBACK(ui_study_cb_import_object)},
-  { "ExportDataSet",NULL, N_("Export _Data Set"),NULL,N_("Export data set(s) to medical image formats"),G_CALLBACK(ui_study_cb_export_data_set)},
-  { "RecoverStudy",NULL,N_("_Recover Study"),NULL,N_("Try to recover a corrupted XIF flat file"),G_CALLBACK(ui_study_cb_recover_study)},
-  { "Close", GTK_STOCK_CLOSE, NULL, "<control>W", N_("Close the current study"), G_CALLBACK (ui_study_cb_close)},
-  { "Quit", GTK_STOCK_QUIT, NULL, "<control>Q", N_("Quit AMIDE"), G_CALLBACK (ui_study_cb_quit)},
+  { "NewStudy",         GTK_STOCK_NEW,     N_("_New Study"), NULL, N_("Create a new study viewer window"), G_CALLBACK(ui_study_cb_new_study)},
+  { "OpenXIFFile",      GTK_STOCK_OPEN,    N_("_Open Study"), NULL, N_("Open a previously saved study (XIF file)"), G_CALLBACK(ui_study_cb_open_xif_file)},
+  { "SaveAsXIFFile",    GTK_STOCK_SAVE_AS, N_("Save Study As"), NULL, N_("Save current study (as a XIF file)"), G_CALLBACK(ui_study_cb_save_as_xif_file)},
+  { "ImportGuess",      NULL,              N_("Import File (guess)"), NULL, N_("Import an image data file into this study, guessing at the file type"),G_CALLBACK(ui_study_cb_import)},
+  { "ImportObject",     NULL,              N_("Import _Object from Study"),NULL, N_("Import an object, such as an ROI, from a preexisting study (XIF file)"),G_CALLBACK(ui_study_cb_import_object_from_xif_file)},
+  { "ExportDataSet",    NULL,              N_("Export _Data Set"),NULL,N_("Export data set(s) to a medical image format"),G_CALLBACK(ui_study_cb_export_data_set)},
+  { "RecoverXIFFile",     NULL,              N_("_Recover Study"),NULL,N_("Try to recover a corrupted XIF file"),G_CALLBACK(ui_study_cb_recover_xif_file)},
+  { "OpenXIFDir",       NULL,              N_("Open XIF Directory"), NULL, N_("Open a study stored in XIF directory format"), G_CALLBACK(ui_study_cb_open_xif_dir)},
+  { "SaveAsXIFDir",     NULL,              N_("Save As XIF Drectory"), NULL, N_("Save a study in XIF directory format"), G_CALLBACK(ui_study_cb_save_as_xif_dir)},
+  { "ImportFromXIFDir", NULL,              N_("Import from XIF Directory"),NULL, N_("Import an object, such as an ROI, from a preexisting XIF directory"),G_CALLBACK(ui_study_cb_import_object_from_xif_dir)},
+  { "Close",            GTK_STOCK_CLOSE,   NULL, "<control>W", N_("Close the current study"), G_CALLBACK (ui_study_cb_close)},
+  { "Quit",             GTK_STOCK_QUIT,    NULL, "<control>Q", N_("Quit AMIDE"), G_CALLBACK (ui_study_cb_quit)},
   
   /* ExportView Submenu */
   { "ExportViewTransverse", NULL, N_("_Transverse"),NULL,N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),G_CALLBACK(ui_study_cb_export_view)},
@@ -422,8 +425,8 @@ static const char *ui_description =
 "  <menubar name='MainMenu'>"
 "    <menu action='FileMenu'>"
 "      <menuitem action='NewStudy'/>"
-"      <menuitem action='OpenStudy'/>"
-"      <menuitem action='SaveStudyAs'/>"
+"      <menuitem action='OpenXIFFile'/>"
+"      <menuitem action='SaveAsXIFFile'/>"
 "      <separator/>"
 "      <menuitem action='ImportGuess'/>"
 "      <menu action='ImportSpecificMenu'>"
@@ -438,7 +441,10 @@ static const char *ui_description =
 "      </menu>"
 "      <menuitem action='ExportDataSet'/>"
 "      <separator/>"
-"      <menuitem action='RecoverStudy'/>"
+"      <menuitem action='RecoverXIFFile'/>"
+"      <menuitem action='OpenXIFDir'/>"
+"      <menuitem action='SaveAsXIFDir'/>"
+"      <menuitem action='ImportFromXIFDir'/>"
 "      <separator/>"
 "      <menuitem action='Close'/>"
 "      <menuitem action='Quit'/>"

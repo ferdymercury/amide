@@ -1,7 +1,7 @@
 /* tb_fly_through.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2009 Andy Loening
+ * Copyright (C) 2002-2011 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -27,14 +27,12 @@
 
 #if (AMIDE_FFMPEG_SUPPORT || AMIDE_LIBFAME_SUPPORT)
 
-#undef GTK_DISABLE_DEPRECATED /* gtk_file_selection_new deprecated in 2.12 */
 #include <sys/stat.h>
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
 #include "amide.h"
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "mpeg_encode.h"
-#include "ui_common.h"
 #include "tb_fly_through.h"
 #include "amitk_canvas.h"
 
@@ -105,7 +103,6 @@ static void change_end_position_spin_cb(GtkWidget * widget, gpointer data);
 static void change_duration_spin_cb(GtkWidget * widget, gpointer data);
 static void destroy_cb(GtkObject * object, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
-static void save_as_ok_cb(GtkWidget* widget, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
 static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_filename);
@@ -293,69 +290,50 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 }
 
 
-/* function to handle picking an output mpeg file name */
-static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  gchar * save_filename;
-  tb_fly_through_t * tb_fly_through;
-
-  tb_fly_through = g_object_get_data(G_OBJECT(file_selection), "tb_fly_through");
-
-  save_filename = ui_common_file_selection_get_save_name(file_selection, TRUE);
-  if (save_filename == NULL) return; /* inappropriate name or don't want to overwrite */
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-
-  /* and generate our movie */
-  movie_generate(tb_fly_through, save_filename);
-  g_free(save_filename);
-
-  return;
-}
 
 /* function called when we hit the apply button */
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
   tb_fly_through_t * tb_fly_through = data;
-  GtkWidget * file_selection;
-  gchar * temp_string;
+  GtkWidget * file_chooser;
+  gchar * filename;
   static guint save_image_num = 0;
   gboolean return_val;
   
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
-    /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new(_("Output MPEG As"));
 
-    temp_string = g_strdup_printf("%s_FlyThrough_%d.mpg", 
+    /* the rest of this function runs the file selection dialog box */
+    file_chooser = gtk_file_chooser_dialog_new(_("Output MPEG As"),
+					       GTK_WINDOW(dialog), /* parent window */
+					       GTK_FILE_CHOOSER_ACTION_SAVE,
+					       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					       GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					       NULL);
+    gtk_file_chooser_set_local_only(GTK_FILE_CHOOSER(file_chooser), TRUE);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(file_chooser), TRUE);
+
+    /* take a guess at the filename */
+    filename = g_strdup_printf("%s_FlyThrough_%d.mpg", 
 				  AMITK_OBJECT_NAME(tb_fly_through->study), 
 				  save_image_num++);
-    ui_common_file_selection_set_filename(file_selection, temp_string);
-    g_free(temp_string); 
-    
-    /* don't want anything else going on till this window is gone */
-    gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-    
-    /* save a pointer to the fly_through data, so we can use it in the callbacks */
-    g_object_set_data(G_OBJECT(file_selection), "tb_fly_through", tb_fly_through);
-    
-    /* connect the signals */
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button),
-		     "clicked", G_CALLBACK(save_as_ok_cb), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
-		     "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),
-		     "delete_event", G_CALLBACK(ui_common_file_selection_cancel_cb),  file_selection);
-    
-    /* set the position of the dialog */
-    gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-    
-    /* run the dialog */
-    gtk_widget_show(file_selection);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(file_chooser), filename);
+    g_free(filename);
 
-    break;
+
+    if (gtk_dialog_run(GTK_DIALOG (file_chooser)) == GTK_RESPONSE_ACCEPT) 
+      filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (file_chooser));
+    else
+      filename = NULL;
+    gtk_widget_destroy(file_chooser);
+
+    if (filename == NULL)
+      return; /* return to flythrough generation dialog */
+    else { /* generate the movie */
+      movie_generate(tb_fly_through, filename);
+      g_free(filename);
+    }
+    /* and fall through to close out the dialog */
 
   case GTK_RESPONSE_CANCEL:
     g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
@@ -705,8 +683,8 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->dialog = 
     gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,
 				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
 				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				_("_Generate Fly Through"), AMITK_RESPONSE_EXECUTE,
 				NULL);
 
   g_signal_connect(G_OBJECT(tb_fly_through->dialog), "delete_event",
