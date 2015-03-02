@@ -53,6 +53,7 @@ void ui_study_cb_tree_view_delete_object(GtkWidget * tree_view,AmitkObject * obj
 void ui_study_cb_tree_view_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gpointer ui_study);
 void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
+void ui_study_cb_gate_pressed(GtkWidget * combo, gpointer data);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_cb_series(GtkWidget * widget, gpointer ui_study);
 #ifdef AMIDE_LIBFAME_SUPPORT

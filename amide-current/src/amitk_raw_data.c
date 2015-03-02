@@ -1,7 +1,7 @@
 /* amitk_raw_data.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -282,7 +282,8 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   gint error_code, j;
   AmitkRawData * raw_data=NULL;;
   gchar * temp_string;
-  gint t_times_z;
+  gint total_planes;
+  gint i_plane;
   div_t x;
   gint divider;
   gboolean continue_work = TRUE;
@@ -294,8 +295,8 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  t_times_z = dim.z*dim.t;
-  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+  total_planes = dim.z*dim.t*dim.g;
+  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
 
   raw_data = amitk_raw_data_new_with_data(amitk_raw_format_to_format(raw_format), dim);
   if (raw_data == NULL) {
@@ -347,336 +348,337 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
   /* iterate over the # of frames */
   error_code = 1;
-  for (i.t = 0; i.t < dim.t; i.t++) {
-    for (i.z = 0; 
-	 (i.z < dim.z) && (error_code >= 0) && (continue_work); 
-	 i.z++) {
+  i_plane=0;
+  for (i.t = 0; (i.t < dim.t) && (error_code >= 0) && (continue_work); i.t++) {
+    for (i.g = 0; (i.g < dim.g) && (error_code >= 0) && (continue_work); i.g++) {
+      for (i.z = 0; (i.z < dim.z) && (error_code >= 0) && (continue_work);  i.z++, i_plane++) {
 
-      if (update_func != NULL) {
-	x = div(i.t*dim.z+i.z,divider);
-	if (x.rem == 0)
-	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
-      }
-
-      /* read in the contents of the file */
-      if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
-	bytes_read = fread(file_buffer, 1, bytes_per_slice, file_pointer );
-	if (bytes_read != bytes_per_slice) {
-	  g_warning(_("read wrong # of elements from raw data, expected %d, got %d"), bytes_per_slice, bytes_read);
-	  goto error_condition;
+	if (update_func != NULL) {
+	  
+	  x = div(i_plane,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble) total_planes));
 	}
-      }
-  
-    
-      /* and convert the data */
-      switch (raw_format) {
-	
-      case AMITK_RAW_FORMAT_ASCII_8_NE:
-	
-	/* copy this frame into the data set */
-	for (i.y = 0; (i.y < dim.y) && (error_code >= 0); i.y++) {
-	  for (i.x = 0; (i.x < dim.x) && (error_code >= 0); i.x++) {
-	    if (raw_data->format == AMITK_FORMAT_DOUBLE)
-	      error_code = fscanf(file_pointer, "%lf", AMITK_RAW_DATA_DOUBLE_POINTER(raw_data,i));
-	    else // (raw_data->format == FLOAT)
-	      error_code = fscanf(file_pointer, "%f", AMITK_RAW_DATA_FLOAT_POINTER(raw_data,i));
-	    if (error_code == 0) error_code = EOF; /* if we couldn't read, may as well be EOF*/
+
+	/* read in the contents of the file */
+	if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
+	  bytes_read = fread(file_buffer, 1, bytes_per_slice, file_pointer );
+	  if (bytes_read != bytes_per_slice) {
+	    g_warning(_("read wrong # of elements from raw data, expected %d, got %d"), bytes_per_slice, bytes_read);
+	    goto error_condition;
 	  }
 	}
 	
-	if (error_code < 0) { /* EOF = -1 (usually) */
-	  g_warning(_("could not read ascii file after %d elements, file or parameters are erroneous"),
-		    i.x + 
-		    dim.x*i.y +
-		    dim.x*dim.y*i.z +
-		    dim.x*dim.y*dim.z*i.t);
-	  goto error_condition;
-	}
 	
-	break;
-	
-      case AMITK_RAW_FORMAT_FLOAT_32_PDP:
-	{
-	  guint32 * data = file_buffer;
-	  guint32 temp;
-	  gfloat * float_p;
-
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no_op\n");
-	      
-	      temp = GUINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
-	      float_p = (void *) &temp;
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
-	    }
-	}
-	break;
-      case AMITK_RAW_FORMAT_SINT_32_PDP:
-	{
-	  gint32 * data=file_buffer;
+	/* and convert the data */
+	switch (raw_format) {
+	  
+	case AMITK_RAW_FORMAT_ASCII_8_NE:
 	  
 	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) = 
-		GINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
-	}
-	break;
-      case AMITK_RAW_FORMAT_UINT_32_PDP:
-	{
-	  guint32 * data=file_buffer;
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no_op\n");
-
-	      AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
-		GUINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
+	  for (i.y = 0; (i.y < dim.y) && (error_code >= 0); i.y++) {
+	    for (i.x = 0; (i.x < dim.x) && (error_code >= 0); i.x++) {
+	      if (raw_data->format == AMITK_FORMAT_DOUBLE)
+		error_code = fscanf(file_pointer, "%lf", AMITK_RAW_DATA_DOUBLE_POINTER(raw_data,i));
+	      else // (raw_data->format == FLOAT)
+		error_code = fscanf(file_pointer, "%f", AMITK_RAW_DATA_FLOAT_POINTER(raw_data,i));
+	      if (error_code == 0) error_code = EOF; /* if we couldn't read, may as well be EOF*/
 	    }
-	}
-	break;
+	  }
+	  
+	  if (error_code < 0) { /* EOF = -1 (usually) */
+	    g_warning(_("could not read ascii file after %d elements, file or parameters are erroneous"),
+		      i.x + 
+		      dim.x*i.y +
+		      dim.x*dim.y*i_plane);
+	    goto error_condition;
+	  }
 	
-      case AMITK_RAW_FORMAT_DOUBLE_64_BE: 
-	{
+	  break;
+	
+	case AMITK_RAW_FORMAT_FLOAT_32_PDP:
+	  {
+	    guint32 * data = file_buffer;
+	    guint32 temp;
+	    gfloat * float_p;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		/* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no_op\n");
+		
+		temp = GUINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
+		float_p = (void *) &temp;
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
+	      }
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_SINT_32_PDP:
+	  {
+	    gint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) = 
+		  GINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_UINT_32_PDP:
+	  {
+	    guint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		/* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no_op\n");
+		
+		AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
+		  GUINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
+	      }
+	  }
+	  break;
+	  
+	case AMITK_RAW_FORMAT_DOUBLE_64_BE: 
+	  {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	  guint64 * data = file_buffer;
-	  guint64 temp;
-	  gdouble * double_p;
+	    guint64 * data = file_buffer;
+	    guint64 temp;
+	    gdouble * double_p;
 #else
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	  gdouble * data = file_buffer;
+	    gdouble * data = file_buffer;
 #else
 #error "need to specify G_BIG_ENDIAN or G_LITTLE_ENDIAN"	
 #endif
 #endif
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	      temp = 
-		GUINT64_FROM_BE(DATA_CONTENT(data, dim, i));
-	      double_p = (void *) &temp;
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
+		temp = 
+		  GUINT64_FROM_BE(DATA_CONTENT(data, dim, i));
+		double_p = (void *) &temp;
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
 #else /* G_BIG_ENDIAN */
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 #endif
               }
-	}
-	break;
-      case AMITK_RAW_FORMAT_FLOAT_32_BE:
-	{
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_FLOAT_32_BE:
+	  {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	  guint32 * data = file_buffer;
-	  guint32 temp;
-	  gfloat * float_p;
+	    guint32 * data = file_buffer;
+	    guint32 temp;
+	    gfloat * float_p;
 #else /* (G_BYTE_ORDER == G_BIG_ENDIAN) */
-	  gfloat * data = file_buffer;
+	    gfloat * data = file_buffer;
 #endif
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      /* keep compiler from generating bad code with a noop, occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no op\n");
-
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		/* keep compiler from generating bad code with a noop, occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no op\n");
+		
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	      temp = GUINT32_FROM_BE(DATA_CONTENT(data, dim, i));
-	      float_p = (void *) &temp;
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
+		temp = GUINT32_FROM_BE(DATA_CONTENT(data, dim, i));
+		float_p = (void *) &temp;
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
 #else /* G_BIG_ENDIAN */
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 #endif
-	    }
-	}
-	break;
-      case AMITK_RAW_FORMAT_SINT_32_BE:
-	{
-	  gint32 * data=file_buffer;
+	      }
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_SINT_32_BE:
+	  {
+	    gint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) = 
+		  GINT32_FROM_BE(DATA_CONTENT(data, dim, i));
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_UINT_32_BE:
+	  {
+	    guint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		/* keep compiler from generating bad code with a noop occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no op\n");
+		
+		AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
+		  GUINT32_FROM_BE(DATA_CONTENT(data, dim, i));
+	      }
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_SSHORT_16_BE:
+	  {
+	    gint16 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SSHORT_SET_CONTENT(raw_data,i) = 
+		  GINT16_FROM_BE(DATA_CONTENT(data, dim, i));
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_USHORT_16_BE:
+	  {
+	    guint16 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_USHORT_SET_CONTENT(raw_data,i) =
+		  GUINT16_FROM_BE(DATA_CONTENT(data, dim, i));
+	  }
+	  break;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) = 
-		GINT32_FROM_BE(DATA_CONTENT(data, dim, i));
-	}
-	break;
-      case AMITK_RAW_FORMAT_UINT_32_BE:
-	{
-	  guint32 * data=file_buffer;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      /* keep compiler from generating bad code with a noop occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no op\n");
-
-	      AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
-		GUINT32_FROM_BE(DATA_CONTENT(data, dim, i));
-	    }
-	}
-	break;
-      case AMITK_RAW_FORMAT_SSHORT_16_BE:
-	{
-	  gint16 * data=file_buffer;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(raw_data,i) = 
-		GINT16_FROM_BE(DATA_CONTENT(data, dim, i));
-	}
-	break;
-      case AMITK_RAW_FORMAT_USHORT_16_BE:
-	{
-	  guint16 * data=file_buffer;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_USHORT_SET_CONTENT(raw_data,i) =
-		GUINT16_FROM_BE(DATA_CONTENT(data, dim, i));
-	}
-	break;
-	
-
-	
-	
-      case AMITK_RAW_FORMAT_DOUBLE_64_LE:
-	{
+	case AMITK_RAW_FORMAT_DOUBLE_64_LE:
+	  {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	  guint64 * data = file_buffer;
-	  guint64 temp;
-	  gdouble * double_p;
+	    guint64 * data = file_buffer;
+	    guint64 temp;
+	    gdouble * double_p;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-	  gdouble * data = file_buffer;
+	    gdouble * data = file_buffer;
 #endif
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = GUINT64_FROM_LE(DATA_CONTENT(data, dim, i));
-	      double_p = (void *) &temp;
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
+		temp = GUINT64_FROM_LE(DATA_CONTENT(data, dim, i));
+		double_p = (void *) &temp;
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = *double_p;
 #else /* G_LITTLE_ENDIAN */
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 #endif
-	    }
-	}
-	break;
-
-
-
-
-      case AMITK_RAW_FORMAT_FLOAT_32_LE:
-	{
+	      }
+	  }
+	  break;
+	  
+	  
+	  
+	  
+	case AMITK_RAW_FORMAT_FLOAT_32_LE:
+	  {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	  guint32 * data = file_buffer;
-	  guint32 temp;
-	  gfloat * float_p;
+	    guint32 * data = file_buffer;
+	    guint32 temp;
+	    gfloat * float_p;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-	  gfloat * data = file_buffer;
+	    gfloat * data = file_buffer;
 #endif
-
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      
-	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no op\n");
-	      
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		
+		/* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no op\n");
+		
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = GUINT32_FROM_LE(DATA_CONTENT(data, dim, i));
-	      float_p = (void *) &temp;
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
+		temp = GUINT32_FROM_LE(DATA_CONTENT(data, dim, i));
+		float_p = (void *) &temp;
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 #endif
-	    }
-	}
-	break;
-
-
-
-
-      case AMITK_RAW_FORMAT_SINT_32_LE:
-	{
-	  gint32 * data=file_buffer;
+	      }
+	  }
+	  break;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) =
-		GINT32_FROM_LE(DATA_CONTENT(data, dim, i));
-	  
-	}
-	break;
-      case AMITK_RAW_FORMAT_UINT_32_LE:
-	{
-	  guint32 * data=file_buffer;
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++) {
-	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
-	      if (i.x == -1) g_print("no_op\n");
 
-	      AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
-		GUINT32_FROM_LE(DATA_CONTENT(data, dim, i));
-	    }
-	}
-	break;
-      case AMITK_RAW_FORMAT_SSHORT_16_LE:
-	{
-	  gint16 * data=file_buffer;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(raw_data,i) =
-		GINT16_FROM_LE(DATA_CONTENT(data, dim, i));
-
-	}
-	break;
-      case AMITK_RAW_FORMAT_USHORT_16_LE:
-	{
-	  guint16 * data=file_buffer;
 	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_USHORT_SET_CONTENT(raw_data,i) =
-		GUINT16_FROM_LE(DATA_CONTENT(data, dim, i));
-
-	}
-	break;
-      case AMITK_RAW_FORMAT_SBYTE_8_NE:
-	{
-	  gint8 * data=file_buffer;
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SBYTE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
-	}
-	break;
-      case AMITK_RAW_FORMAT_UBYTE_8_NE:
-      default:
-	{
-	  guint8 * data=file_buffer;
-	  
-	  /* copy this frame into the data set */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_UBYTE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
-	}
-	break;
-      }   
+	case AMITK_RAW_FORMAT_SINT_32_LE:
+	  {
+	    gint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SINT_SET_CONTENT(raw_data,i) =
+		  GINT32_FROM_LE(DATA_CONTENT(data, dim, i));
+	    
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_UINT_32_LE:
+	  {
+	    guint32 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++) {
+		/* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+		if (i.x == -1) g_print("no_op\n");
+		
+		AMITK_RAW_DATA_UINT_SET_CONTENT(raw_data,i) = 
+		  GUINT32_FROM_LE(DATA_CONTENT(data, dim, i));
+	      }
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_SSHORT_16_LE:
+	  {
+	    gint16 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SSHORT_SET_CONTENT(raw_data,i) =
+		  GINT16_FROM_LE(DATA_CONTENT(data, dim, i));
+	    
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_USHORT_16_LE:
+	  {
+	    guint16 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_USHORT_SET_CONTENT(raw_data,i) =
+		  GUINT16_FROM_LE(DATA_CONTENT(data, dim, i));
+	    
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_SBYTE_8_NE:
+	  {
+	    gint8 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SBYTE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+	  }
+	  break;
+	case AMITK_RAW_FORMAT_UBYTE_8_NE:
+	default:
+	  {
+	    guint8 * data=file_buffer;
+	    
+	    /* copy this frame into the data set */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
+	  }
+	  break;
+	}   
+      }
     }
   }
 

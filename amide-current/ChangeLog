@@ -1,11 +1,23 @@
-0.8.2 2004
+0.8.3 2004
+	* added support for gated files [1,3]
+        * profile tool now updated automatically on data set (de)select
+ 	* fixed small graphical glitch with line between full/scaled bars
+ 	* fixed errors with scale_factor and filtering/cropping [1]
+ 	* fixed crash with double clicking finish on filter/crop
+ 	* can now validly pop up a dialog on an undrawn roi [2]
+	* added ROI quantitation based on Lee et al, Nuc Med Comm 2000 21:685-690
+ 	[1] Found/Suggested by Chris Deroose
+ 	[2] Found/Suggested by Keon Kang
+	[3] Suggested by David Stout
+ 
+ 
+0.8.2 2004.02.16
 	* incorrect loading of frame duration through libecat [1]
 	* rendering conversion had diff. dimension between slice and rendering
 	  lead to core dump on Mac OS X, and with some gcc's [2, 5]
  	* SUV calculations were off by a factor of 1000 [3]
  	* ignore gdk warnings on win32
  	  work around for gdkproperty.c "Not Implemented" warnings (gtk 2.2.4)
- 	* added more digits to the scale spin buttons
  	* got popt/icons working on win32
  	* updated win32 install.  .xif files now associated with AMIDE
 	* updated most of the icons (exception of the toolbar icons)

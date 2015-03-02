@@ -1,7 +1,7 @@
 /* libecat_interface.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -63,7 +63,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   AmitkScalingType scaling_type;
   div_t x;
   gint divider;
-  gint t_times_z;
+  gint total_planes, i_plane;
   gboolean continue_work=TRUE;
   gchar * temp_string;
   Image_subheader * ish;
@@ -139,6 +139,7 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   dim.x = matrix_data->xdim;
   dim.y = matrix_data->ydim;
   dim.z = (matrix_data->zdim == 1) ? libecat_file->mhptr->num_planes : matrix_data->zdim;
+  dim.g = libecat_file->mhptr->num_gates;
   dim.t = libecat_file->mhptr->num_frames;
   num_slices = libecat_file->mhptr->num_planes/matrix_data->zdim;
 
@@ -261,97 +262,99 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  t_times_z = dim.z*dim.t;
-  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+  total_planes = dim.z*dim.g*dim.t;
+  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
 
 
   /* and load in the data */
-  for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
+  for (i.t = 0, i_plane=0; (i.t < AMITK_DATA_SET_NUM_FRAMES(ds)) && (continue_work); i.t++) {
 #ifdef AMIDE_DEBUG
     g_print("\tloading frame:\t%d",i.t);
 #endif
-    for (slice=0; (slice < num_slices) && (continue_work) ; slice++) {
-      matnum=mat_numcod(i.t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
+    for (i.g = 0; (i.g < AMITK_DATA_SET_NUM_GATES(ds)) && (continue_work); i.g++) {
+      for (slice=0; (slice < num_slices) && (continue_work) ; slice++) {
+	matnum=mat_numcod(i.t+1,slice+1,i.g+1,0,0);/* frame, plane, gate, data, bed */
       
-      /* read in the corresponding cti slice */
-      if ((matrix_slice = matrix_read(libecat_file, matnum, 0)) == NULL) {
-	g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, libecat_filename);
-	goto error;
-      }
-      
-      /* set the frame duration, note, CTI files specify time as integers in msecs */
-      switch(libecat_file->mhptr->file_type) {
-      case PetImage: 
-      case PetVolume: 
-      case InterfileImage:
-	ish = (Image_subheader *) matrix_slice->shptr;
-	ds->frame_duration[i.t] = ish->frame_duration/1000.0;
-	break;
-      case Normalization:
-      case AttenCor:
-	ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
-	break;
-      case Sinogram:
-	ssh = (Scan_subheader *) matrix_slice->shptr;
-	ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
-	break;
-      default:
-	break; /* should never get here */
-      }
-      
-      for (i.z = slice*(dim.z/num_slices); 
-	   i.z < dim.z/num_slices + slice*(dim.z/num_slices); 
-	   i.z++) {
-
-	if (update_func != NULL) {
-	  x = div(i.t*dim.z+i.z,divider);
-	  if (x.rem == 0)
-	    continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
+	/* read in the corresponding cti slice */
+	if ((matrix_slice = matrix_read(libecat_file, matnum, 0)) == NULL) {
+	  g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, libecat_filename);
+	  goto error;
 	}
-
-	/* save the scale factor */
-	j.x = j.y = 0;
-	j.z = slice;
-	j.t = i.t;
-	if (scaling_type == AMITK_SCALING_TYPE_2D)
-	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
-	else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
-	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
-
-	switch (format) {
-	case AMITK_FORMAT_SSHORT:
-	  /* copy the data into the volume */
-	  /* note, we compensate here for the fact that we define 
-	     our origin as the bottom left, not top left like the CTI file */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
-		*(((amitk_format_SSHORT_t *) matrix_slice->data_ptr) + 
-		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
-		   +dim.x*(dim.y-i.y-1)
-		   +i.x));
+      
+	/* set the frame duration, note, CTI files specify time as integers in msecs */
+	switch(libecat_file->mhptr->file_type) {
+	case PetImage: 
+	case PetVolume: 
+	case InterfileImage:
+	  ish = (Image_subheader *) matrix_slice->shptr;
+	  ds->frame_duration[i.t] = ish->frame_duration/1000.0;
 	  break;
-	case AMITK_FORMAT_FLOAT:
-	  /* copy the data into the volume */
-	  /* note, we compensate here for the fact that we define 
-	     our origin as the bottom left, not top left like the CTI file */
-	  for (i.y = 0; i.y < dim.y; i.y++) 
-	    for (i.x = 0; i.x < dim.x; i.x++)
-	      AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
-		*(((amitk_format_FLOAT_t *) matrix_slice->data_ptr) + 
-		  (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
-		   +dim.x*(dim.y-i.y-1)
-		   +i.x));
+	case Normalization:
+	case AttenCor:
+	  ds->frame_duration[i.t] = 1.0; /* doesn't mean anything */
+	  break;
+	case Sinogram:
+	  ssh = (Scan_subheader *) matrix_slice->shptr;
+	  ds->frame_duration[i.t] = ssh->frame_duration/1000.0;
 	  break;
 	default:
-	  g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
-	  goto error;
-	  break; 
+	  break; /* should never get here */
+	}
+	
+	for (i.z = slice*(dim.z/num_slices); 
+	     i.z < dim.z/num_slices + slice*(dim.z/num_slices); 
+	     i.z++, i_plane++) {
+
+	  if (update_func != NULL) {
+	    x = div(i_plane,divider);
+	    if (x.rem == 0)
+	      continue_work = (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
+	  }
+	  
+	  /* save the scale factor */
+	  j.x = j.y = 0;
+	  j.z = slice;
+	  j.t = i.t;
+	  if (scaling_type == AMITK_SCALING_TYPE_2D)
+	    *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
+	  else if (i.z == 0)  /* AMITK_SCALING_TYPE_1D */
+	    *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = matrix_slice->scale_factor;
+	  
+	  switch (format) {
+	  case AMITK_FORMAT_SSHORT:
+	    /* copy the data into the volume */
+	    /* note, we compensate here for the fact that we define 
+	       our origin as the bottom left, not top left like the CTI file */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_SSHORT_SET_CONTENT(ds->raw_data,i) =
+		  *(((amitk_format_SSHORT_t *) matrix_slice->data_ptr) + 
+		    (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		     +dim.x*(dim.y-i.y-1)
+		     +i.x));
+	    break;
+	  case AMITK_FORMAT_FLOAT:
+	    /* copy the data into the volume */
+	    /* note, we compensate here for the fact that we define 
+	       our origin as the bottom left, not top left like the CTI file */
+	    for (i.y = 0; i.y < dim.y; i.y++) 
+	      for (i.x = 0; i.x < dim.x; i.x++)
+		AMITK_RAW_DATA_FLOAT_SET_CONTENT(ds->raw_data,i) =
+		  *(((amitk_format_FLOAT_t *) matrix_slice->data_ptr) + 
+		    (dim.y*dim.x*(i.z-slice*(dim.z/num_slices))
+		     +dim.x*(dim.y-i.y-1)
+		     +i.x));
+	    break;
+	  default:
+	    g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
+	    goto error;
+	    break; 
+	  }
+
 	}
 
+	free_matrix_data(matrix_slice);
       }
-
-      free_matrix_data(matrix_slice);
     }
 #ifdef AMIDE_DEBUG
     g_print("\tduration:\t%5.3f\n",ds->frame_duration[i.t]);

@@ -1,7 +1,7 @@
 /* tb_fly_through.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2002-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -41,6 +41,7 @@ typedef enum {
   NOT_DYNAMIC,
   OVER_TIME, 
   OVER_FRAMES, 
+  OVER_GATES,
   DYNAMIC_TYPES
 } dynamic_t;
 
@@ -58,6 +59,7 @@ typedef struct tb_fly_through_t {
   amide_time_t duration;
   gboolean in_generation;
   gboolean dynamic;
+  gboolean gated;
   dynamic_t type;
 
   GtkWidget * dialog;
@@ -130,33 +132,36 @@ static void dynamic_type_cb(GtkWidget * widget, gpointer data) {
 
   if (type != tb_fly_through->type) {
     tb_fly_through->type = type;
-    if (type == OVER_TIME) {
-      gtk_widget_show(tb_fly_through->start_time_label);
-      gtk_widget_show(tb_fly_through->start_time_spin_button);
-      gtk_widget_show(tb_fly_through->end_time_label);
-      gtk_widget_show(tb_fly_through->end_time_spin_button);
-    }
 
-    if (type == OVER_FRAMES) {
-      gtk_widget_show(tb_fly_through->start_frame_label);
-      gtk_widget_show(tb_fly_through->start_frame_spin_button);
-      gtk_widget_show(tb_fly_through->end_frame_label);
-      gtk_widget_show(tb_fly_through->end_frame_spin_button);
-    }
-
-
-    if ((type == OVER_TIME) || (type == NOT_DYNAMIC)) {
-      gtk_widget_hide(tb_fly_through->start_frame_label);
-      gtk_widget_hide(tb_fly_through->start_frame_spin_button);
-      gtk_widget_hide(tb_fly_through->end_frame_label);
-      gtk_widget_hide(tb_fly_through->end_frame_spin_button);
-    }
-
-    if ((type == OVER_FRAMES) || (type == NOT_DYNAMIC)) {
-      gtk_widget_hide(tb_fly_through->start_time_label);
-      gtk_widget_hide(tb_fly_through->start_time_spin_button);
-      gtk_widget_hide(tb_fly_through->end_time_label);
-      gtk_widget_hide(tb_fly_through->end_time_spin_button);
+    if (tb_fly_through->dynamic) {
+      if (type == OVER_TIME) {
+	gtk_widget_show(tb_fly_through->start_time_label);
+	gtk_widget_show(tb_fly_through->start_time_spin_button);
+	gtk_widget_show(tb_fly_through->end_time_label);
+	gtk_widget_show(tb_fly_through->end_time_spin_button);
+      }
+      
+      if (type == OVER_FRAMES) {
+	gtk_widget_show(tb_fly_through->start_frame_label);
+	gtk_widget_show(tb_fly_through->start_frame_spin_button);
+	gtk_widget_show(tb_fly_through->end_frame_label);
+	gtk_widget_show(tb_fly_through->end_frame_spin_button);
+      }
+      
+      
+      if (type != OVER_FRAMES) {
+	gtk_widget_hide(tb_fly_through->start_frame_label);
+	gtk_widget_hide(tb_fly_through->start_frame_spin_button);
+	gtk_widget_hide(tb_fly_through->end_frame_label);
+	gtk_widget_hide(tb_fly_through->end_frame_spin_button);
+      }
+      
+      if (type != OVER_TIME) {
+	gtk_widget_hide(tb_fly_through->start_time_label);
+	gtk_widget_hide(tb_fly_through->start_time_spin_button);
+	gtk_widget_hide(tb_fly_through->end_time_label);
+	gtk_widget_hide(tb_fly_through->end_time_spin_button);
+      }
     }
   }
   return;
@@ -195,7 +200,6 @@ static void change_end_frame_cb(GtkWidget * widget, gpointer data) {
     gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   return;
 }
-
 
 static void set_start_position_pressed_cb(GtkWidget * button, gpointer data) {
 
@@ -362,6 +366,7 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
   GList * temp_sets;
   AmitkDataSet * most_frames_ds=NULL;
   guint ds_frame=0;
+  gint ds_gate;
 
   /* gray out anything that could screw up the movie */
   dialog_set_sensitive(tb_fly_through, FALSE);
@@ -379,7 +384,6 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
       most_frames_ds = AMITK_DATA_SET(temp_sets->data);
     temp_sets = temp_sets->next;
   }
-  amitk_objects_unref(data_sets);
 
   num_frames = ceil(tb_fly_through->duration*FRAMES_PER_SECOND);
   if (num_frames > 1)
@@ -425,6 +429,14 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
     } else if (tb_fly_through->type == OVER_TIME) {
       start_time = tb_fly_through->start_time + i_frame*duration;
       amitk_study_set_view_start_time(tb_fly_through->study, start_time);
+    } else if (tb_fly_through->type == OVER_GATES) {
+      temp_sets = data_sets;
+      while (temp_sets != NULL) {
+	ds_gate = floor((i_frame/((gdouble) num_frames))*AMITK_DATA_SET_NUM_GATES(temp_sets->data));
+	amitk_data_set_set_view_start_gate(AMITK_DATA_SET(temp_sets->data), ds_gate);
+	amitk_data_set_set_view_end_gate(AMITK_DATA_SET(temp_sets->data), ds_gate);
+	temp_sets = temp_sets->next;
+      }
     } /* NOT_DYNAMIC */
 
     dialog_update_position_entry(tb_fly_through);
@@ -434,6 +446,8 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
     /* advance the canvas */
     amitk_study_set_view_center(tb_fly_through->study,
 				amitk_space_s2b(tb_fly_through->space, current_point));
+
+
 
     /* do any events pending, and make sure the canvas gets updated */
     while (gtk_events_pending() || AMITK_CANVAS(tb_fly_through->canvas)->next_update)
@@ -452,6 +466,9 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
   /* reset the canvas */
   amitk_study_set_view_start_time(tb_fly_through->study, initial_start);
   amitk_study_set_view_duration(tb_fly_through->study, initial_duration);
+
+  /* free up references */
+  amitk_objects_unref(data_sets);
 
   tb_fly_through->in_generation = FALSE; /* done generating */
   dialog_set_sensitive(tb_fly_through, TRUE); /* let user change stuff again */
@@ -483,8 +500,11 @@ static void dialog_set_sensitive(tb_fly_through_t * tb_fly_through, gboolean sen
   gtk_widget_set_sensitive(tb_fly_through->duration_spin_button, sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(tb_fly_through->canvas), sensitive);
 
-  if (tb_fly_through->dynamic) {
+  if (tb_fly_through->dynamic || tb_fly_through->gated) {
     gtk_widget_set_sensitive(tb_fly_through->dynamic_type, sensitive);
+  }
+
+  if (tb_fly_through->dynamic) {
     gtk_widget_set_sensitive(tb_fly_through->start_frame_spin_button, sensitive);
     gtk_widget_set_sensitive(tb_fly_through->end_frame_spin_button, sensitive);
     gtk_widget_set_sensitive(tb_fly_through->start_time_spin_button, sensitive);
@@ -618,13 +638,15 @@ void tb_fly_through(AmitkStudy * study,
   GList * objects;
   GList * temp_objects;
   gboolean dynamic = FALSE;
+  gboolean gated = FALSE;
   gboolean valid;
   gint temp_end_frame;
   amide_time_t temp_end_time;
   amide_time_t temp_start_time;
   GtkWidget * radio_button1;
-  GtkWidget * radio_button2;
-  GtkWidget * radio_button3;
+  GtkWidget * radio_button2=NULL;
+  GtkWidget * radio_button3=NULL;
+  GtkWidget * radio_button4=NULL;
   GtkWidget * hbox;
   GtkWidget * hseparator;
   AmitkDataSet * temp_ds;
@@ -770,19 +792,21 @@ void tb_fly_through(AmitkStudy * study,
       }
       valid = TRUE;
 
-      if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) > 1) {
+      if (AMITK_DATA_SET_NUM_FRAMES(temp_objects->data) > 1)
 	dynamic = TRUE;
-      }
+      if (AMITK_DATA_SET_NUM_GATES(temp_objects->data) > 1)
+	gated = TRUE;
     }
     temp_objects = temp_objects->next;
   }
   tb_fly_through->dynamic=dynamic;
+  tb_fly_through->gated=gated;
 
   /* garbage collection */
   amitk_objects_unref(objects);
 
 
-  if (tb_fly_through->dynamic) {
+  if (tb_fly_through->dynamic || tb_fly_through->gated) {
     /* a separator for clarity */
     hseparator = gtk_hseparator_new();
     gtk_table_attach(GTK_TABLE(right_table), hseparator, 0,2,
@@ -806,19 +830,35 @@ void tb_fly_through(AmitkStudy * study,
     tb_fly_through->dynamic_type = radio_button1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
     
-    radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over time"));
-    gtk_box_pack_start(GTK_BOX(hbox), radio_button2, FALSE, FALSE, 3);
-    g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
+    if (tb_fly_through->dynamic) {
+      radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over time"));
+      gtk_box_pack_start(GTK_BOX(hbox), radio_button2, FALSE, FALSE, 3);
+      g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
     
-    radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over frames"));
-    gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
-    g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
+      radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over frames"));
+      gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
+      g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
+    }
+    
+    if (tb_fly_through->gated) {
+      radio_button4 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over gates"));
+      gtk_box_pack_start(GTK_BOX(hbox), radio_button4, FALSE, FALSE, 3);
+      g_object_set_data(G_OBJECT(radio_button4), "dynamic_type", GINT_TO_POINTER(OVER_GATES));
+    }
     
     g_signal_connect(G_OBJECT(radio_button1), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
-    g_signal_connect(G_OBJECT(radio_button2), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
-    g_signal_connect(G_OBJECT(radio_button3), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
+    if (tb_fly_through->dynamic) {
+      g_signal_connect(G_OBJECT(radio_button2), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
+      g_signal_connect(G_OBJECT(radio_button3), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
+    }
+    if (tb_fly_through->gated) {
+      g_signal_connect(G_OBJECT(radio_button4), "clicked", G_CALLBACK(dynamic_type_cb), tb_fly_through);
+    }
     
     table_row++;
+  }
+
+  if (tb_fly_through->dynamic) {
     
     /* widgets to specify the start and end times */
     tb_fly_through->start_time_label = gtk_label_new(_("Start Time (s)"));

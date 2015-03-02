@@ -1,7 +1,7 @@
 /* tb_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2002-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -381,6 +381,9 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   tb_filter_t * tb_filter = data;
   AmitkDataSet * filtered;
 
+  /* disable the buttons */
+  gtk_widget_set_sensitive(GTK_WIDGET(druid), FALSE);
+
   /* generate the new data set */
   filtered = amitk_data_set_get_filtered(tb_filter->data_set, 
   					 tb_filter->filter,
@@ -389,12 +392,18 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 					 amitk_progress_dialog_update,
 					 tb_filter->progress_dialog);
 
-  /* and add the new data set to the study */
-  amitk_object_add_child(AMITK_OBJECT(tb_filter->study), AMITK_OBJECT(filtered)); /* this adds a reference to the data set*/
-  amitk_object_unref(filtered); /* so remove a reference */
+  if (filtered != NULL) {
+    /* and add the new data set to the study */
+    amitk_object_add_child(AMITK_OBJECT(tb_filter->study), AMITK_OBJECT(filtered)); /* this adds a reference to the data set*/
+    amitk_object_unref(filtered); /* so remove a reference */
 
-  /* close the dialog box */
-  cancel_cb(widget, data);
+    /* close the dialog box */
+    cancel_cb(widget, data);
+  } else {
+
+    /* enable the buttons */
+    gtk_widget_set_sensitive(GTK_WIDGET(druid), TRUE);
+  }
 
   return;
 }

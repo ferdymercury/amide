@@ -1,7 +1,7 @@
 /* ui_study.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -61,6 +61,8 @@ typedef struct ui_study_t {
   GtkWidget * view_mode_button[AMITK_VIEW_MODE_NUM];
   GtkWidget * fuse_type_button[AMITK_FUSE_TYPE_NUM];
   GtkWidget * tree_view; /* the tree showing the study data structure info */
+  GtkWidget * gate_dialog;
+  GtkWidget * gate_button;
   GtkWidget * time_dialog;
   GtkWidget * time_button;
   AmitkObject * active_object; /* which object to use for actions that are for one object */
@@ -99,6 +101,7 @@ GtkWidget * ui_study_create(AmitkStudy * study, AmitkPreferences * preferences);
 void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info, 
 			       AmitkPoint point, amide_data_t value);
 void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study);
+void ui_study_update_gate_button(ui_study_t * ui_study);
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);

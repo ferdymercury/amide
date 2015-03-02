@@ -1,7 +1,7 @@
 /* ui_series.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -26,6 +26,9 @@
 #include "amide_config.h"
 #include <libgnomecanvas/libgnomecanvas.h>
 #include <libgnomeui/libgnomeui.h>
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "amitk_canvas_object.h"
@@ -35,10 +38,29 @@
 #include "ui_study_menus.h"
 #include "pixmaps.h"
 
+typedef enum {
+  OVER_SPACE,
+  OVER_FRAMES,
+  //  OVER_GATES,
+  NUM_SERIES_TYPES,
+} series_type_t;
+
+#ifdef AMIDE_WIN32_HACKS
+static series_type_t series_type=OVER_SPACE;
+static AmitkView view = AMITK_VIEW_CORONAL;
+#endif
+
 /* external variables */
 static gchar * series_names[] = {
   N_("over Space"), 
-  N_("over Time")
+  N_("over Time"),
+  N_("over Gates")
+};
+
+static gchar * series_explanations[] = {
+  N_("Look at a series of images over a spatial dimension"), 
+  N_("Look at a series of images over time"), 
+  N_("Look at a series of images over gates")
 };
 
 #define UPDATE_NONE 0
@@ -62,7 +84,7 @@ typedef struct ui_series_t {
   amide_time_t view_time;
   AmitkFuseType fuse_type;
   amide_real_t pixel_dim;
-  series_t type;
+  series_type_t series_type;
   GtkWidget * progress_dialog;
   gboolean in_generation;
   gboolean quit_generation;
@@ -71,16 +93,19 @@ typedef struct ui_series_t {
   gint pixbuf_width;
   gint pixbuf_height;
 
-  /* for "PLANES" series */
+  /* for "OVER SPACE" series */
   amide_time_t view_duration;
   amide_real_t start_z;
   amide_real_t z_point; /* current slice offset z component*/
   amide_real_t end_z;
 
-  /* for "FRAMES" series */
+  /* for "OVER TIME" series */
   guint view_frame;
   amide_time_t start_time;
   amide_time_t * frame_durations; /* an array of frame durations */
+
+  /* for "OVER GATES" series */
+  gint view_gate;
 
   guint next_update;
   guint idle_handler_id;
@@ -107,6 +132,7 @@ static ui_series_t * ui_series_init(GnomeApp * app);
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series);
 static void add_update(ui_series_t * ui_series);
 static gboolean update_immediate(gpointer ui_series);
+static void read_preferences(series_type_t * series_type, AmitkView * view);
 
 
 /* function called by the adjustment in charge for scrolling */
@@ -114,10 +140,12 @@ static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
 
   ui_series_t * ui_series = data;
 
-  if (ui_series->type == PLANES)
+  if (ui_series->series_type == OVER_SPACE)
     ui_series->z_point = adjustment->value-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
-  else
+  else // if (ui_series->series_type == OVER_FRAMES)
     ui_series->view_frame = adjustment->value;
+  //  else if (ui_series->series_type == OVER_GATES)
+  //    ui_series->view_gate = adjustment->value;
 
   add_update(ui_series);
 
@@ -430,7 +458,7 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
   ui_series->pixel_dim = 1.0;
   ui_series->volume = NULL;
   ui_series->view_time = 0.0;
-  ui_series->type = PLANES;
+  ui_series->series_type = OVER_SPACE;
   ui_series->thresholds_dialog = NULL;
   ui_series->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_series->app));
   ui_series->in_generation=FALSE;
@@ -461,14 +489,16 @@ static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_serie
 
   amide_real_t thickness;
 
-  if (ui_series->type == PLANES) {
+  if (ui_series->series_type == OVER_SPACE) {
     thickness = AMITK_VOLUME_Z_CORNER(ui_series->volume);
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->z_point-thickness/2.0,
 					     ui_series->start_z+thickness/2.0,
 					     ui_series->end_z-thickness/2.0,
 					     thickness, thickness, thickness));
-  } else { /* FRAMES */
+  } else { //if (ui_series->series_type == OVER_FRAMES) {
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_frame, 0, ui_series->num_slices, 1,1,1));
+    //  } else if (ui_series->series_type == OVER_GATES) {
+    //    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_gate, 0, ui_series->num_slices, 1,1,1));
   }
 }
 
@@ -490,6 +520,7 @@ static gboolean update_immediate(gpointer data) {
   ui_series_t * ui_series = data;
   AmitkPoint temp_point;
   amide_time_t temp_time, temp_duration;
+  //  gint temp_gate;
   gint i, start_i;
   gint width, height;
   gdouble x, y;
@@ -555,11 +586,13 @@ static gboolean update_immediate(gpointer data) {
 
 
   /* figure out what's the first image we want to display */
-  if (ui_series->type == PLANES) 
+  if (ui_series->series_type == OVER_SPACE)
     start_i = ui_series->num_slices*((ui_series->z_point-ui_series->start_z)/
 				     (ui_series->end_z-ui_series->start_z-AMITK_VOLUME_Z_CORNER(ui_series->volume)));
-  else  /* FRAMES */
+  else // if (ui_series->series_type == OVER_FRAMES)
     start_i = ui_series->view_frame;
+  //  else if (ui_series->series_type == OVER_GATES)
+  //    start_i = ui_series->view_gate;
 
   /* correct i for special cases */
   if (ui_series->num_slices < ui_series->columns*ui_series->rows)
@@ -573,15 +606,17 @@ static gboolean update_immediate(gpointer data) {
 
   temp_time = ui_series->start_time;
   temp_point = zero_point;
-  if (ui_series->type == PLANES) {
+  if (ui_series->series_type == OVER_SPACE) {
     temp_time = ui_series->view_time;
     temp_duration = ui_series->view_duration;
-  } else { /* frames */
+  } else { // if (ui_series->series_type == OVER_FRAMES) {
     for (i=0;i< start_i; i++)
       temp_time += ui_series->frame_durations[i];
     temp_time -= ui_series->frame_durations[start_i];/* well get added back 1st time through loop */
     temp_duration = ui_series->frame_durations[start_i]; 
-  }
+  } // else if (ui_series->series_type == OVER_GATES) {
+  //    g_print("fix me\n");
+  //  }
   x = y = 0.0;
 
   view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
@@ -593,12 +628,14 @@ static gboolean update_immediate(gpointer data) {
 	(!ui_series->quit_generation));
 	i++) {
 
-    if (ui_series->type == PLANES) {
+    if (ui_series->series_type == OVER_SPACE) {
       temp_point.z = i*AMITK_VOLUME_Z_CORNER(ui_series->volume)+ui_series->start_z;
-    } else { /* frames */
+    } else { // if (ui_series->series_type == OVER_FRAMES) {
       temp_time += temp_duration; /* duration from last time through the loop */
       temp_duration = ui_series->frame_durations[i];
-    }
+    } // else if (ui_series->series_type == OVER_GATES) {
+    //      g_print("fix me\n");
+    //    }
 
     amitk_space_set_offset(AMITK_SPACE(view_volume), 
 			   amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
@@ -665,10 +702,13 @@ static gboolean update_immediate(gpointer data) {
 
 
     /* write the caption */
-    if (ui_series->type == PLANES)
+    if (ui_series->series_type == OVER_SPACE)
       temp_string = g_strdup_printf("%2.1f-%2.1f mm", temp_point.z, temp_point.z+AMITK_VOLUME_Z_CORNER(ui_series->volume));
-    else /* frames */
+    else // if (ui_series->series_type == OVER_FRAMES) 
       temp_string = g_strdup_printf("%2.1f-%2.1f s", temp_time, temp_time+temp_duration);
+    //    else if (ui_series->series_type == OVER_GATES)
+    //      g_print("fix me\n");
+
     if (ui_series->captions[i-start_i] == NULL) 
       ui_series->captions[i-start_i] =
 	gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(ui_series->canvas)),
@@ -724,10 +764,26 @@ static gboolean update_immediate(gpointer data) {
   return return_val;
 }
 
+static void read_preferences(series_type_t * series_type, AmitkView * view) {
+
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+ 
+  *series_type = gnome_config_get_int("SERIES/Type");
+  *view = gnome_config_get_int("SERIES/View");
+
+  gnome_config_pop_prefix();
+#endif
+
+  return;
+}
+
 /* function that sets up the series dialog */
 void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
-		      AmitkView view, AmitkVolume * canvas_view, 
-		      series_t series_type) {
+		      AmitkVolume * transverse_view, 
+		      AmitkVolume * coronal_view, 
+		      AmitkVolume * sagittal_view) {
+
  
   ui_series_t * ui_series;
   GnomeApp * app;
@@ -739,6 +795,12 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   GList * temp_objects;
   guint num_data_sets = 0;
   guint total_data_set_frames=0;
+#ifndef AMIDE_WIN32_HACKS
+  series_type_t series_type;
+  AmitkView view;
+
+  read_preferences(&series_type, &view);
+#endif
 
   /* sanity checks */
   g_return_if_fail(AMITK_IS_STUDY(study));
@@ -750,7 +812,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   gtk_window_set_resizable(GTK_WINDOW(app), TRUE);
 
   ui_series = ui_series_init(app);
-  ui_series->type = series_type;
+  ui_series->series_type = series_type;
   ui_series->line_style = AMITK_STUDY_CANVAS_LINE_STYLE(study);
   ui_series->roi_width = AMITK_STUDY_CANVAS_ROI_WIDTH(study);
 
@@ -770,7 +832,18 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   g_signal_connect(G_OBJECT(app), "delete_event", G_CALLBACK(delete_event_cb), ui_series);
 
   /* save the coordinate space of the series and some other parameters */
-  ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(canvas_view)));
+  switch(view) {
+  case AMITK_VIEW_CORONAL:
+    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(coronal_view)));
+    break;
+  case AMITK_VIEW_SAGITTAL:
+    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(sagittal_view)));
+    break;
+  default:
+  case AMITK_VIEW_TRANSVERSE:
+    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(transverse_view)));
+    break;
+  }
 
   ui_series->fuse_type = AMITK_STUDY_FUSE_TYPE(study);
   ui_series->view_time = AMITK_STUDY_VIEW_START_TIME(study);
@@ -794,7 +867,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 
 
   /* do some initial calculations */
-  if (ui_series->type == PLANES) {
+  if (ui_series->series_type == OVER_SPACE) {
     AmitkCorners view_corners;
 
     amitk_volumes_get_enclosing_corners(ui_series->objects, AMITK_SPACE(ui_series->volume), view_corners);
@@ -802,7 +875,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
     ui_series->end_z = view_corners[1].z;
     ui_series->num_slices = ceil((ui_series->end_z-ui_series->start_z)/AMITK_VOLUME_Z_CORNER(ui_series->volume));
 
-  } else { /* FRAMES */
+  } else if (ui_series->series_type == OVER_FRAMES) {
     amide_time_t current_start = 0.0;
     amide_time_t last_start, current_end, temp_time;
     guint * frames;
@@ -962,8 +1035,15 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 	ui_series->view_frame = i;
       temp_time += ui_series->frame_durations[i];
     }
+    //  } else if (ui_series->series_type == OVER_GATES) {
+  //
+  //    ui_series->num_gates = series_gates;
+  //    g_print("fix me\n");
+  } else {
+    g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
   }
 
+  
   
   ui_series->max_slice_cache_size = ui_series->num_slices*num_data_sets+5;
 
@@ -1011,7 +1091,7 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
   /* make a nice scroll bar */
   adjustment = ui_series_create_scroll_adjustment(ui_series);
   scale = gtk_hscale_new(adjustment);
-  if (ui_series->type == FRAMES) 
+  if ((ui_series->series_type == OVER_FRAMES)) // || (ui_series->series_type == OVER_GATES))
     gtk_scale_set_digits(GTK_SCALE(scale), 0); /* want integer for frames */
   gtk_range_set_update_policy(GTK_RANGE(scale), GTK_UPDATE_DISCONTINUOUS);
   gtk_table_attach(GTK_TABLE(packing_table), 
@@ -1028,7 +1108,168 @@ void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 
 
 
+static void init_series_type_cb(GtkWidget * widget, gpointer data);
+static void init_view_cb(GtkWidget * widget, gpointer data);
+static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
+
+
+
+static void init_series_type_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
+  series_type_t series_type;
+#endif
+
+  series_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "series_type"));
+  
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("SERIES/Type", series_type);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+  return;
+}
+
+static void init_view_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
+  AmitkView view;
+#endif
+
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+  
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("SERIES/View", view);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+  return;
+}
+
+static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
+
+  switch(response_id) {
+  case AMITK_RESPONSE_EXECUTE:
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+
+/* function to setup a dialog to allow us to choose options for the series */
+GtkWidget * ui_series_init_dialog_create(GtkWindow * parent) {
+  
+  GtkWidget * dialog;
+  gchar * temp_string;
+  GtkWidget * table;
+  guint table_row;
+  GtkWidget * label;
+  GtkWidget * radio_button[4];
+  GtkWidget * hseparator;
+  GtkTooltips * tips;
+  series_type_t i_series_type;
+  AmitkView i_view;
+#ifndef AMIDE_WIN32_HACKS
+  series_type_t series_type;
+  AmitkView view;
+
+  read_preferences(&series_type, &view);
+#endif
+
+  temp_string = g_strdup_printf(_("%s: Series Initialization Dialog"), PACKAGE);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
+  g_free(temp_string);
+
+  /* setup the callbacks for the dialog */
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
+
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+
+  /* start making the widgets for this dialog box */
+  table = gtk_table_new(7,2,FALSE);
+  table_row=0;
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+  tips = gtk_tooltips_new();
+
+  /* what series type do we want */
+  label = gtk_label_new(_("Series Type:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+
+  for (i_series_type = 0; i_series_type < NUM_SERIES_TYPES; i_series_type++) {
+    if (i_series_type == 0) 
+      radio_button[i_series_type] = 
+	gtk_radio_button_new_with_label(NULL, series_names[i_series_type]);
+    else
+      radio_button[i_series_type] = 
+	gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), 
+						    series_names[i_series_type]);
+    gtk_tooltips_set_tip(tips, radio_button[i_series_type], 
+			 series_explanations[i_series_type],
+			 series_explanations[i_series_type]);
+    gtk_table_attach(GTK_TABLE(table), radio_button[i_series_type], 1, 2, 
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    g_object_set_data(G_OBJECT(radio_button[i_series_type]), "series_type", 
+		      GINT_TO_POINTER(i_series_type));
+    table_row++;
+  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[series_type]), TRUE);
+
+  for (i_series_type = 0; i_series_type < NUM_SERIES_TYPES; i_series_type++) {
+    g_signal_connect(G_OBJECT(radio_button[i_series_type]), "clicked", G_CALLBACK(init_series_type_cb), NULL);
+  }
+
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(table), hseparator, 0,2,
+		   table_row, table_row+1,GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* what view type do we want */
+  label = gtk_label_new(_("View Type:"));
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    if (i_view == 0) 
+      radio_button[i_view] = 
+	gtk_radio_button_new_with_label(NULL, amitk_view_get_name(i_view));
+    else
+      radio_button[i_view] = 
+	gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button[0]), 
+						    amitk_view_get_name(i_view));
+    gtk_table_attach(GTK_TABLE(table), radio_button[i_view], 1, 2, 
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    g_object_set_data(G_OBJECT(radio_button[i_view]), "view",
+		      GINT_TO_POINTER(i_view));
+    table_row++;
+  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[view]), TRUE);
+
+
+  for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
+    g_signal_connect(G_OBJECT(radio_button[i_view]), "clicked", G_CALLBACK(init_view_cb), NULL);
+  }
+
+
+  /* and show all our widgets */
+  gtk_widget_show_all(dialog);
+
+  return dialog;
+}
 
 
 

@@ -1,7 +1,7 @@
 /* amitk_raw_data_variable_type.c - used to generate the different amitk_raw_data_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -50,7 +50,7 @@ AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_2D_init(amitk_format_`'m4_Var
 
   dim.x = x_dim;
   dim.y = y_dim;
-  dim.z = dim.t = 1;
+  dim.z = dim.g = dim.t = 1;
   temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', dim);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
 
@@ -70,7 +70,7 @@ AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_3D_init(amitk_format_`'m4_Var
   dim.x = x_dim;
   dim.y = y_dim;
   dim.z = z_dim;
-  dim.t = 1;
+  dim.t = dim.g = 1;
   temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', dim);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
 
@@ -85,10 +85,11 @@ void amitk_raw_data_`'m4_Variable_Type`'_initialize_data(AmitkRawData * amitk_ra
   AmitkVoxel i;
 
   for (i.t = 0; i.t < amitk_raw_data->dim.t; i.t++)
-    for (i.z = 0; i.z < amitk_raw_data->dim.z; i.z++) 
-      for (i.y = 0; i.y < amitk_raw_data->dim.y; i.y++) 
-	for (i.x = 0; i.x < amitk_raw_data->dim.x; i.x++) 
-	  AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i)=0.0;
+    for (i.g = 0; i.g < amitk_raw_data->dim.g; i.g++) 
+      for (i.z = 0; i.z < amitk_raw_data->dim.z; i.z++) 
+	for (i.y = 0; i.y < amitk_raw_data->dim.y; i.y++) 
+	  for (i.x = 0; i.x < amitk_raw_data->dim.x; i.x++) 
+	    AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i)=0.0;
 
   return;
 }

@@ -1,7 +1,7 @@
 /* amitk_raw_data.h
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -45,6 +45,7 @@ G_BEGIN_DECLS
 #define AMITK_RAW_DATA_DIM_X(rd)          (AMITK_RAW_DATA(rd)->dim.x)
 #define AMITK_RAW_DATA_DIM_Y(rd)          (AMITK_RAW_DATA(rd)->dim.y)
 #define AMITK_RAW_DATA_DIM_Z(rd)          (AMITK_RAW_DATA(rd)->dim.z)
+#define AMITK_RAW_DATA_DIM_G(rd)          (AMITK_RAW_DATA(rd)->dim.g)
 #define AMITK_RAW_DATA_DIM_T(rd)          (AMITK_RAW_DATA(rd)->dim.t)
 
 /* glib doesn't define these for PDP */
@@ -131,13 +132,17 @@ struct _AmitkRawDataClass
 
 
 /* -------- defines ----------- */
-#define amitk_raw_data_includes_voxel(rd, vox) (!(((vox).x < 0) ||  ((vox).y < 0) ||   \
-						  ((vox).z < 0) ||  ((vox).t < 0) ||  \
+#define amitk_raw_data_includes_voxel(rd, vox) (!(((vox).x < 0) ||  \
+						  ((vox).y < 0) ||  \
+						  ((vox).z < 0) ||  \
+						  ((vox).g < 0) ||  \
+						  ((vox).t < 0) ||  \
 						  ((vox).x >= (rd)->dim.x) ||  \
 						  ((vox).y >= (rd)->dim.y) ||  \
 						  ((vox).z >= (rd)->dim.z) ||  \
+						  ((vox).g >= (rd)->dim.g) ||  \
 						  ((vox).t >= (rd)->dim.t)))
-#define amitk_raw_data_num_voxels(rd) ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.t)
+#define amitk_raw_data_num_voxels(rd) ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.g * (rd)->dim.t)
 #define amitk_raw_data_size_data_mem(rd) (amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format])
 #define amitk_raw_data_get_data_mem(rd) (g_try_malloc(amitk_raw_data_size_data_mem(rd)))
 

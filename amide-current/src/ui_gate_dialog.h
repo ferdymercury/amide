@@ -1,7 +1,7 @@
-/* ui_time_dialog.h
+/* ui_gate_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2004 Andy Loening
+ * Copyright (C) 2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -25,8 +25,8 @@
 
 
 /* header files always needed with this */
-#include "amitk_study.h"
+#include "amitk_data_set.h"
 
 /* external functions */
-void ui_time_dialog_set_times(GtkWidget * time_dialog);
-GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent);
+void ui_gate_dialog_set_active_data_set(GtkWidget * dialog, AmitkDataSet * ds);
+GtkWidget * ui_gate_dialog_create(AmitkDataSet * ds, GtkWindow * parent);

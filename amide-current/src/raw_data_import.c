@@ -1,7 +1,7 @@
 /* raw_data_import.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -32,8 +32,6 @@
 #include "amitk_progress_dialog.h"
 
 
-
-typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
 
 /* raw_data information structure */
 typedef struct raw_data_info_t {
@@ -126,7 +124,7 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
 
 
   /* convert to the correct number */
-  if ((which_widget < NUM_DIMS) || (which_widget == NUM_DIMS+AMITK_AXIS_NUM)) {
+  if ((which_widget < AMITK_DIM_NUM) || (which_widget == AMITK_DIM_NUM+AMITK_AXIS_NUM)) {
     error = sscanf(str, "%d", &temp_int);
     if (error == EOF)
       return; /* make sure it's a valid number */
@@ -143,28 +141,31 @@ static void change_entry_cb(GtkWidget * widget, gpointer data) {
 
   /* and save the value in our temporary data set structure */
   switch(which_widget) {
-  case XDIM:
+  case AMITK_DIM_X:
     raw_data_info->data_dim.x = temp_int;
     break;
-  case YDIM:
+  case AMITK_DIM_Y:
     raw_data_info->data_dim.y = temp_int;
     break;
-  case ZDIM:
+  case AMITK_DIM_Z:
     raw_data_info->data_dim.z = temp_int;
     break;
-  case TDIM:
+  case AMITK_DIM_G:
+    raw_data_info->data_dim.g = temp_int;
+    break;
+  case AMITK_DIM_T:
     raw_data_info->data_dim.t = temp_int;
     break;
-  case (NUM_DIMS+AMITK_AXIS_X):
+  case (AMITK_DIM_NUM+AMITK_AXIS_X):
     raw_data_info->voxel_size.x = temp_real;
     break;
-  case (NUM_DIMS+AMITK_AXIS_Y):
+  case (AMITK_DIM_NUM+AMITK_AXIS_Y):
     raw_data_info->voxel_size.y = temp_real;
     break;
-  case (NUM_DIMS+AMITK_AXIS_Z):
+  case (AMITK_DIM_NUM+AMITK_AXIS_Z):
     raw_data_info->voxel_size.z = temp_real;
     break;
-  case (NUM_DIMS+AMITK_AXIS_NUM):
+  case (AMITK_DIM_NUM+AMITK_AXIS_NUM):
     raw_data_info->offset = temp_int;
     break;
   default:
@@ -235,7 +236,7 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
   /* how many bytes we're currently reading from the file */
   if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
     num_entries = raw_data_info->offset + 
-      raw_data_info->data_dim.x*raw_data_info->data_dim.y*raw_data_info->data_dim.z*raw_data_info->data_dim.t;
+      raw_data_info->data_dim.x*raw_data_info->data_dim.y*raw_data_info->data_dim.z*raw_data_info->data_dim.g*raw_data_info->data_dim.t;
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
 		       _("total entries to read through:"));
     temp_string = g_strdup_printf("%d",num_entries);
@@ -270,7 +271,7 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   AmitkModality i_modality;
-  dimension_t i_dim;
+  AmitkDim i_dim;
   AmitkRawFormat i_raw_format;
   AmitkAxis i_axis;
   gchar * temp_string = NULL;
@@ -299,7 +300,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE);
 
   /* make the packing table */
-  packing_table = gtk_table_new(10,5,FALSE);
+  packing_table = gtk_table_new(10,6,FALSE);
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox),packing_table);
 
   /* widgets to change the roi's name */
@@ -420,7 +421,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-  g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(NUM_DIMS+AMITK_AXIS_NUM));
+  g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(AMITK_DIM_NUM+AMITK_AXIS_NUM));
   g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb),  raw_data_info);
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -448,8 +449,11 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   label = gtk_label_new(_("z"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new(_("frames"));
+  label = gtk_label_new(_("gates"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 4,5,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  label = gtk_label_new(_("frames"));
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 5,6,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -460,11 +464,8 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
 
-  raw_data_info->data_dim.x = 
-    raw_data_info->data_dim.y = 
-    raw_data_info->data_dim.z = 
-    raw_data_info->data_dim.t = 1;
-  for (i_dim=0; i_dim<NUM_DIMS; i_dim++) {
+  raw_data_info->data_dim = one_voxel;
+  for (i_dim=0; i_dim<AMITK_DIM_NUM; i_dim++) {
     entry = gtk_entry_new();
     temp_string = g_strdup_printf("%d", 1);
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
@@ -489,7 +490,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
     gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
     g_free(temp_string);
     gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
-    g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+NUM_DIMS));
+    g_object_set_data(G_OBJECT(entry), "type", GINT_TO_POINTER(i_axis+AMITK_DIM_NUM));
     g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(change_entry_cb), 
 		       raw_data_info);
     gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),i_axis+1,i_axis+2,

@@ -1,7 +1,7 @@
 /* analysis.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -33,12 +33,20 @@
 
 /* typedefs, etc. */
 
+typedef enum {
+  ALL_VOXELS,
+  HIGHEST_FRACTION_VOXELS,
+  VOXELS_NEAR_MAX,
+  NUM_CALCULATION_TYPES
+} analysis_calculation_t;
+
+typedef struct _analysis_gate_t analysis_gate_t;
 typedef struct _analysis_frame_t analysis_frame_t;
 typedef struct _analysis_volume_t analysis_volume_t;
 typedef struct _analysis_roi_t analysis_roi_t;
 typedef struct _analysis_study_t analysis_study_t;
 
-struct _analysis_frame_t {
+struct _analysis_gate_t {
 
   /* stats */
   amide_data_t mean;
@@ -56,8 +64,14 @@ struct _analysis_frame_t {
 
   /* internal */
   amide_data_t correction;
-  analysis_frame_t * next_frame_analysis;
+  analysis_gate_t * next_gate_analysis;
   guint ref_count;
+};
+
+struct _analysis_frame_t {
+  analysis_gate_t * gate_analyses;
+  guint ref_count;
+  analysis_frame_t * next_frame_analysis;
 };
 
 struct _analysis_volume_t {
@@ -70,7 +84,9 @@ struct _analysis_volume_t {
 struct _analysis_roi_t {
   AmitkRoi * roi;
   AmitkStudy * study;
+  analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_value;
   analysis_volume_t * volume_analyses;
   guint ref_count;
   analysis_roi_t * next_roi_analysis;
@@ -78,8 +94,12 @@ struct _analysis_roi_t {
 
 /* external functions */
 analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
+
+/* note, subfraction is only used for calculation_type == HIGHEST_FRACTION_VOXELS,
+   threshold_value is only used for calculation_type == VOXELS_NEAR_MAX */
 analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
-				   GList * volumes, gdouble subfraction);
+				   GList * volumes, analysis_calculation_t calculation_type,
+				   gdouble subfraction, gdouble threshold_value);
 
 #endif /* __ANALYSIS_H__ */
 

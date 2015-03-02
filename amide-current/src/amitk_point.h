@@ -1,7 +1,7 @@
 /* amitk_point.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -53,6 +53,7 @@ typedef enum {
   AMITK_DIM_X,
   AMITK_DIM_Y,
   AMITK_DIM_Z,
+  AMITK_DIM_G,
   AMITK_DIM_T,
   AMITK_DIM_NUM
 } AmitkDim;
@@ -98,6 +99,7 @@ struct _AmitkVoxel {
   amide_intpoint_t x;
   amide_intpoint_t y;
   amide_intpoint_t z;
+  amide_intpoint_t g;
   amide_intpoint_t t;
 };
 
@@ -192,6 +194,7 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 #define VOXEL_EQUAL(voxel1,voxel2) (((voxel1).x == (voxel2).x) && \
 				    ((voxel1).y == (voxel2).y) && \
 				    ((voxel1).z == (voxel2).z) && \
+				    ((voxel1).g == (voxel2).g) && \
 				    ((voxel1).t == (voxel2).t))
 
 /* figure out the real point that corresponds to the voxel coordinates */
@@ -199,10 +202,11 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 					     ((real).y = (((amide_real_t) (vox).y)+0.5) * (vox_size).y), \
 					     ((real).z = (((amide_real_t) (vox).z)+0.5) * (vox_size).z))
 
-#define POINT_TO_VOXEL(real, vox_size, frame, vox) (((vox).x = floor((real).x/(vox_size).x)), \
-						    ((vox).y = floor((real).y/(vox_size).y)), \
-						    ((vox).z = floor((real).z/(vox_size).z)), \
-						    ((vox).t = (frame)))
+#define POINT_TO_VOXEL(real, vox_size, frame, gate, vox) (((vox).x = floor((real).x/(vox_size).x)), \
+						          ((vox).y = floor((real).y/(vox_size).y)), \
+						          ((vox).z = floor((real).z/(vox_size).z)), \
+							  ((vox).g = (gate)), \
+						          ((vox).t = (frame)))
 
 /* returned the maximum of point1 */
 #define POINT_MAX(point1) (MAX( MAX((point1).x, (point1).y), (point1).z))

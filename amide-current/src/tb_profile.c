@@ -122,6 +122,7 @@ static gboolean update_while_idle(gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void view_center_changed_cb(AmitkStudy * study, gpointer data);
+static void selections_changed_cb(AmitkObject * object, gpointer data);
 static void profile_changed_cb(AmitkLineProfile * line_profile, gpointer data);
 static void profile_switch_view_cb(GtkWidget * widget, gpointer data);
 static void profile_angle_cb(GtkWidget * widget, gpointer data);
@@ -173,8 +174,17 @@ static tb_profile_t * profile_free(tb_profile_t * tb_profile) {
 #endif
 
     if (tb_profile->study != NULL) {
+      /* disconnect any signal handlers */
+      g_signal_handlers_disconnect_by_func(G_OBJECT(tb_profile->study), 
+					   view_center_changed_cb, tb_profile);
+      g_signal_handlers_disconnect_by_func(G_OBJECT(tb_profile->study), 
+					   selections_changed_cb, tb_profile);
+      g_signal_handlers_disconnect_by_func(G_OBJECT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)), 
+					   profile_changed_cb, tb_profile);
+
       amitk_object_unref(tb_profile->study);
       tb_profile->study = NULL;
+
     }
 
     if (tb_profile->idle_handler_id != 0) {
@@ -1081,10 +1091,6 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
   /* make the line profile invisible */
   amitk_line_profile_set_visible(AMITK_STUDY_LINE_PROFILE(tb_profile->study), FALSE);
 
-  /* disconnect any signal handlers */
-  g_signal_handlers_disconnect_by_func(G_OBJECT(tb_profile->study), view_center_changed_cb, tb_profile);
-  g_signal_handlers_disconnect_by_func(G_OBJECT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)), profile_changed_cb, tb_profile);
-
   /* free the associated data structure */
   tb_profile = profile_free(tb_profile);
 
@@ -1093,6 +1099,14 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 
 
 static void view_center_changed_cb(AmitkStudy * study, gpointer data) {
+  tb_profile_t * tb_profile=data;
+  recalc_profiles(tb_profile);
+  return;
+}
+
+/* somewhat wasteful... as we update the profiles if any object changes
+   selection, not just data sets... but this greatly simplifies bookkeeping */
+static void selections_changed_cb(AmitkObject * object, gpointer data) {
   tb_profile_t * tb_profile=data;
   recalc_profiles(tb_profile);
   return;
@@ -1184,6 +1198,8 @@ void tb_profile(AmitkStudy * study, GtkWindow * parent) {
   /* setup the callbacks for detecting if the line profile has changed */
   g_signal_connect(G_OBJECT(tb_profile->study), "view_center_changed", 
 		   G_CALLBACK(view_center_changed_cb), tb_profile);
+  g_signal_connect(G_OBJECT(tb_profile->study), "object_child_selection_changed",
+		   G_CALLBACK(selections_changed_cb), tb_profile);
   g_signal_connect(G_OBJECT(AMITK_STUDY_LINE_PROFILE(tb_profile->study)), "line_profile_changed", 
 		   G_CALLBACK(profile_changed_cb), tb_profile);
 

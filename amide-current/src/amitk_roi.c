@@ -1,7 +1,7 @@
 /* amitk_roi.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -534,6 +534,7 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
 void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
 				     const AmitkDataSet * ds, 
 				     const guint frame,
+				     const guint gate,
 				     const gboolean inverse,
 				     void (*calculation)(),
 				     gpointer data) {
@@ -545,19 +546,19 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ELLIPSOID:
-    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
+    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_CYLINDER:
-    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
+    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_BOX:
-    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
+    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
+    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
+    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
     break;
   default: 
     g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
@@ -588,9 +589,11 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 			    gpointer update_data) {
 
   guint i_frame;
+  guint i_gate;
 
   for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) 
-    amitk_roi_calculate_on_data_set(roi, ds, i_frame, outside, erase_volume, ds);
+    for (i_gate=0; i_gate<AMITK_DATA_SET_NUM_GATES(ds); i_gate++) 
+      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, erase_volume, ds);
 
   /* recalc max and min */
   amitk_data_set_calc_max_min(ds, update_func, update_data);

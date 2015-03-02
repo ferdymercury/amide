@@ -39,6 +39,7 @@
 #include "ui_preferences_dialog.h"
 #include "amitk_object_dialog.h"
 #include "amitk_progress_dialog.h"
+#include "ui_gate_dialog.h"
 #include "ui_time_dialog.h"
 #include "tb_fly_through.h"
 #include "tb_alignment.h"
@@ -761,6 +762,33 @@ void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer data) {
 
 
 
+static gboolean gate_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
+  ui_study_t * ui_study = data;
+
+  /* just keeping track on whether or not the gate widget is up */
+  ui_study->gate_dialog = NULL;
+
+  return FALSE;
+}
+
+void ui_study_cb_gate_pressed(GtkWidget * combo, gpointer data) {
+  ui_study_t * ui_study = data;
+
+  if (ui_study->gate_dialog == NULL) {
+    if (AMITK_IS_DATA_SET(ui_study->active_object)) {
+      ui_study->gate_dialog = ui_gate_dialog_create(AMITK_DATA_SET(ui_study->active_object), 
+						    GTK_WINDOW(ui_study->app));
+      g_signal_connect(G_OBJECT(ui_study->gate_dialog), "delete_event",
+		       G_CALLBACK(gate_delete_event), ui_study);
+      gtk_widget_show(ui_study->gate_dialog);
+    }
+  } else /* pop the window to the top */
+    gtk_window_present(GTK_WINDOW(ui_study->gate_dialog));
+
+  return;
+}
+
+
 static gboolean time_delete_event(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_study_t * ui_study = data;
 
@@ -791,19 +819,31 @@ void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data) {
 /* callbacks for setting up a set of slices in a new window */
 void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 
+  GtkWidget * dialog;
   ui_study_t * ui_study = data;
-  AmitkView view;
-  series_t series_type;
-  
-  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
-  series_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "series_type"));
+  gint return_val;
+
+  /* need something to view */
+  if (!amitk_object_selected_children(AMITK_OBJECT(ui_study->study),
+				      AMITK_SELECTION_SELECTED_0, TRUE)) 
+    return;
+
+  /* let the user input rendering options */
+  dialog = ui_series_init_dialog_create(GTK_WINDOW(ui_study->app));
+
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  gtk_widget_destroy(dialog);
+  if (return_val != AMITK_RESPONSE_EXECUTE)
+    return; /* we don't want to render */
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_series_create(ui_study->study, 
 		   ui_study->active_object,
-		   view, 
-		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume,
-		   series_type);
+		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE])->volume,
+		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_CORONAL])->volume,
+		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_SAGITTAL])->volume);
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;

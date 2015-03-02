@@ -199,20 +199,20 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 
-@AMIDE_WIN32_HACKS_TRUE@AMIDE_WIN32_LDADD = -lwsock32 ../win32/amiderc.o
-
 @AMIDE_WIN32_HACKS_FALSE@AMIDE_WIN32_LDADD = 
-@AMIDE_WIN32_HACKS_TRUE@AMIDE_WIN32_LDFLAGS = -mwindows
-@AMIDE_WIN32_HACKS_FALSE@AMIDE_WIN32_LDFLAGS = 
-@AMIDE_WIN32_HACKS_TRUE@INCLUDES = \
-@AMIDE_WIN32_HACKS_TRUE@	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 
+@AMIDE_WIN32_HACKS_TRUE@AMIDE_WIN32_LDADD = -lwsock32 ../win32/amiderc.o
+@AMIDE_WIN32_HACKS_FALSE@AMIDE_WIN32_LDFLAGS = 
+@AMIDE_WIN32_HACKS_TRUE@AMIDE_WIN32_LDFLAGS = -mwindows
 @AMIDE_WIN32_HACKS_FALSE@INCLUDES = \
 @AMIDE_WIN32_HACKS_FALSE@	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
 @AMIDE_WIN32_HACKS_FALSE@	-DPREFIX=\""$(prefix)"\"			        \
 @AMIDE_WIN32_HACKS_FALSE@	-DSYSCONFDIR=\""$(sysconfdir)"\"		        \
 @AMIDE_WIN32_HACKS_FALSE@	-DDATADIR=\""$(datadir)"\"			        \
 @AMIDE_WIN32_HACKS_FALSE@	-DLIBDIR=\""$(libdir)"\"			
+
+@AMIDE_WIN32_HACKS_TRUE@INCLUDES = \
+@AMIDE_WIN32_HACKS_TRUE@	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 
 
 AM_CFLAGS = \
@@ -221,12 +221,15 @@ AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	 -DGTK_DISABLE_DEPRECATED \
-	-DGNOME_DISABLE_DEPRECATED
+	-DGNOME_DISABLE_DEPRECATED \
+	-I/usr/local/include
 
 
 
 # following are "toxic", as they drag in Gtk1 stuff
 #	$(XMEDCON_CFLAGS) 
+# added -I/usr/local/include above as that's where XMEDCON
+# usually gets installed
 bin_PROGRAMS = amide
 
 amide_LDADD = \
@@ -322,6 +325,8 @@ amide_SOURCES = \
 	tb_roi_analysis.h \
 	ui_common.c \
 	ui_common.h \
+	ui_gate_dialog.c \
+	ui_gate_dialog.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
 	ui_render.c \
@@ -579,10 +584,10 @@ am_amide_OBJECTS = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	tb_alignment.$(OBJEXT) tb_crop.$(OBJEXT) tb_fads.$(OBJEXT) \
 	tb_filter.$(OBJEXT) tb_fly_through.$(OBJEXT) \
 	tb_profile.$(OBJEXT) tb_roi_analysis.$(OBJEXT) \
-	ui_common.$(OBJEXT) ui_preferences_dialog.$(OBJEXT) \
-	ui_render.$(OBJEXT) ui_render_dialog.$(OBJEXT) \
-	ui_render_movie.$(OBJEXT) ui_series.$(OBJEXT) \
-	ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
+	ui_common.$(OBJEXT) ui_gate_dialog.$(OBJEXT) \
+	ui_preferences_dialog.$(OBJEXT) ui_render.$(OBJEXT) \
+	ui_render_dialog.$(OBJEXT) ui_render_movie.$(OBJEXT) \
+	ui_series.$(OBJEXT) ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
 	ui_study_menus.$(OBJEXT) ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
 amide_OBJECTS = $(am_amide_OBJECTS)
 @AMIDE_WIN32_HACKS_TRUE@amide_DEPENDENCIES = ../win32/amiderc.o
@@ -669,6 +674,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/tb_profile.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/tb_roi_analysis.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_common.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_gate_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_render.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_render_dialog.Po \
@@ -820,6 +826,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_profile.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_roi_analysis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_gate_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_render.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_render_dialog.Po@am__quote@

@@ -37,14 +37,14 @@ Root: HKCR; Subkey: "AmideXmlImageFormat\shell\open\command"; ValueType: string;
 [Files]
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\amide.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\bin\*.dll"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\etc\*"; DestDir: "{app}\etc\"; Flags: ignoreversion recursesubdirs
+Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\help\*"; DestDir: "{app}\help\"; Flags: ignoreversion recursesubdirs
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion recursesubdirs
 Source: "C:\Documents and Settings\loening\Desktop\@PACKAGE@-@VERSION@\share\*"; DestDir: "{app}\share"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"
-Name: "{userdesktop}\amide"; Filename: "{app}\amide.exe"; IconFileName: "{app}\etc\amide.ico"; Tasks: desktopicon
+Name: "{group}\amide"; Filename: "{app}\amide.exe";
+Name: "{userdesktop}\amide"; Filename: "{app}\amide.exe"; Tasks: desktopicon
 
 
 

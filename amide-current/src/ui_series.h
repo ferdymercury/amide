@@ -1,7 +1,7 @@
 /* ui_series.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -36,16 +36,12 @@
 #define UI_SERIES_TOP_MARGIN 2.0
 #define UI_SERIES_BOTTOM_MARGIN 15.0
 
-typedef enum {
-  PLANES, 
-  FRAMES
-} series_t;
-
 /* external functions */
-void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
-		      AmitkView view, AmitkVolume * canvas_view, 
-		      series_t series_type);
-
+void ui_series_create(AmitkStudy * study, AmitkObject * active_object, 
+		      AmitkVolume * transverse_view, 
+		      AmitkVolume * coronal_view, 
+		      AmitkVolume * sagittal_view);
+GtkWidget * ui_series_init_dialog_create(GtkWindow * parent);
 
 #endif /* UI_SERIES_H */
 

@@ -1,7 +1,7 @@
 /* amitk_threshold.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1210,6 +1210,7 @@ static void ds_thresholds_changed_cb(AmitkDataSet * ds, AmitkThreshold * thresho
     threshold->threshold_min[i] = AMITK_DATA_SET_THRESHOLD_MIN(ds, i);
   }
 
+  threshold_update_connector_lines(threshold, AMITK_THRESHOLD_SCALE_FULL);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MIN);
   threshold_update_arrow(threshold, AMITK_THRESHOLD_ARROW_FULL_MAX);
   threshold_update_spin_buttons(threshold);

@@ -1,7 +1,7 @@
 /* amitk_object.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -38,6 +38,7 @@
 enum {
   OBJECT_NAME_CHANGED,
   OBJECT_SELECTION_CHANGED,
+  OBJECT_CHILD_SELECTION_CHANGED,
   OBJECT_COPY,
   OBJECT_COPY_IN_PLACE,
   OBJECT_WRITE_XML,
@@ -47,37 +48,41 @@ enum {
   LAST_SIGNAL
 };
 
-static void          object_class_init          (AmitkObjectClass *klass);
-static void          object_init                (AmitkObject      *object);
-static void          object_finalize            (GObject          *object);
-static void          object_rotate_on_vector    (AmitkSpace       *space,
-						 AmitkPoint      *vector,
-						 gdouble          theta,
-						 AmitkPoint      *rotation_point);
-static void          object_invert_axis         (AmitkSpace       *space, 
-						 AmitkAxis        which_axis,
-						 AmitkPoint       * center_of_inversion);
-static void          object_shift_offset        (AmitkSpace       *space, 
-						 AmitkPoint      *shift);
-static void          object_transform           (AmitkSpace * space, 
-						 AmitkSpace * transform_space);
-static void          object_transform_axes      (AmitkSpace * space, 
-						 AmitkAxes    transform_axes,
-						 AmitkPoint * center_of_rotation);
-static void          object_scale               (AmitkSpace * space, 
-						 AmitkPoint * ref_point,
-						 AmitkPoint * scaling);
-static AmitkObject * object_copy                (const AmitkObject * object);
-static void          object_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
-static void          object_write_xml           (const AmitkObject * object, 
-						 xmlNodePtr           nodes,
-						 FILE                *study_file);
-static gchar *       object_read_xml            (AmitkObject         *object, 
-						 xmlNodePtr           nodes, 
-						 FILE                *study_file,
-						 gchar               *error_buf);
-static void          object_add_child           (AmitkObject * object, AmitkObject * child);
-static void          object_remove_child        (AmitkObject * object, AmitkObject * child);
+static void          object_class_init             (AmitkObjectClass *klass);
+static void          object_init                   (AmitkObject      *object);
+static void          object_finalize               (GObject          *object);
+static void          object_rotate_on_vector       (AmitkSpace       *space,
+						    AmitkPoint       *vector,
+						    gdouble           theta,
+						    AmitkPoint       *rotation_point);
+static void          object_invert_axis            (AmitkSpace       *space, 
+					   	    AmitkAxis         which_axis,
+						    AmitkPoint       *center_of_inversion);
+static void          object_shift_offset           (AmitkSpace       *space, 
+						    AmitkPoint       *shift);
+static void          object_transform              (AmitkSpace       *space, 
+						    AmitkSpace       *transform_space);
+static void          object_transform_axes         (AmitkSpace       *space, 
+						    AmitkAxes         transform_axes,
+						    AmitkPoint * center_of_rotation);
+static void          object_scale                  (AmitkSpace * space, 
+						    AmitkPoint * ref_point,
+						    AmitkPoint * scaling);
+static void          object_child_selection_changed(AmitkObject * object);
+static AmitkObject * object_copy                   (const AmitkObject * object);
+static void          object_copy_in_place          (AmitkObject * dest_object, 
+						    const AmitkObject * src_object);
+static void          object_write_xml              (const AmitkObject * object, 
+						    xmlNodePtr           nodes,
+						    FILE                *study_file);
+static gchar *       object_read_xml               (AmitkObject         *object, 
+						    xmlNodePtr           nodes, 
+						    FILE                *study_file,
+						    gchar               *error_buf);
+static void          object_add_child              (AmitkObject * object, 
+						    AmitkObject * child);
+static void          object_remove_child           (AmitkObject * object, 
+						    AmitkObject * child);
 
 static AmitkSpaceClass * parent_class;
 static guint        object_signals[LAST_SIGNAL];
@@ -129,6 +134,7 @@ static void object_class_init (AmitkObjectClass * class) {
 
   class->object_name_changed = NULL;
   class->object_selection_changed = NULL;
+  class->object_child_selection_changed = object_child_selection_changed;
   class->object_copy = object_copy;
   class->object_copy_in_place = object_copy_in_place;
   
@@ -149,6 +155,13 @@ static void object_class_init (AmitkObjectClass * class) {
 		  G_TYPE_FROM_CLASS(class),
 		  G_SIGNAL_RUN_LAST,
 		  G_STRUCT_OFFSET(AmitkObjectClass, object_selection_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE, 0);
+  object_signals[OBJECT_CHILD_SELECTION_CHANGED] =
+    g_signal_new ("object_child_selection_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkObjectClass, object_child_selection_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE, 0);
   object_signals[OBJECT_COPY] =
@@ -357,6 +370,16 @@ static void object_scale(AmitkSpace * space, AmitkPoint * ref_point, AmitkPoint 
   AMITK_SPACE_CLASS(parent_class)->space_scale (space, ref_point, scaling);
 }
 
+
+static void object_child_selection_changed(AmitkObject * object) {
+
+  /* propogate the signal up the tree */
+  if (AMITK_OBJECT_PARENT(object) != NULL)
+    g_signal_emit(G_OBJECT(AMITK_OBJECT_PARENT(object)), 
+		  object_signals[OBJECT_CHILD_SELECTION_CHANGED], 0);
+
+  return;
+}
 
 static AmitkObject * object_copy (const AmitkObject * object) {
 
@@ -715,8 +738,12 @@ void amitk_object_set_selected(AmitkObject * object, const gboolean selection, c
     }
   }
 
-  if (changed) 
+  if (changed) {
     g_signal_emit(G_OBJECT(object), object_signals[OBJECT_SELECTION_CHANGED], 0);
+    if (AMITK_OBJECT_PARENT(object) != NULL)
+      g_signal_emit(G_OBJECT(AMITK_OBJECT_PARENT(object)), 
+		    object_signals[OBJECT_CHILD_SELECTION_CHANGED], 0);
+  }
 
   return;
 }

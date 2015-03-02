@@ -80,7 +80,7 @@ void amide_call_help(const gchar * link_id) {
   }
 
 #else
-  g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net");
+  g_warning("Help is unavailable in the Windows version. Please see the help documentation online at http://amide.sf.net, or in the AMIDE install folder");
 #endif
 
   return;

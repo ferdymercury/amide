@@ -1,7 +1,7 @@
 /* rendering.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -170,6 +170,14 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->extraction_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_volume)));
   new_rendering->start = start;
   new_rendering->duration = duration;
+  if (AMITK_IS_DATA_SET(object))
+    new_rendering->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(object);
+  else
+    new_rendering->view_start_gate = 0;
+  if (AMITK_IS_DATA_SET(object))
+    new_rendering->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(object);
+  else
+    new_rendering->view_end_gate = 0;
   new_rendering->zero_fill = zero_fill;
   new_rendering->optimize_rendering = optimize_rendering;
 
@@ -333,14 +341,20 @@ gboolean rendering_reload_object(rendering_t * rendering,
   /* only need to do stuff for dynamic data sets */
   if (!AMITK_IS_DATA_SET(rendering->object))
     return TRUE;
-  if (!AMITK_DATA_SET_DYNAMIC(rendering->object))
+
+  if (!(AMITK_DATA_SET_DYNAMIC(rendering->object) || AMITK_DATA_SET_GATED(rendering->object)))
     return TRUE;
 
   if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start) == 
       amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start))
     if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), new_start+new_duration) ==
 	amitk_data_set_get_frame(AMITK_DATA_SET(rendering->object), old_start+old_duration))
-      return TRUE;
+      if (AMITK_DATA_SET_VIEW_START_GATE(rendering->object) == rendering->view_start_gate)
+	if (AMITK_DATA_SET_VIEW_END_GATE(rendering->object) == rendering->view_end_gate)
+	  return TRUE;
+
+  rendering->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(rendering->object);
+  rendering->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(rendering->object);
 
   /* allright, reload the rendering context's data */
   rendering->need_rerender = TRUE;
@@ -438,7 +452,7 @@ gboolean rendering_load_object(rendering_t * rendering,
 			     amitk_volume_get_center(AMITK_VOLUME(rendering->object)));
     height = AMITK_VOLUME_Z_CORNER(rendering->object);
     box_corner = AMITK_VOLUME_CORNER(rendering->object);
-    j_voxel.t = j_voxel.z=i_voxel.t=0;
+    j_voxel.t = j_voxel.g = j_voxel.z = i_voxel.t= i_voxel.g = 0;
 
     /* figure out the intersection between the rendering volume and the roi */
     if (!amitk_volume_volume_intersection_corners(rendering->extraction_volume, 
@@ -447,8 +461,8 @@ gboolean rendering_load_object(rendering_t * rendering,
       end = zero_voxel;
     } else {
       //      intersection_corners[1] = point_cmult(1.0-EPSILON, intersection_corners[1]);
-      POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, start);
-      POINT_TO_VOXEL(intersection_corners[1], voxel_size, 1, end);
+      POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, 0, start);
+      POINT_TO_VOXEL(intersection_corners[1], voxel_size, 1, 1, end);
     }
     
     g_return_val_if_fail(end.x < rendering->dim.x, FALSE);
@@ -470,7 +484,7 @@ gboolean rendering_load_object(rendering_t * rendering,
 	  switch(AMITK_ROI_TYPE(rendering->object)) {
 	  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
 	  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-	    POINT_TO_VOXEL(temp_point, AMITK_ROI(rendering->object)->voxel_size, 0, j_voxel);
+	    POINT_TO_VOXEL(temp_point, AMITK_ROI(rendering->object)->voxel_size, 0, 0, j_voxel);
 	    if (amitk_raw_data_includes_voxel(AMITK_ROI(rendering->object)->isocontour, j_voxel)) {
 	      temp_int = *AMITK_RAW_DATA_UBYTE_POINTER(AMITK_ROI(rendering->object)->isocontour, j_voxel);
 	      if (temp_int == 2)
@@ -533,7 +547,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     new_offset.z = rendering->voxel_size; 
 
     /* copy the info from a data set structure into our rendering_volume structure */
-    j_voxel.t = j_voxel.z = i_voxel.t=0;
+    j_voxel.t = j_voxel.g = j_voxel.z = i_voxel.t= i_voxel.g = 0;
     for (i_voxel.z = 0; ((i_voxel.z < rendering->dim.z) && continue_work); i_voxel.z++) {
       if  (update_func != 0) {
 	x = div(i_voxel.z,divider);

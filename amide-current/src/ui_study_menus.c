@@ -30,7 +30,6 @@
 #include <libgnomeui/libgnomeui.h>
 #include "amitk_common.h"
 #include "ui_common.h"
-#include "ui_series.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
@@ -233,55 +232,15 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  /* the submenus under the series_type menu */
-  GnomeUIInfo series_space_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a series of transaxial views in a single frame"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a series of coronal views in a single frame"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a series of sagittal views in a single frame"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_END
-  };
-
-  GnomeUIInfo series_time_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a times series of a single transaxial view"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a time series of a single coronal view"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a time series of a a signal sagittal view"),
-			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_END
-  };
-
-  /* the submenu under the series button */
-  GnomeUIInfo series_type_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Space"),
-			     N_("Look at a series of images over a spacial dimension"), 
-			     series_space_menu),
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Time"),
-			     N_("Look at a series of images over time"), 
-			     series_time_menu),
-    GNOMEUIINFO_END
-  };
-
-
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Series"),
-			     N_("Look at a series of images"), 
-			     series_type_menu),
+    GNOMEUIINFO_ITEM_DATA(N_("_Series"),
+			  N_("Look at a series of images"), 
+			  ui_study_cb_series, ui_study, NULL),
 #if AMIDE_LIBVOLPACK_SUPPORT
     GNOMEUIINFO_ITEM_DATA(N_("_Volume Rendering"),
 			  N_("perform a volume rendering on the currently selected objects"),
-			  ui_study_cb_render,
-			  ui_study, NULL),
+			  ui_study_cb_render, ui_study, NULL),
 #endif
     GNOMEUIINFO_END
   };
@@ -455,14 +414,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
     g_object_set_data(G_OBJECT(export_view_menu[i_view].widget),
 		      "view", GINT_TO_POINTER(i_view));
-    g_object_set_data(G_OBJECT(series_space_menu[i_view].widget),
-		      "view", GINT_TO_POINTER(i_view));
-    g_object_set_data(G_OBJECT(series_space_menu[i_view].widget),
-		      "series_type", GINT_TO_POINTER(PLANES));
-    g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
-		      "view", GINT_TO_POINTER(i_view));
-    g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
-		      "series_type", GINT_TO_POINTER(FRAMES));
 #if AMIDE_LIBFAME_SUPPORT
     g_object_set_data(G_OBJECT(fly_through_menu[i_view].widget),
 		      "view", GINT_TO_POINTER(i_view));
@@ -656,6 +607,22 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
 
+  /* gate */
+  label = gtk_label_new(_("gate:"));
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
+  gtk_widget_show(label);
+
+  ui_study->gate_button = gtk_button_new_with_label(""); 
+
+  g_signal_connect(G_OBJECT(ui_study->gate_button), "pressed",
+		   G_CALLBACK(ui_study_cb_gate_pressed), 
+		   ui_study);
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
+  			    ui_study->gate_button, _("the gate range over which to view the data"), NULL);
+  gtk_widget_show(ui_study->gate_button);
+
+  gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
+
   /* frame selector */
   label = gtk_label_new(_("time:"));
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
@@ -669,7 +636,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), 
   			    ui_study->time_button, _("the time range over which to view the data (s)"), NULL);
   gtk_widget_show(ui_study->time_button);
-
 
 
 

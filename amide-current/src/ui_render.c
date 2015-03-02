@@ -1,7 +1,7 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -1027,7 +1027,7 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 }
 
 
-/* function to setup a dialog to allow us to choice options for rendering */
+/* function to setup a dialog to allow us to choose options for rendering */
 GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   
   GtkWidget * dialog;

@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.h - used to generate the different amitk_data_set_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -38,9 +38,17 @@
  (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i))) * \
   ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i))))))
 
+#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_INTERNAL_CONTENT(data_set,i) \
+ (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling, (i))) * \
+  ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i))))))
+
 #define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_SET_CONTENT(data_set,i,value) \
  (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
   (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i)))))
+
+#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_SET_INTERNAL_CONTENT(data_set,i,value) \
+ (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+  (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->internal_scaling, (i)))))
 
 /* function declarations */
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set,

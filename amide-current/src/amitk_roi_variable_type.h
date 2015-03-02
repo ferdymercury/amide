@@ -1,7 +1,7 @@
 /* amitk_roi_variable_type.h - used to generate the different amitk_roi_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -52,6 +52,7 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
 							  const AmitkDataSet * ds, 
 							  const guint frame,
+							  const guint gate,
 							  const gboolean inverse,
 							  void (*calculation)(),
 							  gpointer data);

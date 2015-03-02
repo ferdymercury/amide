@@ -1,7 +1,7 @@
 /* amitk_point.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -132,7 +132,7 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   gchar * temp_str;
   AmitkVoxel voxel;
-  gint x,y,z,t;
+  gint x,y,z,g,t;
   gint error=0;
 
   temp_str = xml_get_string(nodes, descriptor);
@@ -140,24 +140,31 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
   if (temp_str != NULL) {
 
     /* convert to a voxel */
-    error = sscanf(temp_str,"%d\t%d\t%d\t%d", &x,&y,&z, &t);
+    error = sscanf(temp_str,"%d\t%d\t%d\t%d\t%d", &x,&y,&z, &g, &t);
     g_free(temp_str);
     
     voxel.x = x;
     voxel.y = y;
     voxel.z = z;
+    voxel.g = g;
     voxel.t = t;
 
   } 
 
   if ((temp_str == NULL) || (error == EOF)) {
     voxel = zero_voxel;
-    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting [%d %d %d %d]"),
-				  descriptor, voxel.x, voxel.y,voxel.z,voxel.z);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting [%d %d %d %d %d]"),
+				  descriptor, voxel.x, voxel.y,voxel.z,voxel.g, voxel.t);
   }
 
-  if (error < 4) {
-    voxel.t = 0;
+  if (error < 5) {
+    /* note, gate was added later, so if we only read 4, the 4th is most likely frames */
+    voxel.t = voxel.g;
+    voxel.g = 1;
+    amitk_append_str_with_newline(perror_buf, _("Couldn't read gate value for %s, substituting %d"),
+				  descriptor, voxel.g);
+  } else if (error < 4) {
+    voxel.t = 1;
     amitk_append_str_with_newline(perror_buf,_("Couldn't read frame value for %s, substituting %d"),
 				  descriptor, voxel.t);
   }
@@ -170,7 +177,7 @@ void amitk_voxel_write_xml(xmlNodePtr node, gchar * descriptor, AmitkVoxel voxel
 
   gchar * temp_str;
 
-  temp_str = g_strdup_printf("%d\t%d\t%d\t%d",voxel.x, voxel.y, voxel.z, voxel.t);
+  temp_str = g_strdup_printf("%d\t%d\t%d\t%d\t%d",voxel.x, voxel.y, voxel.z, voxel.g, voxel.t);
   xml_save_string(node, descriptor, temp_str);
   g_free(temp_str);
 
@@ -482,8 +489,8 @@ const AmitkPoint zero_point = {0.0,0.0,0.0};
 const AmitkPoint one_point = {1.0,1.0,1.0};
 const AmitkPoint ten_point = {10.0,10.0,10.0};
 
-const AmitkVoxel zero_voxel = {0,0,0,0};
-const AmitkVoxel one_voxel = {1,1,1,1};
+const AmitkVoxel zero_voxel = {0,0,0,0,0};
+const AmitkVoxel one_voxel = {1,1,1,1,1};
 
 /* returns abs(point1) for realpoint structures */
 inline AmitkPoint point_abs(const AmitkPoint point1) {
@@ -655,6 +662,7 @@ inline AmitkVoxel voxel_add(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
   temp.x = voxel1.x+voxel2.x;
   temp.y = voxel1.y+voxel2.y;
   temp.z = voxel1.z+voxel2.z;
+  temp.g = voxel1.g+voxel2.g;
   temp.t = voxel1.t+voxel2.t;
   return temp;
 }
@@ -665,6 +673,7 @@ inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
   temp.x = voxel1.x-voxel2.x;
   temp.y = voxel1.y-voxel2.y;
   temp.z = voxel1.z-voxel2.z;
+  temp.g = voxel1.g-voxel2.g;
   temp.t = voxel1.t-voxel2.t;
   return temp;
 }
@@ -672,11 +681,9 @@ inline AmitkVoxel voxel_sub(const AmitkVoxel voxel1,const AmitkVoxel voxel2) {
 /* returns voxel1 == voxel2 for voxelpoint structures */
 inline gboolean voxel_equal(const AmitkVoxel voxel1, const AmitkVoxel voxel2) {
 
-  return ((voxel1.x == voxel2.x) &&
-	  (voxel1.y == voxel2.y) &&
-	  (voxel1.z == voxel2.z) &&
-	  (voxel1.t == voxel2.t));
+  return VOXEL_EQUAL(voxel1, voxel2);
 }
+
 /* returns the maximum dimension of the "box" defined by voxel1 */
 inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1) {
   AmitkPoint temp_point;
@@ -686,7 +693,7 @@ inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1) {
 
 /* little utility function for debugging */
 void voxel_print(gchar * message, const AmitkVoxel voxel) {
-  g_print("%s\t%d\t%d\t%d\t%d\n",message, voxel.x, voxel.y, voxel.z, voxel.t);
+  g_print("%s\t%d\t%d\t%d\t%d\t%d\n",message, voxel.x, voxel.y, voxel.z, voxel.g, voxel.t);
   return;
 }
 
@@ -703,6 +710,9 @@ amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
     break;
   case AMITK_DIM_Z:
     return voxel.z;
+    break;
+  case AMITK_DIM_G:
+    return voxel.g;
     break;
   case AMITK_DIM_T:
     return voxel.t;
@@ -727,6 +737,9 @@ void voxel_set_dim(AmitkVoxel * voxel,
     break;
   case AMITK_DIM_Z:
     voxel->z = value;
+    break;
+  case AMITK_DIM_G:
+    voxel->g = value;
     break;
   case AMITK_DIM_T:
     voxel->t = value;

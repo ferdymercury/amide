@@ -3,12 +3,25 @@ misc list of things todo:
 for next release?
 -----------------
 
+* Gating:
+	gate picker -> multiple selection still screwed up
+	finish gate support in ui_series (lots of fixmes)
+
+
+* get some form of help working on win32? html?
+* fink -> doesn't have yelp
+	need to update amide/unstable packages to new gnome .info files and
+	add in fink
+
+* requested by steve jones:
+  add an import from file button for frame durations
+
 * profile tool:
 	-needs to update on data set selection change
 
-* have ui_series have an initial popup for picking over time/over space/which view/etc.
-	-also, have an amitk_tree on the popup, where the user can
-	switch which things will be displayed
+* ui_series:
+	-add support for gated data sets
+	-have an amitk_tree on the popup, where the user can switch which objects will be displayed
 * on ui_render's initial poup, have an amitk_tree for changing what gets displayed
 
 * change tb_filter, tb_crop, tb_fads, so that an amitk_tree is used for the

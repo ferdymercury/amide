@@ -1,7 +1,7 @@
 /* fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003 Andy Loening
+ * Copyright (C) 2003-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -63,8 +63,8 @@ gchar * fads_type_explanation[] = {
 
 };
 
-
 #include "../pixmaps/two_compartment.h"
+
 const guint8 * fads_type_icon[NUM_FADS_TYPES] = {
   NULL,
   NULL,
@@ -103,7 +103,7 @@ void fads_svd_factors(AmitkDataSet * data_set,
 
   dim = AMITK_DATA_SET_DIM(data_set);
   n = dim.t;
-  m = dim.x*dim.y*dim.z;
+  m = dim.x*dim.y*dim.z*dim.g;
 
   if (n == 1) {
     g_warning(_("need dynamic data set in order to perform factor analysis"));
@@ -129,12 +129,14 @@ void fads_svd_factors(AmitkDataSet * data_set,
   /* fill in the a matrix */
   for (i_voxel.t = 0; i_voxel.t < dim.t; i_voxel.t++) {
     i = 0;
-    for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++)
-      for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++)
-	for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, i++) {
-	  value = amitk_data_set_get_value(data_set, i_voxel);
-	  gsl_matrix_set(matrix_a, i, i_voxel.t, value);
-	}
+    for (i_voxel.g = 0; i_voxel.g < dim.g; i_voxel.g++) {
+      for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++)
+	for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++)
+	  for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, i++) {
+	    value = amitk_data_set_get_value(data_set, i_voxel);
+	    gsl_matrix_set(matrix_a, i, i_voxel.t, value);
+	  }
+    }
   }
 
   /* get the singular value decomposition of the correlation matrix -> matrix_a = U*S*Vt
@@ -256,7 +258,7 @@ static void perform_pca(AmitkDataSet * data_set,
   gdouble total;
 
   dim = AMITK_DATA_SET_DIM(data_set);
-  num_voxels = dim.x*dim.y*dim.z;
+  num_voxels = dim.x*dim.y*dim.z*dim.g;
   num_frames = dim.t;
 
   u = gsl_matrix_alloc(num_voxels, num_frames);
@@ -278,10 +280,11 @@ static void perform_pca(AmitkDataSet * data_set,
   /* copy the info into the matrix */
   for (i_voxel.t = 0; i_voxel.t < num_frames; i_voxel.t++) {
     i = 0;
-    for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++)
-      for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++)
-	for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, i++) 
-	  gsl_matrix_set(u, i, i_voxel.t, amitk_data_set_get_value(data_set, i_voxel));
+    for (i_voxel.g = 0; i_voxel.g < dim.g; i_voxel.g++)
+      for (i_voxel.z = 0; i_voxel.z < dim.z; i_voxel.z++)
+	for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++)
+	  for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++, i++) 
+	    gsl_matrix_set(u, i, i_voxel.t, amitk_data_set_get_value(data_set, i_voxel));
   }
 
   /* do Singular Value decomposition */
@@ -400,11 +403,12 @@ void fads_pca(AmitkDataSet * data_set,
 
     i=0;
     i_voxel.t = 0;
-    for (i_voxel.z=0; i_voxel.z<dim.z; i_voxel.z++) 
-      for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
-	for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++, i++) 
-	  AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, 
-						      gsl_matrix_get(u, i, f));
+    for (i_voxel.g=0; i_voxel.g<dim.g; i_voxel.g++) 
+      for (i_voxel.z=0; i_voxel.z<dim.z; i_voxel.z++) 
+	for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
+	  for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++, i++) 
+	    AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, 
+							gsl_matrix_get(u, i, f));
 
     temp_string = g_strdup_printf("component %d", f+1);
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
@@ -482,12 +486,13 @@ static gdouble calc_magnitude(AmitkDataSet * ds, gdouble * weight) {
   magnitude = 0;
 
   for (i_voxel.t=0; i_voxel.t<dim.t; i_voxel.t++) 
-    for (i_voxel.z=0; i_voxel.z<dim.z; i_voxel.z++) 
-      for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
-	for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) {
-	  data = amitk_data_set_get_value(ds, i_voxel);
-	  magnitude += weight[i_voxel.t]*data*data;
-	}
+    for (i_voxel.g=0; i_voxel.g<dim.g; i_voxel.g++) 
+      for (i_voxel.z=0; i_voxel.z<dim.z; i_voxel.z++) 
+	for (i_voxel.y=0; i_voxel.y<dim.y; i_voxel.y++) 
+	  for (i_voxel.x=0; i_voxel.x<dim.x; i_voxel.x++) {
+	    data = amitk_data_set_get_value(ds, i_voxel);
+	    magnitude += weight[i_voxel.t]*data*data;
+	  }
 
 
   return sqrt(magnitude);
@@ -598,16 +603,18 @@ static void pls_calc_forward_error(pls_params_t * p, const gsl_vector *v) {
   for (i_voxel.t=0; i_voxel.t<p->dim.t; i_voxel.t++) {
     i=p->alpha_offset; /* what to skip in v to get to the coefficients */
     k=0;
-    for (i_voxel.z=0; i_voxel.z<p->dim.z; i_voxel.z++) {
-      for (i_voxel.y=0; i_voxel.y<p->dim.y; i_voxel.y++) {
-	for (i_voxel.x=0; i_voxel.x<p->dim.x; i_voxel.x++, i+=p->num_factors, k+=p->num_frames) {
-	  inner = 0.0;
-	  for (f=0;  f< p->num_factors; f++) {
-	    alpha = gsl_vector_get(v, i+f);
-	    factor = gsl_vector_get(v, f*p->num_frames+i_voxel.t);
-	    inner += alpha*factor;
+    for (i_voxel.g=0; i_voxel.g<p->dim.g; i_voxel.g++) {
+      for (i_voxel.z=0; i_voxel.z<p->dim.z; i_voxel.z++) {
+	for (i_voxel.y=0; i_voxel.y<p->dim.y; i_voxel.y++) {
+	  for (i_voxel.x=0; i_voxel.x<p->dim.x; i_voxel.x++, i+=p->num_factors, k+=p->num_frames) {
+	    inner = 0.0;
+	    for (f=0;  f< p->num_factors; f++) {
+	      alpha = gsl_vector_get(v, i+f);
+	      factor = gsl_vector_get(v, f*p->num_frames+i_voxel.t);
+	      inner += alpha*factor;
+	    }
+	    p->forward_error[k+i_voxel.t] = inner+-amitk_data_set_get_value(p->data_set,i_voxel);
 	  }
-	  p->forward_error[k+i_voxel.t] = inner+-amitk_data_set_get_value(p->data_set,i_voxel);
 	}
       }
     }
@@ -906,7 +913,7 @@ void fads_pls(AmitkDataSet * data_set,
   p.neg = 0.0;
   p.orth = 0.0;
   p.blood = 0.0;
-  p.num_voxels = dim.z*dim.y*dim.x;
+  p.num_voxels = dim.g*dim.z*dim.y*dim.x;
   p.num_frames = dim.t;
   p.num_factors = num_factors;
   p.alpha_offset = p.num_factors*p.num_frames;
@@ -1202,12 +1209,13 @@ void fads_pls(AmitkDataSet * data_set,
     amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
-    for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 
-      for (i_voxel.y=0; i_voxel.y<p.dim.y; i_voxel.y++) 
-	for (i_voxel.x=0; i_voxel.x<p.dim.x; i_voxel.x++, i+= p.num_factors) {
-	  alpha = gsl_vector_get(initial, i+f);
-	  AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, alpha);
-	}
+    for (i_voxel.g=0; i_voxel.g<p.dim.g; i_voxel.g++) 
+      for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 
+	for (i_voxel.y=0; i_voxel.y<p.dim.y; i_voxel.y++) 
+	  for (i_voxel.x=0; i_voxel.x<p.dim.x; i_voxel.x++, i+= p.num_factors) {
+	    alpha = gsl_vector_get(initial, i+f);
+	    AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, alpha);
+	  }
   
 
     temp_string = g_strdup_printf(_("factor %d"), f+1);
@@ -1440,21 +1448,23 @@ static void two_comp_calc_forward_error(two_comp_params_t * p, const gsl_vector 
     i=p->alpha_offset;
     k=0;
     bc = gsl_vector_get(v, p->bc_offset+i_voxel.t);
-    for (i_voxel.z=0; i_voxel.z<p->dim.z; i_voxel.z++) {
-      for (i_voxel.y=0; i_voxel.y<p->dim.y; i_voxel.y++) {
-	for (i_voxel.x=0; i_voxel.x<p->dim.x; i_voxel.x++, k++, i+=p->num_factors) {
-
-	  inner=0;
-	  for (t=0; t < p->num_tissues; t++) {
-	    k21 = gsl_vector_get(v, p->k21_offset+t);
-	    alpha = gsl_vector_get(v, i+t);
-	    inner += alpha*k21*p->tc_unscaled[i_voxel.t*p->num_tissues+t];
+    for (i_voxel.g=0; i_voxel.g<p->dim.g; i_voxel.g++) {
+      for (i_voxel.z=0; i_voxel.z<p->dim.z; i_voxel.z++) {
+	for (i_voxel.y=0; i_voxel.y<p->dim.y; i_voxel.y++) {
+	  for (i_voxel.x=0; i_voxel.x<p->dim.x; i_voxel.x++, k++, i+=p->num_factors) {
+	    
+	    inner=0;
+	    for (t=0; t < p->num_tissues; t++) {
+	      k21 = gsl_vector_get(v, p->k21_offset+t);
+	      alpha = gsl_vector_get(v, i+t);
+	      inner += alpha*k21*p->tc_unscaled[i_voxel.t*p->num_tissues+t];
+	    }
+	    
+	    alpha = gsl_vector_get(v, i+p->num_tissues);
+	    p->forward_error[k*p->num_frames+i_voxel.t] = 
+	      alpha*bc+inner-amitk_data_set_get_value(p->data_set,i_voxel);
+	    
 	  }
-
-	  alpha = gsl_vector_get(v, i+p->num_tissues);
-	  p->forward_error[k*p->num_frames+i_voxel.t] = 
-	    alpha*bc+inner-amitk_data_set_get_value(p->data_set,i_voxel);
-
 	}
       }
     }
@@ -1841,7 +1851,7 @@ void fads_two_comp(AmitkDataSet * data_set,
   p.ls = 0.0;
   p.neg = 0.0;
   p.blood = 0.0;
-  p.num_voxels = dim.z*dim.y*dim.x;
+  p.num_voxels = dim.g*dim.z*dim.y*dim.x;
   p.num_frames = dim.t;
   p.num_factors = tissue_types+1;
   p.num_tissues = tissue_types;
@@ -2168,12 +2178,13 @@ void fads_two_comp(AmitkDataSet * data_set,
     amitk_data_set_set_color_table(new_ds, AMITK_DATA_SET_COLOR_TABLE(data_set));
 
     i=p.alpha_offset; /* what to skip in v to get to the coefficients */
-    for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 
-      for (i_voxel.y=0; i_voxel.y<p.dim.y; i_voxel.y++) 
-	for (i_voxel.x=0; i_voxel.x<p.dim.x; i_voxel.x++, i+=p.num_factors) {
-	  alpha = gsl_vector_get(initial, i+f);
-	  AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, alpha);
-	}
+    for (i_voxel.g=0; i_voxel.g<p.dim.g; i_voxel.g++) 
+      for (i_voxel.z=0; i_voxel.z<p.dim.z; i_voxel.z++) 
+	for (i_voxel.y=0; i_voxel.y<p.dim.y; i_voxel.y++) 
+	  for (i_voxel.x=0; i_voxel.x<p.dim.x; i_voxel.x++, i+=p.num_factors) {
+	    alpha = gsl_vector_get(initial, i+f);
+	    AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(new_ds, i_voxel, alpha);
+	  }
 
     if (f < p.num_tissues) {
       k12 = gsl_vector_get(initial, p.k12_offset+f);

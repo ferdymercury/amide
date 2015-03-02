@@ -1,7 +1,7 @@
 /* amitk_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -851,6 +851,9 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
 
   /* display accumulated warning messages */
   if (error_buf != NULL) {
+    amitk_append_str_with_newline(&error_buf, _(""));
+    amitk_append_str_with_newline(&error_buf, _("The above warnings most likely indicate changes to the"));
+    amitk_append_str_with_newline(&error_buf, _("XIF file format, please resave the data as soon as possible."));
     g_warning(error_buf);
     g_free(error_buf);
   }

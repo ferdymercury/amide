@@ -123,14 +123,38 @@
 <sect2 id="roi_statistics"><title>Calculating Statistics</title>
 
   <para>
+
     Statistics on an ROI can be calculated via the "Tools->calulate
     ROI statistics" menu item.  Choosing this will pop-up a dialog
     that lets you choose which ROI's (selected or all) and which data
     sets (selected or all) you'd like to calculate statistics over.
-    You can also choose to calculate over a subset of voxels, meaning
-    the statistics will be calculated for the x% highest voxels in the
-    ROI.
+    You will also have three options as to how you what the values to
+    be calculated.
   </para>
+
+  <orderedlist>
+   <listitem>
+    <para> Calculate over all voxels. </para>
+   </listitem>
+
+   <listitem>
+    <para> Calculate over highest x percent of voxels.  For example,
+    if you choose this and pick 25% as the number, your ROI will be
+    calculated from the 25% of the voxels in the ROI that have the
+    highest values.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para> Calculate for voxels >= % of Max.  This method is based on
+    Lee, Madsen, Bushnel, and Menda, Nuc Med Comm 2000, 21:685-690.
+    As an example, if you choose this and pick 50% as the number, the
+    highest valued voxel in the ROI will be found, and then the ROI
+    statistics will be calculated for all voxels that are greater or
+    equal to 50% of the highest valued voxel.
+    </para>
+   </listitem>
+  </orderedlist>
 
   <para>
    After hitting execute, the program will crank for a while, and then

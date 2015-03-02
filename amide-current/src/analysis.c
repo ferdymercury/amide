@@ -1,7 +1,7 @@
 /* analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -42,38 +42,44 @@
 
 #define EMPTY 0.0
 
+static analysis_gate_t * analysis_gate_unref(analysis_gate_t *gate_analysis);
+static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet *ds,guint frame, 
+					    analysis_calculation_t calculation_type,
+					    gdouble subfraction, gdouble threshold_value);
 static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
-static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds,
-					      gdouble subfraction);
+static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
+					      analysis_calculation_t calculation_type,
+					      gdouble subfraction, gdouble threshold_value);
 static analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
-static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes,
-						gdouble subfraction);
+static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes, 
+						analysis_calculation_t calculation_type,
+						gdouble subfraction, gdouble threshold_value);
 
 
-static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
+static analysis_gate_t * analysis_gate_unref(analysis_gate_t * gate_analysis) {
 
-  analysis_frame_t * return_list;
+  analysis_gate_t * return_list;
 
-  if (frame_analysis == NULL)
-    return frame_analysis;
+  if (gate_analysis == NULL)
+    return gate_analysis;
 
   /* sanity checks */
-  g_return_val_if_fail(frame_analysis->ref_count > 0, NULL);
+  g_return_val_if_fail(gate_analysis->ref_count > 0, NULL);
 
   /* remove a reference count */
-  frame_analysis->ref_count--;
+  gate_analysis->ref_count--;
 
   /* if we've removed all reference's, free the roi */
-  if (frame_analysis->ref_count == 0) {
+  if (gate_analysis->ref_count == 0) {
     /* recursively delete rest of list */
-    return_list = analysis_frame_unref(frame_analysis->next_frame_analysis);
-    frame_analysis->next_frame_analysis = NULL;
-    g_free(frame_analysis);
-    frame_analysis = NULL;
+    return_list = analysis_gate_unref(gate_analysis->next_gate_analysis);
+    gate_analysis->next_gate_analysis = NULL;
+    g_free(gate_analysis);
+    gate_analysis = NULL;
   } else
-    return_list = frame_analysis;
+    return_list = gate_analysis;
 
-  return frame_analysis;
+  return gate_analysis;
 }
 
 typedef struct element_t {
@@ -157,18 +163,21 @@ static gdouble wvariance (GPtrArray * array, guint num_elements, gdouble wmean)
 
 
 
-/* calculate an analysis of several statistical values for an roi on a given data set frame. */
-static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
-						      AmitkDataSet * ds, 
-						      gdouble subfraction,
-						      guint frame) {
-
-  analysis_frame_t * frame_analysis;
-  guint num_frames;
+/* calculate an analysis of several statistical values for an roi on a given data set frame/gate. */
+static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi, 
+						    AmitkDataSet * ds, 
+						    guint frame,
+						    guint gate,
+						    analysis_calculation_t calculation_type,
+						    gdouble subfraction,
+						    gdouble threshold_value) {
+  analysis_gate_t * analysis;
   GPtrArray * data_array;
   guint subfraction_voxels;
   guint i;
   element_t * element;
+  gdouble max;
+  gboolean done;
 #ifdef AMIDE_DEBUG
   struct timeval tv1;
   struct timeval tv2;
@@ -179,13 +188,11 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   gettimeofday(&tv1, NULL);
 #endif
 
-  num_frames = AMITK_DATA_SET_NUM_FRAMES(ds);
-  if (frame == num_frames) return NULL; /* check if we're done */
-  g_assert(frame < num_frames); /* sanity check */
+  if (gate == AMITK_DATA_SET_NUM_GATES(ds)) return NULL; /* check if we're done */
 
-  /* and now calculate this frame's data */
+  /* and now calculate this gate's data */
   if ((data_array = g_ptr_array_new()) == NULL) {
-    g_warning(_("couldn't allocate space for data array for frame %d"), frame);
+    g_warning(_("couldn't allocate space for data array for frame %d/gate %d"), frame, gate);
     return NULL;
   }
   /* fill the array with the appropriate info from the data set */
@@ -197,72 +204,99 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
      If I used a partial sort, I'd have to iterate over the subfraction to find the 
      max and min, and I'd have to do another partial sort to find the median 
   */
-  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, record_stats, data_array);
+  amitk_roi_calculate_on_data_set(roi, ds, frame, gate,FALSE, record_stats, data_array);
   g_ptr_array_sort(data_array, array_comparison);
+  
+  switch(calculation_type) {
+  case ALL_VOXELS:
+    subfraction_voxels = data_array->len;
+    break;
+  case HIGHEST_FRACTION_VOXELS:
+    subfraction_voxels = ceil(subfraction*data_array->len);
+    break;
+  case VOXELS_NEAR_MAX:
+    subfraction_voxels = 0;
 
-  subfraction_voxels = ceil(subfraction*data_array->len);
+    if (data_array->len > 0) {
+      element = g_ptr_array_index(data_array, 0);
+      max = element->value;
+      done = FALSE;
+      for (i=0; i<data_array->len && !done; i++) {
+	element = g_ptr_array_index(data_array, i);
+	if (element->value >= threshold_value*max)
+	  subfraction_voxels++;
+	else
+	  done = TRUE;
+      }
+    }
+    break;
+  default:
+    subfraction_voxels=0;
+    g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+  }
+
   if ((subfraction_voxels == 0) && (data_array->len > 0))
     subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
 
 
-  /* fill in our frame_analysis structure */
-  if ((frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
-    g_warning(_("couldn't allocate space for roi analysis of frame %d"), frame);
-    return frame_analysis;
+  /* fill in our gate_analysis structure */
+  if ((analysis =  g_try_new(analysis_gate_t,1)) == NULL) {
+    g_warning(_("couldn't allocate space for roi analysis of frame %d/gate %d"), frame, gate);
+    return analysis;
   }
-  frame_analysis->ref_count = 1;
+  analysis->ref_count = 1;
 
   /* set values */
-  frame_analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
-  frame_analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
-  frame_analysis->total = 0.0;
-  frame_analysis->median = 0.0;
-  frame_analysis->total = 0.0;
-  frame_analysis->voxels = subfraction_voxels;
-  frame_analysis->fractional_voxels = 0.0;
-  frame_analysis->correction = 0.0;
-  frame_analysis->var = 0.0;
+  analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
+  analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
+  analysis->total = 0.0;
+  analysis->median = 0.0;
+  analysis->total = 0.0;
+  analysis->voxels = subfraction_voxels;
+  analysis->fractional_voxels = 0.0;
+  analysis->correction = 0.0;
+  analysis->var = 0.0;
 
   
   if (subfraction_voxels == 0) { /* roi not in data set */
-    frame_analysis->max = 0.0;
-    frame_analysis->min = 0.0;
-    frame_analysis->median = 0.0;
-    frame_analysis->mean = 0.0;
+    analysis->max = 0.0;
+    analysis->min = 0.0;
+    analysis->median = 0.0;
+    analysis->mean = 0.0;
 
   } else { 
 
     /* max */
     element = g_ptr_array_index(data_array, 0);
-    frame_analysis->max = element->value;
+    analysis->max = element->value;
 
     /* min */
     element = g_ptr_array_index(data_array, subfraction_voxels-1);
-    frame_analysis->min = element->value;
+    analysis->min = element->value;
 
     /* median */
     if (subfraction_voxels & 0x1) { /* odd */
       element = g_ptr_array_index(data_array, (subfraction_voxels-1)/2);
-      frame_analysis->median = element->value;
+      analysis->median = element->value;
     } else { /* even */
       element = g_ptr_array_index(data_array, subfraction_voxels/2-1);
-      frame_analysis->median = 0.5*element->value;
+      analysis->median = 0.5*element->value;
       element = g_ptr_array_index(data_array, subfraction_voxels/2);
-      frame_analysis->median += 0.5*element->value;
+      analysis->median += 0.5*element->value;
     }
 
     /* total and #fractional_voxels */
     for (i=0; i<subfraction_voxels; i++) {
       element = g_ptr_array_index(data_array, i);
-      frame_analysis->total += element->weight*element->value;
-      frame_analysis->fractional_voxels += element->weight;
+      analysis->total += element->weight*element->value;
+      analysis->fractional_voxels += element->weight;
     }
 
     /* calculate the mean */
-    frame_analysis->mean = frame_analysis->total/frame_analysis->fractional_voxels;
+    analysis->mean = analysis->total/analysis->fractional_voxels;
 
     /* calculate variance */
-    frame_analysis->var = wvariance(data_array, subfraction_voxels, frame_analysis->mean);
+    analysis->var = wvariance(data_array, subfraction_voxels, analysis->mean);
   }
 
   g_ptr_array_free(data_array, TRUE); /* TRUE frees elements too */
@@ -273,31 +307,105 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;
   time2 = ((double) tv2.tv_sec) + ((double) tv2.tv_usec)/1000000.0;
 
-  g_print("Calculated ROI: %s on Data Set: %s Frame %d.  Took %5.3f (s) \n", 
-	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame, time2-time1);
+  g_print("Calculated ROI: %s on Data Set: %s Frame %d Gate %d.  Took %5.3f (s) \n", 
+	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame, gate, time2-time1);
 #endif
 
 
   /* now let's recurse  */
-  frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, subfraction, frame+1);
+  analysis->next_gate_analysis = 
+    analysis_gate_init_recurse(roi, ds, frame, gate+1, calculation_type, subfraction, threshold_value);
+
+  return analysis;
+}
+
+
+
+static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet * ds,
+					    guint frame, 
+					    analysis_calculation_t calculation_type,
+					    gdouble subfraction,
+					    gdouble threshold_value) {
+
+  return analysis_gate_init_recurse(roi, ds, frame, 0, calculation_type,
+				    subfraction, threshold_value);
+}
+
+
+static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
+
+  analysis_frame_t * return_list;
+
+  if (frame_analysis == NULL)
+    return frame_analysis;
+
+  /* sanity checks */
+  g_return_val_if_fail(frame_analysis->ref_count > 0, NULL);
+
+  /* remove a reference count */
+  frame_analysis->ref_count--;
+
+  /* if we've removed all reference's, free the roi */
+  if (frame_analysis->ref_count == 0) {
+    /* recursively delete rest of list */
+    return_list = analysis_frame_unref(frame_analysis->next_frame_analysis);
+    frame_analysis->next_frame_analysis = NULL;
+    g_free(frame_analysis);
+    frame_analysis = NULL;
+  } else
+    return_list = frame_analysis;
 
   return frame_analysis;
 }
 
 
-
 /* returns a calculated analysis structure of an roi on a frame of a data set */
-static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds,
-					      gdouble subfraction) {
+static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
+						      AmitkDataSet *ds, 
+						      guint frame,
+						      analysis_calculation_t calculation_type,
+						      gdouble subfraction,
+						      gdouble threshold_value) {
+  
+  analysis_frame_t * temp_frame_analysis;
+  
+  if (frame == AMITK_DATA_SET_NUM_FRAMES(ds)) return NULL; /* check if we're done */
+
+  if ((temp_frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
+    g_warning(_("couldn't allocate space for roi analysis of frames"));
+    return NULL;
+  }
+  
+  temp_frame_analysis->ref_count = 1;
+
+  /* calculate this one */
+  temp_frame_analysis->gate_analyses = 
+    analysis_gate_init(roi, ds, frame, calculation_type, subfraction, threshold_value);
+
+  /* recurse */
+  temp_frame_analysis->next_frame_analysis = 
+    analysis_frame_init_recurse(roi, ds, frame+1, calculation_type, subfraction, threshold_value);
+
+  return temp_frame_analysis;
+}
+
+
+static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
+					      analysis_calculation_t calculation_type,
+					      gdouble subfraction,
+					      gdouble threshold_value) {
 
   /* sanity checks */
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
+
   if (AMITK_ROI_UNDRAWN(roi)) {
     g_warning(_("ROI: %s appears not to have been drawn"), AMITK_OBJECT_NAME(roi));
     return NULL;
   }
 
-  return analysis_frame_init_recurse(roi, ds, subfraction, 0);
+  return analysis_frame_init_recurse(roi, ds, 0, calculation_type, subfraction, threshold_value);
 }
+
 
 
 /* free up an roi analysis over a data set */
@@ -332,7 +440,9 @@ static analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_anal
 
 /* returns an initialized roi analysis of a list of volumes */
 static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets, 
-						gdouble subfraction) {
+						analysis_calculation_t calculation_type,
+						gdouble subfraction,
+						gdouble threshold_value) {
   
   analysis_volume_t * temp_volume_analysis;
 
@@ -351,11 +461,11 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_set
 
   /* calculate this one */
   temp_volume_analysis->frame_analyses = 
-    analysis_frame_init(roi, temp_volume_analysis->data_set, subfraction);
+    analysis_frame_init(roi, temp_volume_analysis->data_set, calculation_type, subfraction, threshold_value);
 
   /* recurse */
   temp_volume_analysis->next_volume_analysis = 
-    analysis_volume_init(roi, data_sets->next, subfraction);
+    analysis_volume_init(roi, data_sets->next, calculation_type, subfraction, threshold_value);
 
   
   return temp_volume_analysis;
@@ -397,7 +507,8 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
 
 /* returns an initialized list of roi analyses */
 analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
-				   GList * data_sets, gdouble subfraction) {
+				   GList * data_sets, analysis_calculation_t calculation_type,
+				   gdouble subfraction, gdouble threshold_value) {
   
   analysis_roi_t * temp_roi_analysis;
   
@@ -411,15 +522,17 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois,
   temp_roi_analysis->ref_count = 1;
   temp_roi_analysis->roi = amitk_object_ref(rois->data);
   temp_roi_analysis->study = amitk_object_ref(study);
+  temp_roi_analysis->calculation_type = calculation_type;
   temp_roi_analysis->subfraction = subfraction;
+  temp_roi_analysis->threshold_value = threshold_value;
 
   /* calculate this one */
   temp_roi_analysis->volume_analyses = 
-    analysis_volume_init(temp_roi_analysis->roi, data_sets, subfraction);
+    analysis_volume_init(temp_roi_analysis->roi, data_sets, calculation_type, subfraction, threshold_value);
 
   /* recurse */
   temp_roi_analysis->next_roi_analysis = 
-    analysis_roi_init(study, rois->next, data_sets, subfraction);
+    analysis_roi_init(study, rois->next, data_sets, calculation_type, subfraction, threshold_value);
 
   
   return temp_roi_analysis;

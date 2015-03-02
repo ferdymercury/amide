@@ -1,7 +1,7 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -29,17 +29,20 @@
 
 #ifndef AMIDE_WIN32_HACKS
 #include <libgnome/libgnome.h>
-#else /* AMIDE_WIN32_HACKS */
-  static gboolean all_data_sets=FALSE;
-  static gboolean all_rois=FALSE;
-  static gboolean calc_on_subfraction=FALSE;
-  static gdouble subfraction=0.0;
 #endif
-
 #include "amitk_common.h"
 #include "analysis.h"
 #include "tb_roi_analysis.h"
 #include "ui_common.h"
+
+#ifdef AMIDE_WIN32_HACKS
+static gboolean all_data_sets=FALSE;
+static gboolean all_rois=FALSE;
+static analysis_calculation_t calculation_type=ALL_VOXELS;
+static gdouble subfraction=50.0;
+static gdouble threshold_value=50.0;
+#endif
+
 
 
 #define ROI_STATISTICS_WIDTH 950
@@ -51,6 +54,7 @@ typedef enum {
   COLUMN_FRAME,
   COLUMN_DURATION,
   COLUMN_TIME_MIDPT,
+  COLUMN_GATE,
   COLUMN_TOTAL,
   COLUMN_MEDIAN,
   COLUMN_MEAN,
@@ -70,6 +74,7 @@ static gboolean column_use_my_renderer[NUM_ANALYSIS_COLUMNS] = {
   FALSE,
   TRUE,
   TRUE,
+  FALSE,
   TRUE,
   TRUE,
   TRUE,
@@ -88,6 +93,7 @@ static gchar * analysis_titles[] = {
   N_("Frame"),
   N_("Duration (s)"),
   N_("Midpt (s)"),
+  N_("Gate"),
   N_("Total"),
   N_("Median"),
   N_("Mean"),
@@ -111,8 +117,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 		      analysis_roi_t * roi_analyses);
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
-			     gboolean * calc_on_subfraction,
-			     gdouble * subfraction);
+			     analysis_calculation_t * calculation_type,
+			     gdouble * subfraction,
+			     gdouble * threshold_value);
 
 
 /* function to handle exporting the roi analyses */
@@ -196,7 +203,9 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   time_t current_time;
   analysis_volume_t * volume_analyses;
   analysis_frame_t * frame_analyses;
+  analysis_gate_t * gate_analyses;
   guint frame;
+  guint gate;
   guint i;
   amide_real_t voxel_volume;
   gboolean title_printed;
@@ -218,10 +227,20 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
     fprintf(file_pointer, _("# ROI:\t%s\tType:\t%s\n"),
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
-    if (roi_analyses->subfraction < 1.0)
-      fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction);
-    else
+    switch(roi_analyses->calculation_type) {
+    case ALL_VOXELS:
       fprintf(file_pointer, _("#   Calculation done with all voxels in ROI\n"));
+      break;
+    case HIGHEST_FRACTION_VOXELS:
+      fprintf(file_pointer, _("#   Calculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction*100);
+      break;
+    case VOXELS_NEAR_MAX:
+      fprintf(file_pointer, _("#   Calculation done on voxels >= %5.3f percent of maximum value in ROI\n"), roi_analyses->threshold_value*100);
+      break;
+    default:
+      g_error("unexpected case in %s at line %d",__FILE__, __LINE__);
+    }
+
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
@@ -274,20 +293,29 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
       while (frame_analyses != NULL) {
-	fprintf(file_pointer, "    %5d", frame);
-	fprintf(file_pointer, "\t% 12.3f", frame_analyses->duration);
-	fprintf(file_pointer, "\t% 12.3f", frame_analyses->time_midpoint);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->total);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->median);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->mean);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->var);
-	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var));
-	fprintf(file_pointer, "\t% 12g", frame_analyses->min);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->max);
-	fprintf(file_pointer, "\t% 12g", frame_analyses->fractional_voxels*voxel_volume);
-	fprintf(file_pointer, "\t% 12.2f", frame_analyses->fractional_voxels);
-	fprintf(file_pointer, "\t% 12d", frame_analyses->voxels);
-	fprintf(file_pointer, "\n");
+
+	gate_analyses = frame_analyses->gate_analyses;
+	gate = 0;
+	while (gate_analyses != NULL) {
+	  fprintf(file_pointer, "    %5d", frame);
+	  fprintf(file_pointer, "\t% 12.3f", gate_analyses->duration);
+	  fprintf(file_pointer, "\t% 12.3f", gate_analyses->time_midpoint);
+	  fprintf(file_pointer, "\t% 12d", gate);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->total);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->median);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->mean);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->var);
+	  fprintf(file_pointer, "\t% 12g", sqrt(gate_analyses->var));
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->min);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->max);
+	  fprintf(file_pointer, "\t% 12g", gate_analyses->fractional_voxels*voxel_volume);
+	  fprintf(file_pointer, "\t% 12.2f", gate_analyses->fractional_voxels);
+	  fprintf(file_pointer, "\t% 12d", gate_analyses->voxels);
+	  fprintf(file_pointer, "\n");
+
+	  gate_analyses = gate_analyses->next_gate_analysis;
+	  gate++;
+	}
 
 	frame_analyses = frame_analyses->next_frame_analysis;
 	frame++;
@@ -310,7 +338,9 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
   time_t current_time;
   analysis_volume_t * volume_analyses;
   analysis_frame_t * frame_analyses;
+  analysis_gate_t * gate_analyses;
   guint frame;
+  guint gate;
   guint i;
   amide_real_t voxel_volume;
   AmitkPoint voxel_size;
@@ -340,23 +370,32 @@ static gchar * analyses_as_string(analysis_roi_t * roi_analyses) {
       frame = 0;
 
       while (frame_analyses != NULL) {
-	amitk_append_str(&roi_stats, "%-12s\t%-12s",
-			 AMITK_OBJECT_NAME(roi_analyses->roi),
-			 AMITK_OBJECT_NAME(volume_analyses->data_set));
 
-	amitk_append_str(&roi_stats, "\t% 12d", frame);
-	amitk_append_str(&roi_stats, "\t% 12.3f", frame_analyses->duration);
-	amitk_append_str(&roi_stats, "\t% 12.3f", frame_analyses->time_midpoint);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->total);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->median);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->mean);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->var);
-	amitk_append_str(&roi_stats, "\t% 12g", sqrt(frame_analyses->var));
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->min);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->max);
-	amitk_append_str(&roi_stats, "\t% 12g", frame_analyses->fractional_voxels*voxel_volume);
-	amitk_append_str(&roi_stats, "\t% 12.2f", frame_analyses->fractional_voxels);
-	amitk_append_str(&roi_stats, "\t% 12d\n", frame_analyses->voxels);
+	gate_analyses = frame_analyses->gate_analyses;
+	gate = 0;
+	while (gate_analyses != NULL) {
+	  amitk_append_str(&roi_stats, "%-12s\t%-12s",
+			   AMITK_OBJECT_NAME(roi_analyses->roi),
+			   AMITK_OBJECT_NAME(volume_analyses->data_set));
+
+	  amitk_append_str(&roi_stats, "\t% 12d", frame);
+	  amitk_append_str(&roi_stats, "\t% 12.3f", gate_analyses->duration);
+	  amitk_append_str(&roi_stats, "\t% 12.3f", gate_analyses->time_midpoint);
+	  amitk_append_str(&roi_stats, "\t% 12d", gate);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->total);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->median);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->mean);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->var);
+	  amitk_append_str(&roi_stats, "\t% 12g", sqrt(gate_analyses->var));
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->min);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->max);
+	  amitk_append_str(&roi_stats, "\t% 12g", gate_analyses->fractional_voxels*voxel_volume);
+	  amitk_append_str(&roi_stats, "\t% 12.2f", gate_analyses->fractional_voxels);
+	  amitk_append_str(&roi_stats, "\t% 12d\n", gate_analyses->voxels);
+
+	  gate_analyses = gate_analyses->next_gate_analysis;
+	  gate++;
+	}
 
 	frame_analyses = frame_analyses->next_frame_analysis;
 	frame++;
@@ -438,7 +477,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
   GtkWidget * scrolled=NULL;
   GtkWidget * hbox;
   analysis_frame_t * frame_analyses;
+  analysis_gate_t * gate_analyses;
   guint frame;
+  guint gate;
   guint table_row=0;
   amide_real_t voxel_volume;
   AmitkPoint voxel_size;
@@ -452,18 +493,22 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
   analysis_volume_t * volume_analyses;
   analysis_roi_t * temp_roi_analyses;
   gboolean dynamic_data;
+  gboolean gated_data;
   gboolean static_tree_created=FALSE;
   gboolean display;
   
   
-  /* first check if we have only static data */
+  /* check if we have dynamic/gated data */
   temp_roi_analyses = roi_analyses;
   dynamic_data = FALSE;
+  gated_data=FALSE;
   while (temp_roi_analyses != NULL) {
     volume_analyses = temp_roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
       if (AMITK_DATA_SET_NUM_FRAMES(volume_analyses->data_set) > 1)
 	dynamic_data = TRUE;
+      if (AMITK_DATA_SET_NUM_GATES(volume_analyses->data_set) > 1)
+	gated_data = TRUE;
       volume_analyses = volume_analyses->next_volume_analysis;
     }
     temp_roi_analyses = temp_roi_analyses->next_roi_analysis;
@@ -471,9 +516,9 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 
   while (roi_analyses != NULL) {
 
-    if ((dynamic_data) || (!static_tree_created)) {
+    if ((dynamic_data) || (gated_data) || (!static_tree_created)) {
 
-      if (dynamic_data)
+      if ((dynamic_data) || (gated_data))
 	label = gtk_label_new(AMITK_OBJECT_NAME(roi_analyses->roi));
       else
 	label = gtk_label_new(_("ROI Statistics"));
@@ -486,7 +531,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       table_row++;
       gtk_widget_show(hbox);
 
-      if (dynamic_data) {
+      if ((dynamic_data) || (gated_data)){
 	/* tell us the type */
 	label = gtk_label_new(_("type:"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -523,6 +568,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 				 G_TYPE_INT,
 				 AMITK_TYPE_TIME,
 				 AMITK_TYPE_TIME,
+				 G_TYPE_INT,
 				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
 				 AMITK_TYPE_DATA,
@@ -538,15 +584,20 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
     
       for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS; i_column++) {
 	display=TRUE;
-	if (dynamic_data) {
+
+	if ((dynamic_data) || (gated_data)) 
 	  if (i_column == COLUMN_ROI_NAME)
 	    display = FALSE;
-	} else {
+
+	if (!dynamic_data) 
 	  if ((i_column == COLUMN_FRAME) || 
 	      (i_column == COLUMN_TIME_MIDPT) || 
 	      (i_column == COLUMN_DURATION)) 
 	    display = FALSE;
-	}
+
+	if (!gated_data) 
+	  if (i_column == COLUMN_GATE)
+	    display = FALSE;
 
 	if (display) {
 	  renderer = gtk_cell_renderer_text_new ();
@@ -578,24 +629,34 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       */
       frame = 0;
       while (frame_analyses != NULL) {
-	gtk_list_store_append (store, &iter);  /* Acquire an iterator */
-	gtk_list_store_set (store, &iter,
-			    COLUMN_ROI_NAME, AMITK_OBJECT_NAME(roi_analyses->roi),
-			    COLUMN_DATA_SET_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
-			    COLUMN_FRAME, frame,
-			    COLUMN_DURATION, frame_analyses->duration,
-			    COLUMN_TIME_MIDPT, frame_analyses->time_midpoint,
-			    COLUMN_TOTAL, frame_analyses->total,
-			    COLUMN_MEDIAN, frame_analyses->median,
-			    COLUMN_MEAN, frame_analyses->mean,
-			    COLUMN_VAR, frame_analyses->var,
-			    COLUMN_STD_DEV, sqrt(frame_analyses->var),
-			    COLUMN_MIN,frame_analyses->min,
-			    COLUMN_MAX,frame_analyses->max,
-			    COLUMN_SIZE,frame_analyses->fractional_voxels*voxel_volume,
-			    COLUMN_FRAC_VOXELS,frame_analyses->fractional_voxels,
-			    COLUMN_VOXELS, frame_analyses->voxels,
-			    -1);
+
+	gate_analyses = frame_analyses->gate_analyses;
+	gate = 0;
+	while (gate_analyses != NULL) {
+	  gtk_list_store_append (store, &iter);  /* Acquire an iterator */
+	  gtk_list_store_set (store, &iter,
+			      COLUMN_ROI_NAME, AMITK_OBJECT_NAME(roi_analyses->roi),
+			      COLUMN_DATA_SET_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
+			      COLUMN_FRAME, frame,
+			      COLUMN_DURATION, gate_analyses->duration,
+			      COLUMN_TIME_MIDPT, gate_analyses->time_midpoint,
+			      COLUMN_GATE, gate,
+			      COLUMN_TOTAL, gate_analyses->total,
+			      COLUMN_MEDIAN, gate_analyses->median,
+			      COLUMN_MEAN, gate_analyses->mean,
+			      COLUMN_VAR, gate_analyses->var,
+			      COLUMN_STD_DEV, sqrt(gate_analyses->var),
+			      COLUMN_MIN,gate_analyses->min,
+			      COLUMN_MAX,gate_analyses->max,
+			      COLUMN_SIZE,gate_analyses->fractional_voxels*voxel_volume,
+			      COLUMN_FRAC_VOXELS,gate_analyses->fractional_voxels,
+			      COLUMN_VOXELS, gate_analyses->voxels,
+			      -1);
+
+	  gate_analyses = gate_analyses->next_gate_analysis;
+	  gate++;
+	}
+
 	frame++;
 	frame_analyses = frame_analyses->next_frame_analysis;
       }
@@ -604,7 +665,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 
 
     /* if we made the list on this iteration, place the widget*/
-    if ((dynamic_data) || (!static_tree_created)) {
+    if ((dynamic_data) || (gated_data) || (!static_tree_created)) {
       selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
       gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
     
@@ -621,16 +682,18 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
-			     gboolean * calc_on_subfraction,
-			     gdouble * subfraction) {
+			     analysis_calculation_t * calculation_type,
+			     gdouble * subfraction,
+			     gdouble * threshold_value) {
 
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
 
   *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
   *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
-  *calc_on_subfraction = gnome_config_get_int("ANALYSIS/CalculateOnSubFraction");
+  *calculation_type = gnome_config_get_int("ANALYSIS/CalculationType");
   *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
+  *threshold_value = gnome_config_get_float("ANALYSIS/ThresholdValue");
 
   gnome_config_pop_prefix();
 #endif
@@ -652,13 +715,12 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 #ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
-  gboolean calc_on_subfraction;
+  analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_value);
 #endif
-
-  if (!calc_on_subfraction) subfraction = 1.0;
 
   /* figure out which data sets we're dealing with */
   if (all_data_sets)
@@ -687,7 +749,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(study, rois, data_sets, subfraction);
+  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, subfraction, threshold_value);
 
   rois = amitk_objects_unref(rois);
   data_sets = amitk_objects_unref(data_sets);
@@ -732,10 +794,10 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 static void radio_buttons_cb(GtkWidget * widget, gpointer data);
 static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data);
+static void threshold_value_cb(GtkWidget * widget, gpointer data);
 
 
 
-/* function called to change the layout */
 static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
 #ifndef AMIDE_WIN32_HACKS
@@ -757,19 +819,22 @@ static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void calc_on_subfraction_cb(GtkWidget * widget, gpointer data) {
+static void calculation_type_cb(GtkWidget * widget, gpointer data) {
 
 #ifndef AMIDE_WIN32_HACKS
-  gboolean calc_on_subfraction;
+  analysis_calculation_t calculation_type;
 #endif
-  GtkWidget * spin_button = data;
+  GtkWidget * spin_buttons[2];
 
-  calc_on_subfraction = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  gtk_widget_set_sensitive(spin_button, calc_on_subfraction);
+  calculation_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "calculation_type"));
+  spin_buttons[0] = g_object_get_data(G_OBJECT(widget), "spin_button_0");
+  spin_buttons[1] = g_object_get_data(G_OBJECT(widget), "spin_button_1");
+  gtk_widget_set_sensitive(spin_buttons[0], calculation_type == HIGHEST_FRACTION_VOXELS);
+  gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
 
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("ANALYSIS/CalculateOnSubFraction", calc_on_subfraction);
+  gnome_config_set_int("ANALYSIS/CalculationType", calculation_type);
   gnome_config_pop_prefix();
   gnome_config_sync();
 #endif
@@ -788,6 +853,24 @@ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 #ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_float("ANALYSIS/SubFraction", subfraction);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+
+  return;
+}
+
+static void threshold_value_cb(GtkWidget * widget, gpointer data) {
+
+#ifndef AMIDE_WIN32_HACKS
+  gdouble threshold_value;
+#endif
+
+  threshold_value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
+
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_float("ANALYSIS/ThresholdValue", threshold_value);
   gnome_config_pop_prefix();
   gnome_config_sync();
 #endif
@@ -825,16 +908,17 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   guint table_row;
   GtkWidget * radio_button[4];
   GtkWidget * hseparator;
-  GtkWidget * check_button;
   GtkObject * adjustment;
-  GtkWidget * spin_button;
+  GtkWidget * spin_buttons[2];
+  analysis_calculation_t i_calculation_type;
 #ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
-  gboolean calc_on_subfraction;
+  analysis_calculation_t calculation_type;
   gdouble subfraction;
+  gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_value);
 #endif
 
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
@@ -924,36 +1008,72 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   table_row++;
 
   /* do we want to calculate over a subfraction */
-  label = gtk_label_new(_("Calculate over subset of voxels:"));
+  label = gtk_label_new(_("Calculate over all voxels (normal):"));
   gtk_table_attach(GTK_TABLE(table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-  check_button = gtk_check_button_new();
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), calc_on_subfraction);
-  gtk_table_attach(GTK_TABLE(table), check_button, 
-		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  /* signal attached below */
+  radio_button[0] = gtk_radio_button_new(NULL);
+  gtk_table_attach(GTK_TABLE(table), radio_button[0], 1,2,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[0]), "calculation_type", GINT_TO_POINTER(ALL_VOXELS));
   table_row++;
 
-  /* what subfraction */
+
+  /* do we want to calculate over a subfraction */
   label = gtk_label_new(_("Calculate over % highest voxels:"));
   gtk_table_attach(GTK_TABLE(table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
+  radio_button[1] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[1], 1,2,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[1]), "calculation_type", GINT_TO_POINTER(HIGHEST_FRACTION_VOXELS));
+
   adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 1.0);
-  spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
-  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
-  g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(subfraction_precentage_cb), NULL);
-  gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, 
+  spin_buttons[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[0]),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[0]), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(spin_buttons[0]), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  g_signal_connect(G_OBJECT(spin_buttons[0]), "value_changed",  G_CALLBACK(subfraction_precentage_cb), NULL);
+  gtk_table_attach(GTK_TABLE(table), spin_buttons[0], 2,3, 
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_widget_set_sensitive(spin_button, calc_on_subfraction);
+  gtk_widget_set_sensitive(spin_buttons[0], calculation_type == HIGHEST_FRACTION_VOXELS);
   table_row++;
 
-  /* calculate over subfraction callback */
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(calc_on_subfraction_cb), spin_button);
+  /* do we want to calculate over a percentage of max */
+  label = gtk_label_new(_("Calculate for voxels >= % of Max:"));
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  radio_button[2] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[2], 1,2,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[2]), "calculation_type", GINT_TO_POINTER(VOXELS_NEAR_MAX));
+
+  adjustment = gtk_adjustment_new(100.0*threshold_value, 0.0, 100.0,1.0, 1.0, 1.0);
+  spin_buttons[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[1]),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[1]), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[1]), FALSE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[1]), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(spin_buttons[1]), "output",
+		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+  g_signal_connect(G_OBJECT(spin_buttons[1]), "value_changed",  G_CALLBACK(threshold_value_cb), NULL);
+  gtk_table_attach(GTK_TABLE(table), spin_buttons[1], 2,3, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_sensitive(spin_buttons[1], calculation_type == VOXELS_NEAR_MAX);
+  table_row++;
+
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[calculation_type]), TRUE);
+
+  for (i_calculation_type=0; i_calculation_type < NUM_CALCULATION_TYPES; i_calculation_type++) {
+    g_object_set_data(G_OBJECT(radio_button[i_calculation_type]), "spin_button_0", spin_buttons[0]);
+    g_object_set_data(G_OBJECT(radio_button[i_calculation_type]), "spin_button_1", spin_buttons[1]);
+    g_signal_connect(G_OBJECT(radio_button[i_calculation_type]), "clicked", 
+		     G_CALLBACK(calculation_type_cb), NULL);
+  }
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

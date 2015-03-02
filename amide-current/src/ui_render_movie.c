@@ -44,6 +44,7 @@ typedef enum {
   NOT_DYNAMIC,
   OVER_TIME, 
   OVER_FRAMES, 
+  OVER_GATES,
   DYNAMIC_TYPES
 } dynamic_t;
 
@@ -169,14 +170,14 @@ static void dynamic_type_cb(GtkWidget * widget, gpointer data) {
     }
 
 
-    if ((type == OVER_TIME) || (type == NOT_DYNAMIC)) {
+    if (type != OVER_FRAMES) {
       gtk_widget_hide(ui_render_movie->start_frame_label);
       gtk_widget_hide(ui_render_movie->start_frame_spin_button);
       gtk_widget_hide(ui_render_movie->end_frame_label);
       gtk_widget_hide(ui_render_movie->end_frame_spin_button);
     }
 
-    if ((type == OVER_FRAMES) || (type == NOT_DYNAMIC)) {
+    if (type != OVER_TIME) {
       gtk_widget_hide(ui_render_movie->start_time_label);
       gtk_widget_hide(ui_render_movie->start_time_spin_button);
       gtk_widget_hide(ui_render_movie->end_time_label);
@@ -414,6 +415,7 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
   guint num_frames;
   gpointer mpeg_encode_context;
   gboolean continue_work=TRUE;
+  gint ds_gate;
 
   /* gray out anything that could screw up the movie */
   dialog_set_sensitive(ui_render_movie, FALSE);
@@ -440,7 +442,7 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
   num_frames = ceil(ui_render_movie->duration*FRAMES_PER_SECOND);
 
   /* figure out each frame's duration, needed if we're doing a movie over time */
-  if (ui_render_movie->type != NOT_DYNAMIC) {
+  if ((ui_render_movie->type == OVER_FRAMES) || (ui_render_movie->type == OVER_TIME)) {
     ui_render->duration = 
       (ui_render_movie->end_time-ui_render_movie->start_time) /((amide_time_t) num_frames);
   }
@@ -469,9 +471,11 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
     }
 
     /* figure out the start interval for this frame */
-    if (ui_render_movie->type == OVER_TIME) {
+    switch (ui_render_movie->type) {
+    case OVER_TIME:
       ui_render->start = ui_render_movie->start_time + i_frame*ui_render->duration;
-    }  else if (ui_render_movie->type == OVER_FRAMES) {
+      break;
+    case OVER_FRAMES:
       if (most_frames_ds) {
 	ds_frame = floor((i_frame/((gdouble) num_frames)
 			  * AMITK_DATA_SET_NUM_FRAMES(most_frames_ds)));
@@ -483,7 +487,23 @@ static void movie_generate(ui_render_movie_t * ui_render_movie, gchar * output_f
 	ui_render->start = 0.0;
 	ui_render->duration = 1.0;
       }
-    } /* else NOT_DYNAMIC */
+      break;
+    case OVER_GATES:
+      renderings = ui_render->renderings;
+      while (renderings != NULL) {
+	if (AMITK_IS_DATA_SET(renderings->rendering->object)) {
+	  ds_gate = floor((i_frame/((gdouble) num_frames))*AMITK_DATA_SET_NUM_GATES(renderings->rendering->object));
+	  amitk_data_set_set_view_start_gate(AMITK_DATA_SET(renderings->rendering->object), ds_gate);
+	  amitk_data_set_set_view_end_gate(AMITK_DATA_SET(renderings->rendering->object), ds_gate);
+	}
+	renderings = renderings->next;
+      }
+      break;
+    default:
+      /* NOT_DYNAMIC */
+      break;
+    }
+
 
  
     /* render the contexts */
@@ -530,6 +550,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   GtkWidget * radio_button1;
   GtkWidget * radio_button2;
   GtkWidget * radio_button3;
+  GtkWidget * radio_button4;
   GtkWidget * hbox;
   guint table_row = 0;
   AmitkAxis i_axis;
@@ -680,9 +701,14 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
   g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
 
+  radio_button4 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over gates"));
+  gtk_box_pack_start(GTK_BOX(hbox), radio_button4, FALSE, FALSE, 3);
+  g_object_set_data(G_OBJECT(radio_button4), "dynamic_type", GINT_TO_POINTER(OVER_GATES));
+
   g_signal_connect(G_OBJECT(radio_button1), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(radio_button2), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
   g_signal_connect(G_OBJECT(radio_button3), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
+  g_signal_connect(G_OBJECT(radio_button4), "clicked", G_CALLBACK(dynamic_type_cb), ui_render_movie);
 
   table_row++;
 

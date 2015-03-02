@@ -24,10 +24,14 @@ AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
 	 -DGTK_DISABLE_DEPRECATED \
-	-DGNOME_DISABLE_DEPRECATED
+	-DGNOME_DISABLE_DEPRECATED \
+	-I/usr/local/include
+
 
 # following are "toxic", as they drag in Gtk1 stuff
 #	$(XMEDCON_CFLAGS) 
+# added -I/usr/local/include above as that's where XMEDCON
+# usually gets installed
 
 bin_PROGRAMS = amide
 
@@ -124,6 +128,8 @@ amide_SOURCES = \
 	tb_roi_analysis.h \
 	ui_common.c \
 	ui_common.h \
+	ui_gate_dialog.c \
+	ui_gate_dialog.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
 	ui_render.c \

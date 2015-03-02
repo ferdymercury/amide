@@ -1,7 +1,7 @@
 /* tb_crop.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2002-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -67,6 +67,7 @@ typedef struct tb_crop_t {
   AmitkFormat format;
   AmitkScalingType scaling_type;
   guint frame;
+  guint gate;
   gdouble zoom;
   amide_data_t threshold_max;
   amide_data_t threshold_min;
@@ -88,6 +89,7 @@ typedef struct tb_crop_t {
 
   GtkWidget * zoom_spinner[AMITK_VIEW_NUM];
   GtkWidget * frame_spinner[AMITK_VIEW_NUM];
+  GtkWidget * gate_spinner[AMITK_VIEW_NUM];
   GtkWidget * spinner[AMITK_VIEW_NUM][AMITK_DIM_NUM][NUM_RANGES];
   GtkWidget * table[NUM_PAGES];
   GtkWidget * progress_dialog;
@@ -107,6 +109,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
 
 static void zoom_spinner_cb(GtkSpinButton * button, gpointer data);
 static void frame_spinner_cb(GtkSpinButton * button, gpointer data);
+static void gate_spinner_cb(GtkSpinButton * button, gpointer data);
 static void spinner_cb(GtkSpinButton * button, gpointer data);
 static void projection_thresholds_changed_cb(AmitkDataSet * projection, gpointer data);
 static void change_format_cb(GtkWidget * widget, gpointer data);
@@ -189,6 +192,27 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       tb_crop->zoom_spinner[view] = spin_button;
       table_row++;
+      
+      /* the gate selection */
+      if (AMITK_DATA_SET_NUM_GATES(tb_crop->data_set) > 1) {
+	label = gtk_label_new(_("gate"));
+	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
+			 table_column,table_column+1, table_row,table_row+1,
+			 FALSE,FALSE, X_PADDING, Y_PADDING);
+	
+	spin_button =  
+	  gtk_spin_button_new_with_range(0,AMITK_DATA_SET_NUM_GATES(tb_crop->data_set)-1,1);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+	gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+	g_object_set_data(G_OBJECT(spin_button), "which_view", GINT_TO_POINTER(view));
+	g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+			 G_CALLBACK(gate_spinner_cb), tb_crop);
+	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), spin_button, 
+			 table_column+1,table_column+2, table_row,table_row+1,
+			 FALSE,FALSE, X_PADDING, Y_PADDING);
+	tb_crop->gate_spinner[view] = spin_button;
+	table_row++;
+      }
       
       /* the frame selection */
       if (AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set) > 1) {
@@ -404,6 +428,15 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->zoom_spinner[view]), 
 				      G_CALLBACK(zoom_spinner_cb), tb_crop);
 
+    if (AMITK_DATA_SET_NUM_GATES(tb_crop->data_set) > 1) {
+      g_signal_handlers_block_by_func(G_OBJECT(tb_crop->gate_spinner[view]), 
+				      G_CALLBACK(gate_spinner_cb), tb_crop);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_crop->gate_spinner[view]), 
+				tb_crop->gate);
+      g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->gate_spinner[view]), 
+					G_CALLBACK(gate_spinner_cb), tb_crop);
+    }
+
     if (AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set) > 1) {
       g_signal_handlers_block_by_func(G_OBJECT(tb_crop->frame_spinner[view]), 
 				      G_CALLBACK(frame_spinner_cb), tb_crop);
@@ -498,6 +531,45 @@ static void frame_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 			      tb_crop->frame);
     g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->frame_spinner[view]), 
 				      G_CALLBACK(frame_spinner_cb), tb_crop);
+    
+    /* unref all the computed projections */
+    for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) 
+      if (tb_crop->projections[i_view] != NULL)
+	tb_crop->projections[i_view] = amitk_object_unref(tb_crop->projections[i_view]);
+    
+    /* just update the current projection for now */
+    add_canvas_update(tb_crop, view);
+  }
+  
+
+  return;
+}
+
+static void gate_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
+
+  tb_crop_t * tb_crop = data;
+  AmitkView view;
+  AmitkView i_view;
+  gint int_value;
+
+  int_value = gtk_spin_button_get_value_as_int(spin_button);
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(spin_button), "which_view"));
+
+  if (int_value < 0)
+    int_value = 0;
+  else if (int_value >= AMITK_DATA_SET_NUM_GATES(tb_crop->data_set))
+    int_value = AMITK_DATA_SET_NUM_GATES(tb_crop->data_set)-1;
+  
+  
+  if (int_value != tb_crop->gate) {
+    tb_crop->gate = int_value;
+    
+    g_signal_handlers_block_by_func(G_OBJECT(tb_crop->gate_spinner[view]), 
+				    G_CALLBACK(gate_spinner_cb), tb_crop);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_crop->gate_spinner[view]), 
+			      tb_crop->gate);
+    g_signal_handlers_unblock_by_func(G_OBJECT(tb_crop->gate_spinner[view]), 
+				      G_CALLBACK(gate_spinner_cb), tb_crop);
     
     /* unref all the computed projections */
     for (i_view=0; i_view < AMITK_VIEW_NUM; i_view++) 
@@ -711,7 +783,8 @@ static gboolean update_canvas_while_idle(gpointer data) {
 
     /* create the projections if we haven't already */
     if (tb_crop->projections[view] == NULL) 
-      amitk_data_set_get_projections(tb_crop->data_set, tb_crop->frame, tb_crop->projections, 
+      amitk_data_set_get_projections(tb_crop->data_set, tb_crop->frame, tb_crop->gate, 
+				     tb_crop->projections, 
 				     amitk_progress_dialog_update, tb_crop->progress_dialog);
 
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++) {
@@ -777,6 +850,9 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   tb_crop_t * tb_crop = data;
   AmitkDataSet * cropped;
 
+  /* disable the buttons */
+  gtk_widget_set_sensitive(GTK_WIDGET(druid), FALSE);
+
   /* generate the new data set */
   cropped = amitk_data_set_get_cropped(tb_crop->data_set, 
 				       tb_crop->range[RANGE_MIN],
@@ -794,6 +870,10 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 
     /* close the dialog box */
     cancel_cb(widget, data);
+  } else {
+
+    /* reenable the buttons */
+    gtk_widget_set_sensitive(GTK_WIDGET(druid), TRUE);
   }
 
   return;
@@ -902,6 +982,7 @@ static tb_crop_t * tb_crop_init(void) {
 
   tb_crop->reference_count = 1;
   tb_crop->frame = 0;
+  tb_crop->gate=0;
   tb_crop->dialog = NULL;
   tb_crop->data_set = NULL;
   tb_crop->study = NULL;
@@ -952,6 +1033,7 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
   tb_crop->format = AMITK_DATA_SET_FORMAT(active_ds);
   tb_crop->scaling_type = AMITK_DATA_SET_SCALING_TYPE(active_ds);
   tb_crop->frame = amitk_data_set_get_frame(active_ds, AMITK_STUDY_VIEW_START_TIME(study));
+  tb_crop->gate = AMITK_DATA_SET_VIEW_START_GATE(active_ds);
 
   tb_crop->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(tb_crop->dialog), "delete_event",

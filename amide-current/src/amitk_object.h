@@ -1,7 +1,7 @@
 /* amitk_object.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -83,14 +83,15 @@ struct _AmitkObjectClass
 {
   AmitkSpaceClass space_class;
 
-  void (* object_name_changed)          (AmitkObject * object);
-  gboolean (* object_selection_changed) (AmitkObject * object);
-  AmitkObject * (* object_copy)         (const AmitkObject * object);
-  void (* object_copy_in_place)         (AmitkObject * dest_object, const AmitkObject * src_object);
-  void (* object_write_xml)             (const AmitkObject * object, xmlNodePtr nodes, FILE * study_file);
-  gchar * (* object_read_xml)           (AmitkObject * object, xmlNodePtr nodes, FILE * study_file, gchar * error_buf);
-  void (* object_add_child)             (AmitkObject * object, AmitkObject * child);
-  void (* object_remove_child)          (AmitkObject * object, AmitkObject * child);
+  void (* object_name_changed)            (AmitkObject * object);
+  void (* object_selection_changed)       (AmitkObject * object);
+  void (* object_child_selection_changed) (AmitkObject * object);
+  AmitkObject * (* object_copy)           (const AmitkObject * object);
+  void (* object_copy_in_place)           (AmitkObject * dest_object, const AmitkObject * src_object);
+  void (* object_write_xml)               (const AmitkObject * object, xmlNodePtr nodes, FILE * study_file);
+  gchar * (* object_read_xml)             (AmitkObject * object, xmlNodePtr nodes, FILE * study_file, gchar * error_buf);
+  void (* object_add_child)               (AmitkObject * object, AmitkObject * child);
+  void (* object_remove_child)            (AmitkObject * object, AmitkObject * child);
        
 };
 

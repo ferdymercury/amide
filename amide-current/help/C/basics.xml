@@ -391,6 +391,18 @@
    </sect3>
 
 
+   <sect3 id="gate-dialog"><title>Gate Selector</title>
+    
+    <para>This button pops up a dialog for picking which gates of data
+    to show from a gated data set. A gate to display can be selected
+    by clicking on a list element.  Multiple gates can be selected by
+    holding down the shift key and selecting additional frames.  Note
+    that by using the entries, a span of gates can be choosen that
+    loops around (e.g. gates 8, 0, and 1).</para>
+
+   </sect3>
+
+
    <sect3><title>Target Selector</title>
     
     <para>The target cross hairs are generally only displayed when one

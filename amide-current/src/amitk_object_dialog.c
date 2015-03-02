@@ -702,8 +702,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 			GINT_TO_POINTER(i_axis));
       g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "value_changed", 
 		       G_CALLBACK(dialog_change_voxel_size_cb), dialog);
-    g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "output",
-		     G_CALLBACK(amitk_spin_button_scientific_output), NULL);
+      g_signal_connect(G_OBJECT(dialog->voxel_size_spin[i_axis]), "output",
+		       G_CALLBACK(amitk_spin_button_scientific_output), NULL);
       gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_spin[i_axis],1,2,
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(dialog->voxel_size_spin[i_axis]);
@@ -1169,6 +1169,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   gchar * temp_str;
   gint i;
   gboolean immutables;
+  gboolean center_valid = TRUE;
 
   /* object name */
   g_signal_handlers_block_by_func(G_OBJECT(dialog->name_entry),G_CALLBACK(dialog_change_name_cb), dialog);
@@ -1250,9 +1251,12 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 
   }
 
-  if (AMITK_IS_VOLUME(dialog->object))
-    center = amitk_volume_get_center(AMITK_VOLUME(dialog->object));
-  else if (AMITK_IS_STUDY(dialog->object))
+  if (AMITK_IS_VOLUME(dialog->object)) {
+    if (AMITK_VOLUME_VALID(dialog->object))
+      center = amitk_volume_get_center(AMITK_VOLUME(dialog->object));
+    else
+      center_valid = FALSE;
+  } else if (AMITK_IS_STUDY(dialog->object))
     center = AMITK_STUDY_VIEW_CENTER(dialog->object);
   else if (AMITK_IS_FIDUCIAL_MARK(dialog->object)) 
     center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
@@ -1263,8 +1267,10 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
     g_signal_handlers_block_by_func(G_OBJECT(dialog->center_spin[i_axis]), 
 				    G_CALLBACK(dialog_change_center_cb), dialog);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->center_spin[i_axis]), 
-			      point_get_component(center, i_axis));
+    gtk_widget_set_sensitive(GTK_WIDGET(dialog->center_spin[i_axis]), center_valid);
+    if (center_valid)
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->center_spin[i_axis]), 
+				point_get_component(center, i_axis));
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->center_spin[i_axis]), 
 				      G_CALLBACK(dialog_change_center_cb), dialog);
 
@@ -1282,6 +1288,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
       for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
 	if ((AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) || (i_axis == AMITK_AXIS_Z)) {
 	  g_signal_handlers_block_by_func(G_OBJECT(dialog->dimension_spin[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
+	  gtk_widget_set_sensitive(GTK_WIDGET(dialog->dimension_spin[i_axis]), center_valid);
 	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->dimension_spin[i_axis]), 
 				    point_get_component(AMITK_VOLUME_CORNER(dialog->object), i_axis));
 	  g_signal_handlers_unblock_by_func(G_OBJECT(dialog->dimension_spin[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
@@ -1568,7 +1575,7 @@ static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
   /* figure out which widget this is */
   axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
 
-  if (AMITK_IS_VOLUME(dialog->object))
+  if (AMITK_IS_VOLUME(dialog->object)) 
     old_center = amitk_volume_get_center(AMITK_VOLUME(dialog->object)); /* in base coords */
   else if (AMITK_IS_STUDY(dialog->object))
     old_center = AMITK_STUDY_VIEW_CENTER(dialog->object);

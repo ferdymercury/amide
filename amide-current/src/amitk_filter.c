@@ -1,7 +1,7 @@
 /* amitk_filter.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -42,9 +42,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
 							      const amide_real_t fwhm) {
 
   AmitkVoxel i_voxel;
-  AmitkVoxel point[8];
   AmitkPoint location;
-  gint i;
   amide_real_t sigma;
   AmitkVoxel half;
   AmitkRawData * kernel;
@@ -52,6 +50,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   amide_real_t gaussian_value;
 
   g_return_val_if_fail((kernel_size.t == 1), NULL); /* can't filter over time */
+  g_return_val_if_fail((kernel_size.g == 1), NULL); /* can't filter over gates */
   g_return_val_if_fail((kernel_size.z & 0x1), NULL); /* needs to be odd */
   g_return_val_if_fail((kernel_size.y & 0x1), NULL); 
   g_return_val_if_fail((kernel_size.x & 0x1), NULL); 
@@ -63,7 +62,7 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
   kernel->format = AMITK_FORMAT_DOUBLE;
 
   g_free(kernel->data);
-  kernel->dim.t = 1;
+  kernel->dim.t = kernel->dim.g = 1;
   kernel->dim.z = kernel->dim.y = AMITK_FILTER_FFT_SIZE;
   kernel->dim.x = 2*AMITK_FILTER_FFT_SIZE; /* real and complex */
 
@@ -80,15 +79,13 @@ AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel k
 	AMITK_RAW_DATA_DOUBLE_SET_CONTENT(kernel, i_voxel) = 0.0;
 
   sigma = fwhm/SIGMA_TO_FWHM;
-  half.t = 0;
+  half.t = half.g = 0;
   half.z = kernel_size.z>>1;
   half.y = kernel_size.y>>1;
   half.x = kernel_size.x>>1;
 
-  i_voxel.t = 0;
-  for (i=0; i<8; i++) point[i].t = 0;
+  i_voxel.t = i_voxel.g = 0;
   total = 0.0;
-
 
   for (i_voxel.z = 0; i_voxel.z < kernel_size.z; i_voxel.z++) {
     location.z = voxel_size.z*(i_voxel.z-half.z);
@@ -123,12 +120,13 @@ void amitk_filter_3D_FFT(AmitkRawData * data,
   
   g_return_if_fail(AMITK_RAW_DATA_FORMAT(data) == AMITK_FORMAT_DOUBLE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_T(data) == 1);
+  g_return_if_fail(AMITK_RAW_DATA_DIM_G(data) == 1);
   g_return_if_fail(AMITK_RAW_DATA_DIM_Z(data) == AMITK_FILTER_FFT_SIZE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_Y(data) == AMITK_FILTER_FFT_SIZE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_X(data) == 2*AMITK_FILTER_FFT_SIZE);
 
   /* FFT in the X direction */
-  i_voxel.t = i_voxel.x = 0;
+  i_voxel.t = i_voxel.g = i_voxel.x = 0;
   for (i_voxel.z=0; i_voxel.z < AMITK_RAW_DATA_DIM_Z(data); i_voxel.z++) 
     for (i_voxel.y=0; i_voxel.y < AMITK_RAW_DATA_DIM_Y(data); i_voxel.y++) 
       gsl_fft_complex_forward(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -137,7 +135,7 @@ void amitk_filter_3D_FFT(AmitkRawData * data,
 			      wavetable, workspace);
 
   /* FFT in the Y direction */
-  i_voxel.t = i_voxel.y = 0;
+  i_voxel.t = i_voxel.g = i_voxel.y = 0;
   for (i_voxel.z=0; i_voxel.z < AMITK_RAW_DATA_DIM_Z(data); i_voxel.z++) 
     for (i_voxel.x=0; i_voxel.x < AMITK_RAW_DATA_DIM_X(data); i_voxel.x+=2) 
       gsl_fft_complex_forward(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -146,7 +144,7 @@ void amitk_filter_3D_FFT(AmitkRawData * data,
 			     wavetable, workspace);
 
   /* FFT in the Z direction */
-  i_voxel.t = i_voxel.z = 0;
+  i_voxel.t = i_voxel.g = i_voxel.z = 0;
     for (i_voxel.y=0; i_voxel.y < AMITK_RAW_DATA_DIM_Y(data); i_voxel.y++) 
       for (i_voxel.x=0; i_voxel.x < AMITK_RAW_DATA_DIM_X(data); i_voxel.x+=2) 
       gsl_fft_complex_forward(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -165,12 +163,13 @@ void amitk_filter_inverse_3D_FFT(AmitkRawData * data,
 
   g_return_if_fail(AMITK_RAW_DATA_FORMAT(data) == AMITK_FORMAT_DOUBLE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_T(data) == 1);
+  g_return_if_fail(AMITK_RAW_DATA_DIM_G(data) == 1);
   g_return_if_fail(AMITK_RAW_DATA_DIM_Z(data) == AMITK_FILTER_FFT_SIZE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_Y(data) == AMITK_FILTER_FFT_SIZE);
   g_return_if_fail(AMITK_RAW_DATA_DIM_X(data) == 2*AMITK_FILTER_FFT_SIZE);
 
   /* inverse FFT in the X direction */
-  i_voxel.t = i_voxel.x = 0;
+  i_voxel.t = i_voxel.g = i_voxel.x = 0;
   for (i_voxel.z=0; i_voxel.z < AMITK_RAW_DATA_DIM_Z(data); i_voxel.z++) 
     for (i_voxel.y=0; i_voxel.y < AMITK_RAW_DATA_DIM_Y(data); i_voxel.y++) 
       gsl_fft_complex_inverse(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -179,7 +178,7 @@ void amitk_filter_inverse_3D_FFT(AmitkRawData * data,
 			      wavetable, workspace);
 
   /* inverse FFT in the Y direction */
-  i_voxel.t = i_voxel.y = 0;
+  i_voxel.t = i_voxel.g = i_voxel.y = 0;
   for (i_voxel.z=0; i_voxel.z < AMITK_RAW_DATA_DIM_Z(data); i_voxel.z++) 
     for (i_voxel.x=0; i_voxel.x < AMITK_RAW_DATA_DIM_X(data); i_voxel.x+=2) 
       gsl_fft_complex_inverse(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -188,7 +187,7 @@ void amitk_filter_inverse_3D_FFT(AmitkRawData * data,
 			      wavetable, workspace);
 
   /* inverse FFT in the Z direction */
-  i_voxel.t = i_voxel.z = 0;
+  i_voxel.t = i_voxel.g = i_voxel.z = 0;
     for (i_voxel.y=0; i_voxel.y < AMITK_RAW_DATA_DIM_Y(data); i_voxel.y++) 
       for (i_voxel.x=0; i_voxel.x < AMITK_RAW_DATA_DIM_X(data); i_voxel.x+=2) 
 	gsl_fft_complex_inverse(AMITK_RAW_DATA_DOUBLE_POINTER(data,i_voxel),
@@ -214,7 +213,7 @@ void amitk_filter_complex_mult(AmitkRawData * data, AmitkRawData * kernel) {
   g_return_if_fail(AMITK_RAW_DATA_DIM_X(data) == AMITK_RAW_DATA_DIM_X(kernel));
 
 
-  i_voxel.t = j_voxel.t = 0;
+  i_voxel.t = i_voxel.g = j_voxel.t = j_voxel.g = 0;
   for (i_voxel.z = 0, j_voxel.z=0; i_voxel.z < AMITK_RAW_DATA_DIM_Z(data); i_voxel.z++, j_voxel.z++)
     for (i_voxel.y = 0, j_voxel.y=0; i_voxel.y < AMITK_RAW_DATA_DIM_Y(data); i_voxel.y++, j_voxel.y++)
       for (i_voxel.x = 0, j_voxel.x=1; i_voxel.x < AMITK_RAW_DATA_DIM_X(data); i_voxel.x+=2, j_voxel.x+=2) {

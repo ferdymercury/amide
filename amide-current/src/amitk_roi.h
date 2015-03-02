@@ -1,7 +1,7 @@
 /* amitk_roi.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -112,6 +112,7 @@ void            amitk_roi_set_type                (AmitkRoi * roi, AmitkRoiType 
 void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,  
 						   const AmitkDataSet * ds, 
 						   const guint frame,
+						   const guint gate,
 						   const gboolean inverse,
 						   void (* calculation)(),
 						   gpointer data);

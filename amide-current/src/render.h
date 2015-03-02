@@ -1,7 +1,7 @@
 /* render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -119,6 +119,8 @@ typedef struct _rendering_t {
   pixel_type_t pixel_type;
   amide_time_t start;
   amide_time_t duration;
+  gint view_start_gate;
+  gint view_end_gate;
   AmitkVolume * transformed_volume; /* volume in rendering space in which the data resides  */
   AmitkVolume * extraction_volume; /* set on init, used for extracting data into the context */
   rendering_voxel_t * rendering_data;

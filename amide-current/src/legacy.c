@@ -3,7 +3,7 @@
  *
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -101,14 +101,15 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar *
     return_vp.x = x;
     return_vp.y = y;
     return_vp.z = z;
+    return_vp.g = 1;
     return_vp.t = 1;
 
   } 
 
   if ((temp_string == NULL) || (error == EOF)) {
-    return_vp.x = return_vp.y = return_vp.z = return_vp.t = 0;
-    amitk_append_str_with_newline(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
-				  descriptor, return_vp.x, return_vp.y, return_vp.z, return_vp.t);
+    return_vp.x = return_vp.y = return_vp.z = return_vp.g = return_vp.t = 0;
+    amitk_append_str_with_newline(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d %d]",
+				  descriptor, return_vp.x, return_vp.y, return_vp.z, return_vp.g, return_vp.t);
   }
 
   return return_vp;
@@ -344,11 +345,12 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
       }
       
       for (i.t=0; i.t<new_volume->internal_scaling->dim.t; i.t++)
-	for (i.z=0; i.z<new_volume->internal_scaling->dim.z; i.z++)
-	  for (i.y=0; i.y<new_volume->internal_scaling->dim.y; i.y++)
-	    for (i.x=0; i.x<new_volume->internal_scaling->dim.x; i.x++)
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
-		amitk_raw_data_get_value(old_scaling, i);
+	for (i.g=0; i.g<new_volume->internal_scaling->dim.g; i.g++)
+	  for (i.z=0; i.z<new_volume->internal_scaling->dim.z; i.z++)
+	    for (i.y=0; i.y<new_volume->internal_scaling->dim.y; i.y++)
+	      for (i.x=0; i.x<new_volume->internal_scaling->dim.x; i.x++)
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
+		  amitk_raw_data_get_value(old_scaling, i);
       
       g_object_unref(old_scaling);
     }

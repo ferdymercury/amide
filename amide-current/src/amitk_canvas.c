@@ -1,7 +1,7 @@
 /* amitk_canvas.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2003 Andy Loening
+ * Copyright (C) 2002-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -630,7 +630,6 @@ static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer data) {
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   canvas_add_object_update(canvas, AMITK_OBJECT(ds));
 
-
   return;
 }
 
@@ -726,6 +725,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   AmitkDataSet * draw_on_ds=NULL;
   GtkWindow * window;
   GtkWidget * toplevel;
+  amide_intpoint_t gate;
 	
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_ROI(roi));
@@ -764,8 +764,13 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 
   start_time = AMITK_STUDY_VIEW_START_TIME(canvas->study);
   temp_point = amitk_space_b2s(AMITK_SPACE(draw_on_ds), position);
+  if (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)
+    gate = AMITK_DATA_SET_VIEW_START_GATE(draw_on_ds);
+  else
+    gate = 0;
   POINT_TO_VOXEL(temp_point, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds),
 		 amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), start_time),
+		 gate,
 		 temp_voxel);
 
   if (!amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(draw_on_ds),temp_voxel)) {
@@ -773,23 +778,39 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
     return;
   }
 
-  /* complain if more then one frame is currently showing for ISOCONTOUR_3D */
+  /* complain if more then one frame or gate is currently showing for ISOCONTOUR_3D */
   if (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D) {
     end_time = start_time + AMITK_STUDY_VIEW_DURATION(canvas->study);
 
-    if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), end_time)) {
-      toplevel = gtk_widget_get_toplevel (GTK_WIDGET(canvas));
-      if (toplevel != NULL) 
-	window = GTK_WINDOW(toplevel);
-      else
-	window = NULL;
+    toplevel = gtk_widget_get_toplevel (GTK_WIDGET(canvas));
+    if (toplevel != NULL) window = GTK_WINDOW(toplevel);
+    else window = NULL;
       
+    if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(draw_on_ds), end_time)) {
       question = gtk_message_dialog_new(window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_MESSAGE_QUESTION,
 					GTK_BUTTONS_OK_CANCEL,
 					_("Multiple data frames are currently being shown from: %s\nThe isocontour will only be drawn over frame %d"),
 					AMITK_OBJECT_NAME(draw_on_ds),	temp_voxel.t);
+					
+
+      return_val = gtk_dialog_run(GTK_DIALOG(question));
+      
+      gtk_widget_destroy(question);
+      if (return_val != GTK_RESPONSE_OK) { 
+	return; /* cancel */
+      }
+    }
+
+    if (AMITK_DATA_SET_VIEW_START_GATE(draw_on_ds) != AMITK_DATA_SET_VIEW_END_GATE(draw_on_ds)) {
+      question = gtk_message_dialog_new(window,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_MESSAGE_QUESTION,
+					GTK_BUTTONS_OK_CANCEL,
+					_("Multiple gates are currently being shown from: %s\nThe isocontour will only be drawn over gate %d"),
+					AMITK_OBJECT_NAME(draw_on_ds),	temp_voxel.g);
+					
 
       return_val = gtk_dialog_run(GTK_DIALOG(question));
       
@@ -1135,7 +1156,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     active_slice = canvas->slices->data;
 
   temp_point[0] = amitk_space_b2s(AMITK_SPACE(active_slice), base_point);
-  POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(active_slice), 0, temp_voxel);
+  POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(active_slice), 0,0,temp_voxel);
   voxel_value = amitk_data_set_get_value(active_slice, temp_voxel);
   
   switch (canvas_event_type) {
@@ -1435,7 +1456,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_MOTION_LARGE_ERASE_ISOCONTOUR:
   case CANVAS_EVENT_MOTION_ERASE_ISOCONTOUR:
     temp_point[0] = amitk_space_b2s(AMITK_SPACE(object), base_point);
-    POINT_TO_VOXEL(temp_point[0], AMITK_ROI(object)->voxel_size, 0, temp_voxel);
+    POINT_TO_VOXEL(temp_point[0], AMITK_ROI(object)->voxel_size, 0, 0, temp_voxel);
     if ((canvas_event_type == CANVAS_EVENT_MOTION_LARGE_ERASE_ISOCONTOUR) ||
 	(canvas_event_type == CANVAS_EVENT_PRESS_LARGE_ERASE_ISOCONTOUR))
       amitk_roi_isocontour_erase_area(AMITK_ROI(object), temp_voxel, 2);
@@ -2823,6 +2844,7 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
     g_signal_connect(G_OBJECT(object), "thresholding_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholds_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(canvas_color_table_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "view_gates_changed", G_CALLBACK(canvas_data_set_changed_cb), canvas);
     canvas->max_slice_cache_size += 3;
   }
 

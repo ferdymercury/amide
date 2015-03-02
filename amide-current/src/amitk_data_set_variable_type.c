@@ -1,7 +1,7 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -42,10 +42,10 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
 
   AmitkVoxel i;
   amide_data_t max, min, temp;
-  AmitkVoxel initial_voxel;
   div_t x;
   gint divider;
-  gint t_times_z;
+  gint total_planes;
+  gint i_plane;
   gchar * temp_string;
   AmitkVoxel dim;
   
@@ -57,30 +57,32 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(Ami
     (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  t_times_z = dim.z*dim.t;
-  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+  total_planes = AMITK_DATA_SET_TOTAL_PLANES(data_set);
+  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
 
-  initial_voxel = zero_voxel;
+  i = zero_voxel;
+  i_plane=0;
   for (i.t = 0; i.t < dim.t; i.t++) {
-    initial_voxel.t = i.t;
-    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, initial_voxel);
+    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
     if (finite(temp)) max = min = temp;   
     else max = min = 0.0; /* just throw in zero */
 
-    for (i.z = 0; i.z < dim.z; i.z++) {
-      if (update_func != NULL) {
-	x = div(i.t*dim.z+i.z,divider);
-	if (x.rem == 0)
-	  (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*dim.z)/t_times_z);
-      }
-      for (i.y = 0; i.y < dim.y; i.y++) 
-	for (i.x = 0; i.x < dim.x; i.x++) {
-	  temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
-	  if (finite(temp)) {
-	    if (temp > max) max = temp;
-	    else if (temp < min) min = temp;
-	  }
+    for (i.g = 0; i.g < dim.g; i.g++) {
+      for (i.z = 0; i.z < dim.z; i.z++, i_plane++) {
+	if (update_func != NULL) {
+	  x = div(i_plane, divider);
+	  if (x.rem == 0)
+	    (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble)total_planes));
 	}
+	for (i.y = 0; i.y < dim.y; i.y++) 
+	  for (i.x = 0; i.x < dim.x; i.x++) {
+	    temp = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, i);
+	    if (finite(temp)) {
+	      if (temp > max) max = temp;
+	      else if (temp < min) min = temp;
+	    }
+	  }
+      }
     }
     
     data_set->frame_max[i.t] = max;
@@ -110,7 +112,8 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
   gchar * temp_string;
   div_t x;
   gint divider;
-  gint t_times_z;
+  gint total_planes;
+  gint i_plane;
   gboolean continue_work=TRUE;
   AmitkRawData * distribution;
 
@@ -125,7 +128,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
     scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/diff;
   
   distribution_dim.x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
-  distribution_dim.y = distribution_dim.z = distribution_dim.t = 1;
+  distribution_dim.y = distribution_dim.z = distribution_dim.g = distribution_dim.t = 1;
   distribution = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, distribution_dim);
   if (distribution == NULL) {
     g_warning(_("couldn't allocate space for the data set structure to hold distribution data"));
@@ -140,24 +143,27 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
-  t_times_z = data_set_dim.z*data_set_dim.t;
-  divider = ((t_times_z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (t_times_z/AMIDE_UPDATE_DIVIDER);
+  total_planes = AMITK_DATA_SET_TOTAL_PLANES(data_set);
+  divider = ((total_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (total_planes/AMIDE_UPDATE_DIVIDER);
 
   /* now "bin" the data */
-  j.t = j.z = j.y = 0;
+  j = zero_voxel;
+  i_plane=0;
   for (i.t = 0; (i.t < data_set_dim.t) && continue_work; i.t++) {
-    for ( i.z = 0; (i.z < data_set_dim.z) && continue_work; i.z++) {
-      if (update_func != NULL) {
-	x = div(i.t*data_set_dim.z+i.z,divider);
-	if (x.rem == 0)
-	  continue_work = (*update_func)(update_data, NULL, (gdouble) (i.z+i.t*data_set_dim.z)/t_times_z);
-      }
-
-      for (i.y = 0; i.y < data_set_dim.y; i.y++) 
-	for (i.x = 0; i.x < data_set_dim.x; i.x++) {
-	  j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-amitk_data_set_get_global_min(data_set));
-	  AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) += 1.0;
+    for (i.g = 0; (i.g < data_set_dim.g) && continue_work; i.g++) {
+      for ( i.z = 0; (i.z < data_set_dim.z) && continue_work; i.z++, i_plane++) {
+	if (update_func != NULL) {
+	  x = div(i_plane,divider);
+	  if (x.rem == 0)
+	    continue_work = (*update_func)(update_data, NULL, ((gdouble) i_plane)/((gdouble) total_planes));
 	}
+
+	for (i.y = 0; i.y < data_set_dim.y; i.y++) 
+	  for (i.x = 0; i.x < data_set_dim.x; i.x++) {
+	    j.x = scale*(AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i)-amitk_data_set_get_global_min(data_set));
+	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(distribution,j) += 1.0;
+	  }
+      }
     }
   }
 
@@ -204,6 +210,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   amide_data_t weight;
   amide_data_t time_weight;
   amide_intpoint_t start_frame, end_frame, i_frame;
+  amide_intpoint_t i_gate, use_gate;
   amide_time_t end_time;
   AmitkPoint box_point[8];
   AmitkVoxel box_voxel[8];
@@ -221,17 +228,21 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   amide_data_t empty;
   AmitkCorners intersection_corners;
   AmitkVoxel dim;
+  gint num_gates;
 
   /* ----- figure out what frames of this data set to include ----*/
   end_time = start_time+duration;
   start_frame = amitk_data_set_get_frame(data_set, start_time+EPSILON);
   end_frame = amitk_data_set_get_frame(data_set, end_time-EPSILON);
 
+  /* the number of gates we'll be looking at */
+  num_gates = AMITK_DATA_SET_NUM_VIEW_GATES(data_set);
+
   /* ------------------------- */
 
   dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(slice_volume))/pixel_dim);
   dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(slice_volume))/pixel_dim);
-  dim.z = dim.t = 1;
+  dim.z = dim.g = dim.t = 1;
 
 
   /* get the return slice */
@@ -254,10 +265,11 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   slice->scan_start = start_time;
   slice->thresholding = data_set->thresholding;
   slice->interpolation = AMITK_DATA_SET_INTERPOLATION(data_set);
+  slice->view_start_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
+  slice->view_end_gate = AMITK_DATA_SET_VIEW_END_GATE(data_set);
 
   amitk_data_set_calc_far_corner(slice);
   amitk_data_set_set_frame_duration(slice, 0, duration);
-
 
 #if AMIDE_DEBUG
   center_point = amitk_volume_get_center(slice_volume);
@@ -304,8 +316,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 					       AMITK_VOLUME(data_set), 
 					       intersection_corners)) {
     /* translate the intersection into voxel space */
-    POINT_TO_VOXEL(intersection_corners[0], slice->voxel_size, 0, start);
-    POINT_TO_VOXEL(intersection_corners[1], slice->voxel_size, 0, end);
+    POINT_TO_VOXEL(intersection_corners[0], slice->voxel_size, 0, 0, start);
+    POINT_TO_VOXEL(intersection_corners[1], slice->voxel_size, 0, 0, end);
   } else { /* no intersection */
     start = zero_voxel;
     end = zero_voxel;
@@ -324,7 +336,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     empty = 0;
 
   /* iterate over those voxels that we didn't cover, and set them to empty */
-  i_voxel.t = i_voxel.z = 0;
+  i_voxel.t = i_voxel.g = i_voxel.z = 0;
   for (i_voxel.y = 0; i_voxel.y < start.y; i_voxel.y++) 
     for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
       AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
@@ -343,8 +355,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++)
       AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = 0;
 
-
-
   switch(data_set->interpolation) {
 
   case AMITK_INTERPOLATION_TRILINEAR:
@@ -354,100 +364,109 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
 	if (i_frame == start_frame)
-	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/duration;
+	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(duration*num_gates);
 	else if (i_frame == end_frame)
-	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
+	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(duration*num_gates);
 	else
-	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/duration;
+	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/(duration*num_gates);
       } else
-	time_weight = 1.0;
+	time_weight = 1.0/((gdouble) num_gates);
 
-      /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps); z++) {
+      /* iterate over gates */
+      i_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
+      for (i_gate=0; i_gate < num_gates; i_gate++) {
+	use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
+	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
+
+	/* iterate over the number of planes we'll be compressing into this slice */
+	for (z = 0; z < ceil(z_steps); z++) {
 	
-	/* the slices z_coordinate for this iteration's slice voxel */
-	slice_point.z = (((amide_real_t) z)+0.5)*voxel_length;
-
-	/* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
-	if (floor(z_steps) > z)
-	  weight = time_weight/z_steps;
-	else
-	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
-
-	/* iterate over the y dimension */
-	for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
-
-	  /* the slice y_coordinate of the center of this iteration's slice voxel */
-	  slice_point.y = (((amide_real_t) i_voxel.y)+0.5)*slice->voxel_size.y;
+	  /* the slices z_coordinate for this iteration's slice voxel */
+	  slice_point.z = (((amide_real_t) z)+0.5)*voxel_length;
 	  
-	  /* the slice x coord of the center of the first slice voxel in this loop */
-	  slice_point.x = (((amide_real_t) start.x)+0.5)*slice->voxel_size.x;
-
-	  /* iterate over the x dimension */
-	  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
-
-	    /* translate the current point in slice space into the data set's coordinate frame */
-	    ds_point = amitk_space_s2s(slice_space, data_set_space, slice_point);
-
-	    /* get the nearest neighbor in the data set to this slice voxel */
-	    POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, ds_voxel);
-	    VOXEL_TO_POINT(ds_voxel, data_set->voxel_size, nearest_point);
-
-	    /* figure out which way to go to get the nearest voxels to our slice voxel*/
-	    POINT_SUB(ds_point, nearest_point, diff);
-
-	    /* figure out which voxels to look at */
-	    for (l=0; l<8; l=l+1) {
-	      if (diff.x < 0)
-		box_voxel[l].x = (l & 0x1) ? ds_voxel.x-1 : ds_voxel.x;
-	      else /* diff.x >= 0 */
-		box_voxel[l].x = (l & 0x1) ? ds_voxel.x : ds_voxel.x+1;
-	      if (diff.y < 0)
-		box_voxel[l].y = (l & 0x2) ? ds_voxel.y-1 : ds_voxel.y;
-	      else /* diff.y >= 0 */
-		box_voxel[l].y = (l & 0x2) ? ds_voxel.y : ds_voxel.y+1;
-	      if (diff.z < 0)
-		box_voxel[l].z = (l & 0x4) ? ds_voxel.z-1 : ds_voxel.z;
-	      else /* diff.z >= 0 */
-		box_voxel[l].z = (l & 0x4) ? ds_voxel.z : ds_voxel.z+1;
-	      box_voxel[l].t = ds_voxel.t;
-
-	      VOXEL_TO_POINT(box_voxel[l], data_set->voxel_size, box_point[l]);
-
-	      /* get the value of the point on the box */
-	      if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
-		box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, box_voxel[l]);
-	      else
-		box_value[l] = empty;
-	    }
+	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
+	  if (floor(z_steps) > z)
+	    weight = time_weight/z_steps;
+	  else
+	    weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
+	  
+	  /* iterate over the y dimension */
+	  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
 	    
-	    /* do the x direction linear interpolation of the sets of two points */
-	    for (l=0;l<8;l=l+2) {
-	      max_diff = box_point[l+1].x-box_point[l].x;
-	      weight1 = ((max_diff - (ds_point.x - box_point[l].x))/max_diff);
-	      weight2 = ((max_diff - (box_point[l+1].x - ds_point.x))/max_diff);
-	      box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
+	    /* the slice y_coordinate of the center of this iteration's slice voxel */
+	    slice_point.y = (((amide_real_t) i_voxel.y)+0.5)*slice->voxel_size.y;
+	  
+	    /* the slice x coord of the center of the first slice voxel in this loop */
+	    slice_point.x = (((amide_real_t) start.x)+0.5)*slice->voxel_size.x;
+	    
+	    /* iterate over the x dimension */
+	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
+	      
+	      /* translate the current point in slice space into the data set's coordinate frame */
+	      ds_point = amitk_space_s2s(slice_space, data_set_space, slice_point);
+	      
+	      /* get the nearest neighbor in the data set to this slice voxel */
+	      POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, use_gate, ds_voxel);
+	      VOXEL_TO_POINT(ds_voxel, data_set->voxel_size, nearest_point);
+	      
+	      /* figure out which way to go to get the nearest voxels to our slice voxel*/
+	      POINT_SUB(ds_point, nearest_point, diff);
+	      
+	      /* figure out which voxels to look at */
+	      for (l=0; l<8; l=l+1) {
+		if (diff.x < 0)
+		  box_voxel[l].x = (l & 0x1) ? ds_voxel.x-1 : ds_voxel.x;
+		else /* diff.x >= 0 */
+		  box_voxel[l].x = (l & 0x1) ? ds_voxel.x : ds_voxel.x+1;
+		if (diff.y < 0)
+		  box_voxel[l].y = (l & 0x2) ? ds_voxel.y-1 : ds_voxel.y;
+		else /* diff.y >= 0 */
+		  box_voxel[l].y = (l & 0x2) ? ds_voxel.y : ds_voxel.y+1;
+		if (diff.z < 0)
+		  box_voxel[l].z = (l & 0x4) ? ds_voxel.z-1 : ds_voxel.z;
+		else /* diff.z >= 0 */
+		  box_voxel[l].z = (l & 0x4) ? ds_voxel.z : ds_voxel.z+1;
+		box_voxel[l].t = ds_voxel.t;
+		box_voxel[l].g = ds_voxel.g;
+		
+		VOXEL_TO_POINT(box_voxel[l], data_set->voxel_size, box_point[l]);
+		
+		/* get the value of the point on the box */
+		if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
+		  box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, box_voxel[l]);
+		else
+		  box_value[l] = empty;
+	      }
+	      
+	      /* do the x direction linear interpolation of the sets of two points */
+	      for (l=0;l<8;l=l+2) {
+		max_diff = box_point[l+1].x-box_point[l].x;
+		weight1 = ((max_diff - (ds_point.x - box_point[l].x))/max_diff);
+		weight2 = ((max_diff - (box_point[l+1].x - ds_point.x))/max_diff);
+		box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
+	      }
+	      
+	      /* do the y direction linear interpolation of the sets of two points */
+	      for (l=0;l<8;l=l+4) {
+		max_diff = box_point[l+2].y-box_point[l].y;
+		weight1 = ((max_diff - (ds_point.y - box_point[l].y))/max_diff);
+		weight2 = ((max_diff - (box_point[l+2].y - ds_point.y))/max_diff);
+		box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
+	      }
+	      
+	      /* do the z direction linear interpolation of the sets of two points */
+	      for (l=0;l<8;l=l+8) {
+		max_diff = box_point[l+4].z-box_point[l].z;
+		weight1 = ((max_diff - (ds_point.z - box_point[l].z))/max_diff);
+		weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
+		box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
+	      }
+	      
+	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel)+=weight*box_value[0];
+	      
+	      slice_point.x += slice->voxel_size.x; 
 	    }
-
-	    /* do the y direction linear interpolation of the sets of two points */
-	    for (l=0;l<8;l=l+4) {
-	      max_diff = box_point[l+2].y-box_point[l].y;
-	      weight1 = ((max_diff - (ds_point.y - box_point[l].y))/max_diff);
-	      weight2 = ((max_diff - (box_point[l+2].y - ds_point.y))/max_diff);
-	      box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
-	    }
-
-	    /* do the z direction linear interpolation of the sets of two points */
-	    for (l=0;l<8;l=l+8) {
-	      max_diff = box_point[l+4].z-box_point[l].z;
-	      weight1 = ((max_diff - (ds_point.z - box_point[l].z))/max_diff);
-	      weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
-	      box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
-	    }
-
-	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel)+=weight*box_value[0];
-
-	    slice_point.x += slice->voxel_size.x; 
 	  }
 	}
       }
@@ -478,42 +497,50 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
 	if (i_frame == start_frame)
-	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/duration;
+	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(duration*num_gates);
 	else if (i_frame == end_frame)
-	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
+	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(duration*num_gates);
 	else
-	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/duration;
+	  time_weight = amitk_data_set_get_frame_duration(data_set, i_frame)/(duration*num_gates);
       } else
-	time_weight = 1.0;
+	time_weight = 1.0/((gdouble) num_gates);
 
-      ds_point = start_point;
-      /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps); z++) { 
-	last[AMITK_AXIS_Z] = ds_point;
+      /* iterate over gates */
+      i_gate = AMITK_DATA_SET_VIEW_START_GATE(data_set);
+      for (i_gate=0; i_gate < num_gates; i_gate++) {
+	use_gate = i_gate+AMITK_DATA_SET_VIEW_START_GATE(data_set);
+	if (use_gate >= AMITK_DATA_SET_NUM_GATES(data_set))
+	  use_gate -= AMITK_DATA_SET_NUM_GATES(data_set);
 
-	/* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
-	if (floor(z_steps) > z)
-	  weight = time_weight/z_steps;
-	else
-	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
-	
-	/* iterate over the y dimension */
-	for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
-	  last[AMITK_AXIS_Y] = ds_point;
-
-	  /* and iteratate over x */
-	  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
-	    POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, ds_voxel);
-	    if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel))
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
-	    else
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
-		weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,ds_voxel);
-	    POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+	ds_point = start_point;
+	/* iterate over the number of planes we'll be compressing into this slice */
+	for (z = 0; z < ceil(z_steps); z++) { 
+	  last[AMITK_AXIS_Z] = ds_point;
+	  
+	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
+	  if (floor(z_steps) > z)
+	    weight = time_weight/z_steps;
+	  else
+	    weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
+	  
+	  /* iterate over the y dimension */
+	  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
+	    last[AMITK_AXIS_Y] = ds_point;
+	    
+	    /* and iterate over x */
+	    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
+	      POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, use_gate, ds_voxel);
+	      if (!amitk_raw_data_includes_voxel(data_set->raw_data,ds_voxel))
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
+	      else
+		AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
+		  weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,ds_voxel);
+	      POINT_ADD(ds_point, stride[AMITK_AXIS_X], ds_point); 
+	    }
+	    POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
 	  }
-	  POINT_ADD(last[AMITK_AXIS_Y], stride[AMITK_AXIS_Y], ds_point);
+	  POINT_ADD(last[AMITK_AXIS_Z], stride[AMITK_AXIS_Z], ds_point); 
 	}
-	POINT_ADD(last[AMITK_AXIS_Z], stride[AMITK_AXIS_Z], ds_point); 
       }
     }
     break;

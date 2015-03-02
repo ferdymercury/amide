@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.2],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.3],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -163,7 +163,7 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
-AM_PATH_XMEDCON(0.9.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+AM_PATH_XMEDCON(0.9.4, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 

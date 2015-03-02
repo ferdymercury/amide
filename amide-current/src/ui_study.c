@@ -1,7 +1,7 @@
 /* ui_study.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -31,6 +31,7 @@
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
+#include "ui_gate_dialog.h"
 #include "ui_time_dialog.h"
 #include "amitk_tree_view.h"
 #include "amitk_canvas.h"
@@ -363,6 +364,7 @@ ui_study_t * ui_study_init(AmitkPreferences * preferences) {
 
   ui_study->study = NULL;
   ui_study->threshold_dialog = NULL;
+  ui_study->gate_dialog = NULL;
   ui_study->time_dialog = NULL;
   ui_study->thickness_spin = NULL;
 
@@ -402,6 +404,8 @@ void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object) {
   if (AMITK_IS_DATA_SET(ui_study->active_object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(ui_study->active_object),
 					 G_CALLBACK(ui_study_update_interpolation), ui_study);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(ui_study->active_object),
+					 G_CALLBACK(ui_study_update_gate_button), ui_study);
   }
   ui_study->active_object = object;
 
@@ -433,6 +437,8 @@ void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object) {
   if (AMITK_IS_DATA_SET(ui_study->active_object)) {
     g_signal_connect_swapped(G_OBJECT(ui_study->active_object), "interpolation_changed", 
 			     G_CALLBACK(ui_study_update_interpolation), ui_study);
+    g_signal_connect_swapped(G_OBJECT(ui_study->active_object), "view_gates_changed", 
+			     G_CALLBACK(ui_study_update_gate_button), ui_study);
   }
 
   ui_study_update_interpolation(ui_study);
@@ -454,6 +460,16 @@ void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object) {
 					  AMITK_DATA_SET(ui_study->active_object));
     }
   }
+
+  if (ui_study->gate_dialog != NULL) {
+    if (AMITK_IS_DATA_SET(ui_study->active_object))
+      ui_gate_dialog_set_active_data_set(ui_study->gate_dialog, 
+					 AMITK_DATA_SET(ui_study->active_object));
+    else
+      ui_gate_dialog_set_active_data_set(ui_study->gate_dialog, NULL);
+  }
+
+  ui_study_update_gate_button(ui_study);
 }
 
 /* function for adding a fiducial mark */
@@ -565,6 +581,24 @@ void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study) {
   return;
 }
 
+
+/* function to update the text in the gate dialog popup widget */
+void ui_study_update_gate_button(ui_study_t * ui_study) {
+
+  gchar * temp_string;
+  
+  if (AMITK_IS_DATA_SET(ui_study->active_object))
+    temp_string = g_strdup_printf(_("%d-%d"),
+				  AMITK_DATA_SET_VIEW_START_GATE(ui_study->active_object),
+				  AMITK_DATA_SET_VIEW_END_GATE(ui_study->active_object));
+  else
+    temp_string = g_strdup_printf(_("N/A"));
+
+  gtk_label_set_text(GTK_LABEL(GTK_BIN(ui_study->gate_button)->child),temp_string);
+  g_free(temp_string);
+
+  return;
+}
 
 /* function to update the text in the time dialog popup widget */
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {

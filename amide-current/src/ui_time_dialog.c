@@ -1,7 +1,7 @@
 /* ui_time_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -72,7 +72,6 @@ typedef struct ui_time_dialog_t {
   GtkWidget * tree_view;
   GtkWidget * start_spin;
   GtkWidget * end_spin;
-  gint reference_count;
 } ui_time_dialog_t;
 
 
@@ -81,8 +80,7 @@ static void selection_for_each_func(GtkTreeModel *model, GtkTreePath *path,
 static void selection_changed_cb (GtkTreeSelection *selection, gpointer data);
 static gboolean delete_event_cb(GtkWidget* dialog, GdkEvent * event, gpointer data);
 static void change_spin_cb(GtkSpinButton * spin_button, gpointer data);
-static void update_model(GtkListStore * store, GtkTreeSelection *selection,
-			 GList * data_sets, amide_time_t start, amide_time_t end);
+static void update_model(GtkListStore * store, GtkTreeSelection *selection, GList * data_sets);
 static void update_selections(GtkTreeModel * model, GtkTreeSelection *selection,
 			      GtkWidget * dialog, ui_time_dialog_t * td);
 static void update_entries(GtkWidget * dialog, ui_time_dialog_t * td);
@@ -215,8 +213,7 @@ static void change_spin_cb(GtkSpinButton * spin_button, gpointer data) {
   return;
 }
 
-static void update_model(GtkListStore * store, GtkTreeSelection *selection,
-			 GList * data_sets, amide_time_t start, amide_time_t end) {
+static void update_model(GtkListStore * store, GtkTreeSelection *selection, GList * data_sets) {
 
   GList * sets;
   AmitkDataSet * min_ds;
@@ -431,8 +428,7 @@ void ui_time_dialog_set_times(GtkWidget * dialog) {
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(td->tree_view));
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(td->tree_view));
 
-  update_model(GTK_LIST_STORE(model), selection,td->data_sets, 
-	       td->start, td->end);
+  update_model(GTK_LIST_STORE(model), selection,td->data_sets);
 
   update_selections(model, selection, dialog, td);
   update_entries(dialog, td);
@@ -443,7 +439,7 @@ void ui_time_dialog_set_times(GtkWidget * dialog) {
 
 
 
-/* create the time slection dialog */
+/* create the time selection dialog */
 GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 
   GtkWidget * dialog;
@@ -458,7 +454,6 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
   GtkWidget * hseparator;
-  GtkWidget * notebook;
   column_type_t i_column;
 
   temp_string = g_strdup_printf(_("%s: Time Dialog"),PACKAGE);
@@ -466,9 +461,6 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 					    GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
 					    NULL);
   g_free(temp_string);
-  gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
-
-  /* order is allow shrink, allow grow, autoshrink */
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
@@ -483,9 +475,6 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), td);
-
-
-  notebook = gtk_notebook_new();
 
 
   /* start making the widgets for this dialog box */

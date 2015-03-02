@@ -1,7 +1,7 @@
 /* amitk_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -52,13 +52,17 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_DIM_X(ds)                   (AMITK_RAW_DATA_DIM_X(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_DIM_Y(ds)                   (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_DIM_Z(ds)                   (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_G(ds)                   (AMITK_RAW_DATA_DIM_G(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_DIM_T(ds)                   (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
 #define AMITK_DATA_SET_FORMAT(ds)                  (AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_NUM_GATES(ds)               (AMITK_DATA_SET_DIM_G(ds))
 #define AMITK_DATA_SET_NUM_FRAMES(ds)              (AMITK_DATA_SET_DIM_T(ds))
+#define AMITK_DATA_SET_TOTAL_PLANES(ds)            (AMITK_DATA_SET_DIM_Z(ds)*AMITK_DATA_SET_DIM_G(ds)*AMITK_DATA_SET_DIM_T(ds))
 #define AMITK_DATA_SET_DISTRIBUTION(ds)            (AMITK_DATA_SET(ds)->distribution)
 #define AMITK_DATA_SET_COLOR_TABLE(ds)             (AMITK_DATA_SET(ds)->color_table)
 #define AMITK_DATA_SET_INTERPOLATION(ds)           (AMITK_DATA_SET(ds)->interpolation)
-#define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET(ds)->raw_data->dim.t > 1)
+#define AMITK_DATA_SET_DYNAMIC(ds)                 (AMITK_DATA_SET_NUM_FRAMES(ds) > 1)
+#define AMITK_DATA_SET_GATED(ds)                   (AMITK_DATA_SET_NUM_GATES(ds) > 1)
 #define AMITK_DATA_SET_THRESHOLDING(ds)            (AMITK_DATA_SET(ds)->thresholding)
 #define AMITK_DATA_SET_SLICE_PARENT(ds)            (AMITK_DATA_SET(ds)->slice_parent)
 #define AMITK_DATA_SET_SCAN_DATE(ds)               (AMITK_DATA_SET(ds)->scan_date)
@@ -77,6 +81,9 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_CYLINDER_FACTOR(ds)         (AMITK_DATA_SET(ds)->cylinder_factor)
 #define AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(ds) (AMITK_DATA_SET(ds)->displayed_cylinder_unit)
 #define AMITK_DATA_SET_THRESHOLD_WINDOW(ds, i_win, limit) (AMITK_DATA_SET(ds)->threshold_window[i_win][limit])
+#define AMITK_DATA_SET_VIEW_START_GATE(ds)         (AMITK_DATA_SET(ds)->view_start_gate)
+#define AMITK_DATA_SET_VIEW_END_GATE(ds)           (AMITK_DATA_SET(ds)->view_end_gate)
+#define AMITK_DATA_SET_NUM_VIEW_GATES(ds)          (AMITK_DATA_SET(ds)->num_view_gates)
 
 #define AMITK_DATA_SET_DISTRIBUTION_SIZE 256
 
@@ -194,9 +201,13 @@ struct _AmitkDataSet
   amide_data_t threshold_min[2]; 
   guint threshold_ref_frame[2];
   amide_data_t threshold_window[AMITK_WINDOW_NUM][AMITK_LIMIT_NUM];
+
+  /* which gates we're showing */
+  amide_intpoint_t view_start_gate;
+  amide_intpoint_t view_end_gate;
   
   /* parameters calculated as needed or on loading the object */
-  /* theoritically, could be recalculated on the fly, but used enough we'll store... */
+  /* in theory, could be recalculated on the fly, but used enough we'll store... */
   AmitkRawData * distribution; /* 1D array of data distribution, used in thresholding */
   gboolean max_min_calculated; /* the min/max values can be calculated on demand */
   amide_data_t global_max;
@@ -204,6 +215,7 @@ struct _AmitkDataSet
   amide_data_t * frame_max; 
   amide_data_t * frame_min;
   AmitkRawData * current_scaling; /* external_scaling * internal_scaling[] */
+  amide_intpoint_t num_view_gates;
 
   GList * slice_cache;
   gint max_slice_cache_size;
@@ -229,6 +241,7 @@ struct _AmitkDataSetClass
   void (* voxel_size_changed)           (AmitkDataSet * ds);
   void (* data_set_changed)             (AmitkDataSet * ds);
   void (* invalidate_slice_cache)       (AmitkDataSet * ds);
+  void (* view_gates_changed)           (AmitkDataSet * ds);
 
 };
 
@@ -318,6 +331,10 @@ void           amitk_data_set_set_threshold_window (AmitkDataSet * ds,
 						    const AmitkWindow window,
 						    const AmitkLimit limit,
 						    const amide_data_t value);
+void           amitk_data_set_set_view_start_gate(AmitkDataSet * ds,
+						  amide_intpoint_t start_gate);
+void           amitk_data_set_set_view_end_gate  (AmitkDataSet * ds,
+						  amide_intpoint_t end_gate);
 amide_time_t   amitk_data_set_get_start_time     (const AmitkDataSet * ds, 
 						  const guint frame);
 amide_time_t   amitk_data_set_get_end_time       (const AmitkDataSet * ds, 
@@ -352,6 +369,8 @@ void           amitk_data_set_get_thresholding_max_min(AmitkDataSet * ds,
 void           amitk_data_set_calc_distribution   (AmitkDataSet * ds, 
 						   gboolean (*update_func)(), 
 						   gpointer update_data);
+amide_data_t   amitk_data_set_get_internal_value  (const AmitkDataSet * ds, 
+						   const AmitkVoxel i);
 amide_data_t   amitk_data_set_get_value           (const AmitkDataSet * ds, 
 						   const AmitkVoxel i);
 amide_data_t   amitk_data_set_get_internal_scaling(const AmitkDataSet * ds, 
@@ -360,8 +379,13 @@ void           amitk_data_set_set_value           (AmitkDataSet *ds,
 						   const AmitkVoxel i,
 						   const amide_data_t value,
 						   const gboolean signal_change);
+void           amitk_data_set_set_internal_value  (AmitkDataSet *ds,
+						   const AmitkVoxel i,
+						   const amide_data_t internal_value,
+						   const gboolean signal_change);
 void           amitk_data_set_get_projections     (AmitkDataSet * ds,
 						   const guint frame,
+						   const guint gate,
 						   AmitkDataSet ** projections,
 						   gboolean (*update_func)(),
 						   gpointer update_data);

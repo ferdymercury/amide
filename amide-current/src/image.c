@@ -1,7 +1,7 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2003 Andy Loening
+ * Copyright (C) 2000-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -182,7 +182,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
     return NULL;
   }
 
-  i.z = i.t = 0;
+  i.z = i.g = i.t = 0;
   for (i.y=0 ; i.y < dim.y; i.y++)
     for (i.x=0 ; i.x < dim.x; i.x++)
       if (AMITK_RAW_DATA_UBYTE_CONTENT(intersection->raw_data, i) == 1) {
@@ -327,7 +327,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 	rendering_set_rotation(renderings->rendering, AMITK_AXIS_Y, rot);
       }
 
-      i.t = i.z = 0;
+      i.t = i.g = i.z = 0;
       for (i.y = 0; i.y < image_height; i.y++) 
 	for (i.x = 0; i.x < image_width; i.x++) {
 	  rgba_temp = amitk_color_table_lookup(renderings->rendering->image[i.x+i.y*image_width], 
@@ -362,13 +362,13 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 	    rgba16_data[location].r = ((rgba16_data[location].r*rgba16_data[location].a 
 					+ rgba_temp.r*rgba_temp.a)/
 				       ((gdouble) total_alpha));
-	  rgba16_data[location].g = ((rgba16_data[location].g*rgba16_data[location].a 
-				      + rgba_temp.g*rgba_temp.a)/
-				     ((gdouble) total_alpha));
-	  rgba16_data[location].b = ((rgba16_data[location].b*rgba16_data[location].a 
-				      + rgba_temp.b*rgba_temp.a)/
-				     ((gdouble) total_alpha));
-	  rgba16_data[location].a = total_alpha;
+	    rgba16_data[location].g = ((rgba16_data[location].g*rgba16_data[location].a 
+					+ rgba_temp.g*rgba_temp.a)/
+				       ((gdouble) total_alpha));
+	    rgba16_data[location].b = ((rgba16_data[location].b*rgba16_data[location].a 
+					+ rgba_temp.b*rgba_temp.a)/
+				       ((gdouble) total_alpha));
+	    rgba16_data[location].a = total_alpha;
 	  }
 	}
     }      
@@ -383,14 +383,11 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
   }
 
   /* now convert our temp rgb data to real rgb data */
-  i.z = 0;
-  for (i.y = 0; i.y < image_height; i.y++) 
-    for (i.x = 0; i.x < total_width; i.x++) {
-      location = i.y*total_width+i.x;
-      char_data[3*location+0] = rgba16_data[location].r < 0xFF ? rgba16_data[location].r : 0xFF;
-      char_data[3*location+1] = rgba16_data[location].g < 0xFF ? rgba16_data[location].g : 0xFF;
-      char_data[3*location+2] = rgba16_data[location].b < 0xFF ? rgba16_data[location].b : 0xFF;
-    }
+  for (j=0; j<total_width*image_height; j++) {
+    char_data[3*j+0] = rgba16_data[j].r < 0xFF ? rgba16_data[j].r : 0xFF;
+    char_data[3*j+1] = rgba16_data[j].g < 0xFF ? rgba16_data[j].g : 0xFF;
+    char_data[3*j+2] = rgba16_data[j].b < 0xFF ? rgba16_data[j].b : 0xFF;
+  }
 
   /* from the rgb_data, generate a GdkPixbuf */
   temp_image = gdk_pixbuf_new_from_data(char_data, GDK_COLORSPACE_RGB,FALSE,8,
@@ -442,7 +439,7 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
   } else {
     /* figure out the max of the distribution, so we can normalize the distribution to the width */
     max = 0.0;
-    j.t = j.z = j.y = 0;
+    j.t = j.g = j.z = j.y = 0;
     for (j.x = 0; j.x < dim_x ; j.x++) 
     if (*AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j) > max)
       max = *AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j);
@@ -452,7 +449,7 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
       scale = 0;
     
     /* figure out what the rgb data is */
-    j.t = j.z = j.y = 0;
+    j.t = j.g = j.z = j.y = 0;
     for (l=0 ; l < dim_x ; l++) {
       j.x = dim_x-l-1;
       for (k=0; k < floor(((gdouble) IMAGE_DISTRIBUTION_WIDTH)-
@@ -567,7 +564,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
       
   color_table = AMITK_DATA_SET_COLOR_TABLE(projection);
 
-  i.t = i.z = 0;
+  i.t = i.g = i.z = 0;
   for (i.y = 0; i.y < dim.y; i.y++) 
     for (i.x = 0; i.x < dim.x; i.x++) {
       rgba_temp =
@@ -619,7 +616,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
       
   color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
 
-  i.t = i.z = 0;
+  i.t = i.g = i.z = 0;
   index=0;
   /* compensate for the fact that X defines the origin as top left, not bottom left */
   for (i.y = dim.y-1; i.y >= 0; i.y--) 
@@ -709,7 +706,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
       
       color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(slice));
       /* now add this slice into the rgba16 data */
-      i.t = i.z = 0;
+      i.t = i.g = i.z = 0;
       location=0;
       /* compensate for the fact that X defines the origin as top left, not bottom left */
       for (i.y = dim.y-1; i.y >= 0; i.y--) 
@@ -772,7 +769,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
       
       color_table = AMITK_DATA_SET_COLOR_TABLE(AMITK_DATA_SET_SLICE_PARENT(overlay_slice));
 
-      i.t = i.z = 0;
+      i.t = i.g = i.z = 0;
       for (i.y = 0; i.y < dim.y; i.y++) 
 	for (i.x = 0; i.x < dim.x; i.x++) {
 	  rgba_temp = 

@@ -1,7 +1,7 @@
 /* amitk_raw_data_variable_type.h - used to generate the different amitk_raw_data_*.h files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2003 Andy Loening
+ * Copyright (C) 2001-2004 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -37,25 +37,27 @@
   (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+(i).t)
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_SCALING_POINTER(amitk_raw_data,i) \
   (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
-    (i).z + \
-    (i).t * ((amitk_raw_data)->dim.z))
+   (((((i).t) * ((amitk_raw_data)->dim.g) + \
+      (i).g) * ((amitk_raw_data)->dim.z)) + \
+    (i).z))
+
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER(amitk_raw_data,i) \
   (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
-   ((i).x +  \
-    (i).y * ((amitk_raw_data)->dim.x) +  \
-    (i).z * ((amitk_raw_data)->dim.x) * ((amitk_raw_data)->dim.y) +  \
-    (i).t * ((amitk_raw_data)->dim.x) * ((amitk_raw_data)->dim.y) * ((amitk_raw_data)->dim.z))) 
+   ((((((((((i).t) * ((amitk_raw_data)->dim.g)) + \
+	  (i).g) * ((amitk_raw_data)->dim.z)) + \
+	(i).z) * ((amitk_raw_data)->dim.y)) + \
+      (i).y) * ((amitk_raw_data)->dim.x)) + \
+    (i).x))
 
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_3D_POINTER(amitk_raw_data,iz,iy,ix) \
   (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
-   ((ix) +  \
-    (iy) * ((amitk_raw_data)->dim.x) +  \
-    (iz) * ((amitk_raw_data)->dim.x) * ((amitk_raw_data)->dim.y)))
-
+   ((((((iz)) * ((amitk_raw_data)->dim.y)) + \
+      (iy)) * ((amitk_raw_data)->dim.x)) + \
+    (ix)))
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_2D_POINTER(amitk_raw_data,iy,ix) \
   (((amitk_format_`'m4_Variable_Type`'_t *) (amitk_raw_data)->data)+ \
-   ((ix) + \
-    (iy) * ((amitk_raw_data)->dim.x)))
+   ((((iy)) * ((amitk_raw_data)->dim.x)) + \
+    (ix)))
 
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i) \
   (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
