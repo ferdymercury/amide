@@ -29,6 +29,8 @@
 
 #include "../pixmaps/amide_logo.xpm"
 
+#include "../pixmaps/icon_transfer_function.xpm"
+
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
 const char ** icon_interpolation[AMITK_INTERPOLATION_NUM] = {

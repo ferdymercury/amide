@@ -30,6 +30,7 @@
  */
 
 #include "amide_config.h"
+#include "amide_intl.h"
 #include "amitk_dir_sel.h"
 
 #include <stdio.h>
@@ -93,10 +94,6 @@
 #    define MAXPATHLEN 2048
 #  endif
 #endif
-
-/* AML - ignore internationalization */
-#define N_(String) (String)
-#define _(String) (String)
 
 /* I've put this here so it doesn't get confused with the 
  * file completion interface */
@@ -929,7 +926,7 @@ filenames_dropped (GtkWidget        *widget,
   
   if (!filename)
     {
-      g_warning ("Error getting dropped filename: %s\n",
+      g_warning (_("Error getting dropped filename: %s\n"),
 		 error->message);
       g_error_free (error);
       return;
@@ -1011,7 +1008,7 @@ filenames_drag_get (GtkWidget        *widget,
 	  uri_list = g_filename_to_uri (file, (!res)?hostname:NULL, &error);
 	  if (!uri_list)
 	    {
-	      g_warning ("Error getting filename: %s\n",
+	      g_warning (_("Error getting filename: %s\n"),
 			 error->message);
 	      g_error_free (error);
 	      return;
@@ -2137,7 +2134,7 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 		g_free(temp);
 		g_strreverse(frags1[0]);
 		frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
-		xif_directory =  (g_strcasecmp(frags2[0], "xif") == 0);
+		xif_directory =  (g_ascii_strcasecmp(frags2[0], "xif") == 0);
 		g_strfreev(frags2);
 		g_strfreev(frags1);
 		

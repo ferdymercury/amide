@@ -45,12 +45,12 @@
 /* internal variables */
 #define HELP_INFO_LINE_HEIGHT 13
 
-static gchar * blank_name = "new";
+static gchar * blank_name = N_("new");
 
 static gchar * help_info_legends[NUM_HELP_INFO_LINES] = {
-  "1", "shift-1",
-  "2", "shift-2",
-  "3", "shift-3", "ctrl-3",
+  N_("1"), N_("shift-1"),
+  N_("2"), N_("shift-2"),
+  N_("3"), N_("shift-3"), N_("ctrl-3"),
   "variable_place_holder"
 };
 
@@ -61,8 +61,8 @@ enum {
 };
 
 static gchar * help_info_variable_legend[NUM_HELP_INFO_VARIABLE_LINES] = {
-  "ctrl-x",
-  "shift-ctrl-3"
+  N_("ctrl-x"),
+  N_("shift-ctrl-3")
 };
 
 static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
@@ -70,61 +70,61 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    "",  "",    
    "",  "", "",
    ""}, /* BLANK */
-  {"move view", "shift data set",
-   "move view, min. depth", "rotate data set", 
-   "change depth", "",  "add fiducial mark",
+  {N_("move view"), N_("shift data set"),
+   N_("move view, min. depth"), N_("rotate data set"), 
+   N_("change depth"), "",  N_("add fiducial mark"),
    ""}, /* DATA SET */
-  {"shift", "", 
-   "rotate", "", 
-   "scale", "", "set data set inside roi to zero",
-   "set data set outside roi to zero"}, /*CANVAS_ROI */
-  {"shift",  "", 
+  {N_("shift"), "", 
+   N_("rotate"), "", 
+   N_("scale"), "", N_("set data set inside roi to zero"),
+   N_("set data set outside roi to zero")}, /*CANVAS_ROI */
+  {N_("shift"),  "", 
    "", "", 
    "", "", "",
    ""}, /*CANVAS_FIDUCIAL_MARK */
-  {"move view", "",
-   "move view, min. depth", "rotate study", 
-   "change depth", "",  "",
+  {N_("move view"), "",
+   N_("move view, min. depth"), N_("rotate study"), 
+   N_("change depth"), "",  "",
    ""}, /* STUDY  */
-  {"shift", "", 
-   "erase isocontour point", "erase large point", 
-   "start isocontour change", "", "set data set inside roi to zero",
-   "set data set outside roi to zero"}, /*CANVAS_ISOCONTOUR_ROI */
-  {"draw - edge-to-edge", "", 
-   "draw - center out", "", 
+  {N_("shift"), "", 
+   N_("erase isocontour point"), N_("erase large point"), 
+   N_("start isocontour change"), "", N_("set data set inside roi to zero"),
+   N_("set data set outside roi to zero")}, /*CANVAS_ISOCONTOUR_ROI */
+  {N_("draw - edge-to-edge"), "", 
+   N_("draw - center out"), "", 
    "", "", "",
    ""}, /* CANVAS_NEW_ROI */
-  {"pick isocontour value", "", 
+  {N_("pick isocontour value"), "", 
    "", "", 
    "", "", "",
    ""}, /* CANVAS_NEW_ISOCONTOUR_ROI */
-  {"cancel", "", 
-   "cancel", "", 
-   "shift", "", "",
+  {N_("cancel"), "", 
+   N_("cancel"), "", 
+   N_("shift"), "", "",
    ""}, /*CANVAS SHIFT OBJECT */
-  {"cancel", "", 
-   "cancel", "", 
-   "rotate", "", "",
+  {N_("cancel"), "", 
+   N_("cancel"), "", 
+   N_("rotate"), "", "",
    ""}, /*CANVAS ROTATE OBJECT */
-  {"select data set", "", 
-   "make active", "", 
-   "pop up data set dialog", "add roi", "add fiducial mark",
-   "delete data set"}, /* TREE_DATA_SET */
-  {"select roi", "", 
-   "center view on roi", "", 
-   "pop up roi dialog", "", "",
-   "delete roi"}, /* TREE_ROI */
-  {"select point", "", 
-   "center view on point", "", 
-   "pop up point dialog", "", "",
-   "delete mark"}, /* TREE_FIDUCIAL_MARK */
+  {N_("select data set"), "", 
+   N_("make active"), "", 
+   N_("pop up data set dialog"), N_("add roi"), N_("add fiducial mark"),
+   N_("delete data set")}, /* TREE_DATA_SET */
+  {N_("select roi"), "", 
+   N_("center view on roi"), "", 
+   N_("pop up roi dialog"), "", "",
+   N_("delete roi")}, /* TREE_ROI */
+  {N_("select point"), "", 
+   N_("center view on point"), "", 
+   N_("pop up point dialog"), "", "",
+   N_("delete mark")}, /* TREE_FIDUCIAL_MARK */
   {"", "", 
-   "make active", "", 
-   "pop up study dialog","", "",
+   N_("make active"), "", 
+   N_("pop up study dialog"),"", "",
    ""}, /* TREE_STUDY */
   {"", "", 
    "", "", 
-   "add roi","", "",
+   N_("add roi"),"", "",
    ""} /* TREE_NONE */
 };
 
@@ -509,7 +509,7 @@ void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_obje
 
   g_return_if_fail(AMITK_IS_OBJECT(parent_object));
 
-  temp_string = g_strdup_printf("Adding fiducial mark for data set: %s\nEnter the mark's name:",
+  temp_string = g_strdup_printf(_("Adding fiducial mark for data set: %s\nEnter the mark's name:"),
 				AMITK_OBJECT_NAME(parent_object));
   dialog = ui_common_entry_dialog(GTK_WINDOW(ui_study->app), temp_string, &return_str);
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -554,7 +554,7 @@ void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkR
 
   g_return_if_fail(AMITK_IS_OBJECT(parent_object));
 
-  temp_string = g_strdup_printf("Adding ROI to: %s\nEnter ROI Name:",
+  temp_string = g_strdup_printf(_("Adding ROI to: %s\nEnter ROI Name:"),
 				AMITK_OBJECT_NAME(parent_object));
   dialog = ui_common_entry_dialog(GTK_WINDOW(ui_study->app), temp_string, &return_str);
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -611,7 +611,7 @@ void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button) {
   
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  temp_string = g_strdup_printf("%5.1f-%5.1f s",
+  temp_string = g_strdup_printf(_("%5.1f-%5.1f s"),
 				AMITK_STUDY_VIEW_START_TIME(study),
 				AMITK_STUDY_VIEW_START_TIME(study)+
 				AMITK_STUDY_VIEW_DURATION(study));
@@ -633,16 +633,16 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
   AmitkPoint location_p;
 
   if (which_info == AMITK_HELP_INFO_UPDATE_LOCATION) {
-    location_text[0] = g_strdup_printf("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] (mm)", 
+    location_text[0] = g_strdup_printf(_("[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] (mm)"), 
 				       point.x, point.y, point.z);
-    location_text[1] = g_strdup_printf("value  = % 5.3g", value);
+    location_text[1] = g_strdup_printf(_("value  = % 5.3g"), value);
   } else if (which_info == AMITK_HELP_INFO_UPDATE_SHIFT) {
-    location_text[0] = g_strdup_printf("shift (x,y,z) =");
-    location_text[1] = g_strdup_printf("[% 5.2f,% 5.2f,% 5.2f] (mm)", 
+    location_text[0] = g_strdup_printf(_("shift (x,y,z) ="));
+    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] (mm)"), 
 				     point.x, point.y, point.z);
   } else if (which_info == AMITK_HELP_INFO_UPDATE_THETA) {
     location_text[0] = g_strdup("");
-    location_text[1] = g_strdup_printf("theta = % 5.3f degrees", value);
+    location_text[1] = g_strdup_printf(_("theta = % 5.3f degrees"), value);
 
   } else {
 
@@ -695,8 +695,8 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
     }
 
     location_p = AMITK_STUDY_VIEW_CENTER(ui_study->study);
-    location_text[0] = g_strdup_printf("view center (x,y,z) =");
-    location_text[1] = g_strdup_printf("[% 5.2f,% 5.2f,% 5.2f] (mm)", 
+    location_text[0] = g_strdup_printf(_("view center (x,y,z) ="));
+    location_text[1] = g_strdup_printf(_("[% 5.2f,% 5.2f,% 5.2f] (mm)"), 
 				     point.x, point.y, point.z);
   }
 
@@ -874,9 +874,9 @@ void ui_study_update_title(ui_study_t * ui_study) {
   gchar * title;
 
   if (ui_study->study_altered) 
-    title = g_strdup_printf("Study: %s *", AMITK_OBJECT_NAME(ui_study->study));
+    title = g_strdup_printf(_("Study: %s *"), AMITK_OBJECT_NAME(ui_study->study));
   else
-    title = g_strdup_printf("Study: %s",AMITK_OBJECT_NAME(ui_study->study));
+    title = g_strdup_printf(_("Study: %s"),AMITK_OBJECT_NAME(ui_study->study));
   gtk_window_set_title(GTK_WINDOW(ui_study->app), title);
   g_free(title);
 
@@ -934,7 +934,7 @@ void ui_study_update_layout(ui_study_t * ui_study) {
 			     ui_study->canvas_layout,
 			     ui_study->line_style,
 			     ui_study->roi_width,
-			     TRUE,
+			     AMITK_CANVAS_TYPE_NORMAL,
 			     ui_study->canvas_maintain_size,
 			     ui_study->canvas_target_empty_area);
 	  g_object_ref(G_OBJECT(ui_study->canvas[i_view_mode][i_view])); /* will be removed below */

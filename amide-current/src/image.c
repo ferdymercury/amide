@@ -177,7 +177,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   }
 
   if ((rgba_data = g_try_new(guchar,4*dim.x*dim.y)) == NULL) {
-    g_warning("couldn't allocate memory for rgba_data for roi image");
+    g_warning(_("couldn't allocate memory for rgba_data for roi image"));
     g_object_unref(intersection);
     return NULL;
   }
@@ -219,7 +219,7 @@ GdkPixbuf * image_blank(const amide_intpoint_t width, const amide_intpoint_t hei
   guchar * rgb_data;
   
   if ((rgb_data = g_try_new(guchar, 3*width*height)) == NULL) {
-    g_warning("couldn't allocate memory for rgb_data for blank image");
+    g_warning(_("couldn't allocate memory for rgb_data for blank image"));
     return NULL;
   }
 
@@ -251,7 +251,7 @@ GdkPixbuf * image_from_8bit(const guchar * image,
   guint location;
 
   if ((rgb_data = g_try_new(guchar,3*width*height)) == NULL) {
-    g_warning("couldn't allocate memory for image from 8 bit data");
+    g_warning(_("couldn't allocate memory for image from 8 bit data"));
     return NULL;
   }
 
@@ -300,7 +300,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 
   /* allocate and initialize space for a temporary storage buffer */
   if ((rgba16_data = g_try_new(rgba16_t,total_width * image_height)) == NULL) {
-    g_warning("couldn't allocate memory for rgba16_data for transfering rendering to image");
+    g_warning(_("couldn't allocate memory for rgba16_data for transfering rendering to image"));
     return NULL;
   }
   for (j=0; j<total_width*image_height; j++) {
@@ -377,7 +377,7 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 
   /* allocate space for the true rgb buffer */
   if ((char_data = g_try_new(guchar,3*image_height * total_width)) == NULL) {
-    g_warning("couldn't allocate memory for char_data for rendering image");
+    g_warning(_("couldn't allocate memory for char_data for rendering image"));
     g_free(rgba16_data);
     return NULL;
   }
@@ -426,7 +426,7 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
   }
 
   if ((rgba_data = g_try_new(guchar,4*IMAGE_DISTRIBUTION_WIDTH*dim_x)) == NULL) {
-    g_warning("couldn't allocate memory for rgba_data for bar_graph");
+    g_warning(_("couldn't allocate memory for rgba_data for bar_graph"));
     return NULL;
   }
 
@@ -501,7 +501,7 @@ GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
   guchar * rgb_data;
 
   if ((rgb_data = g_try_new(guchar,3*width*height)) == NULL) {
-    g_warning("couldn't allocate memory for rgb_data for color_strip");
+    g_warning(_("couldn't allocate memory for rgb_data for color_strip"));
     return NULL;
   }
 
@@ -556,7 +556,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
   dim = AMITK_DATA_SET_DIM(projection);
 
   if ((rgb_data = g_try_new(guchar,3*dim.x*dim.y)) == NULL) {
-    g_warning("couldn't allocate memory for rgba_data for projection image");
+    g_warning(_("couldn't allocate memory for rgba_data for projection image"));
     return NULL;
   }
 
@@ -606,7 +606,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   dim = AMITK_DATA_SET_DIM(slice);
 
   if ((rgba_data = g_try_new(guchar,4*dim.x*dim.y)) == NULL) {
-    g_warning("couldn't allocate memory for rgba_data for slice image");
+    g_warning(_("couldn't allocate memory for rgba_data for slice image"));
     return NULL;
   }
 
@@ -642,6 +642,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
 
 GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 GList ** pslice_cache,
+				 const gint max_slice_cache_size,
 				 GList * objects,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,
@@ -671,7 +672,8 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
   /* sanity checks */
   g_return_val_if_fail(objects != NULL, NULL);
 
-  slices = amitk_data_sets_get_slices(objects, pslice_cache, start, duration, pixel_dim,view_volume);
+  slices = amitk_data_sets_get_slices(objects, pslice_cache, max_slice_cache_size,
+				      start, duration, pixel_dim,view_volume);
   g_return_val_if_fail(slices != NULL, NULL);
 
   /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */

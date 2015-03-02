@@ -59,19 +59,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
 										const AmitkVoxel end,
 										gboolean (*update_func)(),
 										gpointer update_data);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const AmitkDataSet * data_set,
-								       AmitkDataSet * filtered_ds,
-								       const AmitkRawData * kernel);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_gaussian(const AmitkDataSet * data_set,
-									  AmitkDataSet * filtered_ds,
-									  const gint kernel_size,
-									  const amide_real_t fwhm);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const AmitkDataSet * data_set,
-									   AmitkDataSet * filtered_ds,
-									   AmitkVoxel kernel_dim);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_linear(const AmitkDataSet * data_set,
-									       AmitkDataSet * filtered_ds,
-									       const gint kernel_size);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t start_time,
 									      const amide_time_t duration,

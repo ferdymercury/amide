@@ -52,6 +52,11 @@
 #include "tb_roi_analysis.h"
 
 
+static gchar * no_active_ds = N_("No data set is currently marked as active");
+#ifndef AMIDE_LIBGSL_SUPPORT
+static gchar * no_gsl = N_("This wizard requires compiled in support from the GNU Scientific Library (libgsl), which this copy of AMIDE does not have.");
+#endif
+
 /* function to handle loading in an AMIDE study */
 static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
@@ -79,17 +84,17 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
   /* check to see that the filename exists and it's a directory */
   if (stat(open_filename, &file_info) != 0) {
-    g_warning("AMIDE study %s does not exist",open_filename);
+    g_warning(_("AMIDE study %s does not exist"),open_filename);
     return;
   }
   if (!S_ISDIR(file_info.st_mode)) {
-    g_warning("%s is not a directory/AMIDE study",open_filename);
+    g_warning(_("%s is not a directory/AMIDE study"),open_filename);
     return;
   }
 
   /* try loading the study into memory */
   if ((study=amitk_study_load_xml(open_filename)) == NULL) {
-    g_warning("error loading study: %s",open_filename);
+    g_warning(_("error loading study: %s"),open_filename);
     return;
   }
 
@@ -114,7 +119,7 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
   ui_study_t * ui_study=data;
   GtkWidget * dir_selection;
 
-  dir_selection = amitk_dir_selection_new("Open AMIDE File");
+  dir_selection = amitk_dir_selection_new(_("Open AMIDE File"));
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
@@ -177,7 +182,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
       (strcmp(save_filename, "") == 0) ||
       (strcmp(save_filename, "\\") == 0) ||
       (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
+    g_warning(_("Inappropriate filename: %s"),save_filename);
     return;
   }
 
@@ -187,7 +192,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   g_strreverse(save_filename);
   g_strreverse(frags1[0]);
   frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
-  if (g_strcasecmp(frags2[0], "xif") != 0) {
+  if (g_ascii_strcasecmp(frags2[0], "xif") != 0) {
     prev_filename = save_filename;
     save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
     g_free(prev_filename);
@@ -202,7 +207,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 				      GTK_DIALOG_DESTROY_WITH_PARENT,
 				      GTK_MESSAGE_QUESTION,
 				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
+				      _("Overwrite file: %s"), save_filename);
 
     /* and wait for the question to return */
     return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -220,20 +225,20 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 
 	if (g_pattern_match_simple("*.xml",directory_entry->d_name))
 	  if (unlink(temp_string) != 0)
-	    g_warning("Couldn't unlink file: %s",temp_string);
+	    g_warning(_("Couldn't unlink file: %s"),temp_string);
 	if (g_pattern_match_simple("*.dat",directory_entry->d_name)) 
 	  if (unlink(temp_string) != 0)
-	    g_warning("Couldn't unlink file: %s",temp_string);
+	    g_warning(_("Couldn't unlink file: %s"),temp_string);
 
 	g_free(temp_string);
       }
 
     } else if (S_ISREG(file_info.st_mode)) {
       if (unlink(save_filename) != 0)
-	g_warning("Couldn't unlink file: %s",save_filename);
+	g_warning(_("Couldn't unlink file: %s"),save_filename);
 
     } else {
-      g_warning("Unrecognized file type for file: %s, couldn't delete",save_filename);
+      g_warning(_("Unrecognized file type for file: %s, couldn't delete"),save_filename);
       return;
     }
 
@@ -245,14 +250,14 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
     if (mkdir(save_filename, mode) != 0) 
 #endif 
       {
-	g_warning("Couldn't create amide directory: %s",save_filename);
+	g_warning(_("Couldn't create amide directory: %s"),save_filename);
 	return;
       }
   }
 
   /* allright, save our study */
   if (amitk_study_save_xml(ui_study->study, save_filename) == FALSE) {
-    g_warning("Failure Saving File: %s",save_filename);
+    g_warning(_("Failure Saving File: %s"),save_filename);
     return;
   }
 
@@ -273,7 +278,7 @@ void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
   GtkWidget * dir_selection;
   gchar * temp_string;
 
-  dir_selection = amitk_dir_selection_new("Save File");
+  dir_selection = amitk_dir_selection_new(_("Save File"));
 
   /* take a guess at the filename */
   if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) 
@@ -369,7 +374,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 				      GTK_DIALOG_DESTROY_WITH_PARENT,
 				      GTK_MESSAGE_QUESTION,
 				      GTK_BUTTONS_OK_CANCEL,
-				      "File has incorrect permissions for reading\nCan I try changing access permissions on:\n   %s?", 
+				      _("File has incorrect permissions for reading\nCan I try changing access permissions on:\n   %s?"), 
 				      import_filename);
 
     /* and wait for the question to return */
@@ -381,14 +386,14 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
       if (incorrect_permissions) {
 	stat(import_filename, &file_info);
 	if (chmod(import_filename, 0400 | file_info.st_mode) != 0) 
-	  g_warning("failed to change read permissions, you're probably not the owner");
+	  g_warning(_("failed to change read permissions, you're probably not the owner"));
 	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
       }
 
       if (incorrect_raw_permissions) {
 	stat(raw_filename, &file_info);
 	if (chmod(raw_filename, 0400 | file_info.st_mode) != 0) 
-	  g_warning("failed to change read permissions on raw data file, you're probably not the owner");
+	  g_warning(_("failed to change read permissions on raw data file, you're probably not the owner"));
 	/* we'll go ahead and try reading anyway, even if chmod was unsuccesful  */
       }
 
@@ -434,7 +439,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   GtkFileSelection * file_selection;
   AmitkImportMethod import_method;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Import File"));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
 
   /* save a pointer to ui_study */
   g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
@@ -487,15 +492,16 @@ static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
   if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
     return; /* inappropriate name or don't want to overwrite */
 
+
   if (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]) == NULL) {
-    g_warning("No data sets selected\n");
+    g_warning(_("No data sets selected\n"));
     return;
   }
-
+  
   if (gdk_pixbuf_save (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]),
-		       save_filename, "jpeg", NULL, 
-		       "quality", "100", NULL) == FALSE) {
-    g_warning("Failure Saving File: %s",save_filename);
+  		       save_filename, "jpeg", NULL, 
+  		       "quality", "100", NULL) == FALSE) {
+    g_warning(_("Failure Saving File: %s"),save_filename);
     return;
   }
 
@@ -524,7 +530,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 								 AMITK_VIEW_MODE_SINGLE, TRUE);
   if (current_data_sets == NULL) return;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export File"));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
 
   if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
@@ -661,7 +667,7 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
   gint return_val;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
-    g_warning("no active data set to erase from");
+    g_warning(_("no active data set to erase from"));
     return;
   }
 
@@ -670,17 +676,11 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_QUESTION,
 				    GTK_BUTTONS_OK_CANCEL,
-				    "%s %s\n%s: %s\n%s: %s\n%s\n%s: %5.3f\n%s",
-				     "Do you really wish to erase the data set",
-				    outside ? "exterior" : "interior",
-				    "    to the ROI", 
+				    _("Do you really wish to erase the data set %s\n    to the ROI: %s\n     on the data set: %s\nThis step is irreversible\nThe minimum threshold value: %5.3f\n    will be used to fill in the volume"),
+				    outside ? _("exterior") : _("interior"),
 				    AMITK_OBJECT_NAME(roi),
-				    "    on the data set: ",
 				    AMITK_OBJECT_NAME(ui_study->active_object),
-				    "This step is irreversible",
-				    "The minimum threshold value",
-				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_object,0),
-				    "    will be used to fill in the volume");
+				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_object,0));
   
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -790,10 +790,10 @@ void ui_study_cb_tree_delete_object(GtkWidget * tree, AmitkObject * object, gpoi
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_QUESTION,
 				    GTK_BUTTONS_OK_CANCEL,
-				    "Do you really want to delete: %s%s",
+				    _("Do you really want to delete: %s%s"),
 				    AMITK_OBJECT_NAME(object),
 				    AMITK_OBJECT_CHILDREN(object) != NULL ? 
-				    "\nand it's children" : "");
+				    _("\nand it's children") : "");
   
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -972,7 +972,11 @@ void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
 /* user wants to run the alignment wizard */
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
+#ifdef AMIDE_LIBGSL_SUPPORT
   tb_alignment(ui_study->study);
+#else
+    g_warning(no_gsl);
+#endif
   return;
 }
 
@@ -983,7 +987,7 @@ void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning("No data set is currently marked as active");
+    g_warning(no_active_ds);
   else
     tb_crop(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
   return;
@@ -994,9 +998,14 @@ void ui_study_cb_fads_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning("No data set is currently marked as active");
-  else
+    g_warning(no_active_ds);
+  else {
+#ifdef AMIDE_LIBGSL_SUPPORT
     tb_fads(AMITK_DATA_SET(ui_study->active_object));
+#else
+    g_warning(no_gsl);
+#endif
+  }
   return;
 }
 
@@ -1005,8 +1014,8 @@ void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
-    g_warning("No data set is currently marked as active");
-  else
+    g_warning(no_active_ds);
+  else 
     tb_filter(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
 
   return;
@@ -1215,7 +1224,7 @@ gboolean ui_study_cb_delete_event(GtkWidget* widget, GdkEvent * event, gpointer 
 					 GTK_DIALOG_DESTROY_WITH_PARENT,
 					 GTK_MESSAGE_QUESTION,
 					 GTK_BUTTONS_OK_CANCEL,
-					 "There are unsaved changes to the study.\nAre you sure you wish to quit?");
+					 _("There are unsaved changes to the study.\nAre you sure you wish to quit?"));
 
     /* and wait for the question to return */
     return_val = gtk_dialog_run(GTK_DIALOG(exit_dialog));

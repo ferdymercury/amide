@@ -58,6 +58,7 @@ typedef struct tb_fly_through_t {
   amide_real_t end_z;
   amide_time_t duration;
   gboolean in_generation;
+  gboolean dynamic;
   dynamic_t type;
 
   GtkWidget * dialog;
@@ -301,7 +302,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
     /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new("Output MPEG As");
+    file_selection = gtk_file_selection_new(_("Output MPEG As"));
 
     temp_string = g_strdup_printf("%s_FlyThrough_%d.mpg", 
 				  AMITK_OBJECT_NAME(tb_fly_through->study), 
@@ -443,7 +444,7 @@ static void movie_generate(tb_fly_through_t * tb_fly_through, gchar * output_fil
     return_val = mpeg_encode_frame(mpeg_encode_context, AMITK_CANVAS_PIXBUF(tb_fly_through->canvas));
 
     if (return_val != 1) 
-      g_warning("encoding of frame %d failed", i_frame);
+      g_warning(_("encoding of frame %d failed"), i_frame);
 
     current_point.z += increment_z;
   }
@@ -482,8 +483,16 @@ static void dialog_set_sensitive(tb_fly_through_t * tb_fly_through, gboolean sen
   gtk_widget_set_sensitive(tb_fly_through->start_position_spin, sensitive);
   gtk_widget_set_sensitive(tb_fly_through->end_position_spin, sensitive);
   gtk_widget_set_sensitive(tb_fly_through->duration_spin_button, sensitive);
-  gtk_widget_set_sensitive(tb_fly_through->dynamic_type, sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(tb_fly_through->canvas), sensitive);
+
+  if (tb_fly_through->dynamic) {
+    gtk_widget_set_sensitive(tb_fly_through->dynamic_type, sensitive);
+    gtk_widget_set_sensitive(tb_fly_through->start_frame_spin_button, sensitive);
+    gtk_widget_set_sensitive(tb_fly_through->end_frame_spin_button, sensitive);
+    gtk_widget_set_sensitive(tb_fly_through->start_time_spin_button, sensitive);
+    gtk_widget_set_sensitive(tb_fly_through->end_time_spin_button, sensitive);
+  }
+
   gtk_dialog_set_response_sensitive(GTK_DIALOG(tb_fly_through->dialog), 
 				    AMITK_RESPONSE_EXECUTE, sensitive);
 }
@@ -575,7 +584,7 @@ static tb_fly_through_t * tb_fly_through_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_fly_through = g_try_new(tb_fly_through_t,1)) == NULL) {
-    g_warning("couldn't allocate space for tb_fly_through_t");
+    g_warning(_("couldn't allocate space for tb_fly_through_t"));
     return NULL;
   }
   tb_fly_through->reference_count = 1;
@@ -634,7 +643,7 @@ void tb_fly_through(AmitkStudy * study,
   tb_fly_through->space = amitk_space_get_view_space(view, layout);
 
   tb_fly_through->dialog = 
-    gtk_dialog_new_with_buttons("Fly Through Generation",  parent,
+    gtk_dialog_new_with_buttons(_("Fly Through Generation"),  parent,
 				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
 				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
 				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
@@ -654,7 +663,7 @@ void tb_fly_through(AmitkStudy * study,
   gtk_table_attach(GTK_TABLE(packing_table), right_table, 2,3, 0,2,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
-  label = gtk_label_new("Current Position (mm):");
+  label = gtk_label_new(_("Current Position (mm):"));
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   tb_fly_through->position_entry = gtk_entry_new();
@@ -664,7 +673,7 @@ void tb_fly_through(AmitkStudy * study,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("Start Position (mm):");
+  label = gtk_label_new(_("Start Position (mm):"));
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   tb_fly_through->start_position_spin = 
@@ -679,7 +688,7 @@ void tb_fly_through(AmitkStudy * study,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("End Position (mm):");
+  label = gtk_label_new(_("End Position (mm):"));
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   tb_fly_through->end_position_spin = 
@@ -694,7 +703,7 @@ void tb_fly_through(AmitkStudy * study,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("Movie Duration (sec):");
+  label = gtk_label_new(_("Movie Duration (sec):"));
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   tb_fly_through->duration_spin_button = 
@@ -712,11 +721,12 @@ void tb_fly_through(AmitkStudy * study,
   /* the progress dialog */
   tb_fly_through->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(tb_fly_through->dialog));
   amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(tb_fly_through->progress_dialog),
-				 "Fly through movie generation");
+				 _("Fly through movie generation"));
 
   /* setup the canvas */
   tb_fly_through->canvas = 
-    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, FALSE, FALSE, 0);
+    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, 
+		     AMITK_CANVAS_TYPE_FLY_THROUGH, FALSE, 0);
   amitk_canvas_set_study(AMITK_CANVAS(tb_fly_through->canvas), tb_fly_through->study);
   g_signal_connect(G_OBJECT(tb_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), tb_fly_through);
@@ -724,12 +734,12 @@ void tb_fly_through(AmitkStudy * study,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
 
-  tb_fly_through->start_position_button = gtk_button_new_with_label("Set Start Position");
+  tb_fly_through->start_position_button = gtk_button_new_with_label(_("Set Start Position"));
   g_signal_connect(G_OBJECT(tb_fly_through->start_position_button), "pressed",
 		   G_CALLBACK(set_start_position_pressed_cb), tb_fly_through);
   gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->start_position_button, 
 		   0,1,1,2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  tb_fly_through->end_position_button = gtk_button_new_with_label("Set End Position");
+  tb_fly_through->end_position_button = gtk_button_new_with_label(_("Set End Position"));
   g_signal_connect(G_OBJECT(tb_fly_through->end_position_button), "pressed",
 		   G_CALLBACK(set_end_position_pressed_cb), tb_fly_through);
   gtk_table_attach(GTK_TABLE(packing_table), tb_fly_through->end_position_button, 
@@ -771,12 +781,13 @@ void tb_fly_through(AmitkStudy * study,
     }
     temp_objects = temp_objects->next;
   }
+  tb_fly_through->dynamic=dynamic;
 
   /* garbage collection */
   amitk_objects_unref(objects);
 
 
-  if (dynamic) {
+  if (tb_fly_through->dynamic) {
     /* a separator for clarity */
     hseparator = gtk_hseparator_new();
     gtk_table_attach(GTK_TABLE(right_table), hseparator, 0,2,
@@ -784,7 +795,7 @@ void tb_fly_through(AmitkStudy * study,
     table_row++;
     
     /* do we want to make a movie over time or over frames */
-    label = gtk_label_new("Dynamic Movie:");
+    label = gtk_label_new(_("Dynamic Movie:"));
     gtk_table_attach(GTK_TABLE(right_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     
@@ -794,17 +805,17 @@ void tb_fly_through(AmitkStudy * study,
     gtk_widget_show(hbox);
     
     /* the radio buttons */
-    radio_button1 = gtk_radio_button_new_with_label(NULL, "No");
+    radio_button1 = gtk_radio_button_new_with_label(NULL, _("No"));
     gtk_box_pack_start(GTK_BOX(hbox), radio_button1, FALSE, FALSE, 3);
     g_object_set_data(G_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(NOT_DYNAMIC));
     tb_fly_through->dynamic_type = radio_button1;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button1), TRUE);
     
-    radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over time");
+    radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over time"));
     gtk_box_pack_start(GTK_BOX(hbox), radio_button2, FALSE, FALSE, 3);
     g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
     
-    radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over frames");
+    radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over frames"));
     gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
     g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
     
@@ -815,10 +826,10 @@ void tb_fly_through(AmitkStudy * study,
     table_row++;
     
     /* widgets to specify the start and end times */
-    tb_fly_through->start_time_label = gtk_label_new("Start Time (s)");
+    tb_fly_through->start_time_label = gtk_label_new(_("Start Time (s)"));
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_time_label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-    tb_fly_through->start_frame_label = gtk_label_new("Start Frame");
+    tb_fly_through->start_frame_label = gtk_label_new(_("Start Frame"));
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->start_frame_label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     
@@ -845,10 +856,10 @@ void tb_fly_through(AmitkStudy * study,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
     table_row++;
     
-    tb_fly_through->end_time_label = gtk_label_new("End Time (s)");
+    tb_fly_through->end_time_label = gtk_label_new(_("End Time (s)"));
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_time_label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-    tb_fly_through->end_frame_label = gtk_label_new("End Frame");
+    tb_fly_through->end_frame_label = gtk_label_new(_("End Frame"));
     gtk_table_attach(GTK_TABLE(right_table), tb_fly_through->end_frame_label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     
@@ -888,7 +899,7 @@ void tb_fly_through(AmitkStudy * study,
   gtk_widget_show_all(tb_fly_through->dialog);
 		 
   /* and hide the appropriate widgets */
-  if (dynamic) {
+  if (tb_fly_through->dynamic) {
     gtk_widget_hide(tb_fly_through->start_frame_label);
     gtk_widget_hide(tb_fly_through->start_frame_spin_button);
     gtk_widget_hide(tb_fly_through->end_frame_label);

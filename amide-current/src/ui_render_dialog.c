@@ -43,14 +43,14 @@
 static void change_quality_cb(GtkWidget * widget, gpointer data);
 static void change_pixel_type_cb(GtkWidget * widget, gpointer data);
 static void change_density_cb(GtkWidget * widget, gpointer data);
-static void change_zoom_cb(GtkWidget * widget, gpointer data);
 static void change_eye_angle_cb(GtkWidget * widget, gpointer data);
 static void change_eye_width_cb(GtkWidget * widget, gpointer data);
 static void depth_cueing_toggle_cb(GtkWidget * widget, gpointer data);
 static void change_front_factor_cb(GtkWidget * widget, gpointer data);
 static void color_table_cb(GtkWidget * widget, gpointer data);
 static void change_opacity_cb(GtkWidget * widget, gpointer data);
-static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static gboolean parameter_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static gboolean transfer_function_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 
 static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t type);
 
@@ -104,31 +104,6 @@ static void change_pixel_type_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-
-/* function to change the zoom */
-static void change_zoom_cb(GtkWidget * widget, gpointer data) {
-
-  ui_render_t * ui_render = data;
-  gdouble temp_val;
-
-  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
-  
-  if (temp_val < 0.1)
-    return;
-  if (temp_val > 10) /* 10x zoom seems like quite a bit... */
-    return;
-  
-  /* set the zoom */
-  if (!REAL_EQUAL(ui_render->zoom, temp_val)) {
-    ui_render->zoom = temp_val;
-    renderings_set_zoom(ui_render->renderings, ui_render->zoom);
-    
-    /* do updating */
-    ui_render_add_update(ui_render); 
-  }
-
-  return;
-}
 
 /* function to switch between click & drag versus click, drag, release */
 static void update_without_release_toggle_cb(GtkWidget * widget, gpointer data) {
@@ -359,12 +334,12 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
     /* allocate some new memory */
     if ((rendering->ramp_x[i_classification] = 
 	 g_try_new(gint,rendering->num_points[i_classification])) == NULL) {
-      g_warning("couldn't allocate space for ramp x");
+      g_warning(_("couldn't allocate space for ramp x"));
       return;
     }
     if ((rendering->ramp_y[i_classification] = 
 	 g_try_new(gfloat,rendering->num_points[i_classification])) == NULL) {
-      g_warning("couldn't allocate space for ramp y");
+      g_warning(_("couldn't allocate space for ramp y"));
       return;
     }
     
@@ -414,13 +389,16 @@ static void help_cb(GnomePropertyBox *rendering_dialog, gint page_number, gpoint
 */
 
 
-/* function called to destroy the rendering parameter dialog */
-static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
+static gboolean parameter_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
   ui_render_t * ui_render = data;
-
   ui_render->parameter_dialog = NULL;
+  return FALSE;
+}
 
+static gboolean transfer_function_delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
+  ui_render_t * ui_render = data;
+  ui_render->transfer_function_dialog = NULL;
   return FALSE;
 }
 
@@ -439,7 +417,7 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
 
   /* allocate some memory for the curve we're passing to the curve widget */
   if ((curve_ctrl_points = g_try_malloc(rendering->num_points[type]*sizeof(gfloat)*2)) == NULL) {
-    g_warning("Failed to Allocate Memory for Ramp");
+    g_warning(_("Failed to Allocate Memory for Ramp"));
     return;
   }
   
@@ -470,7 +448,7 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
 }
 
 /* function that sets up the rendering options dialog */
-void ui_render_dialog_create(ui_render_t * ui_render) {
+void ui_render_dialog_create_parameters(ui_render_t * ui_render) {
   
   gchar * temp_string = NULL;
   GtkWidget * packing_table;
@@ -480,19 +458,13 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   GtkWidget * menuitem;
   GtkWidget * check_button;
   GtkWidget * spin_button;
-  GtkWidget * gamma_curve[2];
-  GtkWidget * button;
-  GtkWidget * notebook;
-  classification_t i_classification;
   GtkWidget * hseparator;
   rendering_quality_t i_quality;
-  pixel_type_t i_pixel_type;
   guint table_row = 0;
-  renderings_t * temp_list;
   
   if (ui_render->parameter_dialog != NULL)
     return;
-  temp_string = g_strdup_printf("%s: Rendering Parameters Dialog",PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Rendering Parameters Dialog"),PACKAGE);
   ui_render->parameter_dialog = 
     gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
 				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
@@ -501,27 +473,17 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 
   /* setup the callbacks for the dialog */
   g_signal_connect(G_OBJECT(ui_render->parameter_dialog), "delete_event", 
-		   G_CALLBACK(delete_event_cb), ui_render);
+		   G_CALLBACK(parameter_delete_event_cb), ui_render);
 		   
-
-  notebook = gtk_notebook_new();
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render->parameter_dialog)->vbox), notebook);
-
-
-
-  /* ---------------------------
-     Basic Parameters page 
-     --------------------------- */
 
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,2,FALSE);
-  label = gtk_label_new("Basic Parameters");
   table_row=0;
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render->parameter_dialog)->vbox), packing_table);
 
   /* widgets to change the quality versus speed of rendering */
-  label = gtk_label_new("Speed versus Quality");
+  label = gtk_label_new(_("Speed versus Quality"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -544,21 +506,8 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 
 
 
-  /* widgets to change the zoom */
-  label = gtk_label_new("Zoom");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  spin_button = gtk_spin_button_new_with_range(0.1, 10.0, 0.2);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
-  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), DIALOG_SPIN_BUTTON_DIGITS);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->zoom);
-  g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_zoom_cb), ui_render);
-  gtk_table_attach(GTK_TABLE(packing_table), spin_button,1,2,
-		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-  table_row++;
-
   /* allow rendering to be click and drag */
-  check_button = gtk_check_button_new_with_label ("update without button release");
+  check_button = gtk_check_button_new_with_label (_("update without button release"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->update_without_release);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(update_without_release_toggle_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
@@ -573,7 +522,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 
 
   /* widget for the stereo eye angle */
-  label = gtk_label_new("Stereo Angle");
+  label = gtk_label_new(_("Stereo Angle"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -587,7 +536,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
   /* widget for the stereo eye width */
-  label = gtk_label_new("Eye Width (mm)");
+  label = gtk_label_new(_("Eye Width (mm)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -609,7 +558,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
   /* the depth cueing enabling button */
-  check_button = gtk_check_button_new_with_label ("enable/disable depth cueing");
+  check_button = gtk_check_button_new_with_label (_("enable/disable depth cueing"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->depth_cueing);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(depth_cueing_toggle_cb), ui_render);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
@@ -617,7 +566,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
 
-  label = gtk_label_new("Front Factor");
+  label = gtk_label_new(_("Front Factor"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -630,7 +579,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("Density");
+  label = gtk_label_new(_("Density"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -644,11 +593,49 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
 
+  /* and show all our widgets */
+  gtk_widget_show_all(ui_render->parameter_dialog);
+
+  return;
+}
 
 
-  /* ---------------------------
-     Volume Specific Stuff
-     --------------------------- */
+/* function that sets up the rendering options dialog */
+void ui_render_dialog_create_transfer_function(ui_render_t * ui_render) {
+  
+  gchar * temp_string = NULL;
+  GtkWidget * packing_table;
+  GtkWidget * label;
+  GtkWidget * option_menu;
+  GtkWidget * menu;
+  GtkWidget * menuitem;
+  GtkWidget * gamma_curve[2];
+  GtkWidget * button;
+  GtkWidget * notebook;
+  classification_t i_classification;
+  GtkWidget * hseparator;
+  pixel_type_t i_pixel_type;
+  guint table_row = 0;
+  renderings_t * temp_list;
+  
+
+  if (ui_render->transfer_function_dialog != NULL)
+    return;
+  temp_string = g_strdup_printf(_("%s: Transfer Function Dialog"),PACKAGE);
+  ui_render->transfer_function_dialog = 
+    gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_render->app),
+				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+				 NULL);
+  g_free(temp_string);
+
+  /* setup the callbacks for the dialog */
+  g_signal_connect(G_OBJECT(ui_render->transfer_function_dialog), "delete_event", 
+		   G_CALLBACK(transfer_function_delete_event_cb), ui_render);
+		   
+
+  notebook = gtk_notebook_new();
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render->transfer_function_dialog)->vbox), notebook);
+
 
   temp_list = ui_render->renderings;
   while (temp_list != NULL) {
@@ -658,7 +645,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
     /* widgets to change the returned pixel type of the rendering */
-    label = gtk_label_new("Return Type");
+    label = gtk_label_new(_("Return Type"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -678,7 +665,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
     table_row++;
 
     /* color table selector */
-    label = gtk_label_new("color table:");
+    label = gtk_label_new(_("color table:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -706,9 +693,9 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
     for (i_classification = 0; i_classification < NUM_CLASSIFICATIONS; i_classification++) {
 
       if (i_classification == DENSITY_CLASSIFICATION)
-	label = gtk_label_new("Density\nDependent\nOpacity");
+	label = gtk_label_new(_("Density\nDependent\nOpacity"));
       else /* gradient classification*/
-	label = gtk_label_new("Gradient\nDependent\nOpacity");
+	label = gtk_label_new(_("Gradient\nDependent\nOpacity"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   
@@ -732,7 +719,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 
     /* GTK no longer has a way to detect automatically when the GtkCurve has been changed,
        user will now have to explicitly change */
-    button = gtk_button_new_with_label("Apply Curve Changes");
+    button = gtk_button_new_with_label(_("Apply Curve Changes"));
     g_object_set_data(G_OBJECT(button), "gamma_curve_density", gamma_curve[DENSITY_CLASSIFICATION]);
     g_object_set_data(G_OBJECT(button), "gamma_curve_gradient", gamma_curve[GRADIENT_CLASSIFICATION]);
     g_object_set_data(G_OBJECT(button), "ui_render", ui_render);
@@ -749,7 +736,7 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 
 
   /* and show all our widgets */
-  gtk_widget_show_all(ui_render->parameter_dialog);
+  gtk_widget_show_all(ui_render->transfer_function_dialog);
 
   return;
 }

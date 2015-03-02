@@ -29,42 +29,38 @@
 
 #include "amitk_data_set.h"
 #include "medcon_import.h"
-#undef PACKAGE /* medcon redefines these.... */
-#undef VERSION 
 #include <medcon.h>
-#undef PACKAGE 
-#undef VERSION 
 
 static char * medcon_unknown = "Unknown";
 
 gchar * libmdc_menu_names[] = {
-  "(_X)MedCon Guess",
-  "_Raw via (X)MedCon",
-  "A_SCII via (X)MedCon",
-  "_GIF 87a/89a",
-  "Acr/_Nema 2.0",
-  "IN_W 1.0 (RUG)",
-  "_Concorde/microPET",
-  "_ECAT 6 via (X)MedCon",
-  "_ECAT 7 via (X)MedCon",
-  "_InterFile 3.3",
-  "_Analyze (SPM)",
-  "_DICOM 3.0",
+  N_("(_X)MedCon Guess"),
+  N_("_Raw via (X)MedCon"),
+  N_("A_SCII via (X)MedCon"),
+  N_("_GIF 87a/89a"),
+  N_("Acr/_Nema 2.0"),
+  N_("IN_W 1.0 (RUG)"),
+  N_("_Concorde/microPET"),
+  N_("_ECAT 6 via (X)MedCon"),
+  N_("_ECAT 7 via (X)MedCon"),
+  N_("_InterFile 3.3"),
+  N_("_Analyze (SPM)"),
+  N_("_DICOM 3.0"),
 };
   
 gchar * libmdc_menu_explanations[] = {
-  "let (X)MedCon/libmdc guess file type",
-  "Import a raw data file through (X)MedCon",
-  "Import an ASCII data file through (X)MedCon",
-  "Import a file stored as GIF",
-  "Import a Acr/Nema 2.0 file",
-  "Import a INW 1.0 (RUG) File",
-  "Import a file from the Concorde microPET",
-  "Import a CTI/ECAT 6 file through (X)MedCon",
-  "Import a CTI/ECAT 7 file through (X)MedCon",
-  "Import a InterFile 3.3 file"
-  "Import an Analyze file"
-  "Import a DICOM 3.0 file",
+  N_("let (X)MedCon/libmdc guess file type"),
+  N_("Import a raw data file through (X)MedCon"),
+  N_("Import an ASCII data file through (X)MedCon"),
+  N_("Import a file stored as GIF"),
+  N_("Import a Acr/Nema 2.0 file"),
+  N_("Import a INW 1.0 (RUG) File"),
+  N_("Import a file from the Concorde microPET"),
+  N_("Import a CTI/ECAT 6 file through (X)MedCon"),
+  N_("Import a CTI/ECAT 7 file through (X)MedCon"),
+  N_("Import a InterFile 3.3 file"),
+  N_("Import an Analyze file"),
+  N_("Import a DICOM 3.0 file")
 };
 
 gboolean medcon_import_supports(libmdc_import_method_t submethod) {
@@ -190,7 +186,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
   /* open the file */
   import_filename = g_strdup(filename); /* this gets around the facts that filename is type const */
   if ((error = MdcOpenFile(&medcon_file_info, import_filename)) != MDC_OK) {
-    g_warning("Can't open file %s with libmdc/(X)MedCon",filename);
+    g_warning(_("Can't open file %s with libmdc/(X)MedCon"),filename);
     g_free(import_filename);
     return NULL;
   }
@@ -198,7 +194,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
   
   /* read the file */
   if ((error = MdcReadFile(&medcon_file_info, 1)) != MDC_OK) {
-    g_warning("Can't read file %s with libmdc/(X)MedCon",filename);
+    g_warning(_("Can't read file %s with libmdc/(X)MedCon"),filename);
     goto error;
   }
 
@@ -226,7 +222,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     /* note2: floats we have medcon quantify, everything else we try to get the raw data, and store scaling factors */
   case BIT1: /* 1 */
   case BIT8_S: /* 2 */
-    g_warning("Importing type %d file through (X)MedCon unsupported, will try as unsigned byte",
+    g_warning(_("Importing type %d file through (X)MedCon unsupported, will try as unsigned byte"),
     	      medcon_file_info.type);
   case BIT8_U: /* 3 */
     format = AMITK_FORMAT_UBYTE;
@@ -235,7 +231,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     scaling_type = AMITK_SCALING_TYPE_2D;
     break;
   case BIT16_U: /*  5 */
-    g_warning("Importing type %d file through (X)MedCon unsupported, will try as signed short",
+    g_warning(_("Importing type %d file through (X)MedCon unsupported, will try as signed short"),
     	      medcon_file_info.type);
   case BIT16_S: /* 4 */
     format = AMITK_FORMAT_SSHORT;
@@ -244,7 +240,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     scaling_type = AMITK_SCALING_TYPE_2D;
     break;
   case BIT32_U: /* 7 */
-    g_warning("Importing type %d file through (X)MedCon unsupported, will try as signed int",
+    g_warning(_("Importing type %d file through (X)MedCon unsupported, will try as signed int"),
     	      medcon_file_info.type);
   case BIT32_S: /* 6 */
     format = AMITK_FORMAT_SINT;
@@ -258,7 +254,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
   case FLT64: /* 11 */
   case ASCII: /* 12 */
   case VAXFL32: /* 13 */
-    g_warning("Importing type %d file through (X)MedCon unsupported, will try as float",
+    g_warning(_("Importing type %d file through (X)MedCon unsupported, will try as float"),
     	      medcon_file_info.type);
   case FLT32: /* 10 */
     format = AMITK_FORMAT_FLOAT;
@@ -270,7 +266,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 
   ds = amitk_data_set_new_with_data(format, dim, scaling_type);
   if (ds == NULL) {
-    g_warning("Couldn't allocate space for the data set structure to hold (X)MedCon data");
+    g_warning(_("Couldn't allocate space for the data set structure to hold (X)MedCon data"));
     goto error;
   }
 
@@ -281,20 +277,20 @@ AmitkDataSet * medcon_import(const gchar * filename,
 
 
   /* guess the modality */
-  if (g_strcasecmp(medcon_file_info.image[0].image_mod,"PT") == 0)
+  if (g_ascii_strcasecmp(medcon_file_info.image[0].image_mod,"PT") == 0)
     ds->modality = AMITK_MODALITY_PET;
   else
     ds->modality = AMITK_MODALITY_CT;
 
   /* try figuring out the name, start with the study name */
   name = NULL;
-  if (strlen(medcon_file_info.study_name) > 0) 
-    if (g_strcasecmp(medcon_file_info.study_name, medcon_unknown) != 0)
-      name = g_strdup(medcon_file_info.study_name);
+  if (strlen(medcon_file_info.study_id) > 0) 
+    if (g_ascii_strcasecmp(medcon_file_info.study_id, medcon_unknown) != 0)
+      name = g_strdup(medcon_file_info.study_id);
 
   if (name == NULL)
     if (strlen(medcon_file_info.patient_name) > 0)
-      if (g_strcasecmp(medcon_file_info.patient_name, medcon_unknown) != 0) 
+      if (g_ascii_strcasecmp(medcon_file_info.patient_name, medcon_unknown) != 0) 
 	name = g_strdup(medcon_file_info.patient_name);
 
   if (name == NULL) {/* no original filename? */
@@ -310,7 +306,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 
   /* append the reconstruction method */
   if (strlen(medcon_file_info.recon_method) > 0)
-    if (g_strcasecmp(medcon_file_info.recon_method, medcon_unknown) != 0) {
+    if (g_ascii_strcasecmp(medcon_file_info.recon_method, medcon_unknown) != 0) {
       temp_string = name;
       name = g_strdup_printf("%s - %s", temp_string, medcon_file_info.recon_method);
       g_free(temp_string);
@@ -343,7 +339,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
     time_t current_time;
     time(&current_time);
     amitk_data_set_set_scan_date(ds, ctime(&current_time)); /* give up */
-    g_warning("Couldn't figure out time of scan from (X)MedCon, setting to %s",
+    g_warning(_("Couldn't figure out time of scan from (X)MedCon, setting to %s"),
 	      AMITK_DATA_SET_SCAN_DATE(ds));
   } else {
     amitk_data_set_set_scan_date(ds, asctime(&time_structure));
@@ -360,10 +356,10 @@ AmitkDataSet * medcon_import(const gchar * filename,
 
   /* complain if xmedcon is using an affine transformation, this only checks the first image.... */
   if (!EQUAL_ZERO(medcon_file_info.image[0].rescale_intercept))
-    g_warning("(X)MedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off");
+    g_warning(_("(X)MedCon file has non-zero intercept, which AMIDE is ignoring, quantitation will be off"));
 
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Importing File Through (X)MedCon:\n   %s", filename);
+    temp_string = g_strdup_printf(_("Importing File Through (X)MedCon:\n   %s"), filename);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -406,7 +402,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	  if ((medcon_buffer = 
 	       (amitk_format_UBYTE_t *) MdcGetImgBIT8_U(&medcon_file_info, 
 							i.z+i.t*ds->raw_data->dim.z)) == NULL ){
-	    g_warning("(X)MedCon couldn't convert to an unsigned byte... out of memory?");
+	    g_warning(_("(X)MedCon couldn't convert to an unsigned byte... out of memory?"));
 	    g_free(medcon_buffer);
 	    goto error;
 	  }
@@ -433,7 +429,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	  if ((medcon_buffer = 
 	       (amitk_format_SSHORT_t *) MdcGetImgBIT16_S(&medcon_file_info, 
 							  i.z+i.t*ds->raw_data->dim.z)) == NULL ){
-	    g_warning("(X)MedCon couldn't convert to a signed short... out of memory?");
+	    g_warning(_("(X)MedCon couldn't convert to a signed short... out of memory?"));
 	    g_free(medcon_buffer);
 	    goto error;
 	  }
@@ -460,7 +456,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	  if ((medcon_buffer = 
 	       (amitk_format_SINT_t *) MdcGetImgBIT32_S(&medcon_file_info, 
 						    i.z+i.t*ds->raw_data->dim.z)) == NULL ){
-	    g_warning("(X)MedCon couldn't convert to a signed int... out of memory?");
+	    g_warning(_("(X)MedCon couldn't convert to a signed int... out of memory?"));
 	    g_free(medcon_buffer);
 	    goto error;
 	  }
@@ -483,7 +479,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	  if ((medcon_buffer = 
 	       (amitk_format_FLOAT_t *) MdcGetImgFLT32(&medcon_file_info, 
 						       i.z+i.t*ds->raw_data->dim.z)) == NULL){
-	    g_warning("(X)MedCon couldn't convert to a float... out of memory?");
+	    g_warning(_("(X)MedCon couldn't convert to a float... out of memory?"));
 	    g_free(medcon_buffer);
 	    goto error;
 	  }
@@ -499,7 +495,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	}
 	break;
       default:
-	g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
+	g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
 	goto error;
 	break;
       }

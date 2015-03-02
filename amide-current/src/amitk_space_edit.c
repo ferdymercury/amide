@@ -135,13 +135,13 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   gtk_widget_show(hseparator);
 
   /* and a display of the current axis */
-  label = gtk_label_new("i");
+  label = gtk_label_new(_("i"));
   gtk_table_attach(GTK_TABLE(table), label, 1,2, row, row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
-  label = gtk_label_new("j");
+  label = gtk_label_new(_("j"));
   gtk_table_attach(GTK_TABLE(table), label, 2,3, row, row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
-  label = gtk_label_new("k");
+  label = gtk_label_new(_("k"));
   gtk_table_attach(GTK_TABLE(table), label, 3,4, row, row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
   row++;
@@ -177,12 +177,12 @@ static void space_edit_init (AmitkSpaceEdit *space_edit)
   }
 
   /* button to reset the axis */
-  label = gtk_label_new("data set axis:");
+  label = gtk_label_new(_("data set axis:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, row, row+1,
 		   0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
   
-  button = gtk_button_new_with_label("reset to default");
+  button = gtk_button_new_with_label(_("reset to default"));
   gtk_table_attach(GTK_TABLE(table), button, 1,2, 
 		   row, row+1, 0, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(button), "pressed",
@@ -317,7 +317,7 @@ static void space_edit_reset_axis(GtkWidget * button, gpointer data) {
   AmitkPoint center;
 
   /* first double check that we really want to do this */
-  if (!space_edit_prompt(space_edit, "Do you really wish to reset the axis to identity?\nThis may flip left/right relationships"))
+  if (!space_edit_prompt(space_edit, _("Do you really wish to reset the axis to identity?\nThis may flip left/right relationships")))
     return;
 
   /* shift the coord frame to the center of rotation, and save the old offset */
@@ -341,7 +341,7 @@ static void space_edit_invert_axis(GtkWidget * button, gpointer data) {
   AmitkPoint center;
 
   /* first double check that we really want to do this */
-  if (!space_edit_prompt(space_edit, "Do you really wish to invert?\nThis will flip left/right relationships"))
+  if (!space_edit_prompt(space_edit, _("Do you really wish to invert?\nThis will flip left/right relationships")))
     return;
       
   i_axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(button), "axis"));

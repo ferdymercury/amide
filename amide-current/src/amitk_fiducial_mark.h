@@ -38,7 +38,7 @@ G_BEGIN_DECLS
 #define AMITK_IS_FIDUCIAL_MARK_CLASS(klass)	     (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_FIDUCIAL_MARK))
 #define	AMITK_FIDUCIAL_MARK_GET_CLASS(fiducial_mark) (G_TYPE_CHECK_GET_CLASS ((fiducial_mark), AMITK_TYPE_FIDUCIAL_MARK, AmitkFiducialMarkClass))
 
-#define AMITK_FIDUCIAL_MARK_GET(mark)                (amitk_space_s2b(AMITK_SPACE(mark),AMITK_FIDUCIAL_MARK(mark)->point))
+#define AMITK_FIDUCIAL_MARK_GET(mark)                (AMITK_SPACE_OFFSET(mark))
 
 
 
@@ -50,14 +50,11 @@ struct _AmitkFiducialMark
 {
   AmitkObject parent;
 
-  AmitkPoint point;
 };
 
 struct _AmitkFiducialMarkClass
 {
   AmitkObjectClass parent_class;
-
-  void (* fiducial_mark_changed) (AmitkFiducialMark * mark);
 
 };
 

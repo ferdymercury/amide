@@ -39,20 +39,20 @@
 
 /* external variables */
 gchar * amitk_fuse_type_explanations[] = {
-  "blend all data sets",
-  "overlay active data set on blended data sets"
+  N_("blend all data sets"),
+  N_("overlay active data set on blended data sets")
 };
 
 gchar * view_mode_names[] = {
-  "single view",
-  "linked view, 2 way",
-  "linked view, 3 way"
+  N_("single view"),
+  N_("linked view, 2 way"),
+  N_("linked view, 3 way")
 };
 
 gchar * view_mode_explanations[] = {
-  "All objects are shown in a single view",
-  "Objects are shown between 2 linked views",
-  "Objects are shown between 3 linked views",
+  N_("All objects are shown in a single view"),
+  N_("Objects are shown between 2 linked views"),
+  N_("Objects are shown between 3 linked views"),
 };
 
 
@@ -348,7 +348,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
  
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
-    amitk_append_str(&error_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
+    amitk_append_str(&error_buf,_("inappropriate zoom (%5.3f) for study, reseting to 1.0"),AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
 
@@ -356,7 +356,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
   temp_string = xml_get_string(nodes, "fuse_type");
   if (temp_string != NULL)
     for (i_fuse_type=0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) 
-      if (g_strcasecmp(temp_string, amitk_fuse_type_get_name(i_fuse_type)) == 0)
+      if (g_ascii_strcasecmp(temp_string, amitk_fuse_type_get_name(i_fuse_type)) == 0)
 	amitk_study_set_fuse_type(study, i_fuse_type);
   g_free(temp_string);
 
@@ -364,7 +364,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
   temp_string = xml_get_string(nodes, "view_mode");
   if (temp_string != NULL)
     for (i_view_mode=0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) 
-      if (g_strcasecmp(temp_string, amitk_view_mode_get_name(i_view_mode)) == 0)
+      if (g_ascii_strcasecmp(temp_string, amitk_view_mode_get_name(i_view_mode)) == 0)
 	amitk_study_set_view_mode(study, i_view_mode);
   g_free(temp_string);
 
@@ -649,7 +649,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
   /* switch into our new directory */
   old_dir = g_get_current_dir();
   if (chdir(study_directory) != 0) {
-    g_warning("Couldn't change directories in loading study");
+    g_warning(_("Couldn't change directories in loading study"));
     return NULL;
   }
 
@@ -686,7 +686,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_directory) {
 
   /* and return to the old directory */
   if (chdir(old_dir) != 0) {
-    g_warning("Couldn't return to previous directory in load study");
+    g_warning(_("Couldn't return to previous directory in load study"));
     g_object_unref(study);
     study = NULL;
   }
@@ -706,7 +706,7 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_directory)
   /* switch into our new directory */
   old_dir = g_get_current_dir();
   if (chdir(study_directory) != 0) {
-    g_warning("Couldn't change directories in writing study, study not saved");
+    g_warning(_("Couldn't change directories in writing study, study not saved"));
     return FALSE;
   }
 
@@ -714,7 +714,7 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_directory)
 
   /* and return to the old directory */
   if (chdir(old_dir) != 0) {
-    g_warning("Couldn't return to previous directory in writing study");
+    g_warning(_("Couldn't return to previous directory in writing study"));
     return FALSE;
   }
   g_free(old_dir);

@@ -86,24 +86,24 @@ typedef gdouble amitk_format_DOUBLE_t;
 
 /*the formats that data can take on disk */
 typedef enum {
-  AMITK_RAW_FORMAT_UBYTE_NE, 
-  AMITK_RAW_FORMAT_SBYTE_NE, 
-  AMITK_RAW_FORMAT_USHORT_LE, 
-  AMITK_RAW_FORMAT_SSHORT_LE, 
-  AMITK_RAW_FORMAT_UINT_LE, 
-  AMITK_RAW_FORMAT_SINT_LE, 
-  AMITK_RAW_FORMAT_FLOAT_LE, 
-  AMITK_RAW_FORMAT_DOUBLE_LE, 
-  AMITK_RAW_FORMAT_USHORT_BE, 
-  AMITK_RAW_FORMAT_SSHORT_BE, 
-  AMITK_RAW_FORMAT_UINT_BE,
-  AMITK_RAW_FORMAT_SINT_BE,
-  AMITK_RAW_FORMAT_FLOAT_BE,
-  AMITK_RAW_FORMAT_DOUBLE_BE,
-  AMITK_RAW_FORMAT_UINT_PDP,
-  AMITK_RAW_FORMAT_SINT_PDP,
-  AMITK_RAW_FORMAT_FLOAT_PDP, 
-  AMITK_RAW_FORMAT_ASCII_NE,
+  AMITK_RAW_FORMAT_UBYTE_8_NE, 
+  AMITK_RAW_FORMAT_SBYTE_8_NE, 
+  AMITK_RAW_FORMAT_USHORT_16_LE, 
+  AMITK_RAW_FORMAT_SSHORT_16_LE, 
+  AMITK_RAW_FORMAT_UINT_32_LE, 
+  AMITK_RAW_FORMAT_SINT_32_LE, 
+  AMITK_RAW_FORMAT_FLOAT_32_LE, 
+  AMITK_RAW_FORMAT_DOUBLE_64_LE, 
+  AMITK_RAW_FORMAT_USHORT_16_BE, 
+  AMITK_RAW_FORMAT_SSHORT_16_BE, 
+  AMITK_RAW_FORMAT_UINT_32_BE,
+  AMITK_RAW_FORMAT_SINT_32_BE,
+  AMITK_RAW_FORMAT_FLOAT_32_BE,
+  AMITK_RAW_FORMAT_DOUBLE_64_BE,
+  AMITK_RAW_FORMAT_UINT_32_PDP,
+  AMITK_RAW_FORMAT_SINT_32_PDP,
+  AMITK_RAW_FORMAT_FLOAT_32_PDP, 
+  AMITK_RAW_FORMAT_ASCII_8_NE,
   AMITK_RAW_FORMAT_NUM
 } AmitkRawFormat;
 
@@ -169,12 +169,14 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat data_format);
 #define amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format) ((dim).x*(dim).y*amitk_raw_format_sizes[raw_format])
 #define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).z*(dim).t*amitk_raw_format_calc_num_bytes_per_slice(dim,raw_format))
 
+const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format);
 
 /* external variables */
 extern guint amitk_format_sizes[];
 extern gchar * amitk_format_names[];
 extern guint amitk_raw_format_sizes[];
 extern gchar * amitk_raw_format_names[];
+extern gchar * amitk_raw_format_legacy_names[];
 
 /* variable type function declarations */
 #include "amitk_raw_data_UBYTE.h"

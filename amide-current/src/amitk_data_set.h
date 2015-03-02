@@ -202,6 +202,7 @@ struct _AmitkDataSet
   AmitkRawData * current_scaling; /* external_scaling * internal_scaling[] */
 
   GList * slice_cache;
+  gint max_slice_cache_size;
   AmitkDataSet * slice_parent; /* only used by derived data sets */
 
 };
@@ -210,15 +211,16 @@ struct _AmitkDataSetClass
 {
   AmitkVolumeClass parent_class;
 
-  void (* thresholding_changed)  (AmitkDataSet * ds);
-  void (* color_table_changed)   (AmitkDataSet * ds);
-  void (* interpolation_changed) (AmitkDataSet * ds);
-  void (* conversion_changed)    (AmitkDataSet * ds);
-  void (* scale_factor_changed)  (AmitkDataSet * ds);
-  void (* modality_changed)      (AmitkDataSet * ds);
-  void (* time_changed)          (AmitkDataSet * ds);
-  void (* voxel_size_changed)    (AmitkDataSet * ds);
-  void (* data_set_changed)      (AmitkDataSet * ds);
+  void (* thresholding_changed)    (AmitkDataSet * ds);
+  void (* color_table_changed)     (AmitkDataSet * ds);
+  void (* interpolation_changed)   (AmitkDataSet * ds);
+  void (* conversion_changed)      (AmitkDataSet * ds);
+  void (* scale_factor_changed)    (AmitkDataSet * ds);
+  void (* modality_changed)        (AmitkDataSet * ds);
+  void (* time_changed)            (AmitkDataSet * ds);
+  void (* voxel_size_changed)      (AmitkDataSet * ds);
+  void (* data_set_changed)        (AmitkDataSet * ds);
+  void (* invalidate_slice_cache)  (AmitkDataSet * ds);
 
 };
 
@@ -352,6 +354,7 @@ amide_real_t   amitk_data_sets_get_min_voxel_size    (GList * objects);
 amide_real_t   amitk_data_sets_get_max_min_voxel_size(GList * objects);
 GList *        amitk_data_sets_get_slices            (GList * objects,
 						      GList ** pslice_cache,
+						      const gint max_slice_cache_size,
 						      const amide_time_t start,
 						      const amide_time_t duration,
 						      const amide_real_t pixel_dim,

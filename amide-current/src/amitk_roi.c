@@ -39,19 +39,19 @@
 
 
 gchar * amitk_roi_menu_names[] = {
-  "_Ellipsoid", 
-  "Elliptic _Cylinder", 
-  "_Box",
-  "_2D Isocontour",
-  "_3D Isocontour",
+  N_("_Ellipsoid"), 
+  N_("Elliptic _Cylinder"), 
+  N_("_Box"),
+  N_("_2D Isocontour"),
+  N_("_3D Isocontour"),
 };
 
 gchar * amitk_roi_menu_explanation[] = {
-  "Add a new elliptical ROI", 
-  "Add a new elliptic cylinder ROI", 
-  "Add a new box shaped ROI",
-  "Add a new 2D Isocontour ROI",
-  "Add a new 3D Isocontour ROI",
+  N_("Add a new elliptical ROI"), 
+  N_("Add a new elliptic cylinder ROI"), 
+  N_("Add a new box shaped ROI"),
+  N_("Add a new 2D Isocontour ROI"),
+  N_("Add a new 3D Isocontour ROI"),
 };
 
 
@@ -236,7 +236,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * err
   temp_string = xml_get_string(nodes, "type");
   if (temp_string != NULL)
     for (i_roi_type=0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++) 
-      if (g_strcasecmp(temp_string, amitk_roi_type_get_name(i_roi_type)) == 0)
+      if (g_ascii_strcasecmp(temp_string, amitk_roi_type_get_name(i_roi_type)) == 0)
 	roi->type = i_roi_type;
   g_free(temp_string);
 

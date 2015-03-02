@@ -1,0 +1,87 @@
+
+<para> AMIDE stands for Amide's a Medical Image Data Examiner.  This
+program is a tool for viewing and analyzing volumetric medical imaging
+data sets, and has been designed from the ground up with support for
+multi-modality imaging.
+</para>
+  
+
+<sect2><title>Licensing</title>
+
+  <para>AMIDE is released under the terms of the <ulink type="http"
+  url="http://www.gnu.org/copyleft/gpl.html">GNU General Public
+  Library (GPL).</ulink></para>
+
+  <para>The text of the license is fairly verbose.  A quick summary
+  follows:
+  </para>
+
+  <orderedlist>
+   <listitem>
+    <para>
+     You are free to run the program, for any purpose.  Please note
+     that, although the GPL makes no restrictions on use of the
+     program, your government probably does.  For instance, in the
+     United States, AMIDE is not FDA approved and cannot be used
+     clinically.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     You are free to study the source code of the program, and adapt
+     it to your needs.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     You are free to redistribute the program.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     You are free to release modified versions of the program, as long
+     as you also redistribute the source code to the modified program,
+     and you label your modified version of the program appropriately.
+    </para>
+   </listitem>
+  </orderedlist> 
+
+
+
+
+</sect2>
+
+<sect2><title>Availability of Source Code</title>
+
+  <para> The source code for AMIDE is readily available from the
+  <ulink type="http" url="http://amide.sourceforge.net">AMIDE web
+  site</ulink>.
+  </para>
+
+</sect2>
+
+
+<sect2><title>Supported Platforms</title>
+
+  <para> In addition to source code, binary versions of AMIDE along
+  with installation instructions can be found for several systems on
+  the <ulink type="http" url="http://amide.sourceforge.net">AMIDE web
+  site</ulink>.  The currently supported systems are Linux/i386,
+  Microsoft Windows, and Macintosh OS X (achieved through the use of
+  the <ulink type="http"
+  url="http://fink.sourceforge.net">fink</ulink> add-on packages).
+  </para>
+
+</sect2>
+
+  
+<sect2><title>Contact Information</title>
+
+    <para> Questions and bug reports can be addressed to the AMIDE
+    users list <email> amide-users@lists.sourceforge.net</email>.
+    Information on joining the list and/or viewing archived messages
+    can be found <ulink type="http"
+    url="http://sourceforge.net/mail/?group_id=9464">here</ulink>.
+    </para> 
+
+</sect2>

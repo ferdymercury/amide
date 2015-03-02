@@ -1,3 +1,4 @@
+/* amitk_dial.h, adapted from gtkdial.h */
 
 /* GTK - The GIMP Toolkit
  * Copyright (C) 1995-1997 Peter Mattis, Spencer Kimball and Josh MacDonald
@@ -17,26 +18,24 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
-#ifndef __GTK_DIAL_H__
-#define __GTK_DIAL_H__
+#ifndef __AMITK_DIAL_H__
+#define __AMITK_DIAL_H__
 
 
-#include <gdk/gdk.h>
-#include <gtk/gtkadjustment.h>
-#include <gtk/gtkwidget.h>
+#include <gtk/gtk.h>
 
 
 G_BEGIN_DECLS
 
-#define GTK_DIAL(obj)          GTK_CHECK_CAST (obj, gtk_dial_get_type (), GtkDial)
-#define GTK_DIAL_CLASS(klass)  GTK_CHECK_CLASS_CAST (klass, gtk_dial_get_type (), GtkDialClass)
-#define GTK_IS_DIAL(obj)       GTK_CHECK_TYPE (obj, gtk_dial_get_type ())
+#define AMITK_DIAL(obj)          GTK_CHECK_CAST (obj, amitk_dial_get_type (), AmitkDial)
+#define AMITK_DIAL_CLASS(klass)  GTK_CHECK_CLASS_CAST (klass, amitk_dial_get_type (), AmitkDialClass)
+#define AMITK_IS_DIAL(obj)       GTK_CHECK_TYPE (obj, amitk_dial_get_type ())
 
 
-typedef struct _GtkDial        GtkDial;
-typedef struct _GtkDialClass   GtkDialClass;
+typedef struct _AmitkDial        AmitkDial;
+typedef struct _AmitkDialClass   AmitkDialClass;
 
-struct _GtkDial
+struct _AmitkDial
 {
   GtkWidget widget;
 
@@ -66,21 +65,21 @@ struct _GtkDial
   GtkAdjustment *adjustment;
 };
 
-struct _GtkDialClass
+struct _AmitkDialClass
 {
   GtkWidgetClass parent_class;
 };
 
 
-GtkWidget*     gtk_dial_new                    (GtkAdjustment *adjustment);
-GtkType        gtk_dial_get_type               (void);
-GtkAdjustment* gtk_dial_get_adjustment         (GtkDial      *dial);
-void           gtk_dial_set_update_policy      (GtkDial      *dial,
+GtkWidget*     amitk_dial_new                    (GtkAdjustment *adjustment);
+GtkType        amitk_dial_get_type               (void);
+GtkAdjustment* amitk_dial_get_adjustment         (AmitkDial      *dial);
+void           amitk_dial_set_update_policy      (AmitkDial      *dial,
 						GtkUpdateType  policy);
 
-void           gtk_dial_set_adjustment         (GtkDial      *dial,
+void           amitk_dial_set_adjustment         (AmitkDial      *dial,
 						GtkAdjustment *adjustment);
 
 G_END_DECLS
 
-#endif /* __GTK_DIAL_H__ */
+#endif /* __AMITK_DIAL_H__ */

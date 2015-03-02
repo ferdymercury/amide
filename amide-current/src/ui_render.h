@@ -42,6 +42,7 @@
 typedef struct ui_render_t {
   GnomeApp * app; 
   GtkWidget * parameter_dialog;
+  GtkWidget * transfer_function_dialog;
 #ifdef AMIDE_LIBFAME_SUPPORT
   gpointer movie; /* pointer to type ui_render_movie_t */
 #endif
@@ -51,8 +52,6 @@ typedef struct ui_render_t {
   GnomeCanvasItem * canvas_image;
   GdkPixbuf * pixbuf;
   renderings_t * renderings;
-  GtkWidget * render_button;
-  gboolean immediate;
   gboolean update_without_release;
   gboolean stereoscopic;
   gdouble stereo_eye_angle;

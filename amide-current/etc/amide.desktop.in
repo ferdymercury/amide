@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-GenericName=Medical Image Examiner
-Name=Amide
-Comment=A Medical Image Data Examiner
+_GenericName=Medical Image Examiner
+_Name=Amide
+_Comment=A Medical Image Data Examiner
 Exec=amide
 Icon=amide_logo.png
 Terminal=0

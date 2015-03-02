@@ -36,12 +36,12 @@
 #define AXIS_WIDTH 120
 #define AXIS_HEIGHT 120
 
-static const char * wizard_name = "Data Set Cropping Wizard";
+static const char * wizard_name = N_("Data Set Cropping Wizard");
 
 static const char * finish_page_text = 
-"When the apply button is hit, a new data set will be created\n"
-"and placed into the study's tree, consisting of the appropriately\n"
-"cropped data\n";
+N_("When the apply button is hit, a new data set will be created\n"
+   "and placed into the study's tree, consisting of the appropriately\n"
+   "cropped data\n");
 
 typedef enum {
   TRANSVERSE_PAGE,
@@ -158,7 +158,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       table_column=0;
       
       /* the zoom selection */
-      label = gtk_label_new("zoom");
+      label = gtk_label_new(_("zoom"));
       gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -179,7 +179,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       
       /* the frame selection */
       if (AMITK_DATA_SET_NUM_FRAMES(tb_crop->data_set) > 1) {
-	label = gtk_label_new("frame");
+	label = gtk_label_new(_("frame"));
 	gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
 			 table_column,table_column+1, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -224,7 +224,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 	
 	if (voxel_get_dim(AMITK_DATA_SET_DIM(tb_crop->data_set), i_dim) > 1) {
 	  
-	  temp_string = g_strdup_printf("%s range:", amitk_dim_get_name(i_dim));
+	  temp_string = g_strdup_printf(_("%s range:"), amitk_dim_get_name(i_dim));
 	  label = gtk_label_new(temp_string);
 	  g_free(temp_string);
 	  gtk_table_attach(GTK_TABLE(tb_crop->table[view]), label, 
@@ -758,7 +758,7 @@ static tb_crop_t * tb_crop_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_crop = g_try_new(tb_crop_t,1)) == NULL) {
-    g_warning("couldn't allocate space for tb_crop_t");
+    g_warning(_("couldn't allocate space for tb_crop_t"));
     return NULL;
   }
 
@@ -796,7 +796,7 @@ void tb_crop(AmitkStudy * study, AmitkDataSet * active_ds) {
   GtkWidget * page;
 
   if (active_ds == NULL) {
-    g_warning("No data set is currently marked as active");
+    g_warning(_("No data set is currently marked as active"));
     return;
   }
   

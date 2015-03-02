@@ -55,6 +55,31 @@ static gchar * threshold_names[] = {
   "global"
 };
 
+gchar * color_table_legacy_names[] = {
+  "black/white linear", 
+  "white/black linear", 
+  "black/white/black",
+  "white/black/white",
+  "red temperature", 
+  "inverse red temp.", 
+  "blue temperature", 
+  "inv. blue temp.", 
+  "green temperature", 
+  "inv. green temp.", 
+  "hot metal", 
+  "inv. hot metal", 
+  "hot blue", 
+  "inverse hot blue", 
+  "hot green", 
+  "inverse hot green", 
+  "spectrum", 
+  "inverse spectrum", 
+  "NIH + white", 
+  "inv. NIH + white", 
+  "NIH",
+  "inverse NIH"
+};
+
 #define NUM_THRESHOLDS 4
 
 
@@ -119,13 +144,13 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename, gchar **p
   /* figure out the data format */
   temp_string = xml_get_string(nodes, "raw_data_format");
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_BE;
+  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_64_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_LE;
+  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_64_LE;
 #endif
   if (temp_string != NULL)
     for (i_raw_data_format=0; i_raw_data_format < AMITK_RAW_FORMAT_NUM; i_raw_data_format++) 
-      if (g_strcasecmp(temp_string, amitk_raw_format_names[i_raw_data_format]) == 0)
+      if (g_ascii_strcasecmp(temp_string, amitk_raw_format_legacy_names[i_raw_data_format]) == 0)
 	raw_data_format = i_raw_data_format;
   g_free(temp_string);
 
@@ -149,10 +174,11 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename, gchar **p
 }
 
 /* function to load in an alignment point xml file */
-static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **perror_buf) {
+static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **perror_buf, AmitkSpace *space) {
 
   xmlDocPtr doc;
   AmitkFiducialMark * new_pt;
+  AmitkPoint point;
   xmlNodePtr nodes;
   gchar * temp_string;
 
@@ -181,8 +207,17 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **pe
   /* get the document tree */
   nodes = nodes->children;
 
-  /* get the point */
-  new_pt->point = amitk_point_read_xml(nodes, "point", perror_buf);
+  /* previous to version xif version 2.0, points were defined only with respect to their 
+     parent's space*/
+  amitk_space_copy_in_place(AMITK_SPACE(new_pt), space);
+
+  /* the "point" option was eliminated in version 0.7.11, just 
+     using the space's offset instead */
+  point = amitk_point_read_xml(nodes, "point", perror_buf);
+  point = amitk_space_s2b(AMITK_SPACE(new_pt), point);
+  amitk_space_set_offset(AMITK_SPACE(new_pt), point);
+
+
   /* and we're done */
   xmlFreeDoc(doc);
   
@@ -191,7 +226,7 @@ static AmitkFiducialMark * align_pt_load_xml(gchar * pt_xml_filename, gchar **pe
 
 
 /* function to load in a list of alignment point xml nodes */
-static GList * align_pts_load_xml(xmlNodePtr node_list, gchar **perror_buf) {
+static GList * align_pts_load_xml(xmlNodePtr node_list, gchar **perror_buf, AmitkSpace * space) {
 
   gchar * file_name;
   GList * new_pts;
@@ -199,11 +234,11 @@ static GList * align_pts_load_xml(xmlNodePtr node_list, gchar **perror_buf) {
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_pts = align_pts_load_xml(node_list->next, perror_buf);
+    new_pts = align_pts_load_xml(node_list->next, perror_buf, space);
 
     /* load in this node */
     file_name = xml_get_string(node_list->children, "text");
-    new_pt = align_pt_load_xml(file_name, perror_buf);
+    new_pt = align_pt_load_xml(file_name, perror_buf, space);
     new_pts = g_list_prepend(new_pts, new_pt);
     g_free(file_name);
 
@@ -230,7 +265,6 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   gchar * data_set_xml_filename;
   gchar * internal_scaling_xml_filename;
   GList * align_pts;
-  GList * temp_pts;
   AmitkSpace * space;
 
   /* parse the xml file */
@@ -267,7 +301,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   temp_string = xml_get_string(nodes, "modality");
   if (temp_string != NULL)
     for (i_modality=0; i_modality < NUM_MODALITIES; i_modality++) 
-      if (g_strcasecmp(temp_string, modality_names[i_modality]) == 0)
+      if (g_ascii_strcasecmp(temp_string, modality_names[i_modality]) == 0)
 	new_volume->modality = i_modality;
   g_free(temp_string);
 
@@ -275,7 +309,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   temp_string = xml_get_string(nodes, "color_table");
   if (temp_string != NULL)
     for (i_color_table=0; i_color_table < AMITK_COLOR_TABLE_NUM; i_color_table++) 
-      if (g_strcasecmp(temp_string, color_table_menu_names[i_color_table]) == 0)
+      if (g_ascii_strcasecmp(temp_string, color_table_legacy_names[i_color_table]) == 0)
 	new_volume->color_table = i_color_table;
   g_free(temp_string);
 
@@ -330,13 +364,13 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     /* and figure out the data format */
     temp_string = xml_get_string(nodes, "data_format");
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_BE; 
+    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_64_BE; 
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_LE; 
+    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_64_LE; 
 #endif
     if (temp_string != NULL)
       for (i_raw_data_format=0; i_raw_data_format < AMITK_RAW_FORMAT_NUM; i_raw_data_format++) 
-	if (g_strcasecmp(temp_string, amitk_raw_format_names[i_raw_data_format]) == 0)
+	if (g_ascii_strcasecmp(temp_string, amitk_raw_format_legacy_names[i_raw_data_format]) == 0)
 	  raw_data_format = i_raw_data_format;
     g_free(temp_string);
 
@@ -351,23 +385,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
     /* -------- end legacy cruft -------- */
   }
 
-  /* load in the alignment points */
-  pts_nodes = xml_get_node(nodes, "Alignment_points");
-  if (pts_nodes != NULL) {
-    pts_nodes = pts_nodes->children;
-    if (pts_nodes != NULL) {
-      align_pts = align_pts_load_xml(pts_nodes, perror_buf);
-      temp_pts = align_pts;
-      while (temp_pts != NULL) {
-	amitk_space_copy_in_place(AMITK_SPACE(temp_pts->data), AMITK_SPACE(new_volume));
-	temp_pts = temp_pts->next;
-      }
-      amitk_object_add_children(AMITK_OBJECT(new_volume), align_pts);
-      amitk_objects_unref(align_pts);
-    }
-  }
-
-  /* and figure out the rest of the parameters */
+  /* figure out the rest of the parameters */
   new_volume->voxel_size = amitk_point_read_xml(nodes, "voxel_size", perror_buf);
   new_volume->scan_start = xml_get_time(nodes, "scan_start", perror_buf);
   new_volume->frame_duration = xml_get_times(nodes, "frame_duration", 
@@ -388,7 +406,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   temp_string = xml_get_string(nodes, "threshold_type");
   if (temp_string != NULL)
     for (i_thresholding=0; i_thresholding < NUM_THRESHOLDS; i_thresholding++) 
-      if (g_strcasecmp(temp_string, threshold_names[i_thresholding]) == 0)
+      if (g_ascii_strcasecmp(temp_string, threshold_names[i_thresholding]) == 0)
 	new_volume->thresholding = i_thresholding;
   g_free(temp_string);
 
@@ -403,6 +421,17 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpol
   /* recalc the temporary parameters */
   amitk_data_set_calc_far_corner(new_volume);
   amitk_data_set_calc_max_min(new_volume, NULL, NULL);
+
+  /* and load in any alignment points */
+  pts_nodes = xml_get_node(nodes, "Alignment_points");
+  if (pts_nodes != NULL) {
+    pts_nodes = pts_nodes->children;
+    if (pts_nodes != NULL) {
+      align_pts = align_pts_load_xml(pts_nodes, perror_buf, AMITK_SPACE(new_volume));
+      amitk_object_add_children(AMITK_OBJECT(new_volume), align_pts);
+      amitk_objects_unref(align_pts);
+    }
+  }
 
   /* and we're done */
   xmlFreeDoc(doc);
@@ -475,7 +504,7 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
   temp_string = xml_get_string(nodes, "type");
   if (temp_string != NULL)
     for (i_roi_type=0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
-      if (g_strcasecmp(temp_string, roi_type_names[i_roi_type]) == 0)
+      if (g_ascii_strcasecmp(temp_string, roi_type_names[i_roi_type]) == 0)
 	new_roi->type = i_roi_type;
   g_free(temp_string);
 
@@ -599,7 +628,7 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
   temp_string = xml_get_string(nodes, "interpolation");
   interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
   if (temp_string != NULL)
-    if (g_strcasecmp(temp_string, "Trilinear") == 0)
+    if (g_ascii_strcasecmp(temp_string, "Trilinear") == 0)
       interpolation = AMITK_INTERPOLATION_TRILINEAR;
   g_free(temp_string);
 
@@ -636,7 +665,7 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
     
   /* legacy cruft, rip out at some point in the future */
   /* compensate for errors in old versions of amide */
-  if (g_strcasecmp(file_version, "1.3") < 0) {
+  if (g_ascii_strcasecmp(file_version, "1.3") < 0) {
     GList * objects;
     AmitkObject * object;
     AmitkPoint new_axes[AMITK_AXIS_NUM];

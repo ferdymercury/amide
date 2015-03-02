@@ -29,7 +29,8 @@
 #include "ui_render.h"
 
 /* external functions */
-void ui_render_dialog_create(ui_render_t * ui_render);
+void ui_render_dialog_create_parameters(ui_render_t * ui_render);
+void ui_render_dialog_create_transfer_function(ui_render_t * ui_render);
 
 #endif
 

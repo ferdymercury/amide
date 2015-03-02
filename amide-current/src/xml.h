@@ -34,6 +34,7 @@
 
 /* functions */
 
+gboolean xml_node_exists(xmlNodePtr nodes, const gchar * descriptor);
 xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor);
 gchar * xml_get_string(xmlNodePtr nodes, const gchar * descriptor);
 amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf);

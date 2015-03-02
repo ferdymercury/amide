@@ -82,7 +82,7 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_rp = zero_point;
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]",
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]"),
 		     descriptor, return_rp.x, return_rp.y, return_rp.z);
   }
 
@@ -152,13 +152,13 @@ AmitkVoxel amitk_voxel_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     voxel = zero_voxel;
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting [%d %d %d %d]",
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting [%d %d %d %d]"),
 		     descriptor, voxel.x, voxel.y,voxel.z,voxel.z);
   }
 
   if (error < 4) {
     voxel.t = 0;
-    amitk_append_str(perror_buf,"Couldn't read frame value for %s, substituting %d",
+    amitk_append_str(perror_buf,_("Couldn't read frame value for %s, substituting %d"),
 		     descriptor, voxel.t);
   }
 
@@ -708,7 +708,7 @@ amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
     return voxel.t;
     break;
   default:
-    g_warning("inappropriate case in %s at %d\n", __FILE__, __LINE__);
+    g_error("inappropriate case in %s at %d\n", __FILE__, __LINE__);
     g_return_val_if_reached(0);
   }
 
@@ -732,7 +732,7 @@ void voxel_set_dim(AmitkVoxel * voxel,
     voxel->t = value;
     break;
   default:
-    g_warning("inappropriate case in %s at %d\n", __FILE__, __LINE__);
+    g_error("inappropriate case in %s at %d\n", __FILE__, __LINE__);
     g_return_if_reached();
   }
 }

@@ -1,5 +1,3 @@
-%define xmedcon_version 0.8.10
-
 Name: 		amide
 Summary: 	amide is a program for viewing and analyzing medical image data sets
 Version: 	@VERSION@
@@ -11,7 +9,7 @@ URL: 		http://amide.sourceforge.net
 BuildRoot: 	%{_tmppath}/%{name}-%{version}-root
 Packager: 	Andy Loening <loening@alum.mit.edu>
 
-BuildRequires: 	xmedcon >= %{xmedcon_version}
+BuildRequires: 	xmedcon >= 0.8.12
 BuildRequires:  volpack 
 BuildRequires:  libxml2-devel 
 BuildRequires:  gtk-doc 
@@ -36,6 +34,7 @@ alignments.
 %{_datadir}/omf
 %{_datadir}/applications
 %{_datadir}/gtk-doc
+%{_datadir}/locale
 
 
 %prep

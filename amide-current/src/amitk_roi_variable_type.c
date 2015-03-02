@@ -59,7 +59,7 @@ static GSList * append_intersection_point(GSList * points_list, AmitkPoint new_p
     *ppoint = new_point;
     return  g_slist_append(points_list, ppoint);
   } else {
-    g_warning("Out of Memory");
+    g_warning(_("Out of Memory"));
     return points_list;
   }
 }
@@ -71,7 +71,7 @@ static GSList * prepend_intersection_point(GSList * points_list, AmitkPoint new_
     *ppoint = new_point;
     return  g_slist_prepend(points_list, ppoint);
   } else {
-    g_warning("Out of Memory");
+    g_warning(_("Out of Memory"));
     return points_list;
   }
 }
@@ -195,7 +195,7 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
 static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkVoxel voxel);
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
-				AmitkVoxel * p_ds_voxel, 
+				AmitkVoxel start_voxel, 
 				const amide_data_t iso_value);
 
 
@@ -374,74 +374,126 @@ static amitk_format_UBYTE_t isocontour_edge(AmitkRawData * isocontour_ds, AmitkV
   return edge_value;
 }
 
-/* note, using pointers for ds_voxel and iso_value to try to reduce
-   stack size */
+
+/* the data in temp_rd is setup as follows:
+   bit 1 -> is the voxel in the isocontour
+   bit 2 -> has the voxel been checked 
+   bit 3 -> increment x for backup
+   bit 4 -> decrement x for backup
+   bit 5 -> increment y for backup
+   bit 6 -> decrement y for backup
+   bit 7 -> increment z for backup
+   bit 8 -> decrement z for backup
+*/
 static void isocontour_consider(const AmitkDataSet * ds,
 				const AmitkRawData * temp_rd, 
-				AmitkVoxel * p_ds_voxel, 
+				AmitkVoxel ds_voxel, 
 				const amide_data_t iso_value) {
+
+
+  AmitkVoxel i_voxel;
+  AmitkVoxel roi_voxel;
+  gboolean found;
+  gboolean done;
+
+  roi_voxel = ds_voxel;
+  roi_voxel.t = 0;
+  i_voxel =roi_voxel;
+  done=FALSE;
+
+  /* the starting point is in by definition */
+  AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd, roi_voxel) |= 0x03;
+
+  /* while we still have neighbor voxels to check */
+  while (!done) {
+
+    found = FALSE;
+
+    /* find a neighbor to check, consider the 8 adjoining voxels, or 26 in the case of 3D */
 #ifdef ROI_TYPE_ISOCONTOUR_3D
-  gint z;
+    for (i_voxel.z = (roi_voxel.z >= 1) ? roi_voxel.z-1 : 0;
+	 (i_voxel.z < temp_rd->dim.z) && (i_voxel.z <= roi_voxel.z+1) && (!found);
+	 i_voxel.z++)
+#endif
+      for (i_voxel.y = (roi_voxel.y >= 1) ? roi_voxel.y-1 : 0;
+	   (i_voxel.y < temp_rd->dim.y) && (i_voxel.y <= roi_voxel.y+1) && (!found);
+	   i_voxel.y++)
+	for (i_voxel.x = (roi_voxel.x >= 1) ? roi_voxel.x-1 : 0;
+	     (i_voxel.x < temp_rd->dim.x) && (i_voxel.x <= roi_voxel.x+1) && (!found);
+	     i_voxel.x++) 
+	  if (!(AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, i_voxel) & 0x02)) { /* don't recheck something we've already checked */
+	    AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x02; /* it's been checked */
+
+	    ds_voxel.z = i_voxel.z;
+	    ds_voxel.y = i_voxel.y;
+	    ds_voxel.x = i_voxel.x;
+
+	    if ((amitk_data_set_get_value(ds, ds_voxel) >= iso_value)) {
+
+	      AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x01; /* it's in */
+
+	      /* store backup info */
+#ifdef ROI_TYPE_ISOCONTOUR_3D
+	      if (i_voxel.z > roi_voxel.z)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x40;
+	      else if (i_voxel.z < roi_voxel.z)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x80;
+#endif
+	      if (i_voxel.y > roi_voxel.y)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x10;
+	      else if (i_voxel.y < roi_voxel.y)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x20;
+	      if (i_voxel.x > roi_voxel.x)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x04;
+	      else if (i_voxel.x < roi_voxel.x)
+		AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,i_voxel) |= 0x08;
+	      
+	      /* start next iteration at this voxel */
+	      roi_voxel = i_voxel; 
+	      found = TRUE;
+	    }
+	  }
+
+	      
+    if (!found) { /* all neighbors exhaustively checked, backup */
+
+      /* backup to previous voxel */
+      i_voxel = roi_voxel;
+#ifdef ROI_TYPE_ISOCONTOUR_3D
+      if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x80)
+	i_voxel.z++;
+      else if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x40)
+	i_voxel.z--;
 #endif
 
-  { /* don't want roi_voxel allocated on the stack */
-    AmitkVoxel roi_voxel;
+      if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x20)
+	i_voxel.y++;
+      else if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x10)
+	i_voxel.y--;
 
-    roi_voxel = *p_ds_voxel;
-    roi_voxel.t = 0;
-    if (!amitk_raw_data_includes_voxel(temp_rd, roi_voxel))
-      return; /* make sure we're still in the data set */
+      if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x08)
+	i_voxel.x++;
+      else if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) & 0x04)
+	i_voxel.x--;
 
-    if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd,roi_voxel) == 1)
-      return; /* have we already considered this voxel */
-  
-    if ((amitk_data_set_get_value(ds, *p_ds_voxel) < iso_value)) return;
-    else AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,roi_voxel)=1; /* it's in */
+      /* the inital voxel will backup to itself, which is why we get out of the loop */
+      if (VOXEL_EQUAL(roi_voxel, i_voxel)) 
+	done = TRUE;
+      else
+	roi_voxel = i_voxel;
+    }
   }
-
-  /* consider the 8 adjoining voxels, or 26 in the case of 3D */
-#ifdef ROI_TYPE_ISOCONTOUR_3D
-  for (z=-1; z<=1; z++) { 
-    p_ds_voxel->z += z;
-    if (z != 0) /* don't reconsider the original point */
-      isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-#endif
-    p_ds_voxel->x--;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->y--;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->x++;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->x++;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->y++;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->y++;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->x--;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->x--;
-    isocontour_consider(ds, temp_rd, p_ds_voxel, iso_value);
-    p_ds_voxel->y--;
-    p_ds_voxel->x++;
-#ifdef ROI_TYPE_ISOCONTOUR_3D
-    p_ds_voxel->z -= z;
-  }
-#endif
 
   return;
 }
+  
 
 void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, 
 						   AmitkVoxel iso_voxel) {
 
   AmitkRawData * temp_rd;
   AmitkPoint temp_point;
-  AmitkVoxel min_voxel, max_voxel, i_voxel, roi_voxel;
-#ifndef AMIDE_WIN32_HACKS
-  rlim_t prev_stack_limit;
-  struct rlimit rlim;
-#endif
+  AmitkVoxel min_voxel, max_voxel, i_voxel;
   amide_data_t isocontour_value;
 
   g_return_if_fail(roi->type == AMITK_ROI_TYPE_`'m4_Variable_Type`');
@@ -455,30 +507,10 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   temp_rd = amitk_raw_data_UBYTE_3D_init(0, ds->raw_data->dim.z, ds->raw_data->dim.y, ds->raw_data->dim.x);
 #endif
 
-#ifndef AMIDE_WIN32_HACKS
-  /* remove any limitation to the stack size, this is so we can recurse deeply without
-     seg faulting */
-  getrlimit(RLIMIT_STACK, &rlim); 
-  prev_stack_limit = rlim.rlim_cur;
-  if (rlim.rlim_cur != rlim.rlim_max) {
-    rlim.rlim_cur = rlim.rlim_max;
-    setrlimit(RLIMIT_STACK, &rlim);
-  }
-#endif
-
   /* fill in the data set */
   isocontour_value = roi->isocontour_value-EPSILON*fabs(roi->isocontour_value); /* epsilon guards for floating point rounding */
-  isocontour_consider(ds, temp_rd, &iso_voxel, isocontour_value);
+  isocontour_consider(ds, temp_rd, iso_voxel, isocontour_value);
   
-  /* the selected point is automatically in */
-  roi_voxel = iso_voxel;
-  roi_voxel.t = 0;
-  if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, roi_voxel) != 1) {
-    g_warning("floating point round error detected in %s at %d", __FILE__, __LINE__);
-    AMITK_RAW_DATA_UBYTE_SET_CONTENT(temp_rd,roi_voxel)=1; /* have at least one voxel picked */
-  }
-
-
   /* figure out the min and max dimensions */
   min_voxel = max_voxel = iso_voxel;
   
@@ -486,7 +518,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   for (i_voxel.z=0; i_voxel.z < temp_rd->dim.z; i_voxel.z++) {
     for (i_voxel.y=0; i_voxel.y < temp_rd->dim.y; i_voxel.y++) {
       for (i_voxel.x=0; i_voxel.x < temp_rd->dim.x; i_voxel.x++) {
-	if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, i_voxel)==1) {
+	if (AMITK_RAW_DATA_UBYTE_CONTENT(temp_rd, i_voxel) & 0x1) {
 	  if (min_voxel.x > i_voxel.x) min_voxel.x = i_voxel.x;
 	  if (max_voxel.x < i_voxel.x) max_voxel.x = i_voxel.x;
 	  if (min_voxel.y > i_voxel.y) min_voxel.y = i_voxel.y;
@@ -499,7 +531,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
       }
     }
   }
-
+  
   /* transfer the subset of the data set that contains positive information */
   if (roi->isocontour != NULL)
     g_object_unref(roi->isocontour);
@@ -546,17 +578,13 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   POINT_MULT(roi->isocontour->dim, roi->voxel_size, temp_point);
   amitk_volume_set_corner(AMITK_VOLUME(roi), temp_point);
 
-#ifndef AMIDE_WIN32_HACKS
-  /* reset our previous stack limit */
-  if (prev_stack_limit != rlim.rlim_cur) {
-    rlim.rlim_cur = prev_stack_limit;
-    setrlimit(RLIMIT_STACK, &rlim);
-  }
-#endif
-
   return;
 
 }
+
+
+
+
 
 void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_voxel, gint area_size) {
 

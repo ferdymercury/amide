@@ -1,39 +1,46 @@
-<para> 
+<para> Rendering in AMIDE is accomplished using the <ulink type="http"
+  url="http://graphics.stanford.edu/software/volpack/"> Volpack volume
+  rendering library</ulink>.  This software library is both portable,
+  and provides for true volume rendering (as opposed to the surface
+  rendering used by many other libraries and hardware
+  accelerators).</para>
 
-  Rendering in AMIDE is accomplished via the volpack rendering
-  library.  The rendering performed is volume rendering, which is a
-  more computationally expensive approach than the surface rendering
-  abilities of most other packages.
+<para> To start a rendering dialog, select the data sets and ROI that
+  you would like to include in your rendering, and then hit the
+  "View->Rendering" menu item.  A small dialog will pop-up with two
+  options.  The first "Set values greater than max threshold to zero"
+  allows you to strip high level voxels out of the rendering process.
+  In general you won't want this, but it might be useful if you have
+  high valued areas in your data set that obscures what you'd like to
+  see.  The second option "Accelerate Rendering" tells VolPack to use
+  a faster method for doing the volume rendering.  You will in general
+  want to use this option, as it causes a significance performance
+  enhancement (around 10 fold).  It does, however, require around 3
+  fold as much rendering as the non-accelerated option, so if you're
+  running out of memory, you'll want to try to rendering without the
+  acceleration. </para>
 
-</para>
-<para>
-
-  To start a rendering dialog, select the images that you would like
-  to render, and then hit the "View->Rendering" menu item.  The
-  program needs to reslice the data set into a data structure that the
-  volpack library can handle, and will use the interpolation type
-  specified for the data set(s).  Nearest neighbor is faster but of
-  lower quality, trilinear is slower, but of higher quality.
-  The program will then reslice the data set and perform some initial
-  rendering calculations which are used to speed up later renderings.
-  This whole process will take some time, so be patient.  Please also
-  note that, when converting the data set, the data is scaled between
-  the current minimum and maximum threshold, with all data above the
-  current maximum threshold set to the maximum threshold value, and
-  all data below the current minimum threshold set to the minimum
-  threshold value.  This scaling can be relative to the data set's
-  "Global" maximum and minimum, to the "Per Frame" maximum and
-  minimum, or can be from maximum and minimum values "Interpolated
+<para> After hitting "Execute" the program will reslice the data sets
+  and ROI's into a data structure that the volpack library can handle,
+  and then perform some initial renderin gcalculations.  For data
+  sets, the <link linkend="interpolation">interpolation type</link>
+  specified for the data set will be used. This whole process will
+  take some time, so be patient.  Please also note that, when
+  converting the data set, the data is scaled between the current
+  minimum and maximum threshold, with all data above the current
+  maximum threshold set to the maximum threshold value (or zero, if
+  specified), and all data below the current minimum threshold set to
+  the minimum threshold value.  This scaling can be relative to the
+  data set's "Global" maximum and minimum, to the "Per Frame" maximum
+  and minimum, or can be from maximum and minimum values "Interpolated
   Between Frames".  "Per slice" scaling does not make sense in the
-  context of volume rendering, and is interpreted as "Global" scaling.
+  context of volume rendering, and is interpreted as "Global"
+  scaling. </para>
 
-</para>
-<para>
+<para> When all this is completed, the rendering dialog should pop-up.
+  It's use is described below. </para>
 
-  When this is completed, the rendering dialog should pop-up.  It's
-  use is described below.
 
-</para>
 
 <sect2><title>Rendering Dialog</title>
 
@@ -60,13 +67,6 @@
     </para>
   </sect3>
 
-  <sect3><title>Axis Drawing</title>
-    <para>
-      A coordinate axis is displayed to the left of the rendering, for
-      reminding you which way the axis are pointing.
-    </para>
-  </sect3>
-  
   <sect3><title>Reset Axis</title>
     <para>
       This button will reset the rendering's orientation back to the
@@ -74,187 +74,35 @@
     </para>
   </sect3>
 
-  <sect3><title>"Render" Button</title>
-    <para>
-      This button tells the program to render the data set.  It will
-      be inactive if the "on change" option has been picked.
-    </para>
-  </sect3>
-  
-  <sect3><title>"On Change" Checkbox</title>
-    <para>
-      If this is checked, the data set will be rerendered on every
-      change.  If this is not checked, the "Render" button will have
-      to be hit to cause rerendering of the data set.
-    </para>
-  </sect3>
 
-  <sect3><title>"Steroscopic" Checkbox</title>
-    <para>
-      Checking this box will inform the rendering process to generate
-      a stereoscopic image pair, rathen then just a single rendering.
-      A stereoscopic image pair is a pair of images that have been
-      generated at slightly different angles.  When viewed correctly,
-      these two images can be interpreted by the viewer's eyes as a
-      single image containing depth information.  
+  <sect3><title>Toolbar</title>
 
-      If this box is checked when a movie is generated, the movie will
-      consist of stereoscopic image pairs.
-    </para>
-  </sect3>
-  
+    <sect4><title>Transfer Function Button</title>
 
-  <sect3><title>Rendering Menus</title>
-    <sect4><title>File->Export Rendering</title>
-      <para>
-	This menu item allows you to export the rendered image to
-	an external image file.  The saved data format is 
-        jpeg. </para>
-    </sect4>
-
-    <sect4><title>File->Create Movie</title>
-      <para>
-	This causes the movie generation dialog box to pop up.  This
-	dialog box is further described below.
-      </para>
-    </sect4>
-  
-    <sect4><title>"Edit->Rendering Parameters</title>
-      <para>
-	This causes the rendering parameters dialog box to pop up.
-	This dialog box is described below.
-      </para>
-    </sect4>
-  </sect3>
-  
-</sect2>
-
-<sect2 id="rendering-dialog-help"><title>Rendering Parameters Dialog</title>
-
-  <sect3 id="rendering-dialog-help-basic"><title>Basic Parameters</title>
-
-    <sect4><title>Speed versus Quality</title>
-      <para>
-      With this drop-down menu, the user can choose between rendering
-      speed and rendering quality.  To increase speed, voxels with
-      values either close to zero or close to unity can be counted as
-      completely translucent or completely opaque, respectively.  The
-      highest quality doesn't use this approximation at all, the
-      lowest quality setting uses this approximation big-time.
-      </para>
-    </sect4>
-
-    <sect4><title>Return Type</title>
-      <para>
-	This setting determines whether the rendering returns an image
-	which looks more analogous to an x-ray (the "opacity"
-	setting), or returns an image which looks more like a surface
-	(the "grayscale" setting).  The "grayscale" setting does this
-	by specifying a light source, material properties, and using
-	depth cueing.
-      </para>
-    </sect4>
-
-    <sect4><title>Zoom</title>
-      <para>
-	Determines the size at which the resultant rendered image will
-	be displayed.  Note that changing the zoom will not affect the
-	speed of the rendering, and increasing the zoom past 1 will
-	not increase the resolution of the rendered image.
-      </para>
-    </sect4>
-
-    <sect4><title>Stereosopic parameters</title>
-
-      <para>
-	These parameters are used for controlling the results when the
-	"stereoscopic" option has been chosen.
-      </para>
-      
-      <sect5><title>Stereo Angle</title>
-	<para>
-	  This is the angle offset (in degrees) between a pair of
-	  rendered images.  Increasing this number will generally give
-	  a greater sensation of depth in the image pair.  A
-	  Reasonable value for this parameter is between 2 and 5
-	  degrees.  Note that this parameter will be saved between
-	  different sessions of the program.
-	</para>
-      </sect5>
-      
-      <sect5><title>Eye Width (mm) </title>
-	<para>
-	  Ideally, this should be (roughly) the distance between the
-	  two rendered images, and corresponds to the distance between
-	  the user's eyes.  It is impossible for a person to resolve a
-	  stereoscopic pair if the images are farther apart then the
-	  person's eyes, since human eyes cannot move independently.
-	  While this parameter is specified in millimeters, the
-	  actually distance between the pair of images that gets
-	  displayed on the monitor depends on the setup of the
-	  computer.  If the monitor information reported by the
-	  operating system is not correct (usually the case), the "eye
-	  width" parameter will not be in true millimeters.  Note that
-	  this parameter will be saved between different sessions of
-	  the program.
-	</para>
-      </sect5>
-
-    </sect4>
-
-    <sect4><title>Depth Cueing</title>
-
-      <para>
-	These parameters are only used if the "grayscale" output type
-	has been chosen.
-      </para>
-      
-      <sect5><title>Enable/Disable Depth Cueing</title>
-	<para>
-	  Specify whether or not we want depth cueing.  Depth cueing
-	  puts in a "fog" that causes more distant voxels to appear less
-	  bright.
-	</para>
-      </sect5>
-      
-      <sect5><title>Front Factor</title>
-	<para>
-	  This is the transparency of the fog at the front of the
-	  data set.  If this number is greater than 1.0, voxels toward the
-	  front of the data set will be brightened.  If this parameter
-	  is less than 1.0, voxels toward the front of the data set will
-	  be darker, respectively.
-	</para>
-      </sect5>
-
-      <sect5><title>Density</title>
-	<para>
-	  This is how thick the "fog" is.  The thicker the fog, the
-	  darker distant objects seem.
-	</para>
-      </sect5>
-
-    </sect4>
-
-  </sect3>
-    
-
-  <sect3 id="rendering-dialog-help-data-set"><title>Data Set Specific Settings</title>
-
-    <para>
-      Each panel after the "basic parameters" panel allows the
-      changing of settings specific to each data set that is being
-      rendered.
+    <para> This will pop-up a dialog with a panel for each object
+    being rendered.  The available options are described below:
     </para>
 
-    <sect4><title>Color Table</title>
-      <para>
-	The color table of each rendered data set can be changed here.
-      </para>
-    </sect4>
+    <variablelist>
+
+    <varlistentry><term>Return Type</term>
+      <listitem><para>This setting determines whether the rendering returns an
+      image which looks more analogous to an x-ray (the "opacity"
+      setting), or returns an image which looks more like a surface
+      (the "grayscale" setting).  The "grayscale" setting does this by
+      specifying a light source, material properties, and using depth
+      cueing. </para></listitem>
+    </varlistentry>
+
+    <varlistentry><term>Color Table</term>
+      <listitem><para>
+	The color table of each rendered object can be changed here.
+      </para></listitem>
+    </varlistentry>
 
     
-    <sect4><title>Classification Functions</title>
+    <varlistentry><term>Classification Functions</term>
+      <listitem>
       <para>
 	This is the most confusing part of rendering, so hang on here.
 	The classification functions are used to map between the value
@@ -268,94 +116,203 @@
 	right side of their graphs.  The top button allows the
 	classification function to be drawn as a spline.  The second
 	button allows the classification function to be drawn as a
-	series of straight lines.  The third button allows the
-	function to be hand-drawn.  Finally, the last button resets
+	series of straight lines.  Finally, the last button resets
 	the classification function to a straight line.
       </para>
       <para>
 	There are two classification functions:
       </para>
 
-      <sect5><title>Density Dependent</title>
-	<para>
-	  This function tells you how opaque each voxel will be based
-	  on it's current value.  In a sense, this is analogous to an
-	  x-ray, where the amount of the x-rays that are absorbed in a
-	  structure is related to the density of that structure. 
-	  of the display.
-	</para>
-      </sect5>
+          <itemizedlist>
 
-      <sect5><title>Gradient Dependent</title>
-	<para>
-	  Instead of relating the density of a voxel to its opacity,
-	  this function relates the gradient of a voxel (how much the
-	  value changes between this voxel and it's neighbors) to its
-	  opacity.  This has the effect of giving added weight to
-	  surfaces. 
-	</para>
-      </sect5>
+	  <listitem><para><emphasis>Density Dependent:</emphasis> This
+	    function tells you how opaque each voxel will be based on
+	    it's current value.  In a sense, this is analogous to an
+	    x-ray, where the amount of the x-rays that are absorbed in
+	    a structure is related to the density of that structure.
+	    of the display.</para></listitem>
 
-    </sect4>
+	  <listitem><para><emphasis>Gradient Dependent:</emphasis>
+	    Instead of relating the density of a voxel to its opacity,
+	    this function relates the gradient of a voxel (how much
+	    the value changes between this voxel and it's neighbors)
+	    to its opacity.  This has the effect of giving added
+	    weight to surfaces.</para></listitem>
 
+       </itemizedlist>
+     </listitem>
+
+     </varlistentry>
+    </variablelist>
+   </sect4>
+
+    
+   <sect4><title>Monoscopic/Stereoscopic Buttons</title>
+    <para> You can choose between generating a single rendered image
+      (monoscopic), or a stereoscopic image pair.  A stereoscopic
+      image pair is a pair of images that have been generated at
+      slightly different angles.  When viewed correctly, these two
+      images can be interpreted by the viewer's eyes as a single image
+      containing depth information.
+     </para>
+   </sect4>
+
+   <sect4><title>Zoom</title>
+    <para> Determines the size at which the resultant rendered image
+     will be displayed.  Note that changing the zoom will not affect
+     the speed of the rendering, and increasing the zoom past 1 will
+     not increase the resolution of the rendered image. </para>
+   </sect4>
 
   </sect3>
 
+
+
+
+  <sect3><title>Rendering Menus</title>
+    <sect4><title>File->Export Rendering</title>
+      <para>
+	This menu item allows you to export the rendered image to
+	an external image file.  The saved data format is 
+        jpeg. </para>
+    </sect4>
+
+    <sect4><title>File->Create Movie</title>
+      <para>
+	This causes the movie generation dialog box to pop up.  This
+	dialog box is further described below: <xref
+	linkend="rendering-movie-dialog" />.
+      </para>
+    </sect4>
+  
+    <sect4><title>"Edit->Rendering Parameters</title>
+      <para>
+	This causes the rendering parameters dialog box to pop up.
+	This dialog box is described below: <xref
+	linkend="rendering-dialog" />.
+      </para>
+    </sect4>
+  </sect3>
+  
 </sect2>
 
-<sect2 id="rendering-movie-dialog-help"><title>Rendering Movie Dialog</title>
+<sect2 id="rendering-dialog"><title>Rendering Parameters Dialog</title>
 
-  <sect3 id="rendering-movie-dialog-help-movie"><title>Movie Parameters</title>
+  <sect3><title>Speed versus Quality</title>
+   <para> With this drop-down menu, the user can choose between
+   rendering speed and rendering quality.  To increase speed, voxels
+   with values either close to zero or close to unity can be counted
+   as completely translucent or completely opaque, respectively.  The
+   highest quality doesn't use this approximation at all, the lowest
+   quality setting uses this approximation big-time. </para>
+  </sect3>
 
-    <sect4><title>Frames</title>
+
+  <sect3><title>Stereosopic parameters</title>
+
+   <para>These parameters are used for controlling the results when
+   the "stereoscopic" option has been chosen. </para>
+      
+   <sect4><title>Stereo Angle</title>
+    <para> This is the angle offset (in degrees) between a pair of
+    rendered images.  Increasing this number will generally give a
+    greater sensation of depth in the image pair.  A Reasonable value
+    for this parameter is between 2 and 5 degrees.  Note that this
+    parameter will be saved between different sessions of the
+    program (not currently done on MS Windows).</para>
+   </sect4>
+      
+   <sect4><title>Eye Width (mm) </title>
+    <para> Ideally, this should be (roughly) the distance between the
+    two rendered images, and corresponds to the distance between the
+    user's eyes.  It is impossible for a person to resolve a
+    stereoscopic pair if the images are farther apart then the
+    person's eyes, since human eyes cannot move independently.  While
+    this parameter is specified in millimeters, the actually distance
+    between the pair of images that gets displayed on the monitor
+    depends on the setup of the computer.  If the monitor information
+    reported by the operating system is not correct (usually the
+    case), the "eye width" parameter will not be in true millimeters.
+    Note that this parameter will be saved between different sessions
+    of the program (not currently done on MS windows).</para>
+  </sect4>
+
+ </sect3>
+
+ <sect3><title>Depth Cueing</title>
+
+  <para> These parameters are only used if the "grayscale" output type
+  has been chosen.</para>
+      
+  <sect4><title>Enable/Disable Depth Cueing</title>
+   <para> Specify whether or not we want depth cueing.  Depth cueing
+   puts in a "fog" that causes more distant voxels to appear less
+   bright.</para>
+  </sect4>
+      
+  <sect4><title>Front Factor</title>
+   <para> This is the transparency of the fog at the front of the data
+   set.  If this number is greater than 1.0, voxels toward the front
+   of the data set will be brightened.  If this parameter is less than
+   1.0, voxels toward the front of the data set will be darker,
+   respectively.</para>
+  </sect4>
+
+  <sect4><title>Density</title>
+
+   <para> This is how thick the "fog" is.  The thicker the fog, the
+   darker distant objects seem. </para>
+  </sect4>
+ </sect3>
+</sect2>
+    
+
+<sect2 id="rendering-movie-dialog"><title>Rendering Movie Dialog</title>
+
+ <sect3><title>Frames</title>
       <para>
 	How many frames should be in the MPEG1 movie.  The MPEG1
 	movies generated will be set to run at 30 frames/second, so
 	the default of 300 frames will give a ten second movie.
       </para>
-    </sect4>
 
-    <sect4><title>Rotations on [x,y,z] </title> 
+ </sect3>
+
+ <sect3><title>Rotations on [x,y,z] </title> 
       <para> 
 	This setting determines how many times the data set will be
 	rotated around the given axis over the course of the movie.
 	The rotation for each frame is done in x->y->z order (rotate
 	on x first, then y, then z).
       </para>
-    </sect4>
+ </sect3>
 
-    <sect4><title>Start/End Time</title> 
-      <para> 
-	These entries determine over which time period of the data set
-	the rendered images will be drawn from.  By default, they show
-	the time period over which the current rendered image is drawn
-	from.  By changing these entries, a rendered movie can be made
-	over time.  Note that every time a frame boundary in the data
-	set is passed over, the rendering process must slice and load
-	in a new frame of data.  This makes creating a rendered movie
-	over time significantly slower than a movie with just
-	rotations.
-      </para>
-    </sect4>
+ <sect3><title>Static/Over Time/Over Frames</title>
 
-  </sect3>
+   <para> This option allows a rendered movie to be made over a time
+   period, which is useful for dynamic data sets.  Picking "over time"
+   will allow entry of a start and end time for which the data from
+   the data sets should be drawn.  With the "over time" option, each
+   second is given equal waiting in terms of how many images from that
+   time period are generated for the output movie.</para>
+
+   <para>Picking "over frames" allows entry of a start and end frame
+   (note that this really only makes sense with a single data set).
+   The advantage of "over frames", is that each frame is weighted
+   equally in terms of how many images are generated for the output
+   movie, so for data sets were the dynamics of interest correspond
+   closely to the dynamics of the data set framing sequence, "over
+   frames" may give a more appealing result.
+   </para>
+
+    <para> Note that every time a frame boundary in the data set is
+    passed over, the rendering process must slice and load in a new
+    frame of data.  This makes creating a rendered movie over time
+    significantly slower than a movie with just rotations.
+    </para>
+ </sect3>
 
 </sect2>
 
   
   
-  <!-- Keep this comment at the end of the file
-  Local variables:
-  mode: sgml
-  sgml-omittag:t
-  sgml-shorttag:t
-  sgml-minimize-attributes:nil
-  sgml-always-quote-attributes:t
-  sgml-indent-step:2
-  sgml-indent-data:t
-  sgml-parent-document:nil
-  sgml-exposed-tags:nil
-  sgml-local-catalogs:nil
-  sgml-local-ecat-files:nil
-  End:
-  -->            

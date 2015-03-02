@@ -28,6 +28,7 @@
 
 #include <glib.h>
 #include <pango/pango.h>
+#include "amide_intl.h"
 
 /* define a macro glib should have */
 #define g_try_new(struct_type, n_structs)           \

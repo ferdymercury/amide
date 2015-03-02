@@ -34,8 +34,9 @@
 #include "ui_render.h"
 #include "ui_render_dialog.h"
 #include "ui_render_movie.h"
-#include "gtkdial.h"
+#include "amitk_dial.h"
 #include "amitk_progress_dialog.h"
+#include "pixmaps.h"
 
 
 #ifndef AMIDE_WIN32_HACKS
@@ -45,21 +46,18 @@
   static gboolean optimize_rendering=TRUE;
 #endif
 
-#define N_(String) (String) /* ignore internationalization */
-
 #define UPDATE_NONE 0
 #define UPDATE_RENDERING 0x1
 
 
-
 static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer data);
-static void render_cb(GtkWidget * widget, gpointer data);
-static void immediate_cb(GtkWidget * widget, gpointer data);
 static void stereoscopic_cb(GtkWidget * widget, gpointer data);
+static void change_zoom_cb(GtkWidget * widget, gpointer data);
 static void rotate_cb(GtkAdjustment * adjustment, gpointer data);
 static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data);
 static void export_cb(GtkWidget * widget, gpointer data);
 static void parameters_cb(GtkWidget * widget, gpointer data);
+static void transfer_function_cb(GtkWidget * widget, gpointer data);
 #ifdef AMIDE_LIBFAME_SUPPORT
 static void movie_cb(GtkWidget * widget, gpointer data);
 #endif
@@ -288,47 +286,42 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   return FALSE;
 }
 
-/* function callback for the "render" button */
-static void render_cb(GtkWidget * widget, gpointer data) {
-
-  ui_render_t * ui_render = data;
-
-  ui_render_add_update(ui_render); 
-
-  return;
-}
-
-
-/* function to switch into immediate rendering mode */
-static void immediate_cb(GtkWidget * widget, gpointer data) {
-
-  ui_render_t * ui_render = data;
-
-  /* should we be rendering immediately */
-  ui_render->immediate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  /* set the sensitivity of the render button */
-  gtk_widget_set_sensitive(GTK_WIDGET(ui_render->render_button), !(ui_render->immediate));
-
-  ui_render_update_immediate(ui_render); 
-
-  return;
-
-}
-
 
 /* function to switch into stereoscopic rendering mode */
 static void stereoscopic_cb(GtkWidget * widget, gpointer data) {
   ui_render_t * ui_render = data;
 
-  ui_render->stereoscopic = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  ui_render->stereoscopic = 
+    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "stereoscopic"));
 
   ui_render_add_update(ui_render); 
-
   return;
-
 }
 
+/* function to change the zoom */
+static void change_zoom_cb(GtkWidget * widget, gpointer data) {
+
+  ui_render_t * ui_render = data;
+  gdouble temp_val;
+
+  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  
+  if (temp_val < 0.1)
+    return;
+  if (temp_val > 10) /* 10x zoom seems like quite a bit... */
+    return;
+  
+  /* set the zoom */
+  if (!REAL_EQUAL(ui_render->zoom, temp_val)) {
+    ui_render->zoom = temp_val;
+    renderings_set_zoom(ui_render->renderings, ui_render->zoom);
+    
+    /* do updating */
+    ui_render_add_update(ui_render); 
+  }
+
+  return;
+}
 
 
 
@@ -385,7 +378,7 @@ static void export_ok_cb(GtkWidget* widget, gpointer data) {
 
   if (gdk_pixbuf_save (ui_render->pixbuf, save_filename, "jpeg", NULL, 
 		       "quality", "100", NULL) == FALSE) {
-    g_warning("Failure Saving File: %s",save_filename);
+    g_warning(_("Failure Saving File: %s"),save_filename);
     return;
   }
 
@@ -409,7 +402,7 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 
   g_return_if_fail(ui_render->pixbuf != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export File"));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
 
   /* take a guess at the filename */
   temp_renderings = ui_render->renderings;
@@ -457,7 +450,14 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 /* function called when the button to pop up a rendering parameters modification dialog is hit */
 static void parameters_cb(GtkWidget * widget, gpointer data) {
   ui_render_t * ui_render = data;
-  ui_render_dialog_create(ui_render);
+  ui_render_dialog_create_parameters(ui_render);
+  return;
+}
+
+/* function called when the button to pop up a transfer function dialog is hit */
+static void transfer_function_cb(GtkWidget * widget, gpointer data) {
+  ui_render_t * ui_render = data;
+  ui_render_dialog_create_transfer_function(ui_render);
   return;
 }
 
@@ -506,13 +506,13 @@ static void menus_create(ui_render_t * ui_render) {
 
 
   GnomeUIInfo file_menu[] = {
-    GNOMEUIINFO_ITEM_DATA("_Export Rendering",
-			  "Export the rendered image",
+    GNOMEUIINFO_ITEM_DATA(N_("_Export Rendering"),
+			  N_("Export the rendered image"),
 			  export_cb,
 			  ui_render, NULL),
 #ifdef AMIDE_LIBFAME_SUPPORT
-    GNOMEUIINFO_ITEM_DATA("_Create Movie",
-			  "Create a movie out of a sequence of renderings",
+    GNOMEUIINFO_ITEM_DATA(N_("_Create Movie"),
+			  N_("Create a movie out of a sequence of renderings"),
 			  movie_cb,
 			  ui_render, NULL),
 #endif
@@ -522,8 +522,8 @@ static void menus_create(ui_render_t * ui_render) {
   };
 
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_ITEM_DATA("_Rendering Parameters",
-			  "Adjust parameters pertinent to the rendered image",
+    GNOMEUIINFO_ITEM_DATA(N_("_Rendering Parameters"),
+			  N_("Adjust parameters pertinent to the rendered image"),
 			  parameters_cb,
 			  ui_render, NULL),
     GNOMEUIINFO_END
@@ -549,6 +549,64 @@ static void menus_create(ui_render_t * ui_render) {
 }
 
 
+static void toolbar_create(ui_render_t * ui_render) {
+
+  GtkWidget * toolbar;
+  GtkWidget * label;
+  GtkWidget * spin_button;
+
+  GnomeUIInfo stereoscopic_list[] = {
+    GNOMEUIINFO_RADIOITEM_DATA(NULL, N_("Monoscopic rendering"), stereoscopic_cb, 
+			       ui_render, icon_view_mode[0]),
+    GNOMEUIINFO_RADIOITEM_DATA(NULL, N_("Stereoscopic rendering"), stereoscopic_cb, 
+			       ui_render, icon_view_mode[1]),
+    GNOMEUIINFO_END
+  };
+
+  GnomeUIInfo rendering_toolbar[] = {
+    GNOMEUIINFO_ITEM_DATA(NULL, N_("Opacity and density transfer functions"), 
+			  transfer_function_cb, ui_render,
+			  icon_transfer_function_xpm),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_RADIOLIST(stereoscopic_list),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_END
+  };
+
+  /* make the toolbar */
+  toolbar = gtk_toolbar_new();
+  gnome_app_fill_toolbar(GTK_TOOLBAR(toolbar), rendering_toolbar, NULL);
+
+
+  /* finish setting up items */
+  g_object_set_data(G_OBJECT(stereoscopic_list[0].widget), "stereoscopic", GINT_TO_POINTER(FALSE));
+  g_object_set_data(G_OBJECT(stereoscopic_list[1].widget), "stereoscopic", GINT_TO_POINTER(TRUE));
+
+
+  /* add the zoom widget to our toolbar */
+  label = gtk_label_new(_("zoom:"));
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
+  gtk_widget_show(label);
+
+  spin_button = gtk_spin_button_new_with_range(0.1, 10.0, 0.2);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), FALSE);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button), 2);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_render->zoom);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+  gtk_widget_set_size_request (spin_button, 60, -1);
+  g_signal_connect(G_OBJECT(spin_button), "value_changed", G_CALLBACK(change_zoom_cb), ui_render);
+  gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), spin_button, 
+  			    _("specify how much to magnify the rendering"), NULL);
+  gtk_widget_show(spin_button);
+			      
+  //  gtk_toolbar_append_space(GTK_TOOLBAR(toolbar));
+
+
+  /* add our toolbar to our app */
+  gnome_app_set_toolbar(GNOME_APP(ui_render->app), GTK_TOOLBAR(toolbar));
+
+}
 
 
 /* destroy a ui_render data structure */
@@ -631,7 +689,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
-    g_warning("couldn't allocate space for ui_render_t");
+    g_warning(_("couldn't allocate space for ui_render_t"));
     return NULL;
   }
   ui_render->reference_count = 1;
@@ -639,11 +697,10 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   /* set any needed parameters */
   ui_render->app = app;
   ui_render->parameter_dialog = NULL;
+  ui_render->transfer_function_dialog = NULL;
 #ifdef AMIDE_LIBFAME_SUPPORT
   ui_render->movie = NULL;
 #endif
-  ui_render->render_button = NULL;
-  ui_render->immediate = TRUE;
   ui_render->stereoscopic = FALSE;
   ui_render->renderings = NULL;
   ui_render->pixbuf = NULL;
@@ -699,12 +756,10 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
 void ui_render_add_update(ui_render_t * ui_render) {
 
-  if (ui_render->immediate) {
-    ui_render->next_update = ui_render->next_update | UPDATE_RENDERING;
-    if (ui_render->idle_handler_id == 0)
-      ui_render->idle_handler_id = 
-	gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,ui_render_update_immediate, ui_render);
-  }
+  ui_render->next_update = ui_render->next_update | UPDATE_RENDERING;
+  if (ui_render->idle_handler_id == 0)
+    ui_render->idle_handler_id = 
+      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,ui_render_update_immediate, ui_render);
 
   return;
 }
@@ -785,21 +840,18 @@ gboolean ui_render_update_immediate(gpointer data) {
 
 
 
+
 /* function that sets up the rendering dialog */
 void ui_render_create(AmitkStudy * study) {
   
   GtkWidget * packing_table;
-  GtkWidget * check_button;
   GtkWidget * button;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
   GtkWidget * vbox;
   GtkWidget * hbox;
-  GtkWidget * hseparator;
   GtkWidget * dial;
   GtkWidget * label;
-  GnomeCanvas * axis_indicator;
-  GnomeCanvasPoints * axis_line_points;
   ui_render_t * ui_render;
   GtkWidget * app;
   gboolean return_val;
@@ -807,8 +859,8 @@ void ui_render_create(AmitkStudy * study) {
   /* sanity checks */
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  app = gnome_app_new(PACKAGE, "Rendering Window");
-  gtk_window_set_resizable(GTK_WINDOW(app), TRUE);
+  app = gnome_app_new(PACKAGE, _("Rendering Window"));
+  gtk_window_set_resizable(GTK_WINDOW(app), FALSE);
   ui_render = ui_render_init(GNOME_APP(app), study);
 
   /* check we actually have something */
@@ -825,145 +877,13 @@ void ui_render_create(AmitkStudy * study) {
   g_signal_connect(G_OBJECT(app), "delete_event",
 		   G_CALLBACK(delete_event_cb), ui_render);
 
-  /* setup the menus */
+  /* setup the menus and toolbar */
   menus_create(ui_render);
+  toolbar_create(ui_render);
 
   /* make the widgets for this dialog box */
   packing_table = gtk_table_new(3,3,FALSE);
   gnome_app_set_contents(ui_render->app, packing_table);
-
-  /* start making those widgets */
-  vbox = gtk_vbox_new(FALSE, Y_PADDING);
-  gtk_table_attach(GTK_TABLE(packing_table), vbox, 0,1,0,2,
-		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
-
-  /* create the z dial */
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-  label = gtk_label_new("z");
-  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-  adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, -90.0, 90.0, 1.0, 1.0, 1.0));
-
-  dial = gtk_dial_new(adjustment);
-  gtk_dial_set_update_policy (GTK_DIAL(dial), GTK_UPDATE_DISCONTINUOUS);
-  g_object_set_data(G_OBJECT(adjustment), "axis", GINT_TO_POINTER(AMITK_AXIS_Z));
-  gtk_box_pack_start(GTK_BOX(hbox), dial, FALSE, FALSE, 0);
-  g_signal_connect (G_OBJECT(adjustment), "value_changed", 
-		    G_CALLBACK(rotate_cb), ui_render);
-
-
-  /* a canvas to indicate which way is x, y, and z */
-  axis_indicator = GNOME_CANVAS(gnome_canvas_new_aa());
-  gtk_widget_set_size_request(GTK_WIDGET(axis_indicator), 100, 100);
-  gnome_canvas_set_scroll_region(axis_indicator, 0.0, 0.0, 100.0, 100.0);
-  gtk_box_pack_start(GTK_BOX(vbox), GTK_WIDGET(axis_indicator), TRUE, TRUE, 0);
-
-  /* the x axis */
-  axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = 40.0; /* x1 */
-  axis_line_points->coords[1] = 60.0; /* y1 */
-  axis_line_points->coords[2] = 95.0; /* x2 */
-  axis_line_points->coords[3] = 60.0; /* y2 */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
-			"points", axis_line_points, "fill_color", "black",
-			"width_units", 2.0, "last_arrowhead", TRUE, 
-			"arrow_shape_a", 8.0,
-			"arrow_shape_b", 8.0,
-			"arrow_shape_c", 8.0,
-			NULL);
-
-  gnome_canvas_points_unref(axis_line_points);
-  /* the x label */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
-			gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH_EAST,
-			"text", "x",
-			"x", (gdouble) 80.0,
-			"y", (gdouble) 65.0,
-			"fill_color", "black", 
-			"font_desc", amitk_fixed_font_desc, NULL);
-
-  /* the y axis */
-  axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = 40.0; /* x1 */
-  axis_line_points->coords[1] = 60.0; /* y1 */
-  axis_line_points->coords[2] = 40.0; /* x2 */
-  axis_line_points->coords[3] = 5.0; /* y2 */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
-			"points", axis_line_points, "fill_color", "black",
-			"width_units", 2.0, "last_arrowhead", TRUE, 
-			"arrow_shape_a", 8.0,
-			"arrow_shape_b", 8.0,
-			"arrow_shape_c", 8.0,
-			NULL);
-  gnome_canvas_points_unref(axis_line_points);
-  /* the y label */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
-			gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH_WEST,
-			"text", "y",
-			"x", (gdouble) 45.0,
-			"y", (gdouble) 20.0,
-			"fill_color", "black",
-			"font_desc", amitk_fixed_font_desc, NULL);
-
-  /* the z axis */
-  axis_line_points = gnome_canvas_points_new(2);
-  axis_line_points->coords[0] = 40.0; /* x1 */
-  axis_line_points->coords[1] = 60.0; /* y1 */
-  axis_line_points->coords[2] = 5.0; /* x2 */
-  axis_line_points->coords[3] = 95.0; /* y2 */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator), gnome_canvas_line_get_type(),
-			"points", axis_line_points, "fill_color", "black",
-			"width_units", 2.0, "last_arrowhead", TRUE,
-			"arrow_shape_a", 8.0,
-			"arrow_shape_b", 8.0,
-			"arrow_shape_c", 8.0,
-			NULL);
-  gnome_canvas_points_unref(axis_line_points);
-  /* the z label */
-  gnome_canvas_item_new(gnome_canvas_root(axis_indicator),
-			gnome_canvas_text_get_type(),
-			"anchor", GTK_ANCHOR_NORTH_WEST,
-			"text", "z",
-			"x", (gdouble) 20.0,
-			"y", (gdouble) 80.0,
-			"fill_color", "black", 
-			"font_desc", amitk_fixed_font_desc, NULL);
-
-  /* button to reset the axis */
-  button = gtk_button_new_with_label("Reset Axis");
-  g_signal_connect(G_OBJECT(button), "pressed",
-		   G_CALLBACK(reset_axis_pressed_cb), ui_render);
-  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-
-
-
-  /* a separator for clarity */
-  hseparator = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(vbox), hseparator, FALSE, FALSE, 0);
-
-  /* the Render button, after changing parameters, this is the button you'll
-   * wanna hit to rerender the object, unless you have immediate rendering set */
-  ui_render->render_button = gtk_button_new_with_label("Render");
-  gtk_box_pack_start(GTK_BOX(vbox), ui_render->render_button, FALSE, FALSE, 0);
-  gtk_widget_set_sensitive(ui_render->render_button, !(ui_render->immediate));
-  g_signal_connect(G_OBJECT(ui_render->render_button), "clicked", 
-		   G_CALLBACK(render_cb), ui_render);
-
-
-  /* the render immediately button.. */
-  check_button = gtk_check_button_new_with_label ("on change");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->immediate);
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(immediate_cb), ui_render);
-  gtk_box_pack_start(GTK_BOX(vbox), check_button, FALSE, FALSE, 0);
-
-  /* the render immediately button.. */
-  check_button = gtk_check_button_new_with_label ("stereoscopic");
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_render->stereoscopic);
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(stereoscopic_cb), ui_render);
-  gtk_box_pack_start(GTK_BOX(vbox), check_button, FALSE, FALSE, 0);
 
   /* setup the main canvas */
   ui_render->canvas = GNOME_CANVAS(gnome_canvas_new_aa());
@@ -976,7 +896,7 @@ void ui_render_create(AmitkStudy * study) {
 		   G_CALLBACK(canvas_event_cb), ui_render);
   ui_render_update_immediate(ui_render); /* fill in the canvas */
 
-  /* create the x, and y rotation dials */
+  /* create the x, y, and z rotation dials */
   hbox = gtk_hbox_new(FALSE, 0);
   gtk_table_attach(GTK_TABLE(packing_table), hbox, 1,3,0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
@@ -988,14 +908,33 @@ void ui_render_create(AmitkStudy * study) {
   gtk_box_pack_start(GTK_BOX(hbox), scale, TRUE, TRUE, 0);
   g_signal_connect (G_OBJECT(adjustment), "value_changed", 
 		    G_CALLBACK(rotate_cb), ui_render);
-  label = gtk_label_new("y");
+  label = gtk_label_new(_("y"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
-  vbox = gtk_vbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(packing_table), vbox,  3,4,1,2,
+  /* create the z dial */
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_table_attach(GTK_TABLE(packing_table), hbox, 3,4,0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
 		   X_PADDING, Y_PADDING);
-  label = gtk_label_new("x");
+  label = gtk_label_new(_("z"));
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+  adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, -180.0, 180.0, 1.0, 1.0, 1.0));
+
+  dial = amitk_dial_new(adjustment);
+  gtk_widget_set_size_request(dial,50,50);
+  amitk_dial_set_update_policy (AMITK_DIAL(dial), GTK_UPDATE_DISCONTINUOUS);
+  g_object_set_data(G_OBJECT(adjustment), "axis", GINT_TO_POINTER(AMITK_AXIS_Z));
+  gtk_box_pack_start(GTK_BOX(hbox), dial, FALSE, FALSE, 0);
+  g_signal_connect (G_OBJECT(adjustment), "value_changed", 
+		    G_CALLBACK(rotate_cb), ui_render);
+
+
+  /* the x slider */
+  vbox = gtk_vbox_new(FALSE, 0);
+  gtk_table_attach(GTK_TABLE(packing_table), vbox,  3,4,1,2,
+		   X_PACKING_OPTIONS , Y_PACKING_OPTIONS | GTK_FILL, 
+		   X_PADDING, Y_PADDING);
+  label = gtk_label_new(_("x"));
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
   adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, -90.0, 90.0, 1.0, 1.0, 1.0));
   scale = gtk_vscale_new(adjustment);
@@ -1004,6 +943,13 @@ void ui_render_create(AmitkStudy * study) {
   gtk_box_pack_start(GTK_BOX(vbox), scale, TRUE, TRUE, 0);
   g_signal_connect(G_OBJECT(adjustment), "value_changed", 
 		   G_CALLBACK(rotate_cb), ui_render);
+
+  /* button to reset the axis */
+  button = gtk_button_new_with_label(_("Reset Axis"));
+  g_signal_connect(G_OBJECT(button), "pressed",
+		   G_CALLBACK(reset_axis_pressed_cb), ui_render);
+  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
+
 
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(ui_render->app));
@@ -1089,7 +1035,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   read_preferences(&strip_highs, &optimize_rendering);
 #endif
 
-  temp_string = g_strdup_printf("%s: Rendering Initialization Dialog", PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Rendering Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
@@ -1108,7 +1054,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
 
   /* do we want to strip values */
-  check_button = gtk_check_button_new_with_label("Set values greater than max. threshold to zero?");
+  check_button = gtk_check_button_new_with_label(_("Set values greater than max. threshold to zero?"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), strip_highs);
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
@@ -1116,7 +1062,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   table_row++;
 
   /* do we want to converse memory */
-  check_button = gtk_check_button_new_with_label("Accelerate Rendering?  Increases memory use ~3x");
+  check_button = gtk_check_button_new_with_label(_("Accelerate Rendering?  Increases memory use ~3x"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button),optimize_rendering);
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);

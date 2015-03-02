@@ -114,6 +114,49 @@ static gint array_comparison(gconstpointer a, gconstpointer b) {
     return 0;
 }
 
+
+
+/* note, the following function for weight variance calcuation is
+   derived from statistics/wvariance_source.c from gsl version 1.3.  
+   copyright Jim Davies, Brian Gough, released under GPL. */
+/* The variance is divided by N-1, since the mean in a sense is being
+   "estimated" from the data set....  If anyone else with more
+   statistical experience disagrees, please speak up */
+static gdouble wvariance (GPtrArray * array, guint num_elements, gdouble wmean)
+{
+  element_t * element;
+  gdouble wsumofsquares = 0 ;
+  gdouble Wa = 0;
+  gdouble Wb = 0;
+  gdouble wi;
+  gdouble delta;
+  gdouble factor;
+  guint i;
+
+  if (num_elements < 2) return NAN;
+
+  /* find the weight sum of the squares */
+  /* computes sum(wi*(valuei-mean))/sum(wi) */
+  /* and computes the weighted version of N/(N-1) */
+  for (i = 0; i < num_elements; i++) {
+    element = g_ptr_array_index(array, i);
+    wi = element->weight;
+
+    if (wi > 0) {
+      delta = element->value-wmean;
+      Wa += wi ;
+      Wb += wi*wi;
+      wsumofsquares += (delta * delta - wsumofsquares) * (wi / Wa);
+    } 
+  }
+
+  factor = (Wa*Wa)/((Wa*Wa)-Wb);
+
+  return factor*wsumofsquares;
+}
+
+
+
 /* calculate an analysis of several statistical values for an roi on a given data set frame. */
 static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
 						      AmitkDataSet * ds, 
@@ -126,7 +169,6 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
   guint subfraction_voxels;
   guint i;
   element_t * element;
-  amide_data_t temp;
 #ifdef AMIDE_DEBUG
   struct timeval tv1;
   struct timeval tv2;
@@ -143,7 +185,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 
   /* and now calculate this frame's data */
   if ((data_array = g_ptr_array_new()) == NULL) {
-    g_warning("couldn't allocate space for data array for frame %d", frame);
+    g_warning(_("couldn't allocate space for data array for frame %d"), frame);
     return NULL;
   }
   /* fill the array with the appropriate info from the data set */
@@ -165,7 +207,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 
   /* fill in our frame_analysis structure */
   if ((frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
-    g_warning("couldn't allocate space for roi analysis of frame %d", frame);
+    g_warning(_("couldn't allocate space for roi analysis of frame %d"), frame);
     return frame_analysis;
   }
   frame_analysis->ref_count = 1;
@@ -220,23 +262,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
     frame_analysis->mean = frame_analysis->total/frame_analysis->fractional_voxels;
 
     /* calculate variance */
-    for (i=0; i<subfraction_voxels; i++) {
-      element = g_ptr_array_index(data_array, i);
-      temp = (element->value-frame_analysis->mean);
-      frame_analysis->correction += temp;
-      frame_analysis->var += temp*temp;
-    }
-    /* and divide to get the final var, note I'm using N-1, as the mean
-       in a sense is being "estimated" from the data set....  If anyone
-       else with more statistical experience disagrees, please speak up */
-    /* the "total correction" parameter is to correct roundoff error,
-       for a discussion, see "the art of computer programming" */
-    if (frame_analysis->voxels < 2.0)
-      frame_analysis->var = NAN; /* variance is nonsensical */
-    else
-      frame_analysis->var = 
-	(frame_analysis->var - frame_analysis->correction*frame_analysis->correction/frame_analysis->voxels)
-	/(frame_analysis->voxels-1.0);
+    frame_analysis->var = wvariance(data_array, subfraction_voxels, frame_analysis->mean);
   }
 
   g_ptr_array_free(data_array, TRUE); /* TRUE frees elements too */
@@ -266,7 +292,7 @@ static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds,
 
   /* sanity checks */
   if (AMITK_ROI_UNDRAWN(roi)) {
-    g_warning("ROI: %s appears not to have been drawn", AMITK_OBJECT_NAME(roi));
+    g_warning(_("ROI: %s appears not to have been drawn"), AMITK_OBJECT_NAME(roi));
     return NULL;
   }
 
@@ -318,7 +344,7 @@ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_set
   g_return_val_if_fail(AMITK_IS_DATA_SET(data_sets->data), NULL);
 
   if ((temp_volume_analysis =  g_try_new(analysis_volume_t,1)) == NULL) {
-    g_warning("couldn't allocate space for roi analysis of volumes");
+    g_warning(_("couldn't allocate space for roi analysis of volumes"));
     return NULL;
   }
 
@@ -384,7 +410,7 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois,
   if (rois == NULL)  return NULL;
 
   if ((temp_roi_analysis =  g_try_new(analysis_roi_t,1)) == NULL) {
-    g_warning("couldn't allocate space for roi analyses");
+    g_warning(_("couldn't allocate space for roi analyses"));
     return NULL;
   }
 

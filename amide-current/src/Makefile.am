@@ -1,11 +1,14 @@
 if AMIDE_WIN32_HACKS
 AMIDE_WIN32_HACK_LIBS = \
 	-lwsock32
+INCLUDES = \
+	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\" 
 else
 INCLUDES = \
-	-DPREFIX=\""$(prefix)"\"			\
-	-DSYSCONFDIR=\""$(sysconfdir)"\"		\
-	-DDATADIR=\""$(datadir)"\"			\
+	-DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"  \
+	-DPREFIX=\""$(prefix)"\"			        \
+	-DSYSCONFDIR=\""$(sysconfdir)"\"		        \
+	-DDATADIR=\""$(datadir)"\"			        \
 	-DLIBDIR=\""$(libdir)"\"			
 endif
 
@@ -29,8 +32,6 @@ amide_LDADD = \
 
 
 amide_SOURCES = \
-	gtkdial.c \
-	gtkdial.h \
 	$(MARSHAL_SOURCES) \
 	$(TYPE_BUILTINS_SOURCES) \
 	$(AMITK_RAW_DATA_VARIABLE_H) \
@@ -42,6 +43,7 @@ amide_SOURCES = \
 	$(AMITK_H_SOURCES) \
 	amide.c \
 	amide_limits.h \
+	amide_intl.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
@@ -51,6 +53,7 @@ amide_SOURCES = \
 	amitk_color_table.c \
 	amitk_color_table_menu.c \
 	amitk_data_set.c \
+	amitk_dial.c \
 	amitk_dir_sel.c \
 	amitk_fiducial_mark.c \
 	amitk_filter.c \
@@ -60,8 +63,8 @@ amide_SOURCES = \
 	amitk_progress_dialog.c \
 	amitk_raw_data.c \
 	amitk_roi.c \
-	amitk_space_edit.c \
 	amitk_space.c \
+	amitk_space_edit.c \
 	amitk_study.c \
 	amitk_threshold.c \
 	amitk_tree.c \
@@ -125,6 +128,7 @@ AMITK_H_SOURCES = \
 	amitk_canvas_object.h \
 	amitk_color_table.h \
 	amitk_color_table_menu.h \
+	amitk_dial.h \
 	amitk_dir_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \

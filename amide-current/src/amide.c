@@ -24,6 +24,7 @@
 */
 
 #include "amide_config.h" 
+#include <locale.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include "amide.h"
@@ -132,11 +133,16 @@ int main (int argc, char *argv []) {
   amide_real_t min_voxel_size;
   poptContext amide_ctx;
   GnomeProgram * program;
+#endif
 
-  /* uncomment these whenever we get around to using i18n */
-  //  bindtextdomain(PACKAGE, GNOMELOCALEDIR);
-  //  textdomain(PACKAGE);
+  /* setup i18n */
+  setlocale (LC_ALL, "");
+  bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
+  bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+  textdomain (GETTEXT_PACKAGE);
 
+
+#ifndef AMIDE_WIN32_HACKS
   program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
 			       GNOME_PROGRAM_STANDARD_PROPERTIES,
 #ifdef AMIDE_OSX_HACKS
@@ -161,6 +167,9 @@ int main (int argc, char *argv []) {
   /* specify my own error handler */
   g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
 
+  /* and tell gnome-ui to pump it's errors similarly */
+  g_log_set_handler ("GnomeUI", G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
+
 
   /* startup initializations */
   font_init();
@@ -177,7 +186,7 @@ int main (int argc, char *argv []) {
 
       /* check to see that the filename exists and it's a directory */
       if (stat(input_filenames[i], &file_info) != 0) 
-	g_warning("AMIDE study %s does not exist",input_filenames[i]);
+	g_warning(_("AMIDE study %s does not exist"),input_filenames[i]);
       else if (!S_ISDIR(file_info.st_mode)) {
 	/* not a directory... maybe an import file? */
 	if ((new_ds = amitk_data_set_import_file(AMITK_IMPORT_METHOD_GUESS, 0,
@@ -193,9 +202,9 @@ int main (int argc, char *argv []) {
 	  g_object_unref(new_ds);
 	  new_ds = NULL;
 	} else
-	  g_warning("%s is not an AMIDE study or importable file type ", input_filenames[i]);
+	  g_warning(_("%s is not an AMIDE study or importable file type "), input_filenames[i]);
       } else if ((study=amitk_study_load_xml(input_filenames[i])) == NULL)
-	g_warning("error loading study: %s",input_filenames[i]);
+	g_warning(_("error loading study: %s"),input_filenames[i]);
 
       if (study != NULL) {
 	/* each whole study gets it's own window */

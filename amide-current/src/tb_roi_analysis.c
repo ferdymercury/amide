@@ -67,23 +67,23 @@ typedef enum {
 } column_t;
 
 static gchar * analysis_titles[] = {
-  "ROI",
-  "Type",
-  "Data Set",
-  "Frame",
-  "Duration (s)",
-  "Time Midpt (s)",
-  "Total",
-  "Median",
-  "Mean",
-  "Var",
-  "Std Dev",
-  "Std Err",
-  "Min",
-  "Max",
-  "Size (mm^3)",
-  "Frac. Voxels",
-  "Voxels"
+  N_("ROI"),
+  N_("Type"),
+  N_("Data Set"),
+  N_("Frame"),
+  N_("Duration (s)"),
+  N_("Time Midpt (s)"),
+  N_("Total"),
+  N_("Median"),
+  N_("Mean"),
+  N_("Var"),
+  N_("Std Dev"),
+  N_("Std Err"),
+  N_("Min"),
+  N_("Max"),
+  N_("Size (mm^3)"),
+  N_("Frac. Voxels"),
+  N_("Voxels")
 };
 
 
@@ -133,7 +133,7 @@ static void export_data(analysis_roi_t * roi_analyses) {
   /* sanity checks */
   g_return_if_fail(roi_analyses != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export Statistics"));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export Statistics")));
 
   /* take a guess at the filename */
   analysis_name = g_strdup_printf("%s_analysis_{%s",
@@ -189,44 +189,44 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   AmitkPoint voxel_size;
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
-    g_warning("couldn't open: %s for writing roi analyses", save_filename);
+    g_warning(_("couldn't open: %s for writing roi analyses"), save_filename);
     return;
   }
 
   /* intro information */
   time(&current_time);
-  fprintf(file_pointer, "# %s: ROI Analysis File - generated on %s", PACKAGE, ctime(&current_time));
+  fprintf(file_pointer, _("# %s: ROI Analysis File - generated on %s"), PACKAGE, ctime(&current_time));
   fprintf(file_pointer, "#\n");
-  fprintf(file_pointer, "# Study:\t%s\n", AMITK_OBJECT_NAME(roi_analyses->study));
+  fprintf(file_pointer, _("# Study:\t%s\n"), AMITK_OBJECT_NAME(roi_analyses->study));
   fprintf(file_pointer, "#\n");
   
   while (roi_analyses != NULL) {
-    fprintf(file_pointer, "# ROI:\t%s\tType:\t%s\n",
+    fprintf(file_pointer, _("# ROI:\t%s\tType:\t%s\n"),
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
     if (roi_analyses->subfraction < 1.0)
-      fprintf(file_pointer, "#\tCalculation done on %5.3f percentile of voxels in ROI\n", roi_analyses->subfraction);
+      fprintf(file_pointer, _("#\tCalculation done on %5.3f percentile of voxels in ROI\n"), roi_analyses->subfraction);
     else
-      fprintf(file_pointer, "#\tCalculation done with all voxels in ROI\n");
+      fprintf(file_pointer, _("#\tCalculation done with all voxels in ROI\n"));
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
 
-      fprintf(file_pointer, "#\tData Set:\t%s\tScaling Factor:\t%g\n",
+      fprintf(file_pointer, _("#\tData Set:\t%s\tScaling Factor:\t%g\n"),
 	      AMITK_OBJECT_NAME(volume_analyses->data_set),
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
 
       switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
       case AMITK_CONVERSION_PERCENT_ID_PER_G:
       case AMITK_CONVERSION_SUV:
-	fprintf(file_pointer, "#\t\tOutput Data Units: %s\n",
+	fprintf(file_pointer, _("#\t\tOutput Data Units: %s\n"),
 		amitk_conversion_names[AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)]);
-	fprintf(file_pointer, "#\t\t\tInjected Dose: %g [%s]\n",
+	fprintf(file_pointer, _("#\t\t\tInjected Dose: %g [%s]\n"),
 		amitk_dose_unit_convert_to(AMITK_DATA_SET_INJECTED_DOSE(volume_analyses->data_set),
 					   AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)),
 		amitk_dose_unit_names[AMITK_DATA_SET_DISPLAYED_DOSE_UNIT(volume_analyses->data_set)]);
-	fprintf(file_pointer, "#\t\t\tCylinder Factor: %g [%s]\n",
+	fprintf(file_pointer, _("#\t\t\tCylinder Factor: %g [%s]\n"),
  		amitk_cylinder_unit_convert_to(AMITK_DATA_SET_CYLINDER_FACTOR(volume_analyses->data_set),
 					       AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)),
 		amitk_cylinder_unit_names[AMITK_DATA_SET_DISPLAYED_CYLINDER_UNIT(volume_analyses->data_set)]);
@@ -237,7 +237,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 
       switch(AMITK_DATA_SET_CONVERSION(volume_analyses->data_set)) {
       case AMITK_CONVERSION_SUV:
-	fprintf(file_pointer, "#\t\t\tSubject Weight: %g [%s]\n",
+	fprintf(file_pointer, _("#\t\t\tSubject Weight: %g [%s]\n"),
  		amitk_weight_unit_convert_to(AMITK_DATA_SET_SUBJECT_WEIGHT(volume_analyses->data_set),
 					       AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)),
 		amitk_weight_unit_names[AMITK_DATA_SET_DISPLAYED_WEIGHT_UNIT(volume_analyses->data_set)]);
@@ -379,7 +379,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
       if (dynamic_data)
 	label = gtk_label_new(AMITK_OBJECT_NAME(roi_analyses->roi));
       else
-	label = gtk_label_new("ROI Statistics");
+	label = gtk_label_new(_("ROI Statistics"));
       table = gtk_table_new(5,3,FALSE);
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
@@ -391,7 +391,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 
       if (dynamic_data) {
 	/* tell use the type */
-	label = gtk_label_new("type:");
+	label = gtk_label_new(_("type:"));
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	
 	entry = gtk_entry_new();
@@ -566,7 +566,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 							   AMITK_OBJECT_TYPE_DATA_SET, AMITK_SELECTION_ANY, TRUE);
 
   if (data_sets == NULL) {
-    g_warning("No Data Sets selected for calculating analyses");
+    g_warning(_("No Data Sets selected for calculating analyses"));
     return;
   }
 
@@ -578,7 +578,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 						      AMITK_OBJECT_TYPE_ROI, AMITK_SELECTION_ANY, TRUE);
 
   if (rois == NULL) {
-    g_warning("No ROI's selected for calculating analyses");
+    g_warning(_("No ROI's selected for calculating analyses"));
     amitk_objects_unref(data_sets);
     return;
   }
@@ -591,7 +591,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   g_return_if_fail(roi_analyses != NULL);
   
   /* start setting up the widget we'll display the info from */
-  title = g_strdup_printf("%s Roi Analysis: Study %s", PACKAGE, 
+  title = g_strdup_printf(_("%s Roi Analysis: Study %s"), PACKAGE, 
 			  AMITK_OBJECT_NAME(study));
   dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(parent),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -732,7 +732,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
 #endif
 
-  temp_string = g_strdup_printf("%s: ROI Analysis Initialization Dialog", PACKAGE);
+  temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
@@ -751,18 +751,18 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   table_row=0;
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
 
-  label = gtk_label_new("Calculate:");
+  label = gtk_label_new(_("Calculate:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, 
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new("All ROIS:");
+  label = gtk_label_new(_("All ROIS:"));
   gtk_table_attach(GTK_TABLE(table), label, 1,2, 
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new("Selected ROIS:");
+  label = gtk_label_new(_("Selected ROIS:"));
   gtk_table_attach(GTK_TABLE(table), label, 2,3, 
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  label = gtk_label_new("On All Data Sets:");
+  label = gtk_label_new(_("On All Data Sets:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, 
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
 
@@ -780,7 +780,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   table_row++;
 
 
-  label = gtk_label_new("On Selected Data Sets:");
+  label = gtk_label_new(_("On Selected Data Sets:"));
   gtk_table_attach(GTK_TABLE(table), label, 0,1, 
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
 
@@ -819,7 +819,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   table_row++;
 
   /* do we want to calculate over a subfraction */
-  label = gtk_label_new("Calculate over subset of voxels:");
+  label = gtk_label_new(_("Calculate over subset of voxels:"));
   gtk_table_attach(GTK_TABLE(table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -831,7 +831,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   table_row++;
 
   /* what subfraction */
-  label = gtk_label_new("Calculate over % highest voxels:");
+  label = gtk_label_new(_("Calculate over % highest voxels:"));
   gtk_table_attach(GTK_TABLE(table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 

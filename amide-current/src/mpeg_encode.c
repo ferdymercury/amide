@@ -106,7 +106,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
 
   /* alloc space for the mpeg_encoding structure */
   if ((context = g_try_new(context_t,1)) == NULL) {
-    g_warning("couldn't allocate space for context_t");
+    g_warning(_("couldn't allocate space for context_t"));
     return NULL;
   }
   context->fame_context = NULL;
@@ -118,21 +118,21 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->buffer_size = xsize*ysize*BUFFER_MULT; /* needs to be able to hold a couple frames */
 
   if ((context->fame_parameters = g_try_new(fame_parameters_t,1)) == NULL) {
-    g_warning("couldn't allocate space for fame parameters");
+    g_warning(_("couldn't allocate space for fame parameters"));
     context_free(context);
     return NULL;
   }
   memcpy(context->fame_parameters, &default_fame_parameters, sizeof(fame_parameters_t));
 
   if ((context->buffer = g_try_new(guchar, context->buffer_size)) == NULL) {
-    g_warning("Unable to allocate mpeg encoding buffer");
+    g_warning(_("Unable to allocate mpeg encoding buffer"));
     context_free(context);
     return NULL;
   }
 
 
   if ((context->yuv = g_try_new(fame_yuv_t, 1)) == NULL) {
-    g_warning("Unable to allocate yuv struct");
+    g_warning(_("Unable to allocate yuv struct"));
     context_free(context);
     return NULL;
   }
@@ -140,7 +140,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->yuv->h = ysize;
   context->yuv->p = xsize;
   if ((context->yuv->y = g_try_new(unsigned char, xsize*ysize*3/2)) == NULL) {
-    g_warning("Unable to allocate yuv buffer");
+    g_warning(_("Unable to allocate yuv buffer"));
     context_free(context);
     return NULL;
   }
@@ -159,7 +159,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
 
 
   if ((context->output_file = fopen(output_filename, "wb")) == NULL) {
-    g_warning("unable to open output file for mpeg encoding");
+    g_warning(_("unable to open output file for mpeg encoding"));
     context_free(context);
     return NULL;
   }

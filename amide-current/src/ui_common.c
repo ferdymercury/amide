@@ -36,9 +36,9 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 #include <volpack.h>
 #endif
-//#ifdef AMIDE_LIBMDC_SUPPORT
-//#include <medcon.h>
-//#endif
+#ifdef AMIDE_LIBMDC_SUPPORT
+#include <medcon.h>
+#endif
 #ifdef AMIDE_LIBFAME_SUPPORT
 #include <fame_version.h>
 #endif
@@ -84,7 +84,7 @@ gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
       (strcmp(save_filename, "") == 0) ||
       (strcmp(save_filename, "\\") == 0) ||
       (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
+    g_warning(_("Inappropriate filename: %s"),save_filename);
     return NULL;
   }
 
@@ -95,7 +95,7 @@ gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
 				      GTK_DIALOG_DESTROY_WITH_PARENT,
 				      GTK_MESSAGE_QUESTION,
 				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
+				      _("Overwrite file: %s"), save_filename);
 
     /* and wait for the question to return */
     return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -136,35 +136,34 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 
 
   contents = g_strjoin("", 
-		       "AMIDE's a Medical Image Data Examiner\n",
+		       _("AMIDE's a Medical Image Data Examiner\n"),
 		       "\n",
-		       "Email bug reports to: ", PACKAGE_BUGREPORT,"\n",
+		       _("Email bug reports to: "), PACKAGE_BUGREPORT,"\n",
 		       "\n",
 #if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT || AMIDE_LIBFAME_SUPPORT)
-		       "Compiled with support for the following libraries:\n",
+		       _("Compiled with support for the following libraries:\n"),
 #endif
 #ifdef AMIDE_LIBECAT_SUPPORT
-		       "libecat: CTI File library by Merence Sibomona\n",
+		       _("libecat: CTI File library by Merence Sibomona\n"),
 #endif
 #ifdef AMIDE_LIBGSL_SUPPORT
-		       "libgsl: GNU Scientific Library by the GSL Team (version ",GSL_VERSION,")\n",
+		       _("libgsl: GNU Scientific Library by the GSL Team (version "),GSL_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
-		       //		       "libmdc: Medical Imaging File library by Erik Nolf (version ",MDC_VERSION,")\n",
-		       "libmdc: Medical Imaging File library by Erik Nolf\n",
+		       _("libmdc: Medical Imaging File library by Erik Nolf (version "),MDC_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-		       "libvolpack: Volume Rendering library by Philippe Lacroute (version ",VP_VERSION,")\n",
+		       _("libvolpack: Volume Rendering library by Philippe Lacroute (version "),VP_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBFAME_SUPPORT
-		       "libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version ", LIBFAME_VERSION, ")\n",
+		       _("libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "), LIBFAME_VERSION, ")\n",
 #endif
 		       NULL);
 
   amide_logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
   about = gnome_about_new(PACKAGE, VERSION, 
-			  "Copyright (c) 2000-2003 Andy Loening",
+			  _("Copyright (c) 2000-2003 Andy Loening"),
 			  contents,
 			  authors, NULL, NULL, amide_logo);
   g_object_unref(amide_logo);
@@ -183,8 +182,6 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column, 
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height) {
-
-#ifndef AMIDE_OSX_HACKS 
 
   const gchar * x_axis_label;
   gdouble x_axis_label_x_location;
@@ -314,8 +311,6 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			"arrow_shape_b", (gdouble) AXIS_ARROW_EDGE,
 			"arrow_shape_c", (gdouble) AXIS_ARROW_WIDTH,
 			NULL);
-  gnome_canvas_points_unref(x_axis_line_points);
-    
 
   /* the x label */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
@@ -331,15 +326,15 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			"arrow_shape_b", (gdouble) AXIS_ARROW_EDGE,
 			"arrow_shape_c", (gdouble) AXIS_ARROW_WIDTH,
 			NULL);
+
   gnome_canvas_points_unref(x_axis_line_points);
+  gnome_canvas_points_unref(y_axis_line_points);
 
   /* the y label */
   gnome_canvas_item_new(gnome_canvas_root(canvas),gnome_canvas_text_get_type(),
 			"anchor", y_axis_label_anchor, "text", y_axis_label,
 			"x", y_axis_label_x_location,"y", y_axis_label_y_location,
 			"fill_color", "black", "font_desc", amitk_fixed_font_desc, NULL); 
-
-#endif
 
   return;
 }
@@ -555,7 +550,7 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
   GtkWidget * image;
   
 
-  dialog = gtk_dialog_new_with_buttons ("Request Dialog",  parent,
+  dialog = gtk_dialog_new_with_buttons (_("Request Dialog"),  parent,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
 					GTK_STOCK_OK, GTK_RESPONSE_OK,

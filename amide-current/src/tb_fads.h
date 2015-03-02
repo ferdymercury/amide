@@ -27,8 +27,13 @@
 /* includes always needed with this */
 #include "amitk_data_set.h"
 
+#ifdef AMIDE_LIBGSL_SUPPORT
+
 /* external functions */
 void tb_fads(AmitkDataSet * active_ds);
+
+
+#endif
 
 
 

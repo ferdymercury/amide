@@ -36,7 +36,10 @@
 #define UI_SERIES_TOP_MARGIN 2.0
 #define UI_SERIES_BOTTOM_MARGIN 15.0
 
-typedef enum {PLANES, FRAMES} series_t;
+typedef enum {
+  PLANES, 
+  FRAMES
+} series_t;
 
 /* external functions */
 void ui_series_create(AmitkStudy * study, AmitkObject * active_object,

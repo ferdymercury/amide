@@ -1,85 +1,103 @@
-<para> 
-  
-  ROI stands for Region of Interest.  ROI's designate a volume on
-  the object over which statistics should be calculated.
-  
+<para> ROI stands for Region of Interest.  An ROI designated a volume
+ in space over which statistics should be calculated.
 </para>
-  
 
 
 <sect2><title>ROI Types</title>
-  
+
   <para>
-    The following ROI types are currently supported.
+    The following ROI types are currently supported in AMIDE:
   </para>
   
-  <sect3><title>Ellipsoid</title>
-    <para>
-      An ellipsoid is similar to a sphere, but with a radius
-      specified for each direction [x,y,z].  In the case of x=y=z,
-      the ellipsoid is a sphere.
-    </para>
-  </sect3>
-  
-  <sect3><title>Elliptic Cylinder</title>
-    <para>
-      An elliptic cylinder is similar to a regular cylinder, except
-      it has an ellipse as it's base instead of a circle.
-    </para>
-  </sect3>
-  
-  <sect3><title>Box</title>
-    <para>
-	Exactly what it says, a 3D box.
-    </para>
-  </sect3>
-  
-  <sect3><title>Isocontours</title>
-    <para>
-      Isocontour ROI's are regions selected from the data set such
-      that the edge values of the ROI are always the same value.
-      There are two types, 2D and 3D isocontours.
-    </para>
-    
-    <sect4><title>2D Isocontour</title>
-      <para>
-	A 2D isocontour is derived by considering a value on one of
-	the displayed 2D slices.  The depth of a 2D isocontour is
-	specified initially by the depth of the viewed slices.
-      </para>
-    </sect4>
+  <sect3><title>Geometric ROI's</title>
 
-    <sect4><title>3D Isocontour</title>
-      <para>
-	A 3D isocontour is derived by considering a value on the
-	current frame of the active data set.
-      </para>
-    </sect4>
-    
-    </sect3>
+   <variablelist> 
+
+    <varlistentry><term>Ellipsoid</term>
+    <listitem><para> An ellipsoid is similar to a sphere, but with a
+      radius specified for each direction [x,y,z].  In the case of
+      x=y=z, the ellipsoid is a sphere.</para></listitem>
+    </varlistentry>
   
+    <varlistentry><term>Elliptic Cylinder</term>
+    <listitem><para>An elliptic cylinder is similar to a regular
+      cylinder, except it has an ellipse as it's base instead of a
+      circle.</para></listitem>
+    </varlistentry>
+
+    <varlistentry><term>Box</term>
+    <listitem><para>Exactly what it says, a 3D box.</para></listitem>
+    </varlistentry>
+
+   </variablelist>
+
+  </sect3>
+  
+  <sect3><title>Isocontour ROI's</title>
+
+    <para> Isocontour ROI's are regions selected from the data set
+      such that the edge values of the ROI are always the same value.
+      There are two types, 2D and 3D isocontours.</para>
+    
+   <variablelist> 
+
+    <varlistentry><term>2D Isocontour</term>
+    <listitem><para>A 2D isocontour is derived by considering a value
+	on one of the displayed 2D slices.  The depth of a 2D
+	isocontour is specified initially by the depth of the viewed
+	slices.</para></listitem>
+    </varlistentry>
+  
+    <varlistentry><term>3D Isocontour</term>
+    <listitem><para>A 3D isocontour is derived by considering a value
+	on the current frame of the active data set.</para></listitem>
+    </varlistentry>
+  
+   </variablelist>
+
+ </sect3>
   
 </sect2>
 
+
 <sect2><title>Drawing ROI's</title>
-  
+
   <para>
-    To draw an ROI, first select the ROI desired under the "add ROI:"
-    pull down menu.  Amide will request a name for this ROI and add it
-    to the study item list, but no ROI will be drawn.  The next mouse
-    input on the displayed views will be used to draw the new ROI.
-    For ellipsoid, elliptic cylinder, and box ROI's, The x and y
-    dimensions of the ROI are controlled by the size of the drawing.
-    The z dimension ("depth") of the newly drawn ROI is determined by
-    the current image thickness.  For isocontour's, the value of the
-    data set at the clicked upon location will be used to derive the
-    isocontour.
+    To draw an ROI, you first need to create a new ROI.  You can add a
+    new ROI to either the study, or a particular data set.  To add an
+    ROI to the study, you can either select the ROI desired under the
+    "Edit->add ROI:" menu item, or right click on the blank area of
+    the study tree.  To add an ROI to a data set, shift-right click on
+    the data set that you'd like to add the ROI to.  In both cases, a
+    dialog box will pop-up for you to enter in the new ROI's name.
+  </para>
+
+  <para>
+    When first added, the new (undrawn) ROI will be selected in the
+    study tree.  When an undrawn ROI is selected in the study tree,
+    the program will use the next mouse input on any of the displayed
+    views to begin the process of drawing this ROI.
+  </para>
+
+  <para>
+    For ellipsoid, elliptic cylinder, and box ROI's, a click with the
+    left button will begin an edge-to-edge drawing, while a click with
+    the middle button will begin a center-out drawing.  The x and y
+    dimensions of the ROI are determined by this process. The z
+    dimension (thickness) of the ROI can be specified by the pop-up
+    dialog that will appear on the completion of the mouse movement.
+  </para>
+
+  <para>
+    For isocontour's, the value of the data set at the clicked upon
+    location will be used to derive the isocontour.
   </para>
     
+
 </sect2>
 
 <sect2><title>Manipulating ROI's</title>
-  
+
   <para>
     After an ROI is drawn, it can be further manipulated to adjust
     it's size, placement, and orientation.  You can directly
@@ -89,78 +107,144 @@
     erasing points from isocontour ROI's.  Mouse button 3 is used for
     zooming ellipsoid, elliptic cylinder and box ROI, and is used for
     redefining the isocontour value for isocontour ROI's.
-    
-    You can also edit the ROI size/placement/orientation/name etc. by
-    clicking on mouse button 3 while over the ROI's name in the study
-    item list.  This brings up the edit ROI dialog, which allows
-    keyboard entry of the ROI's parameters.
-
   </para>
-    
-</sect2>
-
-<sect2><title>Calculating Statistics over ROI's</title>
 
   <para>
-    Statistics on an ROI can be calculated via the analysis menu.
-    Choosing "All" will calculate all the ROI's on the currently
-    selected images.  Choosing "Selected" will calculate the selected
-    ROI's on the currently selected images.
+    You can also edit the ROI size/placement/orientation/name etc. by
+    clicking on mouse button 3 while over the ROI's name in the study
+    item list.  This brings up the ROI modification dialog (described
+    at <xref linkend="roi-dialog" />).
   </para>
-  
+    
 </sect2>
 
-<sect2><title>Gotcha's to ROI calculations </title>
+
+
+<sect2 id="roi_statistics"><title>Calculating Statistics</title>
+
+  <para>
+    Statistics on an ROI can be calculated via the "Tools->calulate
+    ROI statistics" menu item.  Choosing this will pop-up a dialog
+    that lets you choose which ROI's (selected or all) and which data
+    sets (selected or all) you'd like to calculate statistics over.
+    You can also choose to calculate over a subset of voxels, meaning
+    the statistics will be calculated for the x% highest voxels in the
+    ROI.
+  </para>
+
+  <para>
+   After hitting execute, the program will crank for a while, and then
+   show the calculated values.  Hitting "save as" allows saving these
+   values as a comma separated values (CSV) file.  This file should be
+   easily imported into most spreadsheet applications (Excel's a
+   little stupid, you'll have to explicitly tell it you're importing a
+   CSV file).
+  </para>
+
+
+
+ <sect3><title>Gotcha's to ROI calculations </title>
   
-  <sect3><title>Variance/Std. Dev./Std. Err. Fallacies</title>
+  <sect4><title>Variance/Std. Dev./Std. Err. Fallacies</title>
     
     <para>
-      A common fallacy is to use the calculated variance (or standard
-      deviation, or standard error) of an ROI as an experiment's
-      variance.  The variance of an experiment can only truly be
-      measured by taking multiple samples (i.e. performing multiple
-      scans) and calculating the variance between these different
-      samples.  The variance that AMIDE calculates is only a measure
-      of the noise within an ROI in the given data set.
+      Currently, AMIDE generates variance/std. dev./std. error values
+      that may occasionally be of interest to imaging physicists.  It
+      is very important to remember, that these numbers represent the
+      noise in the data set, NOT the noise in your experiment.
     </para>
 
-  </sect3>
-
-  <sect3><title>Changing Calculated Volume</title> 
-    <para> 
-	AMIDE calculates ROI's by translating the ROI's dimensions into the
-	data set's coordinate space.  It then computes statistics for all the
-	data set voxels that are in the ROI.  For voxels that lie on
-	the edge of the ROI, AMIDE will subdivide the voxel into a finite
-	number of subvoxels, and calculate over the subvoxels.  This approach
-	yields correct statistics, but it is important to realize that the
-	computed ROI is a discrete representation of the specified analytical
-	ROI.  So while the true volume of an ellipse is pi*r1*r2*r3, the
-	computed volume of the ellipse in AMIDE will depend on the number of
-	voxels and subvoxels that were determined to line within the ellipse,
-	which in turn can depend on the orientation of the ROI.  Since the
-	computed volume given by AMIDE represents the volume in the data set
-	that was used for the ROI calculation, you will want to use that value
-	(not the real ellipse value).
+    <para> The variance of an experiment can only truly be measured by
+      taking multiple samples (i.e. performing multiple scans) and
+      calculating the variance between these different samples.
     </para>
-  </sect3>
+
+  </sect4>
+
+  <sect4><title>Changing Calculated Volume</title> 
+
+   <para><emphasis>Short story:</emphasis> The calculated volume shown
+    by the ROI statistics dialog is correct.  Use this value as the
+    volume of the ROI, not the value you might calculate by hand based
+    on the ROI's dimensions.
+   </para>
+
+   <para><emphasis>Long story:</emphasis> AMIDE calculates ROI's by
+    translating the ROI's dimensions into the data set's coordinate
+    space.  It then computes statistics for all the data set voxels
+    that are in the ROI.  For voxels that lie on the edge of the ROI,
+    AMIDE will subdivide the voxel into a finite number of subvoxels,
+    and calculate over the subvoxels.  This approach yields correct
+    statistics, but it is important to realize that the computed ROI
+    is a discrete representation of the specified analytical ROI.  So
+    while the true volume of an ellipse is pi*r1*r2*r3, the computed
+    volume of the ellipse in AMIDE will depend on the number of voxels
+    and subvoxels that were determined to lie within the ellipse,
+    which in turn can depend on the orientation of the ROI with
+    respect to the data set in question.  Since the computed volume
+    given by AMIDE represents the volume in the data set that was used
+    for the ROI calculation, you will want to use that value (not the
+    real ellipse value).
+    </para>
+  </sect4>
+
+ </sect3>
 
 </sect2>
 
-  
-  
-  <!-- Keep this comment at the end of the file
-  Local variables:
-  mode: sgml
-  sgml-omittag:t
-  sgml-shorttag:t
-  sgml-minimize-attributes:nil
-  sgml-always-quote-attributes:t
-  sgml-indent-step:2
-  sgml-indent-data:t
-  sgml-parent-document:nil
-  sgml-exposed-tags:nil
-  sgml-local-catalogs:nil
-  sgml-local-ecat-files:nil
-  End:
-  -->            
+
+
+<sect2 id="roi-dialog"><title>ROI Modification Dialog</title>
+
+ <para>
+   To directly modify parameters of an ROI, right click on the name of
+   the ROI in the study tree to pop-up the modification dialog.
+   Parameters that can be modified are divided into the following
+   pages.
+ </para>
+
+ <variablelist>
+  <varlistentry><term>Basic Info</term>
+   <listitem><para>
+     The name and type of ROI can be altered on this page.
+   </para></listitem>
+  </varlistentry>
+    
+  <varlistentry><term>Center</term>
+   <listitem><para>
+    The center of the ROI can be shifted with respect to the origin on
+    this page.  The x, y, and z parameters are in millimeters.
+   </para></listitem>
+  </varlistentry>
+    
+  <varlistentry><term>Dimensions</term>
+   <listitem><para>
+	The size of the ROI can be altered from this page.  The x',
+	y', and z' dimensions are in millimeters and are orientated
+	with respect to the orientation of the ROI.
+   </para></listitem>
+  </varlistentry>
+    
+  <varlistentry><term>Rotate</term>
+   <listitem><para>
+	The ROI can be rotated around its center in this page.  There
+	is one dial for each of the three slice planes.  The
+	transverse dial will spin the ROI in the transverse plane
+	(i.e. rotate on the z-axis).  The coronal dial will spin the
+	ROI in the coronal plane (i.e. rotate on the y-axis).  And the
+	sagittal dial will spin the ROI in the sagittal plane
+	(i.e. rotate on the x-axis).  The "reset to default" button
+	allows the ROI to be rotated back to the default orientation.
+	On the bottom of this page is a matrix showing the coordinate
+	frame of the ROI with respect to the base coordinate frame.
+    </para></listitem>
+  </varlistentry>
+  </variablelist>
+</sect2>
+
+
+
+
+
+
+

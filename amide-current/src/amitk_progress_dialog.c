@@ -27,6 +27,7 @@
 
 
 #include "amide_config.h"
+#include "amide_intl.h"
 #include "amitk_marshal.h"
 #include "amitk_progress_dialog.h"
 
@@ -150,7 +151,7 @@ GtkWidget* amitk_progress_dialog_new (GtkWindow * parent)
   AmitkProgressDialog *dialog;
 
   dialog = g_object_new(AMITK_TYPE_PROGRESS_DIALOG, NULL);
-  gtk_window_set_title (GTK_WINDOW (dialog), "Progress Dialog");
+  gtk_window_set_title (GTK_WINDOW (dialog), _("Progress Dialog"));
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW (dialog), TRUE);
   gtk_dialog_add_button(GTK_DIALOG(dialog), GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL);

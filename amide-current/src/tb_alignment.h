@@ -28,8 +28,12 @@
 #include "amitk_study.h"
 
 
+#ifdef AMIDE_LIBGSL_SUPPORT
+
 /* external functions */
 void tb_alignment(AmitkStudy * study);
+
+#endif
 
 
 

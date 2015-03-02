@@ -161,7 +161,7 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
   /* sanity check */
   if (count < 3) {
-    g_warning("Cannot perform an alignment with %d points, need at least 3",count);
+    g_warning(_("Cannot perform an alignment with %d points, need at least 3"),count);
     goto ending;
   }
 
@@ -204,7 +204,7 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
   }
 
   if ((fixed_temp_list != NULL) || (moving_temp_list != NULL)) {
-    g_warning("points lists not completely used in %s at %d", __FILE__, __LINE__);
+    g_warning(_("points lists not completely used in %s at %d"), __FILE__, __LINE__);
     goto ending;
   }
 
@@ -220,19 +220,19 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
   vector_s = gsl_vector_alloc(AMITK_AXIS_NUM);
   vector_w = gsl_vector_alloc(AMITK_AXIS_NUM);
   status = gsl_linalg_SV_decomp(matrix_a, matrix_v, vector_s, vector_w);
-  if (status != 0) g_warning("SV decomp returned error: %s", gsl_strerror(status));
+  if (status != 0) g_warning(_("SV decomp returned error: %s"), gsl_strerror(status));
   gsl_vector_free(vector_s);
   gsl_vector_free(vector_w);
 
   /* get U transpose */
   status = gsl_matrix_transpose(matrix_a);
-  if (status != 0) g_warning("transpose returned error: %s", gsl_strerror(status));
+  if (status != 0) g_warning(_("transpose returned error: %s"), gsl_strerror(status));
 
   /* figure out the determinant of V*Ut */
   matrix_temp = matrix_mult(matrix_v, matrix_a);
   permutation = gsl_permutation_alloc(AMITK_AXIS_NUM);
   status = gsl_linalg_LU_decomp(matrix_temp, permutation, &signum);
-  if (status != 0) g_warning("LU decomp returned error: %s", gsl_strerror(status));
+  if (status != 0) g_warning(_("LU decomp returned error: %s"), gsl_strerror(status));
   det = gsl_linalg_LU_det(matrix_temp, signum);
   g_return_val_if_fail(fabs(det) > 0.1, NULL); /* needs to be -1 or 1 */
   gsl_permutation_free(permutation);

@@ -72,9 +72,9 @@ static void tree_emit_help_signal(AmitkTree * tree);
 static gboolean tree_motion_notify_event(GtkWidget *widget, GdkEventMotion *event);
 static gboolean tree_enter_notify_event(GtkWidget * tree,
 					GdkEventCrossing *event);
-static void tree_row_inserted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1, 
-				 GtkTreeIter *arg2, gpointer amitk_tree);
-static void tree_row_deleted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1,gpointer amitk_tree);
+//static void tree_row_inserted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1, 
+//				 GtkTreeIter *arg2, gpointer amitk_tree);
+//static void tree_row_deleted_cb(GtkTreeModel *treemodel,GtkTreePath *arg1,gpointer amitk_tree);
 static void tree_object_update_cb(AmitkObject * object, gpointer tree);
 static void tree_object_add_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
 static void tree_object_remove_child_cb(AmitkObject * parent, AmitkObject * child, gpointer tree);
@@ -494,7 +494,7 @@ static void tree_emit_help_signal(AmitkTree * tree) {
     else if (AMITK_IS_FIDUCIAL_MARK(object))
       help_type = AMITK_HELP_INFO_TREE_FIDUCIAL_MARK;
     else {
-      g_warning("unknown object type in %s at %d\n", __FILE__, __LINE__);
+      g_error("unknown object type in %s at %d\n", __FILE__, __LINE__);
       help_type = AMITK_HELP_INFO_TREE_NONE;
     }
   } else {
@@ -555,30 +555,28 @@ static gboolean tree_enter_notify_event(GtkWidget * tree,
 }
 
 
-static void tree_row_inserted_cb(GtkTreeModel *treemodel,
-				 GtkTreePath *arg1,
-				 GtkTreeIter *arg2,
-				 gpointer data) {
+//static void tree_row_inserted_cb(GtkTreeModel *treemodel,
+//				 GtkTreePath *arg1,
+//				 GtkTreeIter *arg2,
+//				 gpointer data) {
+//  AmitkTree * tree = data;
+//  
+//  g_return_if_fail(AMITK_IS_TREE(tree));
+//  g_print("inserted\n");
+//
+//  return;
+//}
 
-  AmitkTree * tree = data;
-  
-  g_return_if_fail(AMITK_IS_TREE(tree));
-  g_print("inserted\n");
-
-  return;
-}
-
-static void tree_row_deleted_cb(GtkTreeModel *treemodel,
-				 GtkTreePath *arg1,
-				 gpointer data) {
-
-  AmitkTree * tree = data;
-  
-  g_return_if_fail(AMITK_IS_TREE(tree));
-  g_print("deleted\n");
-
-  return;
-}
+//static void tree_row_deleted_cb(GtkTreeModel *treemodel,
+//				 GtkTreePath *arg1,
+//				 gpointer data) {
+//  AmitkTree * tree = data;
+//  
+//  g_return_if_fail(AMITK_IS_TREE(tree));
+//  g_print("deleted\n");
+//
+//  return;
+//}
 
 
 

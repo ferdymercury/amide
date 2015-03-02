@@ -1,12 +1,19 @@
 EXTRA_DIST = \
 	amide.spec.in \
 	amide.spec \
-	amide-$(VERSION)-1.info 
+	amide-$(VERSION)-1.info \
+	amide.desktop.in 
+
+
 
 Applicationsdir = $(datadir)/applications/
-Applications_DATA = \
-	amide.desktop
+Applications_in_files = amide.desktop.in
+Applications_DATA = $(Applications_in_files:.desktop.in=.desktop)
+@INTLTOOL_DESKTOP_RULE@
+
+CLEANFILES = \
+	$(Applications_DATA)
 
 DISTCLEANFILES = \
 	*~ 	\
-	amide-*.info
+	amide-*.info 

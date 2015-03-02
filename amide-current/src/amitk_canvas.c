@@ -35,8 +35,8 @@
 #include "amitk_study.h"
 
 #define BOX_SPACING 3
-#define CANVAS_TRIANGLE_WIDTH 8.0
-#define CANVAS_TRIANGLE_HEIGHT 8.0
+#define DEFAULT_CANVAS_TRIANGLE_WIDTH 8.0
+#define DEFAULT_CANVAS_TRIANGLE_HEIGHT 8.0
 
 
 #define UPDATE_NONE 0
@@ -52,15 +52,15 @@
 #define cp_2_p(canvas, canvas_cpoint) (canvas_point_2_point(AMITK_VOLUME_CORNER((canvas)->volume),\
 							    (canvas)->pixbuf_width, \
 							    (canvas)->pixbuf_height,\
-							    CANVAS_TRIANGLE_HEIGHT, \
-							    CANVAS_TRIANGLE_HEIGHT, \
+							    (canvas)->triangle_width, \
+							    (canvas)->triangle_height, \
 							    (canvas_cpoint)))
 
 #define p_2_cp(canvas, canvas_cpoint) (point_2_canvas_point(AMITK_VOLUME_CORNER((canvas)->volume),\
 							    (canvas)->pixbuf_width, \
 							    (canvas)->pixbuf_height,\
-							    CANVAS_TRIANGLE_HEIGHT, \
-							    CANVAS_TRIANGLE_HEIGHT, \
+							    (canvas)->triangle_width, \
+							    (canvas)->triangle_height, \
 							    (canvas_cpoint)))
 
 
@@ -139,11 +139,10 @@ static void canvas_target_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_time_changed_cb(AmitkStudy * study, gpointer canvas);
 static void canvas_volume_changed_cb(AmitkVolume * vol, gpointer canvas);
 static void canvas_roi_changed_cb(AmitkRoi * roi, gpointer canvas);
-static void canvas_scale_factor_changed_cb(AmitkDataSet * ds, gpointer data);
+static void canvas_data_set_invalidate_slice_cache(AmitkDataSet * ds, gpointer data);
 static void canvas_data_set_changed_cb(AmitkDataSet * ds, gpointer canvas);
 static void canvas_thresholding_changed_cb(AmitkDataSet * ds, gpointer data);
 static void canvas_color_table_changed_cb(AmitkDataSet * ds, gpointer data);
-static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * mark, gpointer data);
 static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t z);
 static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi, 
 					 AmitkPoint position, AmitkDataSet * active_slice);
@@ -274,7 +273,7 @@ static void canvas_init (AmitkCanvas *canvas)
   /* initialize some critical stuff */
   for (i=0;i<4;i++) canvas->arrows[i]=NULL;
   for (i=0;i<8;i++) canvas->target[i]=NULL;
-  canvas->with_arrows = TRUE;
+  canvas->type = AMITK_CANVAS_TYPE_NORMAL;
 
   canvas->volume = amitk_volume_new();
   amitk_volume_set_corner(canvas->volume, one_point);
@@ -287,6 +286,7 @@ static void canvas_init (AmitkCanvas *canvas)
 
   canvas->canvas = NULL;
   canvas->slice_cache = NULL;
+  canvas->max_slice_cache_size = 10;
   canvas->slices=NULL;
   canvas->image=NULL;
   canvas->pixbuf=NULL;
@@ -420,6 +420,7 @@ static void canvas_space_changed_cb(AmitkSpace * space, gpointer data) {
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_OBJECT(space));
   object = AMITK_OBJECT(space);
+
   canvas_add_object_update(canvas, object);
 
   return;
@@ -475,6 +476,7 @@ static void canvas_object_add_child_cb(AmitkObject * parent, AmitkObject * child
 
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   g_return_if_fail(AMITK_IS_OBJECT(child));
+
   canvas_add_object(AMITK_CANVAS(canvas), child);
 
   return;
@@ -518,6 +520,7 @@ static void canvas_view_changed_cb(AmitkStudy * study, gpointer data) {
     canvas_add_update(canvas, UPDATE_ALL);
   } else if (coords_changed) {
     canvas_add_update(canvas, UPDATE_ARROWS);
+    canvas_add_update(canvas, UPDATE_TARGET);
   }
 
   return;
@@ -577,7 +580,7 @@ static void canvas_roi_changed_cb(AmitkRoi * roi, gpointer data) {
   return;
 }
 
-static void canvas_scale_factor_changed_cb(AmitkDataSet * ds, gpointer data) {
+static void canvas_data_set_invalidate_slice_cache(AmitkDataSet * ds, gpointer data) {
 
   AmitkCanvas * canvas = data;  
 
@@ -585,7 +588,6 @@ static void canvas_scale_factor_changed_cb(AmitkDataSet * ds, gpointer data) {
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
 
   canvas->slice_cache = amitk_data_sets_remove_with_slice_parent(canvas->slice_cache, ds);
-  canvas_add_object_update(canvas, AMITK_OBJECT(ds));
 
 }
 
@@ -622,19 +624,6 @@ static void canvas_color_table_changed_cb(AmitkDataSet * ds, gpointer data) {
   canvas_add_update(canvas, UPDATE_OBJECTS);
 }
 
-static void canvas_fiducial_mark_changed_cb(AmitkFiducialMark * mark, gpointer data) {
-
-  AmitkCanvas * canvas = data;  
-
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  g_return_if_fail(AMITK_IS_OBJECT(mark));
-  canvas_add_object_update(canvas, AMITK_OBJECT(mark));
-
-
-  return;
-}
-
-
 static void z_spin_cb(GtkWidget * widget, gpointer data) {
   gdouble * z = data;
   *z = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
@@ -659,7 +648,7 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   else
     window = NULL;
       
-  dialog = gtk_dialog_new_with_buttons ("ROI Depth Selection",
+  dialog = gtk_dialog_new_with_buttons (_("ROI Depth Selection"),
 					window,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_STOCK_OK, GTK_RESPONSE_OK, NULL);
@@ -675,7 +664,7 @@ static amide_real_t canvas_check_z_dimension(AmitkCanvas * canvas, amide_real_t 
   image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
   gtk_table_attach(GTK_TABLE(table), image, 0,1, 0,1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
 
-  label = gtk_label_new("Please pick depth of ROI (mm):");
+  label = gtk_label_new(_("Please pick depth of ROI (mm):"));
   gtk_table_attach(GTK_TABLE(table), label, 1,2, 0,1, 0, 0, X_PADDING, Y_PADDING);
 
   spin_button = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, z);
@@ -721,7 +710,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
       draw_on_ds = amitk_data_sets_find_with_slice_parent(canvas->slices,
 							  AMITK_DATA_SET(parent_ds));
       if (draw_on_ds == NULL) {
-	g_warning("Parent of isocontour not currently displayed, can't draw isocontour");
+	g_warning(_("Parent of isocontour not currently displayed, can't draw isocontour"));
 	return;
       }
     } else if (active_slice != NULL) { /* if no data set parent, just use the active slice */
@@ -738,7 +727,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   }
 
   if (draw_on_ds == NULL) {
-    g_warning("No data set found to draw isocontour on");
+    g_warning(_("No data set found to draw isocontour on"));
     return;
   }
 
@@ -750,7 +739,7 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 		 temp_voxel);
 
   if (!amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(draw_on_ds),temp_voxel)) {
-    g_warning("designanted voxel not in data set %s", AMITK_OBJECT_NAME(draw_on_ds));
+    g_warning(_("designanted voxel not in data set %s"), AMITK_OBJECT_NAME(draw_on_ds));
     return;
   }
 
@@ -769,11 +758,8 @@ static void canvas_create_isocontour_roi(AmitkCanvas * canvas, AmitkRoi * roi,
 					GTK_DIALOG_DESTROY_WITH_PARENT,
 					GTK_MESSAGE_QUESTION,
 					GTK_BUTTONS_OK_CANCEL,
-					"%s: %s\n%s %d",
-					"Multiple data frames are currently being shown from",
-					AMITK_OBJECT_NAME(draw_on_ds),
-					"The isocontour will only be drawn over frame",
-					temp_voxel.t);
+					_("Multiple data frames are currently being shown from: %s\nThe isocontour will only be drawn over frame %d"),
+					AMITK_OBJECT_NAME(draw_on_ds),	temp_voxel.t);
 
       return_val = gtk_dialog_run(GTK_DIALOG(question));
       
@@ -831,6 +817,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   //    g_print("event %d widget %p grab_on %d %p\n", event->type, widget, grab_on, 
   //	    (GNOME_CANVAS(canvas->canvas)->grabbed_item));
   
+
+  if (canvas->type == AMITK_CANVAS_TYPE_FLY_THROUGH) return FALSE;
 
   /* sanity checks */
   if (canvas->study == NULL) return FALSE; 
@@ -1210,8 +1198,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
 					  gnome_canvas_pixbuf_get_type(),
 					  "pixbuf",pixbuf,
-					  "x", (double) CANVAS_TRIANGLE_HEIGHT,
-					  "y", (double) CANVAS_TRIANGLE_HEIGHT,
+					  "x", (double) canvas->triangle_height,
+					  "y", (double) canvas->triangle_height,
 					  NULL);
       g_signal_connect(G_OBJECT(canvas_item), "event", G_CALLBACK(canvas_event_cb), canvas);
       g_object_unref(pixbuf);
@@ -1999,6 +1987,8 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
   gdouble separation;
   rgba_t color;
 
+  if (canvas->type == AMITK_CANVAS_TYPE_FLY_THROUGH) return;
+
   if ((canvas->slices == NULL) || 
       ((action == AMITK_CANVAS_TARGET_ACTION_HIDE) && 
        (!AMITK_STUDY_CANVAS_TARGET(canvas->study)))) {
@@ -2030,63 +2020,63 @@ static void canvas_update_target(AmitkCanvas * canvas, AmitkCanvasTargetAction a
     separation = 0.0;
     
   points[0] = gnome_canvas_points_new(2);
-  points[0]->coords[0] = (gdouble) CANVAS_TRIANGLE_HEIGHT;
+  points[0]->coords[0] = (gdouble) canvas->triangle_height;
   points[0]->coords[1] = point1.y;
   points[0]->coords[2] = 
-    ((point0.x-separation) > CANVAS_TRIANGLE_HEIGHT) ? (point0.x-separation) : CANVAS_TRIANGLE_HEIGHT;
+    ((point0.x-separation) > canvas->triangle_height) ? (point0.x-separation) : canvas->triangle_height;
   points[0]->coords[3] = point1.y;
 
   points[1] = gnome_canvas_points_new(2);
   points[1]->coords[0] = point0.x;
   points[1]->coords[1] = 
-    ((point1.y-separation) > CANVAS_TRIANGLE_HEIGHT) ? (point1.y-separation) : CANVAS_TRIANGLE_HEIGHT;
+    ((point1.y-separation) > canvas->triangle_height) ? (point1.y-separation) : canvas->triangle_height;
   points[1]->coords[2] = point0.x;
-  points[1]->coords[3] = (gdouble) CANVAS_TRIANGLE_HEIGHT;
+  points[1]->coords[3] = (gdouble) canvas->triangle_height;
     
   points[2] = gnome_canvas_points_new(2);
   points[2]->coords[0] = point1.x;
-  points[2]->coords[1] = (gdouble) CANVAS_TRIANGLE_HEIGHT;
+  points[2]->coords[1] = (gdouble) canvas->triangle_height;
   points[2]->coords[2] = point1.x;
   points[2]->coords[3] =
-    ((point1.y-separation) > CANVAS_TRIANGLE_HEIGHT) ? (point1.y-separation) : CANVAS_TRIANGLE_HEIGHT;
+    ((point1.y-separation) > canvas->triangle_height) ? (point1.y-separation) : canvas->triangle_height;
 
   points[3] = gnome_canvas_points_new(2);
   points[3]->coords[0] = 
-    ((point1.x+separation) < canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT) ? 
-    (point1.x+separation) : canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT;
+    ((point1.x+separation) < canvas->pixbuf_width+canvas->triangle_height) ? 
+    (point1.x+separation) : canvas->pixbuf_width+canvas->triangle_height;
   points[3]->coords[1] = point1.y;
-  points[3]->coords[2] = (gdouble) (canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT);
+  points[3]->coords[2] = (gdouble) (canvas->pixbuf_width+canvas->triangle_height);
   points[3]->coords[3] = point1.y;
   
   points[4] = gnome_canvas_points_new(2);
-  points[4]->coords[0] = (gdouble) CANVAS_TRIANGLE_HEIGHT;
+  points[4]->coords[0] = (gdouble) canvas->triangle_height;
   points[4]->coords[1] = point0.y;
   points[4]->coords[2] = 
-    ((point0.x-separation) > CANVAS_TRIANGLE_HEIGHT) ? (point0.x-separation) : CANVAS_TRIANGLE_HEIGHT;
+    ((point0.x-separation) > canvas->triangle_height) ? (point0.x-separation) : canvas->triangle_height;
   points[4]->coords[3] = point0.y;
 
   points[5] = gnome_canvas_points_new(2);
   points[5]->coords[0] = point0.x;
   points[5]->coords[1] = 
-    ((point0.y+separation) < canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT) ? 
-    (point0.y+separation) : canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT;
+    ((point0.y+separation) < canvas->pixbuf_height+canvas->triangle_height) ? 
+    (point0.y+separation) : canvas->pixbuf_height+canvas->triangle_height;
   points[5]->coords[2] = point0.x;
-  points[5]->coords[3] = (gdouble) (canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT);
+  points[5]->coords[3] = (gdouble) (canvas->pixbuf_height+canvas->triangle_height);
   
   points[6] = gnome_canvas_points_new(2);
   points[6]->coords[0] = point1.x;
-  points[6]->coords[1] = (gdouble) (canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT);
+  points[6]->coords[1] = (gdouble) (canvas->pixbuf_height+canvas->triangle_height);
   points[6]->coords[2] = point1.x;
   points[6]->coords[3] = 
-    ((point0.y+separation) < canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT) ? 
-    (point0.y+separation) : canvas->pixbuf_height+CANVAS_TRIANGLE_HEIGHT;
+    ((point0.y+separation) < canvas->pixbuf_height+canvas->triangle_height) ? 
+    (point0.y+separation) : canvas->pixbuf_height+canvas->triangle_height;
 
   points[7] = gnome_canvas_points_new(2);
   points[7]->coords[0] = 
-    ((point1.x+separation) < canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT) ? 
-    (point1.x+separation) : canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT;
+    ((point1.x+separation) < canvas->pixbuf_width+canvas->triangle_height) ? 
+    (point1.x+separation) : canvas->pixbuf_width+canvas->triangle_height;
   points[7]->coords[1] = point0.y;
-  points[7]->coords[2] = (gdouble) (canvas->pixbuf_width+CANVAS_TRIANGLE_HEIGHT);
+  points[7]->coords[2] = (gdouble) (canvas->pixbuf_width+canvas->triangle_height);
   points[7]->coords[3] = point0.y;
 
   for (i=0; i<8; i++) {
@@ -2122,7 +2112,7 @@ static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_
   AmitkPoint start, end;
   gint i;
 
-  if (!canvas->with_arrows) return;
+  if (canvas->type == AMITK_CANVAS_TYPE_FLY_THROUGH) return;
 
   if (canvas->slices == NULL) {
     for (i=0; i<4; i++)
@@ -2151,47 +2141,47 @@ static void canvas_update_arrows(AmitkCanvas * canvas, AmitkPoint center, amide_
 
   /* left arrow */
   points[0] = gnome_canvas_points_new(4);
-  points[0]->coords[0] = CANVAS_TRIANGLE_HEIGHT-1.0;
+  points[0]->coords[0] = canvas->triangle_height-1.0;
   points[0]->coords[1] = point1.y;
-  points[0]->coords[2] = CANVAS_TRIANGLE_HEIGHT-1.0;
+  points[0]->coords[2] = canvas->triangle_height-1.0;
   points[0]->coords[3] = point0.y;
   points[0]->coords[4] = 0;
-  points[0]->coords[5] = point0.y + CANVAS_TRIANGLE_WIDTH/2.0;
+  points[0]->coords[5] = point0.y + canvas->triangle_width/2.0;
   points[0]->coords[6] = 0;
-  points[0]->coords[7] = point1.y - CANVAS_TRIANGLE_WIDTH/2.0;
+  points[0]->coords[7] = point1.y - canvas->triangle_width/2.0;
 
   /* top arrow */
   points[1] = gnome_canvas_points_new(4);
   points[1]->coords[0] = point0.x;
-  points[1]->coords[1] = CANVAS_TRIANGLE_HEIGHT-1.0;
+  points[1]->coords[1] = canvas->triangle_height-1.0;
   points[1]->coords[2] = point1.x;
-  points[1]->coords[3] = CANVAS_TRIANGLE_HEIGHT-1.0;
-  points[1]->coords[4] = point1.x + CANVAS_TRIANGLE_WIDTH/2.0;
+  points[1]->coords[3] = canvas->triangle_height-1.0;
+  points[1]->coords[4] = point1.x + canvas->triangle_width/2.0;
   points[1]->coords[5] = 0;
-  points[1]->coords[6] = point0.x - CANVAS_TRIANGLE_WIDTH/2.0;
+  points[1]->coords[6] = point0.x - canvas->triangle_width/2.0;
   points[1]->coords[7] = 0;
 
   /* right arrow */
   points[2] = gnome_canvas_points_new(4);
-  points[2]->coords[0] = CANVAS_TRIANGLE_HEIGHT + canvas->pixbuf_width;
+  points[2]->coords[0] = canvas->triangle_height + canvas->pixbuf_width;
   points[2]->coords[1] = point1.y;
-  points[2]->coords[2] = CANVAS_TRIANGLE_HEIGHT + canvas->pixbuf_width;
+  points[2]->coords[2] = canvas->triangle_height + canvas->pixbuf_width;
   points[2]->coords[3] = point0.y;
-  points[2]->coords[4] = 2*(CANVAS_TRIANGLE_HEIGHT)-1.0 + canvas->pixbuf_width;
-  points[2]->coords[5] = point0.y + CANVAS_TRIANGLE_WIDTH/2;
-  points[2]->coords[6] = 2*(CANVAS_TRIANGLE_HEIGHT)-1.0 + canvas->pixbuf_width;
-  points[2]->coords[7] = point1.y - CANVAS_TRIANGLE_WIDTH/2;
+  points[2]->coords[4] = 2*(canvas->triangle_height)-1.0 + canvas->pixbuf_width;
+  points[2]->coords[5] = point0.y + canvas->triangle_width/2;
+  points[2]->coords[6] = 2*(canvas->triangle_height)-1.0 + canvas->pixbuf_width;
+  points[2]->coords[7] = point1.y - canvas->triangle_width/2;
 
   /* bottom arrow */
   points[3] = gnome_canvas_points_new(4);
   points[3]->coords[0] = point0.x;
-  points[3]->coords[1] = CANVAS_TRIANGLE_HEIGHT + canvas->pixbuf_height;
+  points[3]->coords[1] = canvas->triangle_height + canvas->pixbuf_height;
   points[3]->coords[2] = point1.x;
-  points[3]->coords[3] = CANVAS_TRIANGLE_HEIGHT + canvas->pixbuf_height;
-  points[3]->coords[4] = point1.x + CANVAS_TRIANGLE_WIDTH/2;
-  points[3]->coords[5] = 2*(CANVAS_TRIANGLE_HEIGHT)-1.0 + canvas->pixbuf_height;
-  points[3]->coords[6] = point0.x - CANVAS_TRIANGLE_WIDTH/2;
-  points[3]->coords[7] =  2*(CANVAS_TRIANGLE_HEIGHT)-1.0 + canvas->pixbuf_height;
+  points[3]->coords[3] = canvas->triangle_height + canvas->pixbuf_height;
+  points[3]->coords[4] = point1.x + canvas->triangle_width/2;
+  points[3]->coords[5] = 2*(canvas->triangle_height)-1.0 + canvas->pixbuf_height;
+  points[3]->coords[6] = point0.x - canvas->triangle_width/2;
+  points[3]->coords[7] =  2*(canvas->triangle_height)-1.0 + canvas->pixbuf_height;
 
 
   for (i=0; i<4; i++) {
@@ -2254,7 +2244,7 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
     /* figure out what color to use */
     widget_style = gtk_widget_get_style(GTK_WIDGET(canvas));
     if (widget_style == NULL) {
-      g_warning("Canvas has no style?\n");
+      g_warning(_("Canvas has no style?\n"));
       widget_style = gtk_style_new();
     }
 
@@ -2281,6 +2271,7 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
       active_ds = NULL;
     canvas->pixbuf = image_from_data_sets(&(canvas->slices),
 					  &(canvas->slice_cache),
+					  canvas->max_slice_cache_size,
 					  data_sets,
 					  active_ds,
 					  AMITK_STUDY_VIEW_START_TIME(canvas->study),
@@ -2300,19 +2291,19 @@ static void canvas_update_pixbuf(AmitkCanvas * canvas) {
     if ((old_width != canvas->pixbuf_width) || 
 	(old_height != canvas->pixbuf_height) || (canvas->image == NULL)) {
       gtk_widget_set_size_request(canvas->canvas, 
-				  canvas->pixbuf_width + 2 * CANVAS_TRIANGLE_HEIGHT, 
-				  canvas->pixbuf_height + 2 * CANVAS_TRIANGLE_HEIGHT);
+				  canvas->pixbuf_width + 2 * canvas->triangle_height, 
+				  canvas->pixbuf_height + 2 * canvas->triangle_height);
       gnome_canvas_set_scroll_region(GNOME_CANVAS(canvas->canvas), 0.0, 0.0, 
-				     canvas->pixbuf_width + 2 * CANVAS_TRIANGLE_HEIGHT,
-				     canvas->pixbuf_height + 2 * CANVAS_TRIANGLE_HEIGHT);
+				     canvas->pixbuf_width + 2 * canvas->triangle_height,
+				     canvas->pixbuf_height + 2 * canvas->triangle_height);
     }
     /* put the canvas rgb image on the canvas_image */
     if (canvas->image == NULL) {/* time to make a new image */
       canvas->image = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
 					    gnome_canvas_pixbuf_get_type(),
 					    "pixbuf", canvas->pixbuf,
-					    "x", (double) CANVAS_TRIANGLE_HEIGHT,
-					    "y", (double) CANVAS_TRIANGLE_HEIGHT,
+					    "x", (double) canvas->triangle_height,
+					    "y", (double) canvas->triangle_height,
 					    NULL);
       g_signal_connect(G_OBJECT(canvas->image), "event", G_CALLBACK(canvas_event_cb), canvas);
     } else {
@@ -2348,7 +2339,7 @@ static void canvas_update_object(AmitkCanvas * canvas, AmitkObject * object) {
   new_item = amitk_canvas_object_draw(GNOME_CANVAS(canvas->canvas), 
 				      canvas->volume, object, item, pixel_dim,
 				      canvas->pixbuf_width, canvas->pixbuf_height,
-				      CANVAS_TRIANGLE_HEIGHT,CANVAS_TRIANGLE_HEIGHT,
+				      canvas->triangle_height,canvas->triangle_height,
 				      outline_color, canvas->roi_width,
 				      canvas->line_style);
 
@@ -2403,8 +2394,7 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 
     canvas->label = gtk_label_new(view_names[canvas->view]);
 
-    //    canvas->canvas = gnome_canvas_new_aa();
-    canvas->canvas = gnome_canvas_new();
+    canvas->canvas = gnome_canvas_new_aa();
 
     canvas->scrollbar_adjustment = gtk_adjustment_new(0.5, 0, 1, 1, 1, 1); /* junk values */
     g_signal_connect(canvas->scrollbar_adjustment, "value_changed", 
@@ -2573,18 +2563,16 @@ static void canvas_add_object(AmitkCanvas * canvas, AmitkObject * object) {
   if (AMITK_IS_VOLUME(object)) {
     g_signal_connect(G_OBJECT(object), "volume_changed", G_CALLBACK(canvas_volume_changed_cb), canvas);
   } 
-  if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    g_signal_connect(G_OBJECT(object), "fiducial_mark_changed", G_CALLBACK(canvas_fiducial_mark_changed_cb), canvas);
-  }
   if (AMITK_IS_ROI(object)) {
     g_signal_connect(G_OBJECT(object), "roi_changed", G_CALLBACK(canvas_roi_changed_cb), canvas);
   }
   if (AMITK_IS_DATA_SET(object)) {
     g_signal_connect(G_OBJECT(object), "data_set_changed", G_CALLBACK(canvas_data_set_changed_cb), canvas);
-    g_signal_connect(G_OBJECT(object), "scale_factor_changed", G_CALLBACK(canvas_scale_factor_changed_cb), canvas);
+    g_signal_connect(G_OBJECT(object), "invalidate_slice_cache", G_CALLBACK(canvas_data_set_invalidate_slice_cache), canvas);
     g_signal_connect(G_OBJECT(object), "interpolation_changed", G_CALLBACK(canvas_data_set_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "thresholding_changed", G_CALLBACK(canvas_thresholding_changed_cb), canvas);
     g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(canvas_color_table_changed_cb), canvas);
+    canvas->max_slice_cache_size += 3;
   }
 
   /* keep track of undrawn rois */
@@ -2642,17 +2630,15 @@ static void canvas_remove_object(AmitkCanvas * canvas, AmitkObject * object) {
   if (AMITK_IS_VOLUME(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_volume_changed_cb, canvas);
   }
-  if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_fiducial_mark_changed_cb, canvas);
-  }
   if (AMITK_IS_ROI(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_roi_changed_cb, canvas);
   }
   if (AMITK_IS_DATA_SET(object)) {
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_data_set_changed_cb, canvas);
-    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_scale_factor_changed_cb, canvas);
+    g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_data_set_invalidate_slice_cache, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_thresholding_changed_cb, canvas);
     g_signal_handlers_disconnect_by_func(G_OBJECT(object), canvas_color_table_changed_cb, canvas);
+    canvas->max_slice_cache_size -= 3;
   }
   
   /* find corresponding CanvasItem and destroy */
@@ -2679,7 +2665,7 @@ GtkWidget * amitk_canvas_new(AmitkView view,
 			     AmitkLayout layout, 
 			     GdkLineStyle line_style,
 			     gint roi_width,
-			     gboolean with_arrows,
+			     AmitkCanvasType type,
 			     gboolean maintain_size,
 			     gint target_empty_area) {
 
@@ -2692,9 +2678,21 @@ GtkWidget * amitk_canvas_new(AmitkView view,
   canvas->layout = layout;
   canvas->line_style = line_style;
   canvas->roi_width = roi_width;
-  canvas->with_arrows = with_arrows;
   canvas->maintain_size = maintain_size;
   canvas->target_empty_area = target_empty_area;
+
+  canvas->type = type;
+  switch(type) {
+  case AMITK_CANVAS_TYPE_FLY_THROUGH:
+    canvas->triangle_width = 0.0;
+    canvas->triangle_height = 0.0;
+    break;
+  case AMITK_CANVAS_TYPE_NORMAL:
+  default:
+    canvas->triangle_width = DEFAULT_CANVAS_TRIANGLE_WIDTH;
+    canvas->triangle_height = DEFAULT_CANVAS_TRIANGLE_HEIGHT;
+    break;
+  }
 
   amitk_space_set_view_space(AMITK_SPACE(canvas->volume), canvas->view, canvas->layout);
   
@@ -2814,7 +2812,7 @@ gint amitk_canvas_get_width(AmitkCanvas * canvas) {
 
   g_return_val_if_fail(AMITK_IS_CANVAS(canvas), 0);
 
-  return canvas->pixbuf_width + 2*CANVAS_TRIANGLE_HEIGHT;
+  return canvas->pixbuf_width + 2*canvas->triangle_height;
 } 
 
 gint amitk_canvas_get_height(AmitkCanvas * canvas) {
@@ -2824,7 +2822,7 @@ gint amitk_canvas_get_height(AmitkCanvas * canvas) {
 
   g_return_val_if_fail(AMITK_IS_CANVAS(canvas), 0);
 
-  height = canvas->pixbuf_height + 2*CANVAS_TRIANGLE_HEIGHT;
+  height = canvas->pixbuf_height + 2*canvas->triangle_height;
 
   gtk_widget_size_request(canvas->label, &size);
   height+=size.height;

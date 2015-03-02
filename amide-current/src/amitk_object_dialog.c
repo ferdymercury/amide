@@ -139,7 +139,7 @@ static void object_dialog_destroy (GtkObject * object) {
 #if AMIDE_DEBUG
     {
       gchar * temp_string;
-      temp_string = g_strdup_printf("Copy of %s", AMITK_OBJECT_NAME(dialog->original_object));
+      temp_string = g_strdup_printf(_("Copy of %s"), AMITK_OBJECT_NAME(dialog->original_object));
       amitk_object_set_name(dialog->original_object,temp_string);
       g_free(temp_string);
     }
@@ -217,14 +217,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(11,4,FALSE);
-  label = gtk_label_new("Basic Info");
+  label = gtk_label_new(_("Basic Info"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
   gtk_widget_show(label);
   gtk_widget_show(packing_table);
 
   /* widgets to change the object's name */
-  label = gtk_label_new("name:");
+  label = gtk_label_new(_("name:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, 
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
@@ -244,7 +244,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     AmitkRoiType type_start, type_end;
 
     /* widgets to change the object's type */
-    label = gtk_label_new("type:");
+    label = gtk_label_new(_("type:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -294,7 +294,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* widgets to change the date of the scan name */
-    label = gtk_label_new("scan date:");
+    label = gtk_label_new(_("scan date:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -308,7 +308,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     table_row++;
 
     /* widgets to change the object's modality */
-    label = gtk_label_new("modality:");
+    label = gtk_label_new(_("modality:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -330,7 +330,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     table_row++;
     
     /* widget to change the interpolation */
-    label = gtk_label_new("Interpolation Type");
+    label = gtk_label_new(_("Interpolation Type"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -383,7 +383,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* widget to change the scaling factor */
-    label = gtk_label_new("Conversion Type:");
+    label = gtk_label_new(_("Conversion Type:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -417,7 +417,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
 
-    label = gtk_label_new("Scaling Factor:");
+    label = gtk_label_new(_("Scaling Factor:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -444,7 +444,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   
 
     /* injected dose */
-    label = gtk_label_new("Injected Dose:");
+    label = gtk_label_new(_("Injected Dose:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -482,7 +482,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
 
     /* subject weight */
-    label = gtk_label_new("Subject Weight:");
+    label = gtk_label_new(_("Subject Weight:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -520,7 +520,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* cylinder factor */
-    label = gtk_label_new("Cylinder Factor:");
+    label = gtk_label_new(_("Cylinder Factor:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, table_column,table_column+1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -563,7 +563,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
   } else if (AMITK_IS_STUDY(object)) {
     /* widgets to change the study's creation date */
-    label = gtk_label_new("creation date:");
+    label = gtk_label_new(_("creation date:"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -603,18 +603,18 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     packing_table = gtk_table_new(7,7,FALSE);
     table_row=0;
     if (AMITK_IS_STUDY(object))
-      label = gtk_label_new("View Center");
+      label = gtk_label_new(_("View Center"));
     else
-      label = gtk_label_new("Center");
+      label = gtk_label_new(_("Center"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     gtk_widget_show(label);
   }
   
 
   if (AMITK_IS_STUDY(object))
-    label = gtk_label_new("View Center (mm from origin)");
+    label = gtk_label_new(_("View Center (mm from origin)"));
   else
-    label = gtk_label_new("Center Location (mm from origin)");
+    label = gtk_label_new(_("Center Location (mm from origin)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
@@ -669,11 +669,11 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     /* the next page of options */
     packing_table = gtk_table_new(4,2,FALSE);
     table_row=0;
-    label = gtk_label_new("Voxel Size");
+    label = gtk_label_new(_("Voxel Size"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     gtk_widget_show(label);
 
-    label = gtk_label_new("Voxel Size (mm)");
+    label = gtk_label_new(_("Voxel Size (mm)"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -726,12 +726,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       /* the next page of options */
       packing_table = gtk_table_new(4,2,FALSE);
       table_row=0;
-      label = gtk_label_new("Dimensions");
+      label = gtk_label_new(_("Dimensions"));
       gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
       gtk_widget_show(label);
 
       /* widgets to change the dimensions of the objects (in object's space) */
-      label = gtk_label_new("Dimensions (mm) wrt to ROI");
+      label = gtk_label_new(_("Dimensions (mm) wrt to ROI"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
@@ -774,7 +774,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   */
 
   if (!AMITK_IS_FIDUCIAL_MARK(object)) {
-    label = gtk_label_new("Rotate");
+    label = gtk_label_new(_("Rotate"));
     space_edit = amitk_space_edit_new(object);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), space_edit, label);
     gtk_widget_show(label);
@@ -788,7 +788,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   if (AMITK_IS_DATA_SET(object)) {
     GtkWidget * threshold;
 
-    label = gtk_label_new("Colormap/Threshold");
+    label = gtk_label_new(_("Colormap/Threshold"));
     threshold = amitk_threshold_new(AMITK_DATA_SET(object), AMITK_THRESHOLD_BOX_LAYOUT, 
 				    GTK_WINDOW(dialog), FALSE);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), threshold, label);
@@ -805,7 +805,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     GtkWidget * scrolled;
 
     /* start making the page to adjust time values */
-    label = gtk_label_new("Time");
+    label = gtk_label_new(_("Time"));
     packing_table = gtk_table_new(4,4,FALSE);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     table_row=0;
@@ -813,7 +813,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* scan start time..... */
-    label = gtk_label_new("Scan Start Time (s)");
+    label = gtk_label_new(_("Scan Start Time (s)"));
     gtk_table_attach(GTK_TABLE(packing_table),label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -839,12 +839,12 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
     /* frame duration(s).... */
-    label = gtk_label_new("Frame");
+    label = gtk_label_new(_("Frame"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-    label = gtk_label_new("Duration (s)");
+    label = gtk_label_new(_("Duration (s)"));
     gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -913,13 +913,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   if (immutables) {
 
     packing_table = gtk_table_new(4,2,FALSE);
-    label = gtk_label_new("Immutables");
+    label = gtk_label_new(_("Immutables"));
     table_row=0;
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
     gtk_widget_show(label);
     
     if (AMITK_IS_STUDY(object)) {
-      label = gtk_label_new("voxel dim");
+      label = gtk_label_new(_("voxel dim"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
@@ -935,7 +935,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     } else if (AMITK_IS_ROI(object)) {
       if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
-	label = gtk_label_new("isocontour value");
+	label = gtk_label_new(_("isocontour value"));
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	gtk_widget_show(label);
@@ -976,17 +976,17 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       /* how big in memory the raw data is */
       switch(prefix) {
       case 3:
-	label = gtk_label_new("Memory Used (GB):");
+	label = gtk_label_new(_("Memory Used (GB):"));
 	break;
       case 2:
-	label = gtk_label_new("Memory Used (MB):");
+	label = gtk_label_new(_("Memory Used (MB):"));
 	break;
       case 1:
-	label = gtk_label_new("Memory Used (KB):");
+	label = gtk_label_new(_("Memory Used (KB):"));
 	break;
       case 0:
       default:
-	label = gtk_label_new("Memory Used (bytes):");
+	label = gtk_label_new(_("Memory Used (bytes):"));
 	break;
       }
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
@@ -1005,14 +1005,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       table_row++;
       
       /* widget to tell you the internal data format */
-      label = gtk_label_new("Data Format:");
+      label = gtk_label_new(_("Data Format:"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
       gtk_entry_set_text(GTK_ENTRY(entry), 
-			 amitk_raw_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
+			 amitk_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
 		       1,3, table_row, table_row+1, 
@@ -1028,7 +1028,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       table_row++;
       
       /* widget to tell you the scaling format */
-      label = gtk_label_new("Scale Format:");
+      label = gtk_label_new(_("Scale Format:"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
@@ -1036,14 +1036,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       entry = gtk_entry_new();
       switch(AMITK_DATA_SET_SCALING_TYPE(object)) {
       case AMITK_SCALING_TYPE_1D:
-	gtk_entry_set_text(GTK_ENTRY(entry), "Per Frame Scale Factor");
+	gtk_entry_set_text(GTK_ENTRY(entry), _("Per Frame Scale Factor"));
 	break;
       case AMITK_SCALING_TYPE_2D:
-	gtk_entry_set_text(GTK_ENTRY(entry), "Per Plane Scale Factor");
+	gtk_entry_set_text(GTK_ENTRY(entry), _("Per Plane Scale Factor"));
 	break;
       default:
       case AMITK_SCALING_TYPE_0D:
-	gtk_entry_set_text(GTK_ENTRY(entry), "Single Scale Factor");
+	gtk_entry_set_text(GTK_ENTRY(entry), _("Single Scale Factor"));
 	break;
       }
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
@@ -1061,7 +1061,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       table_row++;
       
       /* widgets to display the data set dimensions */
-      label = gtk_label_new("Data Set Dimensions (voxels)");
+      label = gtk_label_new(_("Data Set Dimensions (voxels)"));
       gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
@@ -1890,15 +1890,10 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
 			     G_CALLBACK(dialog_update_conversion), dialog);
   }
 
-  if (AMITK_IS_FIDUCIAL_MARK(object)) {
-    g_signal_connect_swapped(G_OBJECT(object), "fiducial_mark_changed", 
-			     G_CALLBACK(dialog_update_entries), dialog);
-  }
-
   /* fill in values */
   dialog_update_entries(dialog);
 
-  temp_string = g_strdup_printf("Modification Dialog: %s\n",AMITK_OBJECT_NAME(object));
+  temp_string = g_strdup_printf(_("Modification Dialog: %s\n"),AMITK_OBJECT_NAME(object));
   gtk_window_set_title (GTK_WINDOW (dialog), temp_string);
   g_free(temp_string);
 

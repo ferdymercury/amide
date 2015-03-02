@@ -26,6 +26,8 @@
 /* header files that are always needed with this file */
 extern const char * amide_logo_xpm[];
 
+extern const char * icon_transfer_function_xpm[];
+
 extern const char * icon_interpolation_nearest_neighbor_xpm[];
 extern const char * icon_interpolation_trilinear_xpm[];
 extern const char ** icon_interpolation[];

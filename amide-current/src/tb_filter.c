@@ -31,42 +31,49 @@
 #include "tb_filter.h"
 #include "pixmaps.h"
 
+
 #define MIN_FIR_FILTER_SIZE 7
-#define MAX_FIR_FILTER_SIZE 101
+#define MAX_FIR_FILTER_SIZE 31
 #define MIN_NONLINEAR_FILTER_SIZE 3
 #define MAX_NONLINEAR_FILTER_SIZE 11
 #define DEFAULT_FILTER AMITK_FILTER_GAUSSIAN
-#define DEFAULT_GAUSSIAN_FILTER_SIZE 25
+#define DEFAULT_GAUSSIAN_FILTER_SIZE 15
 #define DEFAULT_MEDIAN_FILTER_SIZE 3
 
 #define MAX_FWHM 100.0 /* mm */
 #define MIN_FWHM 0.0 /* mm */
 
-static const char * wizard_name = "Data Set Filtering Wizard";
+static const char * wizard_name = N_("Data Set Filtering Wizard");
 
 static const char * finish_page_text = 
-"When the apply button is hit, a new data set will be created "
-"and placed into the study's tree, consisting of the appropriately "
-"filtered data\n";
+N_("When the apply button is hit, a new data set will be created "
+   "and placed into the study's tree, consisting of the appropriately "
+   "filtered data\n");
 
 static const char * gaussian_filter_text = 
-"The Gaussian filter is an effective smoothing filter";
+N_("The Gaussian filter is an effective smoothing filter");
 
 
 static const char * median_3d_filter_text = 
-"Median filter work relatively well at preserving edges while\n"
-"removing speckle noise.\n"
-"\n"
-"This filter is the 3D median filter, so the neighborhood used for\n"
-"determining the median will be KSxKSxKS, KS=kernel size";
+N_("Median filter work relatively well at preserving edges while\n"
+   "removing speckle noise.\n"
+   "\n"
+   "This filter is the 3D median filter, so the neighborhood used for\n"
+   "determining the median will be KSxKSxKS, KS=kernel size");
 
 static const char * median_linear_filter_text = 
-"Median filters work relatively well at preserving edges while\n"
-"removing speckle noise.\n"
-"\n"
-"This filter is the 1D median filter, so the neighboorhood used for\n"
-"determining the median will be of the given kernel size, and the\n"
-"data set will be filtered 3x (once for each direction).";
+N_("Median filters work relatively well at preserving edges while\n"
+   "removing speckle noise.\n"
+   "\n"
+   "This filter is the 1D median filter, so the neighboorhood used for\n"
+   "determining the median will be of the given kernel size, and the\n"
+   "data set will be filtered 3x (once for each direction).");
+
+#ifndef AMIDE_LIBGSL_SUPPORT
+static const char *no_libgsl_text =
+N_("This filter requires support from the GNU Scientific Library (GSL).\n"
+   "This version of AMIDE has not be compiled with GSL support enabled.");
+#endif
 
 
 typedef enum {
@@ -198,7 +205,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       
     switch(which_page) {
     case PICK_FILTER_PAGE:
-      label = gtk_label_new("Which Filter");
+      label = gtk_label_new(_("Which Filter"));
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -221,6 +228,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       
       break;
     case GAUSSIAN_FILTER_PAGE:
+#ifdef AMIDE_LIBGSL_SUPPORT
       tb_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
 
       label = gtk_label_new(gaussian_filter_text);
@@ -229,9 +237,8 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
-
       /* the kernel selection */
-      label = gtk_label_new("Kernel Size");
+      label = gtk_label_new(_("Kernel Size"));
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -248,7 +255,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
-      label = gtk_label_new("FWHM (mm)");
+      label = gtk_label_new(_("FWHM (mm)"));
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -262,6 +269,15 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(table), spin_button, 
 			 table_column+1,table_column+2, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
+#else /* no libgsl support */
+      label = gtk_label_new(no_libgsl_text);
+      gtk_table_attach(GTK_TABLE(table), label, 
+		       table_column,table_column+2, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+      
+      gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, FALSE, TRUE, TRUE);
+#endif
       break;
     case MEDIAN_3D_FILTER_PAGE:
     case MEDIAN_LINEAR_FILTER_PAGE:
@@ -277,7 +293,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       table_row++;
 
       /* the kernel selection */
-      label = gtk_label_new("Kernel Size");
+      label = gtk_label_new(_("Kernel Size"));
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
@@ -297,7 +313,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     case OUTPUT_PAGE:
     default:
       table = NULL;
-      g_warning("unhandled case in %s at line %d\n", __FILE__, __LINE__);
+      g_error("unhandled case in %s at line %d\n", __FILE__, __LINE__);
       break;
     }
     gtk_widget_show_all(table);
@@ -460,7 +476,7 @@ static tb_filter_t * tb_filter_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((tb_filter = g_try_new(tb_filter_t,1)) == NULL) {
-    g_warning("couldn't allocate space for tb_filter_t");
+    g_warning(_("couldn't allocate space for tb_filter_t"));
     return NULL;
   }
 
@@ -486,7 +502,7 @@ void tb_filter(AmitkStudy * study, AmitkDataSet * active_ds) {
   which_page_t i_page;
 
   if (active_ds == NULL) {
-    g_warning("No data set is currently marked as active");
+    g_warning(_("No data set is currently marked as active"));
     return;
   }
   

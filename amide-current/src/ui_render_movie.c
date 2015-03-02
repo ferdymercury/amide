@@ -234,7 +234,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
     /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new("Output MPEG As");
+    file_selection = gtk_file_selection_new(_("Output MPEG As"));
     
     /* take a guess at the filename */
     temp_renderings = ui_render_movie->ui_render->renderings;
@@ -392,7 +392,7 @@ static ui_render_movie_t * movie_init(void) {
 
   /* alloc space for the data structure */
   if ((ui_render_movie = g_try_new(ui_render_movie_t,1)) == NULL) {
-    g_warning("couldn't allocate space for ui_render_movie_t");
+    g_warning(_("couldn't allocate space for ui_render_movie_t"));
     return NULL;
   }
 
@@ -594,7 +594,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
     renderings = renderings->next;
   }
     
-  temp_string = g_strdup_printf("%s: Rendering Movie Generation Dialog",PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Rendering Movie Generation Dialog"),PACKAGE);
   ui_render_movie->dialog = 
     gtk_dialog_new_with_buttons(temp_string,  GTK_WINDOW(ui_render->app),
 				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
@@ -621,7 +621,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_render_movie->dialog)->vbox), packing_table);
 
   /* widgets to specify how many frames */
-  label = gtk_label_new("Movie Duration (sec)");
+  label = gtk_label_new(_("Movie Duration (sec)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   ui_render_movie->duration_spin_button  = 
@@ -646,7 +646,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   /* widgets to specify number of rotations on the axis */
   for (i_axis=0;i_axis<AMITK_AXIS_NUM;i_axis++) {
 
-    temp_string = g_strdup_printf("Rotations on %s", amitk_axis_get_name(i_axis));
+    temp_string = g_strdup_printf(_("Rotations on %s"), amitk_axis_get_name(i_axis));
     label = gtk_label_new(temp_string);
     g_free(temp_string);
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
@@ -675,7 +675,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
   /* do we want to make a movie over time or over frames */
-  label = gtk_label_new("Dynamic Movie:");
+  label = gtk_label_new(_("Dynamic Movie:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -685,16 +685,16 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   gtk_widget_show(hbox);
 
   /* the radio buttons */
-  radio_button1 = gtk_radio_button_new_with_label(NULL, "No");
+  radio_button1 = gtk_radio_button_new_with_label(NULL, _("No"));
   gtk_box_pack_start(GTK_BOX(hbox), radio_button1, FALSE, FALSE, 3);
   g_object_set_data(G_OBJECT(radio_button1), "dynamic_type", GINT_TO_POINTER(NOT_DYNAMIC));
   ui_render_movie->dynamic_type = radio_button1;
 
-  radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over time");
+  radio_button2 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over time"));
   gtk_box_pack_start(GTK_BOX(hbox), radio_button2, FALSE, FALSE, 3);
   g_object_set_data(G_OBJECT(radio_button2), "dynamic_type", GINT_TO_POINTER(OVER_TIME));
 
-  radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), "over frames");
+  radio_button3 = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON(radio_button1), _("over frames"));
   gtk_box_pack_start(GTK_BOX(hbox), radio_button3, FALSE, FALSE, 3);
   g_object_set_data(G_OBJECT(radio_button3), "dynamic_type", GINT_TO_POINTER(OVER_FRAMES));
 
@@ -705,10 +705,10 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   table_row++;
 
   /* widgets to specify the start and end times */
-  ui_render_movie->start_time_label = gtk_label_new("Start Time (s)");
+  ui_render_movie->start_time_label = gtk_label_new(_("Start Time (s)"));
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_time_label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  ui_render_movie->start_frame_label = gtk_label_new("Start Frame");
+  ui_render_movie->start_frame_label = gtk_label_new(_("Start Frame"));
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->start_frame_label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -735,10 +735,10 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  ui_render_movie->end_time_label = gtk_label_new("End Time (s)");
+  ui_render_movie->end_time_label = gtk_label_new(_("End Time (s)"));
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_time_label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  ui_render_movie->end_frame_label = gtk_label_new("End Frame");
+  ui_render_movie->end_frame_label = gtk_label_new(_("End Frame"));
   gtk_table_attach(GTK_TABLE(packing_table), ui_render_movie->end_frame_label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -769,7 +769,7 @@ gpointer * ui_render_movie_dialog_create(ui_render_t * ui_render) {
   /* progress dialog */
   ui_render_movie->progress_dialog = amitk_progress_dialog_new(GTK_WINDOW(ui_render_movie->dialog));
   amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(ui_render_movie->progress_dialog),
-				 "Rendered Movie Progress");
+				 _("Rendered Movie Progress"));
 
   /* show all our widgets */
   gtk_widget_show_all(ui_render_movie->dialog);

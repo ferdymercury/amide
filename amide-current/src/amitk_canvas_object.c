@@ -106,8 +106,8 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
       item = gnome_canvas_item_new(gnome_canvas_root(canvas),
 				   gnome_canvas_line_get_type(), "points", points,
 				   "fill_color_rgba", fill_color_rgba,
-				   "width_pixels", FIDUCIAL_MARK_WIDTH_PIXELS,
-				   "line_style", FIDUCIAL_MARK_LINE_STYLE, NULL);
+				   "width_pixels", FIDUCIAL_MARK_WIDTH_PIXELS, NULL); 
+    //				   "line_style", FIDUCIAL_MARK_LINE_STYLE, NULL);
     else
       gnome_canvas_item_set(item, "points", points,"fill_color_rgba", fill_color_rgba, NULL);
     gnome_canvas_points_unref(points);
@@ -212,14 +212,13 @@ GnomeCanvasItem * amitk_canvas_object_draw(GnomeCanvas * canvas,
 	item =  gnome_canvas_item_new(gnome_canvas_root(canvas),
 				      gnome_canvas_line_get_type(), "points", points,
 				      "fill_color_rgba",fill_color_rgba,
-				      "width_pixels", roi_width,
-				      "line_style", line_style,
-				      NULL);
+				      "width_pixels", roi_width, NULL);
+	// "line_style", line_style, NULL);
       } else {
 	/* and reset the line points */
 	gnome_canvas_item_set(item, "points", points, "fill_color_rgba", fill_color_rgba,
-			      "width_pixels", roi_width, "line_style", line_style, 
-			      NULL);
+			      "width_pixels", roi_width, NULL);
+	// "line_style", line_style,  NULL);
       }
       gnome_canvas_points_unref(points);
       break;

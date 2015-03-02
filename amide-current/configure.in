@@ -1,5 +1,8 @@
+dnl ===============================================================================
+dnl              Configure script for AMIDE
+dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.10],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.11],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -14,6 +17,18 @@ AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
 
 AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 
+dnl ================= translation =============================================
+
+GETTEXT_PACKAGE=amide
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE", [Define the gettext package to be used])
+
+ALL_LINGUAS="zh_CN"
+AM_GLIB_GNU_GETTEXT
+AC_PROG_INTLTOOL
+
+
+dnl ===============================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
 case "$host_os" in
 darwin*) 	CFLAGS="-g -O2 -Wall";;
@@ -283,6 +298,7 @@ omf-install/Makefile
 src/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in
-etc/amide.spec])
+etc/amide.spec
+po/Makefile.in])
 AC_OUTPUT 
 

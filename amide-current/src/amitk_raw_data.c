@@ -48,14 +48,14 @@ guint amitk_format_sizes[] = {
 };
 
 gchar * amitk_format_names[] = {
-  "Unsigned Byte (8 bit)", 
-  "Signed Byte (8 bit)", 
-  "Unsigned Short (16 bit)", 
-  "Signed Short (16 bit)", 
-  "Unsigned Integer (32 bit)", 
-  "Signed Integer (32 bit)", 
-  "Float (32 bit)", 
-  "Double (64 bit)"
+  N_("Unsigned Byte (8 bit)"), 
+  N_("Signed Byte (8 bit)"), 
+  N_("Unsigned Short (16 bit)"), 
+  N_("Signed Short (16 bit)"), 
+  N_("Unsigned Integer (32 bit)"), 
+  N_("Signed Integer (32 bit)"), 
+  N_("Float (32 bit)"), 
+  N_("Double (64 bit)")
 };
  
 
@@ -80,7 +80,9 @@ guint amitk_raw_format_sizes[] = {
   1,
 };
 
-gchar * amitk_raw_format_names[] = {
+
+/* what used to be saved in the file */
+gchar * amitk_raw_format_legacy_names[] = {
   "Unsigned Byte (8 bit)", 
   "Signed Byte (8 bit)", 
   "Unsigned Short, Little Endian (16 bit)", 
@@ -99,6 +101,28 @@ gchar * amitk_raw_format_names[] = {
   "Signed Integer, PDP (32 bit)", 
   "Float, PDP/VAX (32 bit)", 
   "ASCII (8 bit)"
+};
+
+/* what's shown to the user - can be translated */
+gchar * amitk_raw_format_names[] = {
+  N_("Unsigned Byte (8 bit)"), 
+  N_("Signed Byte (8 bit)"), 
+  N_("Unsigned Short, Little Endian (16 bit)"), 
+  N_("Signed Short, Little Endian (16 bit)"), 
+  N_("Unsigned Integer, Little Endian (32 bit)"), 
+  N_("Signed Integer, Little Endian (32 bit)"), 
+  N_("Float, Little Endian (32 bit)"), 
+  N_("Double, Little Endian (64 bit)"), 
+  N_("Unsigned Short, Big Endian (16 bit)"), 
+  N_("Signed Short, Big Endian (16 bit)"), 
+  N_("Unsigned Integer, Big Endian (32 bit)"), 
+  N_("Signed Integer, Big Endian (32 bit)"), 
+  N_("Float, Big Endian (32 bit)"), 
+  N_("Double, Big Endian (64 bit)"), 
+  N_("Unsigned Integer, PDP (32 bit)"), 
+  N_("Signed Integer, PDP (32 bit)"), 
+  N_("Float, PDP/VAX (32 bit)"), 
+  N_("ASCII (8 bit)")
 };
 
 
@@ -235,12 +259,12 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   gboolean continue_work = TRUE;
 
   if (file_name == NULL) {
-    g_warning("raw_data_read called with no filename");
+    g_warning(_("raw_data_read called with no filename"));
     goto error_condition;
   }
 
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Reading: %s", file_name);
+    temp_string = g_strdup_printf(_("Reading: %s"), file_name);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -249,44 +273,44 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
   raw_data = amitk_raw_data_new_with_data(amitk_raw_format_to_format(raw_format), dim);
   if (raw_data == NULL) {
-    g_warning("couldn't allocate space for the raw data set structure");
+    g_warning(_("couldn't allocate space for the raw data set structure"));
     goto error_condition;
   }
 
   /* open the raw data file for reading */
-  if (raw_format == AMITK_RAW_FORMAT_ASCII_NE) {
+  if (raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
     if ((file_pointer = fopen(file_name, "r")) == NULL) {
-      g_warning("couldn't open raw data file %s", file_name);
+      g_warning(_("couldn't open raw data file %s"), file_name);
       goto error_condition;
     }
   } else { /* note, rb==r on any POSIX compliant system (i.e. Linux). */
     if ((file_pointer = fopen(file_name, "rb")) == NULL) {
-      g_warning("couldn't open raw data file %s", file_name);
+      g_warning(_("couldn't open raw data file %s"), file_name);
       goto error_condition;
     }
   }
   
   /* jump forward by the given offset */
-  if (raw_format == AMITK_RAW_FORMAT_ASCII_NE) {
+  if (raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
     for (j=0; j<file_offset; j++)
       if ((error_code = fscanf(file_pointer, "%*f")) < 0) { /*EOF is usually -1 */
-	g_warning("could not step forward %d elements in raw data file:\n\t%s\n\treturned error: %d",
+	g_warning(_("could not step forward %d elements in raw data file:\n\t%s\n\treturned error: %d"),
 		  j+1, file_name, error_code);
 	goto error_condition;
     }
   } else { /* binary */
     if (fseek(file_pointer, file_offset, SEEK_SET) != 0) {
-      g_warning("could not seek forward %d bytes in raw data file:\n\t%s",
+      g_warning(_("could not seek forward %d bytes in raw data file:\n\t%s"),
 		file_offset, file_name);
       goto error_condition;
     }
   }
     
   /* read in the contents of the file */
-  if (raw_format != AMITK_RAW_FORMAT_ASCII_NE) { /* ASCII handled in the loop below */
+  if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
     bytes_per_slice = amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format);
     if ((file_buffer = (void *) g_try_malloc(bytes_per_slice)) == NULL) {
-      g_warning("couldn't malloc %d bytes for file buffer\n", bytes_per_slice);
+      g_warning(_("couldn't malloc %d bytes for file buffer\n"), bytes_per_slice);
       goto error_condition;
     }
   }
@@ -305,10 +329,10 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
       }
 
       /* read in the contents of the file */
-      if (raw_format != AMITK_RAW_FORMAT_ASCII_NE) { /* ASCII handled in the loop below */
+      if (raw_format != AMITK_RAW_FORMAT_ASCII_8_NE) { /* ASCII handled in the loop below */
 	bytes_read = fread(file_buffer, 1, bytes_per_slice, file_pointer );
 	if (bytes_read != bytes_per_slice) {
-	  g_warning("read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d", 
+	  g_warning(_("read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d"), 
 		    file_name, bytes_per_slice, bytes_read);
 	  goto error_condition;
 	}
@@ -318,7 +342,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
       /* and convert the data */
       switch (raw_format) {
 	
-      case AMITK_RAW_FORMAT_ASCII_NE:
+      case AMITK_RAW_FORMAT_ASCII_8_NE:
 	
 	/* copy this frame into the data set */
 	for (i.y = 0; (i.y < dim.y) && (error_code >= 0); i.y++) {
@@ -332,7 +356,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	}
 	
 	if (error_code < 0) { /* EOF = -1 (usually) */
-	  g_warning("could not read ascii file after %d elements, file or parameters are erroneous:\n\t%s",
+	  g_warning(_("could not read ascii file after %d elements, file or parameters are erroneous:\n\t%s"),
 		    i.x + 
 		    dim.x*i.y +
 		    dim.x*dim.y*i.z +
@@ -343,7 +367,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	
 	break;
 	
-      case AMITK_RAW_FORMAT_FLOAT_PDP:
+      case AMITK_RAW_FORMAT_FLOAT_32_PDP:
 	{
 	  guint32 * data = file_buffer;
 	  guint32 temp;
@@ -361,7 +385,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	    }
 	}
 	break;
-      case AMITK_RAW_FORMAT_SINT_PDP:
+      case AMITK_RAW_FORMAT_SINT_32_PDP:
 	{
 	  gint32 * data=file_buffer;
 	  
@@ -372,7 +396,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 		GINT32_FROM_PDP(DATA_CONTENT(data, dim,i));
 	}
 	break;
-      case AMITK_RAW_FORMAT_UINT_PDP:
+      case AMITK_RAW_FORMAT_UINT_32_PDP:
 	{
 	  guint32 * data=file_buffer;
 	  
@@ -388,7 +412,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	}
 	break;
 	
-      case AMITK_RAW_FORMAT_DOUBLE_BE: 
+      case AMITK_RAW_FORMAT_DOUBLE_64_BE: 
 	{
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	  guint64 * data = file_buffer;
@@ -416,7 +440,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
               }
 	}
 	break;
-      case AMITK_RAW_FORMAT_FLOAT_BE:
+      case AMITK_RAW_FORMAT_FLOAT_32_BE:
 	{
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	  guint32 * data = file_buffer;
@@ -442,7 +466,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	    }
 	}
 	break;
-      case AMITK_RAW_FORMAT_SINT_BE:
+      case AMITK_RAW_FORMAT_SINT_32_BE:
 	{
 	  gint32 * data=file_buffer;
 	  
@@ -453,7 +477,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 		GINT32_FROM_BE(DATA_CONTENT(data, dim, i));
 	}
 	break;
-      case AMITK_RAW_FORMAT_UINT_BE:
+      case AMITK_RAW_FORMAT_UINT_32_BE:
 	{
 	  guint32 * data=file_buffer;
 	  
@@ -468,7 +492,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	    }
 	}
 	break;
-      case AMITK_RAW_FORMAT_SSHORT_BE:
+      case AMITK_RAW_FORMAT_SSHORT_16_BE:
 	{
 	  gint16 * data=file_buffer;
 	  
@@ -479,7 +503,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 		GINT16_FROM_BE(DATA_CONTENT(data, dim, i));
 	}
 	break;
-      case AMITK_RAW_FORMAT_USHORT_BE:
+      case AMITK_RAW_FORMAT_USHORT_16_BE:
 	{
 	  guint16 * data=file_buffer;
 	  
@@ -494,7 +518,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 	
 	
-      case AMITK_RAW_FORMAT_DOUBLE_LE:
+      case AMITK_RAW_FORMAT_DOUBLE_64_LE:
 	{
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 	  guint64 * data = file_buffer;
@@ -521,7 +545,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 
 
-      case AMITK_RAW_FORMAT_FLOAT_LE:
+      case AMITK_RAW_FORMAT_FLOAT_32_LE:
 	{
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 	  guint32 * data = file_buffer;
@@ -552,7 +576,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 
 
-      case AMITK_RAW_FORMAT_SINT_LE:
+      case AMITK_RAW_FORMAT_SINT_32_LE:
 	{
 	  gint32 * data=file_buffer;
 	  
@@ -564,7 +588,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	  
 	}
 	break;
-      case AMITK_RAW_FORMAT_UINT_LE:
+      case AMITK_RAW_FORMAT_UINT_32_LE:
 	{
 	  guint32 * data=file_buffer;
 	  
@@ -579,7 +603,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	    }
 	}
 	break;
-      case AMITK_RAW_FORMAT_SSHORT_LE:
+      case AMITK_RAW_FORMAT_SSHORT_16_LE:
 	{
 	  gint16 * data=file_buffer;
 	  
@@ -591,7 +615,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 	}
 	break;
-      case AMITK_RAW_FORMAT_USHORT_LE:
+      case AMITK_RAW_FORMAT_USHORT_16_LE:
 	{
 	  guint16 * data=file_buffer;
 	  
@@ -603,7 +627,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 
 	}
 	break;
-      case AMITK_RAW_FORMAT_SBYTE_NE:
+      case AMITK_RAW_FORMAT_SBYTE_8_NE:
 	{
 	  gint8 * data=file_buffer;
 	  
@@ -613,7 +637,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
 	      AMITK_RAW_DATA_SBYTE_SET_CONTENT(raw_data,i) = DATA_CONTENT(data, dim, i);
 	}
 	break;
-      case AMITK_RAW_FORMAT_UBYTE_NE:
+      case AMITK_RAW_FORMAT_UBYTE_8_NE:
       default:
 	{
 	  guint8 * data=file_buffer;
@@ -693,7 +717,7 @@ gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
   doc->children = xmlNewDocNode(doc, NULL, "raw_data", name);
   amitk_voxel_write_xml(doc->children, "dim", raw_data->dim);
   xml_save_string(doc->children,"raw_format", 
-		  amitk_raw_format_names[amitk_format_to_raw_format(raw_data->format)]);
+		  amitk_raw_format_get_name(amitk_format_to_raw_format(raw_data->format)));
 
   /* store the name of our associated data file */
   xml_save_string(doc->children, "raw_data_file", raw_filename);
@@ -709,7 +733,7 @@ gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
   /* write it on out.  */
   /* Note, "wb" is same as "w" on Unix, but not in Windows */
   if ((file_pointer = fopen(raw_filename, "wb")) == NULL) {
-    g_warning("couldn't save raw data file: %s",raw_filename);
+    g_warning(_("couldn't save raw data file: %s"),raw_filename);
     g_free(xml_filename);
     g_free(raw_filename);
     return NULL;
@@ -719,7 +743,7 @@ gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
 	     amitk_format_sizes[AMITK_RAW_DATA_FORMAT(raw_data)],
 	     amitk_raw_data_num_voxels(raw_data), 
 	     file_pointer) != amitk_raw_data_num_voxels(raw_data)) {
-    g_warning("incomplete save of raw data file: %s",raw_filename);
+    g_warning(_("incomplete save of raw data file: %s"),raw_filename);
     fclose(file_pointer);
     g_free(xml_filename);
     g_free(raw_filename);
@@ -748,13 +772,13 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
 
   /* parse the xml file */
   if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    amitk_append_str(perror_buf,"Couldn't Parse AMIDE raw_data xml file %s",xml_filename);
+    amitk_append_str(perror_buf,_("Couldn't Parse AMIDE raw_data xml file %s"),xml_filename);
     return NULL;
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
-    amitk_append_str(perror_buf,"Raw data xml file doesn't appear to have a root: %s", xml_filename);
+    amitk_append_str(perror_buf,_("Raw data xml file doesn't appear to have a root: %s"), xml_filename);
     return NULL;
   }
 
@@ -766,14 +790,20 @@ AmitkRawData * amitk_raw_data_read_xml(gchar * xml_filename,
   /* figure out the data format */
   temp_string = xml_get_string(nodes, "raw_format");
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  raw_format = AMITK_RAW_FORMAT_DOUBLE_BE; /* sensible guess in case we don't figure it out from the file */
+  raw_format = AMITK_RAW_FORMAT_DOUBLE_64_BE; /* sensible guess in case we don't figure it out from the file */
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-  raw_format = AMITK_RAW_FORMAT_DOUBLE_LE; /* sensible guess in case we don't figure it out from the file */
+  raw_format = AMITK_RAW_FORMAT_DOUBLE_64_LE; /* sensible guess in case we don't figure it out from the file */
 #endif
   if (temp_string != NULL)
     for (i_raw_format=0; i_raw_format < AMITK_RAW_FORMAT_NUM; i_raw_format++) 
-      if (g_strcasecmp(temp_string, amitk_raw_format_names[i_raw_format]) == 0)
+      if (g_ascii_strcasecmp(temp_string, amitk_raw_format_get_name(i_raw_format)) == 0)
 	raw_format = i_raw_format;
+
+  /* also need to check against legacy names for files created before amide version 0.7.11 */
+    for (i_raw_format=0; i_raw_format < AMITK_RAW_FORMAT_NUM; i_raw_format++) 
+      if (g_ascii_strcasecmp(temp_string, amitk_raw_format_legacy_names[i_raw_format]) == 0)
+	raw_format = i_raw_format;
+
   g_free(temp_string);
 
   /* get the name of our associated data file */
@@ -832,47 +862,47 @@ AmitkFormat amitk_raw_format_to_format(AmitkRawFormat raw_format) {
 
   switch(raw_format) {
 
-  case AMITK_RAW_FORMAT_UBYTE_NE: 
+  case AMITK_RAW_FORMAT_UBYTE_8_NE: 
     format = AMITK_FORMAT_UBYTE;
     break;
-  case AMITK_RAW_FORMAT_SBYTE_NE: 
+  case AMITK_RAW_FORMAT_SBYTE_8_NE: 
     format = AMITK_FORMAT_SBYTE;
     break;
-  case AMITK_RAW_FORMAT_USHORT_LE: 
-  case AMITK_RAW_FORMAT_USHORT_BE: 
+  case AMITK_RAW_FORMAT_USHORT_16_LE: 
+  case AMITK_RAW_FORMAT_USHORT_16_BE: 
     format = AMITK_FORMAT_USHORT;
     break;
-  case AMITK_RAW_FORMAT_SSHORT_LE:
-  case AMITK_RAW_FORMAT_SSHORT_BE:
+  case AMITK_RAW_FORMAT_SSHORT_16_LE:
+  case AMITK_RAW_FORMAT_SSHORT_16_BE:
     format = AMITK_FORMAT_SSHORT;
     break;
-  case AMITK_RAW_FORMAT_UINT_LE:
-  case AMITK_RAW_FORMAT_UINT_BE:
-  case AMITK_RAW_FORMAT_UINT_PDP:
+  case AMITK_RAW_FORMAT_UINT_32_LE:
+  case AMITK_RAW_FORMAT_UINT_32_BE:
+  case AMITK_RAW_FORMAT_UINT_32_PDP:
     format = AMITK_FORMAT_UINT;
     break;
-  case AMITK_RAW_FORMAT_SINT_LE:
-  case AMITK_RAW_FORMAT_SINT_BE:
-  case AMITK_RAW_FORMAT_SINT_PDP:
+  case AMITK_RAW_FORMAT_SINT_32_LE:
+  case AMITK_RAW_FORMAT_SINT_32_BE:
+  case AMITK_RAW_FORMAT_SINT_32_PDP:
     format = AMITK_FORMAT_SINT;
     break;
-  case AMITK_RAW_FORMAT_FLOAT_LE:
-  case AMITK_RAW_FORMAT_FLOAT_BE:
-  case AMITK_RAW_FORMAT_FLOAT_PDP:
+  case AMITK_RAW_FORMAT_FLOAT_32_LE:
+  case AMITK_RAW_FORMAT_FLOAT_32_BE:
+  case AMITK_RAW_FORMAT_FLOAT_32_PDP:
 #if (SIZE_OF_AMIDE_T == 4)
-  case AMITK_RAW_FORMAT_ASCII_NE:
+  case AMITK_RAW_FORMAT_ASCII_8_NE:
 #endif
     format = AMITK_FORMAT_FLOAT;
     break;
-  case AMITK_RAW_FORMAT_DOUBLE_LE:
-  case AMITK_RAW_FORMAT_DOUBLE_BE:
+  case AMITK_RAW_FORMAT_DOUBLE_64_LE:
+  case AMITK_RAW_FORMAT_DOUBLE_64_BE:
 #if (SIZE_OF_AMIDE_T == 8)
-  case AMITK_RAW_FORMAT_ASCII_NE:
+  case AMITK_RAW_FORMAT_ASCII_8_NE:
 #endif
     format = AMITK_FORMAT_DOUBLE;
     break;
   default:
-    g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     format = AMITK_FORMAT_FLOAT; /* take a wild guess */
     break;
   }
@@ -890,17 +920,17 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat format) {
   switch(format) {
 
   case AMITK_FORMAT_UBYTE: 
-    raw_format = AMITK_RAW_FORMAT_UBYTE_NE;
+    raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
     break;
   case AMITK_FORMAT_SBYTE: 
-    raw_format = AMITK_RAW_FORMAT_SBYTE_NE;
+    raw_format = AMITK_RAW_FORMAT_SBYTE_8_NE;
     break;
   case AMITK_FORMAT_USHORT: 
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_USHORT_BE;
+    raw_format = AMITK_RAW_FORMAT_USHORT_16_BE;
 #else
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_USHORT_LE;
+    raw_format = AMITK_RAW_FORMAT_USHORT_16_LE;
 #else
 #error "must specify G_LITTLE_ENDIAN or G_BIG_ENDIAN)"
 #endif
@@ -908,42 +938,42 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat format) {
     break;
   case AMITK_FORMAT_SSHORT:
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_SSHORT_BE;
+    raw_format = AMITK_RAW_FORMAT_SSHORT_16_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_format = AMITK_RAW_FORMAT_SSHORT_LE;
+    raw_format = AMITK_RAW_FORMAT_SSHORT_16_LE;
 #endif
     break;
   case AMITK_FORMAT_UINT:
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_UINT_BE;
+    raw_format = AMITK_RAW_FORMAT_UINT_32_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_format = AMITK_RAW_FORMAT_UINT_LE;
+    raw_format = AMITK_RAW_FORMAT_UINT_32_LE;
 #endif
     break;
   case AMITK_FORMAT_SINT:
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_SINT_BE;
+    raw_format = AMITK_RAW_FORMAT_SINT_32_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_format = AMITK_RAW_FORMAT_SINT_LE;
+    raw_format = AMITK_RAW_FORMAT_SINT_32_LE;
 #endif
     break;
   case AMITK_FORMAT_FLOAT:
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_FLOAT_BE;
+    raw_format = AMITK_RAW_FORMAT_FLOAT_32_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_format = AMITK_RAW_FORMAT_FLOAT_LE;
+    raw_format = AMITK_RAW_FORMAT_FLOAT_32_LE;
 #endif
     break;
   case AMITK_FORMAT_DOUBLE:
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_format = AMITK_RAW_FORMAT_DOUBLE_BE;
+    raw_format = AMITK_RAW_FORMAT_DOUBLE_64_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_format = AMITK_RAW_FORMAT_DOUBLE_LE;
+    raw_format = AMITK_RAW_FORMAT_DOUBLE_64_LE;
 #endif
     break;
   default:
-    g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
-    raw_format = AMITK_RAW_FORMAT_UBYTE_NE; /* take a wild guess */
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE; /* take a wild guess */
     break;
   }
    
@@ -951,6 +981,18 @@ AmitkRawFormat amitk_format_to_raw_format(AmitkFormat format) {
 }
 
 
+
+const gchar * amitk_raw_format_get_name(const AmitkRawFormat raw_format) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_RAW_FORMAT);
+  enum_value = g_enum_get_value(enum_class, raw_format);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}
 
 
 

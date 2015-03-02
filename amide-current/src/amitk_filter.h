@@ -31,6 +31,9 @@
 #include <math.h>
 #include "amide.h"
 #include "amitk_raw_data.h"
+#ifdef AMIDE_LIBGSL_SUPPORT
+#include <gsl/gsl_fft_complex.h>
+#endif
 
 G_BEGIN_DECLS
 
@@ -41,10 +44,23 @@ typedef enum {
   AMITK_FILTER_NUM
 } AmitkFilter;
 
-AmitkRawData * amitk_filter_calculate_gaussian_kernel(const gint kernel_size,
-						      const AmitkPoint voxel_size,
-						      const amide_real_t fwhm,
-						      const AmitkAxis axis);
+#define AMITK_FILTER_FFT_SIZE 64
+
+
+AmitkRawData * amitk_filter_calculate_gaussian_kernel_complex(const AmitkVoxel kernel_size,
+							      const AmitkPoint voxel_size,
+							      const amide_real_t fwhm);
+
+#ifdef AMIDE_LIBGSL_SUPPORT
+void amitk_filter_3D_FFT(AmitkRawData * data, 
+			 gsl_fft_complex_wavetable * wavetable,
+			 gsl_fft_complex_workspace * workspace);
+void amitk_filter_inverse_3D_FFT(AmitkRawData * data, 
+				 gsl_fft_complex_wavetable * wavetable,
+				 gsl_fft_complex_workspace * workspace);
+void amitk_filter_complex_mult(AmitkRawData * data, AmitkRawData * kernel);
+#endif
+amide_data_t amitk_filter_find_median_by_partial_sort(amide_data_t * partial_sort_data, gint size);
 
 const gchar * amitk_filter_get_name(const AmitkFilter filter);
 

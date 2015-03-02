@@ -33,6 +33,15 @@ static char * false_string = "false";
 
 
 
+/* utility functions */
+gboolean xml_node_exists(xmlNodePtr nodes, const gchar * descriptor) {
+
+  if (xml_get_node(nodes, descriptor) != NULL)
+    return TRUE;
+  else
+    return FALSE;
+}
+
 /* ----------------- the load functions ------------------ */
 
 
@@ -49,6 +58,7 @@ xmlNodePtr xml_get_node(xmlNodePtr nodes, const gchar * descriptor) {
       return xml_get_node(nodes->next, descriptor);
   }
 }
+
 
 
 
@@ -97,7 +107,7 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   
   if ((temp_str == NULL) || (error == EOF)) {
     return_time = 0.0;
-    amitk_append_str(perror_buf,"Couldn't read time value for %s, substituting %5.3f",
+    amitk_append_str(perror_buf,_("Couldn't read time value for %s, substituting %5.3f"),
 		     descriptor, return_time);
   }
 
@@ -119,7 +129,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   if (temp_str != NULL) {
 
     if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
-      amitk_append_str(perror_buf, "Couldn't allocate space for time data");
+      amitk_append_str(perror_buf, _("Couldn't allocate space for time data"));
       return return_times;
     }
     
@@ -147,9 +157,9 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   }
 
   if (temp_str == NULL) {
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting zero",descriptor);
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting zero"),descriptor);
     if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
-      amitk_append_str(perror_buf, "Couldn't allocate space for time data");
+      amitk_append_str(perror_buf, _("Couldn't allocate space for time data"));
       return return_times;
     }
     return_times[0] = 0.0;
@@ -186,7 +196,7 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_data = 0.0;
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting %5.3f",
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting %5.3f"),
 		     descriptor, return_data);
   }
 
@@ -229,7 +239,7 @@ gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor, gchar **per
   temp_str = xml_get_string(nodes, descriptor);
 
   if (temp_str == NULL) {
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting FALSE",descriptor);
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting FALSE"),descriptor);
     return FALSE;
   }
   if (g_ascii_strncasecmp(temp_str, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
@@ -257,7 +267,7 @@ gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor, gchar **perror_buf)
 
   if ((temp_str == NULL) || (error == EOF)) {
     return_int = 0;
-    amitk_append_str(perror_buf,"Couldn't read value for %s, substituting %d",descriptor, return_int);
+    amitk_append_str(perror_buf,_("Couldn't read value for %s, substituting %d"),descriptor, return_int);
   }
 
   return return_int;

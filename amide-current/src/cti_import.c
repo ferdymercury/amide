@@ -31,14 +31,14 @@
 #include "cti_import.h"
 
 static char * cti_data_types[] = {
-  "Unknown Data Type",  /* UnknownMatDataType */
-  "Byte", /* ByteData */
-  "Short (16 bit), Little Endian", /* VAX_Ix2 */
-  "Integer (32 bit), Little Endian", /* VAX_Ix4 */
-  "VAX Float (32 bit)", /* VAX_Rx4 */
-  "IEEE Float (32 bit)", /* IeeeFloat */
-  "Short (16 bit), Big Endian", /* SunShort */
-  "Integer (32 bit), Big Endian" /* SunLong */
+  N_("Unknown Data Type"),  /* UnknownMatDataType */
+  N_("Byte"), /* ByteData */
+  N_("Short (16 bit), Little Endian"), /* VAX_Ix2 */
+  N_("Integer (32 bit), Little Endian"), /* VAX_Ix4 */
+  N_("VAX Float (32 bit)"), /* VAX_Rx4 */
+  N_("IEEE Float (32 bit)"), /* IeeeFloat */
+  N_("Short (16 bit), Big Endian"), /* SunShort */
+  N_("Integer (32 bit), Big Endian") /* SunLong */
 }; /* NumMatrixDataTypes */
 
 AmitkDataSet * cti_import(const gchar * cti_filename, 
@@ -69,7 +69,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   Attn_subheader * ash;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
-    g_warning("Can't open file %s using libecat", cti_filename);
+    g_warning(_("Can't open file %s using libecat"), cti_filename);
     goto error;
   }
 
@@ -93,7 +93,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ByteImage:
   case ByteVolume:
   default:
-    g_warning("Can't open this CTI file type: %d", cti_file->mhptr->file_type);
+    g_warning(_("Can't open this CTI file type: %d"), cti_file->mhptr->file_type);
     goto error;
     break;
   }
@@ -103,7 +103,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   matnum = cti_file->dirlist->first->matnum;
 
   if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
-    g_warning("Libecat can't get header info at matrix %x in file %s", matnum, cti_filename);
+    g_warning(_("Libecat can't get header info at matrix %x in file %s"), matnum, cti_filename);
     goto error;
   }
 
@@ -125,7 +125,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   case ColorData:
   case BitData:
   default:
-    g_warning("No support for importing CTI files with data type of: %d (%s)", 
+    g_warning(_("No support for importing CTI files with data type of: %d (%s)"), 
 	      cti_subheader->data_type,
 	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
 			     cti_subheader->data_type : 0]);
@@ -151,7 +151,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   /* init our data structures */
   ds = amitk_data_set_new_with_data(format, dim, scaling_type);
   if (ds == NULL) {
-    g_warning("Couldn't allocate space for the data set structure to hold CTI data");
+    g_warning(_("Couldn't allocate space for the data set structure to hold CTI data"));
     goto error;
   }
   
@@ -215,10 +215,10 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   temp_point.y = 10*cti_subheader->y_size;
   temp_point.z = 10*cti_subheader->z_size;
   if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {/*handle corrupted cti files */ 
-    g_warning("Detected corrupted CTI file, will try to continue by guessing voxel_size");
+    g_warning(_("Detected corrupted CTI file, will try to continue by guessing voxel_size"));
     ds->voxel_size = one_point;
   } else if (EQUAL_ZERO(temp_point.x) || EQUAL_ZERO(temp_point.y) || EQUAL_ZERO(temp_point.z)) {
-    g_warning("Detected zero voxel size in CTI file, will try to continue by guessing voxel_size");
+    g_warning(_("Detected zero voxel size in CTI file, will try to continue by guessing voxel_size"));
     ds->voxel_size = one_point;
   } else
     ds->voxel_size = temp_point;
@@ -228,7 +228,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   temp_point.z = 10*cti_subheader->z_origin;
 
   if (isnan(temp_point.x) || isnan(temp_point.y) || isnan(temp_point.z)) {    /*handle corrupted cti files */ 
-    g_warning("Detected corrupted CTI file, will try to continue by guessing offset");
+    g_warning(_("Detected corrupted CTI file, will try to continue by guessing offset"));
     temp_point = zero_point;
   }
   amitk_space_set_offset(AMITK_SPACE(ds), temp_point);
@@ -258,7 +258,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 #endif
   
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Importing CTI File:\n   %s", cti_filename);
+    temp_string = g_strdup_printf(_("Importing CTI File:\n   %s"), cti_filename);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -276,7 +276,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
       
       /* read in the corresponding cti slice */
       if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	g_warning("Libecat can't get image matrix %x in file %s", matnum, cti_filename);
+	g_warning(_("Libecat can't get image matrix %x in file %s"), matnum, cti_filename);
 	goto error;
       }
       
@@ -343,7 +343,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
 		   +dim.x*(dim.y-i.y-1)
 		   +i.x));
 	default:
-	  g_warning("unexpected case in %s at %d\n", __FILE__, __LINE__);
+	  g_error("unexpected case in %s at %d\n", __FILE__, __LINE__);
 	  goto error;
 	  break; 
 	}

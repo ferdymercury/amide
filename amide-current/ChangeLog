@@ -1,3 +1,21 @@
+0.7.11
+	* zh_CN i18n contributed by Wales Wang
+	* added back in support for internationalization
+	* ui_common axis works on OS X (was a double free bug, that didn't manifest on linux)
+	* variance is now calculated correctly (was overconservative previously).
+	* generalized FIR filtering added
+	* gaussian filtering done with FIR filtering code, 50% slower, but eliminates
+	  a lot of otherwise redundent code
+	* median/filter code no longer data type specific.
+	* ui_series now tracks changes to data sets/rois/and fiducial marks
+	* fiducial mark "point" parameter eliminated.  redundant
+	* switched over to anti-aliased canvases for all canvases
+	* misc. fly through canvas fixups
+	* switched form of raw format entry in .xif files
+	* rewrote isocontour selecting function, no longer recurseive
+	* changed look of rendering window/added toolbar
+	
+
 0.7.10
 	* enable-win32-hacks option, allows compilation on cygwin/mingw32
 	* multiple small fixes for cygwin/mingw32

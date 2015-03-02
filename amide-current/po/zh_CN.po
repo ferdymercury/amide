@@ -1,0 +1,3561 @@
+# Simplified Chinese translation for Amide.
+# Copyright (C) .
+#
+# Wales Wang <wormwang@yahoo.com>, 2003.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Amide 0.7.11\n"
+"POT-Creation-Date: 2003-06-12 14:21-0700\n"
+"PO-Revision-Date: 2003-06-16 14:21+0800\n"
+"Last-Translator: Wales Wang <wormwang@yahoo.com>\n"
+"Language-Team: zh_CN <i18n-translation@lists.linux.net.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: etc/amide.desktop.in.h:1
+msgid "A Medical Image Data Examiner"
+msgstr "高级医学图像察看器"
+
+#: etc/amide.desktop.in.h:2
+msgid "Amide"
+msgstr "Amide"
+
+#: etc/amide.desktop.in.h:3
+msgid "Medical Image Examiner"
+msgstr "医学图像察看器"
+
+#: src/alignment.c:164
+#, c-format
+msgid "Cannot perform an alignment with %d points, need at least 3"
+msgstr "所作的 %1$d 像素关联无法实行，至少为3"
+
+#: src/alignment.c:207
+#, c-format
+msgid "points lists not completely used in %s at %d"
+msgstr "%1$s 像素列表中 %2$d 未完全用完"
+
+#: src/alignment.c:223 src/fads.c:146 src/fads.c:289
+#, c-format
+msgid "SV decomp returned error: %s"
+msgstr "SV 解码出错: %1$s "
+
+#: src/alignment.c:229
+#, c-format
+msgid "transpose returned error: %s"
+msgstr "转换出错: %1$s "
+
+#: src/alignment.c:235
+#, c-format
+msgid "LU decomp returned error: %s"
+msgstr "LU 解码出错: %1$s "
+
+#: src/amide.c:185 src/ui_study_cb.c:87
+#, c-format
+msgid "AMIDE study %s does not exist"
+msgstr "%1$s 图像分析项目不存在"
+
+#: src/amide.c:201
+#, c-format
+msgid "%s is not an AMIDE study or importable file type "
+msgstr "%1$s 不是一个可支持的图像分析项目或文件"
+
+#: src/amide.c:203 src/ui_study_cb.c:97
+#, c-format
+msgid "error loading study: %s"
+msgstr "读入 %1$s 图像分析项目出错"
+
+#: src/amitk_canvas.c:651
+msgid "ROI Depth Selection"
+msgstr "ROI深度选择"
+
+#: src/amitk_canvas.c:667
+msgid "Please pick depth of ROI (mm):"
+msgstr "请选择 ROI 深度 (mm)"
+
+#: src/amitk_canvas.c:713
+msgid "Parent of isocontour not currently displayed, can't draw isocontour"
+msgstr ""
+
+#: src/amitk_canvas.c:730
+msgid "No data set found to draw isocontour on"
+msgstr ""
+
+#: src/amitk_canvas.c:742
+#, c-format
+msgid "designanted voxel not in data set %s"
+msgstr ""
+
+#: src/amitk_canvas.c:761
+#, c-format
+msgid ""
+"Multiple data frames are currently being shown from: %s\n"
+"The isocontour will only be drawn over frame %d"
+msgstr ""
+
+#: src/amitk_canvas.c:2247
+msgid "Canvas has no style?\n"
+msgstr "界面没有风格?\n"
+
+#: src/amitk_color_table.c:37
+msgid "black/white linear"
+msgstr "黑/白线性"
+
+#: src/amitk_color_table.c:38
+msgid "white/black linear"
+msgstr "白/黑线性"
+
+#: src/amitk_color_table.c:39
+msgid "black/white/black"
+msgstr "黑/白/黑"
+
+#: src/amitk_color_table.c:40
+msgid "white/black/white"
+msgstr "白/黑/白"
+
+#: src/amitk_color_table.c:41
+msgid "red temperature"
+msgstr "红色温度"
+
+#: src/amitk_color_table.c:42
+msgid "inverse red temp."
+msgstr "红色逆温度"
+
+#: src/amitk_color_table.c:43
+msgid "blue temperature"
+msgstr "蓝色温度"
+
+#: src/amitk_color_table.c:44
+msgid "inv. blue temp."
+msgstr "蓝色逆温度"
+
+#: src/amitk_color_table.c:45
+msgid "green temperature"
+msgstr "绿色温度"
+
+#: src/amitk_color_table.c:46
+msgid "inv. green temp."
+msgstr "绿色逆温度"
+
+#: src/amitk_color_table.c:47
+msgid "hot metal"
+msgstr "热金属色"
+
+#: src/amitk_color_table.c:48
+msgid "inv. hot metal"
+msgstr "热逆金属色"
+
+#: src/amitk_color_table.c:49
+msgid "hot blue"
+msgstr "热蓝色"
+
+#: src/amitk_color_table.c:50
+msgid "inverse hot blue"
+msgstr "热逆蓝色"
+
+#: src/amitk_color_table.c:51
+msgid "hot green"
+msgstr "热绿色"
+
+#: src/amitk_color_table.c:52
+msgid "inverse hot green"
+msgstr "热逆绿色"
+
+#: src/amitk_color_table.c:53
+msgid "spectrum"
+msgstr "光谱"
+
+#: src/amitk_color_table.c:54
+msgid "inverse spectrum"
+msgstr "逆光谱"
+
+#: src/amitk_color_table.c:55
+msgid "NIH + white"
+msgstr "NIH + 白色"
+
+#: src/amitk_color_table.c:56
+msgid "inv. NIH + white"
+msgstr "NIH + 逆白色"
+
+#: src/amitk_color_table.c:57
+msgid "NIH"
+msgstr "NIH"
+
+#: src/amitk_color_table.c:58
+msgid "inverse NIH"
+msgstr "逆 NIH"
+
+#: src/amitk_data_set.c:78
+msgid "interpolate using nearest neighbhor (fast)"
+msgstr ""
+
+#: src/amitk_data_set.c:79
+msgid "interpolate using trilinear interpolation (slow)"
+msgstr ""
+
+#. place holder for AMITK_IMPORT_METHOD_GUESS
+#: src/amitk_data_set.c:85
+msgid "_Raw Data"
+msgstr "原始数据(_R)"
+
+#: src/amitk_data_set.c:87
+msgid "_ECAT 6/7 via libecat"
+msgstr "ECAT 6/7 通过 libecat(_E)"
+
+#: src/amitk_data_set.c:97
+msgid "Import file as raw data"
+msgstr "导入原始数据文件"
+
+#: src/amitk_data_set.c:99
+msgid "Import a CTI 6.4 or 7.0 file using the libecat library"
+msgstr "使用libecat库导入CTI 6.4 或 7.0 数据文件"
+
+#: src/amitk_data_set.c:102
+msgid "Import via the (X)medcon importing library (libmdc)"
+msgstr "使用(X)medcon(libmdc)库导入"
+
+#: src/amitk_data_set.c:107
+msgid "Direct"
+msgstr "直接"
+
+#: src/amitk_data_set.c:108
+msgid "%ID/G"
+msgstr ""
+
+#: src/amitk_data_set.c:109
+msgid "SUV"
+msgstr ""
+
+#: src/amitk_data_set.c:113
+msgid "MBq"
+msgstr ""
+
+#: src/amitk_data_set.c:114
+msgid "mCi"
+msgstr ""
+
+#: src/amitk_data_set.c:115
+msgid "uCi"
+msgstr ""
+
+#: src/amitk_data_set.c:116
+msgid "nCi"
+msgstr ""
+
+#: src/amitk_data_set.c:120
+msgid "Kg"
+msgstr "公斤"
+
+#: src/amitk_data_set.c:121
+msgid "g"
+msgstr ""
+
+#: src/amitk_data_set.c:122
+msgid "lbs"
+msgstr "磅"
+
+#: src/amitk_data_set.c:123
+msgid "ounces"
+msgstr "盎司"
+
+#: src/amitk_data_set.c:127
+msgid "MBq/cc/Image Units"
+msgstr "MBq/cc/像素"
+
+#: src/amitk_data_set.c:128
+msgid "Image Units/(MBq/CC)"
+msgstr "像素/(MBq/CC)"
+
+#: src/amitk_data_set.c:129
+msgid "mCi/cc/Image Units"
+msgstr "mCi/cc/像素"
+
+#: src/amitk_data_set.c:130
+msgid "Image Units/(mCi/cc)"
+msgstr "像素/(mCi/cc)"
+
+#: src/amitk_data_set.c:131
+msgid "uCi/cc/Image Units"
+msgstr "uCi/cc/像素"
+
+#: src/amitk_data_set.c:132
+msgid "Image Units/(uCi/cc)"
+msgstr "像素/(uCi/cc)"
+
+#: src/amitk_data_set.c:133
+msgid "nCi/cc/Image Units"
+msgstr "nCi/cc/像素"
+
+#: src/amitk_data_set.c:134
+msgid "Image Units/(nCi/cc)"
+msgstr "像素/(nCi/cc)"
+
+#: src/amitk_data_set.c:646
+msgid "wrong type found on internal scaling, converting to double"
+msgstr ""
+
+#: src/amitk_data_set.c:651
+msgid "Couldn't allocate space for the new scaling factors"
+msgstr ""
+
+#: src/amitk_data_set.c:835
+msgid "couldn't allocate space for the data set structure to hold data"
+msgstr ""
+
+#: src/amitk_data_set.c:843
+msgid "raw_data_read_file failed returning NULL data set"
+msgstr ""
+
+#: src/amitk_data_set.c:850
+msgid "couldn't allocate space for the frame duration info"
+msgstr ""
+
+#. unrecognized file type
+#: src/amitk_data_set.c:919
+#, c-format
+msgid ""
+"Extension %s not recognized on file: %s\n"
+"Guessing File Type"
+msgstr ""
+
+#: src/amitk_data_set.c:1087
+msgid "unknown"
+msgstr "未知"
+
+#: src/amitk_data_set.c:2280
+msgid "Filtering: Failed to allocate wavetable and workspace"
+msgstr ""
+
+#: src/amitk_data_set.c:2286
+msgid "couldn't allocate space for the subset structure"
+msgstr ""
+
+#: src/amitk_data_set.c:2305
+msgid "Couldn't allocate space for the subset data"
+msgstr ""
+
+#: src/amitk_data_set.c:2447
+msgid "data set z dimension to small for kernel, setting kernel dimension to 1"
+msgstr ""
+
+#: src/amitk_data_set.c:2451
+msgid "data set y dimension to small for kernel, setting kernel dimension to 1"
+msgstr ""
+
+#: src/amitk_data_set.c:2455
+msgid "data set x dimension to small for kernel, setting kernel dimension to 1"
+msgstr ""
+
+#: src/amitk_data_set.c:2468
+msgid "couldn't allocate space for the internal raw data"
+msgstr ""
+
+#. set a new name for this guy
+#: src/amitk_data_set.c:2636
+#, c-format
+msgid "%s, %s filtered"
+msgstr ""
+
+#: src/amitk_data_set.c:2644
+msgid "couldn't allocate space for the filtered raw data set structure"
+msgstr ""
+
+#: src/amitk_data_set.c:2670
+msgid "failed to calculate 3D gaussian kernel"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:56
+#, c-format
+msgid ""
+"Calculating Max/Min Values for:\n"
+"   %s"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:130
+msgid ""
+"couldn't allocate space for the data set structure to hold distribution data"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:138
+#, c-format
+msgid ""
+"Generating distribution data for:\n"
+"   %s"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:220
+#, c-format
+msgid "couldn't allocate space for the projection, wanted %dx%dx%dx%d elements"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:259
+#, c-format
+msgid ""
+"Generating projection of:\n"
+"   %s"
+msgstr ""
+
+#. set a new name for this guy
+#: src/amitk_data_set_variable_type.c:401
+#, c-format
+msgid "%s, cropped"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:409
+msgid "couldn't allocate space for the cropped raw data set structure"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:414
+#, c-format
+msgid ""
+"Generating cropped version of:\n"
+"   %s"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:453
+msgid "couldn't allocate space for the cropped internal scaling structure"
+msgstr ""
+
+#: src/amitk_data_set_variable_type.c:561
+#, c-format
+msgid "couldn't allocate space for the slice, wanted %dx%dx%dx%d elements"
+msgstr ""
+
+#: src/amitk_dir_sel.c:534
+msgid "Filename"
+msgstr "文件名"
+
+#: src/amitk_dir_sel.c:535
+msgid "The currently selected filename"
+msgstr "当前选中文件名"
+
+#: src/amitk_dir_sel.c:541
+msgid "Show file operations"
+msgstr "显示文件操作"
+
+#: src/amitk_dir_sel.c:542
+msgid "Whether buttons for creating/manipulating files should be displayed"
+msgstr ""
+
+#: src/amitk_dir_sel.c:549
+msgid "Select multiple"
+msgstr "多选"
+
+#: src/amitk_dir_sel.c:550
+msgid "Whether to allow multiple files to be selected"
+msgstr ""
+
+#: src/amitk_dir_sel.c:705
+msgid "Folders"
+msgstr "目录"
+
+#: src/amitk_dir_sel.c:709
+msgid "Fol_ders"
+msgstr "目录(_d)"
+
+#: src/amitk_dir_sel.c:741
+msgid "Files"
+msgstr "文件"
+
+#: src/amitk_dir_sel.c:745
+msgid "_Files"
+msgstr "文件(_F)"
+
+#: src/amitk_dir_sel.c:827 src/amitk_dir_sel.c:2234
+#, c-format
+msgid "Folder unreadable: %s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:929
+#, c-format
+msgid "Error getting dropped filename: %s\n"
+msgstr ""
+
+#: src/amitk_dir_sel.c:958
+#, c-format
+msgid ""
+"The file \"%s\" resides on another machine (called %s) and may not be "
+"available to this program.\n"
+"Are you sure that you want to select it?"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1011
+#, c-format
+msgid "Error getting filename: %s\n"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1089
+msgid "_New Folder"
+msgstr "创建目录(_N)"
+
+#: src/amitk_dir_sel.c:1099
+msgid "De_lete File"
+msgstr "删除文件(_l)"
+
+#: src/amitk_dir_sel.c:1109
+msgid "_Rename File"
+msgstr "重命名文件(_R)"
+
+#: src/amitk_dir_sel.c:1405
+#, c-format
+msgid ""
+"The folder name \"%s\" contains symbols that are not allowed in filenames"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1407
+#, c-format
+msgid ""
+"Error creating folder \"%s\": %s\n"
+"%s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1408 src/amitk_dir_sel.c:1645
+msgid "You probably used symbols not allowed in filenames."
+msgstr ""
+
+#: src/amitk_dir_sel.c:1416
+#, c-format
+msgid "Error creating folder \"%s\": %s\n"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1449
+msgid "New Folder"
+msgstr "新目录"
+
+#: src/amitk_dir_sel.c:1464
+msgid "_Folder name:"
+msgstr "目录名(_F)"
+
+#: src/amitk_dir_sel.c:1489
+msgid "C_reate"
+msgstr "新建(_r)"
+
+#: src/amitk_dir_sel.c:1534
+#, c-format
+msgid "The filename \"%s\" contains symbols that are not allowed in filenames"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1537
+#, c-format
+msgid ""
+"Error deleting file \"%s\": %s\n"
+"%s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1539 src/amitk_dir_sel.c:1659
+msgid "It probably contains symbols not allowed in filenames."
+msgstr ""
+
+#: src/amitk_dir_sel.c:1548
+#, c-format
+msgid "Error deleting file \"%s\": %s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1591
+#, c-format
+msgid "Really delete file \"%s\" ?"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1595
+msgid "Delete File"
+msgstr "删除文件"
+
+#: src/amitk_dir_sel.c:1641 src/amitk_dir_sel.c:1655
+#, c-format
+msgid "The file name \"%s\" contains symbols that are not allowed in filenames"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1643
+#, c-format
+msgid ""
+"Error renaming file to \"%s\": %s\n"
+"%s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1657
+#, c-format
+msgid ""
+"Error renaming file \"%s\": %s\n"
+"%s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1667
+#, c-format
+msgid "Error renaming file \"%s\" to \"%s\": %s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1713
+msgid "Rename File"
+msgstr "重命名文件"
+
+#: src/amitk_dir_sel.c:1728
+#, c-format
+msgid "Rename file \"%s\" to:"
+msgstr ""
+
+#: src/amitk_dir_sel.c:1758
+msgid "_Rename"
+msgstr ""
+
+#: src/amitk_dir_sel.c:2214
+msgid "_Selection: "
+msgstr ""
+
+#: src/amitk_dir_sel.c:3110
+#, c-format
+msgid ""
+"The filename \"%s\" couldn't be converted to UTF-8 (try setting the "
+"environment variable G_BROKEN_FILENAMES): %s"
+msgstr ""
+
+#: src/amitk_dir_sel.c:3113
+msgid "Invalid Utf-8"
+msgstr "无效的 UTF-8 字符"
+
+#: src/amitk_dir_sel.c:3988
+msgid "Name too long"
+msgstr "名字太长"
+
+#: src/amitk_dir_sel.c:3990
+msgid "Couldn't convert filename"
+msgstr "不能转换文件名"
+
+#: src/amitk_filter.c:60
+msgid "couldn't allocate space for the kernel structure"
+msgstr ""
+
+#: src/amitk_filter.c:71
+msgid "Couldn't allocate space for the kernel data"
+msgstr ""
+
+#: src/amitk_object.c:513
+#, c-format
+msgid "Couldn't Parse AMIDE xml file:\t%s"
+msgstr ""
+
+#: src/amitk_object.c:521
+#, c-format
+msgid ""
+"AMIDE xml file doesn't appear to have a root:\n"
+"\t%s"
+msgstr ""
+
+#: src/amitk_object_dialog.c:142
+#, c-format
+msgid "Copy of %s"
+msgstr ""
+
+#: src/amitk_object_dialog.c:220
+msgid "Basic Info"
+msgstr "基本信息"
+
+#. widgets to change the object's name
+#: src/amitk_object_dialog.c:227 src/raw_data_import.c:306
+msgid "name:"
+msgstr ""
+
+#. widgets to change the object's type
+#: src/amitk_object_dialog.c:247 src/tb_roi_analysis.c:394
+msgid "type:"
+msgstr ""
+
+#. widgets to change the date of the scan name
+#: src/amitk_object_dialog.c:297
+msgid "scan date:"
+msgstr ""
+
+#. widgets to change the object's modality
+#: src/amitk_object_dialog.c:311 src/raw_data_import.c:343
+msgid "modality:"
+msgstr ""
+
+#. widget to change the interpolation
+#: src/amitk_object_dialog.c:333
+msgid "Interpolation Type"
+msgstr ""
+
+#. widget to change the scaling factor
+#: src/amitk_object_dialog.c:386
+msgid "Conversion Type:"
+msgstr ""
+
+#: src/amitk_object_dialog.c:420
+msgid "Scaling Factor:"
+msgstr ""
+
+#. injected dose
+#: src/amitk_object_dialog.c:447
+msgid "Injected Dose:"
+msgstr ""
+
+#. subject weight
+#: src/amitk_object_dialog.c:485
+msgid "Subject Weight:"
+msgstr ""
+
+#. cylinder factor
+#: src/amitk_object_dialog.c:523
+msgid "Cylinder Factor:"
+msgstr ""
+
+#. widgets to change the study's creation date
+#: src/amitk_object_dialog.c:566
+msgid "creation date:"
+msgstr ""
+
+#: src/amitk_object_dialog.c:606
+msgid "View Center"
+msgstr "察看中心"
+
+#: src/amitk_object_dialog.c:608
+msgid "Center"
+msgstr "中心"
+
+#: src/amitk_object_dialog.c:615
+msgid "View Center (mm from origin)"
+msgstr ""
+
+#: src/amitk_object_dialog.c:617
+msgid "Center Location (mm from origin)"
+msgstr ""
+
+#: src/amitk_object_dialog.c:672
+msgid "Voxel Size"
+msgstr ""
+
+#: src/amitk_object_dialog.c:676
+msgid "Voxel Size (mm)"
+msgstr ""
+
+#: src/amitk_object_dialog.c:729
+msgid "Dimensions"
+msgstr "尺寸"
+
+#. widgets to change the dimensions of the objects (in object's space)
+#: src/amitk_object_dialog.c:734
+msgid "Dimensions (mm) wrt to ROI"
+msgstr ""
+
+#: src/amitk_object_dialog.c:777
+msgid "Rotate"
+msgstr "旋转"
+
+#: src/amitk_object_dialog.c:791
+msgid "Colormap/Threshold"
+msgstr ""
+
+#. start making the page to adjust time values
+#: src/amitk_object_dialog.c:808
+msgid "Time"
+msgstr "时间"
+
+#. scan start time.....
+#: src/amitk_object_dialog.c:816
+msgid "Scan Start Time (s)"
+msgstr ""
+
+#. frame duration(s)....
+#: src/amitk_object_dialog.c:842 src/tb_roi_analysis.c:73
+msgid "Frame"
+msgstr ""
+
+#: src/amitk_object_dialog.c:847 src/tb_roi_analysis.c:74
+msgid "Duration (s)"
+msgstr ""
+
+#: src/amitk_object_dialog.c:916
+msgid "Immutables"
+msgstr "不可变的"
+
+#: src/amitk_object_dialog.c:922
+msgid "voxel dim"
+msgstr ""
+
+#: src/amitk_object_dialog.c:938
+msgid "isocontour value"
+msgstr ""
+
+#: src/amitk_object_dialog.c:979
+msgid "Memory Used (GB):"
+msgstr ""
+
+#: src/amitk_object_dialog.c:982
+msgid "Memory Used (MB):"
+msgstr ""
+
+#: src/amitk_object_dialog.c:985
+msgid "Memory Used (KB):"
+msgstr ""
+
+#: src/amitk_object_dialog.c:989
+msgid "Memory Used (bytes):"
+msgstr ""
+
+#. widget to tell you the internal data format
+#: src/amitk_object_dialog.c:1008
+msgid "Data Format:"
+msgstr ""
+
+#. widget to tell you the scaling format
+#: src/amitk_object_dialog.c:1031
+msgid "Scale Format:"
+msgstr ""
+
+#: src/amitk_object_dialog.c:1039
+msgid "Per Frame Scale Factor"
+msgstr ""
+
+#: src/amitk_object_dialog.c:1042
+msgid "Per Plane Scale Factor"
+msgstr ""
+
+#: src/amitk_object_dialog.c:1046
+msgid "Single Scale Factor"
+msgstr ""
+
+#. widgets to display the data set dimensions
+#: src/amitk_object_dialog.c:1064
+msgid "Data Set Dimensions (voxels)"
+msgstr ""
+
+#: src/amitk_object_dialog.c:1896
+#, c-format
+msgid "Modification Dialog: %s\n"
+msgstr ""
+
+#: src/amitk_point.c:85
+#, c-format
+msgid "Couldn't read value for %s, substituting [%5.3f %5.3f %5.3f]"
+msgstr ""
+
+#: src/amitk_point.c:155
+#, c-format
+msgid "Couldn't read value for %s, substituting [%d %d %d %d]"
+msgstr ""
+
+#: src/amitk_point.c:161
+#, c-format
+msgid "Couldn't read frame value for %s, substituting %d"
+msgstr ""
+
+#: src/amitk_progress_dialog.c:154
+msgid "Progress Dialog"
+msgstr "进度对话框"
+
+#: src/amitk_raw_data.c:51 src/amitk_raw_data.c:108
+msgid "Unsigned Byte (8 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:52 src/amitk_raw_data.c:109
+msgid "Signed Byte (8 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:53
+msgid "Unsigned Short (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:54
+msgid "Signed Short (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:55
+msgid "Unsigned Integer (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:56
+msgid "Signed Integer (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:57
+msgid "Float (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:58
+msgid "Double (64 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:110
+msgid "Unsigned Short, Little Endian (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:111
+msgid "Signed Short, Little Endian (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:112
+msgid "Unsigned Integer, Little Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:113
+msgid "Signed Integer, Little Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:114
+msgid "Float, Little Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:115
+msgid "Double, Little Endian (64 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:116
+msgid "Unsigned Short, Big Endian (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:117
+msgid "Signed Short, Big Endian (16 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:118
+msgid "Unsigned Integer, Big Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:119
+msgid "Signed Integer, Big Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:120
+msgid "Float, Big Endian (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:121
+msgid "Double, Big Endian (64 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:122
+msgid "Unsigned Integer, PDP (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:123
+msgid "Signed Integer, PDP (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:124
+msgid "Float, PDP/VAX (32 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:125
+msgid "ASCII (8 bit)"
+msgstr ""
+
+#: src/amitk_raw_data.c:262
+msgid "raw_data_read called with no filename"
+msgstr ""
+
+#: src/amitk_raw_data.c:267
+#, c-format
+msgid "Reading: %s"
+msgstr ""
+
+#: src/amitk_raw_data.c:276
+msgid "couldn't allocate space for the raw data set structure"
+msgstr ""
+
+#: src/amitk_raw_data.c:283 src/amitk_raw_data.c:288
+#, c-format
+msgid "couldn't open raw data file %s"
+msgstr ""
+
+#. EOF is usually -1
+#: src/amitk_raw_data.c:297
+#, c-format
+msgid ""
+"could not step forward %d elements in raw data file:\n"
+"\t%s\n"
+"\treturned error: %d"
+msgstr ""
+
+#: src/amitk_raw_data.c:303
+#, c-format
+msgid ""
+"could not seek forward %d bytes in raw data file:\n"
+"\t%s"
+msgstr ""
+
+#: src/amitk_raw_data.c:313
+#, c-format
+msgid "couldn't malloc %d bytes for file buffer\n"
+msgstr ""
+
+#: src/amitk_raw_data.c:335
+#, c-format
+msgid ""
+"read wrong number of elements from raw data file:\n"
+"\t%s\n"
+"\texpected %d\tgot %d"
+msgstr ""
+
+#. EOF = -1 (usually)
+#: src/amitk_raw_data.c:359
+#, c-format
+msgid ""
+"could not read ascii file after %d elements, file or parameters are "
+"erroneous:\n"
+"\t%s"
+msgstr ""
+
+#: src/amitk_raw_data.c:736
+#, c-format
+msgid "couldn't save raw data file: %s"
+msgstr ""
+
+#: src/amitk_raw_data.c:746
+#, c-format
+msgid "incomplete save of raw data file: %s"
+msgstr ""
+
+#: src/amitk_raw_data.c:775
+#, c-format
+msgid "Couldn't Parse AMIDE raw_data xml file %s"
+msgstr ""
+
+#: src/amitk_raw_data.c:781
+#, c-format
+msgid "Raw data xml file doesn't appear to have a root: %s"
+msgstr ""
+
+#: src/amitk_roi.c:42
+msgid "_Ellipsoid"
+msgstr ""
+
+#: src/amitk_roi.c:43
+msgid "Elliptic _Cylinder"
+msgstr ""
+
+#: src/amitk_roi.c:44
+msgid "_Box"
+msgstr ""
+
+#: src/amitk_roi.c:45
+msgid "_2D Isocontour"
+msgstr ""
+
+#: src/amitk_roi.c:46
+msgid "_3D Isocontour"
+msgstr ""
+
+#: src/amitk_roi.c:50
+msgid "Add a new elliptical ROI"
+msgstr ""
+
+#: src/amitk_roi.c:51
+msgid "Add a new elliptic cylinder ROI"
+msgstr ""
+
+#: src/amitk_roi.c:52
+msgid "Add a new box shaped ROI"
+msgstr ""
+
+#: src/amitk_roi.c:53
+msgid "Add a new 2D Isocontour ROI"
+msgstr ""
+
+#: src/amitk_roi.c:54
+msgid "Add a new 3D Isocontour ROI"
+msgstr ""
+
+#: src/amitk_roi_variable_type.c:62 src/amitk_roi_variable_type.c:74
+msgid "Out of Memory"
+msgstr ""
+
+#. and a display of the current axis
+#: src/amitk_space_edit.c:138
+msgid "i"
+msgstr ""
+
+#: src/amitk_space_edit.c:141
+msgid "j"
+msgstr ""
+
+#: src/amitk_space_edit.c:144
+msgid "k"
+msgstr ""
+
+#. button to reset the axis
+#: src/amitk_space_edit.c:180
+msgid "data set axis:"
+msgstr ""
+
+#: src/amitk_space_edit.c:185
+msgid "reset to default"
+msgstr ""
+
+#. first double check that we really want to do this
+#: src/amitk_space_edit.c:320
+msgid ""
+"Do you really wish to reset the axis to identity?\n"
+"This may flip left/right relationships"
+msgstr ""
+
+#. first double check that we really want to do this
+#: src/amitk_space_edit.c:344
+msgid ""
+"Do you really wish to invert?\n"
+"This will flip left/right relationships"
+msgstr ""
+
+#: src/amitk_study.c:42
+msgid "blend all data sets"
+msgstr ""
+
+#: src/amitk_study.c:43
+msgid "overlay active data set on blended data sets"
+msgstr ""
+
+#: src/amitk_study.c:47
+msgid "single view"
+msgstr ""
+
+#: src/amitk_study.c:48
+msgid "linked view, 2 way"
+msgstr ""
+
+#: src/amitk_study.c:49
+msgid "linked view, 3 way"
+msgstr ""
+
+#: src/amitk_study.c:53
+msgid "All objects are shown in a single view"
+msgstr ""
+
+#: src/amitk_study.c:54
+msgid "Objects are shown between 2 linked views"
+msgstr ""
+
+#: src/amitk_study.c:55
+msgid "Objects are shown between 3 linked views"
+msgstr ""
+
+#: src/amitk_study.c:351
+#, c-format
+msgid "inappropriate zoom (%5.3f) for study, reseting to 1.0"
+msgstr ""
+
+#: src/amitk_study.c:652
+msgid "Couldn't change directories in loading study"
+msgstr ""
+
+#: src/amitk_study.c:689
+msgid "Couldn't return to previous directory in load study"
+msgstr ""
+
+#: src/amitk_study.c:709
+msgid "Couldn't change directories in writing study, study not saved"
+msgstr ""
+
+#: src/amitk_study.c:717
+msgid "Couldn't return to previous directory in writing study"
+msgstr ""
+
+#: src/amitk_threshold.c:48
+msgid "per slice"
+msgstr ""
+
+#: src/amitk_threshold.c:49
+msgid "per frame"
+msgstr ""
+
+#: src/amitk_threshold.c:50
+msgid "interpolated between frames"
+msgstr ""
+
+#: src/amitk_threshold.c:51
+msgid "global"
+msgstr ""
+
+#: src/amitk_threshold.c:55
+msgid ""
+"threshold the images based on the max and min values in the current slice"
+msgstr ""
+
+#: src/amitk_threshold.c:56
+msgid ""
+"threshold the images based on the max and min values in the current frame"
+msgstr ""
+
+#: src/amitk_threshold.c:57
+msgid ""
+"threshold the images based on max and min values interpolated from the "
+"reference frame thresholds"
+msgstr ""
+
+#: src/amitk_threshold.c:58
+msgid ""
+"threshold the images based on the max and min values of the entire data set"
+msgstr ""
+
+#: src/amitk_threshold.c:233
+msgid "Percent"
+msgstr ""
+
+#. show/hide taken care of by threshold_update_layout
+#: src/amitk_threshold.c:239
+msgid "Absolute"
+msgstr ""
+
+#: src/amitk_threshold.c:248
+msgid "Max Threshold"
+msgstr ""
+
+#: src/amitk_threshold.c:253
+msgid "Min Threshold"
+msgstr ""
+
+#. color table selector
+#: src/amitk_threshold.c:295 src/ui_render_dialog.c:668
+msgid "color table:"
+msgstr ""
+
+#. threshold type selection
+#: src/amitk_threshold.c:311
+msgid "threshold type"
+msgstr ""
+
+#. color table selector
+#: src/amitk_threshold.c:362
+msgid "ref. frame 0:"
+msgstr ""
+
+#. show/hide taken care of by threshold_update_layout
+#: src/amitk_threshold.c:367
+msgid "ref. frame 1:"
+msgstr ""
+
+#: src/amitk_threshold.c:405
+msgid "distribution"
+msgstr ""
+
+#: src/amitk_threshold.c:412
+msgid "full"
+msgstr ""
+
+#. show/hide taken care of by threshold_update_layout
+#: src/amitk_threshold.c:418
+msgid "scaled"
+msgstr ""
+
+#: src/amitk_threshold.c:549
+msgid "Threshold has no style?\n"
+msgstr ""
+
+#. reset the title
+#: src/amitk_threshold.c:1414 src/amitk_threshold.c:1468
+#, c-format
+msgid "data set: %s\n"
+msgstr ""
+
+#: src/amitk_threshold.c:1449 src/amitk_threshold.c:1588
+msgid "Threshold Dialog"
+msgstr ""
+
+#: src/analysis.c:188
+#, c-format
+msgid "couldn't allocate space for data array for frame %d"
+msgstr ""
+
+#: src/analysis.c:210
+#, c-format
+msgid "couldn't allocate space for roi analysis of frame %d"
+msgstr ""
+
+#: src/analysis.c:295
+#, c-format
+msgid "ROI: %s appears not to have been drawn"
+msgstr ""
+
+#: src/analysis.c:347
+msgid "couldn't allocate space for roi analysis of volumes"
+msgstr ""
+
+#: src/analysis.c:413
+msgid "couldn't allocate space for roi analyses"
+msgstr ""
+
+#: src/cti_import.c:34
+msgid "Unknown Data Type"
+msgstr ""
+
+#. UnknownMatDataType
+#: src/cti_import.c:35
+msgid "Byte"
+msgstr ""
+
+#. ByteData
+#: src/cti_import.c:36
+msgid "Short (16 bit), Little Endian"
+msgstr ""
+
+#. VAX_Ix2
+#: src/cti_import.c:37
+msgid "Integer (32 bit), Little Endian"
+msgstr ""
+
+#. VAX_Ix4
+#: src/cti_import.c:38
+msgid "VAX Float (32 bit)"
+msgstr ""
+
+#. VAX_Rx4
+#: src/cti_import.c:39
+msgid "IEEE Float (32 bit)"
+msgstr ""
+
+#. IeeeFloat
+#: src/cti_import.c:40
+msgid "Short (16 bit), Big Endian"
+msgstr ""
+
+#. SunShort
+#: src/cti_import.c:41
+msgid "Integer (32 bit), Big Endian"
+msgstr ""
+
+#: src/cti_import.c:72
+#, c-format
+msgid "Can't open file %s using libecat"
+msgstr ""
+
+#: src/cti_import.c:96
+#, c-format
+msgid "Can't open this CTI file type: %d"
+msgstr ""
+
+#: src/cti_import.c:106
+#, c-format
+msgid "Libecat can't get header info at matrix %x in file %s"
+msgstr ""
+
+#: src/cti_import.c:128
+#, c-format
+msgid "No support for importing CTI files with data type of: %d (%s)"
+msgstr ""
+
+#: src/cti_import.c:154
+msgid "Couldn't allocate space for the data set structure to hold CTI data"
+msgstr ""
+
+#. handle corrupted cti files
+#: src/cti_import.c:218
+msgid ""
+"Detected corrupted CTI file, will try to continue by guessing voxel_size"
+msgstr ""
+
+#: src/cti_import.c:221
+msgid ""
+"Detected zero voxel size in CTI file, will try to continue by guessing "
+"voxel_size"
+msgstr ""
+
+#. handle corrupted cti files
+#: src/cti_import.c:231
+msgid "Detected corrupted CTI file, will try to continue by guessing offset"
+msgstr ""
+
+#: src/cti_import.c:261
+#, c-format
+msgid ""
+"Importing CTI File:\n"
+"   %s"
+msgstr ""
+
+#: src/cti_import.c:279
+#, c-format
+msgid "Libecat can't get image matrix %x in file %s"
+msgstr ""
+
+#.  N_("Steepest Descent"),
+#: src/fads.c:40
+msgid "Fletcher-Reeves conjugate gradient"
+msgstr ""
+
+#: src/fads.c:41
+msgid "Polak-Ribiere conjugate gradient"
+msgstr ""
+
+#: src/fads.c:47
+msgid "Principle Component Analysis"
+msgstr ""
+
+#: src/fads.c:48
+msgid "Penalized Least Squares Factor Analysis"
+msgstr ""
+
+#: src/fads.c:49
+msgid "2 compartment model"
+msgstr ""
+
+#: src/fads.c:53
+msgid "Priniciple Component Analysis based on singular value decomposition."
+msgstr ""
+
+#: src/fads.c:56
+msgid ""
+"Principle component analysis with positivity constraints and a penalized "
+"least squares objective, an adaptation of Sitek, et al., IEEE Trans. Med. "
+"Imag., 2002.  If beta is set to zero, this is normal factor analysis, "
+"similar to Di Paola, et al., IEEE Trans. Nuc. Sci., 1982"
+msgstr ""
+
+#: src/fads.c:62
+msgid "Standard 2 compartment model"
+msgstr ""
+
+#: src/fads.c:109
+msgid "need dynamic data set in order to perform factor analysis"
+msgstr ""
+
+#: src/fads.c:115 src/fads.c:120 src/fads.c:269
+#, c-format
+msgid "Failed to allocate %dx%d array"
+msgstr ""
+
+#: src/fads.c:125 src/fads.c:274
+#, c-format
+msgid "Failed to allocate %d vector"
+msgstr ""
+
+#: src/fads.c:155
+#, c-format
+msgid "Failed to allocate %d factor array"
+msgstr ""
+
+#: src/fads.c:264
+#, c-format
+msgid "failed to alloc matrix, size %dx%d"
+msgstr ""
+
+#: src/fads.c:308 src/fads.c:335
+#, c-format
+msgid "failed to alloc matrix size %dx%d"
+msgstr ""
+
+#: src/fads.c:322
+#, c-format
+msgid "failed to alloc vector size %d"
+msgstr ""
+
+#: src/fads.c:395 src/fads.c:1197 src/fads.c:2162
+msgid "failed to allocate new_ds"
+msgstr ""
+
+#: src/fads.c:424
+#, c-format
+msgid "couldn't open: %s for writing PCA analyses"
+msgstr ""
+
+#: src/fads.c:932
+msgid "failed forward error malloc"
+msgstr ""
+
+#: src/fads.c:939
+msgid "failed weight malloc"
+msgstr ""
+
+#: src/fads.c:946
+msgid "failed equality constraint alpha malloc"
+msgstr ""
+
+#: src/fads.c:952
+msgid "failed equality constraint blood curve malloc"
+msgstr ""
+
+#: src/fads.c:958 src/fads.c:1923
+msgid "failed malloc for equality lagrange multiplier - alpha"
+msgstr ""
+
+#: src/fads.c:966 src/fads.c:1931
+msgid "failed malloc for equality lagrange multiplier - blood curve"
+msgstr ""
+
+#: src/fads.c:974 src/fads.c:1939
+msgid "failed malloc for inequality lagrange multiplier - alpha"
+msgstr ""
+
+#: src/fads.c:983
+msgid "failed malloc for inequailty lagrange multiplier - factors"
+msgstr ""
+
+#: src/fads.c:1000 src/fads.c:1986
+msgid "failed to allocate multidimensional minimizer"
+msgstr ""
+
+#: src/fads.c:1071
+#, c-format
+msgid ""
+"Calculating Penalized Least Squares Factor Analysis:\n"
+"   %s"
+msgstr ""
+
+#: src/fads.c:1210
+#, c-format
+msgid "factor %d"
+msgstr ""
+
+#: src/fads.c:1229 src/fads.c:2197
+#, c-format
+msgid "couldn't open: %s for writing fads analyses"
+msgstr ""
+
+#: src/fads.c:1875
+msgid "failed to allocate intermediate data storage for tissue components"
+msgstr ""
+
+#: src/fads.c:1881
+msgid "failed to allocate intermediate data storage for forward error"
+msgstr ""
+
+#: src/fads.c:1887
+msgid "failed to allocate frame start array"
+msgstr ""
+
+#: src/fads.c:1893
+msgid "failed to allocate frame end array"
+msgstr ""
+
+#: src/fads.c:1899
+msgid "failed to allocate frame midpt array"
+msgstr ""
+
+#: src/fads.c:1911
+msgid "failed malloc for equality constraint on alpha"
+msgstr ""
+
+#: src/fads.c:1917
+msgid "failed malloc for equality constraint on blood curve"
+msgstr ""
+
+#: src/fads.c:1947
+msgid "failed malloc for inequailty lagrange multiplier - blood curve"
+msgstr ""
+
+#: src/fads.c:1955
+msgid "failed malloc for inequailty lagrange multiplier - k12"
+msgstr ""
+
+#: src/fads.c:1963
+msgid "failed malloc for inequailty lagrange multiplier - k21"
+msgstr ""
+
+#: src/fads.c:1994
+msgid "failed to allocate initial vector"
+msgstr ""
+
+#: src/fads.c:2024
+#, c-format
+msgid ""
+"Calculating Two Compartment Factor Analysis:\n"
+"   %s"
+msgstr ""
+
+#: src/fads.c:2144
+#, c-format
+msgid "Minimum found after %d iterations\n"
+msgstr ""
+
+#: src/fads.c:2146
+msgid "terminated minization \n"
+msgstr ""
+
+#: src/fads.c:2148
+#, c-format
+msgid "No minimum found after %d iterations, exited with: %s\n"
+msgstr ""
+
+#: src/fads.c:2177
+#, c-format
+msgid "tissue type %d: k12 %g k21 %g"
+msgstr ""
+
+#: src/fads.c:2179
+msgid "blood fraction"
+msgstr ""
+
+#: src/image.c:180
+msgid "couldn't allocate memory for rgba_data for roi image"
+msgstr ""
+
+#: src/image.c:222
+msgid "couldn't allocate memory for rgb_data for blank image"
+msgstr ""
+
+#: src/image.c:254
+msgid "couldn't allocate memory for image from 8 bit data"
+msgstr ""
+
+#: src/image.c:303
+msgid ""
+"couldn't allocate memory for rgba16_data for transfering rendering to image"
+msgstr ""
+
+#: src/image.c:380
+msgid "couldn't allocate memory for char_data for rendering image"
+msgstr ""
+
+#: src/image.c:429
+msgid "couldn't allocate memory for rgba_data for bar_graph"
+msgstr ""
+
+#: src/image.c:504
+msgid "couldn't allocate memory for rgb_data for color_strip"
+msgstr ""
+
+#: src/image.c:559
+msgid "couldn't allocate memory for rgba_data for projection image"
+msgstr ""
+
+#: src/image.c:609
+msgid "couldn't allocate memory for rgba_data for slice image"
+msgstr ""
+
+#: src/medcon_import.c:37
+msgid "(_X)MedCon Guess"
+msgstr ""
+
+#: src/medcon_import.c:38
+msgid "_Raw via (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:39
+msgid "A_SCII via (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:40
+msgid "_GIF 87a/89a"
+msgstr ""
+
+#: src/medcon_import.c:41
+msgid "Acr/_Nema 2.0"
+msgstr ""
+
+#: src/medcon_import.c:42
+msgid "IN_W 1.0 (RUG)"
+msgstr ""
+
+#: src/medcon_import.c:43
+msgid "_Concorde/microPET"
+msgstr ""
+
+#: src/medcon_import.c:44
+msgid "_ECAT 6 via (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:45
+msgid "_ECAT 7 via (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:46
+msgid "_InterFile 3.3"
+msgstr ""
+
+#: src/medcon_import.c:47
+msgid "_Analyze (SPM)"
+msgstr ""
+
+#: src/medcon_import.c:48
+msgid "_DICOM 3.0"
+msgstr ""
+
+#: src/medcon_import.c:52
+msgid "let (X)MedCon/libmdc guess file type"
+msgstr ""
+
+#: src/medcon_import.c:53
+msgid "Import a raw data file through (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:54
+msgid "Import an ASCII data file through (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:55
+msgid "Import a file stored as GIF"
+msgstr ""
+
+#: src/medcon_import.c:56
+msgid "Import a Acr/Nema 2.0 file"
+msgstr ""
+
+#: src/medcon_import.c:57
+msgid "Import a INW 1.0 (RUG) File"
+msgstr ""
+
+#: src/medcon_import.c:58
+msgid "Import a file from the Concorde microPET"
+msgstr ""
+
+#: src/medcon_import.c:59
+msgid "Import a CTI/ECAT 6 file through (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:60
+msgid "Import a CTI/ECAT 7 file through (X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:61
+msgid "Import a InterFile 3.3 file"
+msgstr ""
+
+#: src/medcon_import.c:62
+msgid "Import an Analyze file"
+msgstr ""
+
+#: src/medcon_import.c:63
+msgid "Import a DICOM 3.0 file"
+msgstr ""
+
+#: src/medcon_import.c:189
+#, c-format
+msgid "Can't open file %s with libmdc/(X)MedCon"
+msgstr ""
+
+#: src/medcon_import.c:197
+#, c-format
+msgid "Can't read file %s with libmdc/(X)MedCon"
+msgstr ""
+
+#. note1: which types are supported are determined by what MdcGetImg* functions are available
+#. note2: floats we have medcon quantify, everything else we try to get the raw data, and store scaling factors
+#. 1
+#. 2
+#: src/medcon_import.c:225
+#, c-format
+msgid ""
+"Importing type %d file through (X)MedCon unsupported, will try as unsigned "
+"byte"
+msgstr ""
+
+#. 5
+#: src/medcon_import.c:234
+#, c-format
+msgid ""
+"Importing type %d file through (X)MedCon unsupported, will try as signed "
+"short"
+msgstr ""
+
+#. 7
+#: src/medcon_import.c:243
+#, c-format
+msgid ""
+"Importing type %d file through (X)MedCon unsupported, will try as signed int"
+msgstr ""
+
+#. 9
+#. 8
+#. 11
+#. 12
+#. 13
+#: src/medcon_import.c:257
+#, c-format
+msgid "Importing type %d file through (X)MedCon unsupported, will try as float"
+msgstr ""
+
+#: src/medcon_import.c:269
+msgid ""
+"Couldn't allocate space for the data set structure to hold (X)MedCon data"
+msgstr ""
+
+#. give up
+#: src/medcon_import.c:342
+#, c-format
+msgid "Couldn't figure out time of scan from (X)MedCon, setting to %s"
+msgstr ""
+
+#: src/medcon_import.c:359
+msgid ""
+"(X)MedCon file has non-zero intercept, which AMIDE is ignoring, quantitation "
+"will be off"
+msgstr ""
+
+#: src/medcon_import.c:362
+#, c-format
+msgid ""
+"Importing File Through (X)MedCon:\n"
+"   %s"
+msgstr ""
+
+#: src/medcon_import.c:405
+msgid "(X)MedCon couldn't convert to an unsigned byte... out of memory?"
+msgstr ""
+
+#: src/medcon_import.c:432
+msgid "(X)MedCon couldn't convert to a signed short... out of memory?"
+msgstr ""
+
+#: src/medcon_import.c:459
+msgid "(X)MedCon couldn't convert to a signed int... out of memory?"
+msgstr ""
+
+#: src/medcon_import.c:482
+msgid "(X)MedCon couldn't convert to a float... out of memory?"
+msgstr ""
+
+#: src/mpeg_encode.c:109
+msgid "couldn't allocate space for context_t"
+msgstr ""
+
+#: src/mpeg_encode.c:121
+msgid "couldn't allocate space for fame parameters"
+msgstr ""
+
+#: src/mpeg_encode.c:128
+msgid "Unable to allocate mpeg encoding buffer"
+msgstr ""
+
+#: src/mpeg_encode.c:135
+msgid "Unable to allocate yuv struct"
+msgstr ""
+
+#: src/mpeg_encode.c:143
+msgid "Unable to allocate yuv buffer"
+msgstr ""
+
+#: src/mpeg_encode.c:162
+msgid "unable to open output file for mpeg encoding"
+msgstr ""
+
+#: src/raw_data_import.c:223
+msgid "read offset (entries):"
+msgstr ""
+
+#: src/raw_data_import.c:226
+msgid "read offset (bytes):"
+msgstr ""
+
+#: src/raw_data_import.c:240
+msgid "total entries to read through:"
+msgstr ""
+
+#: src/raw_data_import.c:255
+msgid "total bytes to read through:"
+msgstr ""
+
+#: src/raw_data_import.c:292
+#, c-format
+msgid "%s: Raw Data Import Dialog\n"
+msgstr ""
+
+#. widgets to change the raw data file's  data format
+#: src/raw_data_import.c:371
+msgid "data format:"
+msgstr ""
+
+#. how many bytes we can read from the file
+#: src/raw_data_import.c:399
+msgid "file size (bytes):"
+msgstr ""
+
+#. labels for the x, y, and z components
+#: src/raw_data_import.c:442 src/ui_render.c:937
+msgid "x"
+msgstr ""
+
+#: src/raw_data_import.c:445 src/ui_render.c:911
+msgid "y"
+msgstr ""
+
+#: src/raw_data_import.c:448 src/ui_render.c:919
+msgid "z"
+msgstr ""
+
+#: src/raw_data_import.c:451
+msgid "frames"
+msgstr ""
+
+#. widgets to change the dimensions of the data set
+#: src/raw_data_import.c:458
+msgid "dimensions (# voxels)"
+msgstr ""
+
+#. widgets to change the voxel size of the data set
+#: src/raw_data_import.c:481
+msgid "voxel size (mm)"
+msgstr ""
+
+#. scale factor to apply to the data
+#: src/raw_data_import.c:503
+msgid "scale factor"
+msgstr ""
+
+#: src/raw_data_import.c:537
+msgid "Couldn't allocate space for raw_data_info structure for raw data import"
+msgstr ""
+
+#: src/raw_data_import.c:545
+#, c-format
+msgid "Couldn't get stat's on file %s for raw data import"
+msgstr ""
+
+#: src/render.c:46
+msgid "Highest Quality and Slowest"
+msgstr ""
+
+#: src/render.c:47
+msgid "High Quality and Medium Speed"
+msgstr ""
+
+#: src/render.c:48
+msgid "Medium Quality and Fast"
+msgstr ""
+
+#: src/render.c:49
+msgid "Low Quality and Fastest"
+msgstr ""
+
+#: src/render.c:52
+msgid "Opacity"
+msgstr ""
+
+#: src/render.c:53
+msgid "Grayscale"
+msgstr ""
+
+#: src/render.c:147
+msgid "couldn't allocate space for rendering context"
+msgstr ""
+
+#: src/render.c:185
+msgid ""
+"\"Per Slice\" thresholding illogical for conversion to volume rendering, "
+"using \"Global\" thresholding "
+msgstr ""
+
+#: src/render.c:198
+msgid "couldn't allocate space for density ramp x"
+msgstr ""
+
+#: src/render.c:203
+msgid "couldn't allocate space for density ramp y"
+msgstr ""
+
+#: src/render.c:214
+msgid "couldn't allocate space for gradient ramp x"
+msgstr ""
+
+#: src/render.c:219
+msgid "couldn't allocate space for gradient ramp y"
+msgstr ""
+
+#: src/render.c:235
+msgid "Error Setting the Rendering Density Ramp"
+msgstr ""
+
+#: src/render.c:245
+msgid "Error Setting the Rendering Gradient Ramp"
+msgstr ""
+
+#: src/render.c:253
+#, c-format
+msgid "Error Setting the Rendering Voxel Size (%s): %s"
+msgstr ""
+
+#: src/render.c:263
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, NORMAL): %s"
+msgstr ""
+
+#: src/render.c:270
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, DENSITY): %s"
+msgstr ""
+
+#: src/render.c:277
+#, c-format
+msgid "Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s"
+msgstr ""
+
+#: src/render.c:287
+#, c-format
+msgid "Error Setting the Rendering Classifier Table (%s, DENSITY): %s"
+msgstr ""
+
+#: src/render.c:297
+#, c-format
+msgid "Error Setting the Classifier Table (%s, GRADIENT): %s"
+msgstr ""
+
+#: src/render.c:379
+#, c-format
+msgid "Error Setting the Context Size (%s): %s"
+msgstr ""
+
+#: src/render.c:392
+#, c-format
+msgid "Could not allocate space for density data for %s"
+msgstr ""
+
+#: src/render.c:404
+#, c-format
+msgid "Could not allocate space for rendering context volume for %s"
+msgstr ""
+
+#: src/render.c:416
+#, c-format
+msgid "Converting for rendering: %s"
+msgstr ""
+
+#: src/render.c:596
+#, c-format
+msgid "Error Computing the Rendering Normals (%s): %s"
+msgstr ""
+
+#: src/render.c:624
+#, c-format
+msgid "Error Setting Rendering Octree Threshold (%s, DENSITY): %s"
+msgstr ""
+
+#: src/render.c:630
+#, c-format
+msgid "Error Setting Rendering Octree Threshold (%s, GRADIENT): %s"
+msgstr ""
+
+#: src/render.c:637
+#, c-format
+msgid "Error Generating Octree (%s): %s"
+msgstr ""
+
+#: src/render.c:664
+#, c-format
+msgid "Error Setting the Rendering Material (%s, SHINYNESS): %s"
+msgstr ""
+
+#: src/render.c:674
+#, c-format
+msgid "Error Setting the Rendering Shader (%s): %s"
+msgstr ""
+
+#: src/render.c:682
+#, c-format
+msgid "Error Shading Table for Rendering (%s): %s"
+msgstr ""
+
+#: src/render.c:717
+#, c-format
+msgid "Error Setting The Item To Rotate (%s): %s"
+msgstr ""
+
+#: src/render.c:722
+#, c-format
+msgid "Error Rotating Rendering (%s): %s"
+msgstr ""
+
+#: src/render.c:800
+#, c-format
+msgid "Error Setting Rendering Max Ray Opacity (%s): %s"
+msgstr ""
+
+#: src/render.c:806
+#, c-format
+msgid "Error Setting the Min Voxel Opacity (%s): %s"
+msgstr ""
+
+#: src/render.c:835
+#, c-format
+msgid "Could not allocate space for Rendering Image for %s"
+msgstr ""
+
+#: src/render.c:843
+#, c-format
+msgid "Error Switching the Rendering Image Pixel Return Type (%s): %s"
+msgstr ""
+
+#: src/render.c:855
+#, c-format
+msgid "Error Setting the Rendering Depth Cue (%s): %s"
+msgstr ""
+
+#: src/render.c:872
+#, c-format
+msgid "Error Enabling Rendering Depth Cueing (%s): %s"
+msgstr ""
+
+#: src/render.c:902
+#, c-format
+msgid "Error Classifying the Volume (%s): %s"
+msgstr ""
+
+#: src/render.c:908
+#, c-format
+msgid "Error Rendering the Classified Volume (%s): %s"
+msgstr ""
+
+#: src/render.c:914
+#, c-format
+msgid "Error Rendering the Volume (%s): %s"
+msgstr ""
+
+#: src/tb_alignment.c:39
+msgid ""
+"There is only one data set in this study.  There needs to be at least two "
+"data sets to perform an alignment"
+msgstr ""
+
+#: src/tb_alignment.c:43
+msgid ""
+"There must exist at least 3 pairs of objects that can be used as fiducial "
+"marks between the two data sets in order to perform an alignment."
+msgstr ""
+
+#: src/tb_alignment.c:48
+msgid ""
+"Welcome to the data set alignment wizard, used for aligning one medical "
+"image data set with another. \n"
+"Currently, only registration using fiducial marks has been implemented "
+"inside of AMIDE."
+msgstr ""
+
+#: src/tb_alignment.c:288
+#, c-format
+msgid ""
+"The alignment has been calculated, press Finish to apply, or Cancel to "
+"quit.\n"
+"\n"
+"The calculated fiducial reference error is: %5.5f mm/point"
+msgstr ""
+
+#: src/tb_alignment.c:493
+msgid "couldn't allocate space for tb_alignment_t"
+msgstr ""
+
+#: src/tb_alignment.c:578
+msgid "Align Data Set: (moving)"
+msgstr ""
+
+#: src/tb_alignment.c:601
+msgid "With Data Set: (fixed)"
+msgstr ""
+
+#: src/tb_alignment.c:617
+msgid "Fiducial Marks Selection"
+msgstr ""
+
+#: src/tb_alignment.c:643
+msgid "Points for Alignment"
+msgstr ""
+
+#: src/tb_alignment.c:656
+msgid "Conclusion"
+msgstr ""
+
+#: src/tb_alignment.c:669
+msgid "Alignment Error"
+msgstr ""
+
+#: src/tb_crop.c:39
+msgid "Data Set Cropping Wizard"
+msgstr ""
+
+#: src/tb_crop.c:42
+msgid ""
+"When the apply button is hit, a new data set will be created\n"
+"and placed into the study's tree, consisting of the appropriately\n"
+"cropped data\n"
+msgstr ""
+
+#. the zoom selection
+#: src/tb_crop.c:161
+msgid "zoom"
+msgstr ""
+
+#: src/tb_crop.c:182
+msgid "frame"
+msgstr ""
+
+#: src/tb_crop.c:227
+#, c-format
+msgid "%s range:"
+msgstr ""
+
+#: src/tb_crop.c:761
+msgid "couldn't allocate space for tb_crop_t"
+msgstr ""
+
+#: src/tb_crop.c:799 src/tb_filter.c:505 src/ui_study_cb.c:55
+msgid "No data set is currently marked as active"
+msgstr ""
+
+#: src/tb_fads.c:40
+msgid "Factor Analysis Wizard"
+msgstr ""
+
+#: src/tb_fads.c:45
+msgid ""
+"This page allows the computation of the singular value decomposition for the "
+"data set in question.  These values can give you an idea of how many "
+"important factors the data set has.\n"
+"\n"
+"This process can be extremely slow, so skip this page if you already know "
+"the answer."
+msgstr ""
+
+#: src/tb_fads.c:53
+msgid ""
+"When the apply button is hit, the appropriate factor analysis data "
+"structures will be created, and placed underneath the given data set in the "
+"study tree\n"
+msgstr ""
+
+#: src/tb_fads.c:58
+msgid ""
+"Welcome to the factor analysis of dynamic structures wizard.\n"
+"None of this code has been validated, and it's probably wrong,so use at your "
+"own risk"
+msgstr ""
+
+#: src/tb_fads.c:65
+msgid ""
+"Welcome to the factor analysis of dynamic structures wizard.\n"
+"This wizard only works with dynamic studies"
+msgstr ""
+
+#: src/tb_fads.c:152
+#, c-format
+msgid ""
+"%s\n"
+"Method Picked: %s"
+msgstr ""
+
+#: src/tb_fads.c:186
+msgid "Filename for Factor Data"
+msgstr ""
+
+#. do I need to compute factors?
+#: src/tb_fads.c:273
+msgid "Compute Singular Values?"
+msgstr ""
+
+#. ask for the fads method to use
+#: src/tb_fads.c:309
+msgid "FADS Method:"
+msgstr ""
+
+#. ask for the minimizer algorithm to use
+#: src/tb_fads.c:354
+msgid "Minimization Algorithm:"
+msgstr ""
+
+#. max # of iterations
+#: src/tb_fads.c:377
+msgid "Max. # of iterations:"
+msgstr ""
+
+#. stopping criteria
+#: src/tb_fads.c:392
+msgid "Stopping Criteria:"
+msgstr ""
+
+#. stopping criteria
+#: src/tb_fads.c:408
+msgid "Beta:"
+msgstr ""
+
+#. how many factors to solve for?
+#: src/tb_fads.c:423
+msgid "# of Factors to use"
+msgstr ""
+
+#. k12 criteria
+#: src/tb_fads.c:440
+msgid "initial k12 (1/s):"
+msgstr ""
+
+#. k21 criteria
+#: src/tb_fads.c:456
+msgid "initial K21 (1/s):"
+msgstr ""
+
+#. A table to add blood sample measurements
+#: src/tb_fads.c:480
+msgid "Add Blood Sample"
+msgstr ""
+
+#: src/tb_fads.c:520
+msgid "Remove Blood Sample"
+msgstr ""
+
+#: src/tb_fads.c:762
+msgid "failed malloc for frames array"
+msgstr ""
+
+#: src/tb_fads.c:767
+msgid "failed malloc for vals array"
+msgstr ""
+
+#: src/tb_fads.c:901
+msgid "couldn't allocate space for tb_fads_t"
+msgstr ""
+
+#. mm
+#. mm
+#: src/tb_filter.c:46
+msgid "Data Set Filtering Wizard"
+msgstr ""
+
+#: src/tb_filter.c:49
+msgid ""
+"When the apply button is hit, a new data set will be created and placed into "
+"the study's tree, consisting of the appropriately filtered data\n"
+msgstr ""
+
+#: src/tb_filter.c:54
+msgid "The Gaussian filter is an effective smoothing filter"
+msgstr ""
+
+#: src/tb_filter.c:58
+msgid ""
+"Median filter work relatively well at preserving edges while\n"
+"removing speckle noise.\n"
+"\n"
+"This filter is the 3D median filter, so the neighborhood used for\n"
+"determining the median will be KSxKSxKS, KS=kernel size"
+msgstr ""
+
+#: src/tb_filter.c:65
+msgid ""
+"Median filters work relatively well at preserving edges while\n"
+"removing speckle noise.\n"
+"\n"
+"This filter is the 1D median filter, so the neighboorhood used for\n"
+"determining the median will be of the given kernel size, and the\n"
+"data set will be filtered 3x (once for each direction)."
+msgstr ""
+
+#: src/tb_filter.c:74
+msgid ""
+"This filter requires support from the GNU Scientific Library (GSL).\n"
+"This version of AMIDE has not be compiled with GSL support enabled."
+msgstr ""
+
+#: src/tb_filter.c:208
+msgid "Which Filter"
+msgstr ""
+
+#. the kernel selection
+#: src/tb_filter.c:241 src/tb_filter.c:296
+msgid "Kernel Size"
+msgstr ""
+
+#: src/tb_filter.c:258
+msgid "FWHM (mm)"
+msgstr ""
+
+#: src/tb_filter.c:479
+msgid "couldn't allocate space for tb_filter_t"
+msgstr ""
+
+#. the rest of this function runs the file selection dialog box
+#: src/tb_fly_through.c:305 src/ui_render_movie.c:237
+msgid "Output MPEG As"
+msgstr ""
+
+#: src/tb_fly_through.c:447
+#, c-format
+msgid "encoding of frame %d failed"
+msgstr ""
+
+#: src/tb_fly_through.c:587
+msgid "couldn't allocate space for tb_fly_through_t"
+msgstr ""
+
+#: src/tb_fly_through.c:646
+msgid "Fly Through Generation"
+msgstr ""
+
+#: src/tb_fly_through.c:666
+msgid "Current Position (mm):"
+msgstr ""
+
+#: src/tb_fly_through.c:676
+msgid "Start Position (mm):"
+msgstr ""
+
+#: src/tb_fly_through.c:691
+msgid "End Position (mm):"
+msgstr ""
+
+#: src/tb_fly_through.c:706
+msgid "Movie Duration (sec):"
+msgstr ""
+
+#: src/tb_fly_through.c:724
+msgid "Fly through movie generation"
+msgstr ""
+
+#: src/tb_fly_through.c:737
+msgid "Set Start Position"
+msgstr ""
+
+#: src/tb_fly_through.c:742
+msgid "Set End Position"
+msgstr ""
+
+#. do we want to make a movie over time or over frames
+#: src/tb_fly_through.c:798 src/ui_render_movie.c:678
+msgid "Dynamic Movie:"
+msgstr ""
+
+#. the radio buttons
+#: src/tb_fly_through.c:808 src/ui_render_movie.c:688
+msgid "No"
+msgstr ""
+
+#: src/tb_fly_through.c:814 src/ui_render_movie.c:693
+msgid "over time"
+msgstr ""
+
+#: src/tb_fly_through.c:818 src/ui_render_movie.c:697
+msgid "over frames"
+msgstr ""
+
+#. widgets to specify the start and end times
+#: src/tb_fly_through.c:829 src/ui_render_movie.c:708
+msgid "Start Time (s)"
+msgstr ""
+
+#: src/tb_fly_through.c:832 src/ui_render_movie.c:711
+msgid "Start Frame"
+msgstr ""
+
+#: src/tb_fly_through.c:859 src/ui_render_movie.c:738
+msgid "End Time (s)"
+msgstr ""
+
+#: src/tb_fly_through.c:862 src/ui_render_movie.c:741
+msgid "End Frame"
+msgstr ""
+
+#: src/tb_roi_analysis.c:70
+msgid "ROI"
+msgstr ""
+
+#: src/tb_roi_analysis.c:71
+msgid "Type"
+msgstr ""
+
+#: src/tb_roi_analysis.c:72 src/ui_time_dialog.c:53
+msgid "Data Set"
+msgstr ""
+
+#: src/tb_roi_analysis.c:75
+msgid "Time Midpt (s)"
+msgstr ""
+
+#: src/tb_roi_analysis.c:76
+msgid "Total"
+msgstr ""
+
+#: src/tb_roi_analysis.c:77
+msgid "Median"
+msgstr ""
+
+#: src/tb_roi_analysis.c:78
+msgid "Mean"
+msgstr ""
+
+#: src/tb_roi_analysis.c:79
+msgid "Var"
+msgstr ""
+
+#: src/tb_roi_analysis.c:80
+msgid "Std Dev"
+msgstr ""
+
+#: src/tb_roi_analysis.c:81
+msgid "Std Err"
+msgstr ""
+
+#: src/tb_roi_analysis.c:82
+msgid "Min"
+msgstr "最小"
+
+#: src/tb_roi_analysis.c:83
+msgid "Max"
+msgstr "最大"
+
+#: src/tb_roi_analysis.c:84
+msgid "Size (mm^3)"
+msgstr ""
+
+#: src/tb_roi_analysis.c:85
+msgid "Frac. Voxels"
+msgstr ""
+
+#: src/tb_roi_analysis.c:86
+msgid "Voxels"
+msgstr ""
+
+#: src/tb_roi_analysis.c:136
+msgid "Export Statistics"
+msgstr ""
+
+#: src/tb_roi_analysis.c:192
+#, c-format
+msgid "couldn't open: %s for writing roi analyses"
+msgstr ""
+
+#: src/tb_roi_analysis.c:198
+#, c-format
+msgid "# %s: ROI Analysis File - generated on %s"
+msgstr ""
+
+#: src/tb_roi_analysis.c:200
+#, c-format
+msgid "# Study:\t%s\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:204
+#, c-format
+msgid "# ROI:\t%s\tType:\t%s\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:208
+#, c-format
+msgid "#\tCalculation done on %5.3f percentile of voxels in ROI\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:210
+msgid "#\tCalculation done with all voxels in ROI\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:216
+#, c-format
+msgid "#\tData Set:\t%s\tScaling Factor:\t%g\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:223
+#, c-format
+msgid "#\t\tOutput Data Units: %s\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:225
+#, c-format
+msgid "#\t\t\tInjected Dose: %g [%s]\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:229
+#, c-format
+msgid "#\t\t\tCylinder Factor: %g [%s]\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:240
+#, c-format
+msgid "#\t\t\tSubject Weight: %g [%s]\n"
+msgstr ""
+
+#: src/tb_roi_analysis.c:382
+msgid "ROI Statistics"
+msgstr ""
+
+#: src/tb_roi_analysis.c:569
+msgid "No Data Sets selected for calculating analyses"
+msgstr ""
+
+#: src/tb_roi_analysis.c:581
+msgid "No ROI's selected for calculating analyses"
+msgstr ""
+
+#. start setting up the widget we'll display the info from
+#: src/tb_roi_analysis.c:594
+#, c-format
+msgid "%s Roi Analysis: Study %s"
+msgstr ""
+
+#: src/tb_roi_analysis.c:735
+#, c-format
+msgid "%s: ROI Analysis Initialization Dialog"
+msgstr ""
+
+#: src/tb_roi_analysis.c:754
+msgid "Calculate:"
+msgstr ""
+
+#: src/tb_roi_analysis.c:757
+msgid "All ROIS:"
+msgstr ""
+
+#: src/tb_roi_analysis.c:760
+msgid "Selected ROIS:"
+msgstr ""
+
+#: src/tb_roi_analysis.c:765
+msgid "On All Data Sets:"
+msgstr ""
+
+#: src/tb_roi_analysis.c:783
+msgid "On Selected Data Sets:"
+msgstr ""
+
+#. do we want to calculate over a subfraction
+#: src/tb_roi_analysis.c:822
+msgid "Calculate over subset of voxels:"
+msgstr ""
+
+#. what subfraction
+#: src/tb_roi_analysis.c:834
+#, c-format
+msgid "Calculate over % highest voxels:"
+msgstr ""
+
+#: src/ui_common.c:87 src/ui_study_cb.c:185
+#, c-format
+msgid "Inappropriate filename: %s"
+msgstr ""
+
+#: src/ui_common.c:98 src/ui_study_cb.c:210
+#, c-format
+msgid "Overwrite file: %s"
+msgstr ""
+
+#: src/ui_common.c:139
+msgid "AMIDE's a Medical Image Data Examiner\n"
+msgstr ""
+
+#: src/ui_common.c:141
+msgid "Email bug reports to: "
+msgstr ""
+
+#: src/ui_common.c:144
+msgid "Compiled with support for the following libraries:\n"
+msgstr ""
+
+#: src/ui_common.c:147
+msgid "libecat: CTI File library by Merence Sibomona\n"
+msgstr ""
+
+#: src/ui_common.c:150
+msgid "libgsl: GNU Scientific Library by the GSL Team (version "
+msgstr ""
+
+#: src/ui_common.c:153
+msgid "libmdc: Medical Imaging File library by Erik Nolf (version "
+msgstr ""
+
+#: src/ui_common.c:156
+msgid "libvolpack: Volume Rendering library by Philippe Lacroute (version "
+msgstr ""
+
+#: src/ui_common.c:159
+msgid "libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version "
+msgstr ""
+
+#: src/ui_common.c:166
+msgid "Copyright (c) 2000-2003 Andy Loening"
+msgstr ""
+
+#: src/ui_common.c:553
+msgid "Request Dialog"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:361
+#, c-format
+msgid "%s: Preferences Dialog"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:382
+msgid "ROI Drawing"
+msgstr ""
+
+#. widgets to change the roi's size
+#: src/ui_preferences_dialog.c:387
+msgid "Width (pixels)"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:472
+msgid "Canvas Setup"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:476
+msgid "Layout:"
+msgstr ""
+
+#. do we want the size of the canvas to not resize
+#: src/ui_preferences_dialog.c:515
+msgid "Maintain canvas size constant:"
+msgstr ""
+
+#. widgets to change the amount of empty space in the center of the target
+#: src/ui_preferences_dialog.c:529
+msgid "Target Empty Area (pixels)"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:549
+msgid "Default Color Tables"
+msgstr ""
+
+#. color table selector
+#: src/ui_preferences_dialog.c:556
+#, c-format
+msgid "default %s color table:"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:585
+msgid "Miscellaneous"
+msgstr ""
+
+#: src/ui_preferences_dialog.c:589
+msgid "Don't Prompt for \"Save Changes\" on Exit:"
+msgstr ""
+
+#: src/ui_render.c:381 src/ui_study_cb.c:260 src/ui_study_cb.c:504
+#, c-format
+msgid "Failure Saving File: %s"
+msgstr ""
+
+#: src/ui_render.c:405 src/ui_study_cb.c:533
+msgid "Export File"
+msgstr ""
+
+#: src/ui_render.c:509
+msgid "_Export Rendering"
+msgstr ""
+
+#: src/ui_render.c:510
+msgid "Export the rendered image"
+msgstr ""
+
+#: src/ui_render.c:514
+msgid "_Create Movie"
+msgstr ""
+
+#: src/ui_render.c:515
+msgid "Create a movie out of a sequence of renderings"
+msgstr ""
+
+#: src/ui_render.c:525
+msgid "_Rendering Parameters"
+msgstr ""
+
+#: src/ui_render.c:526
+msgid "Adjust parameters pertinent to the rendered image"
+msgstr ""
+
+#: src/ui_render.c:559
+msgid "Single"
+msgstr ""
+
+#: src/ui_render.c:559
+msgid "Monoscopic rendering"
+msgstr ""
+
+#: src/ui_render.c:561
+msgid "Stereo"
+msgstr ""
+
+#: src/ui_render.c:561
+msgid "Stereoscopic rendering"
+msgstr ""
+
+#: src/ui_render.c:567
+msgid "Opacity and density transfer functions"
+msgstr ""
+
+#. add the zoom widget to our toolbar
+#: src/ui_render.c:587 src/ui_study_menus.c:552
+msgid "zoom:"
+msgstr ""
+
+#: src/ui_render.c:600
+msgid "specify how much to magnify the rendering"
+msgstr ""
+
+#: src/ui_render.c:692
+msgid "couldn't allocate space for ui_render_t"
+msgstr ""
+
+#: src/ui_render.c:862
+msgid "Rendering Window"
+msgstr ""
+
+#. button to reset the axis
+#: src/ui_render.c:948
+msgid "Reset Axis"
+msgstr ""
+
+#: src/ui_render.c:1038
+#, c-format
+msgid "%s: Rendering Initialization Dialog"
+msgstr ""
+
+#. do we want to strip values
+#: src/ui_render.c:1057
+msgid "Set values greater than max. threshold to zero?"
+msgstr ""
+
+#. do we want to converse memory
+#: src/ui_render.c:1065
+msgid "Accelerate Rendering?  Increases memory use ~3x"
+msgstr ""
+
+#: src/ui_render_dialog.c:337
+msgid "couldn't allocate space for ramp x"
+msgstr ""
+
+#: src/ui_render_dialog.c:342
+msgid "couldn't allocate space for ramp y"
+msgstr ""
+
+#: src/ui_render_dialog.c:420
+msgid "Failed to Allocate Memory for Ramp"
+msgstr ""
+
+#: src/ui_render_dialog.c:467
+#, c-format
+msgid "%s: Rendering Parameters Dialog"
+msgstr ""
+
+#. widgets to change the quality versus speed of rendering
+#: src/ui_render_dialog.c:486
+msgid "Speed versus Quality"
+msgstr ""
+
+#. allow rendering to be click and drag
+#: src/ui_render_dialog.c:510
+msgid "update without button release"
+msgstr ""
+
+#. widget for the stereo eye angle
+#: src/ui_render_dialog.c:525
+msgid "Stereo Angle"
+msgstr ""
+
+#. widget for the stereo eye width
+#: src/ui_render_dialog.c:539
+msgid "Eye Width (mm)"
+msgstr ""
+
+#. the depth cueing enabling button
+#: src/ui_render_dialog.c:561
+msgid "enable/disable depth cueing"
+msgstr ""
+
+#: src/ui_render_dialog.c:569
+msgid "Front Factor"
+msgstr ""
+
+#: src/ui_render_dialog.c:582
+msgid "Density"
+msgstr ""
+
+#: src/ui_render_dialog.c:624
+#, c-format
+msgid "%s: Transfer Function Dialog"
+msgstr ""
+
+#. widgets to change the returned pixel type of the rendering
+#: src/ui_render_dialog.c:648
+msgid "Return Type"
+msgstr ""
+
+#: src/ui_render_dialog.c:696
+msgid ""
+"Density\n"
+"Dependent\n"
+"Opacity"
+msgstr ""
+
+#. gradient classification
+#: src/ui_render_dialog.c:698
+msgid ""
+"Gradient\n"
+"Dependent\n"
+"Opacity"
+msgstr ""
+
+#. GTK no longer has a way to detect automatically when the GtkCurve has been changed,
+#. user will now have to explicitly change
+#: src/ui_render_dialog.c:722
+msgid "Apply Curve Changes"
+msgstr ""
+
+#: src/ui_render_movie.c:395
+msgid "couldn't allocate space for ui_render_movie_t"
+msgstr ""
+
+#: src/ui_render_movie.c:597
+#, c-format
+msgid "%s: Rendering Movie Generation Dialog"
+msgstr ""
+
+#. widgets to specify how many frames
+#: src/ui_render_movie.c:624
+msgid "Movie Duration (sec)"
+msgstr ""
+
+#: src/ui_render_movie.c:649
+#, c-format
+msgid "Rotations on %s"
+msgstr ""
+
+#: src/ui_render_movie.c:772
+msgid "Rendered Movie Progress"
+msgstr ""
+
+#: src/ui_series.c:40
+msgid "over Space"
+msgstr ""
+
+#: src/ui_series.c:41
+msgid "over Time"
+msgstr ""
+
+#: src/ui_series.c:177
+msgid "No data sets to threshold\n"
+msgstr ""
+
+#: src/ui_series.c:281
+msgid "Set the thresholds and colormaps for the data sets in the series view"
+msgstr ""
+
+#: src/ui_series.c:414
+msgid "couldn't allocate space for ui_series_t"
+msgstr ""
+
+#: src/ui_series.c:512
+msgid "Slicing for series"
+msgstr ""
+
+#: src/ui_series.c:537
+msgid "couldn't allocate space for pointers to image GnomeCanvasItem's"
+msgstr ""
+
+#: src/ui_series.c:542
+msgid "couldn't allocate space for pointers to caption GnomeCanvasItem's"
+msgstr ""
+
+#: src/ui_series.c:547
+msgid "couldn't allocate space for pointers to GnomeCanavasItem lists"
+msgstr ""
+
+#: src/ui_series.c:746
+#, c-format
+msgid "Series: %s (%s - %s)"
+msgstr ""
+
+#: src/ui_series.c:759
+msgid "Need selected objects to create a series"
+msgstr ""
+
+#: src/ui_series.c:815
+msgid "Need selected data sets to generate a series of slices over time"
+msgstr ""
+
+#: src/ui_series.c:823
+msgid "unable to allocate memory for frames"
+msgstr ""
+
+#: src/ui_series.c:832
+msgid "unable to allocate memory for frame durations"
+msgstr ""
+
+#: src/ui_study.c:48
+msgid "new"
+msgstr ""
+
+#: src/ui_study.c:51
+msgid "1"
+msgstr ""
+
+#: src/ui_study.c:51
+msgid "shift-1"
+msgstr ""
+
+#: src/ui_study.c:52
+msgid "2"
+msgstr ""
+
+#: src/ui_study.c:52
+msgid "shift-2"
+msgstr ""
+
+#: src/ui_study.c:53
+msgid "3"
+msgstr ""
+
+#: src/ui_study.c:53
+msgid "shift-3"
+msgstr ""
+
+#: src/ui_study.c:53
+msgid "ctrl-3"
+msgstr ""
+
+#: src/ui_study.c:64
+msgid "ctrl-x"
+msgstr ""
+
+#: src/ui_study.c:65
+msgid "shift-ctrl-3"
+msgstr ""
+
+#. BLANK
+#: src/ui_study.c:73 src/ui_study.c:85
+msgid "move view"
+msgstr ""
+
+#: src/ui_study.c:73
+msgid "shift data set"
+msgstr ""
+
+#: src/ui_study.c:74 src/ui_study.c:86
+msgid "move view, min. depth"
+msgstr ""
+
+#: src/ui_study.c:74
+msgid "rotate data set"
+msgstr ""
+
+#: src/ui_study.c:75 src/ui_study.c:87
+msgid "change depth"
+msgstr ""
+
+#: src/ui_study.c:75 src/ui_study.c:111
+msgid "add fiducial mark"
+msgstr ""
+
+#. DATA SET
+#: src/ui_study.c:77 src/ui_study.c:81 src/ui_study.c:89 src/ui_study.c:103
+msgid "shift"
+msgstr "平移"
+
+#: src/ui_study.c:78 src/ui_study.c:107
+msgid "rotate"
+msgstr "旋转"
+
+#: src/ui_study.c:79
+msgid "scale"
+msgstr ""
+
+#: src/ui_study.c:79 src/ui_study.c:91
+msgid "set data set inside roi to zero"
+msgstr ""
+
+#: src/ui_study.c:80 src/ui_study.c:92
+msgid "set data set outside roi to zero"
+msgstr ""
+
+#: src/ui_study.c:86
+msgid "rotate study"
+msgstr ""
+
+#: src/ui_study.c:90
+msgid "erase isocontour point"
+msgstr ""
+
+#: src/ui_study.c:90
+msgid "erase large point"
+msgstr ""
+
+#: src/ui_study.c:91
+msgid "start isocontour change"
+msgstr ""
+
+#. CANVAS_ISOCONTOUR_ROI
+#: src/ui_study.c:93
+msgid "draw - edge-to-edge"
+msgstr ""
+
+#: src/ui_study.c:94
+msgid "draw - center out"
+msgstr ""
+
+#. CANVAS_NEW_ROI
+#: src/ui_study.c:97
+msgid "pick isocontour value"
+msgstr ""
+
+#. CANVAS_NEW_ISOCONTOUR_ROI
+#: src/ui_study.c:101 src/ui_study.c:102 src/ui_study.c:105 src/ui_study.c:106
+msgid "cancel"
+msgstr "取消"
+
+#. CANVAS ROTATE OBJECT
+#: src/ui_study.c:109
+msgid "select data set"
+msgstr ""
+
+#: src/ui_study.c:110 src/ui_study.c:122
+msgid "make active"
+msgstr "激活"
+
+#: src/ui_study.c:111
+msgid "pop up data set dialog"
+msgstr ""
+
+#: src/ui_study.c:111 src/ui_study.c:127
+msgid "add roi"
+msgstr ""
+
+#: src/ui_study.c:112
+msgid "delete data set"
+msgstr ""
+
+#. TREE_DATA_SET
+#: src/ui_study.c:113
+msgid "select roi"
+msgstr ""
+
+#: src/ui_study.c:114
+msgid "center view on roi"
+msgstr ""
+
+#: src/ui_study.c:115
+msgid "pop up roi dialog"
+msgstr ""
+
+#: src/ui_study.c:116
+msgid "delete roi"
+msgstr ""
+
+#. TREE_ROI
+#: src/ui_study.c:117
+msgid "select point"
+msgstr ""
+
+#: src/ui_study.c:118
+msgid "center view on point"
+msgstr ""
+
+#: src/ui_study.c:119
+msgid "pop up point dialog"
+msgstr ""
+
+#: src/ui_study.c:120
+msgid "delete mark"
+msgstr ""
+
+#: src/ui_study.c:123
+msgid "pop up study dialog"
+msgstr ""
+
+#: src/ui_study.c:512
+#, c-format
+msgid ""
+"Adding fiducial mark for data set: %s\n"
+"Enter the mark's name:"
+msgstr ""
+
+#: src/ui_study.c:557
+#, c-format
+msgid ""
+"Adding ROI to: %s\n"
+"Enter ROI Name:"
+msgstr ""
+
+#: src/ui_study.c:614
+#, c-format
+msgid "%5.1f-%5.1f s"
+msgstr ""
+
+#: src/ui_study.c:636
+#, c-format
+msgid "[x,y,z] = [% 5.2f,% 5.2f,% 5.2f] (mm)"
+msgstr ""
+
+#: src/ui_study.c:638
+#, c-format
+msgid "value  = % 5.3g"
+msgstr ""
+
+#: src/ui_study.c:640
+msgid "shift (x,y,z) ="
+msgstr ""
+
+#: src/ui_study.c:641 src/ui_study.c:699
+#, c-format
+msgid "[% 5.2f,% 5.2f,% 5.2f] (mm)"
+msgstr ""
+
+#: src/ui_study.c:645
+#, c-format
+msgid "theta = % 5.3f degrees"
+msgstr ""
+
+#: src/ui_study.c:698
+msgid "view center (x,y,z) ="
+msgstr ""
+
+#: src/ui_study.c:877
+#, c-format
+msgid "Study: %s *"
+msgstr ""
+
+#: src/ui_study.c:879
+#, c-format
+msgid "Study: %s"
+msgstr ""
+
+#: src/ui_study_cb.c:57
+msgid ""
+"This wizard requires compiled in support from the GNU Scientific Library "
+"(libgsl), which this copy of AMIDE does not have."
+msgstr ""
+
+#: src/ui_study_cb.c:91
+#, c-format
+msgid "%s is not a directory/AMIDE study"
+msgstr ""
+
+#: src/ui_study_cb.c:122
+msgid "Open AMIDE File"
+msgstr ""
+
+#: src/ui_study_cb.c:228 src/ui_study_cb.c:231 src/ui_study_cb.c:238
+#, c-format
+msgid "Couldn't unlink file: %s"
+msgstr ""
+
+#: src/ui_study_cb.c:241
+#, c-format
+msgid "Unrecognized file type for file: %s, couldn't delete"
+msgstr ""
+
+#: src/ui_study_cb.c:253
+#, c-format
+msgid "Couldn't create amide directory: %s"
+msgstr ""
+
+#: src/ui_study_cb.c:281
+msgid "Save File"
+msgstr ""
+
+#: src/ui_study_cb.c:377
+#, c-format
+msgid ""
+"File has incorrect permissions for reading\n"
+"Can I try changing access permissions on:\n"
+"   %s?"
+msgstr ""
+
+#: src/ui_study_cb.c:389
+msgid "failed to change read permissions, you're probably not the owner"
+msgstr ""
+
+#: src/ui_study_cb.c:396
+msgid ""
+"failed to change read permissions on raw data file, you're probably not the "
+"owner"
+msgstr ""
+
+#: src/ui_study_cb.c:442
+msgid "Import File"
+msgstr ""
+
+#: src/ui_study_cb.c:497
+msgid "No data sets selected\n"
+msgstr ""
+
+#: src/ui_study_cb.c:670
+msgid "no active data set to erase from"
+msgstr ""
+
+#: src/ui_study_cb.c:679
+#, c-format
+msgid ""
+"Do you really wish to erase the data set %s\n"
+"    to the ROI: %s\n"
+"     on the data set: %s\n"
+"This step is irreversible\n"
+"The minimum threshold value: %5.3f\n"
+"    will be used to fill in the volume"
+msgstr ""
+
+#: src/ui_study_cb.c:680
+msgid "exterior"
+msgstr "外部"
+
+#: src/ui_study_cb.c:680
+msgid "interior"
+msgstr "内部"
+
+#: src/ui_study_cb.c:793
+#, c-format
+msgid "Do you really want to delete: %s%s"
+msgstr ""
+
+#: src/ui_study_cb.c:796
+msgid ""
+"\n"
+"and it's children"
+msgstr ""
+
+#: src/ui_study_cb.c:1227
+msgid ""
+"There are unsaved changes to the study.\n"
+"Are you sure you wish to quit?"
+msgstr ""
+
+#: src/ui_study_menus.c:169 src/ui_study_menus.c:222 src/ui_study_menus.c:235
+#: src/ui_study_menus.c:275
+msgid "_Transverse"
+msgstr "横断面(_T)"
+
+#: src/ui_study_menus.c:170
+msgid ""
+"Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr ""
+
+#: src/ui_study_menus.c:172 src/ui_study_menus.c:225 src/ui_study_menus.c:238
+#: src/ui_study_menus.c:278
+msgid "_Coronal"
+msgstr "头断面(_C)"
+
+#: src/ui_study_menus.c:173
+msgid "Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr ""
+
+#: src/ui_study_menus.c:175 src/ui_study_menus.c:228 src/ui_study_menus.c:241
+#: src/ui_study_menus.c:281
+msgid "_Sagittal"
+msgstr "径断面(_S)"
+
+#: src/ui_study_menus.c:176
+msgid "Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"
+msgstr ""
+
+#: src/ui_study_menus.c:183
+msgid "_New Study"
+msgstr "新项目(_N)"
+
+#: src/ui_study_menus.c:184
+msgid "Create a new study viewer window"
+msgstr "创建一个新项目的查看窗"
+
+#: src/ui_study_menus.c:189
+msgid "_Import File (guess)"
+msgstr "导入文件(猜测格式）(_I)"
+
+#: src/ui_study_menus.c:190
+msgid "Import an image data file into this study, guessing at the file type"
+msgstr ""
+
+#: src/ui_study_menus.c:193
+msgid "Import File (_specify)"
+msgstr "导入文件(指定格式）(_s)"
+
+#: src/ui_study_menus.c:194
+msgid "Import an image data file into this study, specifying the import filter"
+msgstr ""
+
+#: src/ui_study_menus.c:197
+msgid "_Export View"
+msgstr "导出视图(_E)"
+
+#: src/ui_study_menus.c:198
+msgid "Export one of the views to a data file"
+msgstr ""
+
+#: src/ui_study_menus.c:209
+msgid "Add _ROI"
+msgstr "增加ROI文件(_R)"
+
+#: src/ui_study_menus.c:210
+msgid "Add a new ROI"
+msgstr "新增ROI文件"
+
+#: src/ui_study_menus.c:212
+msgid "Add _Fiducial Mark"
+msgstr ""
+
+#: src/ui_study_menus.c:213
+msgid "Add a new fiducial mark to the active data set"
+msgstr ""
+
+#: src/ui_study_menus.c:223
+msgid "Look at a series of transaxial views in a single frame"
+msgstr ""
+
+#: src/ui_study_menus.c:226
+msgid "Look at a series of coronal views in a single frame"
+msgstr ""
+
+#: src/ui_study_menus.c:229
+msgid "Look at a series of sagittal views in a single frame"
+msgstr ""
+
+#: src/ui_study_menus.c:236
+msgid "Look at a times series of a single transaxial view"
+msgstr ""
+
+#: src/ui_study_menus.c:239
+msgid "Look at a time series of a single coronal view"
+msgstr ""
+
+#: src/ui_study_menus.c:242
+msgid "Look at a time series of a a signal sagittal view"
+msgstr ""
+
+#: src/ui_study_menus.c:249
+msgid "_Space"
+msgstr "空间(_S)"
+
+#: src/ui_study_menus.c:250
+msgid "Look at a series of images over a spacial dimension"
+msgstr "从一个轴向顺序查看刨面图"
+
+#: src/ui_study_menus.c:252
+msgid "_Time"
+msgstr "时间(_T)"
+
+#: src/ui_study_menus.c:253
+msgid "Look at a series of images over time"
+msgstr "从时间顺序查看刨面图"
+
+#: src/ui_study_menus.c:261
+msgid "_Series"
+msgstr "序列图(_S)"
+
+#: src/ui_study_menus.c:262
+msgid "Look at a series of images"
+msgstr "按序列查看刨面图"
+
+#: src/ui_study_menus.c:265
+msgid "_Volume Rendering"
+msgstr "体视图生成(_V)"
+
+#: src/ui_study_menus.c:266
+msgid "perform a volume rendering on the currently selected objects"
+msgstr "生成当前选定对象的三维立体透视图"
+
+#: src/ui_study_menus.c:276
+msgid "Generate a fly through using transaxial slices"
+msgstr ""
+
+#: src/ui_study_menus.c:279
+msgid "Generate a fly through using coronal slices"
+msgstr ""
+
+#: src/ui_study_menus.c:282
+msgid "Generate a fly through using sagittal slices"
+msgstr ""
+
+#: src/ui_study_menus.c:290
+msgid "_Alignment Wizard"
+msgstr ""
+
+#: src/ui_study_menus.c:291
+msgid "guides you throw the processing of alignment"
+msgstr ""
+
+#: src/ui_study_menus.c:294
+msgid "_Crop Active Data Set"
+msgstr ""
+
+#: src/ui_study_menus.c:295
+msgid "allows you to crop the active data set"
+msgstr ""
+
+#: src/ui_study_menus.c:298
+msgid "_Factor Analysis"
+msgstr ""
+
+#: src/ui_study_menus.c:299
+msgid "allows you to do factor analysis of dynamic data on the active data set"
+msgstr ""
+
+#: src/ui_study_menus.c:302
+msgid "_Filter Active Data Set"
+msgstr ""
+
+#: src/ui_study_menus.c:303
+msgid "allows you to filter the active data set"
+msgstr ""
+
+#: src/ui_study_menus.c:307
+msgid "Generate _Fly Through"
+msgstr ""
+
+#: src/ui_study_menus.c:308
+msgid "generate an mpeg fly through of the data sets"
+msgstr ""
+
+#: src/ui_study_menus.c:311
+msgid "Calculate _ROI Statistics"
+msgstr ""
+
+#: src/ui_study_menus.c:312
+msgid "caculate ROI statistics"
+msgstr ""
+
+#: src/ui_study_menus.c:322
+msgid "_Tools"
+msgstr ""
+
+#: src/ui_study_menus.c:440
+msgid "Leave crosshairs on canvases"
+msgstr ""
+
+#: src/ui_study_menus.c:458
+msgid "Set the thresholds and colormaps for the active data set"
+msgstr ""
+
+#: src/ui_study_menus.c:573
+msgid "specify how much to magnify the images"
+msgstr ""
+
+#. add the slice thickness selector
+#: src/ui_study_menus.c:580
+msgid "thickness (mm):"
+msgstr ""
+
+#: src/ui_study_menus.c:598
+msgid "specify how thick to make the slices (mm)"
+msgstr ""
+
+#. frame selector
+#: src/ui_study_menus.c:604
+msgid "time:"
+msgstr ""
+
+#: src/ui_study_menus.c:614
+msgid "the time range over which to view the data (s)"
+msgstr ""
+
+#: src/ui_time_dialog.c:50 src/ui_time_dialog.c:489
+msgid "Start (s)"
+msgstr ""
+
+#: src/ui_time_dialog.c:51 src/ui_time_dialog.c:507
+msgid "End (s)"
+msgstr ""
+
+#: src/ui_time_dialog.c:52
+msgid "Frame #"
+msgstr ""
+
+#: src/ui_time_dialog.c:237
+msgid "can't count frames or allocate memory!"
+msgstr ""
+
+#: src/ui_time_dialog.c:457
+#, c-format
+msgid "%s: Time Dialog"
+msgstr ""
+
+#: src/xml.c:110
+#, c-format
+msgid "Couldn't read time value for %s, substituting %5.3f"
+msgstr ""
+
+#: src/xml.c:132 src/xml.c:162
+msgid "Couldn't allocate space for time data"
+msgstr ""
+
+#: src/xml.c:160
+#, c-format
+msgid "Couldn't read value for %s, substituting zero"
+msgstr ""
+
+#: src/xml.c:199
+#, c-format
+msgid "Couldn't read value for %s, substituting %5.3f"
+msgstr ""
+
+#: src/xml.c:242
+#, c-format
+msgid "Couldn't read value for %s, substituting FALSE"
+msgstr ""
+
+#: src/xml.c:270
+#, c-format
+msgid "Couldn't read value for %s, substituting %d"
+msgstr ""

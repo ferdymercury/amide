@@ -3,20 +3,31 @@ misc list of things todo:
 for next release?
 -----------------
 
-* for Chris-> check what pixels are shown for an ROI edge
+* ability to import and export AIR .air files
 
 * be able to change how much you step when clicking on the slider?
-* look into undo - gnumeric?
-* profile wizard?
+* be able to generate line profiles.  You specify 2 points...
 * histogram for roi's
+  - probably an option on the ROI stat's pop-up
 
-* figure out how to do variance correctly....
+* continue implementing progress bars for various functions:
+	-roi analysis
+	-loading in data sets
 
-* finish dnd support:
-	-need to uncomment gtk_tree_view-set_reorderable line
-	-filtered/cropped object should be added right below the
-		predecessor object
+doc todo
+--------
+complete rewrite of help documentation
 
+
+windows todo
+------------
+* preferences aren't currently saved between amide sessions
+* get popt working, then can have file associations with .xif files
+	-specify icon for .xif files
+
+
+factor analysis things:
+-----------------------       
 * factor analysis -> should be able to do from ROI's too.
 	should be simple.  1 iteration to find the # of voxels,
 	second iteration to fill in 
@@ -26,33 +37,12 @@ for next release?
 * need to extend 2 comp to 3 comp (or n-comp)
 * should be able to combine main function for fads and comp models
 
-* continue implementing progress bars for various functions:
-	-roi analysis
-	-loading in data sets
 
-doc todo
---------
-complete rewrite of help documentation
-handling directories of 2D dicom images
-	http://xmedcon.sourceforge.net/faq/stack.html
-
-
-windows todo
-------------
-* preferences aren't currently saved between amide sessions
-* gsl not currently supported
-* get popt working, then can have file associations with .xif files
-	-specify icon for .xif files
-* libgnomeui help warning isn't a popup
-       
 big things:
 -----------
-* currently implementation for FIR filters is via direct convolution:
-	a FFT based approach would be much more efficient
-	in the interests of memory, would probably do a overlap+add method,
-		with a 64 point FFT (which is 2MB for double)
-	GSL has the necessary functions for doing the FFT
 * add drag-n-drop capabilities between study windows
+	-need to uncomment gtk_tree_view-set_reorderable line (this approach may not work)
+	-filtered/cropped object should be added right below the predecessor object
 * should be able to specify units the image is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 	-study would have an output units variable
@@ -69,6 +59,10 @@ big things:
 	xmlDocDump () this to the end of the binary data
 	first entry in binary file pointer to the xml data
 	add amitkdir ability to identify these files also
+* multi-step undo/redo, look into how other GTK apps do it
+	-once this is done, drop the enact/cancel bit of shifting data sets and study's
+	  as we can now just undo such a change
+ 
 
 
                        
@@ -80,22 +74,22 @@ small things:
 	specify if single, multiple scale factors
 * need to switch gtk_idle (deprecated) calls to g_source calls
 * try to work in the max/min/distribution calculations into the loading loop
-* if the interpolation of a data set is changed in ui_series, the already
-	created slices aren't changed
 * would changing the icons to .png files allow anti-aliasing? better icons?
-* rewrite isocontour determining algorithm so it's not recursive
-* fix zooming of roi's on the canvas
+* fix zooming of off angle roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * implement help buttons on most of the dialogs
 	-gnome_druid has an add help button function
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
 * ui_series, should add popup dialog asking for # columns and rows
+* default color table -> doesn't work for data sets loaded from command line
+* fly through's don't output ROI's, fiducial marks.
+* ui_series, should be able to export 
 
 
 pre 1.0 things:
 --------------
-* change all dialog boxes to verbs?
+* change all dialog boxes to verbs
 * rewrite documentation
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
@@ -106,9 +100,6 @@ pre 1.0 things:
 
 probably post 1.0 things:
 ----------------
-* multi-step undo/redo
-	-once this is done, drop the enact/cancel bit of shifting data sets and study's
-	  as we can now just undo such a change
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.
 	Would handle multiple images.
@@ -127,32 +118,19 @@ probably post 1.0 things:
 	also probably get rid of amitk_roi_variable_types.c... not worth the performance improvement
 * guppi interface for drawing graphs of ROI statistics
 	guppi needs to stabilize first, and needs to get incorporated into standard distributions
-* optimize median filtering:
-	M. Kopp, W. Purgathofer (1994). Efficient 3x3 Median Filter Computations. Technical University, Vienna.
-	http://www.cg.tuwien.ac.at/research/TR/, TR-186-2-94-18
-
-	-perhaps better, as we won't just have 3x3 median filtering,
-	Paeth, 1990, Graphics Gems
-* be able to generate line profiles.  You specify 2 points...
 
 
 things dependent on other things: 
 -------------- 
 
 * AMIDE_OSX_HACKS, on OS X we currently
-	1- Disable drawing of the axis guide (ui_common.c), for some reason
-	   this crashes due to font handling on OS X....  This is as of
-	   fink 0.5.2, OS X 10.2.5.
-	2- Disable interaction with ESD (enlightenment sound daemon).
+	1- Disable interaction with ESD (enlightenment sound daemon).
            If amide crashed, ESD was locking files....  This is as of
 	   fink 0.5.2, OS X 10.2.5
 
-* complete change to anti-aliased canvases
-	check with newer version of libgnomecanvas ( > 2.0.1-3)
-	- all canvases are now anti-aliased except for three:
-	  1- amitk_canvas, canvas coredumps occasionally (not stable?)
-	  2- ui_series, same as above
-	  3- ui_preferences, line_style not followed by libart....
+* anti-aliased canvases doesn't support GDK line styles (as of libgnomecanvas 2.2.0)
+        -ui_preferences_dialog, and amitk_object_dialog have commented out code for
+	 implementing this as a user choice, once anti-aliased canvases support line styles
 
 * ui_time_dialog specifies AmitkDataSet as G_TYPE_POINTER instead of
 	AMITK_TYPE_OBJECT when setting up gtk_list_store - this is due
@@ -193,4 +171,13 @@ things dependent on other things:
 	program into a true, multi-threaded design.  Note that gtk for windows
 	(as of 2003.04.30) does not handle multi-threaded program.... so will
 	have to wait for that.
+
+* Problem with guessing Concorde .dat files.  If the data_file entry
+       	in a concorde file is incorrect, (X)MedCon (0.8.12 at this writing) attempts 
+	to guess the name by dropping the .hdr off the header file name.  For
+	some reason, you get a truncated file read error from both AMIDE and
+	xmedcon if a file is loaded in this way.  However, loading in the same
+	file by specifying it on the command line works....
+
+
 

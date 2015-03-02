@@ -35,14 +35,14 @@
 #include "amitk_color_table_menu.h"
 
 
-static gchar * line_style_names[] = {
-  "Solid",
-  "On/Off",
-  "Double Dash"
-};
+// static gchar * line_style_names[] = {
+//  "Solid",
+//  "On/Off",
+//  "Double Dash"
+//};
 
 static void roi_width_cb(GtkWidget * widget, gpointer data);
-static void line_style_cb(GtkWidget * widget, gpointer data);
+//static void line_style_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
@@ -94,42 +94,42 @@ static void roi_width_cb(GtkWidget * widget, gpointer data) {
 
 
 /* function to change the line style */
-static void line_style_cb(GtkWidget * widget, gpointer data) {
-
-  ui_study_t * ui_study=data;
-  GdkLineStyle new_line_style;
-  GnomeCanvasItem * roi_item;
-  AmitkView i_view;
-  AmitkViewMode i_view_mode;
-
-  g_return_if_fail(ui_study->study != NULL);
-
-  /* figure out which menu item called me */
-  new_line_style = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"line_style"));
-
-  if (ui_study->line_style != new_line_style) {
-    ui_study->line_style = new_line_style;
-
-#ifndef AMIDE_WIN32_HACKS
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-#endif
-
-    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
-      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	if (ui_study->canvas[i_view_mode][i_view] != NULL)
-	  amitk_canvas_set_line_style(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				      ui_study->line_style);
-
-    /* update the roi indicator */
-    roi_item = g_object_get_data(G_OBJECT(ui_study->preferences_dialog), "roi_item");
-    gnome_canvas_item_set(roi_item, "line_style", new_line_style, NULL);
-  }
-
-  return;
-}
+//static void line_style_cb(GtkWidget * widget, gpointer data) {
+//
+//  ui_study_t * ui_study=data;
+//  GdkLineStyle new_line_style;
+//  GnomeCanvasItem * roi_item;
+//  AmitkView i_view;
+//  AmitkViewMode i_view_mode;
+//
+//  g_return_if_fail(ui_study->study != NULL);
+//
+//  /* figure out which menu item called me */
+//  new_line_style = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"line_style"));
+//
+//  if (ui_study->line_style != new_line_style) {
+//    ui_study->line_style = new_line_style;
+//
+//#ifndef AMIDE_WIN32_HACKS
+//    gnome_config_push_prefix("/"PACKAGE"/");
+//    gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
+//    gnome_config_pop_prefix();
+//    gnome_config_sync();
+//#endif
+//
+//    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
+//      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+//	if (ui_study->canvas[i_view_mode][i_view] != NULL)
+//	  amitk_canvas_set_line_style(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+//				      ui_study->line_style);
+//
+//    /* update the roi indicator */
+//    roi_item = g_object_get_data(G_OBJECT(ui_study->preferences_dialog), "roi_item");
+//    gnome_canvas_item_set(roi_item, "line_style", new_line_style, NULL);
+//  }
+//
+//  return;
+//}
 
 
 /* function called to change the layout */
@@ -335,9 +335,10 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   GtkWidget * label;
   GtkObject * adjustment;
   GtkWidget * spin_button;
-  GtkWidget * option_menu;
+  //  GtkWidget * option_menu;
+  //  GtkWidget * menuitem;
+  //  GdkLineStyle i_line_style;
   GtkWidget * menu;
-  GtkWidget * menuitem;
   GtkWidget * check_button;
   GtkWidget * radio_button1;
   GtkWidget * radio_button2;
@@ -350,7 +351,6 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   GnomeCanvas * roi_indicator;
   GnomeCanvasItem * roi_item;
   guint table_row;
-  GdkLineStyle i_line_style;
   GnomeCanvasPoints * roi_line_points;
   rgba_t outline_color;
 
@@ -358,7 +358,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_return_val_if_fail(ui_study != NULL, NULL);
   g_return_val_if_fail(ui_study->preferences_dialog == NULL, NULL);
     
-  temp_string = g_strdup_printf("%s: Preferences Dialog", PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Preferences Dialog"), PACKAGE);
   preferences_dialog = 
     gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_study->app),
 				 GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
@@ -379,12 +379,12 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,5,FALSE);
-  label = gtk_label_new("ROI Drawing");
+  label = gtk_label_new(_("ROI Drawing"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
   /* widgets to change the roi's size */
-  label = gtk_label_new("Width (pixels)");
+  label = gtk_label_new(_("Width (pixels)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1,
 		   0, 0, X_PADDING, Y_PADDING);
@@ -404,31 +404,32 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
   /* widgets to change the roi's line style */
-  label = gtk_label_new("Line Style:");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  // Anti-aliased canvas doesn't yet support this */
+  // also need to uncomment relevant lines in amitk_canvas_object.c */
+  //  label = gtk_label_new(_("Line Style:"));
+  //  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+  //		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
+  //  option_menu = gtk_option_menu_new();
+  //  menu = gtk_menu_new();
 
-  for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) {
-    menuitem = gtk_menu_item_new_with_label(line_style_names[i_line_style]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    g_object_set_data(G_OBJECT(menuitem), "line_style", GINT_TO_POINTER(i_line_style)); 
-    g_signal_connect(G_OBJECT(menuitem), "activate",  G_CALLBACK(line_style_cb), ui_study);
-  }
+  //  for (i_line_style=0; i_line_style<=GDK_LINE_DOUBLE_DASH; i_line_style++) {
+  //    menuitem = gtk_menu_item_new_with_label(line_style_names[i_line_style]);
+  //    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+  //    g_object_set_data(G_OBJECT(menuitem), "line_style", GINT_TO_POINTER(i_line_style)); 
+  //    g_signal_connect(G_OBJECT(menuitem), "activate",  G_CALLBACK(line_style_cb), ui_study);
+  //  }
   
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_study->line_style);
-  gtk_widget_set_size_request (option_menu, 125, -1);
-  gtk_table_attach(GTK_TABLE(packing_table),  option_menu, 1,2, 
-		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
-  table_row++;
+  //  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
+  //  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_study->line_style);
+  //  gtk_widget_set_size_request (option_menu, 125, -1);
+  //  gtk_table_attach(GTK_TABLE(packing_table),  option_menu, 1,2, 
+  //		   table_row,table_row+1, GTK_FILL, 0,  X_PADDING, Y_PADDING);
+  //  table_row++;
 
 
   /* a little canvas indicator thingie to show the user who the new preferences will look */
-  // roi_indicator = GNOME_CANVAS(gnome_canvas_new_aa());
-  roi_indicator = GNOME_CANVAS(gnome_canvas_new());
+  roi_indicator = GNOME_CANVAS(gnome_canvas_new_aa());
   gtk_widget_set_size_request(GTK_WIDGET(roi_indicator), 100, 100);
   gnome_canvas_set_scroll_region(roi_indicator, 0.0, 0.0, 100.0, 100.0);
   gtk_table_attach(GTK_TABLE(packing_table),  GTK_WIDGET(roi_indicator), 
@@ -468,11 +469,11 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,5,FALSE);
-  label = gtk_label_new("Canvas Setup");
+  label = gtk_label_new(_("View Setup"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
-  label = gtk_label_new("Layout:");
+  label = gtk_label_new(_("Layout:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1,
 		   0, 0, X_PADDING, Y_PADDING);
@@ -511,7 +512,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* do we want the size of the canvas to not resize */
-  label = gtk_label_new("Maintain canvas size constant:");
+  label = gtk_label_new(_("Maintain view size constant:"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -525,7 +526,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
 
   /* widgets to change the amount of empty space in the center of the target */
-  label = gtk_label_new("Target Empty Area (pixels)");
+  label = gtk_label_new(_("Target Empty Area (pixels)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 
 		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -545,14 +546,14 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
      Default color tables 
      ---------------------- */
   packing_table = gtk_table_new(4,2,FALSE);
-  label = gtk_label_new("Default Color Tables");
+  label = gtk_label_new(_("Default Color Tables"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
   for (i_modality=0; i_modality < AMITK_MODALITY_NUM; i_modality++) {
 
     /* color table selector */
-    temp_string = g_strdup_printf("default %s color table:", 
+    temp_string = g_strdup_printf(_("default %s color table:"), 
 				  amitk_modality_get_name(i_modality));
     label = gtk_label_new(temp_string);
     g_free(temp_string);
@@ -581,11 +582,11 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   /* start making the widgets for this dialog box */
   packing_table = gtk_table_new(4,5,FALSE);
-  label = gtk_label_new("Miscellaneous");
+  label = gtk_label_new(_("Miscellaneous"));
   table_row=0;
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
 
-  check_button = gtk_check_button_new_with_label("Don't Prompt for \"Save Changes\" on Exit:");
+  check_button = gtk_check_button_new_with_label(_("Don't Prompt for \"Save Changes\" on Exit:"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
 			       ui_study->dont_prompt_for_save_on_exit);
   gtk_table_attach(GTK_TABLE(packing_table), check_button, 

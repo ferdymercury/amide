@@ -47,10 +47,10 @@ enum {
 };
  
 static gchar * column_names[] =  {
-  "Start (s)",
-  "End (s)", 
-  "Frame #", 
-  "Data Set",
+  N_("Start (s)"),
+  N_("End (s)"), 
+  N_("Frame #"), 
+  N_("Data Set"),
   "error - shouldn't be used"
 };
 
@@ -234,7 +234,7 @@ static void update_model(GtkListStore * store, GtkTreeSelection *selection,
   /* get space for the array that'll take care of which frame of which data set we're looking at*/
   frames = g_try_new(guint,num_sets);
   if ((frames == NULL) && (num_sets !=0)) {
-    g_warning("can't count frames or allocate memory!");
+    g_warning(_("can't count frames or allocate memory!"));
     return;
   }
 
@@ -454,7 +454,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   GtkWidget * notebook;
   column_type_t i_column;
 
-  temp_string = g_strdup_printf("%s: Time Dialog",PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Time Dialog"),PACKAGE);
   dialog = gtk_dialog_new_with_buttons(temp_string,  parent,
 					    GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
 					    NULL);
@@ -486,7 +486,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   table_row=0;
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
 
-  label = gtk_label_new("Start (s)");
+  label = gtk_label_new(_("Start (s)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -504,7 +504,7 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 
 
 
-  label = gtk_label_new("End (s)");
+  label = gtk_label_new(_("End (s)"));
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     

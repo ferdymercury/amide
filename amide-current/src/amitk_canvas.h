@@ -45,6 +45,10 @@ G_BEGIN_DECLS
 #define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)
 #define AMITK_CANVAS_PIXBUF(obj)     (AMITK_CANVAS(obj)->pixbuf)
 
+typedef enum {
+  AMITK_CANVAS_TYPE_NORMAL,
+  AMITK_CANVAS_TYPE_FLY_THROUGH
+} AmitkCanvasType;
 
 typedef enum {
   AMITK_CANVAS_TARGET_ACTION_HIDE,
@@ -65,7 +69,7 @@ struct _AmitkCanvas
   GtkWidget * scrollbar;
   GtkObject * scrollbar_adjustment;
   GnomeCanvasItem * arrows[4];
-  gboolean with_arrows;
+  AmitkCanvasType type;
 
   AmitkVolume * volume; /* the volume that this canvas slice displays */
   AmitkPoint center; /* in base coordinate space */
@@ -81,7 +85,9 @@ struct _AmitkCanvas
 
   GList * slices;
   GList * slice_cache;
+  gint max_slice_cache_size;
   gint pixbuf_width, pixbuf_height;
+  gdouble triangle_width, triangle_height;
   GnomeCanvasItem * image;
   GdkPixbuf * pixbuf;
 
@@ -133,7 +139,7 @@ GtkWidget *   amitk_canvas_new                  (AmitkView view,
 						 AmitkLayout layout, 
 						 GdkLineStyle line_style,
 						 gint roi_width,
-						 gboolean with_arrows,
+						 AmitkCanvasType type,
 						 gboolean maintain_size,
 						 gint target_empty_area);
 void          amitk_canvas_set_study            (AmitkCanvas * canvas, 

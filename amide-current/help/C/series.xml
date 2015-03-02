@@ -1,0 +1,19 @@
+
+<para>
+   Instead of looking at three orthogonal slices through the data set,
+   a series of slices (all of the same orientation) can also be
+   examined.  Select: "View->Series->Space->[view]" from the menu to
+   bring up the series of slices from a single frame.  Alternatively,
+   select: "View->Series->Time->[view]" from the menu to bring up a
+   series consisting of the same data slice over the time period of
+   the study.  The thickness of the slices and which data sets are
+   used are determined at the time the series window is brought up.  A
+   slider appears on the top of the window which allows moving through
+   the data set.  Note that since slices are cached in memory after
+   being displayed, already displayed slices do not need to be
+   regenerated from the data set and reviewing these slices is
+   significantly faster.
+</para>
+
+
+

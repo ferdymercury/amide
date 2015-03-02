@@ -30,7 +30,6 @@
 #include "amitk_type_builtins.h"
 
 enum {
-  FIDUCIAL_MARK_CHANGED,
   LAST_SIGNAL
 };
 
@@ -44,7 +43,7 @@ static void          fiducial_mark_write_xml           (const AmitkObject * obje
 static gchar *       fiducial_mark_read_xml            (AmitkObject * object, xmlNodePtr nodes, gchar *error_buf);
 
 static AmitkObjectClass * parent_class;
-static guint        fiducial_mark_signals[LAST_SIGNAL];
+/* static guint        fiducial_mark_signals[LAST_SIGNAL]; */
 
 
 GType amitk_fiducial_mark_get_type(void) {
@@ -88,27 +87,16 @@ static void fiducial_mark_class_init (AmitkFiducialMarkClass * class) {
 
   gobject_class->finalize = fiducial_mark_finalize;
 
-  fiducial_mark_signals[FIDUCIAL_MARK_CHANGED] =
-    g_signal_new ("fiducial_mark_changed",
-		  G_TYPE_FROM_CLASS(class),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(AmitkFiducialMarkClass, fiducial_mark_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
-		  G_TYPE_NONE,0);
-
 }
 
 
 static void fiducial_mark_init (AmitkFiducialMark * fiducial_mark) {
 
-  fiducial_mark->point = zero_point;
  return; 
 }
 
 
 static void fiducial_mark_finalize (GObject * object) {
-  //  AmitkFiducialMark * fiducial_mark = AMITK_FIDUCIAL_MARK(object);
-
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -127,30 +115,16 @@ static AmitkObject * fiducial_mark_copy (const AmitkObject * object ) {
 
 static void fiducial_mark_copy_in_place(AmitkObject * dest_object, const AmitkObject * src_object) {
  
-  AmitkFiducialMark * dest_mark;
-  AmitkFiducialMark * src_mark;
-
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(src_object));
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(dest_object));
-  src_mark = AMITK_FIDUCIAL_MARK(src_object);
-  dest_mark = AMITK_FIDUCIAL_MARK(dest_object);
-
-  /* can't use amitk_fiducial_mark_set, as the AmitkSpace component hasn't yet been set */
-  dest_mark->point = src_mark->point; 
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
-
 }
 
 
 static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
 
-  AmitkFiducialMark * mark;
-
   AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
-
-  mark = AMITK_FIDUCIAL_MARK(object);
-  amitk_point_write_xml(nodes, "point", mark->point);
 
   return;
 }
@@ -158,12 +132,19 @@ static void fiducial_mark_write_xml(const AmitkObject * object, xmlNodePtr nodes
 static gchar * fiducial_mark_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * error_buf ) {
 
   AmitkFiducialMark * mark;
-
-  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+  AmitkPoint point;
 
   mark = AMITK_FIDUCIAL_MARK(object);
 
-  mark->point = amitk_point_read_xml(nodes, "point", &error_buf);
+  error_buf = AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes, error_buf);
+
+  /* legacy cruft.  the "point" option was eliminated in version 0.7.11, just 
+     using the space's offset instead */
+  if (xml_node_exists(nodes, "point")) {
+    point = amitk_point_read_xml(nodes, "point", &error_buf);
+    point = amitk_space_s2b(AMITK_SPACE(mark), point);
+    amitk_space_set_offset(AMITK_SPACE(mark), point);
+  }
 
   return error_buf;
 }
@@ -186,8 +167,7 @@ void amitk_fiducial_mark_set(AmitkFiducialMark * fiducial_mark, AmitkPoint new_p
   g_return_if_fail(AMITK_IS_FIDUCIAL_MARK(fiducial_mark));
 
   if (!POINT_EQUAL(AMITK_FIDUCIAL_MARK_GET(fiducial_mark), new_point)) {
-    fiducial_mark->point = amitk_space_b2s(AMITK_SPACE(fiducial_mark), new_point);
-    g_signal_emit(G_OBJECT(fiducial_mark), fiducial_mark_signals[FIDUCIAL_MARK_CHANGED],0);
+    amitk_space_set_offset(AMITK_SPACE(fiducial_mark), new_point);
   }
   return;
 }

@@ -2,25 +2,26 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "AMIDE">
-<!ENTITY date "October 2002">
-<!ENTITY appversion "0.7.5">
+<!ENTITY date "June 2003">
+<!ENTITY appversion "0.7.11">
+<!ENTITY introduction   SYSTEM "introduction.xml">
 <!ENTITY basics         SYSTEM "basics.xml">
-<!ENTITY handlingfiles  SYSTEM "handlingfiles.xml">
-<!ENTITY importing      SYSTEM "importing.xml">
-<!ENTITY rendering      SYSTEM "rendering.xml">
+<!ENTITY file_handling  SYSTEM "file_handling.xml">
+<!ENTITY data_sets      SYSTEM "data_sets.xml">
 <!ENTITY rois           SYSTEM "rois.xml">
-<!ENTITY datasets       SYSTEM "datasets.xml">
-<!ENTITY alignment      SYSTEM "alignment.xml">
-<!ENTITY manrevision "0.2">
+<!ENTITY series         SYSTEM "series.xml">
+<!ENTITY rendering      SYSTEM "rendering.xml">
+<!ENTITY tools          SYSTEM "tools.xml">
+<!ENTITY manrevision "0.3">
 ]>
 
 <article id="index" lang="en">
   <title>The AMIDE User's Manual</title>
   <articleinfo>
     <title>&app; Manual V&manrevision;</title>
-
+    
     <copyright>
-      <year>2000-2002</year> <holder>Andy Loening</holder>
+      <year>2000-2003</year> <holder>Andy Loening</holder>
     </copyright>
 
     <authorgroup>
@@ -84,34 +85,36 @@
     <primary>AMIDE</primary>
   </indexterm>
 
+
+
+  <sect1 id="introduction">
+    <title>Introduction</title>
+      &introduction;
+  </sect1>
+
   <sect1 id="basics">
     <title>AMIDE Basics</title>
-      &basics;
+    &basics;
   </sect1>
 
-  <sect1 id="handlingfiles">
-    <title>Saving/Loading Files</title>
-    &handlingfiles;
+  <sect1 id="file_handling">
+   <title>Importing Data and Saving Studies</title>
+   &file_handling;
   </sect1>
 
-  <sect1 id="importing">
-    <title>Importing Data </title>
-    &importing;
+  <sect1 id="data_sets">
+    <title>Manipulating Medical Data Sets </title>
+    &data_sets;
   </sect1>
  
-  <sect1 id="datasets">
-    <title>Manipulating Medical Data Sets </title>
-    &datasets;
-  </sect1>
-
   <sect1 id="rois">
-    <title>Using ROI's </title>
+    <title>Using Regions of Interest (ROI's)</title>
     &rois;
   </sect1>
 
-  <sect1 id="alignment">
-    <title>Aligning Data Sets </title>
-    &alignment;
+  <sect1 id="series">
+    <title>Viewing Series of Slices</title>
+    &series;
   </sect1>
 
   <sect1 id="rendering">
@@ -119,25 +122,12 @@
     &rendering;
   </sect1>
 
+  <sect1 id="tools">
+    <title>Additional Tools</title>
+    &tools;
+  </sect1>
+
 </article>
-	
-
-<!-- Keep this comment at the end of the file
-Local variables:
-mode: sgml
-sgml-omittag:t
-sgml-shorttag:t
-sgml-minimize-attributes:nil
-sgml-always-quote-attributes:t
-sgml-indent-step:2
-sgml-indent-data:t
-sgml-parent-document:nil
-sgml-exposed-tags:nil
-sgml-local-catalogs:nil
-sgml-local-ecat-files:nil
-End:
--->                         
-
 
 
 

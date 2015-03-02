@@ -45,17 +45,17 @@
 
 
 static gchar * thresholding_names[] = {
-  "per slice", 
-  "per frame", 
-  "interpolated between frames",
-  "global"
+  N_("per slice"), 
+  N_("per frame"), 
+  N_("interpolated between frames"),
+  N_("global")
 };
 
 static gchar * thresholding_explanations[] = {
-  "threshold the images based on the max and min values in the current slice",
-  "threshold the images based on the max and min values in the current frame",
-  "threshold the images based on max and min values interpolated from the reference frame thresholds",
-  "threshold the images based on the max and min values of the entire data set",
+  N_("threshold the images based on the max and min values in the current slice"),
+  N_("threshold the images based on the max and min values in the current frame"),
+  N_("threshold the images based on max and min values interpolated from the reference frame thresholds"),
+  N_("threshold the images based on the max and min values of the entire data set"),
 };
 
 static void threshold_class_init (AmitkThresholdClass *klass);
@@ -230,13 +230,13 @@ static void threshold_construct(AmitkThreshold * threshold,
   
   if (!threshold->minimal) {
     for (i_ref=0; i_ref<2; i_ref++) {
-      threshold->percent_label[i_ref] = gtk_label_new("Percent");
+      threshold->percent_label[i_ref] = gtk_label_new(_("Percent"));
       gtk_table_attach(GTK_TABLE(left_table), threshold->percent_label[i_ref], 
 		       1+2*i_ref,2+2*i_ref,left_row,left_row+1,
 		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
       /* show/hide taken care of by threshold_update_layout */
       
-      threshold->absolute_label[i_ref] = gtk_label_new("Absolute");
+      threshold->absolute_label[i_ref] = gtk_label_new(_("Absolute"));
       gtk_table_attach(GTK_TABLE(left_table), threshold->absolute_label[i_ref], 
 		       2+2*i_ref,3+2*i_ref,left_row,left_row+1,
 		       X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -245,12 +245,12 @@ static void threshold_construct(AmitkThreshold * threshold,
     left_row++;
     
     
-    label = gtk_label_new("Max Threshold");
+    label = gtk_label_new(_("Max Threshold"));
     gtk_table_attach(GTK_TABLE(left_table),  label, 0,1,left_row,left_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
     
-    label = gtk_label_new("Min Threshold");
+    label = gtk_label_new(_("Min Threshold"));
     gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row+1,left_row+2,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -292,7 +292,7 @@ static void threshold_construct(AmitkThreshold * threshold,
   }
 
   /* color table selector */
-  label = gtk_label_new("color table:");
+  label = gtk_label_new(_("color table:"));
   gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row,left_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(label);
@@ -308,7 +308,7 @@ static void threshold_construct(AmitkThreshold * threshold,
 
   if (!threshold->minimal) {
     /* threshold type selection */
-    label = gtk_label_new("threshold type");
+    label = gtk_label_new(_("threshold type"));
     gtk_table_attach(GTK_TABLE(left_table), label, 0,1, left_row,left_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
@@ -359,12 +359,12 @@ static void threshold_construct(AmitkThreshold * threshold,
   gtk_box_pack_start(GTK_BOX(main_box), right_table, TRUE,TRUE,0);
 
   /* color table selector */
-  threshold->ref_frame_label[0] = gtk_label_new("ref frame 0:");
+  threshold->ref_frame_label[0] = gtk_label_new(_("ref. frame 0:"));
   gtk_table_attach(GTK_TABLE(right_table), threshold->ref_frame_label[0], 1,2, right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   /* show/hide taken care of by threshold_update_layout */
   
-  threshold->ref_frame_label[1] = gtk_label_new("ref frame 1:");
+  threshold->ref_frame_label[1] = gtk_label_new(_("ref. frame 1:"));
   gtk_table_attach(GTK_TABLE(right_table), threshold->ref_frame_label[1], 3,4, right_row,right_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   /* show/hide taken care of by threshold_update_layout */
@@ -402,20 +402,20 @@ static void threshold_construct(AmitkThreshold * threshold,
   else right_row++;
 
   if (!threshold->minimal) {
-    label = gtk_label_new("distribution");
+    label = gtk_label_new(_("distribution"));
     gtk_table_attach(GTK_TABLE(right_table),  label, 0,1, right_row, right_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
   }
 
   for (i_ref=0; i_ref<2; i_ref++) {
-    threshold->full_label[i_ref] = gtk_label_new("full");
+    threshold->full_label[i_ref] = gtk_label_new(_("full"));
     gtk_table_attach(GTK_TABLE(right_table),  threshold->full_label[i_ref], 
 		     1+2*i_ref,2+2*i_ref, right_row, right_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     /* show/hide taken care of by threshold_update_layout */
 
-    threshold->scaled_label[i_ref] = gtk_label_new("scaled");
+    threshold->scaled_label[i_ref] = gtk_label_new(_("scaled"));
     gtk_table_attach(GTK_TABLE(right_table),  threshold->scaled_label[i_ref], 
 		     2+2*i_ref,3+2*i_ref, right_row, right_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
@@ -546,7 +546,7 @@ static void threshold_update_histogram(AmitkThreshold * threshold) {
   /* figure out what colors to use for the distribution image */
   widget_style = gtk_widget_get_style(GTK_WIDGET(threshold));
   if (widget_style == NULL) {
-    g_warning("Threshold has no style?\n");
+    g_warning(_("Threshold has no style?\n"));
     widget_style = gtk_style_new();
   }
 
@@ -1411,7 +1411,7 @@ static void threshold_dialog_construct(AmitkThresholdDialog * dialog,
   gtk_widget_show(dialog->threshold);
 
   /* reset the title */
-  temp_string = g_strdup_printf("data set: %s\n",AMITK_OBJECT_NAME(data_set));
+  temp_string = g_strdup_printf(_("data set: %s\n"),AMITK_OBJECT_NAME(data_set));
   gtk_label_set_text (GTK_LABEL(dialog->data_set_label), temp_string);
   g_free(temp_string);
 
@@ -1446,7 +1446,7 @@ GtkWidget* amitk_threshold_dialog_new (AmitkDataSet * data_set, GtkWindow * pare
 
   dialog = g_object_new(AMITK_TYPE_THRESHOLD_DIALOG, NULL);
   threshold_dialog_construct(dialog, parent, data_set);
-  gtk_window_set_title (GTK_WINDOW (dialog), "Threshold Dialog");
+  gtk_window_set_title (GTK_WINDOW (dialog), _("Threshold Dialog"));
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW (dialog), TRUE);
 
@@ -1465,7 +1465,7 @@ void amitk_threshold_dialog_new_data_set(AmitkThresholdDialog * dialog, AmitkDat
   amitk_threshold_new_data_set(AMITK_THRESHOLD(dialog->threshold), new_data_set);
 
   /* reset the title */
-  temp_string = g_strdup_printf("data set: %s\n",AMITK_OBJECT_NAME(new_data_set));
+  temp_string = g_strdup_printf(_("data set: %s\n"),AMITK_OBJECT_NAME(new_data_set));
   gtk_label_set_text (GTK_LABEL(dialog->data_set_label), temp_string);
   g_free(temp_string);
 
@@ -1585,7 +1585,7 @@ GtkWidget* amitk_thresholds_dialog_new (GList * objects, GtkWindow * parent) {
 
   dialog = g_object_new(AMITK_TYPE_THRESHOLDS_DIALOG, NULL);
   thresholds_dialog_construct(dialog, parent, data_sets);
-  gtk_window_set_title (GTK_WINDOW (dialog), "Threshold Dialog");
+  gtk_window_set_title (GTK_WINDOW (dialog), _("Threshold Dialog"));
   
   gtk_window_set_transient_for(GTK_WINDOW (dialog), parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW (dialog), TRUE);

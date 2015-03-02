@@ -70,6 +70,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection);
 GdkPixbuf * image_from_slice(AmitkDataSet * slice);
 GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 GList ** pslice_cache,
+				 const gint max_slice_cache_size,
 				 GList * objects,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,

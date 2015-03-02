@@ -1,213 +1,312 @@
-  <para> 
-
-  As the use of AMIDE is bound to be completely intuitive only to the
-    one who wrote the program (i.e. me), this chapter will provide a
-    brief overview of the basic operating theory behind the program.
-
+  <para> As the use of AMIDE is bound to be completely intuitive only
+    to the one who wrote the program (i.e. me), this section provides
+    a brief overview of operating within the program.  It assumes you
+    already have a data set loaded in.  For instructions on getting a
+    data set into AMIDE, see <xref linkend="importing_data_sets" />
   </para>
   
+
+
+
+
+  <sect2><title>A Quick Theory of Operations</title>
+
+   <sect3><title>AMIDE Objects</title>
+
+    <para>AMIDE can work with and display a large number of objects
+    simultaneous (limited only be available memory).  The object types
+    current implemented in AMIDE are as follows:
+
+    <variablelist>
+ 
+      <varlistentry><term>Data Set</term>
+      <listitem>
+       <para>A data set object
+       contains the raw information from a medical imaging study,
+       along with the corresponding parameters needed for interpreting
+       that information (thresholds, colormaps, etc.).
+       </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry><term>ROI</term>
+      <listitem>
+       <para>A region of interest
+       object defines a volume of space over which statistics can be
+       calculated.  All ROI's in AMIDE are volumetric.  Currently,
+       AMIDE implements ellipsoid, cylinderical, rectangular, and
+       isocontour based ROI geometries.
+       </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry><term>Fiducial Mark</term>
+      <listitem>
+       <para>A very simple
+       object, fiducial marks encode only the location of a reference
+       point in space, and are used for rigid body alignment.
+       </para>
+      </listitem>
+      </varlistentry>
+
+      <varlistentry><term>Study</term>
+      <listitem>
+       <para>Each AMIDE session has
+       a single study object, which is used for grouping together a
+       number of related data sets, ROI's, and fiducial marks.
+       </para>
+      </listitem>
+      </varlistentry>
+
+     </variablelist>
+
+
+    </para>
+   </sect3>
+
+   <sect3><title>Object Tree</title> 
+
+
+   <figure id="studytree-fig">
+    <title>Study Tree</title>
+    <screenshot>
+     <mediaobject>
+      <imageobject>
+       <imagedata fileref="figures/study_tree.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+       <phrase>An example of a study's tree structure within AMIDE.
+       The two data sets (FDG PET and microCT) and 1 ROI (bladder) are
+       children of the study object (m2862).  The remaining ROI's are
+       children of the data sets.</phrase>
+      </textobject>
+     </mediaobject>
+    </screenshot>
+   </figure>
+
+
+
+    <para> In order to facilitate working with a large number of
+     objects simultaneously, AMIDE conceptually groups all objects
+     into a tree hierarchy, with the study object as the root of the
+     tree (see <xref linkend="studytree-fig" />).  Data set objects
+     will generally be primary branches off of the study object, while
+     ROI's can be branches off of the study object or off of
+     individual data sets.  Why is this important?  Because the
+     structure of the tree determines how movements are mapped within
+     the program.  If a data set is moved relative to the rest of the
+     study, the ROI's that are branches from that data set object will
+     be correspondingly moved, so that they will maintain the correct
+     orientation and position with respect to the data set that is
+     their parent.</para>
+   </sect3>
+
+   <sect3><title>Real World Units</title>
+
+    <para>An important thing to realize when working with AMIDE is
+    that the program will try to abstract away the underlying digital
+    format of the data as much as possible.  When you listen to
+    digital audio, the CD player automatically converts the series of
+    0's and 1's encoded on the compact disc into an analog format so
+    that you don't have to worry about the underlying digital format.
+    Similarly, AMIDE presents the digital data to you in analog form.
+    When ever possible, units are given in terms of real world units
+    (e.g. mm's, seconds), and most operations are not constrained by
+    the discrete nature of the underlying data.  For example, data in
+    AMIDE is viewed in terms of "slices", not fixed image planes.
+    These slices can be taken from the data set at arbitary angles,
+    and can be of any thickness (they are not constrained to be
+    integer multiples of the underlying voxel size).  You may be used
+    to looking at medical images in terms of voxels and integers, but
+    remember that the object or subject scanned is an item in the real
+    world, and AMIDE tries to recreate this "analog signal" for you.
+    </para>
+
+    <para> The only place the abstraction starts to break down is when
+    dealing with dynamic data sets.  Einstein understood time to be a
+    "special" dimension, and AMIDE agrees.  The reason for this, is
+    that trying to represent dynamic data as anything but separate
+    frames of data becomes overly complex from a computational
+    standpoint, primarily because dynamic data is generally not
+    equally spaced.  While moving 1 voxel in the x, y, or z directions
+    will always move you a constant unit of measurement (say 0.4 mm)
+    in the appropriate direction, moving 1 voxel in the t direction
+    may move you 30 seconds or 30 minutes in time, depending on what
+    frame you're looking at.  Because of this, AMIDE deals with
+    dynamic data in terms of frames, although it should always tell
+    you the time that those frames correspond to. </para>
+
+   </sect3>
+
+
+  </sect2>
+
+
+
+
+
+
+
+
+
   <sect2><title>Components of the Display</title>
 
-    <sect3><title>Study Window</title>
-      <para>
-	After starting up AMIDE, the study window will be displayed.
-	A study is a collection of related objects (i.e. medical image
-	data sets and regions of interest), and most of the user's
-	actions will take place in this window.  There are several
-	elements to this window:
-      </para>
+   <figure id="mainwindow-fig">
+    <title>AMIDE Main Window</title>
+    <screenshot>
+     <mediaobject>
+      <imageobject>
+       <imagedata fileref="figures/amide_main_window.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+       <phrase>A diagram pointing out the salient features of the main window</phrase>
+      </textobject>
+     </mediaobject>
+    </screenshot>
+   </figure>
 
-      <sect4><title>Study List</title>
-	<para>
-	  On the left hand side of the study window is a list of all
-	  the objects in the study arranged in a tree.  Objects in the
-	  study list can be selected by left clicking on the object.
-	  Data set objects can additionally be made the active focus
-	  of the program by clicking on the object with the middle
-	  mouse button.  The active data set is noted by the small "X"
-	  to the left of the data set's name.  When an action is
-	  performed which cannot be performed on all selected data
-	  sets (like drawing an isocontour ROI for example), the
-	  active data set will be the one used.
-      </para>
 
-      <para>
-	  Object modification dialog boxes can be brought up in one of
-	  two ways; right clicking on the object, or hitting the
-	  "Edit->>Edit Items" menu item (which will bring up
-	  modification dialog boxes for the relevant selected
-	  objects).  ROI's can be added by either right clicking on an
-	  empty area of the study tree, or hitting the "Edit->add ROI"
-	  menu item.  To delete objects, hit the "edit->delete
-	  items->selected objects" menu item, which will delete the
-	  currently selected objects of the specified type.
-	</para>
-      </sect4>
+   <sect3><title>Context Sensitive Help</title>
 
-      <sect4><title>Study Canvases</title>
-	<para>
-	  In the middle of the study window are three canvases which
-	  show three orthogonal 3-dimensional slices taken from the
-	  data sets.  The thickness of the slices is determined by the
-	  "thickness" widget on the right side of the study window.
-	  The three canvases should be showing you transverse,
-	  coronal, and sagittal sections through the medical image
-	  data sets being analyzed.  Which data sets and regions of
-	  interest that are displayed on the canvases are determined
-	  by which of these objects are selected in the study list on
-	  the left side of the screen.  Below the canvases are dials
-	  for selecting where in the data set the displayed slices
-	  should be taken from.  Slice location can also be changed by
-	  directly clicking on the canvases.  The various mouse clicks
-	  available are as followings: 
-      </para>
+      <para> Located in the lower left corner of the window, the
+      context sensitive help window shows what different mouse buttons
+      and key strokes can accomplish given the current cursor
+      position. Note that mouse buttons are labelled in UNIX fashion.
+      Buttons 1, 2, and 3 correspond to the left, middle, and right
+      mouse buttons, respectively.  Under Macintosh OS X, the middle
+      and right buttons are emulated by pressing the option key or the
+      open apple key, respectively, while pressing the mouse
+      button.</para>
 
-      <sect5><title>Left Mouse Button</title>
+   </sect3>
 
-	  <para>
-	    Change the location in the data set that the slices are
-	    taken from, without changing the thickness of the slices.
-	  </para>
-      </sect5>
 
-      <sect5><title>Middle Mouse Button</title>
 
-	  <para>
-	    Change the location in the data set that the slices are
-	    taken from, along with setting the thickness of the slices
-	    to the minimum reasonable.
-	  </para>
-      </sect5>
+   <sect3><title>Tree View of Study Data</title>
 
-      <sect5><title>Right Mouse Button</title>
+    <para> Located on the left side of the window is a tree listing of
+    all the objects in the study.  The tree structure shows how
+    movements will be propogated to other objects in the study.  For
+    instance, if a data set is rotated, all of its children will be
+    correspondingly rotated. </para>
 
-	  <para>
-	    Changes the thickness of the slices without changing the
-	    location.
-	  </para>
-      </sect5>
+    <para> Objects in the tree can be selected for display by left
+    clicking on the name of the object.  Middle clicking on a data set
+    will make that data set the "active" data set.  The "active" data
+    set is designated by being highlights, and when a function is
+    chosen that can logically apply to only one data set
+    (e.g. filtering), the active data set is the one chosen. </para>
 
-      <sect5><title>Shift-Left Mouse Button</title> <para> This
-	  combination allows shifting of the active data set in space
-	  (usually used for aligning two data sets).  While holding
-	  the shift key, left click (and release) on the canvas, and
-	  you'll grab the active data set. You can now shift the
-	  active data around on the canvas.  At this point, to enact
-	  the shift, click the right button (button 3).  Any other
-	  mouse button will cancel the shift action.
-	  </para>
-      </sect5>
-
-      <sect5><title>Shift-Middle Mouse Button</title> <para> This
-	  combination allows rotating of the active data set in space
-	  (usually used for aligning two data sets).  While holding
-	  the shift key, middle click (and release) on the canvas, and
-	  you'll grab the active data set. You can now rotate the
-	  active data around on the canvas.  At this point, to enact
-	  the rotation, click the right button (button 3).  Any other
-	  mouse button will cancel the rotation.
-	  </para>
-      </sect5>
-
-      <sect5><title>Ctrl-Right Mouse Button</title>
-
-	  <para>
-	    This combination will place an alignment point at the current
-            cursor location.  A dialog will popup for entry of the alignment
-            point's name.
-	  </para>
-      </sect5>
-
-    </sect4>
-
-    <sect4><title>Toolbar</title>
-      <para>
-	On the top of the study window are several widgets used for
-	adjusting the most commonly changed display parameters.
-	Interpolation, zoom, and thickness are global
-	options and will affect all displayed data sets.  Color
-	table and threshold only apply to the data set that
-	currently has the active focus.
-      </para>
-      
-      <sect5><title>Interpolation</title>
-	<para>
-	  The user can specify what type of interpolation to use when
-	  generating slices from the active data set.  Nearest
-	  neighbor is faster.  Tri-linear interpolation produces
-	  betterlooking images but is ~8x slower.
-	</para>
-      </sect5>
-
-      <sect5><title>Viewing Mode</title>
-	<para>
-	  The user can switch between a single set of views
-	  [transverse/coronal/sagittal] on which all data sets are
-	  superimposed, or having a pair of views that are linked
-	  together.
-	</para>
-      </sect5>
-      
-      <sect5><title>Threshold</title>
-	<para>
-	  This button will pop-up a threshold widget which can be
-	  used for scaling the currently focused data set and
-	  changing the colormap.  Other data sets can be thresholded
-	  by either placing them as the focus or by using the data
-	  set modification dialog.  The threshold dialog is
-	  described below.
-	</para>
-      </sect5>
-      
-      <sect5><title>Zoom</title>
-	<para>
-	  This specificies how much to enlarge the canvas for
-	  viewing.  AMIDE tries to make an educated guess about how
-	  large the display of the data set should be.  Zoom can be
-	  used in addition to that guesswork.
-	</para>
-      </sect5>
-      
-      <sect5><title>Thickness</title>
-	<para>
-	  Thickness specifies how deep the slices displayed on the
-	  study canvas are.
-	</para>
-      </sect5>
-      
-      <sect5><title>Time Pop-up</title>
-	<para>
-	  This is another button to pop-up a dialog box.  The time
-	  dialog box allows the user to specify the time interval
-	  over which data should be displayed.
-	  </para>
-      </sect5>
-      
-      
-    </sect4>
+    <para> Object modification dialog boxes can be brought up by right
+    clicking on the corresponding object.  ROI's can be added by right
+    clicking on the blank area of the tree, or shift-right clicking on
+    one of the objects.  These functions are further described in
+    <xref linkend="data_sets" /> and <xref linkend="rois" />.</para>
+   </sect3>
     
+
+   <sect3><title>Orthogonal Views</title>
     
-    
-  </sect3>
+    <para> Most of the main window display consists of the orthogonal
+    views used for visually displaying the data sets being studied.
+    Data is usually presented as three orthogonal slices taken from
+    the data sets, but the user can choose to display fewer of these
+    views if desired by using the view selector (described below in
+    <xref linkend="view_selector" />).  The three views shown are the
+    transverse, coronal, and sagittal planes.  Note that the views may
+    be incorrectly labeled for you.  This could be because the data in
+    the file you imported was not in the order that AMIDE expected it
+    to be in.  It could also be because you want to use the
+    transverse/coronal/sagittal terminology differently then the
+    program does (e.g. a coronal section of a rat brain is not the
+    same as a coronal section of a rat). </para>
+
+
+    <para> Below the views are sliders for adjusting where in the data
+    set the slices are being taken from.  The location can also be
+    changed by directly clicking on any of the canvases.  The
+    appropriate mouse clicks are as follows</para>
+
+
+   <variablelist> 
+
+    <varlistentry><term>Left Mouse Button</term>
+     <listitem>
+      <para>Changes the location in the data set that the slices are
+      taken from, without changing the thickness of the slices.</para>
+    </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Middle Mouse Button</term>
+    <listitem>
+     <para>Change the
+     location in the data set that the slices are taken from, along
+     with setting the thickness of the slices to the minimum
+     reasonable. </para>
+    </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Right Mouse Button</term>
+    <listitem>
+     <para>Clicking an
+     dragging with this button changes the thickness of the slices
+     without changing the location.  The thickness of the viewed
+     slices can also be altered by adjusting the slice thickness
+     setting spin button (see <xref linkend="slice_thickness_setting"
+     />).</para>
+    </listitem>
+    </varlistentry>
+
   
-    <sect3><title>Threshold Dialog</title>
-    <para>
-      The threshold dialog allows the threshold and colormap of the
-      currently focused data set to be altered.  On top are entry
-      boxes where the maximum and minimum thresholds can be entered,
-      either in percent of the data set's maximum and minimum levels
-      or as absolute values.  On the bottom left is a bar graph
-      showing the distribution of the data set's values.  On the
-      bottom right is a color scale from which the thresholds can also
-      be altered.  In the middle are selectors for picking the color
-      table and threshold type (described below).
-   </para>
+    <varlistentry><term>Other</term>
+    <listitem>
+     <para>Additional functionality of the mouse buttons for
+     manipulating data sets and ROI's is explained in <xref
+     linkend="data_sets" /> and <xref linkend="rois" /></para>
+    </listitem>
+    </varlistentry>
 
-	<sect4><title>Threshold Types</title> 
+   </variablelist>
 
-	<para> Several different ways can be used for interpreting how
-	the max and min threshold values are applied to the data set.
-	</para>
+   </sect3>
+
+   
+   <sect3 id="view_selector"><title>View Selector</title>
+    
+    <para>Which of the three orthogonal views are shown can be
+    selected by using these toggle buttons.  By default, all three
+    views are shown. </para>
+
+   </sect3>
+
+
+   <sect3><title>Linked Viewing</title>
+    
+    <para>In addition to the three orthogonal views, AMIDE can display
+    mutiple sets of these orthogonal views, all looking at the same
+    point ("linked") in three dimension space.  This is most often
+    used for looking at fusion images of two data sets, with one set
+    of views used for the first data set, the next set of views used
+    for the second data set, and the third set of views used for the
+    fusion of the two data sets.  </para>
+
+   </sect3>
+
+
+   <sect3 id="threshold_dialog"><title>Thresholding Tool</title>
+    
+    <para> This button on the toolbar will pop-up a thresholding and
+    colormap selection dialog for the currently active data set.  In
+    the dialog, the maximum and minimum thresholding levels can be
+    changed by either directly typing in the values (in absolute or
+    percentage units), or by using sliders on the color bar.  The
+    color scale can be changed using the corresponding drop-down menu.
+    A log normalized histogram is shown to give an idea of the
+    distribution of the data set's value.  Finally, the thresholding
+    type can be changed.  The thresholding type determines how the
+    maximum and minimum threshold values are applied to the data set,
+    and are:
+    </para>
 
 	<variablelist> 
 
@@ -225,12 +324,12 @@
 
 		<varlistentry><term>Interpolate Between Frames</term>
 		<listitem><para>This threshold mode only makes sense
-		for dynamic studies.  In this mode, to sets of max and
-		min threshold values are specified, along with which
-		frame of data each of these sets corresponds to.  For
-		data frames before and include the first reference
-		frame, the first set of threshold values are used.
-		For data frames after and including the second
+		for dynamic studies.  In this mode, two sets of max
+		and min threshold values are specified, along with
+		which frame of data each of these sets corresponds to.
+		For data frames before and including the first
+		reference frame, the first set of threshold values are
+		used.  For data frames after and including the second
 		reference frame, the second set of threshold values
 		are used.  For data frames between the two reference
 		frames, the max and min threshold values are derived
@@ -246,233 +345,134 @@
 
 	</variablelist>
 
-      </sect4>
-      
-  </sect3>
-  
-  <sect3><title>Series View Window</title>
-    <para>
-      Instead of looking at three orthogonal slices through the data
-      set, a series of slices (all of the same orientation) can also
-      be examined.  Select: "View->Series->Space->[view]" from the
-      menu to bring up the series of slices from a single frame.
-      Alternatively, select: "View->Series->Time->[view]" from the
-      menu to bring up a series consisting of the same data slice over
-      the time period of the study.  The thickness, interpolation
-      type, data sets used, and orientation of the slices are all
-      determined at the time the series window is brought up, although
-      the thresholds and color tables can still be altered.  A dial
-      appears on the top of the window which allows moving through the
-      data set.  Note that since slices are cached in memory after
-      being displayed, already displayed slices do not need to be
-      regenerated from the data set and reviewing these slices is
-      significantly faster.
-    </para>
-  </sect3>
+   </sect3>
 
 
-  <sect3 id="time-dialog-help"><title>Time Dialog</title>
-    <para>
-      The time dialog lets the user pick over which time period data
-      should be displayed.  Since data sets are often composed of
-      non-regular duration frames, the abstraction between the user
-      interface and the underlying format of the data set has been
-      dropped in this case and the user is presented with a list of
-      the frames of data arranged in chronological order.  A time
-      period (i.e. frame) can be selected by clicking on a list
-      element.  Multiple frames can be selected by holding down the
-      shift key and selecting on additional frames.  Non-contigous
-      selections are not allowed.  Note that for each selected data
-      set, at least one frame will be highlighted.  If the choosen
-      time period does not encompose a frame for a given data set, the
-      closest frame will be choosen.  Hitting the OK or Apply buttons
-      will cause any changes made on this page to take effect.
-    </para>
-  </sect3>
 
-  <sect3 id="data-set-dialog-help"><title>Data Set Modification Dialog Box</title>
-    <para>
-      To modify parameters of a data set, first select the data set in
-      the study list and then right click on the data set.  The Data
-      Set Modification Dialog Box will then appear.  Parameters that
-      can be modified are divided into the following pages.
-    </para>
+   <sect3><title>Zoom Selector</title>
     
-    <sect4 id="data-set-dialog-help-basic"><title>Basic Info</title>
-      <para>
-	The name, type of modality, and conversion factor can be
-	altered on this page.  The conversion factor is a parameter
-	that is multiplied to the data set before it is used for
-	viewing or quantitation.  Since the data set is in
-	ECAT/MAP/abitrary scale units, the conversion factor can be
-	used in order to analyze the data set in another type of
-	reference unit (i.e. Percent Injected Dose [%ID]).  Hitting
-	the OK or Apply buttons will cause any changes made on this
-	page to take effect.
-      </para>
-    </sect4>
+    <para>This specifies how much to enlarge the views.  AMIDE tries
+    to make an educated guess about how large the display of the data
+    should be, by using the smallest voxel dimension from the data set
+    with the largest voxels to correspond to a displayed pixel.  Zoom
+    can be used in addition to that guesswork.</para>
+
+   </sect3>
+
+
+
+   <sect3 id="slice_thickness_setting"><title>Slice Thickness Setting</title>
     
-    <sect4 id="data-set-dialog-help-center-dimensions"><title>Center/Dimensions</title>
-      <para>
-	The data set can be shifted by respecifing the center of the
-	data set with respect to the origin.  The x, y, and z
-	dimensions are in millimeters.  Being able to change the
-	center of the data set is useful for manually aligning
-	multiple data sets.  The size of the data set's voxels (again,
-	in millimeters) can also be altered on this page.  The "keep
-	aspect ratio" button specifies that when altering the size of
-	any voxel component (x, y, or z), the relative sizes between
-	the components should be kept the same.  Hitting the OK or
-	Apply buttons will cause any changes made on this page to take
-	effect. </para>
-    </sect4>
-
-    <sect4 id="data-set-dialog-help-rotate"><title>Rotate</title>
-      <para>
-	The data set can be rotated around its center in this page.
-	This comes in useful when the data set doesn't quite line-up
-	with the transverse/coronal/sagittal planes.  There is one
-	dial for each of the three slice planes.  The transverse dial
-	will spin the data set in the transverse plane (i.e. rotate on
-	the z-axis).  The coronal dial will spin the data set in the
-	coronal plane (i.e. rotate on the y-axis).  And the sagittal
-	dial will spin the data set in the sagittal plane (i.e. rotate
-	on the x-axis).  The "reset to default" button allows the data
-	set to be rotated back to it's initial orientation.  On the
-	bottom of this page is a matrix showing the coordinate frame
-	of the data set with respect to the base coordinate frame.
-	Hitting the OK or Apply buttons will cause any changes made on
-	this page to take effect. </para>
-    </sect4>
-    
-    <sect4 id="data-set-dialog-help-colormap-threshold"><title>Colormap/Threshold</title>
-      <para>
-	This page is analogous to the threshold dialog (described
-	above).  Any changes made on this page are immediately
-	carried out.
-      </para>
-    </sect4>
-    
-    <sect4 id="data-set-dialog-help-time"><title>Time</title>
-      <para>
-	From this page, the timing information of the data set can be
-	altered.  Scan start time can be used for altering the start
-	time of the scan with respect to other data sets.  Corrections
-	in the duration of each data frame can also be made on this
-	page.  Hitting the OK or Apply buttons will cause any changes
-	made on this page to take effect. </para>
-    </sect4>
-
-    <sect4 id="data-set-dialog-help-immutables"><title>Immutables</title>
-      <para>
-	This panel lists information about the data set that cannot be
-	altered.  The underlying internal data format of the data set
-	and the data set dimensions in voxels are displayed on this
-	page.
-	</para>
-    </sect4>
-
-  </sect3>
-  
-
-  <sect3 id="roi-dialog-help"><title>Region of Interest Modification Dialog Box</title>
-    <para>
-      To modify parameters of an ROI, first select the ROI in the
-      study list and then right click on the data set.  The ROI
-      Modification Dialog Box will then appear.  Parameters that can
-      be modified are divided into the following pages.
+    <para> Thickness specifies how deep the slices displayed on the
+    views are.  The minimum slice thickness is determined by the
+    smallest voxel dimension of any of the data sets in the study.
     </para>
 
-    <sect4 id="roi-dialog-help-basic"><title>Basic Info</title>
-      <para>
-	The name and type of ROI can be altered on this page.
-	Hitting the OK or Apply buttons will cause any changes made
-	on this page to take effect.
-      </para>
-    </sect4>
-    
-    <sect4  id="roi-dialog-helpcenter"><title>Center</title>
-      <para>
-	The center of the ROI can be shifted with respect to the
-	origin on this page.  The x, y, and z parameters are in
-	millimeters Hitting the OK or Apply buttons will cause any
-	changes made on this page to take effect. </para>
-    </sect4>
-    
-    <sect4  id="roi-dialog-help-dimensions"><title>Dimensions</title>
-      <para>
-	The size of the ROI can be altered from this page.  The x',
-	y', and z' dimensions are in millimeters and are orientated
-	with respect to the ROI.  Hitting the OK or Apply buttons
-	will cause any changes made on this page to take
-	effect. </para>
-    </sect4>
-    
-    <sect4 id="roi-dialog-help-rotate"><title>Rotate</title>
-      <para>
-	The ROI can be rotated around its center in this page.  There
-	is one dial for each of the three slice planes.  The
-	transverse dial will spin the ROI in the transverse plane
-	(i.e. rotate on the z-axis).  The coronal dial will spin the
-	ROI in the coronal plane (i.e. rotate on the y-axis).  And the
-	sagittal dial will spin the ROI in the sagittal plane
-	(i.e. rotate on the x-axis).  The "reset to default" button
-	allows the ROI to be rotated back to it's initial orientation.
-	On the bottom of this page is a matrix showing the coordinate
-	frame of the ROI with respect to the base coordinate frame.
-	Hitting the OK or Apply buttons will cause any changes made on
-	this page to take effect. </para>
-    </sect4>
+   </sect3>
 
-  </sect3>
+
+
+   <sect3 id="frame-dialog"><title>Frame Selector</title>
+    
+    <para>This button pops up a dialog for picking which frames of
+    data to show from a dynamic data set. A frame (i.e. time period)
+    to display can be selected by clicking on a list element.
+    Multiple frames can be selected by holding down the shift key and
+    selecting additional frames.  Note, that for each data set
+    selected for view, at least one frame from that data set will be
+    displayed.  If the choosen time period does not encompass a frame
+    from that data set, the closest appropriate frame will be
+    choosen.</para>
+
+   </sect3>
+
+
+   <sect3><title>Target Selector</title>
+    
+    <para>The target cross hairs are generally only displayed when one
+     of the mouse buttons is depressed.  With this toggle button, you
+     can tell the program that you want the target cross hairs left on
+     the views.</para>
+
+   </sect3>
+
+
+   <sect3 id="interpolation"><title>Interpolation</title>
+    
+    <para>Interpolation refers to the method whereby AMIDE extracts
+     data from the original medical imaging data set in order for it
+     to be viewed on the screen.  The interpolation selection button
+     lets the user specify what type of interpolation to use when
+     generating slices from the active data set.  Nearest neighbor is
+     faster, while tri-linear interpolation produces better looking
+     (smoother) images with the penalty of being ~8x slower.
+    </para>
+
+   </sect3>
+
+
+   <sect3><title>Fusion/Overlay Selector</title>
+    
+    <para>By default, AMIDE displays multiple data sets as fused
+    images.  With the fused/overlay selector, you can tell AMIDE that
+    you want the active data set to simply be overlayed on the other
+    data sets, rather than fused.</para>
+
+   </sect3>
 
   <sect3 id="preferences-dialog-help"><title>Preferences Dialog Box</title>
     <para>
-      This dialog box allows you to change preferences as to how
-      things in AMIDE are displayed.  These preferences will be saved
-      in a configuration file for use by future AMIDE sessions.
+      Underneath the edit menu is the preferences menu item.  This
+      will pop-up a dialog box that allows you to change preferences
+      as to how things in AMIDE are displayed.  The preferences will
+      be saved in a configuration file for use by future AMIDE
+      sessions (saved preferences are not currently supported on MS
+      Windows).
     </para>
-    
-    <sect4 id="preferences-dialog-help-roi"><title>ROI Drawing Preferences</title>
-      <para>
-	The width and style of the lines used to draw ROIs can be
-	altered here.  The width can be set between 1 and 5.  The line
-	style can be set to solid, on/off (dashes with translucent
-	bands), and double dashed (dashed with black bands).
-      </para>
-    </sect4>
 
-    <sect4 id="preferences-dialog-help-canvas"><title>Canvas Layout Preferences</title>
-      <para>
-	This allows you to switch the layout of the three views
-	(transverse, coronal, and sagittal) between a linear style
-	layout more commonly seen in PET software, and an orthogonal
-	style layout more commonly seen in MRI software.
-      </para>
-    </sect4>
+    <variablelist>
     
+    <varlistentry><term>ROI Drawing Preferences</term>
+      <listitem> <para>
+	The width of the line used to draw ROIs can be altered here.
+	The width can be set between 1 and 5.
+      </para> </listitem>
+    </varlistentry>
+
+    <varlistentry><term>View Layout Preferences</term>
+      <listitem> <para>
+	The first option allows you to switch the layout of the three
+	views (transverse, coronal, and sagittal) between a linear
+	style layout more commonly seen in PET software, and an
+	orthogonal style layout more commonly seen in MRI software.
+	The second option allows you to pick if you want the size of
+	the view to remain constant or not.  If not checked, the size
+	of the views shown will depend only on the data sets selected.
+	If the checkbox is checked, the size of the views will depend
+	on all the data sets in the study.  The final option is for
+	setting the size of the empty area in the middle of the target
+	(the crosshairs on the views when changing the view location).
+      </para></listitem>
+    </varlistentry>
+
+    <varlistentry><term>Default Colortable Preferences</term>
+      <listitem> <para>
+        The program uses the specified color tables by default on a
+        newly imported data set.
+      </para></listitem>
+    </varlistentry>
+    
+    <varlistentry><term>Misc. Preferences</term>
+      <listitem> <para>
+       With the "Don't prompt for 'save changes' on exit" option, you
+       can tell the program to not prompt you to save changes done on
+       the study when exiting an AMIDE session.
+      </para></listitem>
+    </varlistentry>
+
+    </variablelist>
+
   </sect3>
+    
 
 </sect2>
-
-
-
-
-  
-  
-  <!-- Keep this comment at the end of the file
-  Local variables:
-  mode: sgml
-  sgml-omittag:t
-  sgml-shorttag:t
-  sgml-minimize-attributes:nil
-  sgml-always-quote-attributes:t
-  sgml-indent-step:2
-  sgml-indent-data:t
-  sgml-parent-document:nil
-  sgml-exposed-tags:nil
-  sgml-local-catalogs:nil
-  sgml-local-ecat-files:nil
-  End:
-  -->            
-

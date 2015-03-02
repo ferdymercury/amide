@@ -218,12 +218,12 @@ static void change_raw_format_cb(GtkWidget * widget, gpointer data) {
 /* reset the label for the offset entry */
 static void update_offset_label(raw_data_info_t * raw_data_info) {
 
-  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_NE)
+  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_8_NE)
     gtk_label_set_text(GTK_LABEL(raw_data_info->read_offset_label), 
-		       "read offset (entries):");
+		       _("read offset (entries):"));
   else
     gtk_label_set_text(GTK_LABEL(raw_data_info->read_offset_label), 
-		       "read offset (bytes):");
+		       _("read offset (bytes):"));
 }
 
 /* calculate the total amount of the file that will be read through */
@@ -233,11 +233,11 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
   gchar * temp_string;
   
   /* how many bytes we're currently reading from the file */
-  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_NE) {
+  if (raw_data_info->raw_format == AMITK_RAW_FORMAT_ASCII_8_NE) {
     num_entries = raw_data_info->offset + 
       raw_data_info->data_dim.x*raw_data_info->data_dim.y*raw_data_info->data_dim.z*raw_data_info->data_dim.t;
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
-		       "total entries to read through:");
+		       _("total entries to read through:"));
     temp_string = g_strdup_printf("%d",num_entries);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label2), temp_string);
     g_free(temp_string);
@@ -252,7 +252,7 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
       amitk_raw_format_calc_num_bytes(raw_data_info->data_dim, 
 				      raw_data_info->raw_format);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label1), 
-		       "total bytes to read through:");
+		       _("total bytes to read through:"));
     temp_string = g_strdup_printf("%d",num_bytes);
     gtk_label_set_text(GTK_LABEL(raw_data_info->num_bytes_label2), temp_string);
     g_free(temp_string);
@@ -289,7 +289,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   /* start making the import dialog */
   dialog = gtk_dialog_new();
 
-  temp_string = g_strdup_printf("%s: Raw Data Import Dialog\n", PACKAGE);
+  temp_string = g_strdup_printf(_("%s: Raw Data Import Dialog\n"), PACKAGE);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
 
@@ -303,7 +303,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox),packing_table);
 
   /* widgets to change the roi's name */
-  label = gtk_label_new("name:");
+  label = gtk_label_new(_("name:"));
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1,
@@ -340,7 +340,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* widgets to change the object's modality */
-  label = gtk_label_new("modality:");
+  label = gtk_label_new(_("modality:"));
   gtk_table_attach(GTK_TABLE(packing_table),
   		   GTK_WIDGET(label), 0,1,
   		   table_row, table_row+1,
@@ -368,7 +368,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* widgets to change the raw data file's  data format */
-  label = gtk_label_new("data format:");
+  label = gtk_label_new(_("data format:"));
   gtk_table_attach(GTK_TABLE(packing_table),
 		   GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1,
@@ -387,8 +387,8 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   }
   
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_RAW_FORMAT_UBYTE_NE);
-  raw_data_info->raw_format = AMITK_RAW_FORMAT_UBYTE_NE;
+  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), AMITK_RAW_FORMAT_UBYTE_8_NE);
+  raw_data_info->raw_format = AMITK_RAW_FORMAT_UBYTE_8_NE;
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(option_menu), 1,2, 
 		   table_row,table_row+1,
@@ -396,7 +396,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   X_PADDING, Y_PADDING);
 
   /* how many bytes we can read from the file */
-  label = gtk_label_new("file size (bytes):");
+  label = gtk_label_new(_("file size (bytes):"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   /* how many bytes we're currently reading from the file */
@@ -439,23 +439,23 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* labels for the x, y, and z components */
-  label = gtk_label_new("x");
+  label = gtk_label_new(_("x"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 1,2,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new("y");
+  label = gtk_label_new(_("y"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 2,3,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new("z");
+  label = gtk_label_new(_("z"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 3,4,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  label = gtk_label_new("frames");
+  label = gtk_label_new(_("frames"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 4,5,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
   /* widgets to change the dimensions of the data set */
-  label = gtk_label_new("dimensions (# voxels)");
+  label = gtk_label_new(_("dimensions (# voxels)"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -478,7 +478,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
   table_row++;
 
   /* widgets to change the voxel size of the data set */
-  label = gtk_label_new("voxel size (mm)");
+  label = gtk_label_new(_("voxel size (mm)"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -500,7 +500,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* scale factor to apply to the data */
-  label = gtk_label_new("scale factor");
+  label = gtk_label_new(_("scale factor"));
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
@@ -534,7 +534,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 
   /* get space for our raw_data_info structure */
   if ((raw_data_info = g_try_new(raw_data_info_t,1)) == NULL) {
-    g_warning("Couldn't allocate space for raw_data_info structure for raw data import");
+    g_warning(_("Couldn't allocate space for raw_data_info structure for raw data import"));
     return NULL;
   }
   raw_data_info->scale_factor = 1.0;
@@ -542,7 +542,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
 
   /* figure out the file size in bytes (file_info.st_size) */
   if (stat(raw_data_info->filename, &file_info) != 0) {
-    g_warning("Couldn't get stat's on file %s for raw data import", raw_data_info->filename);
+    g_warning(_("Couldn't get stat's on file %s for raw data import"), raw_data_info->filename);
     g_free(raw_data_info);
     return NULL;
   }

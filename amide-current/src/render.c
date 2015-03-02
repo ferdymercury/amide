@@ -42,12 +42,16 @@
 
 
 /* external variables */
-gchar * rendering_quality_names[] = {"Highest Quality and Slowest",
-				     "High Quality and Medium Speed",
-				     "Medium Quality and Fast",
-				     "Low Quality and Fastest"};
-gchar * pixel_type_names[] = {"Opacity",
-			      "Grayscale"};
+gchar * rendering_quality_names[] = {
+  N_("Highest Quality and Slowest"),
+  N_("High Quality and Medium Speed"),
+  N_("Medium Quality and Fast"),
+  N_("Low Quality and Fastest")
+};
+gchar * pixel_type_names[] = {
+  N_("Opacity"),
+  N_("Grayscale")
+};
 
 
 rendering_t * rendering_unref(rendering_t * rendering) {
@@ -140,7 +144,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   g_return_val_if_fail((AMITK_IS_DATA_SET(object) || AMITK_IS_ROI(object)), NULL);
 
   if ((new_rendering =  g_try_new(rendering_t,1)) == NULL) {
-    g_warning("couldn't allocate space for rendering context");
+    g_warning(_("couldn't allocate space for rendering context"));
     return NULL;
   }
   new_rendering->ref_count = 1;
@@ -178,7 +182,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   if (AMITK_IS_DATA_SET(new_rendering->object))
     if (AMITK_DATA_SET_THRESHOLDING(new_rendering->object) == AMITK_THRESHOLDING_PER_SLICE) {
       amitk_data_set_set_thresholding(AMITK_DATA_SET(new_rendering->object), AMITK_THRESHOLDING_GLOBAL);
-      g_warning("\"Per Slice\" thresholding illogical for conversion to volume rendering, using \"Global\" thresholding ");
+      g_warning(_("\"Per Slice\" thresholding illogical for conversion to volume rendering, using \"Global\" thresholding "));
     }
       
 
@@ -191,12 +195,12 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->num_points[DENSITY_CLASSIFICATION] = RENDERING_DENSITY_RAMP_POINTS;
   if ((new_rendering->ramp_x[DENSITY_CLASSIFICATION] = 
        g_try_new(gint, new_rendering->num_points[DENSITY_CLASSIFICATION])) == NULL) {
-    g_warning("couldn't allocate space for density ramp x");
+    g_warning(_("couldn't allocate space for density ramp x"));
     return NULL;
   }
   if ((new_rendering->ramp_y[DENSITY_CLASSIFICATION] = 
        g_try_new(gfloat,new_rendering->num_points[DENSITY_CLASSIFICATION])) == NULL) {
-    g_warning("couldn't allocate space for density ramp y");
+    g_warning(_("couldn't allocate space for density ramp y"));
     return NULL;
   }
   for (i=0;i<new_rendering->num_points[DENSITY_CLASSIFICATION];i++) {
@@ -207,12 +211,12 @@ rendering_t * rendering_init(const AmitkObject * object,
   new_rendering->num_points[GRADIENT_CLASSIFICATION] = RENDERING_GRADIENT_RAMP_POINTS;
   if ((new_rendering->ramp_x[GRADIENT_CLASSIFICATION] = 
        g_try_new(gint,new_rendering->num_points[GRADIENT_CLASSIFICATION])) == NULL) {
-    g_warning("couldn't allocate space for gradient ramp x");
+    g_warning(_("couldn't allocate space for gradient ramp x"));
     return NULL;
   }
   if ((new_rendering->ramp_y[GRADIENT_CLASSIFICATION] = 
        g_try_new(gfloat,new_rendering->num_points[GRADIENT_CLASSIFICATION])) == NULL) {
-    g_warning("couldn't allocate space for gradient ramp y");
+    g_warning(_("couldn't allocate space for gradient ramp y"));
     return NULL;
   }
   for (i=0;i<new_rendering->num_points[GRADIENT_CLASSIFICATION];i++) {
@@ -228,7 +232,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 	     new_rendering->num_points[DENSITY_CLASSIFICATION],
 	     new_rendering->ramp_x[DENSITY_CLASSIFICATION], 
 	     new_rendering->ramp_y[DENSITY_CLASSIFICATION]) != VP_OK){
-    g_warning("Error Setting the Rendering Density Ramp");
+    g_warning(_("Error Setting the Rendering Density Ramp"));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
   }
@@ -238,7 +242,7 @@ rendering_t * rendering_init(const AmitkObject * object,
 	     new_rendering->num_points[GRADIENT_CLASSIFICATION],
 	     new_rendering->ramp_x[GRADIENT_CLASSIFICATION], 
 	     new_rendering->ramp_y[GRADIENT_CLASSIFICATION]) != VP_OK) {
-    g_warning("Error Setting the Rendering Gradient Ramp");
+    g_warning(_("Error Setting the Rendering Gradient Ramp"));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
   }
@@ -246,7 +250,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   /* tell the rendering context info on the voxel structure */
   if (vpSetVoxelSize(new_rendering->vpc,  RENDERING_BYTES_PER_VOXEL, RENDERING_VOXEL_FIELDS, 
 		     RENDERING_SHADE_FIELDS, RENDERING_CLSFY_FIELDS) != VP_OK) {
-    g_warning("Error Setting the Rendering Voxel Size (%s): %s", 
+    g_warning(_("Error Setting the Rendering Voxel Size (%s): %s"), 
 	      new_rendering->name, vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
@@ -256,21 +260,21 @@ rendering_t * rendering_init(const AmitkObject * object,
      do this for each field in the context */
   if (vpSetVoxelField (new_rendering->vpc,RENDERING_NORMAL_FIELD, RENDERING_NORMAL_SIZE, 
 		       RENDERING_NORMAL_OFFSET, RENDERING_NORMAL_MAX) != VP_OK) {
-    g_warning("Error Specifying the Rendering Voxel Fields (%s, NORMAL): %s", 
+    g_warning(_("Error Specifying the Rendering Voxel Fields (%s, NORMAL): %s"), 
 	      new_rendering->name, vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
   }
   if (vpSetVoxelField (new_rendering->vpc,RENDERING_DENSITY_FIELD, RENDERING_DENSITY_SIZE, 
 		       RENDERING_DENSITY_OFFSET, RENDERING_DENSITY_MAX) != VP_OK) {
-    g_warning("Error Specifying the Rendering Voxel Fields (%s, DENSITY): %s", 
+    g_warning(_("Error Specifying the Rendering Voxel Fields (%s, DENSITY): %s"), 
 	      new_rendering->name, vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
   }
   if (vpSetVoxelField (new_rendering->vpc,RENDERING_GRADIENT_FIELD, RENDERING_GRADIENT_SIZE, 
 		       RENDERING_GRADIENT_OFFSET, RENDERING_GRADIENT_MAX) != VP_OK) {
-    g_warning("Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s",
+    g_warning(_("Error Specifying the Rendering Voxel Fields (%s, GRADIENT): %s"),
 	      new_rendering->name, vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
@@ -280,7 +284,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   if (vpSetClassifierTable(new_rendering->vpc, RENDERING_DENSITY_PARAM, RENDERING_DENSITY_FIELD, 
 			   new_rendering->density_ramp,
 			   sizeof(new_rendering->density_ramp)) != VP_OK){
-    g_warning("Error Setting the Rendering Classifier Table (%s, DENSITY): %s",
+    g_warning(_("Error Setting the Rendering Classifier Table (%s, DENSITY): %s"),
 	      new_rendering->name, vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
@@ -290,7 +294,7 @@ rendering_t * rendering_init(const AmitkObject * object,
   if (vpSetClassifierTable(new_rendering->vpc, RENDERING_GRADIENT_PARAM, RENDERING_GRADIENT_FIELD, 
 			   new_rendering->gradient_ramp,
 			   sizeof(new_rendering->gradient_ramp)) != VP_OK){
-    g_warning("Error Setting the Classifier Table (%s, GRADIENT): %s",
+    g_warning(_("Error Setting the Classifier Table (%s, GRADIENT): %s"),
 	      new_rendering->name,  vpGetErrorString(vpGetError(new_rendering->vpc)));
     new_rendering = rendering_unref(new_rendering);
     return new_rendering;
@@ -372,7 +376,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   /* tell the volpack context the dimensions of our rendering context */
   if (vpSetVolumeSize(rendering->vpc, rendering->dim.x, 
 		      rendering->dim.y, rendering->dim.z) != VP_OK) {
-    g_warning("Error Setting the Context Size (%s): %s", 
+    g_warning(_("Error Setting the Context Size (%s): %s"), 
 	      rendering->name, 
 	      vpGetErrorString(vpGetError(rendering->vpc)));
     return FALSE;
@@ -385,7 +389,7 @@ gboolean rendering_load_object(rendering_t * rendering,
      rendering->dim.z * RENDERING_BYTES_PER_VOXEL;
 
   if ((density = (rendering_density_t * ) g_try_malloc(density_size)) == NULL) {
-    g_warning("Could not allocate space for density data for %s", 
+    g_warning(_("Could not allocate space for density data for %s"), 
 	      rendering->name);
     return FALSE;
   }
@@ -397,7 +401,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   }
 
   if ((rendering->rendering_data = (rendering_voxel_t * ) g_try_malloc(context_size)) == NULL) {
-    g_warning("Could not allocate space for rendering context volume for %s", 
+    g_warning(_("Could not allocate space for rendering context volume for %s"), 
 	      rendering->name);
     g_free(density);
     return FALSE;
@@ -409,7 +413,7 @@ gboolean rendering_load_object(rendering_t * rendering,
 
   /* setup the progress information */
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Converting for rendering: %s", rendering->name);
+    temp_string = g_strdup_printf(_("Converting for rendering: %s"), rendering->name);
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -589,7 +593,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   /* compute surface normals (for shading) and gradient magnitudes (for classification) */
   if (vpVolumeNormals(rendering->vpc, density, density_size, RENDERING_DENSITY_FIELD, 
 		      RENDERING_GRADIENT_FIELD, RENDERING_NORMAL_FIELD) != VP_OK) {
-    g_warning("Error Computing the Rendering Normals (%s): %s",
+    g_warning(_("Error Computing the Rendering Normals (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
     g_free(density);
     return FALSE;
@@ -617,20 +621,20 @@ gboolean rendering_load_object(rendering_t * rendering,
     /* set the thresholds on the min-max octree */
     if (vpMinMaxOctreeThreshold(rendering->vpc, RENDERING_DENSITY_PARAM, 
 				RENDERING_OCTREE_DENSITY_THRESH) != VP_OK) {
-      g_warning("Error Setting Rendering Octree Threshold (%s, DENSITY): %s",
+      g_warning(_("Error Setting Rendering Octree Threshold (%s, DENSITY): %s"),
 		rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
       return FALSE;
     }
     if (vpMinMaxOctreeThreshold(rendering->vpc, RENDERING_GRADIENT_PARAM, 
 				RENDERING_OCTREE_GRADIENT_THRESH) != VP_OK) {
-      g_warning("Error Setting Rendering Octree Threshold (%s, GRADIENT): %s",
+      g_warning(_("Error Setting Rendering Octree Threshold (%s, GRADIENT): %s"),
 		rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
       return FALSE;
     }
 
     /* create the min/max octree */
     if (vpCreateMinMaxOctree(rendering->vpc, 0, RENDERING_OCTREE_BASE_NODE_SIZE) != VP_OK) {
-      g_warning("Error Generating Octree (%s): %s", rendering->name, 
+      g_warning(_("Error Generating Octree (%s): %s"), rendering->name, 
 		vpGetErrorString(vpGetError(rendering->vpc)));
       return FALSE;
     }
@@ -639,25 +643,25 @@ gboolean rendering_load_object(rendering_t * rendering,
 
   /* set the initial ambient property, as I don't like the volpack default */
   /*  if (vpSetMaterial(vpc[which], VP_MATERIAL0, VP_AMBIENT, VP_BOTH_SIDES, 0.0, 0.0, 0.0)  != VP_OK){
-    g_warning("Error Setting the Material (%s, AMBIENT): %s",vol_name[which], vpGetErrorString(vpGetError(vpc[which])));
+    g_warning(_("Error Setting the Material (%s, AMBIENT): %s"),vol_name[which], vpGetErrorString(vpGetError(vpc[which])));
     return FALSE;
     }*/
 
 
   /*  if (vpSetMaterial(vpc[PET_VOLUME], VP_MATERIAL0, VP_DIFFUSE, VP_BOTH_SIDES, 0.35, 0.35, 0.35)  != VP_OK){
-    g_warning("Error Setting the Material (PET_VOLUME, DIFFUSE): %s",vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
+    g_warning(_("Error Setting the Material (PET_VOLUME, DIFFUSE): %s"),vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
     return FALSE;
     }*/
 
   /*  if (vpSetMaterial(vpc[PET_VOLUME], VP_MATERIAL0, VP_SPECULAR, VP_BOTH_SIDES, 0.39, 0.39, 0.39) != VP_OK){
-      g_warning("Error Setting the Material (PET_VOLUME, SPECULAR): %s",vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
+      g_warning(_("Error Setting the Material (PET_VOLUME, SPECULAR): %s"),vpGetErrorString(vpGetError(vpc[PET_VOLUME])));
     return FALSE;
   }  */
 
 
   /* set the initial shinyness, volpack's default is something shiny, I set shiny to zero */
   if (vpSetMaterial(rendering->vpc, VP_MATERIAL0, VP_SHINYNESS, VP_BOTH_SIDES,0.0,0.0,0.0) != VP_OK){
-    g_warning("Error Setting the Rendering Material (%s, SHINYNESS): %s",
+    g_warning(_("Error Setting the Rendering Material (%s, SHINYNESS): %s"),
 	      rendering->name, 
 	      vpGetErrorString(vpGetError(rendering->vpc)));
     return FALSE;
@@ -667,7 +671,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   if (vpSetLookupShader(rendering->vpc, 1, 1, RENDERING_NORMAL_FIELD, 
 			rendering->shade_table, sizeof(rendering->shade_table), 
 			0, NULL, 0) != VP_OK){
-    g_warning("Error Setting the Rendering Shader (%s): %s",
+    g_warning(_("Error Setting the Rendering Shader (%s): %s"),
 	      rendering->name, 
 	      vpGetErrorString(vpGetError(rendering->vpc)));
     return FALSE;
@@ -675,7 +679,7 @@ gboolean rendering_load_object(rendering_t * rendering,
   
   /* and do the shade table stuff (this fills in the shade table I believe) */
   if (vpShadeTable(rendering->vpc) != VP_OK){
-    g_warning("Error Shading Table for Rendering (%s): %s",
+    g_warning(_("Error Shading Table for Rendering (%s): %s"),
 	      rendering->name, 
 	      vpGetErrorString(vpGetError(rendering->vpc)));
     return FALSE;
@@ -710,12 +714,12 @@ static void set_space(rendering_t * rendering) {
 
   /* we want to rotate the data set */
   if (vpCurrentMatrix(rendering->vpc, VP_MODEL) != VP_OK)
-    g_warning("Error Setting The Item To Rotate (%s): %s",
+    g_warning(_("Error Setting The Item To Rotate (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
 
   /* set the rotation */
   if (vpSetMatrix(rendering->vpc, m) != VP_OK)
-    g_warning("Error Rotating Rendering (%s): %s",
+    g_warning(_("Error Rotating Rendering (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
 
 }
@@ -793,13 +797,13 @@ void rendering_set_quality(rendering_t * rendering, rendering_quality_t quality)
 
   /* set the maximum ray opacity (the renderer quits follow a ray if this value is reached */
   if (vpSetd(rendering->vpc, VP_MAX_RAY_OPACITY, max_ray_opacity) != VP_OK){
-    g_warning("Error Setting Rendering Max Ray Opacity (%s): %s",
+    g_warning(_("Error Setting Rendering Max Ray Opacity (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
   }
 
   /* set the minimum voxel opacity (the render ignores voxels with values below this*/
   if (vpSetd(rendering->vpc, VP_MIN_VOXEL_OPACITY, min_voxel_opacity) != VP_OK) {
-    g_warning("Error Setting the Min Voxel Opacity (%s): %s", 
+    g_warning(_("Error Setting the Min Voxel Opacity (%s): %s"), 
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
   }
 
@@ -828,7 +832,7 @@ void rendering_set_image(rendering_t * rendering, pixel_type_t pixel_type, gdoub
   size_dim = ceil(zoom*POINT_MAX(rendering->dim));
   g_free(rendering->image);
   if ((rendering->image = g_try_new(guchar,size_dim*size_dim)) == NULL) {
-    g_warning("Could not allocate space for Rendering Image for %s", 
+    g_warning(_("Could not allocate space for Rendering Image for %s"), 
 	      rendering->name);
     return;
   }
@@ -836,7 +840,7 @@ void rendering_set_image(rendering_t * rendering, pixel_type_t pixel_type, gdoub
   rendering->pixel_type = pixel_type;
   if (vpSetImage(rendering->vpc, (guchar *) rendering->image, size_dim,
 		 size_dim, size_dim* RENDERING_DENSITY_SIZE, volpack_pixel_type)) {
-    g_warning("Error Switching the Rendering Image Pixel Return Type (%s): %s",
+    g_warning(_("Error Switching the Rendering Image Pixel Return Type (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
   }
   return;
@@ -848,7 +852,7 @@ void rendering_set_depth_cueing(rendering_t * rendering, gboolean state) {
   rendering->need_rerender = TRUE;
 
   if (vpEnable(rendering->vpc, VP_DEPTH_CUE, state) != VP_OK) {
-      g_warning("Error Setting the Rendering Depth Cue (%s): %s",
+      g_warning(_("Error Setting the Rendering Depth Cue (%s): %s"),
 		rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
   }
 
@@ -865,7 +869,7 @@ void rendering_set_depth_cueing_parameters(rendering_t * rendering,
 
   /* the defaults should be 1.0 and 1.0 */
   if (vpSetDepthCueing(rendering->vpc, front_factor, density) != VP_OK){
-    g_warning("Error Enabling Rendering Depth Cueing (%s): %s",
+    g_warning(_("Error Enabling Rendering Depth Cueing (%s): %s"),
 	      rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
   }
 
@@ -895,19 +899,19 @@ void rendering_render(rendering_t * rendering)
 	  g_print("\tClassifying\n");
 #endif
 	  if (vpClassifyVolume(rendering->vpc) != VP_OK) {
-	    g_warning("Error Classifying the Volume (%s): %s",
+	    g_warning(_("Error Classifying the Volume (%s): %s"),
 		      rendering->name,vpGetErrorString(vpGetError(rendering->vpc))); 
 	    return; 
 	  }
 	}
 	if (vpRenderClassifiedVolume(rendering->vpc) != VP_OK) {
-	  g_warning("Error Rendering the Classified Volume (%s): %s", 
+	  g_warning(_("Error Rendering the Classified Volume (%s): %s"), 
 		    rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
 	  return;
 	}
       } else {
 	if (vpRenderRawVolume(rendering->vpc) != VP_OK) {
-	  g_warning("Error Rendering the Volume (%s): %s", 
+	  g_warning(_("Error Rendering the Volume (%s): %s"), 
 		    rendering->name, vpGetErrorString(vpGetError(rendering->vpc)));
 	  return;
 	}

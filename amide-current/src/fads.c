@@ -36,30 +36,30 @@
 #define FINAL_MU 1e-07
 
 gchar * fads_minimizer_algorithm_name[NUM_FADS_MINIMIZERS] = {
-  //  "Steepest Descent",
-  "Fletcher-Reeves conjugate gradient",
-  "Polak-Ribiere conjugate gradient",
-  //  "vector BFGS conjugate gradient"
+  //  N_("Steepest Descent"),
+  N_("Fletcher-Reeves conjugate gradient"),
+  N_("Polak-Ribiere conjugate gradient"),
+  //  N_("vector BFGS conjugate gradient")
 };
 
 
 gchar * fads_type_name[] = {
-  "Principle Component Analysis",
-  "Penalized Least Squares Factor Analysis",
-  "2 compartment model"
+  N_("Principle Component Analysis"),
+  N_("Penalized Least Squares Factor Analysis"),
+  N_("2 compartment model")
 };
 
 gchar * fads_type_explanation[] = {
-  "Prinicple Component Analysis based on singular value "
-  "deoomposition.",
+  N_("Priniciple Component Analysis based on singular value "
+     "decomposition."),
 
-  "Principle component analysis with positivity constraints "
-  "and a penalized least squares objective, an adaptation "
-  "of Sitek, et al., IEEE Trans. Med. Imag., 2002.  If beta "
-  "is set to zero, this is normal factor analysis, similar to "
-  "Di Paola, et al., IEEE Trans. Nuc. Sci., 1982",
+  N_("Principle component analysis with positivity constraints "
+     "and a penalized least squares objective, an adaptation "
+     "of Sitek, et al., IEEE Trans. Med. Imag., 2002.  If beta "
+     "is set to zero, this is normal factor analysis, similar to "
+     "Di Paola, et al., IEEE Trans. Nuc. Sci., 1982"),
   
-  "Standard 2 compartment model"
+  N_("Standard 2 compartment model")
 
 };
 
@@ -106,23 +106,23 @@ void fads_svd_factors(AmitkDataSet * data_set,
   m = dim.x*dim.y*dim.z;
 
   if (n == 1) {
-    g_warning("need dynamic data set in order to perform factor analysis");
+    g_warning(_("need dynamic data set in order to perform factor analysis"));
     goto ending;
   }
 
   /* do all the memory allocations upfront */
   if ((matrix_a = gsl_matrix_alloc(m,n)) == NULL) {
-    g_warning("Failed to allocate %dx%d array", m,n);
+    g_warning(_("Failed to allocate %dx%d array"), m,n);
     goto ending;
   }
   
   if ((matrix_v = gsl_matrix_alloc(n,n)) == NULL) {
-    g_warning("Failed to allocate %dx%d array", n,n);
+    g_warning(_("Failed to allocate %dx%d array"), n,n);
     goto ending;
   }
 
   if ((vector_s = gsl_vector_alloc(n)) == NULL) {
-    g_warning("Failed to allocate %d vector", n);
+    g_warning(_("Failed to allocate %d vector"), n);
     goto ending;
   }
 
@@ -143,7 +143,7 @@ void fads_svd_factors(AmitkDataSet * data_set,
         gsl_linalg_SV_decomp_jacobi will return an unsuitable matrix_v, don't use it 
   */
   status = perform_svd(matrix_a, matrix_v, vector_s);
-  if (status != 0) g_warning("SV decomp returned error: %s", gsl_strerror(status));
+  if (status != 0) g_warning(_("SV decomp returned error: %s"), gsl_strerror(status));
 
   /* transfering data */
   if (pnum_factors != NULL)
@@ -152,7 +152,7 @@ void fads_svd_factors(AmitkDataSet * data_set,
   if (pfactors != NULL) {
     factors = g_try_new(gdouble, n);
     if (factors == NULL) {
-      g_warning("Failed to allocate %d factor array", n);
+      g_warning(_("Failed to allocate %d factor array"), n);
       goto ending;
     }
     *pfactors=factors;
@@ -230,7 +230,7 @@ static gsl_multimin_fdfminimizer * alloc_fdfminimizer(fads_minimizer_algorithm_t
     //					   num_variables);
     //    break;
   default:
-    g_warning("no such minimizer algorithm %d\n", minimizer_algorithm);
+    g_error("no such minimizer algorithm %d\n", minimizer_algorithm);
     return NULL;
     break;
   }
@@ -261,17 +261,17 @@ static void perform_pca(AmitkDataSet * data_set,
 
   u = gsl_matrix_alloc(num_voxels, num_frames);
   if (u == NULL) {
-    g_warning("failed to alloc matrix, size %dx%d", num_voxels, num_frames);
+    g_warning(_("failed to alloc matrix, size %dx%d"), num_voxels, num_frames);
     goto ending;
   }
 
   if ((v = gsl_matrix_alloc(num_frames,num_frames)) == NULL) {
-    g_warning("Failed to allocate %dx%d array", num_frames, num_frames);
+    g_warning(_("Failed to allocate %dx%d array"), num_frames, num_frames);
     goto ending;
   }
 
   if ((s = gsl_vector_alloc(num_frames)) == NULL) {
-    g_warning("Failed to allocate %d vector", num_frames);
+    g_warning(_("Failed to allocate %d vector"), num_frames);
     goto ending;
   }
 
@@ -286,7 +286,7 @@ static void perform_pca(AmitkDataSet * data_set,
 
   /* do Singular Value decomposition */
   status = perform_svd(u, v, s);
-  if (status != 0) g_warning("SV decomp returned error: %s", gsl_strerror(status));
+  if (status != 0) g_warning(_("SV decomp returned error: %s"), gsl_strerror(status));
 
   /* do some obvious flipping */
   for (f=0; f<num_factors; f++) {
@@ -305,7 +305,7 @@ static void perform_pca(AmitkDataSet * data_set,
   if (return_u != NULL) {
     small_u = gsl_matrix_alloc(num_voxels, num_factors);
     if (small_u == NULL) {
-      g_warning("failed to alloc matrix size %dx%d", num_voxels, num_factors);
+      g_warning(_("failed to alloc matrix size %dx%d"), num_voxels, num_factors);
       goto ending;
     }
     for (f=0; f<num_factors; f++)
@@ -319,7 +319,7 @@ static void perform_pca(AmitkDataSet * data_set,
   if (return_s != NULL) {
     small_s = gsl_vector_alloc(num_factors);
     if (small_s == NULL) {
-      g_warning("failed to alloc vector size %d", num_factors);
+      g_warning(_("failed to alloc vector size %d"), num_factors);
       goto ending;
     }
     for (f=0; f<num_factors; f++)
@@ -332,7 +332,7 @@ static void perform_pca(AmitkDataSet * data_set,
   if (return_v != NULL) {
     small_v = gsl_matrix_alloc(num_frames, num_factors);
     if (small_v == NULL) {
-      g_warning("failed to alloc matrix size %dx%d", num_frames, num_factors);
+      g_warning(_("failed to alloc matrix size %dx%d"), num_frames, num_factors);
       goto ending;
     }
     for (j=0; j<num_frames; j++)
@@ -392,7 +392,7 @@ void fads_pca(AmitkDataSet * data_set,
 
     new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
-      g_warning("failed to allocate new_ds");
+      g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
 
@@ -421,7 +421,7 @@ void fads_pca(AmitkDataSet * data_set,
 
   /* and output the curves */
   if ((file_pointer = fopen(output_filename, "w")) == NULL) {
-    g_warning("couldn't open: %s for writing PCA analyses", output_filename);
+    g_warning(_("couldn't open: %s for writing PCA analyses"), output_filename);
     goto ending;
   }
 
@@ -929,33 +929,33 @@ void fads_pls(AmitkDataSet * data_set,
 
   p.forward_error = g_try_new(gdouble, p.num_frames*p.num_voxels);
   if (p.forward_error == NULL) {
-    g_warning("failed forward error malloc");
+    g_warning(_("failed forward error malloc"));
     goto ending;
   }
 
   /* calculate the weights and magnitude */
   p.weight = calc_weights(p.data_set);
   if (p.weight == NULL) {
-    g_warning("failed weight malloc");
+    g_warning(_("failed weight malloc"));
     goto ending;
   }
   magnitude = calc_magnitude(p.data_set, p.weight);
 
   p.ec_a = g_try_new(gdouble, p.num_voxels);
   if (p.ec_a == NULL) {
-    g_warning("failed equality constraint alpha malloc");
+    g_warning(_("failed equality constraint alpha malloc"));
     goto ending;
   }
 
   p.ec_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.ec_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
-    g_warning("failed equality constraint blood curve malloc");
+    g_warning(_("failed equality constraint blood curve malloc"));
     goto ending;
   }
 
   p.lme_a = g_try_new(gdouble, p.num_voxels);
   if (p.lme_a == NULL) {
-    g_warning("failed malloc for equality lagrange multiplier - alpha");
+    g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
     goto ending;
   }
   for (i=0; i<p.num_voxels; i++)
@@ -963,7 +963,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   p.lme_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.lme_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
-    g_warning("failed malloc for equality lagrange multiplier - blood curve");
+    g_warning(_("failed malloc for equality lagrange multiplier - blood curve"));
     goto ending;
   }
   for (i=0; i<p.num_blood_curve_constraints; i++)
@@ -971,7 +971,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   p.lmi_a = g_try_new(gdouble, p.num_voxels*p.num_factors);
   if (p.lmi_a == NULL) {
-    g_warning("failed malloc for inequality lagrange multiplier - alpha");
+    g_warning(_("failed malloc for inequality lagrange multiplier - alpha"));
     goto ending;
   }
   for (i=0; i<p.num_voxels; i++)
@@ -980,7 +980,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   p.lmi_f = g_try_new(gdouble, p.num_frames*p.num_factors);
   if (p.lmi_f == NULL) {
-    g_warning("failed malloc for inequailty lagrange multiplier - factors");
+    g_warning(_("failed malloc for inequailty lagrange multiplier - factors"));
     goto ending;
   }
   for (f=0; f<p.num_factors; f++)
@@ -997,7 +997,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   multimin_minimizer = alloc_fdfminimizer(minimizer_algorithm, p.num_variables);
   if (multimin_minimizer == NULL) {
-    g_warning("failed to allocate multidimensional minimizer");
+    g_warning(_("failed to allocate multidimensional minimizer"));
     goto ending;
   }
 
@@ -1068,7 +1068,8 @@ void fads_pls(AmitkDataSet * data_set,
   gsl_matrix_free(v);
 
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Calculating Penalized Least Squares Factor Analysis:\n   %s", AMITK_OBJECT_NAME(data_set));
+    temp_string = g_strdup_printf(_("Calculating Penalized Least Squares Factor Analysis:\n   %s"), 
+				  AMITK_OBJECT_NAME(data_set));
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -1193,7 +1194,7 @@ void fads_pls(AmitkDataSet * data_set,
   for (f=0; f<p.num_factors; f++) {
     new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
-      g_warning("failed to allocate new_ds");
+      g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
 
@@ -1206,7 +1207,7 @@ void fads_pls(AmitkDataSet * data_set,
 	}
   
 
-    temp_string = g_strdup_printf("factor %d", f+1);
+    temp_string = g_strdup_printf(_("factor %d"), f+1);
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
     g_free(temp_string);
     amitk_space_copy_in_place(AMITK_SPACE(new_ds), AMITK_SPACE(p.data_set));
@@ -1225,7 +1226,7 @@ void fads_pls(AmitkDataSet * data_set,
 
   /* and writeout the factor file */
   if ((file_pointer = fopen(output_filename, "w")) == NULL) {
-    g_warning("couldn't open: %s for writing fads analyses", output_filename);
+    g_warning(_("couldn't open: %s for writing fads analyses"), output_filename);
     goto ending;
   }
 
@@ -1871,31 +1872,31 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.tc_unscaled = g_try_new(gdouble, p.num_tissues*p.num_frames);
   if (p.tc_unscaled == NULL) {
-    g_warning("failed to allocate intermediate data storage for tissue components");
+    g_warning(_("failed to allocate intermediate data storage for tissue components"));
     goto ending;
   }
 
   p.forward_error = g_try_new(gdouble, p.num_frames*p.num_voxels);
   if (p.forward_error == NULL) {
-    g_warning("failed to allocate intermediate data storage for forward error");
+    g_warning(_("failed to allocate intermediate data storage for forward error"));
     goto ending;
   }
   
   p.start = g_try_new(gdouble, p.num_frames);
   if (p.start == NULL) {
-    g_warning("failed to allocate frame start array");
+    g_warning(_("failed to allocate frame start array"));
     goto ending;
   }
 
   p.end = g_try_new(gdouble, p.num_frames);
   if (p.end == NULL) {
-    g_warning("failed to allocate frame end array");
+    g_warning(_("failed to allocate frame end array"));
     goto ending;
   }
   
   p.midpt = g_try_new(gdouble, p.num_frames);
   if (p.midpt == NULL) {
-    g_warning("failed to allocate frame midpt array");
+    g_warning(_("failed to allocate frame midpt array"));
     goto ending;
   }
 
@@ -1907,19 +1908,19 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.ec_a = g_try_new(gdouble, p.num_voxels);
   if (p.ec_a == NULL) {
-    g_warning("failed malloc for equality constraint on alpha");
+    g_warning(_("failed malloc for equality constraint on alpha"));
     goto ending;
   }
 
   p.ec_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.ec_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
-    g_warning("failed malloc for equality constraint on blood curve");
+    g_warning(_("failed malloc for equality constraint on blood curve"));
     goto ending;
   }
 
   p.lme_a = g_try_new(gdouble, p.num_voxels);
   if (p.lme_a == NULL) {
-    g_warning("failed malloc for equality lagrange multiplier - alpha");
+    g_warning(_("failed malloc for equality lagrange multiplier - alpha"));
     goto ending;
   }
   for (i=0; i<p.num_voxels; i++)
@@ -1927,7 +1928,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.lme_bc = g_try_new(gdouble, p.num_blood_curve_constraints);
   if ((p.lme_bc == NULL) && (p.num_blood_curve_constraints > 0)) {
-    g_warning("failed malloc for equality lagrange multiplier - blood curve");
+    g_warning(_("failed malloc for equality lagrange multiplier - blood curve"));
     goto ending;
   }
   for (i=0; i<p.num_blood_curve_constraints; i++)
@@ -1935,7 +1936,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.lmi_a = g_try_new(gdouble, p.num_voxels*p.num_factors);
   if (p.lmi_a == NULL) {
-    g_warning("failed malloc for inequality lagrange multiplier - alpha");
+    g_warning(_("failed malloc for inequality lagrange multiplier - alpha"));
     goto ending;
   }
   for (i=0; i<p.num_voxels*p.num_factors; i++)
@@ -1943,7 +1944,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.lmi_bc = g_try_new(gdouble, p.num_frames);
   if (p.lmi_bc == NULL) {
-    g_warning("failed malloc for inequailty lagrange multiplier - blood curve");
+    g_warning(_("failed malloc for inequailty lagrange multiplier - blood curve"));
     goto ending;
   }
   for (j=0; j<p.num_frames; j++)
@@ -1951,7 +1952,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.lmi_k12 = g_try_new(gdouble, p.num_tissues);
   if (p.lmi_k12 == NULL) {
-    g_warning("failed malloc for inequailty lagrange multiplier - k12");
+    g_warning(_("failed malloc for inequailty lagrange multiplier - k12"));
     goto ending;
   }
   for (t=0; t<p.num_tissues; t++)
@@ -1959,7 +1960,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   p.lmi_k21 = g_try_new(gdouble, p.num_tissues);
   if (p.lmi_k21 == NULL) {
-    g_warning("failed malloc for inequailty lagrange multiplier - k21");
+    g_warning(_("failed malloc for inequailty lagrange multiplier - k21"));
     goto ending;
   }
   for (t=0; t<p.num_tissues; t++)
@@ -1982,7 +1983,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   multimin_minimizer = alloc_fdfminimizer(minimizer_algorithm,p.num_variables);
   if (multimin_minimizer == NULL) {
-    g_warning("failed to allocate multidimensional minimizer");
+    g_warning(_("failed to allocate multidimensional minimizer"));
     goto ending;
   }
 
@@ -1990,7 +1991,7 @@ void fads_two_comp(AmitkDataSet * data_set,
   /* Starting point */
   initial = gsl_vector_alloc (p.num_variables);
   if (initial == NULL) {
-    g_warning("failed to allocate initial vector");
+    g_warning(_("failed to allocate initial vector"));
     goto ending;
   }
   
@@ -2020,7 +2021,7 @@ void fads_two_comp(AmitkDataSet * data_set,
       gsl_vector_set(initial, i+f, init_value);
 
   if (update_func != NULL) {
-    temp_string = g_strdup_printf("Calculating Two Compartment Factor Analysis:\n   %s", AMITK_OBJECT_NAME(data_set));
+    temp_string = g_strdup_printf(_("Calculating Two Compartment Factor Analysis:\n   %s"), AMITK_OBJECT_NAME(data_set));
     continue_work = (*update_func)(update_data, temp_string, (gdouble) 0.0);
     g_free(temp_string);
   }
@@ -2140,11 +2141,11 @@ void fads_two_comp(AmitkDataSet * data_set,
 
 #if AMIDE_DEBUG  
   if (status == GSL_SUCCESS) 
-    g_print("Minimum found after %d iterations\n", inner_iter);
+    g_print(_("Minimum found after %d iterations\n"), inner_iter);
   else if (status == GSL_CONTINUE)
-    g_print("terminated minization \n");
+    g_print(_("terminated minization \n"));
   else 
-    g_print("No minimum found after %d iterations, exited with: %s\n", 
+    g_print(_("No minimum found after %d iterations, exited with: %s\n"), 
 	    inner_iter,gsl_strerror(status));
 #endif /* AMIDE_DEBUG */
 
@@ -2158,7 +2159,7 @@ void fads_two_comp(AmitkDataSet * data_set,
   for (f=0; f < p.num_factors; f++) {
     new_ds = amitk_data_set_new_with_data(AMITK_FORMAT_FLOAT, dim, AMITK_SCALING_TYPE_0D);
     if (new_ds == NULL) {
-      g_warning("failed to allocate new_ds");
+      g_warning(_("failed to allocate new_ds"));
       goto ending;
     }
 
@@ -2173,9 +2174,9 @@ void fads_two_comp(AmitkDataSet * data_set,
     if (f < p.num_tissues) {
       k12 = gsl_vector_get(initial, p.k12_offset+f);
       k21 = gsl_vector_get(initial, p.k21_offset+f);
-      temp_string = g_strdup_printf("tissue type %d: k12 %g k21 %g", f+1, k12,k21);
+      temp_string = g_strdup_printf(_("tissue type %d: k12 %g k21 %g"), f+1, k12,k21);
     } else
-      temp_string = g_strdup_printf("blood fraction");
+      temp_string = g_strdup_printf(_("blood fraction"));
     amitk_object_set_name(AMITK_OBJECT(new_ds),temp_string);
     g_free(temp_string);
     amitk_space_copy_in_place(AMITK_SPACE(new_ds), AMITK_SPACE(p.data_set));
@@ -2193,7 +2194,7 @@ void fads_two_comp(AmitkDataSet * data_set,
 
   /* and writeout the tissue curves file */
   if ((file_pointer = fopen(output_filename, "w")) == NULL) {
-    g_warning("couldn't open: %s for writing fads analyses", output_filename);
+    g_warning(_("couldn't open: %s for writing fads analyses"), output_filename);
     goto ending;
   }
 

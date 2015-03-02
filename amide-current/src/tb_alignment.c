@@ -36,39 +36,23 @@
 #ifdef AMIDE_LIBGSL_SUPPORT
 
 static gchar * data_set_error_page_text = 
-"There is only one data set in this study.  There needs "
-"to be at least two data sets to perform an alignment";
+N_("There is only one data set in this study.  There needs "
+   "to be at least two data sets to perform an alignment");
 
 static gchar * fiducial_marks_error_page_text =
-"There must exist at least 3 pairs of objects that "
-"can be used as fiducial marks between the two "
-"data sets in order to perform an alignment.";
-
-static gchar * end_page_text =
-"The alignment has been calculated, press Finish to "
-"apply, or Cancel to quit";
-
-static gchar * start_page_text = 
-"Welcome to the data set alignment wizard, used for "
-"aligning one medical image data set with another. "
-"\n"
-"Currently, only registration using fiducial marks has "
-"been implemented inside of AMIDE.";
-
-#else /* no LIBGSL support */
+N_("In order to perform an alignment, each data set must"
+   "have at least three objects with the same name as"
+   "the corresponding three objects in the other data set"
+   "\n"
+   "Please see the help documentation for a longer"
+   "explanation as to how alignments can be done.");
 
 static gchar * start_page_text = 
-"Welcome to the data set alignment wizard, used for "
-"aligning one medical image data set with another. "
-"\n"
-"Currently, only registration using fiducial markers has "
-"been implemented inside of AMIDE.  This feature requires, "
-"support from the GNU Scientific Library (libgsl).  This "
-"copy of AMIDE has not been compiled with support for "
-"libgsl, so it cannot perform registration. ";
-
-#endif /* NO LIBGSL SUPPORT */
-
+N_("Welcome to the data set alignment wizard, used for "
+   "aligning one medical image data set with another. "
+   "\n"
+   "Currently, only registration using fiducial marks has "
+   "been implemented inside of AMIDE.");
 
 
 typedef enum {
@@ -118,7 +102,6 @@ static tb_alignment_t * tb_alignment_free(tb_alignment_t * alignment);
 static tb_alignment_t * tb_alignment_init(void);
 
 
-#ifdef AMIDE_LIBGSL_SUPPORT
 static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
 static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
 static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
@@ -150,7 +133,7 @@ static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
     }
     break;
   default:
-    g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     break;
   }
 
@@ -172,7 +155,7 @@ static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
 			 GNOME_DRUID_PAGE(alignment->pages[DATA_SETS_PAGE]));
     break;
   default:
-    g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     break;
   }
 
@@ -305,9 +288,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 							alignment->fixed_ds, 
 							alignment->selected_marks,&fre);
 
-    temp_string = g_strdup_printf("%s\n\n%s: %5.5f mm/point",
-				  end_page_text,
-				  "The calculated fiducial reference error is",
+    temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated fiducial reference error is: %5.5f mm/point"), 
 				  fre);
     gnome_druid_page_edge_set_text(GNOME_DRUID_PAGE_EDGE(page), temp_string);
     g_free(temp_string);
@@ -318,7 +299,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
     gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, FALSE, TRUE, TRUE);
     break;
   default:
-    g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     break;
   }
 
@@ -428,12 +409,6 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 }
 
 
-#endif /* AMIDE_LIBGSL_SUPPORT */
-
-
-
-
-
 
 /* function called to cancel the dialog */
 static void cancel_cb(GtkWidget* widget, gpointer data) {
@@ -518,7 +493,7 @@ static tb_alignment_t * tb_alignment_init(void) {
 
   /* alloc space for the data structure for passing ui info */
   if ((alignment = g_try_new(tb_alignment_t,1)) == NULL) {
-    g_warning("couldn't allocate space for tb_alignment_t");
+    g_warning(_("couldn't allocate space for tb_alignment_t"));
     return NULL;
   }
 
@@ -539,7 +514,6 @@ void tb_alignment(AmitkStudy * study) {
 
   tb_alignment_t * alignment;
   GdkPixbuf * logo;
-#ifdef AMIDE_LIBGSL_SUPPORT
   guint count;
   GtkWidget * table;
   GtkWidget * vseparator;
@@ -547,7 +521,6 @@ void tb_alignment(AmitkStudy * study) {
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
-#endif /* AMIDE_LIBGSL_SUPPORT */
   
   g_return_if_fail(AMITK_IS_STUDY(study));
   
@@ -568,17 +541,6 @@ void tb_alignment(AmitkStudy * study) {
 
 
   /* --------------- initial page ------------------ */
-#ifndef AMIDE_LIBGSL_SUPPORT
-  alignment->pages[INTRO_PAGE]= 
-    gnome_druid_page_edge_new_with_vals(GNOME_EDGE_START, TRUE,
-					"Data Set Alignment Wizard",
-					start_page_text, logo, NULL, NULL);
-  gnome_druid_append_page(GNOME_DRUID(alignment->druid), 
-			  GNOME_DRUID_PAGE(alignment->pages[INTRO_PAGE]));
-  gnome_druid_set_buttons_sensitive(GNOME_DRUID(alignment->druid), FALSE, FALSE, TRUE, TRUE);
-
-
-#else /* #ifdef AMIDE_LIBGSL_SUPPORT */
   /* figure out how many data sets there are */
   count = amitk_data_sets_count(alignment->data_sets, TRUE);
 
@@ -616,7 +578,7 @@ void tb_alignment(AmitkStudy * study) {
   g_object_unref(store);
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes("Align Data Set: (moving)", renderer,
+  column = gtk_tree_view_column_new_with_attributes(_("Align Data Set: (moving)"), renderer,
 						    "text", COLUMN_DATA_SET_NAME, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_moving_ds), column);
 
@@ -639,7 +601,7 @@ void tb_alignment(AmitkStudy * study) {
   g_object_unref(store);
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes("With Data Set: (fixed)", renderer,
+  column = gtk_tree_view_column_new_with_attributes(_("With Data Set: (fixed)"), renderer,
 						    "text", COLUMN_DATA_SET_NAME, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_fixed_ds), column);
 
@@ -653,9 +615,9 @@ void tb_alignment(AmitkStudy * study) {
 		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
 
 
-  /*------------------ pick your alignment points page ------------------ */
+  /*------------------ pick your fiducial marks page ------------------ */
   alignment->pages[FIDUCIAL_MARKS_PAGE] = 
-    gnome_druid_page_standard_new_with_vals("Fiducial Marks Selection", logo, NULL);
+    gnome_druid_page_standard_new_with_vals(_("Fiducial Marks Selection"), logo, NULL);
   g_object_set_data(G_OBJECT(alignment->pages[FIDUCIAL_MARKS_PAGE]), 
 		    "which_page", GINT_TO_POINTER(FIDUCIAL_MARKS_PAGE));
   gnome_druid_append_page(GNOME_DRUID(alignment->druid), 
@@ -681,7 +643,7 @@ void tb_alignment(AmitkStudy * study) {
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_points), column);
 
   renderer = gtk_cell_renderer_text_new ();
-  column = gtk_tree_view_column_new_with_attributes("Points for Alignment", renderer,
+  column = gtk_tree_view_column_new_with_attributes(_("Points for Alignment"), renderer,
 						    "text", COLUMN_POINT_NAME, NULL);
   gtk_tree_view_append_column (GTK_TREE_VIEW (alignment->list_points), column);
 
@@ -694,7 +656,7 @@ void tb_alignment(AmitkStudy * study) {
   /* ----------------  conclusion page ---------------------------------- */
   alignment->pages[CONCLUSION_PAGE] = 
     gnome_druid_page_edge_new_with_vals(GNOME_EDGE_FINISH, TRUE,
-					"Conclusion", NULL,logo, NULL, NULL);
+					_("Conclusion"), NULL,logo, NULL, NULL);
   g_object_set_data(G_OBJECT(alignment->pages[CONCLUSION_PAGE]), 
 		    "which_page", GINT_TO_POINTER(CONCLUSION_PAGE));
   g_signal_connect(G_OBJECT(alignment->pages[CONCLUSION_PAGE]), "prepare", 
@@ -704,10 +666,10 @@ void tb_alignment(AmitkStudy * study) {
   gnome_druid_append_page(GNOME_DRUID(alignment->druid), 
 			  GNOME_DRUID_PAGE(alignment->pages[CONCLUSION_PAGE]));
 
-  /* --------------- page shown if no alignment points ------------------ */
+  /* --------------- page shown if no fiducial marks ------------------ */
   alignment->pages[NO_FIDUCIAL_MARKS_PAGE] =
     gnome_druid_page_edge_new_with_vals(GNOME_EDGE_OTHER, TRUE,
-					"Alignment Error", fiducial_marks_error_page_text, 
+					_("Alignment Error"), fiducial_marks_error_page_text, 
 					logo, NULL, NULL);
   g_object_set_data(G_OBJECT(alignment->pages[NO_FIDUCIAL_MARKS_PAGE]), 
 		    "which_page", GINT_TO_POINTER(NO_FIDUCIAL_MARKS_PAGE));
@@ -717,7 +679,6 @@ void tb_alignment(AmitkStudy * study) {
 		   G_CALLBACK(back_page_cb), alignment);
   gnome_druid_append_page(GNOME_DRUID(alignment->druid), 
 			  GNOME_DRUID_PAGE(alignment->pages[NO_FIDUCIAL_MARKS_PAGE]));
-#endif /* AMIDE_LIBGSL_SUPPORT */
 
   g_object_unref(logo);
   gtk_widget_show_all(alignment->dialog);
@@ -725,6 +686,8 @@ void tb_alignment(AmitkStudy * study) {
 }
 
 
+
+#endif /* AMIDE_LIBGSL_SUPPORT */
 
 
 

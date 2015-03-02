@@ -329,11 +329,6 @@ static void object_transform_axes(AmitkSpace * space, AmitkAxes   transform_axes
   AMITK_SPACE_CLASS(parent_class)->space_transform_axes (space, transform_axes, center_of_rotation);
 }
 
-static gboolean object_change_selection(AmitkObject * object, const gboolean state, const gint which) {
-
-  return TRUE; /* returns if the state was set, higher level objects may not change state */
-}
-
 
 static AmitkObject * object_copy (const AmitkObject * object) {
 
@@ -515,7 +510,7 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
 
   /* parse the xml file */
   if ((doc = xmlParseFile(xml_filename)) == NULL) {
-    error_str = g_strdup_printf("Couldn't Parse AMIDE xml file:\t%s", xml_filename);
+    error_str = g_strdup_printf(_("Couldn't Parse AMIDE xml file:\t%s"), xml_filename);
     amitk_append_str(perror_buf, error_str);
     g_free(error_str);
     return NULL;
@@ -523,7 +518,7 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, gchar ** perror_buf) {
 
   /* get the root of our document */
   if ((doc_nodes = xmlDocGetRootElement(doc)) == NULL) {
-    error_str = g_strdup_printf("AMIDE xml file doesn't appear to have a root:\n\t%s", xml_filename);
+    error_str = g_strdup_printf(_("AMIDE xml file doesn't appear to have a root:\n\t%s"), xml_filename);
     amitk_append_str(perror_buf, error_str);
     g_free(error_str);
     return NULL;
