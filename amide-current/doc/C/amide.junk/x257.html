@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Raw Data Files</TITLE
+>Semiautomated Alignment</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -11,14 +11,14 @@ REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="UP"
-TITLE="Importing Data "
-HREF="importing.html"><LINK
+TITLE="Aligning Data Sets "
+HREF="alignment.html"><LINK
 REL="PREVIOUS"
-TITLE="IDL Data Files"
-HREF="x173.html"><LINK
+TITLE="Aligning Data Sets "
+HREF="alignment.html"><LINK
 REL="NEXT"
-TITLE="DICOM Files"
-HREF="x179.html"></HEAD
+TITLE="Drawing Alignment Points"
+HREF="align-pt.html"></HEAD
 ><BODY
 CLASS="SECT1"
 BGCOLOR="#FFFFFF"
@@ -45,20 +45,20 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x173.html"
+HREF="alignment.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
 WIDTH="80%"
 ALIGN="center"
 VALIGN="bottom"
->Importing Data</TD
+>Aligning Data Sets</TD
 ><TD
 WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x179.html"
+HREF="align-pt.html"
 >Next &#62;&#62;&#62;</A
 ></TD
 ></TR
@@ -71,19 +71,36 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN176"
->Raw Data Files</A
+NAME="AEN257"
+>Semiautomated Alignment</A
 ></H1
+><DIV
+CLASS="PROCEDURE"
 ><P
->    AMIDE will attempt to load any file ending in ".dat" or ".raw"
-    as a raw data file.  The user will be prompted for the
-    dimensions of the study, the offset of the data in the file, and
-    the data format of the data in the file.  Both big endian and
-    little endian files can be loaded, with the following data
-    formats supported: 8 bit integer, 16 bit signed or unsigned
-    integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
-    point, and 64 bit IEEE floating point.
-  </P
+><B
+>Semiautomated Alignment</B
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>       Specify at least four pairs of alignment points between the two
+       data sets that you wish to align.  Drawing alignment points is
+       described in <A
+HREF="align-pt.html"
+>the section called <I
+>Drawing Alignment Points</I
+></A
+>
+      </P
+></LI
+><LI
+><P
+>       Run the alignment wizard (under tools-&#62;alignment wizard).  
+      </P
+></LI
+></OL
+></DIV
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -100,7 +117,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x173.html"
+HREF="alignment.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
@@ -116,7 +133,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x179.html"
+HREF="align-pt.html"
 >Next &#62;&#62;&#62;</A
 ></TD
 ></TR
@@ -125,20 +142,20 @@ HREF="x179.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->IDL Data Files</TD
+>Aligning Data Sets</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
 VALIGN="top"
 ><A
-HREF="importing.html"
+HREF="alignment.html"
 >Up</A
 ></TD
 ><TD
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->DICOM Files</TD
+>Drawing Alignment Points</TD
 ></TR
 ></TABLE
 ></DIV

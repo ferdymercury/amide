@@ -1,3 +1,7 @@
+0.6.4
+	* view center notifier on help panel now gives correct location
+	* fixed subtle floating point rounding error in drawing isocontours
+	
 0.6.3
 	* Mac OS X doesn't have lround, using rint instead
 	* canvas arrows weren't being updated with canvas slider change

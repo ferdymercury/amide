@@ -4,7 +4,7 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.6.3)
+AM_INIT_AUTOMAKE(amide, 0.6.4)
 
 AM_MAINTAINER_MODE
 

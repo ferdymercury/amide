@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Gotcha's to ROI calculations </TITLE
+>Manipulating ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -14,11 +14,11 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Calculating Statistics over ROI's"
+TITLE="Drawing ROI's"
 HREF="x228.html"><LINK
 REL="NEXT"
-TITLE="Aligning Data Sets "
-HREF="alignment.html"></HEAD
+TITLE="Calculating Statistics over ROI's"
+HREF="x234.html"></HEAD
 ><BODY
 CLASS="SECT1"
 BGCOLOR="#FFFFFF"
@@ -58,7 +58,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="alignment.html"
+HREF="x234.html"
 >Next &#62;&#62;&#62;</A
 ></TD
 ></TR
@@ -72,26 +72,24 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN231"
->Gotcha's to ROI calculations</A
+>Manipulating ROI's</A
 ></H1
-><DIV
-CLASS="SECT2"
-><H2
-CLASS="SECT2"
-><A
-NAME="AEN233"
->Variance/Std. Dev./Std. Err. Fallacies</A
-></H2
 ><P
->      A common fallacy is to use the calculated variance (or standard
-      deviation, or standard error) of an ROI as an experiment's
-      variance.  The variance of an experiment can only truly be
-      measured by taking multiple samples (i.e. performing multiple
-      scans) and calculating the variance between these different
-      samples.  The variance that AMIDE calculates is only a measure
-      of the noise within an ROI in the given data set.
-    </P
-></DIV
+>    After an ROI is drawn, it can be further manipulated to adjust
+    it's size, placement, and orientation.  You can directly
+    manipulate the ROI by clicking on it in any of the volume view
+    windows.  Mouse button 1 is used to shift ROIs.  Mouse button 2 is
+    used to rotate ellipsoid, elliptic cylinder, and box ROIs, and for
+    erasing points from isocontour ROI's.  Mouse button 3 is used for
+    zooming ellipsoid, elliptic cylinder and box ROI, and is used for
+    redefining the isocontour value for isocontour ROI's.
+    
+    You can also edit the ROI size/placement/orientation/name etc. by
+    clicking on mouse button 3 while over the ROI's name in the study
+    item list.  This brings up the edit ROI dialog, which allows
+    keyboard entry of the ROI's parameters.
+
+  </P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -124,7 +122,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="alignment.html"
+HREF="x234.html"
 >Next &#62;&#62;&#62;</A
 ></TD
 ></TR
@@ -133,7 +131,7 @@ HREF="alignment.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Calculating Statistics over ROI's</TD
+>Drawing ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -146,7 +144,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Aligning Data Sets</TD
+>Calculating Statistics over ROI's</TD
 ></TR
 ></TABLE
 ></DIV

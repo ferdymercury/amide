@@ -600,15 +600,7 @@ gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * eve
   help_info_t which_info;
 
   which_info = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "which_help"));
-
-  /* quick correction so we can handle leaving a tree leaf */
-  if (((which_info == HELP_INFO_TREE_VOLUME) ||
-       (which_info == HELP_INFO_TREE_ROI) ||
-       (which_info == HELP_INFO_TREE_STUDY)) &&
-      (event->type == GDK_LEAVE_NOTIFY))
-    which_info = HELP_INFO_TREE_NONE;
-
-  ui_study_update_help_info(ui_study, which_info, zero_rp, 0.0);
+  ui_study_update_help_info(ui_study, which_info, study_view_center(ui_study->study), 0.0);
 
   return FALSE;
 }

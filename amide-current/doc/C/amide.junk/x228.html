@@ -2,7 +2,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Calculating Statistics over ROI's</TITLE
+>Drawing ROI's</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -14,10 +14,10 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Manipulating ROI's"
-HREF="x225.html"><LINK
+TITLE="Using ROI's "
+HREF="rois.html"><LINK
 REL="NEXT"
-TITLE="Gotcha's to ROI calculations "
+TITLE="Manipulating ROI's"
 HREF="x231.html"></HEAD
 ><BODY
 CLASS="SECT1"
@@ -45,7 +45,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x225.html"
+HREF="rois.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
@@ -72,13 +72,19 @@ CLASS="SECT1"
 CLASS="SECT1"
 ><A
 NAME="AEN228"
->Calculating Statistics over ROI's</A
+>Drawing ROI's</A
 ></H1
 ><P
->    Statistics on an ROI can be calculated via the analysis menu.
-    Choosing "All" will calculate all the ROI's on the currently
-    selected images.  Choosing "Selected" will calculate the selected
-    ROI's on the currently selected images.
+>    To draw an ROI, first select the ROI desired under the "add ROI:"
+    pull down menu.  Amide will request a name for this ROI and add it
+    to the study item list, but no ROI will be drawn.  The next mouse
+    input on the displayed views will be used to draw the new ROI.
+    For ellipsoid, elliptic cylinder, and box ROI's, The x and y
+    dimensions of the ROI are controlled by the size of the drawing.
+    The z dimension ("depth") of the newly drawn ROI is determined by
+    the current image thickness.  For isocontour's, the value of the
+    data set at the clicked upon location will be used to derive the
+    isocontour.
   </P
 ></DIV
 ><DIV
@@ -96,7 +102,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x225.html"
+HREF="rois.html"
 >&#60;&#60;&#60; Previous</A
 ></TD
 ><TD
@@ -121,7 +127,7 @@ HREF="x231.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Manipulating ROI's</TD
+>Using ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -134,7 +140,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Gotcha's to ROI calculations</TD
+>Manipulating ROI's</TD
 ></TR
 ></TABLE
 ></DIV

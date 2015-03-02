@@ -345,7 +345,7 @@ static data_set_UBYTE_t isocontour_edge(data_set_t * isocontour_ds, voxelpoint_t
 static void isocontour_consider(const volume_t * volume, 
 				const data_set_t * temp_ds, 
 				voxelpoint_t * p_volume_vp, 
-				const amide_data_t * p_iso_value) {
+				const amide_data_t iso_value) {
 #ifdef ROI_ISOCONTOUR_3D_TYPE
   gint z;
 #endif
@@ -361,7 +361,7 @@ static void isocontour_consider(const volume_t * volume,
     if (*DATA_SET_UBYTE_POINTER(temp_ds,roi_vp) == 1)
       return; /* have we already considered this voxel */
   
-    if (!(volume_value(volume, *p_volume_vp) >= *p_iso_value)) return;
+    if ((volume_value(volume, *p_volume_vp) < iso_value)) return;
     else DATA_SET_UBYTE_SET_CONTENT(temp_ds,roi_vp)=1; /* it's in */
   }
 
@@ -370,24 +370,24 @@ static void isocontour_consider(const volume_t * volume,
   for (z=-1; z<=1; z++) { 
     p_volume_vp->z += z;
     if (z != 0) /* don't reconsider the original point */
-      isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+      isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
 #endif
     p_volume_vp->x--;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->y--;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->x++;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->x++;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->y++;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->y++;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->x--;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->x--;
-    isocontour_consider(volume, temp_ds, p_volume_vp, p_iso_value);
+    isocontour_consider(volume, temp_ds, p_volume_vp, iso_value);
     p_volume_vp->y--;
     p_volume_vp->x++;
 #ifdef ROI_ISOCONTOUR_3D_TYPE
@@ -428,9 +428,16 @@ void roi_`'m4_Variable_Type`'_set_isocontour(roi_t * roi, volume_t * vol, voxelp
   }
 
   /* fill in the data set */
-  isocontour_value = roi->isocontour_value-CLOSE;
-  isocontour_consider(vol, temp_ds, &iso_vp, &isocontour_value);
-
+  isocontour_value = roi->isocontour_value;
+  isocontour_value *= 1.0-CLOSE; /* guard for floating point rounding */
+  isocontour_consider(vol, temp_ds, &iso_vp, isocontour_value);
+  
+  /* the selected point is automatically in */
+  if (*DATA_SET_UBYTE_POINTER(temp_ds, iso_vp) != 1) {
+    g_warning("floating point round error detected in %s at %d", __FILE__, __LINE__);
+    DATA_SET_UBYTE_SET_CONTENT(temp_ds,iso_vp)=1; /* have at least one voxel picked */
+  }
+  
   /* figure out the min and max dimensions */
   min_vp = max_vp = iso_vp;
   
