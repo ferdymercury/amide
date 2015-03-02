@@ -1,7 +1,7 @@
 /* xml.c - convience functions for working with xml files 
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2014 Andy Loening
+ * Copyright (C) 2001-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

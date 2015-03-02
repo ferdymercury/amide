@@ -1,7 +1,7 @@
 /* fads.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2003-2014 Andy Loening
+ * Copyright (C) 2003-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

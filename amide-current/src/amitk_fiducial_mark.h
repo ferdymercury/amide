@@ -1,7 +1,7 @@
 /* amitk_fiducial_mark.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2002-2014 Andy Loening
+ * Copyright (C) 2002-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */

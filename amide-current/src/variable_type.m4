@@ -1,7 +1,7 @@
 m4_dnl variable_type.m4
 m4_dnl 
 m4_dnl Part of amide - AMIDE's a Medical Image Data Examiner
-m4_dnl Copyright (c) 2001-2014 Andy Loening
+m4_dnl Copyright (c) 2001-2015 Andy Loening
 m4_dnl 
 m4_dnl Author: Andy Loening <loening@alum.mit.edu>
 m4_dnl

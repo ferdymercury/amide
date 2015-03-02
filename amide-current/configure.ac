@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.59)
-AC_INIT([amide],[1.0.5],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[1.0.6],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AC_CONFIG_HEADERS(amide_config.h)
@@ -106,7 +106,7 @@ AM_PATH_XMEDCON(0.10.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
 dnl autoconf doesn't have a nice macro for checking for c++ libraries, therefore the below:
 AC_CHECK_LIB(pthread, pthread_mutex_init, THREAD_LIBS="-lpthread", THREAD_LIBS="")
-AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
+AMIDE_LIBDCMDATA_LIBS="-L/usr/local/dicom/lib -L/usr/lib64/dcmtk -L/usr/lib/dcmtk -ltiff -lpng -ldcmimage -ldcmimgle -ldcmjpeg -lijg8 -lijg12 -lijg16 -ldcmdata -loflog -lofstd -lz $THREAD_LIBS"
 AMIDE_LIBDCMDATA_CFLAGS="-I/usr/local/dicom/include"
 saved_libs="${LIBS}"
 LIBS="${LIBS} ${AMIDE_LIBDCMDATA_LIBS}"

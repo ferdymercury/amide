@@ -1,7 +1,7 @@
 /* tb_alignment.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2014 Andy Loening
+ * Copyright (C) 2001-2015 Andy Loening
  * except mutual information addition Copyright (C) 2011-2012 Ian Miller
  *
 */
@@ -631,7 +631,7 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
 							   tb_alignment->fixed_ds, 
 							   tb_alignment->selected_marks,
 							   &performance_metric);
-      temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated fiducial reference error is:\n\t %5.2f mm/point"), 
+      temp_string = g_strdup_printf(_("The alignment has been calculated, press Apply, or Cancel to quit.\n\nThe calculated fiducial reference error is:\n\t %5.2f mm/point"), 
 				    performance_metric);
       break;
 #endif
@@ -645,7 +645,7 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
 								   &performance_metric,
       								   amitk_progress_dialog_update,
       								   tb_alignment->progress_dialog);
-      temp_string = g_strdup_printf(_("The alignment has been calculated, press Finish to apply, or Cancel to quit.\n\nThe calculated mutual information metric is:\n\t %5.2f"),
+      temp_string = g_strdup_printf(_("The alignment has been calculated, press Apply, or Cancel to quit.\n\nThe calculated mutual information metric is:\n\t %5.2f"),
 				    performance_metric);
       break;
     default:

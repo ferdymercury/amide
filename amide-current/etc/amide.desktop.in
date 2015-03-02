@@ -8,5 +8,5 @@ Icon=amide_logo
 Terminal=false
 Type=Application
 Categories=Graphics;Education;Science;MedicalSoftware;
-
+MimeType=application/dicom;
 

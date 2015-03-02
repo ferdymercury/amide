@@ -1,7 +1,7 @@
 /* tb_math.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2006-2014 Andy Loening
+ * Copyright (C) 2006-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -382,7 +382,7 @@ static void prepare_page_cb(GtkAssistant * wizard, GtkWidget * page, gpointer da
     parameters_update_page(tb_math);
     break;
   case CONCLUSION_PAGE:
-    temp_string = g_strdup_printf(_("A new data set will be created with the math operation, press Finish to calculate this data set, or Cancel to quit."));
+    temp_string = g_strdup_printf(_("A new data set will be created with the math operation, press Apply to calculate this data set, or Cancel to quit."));
     gtk_label_set_text(GTK_LABEL(page), temp_string);
     g_free(temp_string);
     break;

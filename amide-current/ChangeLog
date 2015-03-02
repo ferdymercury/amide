@@ -1,3 +1,12 @@
+1.0.6
+	* fixed dicom sort function to allow slices in gated/dynamic studies
+	that have same location
+	* add dicom mimetype to desktop.in file [1]
+	* added ability to read in DICOM files via DCMTK utilizing jpeg compression [2]
+	  note - JPEG 2000 is not supported by dcmtk by default
+	[1] Contributed by Ville Skytta
+	[2] Suggested by Marc Rechte
+
 1.0.5 2014.01.25
 	* raw_data_import now shows correct file size if file > 2GB
 	* new math functions: remove-negatives, t2* calc

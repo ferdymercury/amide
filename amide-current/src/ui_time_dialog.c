@@ -1,7 +1,7 @@
 /* ui_time_dialog.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2014 Andy Loening
+ * Copyright (C) 2000-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -459,10 +459,11 @@ GtkWidget * ui_time_dialog_create(AmitkStudy * study, GtkWindow * parent) {
 
   temp_string = g_strdup_printf(_("%s: Time Dialog"),PACKAGE);
   dialog = gtk_dialog_new_with_buttons(temp_string,  parent,
-					    GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-					    NULL);
+				       GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+				       NULL);
   g_free(temp_string);
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
+
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
   td = g_try_new(ui_time_dialog_t, 1);

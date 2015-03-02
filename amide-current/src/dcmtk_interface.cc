@@ -1,7 +1,7 @@
 /* dcmtk_interface.cc
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2005-2014 Andy Loening
+ * Copyright (C) 2005-2015 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -46,6 +46,7 @@
 #define HAVE_CONFIG_H /* the autoconf compiled version of DCMTK has a config header file */
 #include <dcmtk/dcmdata/dcddirif.h>     /* for class DicomDirInterface */
 #include <dcmtk/dcmdata/dctk.h>
+#include "dcmtk/dcmjpeg/djdecode.h"    /* for dcmjpeg decoders */
 
 const gchar * dcmtk_version = OFFIS_DCMTK_VERSION;
 
@@ -87,7 +88,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 				      gchar **perror_buf) {
 
   DcmFileFormat dcm_format;
-  //  DcmMetaInfo * dcm_metainfo;
+  DcmMetaInfo * dcm_metainfo;
   DcmDataset * dcm_dataset;
   OFCondition result;
   Uint16 return_uint16=0;
@@ -133,7 +134,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     goto error;
   }
 
-  //  dcm_metainfo = dcm_format.getMetaInfo();
+  dcm_metainfo = dcm_format.getMetaInfo();
   //  if (dcm_metainfo == NULL) {
   //    g_warning("could not find metainfo in DICOM file %s\n", filename);
   //  }
@@ -181,6 +182,34 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
 
+  /* register global decompression codecs */
+  DJDecoderRegistration::registerCodecs(EDC_photometricInterpretation,
+					EUC_default,
+					EPC_default,
+					OFFalse);
+
+  /* uncompress the raw data in case this is a JPEG encoded file */
+  result = dcm_dataset->chooseRepresentation(EXS_LittleEndianExplicit, NULL);
+  if (result.bad()) {
+    valid = FALSE;
+
+    /* check if this is JPEG2000, which is not currently freely supported by dcmtk */
+    if (dcm_metainfo != NULL)
+      if (dcm_metainfo->findAndGetString(DCM_TransferSyntaxUID, return_str).good()) 
+	if (return_str != NULL) 
+	  if ((strcmp(return_str, UID_JPEG2000LosslessOnlyTransferSyntax) == 0) ||
+	      (strcmp(return_str, UID_JPEG2000TransferSyntax) == 0) ||
+	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionLosslessOnlyTransferSyntax) == 0) ||
+	      (strcmp(return_str, UID_JPEG2000Part2MulticomponentImageCompressionTransferSyntax) == 0))
+	    valid = TRUE;
+
+    if (valid)
+      g_warning("could not decompress data in DICOM file %s likely because this is JPEG 2000 compressed data, dcmtk returned %s", filename, result.text());
+    else
+      g_warning("could not decompress data in DICOM file %s, dcmtk returned %s", filename, result.text());
+    goto error;
+  }
+    
   /* get basic data */
   if (dcm_dataset->findAndGetUint16(DCM_Columns, return_uint16).bad()) {
     g_warning(_("could not find # of columns - Failed to load file %s\n"), filename);
@@ -715,6 +744,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
 
 
  function_end:
+
+  /* deregister global decompression codecs */
+  DJDecoderRegistration::cleanup();
+
   return ds;
 }
 
@@ -971,6 +1004,7 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
       x = div(dim.z, num_frames);
     else /* (num_gates > 1) */
       x = div(dim.z, num_gates);
+
 
     if (x.rem == 0) {
       /* ideal case, things make sense */
@@ -1316,11 +1350,11 @@ static GList * organize_and_import_slices_as_datasets(GList ** premaining_slices
     slices_to_combine = g_list_sort(slices_to_combine, sort_slices_func_with_time);
   else if (num_gates > 1)
     slices_to_combine = g_list_sort(slices_to_combine, sort_slices_func_with_gate);
-  else
+  else {
     slices_to_combine = g_list_sort(slices_to_combine, sort_slices_func);
-
-  /* throw out any slices that are duplicated in terms of orientation */
-  slices_to_combine = separate_duplicate_slices(slices_to_combine, premaining_slices);
+    /* throw out any slices that are duplicated in terms of orientation */
+    slices_to_combine = separate_duplicate_slices(slices_to_combine, premaining_slices);
+  }
 
   /* load in the primary data set */
   ds = import_slices_as_dataset(slices_to_combine, num_frames, num_gates, num_slices, update_func, update_data, perror_buf);
