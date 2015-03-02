@@ -90,8 +90,8 @@ static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 }
 
 
-/* function to load in a data set xml file */
-static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) { 
+/* function to load in a raw_data structure from a legacy file */
+static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
 
   xmlDocPtr doc;
   AmitkRawData * new_data_set;
@@ -216,7 +216,7 @@ static GList * align_pts_load_xml(xmlNodePtr node_list) {
 
 
 /* function to load in a volume xml file */
-static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
+static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename, AmitkInterpolation interpolation) {
 
   xmlDocPtr doc;
   AmitkDataSet * new_volume;
@@ -246,6 +246,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
   }
 
   new_volume = amitk_data_set_new();
+  new_volume->interpolation = interpolation;
 
   /* get the volume name */
   temp_string = xml_get_string(nodes->children, "text");
@@ -294,17 +295,9 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
       g_warning("wrong type found on internal scaling, converting to double");
       old_scaling = new_volume->internal_scaling;
 
-      if ((new_volume->internal_scaling = amitk_raw_data_new()) == NULL) {
+      new_volume->internal_scaling = amitk_raw_data_new_with_data(AMITK_FORMAT_DOUBLE, old_scaling->dim);
+      if (new_volume->internal_scaling == NULL) {
 	g_warning("couldn't allocate space for the new scaling structure");
-	g_object_unref(new_volume);
-	return NULL;
-      }
-      new_volume->internal_scaling->dim = old_scaling->dim;
-      new_volume->internal_scaling->format = AMITK_FORMAT_DOUBLE;
-      if (new_volume->internal_scaling->data != NULL)
-	g_free(new_volume->internal_scaling->data);
-      if ((new_volume->internal_scaling->data = amitk_raw_data_get_data_mem(new_volume->internal_scaling)) == NULL) {
-	g_warning("Couldn't allocate space for the new scaling factors");
 	g_object_unref(new_volume);
 	return NULL;
       }
@@ -412,7 +405,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
 
 
 /* function to load in a list of volume xml nodes */
-static GList * volumes_load_xml(xmlNodePtr node_list) {
+static GList * volumes_load_xml(xmlNodePtr node_list, AmitkInterpolation interpolation) {
 
   gchar * file_name;
   GList * new_data_sets;
@@ -420,11 +413,11 @@ static GList * volumes_load_xml(xmlNodePtr node_list) {
 
   if (node_list != NULL) {
     /* first, recurse on through the list */
-    new_data_sets = volumes_load_xml(node_list->next);
+    new_data_sets = volumes_load_xml(node_list->next, interpolation);
 
     /* load in this node */
     file_name = xml_get_string(node_list->children, "text");
-    new_ds = volume_load_xml(file_name);
+    new_ds = volume_load_xml(file_name, interpolation);
     new_data_sets = g_list_prepend(new_data_sets, new_ds);
     g_free(file_name);
 
@@ -544,6 +537,7 @@ AmitkStudy * legacy_load_xml(void) {
   AmitkStudy * study = NULL;
   AmitkSpace * space;
   AmitkPoint view_center;
+  AmitkInterpolation interpolation;
   xmlDocPtr doc;
   xmlNodePtr nodes;
   xmlNodePtr object_nodes;
@@ -596,10 +590,18 @@ AmitkStudy * legacy_load_xml(void) {
   amitk_space_copy_in_place(AMITK_SPACE(study), space);
   g_object_unref(space);
 
+  /* figure out the interpolation */
+  temp_string = xml_get_string(nodes, "interpolation");
+  interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  if (temp_string != NULL)
+    if (g_strcasecmp(temp_string, "Trilinear") == 0)
+      interpolation = AMITK_INTERPOLATION_TRILINEAR;
+  g_free(temp_string);
+
   /* load in the volumes */
   object_nodes = xml_get_node(nodes, "Volumes");
   object_nodes = object_nodes->children;
-  objects = volumes_load_xml(object_nodes);
+  objects = volumes_load_xml(object_nodes, interpolation);
   amitk_object_add_children(AMITK_OBJECT(study), objects);
   amitk_objects_unref(objects);
 
@@ -623,14 +625,6 @@ AmitkStudy * legacy_load_xml(void) {
     g_warning("inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
-
-  /* figure out the interpolation */
-  temp_string = xml_get_string(nodes, "interpolation");
-  amitk_study_set_interpolation(study, AMITK_INTERPOLATION_NEAREST_NEIGHBOR);
-  if (temp_string != NULL)
-    if (g_strcasecmp(temp_string, "Trilinear") == 0)
-      amitk_study_set_interpolation(study, AMITK_INTERPOLATION_TRILINEAR);
-  g_free(temp_string);
 
   /* and we're done */
   xmlFreeDoc(doc);

@@ -516,7 +516,8 @@ static void erase_volume(AmitkVoxel voxel,
 			 gpointer ds) {
 
   amitk_data_set_set_value(AMITK_DATA_SET(ds), voxel, 
-			   value*(1-voxel_fraction)+AMITK_DATA_SET_THRESHOLD_MIN(ds, 0)*voxel_fraction,
+			   (value*(1.0-voxel_fraction)+
+			    AMITK_DATA_SET_THRESHOLD_MIN(ds, 0)*voxel_fraction),
 			   FALSE);
   return;
 }

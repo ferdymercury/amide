@@ -152,14 +152,11 @@ rendering_t * rendering_context_init(const AmitkObject * object,
 				     AmitkVolume * rendering_volume,
 				     const amide_real_t min_voxel_size, 
 				     const amide_time_t start, 
-				     const amide_time_t duration, 
-				     const AmitkInterpolation interpolation);
+				     const amide_time_t duration);
 void rendering_context_reload_object(rendering_t * rendering_context, 
 				     const amide_time_t new_start,
-				     const amide_time_t new_duration, 
-				     const AmitkInterpolation interpolation);
-void rendering_context_load_object(rendering_t * rendering_context, 
-				   const AmitkInterpolation interpolation);
+				     const amide_time_t new_duration);
+void rendering_context_load_object(rendering_t * rendering_context);
 void rendering_context_set_rotation(rendering_t * context, AmitkAxis dir, gdouble rotation);
 void rendering_context_reset_rotation(rendering_t * context);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
@@ -170,9 +167,9 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 void rendering_context_render(rendering_t * context);
 renderings_t * renderings_unref(renderings_t * renderings);
 renderings_t * renderings_init(GList * objects, const amide_time_t start, 
-			       const amide_time_t duration, const AmitkInterpolation interpolation);
+			       const amide_time_t duration);
 void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
-			       const amide_time_t duration, const AmitkInterpolation interpolation);
+			       const amide_time_t duration);
 void renderings_set_rotation(renderings_t * contexts, AmitkAxis dir, gdouble rotation);
 void renderings_reset_rotation(renderings_t * contexts);
 void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);

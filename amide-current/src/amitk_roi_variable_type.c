@@ -571,7 +571,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   gboolean small_dimensions;
   AmitkCorners intersection_corners;
   AmitkPoint ds_voxel_size;
-  AmitkPoint roi_voxel_size;
+  AmitkPoint sub_voxel_size;
+  amide_real_t grain_size;
 
 #if defined (ROI_TYPE_BOX)
   AmitkPoint box_corner;
@@ -590,11 +591,16 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 #endif
 
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
+  AmitkPoint roi_voxel_size;
   AmitkVoxel roi_voxel;
+
+  roi_voxel_size = AMITK_ROI_VOXEL_SIZE(roi);
 #endif
 
   ds_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
-  roi_voxel_size = AMITK_ROI_VOXEL_SIZE(roi);
+  sub_voxel_size = point_cmult(1.0/AMITK_ROI_GRANULARITY, ds_voxel_size);
+
+  grain_size = 1.0/(AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY);
 
   /* figure out the intersection between the data set and the roi */
   if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds), 
@@ -668,29 +674,29 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	else voxel_in = TRUE;
 #endif
 
-	*AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)=voxel_in;
+	AMITK_RAW_DATA_UBYTE_2D_SET_CONTENT(next_plane_in,i.y+1,i.x+1)=voxel_in;
 
-	if (*AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y,i.x) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y,i.x+1) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y+1,i.x) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y+1,i.x+1) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y,i.x) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y,i.x+1) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x) &&
-	    *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1)) {
+	if (AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x+1) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y+1,i.x) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y+1,i.x+1) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x+1) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x) &&
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1)) {
 	  /* this voxel is entirely in the ROI */
 
 	  value = amitk_data_set_get_value(ds,j);
 	  (*calculation)(j, value, 1.0, data);
 
-	} else if (*AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y,i.x) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y,i.x+1) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y+1,i.x) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,i.y+1,i.x+1) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y,i.x) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y,i.x+1) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x) ||
-		   *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,i.y+1,i.x+1) ||
+	} else if (AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x+1) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y+1,i.x) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y+1,i.x+1) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x+1) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x) ||
+		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1) ||
 		   small_dimensions) {
 	  /* this voxel is partially in the ROI, will need to do subvoxel analysis */
 
@@ -698,16 +704,13 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	  voxel_fraction=0;
 
 	  for (k.z = 0;k.z<AMITK_ROI_GRANULARITY;k.z++) {
-	    fine_ds_pt.z = j.z*ds_voxel_size.z+
-	      (((amide_real_t) k.z)+0.5)*ds_voxel_size.z/AMITK_ROI_GRANULARITY;
+	    fine_ds_pt.z = j.z*ds_voxel_size.z+ (k.z+0.5)*sub_voxel_size.z;
 
 	    for (k.y = 0;k.y<AMITK_ROI_GRANULARITY;k.y++) {
-	      fine_ds_pt.y = j.y*ds_voxel_size.y+
-		(((amide_real_t) k.y)+0.5)*ds_voxel_size.y/AMITK_ROI_GRANULARITY;
+	      fine_ds_pt.y = j.y*ds_voxel_size.y+ (k.y+0.5)*sub_voxel_size.y;
 
 	      for (k.x = 0;k.x<AMITK_ROI_GRANULARITY;k.x++) {
-		fine_ds_pt.x = j.x*ds_voxel_size.x+
-		  (((amide_real_t) k.x)+0.5)*ds_voxel_size.x/AMITK_ROI_GRANULARITY;
+		fine_ds_pt.x = j.x*ds_voxel_size.x+(k.x+0.5)*sub_voxel_size.x;
 		
 		roi_pt = amitk_space_s2s(AMITK_SPACE(ds), AMITK_SPACE(roi), fine_ds_pt);
 
@@ -728,7 +731,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 		else voxel_in = TRUE;
 #endif
 		if (voxel_in) {
-		  voxel_fraction +=AMITK_ROI_GRAIN_SIZE;
+		  voxel_fraction += grain_size;
 		} /* voxel_in */
 	      } /* k.x loop */
 	    } /* k.y loop */
@@ -744,8 +747,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
     /* need to copy over the info on which voxel corners are in the roi */
     for (k.y=0;k.y < next_plane_in->dim.y; k.y++)
       for (k.x=0;k.x < next_plane_in->dim.x; k.x++)
-	*AMITK_RAW_DATA_UBYTE_2D_POINTER(curr_plane_in,k.y,k.x) = 
-	  *AMITK_RAW_DATA_UBYTE_2D_POINTER(next_plane_in,k.y,k.x);
+	AMITK_RAW_DATA_UBYTE_2D_SET_CONTENT(curr_plane_in,k.y,k.x) = 
+	  AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,k.y,k.x);
   } /* i.z loop */
 
   /* trash collection */

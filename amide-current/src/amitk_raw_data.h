@@ -146,6 +146,8 @@ struct _AmitkRawDataClass
 
 GType	        amitk_raw_data_get_type	            (void);
 AmitkRawData*   amitk_raw_data_new                  (void);
+AmitkRawData*   amitk_raw_data_new_with_data        (AmitkFormat format,
+						     AmitkVoxel dim);
 AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name, 
 						     AmitkRawFormat raw_format,
 						     AmitkVoxel dim,

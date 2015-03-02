@@ -117,6 +117,9 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
   gchar * import_filename;
   gchar ** frags=NULL;
   gboolean found_name=FALSE;
+  AmitkVoxel dim;
+  AmitkFormat format;
+  AmitkScaling scaling;
   
   /* setup some defaults */
   XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
@@ -176,29 +179,23 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
     return NULL;
   }
   g_free(import_filename);
-
+  
   /* read the file */
   if ((error = MdcReadFile(&medcon_file_info, 1)) != MDC_OK) {
     g_warning("can't read file %s with libmdc (medcon)",filename);
     goto error;
   }
 
-  /* start acquiring some useful information */
-  if ((ds = amitk_data_set_new()) == NULL) {
-    g_warning("couldn't allocate space for the data set structure to hold medcon data");
-    goto error;
-  }
-  if ((ds->raw_data = amitk_raw_data_new()) == NULL) {
-    g_warning("couldn't allocate space for the raw data set structure to hold medcon data");
-    goto error;
-  }
-
   /* start figuring out information */
+  dim.x = medcon_file_info.dim[1];
+  dim.y = medcon_file_info.dim[2];
+  dim.z = medcon_file_info.dim[3];
+  dim.t = medcon_file_info.dim[4];
+
 #ifdef AMIDE_DEBUG
   g_print("libmdc reading file %s\n",filename);
   g_print("\tnum dimensions %d\tx_dim %d\ty_dim %d\tz_dim %d\tframes %d\n",
-	  medcon_file_info.dim[0],medcon_file_info.dim[1],medcon_file_info.dim[2],
-	  medcon_file_info.dim[3],medcon_file_info.dim[4]);
+	  medcon_file_info.dim[0],dim.x, dim.y, dim.z, dim.t);
   g_print("\tx size\t%5.3f\ty size\t%5.3f\tz size\t%5.3f\ttime\t%5.3f\n",
 	  medcon_file_info.pixdim[1], medcon_file_info.pixdim[2],
 	  medcon_file_info.pixdim[3], medcon_file_info.pixdim[4]);
@@ -206,10 +203,6 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
 	  medcon_file_info.dim[5],medcon_file_info.dim[6]);
   g_print("\tbits: %d\ttype: %d\n",medcon_file_info.bits,medcon_file_info.type);
 #endif
-  ds->raw_data->dim.x = medcon_file_info.dim[1];
-  ds->raw_data->dim.y = medcon_file_info.dim[2];
-  ds->raw_data->dim.z = medcon_file_info.dim[3];
-  ds->raw_data->dim.t = medcon_file_info.dim[4];
 
   /* pick our internal data format */
   switch(medcon_file_info.type) {
@@ -220,25 +213,28 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
     g_warning("Importing type %d file through medcon unsupported, trying as unsigned byte",
     	      medcon_file_info.type);
   case BIT8_U: /* 3 */
-    ds->raw_data->format = AMITK_FORMAT_UBYTE;
+    format = AMITK_FORMAT_UBYTE;
     MDC_QUANTIFY = MDC_NO; 
     MDC_NORM_OVER_FRAMES = MDC_NO;
+    scaling = AMITK_SCALING_2D;
     break;
   case BIT16_U: /*  5 */
     g_warning("Importing type %d file through medcon unsupported, trying as signed short",
     	      medcon_file_info.type);
   case BIT16_S: /* 4 */
-    ds->raw_data->format = AMITK_FORMAT_SSHORT;
+    format = AMITK_FORMAT_SSHORT;
     MDC_QUANTIFY = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
+    scaling = AMITK_SCALING_2D;
     break;
   case BIT32_U: /* 7 */
     g_warning("Importing type %d file through medcon unsupported, trying as signed int",
     	      medcon_file_info.type);
   case BIT32_S: /* 6 */
-    ds->raw_data->format = AMITK_FORMAT_SINT;
+    format = AMITK_FORMAT_SINT;
     MDC_QUANTIFY = MDC_NO;
     MDC_NORM_OVER_FRAMES = MDC_NO;
+    scaling = AMITK_SCALING_2D;
     break;
   default:
   case BIT64_U: /* 9 */
@@ -249,11 +245,19 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
     g_warning("Importing type %d file through medcon unsupported, trying as float",
     	      medcon_file_info.type);
   case FLT32: /* 10 */
-    ds->raw_data->format = AMITK_FORMAT_FLOAT;
+    format = AMITK_FORMAT_FLOAT;
+    scaling = AMITK_SCALING_0D;
     MDC_QUANTIFY = MDC_YES;
     MDC_NORM_OVER_FRAMES = MDC_YES;
     break;
   }
+
+  ds = amitk_data_set_new_with_data(format, dim, scaling);
+  if (ds == NULL) {
+    g_warning("couldn't allocate space for the data set structure to hold medcon data");
+    goto error;
+  }
+
 
   ds->voxel_size.x = medcon_file_info.pixdim[1];
   ds->voxel_size.y = medcon_file_info.pixdim[2];
@@ -317,29 +321,6 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
   g_print("\tscan start time %5.3f\n",ds->scan_start);
 #endif
 
-
-  /* allocate space for the array containing info on the duration of the frames */
-  if ((ds->frame_duration = amitk_data_set_get_frame_duration_mem(ds)) == NULL) {
-    g_warning("couldn't allocate space for the frame duration info");
-    goto error;
-  }
-
-  if ((ds->raw_data->data = amitk_raw_data_get_data_mem(ds->raw_data)) == NULL) {
-    g_warning("couldn't allocate space for the data");
-    goto error;
-  }
-
-  /* setup the internal scaling factor array for integer types */
-  if (ds->raw_data->format != AMITK_FORMAT_FLOAT) {
-    ds->internal_scaling->dim.t = ds->raw_data->dim.t;
-    ds->internal_scaling->dim.z = ds->raw_data->dim.z;
-    /* allocate the space for the scaling factors */
-    g_free(ds->internal_scaling->data); /* get rid of any old scaling factors */
-    if ((ds->internal_scaling->data = amitk_raw_data_get_data_mem(ds->internal_scaling)) == NULL) {
-      g_warning("couldn't allocate space for the scaling factors for the (X)medcon data");
-      goto error;
-    }
-  }
 
   /* complain if xmedcon is using an affine transformation, this only checks the first image.... */
   if (!EQUAL_ZERO(medcon_file_info.image[0].rescale_intercept))

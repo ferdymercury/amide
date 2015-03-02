@@ -528,13 +528,13 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
 
 #ifdef AMIDE_DEBUG
       if (ui_rendering_movie->type == OVER_TIME)
-	g_print("\tRendering %d --- start/end %5.3f-%5.3f s --- rotation x %5.1f y %5.1f z %5.1f\r",
+	g_print("Rendering %d -- %5.3f-%5.3f s -- rot. x %5.1f y %5.1f z %5.1f\r",
 		i_frame, ui_rendering->start, ui_rendering->start+ui_rendering->duration,
 		180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
 		180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
 		180.0*rotation_step[AMITK_AXIS_Z]/M_PI);
       else
-	g_print("\tRendering %d --- data frame %d --- rotation x %5.1f y %5.1f z %5.1f\r",
+	g_print("Rendering %d -- data frame %d -- rot. x %5.1f y %5.1f z %5.1f\r",
 		i_frame, ds_frame, 
 		180.0*rotation_step[AMITK_AXIS_X]/M_PI, 
 		180.0*rotation_step[AMITK_AXIS_Y]/M_PI, 
@@ -545,7 +545,7 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
       ui_rendering_update_canvas(ui_rendering, TRUE); 
       
 #ifdef AMIDE_DEBUG
-      g_print("\tWriting   %d\r",i_frame);
+      g_print("Writing   %d\r",i_frame);
 #endif
 
       i = 0;

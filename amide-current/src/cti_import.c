@@ -54,9 +54,10 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   gchar * temp_name;
   gchar ** frags=NULL;
   time_t scan_time;
-  gboolean two_dim_scale;
   AmitkPoint temp_point;
-  AmitkFormat data_format;
+  AmitkFormat format;
+  AmitkVoxel dim;
+  AmitkScaling scaling;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("can't open file %s", cti_filename);
@@ -102,11 +103,11 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   switch (cti_subheader->data_type) {
   case VAX_Ix2:  /* little endian short */
   case SunShort: /* big endian short */
-    data_format = AMITK_FORMAT_SSHORT;
+    format = AMITK_FORMAT_SSHORT;
     break;
   case IeeeFloat: /* big endian float */
   case VAX_Rx4:  /* PDP float */
-    data_format = AMITK_FORMAT_FLOAT;
+    format = AMITK_FORMAT_FLOAT;
     break; /* handled data types */
   case UnknownMatDataType:
   case ByteData: 
@@ -122,53 +123,30 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
     break;
   }
 
+  /* start acquiring some useful information */
+  dim.x = cti_subheader->xdim;
+  dim.y = cti_subheader->ydim;
+  dim.z = (cti_subheader->zdim == 1) ? cti_file->mhptr->num_planes : cti_subheader->zdim;
+  dim.t = cti_file->mhptr->num_frames;
+  num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
+
+  /* figure out the size of our factor array */
+  if (format == AMITK_FORMAT_FLOAT) { /* float image, so we don't need scaling factors */
+    scaling = AMITK_SCALING_0D;
+  } else if (cti_subheader->zdim == 1) {
+    /* slice image, non-float data, so we'll need a 2D array of scaling factors */
+    scaling = AMITK_SCALING_2D;
+  } else { /* volume image, so we'll need a 1D array of scaling factors */
+    scaling = AMITK_SCALING_1D;
+  }
+
   /* init our data structures */
-  if ((ds = amitk_data_set_new()) == NULL) {
+  ds = amitk_data_set_new_with_data(format, dim, scaling);
+  if (ds == NULL) {
     g_warning("couldn't allocate space for the data set structure to hold CTI data");
     goto error;
   }
   
-  if ((ds->raw_data = amitk_raw_data_new()) == NULL) {
-    g_warning("couldn't allocate space for the raw data structure to hold CTI data");
-    goto error;
-  }
-
-  /* start acquiring some useful information */
-  ds->raw_data->format = data_format;
-  ds->raw_data->dim.x = cti_subheader->xdim;
-  ds->raw_data->dim.y = cti_subheader->ydim;
-  ds->raw_data->dim.z = (cti_subheader->zdim == 1) ? 
-    cti_file->mhptr->num_planes : cti_subheader->zdim;
-  ds->raw_data->dim.t = cti_file->mhptr->num_frames;
-  num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
-
-  /* figure out the size of our factor array */
-  if ( data_format == AMITK_FORMAT_FLOAT) { /* float image, so we don't need scaling factors */
-    two_dim_scale = FALSE;
-  } else if (cti_subheader->zdim == 1) {
-    /* slice image, non-float data, so we'll need a 2D array of scaling factors */
-    ds->internal_scaling->dim.t = ds->raw_data->dim.t;
-    ds->internal_scaling->dim.z = ds->raw_data->dim.z;
-    two_dim_scale = TRUE;
-  } else { /* volume image, so we'll need a 1D array of scaling factors */
-    ds->internal_scaling->dim.t = ds->raw_data->dim.t;
-    two_dim_scale = FALSE;
-  }
-
-  /* allocate the space for the scaling factors */
-  g_free(ds->internal_scaling->data); /* get rid of any old scaling factors */
-  if ((ds->internal_scaling->data = amitk_raw_data_get_data_mem(ds->internal_scaling)) == NULL) {
-    g_warning("couldn't allocate space for the scaling factors for the CTI data");
-    goto error;
-  }
-  
-  /* allocate the space for the raw data */
-  if ((ds->raw_data->data = amitk_raw_data_get_data_mem(ds->raw_data)) == NULL) {
-    g_warning("couldn't allocate space for the data set to hold CTI data");
-    goto error;
-  }
-
-
   /* it's a CTI File, we'll guess it's PET data */
   ds->modality = AMITK_MODALITY_PET;
 
@@ -187,9 +165,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   }
 #ifdef AMIDE_DEBUG
   g_print("data set name %s\n",AMITK_OBJECT_NAME(ds));
-  g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", 
-	  ds->raw_data->dim.x, ds->raw_data->dim.y, 
-	  ds->raw_data->dim.z, ds->raw_data->dim.t);
+  g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", dim.x, dim.y, dim.z, dim.t);
   g_print("\tslices/volume %d\n",num_slices);
 	  
 #endif
@@ -245,12 +221,6 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
   cti_subheader = NULL;
   
 
-  /* allocate space for the array containing info on the duration of the frames */
-  if ((ds->frame_duration = amitk_data_set_get_frame_duration_mem(ds)) == NULL) {
-    g_warning("couldn't allocate space for the frame duration info");
-    goto error;
-  }
-  
   /* and load in the data */
   for (i.t = 0; i.t < AMITK_DATA_SET_NUM_FRAMES(ds); i.t++) {
 #ifdef AMIDE_DEBUG
@@ -281,14 +251,14 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
 	break; /* should never get here */
       }
       
-      switch (data_format) {
+      switch (format) {
       case AMITK_FORMAT_SSHORT:
 	
 	/* save the scale factor */
 	j.x = j.y = 0;
 	j.z = slice;
 	j.t = i.t;
-	if (two_dim_scale)
+	if (scaling == AMITK_SCALING_2D)
 	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
 	else if (slice == 0)
 	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;

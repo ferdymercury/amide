@@ -52,7 +52,6 @@ typedef struct ui_series_t {
   guint num_slices, rows, columns;
   AmitkVolume * volume;
   amide_time_t view_time;
-  AmitkInterpolation interpolation;
   AmitkFuseType fuse_type;
   amide_real_t voxel_dim;
   series_t type;

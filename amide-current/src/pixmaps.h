@@ -28,18 +28,22 @@ extern const char * amide_logo_xpm[];
 
 extern const char * icon_interpolation_nearest_neighbor_xpm[];
 extern const char * icon_interpolation_trilinear_xpm[];
+extern const char ** icon_interpolation[];
 
 extern const char * icon_fuse_type_blend_xpm[];
 extern const char * icon_fuse_type_overlay_xpm[];
+extern const char ** icon_fuse_type[];
 
 extern const char * icon_view_single_xpm[];
 extern const char * icon_view_linked_xpm[];
+extern const char ** icon_view_mode[];
 
 extern const char * icon_threshold_xpm[];
 extern const char * icon_thresholding_per_slice_xpm[];
 extern const char * icon_thresholding_per_frame_xpm[];
 extern const char * icon_thresholding_interpolate_frames_xpm[];
 extern const char * icon_thresholding_global_xpm[];
+extern const char ** icon_thresholding[];
 
 extern const char * CYLINDER_xpm[];
 extern const char * BOX_xpm[];

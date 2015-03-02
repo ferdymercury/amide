@@ -143,6 +143,7 @@ amide_SOURCES = \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_H_SOURCES) \
 	amide.c \
+	amide_limits.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
@@ -152,6 +153,7 @@ amide_SOURCES = \
 	amitk_data_set.c \
 	amitk_dir_sel.c \
 	amitk_fiducial_mark.c \
+	amitk_filter.c \
 	amitk_point.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
@@ -187,6 +189,8 @@ amide_SOURCES = \
 	ui_common.h \
 	ui_crop_dialog.c \
 	ui_crop_dialog.h \
+	ui_filter_dialog.c \
+	ui_filter_dialog.h \
 	ui_fly_through.c \
 	ui_fly_through.h \
 	ui_preferences_dialog.c \
@@ -222,6 +226,7 @@ AMITK_H_SOURCES = \
 	amitk_dir_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \
+	amitk_filter.h \
 	amitk_object.h \
 	amitk_object_dialog.h \
 	amitk_point.h \
@@ -424,19 +429,19 @@ am_amide_OBJECTS = gtkdial.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
 	analysis.$(OBJEXT) amitk_canvas.$(OBJEXT) \
 	amitk_color_table.$(OBJEXT) amitk_data_set.$(OBJEXT) \
 	amitk_dir_sel.$(OBJEXT) amitk_fiducial_mark.$(OBJEXT) \
-	amitk_point.$(OBJEXT) amitk_object.$(OBJEXT) \
-	amitk_object_dialog.$(OBJEXT) amitk_raw_data.$(OBJEXT) \
-	amitk_roi.$(OBJEXT) amitk_space_edit.$(OBJEXT) \
-	amitk_space.$(OBJEXT) amitk_study.$(OBJEXT) \
-	amitk_threshold.$(OBJEXT) amitk_tree.$(OBJEXT) \
-	amitk_volume.$(OBJEXT) cti_import.$(OBJEXT) \
-	idl_data_import.$(OBJEXT) image.$(OBJEXT) legacy.$(OBJEXT) \
-	medcon_import.$(OBJEXT) mpeg_encode.$(OBJEXT) pixmaps.$(OBJEXT) \
-	raw_data_import.$(OBJEXT) rendering.$(OBJEXT) \
+	amitk_filter.$(OBJEXT) amitk_point.$(OBJEXT) \
+	amitk_object.$(OBJEXT) amitk_object_dialog.$(OBJEXT) \
+	amitk_raw_data.$(OBJEXT) amitk_roi.$(OBJEXT) \
+	amitk_space_edit.$(OBJEXT) amitk_space.$(OBJEXT) \
+	amitk_study.$(OBJEXT) amitk_threshold.$(OBJEXT) \
+	amitk_tree.$(OBJEXT) amitk_volume.$(OBJEXT) \
+	cti_import.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
+	legacy.$(OBJEXT) medcon_import.$(OBJEXT) mpeg_encode.$(OBJEXT) \
+	pixmaps.$(OBJEXT) raw_data_import.$(OBJEXT) rendering.$(OBJEXT) \
 	ui_alignment_dialog.$(OBJEXT) ui_common.$(OBJEXT) \
-	ui_crop_dialog.$(OBJEXT) ui_fly_through.$(OBJEXT) \
-	ui_preferences_dialog.$(OBJEXT) ui_rendering.$(OBJEXT) \
-	ui_rendering_dialog.$(OBJEXT) \
+	ui_crop_dialog.$(OBJEXT) ui_filter_dialog.$(OBJEXT) \
+	ui_fly_through.$(OBJEXT) ui_preferences_dialog.$(OBJEXT) \
+	ui_rendering.$(OBJEXT) ui_rendering_dialog.$(OBJEXT) \
 	ui_rendering_movie_dialog.$(OBJEXT) \
 	ui_roi_analysis_dialog.$(OBJEXT) ui_series.$(OBJEXT) \
 	ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
@@ -481,6 +486,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_dir_sel.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_fiducial_mark.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/amitk_filter.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_marshal.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_object.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_object_dialog.Po \
@@ -516,6 +522,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ui_alignment_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_common.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_crop_dialog.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_filter_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_fly_through.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering.Po \
@@ -617,6 +624,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_data_set_USHORT_2D_SCALING.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_dir_sel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_fiducial_mark.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_filter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_marshal.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_object_dialog.Po@am__quote@
@@ -657,6 +665,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_alignment_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_crop_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_filter_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_fly_through.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering.Po@am__quote@
@@ -924,7 +933,7 @@ $(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
 	@true
 stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	( cd $(srcdir) && glib-mkenums \
-		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
 		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \

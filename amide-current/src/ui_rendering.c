@@ -53,8 +53,7 @@ static void close_cb(GtkWidget* widget, gpointer data);
 
 static ui_rendering_t * ui_rendering_init(GList * objects, 
 					  amide_time_t start, 
-					  amide_time_t duration, 
-					  AmitkInterpolation interpolation);
+					  amide_time_t duration);
 static ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering);
 static void update_canvas(ui_rendering_t * ui_rendering);
 
@@ -573,8 +572,7 @@ static ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
 /* allocate and initialize a ui_rendering data structure */
 static ui_rendering_t * ui_rendering_init(GList * objects, 
 					  amide_time_t start, 
-					  amide_time_t duration, 
-					  AmitkInterpolation interpolation) {
+					  amide_time_t duration) {
 
   ui_rendering_t * ui_rendering;
 
@@ -602,7 +600,6 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
   ui_rendering->front_factor = RENDERING_DEFAULT_FRONT_FACTOR;
   ui_rendering->density = RENDERING_DEFAULT_DENSITY;
   ui_rendering->zoom = RENDERING_DEFAULT_ZOOM;
-  ui_rendering->interpolation=interpolation;
   ui_rendering->start = start;
   ui_rendering->duration = duration;
   ui_rendering->box_space = amitk_space_new();
@@ -621,7 +618,7 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
   gnome_config_pop_prefix();
 
   /* initialize the rendering contexts */
-  ui_rendering->contexts = renderings_init(objects, start, duration, interpolation);
+  ui_rendering->contexts = renderings_init(objects, start, duration);
 
   return ui_rendering;
 }
@@ -650,7 +647,7 @@ void update_canvas(ui_rendering_t * ui_rendering) {
   g_return_if_fail(ui_rendering->contexts != NULL);
 
   renderings_reload_objects(ui_rendering->contexts, ui_rendering->start,
-			    ui_rendering->duration, ui_rendering->interpolation);
+			    ui_rendering->duration);
 
   /* -------- render our objects ------------ */
 
@@ -696,8 +693,7 @@ void update_canvas(ui_rendering_t * ui_rendering) {
 
 
 /* function that sets up the rendering dialog */
-void ui_rendering_create(GList * objects, amide_time_t start, 
-			 amide_time_t duration, AmitkInterpolation interpolation) {
+void ui_rendering_create(GList * objects, amide_time_t start, amide_time_t duration) {
   
   GtkWidget * packing_table;
   GtkWidget * check_button;
@@ -716,7 +712,7 @@ void ui_rendering_create(GList * objects, amide_time_t start,
   /* sanity checks */
   g_return_if_fail(objects != NULL);
 
-  ui_rendering = ui_rendering_init(objects, start, duration, interpolation);
+  ui_rendering = ui_rendering_init(objects, start, duration);
   ui_rendering->app = GNOME_APP(gnome_app_new(PACKAGE, "Rendering Window"));
   gtk_window_set_resizable(GTK_WINDOW(ui_rendering->app), TRUE);
 

@@ -27,6 +27,9 @@
 #include "amide_config.h"
 #include "xml.h"
 
+#define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
+static char * true_string = "true";
+static char * false_string = "false";
 
 /* ----------------- the load functions ------------------ */
 
@@ -205,6 +208,25 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor) {
   return return_data;
 }
 
+gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor) {
+  gchar * temp_string;
+  gboolean value;
+  
+  temp_string = xml_get_string(nodes, descriptor);
+
+  if (temp_string == NULL) {
+    /* TRUE tends to be better for backwards compatibility */
+    g_warning("Couldn't read value for %s, substituting TRUE",descriptor);
+    return TRUE;
+  }
+  if (g_ascii_strncasecmp(temp_string, true_string, BOOLEAN_STRING_MAX_LENGTH) == 0)
+    value = TRUE;
+  else 
+    value = FALSE;
+  g_free(temp_string);
+
+  return value;
+}
 
 gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor) {
 
@@ -302,6 +324,14 @@ void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t
   return;
 }
 
+
+void xml_save_boolean(xmlNodePtr node, const gchar * descriptor, const gboolean value) {
+
+  if (value)
+    xml_save_string(node, descriptor, true_string);
+  else
+    xml_save_string(node, descriptor, false_string);
+}
 
 void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num) {
 

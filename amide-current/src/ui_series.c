@@ -310,7 +310,6 @@ static ui_series_t * ui_series_init(void) {
   ui_series->captions = NULL;
   ui_series->objects = NULL;
   ui_series->active_ds = NULL;
-  ui_series->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
   ui_series->fuse_type = AMITK_FUSE_TYPE_BLEND;
   ui_series->voxel_dim = 1.0;
   ui_series->volume = NULL;
@@ -399,7 +398,6 @@ static void update_canvas(ui_series_t * ui_series) {
 				temp_duration*(1.0-EPSILON),
 				ui_series->voxel_dim,
 				view_volume,
-				ui_series->interpolation,
 				ui_series->fuse_type);
   g_object_unref(view_volume);
   image_width = gdk_pixbuf_get_width(pixbuf) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
@@ -482,7 +480,6 @@ static void update_canvas(ui_series_t * ui_series) {
 				    temp_duration*(1.0-EPSILON),
 				    ui_series->voxel_dim,
 				    view_volume,
-				    ui_series->interpolation,
 				    ui_series->fuse_type);
     g_object_unref(view_volume);
     
@@ -580,7 +577,6 @@ void ui_series_create(AmitkStudy * study, GList * objects, AmitkDataSet * active
   /* save the coordinate space of the series and some other parameters */
   ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(canvas_view)));
 
-  ui_series->interpolation = AMITK_STUDY_INTERPOLATION(study);
   ui_series->fuse_type = AMITK_STUDY_FUSE_TYPE(study);
   ui_series->view_time = AMITK_STUDY_VIEW_START_TIME(study);
   min_duration = amitk_data_sets_get_min_frame_duration(ui_series->objects);

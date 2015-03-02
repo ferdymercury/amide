@@ -1,6 +1,8 @@
-<?xml version="1.0" standalone="no"?>
+<?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY app "AMIDE">
+<!ENTITY date "October 2002">
 <!ENTITY basics         SYSTEM "basics.xml">
 <!ENTITY file-handling  SYSTEM "file-handling.xml">
 <!ENTITY importing      SYSTEM "importing.xml">
@@ -8,6 +10,7 @@
 <!ENTITY rois           SYSTEM "rois.xml">
 <!ENTITY data_sets      SYSTEM "data_sets.xml">
 <!ENTITY alignment      SYSTEM "alignment.xml">
+<!ENTITY manrevision "0.2">
 ]>
 
 <book id="amide" lang="en">
@@ -31,7 +34,7 @@
     </authorgroup>
 
     <copyright>
-      <year>2000,2001,2002</year> <holder>Andy Loening</holder>
+      <year>2000-2002</year> <holder>Andy Loening</holder>
     </copyright>
 
     <legalnotice id="legalnotice">

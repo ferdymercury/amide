@@ -48,15 +48,24 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
 									       const AmitkView view,
 									       const guint frame);
-AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(AmitkDataSet * data_set,
+AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(const AmitkDataSet * data_set,
 										const AmitkVoxel start,
 										const AmitkVoxel end);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const AmitkDataSet * data_set,
+								       AmitkDataSet * filtered_ds,
+								       const AmitkRawData * kernel);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_gaussian(const AmitkDataSet * data_set,
+									  AmitkDataSet * filtered_ds,
+									  const gint kernel_size,
+									  const amide_real_t fwhm);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median(const AmitkDataSet * data_set,
+									AmitkDataSet * filtered_ds,
+									const gint kernel_size);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t requested_start,
 									      const amide_time_t requested_duration,
 									      const amide_real_t pixel_dim,
 									      const AmitkVolume * slice_volume,
-									      const AmitkInterpolation interpolation,
 									      const gboolean need_calc_max_min);
 
 

@@ -92,8 +92,7 @@ rendering_t * rendering_context_init(const AmitkObject * object,
 				     AmitkVolume * rendering_volume,
 				     const amide_real_t voxel_size, 
 				     const amide_time_t start, 
-				     const amide_time_t duration, 
-				     const AmitkInterpolation interpolation) {
+				     const amide_time_t duration) {
 
   rendering_t * new_context = NULL;
   gint i;
@@ -258,7 +257,7 @@ rendering_t * rendering_context_init(const AmitkObject * object,
   }
 
   /* now copy the object data into the rendering context */
-  rendering_context_load_object(new_context, interpolation);
+  rendering_context_load_object(new_context);
 
   /* and finally, set up the structure into which the rendering will be returned */
   rendering_context_set_image(new_context, new_context->pixel_type, RENDERING_DEFAULT_ZOOM);
@@ -270,8 +269,7 @@ rendering_t * rendering_context_init(const AmitkObject * object,
 /* function to reload the context's concept of an object when necessary */
 void rendering_context_reload_objects(rendering_t * context, 
 				      const amide_time_t new_start,
-				      const amide_time_t new_duration, 
-				      const AmitkInterpolation interpolation) {
+				      const amide_time_t new_duration) {
   
   amide_time_t old_start, old_duration;
 
@@ -296,15 +294,14 @@ void rendering_context_reload_objects(rendering_t * context,
 
   /* allright, reload the context's data */
   context->need_rerender = TRUE;
-  rendering_context_load_object(context, interpolation);
+  rendering_context_load_object(context);
 
 }
 
 
 
 /* function to update the rendering structure's concept of the object */
-void rendering_context_load_object(rendering_t * context, 
-				   const AmitkInterpolation interpolation) {
+void rendering_context_load_object(rendering_t * context) {
 
   AmitkVoxel i_voxel, j_voxel;
   rendering_density_t * density; /* buffer for density data */
@@ -434,8 +431,8 @@ void rendering_context_load_object(rendering_t * context,
 	      break;
 	  }
 
-	  /* note, volpack needs a mirror reversal on the z and x axis */
-	  density[(context->dim.x-i_voxel.x-1)+
+	  /* note, volpack needs a mirror reversal on the z axis */
+	  density[i_voxel.x +
 		  i_voxel.y*context->dim.x+
 		  (context->dim.z-i_voxel.z-1)*context->dim.y*context->dim.x] = temp_int;
 	}
@@ -475,7 +472,7 @@ void rendering_context_load_object(rendering_t * context,
 				       context->start, 
 				       context->duration, 
 				       context->voxel_size, 
-				       slice_volume, interpolation, FALSE);
+				       slice_volume, FALSE);
 
       amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
 					      AMITK_DATA_SET(slice),
@@ -483,13 +480,13 @@ void rendering_context_load_object(rendering_t * context,
 					      context->duration, &max, &min);
       scale = ((amide_data_t) RENDERING_DENSITY_MAX) / (max-min);
 
-      /* note, volpack needs a mirror reversal on the z and x axis */
+      /* note, volpack needs a mirror reversal on the z axis */
       for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  context->dim.y; j_voxel.y++, i_voxel.y++)
 	for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  context->dim.x; j_voxel.x++, i_voxel.x++) {
 	  temp_val = scale * (AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,j_voxel)-min);
 	  if (temp_val > RENDERING_DENSITY_MAX) temp_val = RENDERING_DENSITY_MAX;
 	  if (temp_val < 0.0) temp_val = 0.0;
-	  density[(context->dim.x-i_voxel.x-1)+
+	  density[i_voxel.x+
 		  i_voxel.y*context->dim.x+
 		  (context->dim.z-i_voxel.z-1)* context->dim.y* context->dim.x] = temp_val;
 	}
@@ -827,8 +824,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
 					      AmitkVolume * render_volume,
 					      const amide_real_t voxel_size, 
 					      const amide_time_t start, 
-					      const amide_time_t duration,
-					      const AmitkInterpolation interpolation) {
+					      const amide_time_t duration) {
 
   renderings_t * temp_renderings = NULL;
 
@@ -840,9 +836,9 @@ static renderings_t * renderings_init_recurse(GList * objects,
   temp_renderings->ref_count = 1;
   
   temp_renderings->context = 
-    rendering_context_init(objects->data, render_volume,voxel_size, start, duration, interpolation);
+    rendering_context_init(objects->data, render_volume,voxel_size, start, duration);
   temp_renderings->next = 
-    renderings_init_recurse(objects->next, render_volume, voxel_size, start, duration, interpolation);
+    renderings_init_recurse(objects->next, render_volume, voxel_size, start, duration);
   
   return temp_renderings;
 }
@@ -850,8 +846,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
 					      
 
 /* returns an initialized rendering list */
-renderings_t * renderings_init(GList * objects,const amide_time_t start, 
-			       const amide_time_t duration,const AmitkInterpolation interpolation) {
+renderings_t * renderings_init(GList * objects,const amide_time_t start, const amide_time_t duration) {
   
   AmitkCorners render_corner;
   amide_real_t voxel_size;
@@ -873,20 +868,20 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start,
     voxel_size = 1.0;
 
   /* and generate our rendering list */
-  return renderings_init_recurse(objects, render_volume,voxel_size, start, duration, interpolation);
+  return renderings_init_recurse(objects, render_volume,voxel_size, start, duration);
   g_object_unref(render_volume);
 }
 
 
 /* reloads the rendering list when needed */
 void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
-			       const amide_time_t duration, const AmitkInterpolation interpolation) {
+			       const amide_time_t duration) {
 
   if (renderings != NULL) {
     /* reload this context */
-    rendering_context_reload_objects(renderings->context, start, duration, interpolation);
+    rendering_context_reload_objects(renderings->context, start, duration);
     /* and do the next */
-    renderings_reload_objects(renderings->next, start, duration, interpolation);
+    renderings_reload_objects(renderings->next, start, duration);
   }
 
   return;

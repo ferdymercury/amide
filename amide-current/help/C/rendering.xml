@@ -9,23 +9,23 @@
 <para>
 
   To start a rendering dialog, select the images that you would like
-  to render, and then hit the "View->Rendering" menu item.  Since the
+  to render, and then hit the "View->Rendering" menu item.  The
   program needs to reslice the data set into a data structure that the
-  volpack library can handle, you need to decide if you want to use a
-  nearest neighbor (Fast, lower quality) or trilinear (Slow, higher
-  quality) interpolation.  The program will then reslice the data set
-  and perform some initial rendering calculations which are used to
-  speed up later renderings.  This whole process will take some time,
-  so be patient.  Please also note that, when converting the data set,
-  the data is scaled between the current minimum and maximum
-  threshold, with all data above the current maximum threshold set to
-  the maximum threshold value, and all data below the current minimum
-  threshold set to the minimum threshold value.  This scaling can be
-  relative to the data set's "Global" maximum and minimum, to the "Per
-  Frame" maximum and minimum, or can be from maximum and minimum
-  values "Interpolated Between Frames".  "Per slice" scaling does not
-  make sense in the context of volume rendering, and is interpreted as
-  "Global" scaling.
+  volpack library can handle, and will use the interpolation type
+  specified for the data set(s).  Nearest neighbor is faster but of
+  lower quality, trilinear is slower, but of higher quality.
+  The program will then reslice the data set and perform some initial
+  rendering calculations which are used to speed up later renderings.
+  This whole process will take some time, so be patient.  Please also
+  note that, when converting the data set, the data is scaled between
+  the current minimum and maximum threshold, with all data above the
+  current maximum threshold set to the maximum threshold value, and
+  all data below the current minimum threshold set to the minimum
+  threshold value.  This scaling can be relative to the data set's
+  "Global" maximum and minimum, to the "Per Frame" maximum and
+  minimum, or can be from maximum and minimum values "Interpolated
+  Between Frames".  "Per slice" scaling does not make sense in the
+  context of volume rendering, and is interpreted as "Global" scaling.
 
 </para>
 <para>

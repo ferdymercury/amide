@@ -44,12 +44,6 @@
 #define MENU_COLOR_SCALE_HEIGHT 8
 #define MENU_COLOR_SCALE_WIDTH 30
 
-const gchar ** icon_thresholding[AMITK_THRESHOLDING_NUM] = {
-  icon_thresholding_per_slice_xpm,
-  icon_thresholding_per_frame_xpm,
-  icon_thresholding_interpolate_frames_xpm,
-  icon_thresholding_global_xpm
-};
 
 static gchar * thresholding_names[] = {
   "per slice", 
@@ -657,22 +651,27 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
   gchar * fill_color;
   guint i_ref;
   amide_data_t initial_diff;
+  amide_data_t global_diff;
 
   for (i_ref=0; i_ref<threshold->visible_refs; i_ref++) {
 
     points = gnome_canvas_points_new(3);
     initial_diff = threshold->initial_max[i_ref]-threshold->initial_min[i_ref];
+    global_diff = 
+      AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)- 
+      AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set);
 
     switch (arrow) {
       
     case AMITK_THRESHOLD_ARROW_FULL_MIN:
       left = 0;
       right = THRESHOLD_TRIANGLE_WIDTH;
-      point = THRESHOLD_TRIANGLE_HEIGHT + 
-	THRESHOLD_COLOR_SCALE_HEIGHT * 
-	(1-(threshold->threshold_min[i_ref]- AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/
-	 (AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)- 
-	  AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set)));
+      if (EQUAL_ZERO(global_diff))
+	point = THRESHOLD_TRIANGLE_HEIGHT+THRESHOLD_COLOR_SCALE_HEIGHT;
+      else
+	point = THRESHOLD_TRIANGLE_HEIGHT + 
+	  THRESHOLD_COLOR_SCALE_HEIGHT * 
+	  (1-(threshold->threshold_min[i_ref]- AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
       top = point;
       bottom = point+THRESHOLD_TRIANGLE_HEIGHT;
       if (threshold->threshold_min[i_ref] < AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))
@@ -683,16 +682,15 @@ static void threshold_update_arrow(AmitkThreshold * threshold, AmitkThresholdArr
     case AMITK_THRESHOLD_ARROW_FULL_MAX:
       left = 0;
       right = THRESHOLD_TRIANGLE_WIDTH;
-      point = THRESHOLD_TRIANGLE_HEIGHT + 
-	THRESHOLD_COLOR_SCALE_HEIGHT * 
-	(1-(threshold->threshold_max[i_ref]-
-	    AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/
-	 (AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)-
-	  AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set)));
+      if (EQUAL_ZERO(global_diff))
+	point = THRESHOLD_TRIANGLE_HEIGHT+THRESHOLD_COLOR_SCALE_HEIGHT;
+      else
+	point = THRESHOLD_TRIANGLE_HEIGHT + 
+	  THRESHOLD_COLOR_SCALE_HEIGHT * 
+	  (1-(threshold->threshold_max[i_ref]-AMITK_DATA_SET_GLOBAL_MIN(threshold->data_set))/global_diff);
       top = point-THRESHOLD_TRIANGLE_HEIGHT;
       bottom = point;
-      if (threshold->threshold_max[i_ref] > 
-	  AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) 
+      if (threshold->threshold_max[i_ref] > AMITK_DATA_SET_GLOBAL_MAX(threshold->data_set)) 
 	up_pointing=TRUE; /* want upward pointing max arrow */
       fill_color = "black";
       break;
@@ -971,6 +969,8 @@ static void threshold_update_layout(AmitkThreshold * threshold) {
     }
     
   }
+
+  return;
 }
 
 
@@ -995,6 +995,7 @@ static void threshold_update_type(AmitkThreshold * threshold) {
   gtk_widget_set_sensitive(threshold->type_button[AMITK_THRESHOLDING_INTERPOLATE_FRAMES],
 			   (AMITK_DATA_SET_DYNAMIC(threshold->data_set)));
 
+  return;
 }
 
 

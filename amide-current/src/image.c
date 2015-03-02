@@ -597,7 +597,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = rgba_temp.r;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = rgba_temp.g;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = rgba_temp.b;
-	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = (rgba_temp.a > 0) ? 0xFF : 0;
+	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+3] = rgba_temp.a;
     }
 
   /* from the rgb_data, generate a GdkPixbuf */
@@ -615,7 +615,6 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
 				 const amide_time_t duration,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
-				 const AmitkInterpolation interpolation,
 				 const AmitkFuseType fuse_type) {
 
   gint slice_num;
@@ -641,7 +640,7 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   /* generate the slices if we need to */
   if ((*pslices) == NULL) {
     if ((slices = amitk_data_sets_get_slices(objects, start, duration, pixel_dim, 
-					     view_volume, interpolation, TRUE)) == NULL) {
+					     view_volume, TRUE)) == NULL) {
       g_return_val_if_fail(slices != NULL, NULL);
     } 
     (*pslices) = slices;

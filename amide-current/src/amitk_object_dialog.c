@@ -33,8 +33,10 @@
 #include "amitk_space_edit.h"
 #include "amitk_threshold.h"
 #include "ui_common.h"
+#include "pixmaps.h"
 
 #define AMITK_RESPONSE_REVERT 2
+#define DIMENSION_STEP 0.2
 
 
 static void object_dialog_class_init (AmitkObjectDialogClass *class);
@@ -44,10 +46,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 				    AmitkObject * object,
 				    AmitkLayout layout);
 static void dialog_update_entries  (AmitkObjectDialog * dialog);
+static void dialog_update_interpolation(AmitkObjectDialog * dialog);
 
+static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer data);
 static void dialog_response_cb        (GtkDialog * dialog,
 				       gint        response_id,
 				       gpointer    data);
+static void dialog_interpolation_cb   (GtkWidget * widget, gpointer data);
 static void dialog_aspect_ratio_cb    (GtkWidget * widget, gpointer data);
 static void dialog_change_name_cb     (GtkWidget * widget, gpointer data);
 static void dialog_change_creation_date_cb(GtkWidget * widget, gpointer data);
@@ -168,6 +173,10 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * check_button;
   GtkWidget * notebook;
   GtkWidget * space_edit;
+  GtkWidget * hbox;
+  GtkWidget * pix_box;
+  GtkTooltips * radio_button_tips;
+  AmitkInterpolation i_interpolation;
   guint table_row = 0;
   AmitkAxis i_axis;
   guint i;
@@ -315,6 +324,47 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_widget_show(dialog->scaling_factor_entry);
     table_row++;
 
+    /* widget to change the interpolation */
+    label = gtk_label_new("Interpolation Type");
+    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(label);
+    
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_table_attach(GTK_TABLE(packing_table), hbox,1,2,
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(hbox);
+
+    radio_button_tips = gtk_tooltips_new();
+
+    for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) {
+      
+      dialog->interpolation_button[i_interpolation] = gtk_radio_button_new(NULL);
+      pix_box = gtk_hbox_new(FALSE, 0);
+      gtk_container_add(GTK_CONTAINER(dialog->interpolation_button[i_interpolation]), pix_box);
+      gtk_widget_show(pix_box);
+      g_signal_connect(G_OBJECT(pix_box), "realize", 
+		       G_CALLBACK(dialog_realize_interpolation_icon_cb), 
+		       GINT_TO_POINTER(i_interpolation));
+      
+      gtk_box_pack_start(GTK_BOX(hbox), dialog->interpolation_button[i_interpolation], FALSE, FALSE, 3);
+      gtk_widget_show(dialog->interpolation_button[i_interpolation]);
+      gtk_tooltips_set_tip(radio_button_tips, dialog->interpolation_button[i_interpolation], 
+			   amitk_interpolation_get_name(i_interpolation),
+			   amitk_interpolation_explanations[i_interpolation]);
+      
+      g_object_set_data(G_OBJECT(dialog->interpolation_button[i_interpolation]), "interpolation", 
+			GINT_TO_POINTER(i_interpolation));
+      
+      if (i_interpolation != 0)
+	gtk_radio_button_set_group(GTK_RADIO_BUTTON(dialog->interpolation_button[i_interpolation]), 
+				   gtk_radio_button_get_group(GTK_RADIO_BUTTON(dialog->interpolation_button[0])));
+      
+      g_signal_connect(G_OBJECT(dialog->interpolation_button[i_interpolation]), "clicked",  
+		       G_CALLBACK(dialog_interpolation_cb), dialog);
+    }
+    dialog_update_interpolation(dialog);
+
   } else if (AMITK_IS_STUDY(object)) {
     /* widgets to change the study's creation date */
     label = gtk_label_new("creation date:");
@@ -377,12 +427,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
     
-      dialog->center_entry[i_axis] = gtk_entry_new();
-      gtk_editable_set_editable(GTK_EDITABLE(dialog->center_entry[i_axis]), TRUE);
-      g_signal_connect(G_OBJECT(dialog->center_entry[i_axis]), "activate", G_CALLBACK(dialog_change_center_cb), dialog);
-      gtk_table_attach(GTK_TABLE(packing_table), dialog->center_entry[i_axis],1,2,
+      dialog->center_spinner[i_axis] = 
+	gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, DIMENSION_STEP);
+      g_signal_connect(G_OBJECT(dialog->center_spinner[i_axis]), "value_changed", 
+		       G_CALLBACK(dialog_change_center_cb), dialog);
+      gtk_table_attach(GTK_TABLE(packing_table), dialog->center_spinner[i_axis],1,2,
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(dialog->center_entry[i_axis]);
+      gtk_widget_show(dialog->center_spinner[i_axis]);
 
       table_row++;
     }
@@ -431,13 +482,15 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
 
-      dialog->voxel_size_entry[i_axis] = gtk_entry_new();
-      gtk_editable_set_editable(GTK_EDITABLE(dialog->voxel_size_entry[i_axis]), TRUE);
-      g_object_set_data(G_OBJECT(dialog->voxel_size_entry[i_axis]), "axis", GINT_TO_POINTER(i_axis));
-      g_signal_connect(G_OBJECT(dialog->voxel_size_entry[i_axis]), "activate", G_CALLBACK(dialog_change_voxel_size_cb), dialog);
-      gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_entry[i_axis],1,2,
+      dialog->voxel_size_spinner[i_axis] = 
+	gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
+      g_object_set_data(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "axis", 
+			GINT_TO_POINTER(i_axis));
+      g_signal_connect(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "value_changed", 
+		       G_CALLBACK(dialog_change_voxel_size_cb), dialog);
+      gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_spinner[i_axis],1,2,
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(dialog->voxel_size_entry[i_axis]);
+      gtk_widget_show(dialog->voxel_size_spinner[i_axis]);
       table_row++;
     }	
     
@@ -483,12 +536,13 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 			   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 	  gtk_widget_show(label);
 	
-	  dialog->dimension_entry[i_axis] = gtk_entry_new();
-	  gtk_editable_set_editable(GTK_EDITABLE(dialog->dimension_entry[i_axis]), TRUE);
-	  g_signal_connect(G_OBJECT(dialog->dimension_entry[i_axis]), "activate", G_CALLBACK(dialog_change_dim_cb), dialog);
-	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_entry[i_axis],1,2,
+	  dialog->dimension_spinner[i_axis] = 
+	    gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
+	  g_signal_connect(G_OBJECT(dialog->dimension_spinner[i_axis]), "value_changed", 
+			   G_CALLBACK(dialog_change_dim_cb), dialog);
+	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_spinner[i_axis],1,2,
 			   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-	  gtk_widget_show(dialog->dimension_entry[i_axis]);
+	  gtk_widget_show(dialog->dimension_spinner[i_axis]);
 	  table_row++;
 	}
       }
@@ -804,18 +858,19 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
       center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
 
     for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
-      g_signal_handlers_block_by_func(G_OBJECT(dialog->center_entry[i_axis]), G_CALLBACK(dialog_change_center_cb), dialog);
-      temp_str = g_strdup_printf("%f", point_get_component(center, i_axis));
-      gtk_entry_set_text(GTK_ENTRY(dialog->center_entry[i_axis]), temp_str);
-      g_free(temp_str);
-      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->center_entry[i_axis]), G_CALLBACK(dialog_change_center_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->center_spinner[i_axis]), 
+				      G_CALLBACK(dialog_change_center_cb), dialog);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->center_spinner[i_axis]), 
+				point_get_component(center, i_axis));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->center_spinner[i_axis]), 
+					G_CALLBACK(dialog_change_center_cb), dialog);
 
       if (AMITK_IS_DATA_SET(dialog->object)) {
-	g_signal_handlers_block_by_func(G_OBJECT(dialog->voxel_size_entry[i_axis]), G_CALLBACK(dialog_change_voxel_size_cb), dialog);
-	temp_str = g_strdup_printf("%f", point_get_component(AMITK_DATA_SET_VOXEL_SIZE(dialog->object), i_axis));
-	gtk_entry_set_text(GTK_ENTRY(dialog->voxel_size_entry[i_axis]), temp_str);
-	g_free(temp_str);
-	g_signal_handlers_unblock_by_func(G_OBJECT(dialog->voxel_size_entry[i_axis]), G_CALLBACK(dialog_change_voxel_size_cb), dialog);
+	g_signal_handlers_block_by_func(G_OBJECT(dialog->voxel_size_spinner[i_axis]), 
+					G_CALLBACK(dialog_change_voxel_size_cb), dialog);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->voxel_size_spinner[i_axis]), 
+				  point_get_component(AMITK_DATA_SET_VOXEL_SIZE(dialog->object), i_axis));
+	g_signal_handlers_unblock_by_func(G_OBJECT(dialog->voxel_size_spinner[i_axis]), G_CALLBACK(dialog_change_voxel_size_cb), dialog);
       }
     }
   }
@@ -824,11 +879,10 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
     if (AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) {
       for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
 	if ((AMITK_ROI_TYPE(dialog->object) != AMITK_ROI_TYPE_ISOCONTOUR_2D) || (i_axis == AMITK_AXIS_Z)) {
-	  g_signal_handlers_block_by_func(G_OBJECT(dialog->dimension_entry[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
-	  temp_str = g_strdup_printf("%f", point_get_component(AMITK_VOLUME_CORNER(dialog->object), i_axis));
-	  gtk_entry_set_text(GTK_ENTRY(dialog->dimension_entry[i_axis]), temp_str);
-	  g_free(temp_str);
-	  g_signal_handlers_unblock_by_func(G_OBJECT(dialog->dimension_entry[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
+	  g_signal_handlers_block_by_func(G_OBJECT(dialog->dimension_spinner[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
+	  gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->dimension_spinner[i_axis]), 
+				    point_get_component(AMITK_VOLUME_CORNER(dialog->object), i_axis));
+	  g_signal_handlers_unblock_by_func(G_OBJECT(dialog->dimension_spinner[i_axis]), G_CALLBACK(dialog_change_dim_cb), dialog);
 	}
       }
     }
@@ -880,6 +934,65 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   return;
 }
 
+
+/* set which toggle button is depressed */
+static void dialog_update_interpolation(AmitkObjectDialog * dialog) {
+  
+  AmitkInterpolation i_interpolation;
+  AmitkInterpolation interpolation;
+
+  interpolation = AMITK_DATA_SET_INTERPOLATION(dialog->object);
+  for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+    g_signal_handlers_block_by_func(G_OBJECT(dialog->interpolation_button[i_interpolation]),
+				    G_CALLBACK(dialog_interpolation_cb), dialog);
+  /* need the button pressed to get the display to update correctly */
+  gtk_button_pressed(GTK_BUTTON(dialog->interpolation_button[interpolation]));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->interpolation_button[interpolation]),TRUE);
+
+  for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+    g_signal_handlers_unblock_by_func(G_OBJECT(dialog->interpolation_button[i_interpolation]),
+				      G_CALLBACK(dialog_interpolation_cb), dialog);
+
+  return;
+}
+
+static void dialog_realize_interpolation_icon_cb(GtkWidget * pix_box, gpointer data) {
+
+  AmitkInterpolation interpolation = GPOINTER_TO_INT(data);
+  GdkPixbuf * pixbuf;
+  GtkWidget * image;
+
+  g_return_if_fail(pix_box != NULL);
+
+  /* make sure we don't get called again */
+  if (gtk_container_get_children(GTK_CONTAINER(pix_box)) != NULL) return;
+
+  pixbuf = gdk_pixbuf_new_from_xpm_data(icon_interpolation[interpolation]);
+  image = gtk_image_new_from_pixbuf(pixbuf);
+  g_object_unref(pixbuf);
+
+  gtk_box_pack_start(GTK_BOX(pix_box), image, FALSE, FALSE, 0);
+  gtk_widget_show(image);
+
+  return;
+}
+
+static void dialog_interpolation_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkObjectDialog * dialog = data;
+  AmitkInterpolation interpolation;
+
+  /* figure out which menu item called me */
+  interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
+
+  /* check if we actually changed values */
+  if (AMITK_DATA_SET_INTERPOLATION(dialog->object) != interpolation) {
+    /* and inact the changes */
+    amitk_data_set_set_interpolation(AMITK_DATA_SET(dialog->object), interpolation);
+  }
+  
+  return;
+}
 
 /* function called when the aspect ratio button gets clicked */
 static void dialog_aspect_ratio_cb(GtkWidget * widget, gpointer data) {
@@ -944,8 +1057,6 @@ static void dialog_change_scan_date_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkAxis i_axis;
   AmitkPoint old_center;
@@ -962,25 +1073,21 @@ static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
   new_center = old_center;
 
   for (i_axis = 0; i_axis< AMITK_AXIS_NUM; i_axis++) {
-    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->center_entry[i_axis]), 0, -1); /* get contents */
-    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-    g_free(str);
+    temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->center_spinner[i_axis]));
 
-    if (error != EOF) { /* make sure it's a valid number */
-      switch(i_axis) {
-      case AMITK_AXIS_X:
-	new_center.x = temp_val;
-	break;
-      case AMITK_AXIS_Y:
-	new_center.y = temp_val;
-	break;
-      case AMITK_AXIS_Z:
-	new_center.z = temp_val;
-	break;
-      default:
-	g_return_if_reached();
-	break; /* do nothing */
-      }
+    switch(i_axis) {
+    case AMITK_AXIS_X:
+      new_center.x = temp_val;
+      break;
+    case AMITK_AXIS_Y:
+      new_center.y = temp_val;
+      break;
+    case AMITK_AXIS_Z:
+      new_center.z = temp_val;
+      break;
+    default:
+      g_return_if_reached();
+      break; /* do nothing */
     }
   }
       
@@ -993,8 +1100,6 @@ static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkAxis i_axis;
   AmitkPoint shift;
@@ -1010,25 +1115,21 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
     g_return_if_reached();
 
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
-    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->dimension_entry[i_axis]), 0, -1); /* get contents */
-    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-    g_free(str);
+    temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->dimension_spinner[i_axis]));
 
-    if (error != EOF) { /* make sure it's a valid number */
-      switch(i_axis) {
-      case AMITK_AXIS_X:
-	new_corner.x = fabs(temp_val);
-	break;
-      case AMITK_AXIS_Y:
-	new_corner.y = fabs(temp_val);
-	break;
-      case AMITK_AXIS_Z:
-	new_corner.z = fabs(temp_val);
-	break;
-      default:
-	g_return_if_reached();
-	break; /* do nothing */
-      }
+    switch(i_axis) {
+    case AMITK_AXIS_X:
+      new_corner.x = fabs(temp_val);
+      break;
+    case AMITK_AXIS_Y:
+      new_corner.y = fabs(temp_val);
+      break;
+    case AMITK_AXIS_Z:
+      new_corner.z = fabs(temp_val);
+      break;
+    default:
+      g_return_if_reached();
+      break; /* do nothing */
     }
   }
     
@@ -1058,8 +1159,6 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkAxis end_axis;
   AmitkAxis start_axis;
@@ -1084,42 +1183,37 @@ static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
   center = amitk_volume_center(AMITK_VOLUME(dialog->object));
 
   for (i_axis = start_axis; i_axis < end_axis; i_axis++) {
-    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->voxel_size_entry[i_axis]), 0, -1); /* get contents */
-    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-    g_free(str);
+    temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->voxel_size_spinner[i_axis]));
     
-    if (error != EOF) { /* make sure it's a valid number */
-      
-      if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
-	switch(i_axis) {
-	case AMITK_AXIS_X:
-	  if (dialog->aspect_ratio) {
-	    scale = temp_val/new_voxel_size.x;
-	    new_voxel_size.y = scale*new_voxel_size.y;
-	    new_voxel_size.z = scale*new_voxel_size.z;
-	  }
-	  new_voxel_size.x = temp_val;
-	  break;
-	case AMITK_AXIS_Y:
-	  if (dialog->aspect_ratio) {
-	    scale = temp_val/new_voxel_size.y;
-	    new_voxel_size.x = scale*new_voxel_size.x;
-	    new_voxel_size.z = scale*new_voxel_size.z;
-	  }
-	  new_voxel_size.y = temp_val;
-	  break;
-	case AMITK_AXIS_Z:
-	  if (dialog->aspect_ratio) {
-	    scale = temp_val/new_voxel_size.z;
-	    new_voxel_size.y = scale*new_voxel_size.y;
-	    new_voxel_size.x = scale*new_voxel_size.x;
-	  }
-	  new_voxel_size.z = temp_val;
-	  break;
+    if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
+      switch(i_axis) {
+      case AMITK_AXIS_X:
+	if (dialog->aspect_ratio) {
+	  scale = temp_val/new_voxel_size.x;
+	  new_voxel_size.y = scale*new_voxel_size.y;
+	  new_voxel_size.z = scale*new_voxel_size.z;
+	}
+	new_voxel_size.x = temp_val;
+	break;
+      case AMITK_AXIS_Y:
+	if (dialog->aspect_ratio) {
+	  scale = temp_val/new_voxel_size.y;
+	  new_voxel_size.x = scale*new_voxel_size.x;
+	  new_voxel_size.z = scale*new_voxel_size.z;
+	}
+	new_voxel_size.y = temp_val;
+	break;
+      case AMITK_AXIS_Z:
+	if (dialog->aspect_ratio) {
+	  scale = temp_val/new_voxel_size.z;
+	  new_voxel_size.y = scale*new_voxel_size.y;
+	  new_voxel_size.x = scale*new_voxel_size.x;
+	}
+	new_voxel_size.z = temp_val;
+	break;
       default:
 	g_return_if_reached(); /* error */
 	break; 
-	}
       }
     }
   }
@@ -1308,21 +1402,33 @@ GtkWidget* amitk_object_dialog_new (AmitkObject * object,AmitkLayout layout) {
 
   g_signal_connect_swapped(G_OBJECT(object), "space_changed", 
 			   G_CALLBACK(dialog_update_entries), dialog);
-  if (AMITK_IS_STUDY(object))
+
+  if (AMITK_IS_STUDY(object)) {
     g_signal_connect_swapped(G_OBJECT(object), "study_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
-  if (AMITK_IS_VOLUME(object))
+  }
+
+  if (AMITK_IS_VOLUME(object)) {
     g_signal_connect_swapped(G_OBJECT(object), "volume_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
-  if (AMITK_IS_ROI(object))
+  }
+
+  if (AMITK_IS_ROI(object)) {
     g_signal_connect_swapped(G_OBJECT(object), "roi_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
-  if (AMITK_IS_DATA_SET(object))
+  }
+
+  if (AMITK_IS_DATA_SET(object)) {
     g_signal_connect_swapped(G_OBJECT(object), "data_set_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
-  if (AMITK_IS_FIDUCIAL_MARK(object))
+    g_signal_connect_swapped(G_OBJECT(object), "interpolation_changed", 
+			     G_CALLBACK(dialog_update_interpolation), dialog);
+  }
+
+  if (AMITK_IS_FIDUCIAL_MARK(object)) {
     g_signal_connect_swapped(G_OBJECT(object), "fiducial_mark_changed", 
 			     G_CALLBACK(dialog_update_entries), dialog);
+  }
 
   /* fill in values */
   dialog_update_entries(dialog);

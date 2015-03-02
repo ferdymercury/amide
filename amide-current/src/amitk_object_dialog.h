@@ -31,6 +31,7 @@
 /* includes we always need with this widget */
 #include <gtk/gtk.h>
 #include "amitk_object.h"
+#include "amitk_data_set.h"
 
 G_BEGIN_DECLS
 
@@ -61,10 +62,11 @@ struct _AmitkObjectDialog
   GtkWidget * modality_menu;
   GtkWidget * scaling_factor_entry;
   GtkWidget * creation_date_entry;
+  GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
 
-  GtkWidget * center_entry[AMITK_AXIS_NUM];
-  GtkWidget * voxel_size_entry[AMITK_AXIS_NUM];
-  GtkWidget * dimension_entry[AMITK_AXIS_NUM];
+  GtkWidget * center_spinner[AMITK_AXIS_NUM];
+  GtkWidget * voxel_size_spinner[AMITK_AXIS_NUM];
+  GtkWidget * dimension_spinner[AMITK_AXIS_NUM];
 
   GtkWidget * start_entry;
   GtkWidget * * duration_entries;

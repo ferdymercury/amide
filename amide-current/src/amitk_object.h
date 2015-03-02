@@ -103,7 +103,10 @@ gboolean        amitk_object_remove_child            (AmitkObject * object,
 						      AmitkObject * child);
 gboolean        amitk_object_remove_children         (AmitkObject * object, 
 						      GList * children);
-GList *         amitk_object_children_of_type        (AmitkObject * object,
+AmitkObjectType amitk_object_get_object_type         (AmitkObject * object);
+AmitkObject *   amitk_object_get_parent_of_type      (AmitkObject * object,
+						      const AmitkObjectType type);
+GList *         amitk_object_get_children_of_type    (AmitkObject * object,
 						      const AmitkObjectType type,
 						      const gboolean recurse);
 

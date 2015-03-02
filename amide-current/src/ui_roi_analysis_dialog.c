@@ -33,6 +33,7 @@
 
 
 #define AMITK_RESPONSE_SAVE_AS 3
+#define ROI_STATISTICS_WIDTH 1024
 
 typedef enum {
   COLUMN_NAME,
@@ -293,7 +294,10 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
   GtkTreeSelection *selection;
   GtkTreeIter iter;
   column_t i_column;
+  gint width;
   
+  
+
 
   label = gtk_label_new(AMITK_OBJECT_NAME(roi));
   table = gtk_table_new(5,3,FALSE);
@@ -314,11 +318,16 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
   gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
   gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
  
+  /* try to get a reasonable estimate for how wide the statistics box should be */
+  width = 0.9*gdk_screen_width();
+  if (width > ROI_STATISTICS_WIDTH)
+    width = ROI_STATISTICS_WIDTH;
+
   /* the scroll widget which the list will go into */
   scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_size_request(scrolled,-1,250);
+  gtk_widget_set_size_request(scrolled,width,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-				 GTK_POLICY_NEVER,
+				 GTK_POLICY_AUTOMATIC,
 				 GTK_POLICY_AUTOMATIC);
 
   /* and throw the scrolled widget into the packing table */
@@ -415,7 +424,7 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
 
   /* get the list of roi's we're going to be calculating over */
   if (all)
-    rois = amitk_object_children_of_type(AMITK_OBJECT(ui_study->study), AMITK_OBJECT_TYPE_ROI, TRUE);
+    rois = amitk_object_get_children_of_type(AMITK_OBJECT(ui_study->study), AMITK_OBJECT_TYPE_ROI, TRUE);
   else 
     rois = ui_study_selected_rois(ui_study);
 
@@ -446,7 +455,6 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(response_cb), roi_analyses);
   g_signal_connect(G_OBJECT(dialog), "delete_event", G_CALLBACK(delete_event_cb), roi_analyses);
 
-  /* order is allow shrink, allow grow, autoshrink */
   gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
 
 

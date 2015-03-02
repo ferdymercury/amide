@@ -46,6 +46,7 @@ gchar * amitk_fuse_type_explanations[] = {
 
 enum {
   STUDY_CHANGED,
+  THICKNESS_CHANGED,
   LAST_SIGNAL
 };
 
@@ -120,6 +121,13 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, study_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
+  study_signals[THICKNESS_CHANGED] =
+    g_signal_new ("thickness_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, thickness_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
 
 }
 
@@ -132,11 +140,10 @@ static void study_init (AmitkStudy * study) {
 
   /* view parameters */
   study->view_center = zero_point;
-  study->view_thickness = -1.0;
+  study->view_thickness = 1.0;
   study->view_start_time = SMALL_TIME;
   study->view_duration = 1.0-SMALL_TIME;
   study->zoom = 1.0;
-  study->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
   study->fuse_type = AMITK_FUSE_TYPE_BLEND;
   study->voxel_dim = 1.0;
 
@@ -195,7 +202,6 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   amitk_study_set_view_thickness(dest_study, AMITK_STUDY_VIEW_THICKNESS(src_object));
   dest_study->view_duration = AMITK_STUDY_VIEW_DURATION(src_object);
   dest_study->zoom = AMITK_STUDY_ZOOM(src_object);
-  dest_study->interpolation = AMITK_STUDY_INTERPOLATION(src_object);
   dest_study->fuse_type =AMITK_STUDY_FUSE_TYPE(src_object);
 
   /* make a separate copy in memory of the study's name and filename */
@@ -219,8 +225,6 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_real(nodes, "view_thickness", AMITK_STUDY_VIEW_THICKNESS(study));
   xml_save_time(nodes, "view_start_time", AMITK_STUDY_VIEW_START_TIME(study));
   xml_save_time(nodes, "view_duration", AMITK_STUDY_VIEW_DURATION(study));
-  xml_save_string(nodes, "interpolation", 
-		  amitk_interpolation_get_name(AMITK_STUDY_INTERPOLATION(study)));
   xml_save_string(nodes, "fuse_type",
 		  amitk_fuse_type_get_name(AMITK_STUDY_FUSE_TYPE(study)));
   xml_save_real(nodes, "zoom", AMITK_STUDY_ZOOM(study));
@@ -232,7 +236,6 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
 
   AmitkStudy * study;
   gchar * creation_date;
-  AmitkInterpolation i_interpolation;
   AmitkFuseType i_fuse_type;
   gchar * temp_string;
 
@@ -256,14 +259,6 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
     g_warning("inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }
-
-  /* figure out the interpolation */
-  temp_string = xml_get_string(nodes, "interpolation");
-  if (temp_string != NULL)
-    for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
-      if (g_strcasecmp(temp_string, amitk_interpolation_get_name(i_interpolation)) == 0)
-	amitk_study_set_interpolation(study, i_interpolation);
-  g_free(temp_string);
 
   /* figure out the fuse type */
   temp_string = xml_get_string(nodes, "fuse_type");
@@ -407,6 +402,7 @@ void amitk_study_set_view_thickness(AmitkStudy * study, const amide_real_t new_t
   if (!REAL_EQUAL(study->view_thickness, temp)) {
     study->view_thickness = temp;
     g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[THICKNESS_CHANGED], 0);
   }
 
   return;
@@ -436,18 +432,6 @@ void amitk_study_set_view_duration (AmitkStudy * study, const amide_time_t new_d
   return;
 }
 
-
-void amitk_study_set_interpolation(AmitkStudy * study, const AmitkInterpolation new_interpolation) {
-
-  g_return_if_fail(AMITK_IS_STUDY(study));
-
-  if (study->interpolation != new_interpolation) {
-    study->interpolation = new_interpolation;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
-  }
-
-  return;
-}
 
 void amitk_study_set_fuse_type(AmitkStudy * study, const AmitkFuseType new_fuse_type) {
 

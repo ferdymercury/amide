@@ -1,3 +1,13 @@
+0.7.2
+	* anisotropic filtering added, low pass gaussian filter current implemented
+	* fixed some bugs with rotating/moving data sets
+	* changed rendering x axis again, think it's right now
+	* interpolation is now specified per data set
+	* several entries in amitk_object_dialog are now spinners
+	* disabled main window resizability, this allows the window to autoshrink
+	* roi stat's page now comes up as a better size on small screens
+	* time dialog now resizeable
+     
 0.7.1
 	* can now generate fly through mpeg movies
 	* can now choose between blended and overlay fusion modes

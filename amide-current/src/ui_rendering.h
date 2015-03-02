@@ -60,15 +60,13 @@ typedef struct ui_rendering_t {
   gdouble front_factor;
   gdouble density;
   gdouble zoom;
-  AmitkInterpolation interpolation;
   AmitkSpace * box_space;
   guint reference_count;
 } ui_rendering_t;
 
 /* external functions */
 void ui_rendering_update_canvas(ui_rendering_t * ui_rendering, gboolean override);
-void ui_rendering_create(GList * objects, amide_time_t start, 
-			 amide_time_t duration, AmitkInterpolation interpolation);
+void ui_rendering_create(GList * objects, amide_time_t start, amide_time_t duration);
 
 #endif /* __UI_RENDERING_H__ */
 #endif /* AMIDE_LIBVOLPACK_SUPPORT */

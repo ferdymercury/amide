@@ -40,12 +40,14 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor);
 amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint num_times);
 amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor);
 amide_real_t xml_get_real(xmlNodePtr node, const gchar * descriptor);
+gboolean xml_get_boolean(xmlNodePtr nodes, const gchar * descriptor);
 gint xml_get_int(xmlNodePtr nodes, const gchar * descriptor);
 void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * string);
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num);
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num);
 void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num);
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num);
+void xml_save_boolean(xmlNodePtr node, const gchar * descriptor, const gboolean value);
 void xml_save_int(xmlNodePtr node, const gchar * descriptor, const int num);
 
 #endif /* __XML_H__ */

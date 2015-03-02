@@ -44,6 +44,7 @@
 #include "ui_time_dialog.h"
 #include "ui_alignment_dialog.h"
 #include "ui_crop_dialog.h"
+#include "ui_filter_dialog.h"
 #include "ui_roi_analysis_dialog.h"
 
 
@@ -535,7 +536,6 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
 
   amitk_study_set_view_thickness(ui_study->study, thickness);
   amitk_study_set_view_center(ui_study->study, *position);
-  ui_study_update_thickness(ui_study, thickness);
 
   /* update the other canvases accordingly */
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
@@ -556,18 +556,32 @@ void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi
   GtkWidget * question;
   amide_time_t start_time, end_time;
   gint return_val;
+  AmitkObject * parent_ds;
 
-  g_return_if_fail(ui_study->active_ds != NULL);
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  g_return_if_fail(AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D);
+
+  /* figure out the data set we're drawing on */
+  parent_ds = amitk_object_get_parent_of_type(AMITK_OBJECT(roi), AMITK_OBJECT_TYPE_DATA_SET);
+  if (parent_ds == NULL) {
+    g_return_if_fail(ui_study->active_ds != NULL);
+    parent_ds = g_object_ref(ui_study->active_ds);
+  }
 
   start_time = AMITK_STUDY_VIEW_START_TIME(ui_study->study);
   end_time = start_time + AMITK_STUDY_VIEW_DURATION(ui_study->study);
-  temp_point = amitk_space_b2s(AMITK_SPACE(ui_study->active_ds), *position);
-  POINT_TO_VOXEL(temp_point, ui_study->active_ds->voxel_size, 
-		 amitk_data_set_get_frame(ui_study->active_ds, start_time),
+  temp_point = amitk_space_b2s(AMITK_SPACE(parent_ds), *position);
+  POINT_TO_VOXEL(temp_point, AMITK_DATA_SET_VOXEL_SIZE(parent_ds),
+		 amitk_data_set_get_frame(AMITK_DATA_SET(parent_ds), start_time),
 		 temp_voxel);
 
+  if (!amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(parent_ds),temp_voxel)) {
+    g_warning("designanted voxel not in data set %s\n", AMITK_OBJECT_NAME(parent_ds));
+    goto isocontour_3d_changed_end; /* cancel */
+  }
+
   /* complain if more then one frame is currently showing */
-  if (temp_voxel.t != amitk_data_set_get_frame(ui_study->active_ds, end_time)) {
+  if (temp_voxel.t != amitk_data_set_get_frame(AMITK_DATA_SET(parent_ds), end_time)) {
 
     question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
 				      GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -575,7 +589,7 @@ void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi
 				      GTK_BUTTONS_OK_CANCEL,
 				      "%s: %s\n%s %d",
 				      "Multiple data frames are currently being shown from",
-				      AMITK_OBJECT_NAME(ui_study->active_ds),
+				      AMITK_OBJECT_NAME(parent_ds),
 				      "The isocontour will only be drawn over frame",
 				      temp_voxel.t);
 
@@ -583,14 +597,18 @@ void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi
     return_val = gtk_dialog_run(GTK_DIALOG(question));
 
     gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* cancel */
+    if (return_val != GTK_RESPONSE_OK) { 
+      goto isocontour_3d_changed_end; /* cancel */
+    }
   }
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
-  if (amitk_raw_data_includes_voxel(AMITK_DATA_SET_RAW_DATA(ui_study->active_ds),temp_voxel))
-    amitk_roi_set_isocontour(roi, ui_study->active_ds, temp_voxel);
+  amitk_roi_set_isocontour(roi, AMITK_DATA_SET(parent_ds), temp_voxel);
   ui_common_remove_cursor(GTK_WIDGET(canvas));
+
+  isocontour_3d_changed_end:
+
+  g_object_unref(parent_ds);
 
   return;
 }
@@ -875,21 +893,18 @@ void ui_study_cb_fly_through(GtkWidget * widget, gpointer data) {
 #endif
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-/* callback for starting up volume rendering using nearest neighbor interpolation*/
+/* callback for starting up volume rendering */
 void ui_study_cb_rendering(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  AmitkInterpolation interpolation;
 
   /* need something to rendering */
   if (AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE) == NULL) return;
 
-  interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "interpolation"));
-
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_rendering_create(AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE),
 		      AMITK_STUDY_VIEW_START_TIME(ui_study->study), 
-		      AMITK_STUDY_VIEW_DURATION(ui_study->study),interpolation);
+		      AMITK_STUDY_VIEW_DURATION(ui_study->study));
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
@@ -920,6 +935,13 @@ void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data) {
 void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   ui_crop_dialog_create(ui_study);
+  return;
+}
+
+/* user wants to run the filter wizard */
+void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_filter_dialog_create(ui_study);
   return;
 }
 
@@ -1007,12 +1029,22 @@ void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   AmitkInterpolation interpolation;
 
+  g_return_if_fail(ui_study->active_ds != NULL);
+
   /* figure out which interpolation menu item called me */
   interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
 
-  amitk_study_set_interpolation(ui_study->study,  interpolation);
+  amitk_data_set_set_interpolation(ui_study->active_ds,  interpolation);
 				
   return;
+}
+
+void ui_study_cb_study_changed(AmitkStudy * study, gpointer data) {
+
+  ui_study_t * ui_study = data;
+
+  ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
+
 }
 
 /* function to switch the image fusion type */

@@ -69,7 +69,6 @@ typedef struct ui_crop_t {
   AmitkColorTable color_table;
   gboolean threshold_info_set;
 
-  gchar * name;
   AmitkDataSet * data_set;
   AmitkDataSet * projection[AMITK_VIEW_NUM];
   GtkWidget * canvas[AMITK_VIEW_NUM];
@@ -661,9 +660,8 @@ static ui_crop_t * ui_crop_free(ui_crop_t * ui_crop) {
 
   AmitkView i_view;
 
-  g_return_val_if_fail(ui_crop != NULL, NULL);
-
   /* sanity checks */
+  g_return_val_if_fail(ui_crop != NULL, NULL);
   g_return_val_if_fail(ui_crop->reference_count > 0, NULL);
 
   /* remove a reference count */
@@ -674,11 +672,6 @@ static ui_crop_t * ui_crop_free(ui_crop_t * ui_crop) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_crop\n");
 #endif
-
-    if (ui_crop->name != NULL) {
-      g_free(ui_crop->name);
-      ui_crop->name = NULL;
-    }
 
     if (ui_crop->data_set != NULL) {
       g_object_unref(ui_crop->data_set);
@@ -716,7 +709,6 @@ static ui_crop_t * ui_crop_init(void) {
   ui_crop->reference_count = 1;
   ui_crop->frame = 0;
   ui_crop->dialog = NULL;
-  ui_crop->name = NULL;
   ui_crop->data_set = NULL;
   ui_crop->zoom = 1.0;
   ui_crop->threshold_info_set = FALSE;
@@ -736,7 +728,6 @@ static ui_crop_t * ui_crop_init(void) {
 }
 
 
-/* function that sets up an align point dialog */
 void ui_crop_dialog_create(ui_study_t * ui_study) {
 
   ui_crop_t * ui_crop;

@@ -45,10 +45,8 @@ G_BEGIN_DECLS
 #define AMITK_ROI_UNDRAWN(roi)          (!AMITK_VOLUME_VALID(roi))
 
 /* for iterative algorithms, how many subvoxels should we break the problem up into */
-#define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension */
-#define AMITK_ROI_GRAIN_SIZE 0.015625 /* 1/64 */
+#define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension, so 1/64 is grain size */
 //#define AMITK_ROI_GRANULARITY 10 - takes way to long
-//#define AMITK_ROI_GRAIN_SIZE 0.001 /* 1/10^3 */
 
 typedef enum {
   AMITK_ROI_TYPE_ELLIPSOID, 

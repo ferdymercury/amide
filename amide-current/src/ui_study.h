@@ -58,6 +58,7 @@ typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
+  GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * time_dialog;
   GtkWidget * time_button;
@@ -105,7 +106,8 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 			       AmitkPoint new_point, amide_data_t value);
 void ui_study_update_time_button(ui_study_t * ui_study);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
-void ui_study_update_zoom(ui_study_t * ui_study, amide_real_t zoom);
+void ui_study_update_zoom(ui_study_t * ui_study);
+void ui_study_update_interpolation(ui_study_t * ui_study);
 void ui_study_update_title(ui_study_t * ui_study);
 void ui_study_setup_layout(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);

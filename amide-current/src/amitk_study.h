@@ -46,7 +46,6 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_ZOOM(stu)             (AMITK_STUDY(stu)->zoom)
 #define AMITK_STUDY_VIEW_START_TIME(stu)  (AMITK_STUDY(stu)->view_start_time)
 #define AMITK_STUDY_VIEW_DURATION(stu)    (AMITK_STUDY(stu)->view_duration)
-#define AMITK_STUDY_INTERPOLATION(stu)    (AMITK_STUDY(stu)->interpolation)
 #define AMITK_STUDY_CREATION_DATE(stu)    (AMITK_STUDY(stu)->creation_date)
 #define AMITK_STUDY_FILENAME(stu)         (AMITK_STUDY(stu)->filename)
 #define AMITK_STUDY_VOXEL_DIM(stu)        (AMITK_STUDY(stu)->voxel_dim)
@@ -78,7 +77,6 @@ struct _AmitkStudy
   amide_time_t view_start_time;
   amide_time_t view_duration;
   amide_real_t zoom;
-  AmitkInterpolation interpolation;
   AmitkFuseType fuse_type;
 
   /* stuff calculated when file is loaded and stored */
@@ -93,6 +91,7 @@ struct _AmitkStudyClass
   AmitkObjectClass parent_class;
 
   void (* study_changed) (AmitkStudy * study);
+  void (* thickness_changed) (AmitkStudy * study);
 
 };
 
@@ -114,8 +113,6 @@ void            amitk_study_set_view_start_time     (AmitkStudy * study,
 						     const amide_time_t new_start);
 void            amitk_study_set_view_duration       (AmitkStudy * study,
 						     const amide_time_t new_duration);
-void            amitk_study_set_interpolation       (AmitkStudy * study,
-						     const AmitkInterpolation new_interpolation);
 void            amitk_study_set_fuse_type           (AmitkStudy * study,
 						     const AmitkFuseType new_fuse_type);
 void            amitk_study_set_zoom                (AmitkStudy * study,

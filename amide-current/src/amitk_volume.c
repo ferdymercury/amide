@@ -149,7 +149,10 @@ static void volume_copy_in_place(AmitkObject * dest_object, const AmitkObject * 
   g_return_if_fail(AMITK_IS_VOLUME(src_object));
   g_return_if_fail(AMITK_IS_VOLUME(dest_object));
 
-  amitk_volume_set_corner(AMITK_VOLUME(dest_object), AMITK_VOLUME_CORNER(src_object));
+  if (AMITK_VOLUME_VALID(src_object))
+    amitk_volume_set_corner(AMITK_VOLUME(dest_object), AMITK_VOLUME_CORNER(src_object));
+  else
+    AMITK_VOLUME(dest_object)->valid = FALSE;
 
   AMITK_OBJECT_CLASS (parent_class)->object_copy_in_place (dest_object, src_object);
 }
@@ -162,6 +165,7 @@ static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   AMITK_OBJECT_CLASS(parent_class)->object_write_xml(object, nodes);
 
   amitk_point_write_xml(nodes, "corner", AMITK_VOLUME_CORNER(object));
+  xml_save_boolean(nodes, "valid", AMITK_VOLUME_VALID(object));
 
   return;
 }
@@ -169,7 +173,8 @@ static void volume_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
 static void volume_read_xml(AmitkObject * object, xmlNodePtr nodes) {
 
   AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
-  amitk_volume_set_corner(AMITK_VOLUME(object), amitk_point_read_xml(nodes, "corner"));
+  if (xml_get_boolean(nodes, "valid"))
+    amitk_volume_set_corner(AMITK_VOLUME(object), amitk_point_read_xml(nodes, "corner"));
 
   return;
 }

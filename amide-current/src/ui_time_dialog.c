@@ -510,6 +510,7 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
 					    NULL);
   g_free(temp_string);
   ui_study->time_dialog = time_dialog; /* save a pointer to the dialog */
+  gtk_window_set_resizable(GTK_WINDOW(time_dialog), TRUE);
 
   /* order is allow shrink, allow grow, autoshrink */
   gtk_window_set_resizable(GTK_WINDOW(time_dialog), TRUE);

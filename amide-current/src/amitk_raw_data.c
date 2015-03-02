@@ -188,6 +188,25 @@ AmitkRawData * amitk_raw_data_new (void) {
 
 
 
+AmitkRawData* amitk_raw_data_new_with_data(AmitkFormat format, AmitkVoxel dim) {
+
+  AmitkRawData * raw_data;
+  
+  raw_data = amitk_raw_data_new();
+  g_return_val_if_fail(raw_data != NULL, NULL);
+ 
+  raw_data->format = format;
+  raw_data->dim = dim;
+
+  /* allocate the space for the data */
+  raw_data->data = amitk_raw_data_get_data_mem(raw_data);
+  if (raw_data->data == NULL) {
+    g_object_unref(raw_data);
+    return NULL;
+  }
+
+  return raw_data;
+}
 
 
 
@@ -213,18 +232,9 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
     goto error;
   }
 
-  if ((raw_data = amitk_raw_data_new()) == NULL) {
+  raw_data = amitk_raw_data_new_with_data(amitk_raw_format_to_format(raw_format), dim);
+  if (raw_data == NULL) {
     g_warning("couldn't allocate space for the raw data set structure");
-    goto error;
-  }
-
-  /* figure out what internal data format we should be using */
-  raw_data->format = amitk_raw_format_to_format(raw_format);
-  
-  /* allocate the space for the data set */
-  raw_data->dim = dim;
-  if ((raw_data->data = amitk_raw_data_get_data_mem(raw_data)) == NULL) {
-    g_warning("couldn't allocate space for the raw data");
     goto error;
   }
 

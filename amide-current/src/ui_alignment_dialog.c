@@ -554,7 +554,7 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
 
   ui_alignment = ui_alignment_init();
   ui_alignment->data_sets = 
-    amitk_object_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
+    amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
 
   ui_alignment->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(ui_alignment->dialog), "delete_event",

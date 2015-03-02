@@ -71,7 +71,6 @@ struct _AmitkCanvas
   amide_real_t zoom;
   amide_time_t start_time;
   amide_time_t duration;
-  AmitkInterpolation interpolation;
   AmitkFuseType fuse_type;
 
   AmitkView view;

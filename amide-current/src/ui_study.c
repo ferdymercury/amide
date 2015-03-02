@@ -247,6 +247,12 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
   GList * current_objects;
   AmitkViewMode i_view_mode;
 
+  /* disconnect anything */
+  if (ui_study->active_ds != NULL) {
+    g_signal_handlers_disconnect_by_func(G_OBJECT(ui_study->active_ds), 
+					 G_CALLBACK(ui_study_update_interpolation), ui_study);
+  }
+
   ui_study->active_ds = ds;
 
   if (ds == NULL) {/* make a guess as to what should be the active data set */
@@ -274,11 +280,18 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
   }
 
   /* indicate this is now the active object */
-  if (ui_study->active_ds != NULL)
+  if (ui_study->active_ds != NULL) {
     amitk_tree_set_active_mark(AMITK_TREE(ui_study->tree), 
 			       AMITK_OBJECT(ui_study->active_ds));
-  else
+    /* connect any needed signals */
+    g_signal_connect_swapped(G_OBJECT(ui_study->active_ds), "interpolation_changed", 
+			     G_CALLBACK(ui_study_update_interpolation), ui_study);
+  } else {
     amitk_tree_set_active_mark(AMITK_TREE(ui_study->tree), NULL);
+  }
+  ui_study_update_interpolation(ui_study);
+
+  
 
   for (i_view_mode = 0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
     for (i_view=0; i_view< AMITK_VIEW_NUM; i_view++)
@@ -402,7 +415,7 @@ void ui_study_add_data_set(ui_study_t * ui_study, AmitkDataSet * data_set) {
     amitk_study_set_view_thickness(ui_study->study, min_voxel_size);
     ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
   }
-  
+
   if (ui_study->study_altered != TRUE) {
     ui_study->study_altered=TRUE;
     ui_study->study_virgin=FALSE;
@@ -525,7 +538,7 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
 
 
 /* updates the settings of the thickness spin button, will not change anything about the canvas */
-void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) { 
+void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
 
 
   amide_real_t min_voxel_size, max_size;
@@ -562,7 +575,7 @@ void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness) {
 }
 
 /* updates the settings of the zoom spinbutton, will not change anything about the canvas */
-void ui_study_update_zoom(ui_study_t * ui_study, amide_real_t zoom) { 
+void ui_study_update_zoom(ui_study_t * ui_study) {
 
   /* there's no spin button if we don't create the toolbar at this moment */
   if (ui_study->zoom_spin == NULL) return;
@@ -574,13 +587,47 @@ void ui_study_update_zoom(ui_study_t * ui_study, amide_real_t zoom) {
   g_signal_handlers_block_by_func(G_OBJECT(ui_study->zoom_spin),
 				  G_CALLBACK(ui_study_cb_zoom), ui_study);
 
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), zoom);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_study->zoom_spin), 
+			    AMITK_STUDY_ZOOM(ui_study->study));
 
   /* and now, reconnect the signal */
   g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->zoom_spin),
-				    G_CALLBACK(ui_study_cb_zoom), 
-				    ui_study);
+				    G_CALLBACK(ui_study_cb_zoom), ui_study);
   return;
+}
+
+/* updates the settings of the interpolation radio button, will not change canvas */
+void ui_study_update_interpolation(ui_study_t * ui_study) {
+
+  AmitkInterpolation i_interpolation;
+  AmitkInterpolation interpolation;
+
+  if (ui_study->active_ds == NULL) {
+    for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+      gtk_widget_set_sensitive(ui_study->interpolation_button[i_interpolation], FALSE);
+  } else {
+    for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+      gtk_widget_set_sensitive(ui_study->interpolation_button[i_interpolation], TRUE);
+
+    interpolation = AMITK_DATA_SET_INTERPOLATION(ui_study->active_ds);
+
+    /* block signals, as we only want to change the value, it's up to the caller of this
+       function to change anything on the actual canvases... 
+       we'll unblock at the end of this function */
+    for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
+      g_signal_handlers_block_by_func(G_OBJECT(ui_study->interpolation_button[i_interpolation]),
+				      G_CALLBACK(ui_study_cb_interpolation), ui_study);
+
+    /* need the button pressed to get the display to update correctly */
+    gtk_button_pressed(GTK_BUTTON(ui_study->interpolation_button[interpolation]));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(ui_study->interpolation_button[interpolation]),
+				 TRUE);
+
+    for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
+      g_signal_handlers_unblock_by_func(G_OBJECT(ui_study->interpolation_button[i_interpolation]),
+					G_CALLBACK(ui_study_cb_interpolation),  ui_study);
+  }
+
 }
 
 
@@ -752,7 +799,7 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
       
   /* make a scrolled area for the tree */
   scrolled = gtk_scrolled_window_new(NULL,NULL);  
-  gtk_widget_set_size_request(scrolled,200,200);
+  gtk_widget_set_size_request(scrolled,250,250);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
 				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
@@ -817,8 +864,11 @@ void ui_study_replace_study(ui_study_t * ui_study, AmitkStudy * study) {
 
   /* set any settings we can */
   ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
-  ui_study_update_zoom(ui_study, AMITK_STUDY_ZOOM(ui_study->study));
+  ui_study_update_zoom(ui_study);
   ui_study_update_title(ui_study);
+
+  g_signal_connect(G_OBJECT(ui_study->study), "thickness_changed", 
+		   G_CALLBACK(ui_study_cb_study_changed), ui_study);
 
 }
 
@@ -844,15 +894,15 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
     ui_study->study_virgin=FALSE;
   }
 
-  //  if (parent_bin == NULL) {
+  g_signal_connect(G_OBJECT(ui_study->study), "thickness_changed", 
+		   G_CALLBACK(ui_study_cb_study_changed), ui_study);
   ui_study->app=gnome_app_new(PACKAGE, NULL);
   ui_study_update_title(ui_study);
-    //  } else {
-    //    ui_study->app=gtk_frame_new(NULL);
-    //    gtk_frame_set_shadow_type(GTK_FRAME(ui_study->app), GTK_SHADOW_NONE);
-    //    gtk_container_add(GTK_CONTAINER(parent_bin), ui_study->app);
 
   //  gtk_window_set_policy (GTK_WINDOW(ui_study->app), TRUE, TRUE, TRUE);
+
+  /* disable user resizability, this allows the window to autoshrink */
+  gtk_window_set_resizable(GTK_WINDOW(ui_study->app), FALSE);
 
   g_signal_connect(G_OBJECT(ui_study->app), "realize", 
 		   G_CALLBACK(ui_common_window_realize_cb), NULL);
@@ -878,7 +928,7 @@ GtkWidget * ui_study_create(AmitkStudy * study) {
 
   /* set any settings we can */
   ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
-  ui_study_update_zoom(ui_study, AMITK_STUDY_ZOOM(ui_study->study));
+  ui_study_update_zoom(ui_study);
 
   return ui_study->app;
 }

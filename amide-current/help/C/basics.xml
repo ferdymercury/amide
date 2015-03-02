@@ -95,6 +95,7 @@
 	  active data around on the canvas.  At this point, to enact
 	  the shift, click the right button (button 3).  Any other
 	  mouse button will cancel the shift action.
+	  </para>
       </sect4>
 
       <sect4><title>Shift-Middle Mouse Button</title> <para> This
@@ -105,6 +106,7 @@
 	  active data around on the canvas.  At this point, to enact
 	  the rotation, click the right button (button 3).  Any other
 	  mouse button will cancel the rotation.
+	  </para>
       </sect4>
 
       <sect4><title>Ctrl-Right Mouse Button</title>
@@ -130,8 +132,8 @@
       
       <sect4><title>Interpolation</title>
 	<para>
-	  The user can specify what type of interpolation to use for
-	  generating the slices displayed on the canvas.  Nearest
+	  The user can specify what type of interpolation to use when
+	  generating slices from the active data set.  Nearest
 	  neighbor is faster.  Tri-linear interpolation produces
 	  betterlooking images but is ~8x slower.
 	</para>

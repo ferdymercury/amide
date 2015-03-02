@@ -637,16 +637,50 @@ gboolean amitk_object_remove_children(AmitkObject * object, GList * children) {
  return valid;
 }
 
+
+/* returns the type of the given object */
+AmitkObjectType amitk_object_get_object_type(AmitkObject * object) {
+
+  if (AMITK_IS_STUDY(object))
+    return AMITK_OBJECT_TYPE_STUDY;
+  else if (AMITK_IS_DATA_SET(object))
+    return AMITK_OBJECT_TYPE_DATA_SET;
+  else if (AMITK_IS_FIDUCIAL_MARK(object))
+    return AMITK_OBJECT_TYPE_FIDUCIAL_MARK;
+  else if (AMITK_IS_ROI(object))
+    return AMITK_OBJECT_TYPE_ROI;
+  else
+    g_return_val_if_reached(AMITK_OBJECT_TYPE_NUM);
+}
+
+/* return a referenced pointer 
+   goes up the tree from the given object, finding the first parent of type "type"
+   returns NULL if no appropriate parent found */
+AmitkObject * amitk_object_get_parent_of_type(AmitkObject * object,
+					      const AmitkObjectType type) {
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
+
+  if (AMITK_OBJECT_PARENT(object) == NULL)  /* top node */
+    return NULL;
+  else if (amitk_object_get_object_type(AMITK_OBJECT_PARENT(object)) == type)
+    return g_object_ref(AMITK_OBJECT_PARENT(object));
+  else
+    return amitk_object_get_parent_of_type(AMITK_OBJECT_PARENT(object), type); /* recurse */
+}
+
+
+
 /* returns a referenced list of children of the given object which
    are of the given type.  Will recurse if specified */
-GList * amitk_object_children_of_type(AmitkObject * object, 
-				      const AmitkObjectType type,
-				      const gboolean recurse) {
+GList * amitk_object_get_children_of_type(AmitkObject * object, 
+					  const AmitkObjectType type,
+					  const gboolean recurse) {
 
   GList * children;
   GList * return_objects=NULL;
   GList * children_objects;
-  GObject * child;
+  AmitkObject * child;
 
   g_return_val_if_fail(AMITK_IS_OBJECT(object), NULL);
 
@@ -654,31 +688,12 @@ GList * amitk_object_children_of_type(AmitkObject * object,
 
   while(children != NULL) {
     child = children->data;
-    switch(type) {
-    case AMITK_OBJECT_TYPE_STUDY:
-      if (AMITK_IS_STUDY(child))
-	return_objects = g_list_append(return_objects, g_object_ref(child));
-      break;
-    case AMITK_OBJECT_TYPE_DATA_SET:
-      if (AMITK_IS_DATA_SET(child))
-	return_objects = g_list_append(return_objects, g_object_ref(child));
-      break;
-    case AMITK_OBJECT_TYPE_FIDUCIAL_MARK:
-      if (AMITK_IS_FIDUCIAL_MARK(child))
-	return_objects = g_list_append(return_objects, g_object_ref(child));
-      break;
-    case AMITK_OBJECT_TYPE_ROI:
-      if (AMITK_IS_ROI(child))
-	return_objects = g_list_append(return_objects, g_object_ref(child));
-      break;
-    default:
-      g_return_val_if_reached(NULL);
-      break;
-    }
+    if (amitk_object_get_object_type(child) == type)
+      return_objects = g_list_append(return_objects, g_object_ref(child));
 
     /* get child's objects */
     if (recurse){
-      children_objects = amitk_object_children_of_type(children->data, type, recurse);
+      children_objects = amitk_object_get_children_of_type(children->data, type, recurse);
       return_objects = g_list_concat(return_objects, children_objects);
     }
     children = children->next;

@@ -32,14 +32,10 @@ AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_0D_SCALING_init(amitk_format_
   AmitkRawData * temp_amitk_raw_data;
   AmitkVoxel i;
 
-  temp_amitk_raw_data = amitk_raw_data_new();
+  temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', one_voxel);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
   i = zero_voxel;
 
-  temp_amitk_raw_data->dim.x = temp_amitk_raw_data->dim.y = temp_amitk_raw_data->dim.z = temp_amitk_raw_data->dim.t = 1;
-  temp_amitk_raw_data->format = AMITK_FORMAT_`'m4_Variable_Type`';
-  temp_amitk_raw_data->data = amitk_raw_data_get_data_mem(temp_amitk_raw_data);
-  g_return_val_if_fail(temp_amitk_raw_data->data != NULL, temp_amitk_raw_data);
   (*AMITK_RAW_DATA_`'m4_Variable_Type`'_0D_SCALING_POINTER(temp_amitk_raw_data, i)) = init_value;
 
   return temp_amitk_raw_data;
@@ -50,16 +46,13 @@ AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_2D_init(amitk_format_`'m4_Var
 						   amide_intpoint_t x_dim) {
 
   AmitkRawData * temp_amitk_raw_data;
+  AmitkVoxel dim;
 
-  temp_amitk_raw_data = amitk_raw_data_new();
+  dim.x = x_dim;
+  dim.y = y_dim;
+  dim.z = dim.t = 1;
+  temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', dim);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
-
-  temp_amitk_raw_data->dim.x = x_dim;
-  temp_amitk_raw_data->dim.y = y_dim;
-  temp_amitk_raw_data->dim.z = temp_amitk_raw_data->dim.t = 1;
-  temp_amitk_raw_data->format = AMITK_FORMAT_`'m4_Variable_Type`';
-  temp_amitk_raw_data->data = amitk_raw_data_get_data_mem(temp_amitk_raw_data);
-  g_return_val_if_fail(temp_amitk_raw_data->data != NULL, temp_amitk_raw_data);
 
   amitk_raw_data_`'m4_Variable_Type`'_initialize_data(temp_amitk_raw_data, init_value);
 
@@ -72,17 +65,14 @@ AmitkRawData * amitk_raw_data_`'m4_Variable_Type`'_3D_init(amitk_format_`'m4_Var
 						   amide_intpoint_t x_dim) {
 
   AmitkRawData * temp_amitk_raw_data;
+  AmitkVoxel dim;
 
-  temp_amitk_raw_data = amitk_raw_data_new();
+  dim.x = x_dim;
+  dim.y = y_dim;
+  dim.z = z_dim;
+  dim.t = 1;
+  temp_amitk_raw_data = amitk_raw_data_new_with_data(AMITK_FORMAT_`'m4_Variable_Type`', dim);
   g_return_val_if_fail(temp_amitk_raw_data != NULL, NULL);
-
-  temp_amitk_raw_data->dim.x = x_dim;
-  temp_amitk_raw_data->dim.y = y_dim;
-  temp_amitk_raw_data->dim.z = z_dim;
-  temp_amitk_raw_data->dim.t = 1;
-  temp_amitk_raw_data->format = AMITK_FORMAT_`'m4_Variable_Type`';
-  temp_amitk_raw_data->data = amitk_raw_data_get_data_mem(temp_amitk_raw_data);
-  g_return_val_if_fail(temp_amitk_raw_data->data != NULL, temp_amitk_raw_data);
 
   amitk_raw_data_`'m4_Variable_Type`'_initialize_data(temp_amitk_raw_data, init_value);
 

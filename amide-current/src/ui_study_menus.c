@@ -120,9 +120,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   gint counter;
 #endif
   AmitkRoiType i_roi_type;
-#if AMIDE_LIBVOLPACK_SUPPORT
-  AmitkInterpolation i_interpolation;
-#endif
 
 
 #ifdef AMIDE_LIBMDC_SUPPORT
@@ -220,19 +217,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-#if AMIDE_LIBVOLPACK_SUPPORT
-  /* the submenu under the rendering button */
-  GnomeUIInfo rendering_type_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Nearest Neighbor Conversion"),
-			  N_("convert image data for rendering using nearest neighbor interpolation (Fast)"),
-			  ui_study_cb_rendering,
-			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Trilinear Conversion"),
-			  N_("convert image data for rendering using trilinear interpolation (Slow, High Quality)"),
-			  ui_study_cb_rendering, ui_study, NULL),
-    GNOMEUIINFO_END
-  };
-#endif
 
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
@@ -240,9 +224,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Look at a series of images"), 
 			     series_type_menu),
 #if AMIDE_LIBVOLPACK_SUPPORT
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Rendering"),
-			     N_("perform volume renderings on the currently select volumes"),
-			     rendering_type_menu),
+    GNOMEUIINFO_ITEM_DATA(N_("_Rendering"),
+			  N_("perform volume renderings on the currently select data sets"),
+			  ui_study_cb_rendering,
+			  ui_study, NULL),
 #endif
     GNOMEUIINFO_END
   };
@@ -278,6 +263,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_ITEM_DATA(N_("_Crop Active Data Set"),
 			  N_("allows you to crop the active data set"),
 			  ui_study_cb_crop_selected,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Filter Active Data Set"),
+			  N_("allows you to filter the active data set"),
+			  ui_study_cb_filter_selected,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
 			  N_("guides you throw the processing of alignment"),
@@ -367,12 +356,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
       counter++;
     }
   }
-#endif
-
-#if AMIDE_LIBVOLPACK_SUPPORT
-  for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
-    g_object_set_data(G_OBJECT(rendering_type_menu[i_interpolation].widget), 
-		      "interpolation", GINT_TO_POINTER(i_interpolation));
 #endif
 
   for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)

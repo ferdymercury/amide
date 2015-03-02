@@ -73,7 +73,6 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
 				 const amide_time_t duration,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
-				 const AmitkInterpolation interpolation,
 				 const AmitkFuseType fuse_type);
 GdkPixbuf * image_get_object_pixbuf(AmitkObject * object);
 

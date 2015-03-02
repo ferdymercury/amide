@@ -37,6 +37,7 @@ amide_SOURCES = \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_H_SOURCES) \
 	amide.c \
+	amide_limits.h \
 	alignment.c \
 	alignment.h \
 	analysis.c \
@@ -46,6 +47,7 @@ amide_SOURCES = \
 	amitk_data_set.c \
 	amitk_dir_sel.c \
 	amitk_fiducial_mark.c \
+	amitk_filter.c \
 	amitk_point.c \
 	amitk_object.c \
 	amitk_object_dialog.c \
@@ -81,6 +83,8 @@ amide_SOURCES = \
 	ui_common.h \
 	ui_crop_dialog.c \
 	ui_crop_dialog.h \
+	ui_filter_dialog.c \
+	ui_filter_dialog.h \
 	ui_fly_through.c \
 	ui_fly_through.h \
 	ui_preferences_dialog.c \
@@ -115,6 +119,7 @@ AMITK_H_SOURCES = \
 	amitk_dir_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \
+	amitk_filter.h \
 	amitk_object.h \
 	amitk_object_dialog.h \
 	amitk_point.h \
@@ -331,7 +336,7 @@ $(srcdir)/amitk_type_builtins.c: stamp-amitk_type_builtins.c
 	@true
 stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 	( cd $(srcdir) && glib-mkenums \
-		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
+		--fhead "#include <gtk/gtk.h>\n#include \"amide_config.h\"\n#include \"amitk_canvas.h\"\n#include \"amitk_data_set.h\"\n#include \"amitk_filter.h\"\n#include \"amitk_object.h\"\n#include \"amitk_point.h\"\n#include \"amitk_raw_data.h\"\n#include \"amitk_roi.h\"\n#include \"amitk_space.h\"\n#include \"amitk_threshold.h\"\n" \
 		--fprod "\n/* enumerations from \"@filename@\" */" \
 		--vhead "GType\n@enum_name@_get_type (void)\n{\n  static GType etype = 0;\n  if (etype == 0) {\n    static const G@Type@Value values[] = {" \
 		--vprod "      { @VALUENAME@, \"@VALUENAME@\", \"@valuenick@\" }," \

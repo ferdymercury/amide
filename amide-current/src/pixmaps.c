@@ -23,22 +23,43 @@
   02111-1307, USA.
 */
 
+#include "amitk_data_set.h"
+#include "amitk_study.h"
+
 #include "../pixmaps/amide_logo.xpm"
 
 #include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
 #include "../pixmaps/icon_interpolation_trilinear.xpm"
+const char ** icon_interpolation[AMITK_INTERPOLATION_NUM] = {
+  icon_interpolation_nearest_neighbor_xpm,
+  icon_interpolation_trilinear_xpm
+};
 
 #include "../pixmaps/icon_fuse_type_blend.xpm"
 #include "../pixmaps/icon_fuse_type_overlay.xpm"
+const char ** icon_fuse_type[AMITK_FUSE_TYPE_NUM] = {
+  icon_fuse_type_blend_xpm,
+  icon_fuse_type_overlay_xpm
+};
 
 #include "../pixmaps/icon_view_single.xpm"
 #include "../pixmaps/icon_view_linked.xpm"
+const char ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {
+  icon_view_single_xpm,
+  icon_view_linked_xpm
+};
 
 #include "../pixmaps/icon_threshold.xpm"
 #include "../pixmaps/icon_thresholding_per_slice.xpm"
 #include "../pixmaps/icon_thresholding_per_frame.xpm"
 #include "../pixmaps/icon_thresholding_interpolate_frames.xpm"
 #include "../pixmaps/icon_thresholding_global.xpm"
+const char ** icon_thresholding[AMITK_THRESHOLDING_NUM] = {
+  icon_thresholding_per_slice_xpm,
+  icon_thresholding_per_frame_xpm,
+  icon_thresholding_interpolate_frames_xpm,
+  icon_thresholding_global_xpm
+};
 
 #include "../pixmaps/CYLINDER.xpm"
 #include "../pixmaps/BOX.xpm"

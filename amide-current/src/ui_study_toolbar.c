@@ -34,14 +34,9 @@
 #include "ui_study_menus.h"
 #include "ui_study_toolbar.h"
 #include "pixmaps.h"
+#include "amide_limits.h"
 
 
-const gchar ** icon_interpolation[AMITK_INTERPOLATION_NUM] = {icon_interpolation_nearest_neighbor_xpm,
-							      icon_interpolation_trilinear_xpm};
-const gchar ** icon_fuse_type[AMITK_FUSE_TYPE_NUM] = {icon_fuse_type_blend_xpm,
-						      icon_fuse_type_overlay_xpm};
-const gchar ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {icon_view_single_xpm,
-						      icon_view_linked_xpm};
       
 
 /* function to setup the toolbar for the study ui */
@@ -120,19 +115,13 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
 
 
-
   /* finish setting up the interpolation items */
   for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) {
-    g_object_set_data(G_OBJECT(interpolation_list[i_interpolation].widget), 
+    ui_study->interpolation_button[i_interpolation] = interpolation_list[i_interpolation].widget;
+    g_object_set_data(G_OBJECT(ui_study->interpolation_button[i_interpolation]), 
 		      "interpolation", GINT_TO_POINTER(i_interpolation));
-    g_signal_handlers_block_by_func(G_OBJECT(interpolation_list[i_interpolation].widget),
-				    G_CALLBACK(ui_study_cb_interpolation), ui_study);
+    gtk_widget_set_sensitive(ui_study->interpolation_button[i_interpolation], FALSE);
   }
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(interpolation_list[AMITK_STUDY_INTERPOLATION(ui_study->study)].widget),
-			       TRUE);
-  for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
-    g_signal_handlers_unblock_by_func(G_OBJECT(interpolation_list[i_interpolation].widget),
-				      G_CALLBACK(ui_study_cb_interpolation),  ui_study);
   
 
   /* finish setting up the fuse types items */
@@ -167,7 +156,12 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 
-  adjustment = gtk_adjustment_new(AMITK_STUDY_ZOOM(ui_study->study), 0.2,5,0.2, 0.25, 0.25);
+  adjustment = gtk_adjustment_new(AMITK_STUDY_ZOOM(ui_study->study),
+				  AMIDE_LIMIT_ZOOM_LOWER,
+				  AMIDE_LIMIT_ZOOM_UPPER,
+				  AMIDE_LIMIT_ZOOM_STEP, 
+				  AMIDE_LIMIT_ZOOM_PAGE,
+				  AMIDE_LIMIT_ZOOM_PAGE);
   ui_study->zoom_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 0.25, 2);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(ui_study->zoom_spin),FALSE);
   gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(ui_study->zoom_spin), FALSE);
