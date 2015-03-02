@@ -38,9 +38,9 @@ gchar * color_table_names[] = {"black/white linear", \
 			       "blue temperature", \
 			       "inv blue temp.", \
 			       "green temperature", \
-			       "inverse green temp.", \
+			       "inv. green temp.", \
 			       "hot metal", \
-			       "inverse hot metal", \
+			       "inv. hot metal", \
 			       "hot blue", \
 			       "inverse hot blue", \
 			       "hot green", \
@@ -48,7 +48,7 @@ gchar * color_table_names[] = {"black/white linear", \
 			       "spectrum", \
 			       "inverse spectrum", \
 			       "NIH + white", \
-			       "inverse NIH + white", \
+			       "inv. NIH + white", \
 			       "NIH", \
 			       "inverse NIH"};
 

@@ -29,6 +29,7 @@
 gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpointer data);
 void ui_rendering_cb_render(GtkWidget * widget, gpointer data);
 void ui_rendering_cb_immediate(GtkWidget * widget, gpointer data);
+void ui_rendering_cb_stereoscopic(GtkWidget * widget, gpointer data);
 void ui_rendering_cb_rotate(GtkAdjustment * adjustment, gpointer data);
 void ui_rendering_cb_reset_axis_pressed(GtkWidget * widget, gpointer data);
 void ui_rendering_cb_export(GtkWidget * widget, gpointer data);

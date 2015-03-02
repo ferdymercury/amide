@@ -55,7 +55,7 @@ typedef struct ui_series_t {
   floatpoint_t thickness;
   interpolation_t interpolation;
   scaling_t scaling;
-  floatpoint_t zoom;
+  floatpoint_t voxel_dim;
   series_t type;
   guint reference_count;
 

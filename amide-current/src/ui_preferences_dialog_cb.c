@@ -135,6 +135,7 @@ void ui_preferences_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointe
 
   ui_study_setup_canvas(ui_study);
   ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
+  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ALIGN_PTS);
   return;
 }
 

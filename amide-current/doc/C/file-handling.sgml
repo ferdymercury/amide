@@ -13,7 +13,7 @@
     Although admittedly annoying from a data transfer standpoint,
     using a directory structure for saving study information has the
     decisive advantage of making the saved information easily
-    excessible using standard command-line utilities and text-based
+    accessible using standard command-line utilities and text-based
     tools.
   </para>
 
@@ -23,7 +23,7 @@
     found in the XIF directory, such as ROI_*.xml files which contain
     ROI's, and Volume_*.xml files and their corresponding Volume_*.dat
     files, which contain the image data set parameters and the raw
-    data respectively.  The raw data file format is abitrary, and is
+    data respectively.  The raw data file format is arbitrary, and is
     little endian 32-bit float by default.
   </para>
 

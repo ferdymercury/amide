@@ -52,6 +52,9 @@ typedef struct ui_rendering_t {
   rendering_list_t * contexts;
   GtkWidget * render_button;
   gboolean immediate;
+  gboolean stereoscopic;
+  gdouble stereo_eye_angle;
+  gint stereo_eye_width; /* pixels */
   rendering_quality_t quality;
   pixel_type_t pixel_type;
   gboolean depth_cueing;
@@ -64,11 +67,13 @@ typedef struct ui_rendering_t {
 
 /* external functions */
 ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering);
-ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_frame, 
-				   amide_time_t start, amide_time_t duration, interpolation_t interpolation);
+ui_rendering_t * ui_rendering_init(volume_list_t * volumes, roi_list_t * rois,
+				   realspace_t coord_frame, amide_time_t start, 
+				   amide_time_t duration, interpolation_t interpolation);
 void ui_rendering_update_canvases(ui_rendering_t * ui_rendering);
-void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame, 
-			 amide_time_t start, amide_time_t duration, interpolation_t interpolation);
+void ui_rendering_create(volume_list_t * volumes, roi_list_t * rois, realspace_t coord_frame, 
+			 amide_time_t start, amide_time_t duration, 
+			 interpolation_t interpolation);
 
 #endif /* __UI_RENDERING_H__ */
 #endif /* AMIDE_LIBVOLPACK_SUPPORT */

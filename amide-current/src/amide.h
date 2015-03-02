@@ -34,9 +34,9 @@
 
 /* typedef's */
 typedef enum {TRANSVERSE, CORONAL, SAGITTAL, NUM_VIEWS} view_t;
-
 typedef enum {LINEAR_LAYOUT, ORTHOGONAL_LAYOUT, NUM_LAYOUTS} layout_t;
-      
+typedef enum {STUDY, VOLUME, ROI, ALIGN_PT, NUM_OBJECTS} object_t;      
+typedef enum {LEFT, RIGHT, NUM_EYES} eye_t;
 
 /* setup the types for various internal data formats */
 /* note, don't change the amide_data_t unless you want to do a 
@@ -55,6 +55,9 @@ typedef gint16 intpoint_t;
 
 /* external variables */
 extern gchar * view_names[];
+extern gchar * object_menu_names[];
+extern gchar * object_edit_menu_explanation[];
+extern gchar * object_delete_menu_explanation[];
 
 /* external functions */
 void amide_register_window(gpointer * widget);

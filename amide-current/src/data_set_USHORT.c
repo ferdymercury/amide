@@ -50,7 +50,7 @@ data_set_t * data_set_USHORT_0D_SCALING_init(data_set_USHORT_t init_value) {
 
   temp_data_set = data_set_init();
   g_return_val_if_fail(temp_data_set != NULL, NULL);
-  i = voxelpoint_zero;
+  i = zero_vp;
 
   temp_data_set->dim.x = temp_data_set->dim.y = temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = USHORT;

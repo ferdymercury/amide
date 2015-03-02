@@ -35,11 +35,12 @@
 	  Object modification dialog boxes can be brought up in one of
 	  two ways; right clicking on the object, or hitting the
 	  "Edit->>Edit Items" menu item (which will bring up
-	  modification dialog boxes for all selected items).  ROI's
-	  can be added by either right clicking on an empty area of
-	  the study tree, or hitting the "Edit->add ROI" menu item.
-	  To delete objects, hit the "edit->delete items" menu item,
-	  which will delete the currently selected objects.
+	  modification dialog boxes for the relevant selected
+	  objects).  ROI's can be added by either right clicking on an
+	  empty area of the study tree, or hitting the "Edit->add ROI"
+	  menu item.  To delete objects, hit the "edit->delete
+	  items->selected objects" menu item, which will delete the
+	  currently selected objects of the specified type.
 	</para>
       </sect3>
 

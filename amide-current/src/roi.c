@@ -92,14 +92,14 @@ roi_t * roi_init(void) {
   temp_roi->reference_count = 1;
   
   temp_roi->name = NULL;
-  temp_roi->corner = realpoint_zero;
-  rs_set_offset(&temp_roi->coord_frame, realpoint_zero);
+  temp_roi->corner = zero_rp;
+  rs_set_offset(&temp_roi->coord_frame, zero_rp);
   rs_set_axis(&temp_roi->coord_frame, default_axis);
   temp_roi->parent = NULL;
   temp_roi->children = NULL;
 
   temp_roi->isocontour = NULL;
-  temp_roi->voxel_size = realpoint_zero;
+  temp_roi->voxel_size = zero_rp;
   temp_roi->isocontour_value = EMPTY;
   
   return temp_roi;
@@ -307,12 +307,31 @@ realpoint_t roi_calculate_center(const roi_t * roi) {
   return center;
 }
 
+/* takes an roi and a view_axis, and gives the corners necessary for 
+   the view to totally encompass the roi in the view coord frame */
+void roi_get_view_corners(const roi_t * roi,
+			  const realspace_t view_coord_frame,
+			  realpoint_t view_corner[]) {
+
+  realpoint_t corner[2];
+
+  g_assert(roi!=NULL);
+
+  corner[0] = realspace_base_coord_to_alt(rs_offset(roi->coord_frame),roi->coord_frame);
+  corner[1] = roi->corner;
+
+  /* look at all eight corners of our cube, figure out the min and max coords */
+  realspace_get_enclosing_corners(roi->coord_frame, corner, view_coord_frame, view_corner);
+  return;
+}
+
 
 /* free up an roi list */
 roi_list_t * roi_list_free(roi_list_t * roi_list) {
 
-  if (roi_list == NULL)
-    return roi_list;
+  roi_list_t * return_list;
+
+  if (roi_list == NULL) return roi_list;
 
   /* sanity check */
   g_return_val_if_fail(roi_list->reference_count > 0, NULL);
@@ -320,23 +339,22 @@ roi_list_t * roi_list_free(roi_list_t * roi_list) {
   /* remove a reference count */
   roi_list->reference_count--;
 
-
-
   /* stuff to do if reference count is zero */
   if (roi_list->reference_count == 0) {
     /* recursively delete rest of list */
-    roi_list->next = roi_list_free(roi_list->next);
-
+    return_list = roi_list_free(roi_list->next);
+    roi_list->next = NULL;
     roi_list->roi = roi_free(roi_list->roi);
     g_free(roi_list);
     roi_list = NULL;
-  }
+  } else
+    return_list = roi_list;
 
-  return roi_list;
+  return return_list;
 }
 
 /* returns an initialized roi list node structure */
-roi_list_t * roi_list_init(void) {
+roi_list_t * roi_list_init(roi_t * roi) {
   
   roi_list_t * temp_roi_list;
   
@@ -347,7 +365,7 @@ roi_list_t * roi_list_init(void) {
   temp_roi_list->reference_count = 1;
 
   temp_roi_list->next = NULL;
-  temp_roi_list->roi = NULL;
+  temp_roi_list->roi = roi_add_reference(roi);
   
   return temp_roi_list;
 }
@@ -427,10 +445,7 @@ roi_list_t * roi_list_add_roi(roi_list_t * roi_list, roi_t * roi) {
   }
   
   /* get a new roi_list data structure */
-  temp_list = roi_list_init();
-
-  /* add the roi to this new list item */
-  temp_list->roi = roi_add_reference(roi);
+  temp_list = roi_list_init(roi);
 
   if (roi_list == NULL)
     return temp_list;
@@ -480,15 +495,17 @@ roi_list_t * roi_list_remove_roi(roi_list_t * roi_list, roi_t * roi) {
 roi_list_t * roi_list_copy(roi_list_t * src_roi_list) {
 
   roi_list_t * dest_roi_list;
+  roi_t * temp_roi;
 
   /* sanity check */
   g_return_val_if_fail(src_roi_list != NULL, NULL);
 
-  dest_roi_list = roi_list_init();
-
   /* make a separate copy in memory of the roi this list item points to */
-  dest_roi_list->roi = roi_copy(src_roi_list->roi);
-    
+  temp_roi = roi_copy(src_roi_list->roi); 
+
+  dest_roi_list = roi_list_init(temp_roi); 
+  temp_roi = roi_free(temp_roi); /* no longer need a reference outside of the list's reference */
+
   /* and make copies of the rest of the elements in this list */
   if (src_roi_list->next != NULL)
     dest_roi_list->next = roi_list_copy(src_roi_list->next);
@@ -502,6 +519,35 @@ roi_list_t * roi_list_add_reference(roi_list_t * rois) {
   rois->reference_count++;
 
   return rois;
+}
+
+/* takes a list of rois and a view axis, and give the corners
+   necessary to totally encompass the roi in the view coord frame */
+void rois_get_view_corners(roi_list_t * rois,
+			   const realspace_t view_coord_frame,
+			   realpoint_t view_corner[]) {
+
+  roi_list_t * temp_rois;
+  realpoint_t temp_corner[2];
+
+  g_assert(rois!=NULL);
+
+  temp_rois = rois;
+  roi_get_view_corners(temp_rois->roi,view_coord_frame,view_corner);
+  temp_rois = rois->next;
+
+  while (temp_rois != NULL) {
+    roi_get_view_corners(temp_rois->roi,view_coord_frame,temp_corner);
+    view_corner[0].x = (view_corner[0].x < temp_corner[0].x) ? view_corner[0].x : temp_corner[0].x;
+    view_corner[0].y = (view_corner[0].y < temp_corner[0].y) ? view_corner[0].y : temp_corner[0].y;
+    view_corner[0].z = (view_corner[0].z < temp_corner[0].z) ? view_corner[0].z : temp_corner[0].z;
+    view_corner[1].x = (view_corner[1].x > temp_corner[1].x) ? view_corner[1].x : temp_corner[1].x;
+    view_corner[1].y = (view_corner[1].y > temp_corner[1].y) ? view_corner[1].y : temp_corner[1].y;
+    view_corner[1].z = (view_corner[1].z > temp_corner[1].z) ? view_corner[1].z : temp_corner[1].z;
+    temp_rois = temp_rois->next;
+  }
+
+  return;
 }
 
 
@@ -530,29 +576,54 @@ gboolean roi_undrawn(const roi_t * roi) {
     return (roi->isocontour == NULL);
   else
     return 
-      REALPOINT_EQUAL(rs_offset(roi->coord_frame),realpoint_zero) &&
-      REALPOINT_EQUAL(roi->corner,realpoint_zero);
+      REALPOINT_EQUAL(rs_offset(roi->coord_frame),zero_rp) &&
+      REALPOINT_EQUAL(roi->corner,zero_rp);
 }
     
+/* returns the maximal minimum voxel dimensions of a list of rois */
+floatpoint_t rois_max_min_voxel_size(roi_list_t * rois) {
+
+  floatpoint_t current_min_voxel_size, next_min_voxel_size;
+
+  g_assert(rois!=NULL);
+  g_assert(rois->roi!=NULL);
+
+  if ((rois->roi->type == ISOCONTOUR_2D) || (rois->roi->type == ISOCONTOUR_3D)) {
+    current_min_voxel_size = rp_min_dim(rois->roi->voxel_size);
+    if (2.0*current_min_voxel_size > rp_min_dim(rois->roi->corner)) /* thin roi correction */
+      current_min_voxel_size = rp_min_dim(rois->roi->corner)/2.0;
+  } else
+    current_min_voxel_size = rp_min_dim(rois->roi->corner)/50.0;
+
+  if (rois->next == NULL) 
+    next_min_voxel_size = current_min_voxel_size;
+  else  
+    next_min_voxel_size = rois_max_min_voxel_size(rois->next);
+
+  if (next_min_voxel_size > current_min_voxel_size) 
+    current_min_voxel_size = next_min_voxel_size;
+
+  return current_min_voxel_size;
+}
 
 
 /* returns a singly linked list of intersection points between the roi
    and the given slice.  returned points are in the slice's coord_frame.
    note: use this function for ELLIPSOID, CYLINDER, and BOX 
 */
-GSList * roi_get_slice_intersection_line(const roi_t * roi,  const volume_t * view_slice) {
+GSList * roi_get_intersection_line(const roi_t * roi,  const volume_t * view_slice) {
 
   GSList * return_points = NULL;
 
   switch(roi->type) {
   case ELLIPSOID:
-    return_points = roi_ELLIPSOID_get_slice_intersection(roi, view_slice);
+    return_points = roi_ELLIPSOID_get_intersection_line(roi, view_slice);
     break;
   case CYLINDER:
-    return_points = roi_CYLINDER_get_slice_intersection(roi, view_slice);
+    return_points = roi_CYLINDER_get_intersection_line(roi, view_slice);
     break;
   case BOX:
-    return_points = roi_BOX_get_slice_intersection(roi, view_slice);
+    return_points = roi_BOX_get_intersection_line(roi, view_slice);
     break;
   default: 
     g_warning("%s: roi type %d not implemented!",PACKAGE, roi->type);
@@ -563,20 +634,20 @@ GSList * roi_get_slice_intersection_line(const roi_t * roi,  const volume_t * vi
   return return_points;
 }
 
-/* returns an roi containing a  data set defining the edges of the roi in the given slice.
+/* returns a slice (in a volume structure) containing a  
+   data set defining the edges of the roi in the given slice.
    returned data set is in the slice's coord frame.
-   note: use this function for ISOCONTOUR_2D, ISOCONTOUR_3D
 */
-roi_t * roi_get_slice_intersection_image(const roi_t * roi, const volume_t * view_slice) {
+volume_t * roi_get_slice(const roi_t * roi, const volume_t * view_slice) {
   
-  roi_t * return_roi = NULL;
+  volume_t * intersection = NULL;
 
   switch(roi->type) {
   case ISOCONTOUR_2D:
-    return_roi = roi_ISOCONTOUR_2D_get_slice_intersection(roi, view_slice);
+    intersection = roi_ISOCONTOUR_2D_get_slice(roi, view_slice);
     break;
   case ISOCONTOUR_3D:
-    return_roi = roi_ISOCONTOUR_3D_get_slice_intersection(roi, view_slice);
+    intersection = roi_ISOCONTOUR_3D_get_slice(roi, view_slice);
     break;
   default: 
     g_warning("%s: roi type %d not implemented!",PACKAGE, roi->type);
@@ -584,7 +655,7 @@ roi_t * roi_get_slice_intersection_image(const roi_t * roi, const volume_t * vie
   }
 
 
-  return return_roi;
+  return intersection;
 
 }
 
@@ -623,19 +694,21 @@ void roi_subset_of_volume(const roi_t * roi,
   subset_index[1].z += 1;
   
 
-  /* sanity checks */
-  if (subset_index[0].x < 0) subset_index[0].x = 0;
-  if (subset_index[0].x > volume->data_set->dim.x) subset_index[0].x = volume->data_set->dim.x;
-  if (subset_index[0].y < 0) subset_index[0].y = 0;
-  if (subset_index[0].y > volume->data_set->dim.y) subset_index[0].y = volume->data_set->dim.y;
-  if (subset_index[0].z < 0) subset_index[0].z = 0;
-  if (subset_index[0].z > volume->data_set->dim.z) subset_index[0].z = volume->data_set->dim.z;
-  if (subset_index[1].x < 0) subset_index[1].x = 0;
-  if (subset_index[1].x > volume->data_set->dim.x) subset_index[1].x = volume->data_set->dim.x;
-  if (subset_index[1].y < 0) subset_index[1].y = 0;
-  if (subset_index[1].y > volume->data_set->dim.y) subset_index[1].y = volume->data_set->dim.y;
-  if (subset_index[1].z < 0) subset_index[1].z = 0;
-  if (subset_index[1].z > volume->data_set->dim.z) subset_index[1].z = volume->data_set->dim.z;
+  /* reduce in size if possible */
+  if (volume->data_set != NULL) {
+    if (subset_index[0].x < 0) subset_index[0].x = 0;
+    if (subset_index[0].x > volume->data_set->dim.x) subset_index[0].x = volume->data_set->dim.x;
+    if (subset_index[0].y < 0) subset_index[0].y = 0;
+    if (subset_index[0].y > volume->data_set->dim.y) subset_index[0].y = volume->data_set->dim.y;
+    if (subset_index[0].z < 0) subset_index[0].z = 0;
+    if (subset_index[0].z > volume->data_set->dim.z) subset_index[0].z = volume->data_set->dim.z;
+    if (subset_index[1].x < 0) subset_index[1].x = 0;
+    if (subset_index[1].x > volume->data_set->dim.x) subset_index[1].x = volume->data_set->dim.x;
+    if (subset_index[1].y < 0) subset_index[1].y = 0;
+    if (subset_index[1].y > volume->data_set->dim.y) subset_index[1].y = volume->data_set->dim.y;
+    if (subset_index[1].z < 0) subset_index[1].z = 0;
+    if (subset_index[1].z > volume->data_set->dim.z) subset_index[1].z = volume->data_set->dim.z;
+  }
 
   /* and calculate the return values */
   *subset_start = subset_index[0];

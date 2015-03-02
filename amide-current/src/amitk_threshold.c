@@ -41,6 +41,9 @@
 #define THRESHOLD_TRIANGLE_WIDTH 16.0
 #define THRESHOLD_TRIANGLE_HEIGHT 16.0
 
+#define MENU_COLOR_SCALE_HEIGHT 8
+#define MENU_COLOR_SCALE_WIDTH 30
+
 enum {
   THRESHOLD_CHANGED,
   COLOR_CHANGED,
@@ -51,6 +54,7 @@ static void threshold_class_init (AmitkThresholdClass *klass);
 static void threshold_init (AmitkThreshold *threshold);
 static void threshold_destroy (GtkObject *object);
 static void threshold_construct(AmitkThreshold * threshold);
+static void threshold_realize_color_table_menu_item_cb(GtkWidget * hbox, gpointer data);
 static void threshold_update_histogram(AmitkThreshold * threshold);
 static void threshold_update_entries(AmitkThreshold * threshold);
 static void threshold_update_arrow(AmitkThreshold * threshold, which_threshold_arrow_t arrow);
@@ -141,12 +145,14 @@ static void threshold_init (AmitkThreshold *threshold)
   GtkWidget * right_table;
   GtkWidget * left_table;
   GtkWidget * main_box;
+  GtkWidget * hbox;
   guint right_row=0;
   guint left_row=0;
   GtkWidget * label;
   GtkWidget * option_menu;
   GtkWidget * menu;
   GtkWidget * menuitem;
+  GtkWidget * pix_box;
   color_table_t i_color_table;
   which_threshold_scale_t i_scale;
   which_threshold_line_t i_line;
@@ -251,7 +257,20 @@ static void threshold_init (AmitkThreshold *threshold)
   menu = gtk_menu_new();
 
   for (i_color_table=0; i_color_table<NUM_COLOR_TABLES; i_color_table++) {
-    menuitem = gtk_menu_item_new_with_label(color_table_names[i_color_table]);
+    menuitem = gtk_menu_item_new();
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(menuitem), hbox);
+
+    pix_box = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), pix_box, FALSE, FALSE, 3);
+    gtk_widget_show(pix_box);
+    gtk_signal_connect(GTK_OBJECT(pix_box), "realize", 
+		       threshold_realize_color_table_menu_item_cb, GINT_TO_POINTER(i_color_table));
+
+    label = gtk_label_new(color_table_names[i_color_table]);
+    gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 3);
+    gtk_widget_show(label);
+
     gtk_menu_append(GTK_MENU(menu), menuitem);
     gtk_object_set_data(GTK_OBJECT(menuitem), "color_table", GINT_TO_POINTER(i_color_table));
     gtk_signal_connect(GTK_OBJECT(menuitem), "activate", 
@@ -259,6 +278,7 @@ static void threshold_init (AmitkThreshold *threshold)
   }
 
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
+  gtk_widget_set_usize(option_menu, 185, -1);
   gtk_table_attach(GTK_TABLE(left_table), option_menu, 1,3, left_row,left_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_show_all(option_menu);
@@ -360,6 +380,34 @@ static void threshold_construct(AmitkThreshold * threshold) {
 			      threshold->volume->color_table);
   return;
 }
+
+
+/* this gets called when the hbox inside of a menu item */
+static void threshold_realize_color_table_menu_item_cb(GtkWidget * pix_box, gpointer data) {
+
+  color_table_t color_table = GPOINTER_TO_INT(data);
+  GdkPixbuf * pixbuf;
+  GdkPixmap * pm;
+  GdkBitmap * bm;
+  GtkWidget * pixmap;
+
+  g_return_if_fail(pix_box != NULL);
+
+  /* make sure we don't get called again */
+  if (gtk_container_children(GTK_CONTAINER(pix_box)) != NULL) return;
+
+  pixbuf = image_from_colortable(color_table, MENU_COLOR_SCALE_WIDTH, MENU_COLOR_SCALE_HEIGHT,
+				 0, MENU_COLOR_SCALE_WIDTH-1, 0, MENU_COLOR_SCALE_WIDTH-1, TRUE);
+  gdk_pixbuf_render_pixmap_and_mask(pixbuf, &pm, &bm, 0);
+  gdk_pixbuf_unref(pixbuf);
+
+  pixmap = gtk_pixmap_new(pm, bm);
+  gtk_box_pack_start(GTK_BOX(pix_box), pixmap, FALSE, FALSE, 0);
+  gtk_widget_show(pixmap);
+
+  return;
+}
+
 
 /* refresh what's on the histogram */
 static void threshold_update_histogram(AmitkThreshold * threshold) {
@@ -553,7 +601,8 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, which_thres
 			    threshold->volume->threshold_min,
 			    threshold->volume->threshold_max,
 			    threshold->volume->min,
-			    threshold->volume->max);
+			    threshold->volume->max,
+			    FALSE);
     x = THRESHOLD_TRIANGLE_WIDTH;
     y = THRESHOLD_TRIANGLE_HEIGHT/2.0;
     break;
@@ -566,7 +615,8 @@ static void threshold_update_color_scale(AmitkThreshold * threshold, which_thres
 			    threshold->volume->threshold_min,
 			    threshold->volume->threshold_max,
 			    threshold->initial_min,
-			    threshold->initial_max);
+			    threshold->initial_max,
+			    FALSE);
     x = THRESHOLD_COLOR_SCALE_WIDTH+THRESHOLD_TRIANGLE_WIDTH+THRESHOLD_COLOR_SCALE_SEPARATION;
     y = THRESHOLD_TRIANGLE_HEIGHT/2.0;
     break;

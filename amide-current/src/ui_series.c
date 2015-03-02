@@ -106,9 +106,9 @@ static ui_series_t * ui_series_init(void) {
   ui_series->rgb_images = NULL;
   ui_series->volumes = NULL;
   ui_series->interpolation = NEAREST_NEIGHBOR;
-  ui_series->zoom = 1.0;
+  ui_series->voxel_dim = 1.0;
   ui_series->thickness = -1.0;
-  ui_series->view_point = realpoint_zero;
+  ui_series->view_point = zero_rp;
   ui_series->view_time = 0.0;
   ui_series->type = PLANES;
   ui_series->thresholds_dialog = NULL;
@@ -205,9 +205,9 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 						temp_time+CLOSE,
 						temp_duration-CLOSE,
 						ui_series->thickness,
+						ui_series->voxel_dim,
 						view_coord_frame,
 						ui_series->scaling,
-						ui_series->zoom,
 						ui_series->interpolation);
   image_width = gdk_pixbuf_get_width(ui_series->rgb_images[0]) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
   image_height = gdk_pixbuf_get_height(ui_series->rgb_images[0]) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
@@ -259,9 +259,6 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
   else
     start_i = start_i-ui_series->columns*ui_series->rows/2.0;
 
-  g_print("start i %d num slices %d columns %d rows %d\n", start_i, ui_series->num_slices,
-	  ui_series->columns, ui_series->rows);
-
   temp_time = ui_series->start_time;
   temp_point = ui_series->view_point;
   if (ui_series->type == PLANES) {
@@ -295,9 +292,9 @@ void ui_series_update_canvas(ui_series_t * ui_series) {
 						    temp_time+CLOSE,
 						    temp_duration-CLOSE,
 						    ui_series->thickness,
+						    ui_series->voxel_dim,
 						    view_coord_frame,
 						    ui_series->scaling,
-						    ui_series->zoom,
 						    ui_series->interpolation);
     
     /* figure out the next x,y spot to put this guy */
@@ -406,7 +403,7 @@ void ui_series_create(study_t * study, volume_list_t * volumes, view_t view,
   min_duration = volume_list_min_frame_duration(ui_series->volumes);
   ui_series->view_duration =  
     (min_duration > study_view_duration(study)) ?  min_duration : study_view_duration(study);
-  ui_series->zoom = study_zoom(study);
+  ui_series->voxel_dim = (1/study_zoom(study)) * volumes_max_min_voxel_size(study_volumes(study));
   ui_series->scaling = study_scaling(study);
 
 

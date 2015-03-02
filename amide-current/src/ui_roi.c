@@ -32,6 +32,7 @@
 ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
 
   view_t i_view;
+  ui_roi_list_t * return_list;
 
   if (ui_roi_list == NULL) return ui_roi_list;
 
@@ -42,7 +43,8 @@ ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
 
   /* things to do if we've removed all reference's */
   if (ui_roi_list->reference_count == 0) {
-    ui_roi_list->next = ui_roi_list_free(ui_roi_list->next);
+    return_list = ui_roi_list_free(ui_roi_list->next);
+    ui_roi_list->next = NULL;
     ui_roi_list->roi = roi_free(ui_roi_list->roi);
     for (i_view=0;i_view<NUM_VIEWS;i_view++)
       if (ui_roi_list->canvas_roi[i_view] != NULL) {
@@ -55,13 +57,14 @@ ui_roi_list_t * ui_roi_list_free(ui_roi_list_t * ui_roi_list) {
     }
     g_free(ui_roi_list);
     ui_roi_list = NULL;
-  }
+  } else
+    return_list = ui_roi_list;
 
-  return ui_roi_list;
+  return return_list;
 }
 
 /* returns an initialized ui_roi_list node structure */
-ui_roi_list_t * ui_roi_list_init(void) {
+ui_roi_list_t * ui_roi_list_init(roi_t * roi) {
 
   view_t i_view;
   ui_roi_list_t * temp_roi_list;
@@ -72,7 +75,8 @@ ui_roi_list_t * ui_roi_list_init(void) {
   }
   temp_roi_list->reference_count = 1;
 
-  temp_roi_list->roi = NULL;
+  temp_roi_list->roi = roi_add_reference(roi);
+
   for (i_view=0;i_view<NUM_VIEWS;i_view++)
     temp_roi_list->canvas_roi[i_view] = NULL;
   temp_roi_list->dialog = NULL;
@@ -127,10 +131,8 @@ ui_roi_list_t * ui_roi_list_add_roi(ui_roi_list_t * ui_roi_list,
   }
 
   /* get a new structure */
-  temp_list = ui_roi_list_init();
+  temp_list = ui_roi_list_init(roi);
 
-  /* add the roi and other info to this list structure */
-  temp_list->roi = roi_add_reference(roi);
   if (canvas_roi_item != NULL)
     for (i_view=0;i_view<NUM_VIEWS;i_view++) 
       temp_list->canvas_roi[i_view] = canvas_roi_item[i_view];

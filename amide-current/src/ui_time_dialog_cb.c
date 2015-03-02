@@ -34,7 +34,7 @@
 
 /* we've selected a row in the list of times */
 void ui_time_dialog_cb_select_row(GtkCList * clist, gint row, gint column, 
-					 GdkEventButton *event, gpointer data) {
+				  GdkEventButton *event, gpointer data) {
 
   ui_study_t * ui_study = data;
   volume_t * volume;
@@ -227,3 +227,4 @@ gboolean ui_time_dialog_cb_close(GtkWidget* widget, gpointer data) {
 
   return FALSE;
 }
+

@@ -104,16 +104,14 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
 
   /* figure out the ui_study_roi_list item corresponding to this roi */
   ui_roi_list_item = ui_roi_list_get_ui_roi(ui_study->current_rois, roi);
-  if (ui_roi_list_item == NULL) return;
 
-  /* only want one of these dialogs at a time for a given roi */
-  if (ui_roi_list_item->dialog != NULL)
-    return;
-  
   /* sanity checks */
   g_return_if_fail(ui_roi_list_item != NULL);
   g_return_if_fail(ui_roi_list_item->tree_leaf != NULL);
     
+  /* only want one of these dialogs at a time for a given roi */
+  if (ui_roi_list_item->dialog != NULL) return;
+  
   temp_string = g_strdup_printf("%s: ROI Modification Dialog",PACKAGE);
   roi_dialog = gnome_property_box_new();
   gtk_window_set_title(GTK_WINDOW(roi_dialog), temp_string);
@@ -252,10 +250,10 @@ void ui_roi_dialog_create(ui_study_t * ui_study, roi_t * roi) {
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(roi_dialog), GTK_WIDGET(packing_table), label);
 
   /* widgets to change the location of the ROI's center in real space */
-  label = gtk_label_new("Center Location (mm from origin)");
+  label = gtk_label_new("Center Location (mm from view origin)");
   gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,2,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  center = roi_calculate_center(roi);
+  center = realspace_base_coord_to_alt(roi_calculate_center(roi), study_coord_frame(ui_study->study));
   table_row++;
 
   /**************/

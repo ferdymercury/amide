@@ -27,6 +27,14 @@
 #include "config.h"
 #include <gnome.h>
 
+/* function which gets called from a name entry dialog */
+void ui_common_cb_entry_name(gchar * entry_string, gpointer data) {
+  gchar ** p_roi_name = data;
+  *p_roi_name = entry_string;
+  return;
+}
+
+
 /* function to close a file selection widget */
 void ui_common_cb_file_selection_cancel(GtkWidget* widget, gpointer data) {
 
@@ -59,6 +67,11 @@ void ui_common_cb_about(GtkWidget * button, gpointer data) {
     _("\tlibecat: CTI File library by Merence Sibomona");
 #endif
 
+#ifdef AMIDE_LIBGSL_SUPPORT
+  const gchar *contents_libgsl = \
+    _("\tlibgsl: GNU Scientific Library by the GSL Team");
+#endif
+
 #ifdef AMIDE_LIBMDC_SUPPORT
   const gchar *contents_libmdc = \
     _("\tlibmdc: Medical Imaging File library by Erik Nolf");
@@ -76,11 +89,14 @@ void ui_common_cb_about(GtkWidget * button, gpointer data) {
 
   contents = g_strjoin("\n", 
 		       contents_base,
-#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
+#if (AMIDE_LIBECAT_SUPPORT || AMIDE_LIBGSL_SUPPORT || AMIDE_LIBMDC_SUPPORT || AMIDE_LIBVOLPACK_SUPPORT)
 		       contents_compiled,
 #endif
 #ifdef AMIDE_LIBECAT_SUPPORT
 		       contents_libecat,
+#endif
+#ifdef AMIDE_LIBGSL_SUPPORT
+		       contents_libgsl,
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
 		       contents_libmdc,

@@ -5,6 +5,7 @@
 <!entity rendering SYSTEM "rendering.sgml">
 <!entity rois SYSTEM "rois.sgml">
 <!entity volumes SYSTEM "volumes.sgml">
+<!entity alignment SYSTEM "alignment.sgml">
 ]>
 
 <book id="amide">
@@ -71,6 +72,11 @@
   <chapter id="rois">
     <title>Using ROI's </title>
     &rois;
+  </chapter>
+
+  <chapter id="alignment">
+    <title>Aligning Data Sets </title>
+    &alignment;
   </chapter>
 
   <chapter id="rendering">

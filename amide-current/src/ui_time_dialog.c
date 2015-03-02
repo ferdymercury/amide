@@ -221,7 +221,9 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
   gtk_window_set_title(GTK_WINDOW(time_dialog), temp_string);
   g_free(temp_string);
   ui_study->time_dialog = time_dialog; /* save a pointer to the dialog */
-  gtk_window_set_policy(GTK_WINDOW(time_dialog), FALSE, TRUE, FALSE);
+
+  /* order is allow shrink, allow grow, autoshrink */
+  gtk_window_set_policy(GTK_WINDOW(time_dialog), FALSE, TRUE, FALSE); 
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
   new_time = (ui_time_dialog_t *) g_malloc(sizeof(ui_time_dialog_t));

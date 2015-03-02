@@ -28,8 +28,8 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
 #include <gnome.h>
-#include <math.h>
 #include <gdk-pixbuf/gnome-canvas-pixbuf.h>
+#include <math.h>
 #include "image.h"
 #include "ui_common.h"
 #include "ui_rendering.h"
@@ -69,8 +69,9 @@ ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering) {
 
 
 /* malloc and initialize a ui_rendering data structure */
-ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_frame, 
-				   amide_time_t start, amide_time_t duration, interpolation_t interpolation) {
+ui_rendering_t * ui_rendering_init(volume_list_t * volumes, roi_list_t * rois,
+				   realspace_t coord_frame, amide_time_t start, 
+				   amide_time_t duration, interpolation_t interpolation) {
 
   ui_rendering_t * ui_rendering;
 
@@ -89,6 +90,7 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
 #endif
   ui_rendering->render_button = NULL;
   ui_rendering->immediate = TRUE;
+  ui_rendering->stereoscopic = FALSE;
   ui_rendering->contexts = NULL;
   ui_rendering->rgb_image = NULL;
   ui_rendering->canvas_image = NULL;
@@ -102,8 +104,21 @@ ui_rendering_t * ui_rendering_init(volume_list_t * volumes, realspace_t coord_fr
   ui_rendering->start = start;
   ui_rendering->duration = duration;
 
+  /* load in saved preferences */
+  gnome_config_push_prefix("/"PACKAGE"/");
+
+  ui_rendering->stereo_eye_width = gnome_config_get_int("RENDERING/EyeWidth");
+  if (ui_rendering->stereo_eye_width == 0)  /* if no config file, put in sane value */
+    ui_rendering->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
+
+  ui_rendering->stereo_eye_angle = gnome_config_get_float("RENDERING/EyeAngle");
+  if ((ui_rendering->stereo_eye_angle <= 0.1) || (ui_rendering->stereo_eye_angle > 45.0))
+    ui_rendering->stereo_eye_angle = 2.0; /* degrees */
+
+  gnome_config_pop_prefix();
+
   /* initialize the rendering contexts */
-  ui_rendering->contexts = rendering_list_init(volumes, coord_frame, start, duration,
+  ui_rendering->contexts = rendering_list_init(volumes, rois, coord_frame, start, duration,
 					       ui_rendering->interpolation);
 
   return ui_rendering;
@@ -117,6 +132,8 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
   rgba_t blank_rgba;
   intpoint_t size_dim; 
+  eye_t eyes;
+  gint width, height;
 
   blank_rgba.r = blank_rgba.g = blank_rgba.b = 0;
   blank_rgba.a = 0xFF;
@@ -126,43 +143,39 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
     return;
   }
 
-  /* reload the volumes if the time's changed */
+  /* reload the objects (volumes)  if the time's changed */
   if (ui_rendering->contexts != NULL)
-    rendering_list_reload_volume(ui_rendering->contexts, ui_rendering->start,
-				 ui_rendering->duration, ui_rendering->interpolation);
+    rendering_list_reload_objects(ui_rendering->contexts, ui_rendering->start,
+				  ui_rendering->duration, ui_rendering->interpolation);
 
   /* -------- render our volumes ------------ */
-  if (ui_rendering->rgb_image != NULL)
-    gdk_pixbuf_unref(ui_rendering->rgb_image);
 
-  if (ui_rendering->contexts == NULL)
-    ui_rendering->rgb_image = image_blank(UI_RENDERING_BLANK_WIDTH, UI_RENDERING_BLANK_HEIGHT, blank_rgba);
-  else {
-    rendering_list_render(ui_rendering->contexts);
-    /* base the dimensions on the first context in the list.... */
-    size_dim = ceil(ui_rendering->zoom*REALPOINT_MAX(ui_rendering->contexts->rendering_context->dim));
-    ui_rendering->rgb_image = image_from_renderings(ui_rendering->contexts, size_dim, size_dim); 
+  if (ui_rendering->stereoscopic) eyes = NUM_EYES;
+  else eyes = 1;
+
+  if (ui_rendering->rgb_image != NULL) {
+    gdk_pixbuf_unref(ui_rendering->rgb_image);
+    ui_rendering->rgb_image = NULL;
   }
 
-  /* reset the min size of the widget */
-  gnome_canvas_set_scroll_region(ui_rendering->canvas, 0.0, 0.0, 
-  				 gdk_pixbuf_get_width(ui_rendering->rgb_image),  
-  				 gdk_pixbuf_get_height(ui_rendering->rgb_image));  
-
-  //  requisition.width = ui_study->rgb_image[view]->rgb_width;
-  //  requisition.height = ui_study->rgb_image[view]->rgb_height;
-  //  gtk_widget_size_request(GTK_WIDGET(ui_study->canvas[view]), &requisition);
-  gtk_widget_set_usize(GTK_WIDGET(ui_rendering->canvas), 
-		       gdk_pixbuf_get_width(ui_rendering->rgb_image),
-		       gdk_pixbuf_get_height(ui_rendering->rgb_image));  
+  if (ui_rendering->contexts == NULL)
+    ui_rendering->rgb_image = image_blank(UI_RENDERING_BLANK_WIDTH, 
+					  UI_RENDERING_BLANK_HEIGHT, 
+					  blank_rgba);
+  else {
+    /* base the dimensions on the first context in the list.... */
+    size_dim = ceil(ui_rendering->zoom*REALPOINT_MAX(ui_rendering->contexts->rendering_context->dim));
+    ui_rendering->rgb_image = image_from_contexts(ui_rendering->contexts, 
+						  size_dim, size_dim, eyes,
+						  ui_rendering->stereo_eye_angle, 
+						  ui_rendering->stereo_eye_width); 
+  }
   
   /* put up the image */
-  if (ui_rendering->canvas_image != NULL) {
+  if (ui_rendering->canvas_image != NULL) 
     gnome_canvas_item_set(ui_rendering->canvas_image,
-			  "pixbuf", ui_rendering->rgb_image,
-			  NULL);
-  } else {
-    /* time to make a new image */
+			  "pixbuf", ui_rendering->rgb_image, NULL);
+  else /* time to make a new image */
     ui_rendering->canvas_image = 
       gnome_canvas_item_new(gnome_canvas_root(ui_rendering->canvas),
 			    gnome_canvas_pixbuf_get_type(),
@@ -170,7 +183,14 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 			    "x", (double) 0.0,
 			    "y", (double) 0.0,
 			    NULL);
-  }
+
+  width = gdk_pixbuf_get_width(ui_rendering->rgb_image);  
+  height = gdk_pixbuf_get_height(ui_rendering->rgb_image);  
+
+  /* reset the min size of the widget */
+  gnome_canvas_set_scroll_region(ui_rendering->canvas, 0.0, 0.0, width, height);
+  gtk_widget_set_usize(GTK_WIDGET(ui_rendering->canvas), width, height);
+
 
   return;
 } 
@@ -178,8 +198,8 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
 
 
 /* function that sets up the rendering dialog */
-void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame, 
-			 amide_time_t start, amide_time_t duration, interpolation_t interpolation) {
+void ui_rendering_create(volume_list_t * volumes, roi_list_t * rois, realspace_t coord_frame, 
+			 amide_time_t start, amide_time_t duration,  interpolation_t interpolation) {
   
   GtkWidget * packing_table;
   GtkWidget * check_button;
@@ -196,10 +216,10 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   ui_rendering_t * ui_rendering;
 
   /* sanity checks */
-  if (volumes == NULL)
-    return;
+  if ((volumes == NULL) && (rois == NULL)) return;
 
-  ui_rendering = ui_rendering_init(volumes, coord_frame, start, duration, interpolation);
+  ui_rendering = ui_rendering_init(volumes, rois, coord_frame, start, 
+				   duration, interpolation);
   ui_rendering->app = GNOME_APP(gnome_app_new(PACKAGE, "Rendering Window"));
   gtk_window_set_policy (GTK_WINDOW(ui_rendering->app), TRUE, TRUE, TRUE);
 
@@ -238,6 +258,11 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
 
 
   /* a canvas to indicate which way is x, y, and z */
+  //  gtk_widget_push_visual (gdk_rgb_get_visual ());
+  //  gtk_widget_push_colormap (gdk_rgb_get_cmap ());
+  //  axis_indicator = GNOME_CANVAS(gnome_canvas_new_aa ());
+  //  gtk_widget_pop_colormap ();
+  //  gtk_widget_pop_visual ();
   axis_indicator = GNOME_CANVAS(gnome_canvas_new());
   gtk_widget_set_usize(GTK_WIDGET(axis_indicator), 100, 100);
   gnome_canvas_set_scroll_region(axis_indicator, 0.0, 0.0, 100.0, 100.0);
@@ -343,9 +368,22 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   		     ui_rendering);
   gtk_box_pack_start(GTK_BOX(vbox), check_button, FALSE, FALSE, 0);
 
-  /* setup the main canvases */
+  /* the render immediately button.. */
+  check_button = gtk_check_button_new_with_label ("stereoscopic");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_rendering->stereoscopic);
+  gtk_signal_connect(GTK_OBJECT(check_button), "toggled", 
+  		     GTK_SIGNAL_FUNC(ui_rendering_cb_stereoscopic), 
+  		     ui_rendering);
+  gtk_box_pack_start(GTK_BOX(vbox), check_button, FALSE, FALSE, 0);
+
+  /* setup the main canvas */
+  //  gtk_widget_push_visual (gdk_rgb_get_visual ());
+  //  gtk_widget_push_colormap (gdk_rgb_get_cmap ());
+  //  ui_rendering->canvas = GNOME_CANVAS(gnome_canvas_new_aa ());
+  //  gtk_widget_pop_colormap ();
+  //  gtk_widget_pop_visual ();
+
   ui_rendering->canvas = GNOME_CANVAS(gnome_canvas_new());
-  ui_rendering_update_canvases(ui_rendering); /* fill in the canvas */
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(ui_rendering->canvas), 1,2,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL,
@@ -354,11 +392,11 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   gtk_signal_connect(GTK_OBJECT(ui_rendering->canvas), "event",
 		     GTK_SIGNAL_FUNC(ui_rendering_cb_canvas_event),
 		     ui_rendering);
-  
+  ui_rendering_update_canvases(ui_rendering); /* fill in the canvas */
 
   /* create the x, and y rotation dials */
   hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(packing_table), hbox, 1,2,0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), hbox, 1,3,0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
 		   X_PADDING, Y_PADDING);
   adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0.0, -90.0, 90.0, 1.0, 1.0, 1.0));
@@ -372,7 +410,7 @@ void ui_rendering_create(volume_list_t * volumes, realspace_t coord_frame,
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
   vbox = gtk_vbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(packing_table), vbox,  2,3,1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), vbox,  3,4,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL, 
 		   X_PADDING, Y_PADDING);
   label = gtk_label_new("x");

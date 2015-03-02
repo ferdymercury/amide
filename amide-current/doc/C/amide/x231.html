@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Aligning Data Sets</TITLE
+>Semiautomated Alignment</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -9,14 +9,14 @@ REL="HOME"
 TITLE="Amide's user manual"
 HREF="amide.html"><LINK
 REL="UP"
-TITLE="Manipulating Medical Data Sets "
-HREF="volumes.html"><LINK
+TITLE="Aligning Data Sets "
+HREF="alignment.html"><LINK
 REL="PREVIOUS"
-TITLE="Manipulating Medical Data Sets "
-HREF="volumes.html"><LINK
+TITLE="Aligning Data Sets "
+HREF="alignment.html"><LINK
 REL="NEXT"
-TITLE="Using ROI's "
-HREF="rois.html"></HEAD
+TITLE="Drawing Alignment Points"
+HREF="align-pt.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,20 +38,20 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="volumes.html"
+HREF="alignment.html"
 >Prev</A
 ></TD
 ><TD
 WIDTH="80%"
 ALIGN="center"
 VALIGN="bottom"
->Chapter 4. Manipulating Medical Data Sets</TD
+>Chapter 6. Aligning Data Sets</TD
 ><TD
 WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="rois.html"
+HREF="align-pt.html"
 >Next</A
 ></TD
 ></TR
@@ -64,51 +64,36 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN178"
->Aligning Data Sets</A
+NAME="AEN231"
+>Semiautomated Alignment</A
 ></H1
-><P
->    Aligning of data sets in amide is currently done manually.  The
-    easiest way to align data sets manually is as follows:
-  </P
 ><DIV
 CLASS="PROCEDURE"
 ><P
 ><B
->Manual Alignment</B
+>Semiautomated Alignment</B
 ></P
 ><OL
 TYPE="1"
 ><LI
 ><P
->	First rotate the data sets so that they are level with
-	respect to the transverse, coronal, and sagittal views.
+>       Specify at least four pairs of alignment points between the two
+       data sets that you wish to align.  Drawing alignment wizards is
+       described in <A
+HREF="align-pt.html"
+>the section called <I
+>Drawing Alignment Points</I
+></A
+>
       </P
 ></LI
 ><LI
 ><P
->	Set the center of each of the data sets to the origin
-	(0,0,0).
-      </P
-></LI
-><LI
-><P
->	Choose one of the data sets to be the "fixed" data set.
-      </P
-></LI
-><LI
-><P
->	Then slowly alter the center of the data sets relative to
-	the "fixed" data set until the data sets overly each other
-	as desired.
+>       Run the alignment wizard (under tools-&#62;alignment wizard).  
       </P
 ></LI
 ></OL
 ></DIV
-><P
->    In the future for amide... semi-automated and automated (mutual
-    information?) based registration methods
-  </P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -125,7 +110,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="volumes.html"
+HREF="alignment.html"
 >Prev</A
 ></TD
 ><TD
@@ -141,7 +126,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="rois.html"
+HREF="align-pt.html"
 >Next</A
 ></TD
 ></TR
@@ -150,20 +135,20 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Manipulating Medical Data Sets</TD
+>Aligning Data Sets</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
 VALIGN="top"
 ><A
-HREF="volumes.html"
+HREF="alignment.html"
 >Up</A
 ></TD
 ><TD
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Using ROI's</TD
+>Drawing Alignment Points</TD
 ></TR
 ></TABLE
 ></DIV

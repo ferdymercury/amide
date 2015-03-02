@@ -27,17 +27,12 @@
 #include <gnome.h>
 #include <math.h>
 #include "study.h"
+#include "image.h"
 #include "amitk_threshold.h"
 #include "ui_study.h"
 #include "ui_volume_dialog.h"
 #include "ui_volume_dialog_cb.h"
 #include "ui_time_dialog.h"
-#include "../pixmaps/PET.xpm"
-#include "../pixmaps/SPECT.xpm"
-#include "../pixmaps/CT.xpm"
-#include "../pixmaps/MRI.xpm"
-#include "../pixmaps/OTHER.xpm"
-
 
 /* function called when the name of the volume has been changed */
 void ui_volume_dialog_cb_change_name(GtkWidget * widget, gpointer data) {
@@ -82,29 +77,33 @@ void ui_volume_dialog_cb_change_scan_date(GtkWidget * widget, gpointer data) {
 void ui_volume_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
 
   volume_t * volume_new_info = data;
+  ui_study_t * ui_study;
   gchar * str;
   gint error;
   gdouble temp_val;
   floatpoint_t scale;
   which_entry_widget_t which_widget;
   realpoint_t old_center, new_center, shift;
-  GtkWidget * volume_dialog;
+  GtkWidget * dialog;
   GtkWidget * entry;
   guint i;
   gboolean aspect_ratio=TRUE;
   gboolean update_size_x = FALSE;
   gboolean update_size_y = FALSE;
   gboolean update_size_z = FALSE;
-  
+
+  /* get the pointer ot the volume dialog and get any necessary info */
+  dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
+  aspect_ratio =  GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(dialog), "aspect_ratio"));
+  ui_study = gtk_object_get_data(GTK_OBJECT(dialog), "ui_study"); 
+
   /* initialize the center variables based on the old volume info */
-  old_center = new_center = volume_calculate_center(volume_new_info); /* in real coords */
+  old_center = volume_center(volume_new_info); /* in real coords */
+  new_center = realspace_base_coord_to_alt(old_center, study_coord_frame(ui_study->study));
 
   /* figure out which widget this is */
   which_widget = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget), "type")); 
 
-  /* get the pointer ot the volume dialog and get any necessary info */
-  volume_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "volume_dialog");
-  aspect_ratio =  GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(volume_dialog), "aspect_ratio"));
 
 
   /* get the contents of the name entry box */
@@ -179,14 +178,15 @@ void ui_volume_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
   }
   
   /* recalculate the volume's offset based on the new center */
-  shift = rp_sub(new_center, old_center);
+  shift = rp_sub(realspace_alt_coord_to_base(new_center, study_coord_frame(ui_study->study)),
+		 old_center);
 
   /* and save any changes to the coord frame */
   rs_set_offset(&volume_new_info->coord_frame, rp_add(rs_offset(volume_new_info->coord_frame), shift));
 
   /* update the entry widgets as necessary */
   if (update_size_x) {
-    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_x");
+    entry =  gtk_object_get_data(GTK_OBJECT(dialog), "voxel_size_x");
     gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
     				     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
     				     volume_new_info);
@@ -198,7 +198,7 @@ void ui_volume_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
     				       volume_new_info);
   }
   if (update_size_y) {
-    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_y");
+    entry =  gtk_object_get_data(GTK_OBJECT(dialog), "voxel_size_y");
     gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
     				     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
     				     volume_new_info);
@@ -210,7 +210,7 @@ void ui_volume_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
     				       volume_new_info);
   }
   if (update_size_z) {
-    entry =  gtk_object_get_data(GTK_OBJECT(volume_dialog), "voxel_size_z");
+    entry =  gtk_object_get_data(GTK_OBJECT(dialog), "voxel_size_z");
     gtk_signal_handler_block_by_func(GTK_OBJECT(entry),
     				     GTK_SIGNAL_FUNC(ui_volume_dialog_cb_change_entry), 
     				     volume_new_info);
@@ -225,7 +225,7 @@ void ui_volume_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
 
 
   /* now tell the volume_dialog that we've changed */
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(volume_dialog));
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(dialog));
 
   return;
 }
@@ -282,7 +282,7 @@ void ui_volume_dialog_cb_change_axis(GtkAdjustment * adjustment, gpointer data) 
   ui_study = gtk_object_get_data(GTK_OBJECT(adjustment), "ui_study"); 
 
   /* saving the center, as we're rotating the volume around it's own center */
-  center = volume_calculate_center(volume_new_info); 
+  center = volume_center(volume_new_info); 
 
   /* figure out which scale widget called me */
   i_view = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"view"));
@@ -290,14 +290,13 @@ void ui_volume_dialog_cb_change_axis(GtkAdjustment * adjustment, gpointer data) 
   rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
 
   /* compensate for sagittal being a left-handed coordinate frame */
-  if (i_view == SAGITTAL)
-    rotation = -rotation; 
+  if (i_view == SAGITTAL) rotation = -rotation; 
 
   /* rotate the axis */
   realspace_rotate_on_axis(&volume_new_info->coord_frame,
 			   realspace_get_view_normal(study_coord_frame_axis(ui_study->study), i_view),
 			   rotation);
-  
+
   /* recalculate the offset of this volume based on the center we stored */
   REALPOINT_CMULT(-0.5,volume_new_info->corner,temp);
   rs_set_offset(&volume_new_info->coord_frame, center);
@@ -325,7 +324,7 @@ void ui_volume_dialog_cb_reset_axis(GtkWidget* widget, gpointer data) {
   realpoint_t center, temp;
 
   /* saving the center, as we're rotating the volume around it's own center */
-  center = volume_calculate_center(volume_new_info); 
+  center = volume_center(volume_new_info); 
 
   /* reset the axis */
   rs_set_axis(&volume_new_info->coord_frame, default_axis);
@@ -354,7 +353,9 @@ void ui_volume_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer dat
   guint i;
   GtkWidget * label;
   GtkWidget * pixmap;
-  GdkPixmap * icon;
+  GdkPixmap * gdkpixmap;
+  GdkBitmap * gdkbitmap;
+  GtkWidget * pix_box;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -408,32 +409,10 @@ void ui_volume_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer dat
 
 
   /* change the modality icon */
-  pixmap = gtk_object_get_data(GTK_OBJECT(ui_volume_list_item->tree_leaf), "pixmap");
-  switch (volume_new_info->modality) {
-  case SPECT:
-    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					NULL,NULL,SPECT_xpm);
-    break;
-  case MRI:
-    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					NULL,NULL,MRI_xpm);
-    break;
-  case CT:
-    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					NULL,NULL,CT_xpm);
-    break;
-  case OTHER:
-    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					NULL,NULL,OTHER_xpm);
-    break;
-  case PET:
-  default:
-    icon = gdk_pixmap_create_from_xpm_d(gtk_widget_get_parent_window(ui_study->tree),
-					NULL,NULL,PET_xpm);
-    break;
-  }
-  gtk_pixmap_set(GTK_PIXMAP(pixmap), icon, NULL);
-
+  pix_box = gtk_object_get_data(GTK_OBJECT(ui_volume_list_item->tree_leaf), "pix_box");
+  pixmap = gtk_object_get_data(GTK_OBJECT(pix_box), "pixmap");
+  gdkpixmap = image_get_volume_pixmap(ui_volume_list_item->volume, gtk_widget_get_parent_window(ui_study->tree), &gdkbitmap);
+  gtk_pixmap_set(GTK_PIXMAP(pixmap), gdkpixmap, gdkbitmap);
 
   /* redraw the volume */
   if (ui_volume_list_includes_volume(ui_study->current_volumes, ui_volume_list_item->volume))

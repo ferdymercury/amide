@@ -43,6 +43,7 @@ typedef struct _analysis_roi_t analysis_roi_t;
 typedef struct _analysis_study_t analysis_study_t;
 
 struct _analysis_frame_t {
+  amide_time_t duration;
   amide_time_t time_midpoint;
   amide_data_t mean;
   amide_data_t voxels;

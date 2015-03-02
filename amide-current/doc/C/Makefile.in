@@ -61,6 +61,7 @@ host_alias = @host_alias@
 host_triplet = @host@
 AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
+AMIDE_LIBGSL_LIBS = @AMIDE_LIBGSL_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AS = @AS@
@@ -118,7 +119,7 @@ amide_helpdir = $(datadir)/gnome/help/amide/C
 amide_help_DATA =  	amide.html		topic.dat
 
 
-SGML_FILES =  	amide.sgml			basics.sgml			file-handling.sgml		importing.sgml			rendering.sgml			rois.sgml			volumes.sgml		
+SGML_FILES =  	amide.sgml			basics.sgml			file-handling.sgml		importing.sgml			rendering.sgml			rois.sgml			volumes.sgml			alignment.sgml 		
 
 
 PERL_FILES =  	make-index.pl			make-docbook.pl	

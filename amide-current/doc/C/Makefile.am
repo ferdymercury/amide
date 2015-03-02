@@ -11,7 +11,8 @@ SGML_FILES =			\
 	importing.sgml		\
 	rendering.sgml		\
 	rois.sgml		\
-	volumes.sgml		
+	volumes.sgml		\
+	alignment.sgml 		
 
 PERL_FILES = 			\
 	make-index.pl		\

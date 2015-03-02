@@ -94,7 +94,7 @@ void ui_roi_analysis_dialog_cb_export(GtkWidget * widget, gpointer data) {
   file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export Statistics")));
 
   /* take a guess at the filename */
-  analysis_name = g_strdup_printf("%s_analysis:%s",study_name(roi_analyses->study), roi_analyses->roi->name);
+  analysis_name = g_strdup_printf("%s_analysis_{%s",study_name(roi_analyses->study), roi_analyses->roi->name);
   temp_analyses= roi_analyses->next_roi_analysis;
   while (temp_analyses != NULL) {
     temp_string = g_strdup_printf("%s+%s",analysis_name, temp_analyses->roi->name);
@@ -102,7 +102,7 @@ void ui_roi_analysis_dialog_cb_export(GtkWidget * widget, gpointer data) {
     analysis_name = temp_string;
     temp_analyses= temp_analyses->next_roi_analysis;
   }
-  temp_string = g_strdup_printf("%s.txt",analysis_name);
+  temp_string = g_strdup_printf("%s}.csv",analysis_name);
   g_free(analysis_name);
   analysis_name = temp_string;
   gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), analysis_name);

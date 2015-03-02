@@ -74,7 +74,7 @@ static GSList * prepend_intersection_point(GSList * points_list, realpoint_t new
 
 /* returns a singly linked list of intersection points between the roi
    and the given slice.  returned points are in the slice's coord_frame */
-GSList * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_slice) {
+GSList * roi_BOX_get_intersection_line(const roi_t * roi, const volume_t * view_slice) {
 
 
   GSList * return_points = NULL;
@@ -131,13 +131,13 @@ GSList * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view
       temp_rp = realspace_alt_coord_to_alt(view_rp, view_slice->coord_frame, roi->coord_frame);
       
 #ifdef ROI_BOX_TYPE
-      voxel_in = realpoint_in_box(temp_rp, roi_corner[0],roi_corner[1]);
+      voxel_in = rp_in_box(temp_rp, roi_corner[0],roi_corner[1]);
 #endif
 #ifdef ROI_CYLINDER_TYPE
-      voxel_in = realpoint_in_elliptic_cylinder(temp_rp, center, height, radius);
+      voxel_in = rp_in_elliptic_cylinder(temp_rp, center, height, radius);
 #endif
 #ifdef ROI_ELLIPSOID_TYPE
-      voxel_in = realpoint_in_ellipsoid(temp_rp,center,radius);
+      voxel_in = rp_in_ellipsoid(temp_rp,center,radius);
 #endif
 	
       /* is it an edge */
@@ -182,15 +182,16 @@ GSList * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view
 
 
 #if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
-/* we return the intersection data in the form of an roi because it's convienent */
-roi_t * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_slice) {
+/* we return the intersection data in the form of a volume slice because it's convienent */
+volume_t * roi_BOX_get_slice(const roi_t * roi, const volume_t * view_slice) {
+
   voxelpoint_t i_voxel;
   voxelpoint_t roi_vp;
   voxelpoint_t start, dim;
   realpoint_t view_rp;
   realpoint_t roi_rp;
   realpoint_t slice_corner[2];
-  roi_t * intersection_roi;
+  volume_t * intersection;
   realpoint_t temp_rp;
   data_set_UBYTE_t value;
 #ifdef ROI_ISOCONTOUR_2D_TYPE
@@ -202,9 +203,9 @@ roi_t * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_
   /* figure out the intersections */
   roi_subset_of_volume(roi, view_slice, 0, &start, &dim);
 
-  if (VOXELPOINT_EQUAL(dim, voxelpoint_zero)) return NULL;
-  intersection_roi = roi_init();
-  intersection_roi->isocontour = data_set_UBYTE_2D_init(0, dim.y, dim.x);
+  if (VOXELPOINT_EQUAL(dim, zero_vp)) return NULL;
+  intersection = volume_init();
+  intersection->data_set = data_set_UBYTE_2D_init(0, dim.y, dim.x);
 
   /* get the corners of the view slice in view coordinate space */
   slice_corner[0] = realspace_base_coord_to_alt(rs_offset(view_slice->coord_frame), 
@@ -229,10 +230,10 @@ roi_t * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_
       if (data_set_includes_voxel(roi->isocontour, roi_vp)) {
 	value = *DATA_SET_UBYTE_POINTER(roi->isocontour, roi_vp);
 	if ( value == 1)
-	  DATA_SET_UBYTE_SET_CONTENT(intersection_roi->isocontour, i_voxel) = 1;
+	  DATA_SET_UBYTE_SET_CONTENT(intersection->data_set, i_voxel) = 1;
 #ifdef ROI_ISOCONTOUR_2D_TYPE
 	else if ((value == 2) && ((y_edge) || (i_voxel.x == 0) || (i_voxel.x == (dim.x-1))))
-	  DATA_SET_UBYTE_SET_CONTENT(intersection_roi->isocontour, i_voxel) = 1;
+	  DATA_SET_UBYTE_SET_CONTENT(intersection->data_set, i_voxel) = 1;
 #endif
       }
 
@@ -241,19 +242,19 @@ roi_t * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_
     view_rp.y += view_slice->voxel_size.y;
   }
 
-  intersection_roi->coord_frame = view_slice->coord_frame;
-  intersection_roi->voxel_size = view_slice->voxel_size;
+  intersection->coord_frame = view_slice->coord_frame;
+  intersection->voxel_size = view_slice->voxel_size;
 
-  REALPOINT_MULT(start, intersection_roi->voxel_size, temp_rp);
-  rs_set_offset(&(intersection_roi->coord_frame), 
+  REALPOINT_MULT(start, intersection->voxel_size, temp_rp);
+  rs_set_offset(&(intersection->coord_frame), 
 		realspace_alt_coord_to_base(temp_rp, view_slice->coord_frame));
 
-  temp_rp = rs_offset(intersection_roi->coord_frame);
+  temp_rp = rs_offset(intersection->coord_frame);
 
-  REALPOINT_MULT(intersection_roi->isocontour->dim, intersection_roi->voxel_size, 
-		 intersection_roi->corner);
+  REALPOINT_MULT(intersection->data_set->dim, intersection->voxel_size, 
+		 intersection->corner);
   
-  return intersection_roi;
+  return intersection;
 }
 
 

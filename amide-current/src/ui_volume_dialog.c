@@ -107,11 +107,12 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
 
   /* figure out the ui_study_volume_list item corresponding to this volume */
   ui_volume_list_item = ui_volume_list_get_ui_volume(ui_study->current_volumes, volume);
-  if (ui_volume_list_item == NULL) return;
-
+  /* sanity checks */
+  g_return_if_fail(ui_volume_list_item != NULL);
+  g_return_if_fail(ui_volume_list_item->tree_leaf != NULL);
+    
   /* only want one of these dialogs at a time for a given volume */
-  if (ui_volume_list_item->dialog != NULL)
-    return;
+  if (ui_volume_list_item->dialog != NULL) return;
 
   /* and if the threshold dialog corresponds to this volume, kill it */
   if (ui_study->threshold_dialog != NULL)
@@ -119,10 +120,6 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
       gtk_widget_destroy(ui_study->threshold_dialog);
 
   
-  /* sanity checks */
-  g_return_if_fail(ui_volume_list_item != NULL);
-  g_return_if_fail(ui_volume_list_item->tree_leaf != NULL);
-    
   temp_string = g_strdup_printf("%s: Medical Data Set Modification Dialog",PACKAGE);
   volume_dialog = gnome_property_box_new();
   gtk_window_set_title(GTK_WINDOW(volume_dialog), temp_string);
@@ -256,10 +253,11 @@ void ui_volume_dialog_create(ui_study_t * ui_study, volume_t * volume) {
   gnome_property_box_append_page (GNOME_PROPERTY_BOX(volume_dialog), packing_table, label);
 
   /* widgets to change the location of the volume's center in real space and dimensions*/
-  label = gtk_label_new("Center (mm from origin)");
+  label = gtk_label_new("Center (mm from view origin)");
   gtk_table_attach(GTK_TABLE(packing_table), label, 1,2,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  center = volume_calculate_center(volume);
+  center = realspace_base_coord_to_alt(volume_center(volume), 
+				       study_coord_frame(ui_study->study));
 
   /* a separator for clarity */
   vseparator = gtk_vseparator_new();

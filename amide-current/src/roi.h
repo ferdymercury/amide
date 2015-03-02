@@ -77,9 +77,11 @@ roi_t * roi_copy(roi_t * src_roi);
 roi_t * roi_add_reference(roi_t * roi);
 void roi_set_name(roi_t * roi, gchar * new_name);
 realpoint_t roi_calculate_center(const roi_t * roi);
-
+void roi_get_view_corners(const roi_t * roi,
+			  const realspace_t view_coord_frame,
+			  realpoint_t view_corner[]);
 roi_list_t * roi_list_free(roi_list_t *roi_list);
-roi_list_t * roi_list_init(void);
+roi_list_t * roi_list_init(roi_t * roi);
 guint roi_list_count(roi_list_t * list);
 void roi_list_write_xml(roi_list_t *list, xmlNodePtr node_list, gchar * study_directory);
 roi_list_t * roi_list_load_xml(xmlNodePtr node_list, const gchar * study_directory);
@@ -89,10 +91,14 @@ roi_list_t * roi_list_add_roi_first(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_remove_roi(roi_list_t * list, roi_t * roi);
 roi_list_t * roi_list_copy(roi_list_t * src_roi_list);
 roi_list_t * roi_list_add_reference(roi_list_t * rois);
+void rois_get_view_corners(roi_list_t * rois,
+			   const realspace_t view_coord_frame,
+			   realpoint_t view_corner[]);
 GSList * roi_free_points_list(GSList * list);
 gboolean roi_undrawn(const roi_t * roi);
-GSList * roi_get_slice_intersection_line(const roi_t * roi, const volume_t * view_slice);
-roi_t * roi_get_slice_intersection_image(const roi_t * roi, const volume_t * view_slice);
+floatpoint_t rois_max_min_voxel_size(roi_list_t * rois);
+GSList * roi_get_intersection_line(const roi_t * roi, const volume_t * view_slice);
+volume_t * roi_get_slice(const roi_t * roi, const volume_t * view_slice);
 void roi_subset_of_volume(const roi_t * roi,
 			  const volume_t * volume,
 			  intpoint_t frame,

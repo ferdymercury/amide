@@ -217,8 +217,11 @@ void ui_rendering_movie_dialog_cb_change_end(GtkWidget * widget, gpointer data) 
 void ui_rendering_movie_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) {
   
   ui_rendering_movie_t * ui_rendering_movie = data;
+  rendering_list_t * temp_contexts;
   GtkWidget * file_selection;
   gchar * temp_string;
+  gchar * data_set_names = NULL;
+  static guint save_image_num = 0;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -228,9 +231,18 @@ void ui_rendering_movie_dialog_cb_apply(GtkWidget* widget, gint page_number, gpo
   file_selection = gtk_file_selection_new(_("Output MPEG As"));
 
   /* take a guess at the filename */
-  temp_string = 
-    g_strdup_printf("%s.mpg", 
-		    ui_rendering_movie->ui_rendering->contexts->rendering_context->volume->name);
+  temp_contexts = ui_rendering_movie->ui_rendering->contexts;
+  data_set_names = g_strdup(temp_contexts->rendering_context->name);
+  temp_contexts = temp_contexts->next;
+  while (temp_contexts != NULL) {
+    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->name);
+    g_free(data_set_names);
+    data_set_names = temp_string;
+    temp_contexts = temp_contexts->next;
+  }
+  temp_string = g_strdup_printf("Rendering%s(%s)_%d.mpg", 
+				ui_rendering_movie->ui_rendering->stereoscopic ? "_stereo_" : "_", 
+				data_set_names,save_image_num++);
   gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
   g_free(temp_string); 
 

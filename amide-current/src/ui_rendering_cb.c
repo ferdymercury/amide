@@ -95,7 +95,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
       if ((event->button.button == 1) || (event->button.button == 2)) {
 	dragging = TRUE;
 	initial_cp = last_cp = canvas_cp;
-	theta = realpoint_zero;
+	theta = zero_rp;
 	center_cp.x = center_cp.y = dim/2.0;
 
 	/* figure out the eight vertices */
@@ -123,8 +123,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 	  line_points->coords[2] = box_rp[k].x;  /* x2 */
 	  line_points->coords[3] = box_rp[k].y; /* y2 */
 	  color = 
-	    color_table_outline_color(ui_rendering->contexts->rendering_context->volume->color_table,
-				      TRUE);
+	    color_table_outline_color(ui_rendering->contexts->rendering_context->color_table, TRUE);
 	  rotation_box[i] = 
 	    gnome_canvas_item_new(gnome_canvas_root(ui_rendering->canvas), gnome_canvas_line_get_type(),
 				  "points", line_points, 
@@ -182,7 +181,7 @@ gboolean ui_rendering_cb_canvas_event(GtkWidget* widget,  GdkEvent * event, gpoi
 	}
 	/* recalculate the offset */
 	temp_rp.x = temp_rp.y = temp_rp.z = -dim/2.0;
-	rs_set_offset(&box_coord_frame, realpoint_zero);
+	rs_set_offset(&box_coord_frame, zero_rp);
 	rs_set_offset(&box_coord_frame, 
 		      realspace_alt_coord_to_base(temp_rp, box_coord_frame));
 
@@ -288,6 +287,23 @@ void ui_rendering_cb_immediate(GtkWidget * widget, gpointer data) {
 }
 
 
+/* function to switch into stereoscopic rendering mode */
+void ui_rendering_cb_stereoscopic(GtkWidget * widget, gpointer data) {
+  ui_rendering_t * ui_rendering = data;
+
+  ui_rendering->stereoscopic = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  /* render now if appropriate*/
+  if (ui_rendering->immediate) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering_update_canvases(ui_rendering); 
+    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  }
+
+  return;
+
+}
+
 
 
 
@@ -297,14 +313,14 @@ void ui_rendering_cb_rotate(GtkAdjustment * adjustment, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
   axis_t i_axis;
-  floatpoint_t rotation;
+  gdouble rot;
 
   /* figure out which rotate widget called me */
   i_axis = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(adjustment),"axis"));
-  rotation = (adjustment->value/180)*M_PI; /* get rotation in radians */
+  rot = (adjustment->value/180)*M_PI; /* get rotation in radians */
 
   /* update the rotation values */
-  rendering_list_set_rotation(ui_rendering->contexts, i_axis, rotation);
+  rendering_list_set_rotation(ui_rendering->contexts, i_axis, rot);
 
   /* render now if appropriate*/
   if (ui_rendering->immediate) {
@@ -383,7 +399,8 @@ static void ui_rendering_cb_export_ok(GtkWidget* widget, gpointer data) {
 
   /* yep, we still need to use imlib for the moment for generating output images,
      maybe gdk_pixbuf will have this functionality at some point */
-  export_image = gdk_imlib_create_image_from_data(gdk_pixbuf_get_pixels(ui_rendering->rgb_image), NULL, 
+  export_image = gdk_imlib_create_image_from_data(gdk_pixbuf_get_pixels(ui_rendering->rgb_image), 
+						  NULL, 
 						  gdk_pixbuf_get_width(ui_rendering->rgb_image),
 						  gdk_pixbuf_get_height(ui_rendering->rgb_image));
   if (export_image == NULL) {
@@ -419,16 +436,17 @@ void ui_rendering_cb_export(GtkWidget * widget, gpointer data) {
 
   /* take a guess at the filename */
   temp_contexts = ui_rendering->contexts;
-  data_set_names = g_strdup(temp_contexts->rendering_context->volume->name);
+  data_set_names = g_strdup(temp_contexts->rendering_context->name);
   temp_contexts = temp_contexts->next;
   while (temp_contexts != NULL) {
-    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->volume->name);
+    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->name);
     g_free(data_set_names);
     data_set_names = temp_string;
     temp_contexts = temp_contexts->next;
   }
-  temp_string = g_strdup_printf("Rendering_{%s}_%d.jpg", 
-				data_set_names,save_image_num);
+  temp_string = g_strdup_printf("Rendering%s{%s}_%d.jpg", 
+				ui_rendering->stereoscopic ? "_stereo_" : "_", 
+				data_set_names,save_image_num++);
   gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selection), temp_string);
   g_free(data_set_names);
   g_free(temp_string); 
@@ -459,10 +477,6 @@ void ui_rendering_cb_export(GtkWidget * widget, gpointer data) {
 
   /* run the dialog */
   gtk_widget_show(GTK_WIDGET(file_selection));
-
-
-  /* increment this number, so each guessed image name is unique */
-  save_image_num++;
 
   return;
 }

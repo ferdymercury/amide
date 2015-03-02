@@ -1,3 +1,19 @@
+0.5.0
+	* added ability to place fiducial reference points and align data sets
+	  using a rigid body transform (procrustes method)
+	* stereoscopic rendering support added
+	* roi's are now also rendered
+	* improved alpha blending algorithm
+	* fixed bug with loading in ASCII data
+	* imported files now are centered on 0,0,0 to begin with
+	* added ability to import CTI attenuation and sinogram files
+	* dropped the use of an inverse axis in the coord frame, as we can just use the transpose
+	* cheasy eye candy color scales on option menu in amitk_threshold
+	* removed colons from default exported file names
+	* roi statistics dialog now is resizeable, scrollable, and lists frame duration
+	* zoom is now based on all data sets in study, not just currently selected ones
+	* fixed small configuration bug when compiling without libmdc (thanks Adam Hupp)
+
 0.4.7
 	* can now pick between linear and orthogonal layouts for the 3 views
 	* alignment lines work again

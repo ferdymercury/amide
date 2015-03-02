@@ -28,7 +28,7 @@
 #include "config.h"
 #include <gtk/gtk.h>
 #include <math.h>
-#include <sys/stat.h>
+#include <time.h>
 #ifdef AMIDE_DEBUG
 #include <sys/timeb.h>
 #endif
@@ -38,6 +38,7 @@
 #include "pem_data_import.h"
 #include "cti_import.h"
 #include "medcon_import.h"
+
 
 /* external variables */
 gchar * interpolation_names[] = {"Nearest Neighbhor", 
@@ -80,13 +81,11 @@ gchar * import_menu_explanations[] = {
 /* removes a reference to a volume, frees up the volume if no more references */
 volume_t * volume_free(volume_t * volume) {
 
-  if (volume == NULL)
-    return volume;
+  if (volume == NULL) return volume;
 
   /* sanity checks */
   g_return_val_if_fail(volume->reference_count > 0, NULL);
   
-  /* remove a reference count */
   volume->reference_count--;
 
   /* if we've removed all reference's, free remaining data structures */
@@ -130,7 +129,7 @@ volume_t * volume_init(void) {
 
   if ((temp_volume = (volume_t *) g_malloc(sizeof(volume_t))) == NULL) {
     g_warning("%s: Couldn't allocate memory for the volume structure",PACKAGE);
-    return NULL;
+    return temp_volume;
   }
   temp_volume->reference_count = 1;
 
@@ -142,7 +141,7 @@ volume_t * volume_init(void) {
   temp_volume->frame_duration = NULL;
   temp_volume->distribution = NULL;
   temp_volume->modality = PET;
-  temp_volume->voxel_size = realpoint_zero;
+  temp_volume->voxel_size = zero_rp;
   if ((temp_volume->internal_scaling = data_set_FLOAT_0D_SCALING_init(1.0)) == NULL) {
     g_warning("%s: Couldn't allocate memory for internal scaling structure", PACKAGE);
     return volume_free(temp_volume);
@@ -150,9 +149,9 @@ volume_t * volume_init(void) {
   volume_set_scaling(temp_volume, 1.0);
   temp_volume->scan_start = 0.0;
   temp_volume->color_table = BW_LINEAR;
-  rs_set_offset(&temp_volume->coord_frame,realpoint_zero);
-  rs_set_axis(&temp_volume->coord_frame, default_axis);
-  temp_volume->corner = realpoint_zero;
+  temp_volume->coord_frame = default_coord_frame;
+  temp_volume->corner = zero_rp;
+  temp_volume->align_pts = NULL;
 
   /* set the scan date to the current time, good for an initial guess */
   time(&current_time);
@@ -176,6 +175,7 @@ gchar * volume_write_xml(volume_t * volume, gchar * study_directory) {
   gchar * data_set_name;
   gchar * internal_scaling_xml_filename;
   gchar * internal_scaling_name;
+  xmlNodePtr pts_nodes;
 
   /* make a guess as to our filename */
   count = 1;
@@ -219,6 +219,10 @@ gchar * volume_write_xml(volume_t * volume, gchar * study_directory) {
   xml_save_string(doc->children, "internal_scaling_file", internal_scaling_xml_filename);
   g_free(internal_scaling_xml_filename);
 
+  /* save our alignment points */
+  pts_nodes = xmlNewChild(doc->children, NULL, "Alignment_points", NULL);
+  align_pts_write_xml(volume->align_pts, pts_nodes, study_directory, volume->name);
+
   /* and save */
   xmlSaveFile(volume_xml_filename, doc);
 
@@ -235,6 +239,7 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   xmlDocPtr doc;
   volume_t * new_volume;
   xmlNodePtr nodes;
+  xmlNodePtr pts_nodes;
   modality_t i_modality;
   color_table_t i_color_table;
   gchar * temp_string;
@@ -249,16 +254,14 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
   /* parse the xml file */
   if ((doc = xmlParseFile(volume_xml_filename)) == NULL) {
     g_warning("%s: Couldn't Parse AMIDE volume xml file %s/%s",PACKAGE, study_directory,volume_xml_filename);
-    volume_free(new_volume);
-    return new_volume;
+    return volume_free(new_volume);
   }
 
   /* get the root of our document */
   if ((nodes = xmlDocGetRootElement(doc)) == NULL) {
     g_warning("%s: AMIDE volume xml file doesn't appear to have a root: %s/%s",
 	      PACKAGE, study_directory,volume_xml_filename);
-    volume_free(new_volume);
-    return new_volume;
+    return volume_free(new_volume);
   }
 
   /* get the volume name */
@@ -360,6 +363,13 @@ volume_t * volume_load_xml(gchar * volume_xml_filename, const gchar * study_dire
     /* -------- end legacy cruft -------- */
   }
 
+  /* load in the alignment points */
+  pts_nodes = xml_get_node(nodes, "Alignment_points");
+  if (pts_nodes != NULL) {
+    pts_nodes = pts_nodes->children;
+    if (pts_nodes != NULL)
+      new_volume->align_pts = align_pts_load_xml(pts_nodes, study_directory);
+  }
 
   /* and figure out the rest of the parameters */
   new_volume->voxel_size = xml_get_realpoint(nodes, "voxel_size");
@@ -414,7 +424,9 @@ volume_t * volume_import_file(import_method_t import_method, int submethod,
       import_method = IDL_DATA;
 #ifdef AMIDE_LIBECAT_SUPPORT      
     else if ((g_strcasecmp(import_filename_extension, "img")==0) ||
-	     (g_strcasecmp(import_filename_extension, "v")==0))
+	     (g_strcasecmp(import_filename_extension, "v")==0) ||
+	     (g_strcasecmp(import_filename_extension, "atn")==0) ||
+	     (g_strcasecmp(import_filename_extension, "scn")==0))
       /* if it appears to be a cti file */
       import_method = LIBECAT_DATA;
 #endif
@@ -529,6 +541,12 @@ volume_t * volume_add_reference(volume_t * volume) {
   return volume;
 }
 
+/* adds an alignment point to a volume */
+void volume_add_align_pt(volume_t * volume, align_pt_t * new_pt) {
+  g_return_if_fail(volume != NULL);
+  volume->align_pts = align_pts_add_pt(volume->align_pts, new_pt);
+  return;
+}
 
 /* sets the name of a volume
    note: new_name is copied rather then just being referenced by volume */
@@ -588,8 +606,8 @@ void volume_set_scaling(volume_t * volume, amide_data_t new_external_scaling) {
   return;
 }
 
-/* figure out the center of the volume in real coords */
-realpoint_t volume_calculate_center(const volume_t * volume) {
+/* figure out the center of the volume in the base coord frame */
+realpoint_t volume_center(const volume_t * volume) {
 
   realpoint_t center;
   realpoint_t corner[2];
@@ -599,7 +617,7 @@ realpoint_t volume_calculate_center(const volume_t * volume) {
   corner[1] = volume->corner;
  
   /* the center in volume coords is then just half the far corner */
-  REALPOINT_MADD(0.5,corner[1], 0.5,corner[0], center);
+  center = rp_cmult(0.5, rp_add(corner[1],corner[0]));
   
   /* now, translate that into real coords */
   center = realspace_alt_coord_to_base(center, volume->coord_frame);
@@ -607,6 +625,19 @@ realpoint_t volume_calculate_center(const volume_t * volume) {
   return center;
 }
 
+/* set the center of the volume in the base coord frame */
+/* make sure you set the volume's corner before calling this */
+void volume_set_center(volume_t * volume, realpoint_t center) {
+
+  realpoint_t offset;
+  center = realspace_base_coord_to_alt(center, volume->coord_frame);
+  offset = rp_sub(center, rp_cmult(0.5, volume->corner));
+  offset = realspace_alt_coord_to_base(offset, volume->coord_frame);
+
+  rs_set_offset(&volume->coord_frame, offset);
+
+  return;
+}
 
 
 /* returns the start time of the given frame */
@@ -674,10 +705,8 @@ amide_time_t volume_min_frame_duration(const volume_t * volume) {
 /* function to recalculate the far corner of a volume */
 void volume_recalc_far_corner(volume_t * volume) {
 
-  volume->corner.x = volume->data_set->dim.x * volume->voxel_size.x;
-  volume->corner.y = volume->data_set->dim.y * volume->voxel_size.y;
-  volume->corner.z = volume->data_set->dim.z * volume->voxel_size.z;
-
+  REALPOINT_MULT(volume->data_set->dim, volume->voxel_size, volume->corner);
+  return;
 }
 
 /* function to recalculation the max and min values of a volume */
@@ -921,11 +950,13 @@ amide_data_t volume_value(const volume_t * volume, const voxelpoint_t i) {
   }
 }
 
+
 /* free up a list of volumes */
 volume_list_t * volume_list_free(volume_list_t * volume_list) {
   
-  if (volume_list == NULL)
-    return volume_list;
+  volume_list_t * return_list;
+
+  if (volume_list == NULL) return volume_list;
 
   /* sanity check */
   g_return_val_if_fail(volume_list->reference_count > 0, NULL);
@@ -937,31 +968,39 @@ volume_list_t * volume_list_free(volume_list_t * volume_list) {
   /* things to do if our reference count is zero */
   if (volume_list->reference_count == 0) {
     /* recursively delete rest of list */
-    volume_list->next = volume_list_free(volume_list->next); 
+    return_list = volume_list_free(volume_list->next); 
+    volume_list->next = NULL;
 
     volume_list->volume = volume_free(volume_list->volume);
     g_free(volume_list);
     volume_list = NULL;
-  }
+  } else
+    return_list = volume_list;
 
-  return volume_list;
+  return return_list;
 }
 
 /* returns an initialized volume list node structure */
-volume_list_t * volume_list_init(void) {
+volume_list_t * volume_list_init(volume_t * volume) {
   
   volume_list_t * temp_volume_list;
   
-  if ((temp_volume_list = 
-       (volume_list_t *) g_malloc(sizeof(volume_list_t))) == NULL) {
-    return NULL;
+  if ((temp_volume_list = (volume_list_t *) g_malloc(sizeof(volume_list_t))) == NULL) {
+    g_warning("%s: Couldn't allocate memory for the volume list",PACKAGE);
+    return temp_volume_list;
   }
   temp_volume_list->reference_count = 1;
   
-  temp_volume_list->volume = NULL;
+  temp_volume_list->volume = volume_add_reference(volume);
   temp_volume_list->next = NULL;
   
   return temp_volume_list;
+}
+
+/* count the number of volumes in a volume list */
+guint volume_list_count(volume_list_t * list) {
+  if (list == NULL) return 0;
+  else return (1+volume_list_count(list->next));
 }
 
 /* function to write a list of volumes as xml data.  Function calls
@@ -1008,12 +1047,32 @@ volume_list_t * volume_list_load_xml(xmlNodePtr node_list, const gchar * study_d
   return new_volume_list;
 }
 
+/* makes a new volume_list which is a copy of a previous volume_list */
+volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
+
+  volume_list_t * dest_volume_list;
+  volume_t * temp_volume;
+
+  /* sanity check */
+  g_return_val_if_fail(src_volume_list != NULL, NULL);
+
+  /* make a separate copy in memory of the volume this list item points to */
+  temp_volume = volume_copy(src_volume_list->volume); 
+
+  dest_volume_list = volume_list_init(temp_volume); 
+  temp_volume = volume_free(temp_volume); /* no longer need a reference outside of the list's reference */
+
+  /* and make copies of the rest of the elements in this list */
+  if (src_volume_list->next != NULL)
+    dest_volume_list->next = volume_list_copy(src_volume_list->next);
+  
+  return dest_volume_list;
+}
 
 /* adds one to the reference count of a volume list element*/
 volume_list_t * volume_list_add_reference(volume_list_t * volume_list) {
-
+  g_return_val_if_fail(volume_list != NULL, NULL);
   volume_list->reference_count++;
-
   return volume_list;
 }
 
@@ -1046,10 +1105,7 @@ volume_list_t * volume_list_add_volume(volume_list_t * volume_list, volume_t * v
   }
   
   /* get a new volume_list data structure */
-  temp_list = volume_list_init();
-
-  /* add the volume to this new list item */
-  temp_list->volume = volume_add_reference(vol);
+  temp_list = volume_list_init(vol);
 
   if (volume_list == NULL)
     return temp_list;
@@ -1097,26 +1153,6 @@ volume_list_t * volume_list_remove_volume(volume_list_t * volume_list, volume_t 
   return volume_list;
 }
 
-
-/* makes a new volume_list which is a copy of a previous volume_list */
-volume_list_t * volume_list_copy(volume_list_t * src_volume_list) {
-
-  volume_list_t * dest_volume_list;
-
-  /* sanity check */
-  g_return_val_if_fail(src_volume_list != NULL, NULL);
-
-  dest_volume_list = volume_list_init();
-
-  /* make a separate copy in memory of the volume this list item points to */
-  dest_volume_list->volume = volume_copy(src_volume_list->volume);
-    
-  /* and make copies of the rest of the elements in this list */
-  if (src_volume_list->next != NULL)
-    dest_volume_list->next = volume_list_copy(src_volume_list->next);
-
-  return dest_volume_list;
-}
 
 /* function to get the earliest time in a list of volumes */
 amide_time_t volume_list_start_time(volume_list_t * volume_list) {
@@ -1221,7 +1257,7 @@ void volumes_get_view_corners(volume_list_t * volumes,
 }
 
 
-/* returns the minimum dimensional width of the list of volumes */
+/* returns the minimum voxel dimensions of the list of volumes */
 floatpoint_t volumes_min_voxel_size(volume_list_t * volumes) {
 
   floatpoint_t min_voxel_size, temp;
@@ -1229,10 +1265,10 @@ floatpoint_t volumes_min_voxel_size(volume_list_t * volumes) {
   g_assert(volumes!=NULL);
 
   if (volumes->next == NULL)
-    min_voxel_size = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+    min_voxel_size = rp_min_dim(volumes->volume->voxel_size);
   else {
     min_voxel_size = volumes_min_voxel_size(volumes->next);
-    temp = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+    temp = rp_min_dim(volumes->volume->voxel_size);
     if (temp < min_voxel_size) min_voxel_size = temp;
   }
 
@@ -1248,7 +1284,7 @@ floatpoint_t volumes_max_size(volume_list_t * volumes) {
     return 0.0;
   else {
     max_dim = volumes_max_size(volumes->next);
-    temp = REALPOINT_MAX_DIM(volumes->volume->voxel_size) * REALPOINT_MAX(volumes->volume->data_set->dim);
+    temp = rp_max_dim(volumes->volume->voxel_size) * REALPOINT_MAX(volumes->volume->data_set->dim);
     if (temp > max_dim)
       max_dim = temp;
   }
@@ -1271,10 +1307,10 @@ floatpoint_t volumes_max_min_voxel_size(volume_list_t * volumes) {
      scan).  The user can always increase the zoom later*/
   /* figure out out thickness */
   if (volumes->next == NULL)
-    min_voxel_size = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+    min_voxel_size = rp_min_dim(volumes->volume->voxel_size);
   else {
-    min_voxel_size = volumes_min_voxel_size(volumes->next);
-    temp = REALPOINT_MIN_DIM(volumes->volume->voxel_size);
+    min_voxel_size = volumes_max_min_voxel_size(volumes->next);
+    temp = rp_min_dim(volumes->volume->voxel_size);
     if (temp > min_voxel_size) min_voxel_size = temp;
   }
 
@@ -1291,7 +1327,7 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 
   max_dim = 0;
   while (volumes != NULL) {
-    temp = ceil(REALPOINT_MAX_DIM(volumes->volume->data_set->dim));
+    temp = ceil(vp_max_dim(volumes->volume->data_set->dim));
     if (temp > max_dim) max_dim = temp;
     volumes = volumes->next;
   }
@@ -1345,7 +1381,7 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 //  data_set_FLOAT_initialize_data(axis_volume->data_set, 0.0);
 //
 //  /* figure out an appropriate radius for our cylinders and spheres */
-//  radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/24;
+//  radius.x = rp_min_dim(axis_volume->corner)/24;
 //  radius.y = radius.x;
 //  radius.z = radius.x;
 
@@ -1380,7 +1416,7 @@ intpoint_t volumes_max_dim(volume_list_t * volumes) {
 //  objects_place_elliptic_cylinder(axis_volume, 0, object_coord_frame, 
 //				  center, radius, height, AXIS_VOLUME_DENSITY);
 
-//  radius.z = radius.y = radius.x = REALPOINT_MIN_DIM(axis_volume->corner)/12;
+//  radius.z = radius.y = radius.x = rp_min_dim(axis_volume->corner)/12;
 //  center.x = (axis_volume->corner.x*7.0/8.0);
 //  objects_place_ellipsoid(axis_volume, 0, object_coord_frame, 
 //			  center, radius, AXIS_VOLUME_DENSITY);
@@ -1519,12 +1555,13 @@ volume_t * volume_get_slice(const volume_t * volume,
 
 /* give a list ov volumes, returns a list of slices of equal size and orientation
    intersecting these volumes */
+/* thickness (of slice) in mm, negative indicates set this value according to voxel size */
 volume_list_t * volumes_get_slices(volume_list_t * volumes,
 				   const amide_time_t start,
 				   const amide_time_t duration,
 				   const floatpoint_t thickness,
+				   const floatpoint_t voxel_dim,
 				   const realspace_t view_coord_frame,
-				   const floatpoint_t zoom,
 				   const interpolation_t interpolation,
 				   const gboolean need_calc_max_min) {
 
@@ -1535,7 +1572,6 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   realpoint_t slice_corner;
   volume_list_t * slices=NULL;
   volume_t * temp_slice;
-  floatpoint_t min_voxel_size;
 #ifdef AMIDE_DEBUG
   struct timeval tv1;
   struct timeval tv2;
@@ -1544,8 +1580,6 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   gdouble total_time;
 #endif
 
-  /* thickness (of slice) in mm, negative indicates set this value
-     according to voxel size */
 
 #ifdef AMIDE_DEBUG
   /* let's do some timing */
@@ -1555,14 +1589,8 @@ volume_list_t * volumes_get_slices(volume_list_t * volumes,
   /* sanity check */
   g_assert(volumes != NULL);
 
-  /* get the minimum voxel dimension of this list of volumes */
-  min_voxel_size = volumes_max_min_voxel_size(volumes);
-  g_return_val_if_fail(min_voxel_size > 0.0, NULL);
-
-  /* compensate for zoom */
-  min_voxel_size = (1/zoom) * min_voxel_size;
-  voxel_size.x = voxel_size.y = min_voxel_size;
-  voxel_size.z = (thickness > 0) ? thickness : min_voxel_size;
+  voxel_size.x = voxel_size.y = voxel_dim;
+  voxel_size.z = (thickness > 0) ? thickness : voxel_dim;
 
   /* figure out all encompasing corners for the slices based on our viewing axis */
   volumes_get_view_corners(volumes, view_coord_frame, view_corner);

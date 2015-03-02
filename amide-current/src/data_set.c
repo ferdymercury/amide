@@ -88,7 +88,7 @@ data_set_t * data_set_init(void) {
   temp_data_set->reference_count = 1;
 
   /* put in some sensable values */
-  temp_data_set->dim = voxelpoint_zero;
+  temp_data_set->dim = zero_vp;
   temp_data_set->data = NULL;
   temp_data_set->format = FLOAT;
 

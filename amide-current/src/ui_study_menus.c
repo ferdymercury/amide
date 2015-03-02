@@ -113,12 +113,18 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   view_t i_view;
   import_method_t i_method;
+#ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_import_method_t i_libmdc;
-  roi_type_t i_roi_type;
   gint counter;
+#endif
+  roi_type_t i_roi_type;
+  interpolation_t i_interpolation;
+  object_t i_object;
 
 
+#ifdef AMIDE_LIBMDC_SUPPORT
   GnomeUIInfo libmdc_specific_menu[LIBMDC_NUM_IMPORT_METHODS+1];
+#endif
   GnomeUIInfo import_specific_menu[NUM_IMPORT_METHODS+1];
 
   GnomeUIInfo export_view_menu[] = {
@@ -164,22 +170,23 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   GnomeUIInfo add_roi_menu[NUM_ROI_TYPES+1];
 
+  GnomeUIInfo edit_item_menu[NUM_OBJECTS+1];
+  GnomeUIInfo delete_item_menu[NUM_OBJECTS];
+
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Edit Items"),
-			  N_("Edit the selected objects"),
-			  ui_study_cb_edit_objects,
-			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Delete Items"),
-			  N_("Delete the selected objects"),
-			  ui_study_cb_delete_objects,
-			  ui_study, NULL),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Edit Items"),
+			     N_("Edit the selected objects"),
+			     edit_item_menu),
+    GNOMEUIINFO_SUBTREE_HINT(N_("_Delete Items"),
+			     N_("Delete the selected objects"),
+			     delete_item_menu),
     GNOMEUIINFO_SUBTREE_HINT(N_("Add _ROI"),
 			     N_("Add a new ROI"),
 			     add_roi_menu),
-    //    GNOMEUIINFO_ITEM_DATA(N_("Add _Alignment Point"),
-    //			  N_("Add a new alignment point to the active data set"),
-    //			  ui_study_cb_add_alignment_point,
-    //			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("Add _Alignment Point"),
+			  N_("Add a new alignment point to the active data set"),
+			  ui_study_cb_add_alignment_point,
+			  ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_PREFERENCES_ITEM(ui_study_cb_preferences, ui_study),
     GNOMEUIINFO_END
@@ -234,11 +241,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo rendering_type_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Nearest Neighbor Conversion"),
 			  N_("convert image data for rendering using nearest neighbor interpolation (Fast)"),
-			  ui_study_cb_rendering_nearest_neighbor,
+			  ui_study_cb_rendering,
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Trilinear Conversion"),
 			  N_("convert image data for rendering using trilinear interpolation (Slow, High Quality)"),
-			  ui_study_cb_rendering_trilinear,
+			  ui_study_cb_rendering,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -259,22 +266,26 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* the submenu under the roi analysis menu item */
   GnomeUIInfo roi_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_All"),
-			  N_("caculate values for all ROI's"),
+    GNOMEUIINFO_ITEM_DATA(N_("Calculate _All ROIs"),
+			  N_("caculate values for all ROI's on the currently selected data sets"),
 			  ui_study_cb_calculate_all,
 			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Selected"),
-			  N_("calculate values only for the currently selected ROI's"),
+    GNOMEUIINFO_ITEM_DATA(N_("Calculate _Selected ROIS"),
+			  N_("calculate values only for the currently selected ROI's on the currently selected data sets"),
 			  ui_study_cb_calculate_selected,
 			  ui_study, NULL),
     GNOMEUIINFO_END
   };
 
-  /* defining the menus for doing analysis */
-  GnomeUIInfo analysis_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("Calculate _ROI's"),
-			     N_("Calculate values over the ROI's"), 
+  /* tools for analyzing/etc. the data */
+  GnomeUIInfo tools_menu[] = {
+    GNOMEUIINFO_SUBTREE_HINT(N_("_ROI Statistics"),
+			     N_("calculate statistics over the ROI's"), 
 			     roi_menu),
+    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
+			  N_("guides you throw the processing of semiautomative alignment"),
+			  ui_study_cb_alignment_selected,
+			  ui_study, NULL),
     GNOMEUIINFO_END
   };
 
@@ -283,7 +294,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_MENU_FILE_TREE(file_menu),
     GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
     GNOMEUIINFO_MENU_VIEW_TREE(view_menu),
-    GNOMEUIINFO_SUBTREE(N_("_Analysis"), analysis_menu),
+    GNOMEUIINFO_SUBTREE(N_("_Tools"), tools_menu),
     GNOMEUIINFO_MENU_HELP_TREE(ui_common_help_menu),
     GNOMEUIINFO_END
   };
@@ -294,6 +305,20 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 
   /* fill in some more menu definitions */
+  for (i_object = 0; i_object < NUM_OBJECTS; i_object ++)
+    ui_study_menus_fill_in_menuitem(&(edit_item_menu[i_object]),
+				    object_menu_names[i_object], 
+				    object_edit_menu_explanation[i_object],
+				    ui_study_cb_edit_objects, ui_study);
+  ui_study_menus_fill_in_end(&(edit_item_menu[NUM_OBJECTS]));
+
+  for (i_object = VOLUME; i_object < NUM_OBJECTS; i_object ++)
+    ui_study_menus_fill_in_menuitem(&(delete_item_menu[i_object-VOLUME]),
+				    object_menu_names[i_object], 
+				    object_delete_menu_explanation[i_object],
+				    ui_study_cb_delete_objects, ui_study);
+  ui_study_menus_fill_in_end(&(delete_item_menu[NUM_OBJECTS-VOLUME]));
+
   for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++) 
     ui_study_menus_fill_in_menuitem(&(add_roi_menu[i_roi_type]),
 				    roi_menu_names[i_roi_type], 
@@ -352,6 +377,18 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     }
   }
 #endif
+
+  for (i_interpolation = 0; i_interpolation < NUM_INTERPOLATIONS; i_interpolation++)
+    gtk_object_set_data(GTK_OBJECT(rendering_type_menu[i_interpolation].widget), 
+			"interpolation", GINT_TO_POINTER(i_interpolation));
+
+  for (i_object = 0; i_object < NUM_OBJECTS; i_object++)
+    gtk_object_set_data(GTK_OBJECT(edit_item_menu[i_object].widget), "type",
+			GINT_TO_POINTER(i_object));
+
+  for (i_object = VOLUME; i_object < NUM_OBJECTS; i_object++)
+    gtk_object_set_data(GTK_OBJECT(delete_item_menu[i_object-VOLUME].widget), "type",
+			GINT_TO_POINTER(i_object));
 
   for (i_roi_type = 0; i_roi_type < NUM_ROI_TYPES; i_roi_type++)
     gtk_object_set_data(GTK_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 

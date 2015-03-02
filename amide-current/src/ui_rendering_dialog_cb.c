@@ -135,6 +135,93 @@ void ui_rendering_dialog_cb_change_zoom(GtkWidget * widget, gpointer data) {
 }
 
 
+/* function to change the stereo eye angle */
+void ui_rendering_dialog_cb_change_eye_angle(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_t * ui_rendering = data;
+  GtkWidget * rendering_dialog;
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a floating point */
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+  if (temp_val > 90) /* 90 degrees seems like quite a bit... */
+    return;
+
+  ui_rendering->stereo_eye_angle = temp_val;
+
+  /* do updating */
+  if (ui_rendering->immediate) {
+    /* save user preferences */
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_float("RENDERING/EyeAngle", ui_rendering->stereo_eye_angle);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+    /* render */
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering_update_canvases(ui_rendering); 
+    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  } else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
+
+  return;
+}
+
+/* function to change the distance between stereo image pairs */
+void ui_rendering_dialog_cb_change_eye_width(GtkWidget * widget, gpointer data) {
+
+  ui_rendering_t * ui_rendering = data;
+  GtkWidget * rendering_dialog;
+  gchar * str;
+  gint error;
+  gdouble temp_val;
+
+  /* get the contents of the name entry box */
+  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+
+  /* convert to a floating point */
+  error = sscanf(str, "%lf", &temp_val);
+  g_free(str);
+
+  if (error == EOF)  /* make sure it's a valid number */
+    return;
+  temp_val = temp_val*gdk_screen_width()/gdk_screen_width_mm();
+  if (temp_val < 0) /* weird mutants? */
+    return;
+  if (temp_val > 1000) /* just plain wrong? */
+    return;
+
+  ui_rendering->stereo_eye_width = temp_val;
+
+  /* do updating */
+  if (ui_rendering->immediate) {
+    /* save user preferences */
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("RENDERING/EyeWidth", ui_rendering->stereo_eye_width);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+    /* render */
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering_update_canvases(ui_rendering); 
+    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  } else { /* otherwise, tell the dialog we've changed */
+    rendering_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "rendering_dialog");
+    gnome_property_box_changed(GNOME_PROPERTY_BOX(rendering_dialog));
+  }
+
+  return;
+}
+
 
 /* function to enable/disable depth cueing */
 void ui_rendering_dialog_cb_depth_cueing_toggle(GtkWidget * widget, gpointer data) {
@@ -255,7 +342,7 @@ void ui_rendering_dialog_cb_color_table(GtkWidget * widget, gpointer data) {
   i_color_table = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),"color_table"));
 
   /* set the color table */
-  context->volume->color_table = i_color_table;
+  context->color_table = i_color_table;
   
   /* do the updating */
   if (ui_rendering->immediate) {
@@ -365,6 +452,13 @@ void ui_rendering_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer 
   if (page_number != -1)
     return;
 
+  /* save user preferences */
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("RENDERING/EyeWidth", ui_rendering->stereo_eye_width);
+  gnome_config_set_float("RENDERING/EyeAngle", ui_rendering->stereo_eye_angle);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+
   /* and render */
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
   ui_rendering_update_canvases(ui_rendering); 
@@ -408,6 +502,3 @@ gboolean ui_rendering_dialog_cb_close(GtkWidget* widget, gpointer data) {
 }
 
 #endif
-
-
-

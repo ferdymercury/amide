@@ -35,7 +35,7 @@ data_set_t * data_set_`'m4_Variable_Type`'_0D_SCALING_init(data_set_`'m4_Variabl
 
   temp_data_set = data_set_init();
   g_return_val_if_fail(temp_data_set != NULL, NULL);
-  i = voxelpoint_zero;
+  i = zero_vp;
 
   temp_data_set->dim.x = temp_data_set->dim.y = temp_data_set->dim.z = temp_data_set->dim.t = 1;
   temp_data_set->format = `'m4_Variable_Type`';

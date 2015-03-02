@@ -117,13 +117,18 @@ data_format_t raw_data_format_data(raw_data_format_t raw_data_format) {
   case FLOAT_LE:
   case FLOAT_BE:
   case FLOAT_PDP:
+#if (SIZE_OF_AMIDE_DATA_T == 4)
+  case ASCII_NE:
+#endif
     {
       data_format = FLOAT;
       break;
     }
   case DOUBLE_LE:
   case DOUBLE_BE:
+#if (SIZE_OF_AMIDE_DATA_T == 8)
   case ASCII_NE:
+#endif
     {
       data_format = DOUBLE;
       break;
@@ -340,15 +345,10 @@ data_set_t * raw_data_read_file(const gchar * file_name,
       for (i.z = 0; (i.z < raw_data_set->dim.z) && (error >= 0) ; i.z++) {
 	for (i.y = 0; (i.y < raw_data_set->dim.y) && (error >= 0); i.y++) {
 	  for (i.x = 0; (i.x < raw_data_set->dim.x) && (error >= 0); i.x++) {
-#if (SIZE_OF_AMIDE_DATA_T == 8)
-	    /* convert to doubles */
-	    error = fscanf(file_pointer, "%lf", DATA_SET_FLOAT_POINTER(raw_data_set,i));
-#elif (SIZE_OF_AMIDE_DATA_T == 4)
-	    /* convert to float */
-	    error = fscanf(file_pointer, "%f", DATA_SET_FLOAT_POINTER(raw_data_set,i));
-#else
-#error "Unknown size for SIZE_OF_FLOATPOINT_T"
-#endif
+	    if (raw_data_set->format == DOUBLE)
+	      error = fscanf(file_pointer, "%lf", DATA_SET_DOUBLE_POINTER(raw_data_set,i));
+	    else // (raw_data_set->format == FLOAT)
+	      error = fscanf(file_pointer, "%f", DATA_SET_FLOAT_POINTER(raw_data_set,i));
 	    if (error == 0) error = EOF; /* if we couldn't read, may as well be EOF*/
 	  }
 	}
@@ -377,6 +377,9 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no_op\n");
+
 	      temp = GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
@@ -402,9 +405,13 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	/* copy this frame into the data set */
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no_op\n");
+
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
 		GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	    }
       }
       break;
 
@@ -451,6 +458,9 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      /* keep compiler from generating bad code with a noop, occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no op\n");
+
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	      temp = GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      float_p = (void *) &temp;
@@ -480,9 +490,13 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	/* copy this frame into the data set */
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      /* keep compiler from generating bad code with a noop occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no op\n");
+
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
 		GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	    }
       }
       break;
     case SSHORT_BE:
@@ -555,13 +569,16 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+
+	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no op\n");
+
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 	      temp = GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
-
 #endif
 	    }
       }
@@ -590,9 +607,13 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	/* copy this frame into the data set */
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
-	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
+	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
+	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
+	      if (i.x == -1) g_print("no_op\n");
+
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
 		GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	    }
       }
       break;
     case SSHORT_LE:
@@ -701,8 +722,9 @@ volume_t * raw_data_read_volume(const gchar * file_name,
       raw_data_volume->frame_duration[t] = 1.0;
   }
 
-  /* set the max/min values in the volume */
+  /* set any remaining parameters */
   volume_recalc_max_min(raw_data_volume);
+  volume_set_center(raw_data_volume, zero_rp);
 
   return raw_data_volume;
 }

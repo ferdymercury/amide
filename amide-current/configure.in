@@ -4,7 +4,7 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.4.7)
+AM_INIT_AUTOMAKE(amide, 0.5.0)
 
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
@@ -56,6 +56,13 @@ dnl AC_STDC_HEADERS
 dnl AC_ARG_PROGRAM
 AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
 
+dnl check for various libraries and programs that we might need
+AC_CHECK_LIB(gsl, gsl_error, FOUND_LIBGSL=yes, FOUND_LIBGSL=no, -lgslcblas -L/sw/lib)
+AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
+AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib)
+AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
+AC_PATH_PROG(MPEG_ENCODE, mpeg_encode) 
+
 GNOME_COMPILE_WARNINGS
 
 ALL_LINGUAS=
@@ -71,7 +78,6 @@ case "$host_os" in
 darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
 		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" ;;
 esac
-
 
 
 
@@ -92,10 +98,24 @@ else
 fi
 
 
+dnl let people compile without the GNU Scientific Library
+AC_ARG_ENABLE(
+	libgsl,
+	[  --enable-libgsl	Comple using the GNU Scientific Library [default=yes]],
+	enable_libgsl="$enableval",
+	enable_libgsl=yes)
+
+if (test $enable_libgsl = yes) && (test $FOUND_LIBGSL = yes); then
+	echo "Compiling with GNU Scientific Library support"
+	AMIDE_LIBGSL_LIBS="-lgsl"
+	AC_SUBST(AMIDE_LIBGSL_LIBS)
+	AC_DEFINE(AMIDE_LIBGSL_SUPPORT)
+else
+	echo "Compiling without the GNU Scientific Library"
+fi
 
 
 dnl Let people compile without having libecat (z_matrix_70)
-AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no)
 AC_ARG_ENABLE(
 	libecat, 
 	[  --enable-libecat	Compile with the libecat/CTI library [default=yes]],
@@ -115,8 +135,7 @@ fi
 
 
 
-dnl Check that we have libmdc and let people compile without having libmdc
-AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no)
+dnl Let people compile without having libmdc
 AC_ARG_ENABLE(
 	libmdc, 
 	[  --enable-libmdc	Compile with the xmedcon/libmdc library [default=yes]], 
@@ -133,8 +152,7 @@ else
 fi
 
 
-dnl Check that we have libvolpack on the system and let people compile without rendering/libvolpack
-AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm)
+dnl Let people compile without rendering/libvolpack
 AC_ARG_ENABLE(
 	libvolpack, 
 	[  --enable-libvolpack	Compile with libvolpack rendering support [default=yes]], 
@@ -151,8 +169,7 @@ else
 fi
 
 
-dnl Check that we have mpeg_encode on the system and let people compile without mpeg_encode
-AC_PATH_PROG(MPEG_ENCODE, mpeg_encode) 
+dnl Let people compile without mpeg_encode
 AC_ARG_ENABLE(
 	mpeg_encode, 
 	[  --enable-mpeg-encode	Compile with mpeg_encode movie support [default=yes]], 

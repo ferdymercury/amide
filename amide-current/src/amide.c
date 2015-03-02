@@ -34,6 +34,27 @@
 /* external variables */
 gchar * view_names[] = {"transverse", "coronal", "sagittal"};
 
+gchar * object_menu_names[] = {
+  "_Study",
+  "Selected _Data Sets",
+  "Selected _ROIs",
+  "Selected _Alignment Points"
+};
+
+gchar * object_edit_menu_explanation[] = {
+  "Edit study parameters",
+  "Edit parameters for selected data sets",
+  "Edit parameters for selected ROIs",
+  "Edit parameters for selected alignment points"
+};
+
+gchar * object_delete_menu_explanation[] = {
+  "BUG",
+  "Delete selected data sets",
+  "Delete selected ROIs",
+  "Delete selected alignment points"
+};
+
 /* internal variables */
 static GList * windows = NULL;
 

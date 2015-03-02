@@ -47,7 +47,6 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
   gchar * volume_name;
   gchar ** frags;
   guint file_offset = 35; /* the idl header is 35 bytes */
-  realpoint_t new_offset;
   realpoint_t new_axis[NUM_AXIS];
 
   /* acquire space for the volume structure */
@@ -143,10 +142,8 @@ volume_t * idl_data_import(const gchar * idl_data_filename) {
     new_axis[2].x = 0.0;
     new_axis[2].y = 1.0;
     new_axis[2].z = 0.0;
-    new_offset = rs_offset(idl_volume->coord_frame);
-    new_offset.x = idl_volume->data_set->dim.x*idl_volume->voxel_size.x;
-    rs_set_axis(&(idl_volume->coord_frame), new_axis);
-    rs_set_offset(&(idl_volume->coord_frame), new_offset);
+    rs_set_axis(&(idl_volume->coord_frame), new_axis); 
+    volume_set_center(idl_volume, zero_rp); /* reset the center, needed as we've reset the axis */
   }
 
   /* garbage collection */

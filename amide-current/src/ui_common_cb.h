@@ -25,6 +25,7 @@
 
 
 /* external functions */
+void ui_common_cb_entry_name(gchar * entry_string, gpointer data);
 void ui_common_cb_file_selection_cancel(GtkWidget* widget, gpointer data);
 void ui_common_cb_about(GtkWidget * button, gpointer data);
 

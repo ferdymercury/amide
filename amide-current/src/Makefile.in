@@ -61,6 +61,7 @@ host_alias = @host_alias@
 host_triplet = @host@
 AMIDE_DEBUG_CFLAGS = @AMIDE_DEBUG_CFLAGS@
 AMIDE_LIBECAT_LIBS = @AMIDE_LIBECAT_LIBS@
+AMIDE_LIBGSL_LIBS = @AMIDE_LIBGSL_LIBS@
 AMIDE_LIBMDC_LIBS = @AMIDE_LIBMDC_LIBS@
 AMIDE_LIBVOLPACK_LIBS = @AMIDE_LIBVOLPACK_LIBS@
 AS = @AS@
@@ -118,10 +119,10 @@ CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS)
 
 bin_PROGRAMS = amide
 
-amide_LDADD =  	$(GNOMEUI_LIBS) 	$(GNOME_LIBDIR) 	$(GNOME_XML2_LIBS) 	$(AMIDE_LIBECAT_LIBS) 	$(AMIDE_LIBMDC_LIBS) 	$(AMIDE_LIBVOLPACK_LIBS) 	$(EXTRA_GNOME_LIBS) 	-L/usr/local/lib 
+amide_LDADD =  	$(GNOMEUI_LIBS) 	$(GNOME_LIBDIR) 	$(GNOME_XML2_LIBS) 	$(AMIDE_LIBGSL_LIBS) 	$(AMIDE_LIBECAT_LIBS) 	$(AMIDE_LIBMDC_LIBS) 	$(AMIDE_LIBVOLPACK_LIBS) 	$(EXTRA_GNOME_LIBS) 	-lgsl -lgslcblas 	-L/usr/local/lib 
 
 
-amide_SOURCES =  	gtkdial.c 	gtkdial.h 	gtkdirsel.c 	gtkdirsel.h 	$(DATA_SET_VARIABLE_C) 	$(DATA_SET_VARIABLE_H) 	$(VOLUME_VARIABLE_C) 	$(VOLUME_VARIABLE_H) 	$(ROI_VARIABLE_C) 	$(ROI_VARIABLE_H) 	$(ANALYSIS_VARIABLE_C) 	$(ANALYSIS_VARIABLE_H) 	amide.c 	amide.h 	analysis.c 	analysis.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_preferences_dialog.c 	ui_preferences_dialog.h 	ui_preferences_dialog_cb.c 	ui_preferences_dialog_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_roi_analysis_dialog.c 	ui_roi_analysis_dialog.h 	ui_roi_analysis_dialog_cb.c 	ui_roi_analysis_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
+amide_SOURCES =  	gtkdial.c 	gtkdial.h 	gtkdirsel.c 	gtkdirsel.h 	$(DATA_SET_VARIABLE_C) 	$(DATA_SET_VARIABLE_H) 	$(VOLUME_VARIABLE_C) 	$(VOLUME_VARIABLE_H) 	$(ROI_VARIABLE_C) 	$(ROI_VARIABLE_H) 	$(ANALYSIS_VARIABLE_C) 	$(ANALYSIS_VARIABLE_H) 	amide.c 	amide.h 	align_pt.c 	align_pt.h 	alignment.c 	alignment.h 	analysis.c 	analysis.h 	amitk_threshold.c 	amitk_threshold.h 	color_table.c 	color_table.h 	cti_import.c 	cti_import.h 	data_set.c 	data_set.h 	idl_data_import.c 	idl_data_import.h 	image.c 	image.h 	medcon_import.c 	medcon_import.h 	pem_data_import.c 	pem_data_import.h 	raw_data.c 	raw_data.h 	raw_data_import.c 	raw_data_import.h 	raw_data_import_cb.c 	raw_data_import_cb.h 	realspace.c 	realspace.h 	rendering.c 	rendering.h 	roi.c 	roi.h 	study.c 	study.h 	ui_align_pt.c 	ui_align_pt.h 	ui_align_pt_dialog.c 	ui_align_pt_dialog.h 	ui_align_pt_dialog_cb.c 	ui_align_pt_dialog_cb.h 	ui_alignment_dialog.c 	ui_alignment_dialog.h 	ui_alignment_dialog_cb.c 	ui_alignment_dialog_cb.h 	ui_common.c 	ui_common.h 	ui_common_cb.c 	ui_common_cb.h 	ui_preferences_dialog.c 	ui_preferences_dialog.h 	ui_preferences_dialog_cb.c 	ui_preferences_dialog_cb.h 	ui_rendering.c 	ui_rendering.h 	ui_rendering_cb.c 	ui_rendering_cb.h 	ui_rendering_dialog.c 	ui_rendering_dialog.h 	ui_rendering_dialog_cb.c 	ui_rendering_dialog_cb.h 	ui_rendering_menus.c 	ui_rendering_menus.h 	ui_rendering_movie_dialog.c 	ui_rendering_movie_dialog.h 	ui_rendering_movie_dialog_cb.c 	ui_rendering_movie_dialog_cb.h 	ui_roi.c 	ui_roi.h 	ui_roi_dialog.c 	ui_roi_dialog.h 	ui_roi_dialog_cb.c 	ui_roi_dialog_cb.h 	ui_roi_analysis_dialog.c 	ui_roi_analysis_dialog.h 	ui_roi_analysis_dialog_cb.c 	ui_roi_analysis_dialog_cb.h 	ui_series.c 	ui_series.h 	ui_series_cb.c 	ui_series_cb.h 	ui_series_menus.c 	ui_series_menus.h 	ui_series_toolbar.c 	ui_series_toolbar.h 	ui_study.c 	ui_study.h 	ui_study_cb.c 	ui_study_cb.h 	ui_study_dialog.c 	ui_study_dialog.h 	ui_study_dialog_cb.c 	ui_study_dialog_cb.h 	ui_study_menus.c 	ui_study_menus.h 	ui_study_toolbar.c 	ui_study_toolbar.h 	ui_time_dialog.c 	ui_time_dialog.h 	ui_time_dialog_cb.c 	ui_time_dialog_cb.h 	ui_volume.c 	ui_volume.h 	ui_volume_dialog.c 	ui_volume_dialog.h 	ui_volume_dialog_cb.c 	ui_volume_dialog_cb.h 	volume.c 	volume.h 	xml.c 	xml.h
 
 
 ANALYSIS_VARIABLE_C =  	analysis_ELLIPSOID.c 	analysis_CYLINDER.c 	analysis_BOX.c 	analysis_ISOCONTOUR_2D.c 	analysis_ISOCONTOUR_3D.c 
@@ -196,12 +197,15 @@ roi_ELLIPSOID.$(OBJEXT) roi_CYLINDER.$(OBJEXT) roi_BOX.$(OBJEXT) \
 roi_ISOCONTOUR_2D.$(OBJEXT) roi_ISOCONTOUR_3D.$(OBJEXT) \
 analysis_ELLIPSOID.$(OBJEXT) analysis_CYLINDER.$(OBJEXT) \
 analysis_BOX.$(OBJEXT) analysis_ISOCONTOUR_2D.$(OBJEXT) \
-analysis_ISOCONTOUR_3D.$(OBJEXT) amide.$(OBJEXT) analysis.$(OBJEXT) \
-amitk_threshold.$(OBJEXT) color_table.$(OBJEXT) cti_import.$(OBJEXT) \
-data_set.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
-medcon_import.$(OBJEXT) pem_data_import.$(OBJEXT) raw_data.$(OBJEXT) \
-raw_data_import.$(OBJEXT) raw_data_import_cb.$(OBJEXT) \
-realspace.$(OBJEXT) rendering.$(OBJEXT) roi.$(OBJEXT) study.$(OBJEXT) \
+analysis_ISOCONTOUR_3D.$(OBJEXT) amide.$(OBJEXT) align_pt.$(OBJEXT) \
+alignment.$(OBJEXT) analysis.$(OBJEXT) amitk_threshold.$(OBJEXT) \
+color_table.$(OBJEXT) cti_import.$(OBJEXT) data_set.$(OBJEXT) \
+idl_data_import.$(OBJEXT) image.$(OBJEXT) medcon_import.$(OBJEXT) \
+pem_data_import.$(OBJEXT) raw_data.$(OBJEXT) raw_data_import.$(OBJEXT) \
+raw_data_import_cb.$(OBJEXT) realspace.$(OBJEXT) rendering.$(OBJEXT) \
+roi.$(OBJEXT) study.$(OBJEXT) ui_align_pt.$(OBJEXT) \
+ui_align_pt_dialog.$(OBJEXT) ui_align_pt_dialog_cb.$(OBJEXT) \
+ui_alignment_dialog.$(OBJEXT) ui_alignment_dialog_cb.$(OBJEXT) \
 ui_common.$(OBJEXT) ui_common_cb.$(OBJEXT) \
 ui_preferences_dialog.$(OBJEXT) ui_preferences_dialog_cb.$(OBJEXT) \
 ui_rendering.$(OBJEXT) ui_rendering_cb.$(OBJEXT) \
@@ -230,20 +234,23 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/amide.P .deps/amitk_threshold.P .deps/analysis.P \
-.deps/analysis_BOX.P .deps/analysis_CYLINDER.P \
-.deps/analysis_ELLIPSOID.P .deps/analysis_ISOCONTOUR_2D.P \
-.deps/analysis_ISOCONTOUR_3D.P .deps/color_table.P .deps/cti_import.P \
-.deps/data_set.P .deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P \
-.deps/data_set_SBYTE.P .deps/data_set_SINT.P .deps/data_set_SSHORT.P \
-.deps/data_set_UBYTE.P .deps/data_set_UINT.P .deps/data_set_USHORT.P \
-.deps/gtkdial.P .deps/gtkdirsel.P .deps/idl_data_import.P .deps/image.P \
+DEP_FILES =  .deps/align_pt.P .deps/alignment.P .deps/amide.P \
+.deps/amitk_threshold.P .deps/analysis.P .deps/analysis_BOX.P \
+.deps/analysis_CYLINDER.P .deps/analysis_ELLIPSOID.P \
+.deps/analysis_ISOCONTOUR_2D.P .deps/analysis_ISOCONTOUR_3D.P \
+.deps/color_table.P .deps/cti_import.P .deps/data_set.P \
+.deps/data_set_DOUBLE.P .deps/data_set_FLOAT.P .deps/data_set_SBYTE.P \
+.deps/data_set_SINT.P .deps/data_set_SSHORT.P .deps/data_set_UBYTE.P \
+.deps/data_set_UINT.P .deps/data_set_USHORT.P .deps/gtkdial.P \
+.deps/gtkdirsel.P .deps/idl_data_import.P .deps/image.P \
 .deps/medcon_import.P .deps/pem_data_import.P .deps/raw_data.P \
 .deps/raw_data_import.P .deps/raw_data_import_cb.P .deps/realspace.P \
 .deps/rendering.P .deps/roi.P .deps/roi_BOX.P .deps/roi_CYLINDER.P \
 .deps/roi_ELLIPSOID.P .deps/roi_ISOCONTOUR_2D.P \
-.deps/roi_ISOCONTOUR_3D.P .deps/study.P .deps/ui_common.P \
-.deps/ui_common_cb.P .deps/ui_preferences_dialog.P \
+.deps/roi_ISOCONTOUR_3D.P .deps/study.P .deps/ui_align_pt.P \
+.deps/ui_align_pt_dialog.P .deps/ui_align_pt_dialog_cb.P \
+.deps/ui_alignment_dialog.P .deps/ui_alignment_dialog_cb.P \
+.deps/ui_common.P .deps/ui_common_cb.P .deps/ui_preferences_dialog.P \
 .deps/ui_preferences_dialog_cb.P .deps/ui_rendering.P \
 .deps/ui_rendering_cb.P .deps/ui_rendering_dialog.P \
 .deps/ui_rendering_dialog_cb.P .deps/ui_rendering_menus.P \

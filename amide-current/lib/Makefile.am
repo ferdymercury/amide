@@ -33,6 +33,10 @@ amide_SOURCES = \
 	$(ANALYSIS_VARIABLE_H) \
 	amide.c \
 	amide.h \
+	align_pt.c \
+	align_pt.h \
+	alignment.c \
+	alignment.h \
 	analysis.c \
 	analysis.h \
 	amitk_threshold.c \
@@ -65,6 +69,16 @@ amide_SOURCES = \
 	roi.h \
 	study.c \
 	study.h \
+	ui_align_pt.c \
+	ui_align_pt.h \
+	ui_align_pt_dialog.c \
+	ui_align_pt_dialog.h \
+	ui_align_pt_dialog_cb.c \
+	ui_align_pt_dialog_cb.h \
+	ui_alignment_dialog.c \
+	ui_alignment_dialog.h \
+	ui_alignment_dialog_cb.c \
+	ui_alignment_dialog_cb.h \
 	ui_common.c \
 	ui_common.h \
 	ui_common_cb.c \
@@ -131,6 +145,7 @@ amide_SOURCES = \
 	volume.h \
 	xml.c \
 	xml.h
+
 
 ANALYSIS_VARIABLE_C = \
 	analysis_ELLIPSOID.c \

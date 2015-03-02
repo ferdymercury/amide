@@ -61,13 +61,10 @@ typedef struct realpoint_t {
 
 /* a realspace is the description of an alternative coordinate frame
    wrt to the base coordinate space.  Offset is in the base coordinate
-   frame.  Inverse is the inverse of the axis, and should be
-   precalculated from the axis.  All of these items should be accessed
-   using the proper functions */
+   frame.  All of these items should be accessed using the proper functions */
 typedef struct realspace_t {
   realpoint_t offset;
   realpoint_t axis[NUM_AXIS];
-  realpoint_t inverse[NUM_AXIS];
 } realspace_t;
 
 /* constants */
@@ -79,7 +76,6 @@ typedef struct realspace_t {
 
 /* returns the offset of a realspace */
 #define rs_offset(rs) ((rs).offset)
-#define rs_set_offset(rs, new_off) ((rs)->offset = (new_off))
 #define rs_specific_axis(rs, which) ((rs).axis[(which)])
 #define rs_all_axis(rs) ((rs).axis)
 
@@ -97,11 +93,10 @@ typedef struct realspace_t {
 				   ((vp1).z == (vp2).z) && \
 				   ((vp1).t == (vp2).t))
 
-/* returns the minimum dimension of the "box" defined by rp1*/
-#define REALPOINT_MIN_DIM(rp1) (MIN( MIN((rp1).x, (rp1).y), (rp1).z))
-
-/* returns the maximum dimension of the "box" defined by rp1 */
-#define REALPOINT_MAX_DIM(rp1) (REALPOINT_MAGNITUDE(rp1))
+/* figure out the real point that corresponds to the voxel coordinates */
+#define VOXEL_TO_REALPOINT(vox, size, real) (((real).x = (((floatpoint_t) (vox).x)+0.5) * (size).x), \
+					     ((real).y = (((floatpoint_t) (vox).y)+0.5) * (size).y), \
+					     ((real).z = (((floatpoint_t) (vox).z)+0.5) * (size).z))
 
 /* returned the maximum of rp1 */
 #define REALPOINT_MAX(rp1) (MAX( MAX((rp1).x, (rp1).y), (rp1).z))
@@ -168,6 +163,8 @@ inline realpoint_t rp_cmult(const floatpoint_t cmult, const realpoint_t rp1);
 inline realpoint_t rp_cross_product(const realpoint_t rp1, const realpoint_t rp2);
 inline floatpoint_t rp_dot_product(const realpoint_t rp1, const realpoint_t rp2);
 inline floatpoint_t rp_mag(const realpoint_t rp1);
+inline floatpoint_t rp_min_dim(const realpoint_t rp1);
+inline floatpoint_t rp_max_dim(const realpoint_t rp1);
 
 inline canvaspoint_t cp_diff(const canvaspoint_t cp1,const canvaspoint_t cp2);
 inline canvaspoint_t cp_sub(const canvaspoint_t cp1,const canvaspoint_t cp2);
@@ -177,17 +174,21 @@ inline floatpoint_t cp_mag(const canvaspoint_t cp1);
 
 inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2);
 inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2);
+inline floatpoint_t vp_max_dim(const voxelpoint_t vp1);
 
-gboolean realpoint_in_box(const realpoint_t p,
-			  const realpoint_t p0,
-			  const realpoint_t p1);
-gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
-					const realpoint_t center,
-					const floatpoint_t height,
-					const realpoint_t radius);
-gboolean realpoint_in_ellipsoid(const realpoint_t p,
-				const realpoint_t center,
-				const realpoint_t radius);
+gboolean rp_in_box(const realpoint_t p,
+		   const realpoint_t p0,
+		   const realpoint_t p1);
+gboolean rp_in_elliptic_cylinder(const realpoint_t p,
+				 const realpoint_t center,
+				 const floatpoint_t height,
+				 const realpoint_t radius);
+gboolean rp_in_ellipsoid(const realpoint_t p,
+			 const realpoint_t center,
+			 const realpoint_t radius);
+void rp_print(gchar * message, const realpoint_t rp);
+void rs_print(gchar * message, const realspace_t coord_frame);
+void rs_set_offset(realspace_t * rs, const realpoint_t new_offset);
 void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]);
 void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const realpoint_t in_corner[], 
 				     const realspace_t out_coord_frame, realpoint_t out_corner[] );
@@ -217,9 +218,12 @@ inline realpoint_t realspace_alt_dim_to_alt(const realpoint_t in,
 /* external variables */
 extern const gchar * axis_names[];
 extern const realpoint_t default_axis[NUM_AXIS];
-extern const realpoint_t realpoint_zero;
-extern const voxelpoint_t voxelpoint_zero;
-
+extern const realspace_t default_coord_frame;
+extern const realpoint_t zero_rp;
+extern const realpoint_t one_rp;
+extern const realpoint_t ten_rp;
+extern const voxelpoint_t zero_vp;
+extern const voxelpoint_t one_vp;
 
 
 #endif /* __REALSPACE_H__ */

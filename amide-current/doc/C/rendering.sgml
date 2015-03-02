@@ -83,6 +83,20 @@
       to be hit to cause rerendering of the data set.
     </para>
   </sect2>
+
+  <sect2><title>"Steroscopic" Checkbox</title>
+    <para>
+      Checking this box will inform the rendering process to generate
+      a stereoscopic image pair, rathen then just a single rendering.
+      A stereoscopic image pair is a pair of images that have been
+      generated at slightly different angles.  When viewed correctly,
+      these two images can be interpreted by the viewer's eyes as a
+      single image containing depth information.  
+
+      If this box is checked when a movie is generated, the movie will
+      consist of stereoscopic image pairs.
+    </para>
+  </sect2>
   
 
   <sect2><title>Rendering Menus</title>
@@ -139,6 +153,52 @@
       </para>
     </sect3>
 
+    <sect3><title>Zoom</title>
+      <para>
+	Determines the size at which the resultant rendered image will
+	be displayed.  Note that changing the zoom will not affect the
+	speed of the rendering, and increasing the zoom past 1 will
+	not increase the resolution of the rendered image.
+      </para>
+    </sect3>
+
+    <sect3><title>Stereosopic parameters</title>
+
+      <para>
+	These parameters are used for controlling the results when the
+	"stereoscopic" option has been chosen.
+      </para>
+      
+      <sect4><title>Stereo Angle</title>
+	<para>
+	  This is the angle offset (in degrees) between a pair of
+	  rendered images.  Increasing this number will generally give
+	  a greater sensation of depth in the image pair.  A
+	  Reasonable value for this parameter is between 2 and 5
+	  degrees.  Note that this parameter will be saved between
+	  different sessions of the program.
+	</para>
+      </sect4>
+      
+      <sect4><title>Eye Width (mm) </title>
+	<para>
+	  Ideally, this should be (roughly) the distance between the
+	  two rendered images, and corresponds to the distance between
+	  the user's eyes.  It is impossible for a person to resolve a
+	  stereoscopic pair if the images are farther apart then the
+	  person's eyes, since human eyes cannot move independently.
+	  While this parameter is specified in millimeters, the
+	  actually distance between the pair of images that gets
+	  displayed on the monitor depends on the setup of the
+	  computer.  If the monitor information reported by the
+	  operating system is not correct (usually the case), the "eye
+	  width" parameter will not be in true millimeters.  Note that
+	  this parameter will be saved between different sessions of
+	  the program.
+	</para>
+      </sect4>
+
+    </sect3>
 
     <sect3><title>Depth Cueing</title>
 

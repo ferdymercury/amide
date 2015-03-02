@@ -37,47 +37,6 @@
 
 </sect1>
   
-<sect1><title>Aligning Data Sets</title>
-  
-  <para>
-    Aligning of data sets in amide is currently done manually.  The
-    easiest way to align data sets manually is as follows:
-  </para>
-  
-  <procedure>
-    <title>Manual Alignment</title>
-    <step>
-      <para>
-	First rotate the data sets so that they are level with
-	respect to the transverse, coronal, and sagittal views.
-      </para>
-    </step>
-    <step>
-      <para>
-	Set the center of each of the data sets to the origin
-	(0,0,0).
-      </para>
-    </step>
-    <step>
-      <para>
-	Choose one of the data sets to be the "fixed" data set.
-      </para>
-    </step>
-    <step>
-      <para>
-	Then slowly alter the center of the data sets relative to
-	the "fixed" data set until the data sets overly each other
-	as desired.
-      </para>
-    </step>
-  </procedure>          
-  
-  <para>
-    In the future for amide... semi-automated and automated (mutual
-    information?) based registration methods
-  </para>
-</sect1>
-  
 
   
   

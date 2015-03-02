@@ -41,7 +41,6 @@ volume_t * pem_data_import(const gchar * pem_data_filename, const gchar * pem_mo
   gchar * volume_name;
   gchar ** frags;
   voxelpoint_t i;
-  realpoint_t new_offset;
   realpoint_t new_axis[NUM_AXIS];
   axis_t i_axis;
 
@@ -87,6 +86,7 @@ volume_t * pem_data_import(const gchar * pem_data_filename, const gchar * pem_mo
   /* now that we've figured out the header info, read in the PEM files */
   pem_volume = raw_data_read_volume(pem_data_filename, pem_volume, 
 				    PEM_DATA_FORMAT, PEM_FILE_OFFSET);
+
   /* correct the pem volume based on the model */
   if (pem_model_filename != NULL) {
 
@@ -158,10 +158,8 @@ volume_t * pem_data_import(const gchar * pem_data_filename, const gchar * pem_mo
     new_axis[XAXIS].x = -1.0;
     new_axis[XAXIS].y = 0.0;
     new_axis[XAXIS].z = 0.0;
-    new_offset = rs_offset(pem_volume->coord_frame);
-    new_offset.x = pem_volume->data_set->dim.x*pem_volume->voxel_size.x;
-    rs_set_offset(&pem_volume->coord_frame, new_offset);
     rs_set_axis(&pem_volume->coord_frame, new_axis);
+    volume_set_center(pem_volume, zero_rp); /* reset the center, needed as we've reset the axis */
   }
 
   return pem_volume; 

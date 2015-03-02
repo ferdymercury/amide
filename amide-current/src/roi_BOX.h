@@ -50,11 +50,11 @@
 #define ROI_BOX_TYPE
 
 #if defined(ROI_ELLIPSOID_TYPE) || defined(ROI_CYLINDER_TYPE) || defined(ROI_BOX_TYPE)
-GSList * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_slice);
+GSList * roi_BOX_get_intersection_line(const roi_t * roi, const volume_t * view_slice);
 #endif
 
 #if defined(ROI_ISOCONTOUR_2D_TYPE) || defined(ROI_ISOCONTOUR_3D_TYPE)
-roi_t * roi_BOX_get_slice_intersection(const roi_t * roi, const volume_t * view_slice);
+volume_t * roi_BOX_get_slice(const roi_t * roi, const volume_t * view_slice);
 void roi_BOX_set_isocontour(roi_t * roi, volume_t * vol, voxelpoint_t iso_vp);
 void roi_BOX_erase_area(roi_t * roi, voxelpoint_t erase_vp, gint area_size);
 #endif

@@ -58,9 +58,35 @@ volume_t * cti_import(const gchar * cti_filename) {
   time_t scan_time;
   gboolean two_dim_scale;
   realpoint_t temp_rp;
+  data_format_t data_format;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("%s: can't open file %s", PACKAGE, cti_filename);
+    return NULL;
+  }
+
+  /* check if we can handle the file type */
+  switch(cti_file->mhptr->file_type) {
+  case PetImage: /* i.e. CTI 6.4 */
+  case PetVolume: /* i.e. CTI 7.0 */
+  case AttenCor:
+  case Sinogram:
+    break;
+  case NoData:
+  case Normalization:
+  case PolarMap:
+  case ByteProjection:
+  case PetProjection: 
+  case Short3dSinogram: 
+  case Byte3dSinogram: 
+  case Norm3d:
+  case Float3dSinogram:
+  case InterfileImage:
+  case ByteImage:
+  case ByteVolume:
+  default:
+    g_warning("%s: can't open this CTI file type: %d", PACKAGE, cti_file->mhptr->file_type);
+    matrix_close(cti_file);
     return NULL;
   }
 
@@ -75,8 +101,24 @@ volume_t * cti_import(const gchar * cti_filename) {
     return NULL;
   }
 
-  /* make sure we know how to process this */
-  if (!((cti_subheader->data_type == VAX_Ix2) || (cti_subheader->data_type == SunShort))) {
+  /* make sure we know how to process the data type */
+  /* note that the libecat library handles endian issues */
+  switch (cti_subheader->data_type) {
+  case VAX_Ix2:  /* little endian short */
+  case SunShort: /* big endian short */
+    data_format = SSHORT;
+    break;
+  case IeeeFloat: /* big endian float */
+  case VAX_Rx4:  /* PDP float */
+    data_format = FLOAT;
+    break; /* handled data types */
+  case UnknownMatDataType:
+  case ByteData: 
+  case VAX_Ix4: /* little endian int */
+  case SunLong: /* big endian int? */
+  case ColorData:
+  case BitData:
+  default:
     g_warning("%s: no support for importing CTI files with data type of: %s", PACKAGE, 
 	      cti_data_types[((cti_subheader->data_type) < NumMatrixDataTypes) ? 
 			    cti_subheader->data_type : 0]);
@@ -100,22 +142,25 @@ volume_t * cti_import(const gchar * cti_filename) {
   }
 
   /* start acquiring some useful information */
-  temp_volume->data_set->format = SSHORT;
+  temp_volume->data_set->format = data_format;
   temp_volume->data_set->dim.x = cti_subheader->xdim;
   temp_volume->data_set->dim.y = cti_subheader->ydim;
+  temp_volume->data_set->dim.z = (cti_subheader->zdim == 1) ? 
+    cti_file->mhptr->num_planes : cti_subheader->zdim;
   temp_volume->data_set->dim.t = cti_file->mhptr->num_frames;
   num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
-  if (cti_subheader->zdim != 1) {
-    temp_volume->data_set->dim.z = cti_subheader->zdim;
-    /* volume image, so we'll need a 1D array of scaling factors */
-    temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
+
+  /* figure out the size of our factor array */
+  if ( data_format == FLOAT) { /* float image, so we don't need scaling factors */
     two_dim_scale = FALSE;
-  } else {
-    temp_volume->data_set->dim.z = cti_file->mhptr->num_planes;
-    /* slice image, so we'll need a 2D array of scaling factors */
+  } else if (cti_subheader->zdim == 1) {
+    /* slice image, non-float data, so we'll need a 2D array of scaling factors */
     temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
     temp_volume->internal_scaling->dim.z = temp_volume->data_set->dim.z;
     two_dim_scale = TRUE;
+  } else { /* volume image, so we'll need a 1D array of scaling factors */
+    temp_volume->internal_scaling->dim.t = temp_volume->data_set->dim.t;
+    two_dim_scale = FALSE;
   }
 
   /* malloc the space for the scaling factors */
@@ -169,69 +214,99 @@ volume_t * cti_import(const gchar * cti_filename) {
   g_strdelimit(temp_volume->scan_date, "\n", ' '); /* turns newlines to white space */
   g_strstrip(temp_volume->scan_date); /* removes trailing and leading white space */
 
+  /* get the voxel size */
+  temp_rp.x = 10*cti_subheader->pixel_size;
+  temp_rp.y = 10*cti_subheader->y_size;
+  temp_rp.z = 10*cti_subheader->z_size;
+  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) /*handle corrupted cti files */
+    g_warning("%s: dectected corrupted CTI file, will try to continue by guessing voxel_size", PACKAGE);
+  else if (FLOATPOINT_EQUAL(temp_rp.x, 0.0) || 
+	   FLOATPOINT_EQUAL(temp_rp.y, 0.0) || 
+	   FLOATPOINT_EQUAL(temp_rp.z, 0.0))
+    g_warning("%s: detected zero voxel size in CTI file, will try to continue by guessing voxel_size", PACKAGE);
+  if (isnan(temp_rp.x) || FLOATPOINT_EQUAL(temp_rp.x, 0.0)) temp_rp.x = 1.0;
+  if (isnan(temp_rp.y) || FLOATPOINT_EQUAL(temp_rp.y, 0.0)) temp_rp.y = temp_rp.x;
+  if (isnan(temp_rp.z) || FLOATPOINT_EQUAL(temp_rp.z, 0.0)) temp_rp.z = temp_rp.y;
+  temp_volume->voxel_size = temp_rp;
+
+  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
+  
+  /* get the origin of the data */
+  temp_rp.x = 10*cti_subheader->x_origin;
+  temp_rp.y = 10*cti_subheader->y_origin;
+  temp_rp.z = 10*cti_subheader->z_origin;
+  if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z))    /*handle corrupted cti files */
+    g_warning("%s: detected corrupted CTI file, will try to continue by guessing offset", PACKAGE);
+  if (isnan(temp_rp.x)) temp_rp.x = 0.0;
+  if (isnan(temp_rp.y)) temp_rp.y = 0.0;
+  if (isnan(temp_rp.z)) temp_rp.z = 0.0;
+  volume_set_center(temp_volume, temp_rp);
+
+  /* guess the start of the scan is the same as the start of the first frame of data */
+  /* note, CTI files specify time as integers in msecs */
+  /* check if we can handle the file type */
   switch(cti_file->mhptr->file_type) {
-  case PetImage: /* i.e. CTI 6.4 */
-  case PetVolume: /* i.e. CTI 7.0 */
-
-    /* set some more parameters */
-    temp_rp.x = 10*((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
-    temp_rp.y = 10*((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
-    temp_rp.z = 10*((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
-
-    /*handle corrupted cti files */
-    if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) 
-      g_warning("%s: dectected corrupted CTI file, will try to continue by guessing voxel_size", PACKAGE);
-    if (isnan(temp_rp.y)) temp_rp.x = 1.0;
-    if (isnan(temp_rp.y)) temp_rp.y = 1.0;
-    if (isnan(temp_rp.z)) temp_rp.z = 1.0;
-    temp_volume->voxel_size = temp_rp;
-
-    temp_rp.x = 10*((Image_subheader*)cti_subheader->shptr)->x_offset;
-    temp_rp.y = 10*((Image_subheader*)cti_subheader->shptr)->y_offset;
-    temp_rp.z = 10*((Image_subheader*)cti_subheader->shptr)->z_offset;
-    /*handle corrupted cti files */
-    if (isnan(temp_rp.x) || isnan(temp_rp.y) || isnan(temp_rp.z)) 
-      g_warning("%s: dectected corrupted CTI file, will try to continue by guessing offset", PACKAGE);
-    if (isnan(temp_rp.x)) temp_rp.x = 0.0;
-    if (isnan(temp_rp.y)) temp_rp.y = 0.0;
-    if (isnan(temp_rp.z)) temp_rp.z = 0.0;
-    rs_set_offset(&temp_volume->coord_frame, temp_rp);
-
-    /* guess the start of the scan is the same as the start of the first frame of data */
-    /* note, CTI files specify time as integers in msecs */
-    temp_volume->scan_start =  (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+  case PetImage: 
+  case PetVolume: 
+    temp_volume->scan_start = (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    break;
+  case AttenCor:
+    temp_volume->scan_start = 0.0; /* doesn't mean anything */
+    break;
+  case Sinogram:
+    temp_volume->scan_start = (((Scan_subheader*)cti_subheader->shptr)->frame_start_time)/1000.0;
+    break;
+  default:
+    break; /* should never get here */
+  }
 #ifdef AMIDE_DEBUG
-    g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
+  g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
 #endif
-    free_matrix_data(cti_subheader);
+  free_matrix_data(cti_subheader);
+  
 
-
-    /* allocate space for the array containing info on the duration of the frames */
-    if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
-      g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
-      matrix_close(cti_file);
-      return volume_free(temp_volume);
-    }
-
-    /* and load in the data */
-    for (i.t = 0; i.t < temp_volume->data_set->dim.t; i.t++) {
+  /* allocate space for the array containing info on the duration of the frames */
+  if ((temp_volume->frame_duration = volume_get_frame_duration_mem(temp_volume)) == NULL) {
+    g_warning("%s: couldn't allocate space for the frame duration info",PACKAGE);
+    matrix_close(cti_file);
+    return volume_free(temp_volume);
+  }
+  
+  /* and load in the data */
+  for (i.t = 0; i.t < temp_volume->data_set->dim.t; i.t++) {
 #ifdef AMIDE_DEBUG
-      g_print("\tloading frame:\t%d",i.t);
+    g_print("\tloading frame:\t%d",i.t);
 #endif
-      for (slice=0; slice < num_slices ; slice++) {
-	matnum=mat_numcod(i.t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
-
-	/* read in the corresponding cti slice */
-	if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
-	  g_warning("%s: can't get image matrix %x in file %s",\
-		    PACKAGE, matnum, cti_filename);
-	  matrix_close(cti_file);
-	  return volume_free(temp_volume);
-	}
-
-	/* set the frame duration, note, CTI files specify time as integers in msecs */
+    for (slice=0; slice < num_slices ; slice++) {
+      matnum=mat_numcod(i.t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
+      
+      /* read in the corresponding cti slice */
+      if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
+	g_warning("%s: can't get image matrix %x in file %s",\
+		  PACKAGE, matnum, cti_filename);
+	matrix_close(cti_file);
+	return volume_free(temp_volume);
+      }
+      
+      /* set the frame duration, note, CTI files specify time as integers in msecs */
+      switch(cti_file->mhptr->file_type) {
+      case PetImage: 
+      case PetVolume: 
 	temp_volume->frame_duration[i.t] = (((Image_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
-
+	break;
+      case AttenCor:
+	temp_volume->frame_duration[i.t] = 1.0; /* doesn't mean anything */
+	break;
+      case Sinogram:
+	temp_volume->frame_duration[i.t] = (((Scan_subheader*)cti_slice->shptr)->frame_duration)/1000.0;
+	break;
+      default:
+	break; /* should never get here */
+      }
+      
+      switch (data_format) {
+      case SSHORT:
+	
 	/* save the scale factor */
 	j.x = j.y = 0;
 	j.z = slice;
@@ -240,12 +315,12 @@ volume_t * cti_import(const gchar * cti_filename) {
 	  *DATA_SET_FLOAT_2D_SCALING_POINTER(temp_volume->internal_scaling, j) = cti_slice->scale_factor;
 	else if (slice == 0)
 	  *DATA_SET_FLOAT_1D_SCALING_POINTER(temp_volume->internal_scaling, j) = cti_slice->scale_factor;
-
+	
 	/* copy the data into the volume */
-	/* note, we compensate here for the fact that we define our origin as the bottom left,
-	   not top left like the CTI file */
+	/* note, we compensate here for the fact that we define 
+	   our origin as the bottom left, not top left like the CTI file */
 	for (i.z = slice*(temp_volume->data_set->dim.z/num_slices); 
-	     i.z < temp_volume->data_set->dim.z/num_slices + slice*(temp_volume->data_set->dim.z/num_slices) ; 
+	     i.z < temp_volume->data_set->dim.z/num_slices + slice*(temp_volume->data_set->dim.z/num_slices); 
 	     i.z++) {
 	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
@@ -256,22 +331,34 @@ volume_t * cti_import(const gchar * cti_filename) {
 		   +temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)
 		   +i.x));
 	}
-	/* that giint16 might have to be changed according to the data.... */
-	free_matrix_data(cti_slice);
+	break;
+      case FLOAT:
+	/* floating point data should use no scale factor */
+	
+	/* copy the data into the volume */
+	/* note, we compensate here for the fact that we define 
+	   our origin as the bottom left, not top left like the CTI file */
+	for (i.z = slice*(temp_volume->data_set->dim.z/num_slices); 
+	     i.z < temp_volume->data_set->dim.z/num_slices + slice*(temp_volume->data_set->dim.z/num_slices); 
+	     i.z++) {
+	  for (i.y = 0; i.y < temp_volume->data_set->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->data_set->dim.x; i.x++)
+	      DATA_SET_FLOAT_SET_CONTENT(temp_volume->data_set,i) =
+		*(((data_set_FLOAT_t *) cti_slice->data_ptr) + 
+		  (temp_volume->data_set->dim.y*temp_volume->data_set->dim.x*
+		   (i.z-slice*(temp_volume->data_set->dim.z/num_slices))
+		   +temp_volume->data_set->dim.x*(temp_volume->data_set->dim.y-i.y-1)
+		   +i.x));
+	}
+      default:
+	break; /* should never get here */
       }
-#ifdef AMIDE_DEBUG
-      g_print("\tduration:\t%5.3f\n",temp_volume->frame_duration[i.t]);
-#endif
+
+      free_matrix_data(cti_slice);
     }
-    break;
-  case InterfileImage:
-  case ByteImage:
-  case ByteVolume:
-  case Sinogram:
-  default:
-    g_warning("%s: can't open this CTI file type", PACKAGE);
-    matrix_close(cti_file);
-    return volume_free(temp_volume);
+#ifdef AMIDE_DEBUG
+    g_print("\tduration:\t%5.3f\n",temp_volume->frame_duration[i.t]);
+#endif
   }
 
   /* garbage collection */
@@ -279,7 +366,6 @@ volume_t * cti_import(const gchar * cti_filename) {
 
   /* setup remaining volume parameters */
   volume_set_scaling(temp_volume, 1.0); /* set the external scaling factor */
-  volume_recalc_far_corner(temp_volume); /* set the far corner of the volume */
   volume_recalc_max_min(temp_volume); /* set the max/min values in the volume */
 
   return temp_volume;

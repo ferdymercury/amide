@@ -34,10 +34,17 @@ const gchar * axis_names[] = {"x", "y", "z"};
 const realpoint_t default_axis[NUM_AXIS] = {{1.0,0.0,0.0},
 					    {0.0,1.0,0.0},
 					    {0.0,0.0,1.0}};
+const realspace_t default_coord_frame = {{0.0,0.0,0.0},
+					 {{1.0,0.0,0.0},
+					  {0.0,1.0,0.0},
+					  {0.0,0.0,1.0}}};
 
-const realpoint_t realpoint_zero = {0.0,0.0,0.0};
+const realpoint_t zero_rp = {0.0,0.0,0.0};
+const realpoint_t one_rp = {1.0,1.0,1.0};
+const realpoint_t ten_rp = {10.0,10.0,10.0};
 
-const voxelpoint_t voxelpoint_zero = {0,0,0,0};
+const voxelpoint_t zero_vp = {0,0,0,0};
+const voxelpoint_t one_vp = {1,1,1,1};
 
 /* returns abs(rp1) for realpoint structures */
 inline realpoint_t rp_abs(const realpoint_t rp1) {
@@ -126,6 +133,15 @@ inline floatpoint_t rp_mag(const realpoint_t rp1) {
   return sqrt(rp_dot_product(rp1, rp1));
 }
 
+/* returns the minimum dimension of the "box" defined by rp1*/
+inline floatpoint_t rp_min_dim(const realpoint_t rp1) {
+  return MIN( MIN(rp1.x,rp1.y), rp1.z);
+}
+
+/* returns the maximum dimension of the "box" defined by rp1 */
+inline floatpoint_t rp_max_dim(const realpoint_t rp1) {
+  return rp_mag(rp1);
+}
 
 
 
@@ -181,12 +197,18 @@ inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2) {
 	  (vp1.z == vp2.z) &&
 	  (vp1.t == vp2.t));
 }
+/* returns the maximum dimension of the "box" defined by vp1 */
+inline floatpoint_t vp_max_dim(const voxelpoint_t vp1) {
+  realpoint_t temp_rp;
+  VOXEL_TO_REALPOINT(vp1, one_rp, temp_rp);
+  return rp_mag(temp_rp);
+}
 
 
 /* returns true if the realpoint is in the given box */
-gboolean realpoint_in_box(const realpoint_t p,
-			  const realpoint_t p0,
-			  const realpoint_t p1) {
+gboolean rp_in_box(const realpoint_t p,
+		   const realpoint_t p0,
+		   const realpoint_t p1) {
 
 
   return (
@@ -206,10 +228,10 @@ gboolean realpoint_in_box(const realpoint_t p,
 
 /* returns true if the realpoint is in the elliptic cylinder 
    note: height is in the z direction, and radius.z isn't used for anything */
-gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
-					const realpoint_t center,
-					const floatpoint_t height,
-					const realpoint_t radius) {
+gboolean rp_in_elliptic_cylinder(const realpoint_t p,
+				 const realpoint_t center,
+				 const floatpoint_t height,
+				 const realpoint_t radius) {
 
   return ((1.0+2*CLOSE >= 
 	   (pow((p.x-center.x),2.0)/pow(radius.x,2.0) +
@@ -223,9 +245,9 @@ gboolean realpoint_in_elliptic_cylinder(const realpoint_t p,
 
 
 /* returns true if the realpoint is in the ellipsoid */
-gboolean realpoint_in_ellipsoid(const realpoint_t p,
-				const realpoint_t center,
-				const realpoint_t radius) {
+gboolean rp_in_ellipsoid(const realpoint_t p,
+			 const realpoint_t center,
+			 const realpoint_t radius) {
 
   	  
   return (1.0 + 3*CLOSE >= 
@@ -235,66 +257,114 @@ gboolean realpoint_in_ellipsoid(const realpoint_t p,
 }
 
 
-/* sets the axis, and also recalculates the inverse, for a coordinate frame (rs) */
+/* little utility function for debugging */
+void rp_print(gchar * message, const realpoint_t rp) {
+  g_print("%s\t%5.3f\t%5.3f\t%5.3f\n",message, rp.x, rp.y, rp.z);
+  return;
+}
+
+/* little utility function for debugging */
+void rs_print(gchar * message, const realspace_t coord_frame) {
+
+  g_print("%s\toffset:\t%5.3f\t%5.3f\t%5.3f\n", message, 
+	  coord_frame.offset.x, coord_frame.offset.y, coord_frame.offset.z);
+  g_print("\taxis x:\t%5.3f\t%5.3f\t%5.3f\n",
+	  coord_frame.axis[XAXIS].x,coord_frame.axis[XAXIS].y, coord_frame.axis[XAXIS].z);
+  g_print("\taxis y:\t%5.3f\t%5.3f\t%5.3f\n",
+	  coord_frame.axis[YAXIS].x,coord_frame.axis[YAXIS].y, coord_frame.axis[YAXIS].z);
+  g_print("\taxis z:\t%5.3f\t%5.3f\t%5.3f\n",
+	  coord_frame.axis[ZAXIS].x,coord_frame.axis[ZAXIS].y, coord_frame.axis[ZAXIS].z);
+  return;
+}
+
+/* adjusts the given axis into an orthogonal set */
+static void make_orthogonal(realpoint_t axis[]) {
+
+   realpoint_t temp;
+
+  /* make orthogonal via gram-schmidt */
+
+  /* leave the xaxis as is */
+
+  /* make the y axis orthogonal */
+  REALPOINT_MADD(1.0,
+		 axis[YAXIS],
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[YAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
+		 axis[XAXIS],
+		 axis[YAXIS]);
+
+  /* and make the z axis orthogonal */
+  REALPOINT_MADD(1.0,
+		 axis[ZAXIS],
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[ZAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
+		 axis[XAXIS],
+		 temp);
+  REALPOINT_MADD(1.0,
+		 temp,
+		 -1.0*REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[ZAXIS]) /
+		 REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS]),
+		 axis[YAXIS],
+		 axis[ZAXIS]);
+  return;
+}
+
+/* adjusts the given axis into a true orthonormal axis set */
+static void make_orthonormal(realpoint_t axis[]) {
+
+  /* make orthogonal via gram-schmidt */
+  make_orthogonal(axis);
+
+  /* now normalize the axis to make it orthonormal */
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS])),
+		  axis[XAXIS],
+		  axis[XAXIS]);
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS])),
+		  axis[YAXIS],
+		  axis[YAXIS]);
+  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[ZAXIS],axis[ZAXIS])),
+		  axis[ZAXIS],
+		  axis[ZAXIS]);
+  return;
+}
+
+/* sets the offset */
+void rs_set_offset(realspace_t * rs, const realpoint_t new_offset) {
+
+  rs->offset = new_offset;
+
+  /* get around some bizarre compiler bug */
+  if (isnan(rs->offset.x) || isnan(rs->offset.y) || isnan(rs->offset.z)) {
+    g_warning("%s: inappropriate offset, probably a compiler bug, working around", PACKAGE);
+      rs->offset = default_coord_frame.offset;
+  }
+    
+  return;
+}
+
+
+/* sets the axis, makes sure it's orthonormal */
 void rs_set_axis(realspace_t * rs, const realpoint_t new_axis[]) {
 
-  floatpoint_t detA;
-  axis_t i_axis, j_axis, k_axis;
-  floatpoint_t adjoint[NUM_AXIS][NUM_AXIS];
-  gboolean nan_detected = FALSE;
-
-  /* keep the old offset */
+  axis_t i_axis;
 
   /* set the axis of the realspace */
   for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
     rs->axis[i_axis]=new_axis[i_axis];
 
-  /* recalculate the inverse axis */
 
-  /* figure out the determinate of the new axis */
-  detA = 0.0
-    + new_axis[XAXIS].x*new_axis[YAXIS].y*new_axis[ZAXIS].z    
-    + new_axis[YAXIS].x*new_axis[ZAXIS].y*new_axis[XAXIS].z    
-    + new_axis[ZAXIS].x*new_axis[XAXIS].y*new_axis[YAXIS].z    
-    - new_axis[XAXIS].x*new_axis[ZAXIS].y*new_axis[YAXIS].z    
-    - new_axis[YAXIS].x*new_axis[XAXIS].y*new_axis[ZAXIS].z    
-    - new_axis[ZAXIS].x*new_axis[YAXIS].y*new_axis[XAXIS].z;
+  /* make sure it's orthonormal */
+  make_orthonormal(rs->axis);
 
-  if (isnan(detA)) { /* gcc does some funkyness at times .... */
-    detA=1.0; 
-    g_warning("%s: NaN generated for determinate, weirdness may follow", PACKAGE);
+  /* get around some bizarre compiler bug */
+  if (isnan(rs->axis[XAXIS].x) || isnan(rs->axis[XAXIS].y) || isnan(rs->axis[XAXIS].z) ||
+      isnan(rs->axis[YAXIS].x) || isnan(rs->axis[YAXIS].y) || isnan(rs->axis[YAXIS].z) ||
+      isnan(rs->axis[ZAXIS].x) || isnan(rs->axis[ZAXIS].y) || isnan(rs->axis[ZAXIS].z)) {
+    g_warning("%s: inappropriate axis, probably a compiler bug, working around", PACKAGE);
+    for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+      rs->axis[i_axis]=default_coord_frame.axis[i_axis];
   }
-
-  /* figure out the adjoint matrix */
-  for (i_axis=0; i_axis < NUM_AXIS; i_axis++) {
-    j_axis = (i_axis+1) == NUM_AXIS ? 0 : i_axis+1;
-    k_axis = (j_axis+1) == NUM_AXIS ? 0 : j_axis+1;
-    adjoint[i_axis][XAXIS] = 
-      (new_axis[j_axis].y * new_axis[k_axis].z - new_axis[j_axis].z*new_axis[k_axis].y);
-    adjoint[i_axis][YAXIS] = 
-      (new_axis[j_axis].z * new_axis[k_axis].x - new_axis[j_axis].x*new_axis[k_axis].z);
-    adjoint[i_axis][ZAXIS] = 
-      (new_axis[j_axis].x * new_axis[k_axis].y - new_axis[j_axis].y*new_axis[k_axis].x);
-  }
-  /* place the transpose of the adjunt, scalled by the detemrminante, into the inverse */
-  for (i_axis=0; i_axis < NUM_AXIS; i_axis++) {
-    rs->inverse[i_axis].x = adjoint[XAXIS][i_axis]/detA;
-    rs->inverse[i_axis].y = adjoint[YAXIS][i_axis]/detA;
-    rs->inverse[i_axis].z = adjoint[ZAXIS][i_axis]/detA;
-  }
-
-
-  for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
-    if (isnan(rs->inverse[i_axis].x) ||
-	isnan(rs->inverse[i_axis].y) ||
-	isnan(rs->inverse[i_axis].z))
-      nan_detected = TRUE;
-  if (nan_detected) {
-    g_warning("%s: NaN detected when generating inverse matrix, weirdness will likely follow", PACKAGE);
-    for (i_axis=0;i_axis<NUM_AXIS;i_axis++) 
-      rs->inverse[i_axis] = default_axis[i_axis];
-  }
-
   return;
 }
 
@@ -337,59 +407,6 @@ void realspace_get_enclosing_corners(const realspace_t in_coord_frame, const rea
 
 
 
-/* adjusts the given axis into an orthogonal set */
-static void realspace_make_orthogonal(realpoint_t axis[]) {
-
-  realpoint_t temp;
-
-  /* make orthogonal via gram-schmidt */
-
-  /* leave the xaxis as is */
-
-  /* make the y axis orthogonal */
-  REALPOINT_MADD(1.0,
-		 axis[YAXIS],
-		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[YAXIS]) /
-		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
-		 axis[XAXIS],
-		 axis[YAXIS]);
-
-  /* and make the z axis orthogonal */
-  REALPOINT_MADD(1.0,
-		 axis[ZAXIS],
-		 -1.0*REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[ZAXIS]) /
-		 REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS]),
-		 axis[XAXIS],
-		 temp);
-  REALPOINT_MADD(1.0,
-		 temp,
-		 -1.0*REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[ZAXIS]) /
-		 REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS]),
-		 axis[YAXIS],
-		 temp);
-  return;
-}
-
-/* adjusts the given axis into a true orthonormal axis set */
-static void realspace_make_orthonormal(realpoint_t axis[]) {
-
-  /* make orthogonal via gram-schmidt */
-  realspace_make_orthogonal(axis);
-
-  /* now normalize the axis to make it orthonormal */
-  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[XAXIS],axis[XAXIS])),
-		  axis[XAXIS],
-		  axis[XAXIS]);
-  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[YAXIS],axis[YAXIS])),
-		  axis[YAXIS],
-		  axis[YAXIS]);
-  REALPOINT_CMULT(1.0/sqrt(REALPOINT_DOT_PRODUCT(axis[ZAXIS],axis[ZAXIS])),
-		  axis[ZAXIS],
-		  axis[ZAXIS]);
-
-  return;
-}
-
 /* rotate the vector on the given axis by the given rotation */
 realpoint_t realpoint_rotate_on_axis(const realpoint_t in,
 				     const realpoint_t axis,
@@ -424,7 +441,7 @@ void realspace_rotate_on_axis(realspace_t * rs,
     new_axis[i_axis] = realpoint_rotate_on_axis(rs_specific_axis(*rs, i_axis), axis, theta);
 
   /* make sure the result is orthonomal */
-  realspace_make_orthonormal(new_axis);
+  make_orthonormal(new_axis);
 
   /* and setup the returned coordinate frame */
   rs_set_offset(rs, rs_offset(*rs));
@@ -500,7 +517,7 @@ realpoint_t realspace_get_view_normal(const realpoint_t axis[],
 				      const view_t view) {
 
   /* don't need layout here, as the ZAXIS isn't determined by the layout */
-  return realspace_get_orthogonal_view_axis(axis, view, ZAXIS, LINEAR_LAYOUT);
+  return realspace_get_orthogonal_view_axis(axis, view, LINEAR_LAYOUT, ZAXIS);
 }
 
 /* given a coordinate frame, and a view, and the layout, return the appropriate coordinate frame */
@@ -551,25 +568,25 @@ inline realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 /* convert a point from the base coordinates to the given alternative coordinate frame */
 inline realpoint_t realspace_base_coord_to_alt(realpoint_t in,
 					       const realspace_t out_alt_coord_frame) {
-
   realpoint_t return_point;
-
 
   /* compensate the inpoint for the offset of the new coordinate frame */
   REALPOINT_SUB(in, rs_offset(out_alt_coord_frame), in); 
 
+  /* instead of multiplying by inv(A), we multiple by transpose(A),
+     this is the same thing, as A is orthogonal */
   return_point.x = 
-    in.x * out_alt_coord_frame.inverse[XAXIS].x +
-    in.y * out_alt_coord_frame.inverse[YAXIS].x +
-    in.z * out_alt_coord_frame.inverse[ZAXIS].x;
+    in.x * out_alt_coord_frame.axis[XAXIS].x +
+    in.y * out_alt_coord_frame.axis[XAXIS].y +
+    in.z * out_alt_coord_frame.axis[XAXIS].z;
   return_point.y = 
-    in.x * out_alt_coord_frame.inverse[XAXIS].y +
-    in.y * out_alt_coord_frame.inverse[YAXIS].y +
-    in.z * out_alt_coord_frame.inverse[ZAXIS].y;
+    in.x * out_alt_coord_frame.axis[YAXIS].x +
+    in.y * out_alt_coord_frame.axis[YAXIS].y +
+    in.z * out_alt_coord_frame.axis[YAXIS].z;
   return_point.z = 
-    in.x * out_alt_coord_frame.inverse[XAXIS].z +
-    in.y * out_alt_coord_frame.inverse[YAXIS].z +
-    in.z * out_alt_coord_frame.inverse[ZAXIS].z;
+    in.x * out_alt_coord_frame.axis[ZAXIS].x +
+    in.y * out_alt_coord_frame.axis[ZAXIS].y +
+    in.z * out_alt_coord_frame.axis[ZAXIS].z;
 
   return return_point;
 }

@@ -289,6 +289,7 @@ static void ui_common_cursor_init(void) {
   ui_common_cursor[UI_CURSOR_OLD_ROI_ISOCONTOUR] = gdk_cursor_new(UI_COMMON_OLD_ROI_ISOCONTOUR_CURSOR);
   ui_common_cursor[UI_CURSOR_OLD_ROI_ERASE] = gdk_cursor_new(UI_COMMON_OLD_ROI_ERASE_CURSOR);
   ui_common_cursor[UI_CURSOR_VOLUME_MODE] = gdk_cursor_new(UI_COMMON_VOLUME_MODE_CURSOR);
+  ui_common_cursor[UI_CURSOR_ALIGN_PT_MODE] = gdk_cursor_new(UI_COMMON_ALIGN_PT_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_WAIT] = gdk_cursor_new(UI_COMMON_WAIT_CURSOR);
 
   ui_common_cursors_initialized = TRUE;

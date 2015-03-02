@@ -45,7 +45,7 @@ void volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_recalc_max_min(volume_t * volu
   g_print("\tcalculating max & min\t");
 #endif
 
-  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, voxelpoint_zero);
+  temp = VOLUME_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(volume, zero_vp);
   if (finite(temp)) max = min = temp;
   else max = min = 0.0; /* just throw in zero */
 
@@ -237,7 +237,9 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
   }
   slice->frame_duration[0] = volume_end-volume_start;
   if ((slice->data_set->data = data_set_get_data_mem(slice->data_set)) == NULL) {
-    g_warning("%s: couldn't allocate space for the slice",PACKAGE);
+    g_warning("%s: couldn't allocate space for the slice, wanted %dx%dx%dx%d elements",PACKAGE, 
+	      slice->data_set->dim.x, slice->data_set->dim.y, 
+	      slice->data_set->dim.z, slice->data_set->dim.t );
     return volume_free(slice);
   }
 
@@ -318,7 +320,7 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 
 	    /* get the nearest neighbor in the volume to this slice voxel */
 	    VOLUME_REALPOINT_TO_VOXEL(volume, volume_rp, i_frame, volume_vp);
-	    VOLUME_VOXEL_TO_REALPOINT(volume, volume_vp, nearest_rp);
+	    VOXEL_TO_REALPOINT(volume_vp, volume->voxel_size, nearest_rp);
 
 	    /* figure out which way to go to get the nearest voxels to our slice voxel*/
 	    REALPOINT_SUB(volume_rp, nearest_rp, diff);
@@ -339,7 +341,7 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
 		box_vp[l].z = (l & 0x4) ? volume_vp.z : volume_vp.z+1;
 	      box_vp[l].t = volume_vp.t;
 
-	      VOLUME_VOXEL_TO_REALPOINT(volume, box_vp[l], box_rp[l]);
+	      VOXEL_TO_REALPOINT(box_vp[l], volume->voxel_size, box_rp[l]);
 
 	      /* get the value of the point on the box */
 	      if (data_set_includes_voxel(volume->data_set, box_vp[l]))
@@ -394,8 +396,8 @@ volume_t * volume_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(const volume_t
       alt.y = (i_axis == YAXIS) ? slice->voxel_size.y : 0.0;
       alt.z = (i_axis == ZAXIS) ? voxel_length : 0.0;
       alt = rp_add(rp_sub(realspace_alt_coord_to_base(alt, slice->coord_frame),
-			  rs_offset(slice->coord_frame)),
-		   rs_offset(volume->coord_frame));
+      			  rs_offset(slice->coord_frame)),
+      		   rs_offset(volume->coord_frame));
       stride[i_axis] = realspace_base_coord_to_alt(alt, volume->coord_frame);
     }
 

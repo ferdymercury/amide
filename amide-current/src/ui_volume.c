@@ -32,6 +32,8 @@
 /* free up a ui_volume list */
 ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list) {
 
+  ui_volume_list_t * return_list;
+
   if (ui_volume_list == NULL) return ui_volume_list;
 
   /* sanity checks */
@@ -41,22 +43,25 @@ ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list) {
 
   /* things to do if we've removed all reference's */
   if (ui_volume_list->reference_count == 0) {
-    ui_volume_list->next = ui_volume_list_free(ui_volume_list->next);
+    return_list = ui_volume_list_free(ui_volume_list->next);
+    ui_volume_list->next = NULL;
     ui_volume_list->volume = volume_free(ui_volume_list->volume);
+    ui_volume_list->ui_align_pts = ui_align_pts_free(ui_volume_list->ui_align_pts);
     if (ui_volume_list->dialog != NULL) {
       gnome_dialog_close(GNOME_DIALOG(ui_volume_list->dialog));
       ui_volume_list->dialog = NULL;
-    }			 
+    } 
     g_free(ui_volume_list);
     ui_volume_list = NULL;
-  }
+  } else
+    return_list = ui_volume_list;
 
-  return ui_volume_list;
+  return return_list;
 
 }
 
 /* returns an initialized ui_volume_list node structure */
-ui_volume_list_t * ui_volume_list_init(void) {
+ui_volume_list_t * ui_volume_list_init(volume_t * volume) {
   
   ui_volume_list_t * temp_volume_list;
   
@@ -66,10 +71,11 @@ ui_volume_list_t * ui_volume_list_init(void) {
   }
   temp_volume_list->reference_count = 1;
 
-  temp_volume_list->volume = NULL;
+  temp_volume_list->volume = volume_add_reference(volume);
   temp_volume_list->dialog = NULL;
   temp_volume_list->tree_leaf = NULL;
   temp_volume_list->threshold = NULL;
+  temp_volume_list->ui_align_pts = NULL;
   temp_volume_list->series_list = NULL;
   temp_volume_list->next = NULL;
 
@@ -122,10 +128,8 @@ ui_volume_list_t * ui_volume_list_add_volume(ui_volume_list_t * ui_volume_list,
   }
 
   /* get a new structure */
-  temp_list = ui_volume_list_init();
+  temp_list = ui_volume_list_init(volume);
 
-  /* add the volume and other info to this list structure */
-  temp_list->volume = volume_add_reference(volume);
   temp_list->tree_leaf = tree_leaf;
 
   if  (ui_volume_list == NULL)

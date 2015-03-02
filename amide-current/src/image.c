@@ -27,6 +27,17 @@
 #include <gnome.h>
 #include <math.h>
 #include "image.h"
+#include "../pixmaps/PET.xpm"
+#include "../pixmaps/SPECT.xpm"
+#include "../pixmaps/CT.xpm"
+#include "../pixmaps/MRI.xpm"
+#include "../pixmaps/OTHER.xpm"
+#include "../pixmaps/CYLINDER.xpm"
+#include "../pixmaps/BOX.xpm"
+#include "../pixmaps/ELLIPSOID.xpm"
+#include "../pixmaps/ISOCONTOUR_2D.xpm"
+#include "../pixmaps/ISOCONTOUR_3D.xpm"
+
 
 /* callback function used for freeing the pixel data in a gdkpixbuf */
 static void image_free_rgb_data(guchar * pixels, gpointer data) {
@@ -35,34 +46,34 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 }
 
 
+
 GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, rgba_t color,
 				     realspace_t * return_frame,
 				     realpoint_t * return_corner) {
 
   GdkPixbuf * temp_image;
-  roi_t * intersection_roi;
+  volume_t * intersection;
   voxelpoint_t i;
   guchar * rgba_data;
   voxelpoint_t dim;
 
   
-  if ((intersection_roi = roi_get_slice_intersection_image(roi, slice)) == NULL)
-    return NULL;
+  if ((intersection = roi_get_slice(roi, slice)) == NULL) return NULL;
 
-  dim = intersection_roi->isocontour->dim;
+  dim = intersection->data_set->dim;
 
   if ((rgba_data = (guchar *) g_malloc(4*sizeof(guchar)*dim.x*dim.y)) == NULL) {
     g_warning("%s: couldn't allocate memory for rgba_data for roi image",PACKAGE);
     return NULL;
   }
 
-  *return_frame = intersection_roi->coord_frame;
-  *return_corner = intersection_roi->corner;
+  *return_frame = intersection->coord_frame;
+  *return_corner = intersection->corner;
 
   i.z = i.t = 0;
   for (i.y=0 ; i.y < dim.y; i.y++)
     for (i.x=0 ; i.x < dim.x; i.x++)
-      if (*DATA_SET_UBYTE_POINTER(intersection_roi->isocontour, i) == 1) {
+      if (*DATA_SET_UBYTE_POINTER(intersection->data_set, i) == 1) {
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+0] = color.r;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+1] = color.g;
 	rgba_data[(dim.y-i.y-1)*dim.x*4 + i.x*4+2] = color.b;
@@ -79,7 +90,7 @@ GdkPixbuf * image_slice_intersection(const roi_t * roi, const volume_t * slice, 
 					image_free_rgb_data, 
 					NULL);
 
-  intersection_roi = roi_free(intersection_roi);
+  intersection = volume_free(intersection);
 
   return temp_image;
 }
@@ -150,100 +161,124 @@ GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const 
 }
 
 /* function returns a GdkPixbuf from a rendering context */
-GdkPixbuf * image_from_renderings(rendering_list_t * contexts, gint16 width, gint16 height) {
+GdkPixbuf * image_from_contexts(rendering_list_t * contexts, 
+				gint16 image_width, gint16 image_height,
+				eye_t eyes, 
+				gdouble eye_angle, 
+				gint16 eye_width) {
 
-  rgba_t * rgba_data;
-  guchar * rgb_data;
+  gint image_num;
+  guint32 total_alpha;
+  rgba16_t * rgba16_data;
+  guchar * char_data;
   voxelpoint_t i;
   rgba_t rgba_temp;
   guint location;
-  gdouble total_alpha;
-  gdouble initial_alpha;
-  gdouble new_alpha;
   GdkPixbuf * temp_image;
-  gint context_num;
+  gint total_width;
+  gdouble rot;
+  eye_t i_eye;
+
+  total_width = image_width+(eyes-1)*eye_width;
 
   /* malloc space for a temporary storage buffer */
-  if ((rgba_data = (rgba_t *) g_malloc(sizeof(rgba_t) * width * height)) == NULL) {
-    g_warning("%s: couldn't allocate memory for rgba_data for transfering rendering to image",PACKAGE);
+  if ((rgba16_data = (rgba16_t *) g_malloc(sizeof(rgba16_t) * total_width * image_height)) == NULL) {
+    g_warning("%s: couldn't allocate memory for rgba16_data for transfering rendering to image",PACKAGE);
     return NULL;
   }
   /* and initialize it */
   i.z = 0;
-  for (i.y = 0; i.y < height; i.y++) 
-    for (i.x = 0; i.x < width; i.x++) {
-      location = i.y*width+i.x;
-      rgba_data[location].r = 0;
-      rgba_data[location].g = 0;
-      rgba_data[location].b = 0;
-      rgba_data[location].a = 0;
+  for (i.y = 0; i.y < image_height; i.y++) 
+    for (i.x = 0; i.x < total_width; i.x++) {
+      location = i.y*total_width+i.x;
+      rgba16_data[location].r = 0;
+      rgba16_data[location].g = 0;
+      rgba16_data[location].b = 0;
+      rgba16_data[location].a = 0;
     }
 
-  /* iterate through the contexts, tranfering the image data into the temp storage buffer */
-  context_num = 0;
-  while (contexts != NULL) {
-    context_num++; 
+  /* iterate through the eyes and contexts, tranfering the image data into the temp storage buffer */
+  image_num = 0; 
 
-    i.t = i.z = 0;
-    for (i.y = 0; i.y < height; i.y++) 
-      for (i.x = 0; i.x < width; i.x++) {
-	rgba_temp = color_table_lookup(contexts->rendering_context->image[i.x+i.y*width], 
-				      contexts->rendering_context->volume->color_table, 
-				      0, RENDERING_DENSITY_MAX);
-	/* compensate for the fact that X defines the origin as top left, not bottom left */
-	location = (height-i.y-1)*width+i.x;
-	total_alpha = (context_num-1.0) * rgba_data[location].a + rgba_temp.a;
-	if (total_alpha <= CLOSE) {
-	  total_alpha = CLOSE;
-	  initial_alpha = (context_num-1.0)*CLOSE/context_num;
-	  new_alpha = CLOSE/context_num;
-	} else {
-	  initial_alpha = (context_num-1.0) * rgba_data[location].a;
-	  new_alpha = rgba_temp.a;
+  while (contexts != NULL) {
+
+    for (i_eye = 0; i_eye < eyes; i_eye ++) {
+      image_num++; 
+
+      if (eyes == 1) rot = 0.0;
+      else rot = (-0.5 + i_eye*1.0) * eye_angle;
+      rot = M_PI*rot/180; /* convert to radians */
+
+      rendering_context_set_rotation(contexts->rendering_context, YAXIS, -rot);
+      rendering_context_render(contexts->rendering_context);
+      rendering_context_set_rotation(contexts->rendering_context, YAXIS, rot);
+
+      i.t = i.z = 0;
+      for (i.y = 0; i.y < image_height; i.y++) 
+	for (i.x = 0; i.x < image_width; i.x++) {
+	  rgba_temp = color_table_lookup(contexts->rendering_context->image[i.x+i.y*image_width], 
+					 contexts->rendering_context->color_table, 
+					 0, RENDERING_DENSITY_MAX);
+	  /* compensate for the fact that X defines the origin as top left, not bottom left */
+	  location = (image_height-i.y-1)*total_width+i.x+i_eye*eye_width;
+	  total_alpha = rgba16_data[location].a + rgba_temp.a;
+	  if (total_alpha == 0) {
+	    rgba16_data[location].r = (((image_num-1)*rgba16_data[location].r + 
+					rgba_temp.r)/
+				       ((gdouble) image_num));
+	    rgba16_data[location].g = (((image_num-1)*rgba16_data[location].g + 
+					rgba_temp.g)/
+				       ((gdouble) image_num));
+	    rgba16_data[location].b = (((image_num-1)*rgba16_data[location].b + 
+					rgba_temp.b)/
+				       ((gdouble) image_num));
+	  } else if (rgba16_data[location].a == 0) {
+	    rgba16_data[location].r = rgba_temp.r;
+	    rgba16_data[location].g = rgba_temp.g;
+	    rgba16_data[location].b = rgba_temp.b;
+	    rgba16_data[location].a = rgba_temp.a;
+	  } else if (rgba_temp.a != 0) {
+	    rgba16_data[location].r = ((rgba16_data[location].r*rgba16_data[location].a 
+					+ rgba_temp.r*rgba_temp.a)/
+				       ((double) total_alpha));
+	  rgba16_data[location].g = ((rgba16_data[location].g*rgba16_data[location].a 
+				      + rgba_temp.g*rgba_temp.a)/
+				     ((double) total_alpha));
+	  rgba16_data[location].b = ((rgba16_data[location].b*rgba16_data[location].a 
+				      + rgba_temp.b*rgba_temp.a)/
+				     ((double) total_alpha));
+	  rgba16_data[location].a = total_alpha;
+	  }
 	}
-	rgba_data[location].r = 
-	  ((initial_alpha* rgba_data[location].r) +
-	   (new_alpha * rgba_temp.r)) /
-	  total_alpha;
-	rgba_data[location].g = 
-	  ((initial_alpha* rgba_data[location].g) +
-	   (new_alpha * rgba_temp.g)) /
-	  total_alpha;
-	rgba_data[location].b = 
-	  ((initial_alpha* rgba_data[location].b) +
-	   (new_alpha * rgba_temp.b)) /
-	  total_alpha;
-	rgba_data[location].a = total_alpha;
-      }
-    
+    }      
     contexts = contexts->next;
   }
 
   /* malloc space for the true rgb buffer */
-  if ((rgb_data = (guchar *) g_malloc(sizeof(guchar) * 3 * height * width)) == NULL) {
-    g_warning("%s: couldn't allocate memory for rgba_data for rendering image",PACKAGE);
-    g_free(rgba_data);
+  if ((char_data = (guchar *) g_malloc(3*sizeof(guchar) * image_height * total_width)) == NULL) {
+    g_warning("%s: couldn't allocate memory for char_data for rendering image",PACKAGE);
+    g_free(rgba16_data);
     return NULL;
   }
 
   /* now convert our temp rgb data to real rgb data */
   i.z = 0;
-  for (i.y = 0; i.y < height; i.y++) 
-    for (i.x = 0; i.x < width; i.x++) {
-      location = i.y*width+i.x;
-      rgb_data[3*location+0] = rgba_data[location].r;
-      rgb_data[3*location+1] = rgba_data[location].g;
-      rgb_data[3*location+2] = rgba_data[location].b;
+  for (i.y = 0; i.y < image_height; i.y++) 
+    for (i.x = 0; i.x < total_width; i.x++) {
+      location = i.y*total_width+i.x;
+      char_data[3*location+0] = rgba16_data[location].r < 0xFF ? rgba16_data[location].r : 0xFF;
+      char_data[3*location+1] = rgba16_data[location].g < 0xFF ? rgba16_data[location].g : 0xFF;
+      char_data[3*location+2] = rgba16_data[location].b < 0xFF ? rgba16_data[location].b : 0xFF;
     }
 
   /* from the rgb_data, generate a GdkPixbuf */
-  temp_image = gdk_pixbuf_new_from_data(rgb_data, GDK_COLORSPACE_RGB,
-					FALSE,8,width,height,width*3*sizeof(guchar),
+  temp_image = gdk_pixbuf_new_from_data(char_data, GDK_COLORSPACE_RGB,FALSE,8,
+					total_width,image_height,total_width*3*sizeof(guchar),
 					image_free_rgb_data, NULL);
-
+  
   /* free up any unneeded allocated memory */
-  g_free(rgba_data);
-
+  g_free(rgba16_data);
+  
   return temp_image;
 }
 #endif
@@ -312,7 +347,8 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
 				  const amide_data_t min,
 				  const amide_data_t max,
 				  const amide_data_t volume_min,
-				  const amide_data_t volume_max) {
+				  const amide_data_t volume_max,
+				  const gboolean horizontal) {
 
   intpoint_t i,j;
   rgba_t rgba;
@@ -325,17 +361,29 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
     return NULL;
   }
 
-
-  for (j=0; j < height; j++) {
-    datum = ((((double) height-j)/height) * (volume_max-volume_min))+volume_min;
-    datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
-
-
-    rgba = color_table_lookup(datum, color_table, volume_min, volume_max);
-    for (i=0; i < width; i++) {
-      rgb_data[j*width*3+i*3+0] = rgba.r;
-      rgb_data[j*width*3+i*3+1] = rgba.g;
-      rgb_data[j*width*3+i*3+2] = rgba.b;
+  if (horizontal) {
+      for (i=0; i < width; i++) {
+      datum = ((((double) width-i)/width) * (volume_max-volume_min))+volume_min;
+      datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
+      
+      rgba = color_table_lookup(datum, color_table, volume_min, volume_max);
+      for (j=0; j < height; j++) {
+	rgb_data[j*width*3+i*3+0] = rgba.r;
+	rgb_data[j*width*3+i*3+1] = rgba.g;
+	rgb_data[j*width*3+i*3+2] = rgba.b;
+      }
+    }
+  } else {
+    for (j=0; j < height; j++) {
+      datum = ((((double) height-j)/height) * (volume_max-volume_min))+volume_min;
+      datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
+      
+      rgba = color_table_lookup(datum, color_table, volume_min, volume_max);
+      for (i=0; i < width; i++) {
+	rgb_data[j*width*3+i*3+0] = rgba.r;
+	rgb_data[j*width*3+i*3+1] = rgba.g;
+	rgb_data[j*width*3+i*3+2] = rgba.b;
+      }
     }
   }
 
@@ -353,17 +401,15 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 			       const amide_time_t start,
 			       const amide_time_t duration,
 			       const floatpoint_t thickness,
+			       const floatpoint_t voxel_dim,
 			       const realspace_t view_coord_frame,
 			       const scaling_t scaling,
-			       const floatpoint_t zoom,
 			       const interpolation_t interpolation) {
 
-  guint slice_num;
-  gdouble total_alpha;
-  gdouble initial_alpha;
-  gdouble new_alpha;
+  gint slice_num;
+  guint32 total_alpha;
   guchar * rgb_data;
-  rgba_t * rgba_data;
+  rgba16_t * rgba16_data;
   guint location;
   voxelpoint_t i;
   voxelpoint_t dim;
@@ -393,8 +439,8 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 
   /* generate the slices if we need to */
   if ((*pslices) == NULL) {
-    if ((slices = volumes_get_slices(volumes, start, duration, thickness, view_coord_frame, 
-				     zoom, interpolation, TRUE)) == NULL) {
+    if ((slices = volumes_get_slices(volumes, start, duration, thickness, voxel_dim, 
+				     view_coord_frame, interpolation, TRUE)) == NULL) {
       g_warning("%s: returned slices are NULL?", PACKAGE);
       return NULL;
     } 
@@ -407,8 +453,8 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
   dim = slices->volume->data_set->dim;
 
   /* malloc space for a temporary storage buffer */
-  if ((rgba_data = (rgba_t *) g_malloc(sizeof(rgba_data) * dim.y * dim.x)) == NULL) {
-    g_warning("%s: couldn't allocate memory for rgba_data for image",PACKAGE);
+  if ((rgba16_data = (rgba16_t *) g_malloc(sizeof(rgba16_t) * dim.y * dim.x)) == NULL) {
+    g_warning("%s: couldn't allocate memory for rgba16_data for image",PACKAGE);
     return NULL;
   }
   /* and initialize it */
@@ -416,17 +462,17 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
   for (i.y = 0; i.y < dim.y; i.y++) 
     for (i.x = 0; i.x < dim.x; i.x++) {
       location = i.y*dim.x+i.x;
-      rgba_data[location].r = 0;
-      rgba_data[location].g = 0;
-      rgba_data[location].b = 0;
-      rgba_data[location].a = 0;
+      rgba16_data[location].r = 0;
+      rgba16_data[location].g = 0;
+      rgba16_data[location].b = 0;
+      rgba16_data[location].a = 0;
     }
 
   /* iterate through all the slices */
   temp_slices = slices;
   temp_volumes = volumes;
-
   slice_num = 0;
+
   while (temp_slices != NULL) {
     slice_num++;
 
@@ -445,7 +491,7 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 	(temp_volumes->volume->max-temp_volumes->volume->min);
     }
 
-    /* now add this slice into the rgb data */
+    /* now add this slice into the rgba16 data */
     i.t = i.z = 0;
     for (i.y = 0; i.y < dim.y; i.y++) 
       for (i.x = 0; i.x < dim.x; i.x++) {
@@ -453,22 +499,34 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 				       temp_volumes->volume->color_table, min, max);
 	/* compensate for the fact that X defines the origin as top left, not bottom left */
 	location = (dim.y - i.y - 1)*dim.x+i.x;
-	total_alpha = (slice_num-1.0) * rgba_data[location].a + rgba_temp.a;
-	if (total_alpha <= CLOSE) {
-	  total_alpha = CLOSE;
-	  initial_alpha = (slice_num-1.0)*CLOSE/slice_num;
-	  new_alpha = CLOSE/slice_num;
-	} else {
-	  initial_alpha = (slice_num-1.0) * rgba_data[location].a;
-	  new_alpha = rgba_temp.a;
+	total_alpha = rgba16_data[location].a + rgba_temp.a;
+	if (total_alpha == 0) {
+	  rgba16_data[location].r = (((slice_num-1)*rgba16_data[location].r + 
+				      rgba_temp.r)/
+				     ((gdouble) slice_num));
+	  rgba16_data[location].g = (((slice_num-1)*rgba16_data[location].g + 
+				      rgba_temp.g)/
+				     ((gdouble) slice_num));
+	  rgba16_data[location].b = (((slice_num-1)*rgba16_data[location].b + 
+				      rgba_temp.b)/
+				     ((gdouble) slice_num));
+	} else if (rgba16_data[location].a == 0) {
+	  rgba16_data[location].r = rgba_temp.r;
+	  rgba16_data[location].g = rgba_temp.g;
+	  rgba16_data[location].b = rgba_temp.b;
+	  rgba16_data[location].a = rgba_temp.a;
+	} else if (rgba_temp.a != 0) {
+	  rgba16_data[location].r = ((rgba16_data[location].r*rgba16_data[location].a 
+				      + rgba_temp.r*rgba_temp.a)/
+				     ((double) total_alpha));
+	  rgba16_data[location].g = ((rgba16_data[location].g*rgba16_data[location].a 
+				      + rgba_temp.g*rgba_temp.a)/
+				     ((double) total_alpha));
+	  rgba16_data[location].b = ((rgba16_data[location].b*rgba16_data[location].a 
+				      + rgba_temp.b*rgba_temp.a)/
+				     ((double) total_alpha));
+	  rgba16_data[location].a = total_alpha;
 	}
-	rgba_data[location].r = 
-	  ((initial_alpha* rgba_data[location].r) + (new_alpha * rgba_temp.r)) / total_alpha;
-	rgba_data[location].g = 
-	  ((initial_alpha* rgba_data[location].g) +(new_alpha * rgba_temp.g)) / total_alpha;
-	rgba_data[location].b = 
-	  ((initial_alpha* rgba_data[location].b) +(new_alpha * rgba_temp.b)) / total_alpha;
-	rgba_data[location].a = total_alpha;
       }
     temp_slices = temp_slices->next;
     temp_volumes = temp_volumes->next;
@@ -485,9 +543,9 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
   for (i.y = 0; i.y < dim.y; i.y++) 
     for (i.x = 0; i.x < dim.x; i.x++) {
       location = i.y*dim.x+i.x;
-      rgb_data[3*location+0] = rgba_data[location].r;
-      rgb_data[3*location+1] = rgba_data[location].g;
-      rgb_data[3*location+2] = rgba_data[location].b;
+      rgb_data[3*location+0] = rgba16_data[location].r < 0xFF ? rgba16_data[location].r : 0xFF;
+      rgb_data[3*location+1] = rgba16_data[location].g < 0xFF ? rgba16_data[location].g : 0xFF;
+      rgb_data[3*location+2] = rgba16_data[location].b < 0xFF ? rgba16_data[location].b : 0xFF;
     }
 
   
@@ -498,7 +556,7 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 					image_free_rgb_data, NULL);
 
   /* cleanup */
-  g_free(rgba_data);
+  g_free(rgba16_data);
 
   return temp_image;
 }
@@ -510,4 +568,73 @@ GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 
 
 
+/* get the icon to use for this modality */
+GdkPixmap * image_get_volume_pixmap(volume_t * volume, 
+				    GdkWindow * window, 
+				    GdkBitmap ** gdkbitmap) {
 
+  GdkPixmap * gdkpixmap;
+  GdkBitmap * bmp;
+
+  g_return_val_if_fail(window != NULL, NULL);
+
+  /* which icon to use */
+  switch (volume->modality) {
+  case SPECT:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,SPECT_xpm);
+    break;
+  case MRI:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,MRI_xpm);
+    break;
+  case CT:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,CT_xpm);
+    break;
+  case PET:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,PET_xpm);
+    break;
+  case OTHER:
+  default:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,OTHER_xpm);
+    break;
+  }
+
+  if (gdkbitmap != NULL) gdkbitmap = &bmp;
+
+  return gdkpixmap;
+}
+
+
+/* get the icon to use for this modality */
+GdkPixmap * image_get_roi_pixmap(roi_t * roi, 
+				 GdkWindow * window, 
+				 GdkBitmap ** gdkbitmap) {
+  GdkPixmap * gdkpixmap;
+  GdkBitmap * bmp;
+
+  g_return_val_if_fail(window != NULL, NULL);
+
+  /* which icon to use */
+  switch (roi->type) {
+  case CYLINDER:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,CYLINDER_xpm);
+    break;
+  case ELLIPSOID:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,ELLIPSOID_xpm);
+    break;
+  case ISOCONTOUR_2D:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,ISOCONTOUR_2D_xpm);
+    break;
+  case ISOCONTOUR_3D:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,ISOCONTOUR_3D_xpm);
+    break;
+  case BOX:
+  default:
+    gdkpixmap = gdk_pixmap_create_from_xpm_d(window, gdkbitmap,NULL,BOX_xpm);
+    break;
+  }
+
+  if (gdkbitmap != NULL) gdkbitmap = &bmp;
+
+  return gdkpixmap;
+
+}

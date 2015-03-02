@@ -298,8 +298,7 @@ void ui_rendering_movie_dialog_perform(ui_rendering_movie_t * ui_rendering_movie
       }
       
       /* update the progress bar */
-      gtk_progress_set_percentage(GTK_PROGRESS(ui_rendering_movie->progress),
-				  (gfloat) i_frame/((gfloat) ui_rendering_movie->num_frames*2.0));
+      gtk_progress_set_percentage(GTK_PROGRESS(ui_rendering_movie->progress), 1.0);
     }
   }
 

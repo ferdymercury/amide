@@ -33,11 +33,12 @@
 
 
 /* internal defines */
-#define NUM_ANALYSIS_COLUMNS 11
+#define NUM_ANALYSIS_COLUMNS 12
 
 static gchar * analysis_titles[] = {
   "Volume",
   "Frame",
+  "Duration (s)",
   "Time Midpt (s)",
   "Mean",
   "Var",
@@ -59,6 +60,7 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
   guint frame;
   guint i;
   floatpoint_t voxel_volume;
+  gboolean title_printed;
 
   if ((file_pointer = fopen(save_filename, "w")) == NULL) {
     g_warning("%s: couldn't open: %s for writing roi analyses", PACKAGE, save_filename);
@@ -76,7 +78,7 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
     fprintf(file_pointer, "ROI:\t%s\tType:\t%s\n",
 	    roi_analyses->roi->name,
 	    roi_type_names[roi_analyses->roi->type]);
-    fprintf(file_pointer, "\n");
+    title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
@@ -84,10 +86,13 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
 	      volume_analyses->volume->name,
 	      volume_analyses->volume->external_scaling);
 
-      fprintf(file_pointer, "\t%s", analysis_titles[1]);
-      for (i=2;i<NUM_ANALYSIS_COLUMNS;i++)
-	fprintf(file_pointer, "\t%12s", analysis_titles[i]);
-      fprintf(file_pointer, "\n");
+      if (!title_printed) {
+	fprintf(file_pointer, "\t\t%s", analysis_titles[1]);
+	for (i=2;i<NUM_ANALYSIS_COLUMNS;i++)
+	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
+	fprintf(file_pointer, "\n");
+	title_printed = TRUE;
+      }
 
       voxel_volume = volume_analyses->volume->voxel_size.x*
 	volume_analyses->volume->voxel_size.y*
@@ -96,7 +101,8 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
       frame_analyses = volume_analyses->frame_analyses;
       frame = 0;
       while (frame_analyses != NULL) {
-	fprintf(file_pointer, "\t%d", frame);
+	fprintf(file_pointer, "\t\t%d", frame);
+	fprintf(file_pointer, "\t% 12.3f", frame_analyses->duration);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->time_midpoint);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->mean);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->var);
@@ -111,9 +117,9 @@ void ui_roi_analysis_dialog_export(gchar * save_filename, analysis_roi_t * roi_a
 	frame_analyses = frame_analyses->next_frame_analysis;
 	frame++;
       }
-      fprintf(file_pointer, "\n");
       volume_analyses = volume_analyses->next_volume_analysis;
     }
+    fprintf(file_pointer, "\n");
     roi_analyses = roi_analyses->next_roi_analysis;
   }
 
@@ -134,6 +140,7 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
   GtkWidget * label;
   GtkWidget * entry;
   GtkWidget * clist;
+  GtkWidget * scrolled;
   GtkWidget * hbox;
   analysis_frame_t * frame_analyses;
   guint frame;
@@ -161,6 +168,18 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
   gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
   gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
  
+  /* the scroll widget which the list will go into */
+  scrolled = gtk_scrolled_window_new(NULL,NULL);
+  gtk_widget_set_usize(scrolled,-1,250);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+				 GTK_POLICY_NEVER,
+				 GTK_POLICY_AUTOMATIC);
+  /* and throw the clist into the packing table */
+  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(scrolled), 0,5,table_row, table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL,
+		   Y_PACKING_OPTIONS | GTK_FILL,
+		   X_PADDING, Y_PADDING);
+  table_row++;
 
   /* put in the CLIST */
   clist = gtk_clist_new_with_titles(NUM_ANALYSIS_COLUMNS, analysis_titles);
@@ -178,15 +197,16 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
     while (frame_analyses != NULL) {
       line[0] = g_strdup(volume_analyses->volume->name);
       line[1] = g_strdup_printf("%d",frame);
-      line[2] = g_strdup_printf("%5.4f",frame_analyses->time_midpoint);
-      line[3] = g_strdup_printf("%5.4g",frame_analyses->mean);
-      line[4] = g_strdup_printf("%5.4g",frame_analyses->var);
-      line[5] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var));
-      line[6] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var/frame_analyses->voxels));
-      line[7] = g_strdup_printf("%5.4g",frame_analyses->min);
-      line[8] = g_strdup_printf("%5.4g",frame_analyses->max);
-      line[9] = g_strdup_printf("%5.4g", frame_analyses->voxels*voxel_volume);
-      line[10] = g_strdup_printf("%5.1f",frame_analyses->voxels);
+      line[2] = g_strdup_printf("%5.4f",frame_analyses->duration);
+      line[3] = g_strdup_printf("%5.4f",frame_analyses->time_midpoint);
+      line[4] = g_strdup_printf("%5.4g",frame_analyses->mean);
+      line[5] = g_strdup_printf("%5.4g",frame_analyses->var);
+      line[6] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var));
+      line[7] = g_strdup_printf("%5.4g",sqrt(frame_analyses->var/frame_analyses->voxels));
+      line[8] = g_strdup_printf("%5.4g",frame_analyses->min);
+      line[9] = g_strdup_printf("%5.4g",frame_analyses->max);
+      line[10] = g_strdup_printf("%5.4g", frame_analyses->voxels*voxel_volume);
+      line[11] = g_strdup_printf("%5.1f",frame_analyses->voxels);
 
       gtk_clist_append(GTK_CLIST(clist), line);
 
@@ -205,11 +225,7 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, study_t * stud
     gtk_clist_set_column_width(GTK_CLIST(clist), i, 
 			       gtk_clist_optimal_column_width(GTK_CLIST(clist), i));
 
-  /* and throw the clist into the packing table */
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(clist), 0,5,table_row, table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
+  gtk_container_add(GTK_CONTAINER(scrolled),clist); /* and put it in the scrolled widget */
   table_row++;
 
   return;
@@ -236,6 +252,13 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   else 
     rois = ui_roi_list_return_roi_list(ui_study->current_rois);
 
+  if (rois == NULL) {
+    g_warning("%s: No ROI's selected for calculating analyses",PACKAGE);
+    rois = roi_list_free(rois);
+    volumes = volume_list_free(volumes);
+    return;
+  }
+
   /* calculate all our data */
   roi_analyses = analysis_roi_init(ui_study->study, rois, volumes);
   g_return_if_fail(roi_analyses != NULL);
@@ -244,6 +267,9 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   title = g_strdup_printf("%s Roi Analysis: Study %s", PACKAGE, study_name(ui_study->study));
   dialog = gnome_dialog_new(title, "Save Analysis", GNOME_STOCK_BUTTON_CLOSE, NULL);
   gnome_dialog_set_close(GNOME_DIALOG(dialog), FALSE);
+
+  /* order is allow shrink, allow grow, autoshrink */
+  gtk_window_set_policy(GTK_WINDOW(dialog), FALSE, TRUE, FALSE); 
 
   gnome_dialog_button_connect(GNOME_DIALOG(dialog), 1,  /* 1 corresponds to the close button */
 			      GTK_SIGNAL_FUNC(ui_roi_analysis_dialog_cb_close_button),dialog);

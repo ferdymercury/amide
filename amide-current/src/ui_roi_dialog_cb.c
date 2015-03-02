@@ -27,6 +27,7 @@
 #include <gnome.h>
 #include <math.h>
 #include "study.h"
+#include "image.h"
 #include "ui_study.h"
 #include "ui_roi_dialog.h"
 #include "ui_roi_dialog_cb.h"
@@ -55,6 +56,7 @@ void ui_roi_dialog_cb_change_name(GtkWidget * widget, gpointer data) {
 void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
 
   roi_t * roi_new_info = data;
+  ui_study_t * ui_study;
   gchar * str;
   gint error;
   gdouble temp_val;
@@ -63,10 +65,14 @@ void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
   realpoint_t temp_dim;
   realspace_t temp_coord_frame;
   realpoint_t temp;
-  GtkWidget * roi_dialog;
+  GtkWidget * dialog;
+
+  dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
+  ui_study = gtk_object_get_data(GTK_OBJECT(dialog), "ui_study"); 
 
   /* initialize the center and dimension variables based on the old roi info */
   temp_center = roi_calculate_center(roi_new_info); /* in real coords */
+  temp_center = realspace_base_coord_to_alt(temp_center, study_coord_frame(ui_study->study));
   temp_dim = roi_new_info->corner; /* in roi's coords */
 
   /* figure out which widget this is */
@@ -108,10 +114,12 @@ void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
   }
 
   temp_coord_frame = roi_new_info->coord_frame;
-  rs_set_offset(&temp_coord_frame, realpoint_zero);
+  rs_set_offset(&temp_coord_frame, zero_rp);
 
   /* recalculate the roi's offset based on the new dimensions/center/and axis */
-  temp = realspace_base_coord_to_alt(temp_center, temp_coord_frame);
+  temp = realspace_alt_coord_to_alt(temp_center, 
+				    study_coord_frame(ui_study->study),
+				    temp_coord_frame);
   temp = realspace_alt_coord_to_base(rp_add(rp_cmult(-0.5, temp_dim), temp), temp_coord_frame);
   rs_set_offset(&temp_coord_frame, temp);
 
@@ -128,8 +136,7 @@ void ui_roi_dialog_cb_change_entry(GtkWidget * widget, gpointer data) {
     roi_new_info->voxel_size.z = temp_dim.z;
 
   /* now tell the roi_dialog that we've changed */
-  roi_dialog =  gtk_object_get_data(GTK_OBJECT(widget), "roi_dialog");
-  gnome_property_box_changed(GNOME_PROPERTY_BOX(roi_dialog));
+  gnome_property_box_changed(GNOME_PROPERTY_BOX(dialog));
 
   return;
 }
@@ -249,6 +256,10 @@ void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) 
   roi_t * roi_new_info;
   view_t i_views;
   GtkWidget * label;
+  GtkWidget * pixmap;
+  GdkPixmap * gdkpixmap;
+  GdkBitmap * gdkbitmap;
+  GtkWidget * pix_box;
   
   /* we'll apply all page changes at once */
   if (page_number != -1)
@@ -279,6 +290,14 @@ void ui_roi_dialog_cb_apply(GtkWidget* widget, gint page_number, gpointer data) 
   /* apply any changes to the name of the roi */
   label = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->tree_leaf), "text_label");
   gtk_label_set_text(GTK_LABEL(label), ui_roi_list_item->roi->name);
+
+  /* change the roi icon */
+  pix_box = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->tree_leaf), "pix_box");
+  pixmap = gtk_object_get_data(GTK_OBJECT(pix_box), "pixmap");
+  gdkpixmap = image_get_roi_pixmap(ui_roi_list_item->roi, 
+				   gtk_widget_get_parent_window(ui_roi_list_item->tree_leaf), 
+				   &gdkbitmap);
+  gtk_pixmap_set(GTK_PIXMAP(pixmap), gdkpixmap, gdkbitmap);
 
   /* get a pointer to ui_study so we can redraw the roi's */
   ui_study = gtk_object_get_data(GTK_OBJECT(ui_roi_list_item->dialog), "ui_study"); 

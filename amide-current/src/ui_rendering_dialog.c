@@ -218,6 +218,49 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
   table_row++;
 
+  /* widget for the stereo eye angle */
+  label = gtk_label_new("Stereo Angle");
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%f", ui_rendering->stereo_eye_angle);
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+  gtk_object_set_data(GTK_OBJECT(entry), "rendering_dialog", rendering_dialog);
+  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_cb_change_eye_angle), 
+		     ui_rendering);
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* widget for the stereo eye width */
+  label = gtk_label_new("Eye Width (mm)");
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  entry = gtk_entry_new();
+  temp_string = g_strdup_printf("%f", 
+				gdk_screen_width_mm()*
+				ui_rendering->stereo_eye_width/
+				((gdouble) gdk_screen_width()));
+  gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+  g_free(temp_string);
+  gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
+  gtk_object_set_data(GTK_OBJECT(entry), "rendering_dialog", rendering_dialog);
+  gtk_signal_connect(GTK_OBJECT(entry), "changed", 
+		     GTK_SIGNAL_FUNC(ui_rendering_dialog_cb_change_eye_width),
+		     ui_rendering);
+  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
+		   table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+  table_row++;
+
   /* the depth cueing enabling button */
   check_button = gtk_check_button_new_with_label ("enable/disable depth cueing");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_rendering->depth_cueing);
@@ -276,7 +319,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   while (temp_list != NULL) {
     packing_table = gtk_table_new(4,3,FALSE);
     table_row=0;
-    label = gtk_label_new(temp_list->rendering_context->volume->name);
+    label = gtk_label_new(temp_list->rendering_context->name);
     gnome_property_box_append_page (GNOME_PROPERTY_BOX(rendering_dialog), 
 				    GTK_WIDGET(packing_table), label);
 
@@ -302,7 +345,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
     gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu),
-				temp_list->rendering_context->volume->color_table);
+				temp_list->rendering_context->color_table);
     gtk_widget_show_all(option_menu);
 
     table_row++;

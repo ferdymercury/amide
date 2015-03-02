@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->Calculating Statistics over ROI's</TITLE
+>Gotcha's to ROI calculations </TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
@@ -12,11 +12,11 @@ REL="UP"
 TITLE="Using ROI's "
 HREF="rois.html"><LINK
 REL="PREVIOUS"
-TITLE="Manipulating ROI's"
-HREF="x219.html"><LINK
+TITLE="Calculating Statistics over ROI's"
+HREF="x208.html"><LINK
 REL="NEXT"
-TITLE="Gotcha's to ROI calculations "
-HREF="x225.html"></HEAD
+TITLE="Aligning Data Sets "
+HREF="alignment.html"></HEAD
 ><BODY
 CLASS="SECT1"
 ><DIV
@@ -38,7 +38,7 @@ WIDTH="10%"
 ALIGN="left"
 VALIGN="bottom"
 ><A
-HREF="x219.html"
+HREF="x208.html"
 >Prev</A
 ></TD
 ><TD
@@ -51,7 +51,7 @@ WIDTH="10%"
 ALIGN="right"
 VALIGN="bottom"
 ><A
-HREF="x225.html"
+HREF="alignment.html"
 >Next</A
 ></TD
 ></TR
@@ -64,15 +64,27 @@ CLASS="SECT1"
 ><H1
 CLASS="SECT1"
 ><A
-NAME="AEN222"
->Calculating Statistics over ROI's</A
+NAME="AEN211"
+>Gotcha's to ROI calculations</A
 ></H1
+><DIV
+CLASS="SECT2"
+><H2
+CLASS="SECT2"
+><A
+NAME="AEN213"
+>Variance/Std. Dev./Std. Err. Fallacies</A
+></H2
 ><P
->    Statistics on an ROI can be calculated via the analysis menu.
-    Choosing "All" will calculate all the ROI's on the currently
-    selected images.  Choosing "Selected" will calculate the selected
-    ROI's on the currently selected images.
-  </P
+>      A common fallacy is to use the calculated variance (or standard
+      deviation, or standard error) of an ROI as an experiment's
+      variance.  The variance of an experiment can only truly be
+      measured by taking multiple samples (i.e. performing multiple
+      scans) and calculating the variance between these different
+      samples.  The variance that AMIDE calculates is only a measure
+      of the noise within an ROI in the given data set.
+    </P
+></DIV
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -89,7 +101,7 @@ WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
 ><A
-HREF="x219.html"
+HREF="x208.html"
 >Prev</A
 ></TD
 ><TD
@@ -105,7 +117,7 @@ WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
 ><A
-HREF="x225.html"
+HREF="alignment.html"
 >Next</A
 ></TD
 ></TR
@@ -114,7 +126,7 @@ HREF="x225.html"
 WIDTH="33%"
 ALIGN="left"
 VALIGN="top"
->Manipulating ROI's</TD
+>Calculating Statistics over ROI's</TD
 ><TD
 WIDTH="34%"
 ALIGN="center"
@@ -127,7 +139,7 @@ HREF="rois.html"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
->Gotcha's to ROI calculations</TD
+>Aligning Data Sets</TD
 ></TR
 ></TABLE
 ></DIV

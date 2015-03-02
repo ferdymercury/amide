@@ -8,10 +8,12 @@ amide_LDADD = \
 	$(GNOMEUI_LIBS) \
 	$(GNOME_LIBDIR) \
 	$(GNOME_XML2_LIBS) \
+	$(AMIDE_LIBGSL_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBMDC_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(EXTRA_GNOME_LIBS) \
+	-lgsl -lgslcblas \
 	-L/usr/local/lib 
 
 amide_SOURCES = \
@@ -29,6 +31,10 @@ amide_SOURCES = \
 	$(ANALYSIS_VARIABLE_H) \
 	amide.c \
 	amide.h \
+	align_pt.c \
+	align_pt.h \
+	alignment.c \
+	alignment.h \
 	analysis.c \
 	analysis.h \
 	amitk_threshold.c \
@@ -61,6 +67,16 @@ amide_SOURCES = \
 	roi.h \
 	study.c \
 	study.h \
+	ui_align_pt.c \
+	ui_align_pt.h \
+	ui_align_pt_dialog.c \
+	ui_align_pt_dialog.h \
+	ui_align_pt_dialog_cb.c \
+	ui_align_pt_dialog_cb.h \
+	ui_alignment_dialog.c \
+	ui_alignment_dialog.h \
+	ui_alignment_dialog_cb.c \
+	ui_alignment_dialog_cb.h \
 	ui_common.c \
 	ui_common.h \
 	ui_common_cb.c \

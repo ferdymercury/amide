@@ -7,15 +7,16 @@ for next release?
        
 big things:
 -----------
-* aligning of data sets by specifying >= 3 points in each
 * aligning of data using automated registration?
 * guppi interface for drawing graphs of ROI statistics
 * allow looking at only a subset of the data (i.e. cropping)
- 
                        
 small things:
 -------------
-* adding volume rendering of roi's should be relatively easy
+* preset thresholds (bone window, fat window, etc.)
+* rotation thingie in dialogs could be widgetized
+  -rotation thingie should allow inverting an axis
+* add more of the volpack rendering options
 * add thickness/line style for isocontours?
 * figure out a better way of determining which slice we're drawning a 2D isocontour on
 * gamma curve drawing still crashes program under MacX... don't use MacX for now
@@ -60,6 +61,10 @@ probably post 1.0 things:
 	3D red/green imaging
 	allow rotation of light source and view in addition to object
 	allow changing of material properties
+	transformation to rendering structure is inefficient when doing multiple volumes,
+		each volume should be transfered using it's minimal voxel size, not the
+		group's maximum minimal voxel size.  the rendered images should then be scaled
+		and overlapped.  
 * change mpeg_encode to a library? 
 	would allow lose of "system" command, and proper progress reports, in ui_rendering_movie_dialog
 * cardiac shaped ROI?
@@ -75,6 +80,6 @@ things dependent on other things:
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,
 	delete the following line from amide.c so we can have bug reporting
 	"signal(SIGSEGV, SIG_DFL);"
-
+* remove no-ops in raw_data.c when gcc > 3.0.3 comes out
 
 

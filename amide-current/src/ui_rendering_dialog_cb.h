@@ -30,6 +30,8 @@ void ui_rendering_dialog_cb_change_quality(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_pixel_type(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_density(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_zoom(GtkWidget * widget, gpointer data);
+void ui_rendering_dialog_cb_change_eye_angle(GtkWidget * widget, gpointer data);
+void ui_rendering_dialog_cb_change_eye_width(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_depth_cueing_toggle(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_change_front_factor(GtkWidget * widget, gpointer data);
 void ui_rendering_dialog_cb_color_table(GtkWidget * widget, gpointer data);

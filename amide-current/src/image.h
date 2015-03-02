@@ -41,8 +41,11 @@ GdkPixbuf * image_blank(const intpoint_t width, const intpoint_t height, rgba_t 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_8bit(const guchar * image, const intpoint_t width, const intpoint_t height,
 			    const color_table_t color_table);
-GdkPixbuf * image_from_renderings(rendering_list_t * contexts, 
-				  gint16 width, gint16 height);
+GdkPixbuf * image_from_contexts(rendering_list_t * contexts, 
+				gint16 image_width, gint16 image_height,
+				eye_t eyes, 
+				gdouble eye_angle, 
+				gint16 eye_width);
 #endif
 GdkPixbuf * image_of_distribution(volume_t * volume, rgb_t fg, rgb_t bg);
 GdkPixbuf * image_from_colortable(const color_table_t color_table,
@@ -51,16 +54,23 @@ GdkPixbuf * image_from_colortable(const color_table_t color_table,
 				  const amide_data_t min,
 				  const amide_data_t max,
 				  const amide_data_t volume_min,
-				  const amide_data_t volume_max);
+				  const amide_data_t volume_max,
+				  const gboolean horizontal);
 GdkPixbuf * image_from_volumes(volume_list_t ** pslices,
 			       volume_list_t * volumes,
 			       const amide_time_t start,
 			       const amide_time_t duration,
 			       const floatpoint_t thickness,
+			       const floatpoint_t voxel_dim,
 			       const realspace_t view_coord_frame,
 			       const scaling_t scaling,
-			       const floatpoint_t zoom,
 			       const interpolation_t interpolation);
+GdkPixmap * image_get_volume_pixmap(volume_t * volume, 
+				    GdkWindow * window, 
+				    GdkBitmap ** gdkbitmap);
+GdkPixmap * image_get_roi_pixmap(roi_t * roi, 
+				 GdkWindow * window, 
+				 GdkBitmap ** gdkbitmap);
 
 #endif /*  __IMAGE_H__ */
 

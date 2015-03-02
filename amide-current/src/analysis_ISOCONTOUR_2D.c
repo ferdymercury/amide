@@ -98,6 +98,9 @@ analysis_frame_t * analysis_frame_ISOCONTOUR_2D_init(roi_t * roi, volume_t * vol
   }
   frame_analysis->reference_count = 1;
 
+  /* note the frame duation */
+  frame_analysis->duration = volume->frame_duration[frame];
+
   /* calculate the time midpoint of the data */
   frame_analysis->time_midpoint = (volume_end_time(volume, frame) + volume_start_time(volume, frame))/2.0;
 
@@ -169,13 +172,13 @@ analysis_frame_t * analysis_frame_ISOCONTOUR_2D_init(roi_t * roi, volume_t * vol
 
 	/* calculate the one corner of the voxel "box" to determine if it's in or not */
 #ifdef ANALYSIS_BOX_TYPE
-	voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
+	voxel_in = rp_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
 #ifdef ANALYSIS_CYLINDER_TYPE
-	voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
+	voxel_in = rp_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
 #ifdef ANALYSIS_ELLIPSOID_TYPE
-	voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+	voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
 	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
@@ -234,13 +237,13 @@ analysis_frame_t * analysis_frame_ISOCONTOUR_2D_init(roi_t * roi, volume_t * vol
 
 		/* calculate the one corner of the voxel "box" to determine if it's in or not */
 #ifdef ANALYSIS_BOX_TYPE
-		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
+		voxel_in = rp_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
 #ifdef ANALYSIS_CYLINDER_TYPE
-		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
+		voxel_in = rp_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
 #ifdef ANALYSIS_ELLIPSOID_TYPE
-		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+		voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
 		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
@@ -294,13 +297,13 @@ analysis_frame_t * analysis_frame_ISOCONTOUR_2D_init(roi_t * roi, volume_t * vol
 
 	/* calculate the one corner of the voxel "box" to determine if it's in or not */
 #ifdef ANALYSIS_BOX_TYPE
-	voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
+	voxel_in = rp_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
 #ifdef ANALYSIS_CYLINDER_TYPE
-	voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
+	voxel_in = rp_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
 #ifdef ANALYSIS_ELLIPSOID_TYPE
-	voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+	voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
 	ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);
@@ -358,13 +361,13 @@ analysis_frame_t * analysis_frame_ISOCONTOUR_2D_init(roi_t * roi, volume_t * vol
 
 		/* calculate the one corner of the voxel "box" to determine if it's in or not */
 #ifdef ANALYSIS_BOX_TYPE
-		voxel_in = realpoint_in_box(roi_p, roi_corner[0],roi_corner[1]);
+		voxel_in = rp_in_box(roi_p, roi_corner[0],roi_corner[1]);
 #endif
 #ifdef ANALYSIS_CYLINDER_TYPE
-		voxel_in = realpoint_in_elliptic_cylinder(roi_p, center, height, radius);
+		voxel_in = rp_in_elliptic_cylinder(roi_p, center, height, radius);
 #endif
 #ifdef ANALYSIS_ELLIPSOID_TYPE
-		voxel_in = realpoint_in_ellipsoid(roi_p,center,radius);
+		voxel_in = rp_in_ellipsoid(roi_p,center,radius);
 #endif
 #if defined(ANALYSIS_ISOCONTOUR_2D_TYPE) || defined(ANALYSIS_ISOCONTOUR_3D_TYPE)
 		ROI_REALPOINT_TO_VOXEL(roi, roi_p, roi_vp);

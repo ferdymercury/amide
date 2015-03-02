@@ -53,6 +53,7 @@ typedef enum {BW_LINEAR, \
 	      NUM_COLOR_TABLES} color_table_t;
 
 typedef guint8 color_data_t;
+typedef guint16 color_data16_t;
 typedef gdouble hsv_data_t;
 
 typedef struct rgba_t {
@@ -61,6 +62,13 @@ typedef struct rgba_t {
   color_data_t b;
   color_data_t a;
 } rgba_t;
+
+typedef struct rgba16_t {
+  color_data16_t r;
+  color_data16_t g;
+  color_data16_t b;
+  color_data16_t a;
+} rgba16_t;
 
 typedef struct rgb_t {
   color_data_t r;

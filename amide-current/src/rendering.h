@@ -31,7 +31,7 @@
 /* header files that are always needed with this file */
 #include <volpack.h>
 #include "volume.h"
-
+#include "roi.h"
 
 /* -------------- structures and such ------------- */
 
@@ -112,7 +112,11 @@ rendering_voxel_t * dummy_voxel;
 
 typedef struct _rendering_t {
   vpContext * vpc;      /*  VolPack rendering Context */
+  object_t type;
   volume_t * volume;
+  roi_t * roi;
+  gchar * name;
+  color_table_t color_table;
   amide_time_t start;
   amide_time_t duration;
   realspace_t current_coord_frame;
@@ -146,13 +150,19 @@ struct _rendering_list_t {
 
 /* external functions */
 rendering_t * rendering_context_free(rendering_t * context);
-rendering_t * rendering_context_init(volume_t * volume, const realspace_t render_coord_frame, 
-				     const realpoint_t render_far_corner, const floatpoint_t min_voxel_size, 
-				     const intpoint_t max_dim, const amide_time_t start, 
-				     const amide_time_t duration, const interpolation_t interpolation);
-void rendering_context_reload_volume(rendering_t * rendering_context, const amide_time_t new_start,
-				     const amide_time_t new_duration, const interpolation_t interpolation);
-void rendering_context_load_volume(rendering_t * rendering_context, const interpolation_t interpolation);
+rendering_t * rendering_context_volume_init(volume_t * volume, 
+					    const realspace_t render_coord_frame, 
+					    const realpoint_t render_far_corner, 
+					    const floatpoint_t min_voxel_size, 
+					    const amide_time_t start, 
+					    const amide_time_t duration, 
+					    const interpolation_t interpolation);
+void rendering_context_reload_object(rendering_t * rendering_context, 
+				     const amide_time_t new_start,
+				     const amide_time_t new_duration, 
+				     const interpolation_t interpolation);
+void rendering_context_load_object(rendering_t * rendering_context, 
+				   const interpolation_t interpolation);
 void rendering_context_set_rotation(rendering_t * context, axis_t dir, gdouble rotation);
 void rendering_context_reset_rotation(rendering_t * context);
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
@@ -162,11 +172,11 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 						   gdouble front_factor, gdouble density);
 void rendering_context_render(rendering_t * context);
 rendering_list_t * rendering_list_free(rendering_list_t * rendering_list);
-rendering_list_t * rendering_list_init(volume_list_t * volumes, realspace_t render_coord_frame,
-				       const amide_time_t start, const amide_time_t duration, 
-				       const interpolation_t interpolation);
-void rendering_list_reload_volume(rendering_list_t * rendering_list, const amide_time_t start, 
-				  const amide_time_t duration, const interpolation_t interpolation);
+rendering_list_t * rendering_list_init(volume_list_t * volumes, roi_list_t * rois,
+				       realspace_t render_coord_frame, const amide_time_t start, 
+				       const amide_time_t duration, const interpolation_t interpolation);
+void rendering_list_reload_objects(rendering_list_t * rendering_list, const amide_time_t start, 
+				   const amide_time_t duration, const interpolation_t interpolation);
 void rendering_list_set_rotation(rendering_list_t * contexts, axis_t dir, gdouble rotation);
 void rendering_list_reset_rotation(rendering_list_t * contexts);
 void rendering_list_set_quality(rendering_list_t * renderling_list, rendering_quality_t quality);

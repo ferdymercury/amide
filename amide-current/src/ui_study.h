@@ -57,6 +57,7 @@ typedef enum {
   UPDATE_IMAGE, 
   UPDATE_PLANE_ADJUSTMENT, 
   UPDATE_ROIS,
+  UPDATE_ALIGN_PTS,
   UPDATE_ALL
 } ui_study_update_t;
 
@@ -65,12 +66,14 @@ typedef enum {
   HELP_INFO_BLANK,
   HELP_INFO_CANVAS_VOLUME,
   HELP_INFO_CANVAS_ROI,
+  HELP_INFO_CANVAS_ALIGN_PT,
   HELP_INFO_CANVAS_ISOCONTOUR_ROI,
   HELP_INFO_CANVAS_NEW_ROI,
   HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
   HELP_INFO_CANVAS_ALIGN,
   HELP_INFO_TREE_VOLUME,
   HELP_INFO_TREE_ROI,
+  HELP_INFO_TREE_ALIGN_PT,
   HELP_INFO_TREE_STUDY,
   HELP_INFO_TREE_NONE,
   HELP_INFO_UPDATE_LOCATION,
@@ -103,17 +106,6 @@ typedef enum {
   VOXEL_SIZE_X, VOXEL_SIZE_Y, VOXEL_SIZE_Z,
   SCALING_FACTOR, SCAN_START, FRAME_DURATION,
 } which_entry_widget_t;
-
-typedef enum {
-  UI_STUDY_TREE_STUDY,
-  UI_STUDY_TREE_VOLUME,
-  UI_STUDY_TREE_ROI,
-  NUM_UI_STUDY_TREE_TYPES
-} ui_study_tree_object_t;
-
-typedef enum {
-  OBJECT_VOLUME_TYPE, OBJECT_ROI_TYPE, NUM_OBJECT_TYPES
-} ui_study_canvas_object_t;
 
 /* ui_study data structures */
 typedef struct ui_study_t {
@@ -158,6 +150,7 @@ typedef struct ui_study_t {
 } ui_study_t;
 
 /* external functions */
+void ui_study_add_align_pt(ui_study_t * ui_study, volume_t * volume);
 void ui_study_add_volume(ui_study_t * ui_study, volume_t * new_volume);
 void ui_study_import_file(ui_study_t * ui_study, import_method_t import_method, int submethod,
 			  gchar * import_filename, gchar * model_filename);
@@ -179,15 +172,23 @@ GnomeCanvasItem *  ui_study_update_canvas_roi_image(ui_study_t * ui_study, view_
 GnomeCanvasItem *  ui_study_update_canvas_roi(ui_study_t * ui_study,  view_t view, 
 					      GnomeCanvasItem * roi_item, roi_t * roi);
 void ui_study_update_canvas_rois(ui_study_t * ui_study, view_t view);
+GnomeCanvasItem *  ui_study_update_canvas_align_pt(ui_study_t * ui_study, 
+						   view_t view, 
+						   GnomeCanvasItem * pt_item,
+						   align_pt_t * align_pt,
+						   volume_t * volume);
+void ui_study_update_canvas_align_pts(ui_study_t * ui_study, view_t view);
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i_view,  ui_study_update_t update);
 void ui_study_tree_update_active_leaf(ui_study_t * ui_study, GtkWidget * leaf);
 void ui_study_tree_add_roi(ui_study_t * ui_study, roi_t * roi);
 void ui_study_tree_add_volume(ui_study_t * ui_study, volume_t * volume);
+void ui_study_tree_add_align_pt(ui_study_t * ui_study, volume_t * volume, 
+				align_pt_t * align_pt, GtkWidget * volume_leaf);
 
 
 void ui_study_update_canvas_arrows(ui_study_t * ui_study, view_t view);
 void ui_study_update_canvas_image(ui_study_t * ui_study, view_t view);
-void ui_study_update_tree(ui_study_t * ui_study);
+void ui_study_setup_tree(ui_study_t * ui_study);
 void ui_study_setup_canvas(ui_study_t * ui_study);
 void ui_study_setup_widgets(ui_study_t * ui_study);
 ui_study_t * ui_study_free(ui_study_t * ui_study);

@@ -27,6 +27,7 @@
 /* header files always needed with this file */
 #include "volume.h"
 //#include "ui_threshold.h"
+#include "ui_align_pt.h"
 
 /* data structures */
 
@@ -37,6 +38,7 @@ struct _ui_volume_list_t {
   GtkWidget * dialog;
   GtkWidget * tree_leaf;
   GtkWidget * threshold;
+  ui_align_pts_t * ui_align_pts;
   GSList * series_list;
   guint reference_count;
   ui_volume_list_t * next;
@@ -44,7 +46,7 @@ struct _ui_volume_list_t {
 
 /* external functions */
 ui_volume_list_t * ui_volume_list_free(ui_volume_list_t * ui_volume_list);
-ui_volume_list_t * ui_volume_list_init(void);
+ui_volume_list_t * ui_volume_list_init(volume_t * volume);
 volume_t * ui_volume_list_get_first_volume(ui_volume_list_t * ui_volume_list);
 ui_volume_list_t * ui_volume_list_get_ui_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
 gboolean ui_volume_list_includes_volume(ui_volume_list_t * ui_volume_list, volume_t * volume);
