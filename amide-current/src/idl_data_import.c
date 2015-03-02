@@ -57,7 +57,7 @@ AmitkDataSet * idl_data_import(const gchar * idl_data_filename) {
     
   /* read in the header of the file */
   bytes_to_read = file_offset; /* this is the size of the header */
-  file_buffer = (void *) g_malloc(bytes_to_read);
+  file_buffer = (void *) g_try_malloc(bytes_to_read);
   bytes_read = fread(file_buffer, 1, bytes_to_read, file_pointer);
   if (bytes_read != bytes_to_read) {
     g_warning("read wrong number of elements from idl data file:\n\t%s\n\texpected %d\tgot %d", 

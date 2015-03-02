@@ -46,9 +46,10 @@ G_BEGIN_DECLS
 
 
 typedef enum {
-  AMITK_CANVAS_CROSS_ACTION_HIDE,
-  AMITK_CANVAS_CROSS_ACTION_SHOW
-} AmitkCanvasCrossAction;
+  AMITK_CANVAS_TARGET_ACTION_HIDE,
+  AMITK_CANVAS_TARGET_ACTION_SHOW,
+  AMITK_CANVAS_TARGET_ACTION_LEAVE
+} AmitkCanvasTargetAction;
 
 typedef struct _AmitkCanvas             AmitkCanvas;
 typedef struct _AmitkCanvasClass        AmitkCanvasClass;
@@ -78,6 +79,8 @@ struct _AmitkCanvas
   gint roi_width;
   GdkLineStyle line_style;
   AmitkDataSet * active_ds;
+  gboolean leave_target;
+  gint target_empty_area;
 
   GList * slices;
   gint pixbuf_width, pixbuf_height;
@@ -91,12 +94,12 @@ struct _AmitkCanvas
   guint idle_handler_id;
   GList * next_update_items;
 
-  /* cross stuff */
-  GnomeCanvasItem * cross[4];
-  AmitkCanvasCrossAction next_cross_action;
-  AmitkPoint next_cross_center;
-  rgba_t next_cross_color;
-  amide_real_t next_cross_thickness;
+  /* target stuff */
+  GnomeCanvasItem * target[8];
+  AmitkCanvasTargetAction next_target_action;
+  AmitkPoint next_target_center;
+  rgba_t next_target_color;
+  amide_real_t next_target_thickness;
 
 };
 
@@ -127,31 +130,36 @@ struct _AmitkCanvasClass
 };  
 
 
-GType         amitk_canvas_get_type           (void);
-GtkWidget *   amitk_canvas_new                (AmitkStudy * study,
-					       AmitkView view, 
-					       AmitkLayout layout, 
-					       GdkLineStyle line_style,
-					       gint roi_width,
-					       AmitkDataSet * active_ds,
-					       gboolean with_arrows);
-void          amitk_canvas_set_layout         (AmitkCanvas * canvas, 
-					       AmitkLayout new_layout);
-void          amitk_canvas_set_active_data_set(AmitkCanvas * canvas, 
-					       AmitkDataSet * active_ds);
-void          amitk_canvas_set_line_style     (AmitkCanvas * canvas, 
-					       GdkLineStyle new_line_style);
-void          amitk_canvas_set_roi_width      (AmitkCanvas * canvas, 
-					       gint new_roi_width);
-void          amitk_canvas_add_object         (AmitkCanvas * canvas, 
-					       AmitkObject * object);
-gboolean      amitk_canvas_remove_object      (AmitkCanvas * canvas, 
-					       AmitkObject * object);
-void          amitk_canvas_update_cross       (AmitkCanvas * canvas, 
-					       AmitkCanvasCrossAction action, 
-					       AmitkPoint center, 
-					       rgba_t color, 
-					       amide_real_t thickness);
+GType         amitk_canvas_get_type             (void);
+GtkWidget *   amitk_canvas_new                  (AmitkStudy * study,
+						 AmitkView view, 
+						 AmitkLayout layout, 
+						 GdkLineStyle line_style,
+						 gint roi_width,
+						 AmitkDataSet * active_ds,
+						 gboolean with_arrows,
+						 gboolean leave_target,
+						 gint target_empty_area);
+void          amitk_canvas_set_layout           (AmitkCanvas * canvas, 
+						 AmitkLayout new_layout);
+void          amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
+						 gboolean leave_target,
+						 gint target_empty_area);
+void          amitk_canvas_set_active_data_set  (AmitkCanvas * canvas, 
+						 AmitkDataSet * active_ds);
+void          amitk_canvas_set_line_style       (AmitkCanvas * canvas, 
+						 GdkLineStyle new_line_style);
+void          amitk_canvas_set_roi_width        (AmitkCanvas * canvas, 
+						 gint new_roi_width);
+void          amitk_canvas_add_object           (AmitkCanvas * canvas, 
+						 AmitkObject * object);
+gboolean      amitk_canvas_remove_object        (AmitkCanvas * canvas, 
+						 AmitkObject * object);
+void          amitk_canvas_update_target        (AmitkCanvas * canvas, 
+						 AmitkCanvasTargetAction action, 
+						 AmitkPoint center, 
+						 rgba_t color, 
+						 amide_real_t thickness);
 
 
 G_END_DECLS

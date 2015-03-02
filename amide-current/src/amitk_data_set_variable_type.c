@@ -31,7 +31,6 @@
 #include "amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'.h"
 #include "amitk_data_set_FLOAT_0D_SCALING.h"
 
-#define EMPTY 0.0
 #define DIM_TYPE_`'m4_Scale_Dim`'
 
 
@@ -103,7 +102,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 #if AMIDE_DEBUG
     div_t x;
     gint divider;
-    divider = ((data_set->raw_data->dim.z/20.0) < 1) ? 1 : (data_set->raw_data->dim.z/20.0);
+    divider = ((data_set->raw_data->dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (data_set->raw_data->dim.z/AMIDE_UPDATE_DIVIDER);
     g_print("\n\tframe %d\t",i.t);
 #endif
     for ( i.z = 0; i.z < data_set->raw_data->dim.z; i.z++) {
@@ -136,12 +135,13 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
 
 /* return a planar projection of the data set given the associated view */
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
-									       const AmitkView view,
-									       const guint frame) {
+										   const AmitkView view,
+										   const guint frame) {
 
   AmitkDataSet * projection;
   AmitkVoxel dim, i, j;
   AmitkPoint voxel_size;
+  amide_data_t normalizer;
 
   dim.z = 1;
   dim.t = 1;
@@ -177,17 +177,20 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
     projection->voxel_size.x = voxel_size.x;
     projection->voxel_size.y = voxel_size.z;
     projection->voxel_size.z = AMITK_VOLUME_Y_CORNER(data_set);
+    normalizer = voxel_size.y/projection->voxel_size.z;
     break;
   case AMITK_VIEW_SAGITTAL:
     projection->voxel_size.x = voxel_size.y;
     projection->voxel_size.y = voxel_size.z;
     projection->voxel_size.z = AMITK_VOLUME_X_CORNER(data_set);
+    normalizer = voxel_size.x/projection->voxel_size.z;
     break;
   case AMITK_VIEW_TRANSVERSE:
   default:
     projection->voxel_size.x = voxel_size.x;
     projection->voxel_size.y = voxel_size.y;
     projection->voxel_size.z = AMITK_VOLUME_Z_CORNER(data_set);
+    normalizer = voxel_size.z/projection->voxel_size.z;
     break;
   }
 
@@ -231,6 +234,13 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projecti
     break;
   }
 
+  /* normalize for the thickness, we're assuming the previous voxels were
+     in some units of blah/mm^3 */
+  dim = AMITK_DATA_SET_DIM(projection);
+  j.t = j.z = 0;
+  for (j.y = 0; j.y < dim.y; j.y++)
+    for (j.x = 0; j.x < dim.x; j.x++)
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(projection->raw_data,j) *= normalizer;
 
   amitk_data_set_calc_frame_max_min(projection);
   amitk_data_set_calc_global_max_min(projection);
@@ -690,7 +700,9 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const
     return;
   }
   amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
-  partial_sort_data = g_new(amide_data_t, median_size);
+  partial_sort_data = g_try_new(amide_data_t, median_size);
+  g_return_if_fail(partial_sort_data != NULL);
+
 
   /* iterate over all the voxels in the data_set */
   i.t = 0;
@@ -839,6 +851,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 #endif
   AmitkVoxel ds_voxel;
   amide_data_t weight1, weight2;
+  amide_data_t empty;
   AmitkCorners intersection_corners;
   AmitkVoxel dim;
 
@@ -863,14 +876,13 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   dim.z = dim.t = 1;
 
 
-  /* initialize the return slice */
+  /* get the return slice */
   slice = amitk_data_set_new_with_data(AMITK_FORMAT_DOUBLE, dim, AMITK_SCALING_0D);
   if (slice == NULL) {
     g_warning("couldn't allocate space for the slice, wanted %dx%dx%dx%d elements", 
 	      dim.x, dim.y, dim.z, dim.t);
     return NULL;
   }
-  amitk_raw_data_DOUBLE_initialize_data(AMITK_DATA_SET_RAW_DATA(slice), 0.0);
 
 
   slice->slice_parent = g_object_ref(data_set);
@@ -887,7 +899,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 
 
 #if AMIDE_DEBUG
-  center_point = amitk_volume_center(slice_volume);
+  center_point = amitk_volume_get_center(slice_volume);
   temp_string =  
     g_strdup_printf("slice from data_set %s: @ x %5.3f y %5.3f z %5.3f", AMITK_OBJECT_NAME(data_set), 
 		    center_point.x, center_point.y, center_point.z);
@@ -938,18 +950,40 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     end = zero_voxel;
   }
 
-  if ((end.y > dim.y) || (end.x > dim.x) ||
-      (start.y < 0) || (start.x < 0)) {
-    g_object_unref(slice);
-    g_warning("inappropriate dimensions for slice: %d %d %d %d, wanted within 0 0 %d %d", 
-	      start.x, start.y, end.x, end.y, dim.x, dim.y);
-    return NULL;
-  }
+  /* make sure we only iterate over the slice we've already mallocs */
+  if (start.x < 0) start.x = 0;
+  if (start.y < 0) start.y = 0;
+  if (end.x >= dim.x) end.x = dim.x-1;
+  if (end.y >= dim.y) end.y = dim.y-1;
+
+  /* empty is what we fill voxels with that aren't in the data set*/
+  empty = AMITK_DATA_SET_GLOBAL_MIN(data_set);
+
+  /* iterate over those voxels that we didn't cover, and set them to empty */
+  i_voxel.t = i_voxel.z = 0;
+  for (i_voxel.y = 0; i_voxel.y < start.y; i_voxel.y++) 
+    for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+  for (i_voxel.y = end.y+1; i_voxel.y < dim.y; i_voxel.y++) 
+    for (i_voxel.x = 0; i_voxel.x < dim.x; i_voxel.x++) 
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+  for (i_voxel.x = 0; i_voxel.x < start.x; i_voxel.x++) 
+    for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++) 
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+  for (i_voxel.x = end.x+1; i_voxel.x < dim.x; i_voxel.x++) 
+    for (i_voxel.y = 0; i_voxel.y < dim.y; i_voxel.y++) 
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = empty;
+
+  /* and initialize the rest of the voxels */
+  for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++)
+    for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++)
+      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) = 0;
+
+
 
   switch(data_set->interpolation) {
 
   case AMITK_INTERPOLATION_TRILINEAR:
-    i_voxel.t = i_voxel.z = 0;
     /* iterate over the frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
       
@@ -977,7 +1011,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 
 	/* iterate over the y dimension */
-	for (i_voxel.y = start.y; i_voxel.y < end.y; i_voxel.y++) {
+	for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
 
 	  /* the slice y_coordinate of the center of this iteration's slice voxel */
 	  slice_point.y = (((amide_real_t) i_voxel.y)+0.5)*slice->voxel_size.y;
@@ -1020,7 +1054,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	      if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
 		box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, box_voxel[l]);
 	      else
-		box_value[l] = EMPTY;
+		box_value[l] = empty;
 	    }
 	    
 	    /* do the x direction linear interpolation of the sets of two points */
@@ -1074,7 +1108,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       stride[i_axis] = amitk_space_b2s(data_set_space, alt);
     }
 
-    i_voxel.t = i_voxel.z = 0;
     /* iterate over the number of frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
 
@@ -1100,14 +1133,14 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	  weight = time_weight*(z_steps-floor(z_steps)) / z_steps;
 	
 	/* iterate over the y dimension */
-	for (i_voxel.y = start.y; i_voxel.y < end.y; i_voxel.y++) {
+	for (i_voxel.y = start.y; i_voxel.y <= end.y; i_voxel.y++) {
 	  last[AMITK_AXIS_Y] = ds_point;
 
 	  /* and iteratate over x */
 	  for (i_voxel.x = start.x; i_voxel.x <= end.x; i_voxel.x++) {
 	    POINT_TO_VOXEL(ds_point, data_set->voxel_size, i_frame, j_voxel);
 	    if (!amitk_raw_data_includes_voxel(data_set->raw_data,j_voxel))
-	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*EMPTY;
+	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += weight*empty;
 	    else
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel) += 
 		weight*AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,j_voxel);
@@ -1120,6 +1153,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     }
     break;
   }
+
 
   if (need_calc_max_min) {
     amitk_data_set_calc_frame_max_min(slice);

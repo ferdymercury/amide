@@ -52,18 +52,26 @@ static GSList * prepend_intersection_point(GSList * points_list, AmitkPoint new_
 static GSList * append_intersection_point(GSList * points_list, AmitkPoint new_point) {
   AmitkPoint * ppoint;
 
-  ppoint = g_new(AmitkPoint,1);
-  *ppoint = new_point;
-
-  return  g_slist_append(points_list, ppoint);
+  ppoint = g_try_new(AmitkPoint,1);
+  if (ppoint != NULL) {
+    *ppoint = new_point;
+    return  g_slist_append(points_list, ppoint);
+  } else {
+    g_warning("Out of Memory");
+    return points_list;
+  }
 }
 static GSList * prepend_intersection_point(GSList * points_list, AmitkPoint new_point) {
   AmitkPoint * ppoint;
 
-  ppoint = g_new(AmitkPoint,1);
-  *ppoint = new_point;
-
-  return  g_slist_prepend(points_list, ppoint);
+  ppoint = g_try_new(AmitkPoint,1);
+  if (ppoint != NULL) {
+    *ppoint = new_point;
+    return  g_slist_prepend(points_list, ppoint);
+  } else {
+    g_warning("Out of Memory");
+    return points_list;
+  }
 }
 
 /* returns a singly linked list of intersection points between the roi
@@ -99,7 +107,7 @@ GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * r
 
 #if defined(ROI_TYPE_ELLIPSOID) || defined(ROI_TYPE_CYLINDER)
   radius = point_cmult(0.5, AMITK_VOLUME_CORNER(roi));
-  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_center(AMITK_VOLUME(roi)));
+  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_get_center(AMITK_VOLUME(roi)));
 #endif
 #ifdef ROI_TYPE_CYLINDER
   height = AMITK_VOLUME_Z_CORNER(roi);
@@ -613,7 +621,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   amide_real_t height;
   height = AMITK_VOLUME_Z_CORNER(roi);
 #endif  
-  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_center(AMITK_VOLUME(roi)));
+  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_get_center(AMITK_VOLUME(roi)));
   radius = point_cmult(0.5, AMITK_VOLUME_CORNER(roi));
 #endif
 

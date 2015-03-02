@@ -131,6 +131,7 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
   medcon_file_info.map = MDC_MAP_GRAY; /*default color map*/
   MDC_MAKE_GRAY=MDC_YES;
   MDC_QUANTIFY=MDC_YES; /* want quantified data */
+  MDC_NEGATIVE=MDC_YES; /* allow negative values */
 
   /* figure out the fallback format */
   MDC_FALLBACK_FRMT = MDC_FRMT_NONE;

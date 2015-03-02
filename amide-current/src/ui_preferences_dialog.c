@@ -43,6 +43,8 @@ static void line_style_cb(GtkWidget * widget, gpointer data);
 static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
+static void leave_target_cb(GtkWidget * widget, gpointer data);
+static void target_empty_area_cb(GtkWidget * widget, gpointer data);
 
 
 
@@ -139,7 +141,71 @@ static void layout_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-void save_on_exit_cb(GtkWidget * widget, gpointer data) {
+static void leave_target_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gboolean canvas_leave_target;
+  AmitkView i_view;
+  AmitkViewMode i_view_mode;
+
+  canvas_leave_target = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+
+  if (ui_study->canvas_leave_target != canvas_leave_target) {
+    ui_study->canvas_leave_target = canvas_leave_target;
+
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("CANVAS/LeaveTarget",
+			 ui_study->canvas_leave_target);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+
+    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
+      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+	amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					   ui_study->canvas_leave_target,
+					   ui_study->canvas_target_empty_area);
+  }
+
+
+
+  return;
+}
+
+/* function called when the roi width has been changed */
+static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  gint new_target_empty_area;
+  AmitkView i_view;
+  AmitkViewMode i_view_mode;
+
+  new_target_empty_area = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(widget));
+
+  /* sanity checks */
+  if (new_target_empty_area < 0) new_target_empty_area = 0;
+  if (new_target_empty_area > UI_STUDY_MAX_TARGET_EMPTY_AREA) 
+    new_target_empty_area = UI_STUDY_MAX_TARGET_EMPTY_AREA;
+
+  if (ui_study->canvas_target_empty_area != new_target_empty_area) {
+    ui_study->canvas_target_empty_area = new_target_empty_area;
+
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("CANVAS/TargetEmptyArea",ui_study->canvas_target_empty_area);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+
+    for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) 
+      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
+	amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+					   ui_study->canvas_leave_target,
+					   ui_study->canvas_target_empty_area);
+  }
+
+  return;
+}
+
+
+static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   gboolean dont_prompt_for_save_on_exit;
@@ -373,8 +439,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   image = gtk_image_new_from_pixbuf(pixbuf);
   g_object_unref(pixbuf);
   gtk_container_add(GTK_CONTAINER(radio_button2), image);
-  gtk_table_attach(GTK_TABLE(packing_table), radio_button2,
-  		   2,3, table_row, table_row+1,
+  gtk_table_attach(GTK_TABLE(packing_table), radio_button2, 2,3, table_row, table_row+1,
   		   0, 0, X_PADDING, Y_PADDING);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button2), 
 			       (ui_study->canvas_layout == AMITK_LAYOUT_ORTHOGONAL));
@@ -385,6 +450,33 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 
   table_row++;
 
+
+  /* do we want the target left on the canvas */
+  check_button = gtk_check_button_new_with_label("Leave target on canvas:");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
+			       ui_study->canvas_leave_target);
+  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
+		   0,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(leave_target_cb), ui_study);
+  table_row++;
+
+
+  /* widgets to change the amount of empty space in the center of the target */
+  label = gtk_label_new("Target Empty Area (pixels)");
+  gtk_table_attach(GTK_TABLE(packing_table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  adjustment = gtk_adjustment_new(ui_study->canvas_target_empty_area,
+				  0, UI_STUDY_MAX_TARGET_EMPTY_AREA,1.0, 1.0, 1.0);
+  spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+
+  g_signal_connect(G_OBJECT(spin_button), "changed",  G_CALLBACK(target_empty_area_cb), ui_study);
+  gtk_table_attach(GTK_TABLE(packing_table), spin_button, 1,2, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 
   /* ---------------------------
      Miscellaneous stuff
@@ -404,6 +496,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
 		   0,1, table_row, table_row+1,
 		   0, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(save_on_exit_cb), ui_study);
+
 
   /* and show all our widgets */
   gtk_widget_show_all(preferences_dialog);

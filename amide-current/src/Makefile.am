@@ -76,8 +76,8 @@ amide_SOURCES = \
 	pixmaps.h \
 	raw_data_import.c \
 	raw_data_import.h \
-	rendering.c \
-	rendering.h \
+	render.c \
+	render.h \
 	ui_alignment_dialog.c \
 	ui_alignment_dialog.h \
 	ui_common.c \
@@ -90,12 +90,12 @@ amide_SOURCES = \
 	ui_fly_through.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
-	ui_rendering.c \
-	ui_rendering.h \
-	ui_rendering_dialog.c \
-	ui_rendering_dialog.h \
-	ui_rendering_movie_dialog.c \
-	ui_rendering_movie_dialog.h \
+	ui_render.c \
+	ui_render.h \
+	ui_render_dialog.c \
+	ui_render_dialog.h \
+	ui_render_movie.c \
+	ui_render_movie.h \
 	ui_roi_analysis_dialog.c \
 	ui_roi_analysis_dialog.h \
 	ui_series.c \

@@ -50,6 +50,7 @@ typedef enum {
 
 #define UI_STUDY_MIN_ROI_WIDTH 1
 #define UI_STUDY_MAX_ROI_WIDTH 5
+#define UI_STUDY_MAX_TARGET_EMPTY_AREA 25
 
 
 /* ui_study data structures */
@@ -81,6 +82,8 @@ typedef struct ui_study_t {
   AmitkLayout canvas_layout;
   gint roi_width;
   GdkLineStyle line_style;
+  gboolean canvas_leave_target;
+  gint canvas_target_empty_area;
   gboolean dont_prompt_for_save_on_exit;
 
   gboolean study_altered;

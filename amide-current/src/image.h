@@ -30,7 +30,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "amitk_study.h"
 #include "amitk_roi.h"
-#include "rendering.h"
+#include "render.h"
 
 #define IMAGE_DISTRIBUTION_WIDTH 100
 
@@ -49,11 +49,11 @@ GdkPixbuf * image_from_8bit(const guchar * image,
 			    const amide_intpoint_t height,
 			    const AmitkColorTable color_table);
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-GdkPixbuf * image_from_contexts(renderings_t * contexts, 
-				gint16 image_width, gint16 image_height,
-				AmitkEye eyes, 
-				gdouble eye_angle, 
-				gint16 eye_width);
+GdkPixbuf * image_from_renderings(renderings_t * renderings, 
+				  gint16 image_width, gint16 image_height,
+				  AmitkEye eyes, 
+				  gdouble eye_angle, 
+				  gint16 eye_width);
 #endif
 GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg);
 GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,

@@ -29,13 +29,12 @@
 #include <dirent.h>
 #include <string.h>
 #include "amitk_dir_sel.h"
-#include "rendering.h"
 #include "amitk_threshold.h"
 #include "amitk_canvas.h"
 #include "amitk_tree.h"
 #include "ui_common.h"
 #include "ui_fly_through.h"
-#include "ui_rendering.h"
+#include "ui_render.h"
 #include "ui_series.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
@@ -450,7 +449,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
     data_set_names = temp_string;
     temp_sets = temp_sets->next;
   }
-  temp_string = g_strdup_printf("%s_{%s}_%s_%3.1f-%3.1f.jpg", 
+  temp_string = g_strdup_printf("%s_%s_%s_%3.1f-%3.1f.jpg", 
 				AMITK_OBJECT_NAME(ui_study->study),
 				data_set_names,
 				view_names[view],
@@ -521,8 +520,8 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
       if (canvas != ui_study->canvas[i_view_mode][i_view])
-	amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				  AMITK_CANVAS_CROSS_ACTION_SHOW,*position, outline_color, thickness);
+	amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				   AMITK_CANVAS_TARGET_ACTION_SHOW,*position, outline_color, thickness);
 
   ui_study_update_thickness(ui_study, thickness);
 
@@ -542,8 +541,8 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
   /* update the other canvases accordingly */
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-      amitk_canvas_update_cross(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				AMITK_CANVAS_CROSS_ACTION_HIDE,*position, rgba_black, thickness);
+      amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
+				 AMITK_CANVAS_TARGET_ACTION_HIDE,*position, rgba_black, thickness);
   }
 
   return;
@@ -711,7 +710,7 @@ void ui_study_cb_tree_make_active_object(GtkWidget * tree, AmitkObject * object,
   if (AMITK_IS_DATA_SET(object)) {
     ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
   } else if (AMITK_IS_ROI(object)) {
-    center = amitk_volume_center(AMITK_VOLUME(object));
+    center = amitk_volume_get_center(AMITK_VOLUME(object));
     if (AMITK_IS_ROI(object))
       if (!AMITK_ROI_UNDRAWN(AMITK_ROI(object)) && 
 	  !POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
@@ -898,17 +897,33 @@ void ui_study_cb_fly_through(GtkWidget * widget, gpointer data) {
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 /* callback for starting up volume rendering */
-void ui_study_cb_rendering(GtkWidget * widget, gpointer data) {
+void ui_study_cb_render(GtkWidget * widget, gpointer data) {
 
+  GtkWidget * dialog;
   ui_study_t * ui_study = data;
+  gboolean optimize_rendering, strip_highs;
+  gint return_val;
 
-  /* need something to rendering */
+  /* need something to render */
   if (AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE) == NULL) return;
 
+  /* let the user input rendering options */
+  dialog = ui_render_init_dialog_create(GTK_WINDOW(ui_study->app));
+
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  strip_highs = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "strip_highs"));
+  optimize_rendering = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "optimize_rendering"));
+
+  gtk_widget_destroy(dialog);
+  if (return_val != AMITK_RESPONSE_EXECUTE)
+    return; /* we don't want to render */
+
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_rendering_create(AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE),
-		      AMITK_STUDY_VIEW_START_TIME(ui_study->study), 
-		      AMITK_STUDY_VIEW_DURATION(ui_study->study));
+  ui_render_create(AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE),
+		   AMITK_STUDY_VIEW_START_TIME(ui_study->study), 
+		   AMITK_STUDY_VIEW_DURATION(ui_study->study), strip_highs, optimize_rendering);
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
@@ -916,23 +931,32 @@ void ui_study_cb_rendering(GtkWidget * widget, gpointer data) {
 #endif
 
 
-/* do roi calculations for selected ROI's over selected data sets */
-void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data) {
+/* do roi calculations */
+void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
+  gboolean all_data_sets;
+  gboolean all_rois;
+  GtkWidget * dialog;
+  gint return_val;
+
+  /* let the user input roi analysis options */
+  dialog = ui_roi_analysis_init_dialog_create(GTK_WINDOW(ui_study->app));
+
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "all_data_sets"));
+  all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "all_rois"));
+
+  gtk_widget_destroy(dialog);
+  if (return_val != AMITK_RESPONSE_EXECUTE)
+    return; /* we hit cancel */
+
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_roi_analysis_dialog_create(ui_study, TRUE);
+  ui_roi_analysis_dialog_create(ui_study, all_data_sets, all_rois);
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   return;
 
-}
-
-/* do roi calculations for all ROI's over selected datas */
-void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data) {
-  ui_study_t * ui_study = data;
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_roi_analysis_dialog_create(ui_study, FALSE);
-  ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  return;
 }
 
 /* user wants to run the crop wizard */

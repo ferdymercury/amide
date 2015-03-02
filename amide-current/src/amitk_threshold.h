@@ -92,7 +92,7 @@ struct _AmitkThreshold
   GnomeCanvasItem * histogram_image;
   GnomeCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
   GnomeCanvasItem * connector_line[2][AMITK_THRESHOLD_LINE_NUM_LINES];
-  GtkWidget * entry[2][AMITK_THRESHOLD_ENTRY_NUM_ENTRIES];
+  GtkWidget * spin_button[2][AMITK_THRESHOLD_ENTRY_NUM_ENTRIES];
   GtkWidget * color_table_menu;
   GtkWidget * threshold_ref_frame_menu[2];
   GtkWidget * percent_label[2];

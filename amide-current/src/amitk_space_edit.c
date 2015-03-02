@@ -264,7 +264,7 @@ static void space_edit_rotate_axis(GtkAdjustment * adjustment, gpointer data) {
   if (i_view == AMITK_VIEW_SAGITTAL) rotation = -rotation; 
 
   if (AMITK_IS_VOLUME(space_edit->object))
-    center = amitk_volume_center(AMITK_VOLUME(space_edit->object));
+    center = amitk_volume_get_center(AMITK_VOLUME(space_edit->object));
   else if (AMITK_IS_STUDY(space_edit->object))
     center = AMITK_STUDY_VIEW_CENTER(space_edit->object);
   else
@@ -322,7 +322,7 @@ static void space_edit_reset_axis(GtkWidget * button, gpointer data) {
 
   /* shift the coord frame to the center of rotation, and save the old offset */
   if (AMITK_IS_VOLUME(space_edit->object))
-    center = amitk_volume_center(AMITK_VOLUME(space_edit->object));
+    center = amitk_volume_get_center(AMITK_VOLUME(space_edit->object));
   else if (AMITK_IS_STUDY(space_edit->object))
     center = AMITK_STUDY_VIEW_CENTER(space_edit->object);
   else
@@ -348,7 +348,7 @@ static void space_edit_invert_axis(GtkWidget * button, gpointer data) {
 
   /* shift the coord frame to the center of rotation, and save the old offset */
   if (AMITK_IS_VOLUME(space_edit->object))
-    center = amitk_volume_center(AMITK_VOLUME(space_edit->object));
+    center = amitk_volume_get_center(AMITK_VOLUME(space_edit->object));
   else if (AMITK_IS_STUDY(space_edit->object))
     center = AMITK_STUDY_VIEW_CENTER(space_edit->object);
   else

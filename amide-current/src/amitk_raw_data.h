@@ -139,7 +139,7 @@ struct _AmitkRawDataClass
 						  ((vox).t >= (ds)->dim.t)))
 #define amitk_raw_data_num_voxels(rd) ((rd)->dim.x * (rd)->dim.y * (rd)->dim.z * (rd)->dim.t)
 #define amitk_raw_data_size_data_mem(rd) (amitk_raw_data_num_voxels(rd) * amitk_format_sizes[(rd)->format])
-#define amitk_raw_data_get_data_mem(rd) (g_malloc(amitk_raw_data_size_data_mem(rd)))
+#define amitk_raw_data_get_data_mem(rd) (g_try_malloc(amitk_raw_data_size_data_mem(rd)))
 
 
 /* ------------ external functions ---------- */

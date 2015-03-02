@@ -28,7 +28,6 @@
 
 #include "amide_config.h"
 #include <gnome.h>
-#include "rendering.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"

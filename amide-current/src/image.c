@@ -177,7 +177,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
     return NULL;
   }
 
-  if ((rgba_data = g_new(guchar,4*dim.x*dim.y)) == NULL) {
+  if ((rgba_data = g_try_new(guchar,4*dim.x*dim.y)) == NULL) {
     g_warning("couldn't allocate memory for rgba_data for roi image");
     g_object_unref(intersection);
     return NULL;
@@ -219,7 +219,7 @@ GdkPixbuf * image_blank(const amide_intpoint_t width, const amide_intpoint_t hei
   amide_intpoint_t i,j;
   guchar * rgb_data;
   
-  if ((rgb_data = g_new(guchar, 3*width*height)) == NULL) {
+  if ((rgb_data = g_try_new(guchar, 3*width*height)) == NULL) {
     g_warning("couldn't allocate memory for rgb_data for blank image");
     return NULL;
   }
@@ -251,7 +251,7 @@ GdkPixbuf * image_from_8bit(const guchar * image,
   rgba_t rgba_temp;
   guint location;
 
-  if ((rgb_data = g_new(guchar,3*width*height)) == NULL) {
+  if ((rgb_data = g_try_new(guchar,3*width*height)) == NULL) {
     g_warning("couldn't allocate memory for image from 8 bit data");
     return NULL;
   }
@@ -278,7 +278,7 @@ GdkPixbuf * image_from_8bit(const guchar * image,
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 /* function returns a GdkPixbuf from a rendering context */
-GdkPixbuf * image_from_contexts(renderings_t * contexts, 
+GdkPixbuf * image_from_renderings(renderings_t * renderings, 
 				gint16 image_width, gint16 image_height,
 				AmitkEye eyes, 
 				gdouble eye_angle, 
@@ -295,39 +295,47 @@ GdkPixbuf * image_from_contexts(renderings_t * contexts,
   gint total_width;
   gdouble rot;
   AmitkEye i_eye;
+  gint j;
 
   total_width = image_width+(eyes-1)*eye_width;
 
-  /* allocate initialized space for a temporary storage buffer */
-  if ((rgba16_data = g_new0(rgba16_t,total_width * image_height)) == NULL) {
+  /* allocate and initialize space for a temporary storage buffer */
+  if ((rgba16_data = g_try_new(rgba16_t,total_width * image_height)) == NULL) {
     g_warning("couldn't allocate memory for rgba16_data for transfering rendering to image");
     return NULL;
   }
+  for (j=0; j<total_width*image_height; j++) {
+    rgba16_data[j].r = 0;
+    rgba16_data[j].g = 0;
+    rgba16_data[j].b = 0;
+    rgba16_data[j].a = 0;
+  }
 
-  /* iterate through the eyes and contexts, tranfering the image data into the temp storage buffer */
+  /* iterate through the eyes and rendering contexts, 
+     tranfering the image data into the temp storage buffer */
   image_num = 0; 
 
-  while (contexts != NULL) {
+  while (renderings != NULL) {
 
     for (i_eye = 0; i_eye < eyes; i_eye ++) {
       image_num++; 
 
       if (eyes == 1) {
-	rendering_context_render(contexts->context);
+	rendering_render(renderings->rendering);
       } else {
 	rot = (-0.5 + i_eye*1.0) * eye_angle;
 	rot = M_PI*rot/180; /* convert to radians */
 
-	rendering_context_set_rotation(contexts->context, AMITK_AXIS_Y, -rot);
-	rendering_context_render(contexts->context);
-	rendering_context_set_rotation(contexts->context, AMITK_AXIS_Y, rot);
+	rendering_set_rotation(renderings->rendering, AMITK_AXIS_Y, -rot);
+	rendering_render(renderings->rendering);
+	rendering_set_rotation(renderings->rendering, AMITK_AXIS_Y, rot);
       }
 
       i.t = i.z = 0;
       for (i.y = 0; i.y < image_height; i.y++) 
 	for (i.x = 0; i.x < image_width; i.x++) {
-	  rgba_temp = amitk_color_table_lookup(contexts->context->image[i.x+i.y*image_width], 
-					       contexts->context->color_table, 
+	  rgba_temp = amitk_color_table_lookup(renderings->rendering->image[i.x+i.y*image_width], 
+					       renderings->rendering->color_table, 
 					       0, RENDERING_DENSITY_MAX);
 	  /* compensate for the fact that X defines the origin as top left, not bottom left */
 	  location = (image_height-i.y-1)*total_width+i.x+i_eye*eye_width;
@@ -361,11 +369,11 @@ GdkPixbuf * image_from_contexts(renderings_t * contexts,
 	  }
 	}
     }      
-    contexts = contexts->next;
+    renderings = renderings->next;
   }
 
   /* allocate space for the true rgb buffer */
-  if ((char_data = g_new(guchar,3*image_height * total_width)) == NULL) {
+  if ((char_data = g_try_new(guchar,3*image_height * total_width)) == NULL) {
     g_warning("couldn't allocate memory for char_data for rendering image");
     g_free(rgba16_data);
     return NULL;
@@ -409,7 +417,7 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg) {
   distribution = AMITK_DATA_SET_DISTRIBUTION(ds);
   dim = AMITK_RAW_DATA_DIM(distribution);
 
-  if ((rgba_data = g_new(guchar,4*IMAGE_DISTRIBUTION_WIDTH*dim.x)) == NULL) {
+  if ((rgba_data = g_try_new(guchar,4*IMAGE_DISTRIBUTION_WIDTH*dim.x)) == NULL) {
     g_warning("couldn't allocate memory for rgba_data for bar_graph");
     return NULL;
   }
@@ -470,7 +478,7 @@ GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
   amide_data_t datum;
   guchar * rgb_data;
 
-  if ((rgb_data = g_new(guchar,3*width*height)) == NULL) {
+  if ((rgb_data = g_try_new(guchar,3*width*height)) == NULL) {
     g_warning("couldn't allocate memory for rgb_data for color_strip");
     return NULL;
   }
@@ -525,7 +533,7 @@ GdkPixbuf * image_from_projection(AmitkDataSet * projection) {
   
   dim = AMITK_DATA_SET_DIM(projection);
 
-  if ((rgb_data = g_new(guchar,3*dim.x*dim.y)) == NULL) {
+  if ((rgb_data = g_try_new(guchar,3*dim.x*dim.y)) == NULL) {
     g_warning("couldn't allocate memory for rgba_data for projection image");
     return NULL;
   }
@@ -574,7 +582,7 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   
   dim = AMITK_DATA_SET_DIM(slice);
 
-  if ((rgba_data = g_new(guchar,4*dim.x*dim.y)) == NULL) {
+  if ((rgba_data = g_try_new(guchar,4*dim.x*dim.y)) == NULL) {
     g_warning("couldn't allocate memory for rgba_data for slice image");
     return NULL;
   }
@@ -632,6 +640,7 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   AmitkDataSet * slice;
   AmitkColorTable color_table;
   AmitkDataSet * overlay_slice = NULL;
+  gint j;
   
 
   /* sanity checks */
@@ -651,10 +660,16 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */
   dim = AMITK_DATA_SET_DIM(slices->data);
 
-  /* allocate initialized space for a temporary storage buffer */
-  if ((rgba16_data = g_new0(rgba16_t,dim.y*dim.x)) == NULL) {
+  /* allocate and initialize space for a temporary storage buffer */
+  if ((rgba16_data = g_try_new(rgba16_t,dim.y*dim.x)) == NULL) {
     g_warning("couldn't allocate memory for rgba16_data for image");
     return NULL;
+  }
+  for (j=0; j<dim.y*dim.x; j++) {
+    rgba16_data[j].r = 0;
+    rgba16_data[j].g = 0;
+    rgba16_data[j].b = 0;
+    rgba16_data[j].a = 0;
   }
 
   /* iterate through all the slices */
@@ -717,7 +732,7 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   }
 
   /* allocate space for the true rgb buffer */
-  if ((rgb_data = g_new(guchar,3*dim.y*dim.x)) == NULL) {
+  if ((rgb_data = g_try_new(guchar,3*dim.y*dim.x)) == NULL) {
     g_warning("couldn't allocate memory for rgb_data for image");
     return NULL;
   }

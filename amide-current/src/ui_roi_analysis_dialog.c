@@ -236,7 +236,6 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
   return;
 }
 
-/* function called when we hit the apply button */
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
   analysis_roi_t * roi_analyses = data;
@@ -260,7 +259,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 }
 
 
-/* function called to destroy the roi dialog */
+/* function called to destroy the roi analysis dialog */
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   analysis_roi_t * roi_analyses = data;
@@ -406,7 +405,9 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
 }
 
 
-void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
+void ui_roi_analysis_dialog_create(ui_study_t * ui_study, 
+				   gboolean all_data_sets,
+				   gboolean all_rois) {
 
   GtkWidget * dialog;
   GtkWidget * notebook;
@@ -417,14 +418,19 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
   analysis_roi_t * temp_analyses;
 
   /* figure out which data sets we're dealing with */
-  data_sets = ui_study_selected_data_sets(ui_study);
+  if (all_data_sets)
+    data_sets = amitk_object_get_children_of_type(AMITK_OBJECT(ui_study->study), 
+						  AMITK_OBJECT_TYPE_DATA_SET, TRUE);
+  else
+    data_sets = ui_study_selected_data_sets(ui_study);
+
   if (data_sets == NULL) {
     g_warning("No Data Sets selected for calculating analyses");
     return;
   }
 
   /* get the list of roi's we're going to be calculating over */
-  if (all)
+  if (all_rois)
     rois = amitk_object_get_children_of_type(AMITK_OBJECT(ui_study->study), AMITK_OBJECT_TYPE_ROI, TRUE);
   else 
     rois = ui_study_selected_rois(ui_study);
@@ -477,6 +483,161 @@ void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all) {
 
   return;
 }
+
+
+
+
+static void radio_buttons_cb(GtkWidget * widget, gpointer data);
+static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+
+
+
+/* function called to change the layout */
+static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
+
+  GtkWidget * dialog=data;
+  gboolean all_data_sets;
+  gboolean all_rois;
+
+  all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
+  all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
+
+  g_object_set_data(G_OBJECT(dialog), "all_data_sets", GINT_TO_POINTER(all_data_sets));
+  g_object_set_data(G_OBJECT(dialog), "all_rois", GINT_TO_POINTER(all_rois));
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("ANALYSIS/CalculateAllDataSets",all_data_sets);
+  gnome_config_set_int("ANALYSIS/CalculateAllRois",all_rois);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+
+  return;
+}
+
+static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
+
+  switch(response_id) {
+  case AMITK_RESPONSE_EXECUTE:
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+
+/* function to setup a dialog to allow us to choice options for rendering */
+GtkWidget * ui_roi_analysis_init_dialog_create(GtkWindow * parent) {
+  
+  GtkWidget * dialog;
+  gchar * temp_string;
+  GtkWidget * table;
+  GtkWidget * label;
+  guint table_row;
+  gboolean all_data_sets;
+  gboolean all_rois;
+  GtkWidget * radio_button[4];
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+  all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
+  all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
+  gnome_config_pop_prefix();
+
+  temp_string = g_strdup_printf("%s: ROI Analysis Initialization Dialog", PACKAGE);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
+  g_free(temp_string);
+  g_object_set_data(G_OBJECT(dialog), "all_data_sets", GINT_TO_POINTER(all_data_sets));
+  g_object_set_data(G_OBJECT(dialog), "all_rois", GINT_TO_POINTER(all_rois));
+
+
+  /* setup the callbacks for the dialog */
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
+
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+
+  /* start making the widgets for this dialog box */
+  table = gtk_table_new(3,3,FALSE);
+  table_row=0;
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+
+  label = gtk_label_new("Calculate:");
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  label = gtk_label_new("All ROIS:");
+  gtk_table_attach(GTK_TABLE(table), label, 1,2, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  label = gtk_label_new("Selected ROIS:");
+  gtk_table_attach(GTK_TABLE(table), label, 2,3, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  label = gtk_label_new("On All Data Sets:");
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+
+  radio_button[0] = gtk_radio_button_new(NULL);
+  gtk_table_attach(GTK_TABLE(table), radio_button[0], 1,2, 
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[0]), "all_data_sets", GINT_TO_POINTER(TRUE));
+  g_object_set_data(G_OBJECT(radio_button[0]), "all_rois", GINT_TO_POINTER(TRUE));
+
+  radio_button[1] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[1], 2,3, 
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[1]), "all_data_sets", GINT_TO_POINTER(TRUE));
+  g_object_set_data(G_OBJECT(radio_button[1]), "all_rois", GINT_TO_POINTER(FALSE));
+  table_row++;
+
+
+  label = gtk_label_new("On Selected Data Sets:");
+  gtk_table_attach(GTK_TABLE(table), label, 0,1, 
+		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+
+  radio_button[2] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[2], 1,2, 
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[2]), "all_data_sets", GINT_TO_POINTER(FALSE));
+  g_object_set_data(G_OBJECT(radio_button[2]), "all_rois", GINT_TO_POINTER(TRUE));
+
+  radio_button[3] = gtk_radio_button_new_from_widget(GTK_RADIO_BUTTON(radio_button[0]));
+  gtk_table_attach(GTK_TABLE(table), radio_button[3], 2,3, 
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  g_object_set_data(G_OBJECT(radio_button[3]), "all_data_sets", GINT_TO_POINTER(FALSE));
+  g_object_set_data(G_OBJECT(radio_button[3]), "all_rois", GINT_TO_POINTER(FALSE));
+  table_row++;
+
+  if (all_data_sets && all_rois)
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[0]), TRUE);
+  else if (all_data_sets && !all_rois)
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[1]), TRUE);
+  else if (!all_data_sets && all_rois)
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[2]), TRUE);
+  else /* !all_data_sets && !all_rois */
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[3]), TRUE);
+
+  g_signal_connect(G_OBJECT(radio_button[0]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
+  g_signal_connect(G_OBJECT(radio_button[1]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
+  g_signal_connect(G_OBJECT(radio_button[2]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
+  g_signal_connect(G_OBJECT(radio_button[3]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
+
+
+  /* and show all our widgets */
+  gtk_widget_show_all(dialog);
+
+  return dialog;
+}
+
 
 
 

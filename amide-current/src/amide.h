@@ -28,6 +28,16 @@
 
 #include <glib.h>
 
+/* define a macro glib should have */
+#define g_try_new(struct_type, n_structs)           \
+    ((struct_type *) g_try_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
+
+#define AMITK_RESPONSE_EXECUTE 1
+
+
+/* defines how many times we want the progress bar to be updated over the course of an action */
+#define AMIDE_UPDATE_DIVIDER 40.0 /* must be float point */
+
 /* some basic defines for packing tables */
 #define X_PACKING_OPTIONS GTK_EXPAND
 #define Y_PACKING_OPTIONS GTK_EXPAND

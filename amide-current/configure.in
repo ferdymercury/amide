@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.4],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.5],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -132,7 +132,7 @@ AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
 dnl check for various libraries and programs that we might need
 AC_CHECK_LIB(gsl, gsl_error, FOUND_LIBGSL=yes, FOUND_LIBGSL=no, -lgslcblas -L/sw/lib)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
-AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib)
+AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib -lglib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 

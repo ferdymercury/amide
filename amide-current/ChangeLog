@@ -1,3 +1,26 @@
+0.7.5
+	* medcon importing now allows negative values (had been set to zero)
+	* added progress bars for rendering context initialization
+	* added progress bars for series slicing
+	* added option to set values above threshold to zero when rendering
+	  - a poor man's "strip" function
+	* projection image voxel units are now in terms of 1/mm^3
+	* object dialog now lists memory usage of data sets
+	* fixed unref'ing bug with gtkdial
+	* compiling without libmdc works again
+	* slices correctly generated for data sets with negative values
+	* added ability to leave cross hairs on canvases (in preferences dialog)
+	* added ability to increase the central "empty area" of cross hairs (in preferences dialog)
+	* removed annoying characters from suggested export file names
+	* switched over to using g_try_malloc, g_malloc crashes on failed allocations
+	* fixed bug in rendering, was allocating 5x more memory then it needed
+	* allowing optimized versus non-optimized (less memory) rendering
+	* switched all numerical entries to spin buttons for better behavior on focus out
+	* rendering is now done in idle loop
+	* series slicing is now done in idle loop
+	* ui_series wasn't disconnecting data_set handlers
+	* added popup dialogs before roi analysis and rendering to allow picking of options
+
 0.7.4
 	* switched mpeg encoding to using libfame
 	* number of voxels now displayed on roi_analysis dialog

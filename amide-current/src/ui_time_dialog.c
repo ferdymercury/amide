@@ -28,7 +28,6 @@
 #include "ui_time_dialog.h"
 #include "amitk_canvas.h"
 
-#define AMITK_RESPONSE_EXECUTE 1
 
 typedef enum {
   COLUMN_START,
@@ -270,7 +269,7 @@ static void update_model(GtkListStore * store, GtkTreeSelection *selection,
   }
 
   /* get space for the array that'll take care of which frame of which data set we're looking at*/
-  frames = g_new(guint,num_sets);
+  frames = g_try_new(guint,num_sets);
   if ((frames == NULL) && (num_sets !=0)) {
     g_warning("can't count frames or allocate memory!");
     return;
@@ -516,7 +515,8 @@ void ui_time_dialog_create(ui_study_t * ui_study) {
   gtk_window_set_resizable(GTK_WINDOW(time_dialog), TRUE);
 
   /* make (and save a pointer to) a structure to temporary hold the new time and duration */
-  new_time = g_new(ui_time_dialog_t, 1);
+  new_time = g_try_new(ui_time_dialog_t, 1);
+  g_return_if_fail(new_time != NULL);
   new_time->start = AMITK_STUDY_VIEW_START_TIME(ui_study->study);
   new_time->end = new_time->start+AMITK_STUDY_VIEW_DURATION(ui_study->study);
   new_time->valid = TRUE;

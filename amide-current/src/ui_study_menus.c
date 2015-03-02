@@ -28,7 +28,6 @@
 
 #include "amide_config.h"
 #include <gnome.h>
-#include "rendering.h"
 #include "ui_common.h"
 #include "ui_study.h"
 #include "ui_study_cb.h"
@@ -225,22 +224,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("Look at a series of images"), 
 			     series_type_menu),
 #if AMIDE_LIBVOLPACK_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_Rendering"),
-			  N_("perform volume renderings on the currently select data sets"),
-			  ui_study_cb_rendering,
+    GNOMEUIINFO_ITEM_DATA(N_("_Volume Rendering"),
+			  N_("perform a volume rendering on the currently selected objects"),
+			  ui_study_cb_render,
 			  ui_study, NULL),
 #endif
-    GNOMEUIINFO_END
-  };
-
-  /* the submenu under the roi analysis menu item */
-  GnomeUIInfo roi_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("Calculate _All ROIs"),
-			  N_("caculate values for all ROI's on the currently selected data sets"),
-			  ui_study_cb_calculate_all, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("Calculate _Selected ROIS"),
-			  N_("calculate values only for the currently selected ROI's on the currently selected data sets"),
-			  ui_study_cb_calculate_selected, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
@@ -278,9 +266,9 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			     N_("generate an mpeg fly through of the data sets"), 
 			     fly_through_menu),
 #endif
-    GNOMEUIINFO_SUBTREE_HINT(N_("_ROI Statistics"),
-			     N_("calculate statistics over the ROI's"), 
-			     roi_menu),
+    GNOMEUIINFO_ITEM_DATA(N_("Calculate _ROI Statistics"),
+			  N_("caculate ROI statistics"),
+			  ui_study_cb_roi_statistics, ui_study, NULL),
     GNOMEUIINFO_END
   };
 

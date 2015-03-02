@@ -1,4 +1,4 @@
-/* ui_rendering_movie_dialog.h
+/* ui_render_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2002 Andy Loening
@@ -24,43 +24,14 @@
 */
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-#ifdef AMIDE_LIBFAME_SUPPORT
 
 /* header files that are always needed with this file */
-#include "ui_rendering.h"
-
-typedef enum {OVER_TIME, OVER_FRAMES, DYNAMIC_TYPES} dynamic_t;
-
-/* data structures */
-typedef struct ui_rendering_movie_t {
-  GtkWidget * progress;
-  amide_time_t duration; /* movie duration */
-  gdouble rotation[AMITK_AXIS_NUM];
-  dynamic_t type;
-  amide_time_t start_time;
-  amide_time_t end_time;
-  guint start_frame;
-  guint end_frame;
-  ui_rendering_t * ui_rendering; /* a pointer back to the main rendering ui */
-  guint reference_count;
-
-  GtkWidget * start_time_label;
-  GtkWidget * end_time_label;
-  GtkWidget * start_frame_label;
-  GtkWidget * end_frame_label;
-  GtkWidget * start_time_entry;
-  GtkWidget * end_time_entry;
-  GtkWidget * start_frame_entry;
-  GtkWidget * end_frame_entry;
-} ui_rendering_movie_t;
-
+#include "ui_render.h"
 
 /* external functions */
-ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rendering);
+void ui_render_dialog_create(ui_render_t * ui_render);
 
-#endif /* AMIDE_LIBFAME_SUPPORT */
-#endif /* LIBVOLPACK_SUPPORT */
-
+#endif
 
 
 

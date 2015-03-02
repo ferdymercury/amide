@@ -518,7 +518,7 @@ static ui_alignment_t * ui_alignment_init(void) {
   ui_alignment_t * ui_alignment;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_alignment = g_new(ui_alignment_t,1)) == NULL) {
+  if ((ui_alignment = g_try_new(ui_alignment_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_alignment_t");
     return NULL;
   }

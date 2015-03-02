@@ -444,7 +444,7 @@ static ui_filter_t * ui_filter_init(void) {
   ui_filter_t * ui_filter;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_filter = g_new(ui_filter_t,1)) == NULL) {
+  if ((ui_filter = g_try_new(ui_filter_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_filter_t");
     return NULL;
   }

@@ -68,10 +68,9 @@ void ui_study_cb_series(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_fly_through(GtkWidget * widget, gpointer ui_study);
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-void ui_study_cb_rendering(GtkWidget * widget, gpointer data);
+void ui_study_cb_render(GtkWidget * widget, gpointer data);
 #endif
-void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data);
-void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data);
 void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data);

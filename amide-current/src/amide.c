@@ -140,7 +140,7 @@ int main (int argc, char *argv []) {
 	  if (imported_study == NULL) {
 	    imported_study = amitk_study_new();
 	    amitk_object_set_name(AMITK_OBJECT(imported_study), AMITK_OBJECT_NAME(new_ds));
-	    amitk_study_set_view_center(imported_study, amitk_volume_center(AMITK_VOLUME(new_ds)));
+	    amitk_study_set_view_center(imported_study, amitk_volume_get_center(AMITK_VOLUME(new_ds)));
 	  }
 	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
 	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));

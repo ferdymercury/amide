@@ -1,4 +1,4 @@
-/* ui_rendering.h
+/* ui_render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2002 Andy Loening
@@ -25,31 +25,31 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#ifndef __UI_RENDERING_H__
-#define __UI_RENDERING_H__
+#ifndef __UI_RENDER_H__
+#define __UI_RENDER_H__
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include "rendering.h"
+#include "render.h"
 
 /* defines */
-#define UI_RENDERING_BLANK_WIDTH 200
-#define UI_RENDERING_BLANK_HEIGHT 200
+#define UI_RENDER_BLANK_WIDTH 200
+#define UI_RENDER_BLANK_HEIGHT 200
 #define BOX_OFFSET 0.2
 
-/* ui_rendering data structures */
-typedef struct ui_rendering_t {
+/* ui_render data structures */
+typedef struct ui_render_t {
   GnomeApp * app; 
   GtkWidget * parameter_dialog;
 #ifdef AMIDE_LIBFAME_SUPPORT
-  gpointer movie; /* pointer to type ui_rendering_movie_t */
+  gpointer movie; /* pointer to type ui_render_movie_t */
 #endif
   amide_time_t start;
   amide_time_t duration;
   GnomeCanvas * canvas;
   GnomeCanvasItem * canvas_image;
   GdkPixbuf * pixbuf;
-  renderings_t * contexts;
+  renderings_t * renderings;
   GtkWidget * render_button;
   gboolean immediate;
   gboolean stereoscopic;
@@ -61,14 +61,22 @@ typedef struct ui_rendering_t {
   gdouble density;
   gdouble zoom;
   AmitkSpace * box_space;
+
+  guint next_update;
+  guint idle_handler_id;
+
+  progress_t * progress_dialog;
   guint reference_count;
-} ui_rendering_t;
+} ui_render_t;
 
 /* external functions */
-void ui_rendering_update_canvas(ui_rendering_t * ui_rendering, gboolean override);
-void ui_rendering_create(GList * objects, amide_time_t start, amide_time_t duration);
+void ui_render_add_update(ui_render_t * ui_render);
+gboolean ui_render_update_immediate(gpointer ui_render);
+void ui_render_create(GList * objects, amide_time_t start, amide_time_t duration, 
+		      gboolean zero_fill,gboolean conserve_memory);
+GtkWidget * ui_render_init_dialog_create(GtkWindow * parent);
 
-#endif /* __UI_RENDERING_H__ */
+#endif /* __UI_RENDER_H__ */
 #endif /* AMIDE_LIBVOLPACK_SUPPORT */
 
 

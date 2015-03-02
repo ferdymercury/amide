@@ -36,22 +36,26 @@
 #include "ui_fly_through.h"
 #include "amitk_canvas.h"
 
-#define AMITK_RESPONSE_EXECUTE 1
+#define SPIN_BUTTON_DIGITS 3
 
 typedef struct ui_fly_through_t {
   AmitkStudy * study;
   AmitkSpace * space;
-  GtkWidget * canvas;
-  gboolean in_generation;
-
-  GtkWidget * start_entry;
-  GtkWidget * end_entry;
-  GtkWidget * duration_entry;
-  GtkWidget * position_entry;
 
   amide_real_t start_z;
   amide_real_t end_z;
   amide_time_t duration;
+  gboolean in_generation;
+
+  GtkWidget * dialog;
+  GtkWidget * canvas;
+  GtkWidget * progress_bar;
+  GtkWidget * start_position_button;
+  GtkWidget * end_position_button;
+  GtkWidget * start_spin_button;
+  GtkWidget * end_spin_button;
+  GtkWidget * duration_spin_button;
+  GtkWidget * position_entry;
 
   guint reference_count;
 
@@ -61,15 +65,16 @@ static void view_changed_cb(GtkWidget * canvas, AmitkPoint *position,
 			    amide_real_t thickness, gpointer data);
 static void set_start_pressed_cb(GtkWidget * button, gpointer data);
 static void set_end_pressed_cb(GtkWidget * button, gpointer data);
-static void change_start_entry_cb(GtkWidget * widget, gpointer data);
-static void change_end_entry_cb(GtkWidget * widget, gpointer data);
-static void change_duration_entry_cb(GtkWidget * widget, gpointer data);
+static void change_start_spin_button_cb(GtkWidget * widget, gpointer data);
+static void change_end_spin_button_cb(GtkWidget * widget, gpointer data);
+static void change_duration_spin_button_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void save_as_ok_cb(GtkWidget* widget, gpointer data);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 
 static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_filename);
 static void dialog_update_position_entry(ui_fly_through_t * ui_fly_through);
+static void dialog_set_sensitive(ui_fly_through_t * ui_fly_through, gboolean sensitive);
 static void dialog_update_entries(ui_fly_through_t * ui_fly_through);
 static ui_fly_through_t * ui_fly_through_unref(ui_fly_through_t * ui_fly_through);
 static ui_fly_through_t * fly_through_ref(ui_fly_through_t * fly_through);
@@ -118,58 +123,25 @@ static void set_end_pressed_cb(GtkWidget * button, gpointer data) {
 }
 
 
-static void change_start_entry_cb(GtkWidget * widget, gpointer data) {
-
-  gchar * str;
-  gint error;
-  gdouble temp_val;
+static void change_start_spin_button_cb(GtkWidget * widget, gpointer data) {
   ui_fly_through_t * ui_fly_through = data;
-
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); 
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
-
-  if (error != EOF)  /* make sure it's a valid number */
-    ui_fly_through->start_z = temp_val;
-      
+  ui_fly_through->start_z = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   return;
 }
 
 
 
-static void change_end_entry_cb(GtkWidget * widget, gpointer data) {
-
-  gchar * str;
-  gint error;
-  gdouble temp_val;
+static void change_end_spin_button_cb(GtkWidget * widget, gpointer data) {
   ui_fly_through_t * ui_fly_through = data;
-
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); 
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
-
-  if (error != EOF)  /* make sure it's a valid number */
-    ui_fly_through->end_z = temp_val;
-      
+  ui_fly_through->end_z = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   return;
 }
 
 
 
-static void change_duration_entry_cb(GtkWidget * widget, gpointer data) {
-
-  gchar * str;
-  gint error;
-  gdouble temp_val;
+static void change_duration_spin_button_cb(GtkWidget * widget, gpointer data) {
   ui_fly_through_t * ui_fly_through = data;
-
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); 
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
-
-  if (error != EOF)  /* make sure it's a valid number */
-    ui_fly_through->duration = temp_val;
-
+  ui_fly_through->duration = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
   return;
 }
 
@@ -255,7 +227,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
 
     break;
 
-  case GTK_RESPONSE_CLOSE:
+  case GTK_RESPONSE_CANCEL:
     g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
     if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
     break;
@@ -280,9 +252,8 @@ static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_fil
   gpointer mpeg_encode_context;
 
   /* gray out anything that could screw up the movie */
-  gtk_widget_set_sensitive(GTK_WIDGET(ui_fly_through->canvas), FALSE);
-
-  ui_fly_through->in_generation = TRUE;
+  dialog_set_sensitive(ui_fly_through, FALSE);
+  ui_fly_through->in_generation = TRUE; /* indicate we're generating */
 
   num_frames = ceil(ui_fly_through->duration*FRAMES_PER_SECOND);
   if (num_frames > 1)
@@ -304,36 +275,36 @@ static void movie_generate(ui_fly_through_t * ui_fly_through, gchar * output_fil
 #endif
   
 
-  /* start generating the frames */
-  for (i_frame = 0; i_frame < num_frames; i_frame++) {
+  /* start generating the frames, continue while we haven't hit cancel  */
+  for (i_frame = 0; 
+       (i_frame < num_frames) && ui_fly_through->in_generation && (return_val==1); 
+       i_frame++) {
+
     dialog_update_position_entry(ui_fly_through);
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_fly_through->progress_bar),
+				  (i_frame)/((gdouble) num_frames));
 
-    /* continue if good so far and we haven't closed the dialog box */
-    if ((return_val == 1) && ui_fly_through->in_generation) { 
+    /* advance the canvas */
+    amitk_study_set_view_center(ui_fly_through->study,
+				amitk_space_s2b(ui_fly_through->space, current_point));
+
+    /* do any events pending, and make sure the canvas gets updated */
+    while (gtk_events_pending() || AMITK_CANVAS(ui_fly_through->canvas)->next_update)
+      gtk_main_iteration();
       
-      /* advance the canvas */
-      amitk_study_set_view_center(ui_fly_through->study,
-				  amitk_space_s2b(ui_fly_through->space, current_point));
+    return_val = mpeg_encode_frame(mpeg_encode_context, AMITK_CANVAS_PIXBUF(ui_fly_through->canvas));
 
-      /* do any events pending, and make sure the canvas gets updated */
-      while (gtk_events_pending() || AMITK_CANVAS(ui_fly_through->canvas)->next_update)
-	gtk_main_iteration();
-      
-      return_val = mpeg_encode_frame(mpeg_encode_context, AMITK_CANVAS_PIXBUF(ui_fly_through->canvas));
+    if (return_val != 1) 
+      g_warning("encoding of frame %d failed", i_frame);
 
-      if (return_val != 1) 
-	g_warning("encoding of frame %d failed", i_frame);
-
-      current_point.z += increment_z;
-    }
+    current_point.z += increment_z;
   }
   mpeg_encode_close(mpeg_encode_context);
+  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_fly_through->progress_bar),1.0);
 
-  /* and remove the reference we added here*/
-  ui_fly_through->in_generation = FALSE;
 
-  /* let user change stuff again */
-  gtk_widget_set_sensitive(GTK_WIDGET(ui_fly_through->canvas), TRUE);
+  ui_fly_through->in_generation = FALSE; /* done generating */
+  dialog_set_sensitive(ui_fly_through, TRUE); /* let user change stuff again */
 
   return;
 }
@@ -352,36 +323,43 @@ static void dialog_update_position_entry(ui_fly_through_t * ui_fly_through) {
   return;
 }
 
+static void dialog_set_sensitive(ui_fly_through_t * ui_fly_through, gboolean sensitive) {
+
+  gtk_widget_set_sensitive(ui_fly_through->start_position_button, sensitive);
+  gtk_widget_set_sensitive(ui_fly_through->end_position_button, sensitive);
+  gtk_widget_set_sensitive(ui_fly_through->position_entry, sensitive);
+  gtk_widget_set_sensitive(ui_fly_through->start_spin_button, sensitive);
+  gtk_widget_set_sensitive(ui_fly_through->end_spin_button, sensitive);
+  gtk_widget_set_sensitive(ui_fly_through->duration_spin_button, sensitive);
+  gtk_widget_set_sensitive(GTK_WIDGET(ui_fly_through->canvas), sensitive);
+  gtk_dialog_set_response_sensitive(GTK_DIALOG(ui_fly_through->dialog), 
+				    AMITK_RESPONSE_EXECUTE, sensitive);
+}
 
 static void dialog_update_entries(ui_fly_through_t * ui_fly_through) {
   
-  gchar * temp_str;
-
-  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->start_entry), 
-				  G_CALLBACK(change_start_entry_cb), ui_fly_through);
-  temp_str = g_strdup_printf("%f", ui_fly_through->start_z);
-  gtk_entry_set_text(GTK_ENTRY(ui_fly_through->start_entry), temp_str);
-  g_free(temp_str);
-  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->start_entry), 
-				    G_CALLBACK(change_start_entry_cb), 
+  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->start_spin_button), 
+				  G_CALLBACK(change_start_spin_button_cb), ui_fly_through);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_fly_through->start_spin_button), 
+			    ui_fly_through->start_z);
+  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->start_spin_button), 
+				    G_CALLBACK(change_start_spin_button_cb), 
 				    ui_fly_through);
 
-  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->end_entry), 
-				  G_CALLBACK(change_end_entry_cb), ui_fly_through);
-  temp_str = g_strdup_printf("%f", ui_fly_through->end_z);
-  gtk_entry_set_text(GTK_ENTRY(ui_fly_through->end_entry), temp_str);
-  g_free(temp_str);
-  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->end_entry), 
-				    G_CALLBACK(change_end_entry_cb), 
+  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->end_spin_button), 
+				  G_CALLBACK(change_end_spin_button_cb), ui_fly_through);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_fly_through->end_spin_button), 
+			    ui_fly_through->end_z);
+  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->end_spin_button), 
+				    G_CALLBACK(change_end_spin_button_cb), 
 				    ui_fly_through);
 
-  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->duration_entry), 
-				  G_CALLBACK(change_duration_entry_cb), ui_fly_through);
-  temp_str = g_strdup_printf("%f", ui_fly_through->duration);
-  gtk_entry_set_text(GTK_ENTRY(ui_fly_through->duration_entry), temp_str);
-  g_free(temp_str);
-  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->duration_entry), 
-				    G_CALLBACK(change_duration_entry_cb), 
+  g_signal_handlers_block_by_func(G_OBJECT(ui_fly_through->duration_spin_button), 
+				  G_CALLBACK(change_duration_spin_button_cb), ui_fly_through);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(ui_fly_through->duration_spin_button), 
+			    ui_fly_through->duration);
+  g_signal_handlers_unblock_by_func(G_OBJECT(ui_fly_through->duration_spin_button), 
+				    G_CALLBACK(change_duration_spin_button_cb), 
 				    ui_fly_through);
   return;
 }
@@ -440,7 +418,7 @@ static ui_fly_through_t * ui_fly_through_init(void) {
   ui_fly_through_t * ui_fly_through;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_fly_through = g_new(ui_fly_through_t,1)) == NULL) {
+  if ((ui_fly_through = g_try_new(ui_fly_through_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_fly_through_t");
     return NULL;
   }
@@ -469,10 +447,9 @@ void ui_fly_through_create(GtkWidget * parent_app,
   GtkWidget * packing_table;
   GtkWidget * right_table;
   GtkWidget * label;
-  GtkWidget * button;
+  GtkWidget * hseparator;
   gint table_row=0;
   AmitkCorners corners;
-  GtkWidget * dialog;
 
 
   /* sanity checks */
@@ -483,23 +460,24 @@ void ui_fly_through_create(GtkWidget * parent_app,
   ui_fly_through->study = AMITK_STUDY(amitk_object_copy(AMITK_OBJECT(study)));
   ui_fly_through->space = amitk_space_get_view_space(view, layout);
 
-  dialog = gtk_dialog_new_with_buttons("Fly Through Generation",  GTK_WINDOW(parent_app),
-				       GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
-				       GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
-				       GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
-				       NULL);
+  ui_fly_through->dialog = 
+    gtk_dialog_new_with_buttons("Fly Through Generation",  GTK_WINDOW(parent_app),
+				GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_NO_SEPARATOR,
+				GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+				GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+				NULL);
 
-  g_signal_connect(G_OBJECT(dialog), "delete_event",
+  g_signal_connect(G_OBJECT(ui_fly_through->dialog), "delete_event",
 		   G_CALLBACK(delete_event_cb), ui_fly_through);
-  g_signal_connect(G_OBJECT(dialog), "response", 
+  g_signal_connect(G_OBJECT(ui_fly_through->dialog), "response", 
 		   G_CALLBACK(response_cb), ui_fly_through);
-  gtk_window_set_resizable(GTK_WINDOW(dialog), TRUE);
+  gtk_window_set_resizable(GTK_WINDOW(ui_fly_through->dialog), TRUE);
 
   /* make the widgets for this dialog box */
   packing_table = gtk_table_new(2,3,FALSE);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG(ui_fly_through->dialog)->vbox), packing_table);
 
-  right_table = gtk_table_new(5,2,FALSE);
+  right_table = gtk_table_new(6,2,FALSE);
   gtk_table_attach(GTK_TABLE(packing_table), right_table, 2,3, 0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
 
@@ -516,11 +494,13 @@ void ui_fly_through_create(GtkWidget * parent_app,
   label = gtk_label_new("Start Position (mm):");
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  ui_fly_through->start_entry = gtk_entry_new();
-  gtk_editable_set_editable(GTK_EDITABLE(ui_fly_through->start_entry), TRUE);
-  g_signal_connect(G_OBJECT(ui_fly_through->start_entry), "changed", 
-		   G_CALLBACK(change_start_entry_cb), ui_fly_through);
-  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->start_entry,
+  ui_fly_through->start_spin_button = 
+    gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_fly_through->start_spin_button), 
+			     SPIN_BUTTON_DIGITS);
+  g_signal_connect(G_OBJECT(ui_fly_through->start_spin_button), "value_changed", 
+		   G_CALLBACK(change_start_spin_button_cb), ui_fly_through);
+  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->start_spin_button,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -528,11 +508,13 @@ void ui_fly_through_create(GtkWidget * parent_app,
   label = gtk_label_new("End Position (mm):");
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  ui_fly_through->end_entry = gtk_entry_new();
-  gtk_editable_set_editable(GTK_EDITABLE(ui_fly_through->end_entry), TRUE);
-  g_signal_connect(G_OBJECT(ui_fly_through->end_entry), "changed", 
-		   G_CALLBACK(change_end_entry_cb), ui_fly_through);
-  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->end_entry,
+  ui_fly_through->end_spin_button = 
+    gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_fly_through->end_spin_button), 
+			     SPIN_BUTTON_DIGITS);
+  g_signal_connect(G_OBJECT(ui_fly_through->end_spin_button), "value_changed", 
+		   G_CALLBACK(change_end_spin_button_cb), ui_fly_through);
+  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->end_spin_button,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -540,11 +522,32 @@ void ui_fly_through_create(GtkWidget * parent_app,
   label = gtk_label_new("Movie Duration (sec):");
   gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  ui_fly_through->duration_entry = gtk_entry_new();
-  gtk_editable_set_editable(GTK_EDITABLE(ui_fly_through->duration_entry), TRUE);
-  g_signal_connect(G_OBJECT(ui_fly_through->duration_entry), "changed", 
-		   G_CALLBACK(change_duration_entry_cb), ui_fly_through);
-  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->duration_entry,
+  ui_fly_through->duration_spin_button = 
+    gtk_spin_button_new_with_range(0, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(ui_fly_through->duration_spin_button), 
+			     SPIN_BUTTON_DIGITS);
+  g_signal_connect(G_OBJECT(ui_fly_through->duration_spin_button), "value_changed", 
+		   G_CALLBACK(change_duration_spin_button_cb), ui_fly_through);
+  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->duration_spin_button,
+		   1,2, table_row, table_row+1, 
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(right_table), hseparator,
+		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_show(hseparator);
+  table_row++;
+
+  /* the progress bar */
+  label = gtk_label_new("Progress:");
+  gtk_table_attach(GTK_TABLE(right_table), label, 0,1, table_row,table_row+1,
+		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  ui_fly_through->progress_bar = gtk_progress_bar_new();
+  gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(ui_fly_through->progress_bar), 
+				   GTK_PROGRESS_LEFT_TO_RIGHT);
+  gtk_table_attach(GTK_TABLE(right_table), ui_fly_through->progress_bar,
 		   1,2, table_row, table_row+1, 
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
@@ -552,23 +555,23 @@ void ui_fly_through_create(GtkWidget * parent_app,
 
   /* setup the canvas */
   ui_fly_through->canvas = 
-    amitk_canvas_new(ui_fly_through->study, view, layout, 0, 0, NULL, FALSE);
+    amitk_canvas_new(ui_fly_through->study, view, layout, 0, 0, NULL, FALSE, FALSE, 0);
   g_signal_connect(G_OBJECT(ui_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), ui_fly_through);
   gtk_table_attach(GTK_TABLE(packing_table), ui_fly_through->canvas, 0,2,0,1,
 		   X_PACKING_OPTIONS | GTK_FILL, Y_PACKING_OPTIONS | GTK_FILL,
 		   X_PADDING, Y_PADDING);
 
-  button = gtk_button_new_with_label("Set Start Position");
-  g_signal_connect(G_OBJECT(button), "pressed",
+  ui_fly_through->start_position_button = gtk_button_new_with_label("Set Start Position");
+  g_signal_connect(G_OBJECT(ui_fly_through->start_position_button), "pressed",
 		   G_CALLBACK(set_start_pressed_cb), ui_fly_through);
-  gtk_table_attach(GTK_TABLE(packing_table), button, 0,1,1,2,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  button = gtk_button_new_with_label("Set End Position");
-  g_signal_connect(G_OBJECT(button), "pressed",
+  gtk_table_attach(GTK_TABLE(packing_table), ui_fly_through->start_position_button, 
+		   0,1,1,2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  ui_fly_through->end_position_button = gtk_button_new_with_label("Set End Position");
+  g_signal_connect(G_OBJECT(ui_fly_through->end_position_button), "pressed",
 		   G_CALLBACK(set_end_pressed_cb), ui_fly_through);
-  gtk_table_attach(GTK_TABLE(packing_table), button, 1,2,1,2,
-		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(packing_table), ui_fly_through->end_position_button, 
+		   1,2,1,2, X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
@@ -591,7 +594,7 @@ void ui_fly_through_create(GtkWidget * parent_app,
   dialog_update_entries(ui_fly_through);
 
   /* and show all our widgets */
-  gtk_widget_show_all(dialog);
+  gtk_widget_show_all(ui_fly_through->dialog);
 		 
   return;
 }

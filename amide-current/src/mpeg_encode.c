@@ -105,7 +105,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   ysize = 16*ceil(ysize/16.0);
 
   /* alloc space for the mpeg_encoding structure */
-  if ((context = g_new(context_t,1)) == NULL) {
+  if ((context = g_try_new(context_t,1)) == NULL) {
     g_warning("couldn't allocate space for context_t");
     return NULL;
   }
@@ -117,21 +117,21 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->ysize = ysize;
   context->buffer_size = xsize*ysize*BUFFER_MULT; /* needs to be able to hold a couple frames */
 
-  if ((context->fame_parameters = g_new(fame_parameters_t,1)) == NULL) {
+  if ((context->fame_parameters = g_try_new(fame_parameters_t,1)) == NULL) {
     g_warning("couldn't allocate space for fame parameters");
     context_free(context);
     return NULL;
   }
   memcpy(context->fame_parameters, &default_fame_parameters, sizeof(fame_parameters_t));
 
-  if ((context->buffer = g_new(guchar, context->buffer_size)) == NULL) {
+  if ((context->buffer = g_try_new(guchar, context->buffer_size)) == NULL) {
     g_warning("Unable to allocate mpeg encoding buffer");
     context_free(context);
     return NULL;
   }
 
 
-  if ((context->yuv = g_new(fame_yuv_t, 1)) == NULL) {
+  if ((context->yuv = g_try_new(fame_yuv_t, 1)) == NULL) {
     g_warning("Unable to allocate yuv struct");
     context_free(context);
     return NULL;
@@ -139,7 +139,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
   context->yuv->w = xsize;
   context->yuv->h = ysize;
   context->yuv->p = xsize;
-  if ((context->yuv->y = g_new(unsigned char, xsize*ysize*3/2)) == NULL) {
+  if ((context->yuv->y = g_try_new(unsigned char, xsize*ysize*3/2)) == NULL) {
     g_warning("Unable to allocate yuv buffer");
     context_free(context);
     return NULL;

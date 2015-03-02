@@ -108,9 +108,11 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 						       guint frame) {
 
   analysis_frame_t * frame_analysis;
+  guint num_frames;
 
-  if (frame == AMITK_DATA_SET_NUM_FRAMES(ds)) return NULL; /* check if we're done */
-  g_assert(frame < AMITK_DATA_SET_NUM_FRAMES(ds)); /* sanity check */
+  num_frames = AMITK_DATA_SET_NUM_FRAMES(ds);
+  if (frame == num_frames) return NULL; /* check if we're done */
+  g_assert(frame < num_frames); /* sanity check */
 
   /* and now calculate this frame's data */
 #ifdef AMIDE_DEBUG
@@ -119,7 +121,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 #endif
 
   /* get memory first */
-  if ((frame_analysis =  g_new(analysis_frame_t,1)) == NULL) {
+  if ((frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analysis of frame %d", frame);
     return frame_analysis;
   }
@@ -226,7 +228,7 @@ analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets) {
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(data_sets->data), NULL);
 
-  if ((temp_volume_analysis =  g_new(analysis_volume_t,1)) == NULL) {
+  if ((temp_volume_analysis =  g_try_new(analysis_volume_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analysis of volumes");
     return NULL;
   }
@@ -289,7 +291,7 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * dat
   
   if (rois == NULL)  return NULL;
 
-  if ((temp_roi_analysis =  g_new(analysis_roi_t,1)) == NULL) {
+  if ((temp_roi_analysis =  g_try_new(analysis_roi_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analyses");
     return NULL;
   }

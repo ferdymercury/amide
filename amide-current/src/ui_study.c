@@ -167,7 +167,7 @@ ui_study_t * ui_study_init(void) {
   help_info_line_t i_line;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_study = g_new(ui_study_t,1)) == NULL) {
+  if ((ui_study = g_try_new(ui_study_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_study_t");
     return NULL;
   }
@@ -203,6 +203,10 @@ ui_study_t * ui_study_init(void) {
     gnome_config_get_int("ROI/LineStyle"); /* 0 is solid */
   ui_study->canvas_layout = 
     gnome_config_get_int("CANVAS/Layout"); /* 0 is AMITK_LAYOUT_LINEAR */
+  ui_study->canvas_leave_target = 
+    gnome_config_get_int("CANVAS/LeaveTarget"); /* 0 is FALSE */
+  ui_study->canvas_target_empty_area = 
+    gnome_config_get_int("CANVAS/TargetEmptyArea"); /* in pixels */
   ui_study->dont_prompt_for_save_on_exit = 
     gnome_config_get_int("MISC/DontPromptForSaveOnExit"); /* 0 is FALSE, so we prompt */
 
@@ -701,7 +705,9 @@ void ui_study_setup_layout(ui_study_t * ui_study) {
 			   ui_study->line_style,
 			   ui_study->roi_width,
 			   ui_study->active_ds, 
-			   TRUE);
+			   TRUE,
+			   ui_study->canvas_leave_target,
+			   ui_study->canvas_target_empty_area);
 	
 	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "help_event",
 			 G_CALLBACK(ui_study_cb_canvas_help_event), ui_study);

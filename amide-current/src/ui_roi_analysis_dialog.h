@@ -31,7 +31,10 @@
 #include "ui_study.h"
 
 /* external functions */
-void ui_roi_analysis_dialog_create(ui_study_t * ui_study, gboolean all);
+void ui_roi_analysis_dialog_create(ui_study_t * ui_study, 
+				   gboolean all_data_sets,
+				   gboolean all_rois);
+GtkWidget * ui_roi_analysis_init_dialog_create(GtkWindow * parent);
 
 
 #endif /* __UI_ROI_ANALYSIS_DIALOG_H__ */

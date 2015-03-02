@@ -223,7 +223,7 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 	  
 	  for (i_range=0; i_range<NUM_RANGES; i_range++) {
 	    spin_button =  
-	      gtk_spin_button_new_with_range(0,voxel_get_dim(AMITK_DATA_SET_DIM(ui_crop->data_set), i_dim),1);
+	      gtk_spin_button_new_with_range(0,voxel_get_dim(AMITK_DATA_SET_DIM(ui_crop->data_set), i_dim)-1,1);
 	    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
 				      voxel_get_dim(ui_crop->range[i_range], i_dim));
@@ -418,16 +418,16 @@ static void spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   int_value = gtk_spin_button_get_value_as_int(spin_button);
   
   if (range == RANGE_MIN) {
-    if (int_value <= voxel_get_dim(ui_crop->range[RANGE_MAX], dim)) {
+    if (int_value < voxel_get_dim(ui_crop->range[RANGE_MAX], dim)) {
       valid = TRUE;
     } else {
-      int_value = voxel_get_dim(ui_crop->range[RANGE_MAX], dim);
+      int_value = voxel_get_dim(ui_crop->range[RANGE_MAX], dim)-1;
     }
   } else { /* RANGE_MAX */
-    if (int_value >= voxel_get_dim(ui_crop->range[RANGE_MIN], dim)) {
+    if (int_value > voxel_get_dim(ui_crop->range[RANGE_MIN], dim)) {
       valid = TRUE;
     } else {
-      int_value = voxel_get_dim(ui_crop->range[RANGE_MIN], dim);
+      int_value = voxel_get_dim(ui_crop->range[RANGE_MIN], dim)+1;
     }
   }
 
@@ -701,7 +701,7 @@ static ui_crop_t * ui_crop_init(void) {
   range_t i_range;
 
   /* alloc space for the data structure for passing ui info */
-  if ((ui_crop = g_new(ui_crop_t,1)) == NULL) {
+  if ((ui_crop = g_try_new(ui_crop_t,1)) == NULL) {
     g_warning("couldn't allocate space for ui_crop_t");
     return NULL;
   }

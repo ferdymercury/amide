@@ -528,7 +528,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   GtkWidget * dialog;
 
   /* get space for our raw_data_info structure */
-  if ((raw_data_info = g_new(raw_data_info_t,1)) == NULL) {
+  if ((raw_data_info = g_try_new(raw_data_info_t,1)) == NULL) {
     g_warning("couldn't allocate space for raw_data_info structure to load in RAW file");
     return NULL;
   }

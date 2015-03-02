@@ -190,7 +190,7 @@ AmitkVolume * amitk_volume_new (void) {
 
 
 
-AmitkPoint amitk_volume_center(const AmitkVolume * volume) {
+AmitkPoint amitk_volume_get_center(const AmitkVolume * volume) {
 
   AmitkPoint center;
   AmitkCorners corners;
@@ -246,7 +246,7 @@ void amitk_volume_set_center(AmitkVolume * volume, const AmitkPoint new_center) 
   g_return_if_fail(AMITK_IS_VOLUME(volume));
   g_return_if_fail(AMITK_VOLUME_VALID(volume));
   
-  shift = point_sub(new_center, amitk_volume_center(volume));
+  shift = point_sub(new_center, amitk_volume_get_center(volume));
   if (!POINT_EQUAL(shift, zero_point)) {
     new_offset = point_add(AMITK_SPACE_OFFSET(volume), shift);
     amitk_space_set_offset(AMITK_SPACE(volume), new_offset);

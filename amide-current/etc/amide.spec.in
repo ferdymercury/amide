@@ -1,5 +1,5 @@
-Summary: 	amide is a program for viewing and analyzing medical image data sets
 Name: 		amide
+Summary: 	amide is a program for viewing and analyzing medical image data sets
 Version: 	@VERSION@
 Release: 	1
 License: 	GPL
@@ -16,6 +16,17 @@ It's capabilities include the simultaneous handling of multiple data
 sets imported from a variety of file formats, image fusion, 3D region
 of interest drawing and analysis, volume rendering, and rigid body
 alignments.
+
+
+%files
+%defattr(-, root, root)
+%doc AUTHORS COPYING ChangeLog NEWS README todo
+%{_bindir}/*
+%{_datadir}/pixmaps
+%{_datadir}/gnome
+%{_datadir}/omf
+%{_datadir}/applications
+%{_datadir}/gtk-doc
 
 
 %prep
@@ -44,17 +55,6 @@ scrollkeeper-update
 %postun
 scrollkeeper-update
 
-%files
-%defattr(-, root, root)
-
-%doc AUTHORS COPYING ChangeLog NEWS README todo
-
-%{_bindir}/*
-%{_datadir}/pixmaps
-%{_datadir}/gnome
-%{_datadir}/omf
-%{_datadir}/applications
-%{_datadir}/gtk-doc
 
 %changelog
 * Tue Nov 05 2002 Andy Loening <loening@ucla.edu>

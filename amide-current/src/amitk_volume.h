@@ -73,7 +73,7 @@ struct AmitkVolumeClass
 
 GType	        amitk_volume_get_type	             (void);
 AmitkVolume *   amitk_volume_new                     (void);
-AmitkPoint      amitk_volume_center                  (const AmitkVolume * volume);
+AmitkPoint      amitk_volume_get_center              (const AmitkVolume * volume);
 void            amitk_volume_set_corner              (AmitkVolume * volume, 
 						      AmitkPoint corner);
 void            amitk_volume_set_z_corner            (AmitkVolume * volume, 

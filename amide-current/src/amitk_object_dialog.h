@@ -60,7 +60,7 @@ struct _AmitkObjectDialog
   GtkWidget * roi_type_menu;
   GtkWidget * scan_date_entry;
   GtkWidget * modality_menu;
-  GtkWidget * scaling_factor_entry;
+  GtkWidget * scaling_factor_spin_button;
   GtkWidget * creation_date_entry;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
 
@@ -68,8 +68,8 @@ struct _AmitkObjectDialog
   GtkWidget * voxel_size_spinner[AMITK_AXIS_NUM];
   GtkWidget * dimension_spinner[AMITK_AXIS_NUM];
 
-  GtkWidget * start_entry;
-  GtkWidget * * duration_entries;
+  GtkWidget * start_spin_button;
+  GtkWidget * * duration_spin_buttons;
 
   GtkWidget * isocontour_value_entry;
   GtkWidget * voxel_dim_entry;

@@ -7,9 +7,11 @@
     <title>
 	AMIDE User's Manual V0.2
     </title>
-    <date>October 18, 2002</date>
+    <date>
+	2002-10-18
+    </date>
     <version identifier="0.2" date="2002-10-18" description="Updated for GNOME 2.0"/>
-    <subject category="Applications|Other" />
+    <subject category="Applications|Scientific" />
     <description>
       This is the user's manual for the AMIDE medical imaging program
     </description>

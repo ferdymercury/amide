@@ -185,8 +185,8 @@ amide_SOURCES = \
 	pixmaps.h \
 	raw_data_import.c \
 	raw_data_import.h \
-	rendering.c \
-	rendering.h \
+	render.c \
+	render.h \
 	ui_alignment_dialog.c \
 	ui_alignment_dialog.h \
 	ui_common.c \
@@ -199,12 +199,12 @@ amide_SOURCES = \
 	ui_fly_through.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
-	ui_rendering.c \
-	ui_rendering.h \
-	ui_rendering_dialog.c \
-	ui_rendering_dialog.h \
-	ui_rendering_movie_dialog.c \
-	ui_rendering_movie_dialog.h \
+	ui_render.c \
+	ui_render.h \
+	ui_render_dialog.c \
+	ui_render_dialog.h \
+	ui_render_movie.c \
+	ui_render_movie.h \
 	ui_roi_analysis_dialog.c \
 	ui_roi_analysis_dialog.h \
 	ui_series.c \
@@ -441,14 +441,13 @@ am_amide_OBJECTS = gtkdial.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
 	amitk_tree.$(OBJEXT) amitk_volume.$(OBJEXT) \
 	cti_import.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
 	legacy.$(OBJEXT) medcon_import.$(OBJEXT) mpeg_encode.$(OBJEXT) \
-	pixmaps.$(OBJEXT) raw_data_import.$(OBJEXT) rendering.$(OBJEXT) \
+	pixmaps.$(OBJEXT) raw_data_import.$(OBJEXT) render.$(OBJEXT) \
 	ui_alignment_dialog.$(OBJEXT) ui_common.$(OBJEXT) \
 	ui_crop_dialog.$(OBJEXT) ui_filter_dialog.$(OBJEXT) \
 	ui_fly_through.$(OBJEXT) ui_preferences_dialog.$(OBJEXT) \
-	ui_rendering.$(OBJEXT) ui_rendering_dialog.$(OBJEXT) \
-	ui_rendering_movie_dialog.$(OBJEXT) \
-	ui_roi_analysis_dialog.$(OBJEXT) ui_series.$(OBJEXT) \
-	ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
+	ui_render.$(OBJEXT) ui_render_dialog.$(OBJEXT) \
+	ui_render_movie.$(OBJEXT) ui_roi_analysis_dialog.$(OBJEXT) \
+	ui_series.$(OBJEXT) ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
 	ui_study_menus.$(OBJEXT) ui_study_toolbar.$(OBJEXT) \
 	ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
 amide_OBJECTS = $(am_amide_OBJECTS)
@@ -522,16 +521,16 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/legacy.Po ./$(DEPDIR)/medcon_import.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/mpeg_encode.Po ./$(DEPDIR)/pixmaps.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/raw_data_import.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/rendering.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/render.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_alignment_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_common.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_crop_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_filter_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_fly_through.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_dialog.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_movie_dialog.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_render.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_render_dialog.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_render_movie.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_roi_analysis_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_series.Po ./$(DEPDIR)/ui_study.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_study_cb.Po \
@@ -665,16 +664,16 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpeg_encode.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pixmaps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw_data_import.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rendering.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/render.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_alignment_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_crop_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_filter_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_fly_through.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_dialog.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_movie_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_render.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_render_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_render_movie.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_roi_analysis_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_series.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study.Po@am__quote@

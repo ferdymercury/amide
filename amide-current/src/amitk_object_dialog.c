@@ -37,7 +37,7 @@
 
 #define AMITK_RESPONSE_REVERT 2
 #define DIMENSION_STEP 0.2
-#define SPIN_BUTTON_DIGITS 3 /* how many digits after the decimal point */
+#define DIALOG_SPIN_BUTTON_DIGITS 3 /* how many digits after the decimal point */
 
 static void object_dialog_class_init (AmitkObjectDialogClass *class);
 static void object_dialog_init (AmitkObjectDialog *object_dialog);
@@ -138,9 +138,9 @@ static void object_dialog_destroy (GtkObject * object) {
     dialog->original_object = NULL;
   }
 
-  if (dialog->duration_entries != NULL) {
-    g_free(dialog->duration_entries);
-    dialog->duration_entries = NULL;
+  if (dialog->duration_spin_buttons != NULL) {
+    g_free(dialog->duration_spin_buttons);
+    dialog->duration_spin_buttons = NULL;
   }
 
   if (GTK_OBJECT_CLASS (object_dialog_parent_class)->destroy)
@@ -153,7 +153,7 @@ static void object_dialog_init (AmitkObjectDialog * dialog) {
   dialog->object = NULL;
   dialog->original_object = NULL;
   dialog->aspect_ratio = TRUE;
-  dialog->duration_entries = NULL;
+  dialog->duration_spin_buttons = NULL;
 
   return;
 }
@@ -316,12 +316,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-    dialog->scaling_factor_entry = gtk_entry_new();
-    gtk_editable_set_editable(GTK_EDITABLE(dialog->scaling_factor_entry), TRUE);
-    g_signal_connect(G_OBJECT(dialog->scaling_factor_entry), "activate", G_CALLBACK(dialog_change_scale_factor_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->scaling_factor_entry,1,2,
+    dialog->scaling_factor_spin_button = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->scaling_factor_spin_button),
+			       DIALOG_SPIN_BUTTON_DIGITS);
+    g_signal_connect(G_OBJECT(dialog->scaling_factor_spin_button), "value_changed", 
+		     G_CALLBACK(dialog_change_scale_factor_cb), dialog);
+    gtk_table_attach(GTK_TABLE(packing_table), dialog->scaling_factor_spin_button,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-    gtk_widget_show(dialog->scaling_factor_entry);
+    gtk_widget_show(dialog->scaling_factor_spin_button);
     table_row++;
 
     /* widget to change the interpolation */
@@ -430,7 +432,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       dialog->center_spinner[i_axis] = 
 	gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, DIMENSION_STEP);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->center_spinner[i_axis]),
-				 SPIN_BUTTON_DIGITS);
+				 DIALOG_SPIN_BUTTON_DIGITS);
       g_signal_connect(G_OBJECT(dialog->center_spinner[i_axis]), "value_changed", 
 		       G_CALLBACK(dialog_change_center_cb), dialog);
       gtk_table_attach(GTK_TABLE(packing_table), dialog->center_spinner[i_axis],1,2,
@@ -487,7 +489,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       dialog->voxel_size_spinner[i_axis] = 
 	gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
       gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->voxel_size_spinner[i_axis]),
-				 SPIN_BUTTON_DIGITS);
+				 DIALOG_SPIN_BUTTON_DIGITS);
       g_object_set_data(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "axis", 
 			GINT_TO_POINTER(i_axis));
       g_signal_connect(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "value_changed", 
@@ -547,7 +549,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	  dialog->dimension_spinner[i_axis] = 
 	    gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
 	  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->dimension_spinner[i_axis]),
-				     SPIN_BUTTON_DIGITS);
+				     DIALOG_SPIN_BUTTON_DIGITS);
 	  g_signal_connect(G_OBJECT(dialog->dimension_spinner[i_axis]), "value_changed", 
 			   G_CALLBACK(dialog_change_dim_cb), dialog);
 	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_spinner[i_axis],1,2,
@@ -613,13 +615,14 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-    dialog->start_entry = gtk_entry_new();
-    gtk_editable_set_editable(GTK_EDITABLE(dialog->start_entry), TRUE);
-    g_signal_connect(GTK_OBJECT(dialog->start_entry), "activate", 
+    dialog->start_spin_button = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->start_spin_button),
+			       DIALOG_SPIN_BUTTON_DIGITS);
+    g_signal_connect(GTK_OBJECT(dialog->start_spin_button), "value_changed", 
 		     G_CALLBACK(dialog_change_scan_start_cb), dialog);
-    gtk_table_attach(GTK_TABLE(packing_table), dialog->start_entry,1,2,
+    gtk_table_attach(GTK_TABLE(packing_table), dialog->start_spin_button,1,2,
 		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-    gtk_widget_show(dialog->start_entry);
+    gtk_widget_show(dialog->start_spin_button);
     table_row++;
 
 
@@ -655,8 +658,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_table_attach(GTK_TABLE(packing_table), scrolled, 0,2,
 		     table_row, table_row+1, 0, GTK_FILL|GTK_EXPAND, X_PADDING, Y_PADDING);
 
-    /* get a pointer to the entries */
-    dialog->duration_entries = (GtkWidget **) g_malloc(sizeof(GtkWidget *)*AMITK_DATA_SET_NUM_FRAMES(object));
+    /* get memory for the spin buttons */
+    dialog->duration_spin_buttons = g_try_new(GtkWidget *,AMITK_DATA_SET_NUM_FRAMES(object));
 
     /* iterate throught the frames */
     for (i=0; i< AMITK_DATA_SET_NUM_FRAMES(object); i++) {
@@ -668,14 +671,18 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_table_attach(GTK_TABLE(frames_table), label, 0,1, i, i+1, 0, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(label);
       
-      /* and this frame's entry */
-      dialog->duration_entries[i] = gtk_entry_new();
-      gtk_editable_set_editable(GTK_EDITABLE(dialog->duration_entries[i]), TRUE);
-      g_object_set_data(G_OBJECT(dialog->duration_entries[i]), "frame", GINT_TO_POINTER(i));
-      g_signal_connect(G_OBJECT(dialog->duration_entries[i]), "activate", G_CALLBACK(dialog_change_frame_duration_cb), dialog);
-      gtk_table_attach(GTK_TABLE(frames_table), dialog->duration_entries[i],1,2,
+      /* and this frame's spin_button */
+
+      dialog->duration_spin_buttons[i] = gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, 1.0);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->duration_spin_buttons[i]),
+				 DIALOG_SPIN_BUTTON_DIGITS);
+      gtk_editable_set_editable(GTK_EDITABLE(dialog->duration_spin_buttons[i]), TRUE);
+      g_object_set_data(G_OBJECT(dialog->duration_spin_buttons[i]), "frame", GINT_TO_POINTER(i));
+      g_signal_connect(G_OBJECT(dialog->duration_spin_buttons[i]), "value_changed", 
+		       G_CALLBACK(dialog_change_frame_duration_cb), dialog);
+      gtk_table_attach(GTK_TABLE(frames_table), dialog->duration_spin_buttons[i],1,2,
 		       i, i+1, 0, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(dialog->duration_entries[i]);
+      gtk_widget_show(dialog->duration_spin_buttons[i]);
       
     }
     gtk_widget_show(scrolled);
@@ -741,7 +748,60 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     } else if (AMITK_IS_DATA_SET(object)) {
       AmitkDim i_dim;
       GtkWidget * entry;
+      gdouble memory_used;
+      AmitkRawData * rd;
+      gint prefix=0;
 
+      rd = AMITK_DATA_SET_RAW_DATA(object);
+      memory_used = amitk_raw_data_size_data_mem(rd);
+
+      if ((memory_used/1024.0) > 1.0) {
+	memory_used /= 1024.0;
+	prefix=1;
+      }
+
+      if ((memory_used/1024.0) > 1.0) {
+	memory_used /= 1024.0;
+	prefix=2;
+      }
+
+      if ((memory_used/1024.0) > 1.0) {
+	memory_used /= 1024.0;
+	prefix=3;
+      }
+	
+
+      /* how big in memory the raw data is */
+      switch(prefix) {
+      case 3:
+	label = gtk_label_new("Memory Used (GB):");
+	break;
+      case 2:
+	label = gtk_label_new("Memory Used (MB):");
+	break;
+      case 1:
+	label = gtk_label_new("Memory Used (KB):");
+	break;
+      case 0:
+      default:
+	label = gtk_label_new("Memory Used (bytes):");
+	break;
+      }
+      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      temp_string = g_strdup_printf("%5.3f", memory_used);
+      gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
+      g_free(temp_string);
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       1,3, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
+      
       /* widget to tell you the internal data format */
       label = gtk_label_new("Data Format:");
       gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
@@ -749,7 +809,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       gtk_widget_show(label);
       
       entry = gtk_entry_new();
-      gtk_entry_set_text(GTK_ENTRY(entry), amitk_raw_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
+      gtk_entry_set_text(GTK_ENTRY(entry), 
+			 amitk_raw_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
       gtk_table_attach(GTK_TABLE(packing_table), entry,
 		       1,3, table_row, table_row+1, 
@@ -846,12 +907,12 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
     gtk_option_menu_set_history(GTK_OPTION_MENU(dialog->modality_menu), AMITK_DATA_SET_MODALITY(dialog->object));
     g_signal_handlers_unblock_by_func(G_OBJECT(dialog->modality_menu),G_CALLBACK(dialog_change_modality_cb), dialog);
 
-    g_signal_handlers_block_by_func(G_OBJECT(dialog->scaling_factor_entry),G_CALLBACK(dialog_change_scale_factor_cb), dialog);
-    temp_str = g_strdup_printf("%f", AMITK_DATA_SET_SCALE_FACTOR(dialog->object));
-    gtk_entry_set_text(GTK_ENTRY(dialog->scaling_factor_entry), temp_str);
-    g_free(temp_str);
-    g_signal_handlers_unblock_by_func(G_OBJECT(dialog->scaling_factor_entry),G_CALLBACK(dialog_change_scale_factor_cb), dialog);
-
+    g_signal_handlers_block_by_func(G_OBJECT(dialog->scaling_factor_spin_button),
+				    G_CALLBACK(dialog_change_scale_factor_cb), dialog);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->scaling_factor_spin_button),
+			      AMITK_DATA_SET_SCALE_FACTOR(dialog->object));
+    g_signal_handlers_unblock_by_func(G_OBJECT(dialog->scaling_factor_spin_button),
+				      G_CALLBACK(dialog_change_scale_factor_cb), dialog);
   } else if (AMITK_IS_STUDY(dialog->object)) {
 
     g_signal_handlers_block_by_func(G_OBJECT(dialog->creation_date_entry),G_CALLBACK(dialog_change_creation_date_cb), dialog);
@@ -863,7 +924,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 
   if (!AMITK_IS_STUDY(dialog->object)) {
     if (AMITK_IS_VOLUME(dialog->object))
-      center = amitk_volume_center(AMITK_VOLUME(dialog->object));
+      center = amitk_volume_get_center(AMITK_VOLUME(dialog->object));
     else /* AMITK_IS_FIDUCIAL_MARK */
       center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
 
@@ -924,19 +985,21 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
 	g_free(temp_str);
       }
     } else if (AMITK_IS_DATA_SET(dialog->object)) {
-      g_signal_handlers_block_by_func(G_OBJECT(dialog->start_entry), G_CALLBACK(dialog_change_scan_start_cb), dialog);
-      temp_str = g_strdup_printf("%f", AMITK_DATA_SET_SCAN_START(dialog->object));
-      gtk_entry_set_text(GTK_ENTRY(dialog->start_entry), temp_str);
-      g_free(temp_str);
-      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->start_entry), G_CALLBACK(dialog_change_scan_start_cb), dialog);
+      g_signal_handlers_block_by_func(G_OBJECT(dialog->start_spin_button), 
+				      G_CALLBACK(dialog_change_scan_start_cb), dialog);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->start_spin_button),
+				AMITK_DATA_SET_SCAN_START(dialog->object));
+      g_signal_handlers_unblock_by_func(G_OBJECT(dialog->start_spin_button), 
+					G_CALLBACK(dialog_change_scan_start_cb), dialog);
       
       /* iterate throught the frames */
       for (i=0; i< AMITK_DATA_SET_NUM_FRAMES(dialog->object); i++) {
-	g_signal_handlers_block_by_func(G_OBJECT(dialog->duration_entries[i]), G_CALLBACK(dialog_change_frame_duration_cb), dialog);
-	temp_str = g_strdup_printf("%f", amitk_data_set_get_frame_duration(AMITK_DATA_SET(dialog->object),i));
-	gtk_entry_set_text(GTK_ENTRY(dialog->duration_entries[i]), temp_str);
-	g_free(temp_str);
-	g_signal_handlers_unblock_by_func(G_OBJECT(dialog->duration_entries[i]), G_CALLBACK(dialog_change_frame_duration_cb), dialog);
+	g_signal_handlers_block_by_func(G_OBJECT(dialog->duration_spin_buttons[i]), 
+					G_CALLBACK(dialog_change_frame_duration_cb), dialog);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(dialog->duration_spin_buttons[i]),
+				  amitk_data_set_get_frame_duration(AMITK_DATA_SET(dialog->object),i));
+	g_signal_handlers_unblock_by_func(G_OBJECT(dialog->duration_spin_buttons[i]), 
+					  G_CALLBACK(dialog_change_frame_duration_cb), dialog);
       }
     }
   }
@@ -1074,7 +1137,7 @@ static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
   AmitkObjectDialog * dialog=data;
 
   if (AMITK_IS_VOLUME(dialog->object))
-    old_center = amitk_volume_center(AMITK_VOLUME(dialog->object)); /* in base coords */
+    old_center = amitk_volume_get_center(AMITK_VOLUME(dialog->object)); /* in base coords */
   else if (AMITK_IS_FIDUCIAL_MARK(dialog->object))
     old_center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
   else
@@ -1195,7 +1258,7 @@ static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
   }
 
   new_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(dialog->object);
-  center = amitk_volume_center(AMITK_VOLUME(dialog->object));
+  center = amitk_volume_get_center(AMITK_VOLUME(dialog->object));
 
   for (i_axis = start_axis; i_axis < end_axis; i_axis++) {
     temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->voxel_size_spinner[i_axis]));
@@ -1244,16 +1307,12 @@ static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_scale_factor_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkObjectDialog * dialog=data;
 
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get all contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to float */
-  g_free(str);
+  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  if ((error != EOF) && (fabs(temp_val) > EPSILON)) { 
+  if (fabs(temp_val) > EPSILON) { 
     /* make sure it's a valid number and avoid zero */
     amitk_data_set_set_scale_factor(AMITK_DATA_SET(dialog->object), temp_val);
   }
@@ -1265,18 +1324,11 @@ static void dialog_change_scale_factor_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_scan_start_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkObjectDialog * dialog=data;
 
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get all contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to float */
-  g_free(str);
-
-  if (error != EOF) { /* make sure it's a valid number */
-    amitk_data_set_set_scan_start(AMITK_DATA_SET(dialog->object), temp_val);
-  }  
+  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
+  amitk_data_set_set_scan_start(AMITK_DATA_SET(dialog->object), temp_val);
 
   dialog_update_entries(dialog); 
   return;
@@ -1285,17 +1337,13 @@ static void dialog_change_scan_start_cb(GtkWidget * widget, gpointer data) {
 
 static void dialog_change_frame_duration_cb(GtkWidget * widget, gpointer data) {
 
-  gchar * str;
-  gint error;
   gdouble temp_val;
   AmitkObjectDialog * dialog=data;
   guint i;
 
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get all contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to float */
-  g_free(str);
+  temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget));
 
-  if ((error != EOF) && (temp_val > SMALL_TIME)) {
+  if (temp_val > SMALL_TIME) {
     /* make sure it's a valid number and avoid zero and negatives */
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "frame"));
     amitk_data_set_set_frame_duration(AMITK_DATA_SET(dialog->object),i, temp_val);

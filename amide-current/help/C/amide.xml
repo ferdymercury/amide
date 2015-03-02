@@ -3,6 +3,7 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "AMIDE">
 <!ENTITY date "October 2002">
+<!ENTITY appversion "0.7.5">
 <!ENTITY basics         SYSTEM "basics.xml">
 <!ENTITY handlingfiles  SYSTEM "handlingfiles.xml">
 <!ENTITY importing      SYSTEM "importing.xml">

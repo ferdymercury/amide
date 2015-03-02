@@ -1,4 +1,4 @@
-/* rendering.h
+/* render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2002 Andy Loening
@@ -25,8 +25,8 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#ifndef __RENDERING_H__
-#define __RENDERING_H__
+#ifndef __RENDER_H__
+#define __RENDER_H__
 
 /* header files that are always needed with this file */
 #include <volpack.h>
@@ -110,6 +110,7 @@ rendering_voxel_t * dummy_voxel;
 
 /* ------------ some more structures ------------ */
 
+/* our rendering context structure */
 typedef struct _rendering_t {
   vpContext * vpc;      /*  VolPack rendering Context */
   AmitkObject * object;
@@ -130,7 +131,10 @@ typedef struct _rendering_t {
   gfloat * ramp_y[NUM_CLASSIFICATIONS];
   guint num_points[NUM_CLASSIFICATIONS];
   curve_type_t curve_type[NUM_CLASSIFICATIONS];
+  gboolean zero_fill;
+  gboolean optimize_rendering;
   gboolean need_rerender;
+  gboolean need_reclassify;
   guint ref_count;
 } rendering_t;
 
@@ -138,40 +142,60 @@ typedef struct _rendering_t {
 /* a list of rendering contexts */
 typedef struct _renderings_t renderings_t;
 struct _renderings_t {
-  rendering_t * context;
+  rendering_t * rendering;
   guint ref_count;
   renderings_t * next;
 };
 
 
 
+/* notes:
+   the update function needs to have the folowing syntax:
+   gboolean update_func(gchar * message, gfloat fraction, gpointer data);
+*/
 
 /* external functions */
-rendering_t * rendering_context_unref(rendering_t * context);
-rendering_t * rendering_context_init(const AmitkObject * object,
-				     AmitkVolume * rendering_volume,
-				     const amide_real_t min_voxel_size, 
-				     const amide_time_t start, 
-				     const amide_time_t duration);
-void rendering_context_reload_object(rendering_t * rendering_context, 
-				     const amide_time_t new_start,
-				     const amide_time_t new_duration);
-void rendering_context_load_object(rendering_t * rendering_context);
-void rendering_context_set_rotation(rendering_t * context, AmitkAxis dir, gdouble rotation);
-void rendering_context_reset_rotation(rendering_t * context);
-void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality);
-void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type, gdouble zoom);
-void rendering_context_set_depth_cueing(rendering_t * context, gboolean state);
-void rendering_context_set_depth_cueing_parameters(rendering_t * context, 
+rendering_t * rendering_unref(rendering_t * rendering);
+rendering_t * rendering_init(const AmitkObject * object,
+			     AmitkVolume * rendering_volume,
+			     const amide_real_t min_voxel_size, 
+			     const amide_time_t start, 
+			     const amide_time_t duration,
+			     const gboolean zero_fill,
+			     const gboolean optimize_rendering,
+			     gboolean (* update_func)(), 
+			     gpointer update_data);
+gboolean rendering_reload_object(rendering_t * rendering, 
+				 const amide_time_t new_start,
+				 const amide_time_t new_duration,
+				 gboolean (* update_func)(), 
+				 gpointer update_data);
+gboolean rendering_load_object(rendering_t * rendering, 
+			       gboolean (* update_func)(), 
+			       gpointer update_data);
+void rendering_set_rotation(rendering_t * rendering, AmitkAxis dir, gdouble rotation);
+void rendering_reset_rotation(rendering_t * rendering);
+void rendering_set_quality(rendering_t * rendering, rendering_quality_t quality);
+void rendering_set_image(rendering_t * rendering, pixel_type_t pixel_type, gdouble zoom);
+void rendering_set_depth_cueing(rendering_t * rendering, gboolean state);
+void rendering_set_depth_cueing_parameters(rendering_t * rendering, 
 						   gdouble front_factor, gdouble density);
-void rendering_context_render(rendering_t * context);
+void rendering_render(rendering_t * rendering);
 renderings_t * renderings_unref(renderings_t * renderings);
-renderings_t * renderings_init(GList * objects, const amide_time_t start, 
-			       const amide_time_t duration);
-void renderings_reload_objects(renderings_t * renderings, const amide_time_t start, 
-			       const amide_time_t duration);
-void renderings_set_rotation(renderings_t * contexts, AmitkAxis dir, gdouble rotation);
-void renderings_reset_rotation(renderings_t * contexts);
+renderings_t * renderings_init(GList * objects, 
+			       const amide_time_t start, 
+			       const amide_time_t duration, 
+			       const gboolean zero_fill,
+			       const gboolean optimize_rendering,
+			       gboolean (* update_func)(),
+			       gpointer update_data);
+gboolean renderings_reload_objects(renderings_t * renderings, 
+				   const amide_time_t start, 
+				   const amide_time_t duration,
+				   gboolean (* update_func)(), 
+				   gpointer update_data);
+void renderings_set_rotation(renderings_t * renderings, AmitkAxis dir, gdouble rotation);
+void renderings_reset_rotation(renderings_t * renderings);
 void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);
 void renderings_set_zoom(renderings_t * renderings, gdouble zoom);
 void renderings_set_depth_cueing(renderings_t * renderings, gboolean state);

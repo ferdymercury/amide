@@ -106,7 +106,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   if (temp_string != NULL) {
 
-    if ((return_times = g_new(amide_time_t,num_times)) == NULL) {
+    if ((return_times = g_try_new(amide_time_t,num_times)) == NULL) {
       g_warning("Couldn't allocate space for time data");
       return return_times;
     }
@@ -136,7 +136,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
 
   if (temp_string == NULL) {
     g_warning("Couldn't read value for %s, substituting zero",descriptor);
-    if ((return_times = g_new(amide_time_t,1)) == NULL) {
+    if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
       g_warning("Couldn't allocate space for time data");
       return return_times;
     }

@@ -55,6 +55,9 @@ typedef struct ui_series_t {
   AmitkFuseType fuse_type;
   amide_real_t voxel_dim;
   series_t type;
+  progress_t * progress_dialog;
+  gboolean in_generation;
+  gboolean quit_generation;
 
   /* for "PLANES" series */
   amide_time_t view_duration;
@@ -66,6 +69,9 @@ typedef struct ui_series_t {
   guint view_frame;
   amide_time_t start_time;
   amide_time_t * frame_durations; /* an array of frame durations */
+
+  guint next_update;
+  guint idle_handler_id;
 
   guint reference_count;
 } ui_series_t;

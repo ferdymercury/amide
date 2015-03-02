@@ -270,7 +270,7 @@ AmitkRawData * amitk_raw_data_import_raw_file(const gchar * file_name,
   /* read in the contents of the file */
   if (raw_format != AMITK_RAW_FORMAT_ASCII_NE) { /* ASCII handled in the loop below */
     bytes_per_slice = amitk_raw_format_calc_num_bytes_per_slice(raw_data->dim, raw_format);
-    if ((file_buffer = (void *) g_malloc(bytes_per_slice)) == NULL) {
+    if ((file_buffer = (void *) g_try_malloc(bytes_per_slice)) == NULL) {
       g_warning("couldn't malloc %d bytes for file buffer\n", bytes_per_slice);
       goto error;
     }

@@ -97,7 +97,8 @@ typedef enum {
   AMITK_SCALING_NUM
 } AmitkScaling;
 
-typedef enum {
+/* the skip is for glib-mkenums, it doesn't know how to handle ifdef's */
+typedef enum { /*< skip >*/
   AMITK_IMPORT_METHOD_GUESS, 
   AMITK_IMPORT_METHOD_RAW, 
   AMITK_IMPORT_METHOD_IDL,
@@ -275,8 +276,8 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 
 
 /* -------- defines ----------- */
-#define amitk_data_set_get_frame_duration_mem(ds) (g_new(amide_time_t,(ds)->raw_data->dim.t))
-#define amitk_data_set_get_frame_max_min_mem(ds) (g_new(amide_data_t,(ds)->raw_data->dim.t))
+#define amitk_data_set_get_frame_duration_mem(ds) (g_try_new(amide_time_t,(ds)->raw_data->dim.t))
+#define amitk_data_set_get_frame_max_min_mem(ds) (g_try_new(amide_data_t,(ds)->raw_data->dim.t))
 #define amitk_data_set_dynamic(ds) ((ds)->data_set->dim.t > 1)
 
 
