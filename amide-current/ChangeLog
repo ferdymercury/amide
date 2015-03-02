@@ -1,9 +1,16 @@
+0.8.11
+	* ROI analysis wasn't correctly freeing the pointer array [1]
+	* disabled reporting of "total" statistic, as this is often 
+	  wrong depending on the underlying data type
+	* error in saving of .xif files with dynamic data on win32 [2]
+	[1] Found by Michael Kreissl
+	[2] Found by Steve Jones
+	
 0.8.10 2005.01.26
 	* ui_series no longer requires corresponding ui_study canvas to be shown [1]
  	* Slices of thickness greater then the voxel size were offset in the depth direction [2]
 	[1] Found by Peter Bloomfield
  	[2] Found by Jeff Tseng
- 	
 
 0.8.9.1 2005.01.13
  	* another try at a win32 internationalization fix

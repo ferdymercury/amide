@@ -28,6 +28,7 @@
 #include "amide.h"
 #include "xml.h"
 #include <errno.h>
+#include <string.h>
 
 #define BOOLEAN_STRING_MAX_LENGTH 10 /* when we stop checking */
 static char * true_string = "true";
@@ -132,6 +133,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   gint error;
   guint i;
   gchar * saved_locale;
+  gboolean corrupted=FALSE;
   
   saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
@@ -149,32 +151,40 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
     string_chunks = g_strsplit(temp_str, "\t", num_times);
     g_free(temp_str);
     
-    for (i=0;i<num_times;i++) {
+    for (i=0; (i<num_times) && (!corrupted);i++) {
 
+      if (string_chunks[i] == NULL) 
+	  corrupted = TRUE;
+      else {
 #if (SIZE_OF_AMIDE_TIME_T == 8)
-      /* convert to doubles */
-      error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
+	/* convert to doubles */
+	error = sscanf(string_chunks[i], "%lf", &(return_times[i]));
 #elif (SIZE_OF_AMIDE_TIME_T == 4)
-      /* convert to float */
-      error = sscanf(string_chunks[i], "%f", &(return_times[i]));
+	/* convert to float */
+	error = sscanf(string_chunks[i], "%f", &(return_times[i]));
 #else
 #error "Unknown size for SIZE_OF_AMIDE_TIME_T"
 #endif
-      
-      if ((error == EOF))  return_times[i] = 0.0;
+
+	if ((error == EOF)) corrupted = TRUE;
+      }
+    }
+
+    if (corrupted) {
+      for (i=0; i<num_times; i++) return_times[i]=1.0;
+      amitk_append_str_with_newline(perror_buf, _("XIF File appears corrupted, setting frame durations to 1"));
     }
 
     g_strfreev(string_chunks);
-
   }
 
   if (temp_str == NULL) {
-    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting zero"),descriptor);
+    amitk_append_str_with_newline(perror_buf,_("Couldn't read value for %s, substituting 1"),descriptor);
     if ((return_times = g_try_new(amide_time_t,1)) == NULL) {
       amitk_append_str_with_newline(perror_buf, _("Couldn't allocate space for time data"));
       return return_times;
     }
-    return_times[0] = 0.0;
+    return_times[0] = 1.0;
   }
 
   setlocale(LC_NUMERIC, saved_locale);
@@ -407,15 +417,11 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
 }
 
 
+/* This is the old version fo xml_save_times.  This was replaced with the version below because
+   the glib g_str functions didn't seem to respect the locale on win32 
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num) {
 
-#ifdef AMIDE_WIN32_HACKS
-  gchar temp_str[1024];
-  size_t str_loc;
-  size_t remaining=1024;
-#else
   gchar * temp_str;
-#endif
   int i;
   gchar * saved_locale;
   
@@ -425,28 +431,52 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
   else {
-#ifdef AMIDE_WIN32_HACKS
-    str_loc = snprintf(temp_str, remaining, "%10.9f", numbers[0]);
-    remaining -= str_loc;
-#else
     temp_str = g_strdup_printf("%10.9f", numbers[0]);
-#endif
     for (i=1; i < num; i++) {
-#ifdef AMIDE_WIN32_HACKS
-      str_loc = snprintf(&(temp_str[str_loc+1]), remaining, "\t%10.9f", numbers[i]);
-      if (str_loc >= remaining) {
-	g_warning("overwrote string in %s at %d\n", __FILE__, __LINE__);
-	break;
-      }
-      remaining -= str_loc;
-#else
       temp_str = g_strdup_printf("%s\t%10.9f", temp_str, numbers[i]);
-#endif
     }
     xml_save_string(node, descriptor, temp_str);
-#ifndef AMIDE_WIN32_HACKS
     g_free(temp_str);
-#endif
+  }
+
+  setlocale(LC_NUMERIC, saved_locale);
+  g_free(saved_locale);
+  return;
+}
+*/
+
+void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num) {
+
+  gchar num_str[128];
+  gchar * temp_str2=NULL;
+  gchar * temp_str=NULL;
+  int i;
+  gchar * saved_locale;
+  
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
+  setlocale(LC_NUMERIC,"C");
+
+  if (num == 0)
+    xml_save_string(node, descriptor, NULL);
+  else {
+    for (i=0; i < num; i++) {
+
+      snprintf(num_str, 128, "%10.9f", numbers[i]);
+
+      temp_str2=temp_str;
+      if (temp_str2 == NULL) {
+	temp_str=malloc(sizeof(char)*(strlen(num_str)+1));
+	strcpy(temp_str, num_str);
+      } else {
+	temp_str=malloc(sizeof(char)*(strlen(num_str)+strlen(temp_str2)+2));
+	strcpy(temp_str, temp_str2);
+	strcat(temp_str, "\t");
+	free(temp_str2);
+	strcat(temp_str, num_str);
+      }
+    }
+    xml_save_string(node, descriptor, temp_str);
+    g_free(temp_str);
   }
 
   setlocale(LC_NUMERIC, saved_locale);

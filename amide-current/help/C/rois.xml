@@ -231,18 +231,26 @@
     </para>
   </sect4>
 
+  <sect4><title>Why isn't a "total" statistic calculated for the ROI?</title>
+
+   <para> AMIDE doesn't present the "total" value in the ROI, as it
+   doesn't necessarily know what the units of the underlying data are.
+   If you're using PET or SPECT data, your voxel values are most
+   likely proportional to activity/volume/time.  To calculate the
+   total in your ROI, you should multiple the mean value of the ROI
+   times the ROI volume and the frame duration.  If you're using CT
+   data, your values are probably proportional to density, so to
+   calculate the total you would multiple the mean ROI value by the
+   ROI volume. </para>
+
+  </sect4>
+
  </sect3>
 
  <sect3 id="roi-terms"><title>Explanations of ROI Statistical Values</title>
 
   <variablelist>
   
-   <varlistentry><term>Total</term> 
-   <listitem><para>The sum of the values of all voxels in the ROI.
-   Voxels that are partially enclosed within the ROI are appropriately
-   weighted.</para></listitem>
-   </varlistentry>
-
    <varlistentry><term>Median</term>
    <listitem><para>This is the median value of all the voxels that are
    enclosed (partially or totally) within the ROI.  For an even number

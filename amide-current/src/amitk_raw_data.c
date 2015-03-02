@@ -213,7 +213,7 @@ static void raw_data_finalize (GObject *object) {
 
   if (raw_data->data != NULL) {
 #ifdef AMIDE_DEBUG
-    //    g_print("\tfreeing raw data\n");
+    //g_print("\tfreeing raw data\n");
 #endif
     g_free(raw_data->data);
     raw_data->data = NULL;

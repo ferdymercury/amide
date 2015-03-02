@@ -145,6 +145,7 @@ things dependent on other things:
 3. switch from GtkOptionMenu to GtkComboBox.  Work's already done, just need to 
 	uncomment the relevant code.  GtkComboBox is not avaliable in gtk 2.2
 4. Add -DGTK_DISABLE_DEPRECATED back into src/Makefile.am
+5. analysis.c use of g_ptr_array_foreach is disabled, as this isn't in glib 2.2
 
 
 * I'd like to change the icons on the toolbar to pixbuf data structures generated from

@@ -129,6 +129,10 @@ static gint array_comparison(gconstpointer a, gconstpointer b) {
     return 0;
 }
 
+void free_array_element(gpointer data, gpointer user_data) {
+  element_t * element = data;
+  g_free(element);
+}
 
 
 /* note, the following function for weight variance calcuation is
@@ -329,8 +333,13 @@ static analysis_gate_t * analysis_gate_init_recurse(AmitkRoi * roi,
     /* calculate variance */
     analysis->var = wvariance(data_array, subfraction_voxels, analysis->mean);
   }
+  
+  /* g_ptr_array is a glib 2.4 function.... */
+  //  g_ptr_array_foreach(data_array, free_array_element, NULL); /* free the elements */
+  for (i = 0; i < data_array->len; i++)
+    free_array_element(data_array->pdata[i], NULL);
+  g_ptr_array_free(data_array, TRUE); /* TRUE frees the array of pointers to elements as well */
 
-  g_ptr_array_free(data_array, TRUE); /* TRUE frees elements too */
 
 #ifdef AMIDE_DEBUG
   /* and wrapup our timing */
