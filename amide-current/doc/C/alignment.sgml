@@ -11,26 +11,28 @@
     <title>Manual Alignment</title>
     <step>
       <para>
-	First rotate the data sets so that they are level with
-	respect to the transverse, coronal, and sagittal views.
+	First rotate each of the data sets so that they are level with
+	respect to the transverse, coronal, and sagittal views.  This is
+        easily done using the shift-2, and shift-3 mouse combinations, but 
+        can also be done from the data set modification dialog.
       </para>
     </step>
     <step>
       <para>
-	Set the center of each of the data sets to the origin
-	(0,0,0).
+	Choose one of the data sets to be the active data set.  The other
+        data set will be the "fixed" data set.  
       </para>
     </step>
     <step>
       <para>
-	Choose one of the data sets to be the "fixed" data set.
+	Shift the active data set so that the two data sets line up appropriately.
+        This is easily done using the shift-1 mouse combination, but can also be
+        done from the data set modification dialog.
       </para>
-    </step>
     <step>
       <para>
-	Then slowly alter the center of the data sets relative to
-	the "fixed" data set until the data sets overly each other
-	as desired.
+        If fine tuning adjustments are needed, these are best done from the
+        data set modification dialog.
       </para>
     </step>
   </procedure>          
@@ -45,7 +47,7 @@
     <step>
       <para>
        Specify at least four pairs of alignment points between the two
-       data sets that you wish to align.  Drawing alignment wizards is
+       data sets that you wish to align.  Drawing alignment points is
        described in <xref linkend="align-pt">
       </para>
     </step>

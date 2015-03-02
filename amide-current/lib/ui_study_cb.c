@@ -634,8 +634,11 @@ void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, realpoint_t *posi
   /* update the other canvases accordingly */
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
     for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view])
+      if (canvas != ui_study->canvas[i_view_mode][i_view]) {
+	amitk_canvas_set_center(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), *position, 
+				i_view==AMITK_CANVAS_VIEW(canvas));
 	amitk_canvas_update_arrows(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
+      }
 
   return;
 }
@@ -690,32 +693,6 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, realpoint_t *position,
   return;
 }
 
-void ui_study_cb_canvas_volumes_changed(GtkWidget * canvas, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  view_t i_view;
-  view_mode_t i_view_mode;
-  GtkWidget * tree_item;
-  volumes_t * volumes;
-
-  /* update the other canvases accordingly */
-  for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      if (canvas != ui_study->canvas[i_view_mode][i_view])
-	amitk_canvas_update_volumes(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-
-  /* check if the corresponding dialogs  are up, and update if needed */
-  volumes = AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[SINGLE_VIEW]);
-  while (volumes != NULL) {
-    tree_item = amitk_tree_find_object(AMITK_TREE(ui_study->tree[SINGLE_VIEW]), volumes->volume, VOLUME);
-    g_return_if_fail(AMITK_IS_TREE_ITEM(tree_item));
-    if (AMITK_TREE_ITEM_DIALOG(tree_item))
-      ui_volume_dialog_update(AMITK_TREE_ITEM_DIALOG(tree_item), volumes->volume);
-    volumes = volumes->next;
-  }
-  
-  return;
-}
 
 void ui_study_cb_canvas_object_changed(GtkWidget * canvas, gpointer object, object_t type, 
 				       gpointer data) {
@@ -1165,11 +1142,7 @@ void ui_study_cb_color_changed(GtkWidget * widget, gpointer data) {
 
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
     for(i_view=0; i_view<NUM_VIEWS;i_view++)
-      amitk_canvas_threshold_changed(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
-    if (ui_study->active_volume[i_view_mode] != NULL)
-      for(i_view=0; i_view<NUM_VIEWS;i_view++)
-	amitk_canvas_set_color_table(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				     ui_study->active_volume[i_view_mode]->color_table, TRUE);
+      amitk_canvas_color_table_changed(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
   }
 
   return;

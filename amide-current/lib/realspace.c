@@ -214,6 +214,11 @@ inline floatpoint_t vp_max_dim(const voxelpoint_t vp1) {
   return rp_mag(temp_rp);
 }
 
+/* little utility function for debugging */
+void vp_print(gchar * message, const voxelpoint_t vp) {
+  g_print("%s\t%d\t%d\t%d\t%d\n",message, vp.x, vp.y, vp.z, vp.t);
+  return;
+}
 
 /* returns true if the realpoint is in the given box */
 gboolean rp_in_box(const realpoint_t p,

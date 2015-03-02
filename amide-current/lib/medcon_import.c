@@ -116,6 +116,7 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   gchar * volume_name;
   gchar * import_filename;
   gchar ** frags=NULL;
+  gboolean found_name=FALSE;
   
   /* setup some defaults */
   XMDC_MEDCON = MDC_NO;  /* we're not xmedcon */
@@ -269,20 +270,30 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   else
     temp_volume->modality = CT;
 
-  /* try figuring out the name */
-  if (medcon_file_info.study_name != NULL) {
+  /* try figuring out the name, start with the study name */
+  if (strlen(medcon_file_info.study_name) > 0) {
     volume_set_name(temp_volume,medcon_file_info.study_name);
-  } else {/* no original filename? */
+    found_name = TRUE;
+  }
+
+  if (!found_name) 
+    if (strlen(medcon_file_info.patient_name) > 0) {
+      volume_set_name(temp_volume,medcon_file_info.patient_name);
+      found_name = TRUE;
+    }
+
+  if (!found_name) {/* no original filename? */
     volume_name = g_strdup(g_basename(filename));
     /* remove the extension of the file */
     g_strreverse(volume_name);
     frags = g_strsplit(volume_name, ".", 2);
-    volume_name = frags[1];
-    volume_set_name(temp_volume,volume_name);
-    g_strreverse(volume_name);
+    volume_set_name(temp_volume,frags[1]);
+    g_strreverse(temp_volume->name);
     g_strfreev(frags); /* free up now unused strings */
     g_free(volume_name);
+    found_name=TRUE;
   }
+  
 
   /* enter in the date the scan was performed */
   time_structure.tm_sec = medcon_file_info.study_time_second;

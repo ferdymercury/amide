@@ -1,3 +1,12 @@
+0.6.3
+	* Mac OS X doesn't have lround, using rint instead
+	* canvas arrows weren't being updated with canvas slider change
+	* with dual cursor display, second display wasn't being adjusted with canvas slider change
+	* canvas voxel size adjusted when volume's voxel size adjusted
+	* now better at guessing names from xmedcon imported files
+	* can now shift data sets around on the canvas
+	* help info panel slightly rewritten, more legible
+
 0.6.2
 	* fixed brown bag type error concerning active volume
 

@@ -42,61 +42,59 @@
 /* external variables */
 
 /* internal variables */
-#define HELP_INFO_LINE_X 0.0
+#define UI_STUDY_HELP_FONT "-*-helvetica-medium-r-normal-*-*-100-*-*-p-*-*-*"
+
 #define HELP_INFO_LINE_HEIGHT 13
 
-typedef enum {
-  HELP_INFO_LINE_1,
-  HELP_INFO_LINE_1_SHIFT,
-  HELP_INFO_LINE_2,
-  HELP_INFO_LINE_2_SHIFT,
-  HELP_INFO_LINE_3,
-  HELP_INFO_LINE_3_SHIFT,
-  HELP_INFO_LINE_LOCATION,
-  HELP_INFO_LINE_LOCATION2,
-  NUM_HELP_INFO_LINES
-} help_info_line_t;
+static gchar * help_info_legends[NUM_HELP_INFO_LINES] = {
+  "1", "shift-1",
+  "2", "shift-2",
+  "3", "shift-3", "ctrl-3"
+};
 
 static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
   {"",  "", 
    "",  "",    
-   "",  ""}, /* BLANK */
-  {"1 move view", "shift-1 horizontal align", 
-   "2 move view, min. depth", "shift-2 vertical align", 
-   "3 change depth", "shift-3 add alignment point"},
-  {"1 shift", "", 
-   "2 rotate", "", 
-   "3 scale", ""}, /*CANVAS_ROI */
-  {"1 shift",  "", 
+   "",  "", ""}, /* BLANK */
+  {"move view", "shift data set",
+   "move view, min. depth", "horizontal align", 
+   "change depth", "vertical align",  "add alignment point"},
+  {"shift", "", 
+   "rotate", "", 
+   "scale", "", ""}, /*CANVAS_ROI */
+  {"shift",  "", 
    "", "", 
-   "", ""}, /*CANVAS_ALIGN_PT */
-  {"1 shift", "", 
-   "2 erase point", "shift-2 erase large point", 
-   "3 start isocontour change", ""}, /*CANVAS_ISOCONTOUR_ROI */
-  {"1 draw", "", 
+   "", "", ""}, /*CANVAS_ALIGN_PT */
+  {"shift", "", 
+   "erase point", "erase large point", 
+   "start isocontour change", "", ""}, /*CANVAS_ISOCONTOUR_ROI */
+  {"draw", "", 
    "", "", 
-   "", ""}, /* CANVAS_NEW_ROI */
-  {"1 pick isocontour value", "", 
+   "", "", ""}, /* CANVAS_NEW_ROI */
+  {"pick isocontour value", "", 
    "", "", 
-   "", ""}, /* CANVAS_NEW_ISOCONTOUR_ROI */
-  {"1 cancel", "", 
-   "2 cancel", "", 
-   "3 align", ""}, /*CANVAS ALIGN */
-  {"1 select data set", "", 
-   "2 make active", "", 
-   "3 pop up data set dialog", "shift-3 add alignment point"}, /* TREE_VOLUME */
-  {"1 select roi", "", 
-   "2 center view on roi", "", 
-   "3 pop up roi dialog", ""}, /* TREE_ROI */
-  {"1 select point", "", 
-   "2 center view on point", "", 
-   "3 pop up point dialog", ""}, /* TREE_ALIGN_PT */
+   "", "", ""}, /* CANVAS_NEW_ISOCONTOUR_ROI */
+  {"cancel", "", 
+   "cancel", "", 
+   "shift", "", ""}, /*CANVAS SHIFT */
+  {"cancel", "", 
+   "cancel", "", 
+   "align", "", ""}, /*CANVAS ALIGN */
+  {"select data set", "", 
+   "make active", "", 
+   "pop up data set dialog", "add alignment point", ""}, /* TREE_VOLUME */
+  {"select roi", "", 
+   "center view on roi", "", 
+   "pop up roi dialog", "", ""}, /* TREE_ROI */
+  {"select point", "", 
+   "center view on point", "", 
+   "pop up point dialog", "", ""}, /* TREE_ALIGN_PT */
   {"", "", 
    "", "", 
-   "3 pop up study dialog",""}, /* TREE_STUDY */
+   "pop up study dialog","", ""}, /* TREE_STUDY */
   {"", "", 
    "", "", 
-   "3 add roi",""} /* TREE_NONE */
+   "add roi","", ""} /* TREE_NONE */
 };
 
 static gint next_study_num=1;
@@ -131,6 +129,7 @@ ui_study_t * ui_study_init(void) {
 
   ui_study_t * ui_study;
   view_mode_t i_view_mode;
+  help_info_line_t i_line;
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_study = (ui_study_t *) g_malloc(sizeof(ui_study_t))) == NULL) {
@@ -155,6 +154,10 @@ ui_study_t * ui_study_init(void) {
   ui_study->study_virgin=TRUE;
   ui_study->view_mode=SINGLE_VIEW;
   
+  for (i_line=0 ;i_line < NUM_HELP_INFO_LINES;i_line++) {
+    ui_study->help_line[i_line] = NULL;
+    ui_study->help_legend[i_line] = NULL;
+  }
 
   /* load in saved preferences */
   gnome_config_push_prefix("/"PACKAGE"/");
@@ -234,10 +237,9 @@ void ui_study_make_active_volume(ui_study_t * ui_study, view_mode_t view_mode, v
   amitk_tree_set_active_mark(AMITK_TREE(ui_study->tree[view_mode]), 
 			     ui_study->active_volume[view_mode], VOLUME);
 
-  if (ui_study->active_volume[view_mode] != NULL)
-    for (i_view=0; i_view<NUM_VIEWS; i_view++)
-      amitk_canvas_set_color_table(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), 
-				   ui_study->active_volume[view_mode]->color_table, TRUE);
+  for (i_view=0; i_view<NUM_VIEWS; i_view++)
+    amitk_canvas_set_active_volume(AMITK_CANVAS(ui_study->canvas[view_mode][i_view]), 
+				   ui_study->active_volume[view_mode], TRUE);
   
   /* reset the threshold widget based on the current volume */
   if (ui_study->threshold_dialog != NULL) {
@@ -385,69 +387,93 @@ void ui_study_update_time_button(ui_study_t * ui_study) {
 void ui_study_update_help_info(ui_study_t * ui_study, help_info_t which_info, 
 			       realpoint_t new_point, amide_data_t value) {
 
-  GnomeCanvasItem * button[HELP_INFO_LINE_3_SHIFT-HELP_INFO_LINE_1+1];
-  GnomeCanvasItem * location;
   help_info_line_t i_line;
-  gchar * location_text;
+  gchar * location_text[2];
+  gchar * legend;
   realpoint_t location_p;
 
   if (which_info == HELP_INFO_UPDATE_LOCATION) {
-    location_text = g_strdup_printf("location (x,y,z) = \n (% 5.2f,% 5.2f,% 5.2f)", 
-				    new_point.x, new_point.y, new_point.z);
+    location_text[0] = g_strdup_printf("location (x,y,z) =");
+    location_text[1] = g_strdup_printf("(% 5.2f,% 5.2f,% 5.2f)", 
+				     new_point.x, new_point.y, new_point.z);
+  } else if (which_info == HELP_INFO_UPDATE_SHIFT) {
+    location_text[0] = g_strdup_printf("shift (x,y,z) =");
+    location_text[1] = g_strdup_printf("(% 5.2f,% 5.2f,% 5.2f)", 
+				     new_point.x, new_point.y, new_point.z);
   } else if (which_info == HELP_INFO_UPDATE_VALUE) {
-    location_text = g_strdup_printf("value = % 5.3f", value);
+    location_text[0] = g_strdup("");
+    location_text[1] = g_strdup_printf("value = % 5.3f", value);
+
+  } else if (which_info == HELP_INFO_UPDATE_THETA) {
+    location_text[0] = g_strdup("");
+    location_text[1] = g_strdup_printf("theta = % 5.3f", value);
+
   } else {
-    button[HELP_INFO_LINE_1] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1_info");
-    button[HELP_INFO_LINE_1_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_1s_info");
-    button[HELP_INFO_LINE_2] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2_info");
-    button[HELP_INFO_LINE_2_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_2s_info");
-    button[HELP_INFO_LINE_3] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3_info");
-    button[HELP_INFO_LINE_3_SHIFT] = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "button_3s_info");
-    
-    for (i_line=HELP_INFO_LINE_1 ;i_line <= HELP_INFO_LINE_3_SHIFT;i_line++) 
-      if (button[i_line] == NULL) 
-	button[i_line] = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
-					       gnome_canvas_text_get_type(),
-					       "justification", GTK_JUSTIFY_LEFT,
-					       "anchor", GTK_ANCHOR_NORTH_WEST,
-					       "text", help_info_lines[which_info][i_line],
-					       "x", (gdouble) HELP_INFO_LINE_X,
-					       "y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
-					       "fill_color", "black",
-					       "font", UI_STUDY_HELP_FONT, NULL);
+
+    for (i_line=0; i_line < HELP_INFO_LINE_BLANK;i_line++) {
+
+      /* the line's legend */
+      if (strlen(help_info_lines[which_info][i_line]) > 0)
+	legend = help_info_legends[i_line];
+      else
+	legend = "";
+      if (ui_study->help_legend[i_line] == NULL) 
+	ui_study->help_legend[i_line] = 
+	  gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+				gnome_canvas_text_get_type(),
+				"justification", GTK_JUSTIFY_RIGHT,
+				"anchor", GTK_ANCHOR_NORTH_EAST,
+				"text", legend,
+				"x", (gdouble) 20.0,
+				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
+				"fill_color", "black", 
+				"font", UI_STUDY_HELP_FONT, NULL);
       else /* just need to change the text */
-    	gnome_canvas_item_set(button[i_line], "text", help_info_lines[which_info][i_line], NULL);
-    
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", button[HELP_INFO_LINE_1]);
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", button[HELP_INFO_LINE_1_SHIFT]);
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", button[HELP_INFO_LINE_2]);
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", button[HELP_INFO_LINE_2_SHIFT]);
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", button[HELP_INFO_LINE_3]);
-    gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", button[HELP_INFO_LINE_3_SHIFT]);
+	gnome_canvas_item_set(ui_study->help_legend[i_line], "text", legend, NULL);
+      
+      /* and the button info */
+      if (ui_study->help_line[i_line] == NULL) 
+	ui_study->help_line[i_line] = 
+	  gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+				gnome_canvas_text_get_type(),
+				"justification", GTK_JUSTIFY_LEFT,
+				"anchor", GTK_ANCHOR_NORTH_WEST,
+				"text", help_info_lines[which_info][i_line],
+				"x", (gdouble) 30.0,
+				"y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
+				"fill_color", "black", 
+				"font", UI_STUDY_HELP_FONT, NULL);
+      else /* just need to change the text */
+	gnome_canvas_item_set(ui_study->help_line[i_line], "text", 
+			      help_info_lines[which_info][i_line], NULL);
+    }
 
     location_p = realspace_alt_coord_to_base(study_view_center(ui_study->study),
 					     study_coord_frame(ui_study->study));
-    location_text = g_strdup_printf("view center (x,y,z) = \n (% 5.2f,% 5.2f,% 5.2f)", 
-				    location_p.x, location_p.y, location_p.z);
-  } 
+    location_text[0] = g_strdup_printf("view center (x,y,z) =");
+    location_text[1] = g_strdup_printf("(% 5.2f,% 5.2f,% 5.2f)", 
+				     new_point.x, new_point.y, new_point.z);
+  }
+
   /* update the location display */
-  location = gtk_object_get_data(GTK_OBJECT(ui_study->help_info), "location");
-  if (location == NULL) 
-    location = gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
-				     gnome_canvas_text_get_type(),
-				     "justification", GTK_JUSTIFY_LEFT,
-				     "anchor", GTK_ANCHOR_NORTH_WEST,
-				     "text", location_text,
-				     "x", (gdouble) HELP_INFO_LINE_X,
-				     "y", (gdouble) (HELP_INFO_LINE_LOCATION*HELP_INFO_LINE_HEIGHT),
-				     "fill_color", "black",
-				     "font", UI_STUDY_HELP_FONT, NULL);
-  else /* just need to change the text */
-    gnome_canvas_item_set(location, "text", location_text, NULL);
+  for (i_line=HELP_INFO_LINE_LOCATION1; i_line <= HELP_INFO_LINE_LOCATION2;i_line++) {
+    if (ui_study->help_line[i_line] == NULL) 
+      ui_study->help_line[i_line] =
+	gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
+			      gnome_canvas_text_get_type(),
+			      "justification", GTK_JUSTIFY_LEFT,
+			      "anchor", GTK_ANCHOR_NORTH_WEST,
+			      "text", location_text[i_line-HELP_INFO_LINE_LOCATION1],
+			      "x", (gdouble) 0.0,
+			      "y", (gdouble) (i_line*HELP_INFO_LINE_HEIGHT),
+			      "fill_color", "black",
+			      "font", UI_STUDY_HELP_FONT, NULL);
+    else /* just need to change the text */
+      gnome_canvas_item_set(ui_study->help_line[i_line], "text", 
+			    location_text[i_line-HELP_INFO_LINE_LOCATION1],  NULL);
 
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "location", location);
-
-  g_free(location_text);
+    g_free(location_text[i_line-HELP_INFO_LINE_LOCATION1]);
+  }
 
   return;
 }
@@ -644,7 +670,6 @@ void ui_study_setup_layout(ui_study_t * ui_study) {
 			   study_view_time(ui_study->study),
 			   study_view_duration(ui_study->study),
 			   study_interpolation(ui_study->study),
-			   BW_LINEAR,
 			   ui_study->line_style,
 			   ui_study->roi_width);
 	
@@ -656,8 +681,6 @@ void ui_study_setup_layout(ui_study_t * ui_study) {
 			   GTK_SIGNAL_FUNC(ui_study_cb_canvas_view_changed), ui_study);
 	gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view_mode][i_view]), "view_z_position_changed",
 			   GTK_SIGNAL_FUNC(ui_study_cb_canvas_z_position_changed), ui_study);
-	gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view_mode][i_view]), "volumes_changed",
-			   GTK_SIGNAL_FUNC(ui_study_cb_canvas_volumes_changed), ui_study);
 	gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view_mode][i_view]), "object_changed",
 			   GTK_SIGNAL_FUNC(ui_study_cb_canvas_object_changed), ui_study);
 	gtk_signal_connect(GTK_OBJECT(ui_study->canvas[i_view_mode][i_view]), "isocontour_3d_changed",
@@ -700,8 +723,7 @@ void ui_study_setup_layout(ui_study_t * ui_study) {
       for (i_view=0;i_view<NUM_VIEWS;i_view++) {
 	gtk_table_attach(GTK_TABLE(ui_study->canvas_table[i_view_mode]), 
 			 ui_study->canvas[i_view_mode][i_view], 
-			 i_view, i_view+1, 0,1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
+			 i_view, i_view+1, 0,1, FALSE, FALSE, X_PADDING, Y_PADDING);
       }
       gtk_table_attach(GTK_TABLE(ui_study->center_table), ui_study->canvas_table[i_view_mode],
 		       0,1,i_view_mode, i_view_mode+1, 
@@ -760,7 +782,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   guint main_table_row=0; 
   guint main_table_column=0;
 
-
   /* make and add the main packing table */
   ui_study->main_table = gtk_table_new(3,2,FALSE);
   if (GNOME_IS_APP(ui_study->app)) 
@@ -786,13 +807,6 @@ void ui_study_setup_widgets(ui_study_t * ui_study) {
   gtk_table_attach(GTK_TABLE(ui_study->main_table), GTK_WIDGET(ui_study->help_info), 
 		   main_table_column, main_table_column+1, main_table_row, main_table_row+1,
 		   X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_1s_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_2s_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "button_3s_info", NULL);
-  gtk_object_set_data(GTK_OBJECT(ui_study->help_info), "location", NULL);
   gtk_widget_set_usize(GTK_WIDGET(ui_study->help_info), 150,
 		       HELP_INFO_LINE_HEIGHT*NUM_HELP_INFO_LINES);
   gnome_canvas_set_scroll_region(ui_study->help_info, 0.0, 0.0, 150.0, 

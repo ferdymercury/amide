@@ -19,15 +19,15 @@ Requirements
 
 1) Compiler: 
 
-I currently use gcc-3.0.2, as AMIDE is fairly unstable when compiled
-with any previous version of the gcc compiler if optimizations are
-used
+I currently use gcc-3.1.  AMIDE is fairly unstable when compiled with
+versions of the gcc compiler previous to 3.0.2 when optimizations are
+used.
 
 
 2) Gtk+/Gnome:
 
-I'm developing on Gtk+-1.2.10/Gnome 1.0 at the moment (i.e. default
-Redhat 6.2 install with Ximian on top). 
+I'm developing on Gtk+-1.2.10/Gnome 1.4 at the moment (i.e. default
+Redhat 7.2 install with updates)
 
 
 3) libxml2
@@ -81,6 +81,20 @@ The original version can be found at:
 The version available on the AMIDE web site is preferable, as it's
 been updated to compile cleanly under Linux.  RPM packages are also
 available.
+
+4) mpeg_encode
+
+Another optional package, the Berkeley MPEG-1 Video Encode
+(mpeg_encode) is used for generating MPEG-1 movies from series of
+rendered images.  
+
+The original version can be found at:
+	ftp://mm-ftp.cs.berkeley.edu/pub/mpeg
+
+The version available on the AMIDE web site is preferable, as it's
+been updated to compile cleanly under Linux.  RPM packages are also
+available.
+
 
 
 

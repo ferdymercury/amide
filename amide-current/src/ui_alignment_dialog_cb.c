@@ -260,7 +260,8 @@ void ui_alignment_dialog_cb_finish(GtkWidget* widget, gpointer druid, gpointer d
     if (volumes_includes_volume(AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[i_view_mode]), 
 				ui_alignment->volume_moving)) {
       for (i_view=0; i_view<NUM_VIEWS; i_view++)
-	amitk_canvas_update_volumes(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]));
+	amitk_canvas_update_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]),
+				   ui_alignment->volume_moving, VOLUME);
   }
 
   /* close the dialog box */

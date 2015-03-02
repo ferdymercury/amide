@@ -39,7 +39,6 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, realpoint_t *position,
 				      gfloat thickness, gpointer ui_study);
 void ui_study_cb_canvas_view_changed(GtkWidget * canvas, realpoint_t *position,
 				     gfloat thickness, gpointer ui_study);
-void ui_study_cb_canvas_volumes_changed(GtkWidget * canvas, gpointer ui_study);
 void ui_study_cb_canvas_object_changed(GtkWidget * canvas, gpointer object, object_t type, 
 				       gpointer ui_study);
 void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, roi_t * roi, 

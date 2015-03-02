@@ -88,32 +88,47 @@
       </sect4>
 
       <sect4><title>Shift-Left Mouse Button</title>
+	  <para> 
+	    This combination allows shifting of the active data set in
+	    space (usually used for aligning two data sets).  While
+	    holding the shift key, left click and release on a point
+	    on the active data set in one of the canvases.  A line should now be drawn
+	    between the initial click position and the current mouse
+	    position.  If the right button is now clicked, the data
+	    set will be shifted such that the initial point is now
+	    where the cursor is.  A left or middle click will cancel
+	    the action without shifting the data set.
+	 </para>
+      </sect4>
+
+      <sect4><title>Shift-Middle Mouse Button</title>
 
 	  <para>
-	    This combination allows horizontal leveling of the image.
-	    While holding the shift key, left click and release on a
-	    feature on one of the canvases.  A line should now be
+	    This combination allows horizontal leveling of the active data set.
+	    While holding the shift key, middle click and release on a
+	    point on the active data set in one of the canvases.  A line should now be
 	    drawn between the initial click position and the current
 	    mouse position.  Draw this line so that it lies along what
-	    should be horizontal in the image.  If the right button is
+	    should be horizontal in the data set.  If the right button is
 	    now clicked, the data set will be rotated so that the
 	    drawn line is truly horizontal.  A left or middle click
 	    will cancel the action without rotating the data set.
 	  </para>
       </sect4>
 
-      <sect4><title>Shift-Middle Mouse Button</title>
+      <sect4><title>Shift-Right Mouse Button</title>
 
 	  <para>
-	    This combination allows vertical leveling of the image.
-	    While holding the shift key, left click and release on a
-	    feature on one of the canvases.  A line should now be
-	    drawn between the initial click position and the current
-	    mouse position.  Draw this line so that it lies along what
-	    should be vertical in the image.  If the right button is
-	    now clicked, the data set will be rotated so that the
-	    drawn line is truly vertical.  A left or middle click
-	    will cancel the action without rotating the data set.
+	     Similar to Shift-Middle, but does a vertical leveling action.
+	  </para>
+      </sect4>
+
+      <sect4><title>Ctrl-Right Mouse Button</title>
+
+	  <para>
+	    This combination will place an alignment point at the current
+            cursor location.  A dialog will popup for entry of the alignment
+            point's name.
 	  </para>
       </sect4>
 

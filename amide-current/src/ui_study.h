@@ -30,8 +30,21 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "study.h"
 
+typedef enum {
+  HELP_INFO_LINE_1,
+  HELP_INFO_LINE_1_SHIFT,
+  HELP_INFO_LINE_2,
+  HELP_INFO_LINE_2_SHIFT,
+  HELP_INFO_LINE_3,
+  HELP_INFO_LINE_3_SHIFT,
+  HELP_INFO_LINE_3_CTRL,
+  HELP_INFO_LINE_BLANK,
+  HELP_INFO_LINE_LOCATION1,
+  HELP_INFO_LINE_LOCATION2,
+  NUM_HELP_INFO_LINES /* corresponds to the location line */
+} help_info_line_t;
+
 #define UI_STUDY_DEFAULT_ENTRY_WIDTH 75
-#define UI_STUDY_HELP_FONT "fixed"
 
 #define UI_STUDY_MIN_ROI_WIDTH 1
 #define UI_STUDY_MAX_ROI_WIDTH 5
@@ -49,7 +62,6 @@ typedef struct ui_study_t {
   GtkWidget * app; /* pointer to the window managing this study */
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
-  GnomeCanvas * help_info;
   GtkWidget * tree[NUM_VIEW_MODES]; /* the tree showing the study data structure info */
   GtkWidget * tree_event_box[NUM_VIEW_MODES];
   GtkWidget * tree_scrolled[NUM_VIEW_MODES];
@@ -65,6 +77,11 @@ typedef struct ui_study_t {
   GtkWidget * center_table;
   GtkWidget * canvas_table[NUM_VIEW_MODES];
   GtkWidget * canvas[NUM_VIEW_MODES][NUM_VIEWS];
+
+  /* help canvas info */
+  GnomeCanvas * help_info;
+  GnomeCanvasItem * help_legend[NUM_HELP_INFO_LINES];
+  GnomeCanvasItem * help_line[NUM_HELP_INFO_LINES];
 
   /* stuff changed in the preferences dialog */
   layout_t canvas_layout;

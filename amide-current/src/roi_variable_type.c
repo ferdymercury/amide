@@ -112,9 +112,10 @@ GSList * roi_`'m4_Variable_Type`'_get_intersection_line(const roi_t * roi,
   view_rp.z = (slice_corner[0].z+slice_corner[1].z)/2.0;
   view_rp.y = slice_corner[0].y+canvas_voxel_size.y/2.0;
 
-  canvas_dim.z = lround(canvas_corner.z/canvas_voxel_size.z);
-  canvas_dim.y = lround(canvas_corner.y/canvas_voxel_size.y);
-  canvas_dim.x = lround(canvas_corner.x/canvas_voxel_size.x);
+  canvas_dim.t = 0;
+  canvas_dim.z = rint(canvas_corner.z/canvas_voxel_size.z);
+  canvas_dim.y = rint(canvas_corner.y/canvas_voxel_size.y);
+  canvas_dim.x = rint(canvas_corner.x/canvas_voxel_size.x);
   g_return_val_if_fail(canvas_dim.z == 1, NULL);
 
   for (i.y=0; i.y < canvas_dim.y ; i.y++) {

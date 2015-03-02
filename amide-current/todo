@@ -4,28 +4,29 @@ misc list of things todo:
 for next release?
 -----------------
 * progress bars
-* add .vol file support
 
 comming soon
 ------------
 * need to convert to glib/gtk 2.0 for g_object,
 	also rename some objects
-	volume -> data_set
+	volume -> data_set?
 	data_set -> raw_data
+	align_pt->fiducial_pt
        
 big things:
 -----------
 * guppi interface for drawing graphs of ROI statistics
 * add drag-n-drop capabilities between study windows
+* allow changing of displayed units (mm, cm, m, s, min)
                        
 small things:
 -------------
+* add "fly through" movie generation capability
+* add .vol file support
 * ISOCONTOUR_2D drawing doesn't know the active slice... just using the 1st for now
 * would changing the icons to .png files allow anti-aliasing?
-* widgetize the help_info 
-* rewrite isocontour determining algorithm so it's not recursive,
+* rewrite isocontour determining algorithm so it's not recursive
 * add thickness/line style for isocontours?
-* gamma curve drawing still crashes program under MacX... don't use MacX for now
 * change realpoint to 4D?
 * put the canvases in a scrolled widget?
 * make caching of slices smarter.  
@@ -76,8 +77,10 @@ things dependent on other things:
 	- if gtk_spinbutton has a discontinous mode, remove work around (amitk_spin_button)
 	- gtk_tree doesn't like to be removed and attached to containers, 
 		starts displaying multiple trees
+* GNOME 2.0
+	-when gnome 2.0 is released, port to it
 * changing to anti-aliased canvases, check with newer version of gnome canvas ( > 1.4.1.2.90)
-	- all canvases are anti-aliased except for two:
+	- all canvases are now anti-aliased except for two:
 	  1- amitk_canvas, libart coredumps and misdisplays some stuff
 	  2- ui_preferences, line_style not followed by libart....
 * when bug-buddy and the gnome-error-dialog support sourceforge bug reporting,

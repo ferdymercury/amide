@@ -958,6 +958,8 @@ static void threshold_update_type(AmitkThreshold * threshold) {
     gtk_signal_handler_unblock_by_func(GTK_OBJECT(threshold->type_button[i_threshold_type]),
 				       GTK_SIGNAL_FUNC(threshold_type_cb),
 				       threshold);
+  gtk_widget_set_sensitive(threshold->type_button[THRESHOLD_PER_FRAME],
+			   (volume_dynamic(threshold->volume)));
   gtk_widget_set_sensitive(threshold->type_button[THRESHOLD_INTERPOLATE_FRAMES],
 			   (volume_dynamic(threshold->volume)));
 

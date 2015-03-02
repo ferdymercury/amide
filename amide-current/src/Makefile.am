@@ -1,5 +1,5 @@
 
-INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\"" -I/usr/local/include
+INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\""
 CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS) $(GNOME_XML2_CFLAGS)
 
 bin_PROGRAMS = amide

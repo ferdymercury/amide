@@ -85,7 +85,7 @@ struct _AmitkCanvas
   view_mode_t view_mode;
   gint roi_width;
   GdkLineStyle line_style;
-  color_table_t color_table;
+  volume_t * active_volume;
 
   volumes_t * volumes;
   volumes_t * slices;
@@ -118,7 +118,6 @@ struct _AmitkCanvasClass
 				      gfloat thickness);
   void (* view_z_position_changed)   (AmitkCanvas *Canvas,
 				      realpoint_t *position);
-  void (* volumes_changed)           (AmitkCanvas *Canvas);
   void (* object_changed)            (AmitkCanvas *Canvas,
 				      gpointer    object,
 				      object_t    type);
@@ -142,7 +141,6 @@ GtkWidget*    amitk_canvas_new                (view_t view,
 					       amide_time_t start_time,
 					       amide_time_t duration,
 					       interpolation_t interpolation,
-					       color_table_t color_table,
 					       GdkLineStyle line_style,
 					       gint roi_width);
 void          amitk_canvas_set_layout         (AmitkCanvas * canvas, 
@@ -172,8 +170,8 @@ void          amitk_canvas_set_duration       (AmitkCanvas * canvas,
 void          amitk_canvas_set_interpolation  (AmitkCanvas * canvas, 
 					       interpolation_t interpolation,
 					       gboolean update_now);
-void          amitk_canvas_set_color_table    (AmitkCanvas * canvas, 
-					       color_table_t color_table,
+void          amitk_canvas_set_active_volume  (AmitkCanvas * canvas, 
+					       volume_t * active_volume,
 					       gboolean update_now);
 void          amitk_canvas_set_line_style     (AmitkCanvas * canvas, 
 					       GdkLineStyle new_line_style,
@@ -191,6 +189,7 @@ void          amitk_canvas_remove_object      (AmitkCanvas * canvas,
 					       gboolean update_now);
 void          amitk_canvas_update_object      (AmitkCanvas * canvas, gpointer object, object_t type);
 void          amitk_canvas_threshold_changed  (AmitkCanvas * canvas);
+void          amitk_canvas_color_table_changed(AmitkCanvas * canvas);
 void          amitk_canvas_update_scrollbar   (AmitkCanvas * canvas);
 void          amitk_canvas_update_arrows      (AmitkCanvas * canvas);
 void          amitk_canvas_update_cross       (AmitkCanvas * canvas, 
@@ -198,9 +197,6 @@ void          amitk_canvas_update_cross       (AmitkCanvas * canvas,
 					       realpoint_t center, 
 					       rgba_t outline_color, 
 					       floatpoint_t thickness);
-void          amitk_canvas_update_rois        (AmitkCanvas * canvas);
-void          amitk_canvas_update_volumes     (AmitkCanvas * canvas);
-void          amitk_canvas_update_align_pts   (AmitkCanvas * canvas);
 
 
 #ifdef __cplusplus

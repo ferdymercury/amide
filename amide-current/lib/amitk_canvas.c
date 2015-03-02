@@ -56,7 +56,6 @@ enum {
   VIEW_CHANGING,
   VIEW_CHANGED,
   VIEW_Z_POSITION_CHANGED,
-  VOLUMES_CHANGED,
   OBJECT_CHANGED,
   ISOCONTOUR_3D_CHANGED,
   NEW_ALIGN_PT,
@@ -64,6 +63,7 @@ enum {
 } amitk_canvas_signals;
 
 typedef enum {
+  CANVAS_EVENT_NONE,
   CANVAS_EVENT_ENTER_VOLUME, 
   CANVAS_EVENT_ENTER_ALIGN_PT,
   CANVAS_EVENT_ENTER_NEW_NORMAL_ROI,
@@ -73,8 +73,9 @@ typedef enum {
   CANVAS_EVENT_LEAVE, 
   CANVAS_EVENT_PRESS_MOVE_VIEW,
   CANVAS_EVENT_PRESS_MINIMIZE_VIEW,
-  CANVAS_EVENT_PRESS_RESIZE_VIEW,
-  CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL, /* 10 */
+  CANVAS_EVENT_PRESS_RESIZE_VIEW, /* 10 */
+  CANVAS_EVENT_PRESS_SHIFT_DATA_SET, 
+  CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL, 
   CANVAS_EVENT_PRESS_ALIGN_VERTICAL,
   CANVAS_EVENT_PRESS_MOVE_ALIGN_PT,
   CANVAS_EVENT_PRESS_NEW_ROI,
@@ -82,19 +83,20 @@ typedef enum {
   CANVAS_EVENT_PRESS_ROTATE_ROI,
   CANVAS_EVENT_PRESS_RESIZE_ROI,
   CANVAS_EVENT_PRESS_ERASE_ISOCONTOUR,
-  CANVAS_EVENT_PRESS_LARGE_ERASE_ISOCONTOUR,
-  CANVAS_EVENT_PRESS_CHANGE_ISOCONTOUR,
-  CANVAS_EVENT_PRESS_NEW_ALIGN_PT, /* 20 */
+  CANVAS_EVENT_PRESS_LARGE_ERASE_ISOCONTOUR, /* 20 */
+  CANVAS_EVENT_PRESS_CHANGE_ISOCONTOUR, 
+  CANVAS_EVENT_PRESS_NEW_ALIGN_PT, 
   CANVAS_EVENT_MOTION, 
   CANVAS_EVENT_MOTION_MOVE_VIEW,
   CANVAS_EVENT_MOTION_MINIMIZE_VIEW,
-  CANVAS_EVENT_MOTION_RESIZE_VIEW,
+  CANVAS_EVENT_MOTION_RESIZE_VIEW, /* 30 */
+  CANVAS_EVENT_MOTION_SHIFT_DATA_SET, 
   CANVAS_EVENT_MOTION_ALIGN_HORIZONTAL,
   CANVAS_EVENT_MOTION_ALIGN_VERTICAL, 
   CANVAS_EVENT_MOTION_ALIGN_PT,
   CANVAS_EVENT_MOTION_NEW_ROI,
-  CANVAS_EVENT_MOTION_SHIFT_ROI,
-  CANVAS_EVENT_MOTION_ROTATE_ROI, /* 30 */
+  CANVAS_EVENT_MOTION_SHIFT_ROI, 
+  CANVAS_EVENT_MOTION_ROTATE_ROI, 
   CANVAS_EVENT_MOTION_RESIZE_ROI, 
   CANVAS_EVENT_MOTION_ERASE_ISOCONTOUR,
   CANVAS_EVENT_MOTION_LARGE_ERASE_ISOCONTOUR,
@@ -102,6 +104,7 @@ typedef enum {
   CANVAS_EVENT_RELEASE_MOVE_VIEW,
   CANVAS_EVENT_RELEASE_MINIMIZE_VIEW,
   CANVAS_EVENT_RELEASE_RESIZE_VIEW,
+  CANVAS_EVENT_RELEASE_SHIFT_DATA_SET,
   CANVAS_EVENT_RELEASE_ALIGN_HORIZONTAL,
   CANVAS_EVENT_RELEASE_ALIGN_VERTICAL, 
   CANVAS_EVENT_RELEASE_ALIGN_PT,
@@ -112,11 +115,12 @@ typedef enum {
   CANVAS_EVENT_RELEASE_ERASE_ISOCONTOUR,
   CANVAS_EVENT_RELEASE_LARGE_ERASE_ISOCONTOUR,
   CANVAS_EVENT_RELEASE_CHANGE_ISOCONTOUR,
+  CANVAS_EVENT_CANCEL_SHIFT_DATA_SET,
   CANVAS_EVENT_CANCEL_ALIGN_HORIZONTAL,
   CANVAS_EVENT_CANCEL_ALIGN_VERTICAL,
+  CANVAS_EVENT_ENACT_SHIFT_DATA_SET,
   CANVAS_EVENT_ENACT_ALIGN_HORIZONTAL,
   CANVAS_EVENT_ENACT_ALIGN_VERTICAL,
-  CANVAS_EVENT_DO_NOTHING
 } canvas_event_t;
 
 
@@ -269,13 +273,6 @@ static void canvas_class_init (AmitkCanvasClass *klass)
   		    gtk_marshal_NONE__POINTER, 
 		    GTK_TYPE_NONE, 1,
 		    GTK_TYPE_POINTER);
-  canvas_signals[VOLUMES_CHANGED] =
-    gtk_signal_new ("volumes_changed",
-  		    GTK_RUN_FIRST,
-  		    object_class->type,
-  		    GTK_SIGNAL_OFFSET (AmitkCanvasClass, volumes_changed),
-  		    gtk_marshal_NONE__NONE, 
-		    GTK_TYPE_NONE, 0);
   canvas_signals[OBJECT_CHANGED] =
     gtk_signal_new ("object_changed",
   		    GTK_RUN_FIRST,
@@ -321,7 +318,7 @@ static void canvas_init (AmitkCanvas *canvas)
   }
 
   canvas->coord_frame=NULL;
-  canvas->color_table = BW_LINEAR;
+  canvas->active_volume = NULL;
 
   canvas->canvas = NULL;
   canvas->volumes=NULL;
@@ -417,14 +414,13 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   canvaspoint_t temp_cp[2];
   realpoint_t temp_rp[2];
   realpoint_t shift;
-  volumes_t * volumes;
   volume_t * temp_volume;
   voxelpoint_t temp_vp;
   roi_t * undrawn_roi;
+  color_table_t color_table;
   static GnomeCanvasItem * canvas_item = NULL;
   static gboolean grab_on = FALSE;
-  static gboolean extended_mode = FALSE;
-  static gboolean align_vertical = FALSE;
+  static canvas_event_t extended_event_type = CANVAS_EVENT_NONE;
   static canvaspoint_t initial_cp;
   static canvaspoint_t previous_cp;
   static realpoint_t initial_base_rp;
@@ -467,13 +463,18 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
   undrawn_roi = rois_undrawn_roi(canvas->rois);
 
+  if (canvas->active_volume == NULL)
+    color_table = BW_LINEAR;
+  else
+    color_table = canvas->active_volume->color_table;
+
   switch(event->type) {
 
   case GDK_ENTER_NOTIFY:
     event_cp.x = event->crossing.x;
     event_cp.y = event->crossing.y;
     if (event->crossing.mode != GDK_CROSSING_NORMAL) {
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING; /* ignore grabs */
+      canvas_event_type = CANVAS_EVENT_NONE; /* ignore grabs */
 
     } else if (undrawn_roi != NULL) {
 
@@ -481,8 +482,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	canvas_event_type = CANVAS_EVENT_ENTER_NEW_ISOCONTOUR_ROI;      
       else canvas_event_type = CANVAS_EVENT_ENTER_NEW_NORMAL_ROI;      
       
-    } else if (extended_mode) {
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING;
+    } else if (extended_event_type != CANVAS_EVENT_NONE) {
+      canvas_event_type = CANVAS_EVENT_NONE;
 
     } else if (type == VOLUME) {
       canvas_event_type = CANVAS_EVENT_ENTER_VOLUME;
@@ -496,7 +497,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       else  canvas_event_type = CANVAS_EVENT_ENTER_NORMAL_ROI;
       
     } else
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING;
+      canvas_event_type = CANVAS_EVENT_NONE;
     
     break;
     
@@ -504,9 +505,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     event_cp.x = event->crossing.x;
     event_cp.y = event->crossing.y;
     if (event->crossing.mode != GDK_CROSSING_NORMAL)
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING; /* ignore grabs */
-    else if (extended_mode)
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING; 
+      canvas_event_type = CANVAS_EVENT_NONE; /* ignore grabs */
+    else if (extended_event_type != CANVAS_EVENT_NONE)
+      canvas_event_type = CANVAS_EVENT_NONE; 
     else
       canvas_event_type = CANVAS_EVENT_LEAVE;
     break;
@@ -518,22 +519,23 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     if (undrawn_roi != NULL) {
       canvas_event_type = CANVAS_EVENT_PRESS_NEW_ROI;
       
-    } else if (extended_mode) {
-      if (align_vertical) canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_VERTICAL;
-      else canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL;
+    } else if (extended_event_type != CANVAS_EVENT_NONE) {
+      canvas_event_type = extended_event_type;
       
     } else if ((!grab_on) && (!in_object) && (type == VOLUME) && (event->button.button == 1)) {
       if (event->button.state & GDK_SHIFT_MASK) 
-	canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL;
+	canvas_event_type = CANVAS_EVENT_PRESS_SHIFT_DATA_SET;
       else canvas_event_type = CANVAS_EVENT_PRESS_MOVE_VIEW;
       
     } else if ((!grab_on) && (!in_object) && (type == VOLUME) && (event->button.button == 2)) {
       if (event->button.state & GDK_SHIFT_MASK) 
-	canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_VERTICAL;
+	canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL;
       else canvas_event_type = CANVAS_EVENT_PRESS_MINIMIZE_VIEW;
       
     } else if ((!grab_on) && (!in_object) && (type == VOLUME) && (event->button.button == 3)) {
       if (event->button.state & GDK_SHIFT_MASK) 
+	canvas_event_type = CANVAS_EVENT_PRESS_ALIGN_VERTICAL;
+      else if (event->button.state & GDK_CONTROL_MASK)
 	canvas_event_type = CANVAS_EVENT_PRESS_NEW_ALIGN_PT;
       else canvas_event_type = CANVAS_EVENT_PRESS_RESIZE_VIEW;
       
@@ -557,7 +559,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       canvas_event_type = CANVAS_EVENT_PRESS_MOVE_ALIGN_PT;
 
     } else 
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING;
+      canvas_event_type = CANVAS_EVENT_NONE;
     
     break;
     
@@ -568,10 +570,20 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     if (grab_on && (undrawn_roi != NULL)) {
       canvas_event_type = CANVAS_EVENT_MOTION_NEW_ROI;
       
-    } else if (extended_mode ) {
-      if (align_vertical) canvas_event_type = CANVAS_EVENT_MOTION_ALIGN_VERTICAL;
-      else canvas_event_type = CANVAS_EVENT_MOTION_ALIGN_HORIZONTAL;
-      
+    } else if (extended_event_type != CANVAS_EVENT_NONE) {
+
+      if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+	canvas_event_type = CANVAS_EVENT_MOTION_ALIGN_VERTICAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL) 
+	canvas_event_type = CANVAS_EVENT_MOTION_ALIGN_HORIZONTAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_SHIFT_DATA_SET)
+	canvas_event_type = CANVAS_EVENT_MOTION_SHIFT_DATA_SET;
+      else {
+	canvas_event_type = CANVAS_EVENT_NONE;
+	grab_on = FALSE;
+	g_error("unexpected case in %s at line %d",  __FILE__, __LINE__);
+      }
+
     } else if (grab_on && (!in_object) && (type == VOLUME) && (event->motion.state & GDK_BUTTON1_MASK)) {
       canvas_event_type = CANVAS_EVENT_MOTION_MOVE_VIEW;
       
@@ -612,18 +624,47 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     if (undrawn_roi != NULL) {
       canvas_event_type = CANVAS_EVENT_RELEASE_NEW_ROI;
 	
-    } else if (extended_mode && (!grab_on) && (event->button.button == 3)) {
-      if (align_vertical) canvas_event_type = CANVAS_EVENT_ENACT_ALIGN_VERTICAL;
-      else canvas_event_type = CANVAS_EVENT_ENACT_ALIGN_HORIZONTAL;
-      
-    } else if (extended_mode && (!grab_on))  {
-      if (align_vertical) canvas_event_type = CANVAS_EVENT_CANCEL_ALIGN_VERTICAL;
-      else canvas_event_type = CANVAS_EVENT_CANCEL_ALIGN_HORIZONTAL;
+    } else if ((extended_event_type != CANVAS_EVENT_NONE) && (!grab_on) && (event->button.button == 3)) {
 
-    } else if (extended_mode && (grab_on)) {
-      if (align_vertical) canvas_event_type = CANVAS_EVENT_RELEASE_ALIGN_VERTICAL;
-      else canvas_event_type = CANVAS_EVENT_RELEASE_ALIGN_HORIZONTAL;
-      
+      if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+	canvas_event_type = CANVAS_EVENT_ENACT_ALIGN_VERTICAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL) 
+	canvas_event_type = CANVAS_EVENT_ENACT_ALIGN_HORIZONTAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_SHIFT_DATA_SET)
+	canvas_event_type = CANVAS_EVENT_ENACT_SHIFT_DATA_SET;
+      else {
+	canvas_event_type = CANVAS_EVENT_NONE;
+	grab_on = FALSE;
+	g_error("unexpected case in %s at line %d",  __FILE__, __LINE__);
+      }
+
+    } else if ((extended_event_type != CANVAS_EVENT_NONE) && (!grab_on))  {
+
+      if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+	canvas_event_type = CANVAS_EVENT_CANCEL_ALIGN_VERTICAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL) 
+	canvas_event_type = CANVAS_EVENT_CANCEL_ALIGN_HORIZONTAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_SHIFT_DATA_SET)
+	canvas_event_type = CANVAS_EVENT_CANCEL_SHIFT_DATA_SET;
+      else {
+	canvas_event_type = CANVAS_EVENT_NONE;
+	grab_on = FALSE;
+	g_error("unexpected case in %s at line %d",  __FILE__, __LINE__);
+      }
+
+    } else if ((extended_event_type != CANVAS_EVENT_NONE) && (grab_on)) {
+      if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+	canvas_event_type = CANVAS_EVENT_RELEASE_ALIGN_VERTICAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL) 
+	canvas_event_type = CANVAS_EVENT_RELEASE_ALIGN_HORIZONTAL;
+      else if (extended_event_type == CANVAS_EVENT_PRESS_SHIFT_DATA_SET)
+	canvas_event_type = CANVAS_EVENT_RELEASE_SHIFT_DATA_SET;
+      else {
+	canvas_event_type = CANVAS_EVENT_NONE;
+	grab_on = FALSE;
+	g_error("unexpected case in %s at line %d",  __FILE__, __LINE__);
+      }
+
     } else if ((!in_object) && (type == VOLUME) && (event->button.button == 1)) {
       canvas_event_type = CANVAS_EVENT_RELEASE_MOVE_VIEW;
 	
@@ -653,14 +694,14 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       canvas_event_type = CANVAS_EVENT_RELEASE_ALIGN_PT;
 
     } else 
-      canvas_event_type = CANVAS_EVENT_DO_NOTHING;
+      canvas_event_type = CANVAS_EVENT_NONE;
     
     break;
     
   default: 
     event_cp.x = event_cp.y = 0;
     /* an event we don't handle */
-    canvas_event_type = CANVAS_EVENT_DO_NOTHING;
+    canvas_event_type = CANVAS_EVENT_NONE;
     break;
     
   }
@@ -745,36 +786,42 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		    HELP_INFO_UPDATE_LOCATION, &base_rp, 0.0);
     grab_on = TRUE;
     canvas->center = base_rp;
-    outline_color = color_table_outline_color(canvas->color_table, FALSE);
+    outline_color = color_table_outline_color(color_table, FALSE);
     canvas_update_cross(canvas, AMITK_CANVAS_CROSS_SHOW, canvas->center, outline_color,canvas->thickness);
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[VIEW_CHANGING], 
 		    &(canvas->center), canvas->thickness);
     break;
 
     
+  case CANVAS_EVENT_PRESS_SHIFT_DATA_SET:
   case CANVAS_EVENT_PRESS_ALIGN_VERTICAL:
   case CANVAS_EVENT_PRESS_ALIGN_HORIZONTAL:
-    gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
-		    HELP_INFO_CANVAS_ALIGN, &base_rp, 0.0);
-    if (extended_mode) {
+    if (extended_event_type != CANVAS_EVENT_NONE) {
       grab_on = FALSE; /* do everything on the BUTTON_RELEASE */
     } else {
       grab_on = TRUE;
-      extended_mode = TRUE;
+      extended_event_type = canvas_event_type;
       initial_cp = canvas_cp;
+      initial_base_rp = base_rp;
+      initial_canvas_rp = canvas_rp;
 
       points = gnome_canvas_points_new(2);
       points->coords[2] = points->coords[0] = canvas_cp.x;
       points->coords[3] = points->coords[1] = canvas_cp.y;
-      outline_color = color_table_outline_color(canvas->color_table, TRUE);
+      outline_color = color_table_outline_color(color_table, TRUE);
       canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)), 
 					  gnome_canvas_line_get_type(),
 					  "points", points, "width_pixels", canvas->roi_width,
 					  "fill_color_rgba", color_table_rgba_to_uint32(outline_color),
 					  NULL);
       gnome_canvas_points_unref(points);
-
-      align_vertical = (canvas_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL);
+    }
+    if (canvas_event_type == CANVAS_EVENT_PRESS_SHIFT_DATA_SET) {
+      gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		      HELP_INFO_CANVAS_SHIFT, &base_rp, 0.0);
+    } else { /* ALIGN */
+      gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		      HELP_INFO_CANVAS_ALIGN, &base_rp, 0.0);
     }
     break;
 
@@ -795,7 +842,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   case CANVAS_EVENT_PRESS_NEW_ROI:
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
 		    HELP_INFO_CANVAS_NEW_ROI, &base_rp, 0.0);
-    outline_color = color_table_outline_color(canvas->color_table, TRUE);
+    outline_color = color_table_outline_color(color_table, TRUE);
     initial_canvas_rp = canvas_rp;
     initial_cp = canvas_cp;
     
@@ -893,7 +940,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     points = gnome_canvas_points_new(2);
     points->coords[2] = points->coords[0] = canvas_cp.x;
     points->coords[3] = points->coords[1] = canvas_cp.y;
-    outline_color = color_table_outline_color(canvas->color_table, TRUE);
+    outline_color = color_table_outline_color(color_table, TRUE);
     canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)), 
 					gnome_canvas_line_get_type(),
 					"points", points, "width_pixels", canvas->roi_width,
@@ -925,7 +972,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       canvas->thickness = rp_max_dim(rp_diff(base_rp, canvas->center));
     else
       canvas->center = base_rp;
-    outline_color = color_table_outline_color(canvas->color_table, FALSE);
+    outline_color = color_table_outline_color(color_table, FALSE);
     canvas_update_cross(canvas, AMITK_CANVAS_CROSS_SHOW, canvas->center, outline_color,canvas->thickness);
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[VIEW_CHANGING], 
 		    &(canvas->center), canvas->thickness);
@@ -967,14 +1014,8 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		    HELP_INFO_UPDATE_VALUE, &base_rp, volume_value(temp_volume, temp_vp));
     break;
 
+  case CANVAS_EVENT_MOTION_SHIFT_DATA_SET:
   case CANVAS_EVENT_MOTION_CHANGE_ISOCONTOUR:
-    g_return_val_if_fail(canvas->slices != NULL, FALSE);
-    temp_volume = canvas->slices->volume; /* just use the first slice for now... not always right */
-    temp_rp[0] = realspace_base_coord_to_alt(base_rp, temp_volume->coord_frame);
-    REALPOINT_TO_VOXEL(temp_rp[0], temp_volume->voxel_size, 0, temp_vp);
-    gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
-		    HELP_INFO_UPDATE_VALUE, &base_rp, volume_value(temp_volume, temp_vp));
-    /* and fall through */
   case CANVAS_EVENT_MOTION_ALIGN_HORIZONTAL:
   case CANVAS_EVENT_MOTION_ALIGN_VERTICAL:
     points = gnome_canvas_points_new(2);
@@ -984,6 +1025,34 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     points->coords[3] = canvas_cp.y;
     gnome_canvas_item_set(canvas_item, "points", points, NULL);
     gnome_canvas_points_unref(points);
+
+    /* set help appropriately */
+    if (canvas_event_type == CANVAS_EVENT_MOTION_CHANGE_ISOCONTOUR) {
+      g_return_val_if_fail(canvas->slices != NULL, FALSE);
+      temp_volume = canvas->slices->volume; /* just use the first slice for now... not always right */
+      temp_rp[0] = realspace_base_coord_to_alt(base_rp, temp_volume->coord_frame);
+      REALPOINT_TO_VOXEL(temp_rp[0], temp_volume->voxel_size, 0, temp_vp);
+      gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		      HELP_INFO_UPDATE_VALUE, &base_rp, volume_value(temp_volume, temp_vp));
+    } else if (canvas_event_type == CANVAS_EVENT_MOTION_SHIFT_DATA_SET) {
+      diff_rp = rp_diff(canvas_rp, initial_canvas_rp);
+      gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		      HELP_INFO_UPDATE_SHIFT, &diff_rp, theta);
+    } else { /* align horizontal or vertical */
+      /* figure out how many degrees we've rotated */
+      diff_cp = cp_sub(canvas_cp, initial_cp);
+      if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+	theta = -atan(diff_cp.x/diff_cp.y);
+      else theta = atan(diff_cp.y/diff_cp.x);
+
+      if (isnan(theta)) theta = 0;
+      if (canvas->view == SAGITTAL) theta = -theta; /* sagittal is left-handed */
+      theta *= 180.0/M_PI; /* convert to degrees */
+
+      gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		      HELP_INFO_UPDATE_THETA, &base_rp, theta);
+    }
+
     break;
 
   case CANVAS_EVENT_MOTION_NEW_ROI:
@@ -1188,54 +1257,84 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 		    &(canvas->center), canvas->thickness);
     break;
 
+  case CANVAS_EVENT_RELEASE_SHIFT_DATA_SET:
+    gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		    HELP_INFO_CANVAS_SHIFT, &base_rp, 0.0);
+    break;
+
   case CANVAS_EVENT_RELEASE_ALIGN_HORIZONTAL:
   case CANVAS_EVENT_RELEASE_ALIGN_VERTICAL:
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
 		    HELP_INFO_CANVAS_ALIGN, &base_rp, 0.0);
     break;
 
+  case CANVAS_EVENT_CANCEL_SHIFT_DATA_SET:
   case CANVAS_EVENT_CANCEL_ALIGN_HORIZONTAL:
   case CANVAS_EVENT_CANCEL_ALIGN_VERTICAL:
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
 		    HELP_INFO_CANVAS_VOLUME, &base_rp, 0.0);
-    extended_mode = FALSE;
+    extended_event_type = CANVAS_EVENT_NONE;
     gtk_object_destroy(GTK_OBJECT(canvas_item));
+    break;
+
+  case CANVAS_EVENT_ENACT_SHIFT_DATA_SET:
+    gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
+		    HELP_INFO_CANVAS_VOLUME, &base_rp, 0.0);
+    gtk_object_destroy(GTK_OBJECT(canvas_item));
+    extended_event_type = CANVAS_EVENT_NONE;
+
+    /* rotate the active volume */
+    if (canvas->active_volume == NULL) { /* sanity check */
+      g_error("inappropriate null active volume, %s at line %d", __FILE__, __LINE__);
+    } else {
+      /* recalculate the offset of this volume */
+      diff_rp = rp_sub(base_rp, initial_base_rp);
+      rs_set_offset(canvas->active_volume->coord_frame, 
+		    rp_add(diff_rp, rs_offset(canvas->active_volume->coord_frame)));
+
+      canvas_update(canvas, UPDATE_ALL);
+      gtk_signal_emit(GTK_OBJECT(canvas), canvas_signals[OBJECT_CHANGED], 
+		      canvas->active_volume, VOLUME);
+    }      
     break;
 
   case CANVAS_EVENT_ENACT_ALIGN_HORIZONTAL:
   case CANVAS_EVENT_ENACT_ALIGN_VERTICAL:
     gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[HELP_EVENT], 
 		    HELP_INFO_CANVAS_VOLUME, &base_rp, 0.0);
-    extended_mode = FALSE;
     gtk_object_destroy(GTK_OBJECT(canvas_item));
 
     /* figure out how many degrees we've rotated */
     diff_cp = cp_sub(canvas_cp, initial_cp);
-    if (align_vertical) theta = -atan(diff_cp.x/diff_cp.y);
+    if (extended_event_type == CANVAS_EVENT_PRESS_ALIGN_VERTICAL) 
+      theta = -atan(diff_cp.x/diff_cp.y);
     else theta = atan(diff_cp.y/diff_cp.x);
+
+    extended_event_type = CANVAS_EVENT_NONE;
     
     if (isnan(theta)) theta = 0;
     
     if (canvas->view == SAGITTAL) theta = -theta; /* sagittal is left-handed */
     
-    /* rotate all the currently displayed volumes */
-    volumes = canvas->volumes;
-    while (volumes != NULL) {
+    /* rotate the active volume */
+    if (canvas->active_volume == NULL) { /* sanity check */
+      g_error("inappropriate null active volume, %s at line %d", __FILE__, __LINE__);
+    } else {
       /* saving the center wrt to the volume's coord axis, as we're rotating around the center */
-      temp_rp[0] = realspace_base_coord_to_alt(canvas->center, volumes->volume->coord_frame);
-      realspace_rotate_on_axis(volumes->volume->coord_frame,
+      temp_rp[0] = realspace_base_coord_to_alt(canvas->center, canvas->active_volume->coord_frame);
+      realspace_rotate_on_axis(canvas->active_volume->coord_frame,
 			       rs_specific_axis(canvas->coord_frame, ZAXIS),
 			       theta);
 	
       /* recalculate the offset of this volume based on the center we stored */
-      rs_set_offset(volumes->volume->coord_frame, zero_rp);
-      temp_rp[0] = realspace_alt_coord_to_base(temp_rp[0], volumes->volume->coord_frame);
-      rs_set_offset(volumes->volume->coord_frame, rp_sub(canvas->center, temp_rp[0]));
-      volumes = volumes->next;
+      rs_set_offset(canvas->active_volume->coord_frame, zero_rp);
+      temp_rp[0] = realspace_alt_coord_to_base(temp_rp[0], canvas->active_volume->coord_frame);
+      rs_set_offset(canvas->active_volume->coord_frame, rp_sub(canvas->center, temp_rp[0]));
+
+      canvas_update(canvas, UPDATE_ALL);
+      gtk_signal_emit(GTK_OBJECT(canvas), canvas_signals[OBJECT_CHANGED], 
+		      canvas->active_volume, VOLUME);
     }      
-     
-    canvas_update(canvas, UPDATE_ALL);
-    gtk_signal_emit(GTK_OBJECT (canvas), canvas_signals[VOLUMES_CHANGED]);
 
     break;
 
@@ -1404,7 +1503,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 
     break;
 
-  case CANVAS_EVENT_DO_NOTHING:
+  case CANVAS_EVENT_NONE:
     break;
   default:
     g_error("unexpected case in %s at line %d, event %d", 
@@ -1912,7 +2011,10 @@ static GnomeCanvasItem * canvas_update_roi(AmitkCanvas * canvas,
     roi = gtk_object_get_data(GTK_OBJECT(roi_item), "object");
   g_return_val_if_fail(roi != NULL, NULL);
 
-  outline_color = color_table_outline_color(canvas->color_table, TRUE);
+  if (canvas->active_volume == NULL)
+    outline_color = color_table_outline_color(BW_LINEAR, TRUE);
+  else
+    outline_color = color_table_outline_color(canvas->active_volume->color_table, TRUE);
 
   switch(roi->type) {
   case ISOCONTOUR_2D:
@@ -2204,7 +2306,6 @@ GtkWidget * amitk_canvas_new(view_t view,
 			     amide_time_t start_time,
 			     amide_time_t duration,
 			     interpolation_t interpolation,
-			     color_table_t color_table,
 			     GdkLineStyle line_style,
 			     gint roi_width) {
 
@@ -2222,7 +2323,6 @@ GtkWidget * amitk_canvas_new(view_t view,
   canvas->interpolation = interpolation;
   canvas->line_style = line_style;
   canvas->roi_width = roi_width;
-  canvas->color_table = color_table;
   canvas->layout = layout;
   canvas->view_mode = view_mode;
   canvas->coord_frame = realspace_get_view_coord_frame(view_coord_frame,view, layout);
@@ -2333,13 +2433,13 @@ void amitk_canvas_set_interpolation(AmitkCanvas * canvas,
   if (update_now) canvas_update(canvas, UPDATE_VOLUMES);
 }
 
-void amitk_canvas_set_color_table(AmitkCanvas * canvas, 
-				  color_table_t color_table,
-				  gboolean update_now) {
+void amitk_canvas_set_active_volume(AmitkCanvas * canvas, 
+				    volume_t * active_volume,
+				    gboolean update_now) {
 
   g_return_if_fail(canvas != NULL);
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  canvas->color_table = color_table;
+  canvas->active_volume = active_volume;
   if (update_now) canvas_update(canvas, UPDATE_ROIS);
 
 }
@@ -2587,6 +2687,13 @@ void amitk_canvas_threshold_changed(AmitkCanvas * canvas) {
   canvas_update(canvas, REFRESH_VOLUMES);
 }
 
+void amitk_canvas_color_table_changed(AmitkCanvas * canvas) {
+
+  g_return_if_fail(canvas != NULL);
+  g_return_if_fail(AMITK_IS_CANVAS(canvas));
+  canvas_update(canvas, REFRESH_VOLUMES);
+  canvas_update(canvas, UPDATE_ROIS);
+}
 
 void amitk_canvas_update_scrollbar(AmitkCanvas * canvas) {
   g_return_if_fail(canvas != NULL);
@@ -2605,24 +2712,6 @@ void amitk_canvas_update_cross(AmitkCanvas * canvas, amitk_canvas_cross_action_t
   g_return_if_fail(canvas != NULL);
   g_return_if_fail(AMITK_IS_CANVAS(canvas));
   canvas_update_cross(canvas, action, center, outline_color, thickness);
-}
-
-void amitk_canvas_update_align_pts(AmitkCanvas * canvas) {
-  g_return_if_fail(canvas != NULL);
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  canvas_update(canvas, UPDATE_ALIGN_PTS);
-}
-
-void amitk_canvas_update_rois(AmitkCanvas * canvas) {
-  g_return_if_fail(canvas != NULL);
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  canvas_update(canvas, UPDATE_ROIS);
-}
-
-void amitk_canvas_update_volumes(AmitkCanvas * canvas) {
-  g_return_if_fail(canvas != NULL);
-  g_return_if_fail(AMITK_IS_CANVAS(canvas));
-  canvas_update(canvas, UPDATE_ALL);
 }
 
 

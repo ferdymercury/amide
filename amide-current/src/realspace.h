@@ -184,6 +184,7 @@ inline voxelpoint_t vp_add(const voxelpoint_t vp1,const voxelpoint_t vp2);
 inline voxelpoint_t vp_sub(const voxelpoint_t vp1,const voxelpoint_t vp2);
 inline gboolean vp_equal(const voxelpoint_t vp1, const voxelpoint_t vp2);
 inline floatpoint_t vp_max_dim(const voxelpoint_t vp1);
+void vp_print(gchar * message, const voxelpoint_t vp);
 
 gboolean rp_in_box(const realpoint_t p,
 		   const realpoint_t p0,

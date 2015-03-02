@@ -287,6 +287,7 @@ void ui_volume_dialog_cb_apply(GtkWidget* dialog, gint page_number, gpointer dat
   guint i_frame;
   view_t i_view;
   view_mode_t i_view_mode;
+  floatpoint_t max_voxel_dim;
   GtkWidget * threshold;
   
   /* we'll apply all page changes at once */
@@ -338,14 +339,17 @@ void ui_volume_dialog_cb_apply(GtkWidget* dialog, gint page_number, gpointer dat
 
 
   /* redraw the volume */
+  max_voxel_dim = volumes_max_min_voxel_size(study_volumes(ui_study->study));
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++) {
 
     /* change the modality icon */
     amitk_tree_update_object(AMITK_TREE(ui_study->tree[i_view_mode]), old_info, VOLUME);
 
     if (volumes_includes_volume(AMITK_TREE_SELECTED_VOLUMES(ui_study->tree[i_view_mode]), old_info)) {
-      for (i_view=0; i_view<NUM_VIEWS; i_view++)
+      for (i_view=0; i_view<NUM_VIEWS; i_view++) {
+	amitk_canvas_set_voxel_dim(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), max_voxel_dim, FALSE);
 	amitk_canvas_update_object(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), old_info, VOLUME);
+      }
     }
   }
 
