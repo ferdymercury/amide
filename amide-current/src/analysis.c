@@ -127,7 +127,8 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 
   /* initialize values */
   frame_analysis->mean = 0.0;
-  frame_analysis->voxels = 0.0; 
+  frame_analysis->voxels = 0.0;
+  frame_analysis->correction = 0.0;
   frame_analysis->var = 0.0;
   frame_analysis->min_max_valid=FALSE;
   frame_analysis->min = 0.0;
@@ -142,13 +143,13 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 				   amitk_data_set_get_start_time(ds, frame))/2.0;
 
   /* calculate the #voxels, min max, and total */
-  amitk_roi_calculate_on_data_set(roi, ds, frame, calculate_stats1, frame_analysis);
+  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, calculate_stats1, frame_analysis);
 
   /* calculate the mean */
   frame_analysis->mean = frame_analysis->total/frame_analysis->voxels;
 
   /* go through the data again, to calculate variance */
-  amitk_roi_calculate_on_data_set(roi, ds, frame, calculate_stats2, frame_analysis);
+  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, calculate_stats2, frame_analysis);
 
   /* and divide to get the final var, note I'm using N-1, as the mean
      in a sense is being "estimated" from the data set....  If anyone

@@ -66,7 +66,7 @@ static void          study_add_child           (AmitkObject         *object,
 static void          study_remove_child        (AmitkObject         *object,
 						AmitkObject         *child);
 
-static AmitkObject * parent_class;
+static AmitkObjectClass * parent_class;
 static guint         study_signals[LAST_SIGNAL];
 
 

@@ -53,7 +53,7 @@ static gchar * start_page_text =
 "Welcome to the data set alignment wizard, used for\n"
 "aligning one medical image data set with another.\n"
 "\n"
-"Currently, only egistration using fiducial marks has\n"
+"Currently, only registration using fiducial marks has\n"
 "been implemented inside of AMIDE.\n";
 
 #else /* no LIBGSL support */
@@ -306,8 +306,10 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 							ui_alignment->fixed_ds, 
 							ui_alignment->selected_marks,&fre);
 
-    temp_string = g_strdup_printf("%s\n\nThe calculated fiducial reference error is: %5.5f", 
-				  end_page_text,fre);
+    temp_string = g_strdup_printf("%s\n\n%s: %5.5f mm",
+				  end_page_text,
+				  "The calculated fiducial reference error is",
+				  fre);
     gnome_druid_page_edge_set_text(GNOME_DRUID_PAGE_EDGE(page), temp_string);
     g_free(temp_string);
     gnome_druid_set_show_finish(GNOME_DRUID(druid), TRUE);

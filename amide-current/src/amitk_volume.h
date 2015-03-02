@@ -83,7 +83,7 @@ void            amitk_volume_set_center              (AmitkVolume * volume,
 void            amitk_volume_get_enclosing_corners   (const AmitkVolume * volume,
 						      const AmitkSpace * space,
 						      AmitkCorners return_corners);
-void           amitk_volumes_get_enclosing_corners   (GList * volumes,
+gboolean       amitk_volumes_get_enclosing_corners   (GList * volumes,
 						      const AmitkSpace * space,
 						      AmitkCorners return_corners);
 gboolean       amitk_volume_volume_intersection_corners(const AmitkVolume * volume1,

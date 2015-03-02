@@ -48,7 +48,18 @@ static gchar * help_info_legends[NUM_HELP_INFO_LINES] = {
   "1", "shift-1",
   "2", "shift-2",
   "3", "shift-3", "ctrl-3",
-  "ctrl-x"
+  "variable_place_holder"
+};
+
+enum {
+  HELP_INFO_VARIABLE_LINE_CTRL_X,
+  HELP_INFO_VARIABLE_LINE_SHIFT_CTRL_3,
+  NUM_HELP_INFO_VARIABLE_LINES
+};
+
+static gchar * help_info_variable_legend[NUM_HELP_INFO_VARIABLE_LINES] = {
+  "ctrl-x",
+  "shift-ctrl-3"
 };
 
 static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
@@ -62,16 +73,16 @@ static gchar * help_info_lines[][NUM_HELP_INFO_LINES] = {
    ""},
   {"shift", "", 
    "rotate", "", 
-   "scale", "", "set data set to zero",
-   ""}, /*CANVAS_ROI */
+   "scale", "", "set data set inside roi to zero",
+   "set data set outside roi to zero"}, /*CANVAS_ROI */
   {"shift",  "", 
    "", "", 
    "", "", "",
    ""}, /*CANVAS_FIDUCIAL_MARK */
   {"shift", "", 
    "erase isocontour point", "erase large point", 
-   "start isocontour change", "", "set data set to zero",
-   ""}, /*CANVAS_ISOCONTOUR_ROI */
+   "start isocontour change", "", "set data set inside roi to zero",
+   "set data set outside roi to zero"}, /*CANVAS_ISOCONTOUR_ROI */
   {"draw", "", 
    "", "", 
    "", "", "",
@@ -281,13 +292,13 @@ void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds) {
 
   /* indicate this is now the active object */
   if (ui_study->active_ds != NULL) {
-    amitk_tree_set_active_mark(AMITK_TREE(ui_study->tree), 
-			       AMITK_OBJECT(ui_study->active_ds));
+    amitk_tree_set_active_object(AMITK_TREE(ui_study->tree), 
+				 AMITK_OBJECT(ui_study->active_ds));
     /* connect any needed signals */
     g_signal_connect_swapped(G_OBJECT(ui_study->active_ds), "interpolation_changed", 
 			     G_CALLBACK(ui_study_update_interpolation), ui_study);
   } else {
-    amitk_tree_set_active_mark(AMITK_TREE(ui_study->tree), NULL);
+    amitk_tree_set_active_object(AMITK_TREE(ui_study->tree), NULL);
   }
   ui_study_update_interpolation(ui_study);
 
@@ -471,10 +482,20 @@ void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info,
     for (i_line=0; i_line < HELP_INFO_LINE_BLANK;i_line++) {
 
       /* the line's legend */
-      if (strlen(help_info_lines[which_info][i_line]) > 0)
-	legend = help_info_legends[i_line];
-      else
+      if (strlen(help_info_lines[which_info][i_line]) > 0) {
+	if (i_line == HELP_INFO_LINE_VARIABLE) {
+	  if ((which_info == AMITK_HELP_INFO_CANVAS_ROI) ||
+	      (which_info == AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI)) {
+	    legend = help_info_variable_legend[HELP_INFO_VARIABLE_LINE_SHIFT_CTRL_3];
+	  } else {
+	    legend = help_info_variable_legend[HELP_INFO_VARIABLE_LINE_CTRL_X];
+	  }
+	} else {
+	  legend = help_info_legends[i_line];
+	}
+      } else {
 	legend = "";
+      }
       if (ui_study->help_legend[i_line] == NULL) 
 	ui_study->help_legend[i_line] = 
 	  gnome_canvas_item_new(gnome_canvas_root(ui_study->help_info),
@@ -677,6 +698,7 @@ void ui_study_setup_layout(ui_study_t * ui_study) {
 			   ui_study->canvas_layout,
 			   ui_study->line_style,
 			   ui_study->roi_width,
+			   ui_study->active_ds, 
 			   TRUE);
 	
 	g_signal_connect(G_OBJECT(ui_study->canvas[i_view_mode][i_view]), "help_event",

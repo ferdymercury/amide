@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.2],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.3],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -264,6 +264,7 @@ doc/Makefile
 doc/reference/Makefile
 doc/reference/sgml/Makefile
 doc/reference/tmpl/Makefile
+omf-install/Makefile
 src/Makefile
 etc/Makefile
 etc/amide-$VERSION-1.info:etc/amide.info.in

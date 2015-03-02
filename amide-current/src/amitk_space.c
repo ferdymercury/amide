@@ -59,7 +59,7 @@ static void          space_transform_axes      (AmitkSpace * space,
 						AmitkAxes    axes,
 						AmitkPoint * center_of_rotation);
 
-static GObject * parent_class;
+static GObjectClass * parent_class;
 static guint     space_signals[LAST_SIGNAL];
 
 

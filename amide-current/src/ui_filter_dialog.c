@@ -29,10 +29,13 @@
 #include "ui_filter_dialog.h"
 #include "pixmaps.h"
 
-#define MIN_FILTER_SIZE 7
-#define MAX_FILTER_SIZE 101
-#define DEFAULT_FILTER_SIZE 25
+#define MIN_FIR_FILTER_SIZE 7
+#define MAX_FIR_FILTER_SIZE 101
+#define MIN_NONLINEAR_FILTER_SIZE 3
+#define MAX_NONLINEAR_FILTER_SIZE 11
 #define DEFAULT_FILTER AMITK_FILTER_GAUSSIAN
+#define DEFAULT_GAUSSIAN_FILTER_SIZE 25
+#define DEFAULT_MEDIAN_FILTER_SIZE 3
 
 #define MAX_FWHM 100.0 /* mm */
 #define MIN_FWHM 0.0 /* mm */
@@ -45,21 +48,30 @@ static const char * finish_page_text =
 "filtered data\n";
 
 static const char * gaussian_filter_text = 
-"The Gaussian filter is an efficient and effective\n"
-"smoothing filter\n";
+"The Gaussian filter is an effective smoothing filter\n";
 
 
-static const char * median_filter_text = 
-"While slow, the median filter works relatively well at preserving\n"
-"edges while removing speckle noise.\n"
+static const char * median_3d_filter_text = 
+"Median filter work relatively well at preserving edges while\n"
+"removing speckle noise.\n"
 "\n"
-"The median filter has no parameters\n";
+"This filter is the 3D median filter, so the neighborhood used for\n"
+"determining the median will be KSxKSxKS, KS=kernel size\n";
+
+static const char * median_linear_filter_text = 
+"Median filters work relatively well at preserving edges while\n"
+"removing speckle noise.\n"
+"\n"
+"This filter is the 1D median filter, so the neighboorhood used for\n"
+"determining the median will be of the given kernel size, and the\n"
+"data set will be filtered 3x (once for each direction)\n";
 
 
 typedef enum {
   PICK_FILTER_PAGE,
   GAUSSIAN_FILTER_PAGE,
-  MEDIAN_FILTER_PAGE,
+  MEDIAN_LINEAR_FILTER_PAGE,
+  MEDIAN_3D_FILTER_PAGE,
   OUTPUT_PAGE,
   NUM_PAGES
 } which_page_t;
@@ -203,22 +215,10 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_widget_show_all(option_menu);
       table_row++;
       
-      /* the kernel selection */
-      label = gtk_label_new("Kernel Size");
-      gtk_table_attach(GTK_TABLE(table), label, 
-		       table_column,table_column+1, table_row,table_row+1,
-		       FALSE,FALSE, X_PADDING, Y_PADDING);
-	
-      spin_button =  gtk_spin_button_new_with_range(MIN_FILTER_SIZE, MAX_FILTER_SIZE,2);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_filter->kernel_size);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-      			 G_CALLBACK(kernel_size_spinner_cb), ui_filter);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 
-			 table_column+1,table_column+2, table_row,table_row+1,
-			 FALSE,FALSE, X_PADDING, Y_PADDING);
       break;
     case GAUSSIAN_FILTER_PAGE:
+      ui_filter->kernel_size = DEFAULT_GAUSSIAN_FILTER_SIZE;
+
       label = gtk_label_new(gaussian_filter_text);
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+2, table_row,table_row+1,
@@ -226,12 +226,31 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       table_row++;
 
 
+      /* the kernel selection */
+      label = gtk_label_new("Kernel Size");
+      gtk_table_attach(GTK_TABLE(table), label, 
+		       table_column,table_column+1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+	
+      spin_button =  gtk_spin_button_new_with_range(MIN_FIR_FILTER_SIZE, 
+						    MAX_FIR_FILTER_SIZE,2);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
+				ui_filter->kernel_size);
+      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+      			 G_CALLBACK(kernel_size_spinner_cb), ui_filter);
+      gtk_table_attach(GTK_TABLE(table), spin_button, 
+			 table_column+1,table_column+2, table_row,table_row+1,
+			 FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+
       label = gtk_label_new("FWHM (mm)");
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 	
       spin_button =  gtk_spin_button_new_with_range(MIN_FWHM, MAX_FWHM,0.2);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),3);
       gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), ui_filter->fwhm);
       g_signal_connect(G_OBJECT(spin_button), "value_changed",  
       			 G_CALLBACK(fwhm_spinner_cb), ui_filter);
@@ -239,11 +258,36 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 			 table_column+1,table_column+2, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
       break;
-    case MEDIAN_FILTER_PAGE:
-      label = gtk_label_new(median_filter_text);
+    case MEDIAN_3D_FILTER_PAGE:
+    case MEDIAN_LINEAR_FILTER_PAGE:
+      ui_filter->kernel_size = DEFAULT_MEDIAN_FILTER_SIZE;
+
+      if (which_page == MEDIAN_3D_FILTER_PAGE)
+	label = gtk_label_new(median_3d_filter_text);
+      else
+	label = gtk_label_new(median_linear_filter_text);
       gtk_table_attach(GTK_TABLE(table), label, 
 		       table_column,table_column+2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
+
+      /* the kernel selection */
+      label = gtk_label_new("Kernel Size");
+      gtk_table_attach(GTK_TABLE(table), label, 
+		       table_column,table_column+1, table_row,table_row+1,
+		       FALSE,FALSE, X_PADDING, Y_PADDING);
+	
+      spin_button =  gtk_spin_button_new_with_range(MIN_NONLINEAR_FILTER_SIZE, 
+						    MAX_NONLINEAR_FILTER_SIZE,2);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), 
+				ui_filter->kernel_size);
+      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+      			 G_CALLBACK(kernel_size_spinner_cb), ui_filter);
+      gtk_table_attach(GTK_TABLE(table), spin_button, 
+			 table_column+1,table_column+2, table_row,table_row+1,
+			 FALSE,FALSE, X_PADDING, Y_PADDING);
+      table_row++;
       break;
     case OUTPUT_PAGE:
     default:
@@ -271,11 +315,7 @@ static void kernel_size_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
 
   int_value = gtk_spin_button_get_value_as_int(spin_button);
 
-  if (int_value < MIN_FILTER_SIZE) {
-    int_value = MIN_FILTER_SIZE;
-  } else if (int_value > MAX_FILTER_SIZE) {
-    int_value = MAX_FILTER_SIZE;
-  } else if (!(int_value & 0x1)) {
+  if (!(int_value & 0x1)) {
     int_value++; /* make it odd */
   }
 
@@ -412,7 +452,7 @@ static ui_filter_t * ui_filter_init(void) {
   ui_filter->reference_count = 1;
   ui_filter->filter = DEFAULT_FILTER;
   ui_filter->dialog = NULL;
-  ui_filter->kernel_size=DEFAULT_FILTER_SIZE;
+  ui_filter->kernel_size=3;
   ui_filter->fwhm = 1.0;
   for (i_page=0; i_page<NUM_PAGES; i_page++)
     ui_filter->table[i_page] = NULL;
@@ -439,7 +479,7 @@ void ui_filter_dialog_create(ui_study_t * ui_study) {
   ui_filter->data_set = g_object_ref(ui_study->active_ds);
 
   /* take a guess at a good fwhm */
-  ui_filter->fwhm = POINT_MAGNITUDE(AMITK_DATA_SET_VOXEL_SIZE(ui_filter->data_set));
+  ui_filter->fwhm = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(ui_filter->data_set));
 
   ui_filter->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(ui_filter->dialog), "delete_event", G_CALLBACK(delete_event), ui_filter);

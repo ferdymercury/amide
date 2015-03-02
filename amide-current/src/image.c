@@ -404,7 +404,7 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg) {
   AmitkRawData * distribution;
   AmitkVoxel dim;
 
-  /* make sure we have a distribution calculated (won't the first time we're called with a vol)*/
+  /* make sure we have a distribution calculated */
   amitk_data_set_calc_distribution(ds);
   distribution = AMITK_DATA_SET_DISTRIBUTION(ds);
   dim = AMITK_RAW_DATA_DIM(distribution);

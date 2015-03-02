@@ -10,7 +10,7 @@
 </para>
   
 
-<sect1><title>Displaying a Data Set</title>
+<sect2><title>Displaying a Data Set</title>
 
   <para>
     When initially loaded into the program, a data set is not
@@ -19,23 +19,23 @@
     data set in the study list so that it is displayed on the canvases.
   </para>
   
-  <sect2><title>Displaying Multiple Data Sets</title>
+  <sect3><title>Displaying Multiple Data Sets</title>
     <para>
       Displaying multiple data sets is as simple as importing more
       than one data set, and then selecting the data sets that you
       wish to view from the study list.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>Handling Dynamic Data Sets</title>
+  <sect3><title>Handling Dynamic Data Sets</title>
     <para>
       The time period over which the slices are drawn is determined by
       the time dialog, described in more detail by:
       <xref linkend="time-dialog-help" />
     </para>
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
   
 
   

@@ -58,9 +58,12 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_gaussian(const 
 									  AmitkDataSet * filtered_ds,
 									  const gint kernel_size,
 									  const amide_real_t fwhm);
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median(const AmitkDataSet * data_set,
-									AmitkDataSet * filtered_ds,
-									const gint kernel_size);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const AmitkDataSet * data_set,
+									   AmitkDataSet * filtered_ds,
+									   const AmitkVoxel kernel_dim);
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_linear(const AmitkDataSet * data_set,
+									       AmitkDataSet * filtered_ds,
+									       const gint kernel_size);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t requested_start,
 									      const amide_time_t requested_duration,

@@ -70,7 +70,7 @@ static void          object_read_xml            (AmitkObject * object, xmlNodePt
 static void          object_add_child           (AmitkObject * object, AmitkObject * child);
 static void          object_remove_child        (AmitkObject * object, AmitkObject * child);
 
-static AmitkSpace * parent_class;
+static AmitkSpaceClass * parent_class;
 static guint        object_signals[LAST_SIGNAL];
 
 

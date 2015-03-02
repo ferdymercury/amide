@@ -1,20 +1,18 @@
 figs =
 # figures/blah.png
 
+docname = amide
 lang = C
 locale = C
 omffile = amide-C.omf
 entities = 			\
-	amide.xml 		\
 	basics.xml 		\
-	file-handling.xml 	\
+	filehandling.xml 	\
 	importing.xml 		\
 	rendering.xml 		\
 	rois.xml 		\
-	data_sets.xml		\
+	datasets.xml		\
 	alignment.xml
-
-docname = amide
 
 include $(top_srcdir)/help/xmldocs.make
 

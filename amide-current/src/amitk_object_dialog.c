@@ -37,7 +37,7 @@
 
 #define AMITK_RESPONSE_REVERT 2
 #define DIMENSION_STEP 0.2
-
+#define SPIN_BUTTON_DIGITS 3 /* how many digits after the decimal point */
 
 static void object_dialog_class_init (AmitkObjectDialogClass *class);
 static void object_dialog_init (AmitkObjectDialog *object_dialog);
@@ -429,6 +429,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
       dialog->center_spinner[i_axis] = 
 	gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, DIMENSION_STEP);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->center_spinner[i_axis]),
+				 SPIN_BUTTON_DIGITS);
       g_signal_connect(G_OBJECT(dialog->center_spinner[i_axis]), "value_changed", 
 		       G_CALLBACK(dialog_change_center_cb), dialog);
       gtk_table_attach(GTK_TABLE(packing_table), dialog->center_spinner[i_axis],1,2,
@@ -484,6 +486,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
       dialog->voxel_size_spinner[i_axis] = 
 	gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->voxel_size_spinner[i_axis]),
+				 SPIN_BUTTON_DIGITS);
       g_object_set_data(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "axis", 
 			GINT_TO_POINTER(i_axis));
       g_signal_connect(G_OBJECT(dialog->voxel_size_spinner[i_axis]), "value_changed", 
@@ -538,6 +542,8 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	
 	  dialog->dimension_spinner[i_axis] = 
 	    gtk_spin_button_new_with_range(0.0, G_MAXDOUBLE, DIMENSION_STEP);
+	  gtk_spin_button_set_digits(GTK_SPIN_BUTTON(dialog->dimension_spinner[i_axis]),
+				     SPIN_BUTTON_DIGITS);
 	  g_signal_connect(G_OBJECT(dialog->dimension_spinner[i_axis]), "value_changed", 
 			   G_CALLBACK(dialog_change_dim_cb), dialog);
 	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_spinner[i_axis],1,2,

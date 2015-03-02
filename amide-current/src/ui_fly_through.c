@@ -582,7 +582,7 @@ void ui_fly_through_create(GtkWidget * parent_app,
 
   /* setup the canvas */
   ui_fly_through->canvas = 
-    amitk_canvas_new(ui_fly_through->study, view, layout, 0, 0, FALSE);
+    amitk_canvas_new(ui_fly_through->study, view, layout, 0, 0, NULL, FALSE);
   g_signal_connect(G_OBJECT(ui_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), ui_fly_through);
   gtk_table_attach(GTK_TABLE(packing_table), ui_fly_through->canvas, 0,2,0,1,

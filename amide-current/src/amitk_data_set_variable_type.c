@@ -383,35 +383,31 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(
 
 /* fills the data set "filtered_ds", with the results of the kernel convolved to data_set */
 /* assumptions:
-    1- filtered_ds is of type FLOAT
-    2- scale of filtered_ds is 1.0
-    3- kernel has dimension of 1 in the T direction
-    3- kernel is of type DOUBLE
-*/
-/* notes:
-   if data_set == NULL, the data already in filtered_ds will have the kernel applied 
+   1- filtered_ds is of type FLOAT
+   2- scale of filtered_ds is 1.0
+   3- kernel has dimension of 1 in the T direction
+   4- kernel is of type DOUBLE
+
+   notes:
+   data_set can be the same as filtered_ds;
  */
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const AmitkDataSet * data_set,
 								       AmitkDataSet * filtered_ds,
 								       const AmitkRawData * kernel) {
 
   AmitkVoxel i,j, k;
-  AmitkVoxel ds_dim, kernel_dim, mid_dim;
+  AmitkVoxel ds_dim, kernel_dim, mid_dim, output_dim;
   AmitkVoxel inner_start, inner_end, kernel_start;
   AmitkRawData * output_data;
-  const AmitkDataSet * input_ds; /* just a pointer, not a reference */
 #if AMIDE_DEBUG
   div_t x;
   gint divider;
 
 #endif
 
-  if (data_set != NULL) {
-    g_return_if_fail(AMITK_IS_DATA_SET(data_set));
-    g_return_if_fail(VOXEL_EQUAL(AMITK_DATA_SET_DIM(data_set), AMITK_DATA_SET_DIM(filtered_ds)));
-    g_return_if_fail(data_set != filtered_ds);
-  }
+  g_return_if_fail(AMITK_IS_DATA_SET(data_set));
   g_return_if_fail(AMITK_IS_DATA_SET(filtered_ds));
+  g_return_if_fail(VOXEL_EQUAL(AMITK_DATA_SET_DIM(data_set), AMITK_DATA_SET_DIM(filtered_ds)));
 
   g_return_if_fail(AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(filtered_ds)) == AMITK_FORMAT_FLOAT);
   g_return_if_fail(REAL_EQUAL(AMITK_DATA_SET_SCALE_FACTOR(filtered_ds), 1.0));
@@ -425,39 +421,32 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const Ami
   g_return_if_fail(kernel_dim.x & 0x1);
   g_return_if_fail(kernel_dim.y & 0x1);
   g_return_if_fail(kernel_dim.z & 0x1);
+
   ds_dim = AMITK_DATA_SET_DIM(filtered_ds);
-  mid_dim.x = kernel_dim.x >> 1;
-  mid_dim.y = kernel_dim.y >> 1;
-  mid_dim.z = kernel_dim.z >> 1;
+
   mid_dim.t = 0;
+  mid_dim.z = kernel_dim.z >> 1;
+  mid_dim.y = kernel_dim.y >> 1;
+  mid_dim.x = kernel_dim.x >> 1;
 
   inner_start.t = 0;
   inner_end.t = 0;
-  k.t = 0;
+  i.t = k.t = 0;
 
-  if (data_set == NULL) {
-
-    if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, ds_dim)) == NULL) {
-      g_warning("couldn't allocate space for the internal raw data");
-      return;
-    }
-  
-    input_ds = filtered_ds;
-
-  } else {
-    output_data = g_object_ref(filtered_ds->raw_data);
-    input_ds = data_set;
+  output_dim = AMITK_DATA_SET_DIM(data_set);
+  output_dim.t = 1;
+  if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, output_dim)) == NULL) {
+    g_warning("couldn't alloc space for FIR filter internal data");
+    return;
   }
   amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
 
-
   /* convolve the kernel with the data set */
-  for (i.t=0; i.t < ds_dim.t; i.t++) {
-    j.t = i.t;
+  for (j.t=0; j.t < AMITK_DATA_SET_NUM_FRAMES(data_set); j.t++) {
 
 #ifdef AMIDE_DEBUG
     divider = ((ds_dim.z/20.0) < 1) ? 1 : (ds_dim.z/20.0);
-    g_print("Filtering Frame %d\t", i.t);
+    g_print("Filtering Frame %d\t", j.t);
 #endif
 
     for (i.z=0; i.z < ds_dim.z; i.z++) {
@@ -508,21 +497,27 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_apply_kernel(const Ami
 	      for (j.x=inner_start.x, k.x = kernel_start.x; j.x <= inner_end.x; j.x++, k.x--) {
 		AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_data, i) +=
 		  AMITK_RAW_DATA_DOUBLE_CONTENT(kernel, k) *
-		  AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(input_ds, j);
+		  AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, j);
 	      }
 	    }
 	  }
 	}
       }
     }
+
+    /* copy the output_data over into the filtered_ds */
+    for (i.z=0, j.z=0; i.z < output_dim.z; i.z++, j.z++)
+      for (i.y=0, j.y=0; i.y < output_dim.y; i.y++, j.y++)
+	for (i.x=0, j.x=0; i.x < output_dim.x; i.x++, j.x++)
+	  AMITK_RAW_DATA_FLOAT_SET_CONTENT(filtered_ds->raw_data, j) = 
+	    AMITK_RAW_DATA_FLOAT_CONTENT(output_data, i);
 #ifdef AMIDE_DEBUG
     g_print("\n");
 #endif 
   }
 
 
-  g_object_unref(filtered_ds->raw_data);
-  filtered_ds->raw_data = output_data;
+  g_object_unref(output_data); /* cleanup */
 
   return;
 }
@@ -550,7 +545,7 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_gaussian(const 
     kernel = amitk_filter_calculate_gaussian_kernel(kernel_size, 
 						    AMITK_DATA_SET_VOXEL_SIZE(data_set),
 						    fwhm, i_axis);
-    amitk_data_set_FLOAT_0D_SCALING_apply_kernel(NULL,
+    amitk_data_set_FLOAT_0D_SCALING_apply_kernel(filtered_ds,
 						 filtered_ds,
 						 kernel);
     g_object_unref(kernel);
@@ -558,11 +553,252 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_gaussian(const 
 
   return;
 }
-void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median(const AmitkDataSet * data_set,
-									AmitkDataSet * filtered_ds,
-									const gint kernel_size) {
 
-  g_warning("function not yet implemented\n");
+
+
+/* do a (destructive) partial sort of the given data to find median */
+/* adapted and modified from Numerical Receipes in C, (who got it from Knuth, Vol 3?) */
+/* median size needs to be odd for this to be strictly correct from a statistical stand point*/
+
+#define SWAP(leftv, rightv) temp=(leftv); (leftv)=(rightv); (rightv=temp)
+static amide_data_t find_median_by_partial_sort(amide_data_t * partial_sort_data, gint size) {
+
+  gint left, right, mid;
+  gint i_left, i_right;
+  gint median_point;
+  amide_data_t partition_value;
+  amide_data_t temp;
+
+  median_point = (size-1) >> 1;  /* not strictly correct for case of even size */
+  
+  left = 0;
+  right = size-1;
+  while (TRUE)
+
+    if (right-left <= 2) { /* <= 3 elements left */
+
+      if (right-left == 1) {/* 2 elements left to sort*/
+	if (partial_sort_data[left] > partial_sort_data[right]) {
+	  SWAP(partial_sort_data[left], partial_sort_data[right]);
+	}
+      } else if (right-left == 2){ /* 3 elements left to sort */
+	if (partial_sort_data[left] > partial_sort_data[right]) {
+	  SWAP(partial_sort_data[left], partial_sort_data[right]);
+	}
+	if (partial_sort_data[left+1] > partial_sort_data[right]) {
+	  SWAP(partial_sort_data[left+1], partial_sort_data[right]);
+	}
+	if (partial_sort_data[left] > partial_sort_data[left+1]) {
+	  SWAP(partial_sort_data[left], partial_sort_data[left+1]);
+	}
+      }
+      return partial_sort_data[median_point];
+
+    } else {
+      mid = (left+right) >> 1;
+
+      /* do a three way median with the leftmost, rightmost, and mid elements
+	 to get a decent guess for a partitioning element.  This partioning element
+	 ends up in left+1*/
+      SWAP(partial_sort_data[mid], partial_sort_data[left+1]);
+      if (partial_sort_data[left] > partial_sort_data[right]) {
+	SWAP(partial_sort_data[left], partial_sort_data[right]);
+      }
+      if (partial_sort_data[left+1] > partial_sort_data[right]) {
+	SWAP(partial_sort_data[left+1], partial_sort_data[right]);
+      }
+      if (partial_sort_data[left] > partial_sort_data[left+1]) {
+	SWAP(partial_sort_data[left], partial_sort_data[left+1]);
+      }
+      
+      
+      partition_value = partial_sort_data[left+1];
+      i_left=left+1;
+      i_right = right;
+
+      while (TRUE) {
+
+	/* find an element > partition_value */
+	do i_left++; while (partial_sort_data[i_left] < partition_value);
+
+	/* find an element < partition value */
+	do i_right--; while (partial_sort_data[i_right] > partition_value);
+
+	if (i_right < i_left) break; /* pointers crossed */
+
+	SWAP(partial_sort_data[i_left], partial_sort_data[i_right]);
+      }
+
+      partial_sort_data[left+1] = partial_sort_data[i_right];
+      partial_sort_data[i_right] = partition_value;
+
+      if (i_right >= median_point) right = i_right-1;
+      if (i_right <= median_point) left = i_left;
+
+    }
+
+}
+
+
+/* assumptions :
+   filtered_ds needs to be of type FLOAT, with 0D scaling
+
+   notes:
+   data_set can be the same as filtered_ds
+ */	    
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(const AmitkDataSet * data_set,
+									   AmitkDataSet * filtered_ds,
+									   const AmitkVoxel kernel_dim) {
+
+  amide_data_t * partial_sort_data;
+  AmitkVoxel i,j, mid_dim, output_dim;
+  gint loc, median_size;
+  AmitkRawData * output_data;
+  AmitkVoxel ds_dim;
+#if AMIDE_DEBUG
+  div_t x;
+  gint divider;
+
+#endif
+
+  g_return_if_fail(AMITK_IS_DATA_SET(data_set));
+  g_return_if_fail(AMITK_IS_DATA_SET(filtered_ds));
+  g_return_if_fail(VOXEL_EQUAL(AMITK_DATA_SET_DIM(data_set), AMITK_DATA_SET_DIM(filtered_ds)));
+
+  g_return_if_fail(AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(filtered_ds)) == AMITK_FORMAT_FLOAT);
+  g_return_if_fail(REAL_EQUAL(AMITK_DATA_SET_SCALE_FACTOR(filtered_ds), 1.0));
+  g_return_if_fail(VOXEL_EQUAL(AMITK_RAW_DATA_DIM(filtered_ds->internal_scaling), one_voxel));
+  g_return_if_fail(kernel_dim.t == 1); /* haven't written support yet */
+
+  /* check it's odd */
+  g_return_if_fail(kernel_dim.x & 0x1);
+  g_return_if_fail(kernel_dim.y & 0x1);
+  g_return_if_fail(kernel_dim.z & 0x1);
+
+  mid_dim.t = 0;
+  mid_dim.z = kernel_dim.z >> 1;
+  mid_dim.y = kernel_dim.y >> 1;
+  mid_dim.x = kernel_dim.x >> 1;
+
+  median_size = kernel_dim.z*kernel_dim.y*kernel_dim.x;
+
+  ds_dim = AMITK_DATA_SET_DIM(data_set);
+  output_dim = ds_dim;
+  output_dim.t = 1;
+  if ((output_data = amitk_raw_data_new_with_data(AMITK_FORMAT_FLOAT, output_dim)) == NULL) {
+    g_warning("couldn't allocate space for the internal raw data");
+    return;
+  }
+  amitk_raw_data_FLOAT_initialize_data(output_data, 0.0);
+  partial_sort_data = g_new(amide_data_t, median_size);
+
+  /* iterate over all the voxels in the data_set */
+  i.t = 0;
+  for (j.t=0; j.t < AMITK_DATA_SET_NUM_FRAMES(data_set); j.t++) {
+#ifdef AMIDE_DEBUG
+    divider = ((output_dim.z/20.0) < 1) ? 1 : (output_dim.z/20.0);
+    g_print("Filtering Frame %d\t", j.t);
+#endif
+    for (i.z=0; i.z < output_dim.z; i.z++) {
+#ifdef AMIDE_DEBUG
+      x = div(i.z,divider);
+      if (x.rem == 0) g_print(".");
+#endif 
+      for (i.y=0; i.y < output_dim.y; i.y++) {
+	for (i.x=0; i.x < output_dim.x; i.x++) {
+	    
+	    /* initialize the data for the iteration */
+	    loc = 0;
+	    for (j.z = i.z-mid_dim.z; j.z <= i.z+mid_dim.z; j.z++) {
+	      if ((j.z < 0) || (j.z >= ds_dim.z)) {
+		for (j.y=0; j.y < kernel_dim.y; j.y++) {
+		  for (j.x=0; j.x < kernel_dim.x; j.x++) {
+		    partial_sort_data[loc] = 0.0;
+		    loc++;
+		  }
+		}
+	      } else {
+		for (j.y = i.y-mid_dim.y; j.y <= i.y+mid_dim.y; j.y++) {
+		  if ((j.y < 0) || (j.y >= ds_dim.y)) {
+		    for (j.x=0; j.x < kernel_dim.x; j.x++) {
+		      partial_sort_data[loc] = 0.0;
+		      loc++;
+		    }
+		  } else {
+		    for (j.x = i.x-mid_dim.x; j.x <= i.x+mid_dim.x; j.x++) {
+		      if ((j.x < 0) || (j.x >= ds_dim.x)) {
+			partial_sort_data[loc] = 0.0;
+			loc++;
+		      } else {
+			partial_sort_data[loc] = 
+			  AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set, j);
+			loc++;
+		      }
+		    }
+		  }
+		}
+	      }
+	    } /* end initializing data */
+
+	    // remove 
+	    if (loc != median_size) {
+	      g_print("initialize descrepency : %d %d\n", loc, median_size);
+	    }
+	    
+	    /* and store median value */
+	    AMITK_RAW_DATA_FLOAT_SET_CONTENT(output_data, i) = 
+	      find_median_by_partial_sort(partial_sort_data, median_size);
+
+	  } /* i.x */
+	} /* i.y */
+      } /* i.z */
+
+
+    /* copy the output_data over into the filtered_ds */
+    for (i.z=0, j.z=0; i.z < output_dim.z; i.z++, j.z++)
+      for (i.y=0, j.y=0; i.y < output_dim.y; i.y++, j.y++)
+	for (i.x=0, j.x=0; i.x < output_dim.x; i.x++, j.x++)
+	  AMITK_RAW_DATA_FLOAT_SET_CONTENT(filtered_ds->raw_data, j) = 
+	    AMITK_RAW_DATA_FLOAT_CONTENT(output_data, i);
+#ifdef AMIDE_DEBUG
+    g_print("\n");
+#endif 
+  } /* j.t */
+
+  /* garbage collection */
+  g_object_unref(output_data); 
+  g_free(partial_sort_data);
+
+  return;
+}
+  
+
+void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_linear(const AmitkDataSet * data_set,
+									       AmitkDataSet * filtered_ds,
+									       const gint kernel_size) {
+
+  AmitkVoxel kernel_dim;
+
+  kernel_dim.x = kernel_size;
+  kernel_dim.y = 1;
+  kernel_dim.z = 1;
+  kernel_dim.t = 1;
+  amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_3D(data_set, 
+									filtered_ds,
+									kernel_dim);
+  
+  kernel_dim.x = 1;
+  kernel_dim.y = kernel_size;
+  kernel_dim.z = 1;
+  kernel_dim.t = 1;
+  amitk_data_set_FLOAT_0D_SCALING_filter_median_3D(filtered_ds,filtered_ds,kernel_dim);
+  
+  kernel_dim.x = 1;
+  kernel_dim.y = 1;
+  kernel_dim.z = kernel_size;
+  kernel_dim.t = 1;
+  amitk_data_set_FLOAT_0D_SCALING_filter_median_3D(filtered_ds,filtered_ds,kernel_dim);
+
   return;
 }
 
@@ -716,7 +952,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     i.t = i.z = 0;
     /* iterate over the frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
-      //start_frame+num_frames;i_frame++) {
       
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
@@ -842,7 +1077,6 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     i.t = i.z = 0;
     /* iterate over the number of frames we'll be incorporating into this slice */
     for (i_frame = start_frame; i_frame <= end_frame; i_frame++) {
-      //start_frame+num_frames;i_frame++) {
 
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {

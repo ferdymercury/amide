@@ -514,6 +514,8 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
   AmitkView i_view;
   AmitkViewMode i_view_mode;
 
+  g_return_if_fail(ui_study->active_ds != NULL);
+
   /* update the other canvases accordingly */
   outline_color = amitk_color_table_outline_color(ui_study->active_ds->color_table, FALSE);
   for (i_view_mode=0; i_view_mode <= ui_study->view_mode; i_view_mode++)
@@ -614,7 +616,8 @@ void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi
 }
 
 
-void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointer data) {
+void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, 
+				     gboolean outside, gpointer data) {
   ui_study_t * ui_study = data;
   GtkWidget * question;
   gint return_val;
@@ -629,15 +632,17 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointe
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_QUESTION,
 				    GTK_BUTTONS_OK_CANCEL,
-				    "%s: %s\n%s: %s\n%s\n%s: %5.3f, %s",
-				    "Do you really wish to erase the interior of ROI:",
+				    "%s %s\n%s: %s\n%s: %s\n%s\n%s: %5.3f\n%s",
+				     "Do you really wish to erase the data set",
+				    outside ? "exterior" : "interior",
+				    "    to the ROI", 
 				    AMITK_OBJECT_NAME(roi),
-				    "On the data set: ",
+				    "    on the data set: ",
 				    AMITK_OBJECT_NAME(ui_study->active_ds),
 				    "This step is irreversible",
 				    "The minimum threshold value",
 				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_ds,0),
-				    "will be used to fill in the volume");
+				    "    will be used to fill in the volume");
   
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(question));
@@ -646,7 +651,7 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointe
   if (return_val != GTK_RESPONSE_OK)
     return; /* cancel */
 
-  amitk_roi_erase_volume(roi, ui_study->active_ds);
+  amitk_roi_erase_volume(roi, ui_study->active_ds, outside);
   
   return;
 }
@@ -674,9 +679,8 @@ void ui_study_cb_tree_select_object(GtkWidget * tree, AmitkObject * object, Amit
 
   if (AMITK_IS_DATA_SET(object)) {
     ui_time_dialog_set_times(ui_study);
-    if (view_mode == AMITK_VIEW_MODE_SINGLE)
-      if (ui_study->active_ds == NULL)
-	ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
+    if (ui_study->active_ds == NULL)
+      ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
   }
 
   return;
@@ -692,20 +696,19 @@ void ui_study_cb_tree_unselect_object(GtkWidget * tree, AmitkObject * object, Am
 
   if (AMITK_IS_DATA_SET(object)) {
     ui_time_dialog_set_times(ui_study);
-    if (view_mode == AMITK_VIEW_MODE_SINGLE)
-      if (ui_study->active_ds == AMITK_DATA_SET(object))
-	ui_study_make_active_data_set(ui_study, NULL);
+    if (ui_study->active_ds == AMITK_DATA_SET(object))
+      ui_study_make_active_data_set(ui_study, NULL);
   }
 
   return;
 }
 
-void ui_study_cb_tree_make_active_object(GtkWidget * tree, AmitkObject * object, AmitkViewMode view_mode, gpointer data) {
+void ui_study_cb_tree_make_active_object(GtkWidget * tree, AmitkObject * object, gpointer data) {
 
   ui_study_t * ui_study = data;
   AmitkPoint center;
 
-  if (AMITK_IS_DATA_SET(object) && (view_mode == AMITK_VIEW_MODE_SINGLE)) {
+  if (AMITK_IS_DATA_SET(object)) {
     ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
   } else if (AMITK_IS_ROI(object)) {
     center = amitk_volume_center(AMITK_VOLUME(object));

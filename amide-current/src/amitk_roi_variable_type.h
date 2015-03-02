@@ -52,6 +52,7 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
 							  const AmitkDataSet * ds, 
 							  const guint frame,
+							  const gboolean inverse,
 							  void (*calculation)(),
 							  gpointer data);
 

@@ -193,7 +193,6 @@ void help_cb(GnomePropertyBox *preferences_dialog, gint page_number, gpointer da
 gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data) {
 
   ui_study_t * ui_study = data;
-  g_print("destroy preferences\n");
 
   ui_study->preferences_dialog = NULL;
 

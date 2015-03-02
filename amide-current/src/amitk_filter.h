@@ -36,9 +36,10 @@ G_BEGIN_DECLS
 
 typedef enum {
   AMITK_FILTER_GAUSSIAN,
+  AMITK_FILTER_MEDIAN_LINEAR,
+  AMITK_FILTER_MEDIAN_3D,
   AMITK_FILTER_NUM
 } AmitkFilter;
-  //  AMITK_FILTER_MEDIAN,
 
 AmitkRawData * amitk_filter_calculate_gaussian_kernel(const gint kernel_size,
 						      const AmitkPoint voxel_size,

@@ -43,7 +43,7 @@ static void          fiducial_mark_copy_in_place       (AmitkObject * dest_objec
 static void          fiducial_mark_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
 static void          fiducial_mark_read_xml            (AmitkObject * object, xmlNodePtr nodes);
 
-static AmitkObject * parent_class;
+static AmitkObjectClass * parent_class;
 static guint        fiducial_mark_signals[LAST_SIGNAL];
 
 

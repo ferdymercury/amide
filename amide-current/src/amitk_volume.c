@@ -47,7 +47,7 @@ static void          volume_write_xml        (const AmitkObject * object, xmlNod
 static void          volume_read_xml         (AmitkObject * object, xmlNodePtr nodes);
 
 
-static AmitkObject* parent_class;
+static AmitkObjectClass* parent_class;
 static guint        volume_signals[LAST_SIGNAL];
 
 
@@ -278,7 +278,7 @@ void amitk_volume_get_enclosing_corners(const AmitkVolume * volume,
 
 /* takes a list of volumes and a view coordinate space, give the corners
    necessary to totally encompass the volumes in the given space */
-void amitk_volumes_get_enclosing_corners(GList * volumes,
+gboolean amitk_volumes_get_enclosing_corners(GList * volumes,
 					 const AmitkSpace * space,
 					 AmitkCorners return_corners) {
 
@@ -310,7 +310,7 @@ void amitk_volumes_get_enclosing_corners(GList * volumes,
   if (!valid)
     return_corners[0] = return_corners[1] = zero_point;
 
-  return;
+  return valid;
 }
 
 

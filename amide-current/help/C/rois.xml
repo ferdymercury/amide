@@ -7,61 +7,61 @@
   
 
 
-<sect1><title>ROI Types</title>
+<sect2><title>ROI Types</title>
   
   <para>
     The following ROI types are currently supported.
   </para>
   
-  <sect2><title>Ellipsoid</title>
+  <sect3><title>Ellipsoid</title>
     <para>
       An ellipsoid is similar to a sphere, but with a radius
       specified for each direction [x,y,z].  In the case of x=y=z,
       the ellipsoid is a sphere.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>Elliptic Cylinder</title>
+  <sect3><title>Elliptic Cylinder</title>
     <para>
       An elliptic cylinder is similar to a regular cylinder, except
       it has an ellipse as it's base instead of a circle.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>Box</title>
+  <sect3><title>Box</title>
     <para>
 	Exactly what it says, a 3D box.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>Isocontours</title>
+  <sect3><title>Isocontours</title>
     <para>
       Isocontour ROI's are regions selected from the data set such
       that the edge values of the ROI are always the same value.
       There are two types, 2D and 3D isocontours.
     </para>
     
-    <sect3><title>2D Isocontour</title>
+    <sect4><title>2D Isocontour</title>
       <para>
 	A 2D isocontour is derived by considering a value on one of
 	the displayed 2D slices.  The depth of a 2D isocontour is
 	specified initially by the depth of the viewed slices.
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>3D Isocontour</title>
+    <sect4><title>3D Isocontour</title>
       <para>
 	A 3D isocontour is derived by considering a value on the
 	current frame of the active data set.
       </para>
-    </sect3>
+    </sect4>
     
-    </sect2>
+    </sect3>
   
   
-</sect1>
+</sect2>
 
-<sect1><title>Drawing ROI's</title>
+<sect2><title>Drawing ROI's</title>
   
   <para>
     To draw an ROI, first select the ROI desired under the "add ROI:"
@@ -76,9 +76,9 @@
     isocontour.
   </para>
     
-</sect1>
+</sect2>
 
-<sect1><title>Manipulating ROI's</title>
+<sect2><title>Manipulating ROI's</title>
   
   <para>
     After an ROI is drawn, it can be further manipulated to adjust
@@ -97,9 +97,9 @@
 
   </para>
     
-</sect1>
+</sect2>
 
-<sect1><title>Calculating Statistics over ROI's</title>
+<sect2><title>Calculating Statistics over ROI's</title>
 
   <para>
     Statistics on an ROI can be calculated via the analysis menu.
@@ -108,11 +108,11 @@
     ROI's on the currently selected images.
   </para>
   
-</sect1>
+</sect2>
 
-<sect1><title>Gotcha's to ROI calculations </title>
+<sect2><title>Gotcha's to ROI calculations </title>
   
-  <sect2><title>Variance/Std. Dev./Std. Err. Fallacies</title>
+  <sect3><title>Variance/Std. Dev./Std. Err. Fallacies</title>
     
     <para>
       A common fallacy is to use the calculated variance (or standard
@@ -124,9 +124,9 @@
       of the noise within an ROI in the given data set.
     </para>
 
-  </sect2>
+  </sect3>
 
-  <sect2><title>Changing Calculated Volume</title> 
+  <sect3><title>Changing Calculated Volume</title> 
     <para> 
 	AMIDE calculates ROI's by translating the ROI's dimensions into the
 	data set's coordinate space.  It then computes statistics for all the
@@ -143,9 +143,9 @@
 	that was used for the ROI calculation, you will want to use that value
 	(not the real ellipse value).
     </para>
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
 
   
   

@@ -244,7 +244,7 @@ AmitkDataSet * amitk_data_set_get_cropped        (const AmitkDataSet * ds,
 						  const AmitkVoxel start,
 						  const AmitkVoxel end);
 AmitkDataSet * amitk_data_set_get_filtered       (const AmitkDataSet * ds,
-						  const AmitkFilter filter,
+						  const AmitkFilter filter_type,
 						  const gint kernel_size,
 						  const amide_real_t fwhm);
 AmitkDataSet * amitk_data_set_get_slice          (AmitkDataSet * ds,

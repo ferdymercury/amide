@@ -14,39 +14,21 @@
 
 @SET_MAKE@
 
-# To use this template:
-#     1) Define: figs, docname, lang, omffile, entities although figs, 
-#        omffile, and entities may be empty in your Makefile.am which 
-#        will "include" this one 
-#     2) Figures must go under figures/ and be in PNG format
-#     3) You should only have one document per directory 
+# 
+# Modify the definition of $omf_dest_dir, replacing "gdp-example1" with
+# the name of your package.
+# 
+# No other modifications should be necessary.
 #
-#        Note that this makefile forces the directory name under
-#        $prefix/share/gnome/help/ to be the same as the XML filename
-#        of the document.  This is required by GNOME. eg:
-#        $prefix/share/gnome/help/fish_applet/C/fish_applet.xml
-#                                 ^^^^^^^^^^^   ^^^^^^^^^^^
-# Definitions:
-#   figs         A list of screenshots which will be included in EXTRA_DIST
-#                Note that these should reside in figures/ and should be .png
-#                files, or you will have to make modifications below.
-#   docname      This is the name of the XML file: <docname>.xml
-#   lang         This is the document locale
-#   omffile      This is the name of the OMF file.  Convention is to name
-#                it <docname>-<locale>.omf.
-#   entities     This is a list of XML entities which must be installed 
-#                with the main XML file and included in EXTRA_DIST. 
-# eg:
-#   figs = \
-#          figures/fig1.png            \
-#          figures/fig2.png
-#   docname = scrollkeeper-manual
-#   lang = C
-#   omffile=scrollkeeper-manual-C.omf
-#   entities = fdl.xml
-#   include $(top_srcdir)/help/xmldocs.make
-#   dist-hook: app-dist-hook
+# Note that you must configure your package with --localstatedir=/var/lib
+# so that the scrollkeeper-update command below will update the database
+# in the standard scrollkeeper directory.
 #
+# If it is impossible to configure with --localstatedir=/var/lib, then
+# modify the definition of scrollkeeper_localstate_dir so that
+# it points to the correct location. Note that you must still use 
+# $(localstatedir) in this or when people build RPMs it will update
+# the real database on their system instead of the one under RPM_BUILD_ROOT.
 SHELL = @SHELL@
 
 srcdir = @srcdir@
@@ -70,7 +52,7 @@ oldincludedir = /usr/include
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
-top_builddir = ../..
+top_builddir = ..
 
 ACLOCAL = @ACLOCAL@
 AUTOCONF = @AUTOCONF@
@@ -136,46 +118,21 @@ VERSION = @VERSION@
 am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
-figs = 
 
-# figures/blah.png
-docname = amide
-lang = C
-locale = C
-omffile = amide-C.omf
-entities = \
-	basics.xml 		\
-	filehandling.xml 	\
-	importing.xml 		\
-	rendering.xml 		\
-	rois.xml 		\
-	datasets.xml		\
-	alignment.xml
-
-
-docdir = $(datadir)/gnome/help/$(docname)/$(lang)
-
-xml_files = $(entities) $(docname).xml
-
-omf_dir = $(top_srcdir)/omf-install
-
-EXTRA_DIST = $(xml_files) $(omffile) $(figs)
-
-CLEANFILES = omf_timestamp
-
-DISTCLEANFILES = *~
-subdir = help/C
+omf_dest_dir = $(datadir)/omf/amide
+scrollkeeper_localstate_dir = $(localstatedir)/scrollkeeper
+subdir = omf-install
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/amide_config.h
 CONFIG_CLEAN_FILES =
 DIST_SOURCES =
-DIST_COMMON = README Makefile.am Makefile.in
+DIST_COMMON = Makefile.am Makefile.in
 all: all-am
 
 .SUFFIXES:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/help/xmldocs.make $(top_srcdir)/configure.in $(ACLOCAL_M4)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  help/C/Makefile
+	  $(AUTOMAKE) --gnu  omf-install/Makefile
 Makefile: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__depfiles_maybe)
 
@@ -193,7 +150,7 @@ TAGS:
 
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-top_distdir = ../..
+top_distdir = ..
 distdir = $(top_distdir)/$(PACKAGE)-$(VERSION)
 
 distdir: $(DISTFILES)
@@ -217,9 +174,6 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="${top_distdir}" distdir="$(distdir)" \
-	  dist-hook
 check-am: all-am
 check: check-am
 all-am: Makefile
@@ -243,11 +197,9 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
-	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)
-	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -268,7 +220,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-data-local
 
 install-exec-am:
 
@@ -291,58 +243,28 @@ uninstall-am: uninstall-info-am uninstall-local
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	distclean distclean-generic distclean-libtool distdir dvi \
 	dvi-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	install-data-am install-data-local install-exec install-exec-am \
+	install-info install-info-am install-man install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool uninstall uninstall-am uninstall-info-am \
 	uninstall-local
 
 
-all: omf
-
-omf: omf_timestamp
-
-omf_timestamp: $(omffile)
-	-for file in $(omffile); do \
-	  scrollkeeper-preinstall $(docdir)/`awk 'BEGIN {RS = ">" } /identifier/ {print $$0}' $${file} | awk 'BEGIN {FS="\""} /url/ {print $$2}'` $${file} $(omf_dir)/$${file}; \
+install-data-local:
+	$(mkinstalldirs) $(DESTDIR)$(omf_dest_dir)
+	-for file in $(srcdir)/*.omf; do \
+		$(INSTALL_DATA) $(srcdir)/$$file $(DESTDIR)$(omf_dest_dir); \
 	done
-	touch omf_timestamp
-
-$(docname).xml: $(entities)
-	-ourdir=`pwd`;  \
-	cd $(srcdir);   \
-	cp $(entities) $$ourdir
-
-app-dist-hook: 
-	-$(mkinstalldirs) $(distdir)/figures
-	-if [ -e topic.dat ]; then \
-		cp $(srcdir)/topic.dat $(distdir); \
-	 fi
-
-install-data-am: omf
-	-$(mkinstalldirs) $(DESTDIR)$(docdir)/figures
-	-cp $(srcdir)/$(xml_files) $(DESTDIR)$(docdir)
-	-for file in $(srcdir)/figures/*.png; do \
-	  basefile=`echo $$file | sed -e  's,^.*/,,'`; \
-	  $(INSTALL_DATA) $$file $(DESTDIR)$(docdir)/figures/$$basefile; \
-	done
-	-if [ -e $(srcdir)/topic.dat ]; then \
-		$(INSTALL_DATA) $(srcdir)/topic.dat $(DESTDIR)$(docdir); \
-	 fi
+	-scrollkeeper-update -p $(scrollkeeper_localstate_dir) 
 
 uninstall-local:
-	-for file in $(srcdir)/figures/*.png; do \
-	  basefile=`echo $$file | sed -e  's,^.*/,,'`; \
-	  rm -f $(docdir)/figures/$$basefile; \
-	done
-	-for file in $(xml_files); do \
-	  rm -f $(DESTDIR)$(docdir)/$$file; \
-	done
-	-rmdir $(DESTDIR)$(docdir)/figures
-	-rmdir $(DESTDIR)$(docdir)
-
-dist-hook: app-dist-hook
+	-for file in $(srcdir)/*.omf; do \
+		basefile=`basename $$file`; \
+		rm -f $(omf_dest_dir)/$$basefile; \
+        done
+	-rmdir $(omf_dest_dir)
+	-scrollkeeper-update -p $(scrollkeeper_localstate_dir) 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

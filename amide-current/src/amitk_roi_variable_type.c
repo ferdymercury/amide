@@ -558,6 +558,7 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
 							  const AmitkDataSet * ds, 
 							  const guint frame,
+							  const gboolean inverse,
 							  void (* calculation)(),
 							  gpointer data) {
   AmitkPoint roi_pt, fine_ds_pt, far_ds_pt;
@@ -603,15 +604,20 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   grain_size = 1.0/(AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY);
 
   /* figure out the intersection between the data set and the roi */
-  if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds), 
-						AMITK_VOLUME(roi), 
-						intersection_corners)) {
-    dim = zero_voxel; /* no intersection */
+  if (inverse) {
+    start = zero_voxel;
+    dim = AMITK_DATA_SET_DIM(ds);
   } else {
-    /* translate the intersection into voxel space */
-    POINT_TO_VOXEL(intersection_corners[0], ds_voxel_size, 0, start);
-    POINT_TO_VOXEL(intersection_corners[1], ds_voxel_size, 0, dim);
-    dim = voxel_add(voxel_sub(dim, start), one_voxel);
+    if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds),  AMITK_VOLUME(roi), 
+						  intersection_corners)) {
+      dim = zero_voxel; /* no intersection */
+      start = zero_voxel;
+    } else {
+      /* translate the intersection into voxel space */
+      POINT_TO_VOXEL(intersection_corners[0], ds_voxel_size, 0, start);
+      POINT_TO_VOXEL(intersection_corners[1], ds_voxel_size, 0, dim);
+      dim = voxel_add(voxel_sub(dim, start), one_voxel);
+    }
   }
 
   /* check if we're done already */
@@ -632,7 +638,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   dim.y += 1;
   dim.z += 1;
 
-  /* start and end specify (in the data set's voxel space) the voxels in 
+  /* start and dim specify (in the data set's voxel space) the voxels in 
      the volume we should be iterating over */
 
   /* these two arrays are used to store whether the voxel vertices are in the ROI or not */
@@ -686,8 +692,10 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1)) {
 	  /* this voxel is entirely in the ROI */
 
-	  value = amitk_data_set_get_value(ds,j);
-	  (*calculation)(j, value, 1.0, data);
+	  if (!inverse) {
+	    value = amitk_data_set_get_value(ds,j);
+	    (*calculation)(j, value, 1.0, data);
+	  }
 
 	} else if (AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x) ||
 		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x+1) ||
@@ -737,10 +745,18 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	    } /* k.y loop */
 	  } /* k.z loop */
 
-	  (*calculation)(j, value, voxel_fraction, data);
+	  if (!inverse) {
+	    (*calculation)(j, value, voxel_fraction, data);
+	  } else {
+	    (*calculation)(j, value, 1.0-voxel_fraction, data);
+	  }
 
-	} /* this voxel is outside the ROI, do nothing*/
-
+	} else { /* this voxel is outside the ROI, do nothing*/
+	  if (inverse) {
+	    value = amitk_data_set_get_value(ds,j);
+	    (*calculation)(j, value, 1.0, data);
+	  }
+	}
       } /* i.x loop */
     } /* i.y loop */
     

@@ -6,9 +6,9 @@
 
   </para>
   
-  <sect1><title>Components of the Display</title>
+  <sect2><title>Components of the Display</title>
 
-    <sect2><title>Study Window</title>
+    <sect3><title>Study Window</title>
       <para>
 	After starting up AMIDE, the study window will be displayed.
 	A study is a collection of related objects (i.e. medical image
@@ -17,7 +17,7 @@
 	elements to this window:
       </para>
 
-      <sect3><title>Study List</title>
+      <sect4><title>Study List</title>
 	<para>
 	  On the left hand side of the study window is a list of all
 	  the objects in the study arranged in a tree.  Objects in the
@@ -42,9 +42,9 @@
 	  items->selected objects" menu item, which will delete the
 	  currently selected objects of the specified type.
 	</para>
-      </sect3>
+      </sect4>
 
-      <sect3><title>Study Canvases</title>
+      <sect4><title>Study Canvases</title>
 	<para>
 	  In the middle of the study window are three canvases which
 	  show three orthogonal 3-dimensional slices taken from the
@@ -62,32 +62,32 @@
 	  available are as followings: 
       </para>
 
-      <sect4><title>Left Mouse Button</title>
+      <sect5><title>Left Mouse Button</title>
 
 	  <para>
 	    Change the location in the data set that the slices are
 	    taken from, without changing the thickness of the slices.
 	  </para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Middle Mouse Button</title>
+      <sect5><title>Middle Mouse Button</title>
 
 	  <para>
 	    Change the location in the data set that the slices are
 	    taken from, along with setting the thickness of the slices
 	    to the minimum reasonable.
 	  </para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Right Mouse Button</title>
+      <sect5><title>Right Mouse Button</title>
 
 	  <para>
 	    Changes the thickness of the slices without changing the
 	    location.
 	  </para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Shift-Left Mouse Button</title> <para> This
+      <sect5><title>Shift-Left Mouse Button</title> <para> This
 	  combination allows shifting of the active data set in space
 	  (usually used for aligning two data sets).  While holding
 	  the shift key, left click (and release) on the canvas, and
@@ -96,9 +96,9 @@
 	  the shift, click the right button (button 3).  Any other
 	  mouse button will cancel the shift action.
 	  </para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Shift-Middle Mouse Button</title> <para> This
+      <sect5><title>Shift-Middle Mouse Button</title> <para> This
 	  combination allows rotating of the active data set in space
 	  (usually used for aligning two data sets).  While holding
 	  the shift key, middle click (and release) on the canvas, and
@@ -107,20 +107,20 @@
 	  the rotation, click the right button (button 3).  Any other
 	  mouse button will cancel the rotation.
 	  </para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Ctrl-Right Mouse Button</title>
+      <sect5><title>Ctrl-Right Mouse Button</title>
 
 	  <para>
 	    This combination will place an alignment point at the current
             cursor location.  A dialog will popup for entry of the alignment
             point's name.
 	  </para>
-      </sect4>
+      </sect5>
 
-    </sect3>
+    </sect4>
 
-    <sect3><title>Toolbar</title>
+    <sect4><title>Toolbar</title>
       <para>
 	On the top of the study window are several widgets used for
 	adjusting the most commonly changed display parameters.
@@ -130,25 +130,25 @@
 	currently has the active focus.
       </para>
       
-      <sect4><title>Interpolation</title>
+      <sect5><title>Interpolation</title>
 	<para>
 	  The user can specify what type of interpolation to use when
 	  generating slices from the active data set.  Nearest
 	  neighbor is faster.  Tri-linear interpolation produces
 	  betterlooking images but is ~8x slower.
 	</para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Viewing Mode</title>
+      <sect5><title>Viewing Mode</title>
 	<para>
 	  The user can switch between a single set of views
 	  [transverse/coronal/sagittal] on which all data sets are
 	  superimposed, or having a pair of views that are linked
 	  together.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Threshold</title>
+      <sect5><title>Threshold</title>
 	<para>
 	  This button will pop-up a threshold widget which can be
 	  used for scaling the currently focused data set and
@@ -157,40 +157,40 @@
 	  set modification dialog.  The threshold dialog is
 	  described below.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Zoom</title>
+      <sect5><title>Zoom</title>
 	<para>
 	  This specificies how much to enlarge the canvas for
 	  viewing.  AMIDE tries to make an educated guess about how
 	  large the display of the data set should be.  Zoom can be
 	  used in addition to that guesswork.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Thickness</title>
+      <sect5><title>Thickness</title>
 	<para>
 	  Thickness specifies how deep the slices displayed on the
 	  study canvas are.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Time Pop-up</title>
+      <sect5><title>Time Pop-up</title>
 	<para>
 	  This is another button to pop-up a dialog box.  The time
 	  dialog box allows the user to specify the time interval
 	  over which data should be displayed.
 	  </para>
-      </sect4>
+      </sect5>
       
       
-    </sect3>
+    </sect4>
     
     
     
-  </sect2>
+  </sect3>
   
-    <sect2><title>Threshold Dialog</title>
+    <sect3><title>Threshold Dialog</title>
     <para>
       The threshold dialog allows the threshold and colormap of the
       currently focused data set to be altered.  On top are entry
@@ -203,7 +203,7 @@
       table and threshold type (described below).
    </para>
 
-	<sect3><title>Threshold Types</title> 
+	<sect4><title>Threshold Types</title> 
 
 	<para> Several different ways can be used for interpreting how
 	the max and min threshold values are applied to the data set.
@@ -246,11 +246,11 @@
 
 	</variablelist>
 
-      </sect3>
+      </sect4>
       
-  </sect2>
+  </sect3>
   
-  <sect2><title>Series View Window</title>
+  <sect3><title>Series View Window</title>
     <para>
       Instead of looking at three orthogonal slices through the data
       set, a series of slices (all of the same orientation) can also
@@ -268,10 +268,10 @@
       regenerated from the data set and reviewing these slices is
       significantly faster.
     </para>
-  </sect2>
+  </sect3>
 
 
-  <sect2 id="time-dialog-help"><title>Time Dialog</title>
+  <sect3 id="time-dialog-help"><title>Time Dialog</title>
     <para>
       The time dialog lets the user pick over which time period data
       should be displayed.  Since data sets are often composed of
@@ -288,9 +288,9 @@
       closest frame will be choosen.  Hitting the OK or Apply buttons
       will cause any changes made on this page to take effect.
     </para>
-  </sect2>
+  </sect3>
 
-  <sect2 id="data-set-dialog-help"><title>Data Set Modification Dialog Box</title>
+  <sect3 id="data-set-dialog-help"><title>Data Set Modification Dialog Box</title>
     <para>
       To modify parameters of a data set, first select the data set in
       the study list and then right click on the data set.  The Data
@@ -298,7 +298,7 @@
       can be modified are divided into the following pages.
     </para>
     
-    <sect3 id="data-set-dialog-help-basic"><title>Basic Info</title>
+    <sect4 id="data-set-dialog-help-basic"><title>Basic Info</title>
       <para>
 	The name, type of modality, and conversion factor can be
 	altered on this page.  The conversion factor is a parameter
@@ -310,9 +310,9 @@
 	the OK or Apply buttons will cause any changes made on this
 	page to take effect.
       </para>
-    </sect3>
+    </sect4>
     
-    <sect3 id="data-set-dialog-help-center-dimensions"><title>Center/Dimensions</title>
+    <sect4 id="data-set-dialog-help-center-dimensions"><title>Center/Dimensions</title>
       <para>
 	The data set can be shifted by respecifing the center of the
 	data set with respect to the origin.  The x, y, and z
@@ -325,9 +325,9 @@
 	the components should be kept the same.  Hitting the OK or
 	Apply buttons will cause any changes made on this page to take
 	effect. </para>
-    </sect3>
+    </sect4>
 
-    <sect3 id="data-set-dialog-help-rotate"><title>Rotate</title>
+    <sect4 id="data-set-dialog-help-rotate"><title>Rotate</title>
       <para>
 	The data set can be rotated around its center in this page.
 	This comes in useful when the data set doesn't quite line-up
@@ -343,17 +343,17 @@
 	of the data set with respect to the base coordinate frame.
 	Hitting the OK or Apply buttons will cause any changes made on
 	this page to take effect. </para>
-    </sect3>
+    </sect4>
     
-    <sect3 id="data-set-dialog-help-colormap-threshold"><title>Colormap/Threshold</title>
+    <sect4 id="data-set-dialog-help-colormap-threshold"><title>Colormap/Threshold</title>
       <para>
 	This page is analogous to the threshold dialog (described
 	above).  Any changes made on this page are immediately
 	carried out.
       </para>
-    </sect3>
+    </sect4>
     
-    <sect3 id="data-set-dialog-help-time"><title>Time</title>
+    <sect4 id="data-set-dialog-help-time"><title>Time</title>
       <para>
 	From this page, the timing information of the data set can be
 	altered.  Scan start time can be used for altering the start
@@ -361,21 +361,21 @@
 	in the duration of each data frame can also be made on this
 	page.  Hitting the OK or Apply buttons will cause any changes
 	made on this page to take effect. </para>
-    </sect3>
+    </sect4>
 
-    <sect3 id="data-set-dialog-help-immutables"><title>Immutables</title>
+    <sect4 id="data-set-dialog-help-immutables"><title>Immutables</title>
       <para>
 	This panel lists information about the data set that cannot be
 	altered.  The underlying internal data format of the data set
 	and the data set dimensions in voxels are displayed on this
 	page.
 	</para>
-    </sect3>
+    </sect4>
 
-  </sect2>
+  </sect3>
   
 
-  <sect2 id="roi-dialog-help"><title>Region of Interest Modification Dialog Box</title>
+  <sect3 id="roi-dialog-help"><title>Region of Interest Modification Dialog Box</title>
     <para>
       To modify parameters of an ROI, first select the ROI in the
       study list and then right click on the data set.  The ROI
@@ -383,32 +383,32 @@
       be modified are divided into the following pages.
     </para>
 
-    <sect3 id="roi-dialog-help-basic"><title>Basic Info</title>
+    <sect4 id="roi-dialog-help-basic"><title>Basic Info</title>
       <para>
 	The name and type of ROI can be altered on this page.
 	Hitting the OK or Apply buttons will cause any changes made
 	on this page to take effect.
       </para>
-    </sect3>
+    </sect4>
     
-    <sect3  id="roi-dialog-helpcenter"><title>Center</title>
+    <sect4  id="roi-dialog-helpcenter"><title>Center</title>
       <para>
 	The center of the ROI can be shifted with respect to the
 	origin on this page.  The x, y, and z parameters are in
 	millimeters Hitting the OK or Apply buttons will cause any
 	changes made on this page to take effect. </para>
-    </sect3>
+    </sect4>
     
-    <sect3  id="roi-dialog-help-dimensions"><title>Dimensions</title>
+    <sect4  id="roi-dialog-help-dimensions"><title>Dimensions</title>
       <para>
 	The size of the ROI can be altered from this page.  The x',
 	y', and z' dimensions are in millimeters and are orientated
 	with respect to the ROI.  Hitting the OK or Apply buttons
 	will cause any changes made on this page to take
 	effect. </para>
-    </sect3>
+    </sect4>
     
-    <sect3 id="roi-dialog-help-rotate"><title>Rotate</title>
+    <sect4 id="roi-dialog-help-rotate"><title>Rotate</title>
       <para>
 	The ROI can be rotated around its center in this page.  There
 	is one dial for each of the three slice planes.  The
@@ -422,38 +422,38 @@
 	frame of the ROI with respect to the base coordinate frame.
 	Hitting the OK or Apply buttons will cause any changes made on
 	this page to take effect. </para>
-    </sect3>
+    </sect4>
 
-  </sect2>
+  </sect3>
 
-  <sect2 id="preferences-dialog-help"><title>Preferences Dialog Box</title>
+  <sect3 id="preferences-dialog-help"><title>Preferences Dialog Box</title>
     <para>
       This dialog box allows you to change preferences as to how
       things in AMIDE are displayed.  These preferences will be saved
       in a configuration file for use by future AMIDE sessions.
     </para>
     
-    <sect3 id="preferences-dialog-help-roi"><title>ROI Drawing Preferences</title>
+    <sect4 id="preferences-dialog-help-roi"><title>ROI Drawing Preferences</title>
       <para>
 	The width and style of the lines used to draw ROIs can be
 	altered here.  The width can be set between 1 and 5.  The line
 	style can be set to solid, on/off (dashes with translucent
 	bands), and double dashed (dashed with black bands).
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3 id="preferences-dialog-help-canvas"><title>Canvas Layout Preferences</title>
+    <sect4 id="preferences-dialog-help-canvas"><title>Canvas Layout Preferences</title>
       <para>
 	This allows you to switch the layout of the three views
 	(transverse, coronal, and sagittal) between a linear style
 	layout more commonly seen in PET software, and an orthogonal
 	style layout more commonly seen in MRI software.
       </para>
-    </sect3>
+    </sect4>
     
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
 
 
 

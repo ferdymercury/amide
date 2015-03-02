@@ -38,13 +38,13 @@
 
 gchar * libmdc_menu_names[] = {
   "(_X)MedCon Guess",
-  "_Raw",
-  "A_SCII",
+  "_Raw via (X)MedCon",
+  "A_SCII via (X)MedCon",
   "_GIF 87a/89a",
   "Acr/_Nema 2.0",
   "IN_W 1.0 (RUG)",
   "_Concorde/microPET",
-  "_CTI 6.4",
+  "_CTI 6.4 via (X)MedCon",
   "_InterFile 3.3",
   "_Analyze (SPM)",
   "_DICOM 3.0",
@@ -52,13 +52,13 @@ gchar * libmdc_menu_names[] = {
   
 gchar * libmdc_menu_explanations[] = {
   "let (X)MedCon/libmdc guess file type",
-  "Import a raw data file",
-  "Import an ASCII data file",
+  "Import a raw data file through (X)MedCon",
+  "Import an ASCII data file through (X)MedCon",
   "Import a file stored as GIF",
   "Import a Acr/Nema 2.0 file",
   "Import a INW 1.0 (RUG) File",
   "Import a file from the Concorde microPET",
-  "Import a CTI 6.4 file",
+  "Import a CTI 6.4 file through (X)MedCon",
   "Import a InterFile 3.3 file"
   "Import an Analyze file"
   "Import a DICOM 3.0 file",

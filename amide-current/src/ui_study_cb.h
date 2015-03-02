@@ -40,7 +40,8 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
 				     amide_real_t thickness, gpointer ui_study);
 void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
 					      AmitkPoint *position, gpointer ui_study);
-void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointer ui_study);
+void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, 
+				     gboolean outside, gpointer ui_study);
 void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type, 
 				   AmitkPoint *position, gpointer ui_study);
 void ui_study_cb_tree_select_object(GtkWidget * tree, 
@@ -53,7 +54,6 @@ void ui_study_cb_tree_unselect_object(GtkWidget * tree,
 				      gpointer ui_study);
 void ui_study_cb_tree_make_active_object(GtkWidget * tree, 
 					 AmitkObject * object, 
-					 AmitkViewMode view_mode, 
 					 gpointer ui_study);
 void ui_study_cb_tree_popup_object(GtkWidget * tree, AmitkObject * object, gpointer ui_study);
 void ui_study_cb_tree_add_object(GtkWidget * tree, AmitkObject * parent, 

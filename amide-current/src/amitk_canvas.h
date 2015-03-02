@@ -118,7 +118,8 @@ struct _AmitkCanvasClass
 				      AmitkRoi * roi,
 				      AmitkPoint *position);
   void (* erase_volume)              (AmitkCanvas *Canvas,
-				      AmitkRoi *roi);
+				      AmitkRoi *roi,
+				      gboolean outside);
   void (* new_object)                (AmitkCanvas *Canvas,
 				      AmitkObject * parent,
 				      AmitkObjectType type,
@@ -132,6 +133,7 @@ GtkWidget *   amitk_canvas_new                (AmitkStudy * study,
 					       AmitkLayout layout, 
 					       GdkLineStyle line_style,
 					       gint roi_width,
+					       AmitkDataSet * active_ds,
 					       gboolean with_arrows);
 void          amitk_canvas_set_layout         (AmitkCanvas * canvas, 
 					       AmitkLayout new_layout);

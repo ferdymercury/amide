@@ -117,15 +117,16 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   AmitkImportMethod i_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_import_method_t i_libmdc;
-  gint counter;
 #endif
+  gint counter;
   AmitkRoiType i_roi_type;
 
 
 #ifdef AMIDE_LIBMDC_SUPPORT
-  GnomeUIInfo libmdc_specific_menu[LIBMDC_NUM_IMPORT_METHODS+1];
-#endif
+  GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS];
+#else
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
+#endif
 
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
@@ -306,58 +307,59 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 				    ui_study_cb_add_roi, ui_study);
   ui_study_menus_fill_in_end(&(add_roi_menu[AMITK_ROI_TYPE_NUM]));
 
-  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) 
-#ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) 
-      ui_study_menus_fill_in_submenu(&(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW]),
-				     amitk_import_menu_names[i_method],
-				     amitk_import_menu_explanations[i_method],
-				     libmdc_specific_menu);
-    else
-#endif
-      ui_study_menus_fill_in_menuitem(&(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW]),
-				      amitk_import_menu_names[i_method],
-				      amitk_import_menu_explanations[i_method],
-				      ui_study_cb_import, ui_study);
-  ui_study_menus_fill_in_end(&(import_specific_menu[AMITK_IMPORT_METHOD_NUM-AMITK_IMPORT_METHOD_RAW]));
-
-#ifdef AMIDE_LIBMDC_SUPPORT
   counter = 0;
-  for (i_libmdc = 0; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
-    if (medcon_import_supports(i_libmdc)) {
-      ui_study_menus_fill_in_menuitem(&(libmdc_specific_menu[counter]),
-				      libmdc_menu_names[i_libmdc],
-				      libmdc_menu_explanations[i_libmdc],
-				      ui_study_cb_import,
-				      ui_study);
-      counter++;
-    }
-  }
-  ui_study_menus_fill_in_end(&(libmdc_specific_menu[counter]));
-    
+  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) {
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) {
+      for (i_libmdc = LIBMDC_GIF; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
+	if (medcon_import_supports(i_libmdc)) {
+	  ui_study_menus_fill_in_menuitem(&(import_specific_menu[counter]),
+					  libmdc_menu_names[i_libmdc],
+					  libmdc_menu_explanations[i_libmdc],
+					  ui_study_cb_import, ui_study);
+	  counter++;
+	}
+      }
+    } else 
 #endif
+      {
+	ui_study_menus_fill_in_menuitem(&(import_specific_menu[counter]),
+					amitk_import_menu_names[i_method],
+					amitk_import_menu_explanations[i_method],
+					ui_study_cb_import, ui_study);
+	counter++;
+      }
+  }
+  ui_study_menus_fill_in_end(&(import_specific_menu[counter]));
+
 
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
 
   /* add some info to some of the menus 
      note: the "Importing guess" widget doesn't have data set, NULL == AMIDE_GUESS */ 
-  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) 
-    g_object_set_data(G_OBJECT(import_specific_menu[i_method-AMITK_IMPORT_METHOD_RAW].widget),
-		      "method", GINT_TO_POINTER(i_method));
-#ifdef AMIDE_LIBMDC_SUPPORT
   counter = 0;
-  for (i_libmdc = LIBMDC_NONE; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
-    if (medcon_import_supports(i_libmdc)) {
-      g_object_set_data(G_OBJECT(libmdc_specific_menu[counter].widget),
-			"method", GINT_TO_POINTER(AMITK_IMPORT_METHOD_LIBMDC));
-      g_object_set_data(G_OBJECT(libmdc_specific_menu[counter].widget),
-			"submethod", GINT_TO_POINTER(i_libmdc));
-      counter++;
-    }
-  }
+  for (i_method = AMITK_IMPORT_METHOD_RAW; i_method < AMITK_IMPORT_METHOD_NUM; i_method++) {
+#ifdef AMIDE_LIBMDC_SUPPORT
+    if (i_method == AMITK_IMPORT_METHOD_LIBMDC) {
+      for (i_libmdc = LIBMDC_GIF; i_libmdc < LIBMDC_NUM_IMPORT_METHODS; i_libmdc++) {
+	if (medcon_import_supports(i_libmdc)) {
+	  g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
+			    "method", GINT_TO_POINTER(i_method));
+	  g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
+			    "submethod", GINT_TO_POINTER(i_libmdc));
+	  counter++;
+	}
+      }
+    } else 
 #endif
-
+      {
+	g_object_set_data(G_OBJECT(import_specific_menu[counter].widget),
+			  "method", GINT_TO_POINTER(i_method));
+	counter++;
+      }
+  }
+  
   for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)
     g_object_set_data(G_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 
 		      GINT_TO_POINTER(i_roi_type));

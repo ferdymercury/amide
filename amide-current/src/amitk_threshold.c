@@ -93,7 +93,7 @@ static void thresholds_dialog_class_init (AmitkThresholdsDialogClass *klass);
 static void thresholds_dialog_init (AmitkThresholdsDialog *thresholds_dialog);
 static void thresholds_dialog_construct(AmitkThresholdsDialog * thresholds_dialog, GList * data_sets);
 
-static GtkVBox *threshold_parent_class;
+static GtkVBoxClass *threshold_parent_class;
 static GtkDialogClass *threshold_dialog_parent_class;
 static GtkDialogClass *thresholds_dialog_parent_class;
 

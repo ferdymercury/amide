@@ -11,7 +11,7 @@
 
 
 
-<sect1><title>CTI Files</title>
+<sect2><title>CTI Files</title>
 
   <para>
     
@@ -23,25 +23,25 @@
 
   </para>
 
-  <sect2><title>CTI 6.4</title>
+  <sect3><title>CTI 6.4</title>
     <para>
       AMIDE will try to load any file ending in ".img" as a CTI 6.4
       file.  This file format is used by both the microPET and some
       clinical scanners.
     </para>
-  </sect2>
+  </sect3>
 
-  <sect2><title>CTI 7.0</title>
+  <sect3><title>CTI 7.0</title>
     <para>
       AMIDE will try to load any file ending in ".v" as a CTI 7.0
       file.  This file format is used by newer clinical scanners.
     </para>
-  </sect2>
+  </sect3>
       
 
-</sect1>
+</sect2>
 
-<sect1><title>IDL Data Files</title>
+<sect2><title>IDL Data Files</title>
   
   <para>
     AMIDE will attempt to load any file ending in ".idl" or ".ucat"
@@ -49,9 +49,9 @@
     header followed by the raw data.
   </para>
   
-</sect1>
+</sect2>
 
-<sect1><title>Raw Data Files</title>
+<sect2><title>Raw Data Files</title>
 
   <para>
     AMIDE will attempt to load any file ending in ".dat" or ".raw"
@@ -64,9 +64,9 @@
     point, and 64 bit IEEE floating point.
   </para>
   
-</sect1>
+</sect2>
 
-<sect1><title>DICOM Files</title>
+<sect2><title>DICOM Files</title>
   
   <para>
     
@@ -79,10 +79,10 @@
   </para>
   
   
-</sect1>
+</sect2>
 
 
-<sect1><title>Other Filetypes</title>
+<sect2><title>Other Filetypes</title>
 
   <para>
     
@@ -94,7 +94,7 @@
   </para>
   
   
-</sect1>
+</sect2>
   
   
   

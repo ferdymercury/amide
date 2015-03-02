@@ -144,8 +144,7 @@ int main (int argc, char *argv []) {
 	  }
 	  amitk_object_add_child(AMITK_OBJECT(imported_study), AMITK_OBJECT(new_ds));
 	  min_voxel_size = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(imported_study));
-	  if (min_voxel_size > AMITK_STUDY_VIEW_THICKNESS(imported_study)) 
-	    amitk_study_set_view_thickness(imported_study, min_voxel_size);
+	  amitk_study_set_view_thickness(imported_study, min_voxel_size);
 	  g_object_unref(new_ds);
 	  new_ds = NULL;
 	} else

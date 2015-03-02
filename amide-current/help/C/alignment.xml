@@ -5,7 +5,7 @@
   
 </para>
   
-<sect1><title>Manual Alignment</title>
+<sect2><title>Manual Alignment</title>
   
   <procedure>
     <title>Manual Alignment</title>
@@ -38,10 +38,10 @@
     </step>
   </procedure>          
   
-</sect1>
+</sect2>
 
 
-<sect1><title>Semiautomated Alignment</title>
+<sect2><title>Semiautomated Alignment</title>
   
   <procedure>
     <title>Semiautomated Alignment</title>
@@ -59,9 +59,9 @@
     </step>
   </procedure>          
   
-</sect1>
+</sect2>
 
-<sect1 id="align-pt"><title>Drawing Alignment Points</title>
+<sect2 id="align-pt"><title>Drawing Alignment Points</title>
   <para>
    Alignment points can be added to any of the data sets in the study.
    To add an alignment point, hit the "Edit->Add alignment point" menu
@@ -74,7 +74,7 @@
    clicking on the marker point shown in any of the views.
   </para>
 
-  <sect2 id="align-pt-dialog-help"><title>Alignment Point Modification Dialog Box</title>
+  <sect3 id="align-pt-dialog-help"><title>Alignment Point Modification Dialog Box</title>
     <para>
       To modify parameters of an alignment point, first select and
       then right click the point in the study list.  The Alignment
@@ -82,19 +82,19 @@
       can be modified are listed below.
     </para>
 
-    <sect3 id="align-pt-help-basic"><title>Basic Info</title>
+    <sect4 id="align-pt-help-basic"><title>Basic Info</title>
       <para>
 	The name, and location of the alignment point can be altered
 	on this page.  Hitting the OK or Apply buttons will cause any
 	changes made on this page to take effect.  Hitting Close will
 	quit the dialog without making any changes.
       </para>
-    </sect3>
+    </sect4>
 
- </sect2>
+ </sect3>
     
 
-</sect1>
+</sect2>
 
   <!-- Keep this comment at the end of the file
   Local variables:

@@ -4,15 +4,17 @@ misc list of things todo:
 for next release?
 -----------------
 
-* change all dialog boxes to verbs
-* check that help is working after rpm install
-
+* finish dnd support:
+	-for some reason, the row_reordered signal isn't emitted, so I can't
+	detect what's been done.
+	-need to uncomment gtk_tree_view-set_reorderable line
+	-filtered/cropped object should be added right below the
+		predecessor object
        
 big things:
 -----------
 * having issues with the "queing" of redisplay calls due to lack of locking.  
 	need to switch to a full threading modeling to separate input/computation/display. 
-* guppi interface for drawing graphs of ROI statistics
 * add drag-n-drop capabilities between study windows
 * should be able to specify units the image is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
@@ -20,14 +22,17 @@ big things:
 	-each data set, can specify it's original units, and (if needed), a scaling factor to output unit
 * progress bars
 * ui_series should show all selected objects, not just data sets
+	-would require generalizing some of the drawing functions in amitk_canvas
 * add a objects list item,
 	-would allow reading in multi-bed data sets
 * calculating PV correction.  
 	Correction factors could be calculated for each volume's 
 	resolution and then cached.
-* add median filtering
-	M. Kopp, W. Purgathofer (1994). Efficient 3x3 Median Filter Computations. Technical University, Vienna.
-	http://www.cg.tuwien.ac.at/research/TR/, TR-186-2-94-18
+* currently implementation for FIR filters is via direct convolution:
+	a FFT based approach would be much more efficient
+	in the interests of memory, would probably do a overlap+add method,
+		with a 64 point FFT (which is 2MB for double)
+	GSL has the necessary functions for doing the FFT
                        
 small things:
 -------------
@@ -42,14 +47,12 @@ small things:
 	of something in gtk is off, not sure what
 * would changing the icons to .png files allow anti-aliasing? better icons?
 * rewrite isocontour determining algorithm so it's not recursive
-* add thickness/line style for isocontours?
 * put the canvases in a scrolled widget?
 * make caching of slices smarter.  
 	We don't need to regenerate all slices when removing one slice from the list
 	slices shouldn't have to be the size of the largest dimensions
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
-* isocontour erase function only updates at button release, not during mouse movement
 * implement help buttons on most of the dialogs
 	-gnome_druid has an add help button function
 * add close button to threshold dialogs
@@ -57,10 +60,13 @@ small things:
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
 * try to work in the max/min/distribution calculations into the loading loop
+* one small warning when loading help (doesn't impact operation):
+	warning: failed to load external entity "No table of content available for this document."
 
 
 pre 1.0 things:
 --------------
+* change all dialog boxes to verbs
 * rewrite documentation
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
@@ -88,10 +94,16 @@ probably post 1.0 things:
 	progress reports, in ui_rendering_movie_dialog
 * aligning of data using automated registration?
 * preset thresholds (bone window, fat window, etc.)
-* roi object's could store their calculated values, and update on changes
-	updating could be done in idle time
 * could probably subclass isocontour's from AmitkRoi -> AimtkIsocontourRoi
 	also probably get rid of roi_variable types... not worth the performance improvement
+* guppi interface for drawing graphs of ROI statistics
+* optimize median filtering:
+	M. Kopp, W. Purgathofer (1994). Efficient 3x3 Median Filter Computations. Technical University, Vienna.
+	http://www.cg.tuwien.ac.at/research/TR/, TR-186-2-94-18
+
+	-perhaps better, as we won't just have 3x3 median filtering,
+	Paeth, 1990, Graphics Gems
+
 
 things dependent on other things: 
 -------------- 
@@ -133,6 +145,13 @@ things dependent on other things:
 	screwing up the color levels.  may have to rewrite libgnomecanvas to use
 	a 32bit buffer
 	-would allow the use of cursor keys for moving data sets around each other
+
+
+* using the gdk_pixbuf_scale functions
+	Slicing from all data sets at zoom=1.0, and then scaling using
+	the gdk_pixbuf_scale type functions doesn't work well, as the
+	scale functions don't do a great job of interpolation (circa
+	gdk-pixbuf-0.18.0).
 
 
 remaining GNOME 2.0 changes that need to be done 

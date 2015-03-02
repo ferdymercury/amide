@@ -42,7 +42,7 @@ static gboolean space_edit_prompt(AmitkSpaceEdit * space_edit, const gchar * mes
 static void space_edit_reset_axis(GtkWidget * button, gpointer data);
 static void space_edit_invert_axis(GtkWidget * button, gpointer data);
 
-static GtkVBox *space_edit_parent_class;
+static GtkVBoxClass *parent_class;
 
 GType amitk_space_edit_get_type (void) {
 
@@ -80,7 +80,7 @@ static void space_edit_class_init (AmitkSpaceEditClass *klass)
   gtkobject_class = (GtkObjectClass*) klass;
   widget_class =    (GtkWidgetClass*) klass;
 
-  space_edit_parent_class = g_type_class_peek_parent(klass);
+  parent_class = g_type_class_peek_parent(klass);
 
   gtkobject_class->destroy = space_edit_destroy;
 
@@ -212,8 +212,8 @@ static void space_edit_destroy (GtkObject * gtkobject) {
 
 
 
-  if (GTK_OBJECT_CLASS (space_edit_parent_class)->destroy)
-    (* GTK_OBJECT_CLASS (space_edit_parent_class)->destroy) (gtkobject);
+  if (GTK_OBJECT_CLASS (parent_class)->destroy)
+    (* GTK_OBJECT_CLASS (parent_class)->destroy) (gtkobject);
 }
 
 

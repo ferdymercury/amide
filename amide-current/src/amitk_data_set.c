@@ -116,7 +116,7 @@ static AmitkObject * data_set_copy                (const AmitkObject * object);
 static void          data_set_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          data_set_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
 static void          data_set_read_xml            (AmitkObject * object, xmlNodePtr nodes);
-static AmitkVolume * parent_class;
+static AmitkVolumeClass * parent_class;
 static guint         data_set_signals[LAST_SIGNAL];
 
 
@@ -436,6 +436,14 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_string(nodes, "internal_scaling_file", xml_filename);
   g_free(xml_filename);
 
+  if (ds->distribution != NULL) {
+    name = g_strdup_printf("data-set_%s_distribution",AMITK_OBJECT_NAME(ds));
+    xml_filename = amitk_raw_data_write_xml(ds->distribution, name);
+    g_free(name);
+    xml_save_string(nodes, "distribution_file", xml_filename);
+    g_free(xml_filename);
+  }
+
   xml_save_data(nodes, "scale_factor", AMITK_DATA_SET_SCALE_FACTOR(ds));
   xml_save_time(nodes, "scan_start", AMITK_DATA_SET_SCAN_START(ds));
   xml_save_times(nodes, "frame_duration", ds->frame_duration, AMITK_DATA_SET_NUM_FRAMES(ds));
@@ -490,6 +498,14 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
     g_object_unref(ds->internal_scaling);
   ds->internal_scaling = amitk_raw_data_read_xml(filename);
   g_free(filename);
+
+  filename = xml_get_string(nodes, "distribution_file");
+  if (filename != NULL) {
+    if (ds->distribution != NULL)
+      g_object_unref(ds->distribution);
+    ds->distribution = amitk_raw_data_read_xml(filename);
+    g_free(filename);
+  }
 
   /* a little legacy bit, the type of internal_scaling has been changed to double
      as of amide 0.7.1 */
@@ -1380,6 +1396,16 @@ void amitk_data_set_calc_distribution(AmitkDataSet * ds) {
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   g_return_if_fail(ds->raw_data != NULL);
 
+  /* check that the distribution is the right size.  This may not be the case
+     if we've changed AMITK_DATA_SET_DISTRIBUTION_SIZE, and we've loaded
+     in an old file */
+  if (ds->distribution != NULL)
+    if (AMITK_RAW_DATA_DIM_X(ds->distribution) != AMITK_DATA_SET_DISTRIBUTION_SIZE) {
+      g_object_unref(ds->distribution);
+      ds->distribution = NULL;
+    }
+
+
   /* hand everything off to the data type specific function */
   switch(ds->raw_data->format) {
   case AMITK_FORMAT_UBYTE:
@@ -1535,6 +1561,10 @@ amide_data_t amitk_data_set_get_value(const AmitkDataSet * ds, const AmitkVoxel 
 }
 
 
+
+/* note, after using this function, you should
+   recalculate the frame's max/min, along with the
+   global max/min, and the distribution data */
 void amitk_data_set_set_value(AmitkDataSet * ds, 
 			      const AmitkVoxel i, 
 			      const amide_data_t value,
@@ -1908,12 +1938,13 @@ AmitkDataSet *amitk_data_set_get_cropped(const AmitkDataSet * ds,
 
 /* returns a filtered version of the given data set */
 AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
-					  const AmitkFilter filter,
+					  const AmitkFilter filter_type,
 					  const gint kernel_size,
 					  const amide_real_t fwhm) {
 
   AmitkDataSet * filtered=NULL;
   gchar * temp_string;
+  AmitkVoxel kernel_dim;
 
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
   g_return_val_if_fail(ds->raw_data != NULL, NULL);
@@ -1954,7 +1985,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 
   /* set a new name for this guy */
   temp_string = g_strdup_printf("%s, %s filtered", AMITK_OBJECT_NAME(ds),
-				amitk_filter_get_name(filter));
+				amitk_filter_get_name(filter_type));
   amitk_object_set_name(AMITK_OBJECT(filtered), temp_string);
   g_free(temp_string);
 
@@ -1970,7 +2001,7 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
 
 
   /* hand everything off to the data type specific function */
-  switch(filter) {
+  switch(filter_type) {
   case AMITK_FILTER_GAUSSIAN:
     switch(ds->raw_data->format) {
     case AMITK_FORMAT_UBYTE:
@@ -2042,78 +2073,150 @@ AmitkDataSet *amitk_data_set_get_filtered(const AmitkDataSet * ds,
       goto error;
     }
     break;
-#if 0
-  case AMITK_FILTER_MEDIAN:
+  case AMITK_FILTER_MEDIAN_LINEAR:
     switch(ds->raw_data->format) {
     case AMITK_FORMAT_UBYTE:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_UBYTE_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UBYTE_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_UBYTE_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UBYTE_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_UBYTE_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UBYTE_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_SBYTE:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_SBYTE_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SBYTE_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_SBYTE_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SBYTE_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_SBYTE_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SBYTE_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_USHORT:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_USHORT_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_USHORT_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_USHORT_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_USHORT_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_USHORT_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_USHORT_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_SSHORT:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_SSHORT_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SSHORT_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_SSHORT_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SSHORT_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_SSHORT_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SSHORT_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_UINT:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_UINT_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UINT_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_UINT_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UINT_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_UINT_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_UINT_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_SINT:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_SINT_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SINT_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_SINT_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SINT_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_SINT_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_SINT_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_FLOAT:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_FLOAT_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_FLOAT_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_FLOAT_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_FLOAT_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_FLOAT_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_FLOAT_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     case AMITK_FORMAT_DOUBLE:
       if (ds->internal_scaling->dim.z > 1) 
-	amitk_data_set_DOUBLE_2D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_DOUBLE_2D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else if (ds->internal_scaling->dim.t > 1)
-	amitk_data_set_DOUBLE_1D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_DOUBLE_1D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       else 
-	amitk_data_set_DOUBLE_0D_SCALING_filter_median(ds, filtered, kernel_size);
+	amitk_data_set_DOUBLE_0D_SCALING_filter_median_linear(ds, filtered, kernel_size);
       break;
     default:
       g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
       goto error;
     }
-#endif
+    break;
+  case AMITK_FILTER_MEDIAN_3D:
+    kernel_dim.t = 1;
+    kernel_dim.z = kernel_dim.y = kernel_dim.x = kernel_size;
+    switch(ds->raw_data->format) {
+    case AMITK_FORMAT_UBYTE:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_UBYTE_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_UBYTE_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_UBYTE_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_SBYTE:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_SBYTE_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_SBYTE_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_SBYTE_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_USHORT:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_USHORT_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_USHORT_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_USHORT_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_SSHORT:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_SSHORT_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_SSHORT_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_SSHORT_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_UINT:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_UINT_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_UINT_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_UINT_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_SINT:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_SINT_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_SINT_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_SINT_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_FLOAT:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_FLOAT_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_FLOAT_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_FLOAT_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    case AMITK_FORMAT_DOUBLE:
+      if (ds->internal_scaling->dim.z > 1) 
+	amitk_data_set_DOUBLE_2D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else if (ds->internal_scaling->dim.t > 1)
+	amitk_data_set_DOUBLE_1D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      else 
+	amitk_data_set_DOUBLE_0D_SCALING_filter_median_3D(ds, filtered, kernel_dim);
+      break;
+    default:
+      g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+      goto error;
+    }
+    break;
   default: 
     g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
     goto error;

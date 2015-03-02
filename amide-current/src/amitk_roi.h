@@ -108,10 +108,12 @@ void            amitk_roi_set_voxel_size          (AmitkRoi * roi, AmitkPoint vo
 void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,  
 						   const AmitkDataSet * ds, 
 						   const guint frame,
+						   const gboolean inverse,
 						   void (* calculation)(),
 						   gpointer data);
 void            amitk_roi_erase_volume            (const AmitkRoi * roi, 
-						   AmitkDataSet * ds);
+						   AmitkDataSet * ds,
+						   const gboolean outside );
 const gchar *   amitk_roi_type_get_name           (const AmitkRoiType roi_type);
 
 amide_real_t    amitk_rois_get_max_min_voxel_size (GList * objects);

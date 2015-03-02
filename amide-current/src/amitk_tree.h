@@ -52,10 +52,12 @@ struct _AmitkTree
   GtkTreeView tree;
 
   GList * visible_objects[AMITK_VIEW_MODE_NUM];
+  AmitkObject * active_object;
 
   GtkTreeViewColumn * linked_column;
   gint mouse_x; /* the current mouse position */
   gint mouse_y; 
+  GtkTreePath * current_path;
   
 };
 
@@ -73,8 +75,7 @@ struct _AmitkTreeClass
 				      AmitkObject *   object,
 				      AmitkViewMode   view_mode);
   void (* make_active_object)        (AmitkTree *     tree,
-				      AmitkObject *   object,
-				      AmitkViewMode   view_mode);
+				      AmitkObject *   object);
   void (* popup_object)              (AmitkTree *     tree,
 				      AmitkObject *   object);
   void (* add_object)                (AmitkTree *     tree,
@@ -93,7 +94,7 @@ void            amitk_tree_add_object        (AmitkTree * tree,
 					      gboolean expand_parent);
 void            amitk_tree_remove_object     (AmitkTree * tree, 
 					      AmitkObject * object);
-void            amitk_tree_set_active_mark   (AmitkTree * tree,
+void            amitk_tree_set_active_object (AmitkTree * tree,
 					      AmitkObject * object);
 void            amitk_tree_select_object     (AmitkTree * tree,
 					      AmitkObject * object,

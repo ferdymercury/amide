@@ -68,7 +68,7 @@ static AmitkObject * roi_copy                (const AmitkObject * object);
 static void          roi_copy_in_place       (AmitkObject * dest_object, const AmitkObject * src_object);
 static void          roi_write_xml           (const AmitkObject * object, xmlNodePtr nodes);
 static void          roi_read_xml            (AmitkObject * object, xmlNodePtr nodes);
-static AmitkVolume * parent_class;
+static AmitkVolumeClass * parent_class;
 static guint        roi_signals[LAST_SIGNAL];
 
 
@@ -473,11 +473,13 @@ void amitk_roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
 
 /* iterates over the voxels in the given data set that are inside the given roi,
    and performs the specified calculation function for those points */
+/* if inverse is true, the calculation is done for the portion of the data set not in the roi */
 /* calulation should be a function taking the following arguments:
    calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
 void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
 				     const AmitkDataSet * ds, 
 				     const guint frame,
+				     const gboolean inverse,
 				     void (*calculation)(),
 				     gpointer data) {
 
@@ -488,19 +490,19 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ELLIPSOID:
-    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, calculation, data);
+    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_CYLINDER:
-    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, calculation, data);
+    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_BOX:
-    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, calculation, data);
+    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, calculation, data);
+    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, calculation, data);
+    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, inverse, calculation, data);
     break;
   default: 
     g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
@@ -523,13 +525,22 @@ static void erase_volume(AmitkVoxel voxel,
 }
 
 
-/* sets the volume inside of the given data set that is enclosed by roi equal to zero */
-void amitk_roi_erase_volume(const AmitkRoi * roi, AmitkDataSet * ds) {
+/* sets the volume inside/or outside of the given data set that is enclosed by roi equal to zero */
+void amitk_roi_erase_volume(const AmitkRoi * roi, AmitkDataSet * ds, const gboolean outside) {
 
   guint i_frame;
 
-  for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++)
-    amitk_roi_calculate_on_data_set(roi, ds, i_frame, erase_volume, ds);
+  for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) {
+    amitk_roi_calculate_on_data_set(roi, ds, i_frame, outside, erase_volume, ds);
+    amitk_data_set_calc_frame_max_min(ds);
+  }
+  amitk_data_set_calc_global_max_min(ds);
+
+  /* mark the distribution data as invalid */
+  if (AMITK_DATA_SET_DISTRIBUTION(ds) != NULL) {
+    g_object_unref(AMITK_DATA_SET_DISTRIBUTION(ds));
+    ds->distribution = NULL;
+  }
 
   /* this is a no-op to get a data_set_changed signal */
   amitk_data_set_set_value(AMITK_DATA_SET(ds), zero_voxel,

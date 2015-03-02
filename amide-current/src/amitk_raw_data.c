@@ -109,7 +109,7 @@ gchar * amitk_raw_format_names[] = {
 static void raw_data_class_init          (AmitkRawDataClass *klass);
 static void raw_data_init                (AmitkRawData      *object);
 static void raw_data_finalize            (GObject           *object);
-static GObject * parent_class;
+static GObjectClass * parent_class;
 //static guint     raw_data_signals[LAST_SIGNAL];
 
 

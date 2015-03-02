@@ -643,6 +643,7 @@ void voxel_print(gchar * message, const AmitkVoxel voxel) {
   return;
 }
 
+
 amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
 			       const AmitkDim which_dim) {
 
@@ -758,18 +759,18 @@ AmitkPoint point_rotate_on_vector(const AmitkPoint in,
   AmitkPoint return_vector;
 
   return_vector.x = 
-    (pow(vector.x,2.0) + cos(theta) * (1.0 - pow(vector.x,2.0))) * in.x +
+    (vector.x*vector.x + cos(theta) * (1.0 - vector.x*vector.x)) * in.x +
     (vector.x*vector.y*(1.0-cos(theta)) - vector.z * sin(theta)) * in.y +
     (vector.z*vector.x*(1.0-cos(theta)) + vector.y * sin(theta)) * in.z;
   return_vector.y = 
     (vector.x*vector.y*(1.0-cos(theta)) + vector.z * sin(theta)) * in.x +
-    (pow(vector.y,2.0) + cos(theta) * (1.0 - pow(vector.y,2.0))) * in.y +
+    (vector.y*vector.y + cos(theta) * (1.0 - vector.y*vector.y)) * in.y +
     (vector.y*vector.z*(1.0-cos(theta)) - vector.x * sin(theta)) * in.z;
   return_vector.z = 
     (vector.z*vector.x*(1.0-cos(theta)) - vector.y * sin(theta)) * in.x +
     (vector.y*vector.z*(1.0-cos(theta)) + vector.x * sin(theta)) * in.y +
-    (pow(vector.z,2.0) + cos(theta) * (1.0 - pow(vector.z,2.0))) * in.z;
-
+    (vector.z*vector.z + cos(theta) * (1.0 - vector.z*vector.z)) * in.z;
+  
   return return_vector;
 }
 

@@ -35,9 +35,9 @@
 
 </para>
 
-<sect1><title>Rendering Dialog</title>
+<sect2><title>Rendering Dialog</title>
 
-  <sect2><title>Main Rendering Canvas</title>
+  <sect3><title>Main Rendering Canvas</title>
     <para>
       The result of the rendering process is presented on the canvas
       in the center of the dialog.  This canvas can accept user input
@@ -45,10 +45,10 @@
       rotating on the x and y axis, and button 2 allows rotating on
       the z axis.
     </para>
-  </sect2>
+  </sect3>
 
 
-  <sect2><title>Spin Sliders</title>
+  <sect3><title>Spin Sliders</title>
     <para>
       You should notice two slider type widgets, one on top of the
       rendered image, and one on the right side.  These are both
@@ -58,38 +58,38 @@
       the z axis (which comes out of the plane of the display).  Note
       that the effect of rotations are cumulative.
     </para>
-  </sect2>
+  </sect3>
 
-  <sect2><title>Axis Drawing</title>
+  <sect3><title>Axis Drawing</title>
     <para>
       A coordinate axis is displayed to the left of the rendering, for
       reminding you which way the axis are pointing.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>Reset Axis</title>
+  <sect3><title>Reset Axis</title>
     <para>
       This button will reset the rendering's orientation back to the
       default orientation.
     </para>
-  </sect2>
+  </sect3>
 
-  <sect2><title>"Render" Button</title>
+  <sect3><title>"Render" Button</title>
     <para>
       This button tells the program to render the data set.  It will
       be inactive if the "on change" option has been picked.
     </para>
-  </sect2>
+  </sect3>
   
-  <sect2><title>"On Change" Checkbox</title>
+  <sect3><title>"On Change" Checkbox</title>
     <para>
       If this is checked, the data set will be rerendered on every
       change.  If this is not checked, the "Render" button will have
       to be hit to cause rerendering of the data set.
     </para>
-  </sect2>
+  </sect3>
 
-  <sect2><title>"Steroscopic" Checkbox</title>
+  <sect3><title>"Steroscopic" Checkbox</title>
     <para>
       Checking this box will inform the rendering process to generate
       a stereoscopic image pair, rathen then just a single rendering.
@@ -101,39 +101,39 @@
       If this box is checked when a movie is generated, the movie will
       consist of stereoscopic image pairs.
     </para>
-  </sect2>
+  </sect3>
   
 
-  <sect2><title>Rendering Menus</title>
-    <sect3><title>File->Export Rendering</title>
+  <sect3><title>Rendering Menus</title>
+    <sect4><title>File->Export Rendering</title>
       <para>
 	This menu item allows you to export the rendered image to
 	an external image file.  The saved data format is 
         jpeg. </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>File->Create Movie</title>
+    <sect4><title>File->Create Movie</title>
       <para>
 	This causes the movie generation dialog box to pop up.  This
 	dialog box is further described below.
       </para>
-    </sect3>
+    </sect4>
   
-    <sect3><title>"Edit->Rendering Parameters</title>
+    <sect4><title>"Edit->Rendering Parameters</title>
       <para>
 	This causes the rendering parameters dialog box to pop up.
 	This dialog box is described below.
       </para>
-    </sect3>
-  </sect2>
+    </sect4>
+  </sect3>
   
-</sect1>
+</sect2>
 
-<sect1 id="rendering-dialog-help"><title>Rendering Parameters Dialog</title>
+<sect2 id="rendering-dialog-help"><title>Rendering Parameters Dialog</title>
 
-  <sect2 id="rendering-dialog-help-basic"><title>Basic Parameters</title>
+  <sect3 id="rendering-dialog-help-basic"><title>Basic Parameters</title>
 
-    <sect3><title>Speed versus Quality</title>
+    <sect4><title>Speed versus Quality</title>
       <para>
       With this drop-down menu, the user can choose between rendering
       speed and rendering quality.  To increase speed, voxels with
@@ -142,9 +142,9 @@
       highest quality doesn't use this approximation at all, the
       lowest quality setting uses this approximation big-time.
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>Return Type</title>
+    <sect4><title>Return Type</title>
       <para>
 	This setting determines whether the rendering returns an image
 	which looks more analogous to an x-ray (the "opacity"
@@ -153,25 +153,25 @@
 	by specifying a light source, material properties, and using
 	depth cueing.
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>Zoom</title>
+    <sect4><title>Zoom</title>
       <para>
 	Determines the size at which the resultant rendered image will
 	be displayed.  Note that changing the zoom will not affect the
 	speed of the rendering, and increasing the zoom past 1 will
 	not increase the resolution of the rendered image.
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>Stereosopic parameters</title>
+    <sect4><title>Stereosopic parameters</title>
 
       <para>
 	These parameters are used for controlling the results when the
 	"stereoscopic" option has been chosen.
       </para>
       
-      <sect4><title>Stereo Angle</title>
+      <sect5><title>Stereo Angle</title>
 	<para>
 	  This is the angle offset (in degrees) between a pair of
 	  rendered images.  Increasing this number will generally give
@@ -180,9 +180,9 @@
 	  degrees.  Note that this parameter will be saved between
 	  different sessions of the program.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Eye Width (mm) </title>
+      <sect5><title>Eye Width (mm) </title>
 	<para>
 	  Ideally, this should be (roughly) the distance between the
 	  two rendered images, and corresponds to the distance between
@@ -198,26 +198,26 @@
 	  this parameter will be saved between different sessions of
 	  the program.
 	</para>
-      </sect4>
+      </sect5>
 
-    </sect3>
+    </sect4>
 
-    <sect3><title>Depth Cueing</title>
+    <sect4><title>Depth Cueing</title>
 
       <para>
 	These parameters are only used if the "grayscale" output type
 	has been chosen.
       </para>
       
-      <sect4><title>Enable/Disable Depth Cueing</title>
+      <sect5><title>Enable/Disable Depth Cueing</title>
 	<para>
 	  Specify whether or not we want depth cueing.  Depth cueing
 	  puts in a "fog" that causes more distant voxels to appear less
 	  bright.
 	</para>
-      </sect4>
+      </sect5>
       
-      <sect4><title>Front Factor</title>
+      <sect5><title>Front Factor</title>
 	<para>
 	  This is the transparency of the fog at the front of the
 	  data set.  If this number is greater than 1.0, voxels toward the
@@ -225,21 +225,21 @@
 	  is less than 1.0, voxels toward the front of the data set will
 	  be darker, respectively.
 	</para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Density</title>
+      <sect5><title>Density</title>
 	<para>
 	  This is how thick the "fog" is.  The thicker the fog, the
 	  darker distant objects seem.
 	</para>
-      </sect4>
+      </sect5>
 
-    </sect3>
+    </sect4>
 
-  </sect2>
+  </sect3>
     
 
-  <sect2 id="rendering-dialog-help-data-set"><title>Data Set Specific Settings</title>
+  <sect3 id="rendering-dialog-help-data-set"><title>Data Set Specific Settings</title>
 
     <para>
       Each panel after the "basic parameters" panel allows the
@@ -247,14 +247,14 @@
       rendered.
     </para>
 
-    <sect3><title>Color Table</title>
+    <sect4><title>Color Table</title>
       <para>
 	The color table of each rendered data set can be changed here.
       </para>
-    </sect3>
+    </sect4>
 
     
-    <sect3><title>Classification Functions</title>
+    <sect4><title>Classification Functions</title>
       <para>
 	This is the most confusing part of rendering, so hang on here.
 	The classification functions are used to map between the value
@@ -276,7 +276,7 @@
 	There are two classification functions:
       </para>
 
-      <sect4><title>Density Dependent</title>
+      <sect5><title>Density Dependent</title>
 	<para>
 	  This function tells you how opaque each voxel will be based
 	  on it's current value.  In a sense, this is analogous to an
@@ -284,9 +284,9 @@
 	  structure is related to the density of that structure. 
 	  of the display.
 	</para>
-      </sect4>
+      </sect5>
 
-      <sect4><title>Gradient Dependent</title>
+      <sect5><title>Gradient Dependent</title>
 	<para>
 	  Instead of relating the density of a voxel to its opacity,
 	  this function relates the gradient of a voxel (how much the
@@ -294,37 +294,37 @@
 	  opacity.  This has the effect of giving added weight to
 	  surfaces. 
 	</para>
-      </sect4>
+      </sect5>
 
-    </sect3>
+    </sect4>
 
 
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
 
-<sect1 id="rendering-movie-dialog-help"><title>Rendering Movie Dialog</title>
+<sect2 id="rendering-movie-dialog-help"><title>Rendering Movie Dialog</title>
 
-  <sect2 id="rendering-movie-dialog-help-movie"><title>Movie Parameters</title>
+  <sect3 id="rendering-movie-dialog-help-movie"><title>Movie Parameters</title>
 
-    <sect3><title>Frames</title>
+    <sect4><title>Frames</title>
       <para>
 	How many frames should be in the MPEG1 movie.  The MPEG1
 	movies generated will be set to run at 30 frames/second, so
 	the default of 300 frames will give a ten second movie.
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>Rotations on [x,y,z] </title> 
+    <sect4><title>Rotations on [x,y,z] </title> 
       <para> 
 	This setting determines how many times the data set will be
 	rotated around the given axis over the course of the movie.
 	The rotation for each frame is done in x->y->z order (rotate
 	on x first, then y, then z).
       </para>
-    </sect3>
+    </sect4>
 
-    <sect3><title>Start/End Time</title> 
+    <sect4><title>Start/End Time</title> 
       <para> 
 	These entries determine over which time period of the data set
 	the rendered images will be drawn from.  By default, they show
@@ -336,11 +336,11 @@
 	over time significantly slower than a movie with just
 	rotations.
       </para>
-    </sect3>
+    </sect4>
 
-  </sect2>
+  </sect3>
 
-</sect1>
+</sect2>
 
   
   

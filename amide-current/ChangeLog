@@ -1,3 +1,16 @@
+0.7.3
+	* added median filtering to the filter dialog
+	* distribution data now saved in .xif file when available
+	* corrected an error in the generation of roi stats
+	* fixed some small bugs with dual cursor display
+	* on roi clear, max and min are now recalculated, along with the distribution
+	* no longer moving canvas view when shifting roi
+	* now sets thickness correctly when loaded up directly with an imported data set
+	* added ability to erase data set outside of an roi
+	* removed slop in moving fiducial marks
+	* dual cursor display weirdness is now (hopefully) fixed for real
+	* help is working again
+
 0.7.2
 	* anisotropic filtering added, low pass gaussian filter current implemented
 	* fixed some bugs with rotating/moving data sets
