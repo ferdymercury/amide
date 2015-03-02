@@ -2849,9 +2849,10 @@ void  amitk_data_set_get_line_profile(AmitkDataSet * ds,
       /* need to average over frames */
       value = 0;
       for (current_voxel.t=start_frame; current_voxel.t<=end_frame;current_voxel.t++) {
+
 	if (start_frame == end_frame)
 	  time_weight = 1.0;
-	if (current_voxel.t == start_frame)
+	else if (current_voxel.t == start_frame)
 	  time_weight = (amitk_data_set_get_end_time(ds, start_frame)-used_start)/used_duration;
 	else if (current_voxel.t == end_frame)
 	  time_weight = (used_end-amitk_data_set_get_start_time(ds, end_frame))/used_duration;

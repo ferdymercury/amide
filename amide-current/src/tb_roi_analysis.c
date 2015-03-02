@@ -39,6 +39,7 @@
 static gboolean all_data_sets=FALSE;
 static gboolean all_rois=FALSE;
 static analysis_calculation_t calculation_type=ALL_VOXELS;
+static gboolean accurate=FALSE;
 static gdouble subfraction=50.0;
 static gdouble threshold_percentage=50.0;
 static gdouble threshold_value=50.0;
@@ -119,6 +120,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
 			     analysis_calculation_t * calculation_type,
+			     gboolean * accurate,
 			     gdouble * subfraction,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value);
@@ -688,6 +690,7 @@ static void add_pages(GtkWidget * notebook, AmitkStudy * study,
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
 			     analysis_calculation_t * calculation_type,
+			     gboolean * accurate,
 			     gdouble * subfraction,
 			     gdouble * threshold_percentage,
 			     gdouble * threshold_value) {
@@ -698,6 +701,7 @@ static void read_preferences(gboolean * all_data_sets,
   *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
   *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
   *calculation_type = gnome_config_get_int("ANALYSIS/CalculationType");
+  *accurate = gnome_config_get_int("ANALYSIS/Accurate");
   *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
   *threshold_percentage = gnome_config_get_float("ANALYSIS/ThresholdPercentage");
   *threshold_value = gnome_config_get_float("ANALYSIS/ThresholdValue");
@@ -723,11 +727,12 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   gboolean all_data_sets;
   gboolean all_rois;
   analysis_calculation_t calculation_type;
+  gboolean accurate;
   gdouble subfraction;
   gdouble threshold_percentage;
   gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, 
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, &subfraction, 
 		   &threshold_percentage, &threshold_value);
 #endif
 
@@ -758,8 +763,8 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, subfraction, 
-				   threshold_percentage, threshold_value);
+  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, accurate, 
+				   subfraction, threshold_percentage, threshold_value);
 
   rois = amitk_objects_unref(rois);
   data_sets = amitk_objects_unref(data_sets);
@@ -854,6 +859,21 @@ static void calculation_type_cb(GtkWidget * widget, gpointer data) {
 
 }
 
+static void accurate_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
+  gboolean accurate;
+#endif
+
+  accurate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  
+#ifndef AMIDE_WIN32_HACKS
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("ANALYSIS/Accurate", accurate);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+#endif
+  return;
+}
 
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 
@@ -942,16 +962,19 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   GtkWidget * hseparator;
   GtkObject * adjustment;
   GtkWidget * spin_buttons[3];
+  GtkWidget * check_button;
   analysis_calculation_t i_calculation_type;
 #ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   analysis_calculation_t calculation_type;
+  gboolean accurate;
   gdouble subfraction;
   gdouble threshold_percentage;
   gdouble threshold_value;
 
-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_percentage, &threshold_value);
+  read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, 
+		   &subfraction, &threshold_percentage, &threshold_value);
 #endif
 
   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
@@ -1064,8 +1087,8 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 1.0);
   spin_buttons[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[0]),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[0]), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[0]), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[0]), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_buttons[0]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
@@ -1088,8 +1111,8 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   adjustment = gtk_adjustment_new(threshold_percentage, 0.0, 100.0,1.0, 1.0, 1.0);
   spin_buttons[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[1]),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[1]), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[1]), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[1]), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[1]), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[1]), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_buttons[1]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
@@ -1109,11 +1132,11 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   g_object_set_data(G_OBJECT(radio_button[3]), "calculation_type", GINT_TO_POINTER(VOXELS_GREATER_THAN_VALUE));
 
-  adjustment = gtk_adjustment_new(threshold_value, 0.0, 100.0,1.0, 1.0, 1.0);
-  spin_buttons[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  spin_buttons[2] = gtk_spin_button_new_with_range(-G_MAXDOUBLE, G_MAXDOUBLE, 1.0);
+  gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_buttons[2]), threshold_value);
   gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_buttons[2]),FALSE);
-  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[2]), TRUE);
-  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[2]), TRUE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_buttons[2]), FALSE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_buttons[2]), FALSE);
   gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_buttons[2]), GTK_UPDATE_ALWAYS);
   g_signal_connect(G_OBJECT(spin_buttons[2]), "output",
 		   G_CALLBACK(amitk_spin_button_scientific_output), NULL);
@@ -1132,6 +1155,20 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
     g_signal_connect(G_OBJECT(radio_button[i_calculation_type]), "clicked", 
 		     G_CALLBACK(calculation_type_cb), NULL);
   }
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(table), hseparator, 0,3,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* do we want more accurate quantitation */
+  check_button = gtk_check_button_new_with_label(_("More Accurate Quantitation (Slow)"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), accurate);
+  gtk_table_attach(GTK_TABLE(table), check_button, 
+		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(accurate_cb), dialog);
+  table_row++;
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

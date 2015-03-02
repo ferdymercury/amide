@@ -589,6 +589,7 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 
   AmitkVoxel i_voxel;
 
+  i_voxel.t = i_voxel.g = i_voxel.z = 0;
 #ifdef ROI_TYPE_ISOCONTOUR_3D
   for (i_voxel.z = erase_voxel.z-area_size; i_voxel.z <= erase_voxel.z+area_size; i_voxel.z++) 
 #endif
@@ -598,7 +599,6 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
 	  AMITK_RAW_DATA_UBYTE_SET_CONTENT(roi->isocontour,i_voxel)=0;
 
   /* re edge the neighboring points */
-  i_voxel.t = i_voxel.g = i_voxel.z = 0;
 #ifdef ROI_TYPE_ISOCONTOUR_3D
   for (i_voxel.z = erase_voxel.z-1-area_size; i_voxel.z <= erase_voxel.z+1+area_size; i_voxel.z++) 
 #endif
@@ -624,20 +624,21 @@ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_
    and performs the specified calculation function for those points */
 /* calulation should be a function taking the following arguments:
    calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
-							  const AmitkDataSet * ds, 
-							  const guint frame,
-							  const guint gate,
-							  const gboolean inverse,
-							  void (* calculation)(),
-							  gpointer data) {
+void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
+							       const AmitkDataSet * ds, 
+							       const guint frame,
+							       const guint gate,
+							       const gboolean inverse,
+							       void (* calculation)(),
+							       gpointer data) {
 
-  AmitkPoint roi_pt, fine_ds_pt, far_ds_pt;
+  AmitkPoint roi_pt_corner, roi_pt_center, fine_roi_pt;
+  AmitkPoint fine_ds_pt, far_ds_pt, center_ds_pt;
   amide_data_t value;
   amide_real_t voxel_fraction;
   AmitkVoxel i,j, k;
   AmitkVoxel start, dim, ds_dim;
-  gboolean voxel_in;
+  gboolean corner_in, center_in;
   AmitkRawData * next_plane_in;
   AmitkRawData * curr_plane_in;
   gboolean small_dimensions;
@@ -703,7 +704,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
     small_dimensions = TRUE;
   else
     small_dimensions = FALSE;
-
+  
   /* over-iterate, as our initial edges will always be considered out of the roi */
   start.x -= 1;
   start.y -= 1;
@@ -733,37 +734,47 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   for (i.z = 0; i.z < dim.z; i.z++) {
     j.z = i.z+start.z;
     far_ds_pt.z = (j.z+1)*ds_voxel_size.z;
+    center_ds_pt.z = (j.z+0.5)*ds_voxel_size.z;
     
     for (i.y = 0; i.y < dim.y; i.y++) {
       j.y = i.y+start.y;
       far_ds_pt.y = (j.y+1)*ds_voxel_size.y;
+      center_ds_pt.y = (j.y+0.5)*ds_voxel_size.y;
       
       for (i.x = 0; i.x < dim.x; i.x++) {
 	j.x = i.x+start.x;
 	far_ds_pt.x = (j.x+1)*ds_voxel_size.x;
+	center_ds_pt.x = (j.x+0.5)*ds_voxel_size.x;
 	
-	/* figure out if the next far corner is in the roi or not */
-	/* get the corresponding roi point */
-	roi_pt = amitk_space_s2s(AMITK_SPACE(ds),  AMITK_SPACE(roi), far_ds_pt);
+	/* figure out if the center and the next far corner is in the roi or not */
+	/* get the corresponding roi points */
+	roi_pt_corner = amitk_space_s2s(AMITK_SPACE(ds),  AMITK_SPACE(roi), far_ds_pt);
+	roi_pt_center = amitk_space_s2s(AMITK_SPACE(ds),  AMITK_SPACE(roi), center_ds_pt);
 
 	/* calculate the one corner of the voxel "box" to determine if it's in or not */
+	/* along with the center of the voxel */
 #if defined (ROI_TYPE_BOX)
-	voxel_in = point_in_box(roi_pt, box_corner);
+	corner_in = point_in_box(roi_pt_corner, box_corner);
+	center_in = point_in_box(roi_pt_center, box_corner);
 #endif
 #if defined(ROI_TYPE_CYLINDER)
-	voxel_in = point_in_elliptic_cylinder(roi_pt, center, height, radius);
+	corner_in = point_in_elliptic_cylinder(roi_pt_corner, center, height, radius);
+	center_in = point_in_elliptic_cylinder(roi_pt_center, center, height, radius);
 #endif
 #if defined(ROI_TYPE_ELLIPSOID)
-	voxel_in = point_in_ellipsoid(roi_pt,center,radius);
+	corner_in = point_in_ellipsoid(roi_pt_corner,center,radius);
+	center_in = point_in_ellipsoid(roi_pt_center,center,radius);
 #endif
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
-	POINT_TO_VOXEL(roi_pt, roi_voxel_size, 0, 0,roi_voxel);
-	if (!amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel)) voxel_in = FALSE;
-	else if (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) == 0) voxel_in = FALSE;
-	else voxel_in = TRUE;
+	POINT_TO_VOXEL(roi_pt_corner, roi_voxel_size, 0, 0,roi_voxel);
+	corner_in = (amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel) &&
+		     (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) != 0));
+	POINT_TO_VOXEL(roi_pt_center, roi_voxel_size, 0, 0,roi_voxel);
+	center_in = (amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel) &&
+		     (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) != 0));
 #endif
 
-	AMITK_RAW_DATA_UBYTE_2D_SET_CONTENT(next_plane_in,i.y+1,i.x+1)=voxel_in;
+	AMITK_RAW_DATA_UBYTE_2D_SET_CONTENT(next_plane_in,i.y+1,i.x+1)=corner_in;
 
 	if (AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x) &&
 	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(curr_plane_in,i.y,i.x+1) &&
@@ -772,7 +783,8 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x) &&
 	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x+1) &&
 	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x) &&
-	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1)) {
+	    AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1) &&
+	    center_in) {
 	  /* this voxel is entirely in the ROI */
 
 	  if (!inverse) {
@@ -788,6 +800,7 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y,i.x+1) ||
 		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x) ||
 		   AMITK_RAW_DATA_UBYTE_2D_CONTENT(next_plane_in,i.y+1,i.x+1) ||
+		   center_in ||
 		   small_dimensions) {
 	  /* this voxel is partially in the ROI, will need to do subvoxel analysis */
 
@@ -803,27 +816,24 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
 	      for (k.x = 0;k.x<AMITK_ROI_GRANULARITY;k.x++) {
 		fine_ds_pt.x = j.x*ds_voxel_size.x+(k.x+0.5)*sub_voxel_size.x;
 		
-		roi_pt = amitk_space_s2s(AMITK_SPACE(ds), AMITK_SPACE(roi), fine_ds_pt);
+		fine_roi_pt = amitk_space_s2s(AMITK_SPACE(ds), AMITK_SPACE(roi), fine_ds_pt);
 
 		/* calculate the one corner of the voxel "box" to determine if it's in or not */
 #if defined (ROI_TYPE_BOX)
-		voxel_in = point_in_box(roi_pt, box_corner);
+		if (point_in_box(fine_roi_pt, box_corner)) voxel_fraction += grain_size;
 #endif
 #if defined(ROI_TYPE_CYLINDER)
-		voxel_in = point_in_elliptic_cylinder(roi_pt, center, height, radius);
+		if (point_in_elliptic_cylinder(fine_roi_pt, center, height, radius)) voxel_fraction += grain_size;
 #endif
 #if defined(ROI_TYPE_ELLIPSOID)
-		voxel_in = point_in_ellipsoid(roi_pt,center,radius);
+		if (point_in_ellipsoid(fine_roi_pt,center,radius)) voxel_fraction += grain_size;
 #endif
 #if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
-		POINT_TO_VOXEL(roi_pt, roi_voxel_size, 0, 0, roi_voxel);
-		if (!amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel)) voxel_in = FALSE;
-		else if (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) == 0) voxel_in = FALSE;
-		else voxel_in = TRUE;
-#endif
-		if (voxel_in) {
+		POINT_TO_VOXEL(fine_roi_pt, roi_voxel_size, 0, 0, roi_voxel);
+		if (amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel) &&
+		    (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) != 0))
 		  voxel_fraction += grain_size;
-		} /* voxel_in */
+#endif
 	      } /* k.x loop */
 	    } /* k.y loop */
 	  } /* k.z loop */
@@ -854,6 +864,147 @@ void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,
   g_object_unref(curr_plane_in);
   g_object_unref(next_plane_in);
 
+
+  return;
+}
+
+
+/* iterates over the voxels in the given data set that are inside the given roi,
+   and performs the specified calculation function for those points */
+/* calulation should be a function taking the following arguments:
+   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
+								   const AmitkDataSet * ds, 
+								   const guint frame,
+								   const guint gate,
+								   const gboolean inverse,
+								   void (* calculation)(),
+								   gpointer data) {
+
+  AmitkPoint fine_roi_pt, fine_ds_pt;
+  amide_data_t value;
+  amide_real_t voxel_fraction;
+  AmitkVoxel j, k;
+  AmitkVoxel start, end, ds_dim;
+  AmitkCorners intersection_corners;
+  AmitkPoint ds_voxel_size;
+  AmitkPoint sub_voxel_size;
+  amide_real_t grain_size;
+
+#if defined (ROI_TYPE_BOX)
+  AmitkPoint box_corner;
+  box_corner = AMITK_VOLUME_CORNER(roi);
+#endif
+
+#if defined(ROI_TYPE_ELLIPSOID) || defined(ROI_TYPE_CYLINDER)
+  AmitkPoint center;
+  AmitkPoint radius;
+#if defined(ROI_TYPE_CYLINDER)
+  amide_real_t height;
+  height = AMITK_VOLUME_Z_CORNER(roi);
+#endif  
+  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_get_center(AMITK_VOLUME(roi)));
+  radius = point_cmult(0.5, AMITK_VOLUME_CORNER(roi));
+#endif
+
+#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
+  AmitkPoint roi_voxel_size;
+  AmitkVoxel roi_voxel;
+
+  roi_voxel_size = AMITK_ROI_VOXEL_SIZE(roi);
+#endif
+
+  ds_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
+  sub_voxel_size = point_cmult(1.0/AMITK_ROI_GRANULARITY, ds_voxel_size);
+  ds_dim = AMITK_DATA_SET_DIM(ds);
+
+  grain_size = 1.0/(AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY);
+
+  /* figure out the intersection between the data set and the roi */
+  if (inverse) {
+    start = zero_voxel;
+    end = voxel_sub(ds_dim, one_voxel);
+  } else {
+    if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds),  AMITK_VOLUME(roi), 
+						  intersection_corners)) {
+      end = zero_voxel; /* no intersection */
+      start = one_voxel;
+    } else {
+      /* translate the intersection into voxel space */
+      POINT_TO_VOXEL(intersection_corners[0], ds_voxel_size, 0, 0, start);
+      POINT_TO_VOXEL(intersection_corners[1], ds_voxel_size, 0, 0, end);
+    }
+  }
+
+  /* check if we're done already */
+  if ((start.x > end.x) || (start.y > end.y) || (start.z > end.z)) 
+    return;
+
+  /* check all dimensions */
+  if (start.x < 0) start.x = 0;
+  if (start.y < 0) start.y = 0;
+  if (start.z < 0) start.z = 0;
+  if (end.x >= ds_dim.x) end.x = ds_dim.x-1;
+  if (end.y >= ds_dim.y) end.y = ds_dim.y-1;
+  if (end.z >= ds_dim.z) end.z = ds_dim.z-1;
+
+  /* start and end specify (in the data set's voxel space) the voxels in 
+     the volume we should be iterating over */
+
+  j.t = frame;
+  j.g = gate;
+  k.t = k.g = 0;
+
+  for (j.z = start.z; j.z <= end.z; j.z++) {
+    for (j.y = start.y; j.y <= end.y; j.y++) {
+      for (j.x = start.x; j.x <= end.x; j.x++) {
+
+	value = amitk_data_set_get_value(ds,j);
+	voxel_fraction=0;
+
+	for (k.z = 0;k.z<AMITK_ROI_GRANULARITY;k.z++) {
+	  fine_ds_pt.z = j.z*ds_voxel_size.z+ (k.z+0.5)*sub_voxel_size.z;
+
+	  for (k.y = 0;k.y<AMITK_ROI_GRANULARITY;k.y++) {
+	    fine_ds_pt.y = j.y*ds_voxel_size.y+ (k.y+0.5)*sub_voxel_size.y;
+
+	    /* fine_ds_pt.x gets advanced at bottom of loop */
+	    fine_ds_pt.x = j.x*ds_voxel_size.x+0.5*sub_voxel_size.x;
+
+	    for (k.x = 0;k.x<AMITK_ROI_GRANULARITY;k.x++) {
+	      fine_roi_pt = amitk_space_s2s(AMITK_SPACE(ds), AMITK_SPACE(roi), fine_ds_pt);
+
+	      /* is this point in */
+#if defined (ROI_TYPE_BOX)
+	      if (point_in_box(fine_roi_pt, box_corner)) voxel_fraction+=grain_size;
+#endif
+#if defined(ROI_TYPE_CYLINDER)
+	      if (point_in_elliptic_cylinder(fine_roi_pt, center, height, radius)) voxel_fraction+=grain_size;
+#endif
+#if defined(ROI_TYPE_ELLIPSOID)
+	      if (point_in_ellipsoid(fine_roi_pt,center,radius)) voxel_fraction+=grain_size;
+#endif
+#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
+	      POINT_TO_VOXEL(fine_roi_pt, roi_voxel_size, 0, 0, roi_voxel);
+	      if (amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel) &&
+		  (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) != 0)) 
+		voxel_fraction+=grain_size;
+#endif
+	      fine_ds_pt.x += sub_voxel_size.x;
+	    } /* k.x loop */
+	  } /* k.y loop */
+	} /* k.z loop */
+
+	if (voxel_fraction > 0.0) {
+	  if (!inverse) {
+	    (*calculation)(j, value, voxel_fraction, data);
+	  } else {
+	    (*calculation)(j, value, 1.0-voxel_fraction, data);
+	  }
+	}
+      } /* i.x loop */
+    } /* i.y loop */
+  } /* i.z loop */
 
   return;
 }

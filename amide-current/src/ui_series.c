@@ -77,6 +77,8 @@ typedef struct ui_series_t {
   GList * objects;
   AmitkDataSet * active_ds;
   GtkWidget * canvas;
+  gint canvas_height;
+  gint canvas_width;
   GnomeCanvasItem ** images;
   GnomeCanvasItem ** captions;
   GList ** items;
@@ -119,6 +121,7 @@ typedef struct ui_series_t {
 
 
 static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data);
+static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation, gpointer ui_series);
 static void export_series_ok_cb(GtkWidget* widget, gpointer data);
 static void export_cb(GtkWidget * widget, gpointer data);
 static void changed_cb(gpointer dummy, gpointer ui_series);
@@ -160,6 +163,17 @@ static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
 
   return;
 }
+
+static void canvas_size_change_cb(GtkWidget * widget, GtkAllocation * allocation, gpointer data) {
+  ui_series_t * ui_series = data;
+
+  ui_series->canvas_width = allocation->width;
+  ui_series->canvas_height = allocation->height;
+  add_update(ui_series);
+
+  return;
+}
+
 
 /* function to handle exporting a view */
 static void export_series_ok_cb(GtkWidget* widget, gpointer data) {
@@ -520,7 +534,7 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
     }
 
     if (ui_series->items != NULL) {
-      for (i=0; i < ui_series->rows*ui_series->columns; i++) {
+      for (i=0; i < ui_series->num_slices; i++) {
 	if (ui_series->items[i] != NULL) {
 	  g_list_free(ui_series->items[i]);
 	  ui_series->items[i] = NULL;
@@ -563,6 +577,8 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
   ui_series->num_slices = 0;
   ui_series->rows = 0;
   ui_series->columns = 0;
+  ui_series->canvas_height = 0;
+  ui_series->canvas_width = 1;
   ui_series->images = NULL;
   ui_series->captions = NULL;
   ui_series->items = NULL;
@@ -635,7 +651,7 @@ static void add_update(ui_series_t * ui_series) {
   if (ui_series->idle_handler_id == 0) {
     ui_common_place_cursor_no_wait(UI_CURSOR_WAIT, ui_series->canvas);
     ui_series->idle_handler_id = 
-      g_idle_add_full(G_PRIORITY_HIGH_IDLE,update_immediate, ui_series, NULL);
+      g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,update_immediate, ui_series, NULL);
   }
 
   return;
@@ -650,9 +666,7 @@ static gboolean update_immediate(gpointer data) {
   amide_time_t temp_time, temp_duration;
   gint temp_gate;
   gint i, start_i;
-  gint width, height;
   gdouble x, y;
-  GtkRequisition requisition;
   AmitkVolume * view_volume;
   gint image_width, image_height;
   gchar * temp_string;
@@ -662,6 +676,7 @@ static gboolean update_immediate(gpointer data) {
   GList * objects;
   GnomeCanvasItem * item;
   rgba_t outline_color;
+  gint rows, columns;
 
   ui_series->in_generation=TRUE;
 
@@ -669,48 +684,72 @@ static gboolean update_immediate(gpointer data) {
   amitk_progress_dialog_set_text(AMITK_PROGRESS_DIALOG(ui_series->progress_dialog), temp_string);
   g_free(temp_string);
 
-  /* get the view axis to use*/
-  width = 0.9*gdk_screen_width();
-  height = 0.8*gdk_screen_height();
-
-  image_width = ui_series->pixbuf_width + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
-  image_height = ui_series->pixbuf_height + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
-
-
-  /* allocate space for pointers to our canvas_images, captions, and item lists, if needed */
+  /* allocate space for the following if this is the first time through */
   if (ui_series->images == NULL) {
-    /* figure out how many images we can display at once */
-    ui_series->columns = floor(width/image_width);
-    if (ui_series->columns < 1) ui_series->columns = 1;
-    ui_series->rows = floor(height/image_height);
-    if (ui_series->rows < 1) ui_series->rows = 1;
-
-    /* compensate for cases where we don't need all the rows */
-    if ((ui_series->columns * ui_series->rows) > ui_series->num_slices)
-      ui_series->rows = ceil((double) ui_series->num_slices/(double) ui_series->columns);
-
-    if ((ui_series->images = g_try_new(GnomeCanvasItem *,ui_series->rows*ui_series->columns)) == NULL) {
+    if ((ui_series->images = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
       g_warning(_("couldn't allocate space for pointers to image GnomeCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
-    if ((ui_series->captions = g_try_new(GnomeCanvasItem *,ui_series->rows*ui_series->columns)) == NULL) {
+    if ((ui_series->captions = g_try_new(GnomeCanvasItem *,ui_series->num_slices)) == NULL) {
       g_warning(_("couldn't allocate space for pointers to caption GnomeCanvasItem's"));
       return_val = FALSE;
       goto exit_update;
     }
-    if ((ui_series->items = g_try_new(GList *,ui_series->rows*ui_series->columns)) == NULL) {
+    if ((ui_series->items = g_try_new(GList *,ui_series->num_slices)) == NULL) {
       g_warning(_("couldn't allocate space for pointers to GnomeCanavasItem lists"));
       return_val = FALSE;
       goto exit_update;
     }
-    for (i=0; i < ui_series->columns * ui_series->rows ; i++) {
+    for (i=0; i < ui_series->num_slices ; i++) {
       ui_series->images[i] = NULL;
       ui_series->captions[i] = NULL;
       ui_series->items[i] = NULL;
     }
   }
 
+
+  image_width = ui_series->pixbuf_width + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
+  image_height = ui_series->pixbuf_height + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
+
+  /* figure out how many images we can display at once */
+  columns = floor(ui_series->canvas_width/image_width);
+  if (columns < 1) columns = 1;
+  rows = floor(ui_series->canvas_height/image_height);
+  if (rows < 1) rows = 1;
+
+  /* compensate for cases where we don't need all the rows */
+  if ((columns * rows) > ui_series->num_slices)
+    rows = ceil((double) ui_series->num_slices/(double) columns);
+
+  /* if we've changed rows or columns, delete prexisting canvas objects */
+  if ((ui_series->rows != rows) || (ui_series->columns != columns)) {
+    ui_series->rows = rows;
+    ui_series->columns = columns;
+
+    for (i=0; i < ui_series->num_slices ; i++) {
+      if (ui_series->images[i] != NULL) {
+	gtk_object_destroy(GTK_OBJECT(ui_series->images[i]));
+	ui_series->images[i] = NULL;
+      }
+      if (ui_series->captions[i] != NULL) {
+	gtk_object_destroy(GTK_OBJECT(ui_series->captions[i]));
+	ui_series->captions[i] = NULL;
+      }
+      if (ui_series->items[i] != NULL) {
+	while (ui_series->items[i] != NULL) { 
+	  item = ui_series->items[i]->data;
+	  ui_series->items[i] = g_list_remove(ui_series->items[i], item);
+	  gtk_object_destroy(GTK_OBJECT(item));
+	}
+	ui_series->items[i] = NULL;
+      }
+    }
+
+    gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_series->canvas), 0.0, 0.0, 
+				   (double) (ui_series->columns*image_width), 
+				   (double) (ui_series->rows*image_height));
+  }
 
   /* figure out what's the first image we want to display */
   switch(ui_series->series_type) {
@@ -878,19 +917,6 @@ static gboolean update_immediate(gpointer data) {
   }
   amitk_object_unref(view_volume);
 
-  /* readjust widith and height for what we really used */
-  width = ui_series->columns*image_width;
-  height =ui_series->rows   *image_height;
-
-  /* reset the min size of the widget */
-  gnome_canvas_set_scroll_region(GNOME_CANVAS(ui_series->canvas), 0.0, 0.0, 
-				 (double) width, (double) height);
-
-  requisition.width = width;
-  requisition.height = height;
-  gtk_widget_size_request(ui_series->canvas, &requisition);
-  gtk_widget_set_size_request(ui_series->canvas, width, height);
-  /* the requisition thing should work.... I'll use this for now for now... */
   return_val = FALSE;
 
 
@@ -939,6 +965,7 @@ void ui_series_create(AmitkStudy * study,
   GList * temp_objects;
   guint num_data_sets = 0;
   guint total_data_set_frames=0;
+  gint width, height;
 #ifndef AMIDE_WIN32_HACKS
   series_type_t series_type;
   AmitkView view;
@@ -954,6 +981,9 @@ void ui_series_create(AmitkStudy * study,
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   g_free(title);
   gtk_window_set_resizable(GTK_WINDOW(app), TRUE);
+  width = 0.5*gdk_screen_width();
+  height = 0.5*gdk_screen_height();
+  gtk_window_set_default_size(GTK_WINDOW(app), width, height);
 
   ui_series = ui_series_init(app);
   ui_series->series_type = series_type;
@@ -1240,7 +1270,9 @@ void ui_series_create(AmitkStudy * study,
 #else
   ui_series->canvas = gnome_canvas_new();
 #endif
-  update_immediate(ui_series); /* fill in the canvas */
+  g_signal_connect(G_OBJECT(ui_series->canvas), "size_allocate", 
+		   G_CALLBACK(canvas_size_change_cb), ui_series);
+
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   ui_series->canvas, 0,1,1,2,
 		   X_PACKING_OPTIONS | GTK_FILL,

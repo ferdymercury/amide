@@ -86,6 +86,7 @@ struct _analysis_roi_t {
   AmitkRoi * roi;
   AmitkStudy * study;
   analysis_calculation_t calculation_type;
+  gboolean accurate;
   gdouble subfraction;
   gdouble threshold_percentage;
   gdouble threshold_value;
@@ -104,6 +105,7 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study,
 				   GList * rois, 
 				   GList * volumes, 
 				   analysis_calculation_t calculation_type,
+				   gboolean accurate,
 				   gdouble subfraction, 
 				   gdouble threshold_percentage, 
 				   gdouble threshold_value);

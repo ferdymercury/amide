@@ -33,6 +33,10 @@ windows todo
 * zdial on rendering doesn't work
 * preferences aren't currently saved between amide sessions
 * help buttons don't work.
+* clicking and dragging roi off canvas yields bad behavior
+	(program interaction is frozen until same roi is clicked and released)
+	doesn't occur under linux
+* calculate over highest % of voxels crashes if the value is 100%
 
 
 factor analysis things:
@@ -87,9 +91,6 @@ small things:
 * roi analysis dialog should probably be updated for any change of the roi's
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
-* ui_series, should add popup dialog allowing # columns and rows to
-	be specified (best guess would be default).
-	also, switch between putting time or frame number on display
 * add key combination that sets current pixel value to max/min threshold
                                                                                 
 
@@ -99,7 +100,6 @@ pre 1.0 things:
 * try to change dialog box buttons to verbs
 * start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
-* check that make distcheck works
 * add tooltips to everything....
 * add more help buttons to the dialogs 
   -gnome_druid has an add help button function

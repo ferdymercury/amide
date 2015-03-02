@@ -114,6 +114,7 @@ void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,
 						   const guint frame,
 						   const guint gate,
 						   const gboolean inverse,
+						   const gboolean accurate,
 						   void (* calculation)(),
 						   gpointer data);
 void            amitk_roi_erase_volume            (const AmitkRoi * roi, 

@@ -529,6 +529,7 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
 /* iterates over the voxels in the given data set that are inside the given roi,
    and performs the specified calculation function for those points */
 /* if inverse is true, the calculation is done for the portion of the data set not in the roi */
+/* if accurate is true, uses much slower but more accurate calculation */
 /* calulation should be a function taking the following arguments:
    calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
 void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
@@ -536,6 +537,7 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
 				     const guint frame,
 				     const guint gate,
 				     const gboolean inverse,
+				     const gboolean accurate,
 				     void (*calculation)(),
 				     gpointer data) {
 
@@ -546,19 +548,34 @@ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ELLIPSOID:
-    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
+    if (accurate)
+      amitk_roi_ELLIPSOID_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_ELLIPSOID_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_CYLINDER:
-    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
+    if (accurate)
+      amitk_roi_CYLINDER_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_CYLINDER_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_BOX:
-    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
+    if (accurate)
+      amitk_roi_BOX_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_BOX_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
+    if (accurate)
+      amitk_roi_ISOCONTOUR_2D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_ISOCONTOUR_2D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
+    if (accurate)
+      amitk_roi_ISOCONTOUR_3D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
+    else
+      amitk_roi_ISOCONTOUR_3D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
     break;
   default: 
     g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
@@ -593,7 +610,7 @@ void amitk_roi_erase_volume(const AmitkRoi * roi,
 
   for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) 
     for (i_gate=0; i_gate<AMITK_DATA_SET_NUM_GATES(ds); i_gate++) 
-      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, erase_volume, ds);
+      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, TRUE, erase_volume, ds);
 
   /* recalc max and min */
   amitk_data_set_calc_max_min(ds, update_func, update_data);

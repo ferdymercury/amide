@@ -1132,10 +1132,11 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     
   }
 
-  //    if ((canvas_event_type != CANVAS_EVENT_NONE) &&
-  //        (canvas_event_type != CANVAS_EVENT_MOTION))
-  //      g_print("%s event %d grab %d gdk %d\n", AMITK_IS_OBJECT(object) ? AMITK_OBJECT_NAME(object) : "line_profile", 
-  //  	    canvas_event_type, grab_on, event->type);
+
+  //      if ((canvas_event_type != CANVAS_EVENT_NONE) &&
+  //          (canvas_event_type != CANVAS_EVENT_MOTION))
+  //        g_print("%s event %d grab %d gdk %d\n", AMITK_IS_OBJECT(object) ? AMITK_OBJECT_NAME(object) : "line_profile", 
+  //    	    canvas_event_type, grab_on, event->type);
 
   /* get the location of the event, and convert it to the canvas coordinates */
   gnome_canvas_window_to_world(GNOME_CANVAS(canvas->canvas), event_cpoint.x, event_cpoint.y, &canvas_cpoint.x, &canvas_cpoint.y);
@@ -1413,8 +1414,9 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     
   case CANVAS_EVENT_MOTION:
     if (AMITK_IS_ROI(object))
-      if (AMITK_ROI_TYPE_ISOCONTOUR(object))
-	voxel_value = AMITK_ROI(object)->isocontour_value;
+      if (!AMITK_ROI_UNDRAWN(object))
+	if (AMITK_ROI_TYPE_ISOCONTOUR(object))
+	  voxel_value = AMITK_ROI(object)->isocontour_value;
   
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		  AMITK_HELP_INFO_UPDATE_LOCATION, &base_point, voxel_value);
@@ -1481,7 +1483,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     break;
 
   case CANVAS_EVENT_MOTION_NEW_ROI:
-    if (AMITK_ROI_TYPE_ISOCONTOUR(object))
+    if (AMITK_ROI_TYPE_ISOCONTOUR(object)) 
       g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		    AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI, &base_point, 0.0);
     else {

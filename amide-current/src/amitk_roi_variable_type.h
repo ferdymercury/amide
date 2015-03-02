@@ -49,13 +49,20 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
 #endif
 
-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
-							  const AmitkDataSet * ds, 
-							  const guint frame,
-							  const guint gate,
-							  const gboolean inverse,
-							  void (*calculation)(),
-							  gpointer data);
+void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
+							       const AmitkDataSet * ds, 
+							       const guint frame,
+							       const guint gate,
+							       const gboolean inverse,
+							       void (*calculation)(),
+							       gpointer data);
+void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
+								   const AmitkDataSet * ds, 
+								   const guint frame,
+								   const guint gate,
+								   const gboolean inverse,
+								   void (*calculation)(),
+								   gpointer data);
 
 #undef ROI_TYPE_`'m4_Variable_Type`'
 

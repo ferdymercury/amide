@@ -1,4 +1,18 @@
-0.8.6
+0.8.7
+	* spin buttons on roi initial popup didn't take decimal places [1]
+	* ui_series panel size can now be adjusted [2]
+	* new isocontour, wasn't showing image value on help window [3]
+	* fixed isocontour erasing [3]
+	* fixed error in profile tool, incorrect values for view_duration < frame_duration [4]
+	* users now have the option of a more accurate roi quantitation algorithm [5]
+	* increased accuracy of the fast roi quantitation algorithm
+	[1] Found by Keon Kang
+	[2] Requested by Freimut Juengling
+	[3] Found by Steve Jones
+ 	[4] Found by Patrick Chow
+ 	[5] Found by Peter Bloomfield	
+	
+0.8.6 2004.06.22
 	* raw data import dialog didn't take gates into account for calculating bytes
 	* fixed rendered movie generation
 	* can now calculate inside ROI for values greater than specific value

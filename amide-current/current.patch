@@ -1,0 +1,657 @@
+diff -urN amide-0.8.6/ChangeLog amide-0.8.6_legoland/ChangeLog
+--- amide-0.8.6/ChangeLog	2004-06-22 10:37:34.000000000 -0700
++++ amide-0.8.6_legoland/ChangeLog	2004-08-18 22:47:44.800142728 -0700
+@@ -1,3 +1,9 @@
++0.8.7
++	* fixed error in profile tool, incorrect values for view_duration < frame_duration [1]
++	* users now have the option of a more accurate roi quantitation algorithm [2]
++	[1] Found by Patrick Chow
++	[2] Found by Peter Bloomfield	
++
+ 0.8.6
+ 	* raw data import dialog didn't take gates into account for calculating bytes
+ 	* fixed rendered movie generation
+diff -urN amide-0.8.6/help/C/rois.xml amide-0.8.6_legoland/help/C/rois.xml
+--- amide-0.8.6/help/C/rois.xml	2004-04-21 18:56:13.000000000 -0700
++++ amide-0.8.6_legoland/help/C/rois.xml	2004-08-18 21:48:29.481633296 -0700
+@@ -154,8 +154,23 @@
+     equal to 50% of the highest valued voxel.
+     </para>
+    </listitem>
++
++   <listitem>
++    <para> Calculate for voxel >= Value. This algorithm only does
++    calculations for voxels in the ROI that have a value greater than
++    the value specified.
++    </para>
++   </listitem>
++
+   </orderedlist>
+ 
++  <para> There's also a check box to enable "more accurate
++  quantitation".  The default algorithm (corresponding to unchecked)
++  makes some approximations in deciding which voxel are in our out of
++  the ROI.  If this check boxed is checked, the ROI results will be
++  more accurate, but will take much longer to compute.
++  </para>
++
+   <para>
+    After hitting execute, the program will crank for a while, and then
+    show the calculated values in a new dialog window.  Hitting "Save
+diff -urN amide-0.8.6/src/amitk_data_set.c amide-0.8.6_legoland/src/amitk_data_set.c
+--- amide-0.8.6/src/amitk_data_set.c	2004-06-07 16:47:45.000000000 -0700
++++ amide-0.8.6_legoland/src/amitk_data_set.c	2004-08-18 15:37:43.474540424 -0700
+@@ -2849,9 +2849,10 @@
+       /* need to average over frames */
+       value = 0;
+       for (current_voxel.t=start_frame; current_voxel.t<=end_frame;current_voxel.t++) {
++
+ 	if (start_frame == end_frame)
+ 	  time_weight = 1.0;
+-	if (current_voxel.t == start_frame)
++	else if (current_voxel.t == start_frame)
+ 	  time_weight = (amitk_data_set_get_end_time(ds, start_frame)-used_start)/used_duration;
+ 	else if (current_voxel.t == end_frame)
+ 	  time_weight = (used_end-amitk_data_set_get_start_time(ds, end_frame))/used_duration;
+diff -urN amide-0.8.6/src/amitk_roi.c amide-0.8.6_legoland/src/amitk_roi.c
+--- amide-0.8.6/src/amitk_roi.c	2004-03-30 14:01:56.000000000 -0800
++++ amide-0.8.6_legoland/src/amitk_roi.c	2004-08-18 21:22:34.011100760 -0700
+@@ -529,6 +529,7 @@
+ /* iterates over the voxels in the given data set that are inside the given roi,
+    and performs the specified calculation function for those points */
+ /* if inverse is true, the calculation is done for the portion of the data set not in the roi */
++/* if accurate is true, uses much slower but more accurate calculation */
+ /* calulation should be a function taking the following arguments:
+    calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+ void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
+@@ -536,6 +537,7 @@
+ 				     const guint frame,
+ 				     const guint gate,
+ 				     const gboolean inverse,
++				     const gboolean accurate,
+ 				     void (*calculation)(),
+ 				     gpointer data) {
+ 
+@@ -546,19 +548,34 @@
+ 
+   switch(AMITK_ROI_TYPE(roi)) {
+   case AMITK_ROI_TYPE_ELLIPSOID:
+-    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
++    if (accurate)
++      amitk_roi_ELLIPSOID_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
++    else
++      amitk_roi_ELLIPSOID_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+     break;
+   case AMITK_ROI_TYPE_CYLINDER:
+-    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
++    if (accurate)
++      amitk_roi_CYLINDER_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
++    else
++      amitk_roi_CYLINDER_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+     break;
+   case AMITK_ROI_TYPE_BOX:
+-    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
++    if (accurate)
++      amitk_roi_BOX_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
++    else
++      amitk_roi_BOX_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+     break;
+   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
+-    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
++    if (accurate)
++      amitk_roi_ISOCONTOUR_2D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
++    else
++      amitk_roi_ISOCONTOUR_2D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+     break;
+   case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+-    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, gate, inverse, calculation, data);
++    if (accurate)
++      amitk_roi_ISOCONTOUR_3D_calculate_on_data_set_accurate(roi, ds, frame, gate, inverse, calculation, data);
++    else
++      amitk_roi_ISOCONTOUR_3D_calculate_on_data_set_fast(roi, ds, frame, gate, inverse, calculation, data);
+     break;
+   default: 
+     g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
+@@ -593,7 +610,7 @@
+ 
+   for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++) 
+     for (i_gate=0; i_gate<AMITK_DATA_SET_NUM_GATES(ds); i_gate++) 
+-      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, erase_volume, ds);
++      amitk_roi_calculate_on_data_set(roi, ds, i_frame, i_gate, outside, TRUE, erase_volume, ds);
+ 
+   /* recalc max and min */
+   amitk_data_set_calc_max_min(ds, update_func, update_data);
+diff -urN amide-0.8.6/src/amitk_roi.h amide-0.8.6_legoland/src/amitk_roi.h
+--- amide-0.8.6/src/amitk_roi.h	2004-03-30 11:31:49.000000000 -0800
++++ amide-0.8.6_legoland/src/amitk_roi.h	2004-08-18 21:33:10.329365680 -0700
+@@ -114,6 +114,7 @@
+ 						   const guint frame,
+ 						   const guint gate,
+ 						   const gboolean inverse,
++						   const gboolean accurate,
+ 						   void (* calculation)(),
+ 						   gpointer data);
+ void            amitk_roi_erase_volume            (const AmitkRoi * roi, 
+diff -urN amide-0.8.6/src/amitk_roi_variable_type.c amide-0.8.6_legoland/src/amitk_roi_variable_type.c
+--- amide-0.8.6/src/amitk_roi_variable_type.c	2004-03-30 11:32:13.000000000 -0800
++++ amide-0.8.6_legoland/src/amitk_roi_variable_type.c	2004-08-18 22:33:45.681708120 -0700
+@@ -624,13 +624,13 @@
+    and performs the specified calculation function for those points */
+ /* calulation should be a function taking the following arguments:
+    calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
+-							  const AmitkDataSet * ds, 
+-							  const guint frame,
+-							  const guint gate,
+-							  const gboolean inverse,
+-							  void (* calculation)(),
+-							  gpointer data) {
++void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
++							       const AmitkDataSet * ds, 
++							       const guint frame,
++							       const guint gate,
++							       const gboolean inverse,
++							       void (* calculation)(),
++							       gpointer data) {
+ 
+   AmitkPoint roi_pt, fine_ds_pt, far_ds_pt;
+   amide_data_t value;
+@@ -703,7 +703,7 @@
+     small_dimensions = TRUE;
+   else
+     small_dimensions = FALSE;
+-
++  
+   /* over-iterate, as our initial edges will always be considered out of the roi */
+   start.x -= 1;
+   start.y -= 1;
+@@ -859,5 +859,146 @@
+ }
+ 
+ 
++/* iterates over the voxels in the given data set that are inside the given roi,
++   and performs the specified calculation function for those points */
++/* calulation should be a function taking the following arguments:
++   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
++void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
++								   const AmitkDataSet * ds, 
++								   const guint frame,
++								   const guint gate,
++								   const gboolean inverse,
++								   void (* calculation)(),
++								   gpointer data) {
++
++  AmitkPoint roi_pt, fine_ds_pt;
++  amide_data_t value;
++  amide_real_t voxel_fraction;
++  AmitkVoxel j, k;
++  AmitkVoxel start, end, ds_dim;
++  AmitkCorners intersection_corners;
++  AmitkPoint ds_voxel_size;
++  AmitkPoint sub_voxel_size;
++  amide_real_t grain_size;
++
++#if defined (ROI_TYPE_BOX)
++  AmitkPoint box_corner;
++  box_corner = AMITK_VOLUME_CORNER(roi);
++#endif
++
++#if defined(ROI_TYPE_ELLIPSOID) || defined(ROI_TYPE_CYLINDER)
++  AmitkPoint center;
++  AmitkPoint radius;
++#if defined(ROI_TYPE_CYLINDER)
++  amide_real_t height;
++  height = AMITK_VOLUME_Z_CORNER(roi);
++#endif  
++  center = amitk_space_b2s(AMITK_SPACE(roi), amitk_volume_get_center(AMITK_VOLUME(roi)));
++  radius = point_cmult(0.5, AMITK_VOLUME_CORNER(roi));
++#endif
++
++#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
++  AmitkPoint roi_voxel_size;
++  AmitkVoxel roi_voxel;
++
++  roi_voxel_size = AMITK_ROI_VOXEL_SIZE(roi);
++#endif
++
++  ds_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(ds);
++  sub_voxel_size = point_cmult(1.0/AMITK_ROI_GRANULARITY, ds_voxel_size);
++  ds_dim = AMITK_DATA_SET_DIM(ds);
++
++  grain_size = 1.0/(AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY*AMITK_ROI_GRANULARITY);
++
++  /* figure out the intersection between the data set and the roi */
++  if (inverse) {
++    start = zero_voxel;
++    end = voxel_sub(ds_dim, one_voxel);
++  } else {
++    if (!amitk_volume_volume_intersection_corners(AMITK_VOLUME(ds),  AMITK_VOLUME(roi), 
++						  intersection_corners)) {
++      end = zero_voxel; /* no intersection */
++      start = one_voxel;
++    } else {
++      /* translate the intersection into voxel space */
++      POINT_TO_VOXEL(intersection_corners[0], ds_voxel_size, 0, 0, start);
++      POINT_TO_VOXEL(intersection_corners[1], ds_voxel_size, 0, 0, end);
++    }
++  }
++
++  /* check if we're done already */
++  if ((start.x > end.x) || (start.y > end.y) || (start.z > end.z)) 
++    return;
++
++  /* check all dimensions */
++  if (start.x < 0) start.x = 0;
++  if (start.y < 0) start.y = 0;
++  if (start.z < 0) start.z = 0;
++  if (end.x >= ds_dim.x) end.x = ds_dim.x-1;
++  if (end.y >= ds_dim.y) end.y = ds_dim.y-1;
++  if (end.z >= ds_dim.z) end.z = ds_dim.z-1;
++
++  /* start and end specify (in the data set's voxel space) the voxels in 
++     the volume we should be iterating over */
++
++  j.t = frame;
++  j.g = gate;
++  k.t = k.g = 0;
++
++  for (j.z = start.z; j.z <= end.z; j.z++) {
++    for (j.y = start.y; j.y <= end.y; j.y++) {
++      for (j.x = start.x; j.x <= end.x; j.x++) {
++
++	value = amitk_data_set_get_value(ds,j);
++	voxel_fraction=0;
++
++	for (k.z = 0;k.z<AMITK_ROI_GRANULARITY;k.z++) {
++	  fine_ds_pt.z = j.z*ds_voxel_size.z+ (k.z+0.5)*sub_voxel_size.z;
++
++	  for (k.y = 0;k.y<AMITK_ROI_GRANULARITY;k.y++) {
++	    fine_ds_pt.y = j.y*ds_voxel_size.y+ (k.y+0.5)*sub_voxel_size.y;
++
++	    /* fine_ds_pt.x gets advanced at bottom of loop */
++	    fine_ds_pt.x = j.x*ds_voxel_size.x+0.5*sub_voxel_size.x;
++
++	    for (k.x = 0;k.x<AMITK_ROI_GRANULARITY;k.x++) {
++	      roi_pt = amitk_space_s2s(AMITK_SPACE(ds), AMITK_SPACE(roi), fine_ds_pt);
++
++	      /* is this point in */
++#if defined (ROI_TYPE_BOX)
++	      if (point_in_box(roi_pt, box_corner)) voxel_fraction+=grain_size;
++#endif
++#if defined(ROI_TYPE_CYLINDER)
++	      if (point_in_elliptic_cylinder(roi_pt, center, height, radius)) voxel_fraction+=grain_size;
++#endif
++#if defined(ROI_TYPE_ELLIPSOID)
++	      if (point_in_ellipsoid(roi_pt,center,radius)) voxel_fraction+=grain_size;
++#endif
++#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
++	      POINT_TO_VOXEL(roi_pt, roi_voxel_size, 0, 0, roi_voxel);
++	      if (amitk_raw_data_includes_voxel(roi->isocontour, roi_voxel) &&
++		  (AMITK_RAW_DATA_UBYTE_CONTENT(roi->isocontour, roi_voxel) != 0)) 
++		voxel_fraction+=grain_size;
++#endif
++	      fine_ds_pt.x += sub_voxel_size.x;
++	    } /* k.x loop */
++	  } /* k.y loop */
++	} /* k.z loop */
++
++	if (voxel_fraction > 0.0) {
++	  if (!inverse) {
++	    (*calculation)(j, value, voxel_fraction, data);
++	  } else {
++	    (*calculation)(j, value, 1.0-voxel_fraction, data);
++	  }
++	}
++      } /* i.x loop */
++    } /* i.y loop */
++  } /* i.z loop */
++
++  return;
++}
++
++
+ 
+ 
+diff -urN amide-0.8.6/src/amitk_roi_variable_type.h amide-0.8.6_legoland/src/amitk_roi_variable_type.h
+--- amide-0.8.6/src/amitk_roi_variable_type.h	2004-03-30 13:20:50.000000000 -0800
++++ amide-0.8.6_legoland/src/amitk_roi_variable_type.h	2004-08-18 17:29:30.918853896 -0700
+@@ -49,13 +49,20 @@
+ void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
+ #endif
+ 
+-void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
+-							  const AmitkDataSet * ds, 
+-							  const guint frame,
+-							  const guint gate,
+-							  const gboolean inverse,
+-							  void (*calculation)(),
+-							  gpointer data);
++void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_fast(const AmitkRoi * roi,  
++							       const AmitkDataSet * ds, 
++							       const guint frame,
++							       const guint gate,
++							       const gboolean inverse,
++							       void (*calculation)(),
++							       gpointer data);
++void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set_accurate(const AmitkRoi * roi,  
++								   const AmitkDataSet * ds, 
++								   const guint frame,
++								   const guint gate,
++								   const gboolean inverse,
++								   void (*calculation)(),
++								   gpointer data);
+ 
+ #undef ROI_TYPE_`'m4_Variable_Type`'
+ 
+diff -urN amide-0.8.6/src/analysis.c amide-0.8.6_legoland/src/analysis.c
+--- amide-0.8.6/src/analysis.c	2004-06-21 22:46:37.000000000 -0700
++++ amide-0.8.6_legoland/src/analysis.c	2004-08-18 21:11:48.270268288 -0700
+@@ -45,18 +45,21 @@
+ static analysis_gate_t * analysis_gate_unref(analysis_gate_t *gate_analysis);
+ static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet *ds,guint frame, 
+ 					    analysis_calculation_t calculation_type,
++					    gboolean accurate,
+ 					    gdouble subfraction, 
+ 					    gdouble threshold_percentage, 
+ 					    gdouble threshold_value);
+ static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
+ static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
+ 					      analysis_calculation_t calculation_type,
++					      gboolean accurate,
+ 					      gdouble subfraction, 
+ 					      gdouble threshold_percentage,
+ 					      gdouble threshold_value);
+ static analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
+ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes, 
+ 						analysis_calculation_t calculation_type,
++						gboolean accurate,
+ 						gdouble subfraction, 
+ 						gdouble threshold_percentage, 
+ 						gdouble threshold_value);
+@@ -175,6 +178,7 @@
+ 						    guint frame,
+ 						    guint gate,
+ 						    analysis_calculation_t calculation_type,
++						    gboolean accurate,
+ 						    gdouble subfraction,
+ 						    gdouble threshold_percentage,
+ 						    gdouble threshold_value) {
+@@ -211,7 +215,7 @@
+      If I used a partial sort, I'd have to iterate over the subfraction to find the 
+      max and min, and I'd have to do another partial sort to find the median 
+   */
+-  amitk_roi_calculate_on_data_set(roi, ds, frame, gate,FALSE, record_stats, data_array);
++  amitk_roi_calculate_on_data_set(roi, ds, frame, gate,FALSE, accurate, record_stats, data_array);
+   g_ptr_array_sort(data_array, array_comparison);
+   
+   switch(calculation_type) {
+@@ -341,8 +345,8 @@
+ 
+   /* now let's recurse  */
+   analysis->next_gate_analysis = 
+-    analysis_gate_init_recurse(roi, ds, frame, gate+1, calculation_type, subfraction, 
+-			       threshold_percentage, threshold_value);
++    analysis_gate_init_recurse(roi, ds, frame, gate+1, calculation_type, accurate, 
++			       subfraction, threshold_percentage, threshold_value);
+ 
+   return analysis;
+ }
+@@ -352,11 +356,12 @@
+ static analysis_gate_t * analysis_gate_init(AmitkRoi * roi, AmitkDataSet * ds,
+ 					    guint frame, 
+ 					    analysis_calculation_t calculation_type,
++					    gboolean accurate,
+ 					    gdouble subfraction,
+ 					    gdouble threshold_percentage,
+ 					    gdouble threshold_value) {
+ 
+-  return analysis_gate_init_recurse(roi, ds, frame, 0, calculation_type,
++  return analysis_gate_init_recurse(roi, ds, frame, 0, calculation_type, accurate,
+ 				    subfraction, threshold_percentage, threshold_value);
+ }
+ 
+@@ -393,6 +398,7 @@
+ 						      AmitkDataSet *ds, 
+ 						      guint frame,
+ 						      analysis_calculation_t calculation_type,
++						      gboolean accurate,
+ 						      gdouble subfraction,
+ 						      gdouble threshold_percentage,
+ 						      gdouble threshold_value) {
+@@ -410,12 +416,12 @@
+ 
+   /* calculate this one */
+   temp_frame_analysis->gate_analyses = 
+-    analysis_gate_init(roi, ds, frame, calculation_type, subfraction, 
++    analysis_gate_init(roi, ds, frame, calculation_type, accurate, subfraction, 
+ 		       threshold_percentage, threshold_value);
+ 
+   /* recurse */
+   temp_frame_analysis->next_frame_analysis = 
+-    analysis_frame_init_recurse(roi, ds, frame+1, calculation_type, subfraction, 
++    analysis_frame_init_recurse(roi, ds, frame+1, calculation_type, accurate, subfraction, 
+ 				threshold_percentage, threshold_value);
+ 
+   return temp_frame_analysis;
+@@ -424,6 +430,7 @@
+ 
+ static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds, 
+ 					      analysis_calculation_t calculation_type,
++					      gboolean accurate,
+ 					      gdouble subfraction,
+ 					      gdouble threshold_percentage,
+ 					      gdouble threshold_value) {
+@@ -436,7 +443,7 @@
+     return NULL;
+   }
+ 
+-  return analysis_frame_init_recurse(roi, ds, 0, calculation_type, subfraction, 
++  return analysis_frame_init_recurse(roi, ds, 0, calculation_type, accurate, subfraction, 
+ 				     threshold_percentage, threshold_value);
+ }
+ 
+@@ -475,6 +482,7 @@
+ /* returns an initialized roi analysis of a list of volumes */
+ static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets, 
+ 						analysis_calculation_t calculation_type,
++						gboolean accurate,
+ 						gdouble subfraction,
+ 						gdouble threshold_percentage,
+ 						gdouble threshold_value) {
+@@ -496,13 +504,13 @@
+ 
+   /* calculate this one */
+   temp_volume_analysis->frame_analyses = 
+-    analysis_frame_init(roi, temp_volume_analysis->data_set, calculation_type, subfraction, 
+-			threshold_percentage, threshold_value);
++    analysis_frame_init(roi, temp_volume_analysis->data_set, calculation_type, accurate,
++			subfraction, threshold_percentage, threshold_value);
+ 
+   /* recurse */
+   temp_volume_analysis->next_volume_analysis = 
+-    analysis_volume_init(roi, data_sets->next, calculation_type, subfraction, 
+-			 threshold_percentage, threshold_value);
++    analysis_volume_init(roi, data_sets->next, calculation_type, accurate,
++			 subfraction, threshold_percentage, threshold_value);
+ 
+   
+   return temp_volume_analysis;
+@@ -544,7 +552,9 @@
+ 
+ /* returns an initialized list of roi analyses */
+ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
+-				   GList * data_sets, analysis_calculation_t calculation_type,
++				   GList * data_sets, 
++				   analysis_calculation_t calculation_type,
++				   gboolean accurate,
+ 				   gdouble subfraction, 
+ 				   gdouble threshold_percentage,
+ 				   gdouble threshold_value) {
+@@ -562,19 +572,20 @@
+   temp_roi_analysis->roi = amitk_object_ref(rois->data);
+   temp_roi_analysis->study = amitk_object_ref(study);
+   temp_roi_analysis->calculation_type = calculation_type;
++  temp_roi_analysis->accurate = accurate;
+   temp_roi_analysis->subfraction = subfraction;
+   temp_roi_analysis->threshold_percentage = threshold_percentage;
+   temp_roi_analysis->threshold_value = threshold_value;
+ 
+   /* calculate this one */
+   temp_roi_analysis->volume_analyses = 
+-    analysis_volume_init(temp_roi_analysis->roi, data_sets, calculation_type, subfraction, 
+-			 threshold_percentage, threshold_value);
++    analysis_volume_init(temp_roi_analysis->roi, data_sets, calculation_type, accurate,
++			 subfraction, threshold_percentage, threshold_value);
+ 
+   /* recurse */
+   temp_roi_analysis->next_roi_analysis = 
+-    analysis_roi_init(study, rois->next, data_sets, calculation_type, subfraction, 
+-		      threshold_percentage, threshold_value);
++    analysis_roi_init(study, rois->next, data_sets, calculation_type, accurate,
++		      subfraction, threshold_percentage, threshold_value);
+ 
+   
+   return temp_roi_analysis;
+diff -urN amide-0.8.6/src/analysis.h amide-0.8.6_legoland/src/analysis.h
+--- amide-0.8.6/src/analysis.h	2004-06-21 22:36:50.000000000 -0700
++++ amide-0.8.6_legoland/src/analysis.h	2004-08-18 21:11:45.618671392 -0700
+@@ -86,6 +86,7 @@
+   AmitkRoi * roi;
+   AmitkStudy * study;
+   analysis_calculation_t calculation_type;
++  gboolean accurate;
+   gdouble subfraction;
+   gdouble threshold_percentage;
+   gdouble threshold_value;
+@@ -104,6 +105,7 @@
+ 				   GList * rois, 
+ 				   GList * volumes, 
+ 				   analysis_calculation_t calculation_type,
++				   gboolean accurate,
+ 				   gdouble subfraction, 
+ 				   gdouble threshold_percentage, 
+ 				   gdouble threshold_value);
+diff -urN amide-0.8.6/src/tb_roi_analysis.c amide-0.8.6_legoland/src/tb_roi_analysis.c
+--- amide-0.8.6/src/tb_roi_analysis.c	2004-06-21 22:43:01.000000000 -0700
++++ amide-0.8.6_legoland/src/tb_roi_analysis.c	2004-08-18 21:23:02.828719816 -0700
+@@ -39,6 +39,7 @@
+ static gboolean all_data_sets=FALSE;
+ static gboolean all_rois=FALSE;
+ static analysis_calculation_t calculation_type=ALL_VOXELS;
++static gboolean accurate=FALSE;
+ static gdouble subfraction=50.0;
+ static gdouble threshold_percentage=50.0;
+ static gdouble threshold_value=50.0;
+@@ -119,6 +120,7 @@
+ static void read_preferences(gboolean * all_data_sets, 
+ 			     gboolean * all_rois, 
+ 			     analysis_calculation_t * calculation_type,
++			     gboolean * accurate,
+ 			     gdouble * subfraction,
+ 			     gdouble * threshold_percentage,
+ 			     gdouble * threshold_value);
+@@ -688,6 +690,7 @@
+ static void read_preferences(gboolean * all_data_sets, 
+ 			     gboolean * all_rois, 
+ 			     analysis_calculation_t * calculation_type,
++			     gboolean * accurate,
+ 			     gdouble * subfraction,
+ 			     gdouble * threshold_percentage,
+ 			     gdouble * threshold_value) {
+@@ -698,6 +701,7 @@
+   *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
+   *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
+   *calculation_type = gnome_config_get_int("ANALYSIS/CalculationType");
++  *accurate = gnome_config_get_int("ANALYSIS/Accurate");
+   *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
+   *threshold_percentage = gnome_config_get_float("ANALYSIS/ThresholdPercentage");
+   *threshold_value = gnome_config_get_float("ANALYSIS/ThresholdValue");
+@@ -723,11 +727,12 @@
+   gboolean all_data_sets;
+   gboolean all_rois;
+   analysis_calculation_t calculation_type;
++  gboolean accurate;
+   gdouble subfraction;
+   gdouble threshold_percentage;
+   gdouble threshold_value;
+ 
+-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, 
++  read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, &subfraction, 
+ 		   &threshold_percentage, &threshold_value);
+ #endif
+ 
+@@ -758,8 +763,8 @@
+   }
+ 
+   /* calculate all our data */
+-  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, subfraction, 
+-				   threshold_percentage, threshold_value);
++  roi_analyses = analysis_roi_init(study, rois, data_sets, calculation_type, accurate, 
++				   subfraction, threshold_percentage, threshold_value);
+ 
+   rois = amitk_objects_unref(rois);
+   data_sets = amitk_objects_unref(data_sets);
+@@ -854,6 +859,21 @@
+ 
+ }
+ 
++static void accurate_cb(GtkWidget * widget, gpointer data) {
++#ifndef AMIDE_WIN32_HACKS
++  gboolean accurate;
++#endif
++
++  accurate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
++  
++#ifndef AMIDE_WIN32_HACKS
++  gnome_config_push_prefix("/"PACKAGE"/");
++  gnome_config_set_int("ANALYSIS/Accurate", accurate);
++  gnome_config_pop_prefix();
++  gnome_config_sync();
++#endif
++  return;
++}
+ 
+ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
+ 
+@@ -942,16 +962,19 @@
+   GtkWidget * hseparator;
+   GtkObject * adjustment;
+   GtkWidget * spin_buttons[3];
++  GtkWidget * check_button;
+   analysis_calculation_t i_calculation_type;
+ #ifndef AMIDE_WIN32_HACKS
+   gboolean all_data_sets;
+   gboolean all_rois;
+   analysis_calculation_t calculation_type;
++  gboolean accurate;
+   gdouble subfraction;
+   gdouble threshold_percentage;
+   gdouble threshold_value;
+ 
+-  read_preferences(&all_data_sets, &all_rois, &calculation_type, &subfraction, &threshold_percentage, &threshold_value);
++  read_preferences(&all_data_sets, &all_rois, &calculation_type, &accurate, 
++		   &subfraction, &threshold_percentage, &threshold_value);
+ #endif
+ 
+   temp_string = g_strdup_printf(_("%s: ROI Analysis Initialization Dialog"), PACKAGE);
+@@ -1133,6 +1156,20 @@
+ 		     G_CALLBACK(calculation_type_cb), NULL);
+   }
+ 
++  /* a separator for clarity */
++  hseparator = gtk_hseparator_new();
++  gtk_table_attach(GTK_TABLE(table), hseparator, 0,3,table_row, table_row+1,
++		   GTK_FILL, 0, X_PADDING, Y_PADDING);
++  table_row++;
++
++  /* do we want more accurate quantitation */
++  check_button = gtk_check_button_new_with_label(_("More Accurate Quantitation (Slow)"));
++  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), accurate);
++  gtk_table_attach(GTK_TABLE(table), check_button, 
++		   0,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
++  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(accurate_cb), dialog);
++  table_row++;
++
+   /* and show all our widgets */
+   gtk_widget_show_all(dialog);
+ 

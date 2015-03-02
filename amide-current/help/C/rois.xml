@@ -154,7 +154,22 @@
     equal to 50% of the highest valued voxel.
     </para>
    </listitem>
+
+   <listitem>
+    <para> Calculate for voxel >= Value. This algorithm only does
+    calculations for voxels in the ROI that have a value greater than
+    the value specified.
+    </para>
+   </listitem>
+
   </orderedlist>
+
+  <para> There's also a check box to enable "more accurate
+  quantitation".  The default algorithm (corresponding to unchecked)
+  makes some approximations in deciding which voxel are in our out of
+  the ROI.  If this check boxed is checked, the ROI results will be
+  more accurate, but will take much longer to compute.
+  </para>
 
   <para>
    After hitting execute, the program will crank for a while, and then
