@@ -105,45 +105,6 @@ gchar * libmdc_export_menu_explanations[LIBMDC_NUM_EXPORT_METHODS] = {
   N_("Export a NIFTI file")
 };
 
-gboolean libmdc_supports(libmdc_format_t format) {
-  
-  switch(format) {
-  case LIBMDC_RAW: 
-  case LIBMDC_ASCII:
-    return TRUE;
-    break;
-  case LIBMDC_GIF:
-    return MDC_INCLUDE_GIF;
-    break;
-  case LIBMDC_ACR:
-    return MDC_INCLUDE_ACR;
-    break;
-  case LIBMDC_CONC:
-    return MDC_INCLUDE_CONC;
-    break;
-  case LIBMDC_ECAT6:
-  case LIBMDC_ECAT7:
-    return MDC_INCLUDE_ECAT;
-    break;
-  case LIBMDC_INTF:
-    return MDC_INCLUDE_INTF;
-    break;
-  case LIBMDC_ANLZ:
-    return MDC_INCLUDE_ANLZ;
-    break;
-  case LIBMDC_DICM:
-    return MDC_INCLUDE_DICM;
-    break;
-  case LIBMDC_NIFTI:
-    return MDC_INCLUDE_NIFTI;
-    break;
-  case LIBMDC_NONE:
-  default:
-    return TRUE;
-    break;
-  }
-}
-
 static gint libmdc_format_number(libmdc_format_t format) {
 
   switch(format) {
@@ -185,6 +146,53 @@ static gint libmdc_format_number(libmdc_format_t format) {
     return MDC_FRMT_NONE;
     break;
   }
+}
+
+
+/* old code used for xmedcon versions <= 0.9.9.6.2 */
+#if 0 
+gboolean libmdc_supports(libmdc_format_t format) {
+
+  switch(format) {
+  case LIBMDC_RAW: 
+  case LIBMDC_ASCII:
+    return TRUE;
+    break;
+  case LIBMDC_GIF:
+    return MDC_INCLUDE_GIF;
+    break;
+  case LIBMDC_ACR:
+    return MDC_INCLUDE_ACR;
+    break;
+  case LIBMDC_CONC:
+    return MDC_INCLUDE_CONC;
+    break;
+  case LIBMDC_ECAT6:
+  case LIBMDC_ECAT7:
+    return MDC_INCLUDE_ECAT;
+    break;
+  case LIBMDC_INTF:
+    return MDC_INCLUDE_INTF;
+    break;
+  case LIBMDC_ANLZ:
+    return MDC_INCLUDE_ANLZ;
+    break;
+  case LIBMDC_DICM:
+    return MDC_INCLUDE_DICM;
+    break;
+  case LIBMDC_NIFTI:
+    return MDC_INCLUDE_NIFTI;
+    break;
+  case LIBMDC_NONE:
+  default:
+    return TRUE;
+    break;
+  }
+}
+#endif
+
+gboolean libmdc_supports(libmdc_format_t format) {
+  return FrmtSupported[libmdc_format_number(format)];
 }
 
 static gint libmdc_type_number(AmitkFormat format) {

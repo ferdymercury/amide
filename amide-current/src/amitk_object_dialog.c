@@ -57,6 +57,7 @@ static void dialog_response_cb        (GtkDialog * dialog,
 				       gpointer    data);
 static void dialog_interpolation_cb          (GtkWidget * widget, gpointer data);
 static void dialog_conversion_cb             (GtkWidget * widget, gpointer data);
+static void dialog_set_view_center_to_origin_cb(GtkWidget * widget, gpointer data);
 static void dialog_aspect_ratio_cb           (GtkWidget * widget, gpointer data);
 static void dialog_change_name_cb            (GtkWidget * widget, gpointer data);
 static void dialog_change_creation_date_cb   (GtkWidget * widget, gpointer data);
@@ -200,6 +201,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * space_edit;
   GtkWidget * hbox;
   GtkWidget * pix_box;
+  GtkWidget * button;
   GtkTooltips * radio_button_tips;
   gint table_row;
   gint inner_table_row;
@@ -784,13 +786,23 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     table_row++;
   }
 
+  if (AMITK_IS_STUDY(object)) {
+    button = gtk_button_new_with_label("Shift all objects so view center is origin");
+    gtk_table_attach(GTK_TABLE(packing_table), button, 0,3,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(dialog_set_view_center_to_origin_cb), object);
+    gtk_widget_show(button);
+    table_row++;
+
+  }
+  
   /* a separator for clarity */
   hseparator = gtk_hseparator_new();
   gtk_table_attach(GTK_TABLE(packing_table), hseparator, 0, 5, table_row, table_row+1,
 		   GTK_FILL, 0, X_PADDING, Y_PADDING);
   gtk_widget_show(hseparator);
   table_row++;
-  
+
   /* a canvas to indicate which way is x, y, and z */
   axis_indicator = ui_common_create_view_axis_indicator(layout);
   gtk_table_attach(GTK_TABLE(packing_table), axis_indicator,0,5,
@@ -1723,6 +1735,29 @@ static void dialog_conversion_cb(GtkWidget * widget, gpointer data) {
   conversion = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"conversion"));
   amitk_data_set_set_conversion(AMITK_DATA_SET(dialog->object), conversion);
   
+  return;
+}
+
+static void dialog_set_view_center_to_origin_cb(GtkWidget * widget, gpointer data) {
+
+  AmitkStudy * study = data;
+  AmitkPoint shift;
+  GList * objects;
+
+  g_return_if_fail(AMITK_IS_STUDY(data));
+  
+  /* move all children by the given amount */
+  objects = AMITK_OBJECT_CHILDREN(study);
+  shift = point_neg(AMITK_STUDY_VIEW_CENTER(study));
+
+  while (objects != NULL) {
+    amitk_space_shift_offset(AMITK_SPACE(objects->data), shift);
+    objects = objects->next;
+  }		    
+
+  /* and reset the view center */
+  amitk_study_set_view_center(study, zero_point);
+
   return;
 }
 

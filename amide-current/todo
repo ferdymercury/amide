@@ -3,8 +3,11 @@ misc list of things todo:
 for next release?
 -----------------
 
-* freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [1]
- [1] noticed by Mark Huisman
+* some sort of way to easily measure distances between fiducials [1]
+* add/expand support for multiple frames/gates in mathematical operations tool [1]
+ [1] suggested by Michael Braden
+* freehand/isocontour roi's - draw them at high mag - will see they're shifted just slightly off voxel lines [2]
+ [2] noticed by Mark Huisman
 * look careful at use of amitk_space_transform, and see if this function is
 	really needed/used correctly - as I don't think this operation 
 	propogates correctly to an object's children
@@ -263,6 +266,8 @@ things dependent on other things:
 	Can't use Guppi, it's unmaintained and deprecated.  Hopefully the 
 	gnumeric project will come out with a library for drawing charts/etc 
 	at some point in the future.
+	-this is really low priority... people can draw their own graphs in
+	gnumeric/excel etc.
 
 * in xml.c and amitk_point.c, have a bunch of AMIDE_WIN32_HACK
 	ifdef's, because g_strdup_printf

@@ -52,8 +52,6 @@ gboolean dcmtk_test_dicom(const gchar * filename) {
 
   g_return_val_if_fail(filename != NULL, FALSE);
 
-  const char *fname = NULL;
-
   if ((file = fopen(filename, "rb")) == NULL)
     return FALSE;
 
@@ -495,7 +493,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   }
 
   if (result.bad()) {
-    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file"),result.text(), filename);
+    g_warning(_("error reading in pixel data -  DCMTK error: %s - Failed to read file %s"),result.text(), filename);
     goto error;
   }
 
@@ -681,11 +679,9 @@ static GList * check_slices(GList * slices) {
 static void separate_duplicate_slices(GList ** pslices, GList ** pdiscard_slices) {
 
   GList * current_slices;
-  GList * discard_slices=NULL;
   AmitkDataSet * previous_slice;
   AmitkDataSet * slice;
   AmitkDataSet * discard_slice;
-  gint discard=0;
   AmitkPoint offset1;
   AmitkPoint offset2;
 
@@ -733,17 +729,18 @@ static AmitkDataSet * import_slices_as_dataset(GList * slices,
 					       gchar **perror_buf) {
 
   AmitkDataSet * ds=NULL;
-  guint num_images;
+  gint num_images;
   gint image;
   AmitkDataSet * slice_ds=NULL;
   AmitkVoxel dim, scaling_dim;
   div_t x;
   AmitkVoxel i;
-  amide_time_t last_scan_start;
+  amide_time_t last_scan_start=0.0;
   AmitkPoint offset, initial_offset, diff;
   gboolean screwed_up_timing;
   gboolean screwed_up_thickness;
-  amide_real_t true_thickness, old_thickness;
+  amide_real_t true_thickness=0.0;
+  amide_real_t old_thickness=0.0;
   AmitkPoint voxel_size;
 
   g_return_val_if_fail(slices != NULL, NULL);
@@ -1018,7 +1015,7 @@ static GList * import_files_as_datasets(GList * image_files,
   gint image;
   gint num_frames=1;
   gint num_gates=1;
-  guint num_files;
+  gint num_files;
   GList * slices=NULL;
   GList * discarded_slices=NULL;
   gboolean continue_work=TRUE;
@@ -1566,7 +1563,6 @@ GList * dcmtk_import(const gchar * filename,
 		     gpointer update_data) {
 
   GList * data_sets=NULL;
-  AmitkDataSet * ds;
   gboolean is_dir=FALSE;
   DcmFileFormat dcm_format;
   DcmMetaInfo * dcm_metainfo;

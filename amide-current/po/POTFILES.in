@@ -5,7 +5,6 @@ src/amitk_canvas.c
 src/amitk_color_table.c
 src/amitk_data_set.c
 src/amitk_data_set_variable_type.c
-src/amitk_dir_sel.c
 src/amitk_filter.c
 src/amitk_object.c
 src/amitk_object_dialog.c
@@ -17,11 +16,17 @@ src/amitk_roi_variable_type.c
 src/amitk_space_edit.c
 src/amitk_study.c
 src/amitk_threshold.c
+src/amitk_xif_sel.c
+src/dcmtk_interface.cc
+src/libecat_interface.c
+src/libmdc_interface.c
+src/tb_export_data_set.c
+src/tb_math.c
+src/tb_profile.c
+src/ui_gate_dialog.c
 src/analysis.c
-src/cti_import.c
 src/fads.c
 src/image.c
-src/medcon_import.c
 src/mpeg_encode.c
 src/raw_data_import.c
 src/render.c

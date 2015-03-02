@@ -1632,9 +1632,9 @@ static void export_raw(AmitkDataSet *ds,
     dim.z = ceil(corner.z/voxel_size.z);
     corner.z = voxel_size.z;
     amitk_volume_set_corner(output_volume, corner);
-
-    g_message("dimensions of output data set will be %dx%dx%dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, dim.g, dim.t, voxel_size.x, voxel_size.y, voxel_size.z);
   }
+
+  g_message("dimensions of output data set will be %dx%dx%dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, dim.g, dim.t, voxel_size.x, voxel_size.y, voxel_size.z);
 
   if ((row_data = g_try_new(gfloat,dim.x)) == NULL) {
     g_warning(_("Couldn't allocate memory space for row_data"));
@@ -1786,6 +1786,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
   amitk_format_DOUBLE_t value;
   div_t x;
   gint divider;
+  gint num_planes, plane;
   gboolean continue_work=TRUE;
   gchar * temp_string;
   gchar * export_name;
@@ -1879,16 +1880,18 @@ void amitk_data_sets_export_to_file(GList * data_sets,
   corner.z = voxel_size.z;
   amitk_volume_set_corner(volume, corner); /* set the z dim of the slices */
   j_voxel.t = j_voxel.g = j_voxel.z = 0;
-  divider = ((dim.z/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (dim.z/AMIDE_UPDATE_DIVIDER);
+  num_planes = dim.g*dim.t*dim.z;
+  plane=0;
+  divider = ((num_planes/AMIDE_UPDATE_DIVIDER) < 1) ? 1 : (num_planes/AMIDE_UPDATE_DIVIDER);
 
   for (i_voxel.t=0; (i_voxel.t< dim.t) && continue_work; i_voxel.t++)
     for (i_voxel.g=0; (i_voxel.g<dim.g) && continue_work; i_voxel.g++) 
-      for (i_voxel.z=0; (i_voxel.z<dim.z) && continue_work; i_voxel.z++) {
+      for (i_voxel.z=0; (i_voxel.z<dim.z) && continue_work; i_voxel.z++, plane++) {
 
 	if (update_func != NULL) {
-	  x = div(i_voxel.z,divider);
+	  x = div(plane,divider);
 	  if (x.rem == 0)
-	    continue_work = (*update_func)(update_data, NULL, (gdouble) (i_voxel.z)/dim.z);
+	    continue_work = (*update_func)(update_data, NULL, (gdouble) plane/num_planes);
 	}
 
 	new_offset = zero_point;
@@ -1946,7 +1949,7 @@ void amitk_data_sets_export_to_file(GList * data_sets,
 #endif
   case AMITK_EXPORT_METHOD_RAW:
   default:
-    export_raw(export_ds, filename, FALSE, zero_point, volume, update_func, update_data);
+    export_raw(export_ds, filename, FALSE, AMITK_DATA_SET_VOXEL_SIZE(export_ds), volume, update_func, update_data);
     break;
   }
 

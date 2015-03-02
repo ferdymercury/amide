@@ -1129,6 +1129,7 @@ static gboolean canvas_create_freehand_roi(AmitkCanvas * canvas, AmitkRoi * roi,
   position = amitk_space_b2s(AMITK_SPACE(draw_on_ds), position);
   POINT_TO_VOXEL(position, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds), 0,0,temp_voxel);
   VOXEL_CORNER(temp_voxel, AMITK_DATA_SET_VOXEL_SIZE(draw_on_ds), position);
+  position = amitk_space_s2b(AMITK_SPACE(draw_on_ds), position);
   
 
   amitk_roi_set_voxel_size(roi, voxel_size);

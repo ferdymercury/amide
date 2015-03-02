@@ -1,10 +1,19 @@
-0.8.21
+0.8.22
+	* fixed bug with drawing 1st voxel of freehand (introduced 0.8.21) [1]
+	* autodetect xmedcon format support (requires xmedcon > 0.9.10)
+	* button to set the view center as origin [2]
+	[1] Found by Jeff Arkles
+	[2] Requested by Michael Braden
+
+0.8.21 2007.07.14
         * switched index to strchr in xml.c, amitk_point.c
 	* man page fix [1]
 	* freehand roi's now initially line up with the voxels of the dataset
 	* hopefully finally now have a true radix sign fix,  as mingw can't
 	  really use setlocale
+	* flip around NIFTI images to get right orientation [2]
 	[1] From Dominique Belhachemi
+ 	[2] Suggested by Buyean Lee
 	
 0.8.20 2007.06.29
 	* message popup for export raw data dimensions

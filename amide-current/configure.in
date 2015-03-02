@@ -2,7 +2,7 @@ dnl ============================================================================
 dnl              Configure script for AMIDE
 dnl ===============================================================================
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.8.21],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.8.22],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
@@ -48,7 +48,8 @@ dnl ============================================================================
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
 case "$host_os" in
 darwin*) 	CFLAGS="-g -O2 -Wall";;
-*)		CFLAGS="-g -O6 -Wall";;
+*)		CFLAGS="-g -O6 -Wall"
+		CXXFLAGS="-g -O6 -Wall";;
 esac
 
 if test $CC = "gcc"; then
@@ -141,7 +142,7 @@ dnl check for various libraries and programs that we might need
 AM_PATH_GSL(1.1.1, FOUND_LIBGSL=yes, FOUND_LIBGSL=no)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib -L/usr/local/lib)
-AM_PATH_XMEDCON(0.9.9.0, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
+AM_PATH_XMEDCON(0.9.9.7, FOUND_XMEDCON=yes, FOUND_XMEDCON=no)
 AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 
 dnl switch to C++ for DCMTK library stuff - also, if pthread is on the platform, probably need that
