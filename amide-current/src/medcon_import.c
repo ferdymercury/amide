@@ -36,6 +36,8 @@
 #undef VERSION 
 #include "config.h"
 
+static char * medcon_unknown = "Unknown";
+
 gchar * libmdc_menu_names[] = {
   "(_X)MedCon Guess",
   "_Raw",
@@ -113,7 +115,8 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   struct tm time_structure;
   voxelpoint_t i;
   volume_t * temp_volume;
-  gchar * volume_name;
+  gchar * name;
+  gchar * temp_string;
   gchar * import_filename;
   gchar ** frags=NULL;
   gboolean found_name=FALSE;
@@ -270,30 +273,40 @@ volume_t * medcon_import(const gchar * filename, libmdc_import_method_t submetho
   else
     temp_volume->modality = CT;
 
+
   /* try figuring out the name, start with the study name */
-  if (strlen(medcon_file_info.study_name) > 0) {
-    volume_set_name(temp_volume,medcon_file_info.study_name);
-    found_name = TRUE;
+  name = NULL;
+  if (strlen(medcon_file_info.study_name) > 0) 
+    if (g_strcasecmp(medcon_file_info.study_name, medcon_unknown) != 0)
+      name = g_strdup(medcon_file_info.study_name);
+
+  if (name == NULL)
+    if (strlen(medcon_file_info.patient_name) > 0)
+      if (g_strcasecmp(medcon_file_info.patient_name, medcon_unknown) != 0) 
+	name = g_strdup(medcon_file_info.patient_name);
+
+  if (name == NULL) {/* no original filename? */
+    temp_string = g_strdup(g_basename(filename));
+    /* remove the extension of the file */
+    g_strreverse(temp_string);
+    frags = g_strsplit(temp_string, ".", 2);
+    g_free(temp_string);
+    g_strreverse(frags[1]);
+    name = g_strdup(frags[1]);
+    g_strfreev(frags); /* free up now unused strings */
   }
 
-  if (!found_name) 
-    if (strlen(medcon_file_info.patient_name) > 0) {
-      volume_set_name(temp_volume,medcon_file_info.patient_name);
-      found_name = TRUE;
+  /* append the reconstruction method */
+  if (strlen(medcon_file_info.recon_method) > 0)
+    if (g_strcasecmp(medcon_file_info.recon_method, medcon_unknown) != 0) {
+      temp_string = name;
+      name = g_strdup_printf("%s - %s", temp_string, medcon_file_info.recon_method);
+      g_free(temp_string);
     }
 
-  if (!found_name) {/* no original filename? */
-    volume_name = g_strdup(g_basename(filename));
-    /* remove the extension of the file */
-    g_strreverse(volume_name);
-    frags = g_strsplit(volume_name, ".", 2);
-    volume_set_name(temp_volume,frags[1]);
-    g_strreverse(temp_volume->name);
-    g_strfreev(frags); /* free up now unused strings */
-    g_free(volume_name);
-    found_name=TRUE;
-  }
-  
+  volume_set_name(temp_volume,name);
+  g_free(name);
+
 
   /* enter in the date the scan was performed */
   time_structure.tm_sec = medcon_file_info.study_time_second;

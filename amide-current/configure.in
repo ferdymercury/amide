@@ -4,17 +4,9 @@ dnl First, setup the libary source directory
 cp -f src/*.c src/*.h src/*.m4 lib/lib_src/*.h lib/lib_src/*.c lib
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(amide, 0.6.4)
+AM_INIT_AUTOMAKE(amide, 0.6.5)
 
 AM_MAINTAINER_MODE
-
-GNOME_INIT
-AM_PATH_GTK(1.2.0)
-AM_PATH_GDK_PIXBUF(0.11.0)
-GNOME_XML2_CHECK
-
-dnl AC_ISC_POSIX
-
 
 AC_PROG_CC
 AM_PROG_LIBTOOL()
@@ -54,22 +46,27 @@ dnl AC_STDC_HEADERS
 dnl AC_ARG_PROGRAM
 AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
 
+ 
+PKG_CHECK_MODULES(AMIDE_GNOME,[
+	gnome              >= 1.2
+	gnomeui            >= 1.2
+        xml2            
+        gdk_pixbuf         >= 0.14.0
+	gnomecanvaspixbuf 
+])
+AC_SUBST(AMIDE_GNOME_LIBS)
+AC_SUBST(AMIDE_GNOME_CFLAGS)
+ 
+
 dnl check for various libraries and programs that we might need
 AC_CHECK_LIB(gsl, gsl_error, FOUND_LIBGSL=yes, FOUND_LIBGSL=no, -lgslcblas -L/sw/lib)
 AC_CHECK_LIB(ecat, matrix_open, FOUND_LIBECAT=yes, FOUND_LIBECAT=no, -L/sw/lib)
-AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib)
+AC_CHECK_LIB(mdc, MdcOpenFile, FOUND_MEDCON=yes, FOUND_MEDCON=no, -L/sw/lib -lglib)
 AC_CHECK_LIB(volpack, vpGetErrorString, FOUND_VOLPACK=yes, FOUND_VOLPACK=no, -lm -L/sw/lib)
 AC_PATH_PROG(MPEG_ENCODE, mpeg_encode) 
 
-GNOME_COMPILE_WARNINGS
-
 ALL_LINGUAS=
 dnl AM_GNU_GETTEXT
-
-EXTRA_GNOME_LIBS=`gnome-config --libs gnomeui gdk_pixbuf gnomecanvaspixbuf`
-EXTRA_GNOME_CFLAGS=`gnome-config --cflags gnomeui gdk_pixbuf gnomecanvaspixbuf`
-
-
 
 dnl add the -no-cpp-precomp for macintosh os x
 case "$host_os" in

@@ -232,15 +232,17 @@ raw_data_format_t raw_data_format_raw(data_format_t data_format) {
 }
 
 
+guint raw_data_calc_num_bytes_per_frame(voxelpoint_t dim, raw_data_format_t raw_data_format) {
+
+  return (dim.x * dim.y * dim.z *  raw_data_sizes[raw_data_format]);
+}
 
 /* calculate the number of bytes that will be read from the file*/
 guint raw_data_calc_num_bytes(voxelpoint_t dim, raw_data_format_t raw_data_format) {
 
-  return (dim.x * dim.y * dim.z * dim.t *  raw_data_sizes[raw_data_format]);
+  return dim.t*raw_data_calc_num_bytes_per_frame(dim,raw_data_format);
 
 }
-
-
 
 
 /* reads the contents of a raw data file into an amide data_set structure,
@@ -254,7 +256,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
   FILE * file_pointer;
   void * file_buffer=NULL;
   size_t bytes_read;
-  size_t bytes_to_read;
+  size_t bytes_per_frame=0;
   voxelpoint_t i;
   gint error, j;
   data_set_t * raw_data_set;
@@ -314,21 +316,28 @@ data_set_t * raw_data_read_file(const gchar * file_name,
   if (raw_data_format == ASCII_NE) {
     ; /* this case is handled in the loop below */
   } else {
-    bytes_to_read = raw_data_calc_num_bytes(raw_data_set->dim, raw_data_format);
-    file_buffer = (void *) g_malloc(bytes_to_read);
-    bytes_read = fread(file_buffer, 1, bytes_to_read, file_pointer );
-    if (bytes_read != bytes_to_read) {
-      g_warning("read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d", 
-		file_name, bytes_to_read, bytes_read);
-      g_free(file_buffer);
-      fclose(file_pointer);
-      return data_set_unref(raw_data_set);
-    }
-    fclose(file_pointer);
+    bytes_per_frame = raw_data_calc_num_bytes_per_frame(raw_data_set->dim, raw_data_format);
+    file_buffer = (void *) g_malloc(bytes_per_frame);
   }
-  
+
   /* iterate over the # of frames */
   for (i.t = 0; i.t < raw_data_set->dim.t; i.t++) {
+
+    /* read in the contents of the file */
+    if (raw_data_format == ASCII_NE) {
+      ; /* this case is handled in the loop below */
+    } else {
+      bytes_read = fread(file_buffer, 1, bytes_per_frame, file_pointer );
+      if (bytes_read != bytes_per_frame) {
+	g_warning("read wrong number of elements from raw data file:\n\t%s\n\texpected %d\tgot %d", 
+		  file_name, bytes_per_frame, bytes_read);
+	g_free(file_buffer);
+	fclose(file_pointer);
+	return data_set_unref(raw_data_set);
+      }
+    }
+  
+
 #ifdef AMIDE_DEBUG
     g_print("\tloading frame %d\n",i.t);
 #endif
@@ -377,7 +386,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      /* keep compiler from generating bad code with a noop,occurs with gcc 3.0.3 */
 	      if (i.x == -1) g_print("no_op\n");
 
-	      temp = GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      temp = GUINT32_FROM_PDP(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 	    }
@@ -392,7 +401,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) = 
-		GINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GINT32_FROM_PDP(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0));
       }
       break;
     case UINT_PDP:
@@ -407,7 +416,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      if (i.x == -1) g_print("no_op\n");
 
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
-		GUINT32_FROM_PDP(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT32_FROM_PDP(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0));
 	    }
       }
       break;
@@ -432,11 +441,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
 	      temp = 
-		GUINT64_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT64_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0));
 	      double_p = (void *) &temp;
 	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_BIG_ENDIAN */
-	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0);
 #endif
               }
       }
@@ -459,11 +468,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      if (i.x == -1) g_print("no op\n");
 
 #if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
-	      temp = GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      temp = GUINT32_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_BIG_ENDIAN */
-	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i, 0);
 #endif
 	    }
       }
@@ -477,7 +486,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) = 
-		GINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GINT32_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
       }
       break;
     case UINT_BE:
@@ -492,7 +501,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      if (i.x == -1) g_print("no op\n");
 
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
-		GUINT32_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT32_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 	    }
       }
       break;
@@ -505,7 +514,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) = 
-		GINT16_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GINT16_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
       }
       break;
     case USHORT_BE:
@@ -517,7 +526,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
-		GUINT16_FROM_BE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT16_FROM_BE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
       }
       break;
 
@@ -539,11 +548,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++) {
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = GUINT64_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      temp = GUINT64_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 	      double_p = (void *) &temp;
 	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = *double_p;
 #else /* G_LITTLE_ENDIAN */
-	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_DOUBLE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0);
 #endif
                }
       }
@@ -571,11 +580,11 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      if (i.x == -1) g_print("no op\n");
 
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-	      temp = GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+	      temp = GUINT32_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 	      float_p = (void *) &temp;
 	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = *float_p;
 #else /* G_LITTLE_ENDIAN */
-	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_FLOAT_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0);
 #endif
 	    }
       }
@@ -593,7 +602,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SINT_SET_CONTENT(raw_data_set,i) =
-		GINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GINT32_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 	  
       }
       break;
@@ -609,7 +618,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	      if (i.x == -1) g_print("no_op\n");
 
 	      DATA_SET_UINT_SET_CONTENT(raw_data_set,i) = 
-		GUINT32_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT32_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 	    }
       }
       break;
@@ -622,7 +631,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_SSHORT_SET_CONTENT(raw_data_set,i) =
-		GINT16_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GINT16_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 
       }
       break;
@@ -635,7 +644,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
 	      DATA_SET_USHORT_SET_CONTENT(raw_data_set,i) =
-		GUINT16_FROM_LE(RAW_DATA_CONTENT(data, raw_data_set->dim, i));
+		GUINT16_FROM_LE(RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0));
 
       }
       break;
@@ -647,7 +656,7 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_SBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_SBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0);
       }
       break;
     case UBYTE_NE:
@@ -659,11 +668,13 @@ data_set_t * raw_data_read_file(const gchar * file_name,
 	for (i.z = 0; i.z < raw_data_set->dim.z ; i.z++) 
 	  for (i.y = 0; i.y < raw_data_set->dim.y; i.y++) 
 	    for (i.x = 0; i.x < raw_data_set->dim.x; i.x++)
-	      DATA_SET_UBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT(data, raw_data_set->dim, i);
+	      DATA_SET_UBYTE_SET_CONTENT(raw_data_set,i) = RAW_DATA_CONTENT_FRAME(data, raw_data_set->dim, i,0);
       }
       break;
     }   
   }
+
+  fclose(file_pointer);
 
   /* garbage collection */
   g_free(file_buffer);

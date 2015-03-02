@@ -31,6 +31,7 @@
 #include "volume.h"
 
 #define RAW_DATA_CONTENT(data, dim, i) ((data)[(i).x + (dim).x*(i).y + (dim).x*(dim).y*(i).z + (dim).x*(dim).y*(dim).z*(i).t])
+#define RAW_DATA_CONTENT_FRAME(data, dim, i, frame) ((data)[(i).x + (dim).x*(i).y + (dim).x*(dim).y*(i).z + (dim).x*(dim).y*(dim).z*frame])
 
 
 /* glib doesn't define these for PDP */

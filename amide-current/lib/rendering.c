@@ -414,10 +414,8 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	      break;
 	    }
 	    density[i_voxel.x+
-		   i_voxel.y*rendering_context->dim.x+
-		   (rendering_context->dim.z-i_voxel.z-1)*
-		   rendering_context->dim.y*
-		   rendering_context->dim.x] = temp_int;
+		    i_voxel.y*rendering_context->dim.x+ 
+		    (rendering_context->dim.z-i_voxel.z-1)* rendering_context->dim.y* rendering_context->dim.x] = temp_int;
 	  }
       }
     }
@@ -509,10 +507,8 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	    if (temp_val > RENDERING_DENSITY_MAX) temp_val = RENDERING_DENSITY_MAX;
 	    if (temp_val < 0.0) temp_val = 0.0;
 	    density[i_voxel.x+
-		   i_voxel.y*rendering_context->dim.x+
-		   (rendering_context->dim.z-i_voxel.z-1)*
-		   rendering_context->dim.y*
-		   rendering_context->dim.x] = temp_val;
+		    i_voxel.y*rendering_context->dim.x+
+		    (rendering_context->dim.z-i_voxel.z-1)*rendering_context->dim.y*rendering_context->dim.x] = temp_val;
 	  }
 	slice = volume_unref(slice);
       }

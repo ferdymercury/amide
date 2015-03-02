@@ -1,9 +1,10 @@
 SUBDIRS = \
 	lib_src
 
+CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS) $(GNOME_XML2_CFLAGS)
 if BUILD_LIBAMIDE
 INCLUDES = -DGNOMELOCALEDIR=\""$(datadir)/locale\""
-CFLAGS = @CFLAGS@ $(EXTRA_GNOME_CFLAGS) $(AMIDE_DEBUG_CFLAGS) $(GNOME_XML2_CFLAGS)
+
 lib_LTLIBRARIES = libamide.la
 libamideincludedir = $(includedir)/amide
 

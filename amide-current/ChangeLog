@@ -1,3 +1,14 @@
+0.6.5
+	* reduced memory consumption when importing raw data
+	* configure.in fix for medcon now using glib
+	* configure.in update for pkg-config
+	* threshold fix, uses %g instead of %f
+	* more intelligent CTI data set naming
+	* more intelligent medcon data set naming
+	* worked around delete during linked view bug - disallow
+	* fixed bug - getting color table on NULL data set with linked viewing
+	
+	
 0.6.4
 	* view center notifier on help panel now gives correct location
 	* fixed subtle floating point rounding error in drawing isocontours
