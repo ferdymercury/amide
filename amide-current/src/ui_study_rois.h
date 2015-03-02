@@ -1,6 +1,6 @@
 /* ui_study_rois.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -30,7 +30,7 @@ typedef struct _ui_study_roi_list_t ui_study_roi_list_t;
 struct _ui_study_roi_list_t {
   amide_roi_t * roi;
   GnomeCanvasItem * canvas_roi[NUM_VIEWS];
-  GnomeApp * dialog;
+  GtkWidget * dialog;
   GtkCTree * tree;
   GtkCTreeNode * tree_node;
   ui_study_roi_list_t * next;
@@ -49,8 +49,7 @@ void ui_study_rois_list_add_roi(ui_study_roi_list_t ** plist,
 void ui_study_rois_list_add_roi_first(ui_study_roi_list_t ** plist, 
 				      amide_roi_t * roi,
 				      GnomeCanvasItem * canvas_roi_item[]);
-void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist, 
-				   amide_roi_t * roi);
+void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist, amide_roi_t * roi);
 
 
 

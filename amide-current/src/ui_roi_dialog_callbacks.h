@@ -1,6 +1,6 @@
 /* ui_roi_dialog_callbacks.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -31,6 +31,6 @@ void ui_roi_dialog_callbacks_change_name(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_callbacks_change_type(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_callbacks_change_entry(GtkWidget * widget, gpointer data);
 void ui_roi_dialog_callbacks_change_grain(GtkWidget * widget, gpointer data);
-void ui_roi_dialog_callbacks_delete_event(GtkWidget* widget, 
-					  GdkEvent * event,
-					  gpointer data);
+void ui_roi_dialog_callbacks_apply(GtkWidget* widget, gint page_number, gpointer data);
+void ui_roi_dialog_callbacks_help(GnomePropertyBox *roi_dialog, gint page_number, gpointer data);
+void ui_roi_dialog_callbacks_close_event(GtkWidget* widget, gpointer data);

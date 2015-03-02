@@ -1,6 +1,6 @@
 /* cti_import.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -30,6 +30,7 @@
 #ifdef AMIDE_CTI_SUPPORT
 #include <matrix.h>
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "cti_import.h"
 
@@ -41,10 +42,10 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   voxelpoint_t i;
   gint matnum;
   amide_volume_t * temp_volume;
-  guint t;
+  guint t, slice, num_slices;
   volume_data_t max,min,temp;
   gchar * volume_name;
-  gchar ** frags;
+  gchar ** frags=NULL;
 
   if (!(cti_file = matrix_open(cti_filename, MAT_READ_ONLY, MAT_UNKNOWN_FTYPE))) {
     g_warning("%s: can't open file %s", PACKAGE, cti_filename);
@@ -52,7 +53,8 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   }
 
   /* we always start at the first iamge */
-  matnum = mat_numcod(1,1,1,0,0); /* frame, plane, gate, data, bed */
+  //  matnum = mat_numcod(1,1,1,0,0); /* frame, plane, gate, data, bed */
+  matnum = cti_file->dirlist->first->matnum;
 
   if (!(cti_subheader = matrix_read(cti_file, matnum, MAT_SUB_HEADER))) {
     g_warning("%s: can't get header info at matrix %x in file %s\n",\
@@ -73,6 +75,7 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   else
     temp_volume->dim.z = cti_file->mhptr->num_planes;
   temp_volume->num_frames = cti_file->mhptr->num_frames;
+  num_slices = cti_file->mhptr->num_planes/cti_subheader->zdim;
   
   /* malloc the space for the volume */
   temp_volume->data = 
@@ -90,33 +93,64 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   temp_volume->modality = PET;
 
   /* try figuring out the name */
-  if (cti_file->mhptr->original_file_name != NULL)
+  if (cti_file->mhptr->original_file_name != NULL) {
     volume_name = cti_file->mhptr->original_file_name;
-  else /* no original filename? */
+    volume_set_name(temp_volume,volume_name);
+  } else {/* no original filename? */
     volume_name = g_basename(cti_filename);
-  /* remove the extension of the file */
-  g_strreverse(volume_name);
-  frags = g_strsplit(volume_name, ".", 2);
-  volume_name = frags[1];
-  g_strreverse(volume_name);
-
-  temp_volume->name = g_strdup_printf("%s",volume_name); /* allocates memory */
+    /* remove the extension of the file */
+    g_strreverse(volume_name);
+    frags = g_strsplit(volume_name, ".", 2);
+    volume_name = frags[1];
+    volume_set_name(temp_volume,volume_name);
+    g_strreverse(volume_name);
+    g_strfreev(frags); /* free up now unused strings */
+  }
+#ifdef AMIDE_DEBUG
+  g_print("volume name %s\n",volume_name);
+  g_print("\tx size %d\ty size %d\tz size %d\tframes %d\n", 
+	  temp_volume->dim.x, temp_volume->dim.y, temp_volume->dim.z, temp_volume->num_frames);
+  g_print("\tslices/volume %d\n",num_slices);
+	  
+#endif
 
   switch(cti_file->mhptr->file_type) {
-  case PetImage:
+  case PetImage: /* i.e. CTI 6.4 */
+  case PetVolume: /* i.e. CTI 7.0 */
 
     /* set some more parameters */
-        temp_volume->voxel_size.x = 10*
-          ((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
-        temp_volume->voxel_size.y = 10*
-          ((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
-        temp_volume->voxel_size.z = 10*
-          ((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
+    temp_volume->voxel_size.x = 10*
+      ((Image_subheader*)cti_subheader->shptr)->x_pixel_size;
+    temp_volume->voxel_size.y = 10*
+      ((Image_subheader*)cti_subheader->shptr)->y_pixel_size;
+    temp_volume->voxel_size.z = 10*
+      ((Image_subheader*)cti_subheader->shptr)->z_pixel_size;
+
+    /* guess the start of the scan is the same as the start of the first frame of data */
+    /* note, CTI files specify time as integers in msecs */
+    temp_volume->scan_start = 
+      (((Image_subheader*)cti_subheader->shptr)->frame_start_time)/1000;
+#ifdef AMIDE_DEBUG
+    g_print("\tscan start time %5.3f\n",temp_volume->scan_start);
+#endif
+
+
+    /* allocate space for the array containing info on the duration of the frames */
+    temp_volume->frame_duration = 
+      (volume_time_t *) g_malloc(temp_volume->num_frames*sizeof(volume_time_t));
+    if (temp_volume->frame_duration == NULL) {
+      g_warning("%s: couldn't allocate space for the frame duration info\n",PACKAGE);
+      volume_free(&temp_volume);
+      return NULL;
+    }
 
     /* and load in the data */
     for (t = 0; t < temp_volume->num_frames; t++) {
-      for (i.z = 0; i.z < temp_volume->dim.z ; i.z++) {
-	matnum=mat_numcod(t+1,i.z+1,1,0,0);/* frame, plane, gate, data, bed */
+#ifdef AMIDE_DEBUG
+      g_print("\tloading frame %d",t);
+#endif
+      for (slice=0; slice < num_slices ; slice++) {
+	matnum=mat_numcod(t+1,slice+1,1,0,0);/* frame, plane, gate, data, bed */
 
 	if ((cti_slice = matrix_read(cti_file, matnum, 0)) == NULL) {
 	  g_warning("%s: can't get image matrix %x in file %s\n",\
@@ -125,20 +159,30 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 	  return NULL;
 	}
 
+	/* set the frame duration, note, CTI files specify time as integers in msecs */
+	temp_volume->frame_duration[t] = 
+	  (((Image_subheader*)cti_subheader->shptr)->frame_duration)/1000;
+
 	/* copy the data into the volume */
-	for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
-	  for (i.x = 0; i.x < temp_volume->dim.x; i.x++)
-	    VOLUME_SET_CONTENT(temp_volume,t,i) =
-	      cti_slice->scale_factor *
-	      *(((guint16 *) cti_slice->data_ptr) + 
-	       (temp_volume->dim.x*i.y+i.x));
+	for (i.z = slice*(temp_volume->dim.z/num_slices); 
+	     i.z < temp_volume->dim.z/num_slices + slice*(temp_volume->dim.z/num_slices) ; 
+	     i.z++)
+	  for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
+	    for (i.x = 0; i.x < temp_volume->dim.x; i.x++)
+	      VOLUME_SET_CONTENT(temp_volume,t,i) =
+		cti_slice->scale_factor *
+		*(((gint16 *) cti_slice->data_ptr) + 
+		  (temp_volume->dim.y*temp_volume->dim.x*(i.z-slice*(temp_volume->dim.z/num_slices))
+		   +temp_volume->dim.x*i.y+i.x));
 	/* that guint16 might have to be changed according to the data.... */
 	free_matrix_data(cti_slice);
       }
+#ifdef AMIDE_DEBUG
+      g_print("\tduration %5.3f\n",temp_volume->frame_duration[t]);
+#endif
     }
     break;
   case InterfileImage:
-  case PetVolume:
   case ByteImage:
   case ByteVolume:
   case Sinogram:
@@ -154,9 +198,12 @@ amide_volume_t * cti_import(gchar * cti_filename) {
   temp_volume->corner.z = temp_volume->dim.z*temp_volume->voxel_size.z;
 
   /* set the max/min values in the volume */
+#ifdef AMIDE_DEBUG
+  g_print("\tcalculating max & min");
+#endif
   max = 0.0;
   min = 0.0;
-  for(t = 0; t < temp_volume->num_frames; t++) 
+  for(t = 0; t < temp_volume->num_frames; t++) {
     for (i.z = 0; i.z < temp_volume->dim.z; i.z++) 
       for (i.y = 0; i.y < temp_volume->dim.y; i.y++) 
 	for (i.x = 0; i.x < temp_volume->dim.x; i.x++) {
@@ -166,15 +213,21 @@ amide_volume_t * cti_import(gchar * cti_filename) {
 	  else if (temp < min)
 	    min = temp;
 	}
+#ifdef AMIDE_DEBUG
+  g_print(".");
+#endif
+  }
   temp_volume->max = max;
   temp_volume->min = min;
+
+#ifdef AMIDE_DEBUG
+  g_print("\tmax %5.3f min %5.3f\n",max,min);
+#endif
 
   free_matrix_data(cti_subheader);
   matrix_close(cti_file);
 
-#ifdef AMIDE_DEBUG
-  g_printerr("\tmax %5.3f min %5.3f\n",max,min);
-#endif
+
 
   return temp_volume;
 }

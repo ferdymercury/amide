@@ -1,6 +1,6 @@
 /* ui_roi_dialog.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -23,12 +23,6 @@
   02111-1307, USA.
 */
 
-
-typedef enum {CORNER_X, CORNER_Y, CORNER_Z, \
-	      OFFSET_X, OFFSET_Y, OFFSET_Z, \
-	      AXIS_X_X, AXIS_X_Y, AXIS_X_Z, \
-	      AXIS_Y_X, AXIS_Y_Y, AXIS_Y_Z, \
-	      AXIS_Z_X, AXIS_Z_Y, AXIS_Z_Z} which_entry_widget_t;
 
 /* external functions */
 void ui_roi_dialog_create(ui_study_t * ui_study, amide_roi_t * roi);

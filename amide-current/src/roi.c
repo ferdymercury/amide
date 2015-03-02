@@ -1,6 +1,6 @@
 /* roi.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,6 +28,7 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 
@@ -92,6 +93,66 @@ amide_roi_t * roi_init(void) {
   
   return temp_roi;
 }
+
+/* copies the information of one roi into another, if dest roi
+   doesn't exist, make it*/
+void roi_copy(amide_roi_t ** dest_roi, amide_roi_t * src_roi) {
+
+  /* sanity checks */
+  g_assert(src_roi != NULL);
+  g_assert(src_roi != *dest_roi);
+
+  /* start over from scratch */
+  roi_free(dest_roi);
+  *dest_roi = roi_init();
+
+  /* copy the data elements */
+  (*dest_roi)->type = src_roi->type;
+  (*dest_roi)->coord_frame = src_roi->coord_frame;
+  (*dest_roi)->corner = src_roi->corner;
+  (*dest_roi)->parent = src_roi->parent;
+  (*dest_roi)->grain = src_roi->grain;
+
+
+  /* make a separate copy in memory of the roi's name */
+  roi_set_name(*dest_roi, src_roi->name);
+
+  /* make a separate copy in memory of the roi's children */
+  if (src_roi->children != NULL)
+    roi_list_copy(&((*dest_roi)->children), src_roi->children);
+
+  return;
+}
+
+/* sets the name of an roi
+   note: new_name is copied rather then just being referenced by roi */
+void roi_set_name(amide_roi_t * roi, gchar * new_name) {
+
+  g_free(roi->name); /* free up the memory used by the old name */
+  roi->name = g_strdup(new_name); /* and assign the new name */
+
+  return;
+}
+
+/* figure out the center of the roi in real coords */
+realpoint_t roi_calculate_center(const amide_roi_t * roi) {
+
+  realpoint_t center;
+  realpoint_t corner[2];
+
+  /* get the far corner (in roi coords) */
+  corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
+  corner[1] = roi->corner;
+ 
+  /* the center in roi coords is then just half the far corner */
+  REALSPACE_MADD(0.5,corner[1], 0.5,corner[0], center);
+  
+  /* now, translate that into real coords */
+  center = realspace_alt_coord_to_base(center, roi->coord_frame);
+
+  return center;
+}
+
 
 /* returns an initialized roi list node structure */
 amide_roi_list_t * roi_list_init(void) {
@@ -173,6 +234,28 @@ void roi_list_remove_roi(amide_roi_list_t ** plist, amide_roi_t * roi) {
   return;
 }
 
+/* copies the information of one roi list into another, if dest roi list
+   doesn't exist, make it*/
+void roi_list_copy(amide_roi_list_t ** dest_roi_list, amide_roi_list_t * src_roi_list) {
+
+  /* sanity check */
+  g_assert(src_roi_list != NULL);
+  g_assert(src_roi_list != (*dest_roi_list));
+
+  /* if we don't already have a roi_list, allocate the space for one */
+  if (*dest_roi_list == NULL)
+    *dest_roi_list = roi_list_init();
+
+  /* make a separate copy in memory of the roi this list item points to */
+  (*dest_roi_list)->roi = NULL;
+  roi_copy(&((*dest_roi_list)->roi), src_roi_list->roi);
+    
+  /* and make copies of the rest of the elements in this list */
+  if (src_roi_list->next != NULL)
+    roi_list_copy(&((*dest_roi_list)->next), src_roi_list->next);
+
+  return;
+}
 
 
 void roi_free_points_list(GSList ** plist) {
@@ -295,12 +378,11 @@ GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,
 	      of interest */
 
     /* get the roi corners in roi space */
-    roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset,
-						roi->coord_frame);
+    roi_corner[0] = realspace_base_coord_to_alt(roi->coord_frame.offset, roi->coord_frame);
     roi_corner[1] = roi->corner;
 
     /* figure out the center of the object in it's space*/
-    REALSPACE_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);
+    REALSPACE_MADD(0.5,roi_corner[1], 0.5,roi_corner[0], center);   
 
     /* figure out the radius in each direction */
     REALSPACE_DIFF(roi_corner[1],roi_corner[0], radius);

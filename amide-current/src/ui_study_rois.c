@@ -1,6 +1,6 @@
 /* ui_study_rois.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,14 +28,15 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_study_rois2.h"
 #include "ui_study_rois_callbacks.h"
@@ -52,6 +53,9 @@ void ui_study_rois_list_free(ui_study_roi_list_t ** pui_study_rois) {
 	gtk_object_destroy(GTK_OBJECT((*pui_study_rois)->canvas_roi[i]));
     if ((*pui_study_rois)->next != NULL)
       ui_study_rois_list_free(&((*pui_study_rois)->next));
+    if ((*pui_study_rois)->dialog != NULL)
+      gtk_signal_emit_by_name(GTK_OBJECT((*pui_study_rois)->dialog), 
+			      "delete_event", NULL, *pui_study_rois);
     g_free(*pui_study_rois);
     *pui_study_rois = NULL;
   }
@@ -138,8 +142,7 @@ void ui_study_rois_list_add_roi_first(ui_study_roi_list_t ** plist,
 
 
 /* function to remove an roi from a ui_study_roi_list, does not delete roi */
-void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist, 
-				   amide_roi_t * roi) {
+void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist, amide_roi_t * roi) {
 
   ui_study_roi_list_t * temp_list = *plist;
   ui_study_roi_list_t * prev_list = NULL;
@@ -165,7 +168,7 @@ void ui_study_rois_list_remove_roi(ui_study_roi_list_t ** plist,
 
 /* function to draw an roi for a canvas */
 GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study, 
-						   view_t i, 
+						   view_t view, 
 						   GnomeCanvasItem * roi_item,
 						   amide_roi_t * roi) {
 
@@ -176,23 +179,30 @@ GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study,
   axis_t j;
   guint32 outline_color;
   floatpoint_t width,height;
+  amide_volume_t * volume;
 
   /* sanity check */
-  if (ui_study->current_slice[i] == NULL)
+  if (ui_study->current_slices[view] == NULL)
     return NULL;
+
+  /* figure out which volume we're dealing with */
+  if (ui_study->current_volume == NULL)
+    volume = ui_study->study->volumes->volume;
+  else
+    volume = ui_study->current_volume;
+  /* and figure out the outline color from that*/
+  outline_color = 
+    color_table_outline_color(volume->color_table,
+			      ui_study->current_roi == roi);
 
   /* start by destroying the old object */
   if (roi_item != NULL) 
     gtk_object_destroy(GTK_OBJECT(roi_item));
 
-  /* figure out the outline color */
-  outline_color = 
-    color_table_outline_color(ui_study->color_table,
-			      ui_study->current_roi == roi);
 
   /* get the points */
   roi_points = 
-    roi_get_volume_intersection_points(ui_study->current_slice[i], roi);
+    roi_get_volume_intersection_points(ui_study->current_slices[view]->volume, roi);
 
   /* count the points */
   j=0;
@@ -207,13 +217,13 @@ GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study,
 
 
   /* get some needed information */
-  width = ui_study->current_slice[i]->dim.x*
-    ui_study->current_slice[i]->voxel_size.x;
-  height = ui_study->current_slice[i]->dim.y*
-    ui_study->current_slice[i]->voxel_size.y;
+  width = ui_study->current_slices[view]->volume->dim.x*
+    ui_study->current_slices[view]->volume->voxel_size.x;
+  height = ui_study->current_slices[view]->volume->dim.y*
+    ui_study->current_slices[view]->volume->voxel_size.y;
   offset = 
-    realspace_base_coord_to_alt(ui_study->current_slice[i]->coord_frame.offset,
-				ui_study->current_slice[i]->coord_frame);
+    realspace_base_coord_to_alt(ui_study->current_slices[view]->volume->coord_frame.offset,
+				ui_study->current_slices[view]->volume->coord_frame);
   /* transfer the points list to what we'll be using to construction the figure */
   item_points = gnome_canvas_points_new(j);
   temp=roi_points;
@@ -221,10 +231,10 @@ GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study,
   while(temp!=NULL) {
     item_points->coords[j] = 
       ((((realpoint_t * ) temp->data)->x-offset.x)/width)
-      *ui_study->rgb_image[i]->rgb_width + UI_STUDY_TRIANGLE_HEIGHT;
+      *ui_study->rgb_image[view]->rgb_width + UI_STUDY_TRIANGLE_HEIGHT;
     item_points->coords[j+1] = 
       ((((realpoint_t * ) temp->data)->y-offset.y)/height)
-      *ui_study->rgb_image[i]->rgb_height + UI_STUDY_TRIANGLE_HEIGHT;
+      *ui_study->rgb_image[view]->rgb_height + UI_STUDY_TRIANGLE_HEIGHT;
     temp=temp->next;
     j += 2;
   }
@@ -233,7 +243,7 @@ GnomeCanvasItem *  ui_study_rois_update_canvas_roi(ui_study_t * ui_study,
 
   /* create the item */
   item = 
-    gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[i]),
+    gnome_canvas_item_new(gnome_canvas_root(ui_study->canvas[view]),
 			  gnome_canvas_line_get_type(),
 			  "points", item_points,
 			  "fill_color_rgba", outline_color,

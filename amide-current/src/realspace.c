@@ -1,6 +1,6 @@
 /* realspace.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -193,6 +193,26 @@ realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
     break;
   }
 }
+
+/* given a coordinate frame, return an orthogonal coordinate frame */
+realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_frame,
+						 const view_t view) {
+
+  realspace_t return_coord_frame;
+  axis_t i_axis;
+
+
+  /* getting the axis is easy, just spin the current viewing axis based on which
+     view we want */
+  for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+    return_coord_frame.axis[i_axis] = 
+      realspace_get_orthogonal_axis(in_coord_frame.axis,view,i_axis);
+
+  return_coord_frame.offset = in_coord_frame.offset;
+
+  return return_coord_frame;
+}
+
 
 /* convert a point in an alternative coordinate frame to the base
    coordinate frame */

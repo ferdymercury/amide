@@ -9,12 +9,17 @@ amide_SOURCES = \
 	amide.h \
 	color_table.c \
 	color_table.h \
+	color_table2.h \
 	cti_import.c \
 	cti_import.h \
 	image.c \
 	image.h \
 	realspace.c \
 	realspace.h \
+	raw_data_import.c \
+	raw_data_import.h \
+	raw_data_import_callbacks.c \
+	raw_data_import_callbacks.h \
 	roi.c \
 	roi.h \
 	study.c \
@@ -45,11 +50,21 @@ amide_SOURCES = \
 	ui_study_rois2.h \
 	ui_study_rois_callbacks.c \
 	ui_study_rois_callbacks.h \
+	ui_study_volumes.c \
+	ui_study_volumes.h \
 	ui_threshold.c \
 	ui_threshold.h \
 	ui_threshold2.h \
 	ui_threshold_callbacks.c \
 	ui_threshold_callbacks.h \
+	ui_time_dialog.c \
+	ui_time_dialoh.h \
+	ui_time_dialog_callbacks.c \
+	ui_time_dialoh_callbacks.h \
+	ui_volume_dialog.c \
+	ui_volume_dialog.h \
+	ui_volume_dialog_callbacks.c \
+	ui_volume_dialog_callbacks.h \
 	volume.h \
 	volume.c
 

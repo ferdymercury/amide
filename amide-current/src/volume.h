@@ -1,6 +1,6 @@
 /* volume.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -24,9 +24,8 @@
 */
 
 typedef enum {XDIM, YDIM, ZDIM, TDIM, NUM_DIMS} dimension_t;
-typedef enum {DIM2, DIM3} dimensionality_t;
 typedef enum {NEAREST_NEIGHBOR, BILINEAR, TRILINEAR, NUM_INTERPOLATIONS} interpolation_t;
-typedef enum {PET, SPECT, CT, MRI, NUM_MODALITIES} modality_t;
+typedef enum {PET, SPECT, CT, MRI, OTHER, NUM_MODALITIES} modality_t;
 
 /* setup the types for various internal data formats */
 typedef gdouble volume_data_t;
@@ -38,17 +37,21 @@ typedef struct _amide_volume_list_t amide_volume_list_t;
 typedef struct amide_volume_t { 
   gchar * name;
   modality_t modality;
-  dimensionality_t dimensionality;
   realpoint_t voxel_size;  /* in mm */
   voxelpoint_t dim;
   volume_data_t * data;
   volume_data_t conversion; /* factor  to translate data into useable units */
   guint num_frames;
-  volume_time_t * time;
-  volume_data_t max;
+  volume_time_t scan_start;
+  volume_time_t * frame_duration;
+  volume_data_t max; 
   volume_data_t min;
+  color_table_t color_table; /* the color table to draw this roi in */
+  volume_data_t threshold_max; /* the thresholds to use for this volume */
+  volume_data_t threshold_min; 
   realspace_t coord_frame;
   realpoint_t corner; /* far corner, near corner is 0,0,0 in volume coord space*/ 
+  volume_data_t * distribution; /* 1D array of data distribution, used in thresholding */
 } amide_volume_t;
 
 struct _amide_volume_list_t {
@@ -86,6 +89,10 @@ struct _amide_volume_list_t {
 /* external functions */
 void volume_free(amide_volume_t ** volume);
 amide_volume_t * volume_init(void);
+void volume_copy(amide_volume_t ** dest_volume, amide_volume_t * src_volume);
+void volume_set_name(amide_volume_t * volume, gchar * new_name);
+realpoint_t volume_calculate_center(const amide_volume_t * volume);
+volume_time_t volume_start_time(const amide_volume_t * volume, guint frame);
 void volume_list_free(amide_volume_list_t ** pvolume_list);
 amide_volume_list_t * volume_list_init(void);
 gboolean volume_list_includes_volume(amide_volume_list_t *list, 
@@ -97,45 +104,35 @@ void volume_list_remove_volume(amide_volume_list_t ** plist, amide_volume_t * vo
 gboolean volume_includes_voxel(const amide_volume_t * volume,
 			       const voxelpoint_t voxel);
 void volume_get_view_corners(const amide_volume_t * volume,
-			     const realpoint_t view_axis[],
+			     const realspace_t view_coord_frame,
 			     realpoint_t corner[]);
-floatpoint_t volume_get_width(const amide_volume_t * volume, 
-			      const realpoint_t view_axis[]);
-floatpoint_t volume_get_height(const amide_volume_t * volume, 
-			       const realpoint_t view_axis[]);
-floatpoint_t volume_get_length(const amide_volume_t * volume, 
-			       const realpoint_t view_axis[]);
+void volumes_get_view_corners(amide_volume_list_t * volumes,
+			      const realspace_t view_coord_frame,
+			      realpoint_t view_corner[]);
+floatpoint_t volumes_min_dim(amide_volume_list_t * volumes);
+floatpoint_t volumes_get_width(amide_volume_list_t * volumes, 
+			      const realspace_t view_coord_frame);
+floatpoint_t volumes_get_height(amide_volume_list_t * volumes, 
+			       const realspace_t view_coord_frame);
+floatpoint_t volumes_get_length(amide_volume_list_t * volumes, 
+			       const realspace_t view_coord_frame);
 amide_volume_t * volume_get_slice(const amide_volume_t * volume,
-				  const guint frame,
-				  const floatpoint_t zp_start,
-				  const floatpoint_t thickness,
-				  const realpoint_t view_axis[],
-				  const floatpoint_t zoom,
+				  const volume_time_t start,
+				  const volume_time_t duration,
+				  const realpoint_t  requested_voxel_size,
+				  const realspace_t slice_coord_frame,
+				  const realpoint_t far_corner,
 				  const interpolation_t interpolation);
+amide_volume_list_t * volumes_get_slices(amide_volume_list_t * volumes,
+					 const volume_time_t start,
+					 const volume_time_t duration,
+					 const floatpoint_t thickness,
+					 const realspace_t view_coord_frame,
+					 const floatpoint_t zoom,
+					 const interpolation_t interpolation);
 
 
 /* external variables */
 extern gchar * interpolation_names[];
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+extern gchar * modality_names[];
 

@@ -1,6 +1,6 @@
 /* ui_series_callbacks.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -27,14 +27,15 @@
 #include <gnome.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_series2.h"
 #include "ui_threshold2.h"
@@ -45,8 +46,7 @@ void ui_series_callbacks_scroll_change(GtkAdjustment* adjustment, gpointer data)
 
   ui_study_t * ui_study = data;
 
-  ui_study->series->zp_start = adjustment->value;
-
+  ui_study->series->start.z = adjustment->value;
   ui_series_update_canvas_image(ui_study);
 
   return;
@@ -66,3 +66,4 @@ void ui_series_callbacks_delete_event(GtkWidget* widget, GdkEvent * event,
 
   return;
 }
+

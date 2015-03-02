@@ -1,6 +1,6 @@
 /* ui_threshold_callbacks.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -27,14 +27,15 @@
 #include <gnome.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_threshold2.h"
 #include "ui_series2.h"
@@ -58,12 +59,7 @@ gint ui_threshold_callbacks_max_arrow(GtkWidget* widget,
   item_y = event->button.y;
   gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item_x, &item_y);
 
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
-  if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
+  volume = ui_study->threshold->volume;
 
   /* switch on the event which called this */
   switch (event->type)
@@ -81,21 +77,21 @@ gint ui_threshold_callbacks_max_arrow(GtkWidget* widget,
       if (event->motion.state & GDK_BUTTON1_MASK) {
 	temp = ((UI_THRESHOLD_COLOR_STRIP_HEIGHT - item_y) /
 		UI_THRESHOLD_COLOR_STRIP_HEIGHT) *
-	  (volume->max - volume->min);
-	if (temp <= ui_study->threshold_min) 
-	  temp = ui_study->threshold_min;
+	  (volume->max - volume->min)+volume->min;
+	if (temp <= volume->threshold_min) 
+	  temp = volume->threshold_min;
 	if (temp < 0.0)
 	  temp = 0.0;
-	ui_study->threshold_max = temp;
+	volume->threshold_max = temp;
 	ui_threshold_update_canvas(ui_study);
-	ui_threshold_update_entries(ui_study);   /* reset the entry widgets */
+	ui_threshold_update_entries(ui_study->threshold);   /* reset the entry widgets */
       }
       break;
 
     case GDK_BUTTON_RELEASE:
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
-      ui_threshold_update_entries(ui_study);   /* reset the entry widgets */
+      ui_threshold_update_entries(ui_study->threshold);   /* reset the entry widgets */
       /* and if we have a series up, update that */
       if (ui_study->series != NULL)
 	ui_series_update_canvas_image(ui_study);
@@ -117,12 +113,7 @@ void ui_threshold_callbacks_max_percentage(GtkWidget* widget, gpointer data) {
   volume_data_t temp;
   amide_volume_t * volume;
 
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
-  if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
+  volume = ui_study->threshold->volume;
 
   /* get the current entry */
   string = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -134,8 +125,8 @@ void ui_threshold_callbacks_max_percentage(GtkWidget* widget, gpointer data) {
   /* make sure it's a valid floating point */
   if (!(error == EOF)) {
     temp = (volume->max-volume->min) * temp/100.0;
-    if ((temp > 0.0) & (temp > ui_study->threshold_min)) {
-      ui_study->threshold_max = temp;
+    if ((temp > 0.0) & (temp > volume->threshold_min)) {
+      volume->threshold_max = temp;
       ui_threshold_update_canvas(ui_study);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
       /* and if we have a series up, update that */
@@ -145,7 +136,7 @@ void ui_threshold_callbacks_max_percentage(GtkWidget* widget, gpointer data) {
   }      
 
   /* reset the entry widgets */
-  ui_threshold_update_entries(ui_study);
+  ui_threshold_update_entries(ui_study->threshold);
 
   return;
 }
@@ -158,6 +149,9 @@ void ui_threshold_callbacks_max_absolute(GtkWidget* widget, gpointer data) {
   gchar * string;
   gint error;
   volume_data_t temp;
+  amide_volume_t * volume;
+
+  volume = ui_study->threshold->volume;
 
   /* get the current entry */
   string = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -168,8 +162,8 @@ void ui_threshold_callbacks_max_absolute(GtkWidget* widget, gpointer data) {
     
   /* make sure it's a valid floating point */
   if (!(error == EOF)) 
-    if ((temp > 0.0) & (temp > ui_study->threshold_min)) {
-      ui_study->threshold_max = temp;
+    if ((temp > 0.0) & (temp > volume->threshold_min)) {
+      volume->threshold_max = temp;
       ui_threshold_update_canvas(ui_study);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
       /* and if we have a series up, update that */
@@ -178,7 +172,7 @@ void ui_threshold_callbacks_max_absolute(GtkWidget* widget, gpointer data) {
     }
       
   /* reset the entry widgets */
-  ui_threshold_update_entries(ui_study);
+  ui_threshold_update_entries(ui_study->threshold);
 
   return;
 }
@@ -194,16 +188,9 @@ gint ui_threshold_callbacks_min_arrow(GtkWidget* widget,
   gdouble item_x, item_y;
   GdkCursor * cursor;
   volume_data_t temp;
-
   amide_volume_t * volume;
 
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
-  if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
-
+  volume = ui_study->threshold->volume;
 
   /* get the location of the event, and convert it to our coordinate system */
   item_x = event->button.x;
@@ -226,14 +213,14 @@ gint ui_threshold_callbacks_min_arrow(GtkWidget* widget,
       if (event->motion.state & GDK_BUTTON1_MASK) {
 	temp = ((UI_THRESHOLD_COLOR_STRIP_HEIGHT - item_y) /
 		UI_THRESHOLD_COLOR_STRIP_HEIGHT) *
-	  (volume->max - volume->min);
-	if (temp < 0.0) 
-	  temp = 0.0;
-	if (temp >= ui_study->threshold_max)
-	  temp = ui_study->threshold_max;
+	  (volume->max - volume->min)+volume->min;
+	if (temp < volume->min) 
+	  temp = volume->min;
+	if (temp >= volume->threshold_max)
+	  temp = volume->threshold_max;
 	if (temp >= volume->max)
 	  temp = volume->max;
-	ui_study->threshold_min = temp;
+	volume->threshold_min = temp;
 	ui_threshold_update_canvas(ui_study);
       }
       break;
@@ -241,7 +228,7 @@ gint ui_threshold_callbacks_min_arrow(GtkWidget* widget,
     case GDK_BUTTON_RELEASE:
       gnome_canvas_item_ungrab(GNOME_CANVAS_ITEM(widget), event->button.time);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
-      ui_threshold_update_entries(ui_study);   /* reset the entry widgets */
+      ui_threshold_update_entries(ui_study->threshold);   /* reset the entry widgets */
       /* and if we have a series up, update that */
       if (ui_study->series != NULL)
 	ui_series_update_canvas_image(ui_study);
@@ -263,13 +250,7 @@ void ui_threshold_callbacks_min_percentage(GtkWidget* widget, gpointer data) {
   volume_data_t temp;
   amide_volume_t * volume;
 
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
-  if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
-
+  volume = ui_study->threshold->volume;
 
   /* get the current entry */
   string = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -280,9 +261,9 @@ void ui_threshold_callbacks_min_percentage(GtkWidget* widget, gpointer data) {
     
   /* make sure it's a valid floating point */
   if (!(error == EOF)) { 
-    temp = (volume->max-volume->min) * temp/100.0;
-    if ((temp < volume->max) & (temp >= 0.0) & (temp < ui_study->threshold_max)) {
-      ui_study->threshold_min = temp;
+    temp = ((volume->max-volume->min) * temp/100.0)+volume->min;
+    if ((temp < volume->max) & (temp >= volume->min) & (temp < volume->threshold_max)) {
+      volume->threshold_min = temp;
       ui_threshold_update_canvas(ui_study);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
       /* and if we have a series up, update that */
@@ -292,7 +273,7 @@ void ui_threshold_callbacks_min_percentage(GtkWidget* widget, gpointer data) {
   }
 
   /* reset the entry widgets */
-  ui_threshold_update_entries(ui_study);
+  ui_threshold_update_entries(ui_study->threshold);
 
   return;
 }
@@ -307,13 +288,7 @@ void ui_threshold_callbacks_min_absolute(GtkWidget* widget, gpointer data) {
   volume_data_t temp;
   amide_volume_t * volume;
 
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
-  if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
-
+  volume = ui_study->threshold->volume;
 
   /* get the current entry */
   string = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
@@ -324,8 +299,8 @@ void ui_threshold_callbacks_min_absolute(GtkWidget* widget, gpointer data) {
     
   /* make sure it's a valid floating point */
   if (!(error == EOF))
-    if ((temp < volume->max) & (temp >= 0.0) & (temp < ui_study->threshold_max)) {
-      ui_study->threshold_max = temp;
+    if ((temp < volume->max) & (temp >= 0.0) & (temp < volume->threshold_max)) {
+      volume->threshold_min = temp;
       ui_threshold_update_canvas(ui_study);
       ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
       /* and if we have a series up, update that */
@@ -334,7 +309,7 @@ void ui_threshold_callbacks_min_absolute(GtkWidget* widget, gpointer data) {
     }
 
   /* reset the entry widgets */
-  ui_threshold_update_entries(ui_study);
+  ui_threshold_update_entries(ui_study->threshold);
 
   return;
 }

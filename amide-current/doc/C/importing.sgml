@@ -3,8 +3,8 @@
   
   <para> 
 
-    All imported files are converted into AMIDE's internal double
-    float representation.
+    All imported files are converted into AMIDE's internal float
+    representation, which is double (64 bit) by default.
 
   </para>
   
@@ -14,30 +14,48 @@
   <sect2><title>CTI Files</title>
 
     <para>
-      Currently, the only file type supported for importing is CTI
-      6.4.  Adding support for CTI 7.0 files should be trivial, I just
-      don't have any 7.0 files.
+      Currently, static and dynamic CTI 6.4 and 7.0 files are
+      supported.  AMIDE support for the CTI file format is
+      accomplished through the libecat C library.
     </para>
 
     <sect3><title>CTI 6.4</title>
       <para>
-	6.4
+	AMIDE will try to load any file ending in ".img" as a CTI 6.4
+	file.  This file format is used by both the microPET and some
+	clinical scanners.  
       </para>
     </sect3>
 
     <sect3><title>CTI 7.0</title>
       <para>
-	7.0: not currently supported
+	AMIDE will try to load any file ending in ".v" as a CTI 7.0
+	file.  This file format is used by newer clinical scanners.
       </para>
     </sect3>
       
 
   </sect2>
 
+  <sect2><title>Raw Data Files</title>
+
+    <para>
+      AMIDE will attempt to load any file ending in ".dat" or ".raw"
+      as a raw data file.  The user will be prompted for the
+      dimensions of the study, the offset of the data in the file, and
+      the data format of the data in the file.  Both big endian and
+      little endian files can be loaded, with the following data
+      formats supported: 8 bit integer, 16 bit signed or unsigned
+      integer, 32 bit signed or unsigned integer, 32 bit IEEE floating
+      point, and 64 bit IEEE floating point.
+    </para>
+    
+  </sect2>
+
   <sect2><title>DICOM Files</title>
 
     <para>
-      DICOM: not currently supported
+      DICOM is not currently supported.....
     </para>
     
   </sect2>

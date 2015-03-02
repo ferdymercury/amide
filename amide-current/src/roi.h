@@ -1,6 +1,6 @@
 /* roi.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -59,11 +59,15 @@ typedef struct amide_roi_analysis_t {
 void roi_free(amide_roi_t ** proi);
 void roi_list_free(amide_roi_list_t ** proi_list);
 amide_roi_t * roi_init(void);
+void roi_copy(amide_roi_t ** dest_roi, amide_roi_t * src_roi);
+void roi_set_name(amide_roi_t * roi, gchar * new_name);
+realpoint_t roi_calculate_center(const amide_roi_t * roi);
 amide_roi_list_t * roi_list_init(void);
 gboolean roi_list_includes_roi(amide_roi_list_t *list, amide_roi_t * roi);
 void roi_list_add_roi(amide_roi_list_t ** plist, amide_roi_t * roi);
 void roi_list_add_roi_first(amide_roi_list_t ** plist, amide_roi_t * roi);
 void roi_list_remove_roi(amide_roi_list_t ** plist, amide_roi_t * roi);
+void roi_list_copy(amide_roi_list_t ** dest_roi_list, amide_roi_list_t * src_roi_list);
 void roi_free_points_list(GSList ** plist);
 gboolean roi_undrawn(const amide_roi_t * roi);
 GSList * roi_get_volume_intersection_points(const amide_volume_t * view_slice,

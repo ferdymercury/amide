@@ -1,6 +1,6 @@
 /* ui_series.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,14 +28,19 @@
 /* ui_series data structures */
 typedef struct ui_series_t {
   GnomeApp * app; /* pointer to the threshold window for this study */
-  amide_volume_t ** slices;
-  amide_volume_t ** pvolume; /*pointer to the pointer of volume we're looking at */
+  amide_volume_list_t ** slices;
+  amide_volume_list_t * volumes;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
   GdkImlibImage ** rgb_images;
   guint num_slices, rows, columns;
-  floatpoint_t zp_start; /* were along the z_prime axis to start the images*/
-  view_t view;
+  realspace_t coord_frame;
+  realpoint_t start;
+  floatpoint_t thickness;
+  volume_time_t time;
+  volume_time_t duration;
+  interpolation_t interpolation;
+  floatpoint_t zoom;
 } ui_series_t;
 
 /* external functions */

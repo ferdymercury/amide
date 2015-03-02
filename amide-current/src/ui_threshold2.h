@@ -1,6 +1,6 @@
 /* ui_threshold2.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -27,6 +27,6 @@
  * interdependencies */
 
 /* external functions */
-void ui_threshold_update_entries(ui_study_t * ui_study);
 void ui_threshold_update_canvas(ui_study_t * ui_study);
+void ui_threshold_update(ui_study_t * ui_study);
 void ui_threshold_create(ui_study_t * ui_study);

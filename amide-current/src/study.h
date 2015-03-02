@@ -1,6 +1,6 @@
 /* study.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -34,6 +34,7 @@ typedef struct amide_study_t {
 /* external functions */
 void study_free(amide_study_t ** pstudy);
 amide_study_t * study_init(void);
+void study_set_name(amide_study_t * study, gchar * new_name);
 
 
 

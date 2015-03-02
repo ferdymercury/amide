@@ -1,6 +1,6 @@
 /* study.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -27,6 +27,7 @@
 #include <glib.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
@@ -64,4 +65,13 @@ amide_study_t * study_init(void) {
   return study;
 }
 
+/* sets the name of a study
+   note: new_name is copied rather then just being referenced by study */
+void study_set_name(amide_study_t * study, gchar * new_name) {
+
+  g_free(study->name); /* free up the memory used by the old name */
+  study->name = g_strdup(new_name); /* and assign the new name */
+
+  return;
+}
 

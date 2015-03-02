@@ -1,6 +1,6 @@
 /* ui_study_callbacks.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -29,14 +29,15 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_study_callbacks.h"
 #include "ui_threshold2.h"
@@ -44,6 +45,10 @@
 #include "ui_study_rois2.h"
 #include "cti_import.h"
 #include "ui_roi_dialog.h"
+#include "ui_time_dialog.h"
+#include "ui_volume_dialog.h"
+#include "raw_data_import.h"
+
 
 /* function to close the file import widget */
 static void ui_study_callbacks_import_cancel(GtkWidget* widget, gpointer data) {
@@ -60,11 +65,11 @@ static void ui_study_callbacks_import_cancel(GtkWidget* widget, gpointer data) {
 static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  gchar * import_filename;
-  gchar * import_filename_base;
-  gchar * import_filename_extension;
-  gchar ** frags;
-  amide_volume_t * import_volume;
+  gchar * import_filename=NULL;
+  gchar * import_filename_base=NULL;
+  gchar * import_filename_extension=NULL;
+  gchar ** frags=NULL;
+  amide_volume_t * import_volume=NULL;
 
   /* get the filename */
   import_filename = gtk_file_selection_get_filename(ui_study->file_selection);
@@ -85,55 +90,75 @@ static void ui_study_callbacks_import_ok(GtkWidget* widget, gpointer data) {
     g_strreverse(import_filename_extension);
 
 
-#ifdef AMIDE_CTI_SUPPORT
-    /* if it appears to be a cti file, try importing it */
-    if (g_strcasecmp(import_filename_extension, "img")==0) {
+
+    
+    if ((g_strcasecmp(import_filename_extension, "dat")==0) |
+	(g_strcasecmp(import_filename_extension, "raw")==0))  
+      { /* .dat and .raw are assumed to be raw data */
       
-      /* and call that import function */
-      if ((import_volume=cti_import(import_filename)) == NULL) {
-      	g_warning("%s: Could not open file: %s as a CTI File", 
-      		  PACKAGE, import_filename);
-      	return;
+	/* call the corresponding import function */
+	import_volume=raw_data_import(import_filename);
+
       }
-
-      /* add the volume to the study structure */
-      volume_list_add_volume(&(ui_study->study->volumes), import_volume);
-
-      /* and add the volume to the ui_study tree structure */
-      ui_study_tree_add_volume(ui_study, import_volume);
-
-      /* reset the thresholds */
-      if (ui_study->threshold_max < import_volume->max)
-	ui_study->threshold_max = import_volume->max;
-      if (ui_study->threshold_min > import_volume->min)
-	ui_study->threshold_min = import_volume->min;
-
-      /* set the current thickness if it hasn't already been done */
-      if (ui_study->current_thickness < 0.0)
-	ui_study->current_thickness = REALPOINT_MIN_DIM(import_volume->voxel_size);
-
-      /* close the file selection box */
-      ui_study_callbacks_import_cancel(widget, ui_study->file_selection);
+#ifdef AMIDE_CTI_SUPPORT      
+    else if ((g_strcasecmp(import_filename_extension, "img")==0) |
+	     (g_strcasecmp(import_filename_extension, "v")==0))
+      { /* if it appears to be a cti file, try importing it */
       
-      /* update the thickness widget */
-      ui_study_update_thickness_adjustment(ui_study);
-
-      /* update the ui_study cavases with the new volume */
-      ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
-    } else 
+      
+	/* and call that import function */
+	if ((import_volume=cti_import(import_filename)) == NULL) {
+	  g_warning("%s: Could not open file: %s as a CTI File", 
+		    PACKAGE, import_filename);
+	} 
+      }
 #endif
+     
+    else 
       { /* unrecognized file type */
-	
 	g_warning("%s: file: %s does not appear to be a supported data file\n", 
 		  PACKAGE, import_filename);
       }
-
+    
   } else { /* no filename */
+    ; 
+  }
 
-    /* close the file selection box */
-    ui_study_callbacks_import_cancel(widget, ui_study->file_selection);
+
+  if (import_volume != NULL) {
+
+    /* add the volume to the study structure */
+    volume_list_add_volume(&(ui_study->study->volumes), import_volume);
+    
+    /* and add the volume to the ui_study tree structure */
+    ui_study_tree_add_volume(ui_study, import_volume);
+    
+    /* set the thresholds */
+    import_volume->threshold_max = import_volume->max;
+    import_volume->threshold_min = (import_volume->min >=0) ? import_volume->min : 0;
+    
+    /* set the current thickness if it hasn't already been done */
+    if (ui_study->current_thickness < 0.0)
+      ui_study->current_thickness = REALPOINT_MIN_DIM(import_volume->voxel_size);
+    
+    /* update the thickness widget */
+    ui_study_update_thickness_adjustment(ui_study);
+    
+    /* update the ui_study cavases with the new volume */
+    ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+
+    /* adjust the time dialog if necessary */
+    ui_time_dialog_set_times(ui_study);
 
   }
+
+  /* freeup our strings, note, the other two are just pointers into these strings */
+  //  g_free(import_filename); /* this causes a crash for some reason, is import_filename just
+  //			    *  a reference into the file_selection box? */
+  g_strfreev(frags);
+
+  /* close the file selection box */
+  ui_study_callbacks_import_cancel(widget, ui_study->file_selection);
 
   return;
 }
@@ -188,11 +213,12 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
   realpoint_t real_loc, view_loc;
   view_t i, j;
   axis_t k;
-  floatpoint_t view_width,view_height;
   realpoint_t item, diff;
   amide_volume_t * volume;
   guint32 outline_color;
   GdkCursor * cursor;
+  realspace_t view_coord_frame;
+  realpoint_t far_corner;
   static realpoint_t picture_center,picture0,picture1;
   static realpoint_t center, p0,p1;
   static GnomeCanvasItem * new_roi = NULL;
@@ -201,19 +227,17 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
   /* sanity checks */
   if (ui_study->study->volumes == NULL)
     return TRUE;
-  for (i=0; i<NUM_VIEWS; i++)
-    if (ui_study->current_slice[i] == NULL)
-      return TRUE;
-  if (ui_study->current_mode == ROI_MODE) {
+  if (ui_study->current_volumes == NULL)
+    return TRUE;
+  if (ui_study->current_mode == ROI_MODE)
     if (ui_study->current_roi == NULL)
       return TRUE;
-  }
+
   /* figure out which volume we're dealing with */
   if (ui_study->current_volume == NULL)
-    volume = ui_study->study->volumes->volume;
+    volume = ui_study->current_volumes->volume;
   else
     volume = ui_study->current_volume;
-		   
 
   /* get the location of the event, and convert it to the gnome image system 
      coordinates */
@@ -221,27 +245,24 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
   item.y = event->button.y;
   gnome_canvas_item_w2i(GNOME_CANVAS_ITEM(widget)->parent, &item.x, &item.y);
 
-  /* figure out which canvas called this */
+  /* figure out which canvas called this (transverse/coronal/sagittal)*/
   for (i=0; i<NUM_VIEWS; i++) 
     if (((gpointer) (ui_study->canvas_image[i])) == ((gpointer) widget))
       break;
 
-  /* get some needed information */
-  view_width = ui_study->current_slice[i]->voxel_size.x*
-    ui_study->current_slice[i]->dim.x;
-  view_height = ui_study->current_slice[i]->voxel_size.y*
-    ui_study->current_slice[i]->dim.y;
+  /* get the coordinate frame for this view and the far_corner
+     the far_corner is in the view_coord_frame */
+  view_coord_frame = ui_study_get_coords_current_view(ui_study, i, &far_corner);
 
   /* convert the event location to view space units */
   view_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[i]->rgb_width)*view_width;
+		/ui_study->rgb_image[i]->rgb_width)*far_corner.x;
   view_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[i]->rgb_height)*view_height;
+		/ui_study->rgb_image[i]->rgb_height)*far_corner.y;
   view_loc.z = ui_study->current_thickness/2.0;
 
   /* Convert the event location info to real units */
-  real_loc = realspace_alt_coord_to_base(view_loc,
-					 ui_study->current_slice[i]->coord_frame);
+  real_loc = realspace_alt_coord_to_base(view_loc, view_coord_frame);
 
   /* switch on the event which called this */
   switch (event->type)
@@ -292,7 +313,7 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
 				 event->button.time);
 	  
 	  /* figure out the outline color */
-	  outline_color = color_table_outline_color(ui_study->color_table, TRUE);
+	  outline_color = color_table_outline_color(volume->color_table, TRUE);
 	  
 	  /* save the center of our object in static variables for future use */
 	  center = real_loc;
@@ -334,9 +355,8 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
 
 	/* some sanity checks */
 	if ((real_loc.x < 0.0) | (real_loc.y < 0.0) | (real_loc.z < 0.0) |
-	    (real_loc.x > volume->voxel_size.x*volume->dim.x) |
-	    (real_loc.y > volume->voxel_size.y*volume->dim.y) |
-	    (real_loc.z > volume->voxel_size.z*volume->dim.z))
+	    (real_loc.x > far_corner.x) | (real_loc.y > far_corner.y))
+	  // |(real_loc.z > far_corner.z))
 	  return TRUE;
 
 	switch (i)
@@ -430,8 +450,8 @@ gint ui_study_callbacks_canvas_event(GtkWidget* widget,
 	  /* we'll save the coord frame and offset of the roi */
 	  ui_study->current_roi->coord_frame.offset = p0;
 	  for (k=0;k<NUM_AXIS;k++)
-	    ui_study->current_roi->coord_frame.axis[k] = 
-	      ui_study->current_slice[i]->coord_frame.axis[k];
+	    ui_study->current_roi->coord_frame.axis[k] = view_coord_frame.axis[k];
+
 	  /* and set the far corner of the roi */
 	  ui_study->current_roi->corner = 
 	    realspace_base_coord_to_alt(p1,ui_study->current_roi->coord_frame);
@@ -472,6 +492,8 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
   /* sanity check */
   if (ui_study->study->volumes == NULL)
     return;
+  if (ui_study->current_volumes == NULL)
+    return;
 
   /* figure out which scale widget called me */
   for (i=0;i<NUM_VIEWS;i++) 
@@ -503,7 +525,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data) 
   return;
 }
 
-/* function called when rotating the volume around an axis */
+/* function called when rotating the view coordinates around an axis */
 void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
 
   ui_study_t * ui_study = data;
@@ -511,23 +533,17 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
   floatpoint_t rotation;
   floatpoint_t width,height,length;
   floatpoint_t old_width,old_height,old_length;
-  amide_volume_t * volume;
 
   /* sanity check */
   if (ui_study->study->volumes == NULL)
     return;
-
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
   if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
+    return;
 
   /* get some info we'll need */
-  old_width = volume_get_width(volume, ui_study->current_coord_frame.axis);
-  old_height = volume_get_height(volume, ui_study->current_coord_frame.axis);
-  old_length = volume_get_length(volume, ui_study->current_coord_frame.axis);
+  old_width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
+  old_height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
+  old_length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
 
   /* figure out which scale widget called me */
   for (i_view=0;i_view<NUM_VIEWS;i_view++) 
@@ -545,8 +561,8 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
 				   rotation);
 	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
 	/* compensate the current viewing information for the change in size */
-	width = volume_get_width(volume, ui_study->current_coord_frame.axis);
-	height = volume_get_height(volume, ui_study->current_coord_frame.axis);
+	width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
+	height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
 	ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
 	  (width-old_width)/2.0;
 	ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
@@ -564,8 +580,8 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
 				   rotation);
 	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
 	/* compensate the current viewing information for the change in size */
-	width = volume_get_width(volume, ui_study->current_coord_frame.axis);
-	length =volume_get_length(volume, ui_study->current_coord_frame.axis);
+	width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
+	length =ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
 	ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
 	  (width-old_width)/2.0;
 	ui_study->current_axis_p_start.z = ui_study->current_axis_p_start.z +
@@ -583,8 +599,8 @@ void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data) {
 				   rotation);
 	realspace_make_orthonormal(ui_study->current_coord_frame.axis); /* orthonormalize*/
 	/* compensate the current viewing information for the change in size */
-	length =volume_get_length(volume, ui_study->current_coord_frame.axis);
-	height = volume_get_height(volume, ui_study->current_coord_frame.axis);
+	length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
+	height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
 	ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
 	  (height-old_height)/2.0;
 	ui_study->current_axis_p_start.z = ui_study->current_axis_p_start.z +
@@ -611,24 +627,17 @@ void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data) {
   axis_t i;
   floatpoint_t width,height,length;
   floatpoint_t old_width,old_height,old_length;
-  amide_volume_t * volume;
 
   /* sanity check */
   if (ui_study->study->volumes == NULL)
     return;
-
-
-  /* figure out which volume we're dealing with */
-  /* we're just going to work with the first volume in the list */
   if (ui_study->current_volumes == NULL)
-    volume = ui_study->study->volumes->volume;
-  else
-    volume = ui_study->current_volumes->volume;
+    return;
 
   /* get some info we'll need */
-  old_width = volume_get_width(volume, ui_study->current_coord_frame.axis);
-  old_height = volume_get_height(volume, ui_study->current_coord_frame.axis);
-  old_length = volume_get_length(volume, ui_study->current_coord_frame.axis);
+  old_width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
+  old_height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
+  old_length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
 
   /* reset the axis */
   for (i=0;i<NUM_AXIS;i++) {
@@ -637,9 +646,9 @@ void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data) {
   ui_study->current_coord_frame.offset = realpoint_init;
 
   /* compensate the current viewing information for the change in size */
-  width = volume_get_width(volume, ui_study->current_coord_frame.axis);
-  height = volume_get_height(volume, ui_study->current_coord_frame.axis);
-  length =volume_get_length(volume, ui_study->current_coord_frame.axis);
+  width = ui_study_volumes_get_width(ui_study->current_volumes, ui_study->current_coord_frame);
+  height = ui_study_volumes_get_height(ui_study->current_volumes, ui_study->current_coord_frame);
+  length = ui_study_volumes_get_length(ui_study->current_volumes, ui_study->current_coord_frame);
   ui_study->current_axis_p_start.x = ui_study->current_axis_p_start.x +
     (width-old_width)/2.0;
   ui_study->current_axis_p_start.y = ui_study->current_axis_p_start.y +
@@ -667,6 +676,18 @@ void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data) {
   }
 
   return;
+}
+
+
+void ui_study_callbacks_time_pressed(GtkWidget * combo, gpointer data) {
+  
+  ui_study_t * ui_study = data;
+
+  /* sanity check */
+  ui_time_dialog_create(ui_study);
+
+  return;
+
 }
 
 
@@ -738,14 +759,21 @@ void ui_study_callbacks_color_table(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   color_table_t i_color_table;
+  amide_volume_t * volume;
+
+  /* figure out which volume we're dealing with */
+  if (ui_study->current_volume == NULL)
+    volume = ui_study->study->volumes->volume;
+  else
+    volume = ui_study->current_volume;
 
   /* figure out which scaling menu item called me */
   for (i_color_table=0;i_color_table<NUM_COLOR_TABLES;i_color_table++) 
     if (gtk_object_get_data(GTK_OBJECT(widget),"color_table") == color_table_names[i_color_table])
       /* check if we actually changed values */
-      if (ui_study->color_table != i_color_table) {
+      if (volume->color_table != i_color_table) {
 	/* and inact the changes */
-	ui_study->color_table = i_color_table;
+	volume->color_table = i_color_table;
 	if (ui_study->study->volumes != NULL) {
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, REFRESH_IMAGE);
 	  ui_study_update_canvas(ui_study, NUM_VIEWS, UPDATE_ROIS);
@@ -791,7 +819,7 @@ void ui_study_callbacks_add_roi_type(GtkWidget * widget, gpointer data) {
 
       if (entry_return == 0) {
 	roi = roi_init();
-	roi->name = roi_name;
+	roi_set_name(roi,roi_name);
 	roi->type = i_roi_type;
 	roi->grain = ui_study->default_roi_grain;
 	roi_list_add_roi(&(ui_study->study->rois), roi);
@@ -847,11 +875,16 @@ void ui_study_callback_tree_select_row(GtkCTree * ctree, GList * node,
     while (volume_list != NULL) {
 
       /* if it's a volume, do the appropriate volume action */
-      if (node_pointer == volume_list->volume)
-	if (!volume_list_includes_volume(ui_study->current_volumes, 
-					 volume_list->volume))
-	  volume_list_add_volume(&(ui_study->current_volumes),
-				 volume_list->volume);
+      if (node_pointer == volume_list->volume) {
+	if (!ui_study_volumes_list_includes_volume(ui_study->current_volumes, 
+						  volume_list->volume))
+	  ui_study_volumes_list_add_volume(&(ui_study->current_volumes),
+					  volume_list->volume,
+					  ctree,
+					  GTK_CTREE_NODE(node));
+	ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
+	ui_time_dialog_set_times(ui_study);
+      }
 
       volume_list = volume_list->next;
     }
@@ -876,7 +909,7 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
 
       /* if it's an roi, do the appropriate roi action */
       if (node_pointer == roi_list->roi) {
-	if (ui_study->current_roi == roi_list->roi)
+	if (ui_study->current_roi == roi_list->roi) 
 	  ui_study->current_roi = NULL;
 	ui_study_rois_list_remove_roi(&(ui_study->current_rois), roi_list->roi);
       }
@@ -886,9 +919,21 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
     while (volume_list != NULL) {
 
       /* if it's a volume, do the appropriate volume action */
-      if (node_pointer == volume_list->volume)
-	volume_list_remove_volume(&(ui_study->current_volumes),
-				  volume_list->volume);
+      if (node_pointer == volume_list->volume) {
+
+	ui_study_volumes_list_remove_volume(&(ui_study->current_volumes),
+					   volume_list->volume);
+      
+	/* destroy the threshold window if it's open and looking at this volume */
+	if (ui_study->threshold != NULL)
+	  if (ui_study->threshold->volume==volume_list->volume)
+	    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", 
+				    NULL, ui_study);
+
+	/* we'll need to redraw the canvas */
+	ui_study_update_canvas(ui_study,NUM_VIEWS,UPDATE_ALL);
+	ui_time_dialog_set_times(ui_study);
+      }
 
       volume_list = volume_list->next;
     }
@@ -898,10 +943,10 @@ void ui_study_callback_tree_unselect_row(GtkCTree * ctree, GList * node,
   return;
 }
 
-/* function called when a row in the tree is clicked on */
+/* function called when a ropw in the tree is clicked on */
 gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
-						 GdkEventButton *event,
-						 gpointer data) {
+					  GdkEventButton *event,
+					  gpointer data) {
   ui_study_t * ui_study = data;
   gpointer node_pointer = NULL;
   amide_volume_list_t * volume_list = ui_study->study->volumes;
@@ -914,9 +959,9 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
   realpoint_t p0,p1;
  
   /* we're really only interest in double clicks with button 1, or clicks
-     with button 3 */
+     with buttons 2 or 3 */
   if (((event->type == GDK_2BUTTON_PRESS) & (event->button == 1)) 
-      | (event->button == 3)) {
+      | (event->button == 3) | (event->button ==2)) {
 
     /* do some fancy stuff to figure out what node in the tree just got selected*/
     gtk_clist_get_selection_info (GTK_CLIST(ctree), event->x, event->y, 
@@ -934,7 +979,7 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 
 	/* if it's an roi, do the appropriate roi action */
 	if (node_pointer == roi_list->roi) {
-	  if (event->button == 1) {
+	  if ((event->button == 1) | (event->button == 2)) {
 	    ui_study->current_mode = ROI_MODE;
 	    ui_study->current_roi = node_pointer;
 	    
@@ -972,13 +1017,19 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 	/* if it's a volume, display that volume */
 	if (node_pointer == volume_list->volume) {
 
-	  if (event->button == 1) {
+	  if ((event->button == 1) | (event->button == 2)) {
 	    ui_study->current_mode = VOLUME_MODE;
 	    ui_study->current_volume = node_pointer;
-	    ui_study_update_canvas(ui_study,NUM_VIEWS, UPDATE_ALL);
+	    /* reset the color_table picker based on the current volume */
+	    gtk_option_menu_set_history(GTK_OPTION_MENU(ui_study->color_table_menu),
+					ui_study->current_volume->color_table);
+	    /* reset the threshold widget based on the current volume */
+	    if (ui_study->threshold != NULL)
+	      ui_threshold_update(ui_study);
 
 	  } else { /* event.button == 3 */
-	    g_print("bring up volume dialog\n");
+	    /* start up the volume dialog */
+	    ui_volume_dialog_create(ui_study, node_pointer);
 
 	  }
 	}
@@ -999,9 +1050,10 @@ gboolean ui_study_callback_tree_click_row(GtkWidget *widget,
 void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
-  amide_volume_list_t * volume_list = ui_study->current_volumes;
+  ui_study_volume_list_t * volume_list = ui_study->current_volumes;
   ui_study_roi_list_t * roi_list = ui_study->current_rois;
   amide_volume_t * volume;
+  amide_volume_t * current_volume;
   amide_roi_t * roi;
   GtkCTreeNode * node;
 
@@ -1018,8 +1070,25 @@ void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
       ui_study->tree_volumes = GTK_CTREE_NODE_NEXT(node);
     gtk_ctree_remove_node(GTK_CTREE(ui_study->tree), node);
 
+
+    /* destroy the threshold window if it's open and looking at this volume */
+    /* figure out what's the current active volume */
+    if (ui_study->current_volume == NULL)
+      current_volume = ui_study->study->volumes->volume;
+    else
+      current_volume = ui_study->current_volume;
+    if (current_volume==volume)
+      if (ui_study->threshold != NULL)
+	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
+
+    /* if we're currently displaying this volume in the series widget, delete the series widget */
+    if (volume_list_includes_volume(ui_study->series->volumes, current_volume))
+      if (ui_study->series != NULL)
+	gtk_signal_emit_by_name(GTK_OBJECT(ui_study->series->app), "delete_event", NULL, ui_study);
+      
+
     /* remove the volume from existence */
-    volume_list_remove_volume(&(ui_study->current_volumes), volume);
+    ui_study_volumes_list_remove_volume(&(ui_study->current_volumes), volume);
     volume_list_remove_volume(&(ui_study->study->volumes), volume);
     if (ui_study->current_volume == volume)
       ui_study->current_volume = NULL;
@@ -1040,12 +1109,12 @@ void ui_study_callbacks_delete_item_pressed(GtkWidget * button, gpointer data) {
 
     /* if there is a roi dialog widget up, kill it */
     if (roi_list->dialog != NULL)
-      gtk_signal_emit_by_name(GTK_OBJECT(roi_list->dialog), "delete_event",
-			      NULL, roi_list);
+      gtk_signal_emit_by_name(GTK_OBJECT(roi_list->dialog), "delete_event", NULL, roi_list);
 
-    /* remove the roi from existence */
+    /* remove the roi's data structure */
     roi_list = roi_list->next;
     ui_study_rois_list_remove_roi(&(ui_study->current_rois), roi);
+    g_assert(roi_list->dialog == NULL);
     if (ui_study->current_roi == roi)
       ui_study->current_roi = NULL;
     roi_list_remove_roi(&(ui_study->study->rois), roi);
@@ -1090,13 +1159,11 @@ void ui_study_callbacks_delete_event(GtkWidget* widget, GdkEvent * event, gpoint
 
   /* destroy the threshold window if it's open */
   if (ui_study->threshold != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", 
-			    NULL, ui_study);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->threshold->app), "delete_event", NULL, ui_study);
 
   /* destroy the series window if it's open */
   if (ui_study->series != NULL)
-    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->series->app), "delete_event", 
-			    NULL, ui_study);
+    gtk_signal_emit_by_name(GTK_OBJECT(ui_study->series->app), "delete_event", NULL, ui_study);
 
   /* destroy the widget */
   gtk_widget_destroy(widget);

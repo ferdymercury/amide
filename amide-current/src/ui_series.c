@@ -1,6 +1,6 @@
 /* ui_series.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,14 +28,16 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
+#include "color_table2.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_series2.h"
 #include "ui_series_callbacks.h"
@@ -46,7 +48,7 @@ void ui_series_slices_free(ui_series_t * ui_series) {
 
   for (i=0; i < ui_series->num_slices; i++) {
     if (ui_series->slices[i] != NULL)
-      volume_free(&(ui_series->slices[i]));
+      volume_list_free(&(ui_series->slices[i]));
     if (ui_series->rgb_images[i] != NULL)
       gnome_canvas_destroy_image(ui_series->rgb_images[i]);
   }
@@ -61,6 +63,8 @@ void ui_series_free(ui_series_t ** pui_series) {
 
   ui_series_slices_free(*pui_series);
   g_free((*pui_series)->images);
+  while ((*pui_series)->volumes != NULL)
+    volume_list_remove_volume(&((*pui_series)->volumes), ((*pui_series)->volumes->volume));
   g_free(*pui_series);
   *pui_series = NULL;
 
@@ -85,6 +89,13 @@ ui_series_t * ui_series_init(void) {
   ui_series->columns = 0;
   ui_series->images = NULL;
   ui_series->rgb_images = NULL;
+  ui_series->volumes = NULL;
+  ui_series->interpolation = NEAREST_NEIGHBOR;
+  ui_series->time = 0.0;
+  ui_series->duration = 1.0;
+  ui_series->zoom = 1.0;
+  ui_series->thickness = -1.0;
+  ui_series->start = realpoint_init;
 
   return ui_series;
 }
@@ -94,33 +105,14 @@ ui_series_t * ui_series_init(void) {
 GtkAdjustment * ui_series_create_scroll_adjustment(ui_study_t * ui_study) { 
 
 
-  realpoint_t new_axis[NUM_AXIS], view_voxel_size;
-  floatpoint_t length, voxel_length, thickness;
-  axis_t j;
+  floatpoint_t length, thickness;
   GtkAdjustment * new_adjustment;
 
-  /* sanity check */
-  if (*(ui_study->series->pvolume) == NULL)
-    return NULL;
+  length = volumes_get_length(ui_study->series->volumes, ui_study->series->coord_frame);
+  thickness = ui_study->series->thickness;
 
-  for (j=0;j<NUM_AXIS;j++)
-    new_axis[j] = realspace_get_orthogonal_axis(ui_study->current_coord_frame.axis,
-						ui_study->series->view,j);
-  length = volume_get_length(*(ui_study->series->pvolume), new_axis);
-
-  /* get the length of a voxel for the given axis*/
-  view_voxel_size = 
-    realspace_base_coord_to_alt((*(ui_study->series->pvolume))->voxel_size,
-				ui_study->current_coord_frame);
-  voxel_length = REALSPACE_DOT_PRODUCT(view_voxel_size,view_voxel_size);
-
-  /* use the most appropriate thickness */
-  if (ui_study->current_thickness <= voxel_length)
-    thickness = voxel_length;
-  else
-    thickness = ui_study->current_thickness;
-
-  new_adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(0, 0, length, 
+  new_adjustment = GTK_ADJUSTMENT(gtk_adjustment_new(ui_study->series->start.z,
+						     0, length, 
 						     thickness, thickness,
 						     thickness));
   return new_adjustment;
@@ -129,26 +121,25 @@ GtkAdjustment * ui_series_create_scroll_adjustment(ui_study_t * ui_study) {
 /* funtion to update the canvas iamge */
 void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
-  realpoint_t new_axis[NUM_AXIS];
-  floatpoint_t zp_start;
-  floatpoint_t zp_length, voxel_length;
-  floatpoint_t thickness;
-  realpoint_t view_voxel_size;
+  floatpoint_t zp_length;
+  realpoint_t temp_point;
   guint i, start_i;
   gint width, height;
   gdouble x, y;
-  axis_t k;
   GtkRequisition requisition;
   GdkCursor * cursor;
-
-  /* sanity check */
-  if (*(ui_study->series->pvolume) == NULL)
-    return;
+  GdkWindow * parent=NULL;
+  realspace_t view_coord_frame;
 
   /* push our desired cursor onto the cursor stack */
   cursor = ui_study->cursor[UI_STUDY_WAIT];
   ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->series->canvas)), cursor);
+
+  if (GTK_WIDGET_REALIZED(GTK_WIDGET(ui_study->series->canvas)))
+    parent = gtk_widget_get_parent_window(GTK_WIDGET(ui_study->series->canvas));
+  if (parent == NULL)
+    parent = gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[0]));
+  gdk_window_set_cursor(parent, cursor);
   
   /* do any events pending, this allows the cursor to get displayed */
   while (gtk_events_pending()) 
@@ -156,32 +147,17 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
 
   /* get the view axis to use*/
-  for (k=0;k<NUM_AXIS;k++)
-    new_axis[k] = realspace_get_orthogonal_axis(ui_study->current_coord_frame.axis,
-						ui_study->series->view,k);
-
-  zp_length = volume_get_length(*(ui_study->series->pvolume), new_axis);
   width = 0.8*gdk_screen_width();
   height = 0.8*gdk_screen_height();
 
-  /* get the length of a voxel for the given axis*/
-  view_voxel_size = 
-    realspace_base_coord_to_alt((*(ui_study->series->pvolume))->voxel_size,
-				ui_study->current_coord_frame);
-  voxel_length = REALSPACE_DOT_PRODUCT(view_voxel_size,view_voxel_size);
-
-  /* get the total number of images */
-  if (ui_study->current_thickness <= voxel_length)
-    thickness = voxel_length;
-  else
-    thickness = ui_study->current_thickness;
-  ui_study->series->num_slices = ceil(zp_length/thickness);
+  /* figure out some parameters */
+  zp_length = volumes_get_length(ui_study->series->volumes,ui_study->series->coord_frame);
+  ui_study->series->num_slices = ceil(zp_length/ui_study->series->thickness);
 
   /* allocate space for pointers to our slices if needed */
   if (ui_study->series->slices == NULL) {
     if ((ui_study->series->slices = 
-	 (amide_volume_t **) g_malloc(sizeof(amide_volume_t *)
-				      *ui_study->series->num_slices)) == NULL) {
+	 (amide_volume_list_t **) g_malloc(sizeof(amide_volume_list_t *) *ui_study->series->num_slices)) == NULL) {
       g_warning("%s: couldn't allocate space for pointers to amide_volume_t's",
 		PACKAGE);
       return;
@@ -193,8 +169,7 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   /* allocate space for pointers to our rgb_images if needed */
   if (ui_study->series->rgb_images == NULL) {
     if ((ui_study->series->rgb_images = 
-	 (GdkImlibImage **) g_malloc(sizeof(GdkImlibImage *)
-				       *ui_study->series->num_slices)) 
+	 (GdkImlibImage **) g_malloc(sizeof(GdkImlibImage *)*ui_study->series->num_slices)) 
 	== NULL) {
       g_warning("%s: couldn't allocate space for pointers to GdkImlibImage's",
 		PACKAGE);
@@ -209,20 +184,21 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
      of the ui_series data structure */
   if (ui_study->series->rgb_images[0] != NULL) 
     gnome_canvas_destroy_image(ui_study->series->rgb_images[0]);
-  ui_study->series->rgb_images[0] = 
-    image_from_volume(&(ui_study->series->slices[0]),
-		      *(ui_study->series->pvolume),
-		      ui_study->current_frame,
-		      0.0,
-		      thickness,
-		      new_axis,
-		      ui_study->scaling,
-		      ui_study->color_table,
-		      ui_study->current_zoom,
-		      ui_study->current_interpolation,
-		      ui_study->threshold_min,
-		      ui_study->threshold_max);
+  view_coord_frame = ui_study->series->coord_frame;
+  view_coord_frame.offset = 
+    realspace_alt_coord_to_base(ui_study->series->start,
+				ui_study->series->coord_frame);
 
+  ui_study->series->rgb_images[0] = 
+    image_from_volumes(&(ui_study->series->slices[0]),
+		       ui_study->series->volumes,
+		       ui_study->series->time,
+		       ui_study->series->duration,
+		       ui_study->series->thickness,
+		       view_coord_frame,
+		       ui_study->scaling,
+		       ui_study->series->zoom,
+		       ui_study->series->interpolation);
 
   /* allocate space for pointers to our canvas_images if needed */
   if (ui_study->series->images == NULL) {
@@ -250,14 +226,11 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
 
   /* figure out what's the first image we want to display */
-  i = ui_study->series->num_slices*(ui_study->series->zp_start/zp_length);
-  if (ui_study->series->num_slices <= 
-      ui_study->series->columns*ui_study->series->rows)
+  i = ui_study->series->num_slices*(ui_study->series->start.z/zp_length);
+  if (ui_study->series->num_slices <= ui_study->series->columns*ui_study->series->rows)
     i = 0;
-  else if (i > ui_study->series->num_slices - 
-	   ui_study->series->columns*ui_study->series->rows)
-    i = ui_study->series->num_slices - 
-      ui_study->series->columns*ui_study->series->rows;
+  else if (i > (ui_study->series->num_slices -  ui_study->series->columns*ui_study->series->rows))
+    i = ui_study->series->num_slices - ui_study->series->columns*ui_study->series->rows;
   if (i < 0)
     i = 0;
 
@@ -266,7 +239,11 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
 
   for (; ((i-start_i) < (ui_study->series->rows*ui_study->series->columns))
 	 & (i < ui_study->series->num_slices); i++) {
-    zp_start = i*thickness;
+    temp_point = ui_study->series->start;
+    temp_point.z = i*ui_study->series->thickness;
+    view_coord_frame.offset = 
+      realspace_alt_coord_to_base(temp_point,
+				  ui_study->series->coord_frame);
     
     if (i != 0) /* we've already done image 0 */
       if (ui_study->series->rgb_images[i] != NULL)
@@ -274,19 +251,15 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
     
     if (i != 0) /* we've already done image 0 */
       ui_study->series->rgb_images[i] = 
-	image_from_volume(&(ui_study->series->slices[i]),
-			  *(ui_study->series->pvolume),
-			  ui_study->current_frame,
-			  zp_start,
-			  thickness,
-			  new_axis,
-			  ui_study->scaling,
-			  ui_study->color_table,
-			  ui_study->current_zoom,
-			  ui_study->current_interpolation,
-			  ui_study->threshold_min,
-			  ui_study->threshold_max);
-    
+	image_from_volumes(&(ui_study->series->slices[i]),
+			   ui_study->series->volumes,
+			   ui_study->series->time,
+			   ui_study->series->duration,
+			   ui_study->series->thickness,
+			   view_coord_frame,
+			   ui_study->scaling,
+			   ui_study->series->zoom,
+			   ui_study->series->interpolation);
     
     /* figure out the next x,y spot to put this guy */
     y = floor((i-start_i)/ui_study->series->columns)
@@ -329,12 +302,11 @@ void ui_series_update_canvas_image(ui_study_t * ui_study) {
   gtk_widget_set_usize(GTK_WIDGET(ui_study->series->canvas), width, height);
   /* the requisition thing should work.... I'll use usize for now... */
 
-
   /* pop the previous cursor off the stack */
   cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
   ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
   cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-  gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->series->canvas)), cursor);
+  gdk_window_set_cursor(parent, cursor);
 
   return;
 }
@@ -348,6 +320,7 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   GnomeCanvas * series_canvas;
   GtkAdjustment * adjustment;
   GtkWidget * scale;
+  ui_study_volume_list_t * ui_volumes;
 
   /* sanity checks */
   if (ui_study->study->volumes == NULL)
@@ -356,22 +329,22 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
     return;
   if (ui_study->series != NULL)
     return;
-
+  if (ui_study->current_volumes == NULL)
+    return;
 
   ui_study->series = ui_series_init();
-  ui_study->series->view = view;
 
-  /* pick the appropriate volume */
-  if (ui_study->current_volume == NULL)
-    ui_study->series->pvolume = &(ui_study->study->volumes->volume); 
-  else 
-    ui_study->series->pvolume = &(ui_study->current_volume);
-
-  title = g_strdup_printf("Series: %s (%s)",ui_study->study->name, 
-			  view_names[view]);
+  title = g_strdup_printf("Series: %s (%s)",ui_study->study->name, view_names[view]);
   app = GNOME_APP(gnome_app_new(PACKAGE, title));
   free(title);
   ui_study->series->app = app;
+
+  /* figure out the currrent number of volumes, and make a copy in our series's volume list */
+  ui_volumes = ui_study->current_volumes;
+  while (ui_volumes != NULL) {
+    volume_list_add_volume(&(ui_study->series->volumes),ui_volumes->volume);
+    ui_volumes = ui_volumes->next;
+  }
 
   /* setup the callbacks for app */
   gtk_signal_connect(GTK_OBJECT(app), "delete_event",
@@ -382,10 +355,23 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
   packing_table = gtk_table_new(1,2,FALSE);
   gnome_app_set_contents(app, GTK_WIDGET(packing_table));
 
+  /* save the coord_frame of the series */
+  ui_study->series->coord_frame = ui_study->current_coord_frame;
+  ui_study->series->coord_frame = 
+    realspace_get_orthogonal_coord_frame(ui_study->series->coord_frame, view);
+  ui_study->series->start = realspace_base_coord_to_alt(ui_study->current_axis_p_start,
+							ui_study->series->coord_frame);
 
+  /* save some parameters */
+  ui_study->series->thickness = ui_study->current_thickness;
+  ui_study->series->interpolation = ui_study->current_interpolation;
+  ui_study->series->time = ui_study->current_time;
+  ui_study->series->duration = ui_study->current_duration;
+  ui_study->series->zoom = ui_study->current_zoom;
+
+  /* setup the canvas */
   series_canvas = GNOME_CANVAS(gnome_canvas_new());
   ui_study->series->canvas = series_canvas; /* save for future use */
-  ui_study->series->zp_start = 0.0;
   ui_series_update_canvas_image(ui_study); /* fill in the canvas */
   gtk_table_attach(GTK_TABLE(packing_table), 
 		   GTK_WIDGET(series_canvas), 0,1,1,2,
@@ -404,16 +390,11 @@ void ui_series_create(ui_study_t * ui_study, view_t view) {
 		     GTK_SIGNAL_FUNC(ui_series_callbacks_scroll_change), 
 		     ui_study);
 
-
-
-
   /* and show all our widgets */
   gtk_widget_show_all(GTK_WIDGET(app));
 
   return;
 }
-
-
 
 
 

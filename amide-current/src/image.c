@@ -1,6 +1,6 @@
 /* image.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -30,9 +30,11 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
-#include "volume.h"
 #include "color_table.h"
+#include "volume.h"
+#include "color_table2.h"
 #include "image.h"
+
 
 /* external variables */
 gchar * scaling_names[] = {"per slice", "global"};
@@ -66,7 +68,7 @@ GdkImlibImage * image_blank(const gint width, const gint height) {
 }
 
 /* function to make the bar graph to put next to the color_strip image */
-GdkImlibImage * image_of_distribution(const amide_volume_t * volume,
+GdkImlibImage * image_of_distribution(amide_volume_t * volume,
 				      const gint width, 
 				      const gint height) {
 
@@ -75,7 +77,6 @@ GdkImlibImage * image_of_distribution(const amide_volume_t * volume,
   volume_data_t scale;
   guchar * rgb_data;
   guint frame;
-  volume_data_t counter[height];
   guint32 j, k;
   volume_data_t max;
 
@@ -86,41 +87,54 @@ GdkImlibImage * image_of_distribution(const amide_volume_t * volume,
   }
 
 
-  scale = height/(volume->max - volume->min);
 
-  /* initialize the counter array */
-  for (j = 0 ; j < height ; j++)
-    counter[j] = 0.0;
+  /* check if we've already calculated the data distribution */
+  if (volume->distribution == NULL) {
+    /* if not, calculate it now */
 
-  /* now "bin" the data */
-  for (frame = 0; frame < volume->num_frames; frame++)
-    for ( i.z = 0; i.z < volume->dim.z; i.z++)
-      for (i.y = 0; i.y < volume->dim.y; i.y++) 
-	for (i.x = 0; i.x < volume->dim.x; i.x++) {
-	  j = rint(scale*VOLUME_CONTENTS(volume,frame,i));
-	  counter[j]+=1.0;
-	}
+    scale = (height-1)/(volume->max - volume->min);
+
+    if ((volume->distribution = 
+	 (volume_data_t *) g_malloc(sizeof(volume_data_t) * height)) == NULL) {
+      g_warning("%s: couldn't allocate memory for data distribution for bar_graph",PACKAGE);
+      return NULL;
+    }
+    
+
+    /* initialize the distribution array */
+    for (j = 0 ; j < height ; j++)
+      volume->distribution[j] = 0.0;
+
+    /* now "bin" the data */
+    for (frame = 0; frame < volume->num_frames; frame++)
+      for ( i.z = 0; i.z < volume->dim.z; i.z++)
+	for (i.y = 0; i.y < volume->dim.y; i.y++) 
+	  for (i.x = 0; i.x < volume->dim.x; i.x++) {
+	    j = rint(scale*(VOLUME_CONTENTS(volume,frame,i)-volume->min));
+	    volume->distribution[j]+=1.0;
+	  }
   
+    /* normalize the distribution array to the width */
 
-  /* normalize the counter array to the width */
-  max = 0.0;
-
-  /* ignore the lowest two bins */
-  for (j = 0; j < height ; j++) 
-    if (counter[j] > max)
-      max = counter[j];
+    /* figure out the max of the distribution */
+    max = 0.0;
+    for (j = 0; j < height ; j++) 
+      if (volume->distribution[j] > max)
+	max = volume->distribution[j];
   
-  /* do some scaling */
-  for (j = 0; j < height ; j++) 
-    counter[j] = log10(counter[j]+1.0);
-  max = log10(max+1.0);
-  scale = ((double) width)/max;
-  for (j = 0 ; j < height ; j++)
-    counter[j] = scale*counter[j];
+    /* do some log scaling so the distribution is more meaningful, and doesn't get
+       swamped by outlyers */
+    for (j = 0; j < height ; j++) 
+      volume->distribution[j] = log10(volume->distribution[j]+1.0);
+    max = log10(max+1.0);
+    scale = ((double) width)/max;
+    for (j = 0 ; j < height ; j++)
+      volume->distribution[j] = scale*volume->distribution[j];
+  }
 
   /* figure out what the rgb data is */
   for (j=0 ; j < height ; j++) {
-    for (k=0; k < floor(((double) width)-counter[height-j-1]) ; k++) {
+    for (k=0; k < floor(((double) width)-volume->distribution[height-j-1]) ; k++) {
       rgb_data[j*width*3+k*3+0] = 0xFF;
       rgb_data[j*width*3+k*3+1] = 0xFF;
       rgb_data[j*width*3+k*3+2] = 0xFF;
@@ -167,14 +181,14 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
 
 
   for (j=0; j < height; j++) {
-    datum = (((double) height-j)/height) * volume_max;
+    datum = ((((double) height-j)/height) * (volume_max-volume_min))+volume_min;
     if (datum >= max)
       datum = volume_max;
     else if (datum <= min)
-      datum = 0.0;
+      datum = volume_min;
     else
-      datum = (datum-min)/
-	((max-min)/(volume_max-volume_min));
+      datum = (volume_max-volume_min)*(datum-min)/(max-min)+volume_min;
+
 
     color = color_table_lookup(datum, color_table, volume_min, volume_max);
     for (i=0; i < width; i++) {
@@ -191,78 +205,136 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
   return temp_image;
 }
 
-GdkImlibImage * image_from_volume(amide_volume_t ** pslice,
-				  const amide_volume_t * volume,
-				  const guint frame,
-				  const floatpoint_t zp_start,
-				  const floatpoint_t thickness,
-				  const realpoint_t axis[],
-				  const scaling_t scaling,
-				  const color_table_t color_table,
-				  const floatpoint_t zoom,
-				  const interpolation_t interpolation,
-				  const volume_data_t threshold_min,
-				  const volume_data_t threshold_max) {
+GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
+				   amide_volume_list_t * volumes,
+				   const volume_time_t start,
+				   const volume_time_t duration,
+				   const floatpoint_t thickness,
+				   const realspace_t view_coord_frame,
+				   const scaling_t scaling,
+				   const floatpoint_t zoom,
+				   const interpolation_t interpolation) {
 
   guchar * rgb_data;
+  guint16 * temp_data;
+  guint location;
   voxelpoint_t i;
-  volume_data_t max,min,temp;
+  voxelpoint_t dim;
+  volume_data_t max,min;
   GdkImlibImage * temp_image;
   color_point_t rgb_temp;
-  amide_volume_t * slice;
+  amide_volume_list_t * slices;
+  amide_volume_list_t * temp_slices;
+  amide_volume_list_t * temp_volumes;
 
-  if ((*pslice) == NULL) {
-    if ((slice = volume_get_slice(volume, frame, zp_start, thickness,
-				  axis, zoom, interpolation)) == NULL) {
-      g_warning("%s: slice is NULL?\n", PACKAGE);
+  /* sanity checks */
+  g_assert(volumes != NULL);
+#ifdef AMIDE_DEBUG
+  if ((*pslices) != NULL) {
+    temp_slices = *pslices;
+    temp_volumes = volumes;
+    while ((temp_slices != NULL) & (temp_volumes != NULL)) {
+      temp_slices = temp_slices->next;
+      temp_volumes = temp_volumes->next;
+    }
+    /* both should now be null */
+    g_assert(temp_slices == NULL);
+    g_assert(temp_volumes == NULL);
+  }
+#endif
+
+  /* generate the slices if we need to */
+  if ((*pslices) == NULL) {
+    if ((slices = volumes_get_slices(volumes, start, duration, thickness, view_coord_frame, 
+				     zoom, interpolation)) == NULL) {
+      g_warning("%s: returned slices are NULL?\n", PACKAGE);
       return NULL;
     } 
-    *pslice = slice;
-  } else 
-    slice = (*pslice);
-
-  /* get the max/min values for scaling */
-  if (scaling == VOLUME) {
-    max = threshold_max;
-    min = threshold_min;
+    (*pslices) = slices;
   } else {
-    /* find the slice's max and min, and then adjust these values to
-     * correspond to the current threshold values */
-    max = 0.0;
-    min = 0.0;
-    i.z = 0;
-    for (i.y = 0; i.y < (*pslice)->dim.y; i.y++) 
-      for (i.x = 0; i.x < (*pslice)->dim.x; i.x++) {
-	temp = VOLUME_CONTENTS(slice, frame, i);
-	if (temp > max)
-	  max = temp;
-	else if (temp < min)
-	  min = temp;
-      }
-    max = threshold_max*(max-min)/(volume->max-volume->min);
-    min = threshold_min*(max-min)/(volume->max-volume->min);
+    slices = (*pslices);
   }
 
-  if ((rgb_data = (guchar *) g_malloc(sizeof(guchar) * 3 * slice->dim.y *slice->dim.x)) == NULL) {
+  /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */
+  dim = slices->volume->dim;
+
+  /* malloc space for a temporary storage buffer */
+  if ((temp_data = (guint16 *) g_malloc(sizeof(guint16) * 3 * dim.y * dim.x)) == NULL) {
+    g_warning("%s: couldn't allocate memory for rgb_data for image",PACKAGE);
+    return NULL;
+  }
+  /* and initialize it */
+  i.z = 0;
+  for (i.y = 0; i.y < dim.y; i.y++) 
+    for (i.x = 0; i.x < dim.x; i.x++) {
+      location = i.y*dim.x*3+i.x*3;
+      temp_data[location+0] = 0;
+      temp_data[location+1] = 0;
+      temp_data[location+2] = 0;
+    }
+
+  /* iterate through all the slices */
+  temp_slices = slices;
+  temp_volumes = volumes;
+
+  while (temp_slices != NULL) {
+
+
+    /* get the max/min values for scaling */
+    if (scaling == VOLUME) {
+      max = temp_volumes->volume->threshold_max;
+      min = temp_volumes->volume->threshold_min;
+    } else {
+      /* find the slice's max and min, and then adjust these values to
+       * correspond to the current threshold values */
+      max = temp_slices->volume->max;
+      min = temp_slices->volume->min;
+      max = temp_volumes->volume->threshold_max*(max-min)/
+	(temp_volumes->volume->max-temp_volumes->volume->min);
+      min = temp_volumes->volume->threshold_min*(max-min)/
+	(temp_volumes->volume->max-temp_volumes->volume->min);
+    }
+
+    /* now add this slice into the rgb data */
+    i.z = 0;
+    for (i.y = 0; i.y < dim.y; i.y++) 
+      for (i.x = 0; i.x < dim.x; i.x++) {
+	rgb_temp = color_table_lookup(VOLUME_CONTENTS(temp_slices->volume,0,i), 
+				      temp_volumes->volume->color_table, min, max);
+	location = i.y*dim.x*3+i.x*3;
+	temp_data[location+0] += rgb_temp.r;
+	temp_data[location+1] += rgb_temp.g;
+	temp_data[location+2] += rgb_temp.b;
+      }
+
+    temp_slices = temp_slices->next;
+    temp_volumes = temp_volumes->next;
+  }
+
+
+  /* malloc space for the true rgb buffer */
+  if ((rgb_data = (guchar *) g_malloc(sizeof(guchar) * 3 * dim.y *dim.x)) == NULL) {
     g_warning("%s: couldn't allocate memory for rgb_data for image",PACKAGE);
     return NULL;
   }
 
-  /* now convert our slice to rgb data */
+  /* now convert our temp rgb data to real rgb data */
   i.z = 0;
-  for (i.y = 0; i.y < (slice)->dim.y; i.y++) 
-    for (i.x = 0; i.x < (slice)->dim.x; i.x++) {
-      rgb_temp = color_table_lookup(VOLUME_CONTENTS((slice),frame,i), 
-				    color_table, min, max);
-      rgb_data[i.y*(slice)->dim.x*3+i.x*3+0] = rgb_temp.r;
-      rgb_data[i.y*(slice)->dim.x*3+i.x*3+1] = rgb_temp.g;
-      rgb_data[i.y*(slice)->dim.x*3+i.x*3+2] = rgb_temp.b;
+  for (i.y = 0; i.y < dim.y; i.y++) 
+    for (i.x = 0; i.x < dim.x; i.x++) {
+      location = i.y*dim.x*3+i.x*3;
+      rgb_data[location+0] = (temp_data[location+0] < 0xFF) ? temp_data[location+0] : 0xFF;
+      rgb_data[location+1] = (temp_data[location+1] < 0xFF) ? temp_data[location+1] : 0xFF;
+      rgb_data[location+2] = (temp_data[location+2] < 0xFF) ? temp_data[location+2] : 0xFF;
     }
 
-  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL, 
-						(slice)->dim.x, 
-						(slice)->dim.y);
-  g_free(rgb_data); /* no longer need the data */
+  
+
+  temp_image = gdk_imlib_create_image_from_data(rgb_data, NULL,dim.x, dim.y);
+
+  /* no longer need the data */
+  g_free(rgb_data); 
+  g_free(temp_data);
 
   return temp_image;
 }

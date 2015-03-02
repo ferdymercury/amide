@@ -16,6 +16,11 @@ COPYING.
 Requirements
 ------------
 
+Compiler: 
+
+I currently use gcc-2.95.2, as amide is fairly unstable when compiled
+with egcs-1.1.2 
+
 
 Optional Packages
 -----------------
@@ -59,3 +64,4 @@ don't feel like reading that, try:
 	./configure
 	make 
 	make install
+

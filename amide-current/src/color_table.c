@@ -1,6 +1,6 @@
 /* color_table.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -29,8 +29,9 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
-#include "volume.h"
 #include "color_table.h"
+#include "volume.h"
+#include "color_table2.h"
 
 /* external variables */
 gchar * color_table_names[] = {"black/white linear", \
@@ -38,6 +39,7 @@ gchar * color_table_names[] = {"black/white linear", \
 			       "red temperature", \
 			       "blue temperature", \
 			       "green temperature", \
+			       "hot metal", \
 			       "spectrum", \
 			       "NIH + white", \
 			       "NIH"};
@@ -111,15 +113,15 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
   case RED_TEMPERATURE:
     /* this may not be exactly right.... */
     scale = 0xFF/(max-min);
-    temp = ((datum-min)/(max-min));
+    temp = (datum-min)/(max-min);
     if (temp > 1.0)
       rgb.r = rgb.g = rgb.b = 0xFF;
     else if (temp < 0.0)
       rgb.r = rgb.g = rgb.b = 0;
     else {
       rgb.r = temp >= 0.70 ? 0xFF : scale*(datum-min)/0.70;
-      rgb.g = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
-      rgb.b = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
+      rgb.g = temp >= 0.50 ? 2*scale*(datum-min/2.0-max/2.0) : 0;
+      rgb.b = temp >= 0.50 ? 2*scale*(datum-min/2.0-max/2.0) : 0;
     }
     break;
   case BLUE_TEMPERATURE:
@@ -131,8 +133,8 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
     else if (temp < 0.0)
       rgb.r = rgb.g = rgb.b = 0;
     else {
-      rgb.r = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
-      rgb.g = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
+      rgb.r = temp >= 0.50 ? 2*scale*(datum-max/2.0-min/2.0) : 0;
+      rgb.g = temp >= 0.50 ? 2*scale*(datum-max/2.0-min/2.0) : 0;
       rgb.b = temp >= 0.70 ? 0xFF : scale*(datum-min)/0.70;
     }
     break;
@@ -145,9 +147,32 @@ color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
     else if (temp < 0.0)
       rgb.r = rgb.g = rgb.b = 0;
     else {
-      rgb.r = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
+      rgb.r = temp >= 0.50 ? 2*scale*(datum-max/2.0-min/2.0) : 0;
       rgb.g = temp >= 0.70 ? 0xFF : scale*(datum-min)/0.70;
-      rgb.b = temp >= 0.50 ? 2*scale*(datum-max/2.0-min) : 0;
+      rgb.b = temp >= 0.50 ? 2*scale*(datum-max/2.0-min/2.0) : 0;
+    }
+    break;
+  case HOT_METAL:
+    /* derived from code in xmedcon (by Erik Nolf) */
+
+    temp = ((datum-min)/(max-min)); /* between 0.0 and 1.0 */
+    if (temp > 1.0)
+      rgb.r = rgb.g = rgb.b = 0xFF;
+    else if (temp < 0.0)
+      rgb.r = rgb.g = rgb.b = 0;
+    else {
+      /* several "magic" numbers are used, i.e. I have no idea how they're derived, 
+	 but they work.....
+	 red: distributed between 0-181 (out of 255)
+	 green: distributed between 128-218 (out of 255)
+	 blue: distributed between 192-255 (out of 255)
+      */
+      rgb.r = (temp >= (182.0/255.0)) ? 0xFF : 0xFF*temp*(255.0/182); 
+      rgb.g = 
+	(temp <  (128.0/255.0)) ? 0x00 : 
+	((temp >= (219.0/255.0)) ? 0xFF : 0xFF*(temp-128.0/255.0)*(255.0/91.0));
+      rgb.b = (temp >= (192.0/255.0)) ? 0xFF*(temp-192.0/255)*(255.0/63.0) : 0x00 ;
+      
     }
     break;
   case SPECTRUM:
@@ -241,7 +266,7 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
   switch(which) {
   case RED_TEMPERATURE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
-    highlight_color.r = 0;
+    highlight_color.r = 0x00;
     highlight_color.g = 0xFF;
     highlight_color.b = 0xFF;
     break;
@@ -249,12 +274,18 @@ guint32 color_table_outline_color(color_table_t which, gboolean highlight) {
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0xFF;
     highlight_color.g = 0xFF;
-    highlight_color.b = 0;
+    highlight_color.b = 0x00;
     break;
   case GREEN_TEMPERATURE:
     normal_color = color_table_lookup(1.0, which, 0.0,1.0);
     highlight_color.r = 0xFF;
-    highlight_color.g = 0;
+    highlight_color.g = 0x00;
+    highlight_color.b = 0xFF;
+    break;
+  case HOT_METAL:
+    normal_color = color_table_lookup(1.0, which, 0.0,1.0);
+    highlight_color.r = 0x00;
+    highlight_color.g = 0xFF;
     highlight_color.b = 0xFF;
     break;
   case SPECTRUM:

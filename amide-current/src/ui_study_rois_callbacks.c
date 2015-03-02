@@ -1,6 +1,6 @@
 /* ui_study_rois_callbacks.c
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,14 +28,15 @@
 #include <math.h>
 #include "amide.h"
 #include "realspace.h"
+#include "color_table.h"
 #include "volume.h"
 #include "roi.h"
 #include "study.h"
-#include "color_table.h"
 #include "image.h"
 #include "ui_threshold.h"
 #include "ui_series.h"
 #include "ui_study_rois.h"
+#include "ui_study_volumes.h"
 #include "ui_study.h"
 #include "ui_study_rois2.h"
 #include "ui_study_rois_callbacks.h"
@@ -50,8 +51,8 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   ui_study_t * ui_study = data;
   ui_study_roi_list_t * temp_roi_list;
   realpoint_t real_loc, view_loc;
-  view_t j;
-  axis_t k;
+  view_t i_view;
+  axis_t i_axis;
   floatpoint_t view_width,view_height;
   realpoint_t item, diff;
   amide_volume_t * volume;
@@ -59,7 +60,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   realpoint_t t[3]; /* temp variables */
   realpoint_t new_center, new_radius, view_center, view_radius;
   static realpoint_t center, radius;
-  static view_t i;
+  static view_t i_view_static;
   static realpoint_t initial_real_loc;
   static realpoint_t initial_view_loc;
   static realpoint_t last_pic_loc;
@@ -75,8 +76,8 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
     return TRUE;
   if (ui_study->study->volumes == NULL)
     return TRUE;
-  for (j=0; j<NUM_VIEWS; j++)
-    if (ui_study->current_slice[j] == NULL)
+  for (i_view=0; i_view<NUM_VIEWS; i_view++)
+    if (ui_study->current_slices[i_view] == NULL)
       return TRUE;
   
   /* figure out which volume we're dealing with */
@@ -97,30 +98,30 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
   temp_roi_list = ui_study->current_rois;
   if (roi_item == NULL)
     while (temp_roi_list != NULL) {
-      for (j=0; j<NUM_VIEWS; j++) 
-	if (((gpointer) (temp_roi_list->canvas_roi[j])) == ((gpointer) widget)) {
-	  i = j;
+      for (i_view=0; i_view<NUM_VIEWS; i_view++) 
+	if (((gpointer) (temp_roi_list->canvas_roi[i_view])) == ((gpointer) widget)) {
+	  i_view_static = i_view;
 	  current_roi_list_item = temp_roi_list;
 	}
       temp_roi_list = temp_roi_list->next;
     }
       
   /* get some needed information */
-  view_width = ui_study->current_slice[i]->voxel_size.x*
-    ui_study->current_slice[i]->dim.x;
-  view_height = ui_study->current_slice[i]->voxel_size.y*
-    ui_study->current_slice[i]->dim.y;
+  view_width = ui_study->current_slices[i_view_static]->volume->voxel_size.x*
+    ui_study->current_slices[i_view_static]->volume->dim.x;
+  view_height = ui_study->current_slices[i_view_static]->volume->voxel_size.y*
+    ui_study->current_slices[i_view_static]->volume->dim.y;
 
   /* convert the event location to view space units */
   view_loc.x = ((item.x-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[i]->rgb_width)*view_width;
+		/ui_study->rgb_image[i_view_static]->rgb_width)*view_width;
   view_loc.y = ((item.y-UI_STUDY_TRIANGLE_HEIGHT)
-		/ui_study->rgb_image[i]->rgb_height)*view_height;
+		/ui_study->rgb_image[i_view_static]->rgb_height)*view_height;
   view_loc.z = ui_study->current_thickness/2.0;
 
   /* Convert the event location info to real units */
   real_loc = realspace_alt_coord_to_base(view_loc,
-					 ui_study->current_slice[i]->coord_frame);
+					 ui_study->current_slices[i_view_static]->volume->coord_frame);
 
   /* switch on the event which called this */
   switch (event->type)
@@ -132,7 +133,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       
       /* push our desired cursor onto the cursor stack */
       ui_study->cursor_stack = g_slist_prepend(ui_study->cursor_stack,cursor);
-      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i])), cursor);
+      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i_view_static])), cursor);
       
       break;
 
@@ -142,7 +143,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
       ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i])), cursor);
+      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i_view_static])), cursor);
       
       break;
       
@@ -173,7 +174,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 			     event->button.time);
 
       /* save the roi we're going to manipulate for future use */
-      roi_item = current_roi_list_item->canvas_roi[i];
+      roi_item = current_roi_list_item->canvas_roi[i_view_static];
 
       /* save some values in static variables for future use */
       initial_real_loc = real_loc;
@@ -227,21 +228,21 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	  view_radius = 
 	    realspace_alt_dim_to_alt(radius,
 				     current_roi_list_item->roi->coord_frame,
-				     ui_study->current_slice[i]->coord_frame);
+				     ui_study->current_slices[i_view_static]->volume->coord_frame);
 	  view_center = 
 	    realspace_alt_coord_to_alt(center, 
 				       current_roi_list_item->roi->coord_frame,
-				       ui_study->current_slice[i]->coord_frame);
+				       ui_study->current_slices[i_view_static]->volume->coord_frame);
 	  REALSPACE_SUB(view_loc,view_center,t[0]);
 	  REALSPACE_SUB(initial_view_loc,view_center,t[1]);
 	  
 	  /* figure out what the center of the roi is in canvas_item coords */
 
 	  item_center.x = ((view_center.x/view_width)
-			   *ui_study->rgb_image[i]->rgb_width
+			   *ui_study->rgb_image[i_view_static]->rgb_width
 			   +UI_STUDY_TRIANGLE_HEIGHT);
 	  item_center.y = ((view_center.y/view_height)
-			   *ui_study->rgb_image[i]->rgb_height
+			   *ui_study->rgb_image[i_view_static]->rgb_height
 			   +UI_STUDY_TRIANGLE_HEIGHT);
 
 	  zoom.x = (view_radius.x+t[0].x)/(view_radius.x+t[1].x);
@@ -266,7 +267,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	  view_center = 
 	    realspace_alt_coord_to_alt(center,
 				       current_roi_list_item->roi->coord_frame,
-				       ui_study->current_slice[i]->coord_frame);
+				       ui_study->current_slices[i_view_static]->volume->coord_frame);
 	  REALSPACE_SUB(initial_view_loc,view_center,t[0]);
 	  REALSPACE_SUB(view_loc,view_center,t[1]);
 
@@ -276,10 +277,10 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 
 	  /* figure out what the center of the roi is in canvas_item coords */
 	  item_center.x = ((view_center.x/view_width)
-			   *ui_study->rgb_image[i]->rgb_width
+			   *ui_study->rgb_image[i_view_static]->rgb_width
 			   +UI_STUDY_TRIANGLE_HEIGHT);
 	  item_center.y = ((view_center.y/view_height)
-			   *ui_study->rgb_image[i]->rgb_height
+			   *ui_study->rgb_image[i_view_static]->rgb_height
 			   +UI_STUDY_TRIANGLE_HEIGHT);
 	  affine[0] = cos(theta);
 	  affine[1] = sin(theta);
@@ -313,7 +314,7 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
       ui_study->cursor_stack = g_slist_remove(ui_study->cursor_stack, cursor);
       cursor = g_slist_nth_data(ui_study->cursor_stack, 0);
-      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i])), cursor);
+      gdk_window_set_cursor(gtk_widget_get_parent_window(GTK_WIDGET(ui_study->canvas[i_view_static])), cursor);
       dragging = FALSE;
       roi_item = NULL;
 
@@ -343,9 +344,9 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	REALSPACE_SUB(zoom,t[2],zoom);
 	zoom = /* get the zoom in roi coords */
 	  realspace_alt_coord_to_base(zoom,
-				      ui_study->current_slice[i]->coord_frame);
+				      ui_study->current_slices[i_view_static]->volume->coord_frame);
 	REALSPACE_SUB(zoom, 
-		      ui_study->current_slice[i]->coord_frame.offset,
+		      ui_study->current_slices[i_view_static]->volume->coord_frame.offset,
 		      zoom);
 	REALSPACE_ADD(zoom, 
 		      current_roi_list_item->roi->coord_frame.offset,
@@ -381,10 +382,10 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	current_roi_list_item->roi->coord_frame.offset = new_center;
 	
 	/* now rotate the roi coord_frame axis */
-	for (k=0;k<NUM_AXIS;k++)
-	  current_roi_list_item->roi->coord_frame.axis[k] =
-	    realspace_rotate_on_axis(&(current_roi_list_item->roi->coord_frame.axis[k]),
-				     &(ui_study->current_slice[i]->coord_frame.axis[ZAXIS]),
+	for (i_axis=0;i_axis<NUM_AXIS;i_axis++)
+	  current_roi_list_item->roi->coord_frame.axis[i_axis] =
+	    realspace_rotate_on_axis(&(current_roi_list_item->roi->coord_frame.axis[i_axis]),
+				     &(ui_study->current_slices[i_view_static]->volume->coord_frame.axis[ZAXIS]),
 				     theta);
 	realspace_make_orthonormal(current_roi_list_item->roi->coord_frame.axis);
 	
@@ -402,10 +403,10 @@ gint ui_study_rois_callbacks_roi_event(GtkWidget* widget,
 	return TRUE; /* shouldn't get here */
 	
       /* update the roi */
-      for (j=0;j<NUM_VIEWS;j++) {
-	current_roi_list_item->canvas_roi[j] =
-	  ui_study_rois_update_canvas_roi(ui_study,j,
-					  current_roi_list_item->canvas_roi[j],
+      for (i_view=0;i_view<NUM_VIEWS;i_view++) {
+	current_roi_list_item->canvas_roi[i_view] =
+	  ui_study_rois_update_canvas_roi(ui_study,i_view,
+					  current_roi_list_item->canvas_roi[i_view],
 					  current_roi_list_item->roi);
       }
       

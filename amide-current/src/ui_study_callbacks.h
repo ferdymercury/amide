@@ -1,6 +1,6 @@
 /* ui_study_callbacks.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -32,6 +32,7 @@ void ui_study_callbacks_plane_change(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_axis_change(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_reset_axis(GtkWidget * button, gpointer data);
 void ui_study_callbacks_zoom(GtkAdjustment * adjustment, gpointer data);
+void ui_study_callbacks_time_pressed(GtkWidget * combo, gpointer data);
 void ui_study_callbacks_thickness(GtkAdjustment * adjustment, gpointer data);
 void ui_study_callbacks_transverse_series(GtkWidget * widget, gpointer data);
 void ui_study_callbacks_coronal_series(GtkWidget * widget, gpointer data);

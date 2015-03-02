@@ -1,6 +1,6 @@
 /* ui_study.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -61,6 +61,12 @@ typedef enum {UI_STUDY_DEFAULT,
 	      UI_STUDY_WAIT,
 	      NUM_CURSORS} ui_study_cursor_t;
 
+typedef enum {DIM_X, DIM_Y, DIM_Z, \
+	      CENTER_X, CENTER_Y, CENTER_Z, \
+	      AXIS_X_X, AXIS_X_Y, AXIS_X_Z, \
+	      AXIS_Y_X, AXIS_Y_Y, AXIS_Y_Z, \
+	      AXIS_Z_X, AXIS_Z_Y, AXIS_Z_Z} which_entry_widget_t;
+
 /* ui_study data structures */
 typedef struct ui_study_t {
   GnomeApp * app; /* pointer to the window managing this study */
@@ -73,29 +79,30 @@ typedef struct ui_study_t {
   GdkCursor * cursor[NUM_CURSORS];
   GSList * cursor_stack;
   GtkWidget * thickness_spin_button;
+  GtkWidget * color_table_menu;
   GtkWidget * add_roi_option_menu;
   GtkFileSelection * file_selection; /* needs to be passed to some callbacks */
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkCTreeNode * tree_studies;
   GtkCTreeNode * tree_volumes;
   GtkCTreeNode * tree_rois;
+  GtkWidget * time_dialog;
+  GtkWidget * time_button;
   scaling_t scaling; /* scale on this slice or the whole volume */
-  color_table_t color_table;
-  ui_study_mode_t current_mode;
+  ui_study_mode_t current_mode; /* are we currently working on an roi or a volume */
   amide_volume_t * current_volume; /* the last volume double clicked on */
   amide_roi_t * current_roi; /* the last roi double clicked on */
-  amide_volume_list_t * current_volumes; /* the currently selected volumes */ 
+  ui_study_volume_list_t * current_volumes; /* the currently selected volumes */ 
   ui_study_roi_list_t * current_rois; /* the currently selected rois */
-  guint current_frame;
   realspace_t current_coord_frame;
+  volume_time_t current_time;
+  volume_time_t current_duration;
   floatpoint_t current_thickness;
   floatpoint_t current_zoom;
   interpolation_t current_interpolation;
   realpoint_t current_axis_p_start;
-  amide_volume_t * current_slice[NUM_VIEWS];
+  amide_volume_list_t * current_slices[NUM_VIEWS];
   roi_grain_t default_roi_grain;
-  volume_data_t threshold_min;
-  volume_data_t threshold_max;
   amide_study_t * study; /* pointer to the study data structure */
   ui_threshold_t * threshold; /* pointer to the threshold widget data structure */
   ui_series_t * series; /* pointer to the series widget data structure */
@@ -103,6 +110,8 @@ typedef struct ui_study_t {
 
 /* external functions */
 void ui_study_create(gchar * study);
+realspace_t ui_study_get_coords_current_view(ui_study_t * ui_study, view_t view, 
+					     realpoint_t * pfar_corner);
 GtkAdjustment * ui_study_update_plane_adjustment(ui_study_t * ui_study, view_t view);
 void ui_study_update_thickness_adjustment(ui_study_t * ui_study);
 void ui_study_update_canvas(ui_study_t * ui_study, view_t i, 

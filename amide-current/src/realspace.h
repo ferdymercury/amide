@@ -1,6 +1,6 @@
 /* realspace.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -136,6 +136,8 @@ realpoint_t realspace_get_orthogonal_normal(const realpoint_t axis[],
 realpoint_t realspace_get_orthogonal_axis(const realpoint_t axis[],
 					  const view_t view,
 					  const axis_t ax);
+realspace_t realspace_get_orthogonal_coord_frame(const realspace_t in_coord_frame,
+						 const view_t view);
 realpoint_t realspace_alt_coord_to_base(const realpoint_t in,
 					const realspace_t in_alt_coord_frame);
 realpoint_t realspace_base_coord_to_alt(realpoint_t in,

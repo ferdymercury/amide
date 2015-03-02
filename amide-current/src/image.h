@@ -1,6 +1,6 @@
 /* image.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -28,7 +28,7 @@ typedef enum {SLICE, VOLUME, NUM_SCALINGS} scaling_t;
 
 /* external functions */
 GdkImlibImage * image_blank(const gint width, const gint height);
-GdkImlibImage * image_of_distribution(const amide_volume_t * volume,
+GdkImlibImage * image_of_distribution(amide_volume_t * volume,
 				      const gint width, 
 				      const gint height);
 GdkImlibImage * image_from_colortable(const color_table_t color_table,
@@ -38,18 +38,15 @@ GdkImlibImage * image_from_colortable(const color_table_t color_table,
 				      const volume_data_t max,
 				      const volume_data_t volume_min,
 				      const volume_data_t volume_max);
-GdkImlibImage * image_from_volume(amide_volume_t ** pslice,
-				  const amide_volume_t * volume,
-				  const guint frame,
-				  const floatpoint_t zp_start,
-				  const floatpoint_t thickness,
-				  const realpoint_t axis[],
-				  const scaling_t scaling,
-				  const color_table_t color_table,
-				  const floatpoint_t zoom,
-				  const interpolation_t interpolation,
-				  const volume_data_t threshold_min,
-				  const volume_data_t threshold_max);
+GdkImlibImage * image_from_volumes(amide_volume_list_t ** pslices,
+				   amide_volume_list_t * volumes,
+				   const volume_time_t start,
+				   const volume_time_t duration,
+				   const floatpoint_t thickness,
+				   const realspace_t view_coord_frame,
+				   const scaling_t scaling,
+				   const floatpoint_t zoom,
+				   const interpolation_t interpolation);
 
 /* external variables */
 extern gchar * scaling_names[];

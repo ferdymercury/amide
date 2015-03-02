@@ -1,6 +1,6 @@
 /* color_table.h
  *
- * Part of amide - Amide's a Medical Image Dataset Viewer
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -30,6 +30,7 @@ typedef enum {BW_LINEAR, \
 	      RED_TEMPERATURE, \
 	      BLUE_TEMPERATURE, \
 	      GREEN_TEMPERATURE, \
+	      HOT_METAL, \
 	      SPECTRUM, \
 	      NIH_WHITE, \
 	      NIH, \
@@ -51,9 +52,10 @@ typedef struct hsv_point_t {
 } hsv_point_t;
 
 /* external functions */
-color_point_t color_table_lookup(volume_data_t datum, color_table_t which,
-				 volume_data_t min, volume_data_t max);
 guint32 color_table_outline_color(color_table_t which, gboolean highlight);
+
+/* in color_table2.h 
+   color_point_t color_table_lookup */
 
 /* external variables */
 extern gchar * color_table_names[];
