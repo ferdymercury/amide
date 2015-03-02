@@ -33,15 +33,15 @@
 
 
 /* function declarations */
-#define VARIABLE_TYPE_`'m4_Variable_Type`'
+#define ROI_TYPE_`'m4_Variable_Type`'
 
-#if defined(VARIABLE_TYPE_ELLIPSOID) || defined(VARIABLE_TYPE_CYLINDER) || defined(VARIABLE_TYPE_BOX)
+#if defined(ROI_TYPE_ELLIPSOID) || defined(ROI_TYPE_CYLINDER) || defined(ROI_TYPE_BOX)
 GSList * amitk_roi_`'m4_Variable_Type`'_get_intersection_line(const AmitkRoi * roi, 
 							      const AmitkVolume * canvas_slice,
 							      const amide_real_t pixel_dim);
 #endif
 
-#if defined(VARIABLE_TYPE_ISOCONTOUR_2D) || defined(VARIABLE_TYPE_ISOCONTOUR_3D)
+#if defined(ROI_TYPE_ISOCONTOUR_2D) || defined(ROI_TYPE_ISOCONTOUR_3D)
 AmitkDataSet * amitk_roi_`'m4_Variable_Type`'_get_intersection_slice(const AmitkRoi * roi,
 								     const AmitkVolume * canvas_slice,
 								     const amide_real_t pixel_dim);
@@ -49,7 +49,13 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
 void amitk_roi_`'m4_Variable_Type`'_erase_area(AmitkRoi * roi, AmitkVoxel erase_vp, gint area_size);
 #endif
 
-#undef VARIABLE_TYPE_`'m4_Variable_Type`'
+void amitk_roi_`'m4_Variable_Type`'_calculate_on_data_set(const AmitkRoi * roi,  
+							  const AmitkDataSet * ds, 
+							  const guint frame,
+							  void (*calculation)(),
+							  gpointer data);
+
+#undef ROI_TYPE_`'m4_Variable_Type`'
 
 #endif /* __AMITK_ROI_`'m4_Variable_Type`'_H__ */
 

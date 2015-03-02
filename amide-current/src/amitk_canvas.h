@@ -41,7 +41,6 @@ G_BEGIN_DECLS
 #define AMITK_IS_CANVAS_CLASS(klass) (GTK_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_CANVAS))
 
 #define AMITK_CANVAS_VIEW(obj)       (AMITK_CANVAS(obj)->view)
-#define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)->view_mode)
 #define AMITK_CANVAS_PIXBUF(obj)     (AMITK_CANVAS(obj)->pixbuf)
 
 
@@ -64,6 +63,7 @@ struct _AmitkCanvas
   GtkWidget * scrollbar;
   GtkObject * scrollbar_adjustment;
   GnomeCanvasItem * arrows[4];
+  gboolean with_arrows;
 
   AmitkVolume * volume; /* the volume that this canvas slice displays */
   AmitkPoint center; /* in base coordinate space */
@@ -72,10 +72,10 @@ struct _AmitkCanvas
   amide_time_t start_time;
   amide_time_t duration;
   AmitkInterpolation interpolation;
+  AmitkFuseType fuse_type;
 
   AmitkView view;
   AmitkLayout layout;
-  AmitkViewMode view_mode;
   gint roi_width;
   GdkLineStyle line_style;
   AmitkDataSet * active_ds;
@@ -115,12 +115,13 @@ struct _AmitkCanvasClass
   void (* view_changed)              (AmitkCanvas *Canvas,
 				      AmitkPoint *position,
 				      amide_real_t thickness);
-  void (* view_z_position_changed)   (AmitkCanvas *Canvas,
-				      AmitkPoint *position);
   void (* isocontour_3d_changed)     (AmitkCanvas *Canvas,
 				      AmitkRoi * roi,
 				      AmitkPoint *position);
+  void (* erase_volume)              (AmitkCanvas *Canvas,
+				      AmitkRoi *roi);
   void (* new_object)                (AmitkCanvas *Canvas,
+				      AmitkObject * parent,
 				      AmitkObjectType type,
 				      AmitkPoint *position);
 };  
@@ -130,9 +131,9 @@ GType         amitk_canvas_get_type           (void);
 GtkWidget *   amitk_canvas_new                (AmitkStudy * study,
 					       AmitkView view, 
 					       AmitkLayout layout, 
-					       AmitkViewMode view_mode,
 					       GdkLineStyle line_style,
-					       gint roi_width);
+					       gint roi_width,
+					       gboolean with_arrows);
 void          amitk_canvas_set_layout         (AmitkCanvas * canvas, 
 					       AmitkLayout new_layout);
 void          amitk_canvas_set_active_data_set(AmitkCanvas * canvas, 

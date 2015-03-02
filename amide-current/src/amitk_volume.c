@@ -116,6 +116,7 @@ static void volume_class_init (AmitkVolumeClass * class) {
 static void volume_init (AmitkVolume * volume) {
 
   volume->corner = zero_point;
+  volume->valid = FALSE;
 
   return;
 }
@@ -124,6 +125,7 @@ static void volume_init (AmitkVolume * volume) {
 static void volume_corner_changed(AmitkVolume *volume, AmitkPoint * new_corner) {
 
   volume->corner = *new_corner;
+  volume->valid = TRUE;
 
   return;
 }
@@ -189,6 +191,7 @@ AmitkPoint amitk_volume_center(const AmitkVolume * volume) {
   AmitkCorners corners;
 
   g_return_val_if_fail(AMITK_IS_VOLUME(volume), zero_point);
+  g_return_val_if_fail(AMITK_VOLUME_VALID(volume), zero_point);
 
   /* get the far corner, corner[0] is currently always zero */
   corners[0] = amitk_space_b2s(AMITK_SPACE(volume), 
@@ -219,6 +222,7 @@ void amitk_volume_set_z_corner(AmitkVolume * volume, amide_real_t z) {
   AmitkPoint corner;
 
   g_return_if_fail(AMITK_IS_VOLUME(volume));
+  g_return_if_fail(AMITK_VOLUME_VALID(volume));
 
   if (!REAL_EQUAL(AMITK_VOLUME_Z_CORNER(volume), z)) {
     corner = AMITK_VOLUME_CORNER(volume);
@@ -235,6 +239,7 @@ void amitk_volume_set_center(AmitkVolume * volume, const AmitkPoint new_center) 
   AmitkPoint new_offset;
 
   g_return_if_fail(AMITK_IS_VOLUME(volume));
+  g_return_if_fail(AMITK_VOLUME_VALID(volume));
   
   shift = point_sub(new_center, amitk_volume_center(volume));
   if (!POINT_EQUAL(shift, zero_point)) {
@@ -254,6 +259,7 @@ void amitk_volume_get_enclosing_corners(const AmitkVolume * volume,
 
   g_return_if_fail(AMITK_IS_VOLUME(volume));
   g_return_if_fail(AMITK_IS_SPACE(space));
+  g_return_if_fail(AMITK_VOLUME_VALID(volume));
 
   corners[0] = amitk_space_b2s(AMITK_SPACE(volume), AMITK_SPACE_OFFSET(volume));
   corners[1] = volume->corner;
@@ -277,18 +283,20 @@ void amitk_volumes_get_enclosing_corners(GList * volumes,
   while (volumes != NULL) {
 
     if (AMITK_IS_VOLUME(volumes->data)) {
-      amitk_volume_get_enclosing_corners(AMITK_VOLUME(volumes->data),space,temp_corners);
-      if (!valid) {
-	valid = TRUE;
-	return_corners[0] = temp_corners[0];
-	return_corners[1] = temp_corners[1];
-      } else {
-	return_corners[0].x = (return_corners[0].x < temp_corners[0].x) ? return_corners[0].x : temp_corners[0].x;
-	return_corners[0].y = (return_corners[0].y < temp_corners[0].y) ? return_corners[0].y : temp_corners[0].y;
-	return_corners[0].z = (return_corners[0].z < temp_corners[0].z) ? return_corners[0].z : temp_corners[0].z;
-	return_corners[1].x = (return_corners[1].x > temp_corners[1].x) ? return_corners[1].x : temp_corners[1].x;
-	return_corners[1].y = (return_corners[1].y > temp_corners[1].y) ? return_corners[1].y : temp_corners[1].y;
-	return_corners[1].z = (return_corners[1].z > temp_corners[1].z) ? return_corners[1].z : temp_corners[1].z;
+      if (AMITK_VOLUME_VALID(volumes->data)) {
+	amitk_volume_get_enclosing_corners(AMITK_VOLUME(volumes->data),space,temp_corners);
+	if (!valid) {
+	  valid = TRUE;
+	  return_corners[0] = temp_corners[0];
+	  return_corners[1] = temp_corners[1];
+	} else {
+	  return_corners[0].x = (return_corners[0].x < temp_corners[0].x) ? return_corners[0].x : temp_corners[0].x;
+	  return_corners[0].y = (return_corners[0].y < temp_corners[0].y) ? return_corners[0].y : temp_corners[0].y;
+	  return_corners[0].z = (return_corners[0].z < temp_corners[0].z) ? return_corners[0].z : temp_corners[0].z;
+	  return_corners[1].x = (return_corners[1].x > temp_corners[1].x) ? return_corners[1].x : temp_corners[1].x;
+	  return_corners[1].y = (return_corners[1].y > temp_corners[1].y) ? return_corners[1].y : temp_corners[1].y;
+	  return_corners[1].z = (return_corners[1].z > temp_corners[1].z) ? return_corners[1].z : temp_corners[1].z;
+	}
       }
     }
     volumes = volumes->next;
@@ -313,6 +321,8 @@ gboolean amitk_volume_volume_intersection_corners(const AmitkVolume * volume1,
 
   g_return_val_if_fail(AMITK_IS_VOLUME(volume1), FALSE);
   g_return_val_if_fail(AMITK_IS_VOLUME(volume2), FALSE);
+  g_return_val_if_fail(AMITK_VOLUME_VALID(volume1), FALSE);
+  g_return_val_if_fail(AMITK_VOLUME_VALID(volume2), FALSE);
 
   /* get the corners in the volume's space that orthogonally encloses the roi */
   amitk_volume_get_enclosing_corners(volume2, AMITK_SPACE(volume1), return_corners);
@@ -355,10 +365,11 @@ amide_real_t amitk_volumes_get_max_size(GList * objects) {
   if (temp > max_size) max_size = temp;
 
   /* and process this guy */
-  if (AMITK_IS_VOLUME(objects->data)) {
-    temp = point_max_dim(AMITK_VOLUME_CORNER(objects->data));
-    if (temp > max_size) max_size = temp;
-  }
+  if (AMITK_IS_VOLUME(objects->data)) 
+    if (AMITK_VOLUME_VALID(objects->data)) {
+      temp = point_max_dim(AMITK_VOLUME_CORNER(objects->data));
+      if (temp > max_size) max_size = temp;
+    }
 
   return max_size;
 }

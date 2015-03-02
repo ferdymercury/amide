@@ -27,7 +27,6 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#include <sys/stat.h>
 #include <gnome.h>
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
 #include "image.h"
@@ -57,6 +56,7 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
 					  amide_time_t duration, 
 					  AmitkInterpolation interpolation);
 static ui_rendering_t * ui_rendering_free(ui_rendering_t * ui_rendering);
+static void update_canvas(ui_rendering_t * ui_rendering);
 
 
 
@@ -144,7 +144,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	  line_points->coords[2] = box_point[k].x;  /* x2 */
 	  line_points->coords[3] = box_point[k].y; /* y2 */
 	  color = 
-	    amitk_color_table_outline_color(ui_rendering->contexts->rendering_context->color_table, TRUE);
+	    amitk_color_table_outline_color(ui_rendering->contexts->context->color_table, TRUE);
 	  rotation_box[i] = 
 	    gnome_canvas_item_new(gnome_canvas_root(ui_rendering->canvas), gnome_canvas_line_get_type(),
 				  "points", line_points, 
@@ -256,11 +256,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
 	renderings_set_rotation(ui_rendering->contexts, AMITK_AXIS_Z, -theta.z); 
 
 	/* render now if appropriate*/
-	if (ui_rendering->immediate) {
-	  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-	  ui_rendering_update_canvases(ui_rendering); 
-	  ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-	}
+	ui_rendering_update_canvas(ui_rendering, FALSE); 
 
       }
       break;
@@ -276,10 +272,7 @@ static void render_cb(GtkWidget * widget, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
 
-  /* render now */
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-  ui_rendering_update_canvases(ui_rendering); 
-  ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  ui_rendering_update_canvas(ui_rendering, TRUE); 
 
   return;
 }
@@ -296,12 +289,7 @@ static void immediate_cb(GtkWidget * widget, gpointer data) {
   /* set the sensitivity of the render button */
   gtk_widget_set_sensitive(GTK_WIDGET(ui_rendering->render_button), !(ui_rendering->immediate));
 
-  /* render now if appropriate*/
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  }
+  ui_rendering_update_canvas(ui_rendering, FALSE); 
 
   return;
 
@@ -314,12 +302,7 @@ static void stereoscopic_cb(GtkWidget * widget, gpointer data) {
 
   ui_rendering->stereoscopic = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-  /* render now if appropriate*/
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  }
+  ui_rendering_update_canvas(ui_rendering, FALSE); 
 
   return;
 
@@ -344,11 +327,7 @@ static void rotate_cb(GtkAdjustment * adjustment, gpointer data) {
   renderings_set_rotation(ui_rendering->contexts, i_axis, rot);
 
   /* render now if appropriate*/
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  }
+  ui_rendering_update_canvas(ui_rendering, FALSE); 
 
   /* return adjustment back to normal */
   adjustment->value = 0.0;
@@ -364,12 +343,7 @@ static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data) {
   /* reset the rotations */
   renderings_reset_rotation(ui_rendering->contexts);
 
-  /* render now if appropriate*/
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  }
+  ui_rendering_update_canvas(ui_rendering, FALSE); 
 
   return;
 }
@@ -379,43 +353,14 @@ static void reset_axis_pressed_cb(GtkWidget * widget, gpointer data) {
 static void export_ok_cb(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
-  GtkWidget * question;
   ui_rendering_t * ui_rendering;
   const gchar * save_filename;
-  struct stat file_info;
-  gint return_val;
 
   /* get a pointer to ui_rendering */
   ui_rendering = g_object_get_data(G_OBJECT(file_selection), "ui_rendering");
 
-  /* get the filename */
-  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-
-  /* some sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
-    return;
-  }
-
-  /* see if the filename already exists */
-  if (stat(save_filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(ui_rendering->app),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* we don't want to overwrite the file.... */
-  }
+  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
+    return; /* inappropriate name or don't want to overwrite */
 
   if (gdk_pixbuf_save (ui_rendering->pixbuf, save_filename, "jpeg", NULL, 
 		       "quality", "100", NULL) == FALSE) {
@@ -447,10 +392,10 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 
   /* take a guess at the filename */
   temp_contexts = ui_rendering->contexts;
-  data_set_names = g_strdup(temp_contexts->rendering_context->name);
+  data_set_names = g_strdup(temp_contexts->context->name);
   temp_contexts = temp_contexts->next;
   while (temp_contexts != NULL) {
-    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->name);
+    temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->context->name);
     g_free(data_set_names);
     data_set_names = temp_string;
     temp_contexts = temp_contexts->next;
@@ -653,7 +598,6 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
   ui_rendering->pixbuf = NULL;
   ui_rendering->canvas_image = NULL;
   ui_rendering->quality = RENDERING_DEFAULT_QUALITY;
-  ui_rendering->pixel_type = RENDERING_DEFAULT_PIXEL_TYPE;
   ui_rendering->depth_cueing = RENDERING_DEFAULT_DEPTH_CUEING;
   ui_rendering->front_factor = RENDERING_DEFAULT_FRONT_FACTOR;
   ui_rendering->density = RENDERING_DEFAULT_DENSITY;
@@ -684,27 +628,29 @@ static ui_rendering_t * ui_rendering_init(GList * objects,
 
 
 
+void ui_rendering_update_canvas(ui_rendering_t * ui_rendering, gboolean override) {
+
+  if (ui_rendering->immediate || override) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
+    update_canvas(ui_rendering); 
+    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  }
+
+  return;
+}
 
 /* render our objects and place into the canvases */
-void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
+void update_canvas(ui_rendering_t * ui_rendering) {
 
-  rgba_t blank_rgba;
   amide_intpoint_t size_dim; 
   AmitkEye eyes;
   gint width, height;
 
-  blank_rgba.r = blank_rgba.g = blank_rgba.b = 0;
-  blank_rgba.a = 0xFF;
+  g_return_if_fail(ui_rendering != NULL);
+  g_return_if_fail(ui_rendering->contexts != NULL);
 
-  if (ui_rendering == NULL) {
-    g_warning("called ui_rendering_update_canvases with NULL ui_rendering....?");
-    return;
-  }
-
-  /* reload the objects  if the time's changed */
-  if (ui_rendering->contexts != NULL)
-    renderings_reload_objects(ui_rendering->contexts, ui_rendering->start,
-			      ui_rendering->duration, ui_rendering->interpolation);
+  renderings_reload_objects(ui_rendering->contexts, ui_rendering->start,
+			    ui_rendering->duration, ui_rendering->interpolation);
 
   /* -------- render our objects ------------ */
 
@@ -716,18 +662,12 @@ void ui_rendering_update_canvases(ui_rendering_t * ui_rendering) {
     ui_rendering->pixbuf = NULL;
   }
 
-  if (ui_rendering->contexts == NULL)
-    ui_rendering->pixbuf = image_blank(UI_RENDERING_BLANK_WIDTH, 
-					  UI_RENDERING_BLANK_HEIGHT, 
-					  blank_rgba);
-  else {
-    /* base the dimensions on the first context in the list.... */
-    size_dim = ceil(ui_rendering->zoom*POINT_MAX(ui_rendering->contexts->rendering_context->dim));
-    ui_rendering->pixbuf = image_from_contexts(ui_rendering->contexts, 
-					       size_dim, size_dim, eyes,
-					       ui_rendering->stereo_eye_angle, 
-					       ui_rendering->stereo_eye_width); 
-  }
+  /* base the dimensions on the first context in the list.... */
+  size_dim = ceil(ui_rendering->zoom*POINT_MAX(ui_rendering->contexts->context->dim));
+  ui_rendering->pixbuf = image_from_contexts(ui_rendering->contexts, 
+					     size_dim, size_dim, eyes,
+					     ui_rendering->stereo_eye_angle, 
+					     ui_rendering->stereo_eye_width); 
   
   /* put up the image */
   if (ui_rendering->canvas_image != NULL) 
@@ -934,7 +874,7 @@ void ui_rendering_create(GList * objects, amide_time_t start,
 		   X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(ui_rendering->canvas), "event",
 		   G_CALLBACK(canvas_event_cb), ui_rendering);
-  ui_rendering_update_canvases(ui_rendering); /* fill in the canvas */
+  update_canvas(ui_rendering); /* fill in the canvas */
 
   /* create the x, and y rotation dials */
   hbox = gtk_hbox_new(FALSE, 0);

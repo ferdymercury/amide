@@ -1,3 +1,25 @@
+0.7.1
+	* can now generate fly through mpeg movies
+	* can now choose between blended and overlay fusion modes
+	* adding a data set cropping wizard
+	* added the ability to erase a portion of a data set 
+	* most internal formats are now double
+	* shifting and rotating data sets now uses an overlay image
+        * can now compile correctly without libgsl support
+	* alignment's only need 3 points now.  problem was with SVD decomposition
+	* rendering flipped left and right.  that's now fixed
+	* object modification dialog reads in entries a little more sensible now
+	* big endian raw data importing works again
+	* speed increase in reslicing.  loops now iterate only over portion
+	    of slice that encompases the data set
+	* fixed some small bugs with changing the view thickness on the canvas
+	* fixed some small bugs with setting the minimum thickness of a multi data set study
+	* data set icons now change with the data set's color scale
+	* added black/white/black and white/black/white colormaps 
+	* cursor now shows current voxel value on active volume
+	* removed extraneous memory consumption of raw_data_import
+	* now ignores "per slice" scaling when converting to rendering
+
 0.7.0
      A complete rewrite of almost all of the code in AMIDE
 

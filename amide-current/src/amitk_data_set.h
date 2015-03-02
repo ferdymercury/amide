@@ -43,6 +43,12 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_MODALITY(ds)             (AMITK_DATA_SET(ds)->modality)
 #define AMITK_DATA_SET_VOXEL_SIZE(ds)           (AMITK_DATA_SET(ds)->voxel_size)
 #define AMITK_DATA_SET_RAW_DATA(ds)             (AMITK_DATA_SET(ds)->raw_data)
+#define AMITK_DATA_SET_DIM(ds)                  (AMITK_RAW_DATA_DIM(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_X(ds)                (AMITK_RAW_DATA_DIM_X(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_Y(ds)                (AMITK_RAW_DATA_DIM_Y(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_Z(ds)                (AMITK_RAW_DATA_DIM_Z(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_DIM_T(ds)                (AMITK_RAW_DATA_DIM_T(AMITK_DATA_SET_RAW_DATA(ds)))
+#define AMITK_DATA_SET_NUM_FRAMES(ds)           (AMITK_DATA_SET_DIM_T(ds))
 #define AMITK_DATA_SET_DISTRIBUTION(ds)         (AMITK_DATA_SET(ds)->distribution)
 #define AMITK_DATA_SET_COLOR_TABLE(ds)          (AMITK_DATA_SET(ds)->color_table)
 #define AMITK_DATA_SET_DYNAMIC(ds)              (AMITK_DATA_SET(ds)->raw_data->dim.t > 1)
@@ -53,7 +59,6 @@ G_BEGIN_DECLS
 #define AMITK_DATA_SET_SCAN_START(ds)           (AMITK_DATA_SET(ds)->scan_start)
 #define AMITK_DATA_SET_GLOBAL_MAX(ds)           (AMITK_DATA_SET(ds)->global_max)
 #define AMITK_DATA_SET_GLOBAL_MIN(ds)           (AMITK_DATA_SET(ds)->global_min)
-#define AMITK_DATA_SET_NUM_FRAMES(ds)           (AMITK_DATA_SET_RAW_DATA(ds)->dim.t)
 #define AMITK_DATA_SET_THRESHOLD_REF_FRAME(ds,ref_frame) (AMITK_DATA_SET(ds)->threshold_ref_frame[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MAX(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_max[ref_frame])
 #define AMITK_DATA_SET_THRESHOLD_MIN(ds, ref_frame)      (AMITK_DATA_SET(ds)->threshold_min[ref_frame])
@@ -212,10 +217,20 @@ void           amitk_data_set_get_thresholding_max_min(const AmitkDataSet * ds,
 void           amitk_data_set_calc_distribution  (AmitkDataSet * ds);
 amide_data_t   amitk_data_set_get_value          (const AmitkDataSet * ds, 
 						  const AmitkVoxel i);
+void           amitk_data_set_set_value          (AmitkDataSet *ds,
+						  const AmitkVoxel i,
+						  const amide_data_t value,
+						  const gboolean signal_change);
+AmitkDataSet * amitk_data_set_get_projection     (AmitkDataSet * ds,
+						  const AmitkView view,
+						  const guint frame);
+AmitkDataSet * amitk_data_set_get_cropped        (AmitkDataSet * ds,
+						  const AmitkVoxel start,
+						  const AmitkVoxel end);
 AmitkDataSet * amitk_data_set_get_slice          (AmitkDataSet * ds,
 						  const amide_time_t start,
 						  const amide_time_t duration,
-						  const AmitkPoint  requested_voxel_size,
+						  const amide_real_t pixel_dim,
 						  const AmitkVolume * slice_volume,
 						  const AmitkInterpolation interpolation,
 						  const gboolean need_calc_max_min);
@@ -249,6 +264,7 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices,
 
 
 
+const gchar *   amitk_data_set_scaling_get_name   (const AmitkDataSet * ds);
 const gchar *   amitk_modality_get_name           (const AmitkModality modality);
 const gchar *   amitk_interpolation_get_name      (const AmitkInterpolation interpolation);
 const gchar *   amitk_thresholding_get_name       (const AmitkThresholding thresholding);

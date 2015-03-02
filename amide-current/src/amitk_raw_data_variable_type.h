@@ -58,7 +58,12 @@
     (iy) * ((amitk_raw_data)->dim.x)))
 
 #define AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT(amitk_raw_data,i) \
-  (*((amitk_format_`'m4_Variable_Type`'_t *) AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
+  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
+
+#define AMITK_RAW_DATA_`'m4_Variable_Type`'_CONTENT(amitk_raw_data,i) \
+  (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
+
+//  (*((amitk_format_`'m4_Variable_Type`'_t *) AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((amitk_raw_data),(i))))
 
 
 /* function declarations */

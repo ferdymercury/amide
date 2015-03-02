@@ -137,8 +137,6 @@ amide_SOURCES = \
 	$(TYPE_BUILTINS_SOURCES) \
 	$(AMITK_RAW_DATA_VARIABLE_H) \
 	$(AMITK_RAW_DATA_VARIABLE_C) \
-	$(ANALYSIS_VARIABLE_H) \
-	$(ANALYSIS_VARIABLE_C) \
 	$(AMITK_DATA_SET_VARIABLE_H) \
 	$(AMITK_DATA_SET_VARIABLE_C) \
 	$(AMITK_ROI_VARIABLE_H) \
@@ -175,6 +173,10 @@ amide_SOURCES = \
 	legacy.h \
 	medcon_import.c \
 	medcon_import.h \
+	mpeg_encode.c \
+	mpeg_encode.h \
+	pixmaps.c \
+	pixmaps.h \
 	raw_data_import.c \
 	raw_data_import.h \
 	rendering.c \
@@ -183,6 +185,10 @@ amide_SOURCES = \
 	ui_alignment_dialog.h \
 	ui_common.c \
 	ui_common.h \
+	ui_crop_dialog.c \
+	ui_crop_dialog.h \
+	ui_fly_through.c \
+	ui_fly_through.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
 	ui_rendering.c \
@@ -227,22 +233,6 @@ AMITK_H_SOURCES = \
 	amitk_threshold.h \
 	amitk_tree.h \
 	amitk_volume.h 
-
-
-ANALYSIS_VARIABLE_C = \
-	analysis_ELLIPSOID.c \
-	analysis_CYLINDER.c \
-	analysis_BOX.c \
-	analysis_ISOCONTOUR_2D.c \
-	analysis_ISOCONTOUR_3D.c 
-
-
-ANALYSIS_VARIABLE_H = \
-	analysis_ELLIPSOID.h \
-	analysis_CYLINDER.h \
-	analysis_BOX.h \
-	analysis_ISOCONTOUR_2D.h \
-	analysis_ISOCONTOUR_3D.h
 
 
 AMITK_ROI_VARIABLE_C = \
@@ -341,9 +331,6 @@ VARIABLE_INPUT = \
 	variable_type.m4
 
 
-ANALYSIS_VARIABLE_C_SRC = analysis_variable_type.c 
-ANALYSIS_VARIABLE_H_SRC = analysis_variable_type.h 
-
 AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c 
 AMITK_ROI_VARIABLE_H_SRC = amitk_roi_variable_type.h
 
@@ -374,8 +361,6 @@ STAMP_FILES = \
 
 
 CLEANFILES = \
-	$(ANALYSIS_VARIABLE_C) \
-	$(ANALYSIS_VARIABLE_H) \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_ROI_VARIABLE_H) \
 	$(AMITK_DATA_SET_VARIABLE_C) \
@@ -404,10 +389,7 @@ am__objects_4 = amitk_raw_data_UBYTE.$(OBJEXT) \
 	amitk_raw_data_SSHORT.$(OBJEXT) amitk_raw_data_UINT.$(OBJEXT) \
 	amitk_raw_data_SINT.$(OBJEXT) amitk_raw_data_FLOAT.$(OBJEXT) \
 	amitk_raw_data_DOUBLE.$(OBJEXT)
-am__objects_5 = analysis_ELLIPSOID.$(OBJEXT) analysis_CYLINDER.$(OBJEXT) \
-	analysis_BOX.$(OBJEXT) analysis_ISOCONTOUR_2D.$(OBJEXT) \
-	analysis_ISOCONTOUR_3D.$(OBJEXT)
-am__objects_6 = amitk_data_set_UBYTE_0D_SCALING.$(OBJEXT) \
+am__objects_5 = amitk_data_set_UBYTE_0D_SCALING.$(OBJEXT) \
 	amitk_data_set_UBYTE_1D_SCALING.$(OBJEXT) \
 	amitk_data_set_UBYTE_2D_SCALING.$(OBJEXT) \
 	amitk_data_set_SBYTE_0D_SCALING.$(OBJEXT) \
@@ -431,27 +413,28 @@ am__objects_6 = amitk_data_set_UBYTE_0D_SCALING.$(OBJEXT) \
 	amitk_data_set_DOUBLE_0D_SCALING.$(OBJEXT) \
 	amitk_data_set_DOUBLE_1D_SCALING.$(OBJEXT) \
 	amitk_data_set_DOUBLE_2D_SCALING.$(OBJEXT)
-am__objects_7 = amitk_roi_ELLIPSOID.$(OBJEXT) \
+am__objects_6 = amitk_roi_ELLIPSOID.$(OBJEXT) \
 	amitk_roi_CYLINDER.$(OBJEXT) amitk_roi_BOX.$(OBJEXT) \
 	amitk_roi_ISOCONTOUR_2D.$(OBJEXT) \
 	amitk_roi_ISOCONTOUR_3D.$(OBJEXT)
 am_amide_OBJECTS = gtkdial.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
 	$(am__objects_3) $(am__objects_4) $(am__objects_3) \
 	$(am__objects_5) $(am__objects_3) $(am__objects_6) \
-	$(am__objects_3) $(am__objects_7) $(am__objects_3) \
-	amide.$(OBJEXT) alignment.$(OBJEXT) analysis.$(OBJEXT) \
-	amitk_canvas.$(OBJEXT) amitk_color_table.$(OBJEXT) \
-	amitk_data_set.$(OBJEXT) amitk_dir_sel.$(OBJEXT) \
-	amitk_fiducial_mark.$(OBJEXT) amitk_point.$(OBJEXT) \
-	amitk_object.$(OBJEXT) amitk_object_dialog.$(OBJEXT) \
-	amitk_raw_data.$(OBJEXT) amitk_roi.$(OBJEXT) \
-	amitk_space_edit.$(OBJEXT) amitk_space.$(OBJEXT) \
-	amitk_study.$(OBJEXT) amitk_threshold.$(OBJEXT) \
-	amitk_tree.$(OBJEXT) amitk_volume.$(OBJEXT) \
-	cti_import.$(OBJEXT) idl_data_import.$(OBJEXT) image.$(OBJEXT) \
-	legacy.$(OBJEXT) medcon_import.$(OBJEXT) \
+	$(am__objects_3) amide.$(OBJEXT) alignment.$(OBJEXT) \
+	analysis.$(OBJEXT) amitk_canvas.$(OBJEXT) \
+	amitk_color_table.$(OBJEXT) amitk_data_set.$(OBJEXT) \
+	amitk_dir_sel.$(OBJEXT) amitk_fiducial_mark.$(OBJEXT) \
+	amitk_point.$(OBJEXT) amitk_object.$(OBJEXT) \
+	amitk_object_dialog.$(OBJEXT) amitk_raw_data.$(OBJEXT) \
+	amitk_roi.$(OBJEXT) amitk_space_edit.$(OBJEXT) \
+	amitk_space.$(OBJEXT) amitk_study.$(OBJEXT) \
+	amitk_threshold.$(OBJEXT) amitk_tree.$(OBJEXT) \
+	amitk_volume.$(OBJEXT) cti_import.$(OBJEXT) \
+	idl_data_import.$(OBJEXT) image.$(OBJEXT) legacy.$(OBJEXT) \
+	medcon_import.$(OBJEXT) mpeg_encode.$(OBJEXT) pixmaps.$(OBJEXT) \
 	raw_data_import.$(OBJEXT) rendering.$(OBJEXT) \
 	ui_alignment_dialog.$(OBJEXT) ui_common.$(OBJEXT) \
+	ui_crop_dialog.$(OBJEXT) ui_fly_through.$(OBJEXT) \
 	ui_preferences_dialog.$(OBJEXT) ui_rendering.$(OBJEXT) \
 	ui_rendering_dialog.$(OBJEXT) \
 	ui_rendering_movie_dialog.$(OBJEXT) \
@@ -524,18 +507,16 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_tree.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_type_builtins.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/amitk_volume.Po ./$(DEPDIR)/analysis.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis_BOX.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis_CYLINDER.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis_ELLIPSOID.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis_ISOCONTOUR_2D.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/analysis_ISOCONTOUR_3D.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/cti_import.Po ./$(DEPDIR)/gtkdial.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/idl_data_import.Po ./$(DEPDIR)/image.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/legacy.Po ./$(DEPDIR)/medcon_import.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/mpeg_encode.Po ./$(DEPDIR)/pixmaps.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/raw_data_import.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/rendering.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_alignment_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_common.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_crop_dialog.Po \
+@AMDEP_TRUE@	./$(DEPDIR)/ui_fly_through.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_preferences_dialog.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_rendering_dialog.Po \
@@ -663,21 +644,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_type_builtins.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/amitk_volume.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_BOX.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_CYLINDER.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ELLIPSOID.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ISOCONTOUR_2D.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/analysis_ISOCONTOUR_3D.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cti_import.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkdial.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/idl_data_import.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/legacy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/medcon_import.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpeg_encode.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pixmaps.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/raw_data_import.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rendering.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_alignment_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_common.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_crop_dialog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_fly_through.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_preferences_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_rendering_dialog.Po@am__quote@
@@ -867,24 +847,6 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	mostlyclean-libtool tags uninstall uninstall-am \
 	uninstall-binPROGRAMS uninstall-info-am
 
-
-$(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
-	@for i in $(ANALYSIS_VARIABLE_H) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
-
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
-	@for i in $(ANALYSIS_VARIABLE_C) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
 
 $(AMITK_ROI_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_H_SRC)
 	@for i in $(AMITK_ROI_VARIABLE_H) ; \

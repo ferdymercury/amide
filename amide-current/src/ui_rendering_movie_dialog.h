@@ -34,7 +34,7 @@ typedef enum {OVER_TIME, OVER_FRAMES, DYNAMIC_TYPES} dynamic_t;
 /* data structures */
 typedef struct ui_rendering_movie_t {
   GtkWidget * progress;
-  guint num_frames;
+  amide_time_t duration; /* movie duration */
   gdouble rotation[AMITK_AXIS_NUM];
   dynamic_t type;
   amide_time_t start_time;

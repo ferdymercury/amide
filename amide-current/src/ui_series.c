@@ -31,7 +31,7 @@
 #include "ui_common.h"
 #include "ui_series.h"
 #include "ui_study_menus.h"
-#include "../pixmaps/icon_threshold.xpm"
+#include "pixmaps.h"
 
 /* external variables */
 static gchar * series_names[] = {"over Space", "over Time"};
@@ -61,7 +61,7 @@ static void scroll_change_cb(GtkAdjustment* adjustment, gpointer data) {
   ui_series_t * ui_series = data;
 
   if (ui_series->type == PLANES)
-    ui_series->view_point.z = adjustment->value;
+    ui_series->z_point = adjustment->value-AMITK_VOLUME_Z_CORNER(ui_series->volume)/2.0;
   else
     ui_series->view_frame = adjustment->value;
 
@@ -309,9 +309,10 @@ static ui_series_t * ui_series_init(void) {
   ui_series->images = NULL;
   ui_series->captions = NULL;
   ui_series->objects = NULL;
+  ui_series->active_ds = NULL;
   ui_series->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  ui_series->fuse_type = AMITK_FUSE_TYPE_BLEND;
   ui_series->voxel_dim = 1.0;
-  ui_series->view_point = zero_point;
   ui_series->volume = NULL;
   ui_series->view_time = 0.0;
   ui_series->type = PLANES;
@@ -320,6 +321,7 @@ static ui_series_t * ui_series_init(void) {
   ui_series->view_duration = 1.0;
   ui_series->start_z = 0.0;
   ui_series->end_z = 0.0;
+  ui_series->z_point = 0.0;
 
   ui_series->view_frame = 0;
   ui_series->start_time = 0.0;
@@ -332,19 +334,14 @@ static ui_series_t * ui_series_init(void) {
 /* function to make the adjustments for the scrolling scale */
 static GtkAdjustment * ui_series_create_scroll_adjustment(ui_series_t * ui_series) { 
 
-  if (ui_series->type == PLANES) {
-    AmitkCorners view_corners;
+  amide_real_t thickness;
 
-    amitk_volumes_get_enclosing_corners(ui_series->objects, 
-					AMITK_SPACE(ui_series->volume), 
-					view_corners);
-    
-    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_point.z,
-					     view_corners[0].z,
-					     view_corners[1].z,
-					     AMITK_VOLUME_Z_CORNER(ui_series->volume),
-					     AMITK_VOLUME_Z_CORNER(ui_series->volume),
-					     AMITK_VOLUME_Z_CORNER(ui_series->volume)));
+  if (ui_series->type == PLANES) {
+    thickness = AMITK_VOLUME_Z_CORNER(ui_series->volume);
+    return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->z_point-thickness/2.0,
+					     ui_series->start_z+thickness/2.0,
+					     ui_series->end_z-thickness/2.0,
+					     thickness, thickness, thickness));
   } else { /* FRAMES */
     return GTK_ADJUSTMENT(gtk_adjustment_new(ui_series->view_frame, 0, ui_series->num_slices, 1,1,1));
   }
@@ -383,7 +380,7 @@ static void update_canvas(ui_series_t * ui_series) {
   /* always do the first image, so that we can get the width and height
      of an image (needed for computing the rows and columns portions
      of the ui_series data structure */
-  temp_point = ui_series->view_point;
+  temp_point = zero_point;
   if (ui_series->type == PLANES) {
     temp_point.z = ui_series->start_z;
     temp_time =  ui_series->view_time;
@@ -397,11 +394,13 @@ static void update_canvas(ui_series_t * ui_series) {
 			 amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
   pixbuf = image_from_data_sets(&(ui_series->slices[0]),
 				ui_series->objects,
+				ui_series->active_ds,
 				temp_time*(1.0+EPSILON),
 				temp_duration*(1.0-EPSILON),
 				ui_series->voxel_dim,
 				view_volume,
-				ui_series->interpolation);
+				ui_series->interpolation,
+				ui_series->fuse_type);
   g_object_unref(view_volume);
   image_width = gdk_pixbuf_get_width(pixbuf) + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
   image_height = gdk_pixbuf_get_height(pixbuf) + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
@@ -436,8 +435,8 @@ static void update_canvas(ui_series_t * ui_series) {
 
   /* figure out what's the first image we want to display */
   if (ui_series->type == PLANES) 
-    start_i = ui_series->num_slices*((ui_series->view_point.z-ui_series->start_z)/
-				     (ui_series->end_z-ui_series->start_z));
+    start_i = ui_series->num_slices*((ui_series->z_point-ui_series->start_z)/
+				     (ui_series->end_z-ui_series->start_z-AMITK_VOLUME_Z_CORNER(ui_series->volume)));
   else  /* FRAMES */
     start_i = ui_series->view_frame;
 
@@ -452,7 +451,7 @@ static void update_canvas(ui_series_t * ui_series) {
     start_i = start_i-ui_series->columns*ui_series->rows/2.0;
 
   temp_time = ui_series->start_time;
-  temp_point = ui_series->view_point;
+  temp_point = zero_point;
   if (ui_series->type == PLANES) {
     temp_time = ui_series->view_time;
     temp_duration = ui_series->view_duration;
@@ -478,11 +477,13 @@ static void update_canvas(ui_series_t * ui_series) {
     if (i != 0) /* we've already done image 0 */
       pixbuf = image_from_data_sets(&(ui_series->slices[i]),
 				    ui_series->objects,
+				    ui_series->active_ds,
 				    temp_time*(1.0+EPSILON),
 				    temp_duration*(1.0-EPSILON),
 				    ui_series->voxel_dim,
 				    view_volume,
-				    ui_series->interpolation);
+				    ui_series->interpolation,
+				    ui_series->fuse_type);
     g_object_unref(view_volume);
     
     /* figure out the next x,y spot to put this guy */
@@ -542,8 +543,8 @@ static void update_canvas(ui_series_t * ui_series) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(AmitkStudy * study, GList * objects, AmitkView view, 
-		      AmitkVolume * canvas_view, series_t series_type) {
+void ui_series_create(AmitkStudy * study, GList * objects, AmitkDataSet * active_ds,
+		      AmitkView view, AmitkVolume * canvas_view, series_t series_type) {
  
   ui_series_t * ui_series;
   GnomeApp * app;
@@ -570,6 +571,7 @@ void ui_series_create(AmitkStudy * study, GList * objects, AmitkView view,
 
   /* add a reference to the objects sent to this series */
   ui_series->objects = amitk_objects_ref(objects);
+  ui_series->active_ds = active_ds; /* save a pointer to which object is active */
 
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(app), "realize", G_CALLBACK(ui_common_window_realize_cb), NULL);
@@ -578,9 +580,8 @@ void ui_series_create(AmitkStudy * study, GList * objects, AmitkView view,
   /* save the coordinate space of the series and some other parameters */
   ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(canvas_view)));
 
-  ui_series->view_point = 
-    amitk_space_b2s(AMITK_SPACE(ui_series->volume), AMITK_STUDY_VIEW_CENTER(study));
   ui_series->interpolation = AMITK_STUDY_INTERPOLATION(study);
+  ui_series->fuse_type = AMITK_STUDY_FUSE_TYPE(study);
   ui_series->view_time = AMITK_STUDY_VIEW_START_TIME(study);
   min_duration = amitk_data_sets_get_min_frame_duration(ui_series->objects);
   ui_series->view_duration =  

@@ -1,6 +1,6 @@
-/* analysis_variable_type.h - used to generate the different analysis_*.h files
+/* mpeg_encode.c - interface to the mpeg_encode application
  *
- * Part of amide - Amide's a Medical Image Data Examiner
+ * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2002 Andy Loening
  *
  * Author: Andy Loening <loening@ucla.edu>
@@ -23,21 +23,21 @@
   02111-1307, USA.
 */
 
+#ifdef AMIDE_MPEG_ENCODE_SUPPORT
 
-#ifndef __ANALYSIS_`'m4_Internal_Data_Format`'__
-#define __ANALYSIS_`'m4_Variable_Type`'__
+#ifndef __MPEG_ENCODE_H__
+#define __MPEG_ENCODE_H__
 
-/* header files that are always needed with this file */
-#include "analysis.h"
+/* header files that are always associated with this header file */
+#include <amide.h>
 
-/* defines */
+#define FRAMES_PER_SECOND 30
 
-/* function declarations */
-analysis_frame_t * analysis_frame_`'m4_Variable_Type`'_init(AmitkRoi * roi, AmitkDataSet * ds, guint frame);
+/* functions */
+void mpeg_encode(const gchar * temp_dir, GList * file_list, 
+		 gchar * output_filename, GTimeVal current_time,
+		 gboolean clean_only);
 
-#endif /* __ANALYSIS_`'m4_Variable_Type`'__ */
-
-
-
-
+#endif /* __MPEG_ENCODE_H__ */
+#endif /* AMIDE_MPEG_ENCODE_SUPPORT */
 

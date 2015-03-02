@@ -56,17 +56,18 @@ static void setup_curve(GtkWidget * gamma_curve, gpointer data, classification_t
 static void change_quality_cb(GtkWidget * widget, gpointer data) {
 
   ui_rendering_t * ui_rendering = data;
+  rendering_quality_t new_quality;
 
-  ui_rendering->quality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+  new_quality = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
 
-  /* apply the new quality */
-  renderings_set_quality(ui_rendering->contexts, ui_rendering->quality);
+  if (ui_rendering->quality != new_quality) {
+    ui_rendering->quality = new_quality;
 
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    /* apply the new quality */
+    renderings_set_quality(ui_rendering->contexts, ui_rendering->quality);
+    
+    /* do updating */
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -77,22 +78,24 @@ static void change_quality_cb(GtkWidget * widget, gpointer data) {
 /* function to change the return pixel type  */
 static void change_pixel_type_cb(GtkWidget * widget, gpointer data) {
 
-  ui_rendering_t * ui_rendering = data;
+  ui_rendering_t * ui_rendering;
+  rendering_t * context = data;
+  pixel_type_t new_type;
 
-  ui_rendering->pixel_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+  ui_rendering = g_object_get_data(G_OBJECT(widget), "ui_rendering");
 
-  /* apply the new quality */
-  renderings_set_image(ui_rendering->contexts, 
-		       ui_rendering->pixel_type,
-		       ui_rendering->zoom);
+  new_type = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
 
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  if (context->pixel_type != new_type) {
+    context->pixel_type = new_type;
+
+    /* apply the new quality */
+    rendering_context_set_image(context, context->pixel_type, ui_rendering->zoom);
+    
+    /* do updating */
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
-
+  
   return;
 }
 
@@ -121,16 +124,13 @@ static void change_zoom_cb(GtkWidget * widget, gpointer data) {
     return;
 
   /* set the zoom */
-  ui_rendering->zoom = temp_val;
-  renderings_set_image(ui_rendering->contexts, 
-		       ui_rendering->pixel_type,
-		       ui_rendering->zoom);
-
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  if (!REAL_EQUAL(ui_rendering->zoom, temp_val)) {
+    ui_rendering->zoom = temp_val;
+    renderings_set_zoom(ui_rendering->contexts, 
+			ui_rendering->zoom);
+    
+    /* do updating */
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -157,19 +157,17 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
   if (temp_val > 90) /* 90 degrees seems like quite a bit... */
     return;
 
-  ui_rendering->stereo_eye_angle = temp_val;
-
-  /* save user preferences */
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_float("RENDERING/EyeAngle", ui_rendering->stereo_eye_angle);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  if (!REAL_EQUAL(ui_rendering->stereo_eye_angle, temp_val)) {
+    ui_rendering->stereo_eye_angle = temp_val;
+    
+    /* save user preferences */
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_float("RENDERING/EyeAngle", ui_rendering->stereo_eye_angle);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+    
+    /* do updating */
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -198,19 +196,18 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
   if (temp_val > 1000) /* just plain wrong? */
     return;
 
-  ui_rendering->stereo_eye_width = temp_val;
+  if (!REAL_EQUAL(ui_rendering->stereo_eye_width, temp_val)) {
 
-  /* save user preferences */
-  gnome_config_push_prefix("/"PACKAGE"/");
-  gnome_config_set_int("RENDERING/EyeWidth", ui_rendering->stereo_eye_width);
-  gnome_config_pop_prefix();
-  gnome_config_sync();
-
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering->stereo_eye_width = temp_val;
+    
+    /* save user preferences */
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int("RENDERING/EyeWidth", ui_rendering->stereo_eye_width);
+    gnome_config_pop_prefix();
+    gnome_config_sync();
+    
+    /* do updating */
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -221,17 +218,18 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
 static void depth_cueing_toggle_cb(GtkWidget * widget, gpointer data) {
   
   ui_rendering_t * ui_rendering = data;
+  gboolean depth_cueing;
 
-  ui_rendering->depth_cueing = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  depth_cueing = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
-  /* apply the new quality */
-  renderings_set_depth_cueing(ui_rendering->contexts, ui_rendering->depth_cueing);
+  
+  if (ui_rendering->depth_cueing != depth_cueing) {
+    ui_rendering->depth_cueing = depth_cueing;
 
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    /* apply the new quality */
+    renderings_set_depth_cueing(ui_rendering->contexts, ui_rendering->depth_cueing);
+    
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -258,17 +256,16 @@ static void change_front_factor_cb(GtkWidget * widget, gpointer data) {
   if (error == EOF)  /* make sure it's a valid number */
     return;
 
-  /* set the front factor */
-  ui_rendering->front_factor = temp_val;
-  renderings_set_depth_cueing_parameters(ui_rendering->contexts,
-					 ui_rendering->front_factor,
-					 ui_rendering->density);
+  if (!REAL_EQUAL(ui_rendering->front_factor, temp_val)) {
 
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    /* set the front factor */
+    ui_rendering->front_factor = temp_val;
+
+    renderings_set_depth_cueing_parameters(ui_rendering->contexts,
+					   ui_rendering->front_factor,
+					   ui_rendering->density);
+    
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -294,17 +291,15 @@ static void change_density_cb(GtkWidget * widget, gpointer data) {
   if (error == EOF)  /* make sure it's a valid number */
     return;
 
-  /* set the density */
-  ui_rendering->density = temp_val;
-  renderings_set_depth_cueing_parameters(ui_rendering->contexts,
-					 ui_rendering->front_factor,
-					 ui_rendering->density);
+  if (!REAL_EQUAL(ui_rendering->density, temp_val)) {
   
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering->density = temp_val; /* set the density */
+
+    renderings_set_depth_cueing_parameters(ui_rendering->contexts,
+					   ui_rendering->front_factor,
+					   ui_rendering->density);
+    
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -319,17 +314,13 @@ static void color_table_cb(GtkWidget * widget, gpointer data) {
 
   ui_rendering = g_object_get_data(G_OBJECT(widget), "ui_rendering");
 
-  /* figure out which scaling menu item called me */
   i_color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
 
-  /* set the color table */
-  context->color_table = i_color_table;
+  if (context->color_table != i_color_table) {
+    /* set the color table */
+    context->color_table = i_color_table;
   
-  /* do the updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+    ui_rendering_update_canvas(ui_rendering, FALSE); 
   }
 
   return;
@@ -396,14 +387,11 @@ static void change_opacity_cb(GtkWidget * widget, gpointer data) {
       context->ramp_x[i_classification][i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][0];
       context->ramp_y[i_classification][i] = GTK_CURVE(GTK_GAMMA_CURVE(gamma_curve[i_classification])->curve)->ctlpoint[i][1];
     }
+
+    context->need_rerender = TRUE;
   }
 
-  /* do updating */
-  if (ui_rendering->immediate) {
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-    ui_rendering_update_canvases(ui_rendering); 
-    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-  }
+  ui_rendering_update_canvas(ui_rendering, FALSE); 
 
   return;
 }
@@ -549,11 +537,8 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 
   /* widgets to change the quality versus speed of rendering */
   label = gtk_label_new("Speed versus Quality");
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1,
-		   0, 0,
-		   X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
 
   option_menu = gtk_option_menu_new();
   menu = gtk_menu_new();
@@ -567,44 +552,16 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
   gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_rendering->quality);
   g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_quality_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(option_menu), 1,2, 
-		   table_row,table_row+1,
-		   GTK_EXPAND | GTK_FILL, 0, 
+  gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, 
+		   table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, 
 		   X_PADDING, Y_PADDING);
   table_row++;
 
 
-
-  /* widgets to change the returned pixel type of the rendering */
-  label = gtk_label_new("Return Type");
-  gtk_table_attach(GTK_TABLE(packing_table),
-		   GTK_WIDGET(label), 0,1,
-		   table_row, table_row+1,
-		   0, 0,
-		   X_PADDING, Y_PADDING);
-
-  option_menu = gtk_option_menu_new();
-  menu = gtk_menu_new();
-
-  for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) {
-    menuitem = gtk_menu_item_new_with_label(pixel_type_names[i_pixel_type]);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  }
-  
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-  gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), ui_rendering->pixel_type);
-  g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_pixel_type_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(option_menu), 1,2, 
-		   table_row,table_row+1,
-		   GTK_EXPAND | GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
-  table_row++;
 
   /* widgets to change the zoom */
   label = gtk_label_new("Zoom");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", ui_rendering->zoom);
@@ -612,7 +569,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_zoom_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -624,7 +581,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 
   /* widget for the stereo eye angle */
   label = gtk_label_new("Stereo Angle");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", ui_rendering->stereo_eye_angle);
@@ -632,13 +589,13 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_eye_angle_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
   /* widget for the stereo eye width */
   label = gtk_label_new("Eye Width (mm)");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", 
@@ -649,7 +606,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_eye_width_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -663,16 +620,13 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   check_button = gtk_check_button_new_with_label ("enable/disable depth cueing");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), ui_rendering->depth_cueing);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(depth_cueing_toggle_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), 
-		   GTK_WIDGET(check_button), 0,2, 
-		   table_row,table_row+1,
-		   GTK_FILL, 0, 
-		   X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(packing_table), check_button, 0,2, 
+		   table_row,table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
 
   label = gtk_label_new("Front Factor");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", ui_rendering->front_factor);
@@ -680,12 +634,12 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_front_factor_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
   label = gtk_label_new("Density");
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+  gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
   temp_string = g_strdup_printf("%f", ui_rendering->density);
@@ -693,7 +647,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);
   g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(change_density_cb), ui_rendering);
-  gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(entry),1,2,
+  gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
   table_row++;
 
@@ -708,8 +662,28 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
   while (temp_list != NULL) {
     packing_table = gtk_table_new(4,3,FALSE);
     table_row=0;
-    label = gtk_label_new(temp_list->rendering_context->name);
+    label = gtk_label_new(temp_list->context->name);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
+
+    /* widgets to change the returned pixel type of the rendering */
+    label = gtk_label_new("Return Type");
+    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+    option_menu = gtk_option_menu_new();
+    menu = gtk_menu_new();
+    for (i_pixel_type=0; i_pixel_type<NUM_PIXEL_TYPES; i_pixel_type++) {
+      menuitem = gtk_menu_item_new_with_label(pixel_type_names[i_pixel_type]);
+      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
+    }
+  
+    gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
+    g_object_set_data(G_OBJECT(option_menu), "ui_rendering", ui_rendering);
+    gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, 
+		     table_row,table_row+1, GTK_EXPAND | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu), temp_list->context->pixel_type);
+    g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(change_pixel_type_cb), temp_list->context);
+    table_row++;
 
     /* color table selector */
     label = gtk_label_new("color table:");
@@ -728,9 +702,9 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
     gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu),
-				temp_list->rendering_context->color_table);
+				temp_list->context->color_table);
     g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(color_table_cb), 
-		     temp_list->rendering_context);
+		     temp_list->context);
     gtk_widget_show_all(option_menu);
 
     table_row++;
@@ -749,7 +723,7 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 	label = gtk_label_new("Density\nDependent\nOpacity");
       else /* gradient classification*/
 	label = gtk_label_new("Gradient\nDependent\nOpacity");
-      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(label), 0,1,
+      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   
       gamma_curve[i_classification] = gtk_gamma_curve_new();
@@ -758,13 +732,13 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
 			  (i_classification == DENSITY_CLASSIFICATION) ? RENDERING_DENSITY_MAX: RENDERING_GRADIENT_MAX, 
 			  0.0, 1.0);
 
-      setup_curve(gamma_curve[i_classification], temp_list->rendering_context, i_classification);
+      setup_curve(gamma_curve[i_classification], temp_list->context, i_classification);
       /* disable the gamma button and free drawing button */
       gtk_widget_destroy(GTK_GAMMA_CURVE(gamma_curve[i_classification])->button[3]);
       gtk_widget_destroy(GTK_GAMMA_CURVE(gamma_curve[i_classification])->button[2]);
     
       /* and attach */
-      gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(gamma_curve[i_classification]), 1,3,
+      gtk_table_attach(GTK_TABLE(packing_table), gamma_curve[i_classification], 1,3,
 		       table_row, table_row+1,
 		       GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
       table_row++;
@@ -777,12 +751,12 @@ void ui_rendering_dialog_create(ui_rendering_t * ui_rendering) {
     g_object_set_data(G_OBJECT(button), "gamma_curve_gradient", gamma_curve[GRADIENT_CLASSIFICATION]);
     g_object_set_data(G_OBJECT(button), "ui_rendering", ui_rendering);
     /* and attach */
-    gtk_table_attach(GTK_TABLE(packing_table), GTK_WIDGET(button), 1,3, table_row, table_row+1, 
+    gtk_table_attach(GTK_TABLE(packing_table), button, 1,3, table_row, table_row+1, 
 		     GTK_EXPAND | GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
     gtk_widget_show(button);
     table_row++;
     g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(change_opacity_cb), 
-		     temp_list->rendering_context);
+		     temp_list->context);
 
     temp_list=temp_list->next;
   }

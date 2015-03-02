@@ -103,8 +103,13 @@ am__include = @am__include@
 am__quote = @am__quote@
 install_sh = @install_sh@
 EXTRA_DIST = \
+	amide.spec.in \
 	amide.spec \
-	amide-$(VERSION)-1.info \
+	amide-$(VERSION)-1.info 
+
+
+Applicationsdir = $(datadir)/applications/
+Applications_DATA = \
 	amide.desktop
 
 
@@ -117,6 +122,8 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/amide_config.h
 CONFIG_CLEAN_FILES = amide-$VERSION-1.info amide.spec
 DIST_SOURCES =
+DATA = $(Applications_DATA)
+
 DIST_COMMON = Makefile.am Makefile.in amide.info.in amide.spec.in
 all: all-am
 
@@ -140,6 +147,24 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
+ApplicationsDATA_INSTALL = $(INSTALL_DATA)
+install-ApplicationsDATA: $(Applications_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(Applicationsdir)
+	@list='$(Applications_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(ApplicationsDATA_INSTALL) $$d$$p $(DESTDIR)$(Applicationsdir)/$$f"; \
+	  $(ApplicationsDATA_INSTALL) $$d$$p $(DESTDIR)$(Applicationsdir)/$$f; \
+	done
+
+uninstall-ApplicationsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(Applications_DATA)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(Applicationsdir)/$$f"; \
+	  rm -f $(DESTDIR)$(Applicationsdir)/$$f; \
+	done
 tags: TAGS
 TAGS:
 
@@ -171,9 +196,10 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile
+all-am: Makefile $(DATA)
 
 installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(Applicationsdir)
 
 install: install-am
 install-exec: install-exec-am
@@ -216,7 +242,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-ApplicationsDATA
 
 install-exec-am:
 
@@ -234,16 +260,17 @@ mostlyclean: mostlyclean-am
 
 mostlyclean-am: mostlyclean-generic mostlyclean-libtool
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-ApplicationsDATA uninstall-info-am
 
 .PHONY: all all-am check check-am clean clean-generic clean-libtool \
 	distclean distclean-generic distclean-libtool distdir dvi \
-	dvi-am info info-am install install-am install-data \
-	install-data-am install-exec install-exec-am install-info \
-	install-info-am install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
+	dvi-am info info-am install install-ApplicationsDATA install-am \
+	install-data install-data-am install-exec install-exec-am \
+	install-info install-info-am install-man install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool uninstall uninstall-am uninstall-info-am
+	mostlyclean-libtool uninstall uninstall-ApplicationsDATA \
+	uninstall-am uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

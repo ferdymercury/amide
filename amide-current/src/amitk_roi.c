@@ -252,6 +252,17 @@ static void roi_read_xml (AmitkObject * object, xmlNodePtr nodes) {
       roi->isocontour = amitk_raw_data_read_xml(isocontour_xml_filename);
   }
 
+  /* make sure to mark the roi as undrawn if needed */
+  if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
+      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+    if (roi->isocontour == NULL) 
+      AMITK_VOLUME(roi)->valid = FALSE;
+  } else {
+    if (POINT_EQUAL(AMITK_VOLUME_CORNER(roi), zero_point)) {
+      AMITK_VOLUME(roi)->valid = FALSE;
+    }
+  }
+
   return;
 }
 
@@ -264,18 +275,6 @@ AmitkRoi * amitk_roi_new (AmitkRoiType type) {
   roi->type = type;
 
   return roi;
-}
-
-
-gboolean amitk_roi_undrawn(const AmitkRoi * roi) {
-
-  g_return_val_if_fail(AMITK_IS_ROI(roi), FALSE);
-
-  if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
-    return (roi->isocontour == NULL);
-  else 
-    return (POINT_EQUAL(AMITK_VOLUME_CORNER(roi), zero_point));
 }
 
 
@@ -326,7 +325,7 @@ GSList * amitk_roi_get_intersection_line(const AmitkRoi * roi,
 
   g_return_val_if_fail(AMITK_IS_ROI(roi), NULL);
 
-  if (amitk_roi_undrawn(roi)) return NULL;
+  if (AMITK_ROI_UNDRAWN(roi)) return NULL;
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ELLIPSOID:
@@ -377,7 +376,7 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
 
   g_return_val_if_fail(AMITK_IS_ROI(roi), NULL);
 
-  if (amitk_roi_undrawn(roi)) return NULL;
+  if (AMITK_ROI_UNDRAWN(roi)) return NULL;
 
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
@@ -472,6 +471,74 @@ void amitk_roi_set_voxel_size(AmitkRoi * roi, AmitkPoint voxel_size) {
 }
 
 
+/* iterates over the voxels in the given data set that are inside the given roi,
+   and performs the specified calculation function for those points */
+/* calulation should be a function taking the following arguments:
+   calculation(AmitkVoxel voxel, amide_data_t value, amide_real_t voxel_fraction, gpointer data) */
+void amitk_roi_calculate_on_data_set(const AmitkRoi * roi,  
+				     const AmitkDataSet * ds, 
+				     const guint frame,
+				     void (*calculation)(),
+				     gpointer data) {
+
+  g_return_if_fail(AMITK_IS_ROI(roi));
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  
+  if (AMITK_ROI_UNDRAWN(roi)) return;
+
+  switch(AMITK_ROI_TYPE(roi)) {
+  case AMITK_ROI_TYPE_ELLIPSOID:
+    amitk_roi_ELLIPSOID_calculate_on_data_set(roi, ds, frame, calculation, data);
+    break;
+  case AMITK_ROI_TYPE_CYLINDER:
+    amitk_roi_CYLINDER_calculate_on_data_set(roi, ds, frame, calculation, data);
+    break;
+  case AMITK_ROI_TYPE_BOX:
+    amitk_roi_BOX_calculate_on_data_set(roi, ds, frame, calculation, data);
+    break;
+  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
+    amitk_roi_ISOCONTOUR_2D_calculate_on_data_set(roi, ds, frame, calculation, data);
+    break;
+  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+    amitk_roi_ISOCONTOUR_3D_calculate_on_data_set(roi, ds, frame, calculation, data);
+    break;
+  default: 
+    g_error("roi type %d not implemented!",AMITK_ROI_TYPE(roi));
+    break;
+  }
+
+  return;
+}
+
+static void erase_volume(AmitkVoxel voxel, 
+			 amide_data_t value, 
+			 amide_real_t voxel_fraction, 
+			 gpointer ds) {
+
+  amitk_data_set_set_value(AMITK_DATA_SET(ds), voxel, 
+			   value*(1-voxel_fraction)+AMITK_DATA_SET_THRESHOLD_MIN(ds, 0)*voxel_fraction,
+			   FALSE);
+  return;
+}
+
+
+/* sets the volume inside of the given data set that is enclosed by roi equal to zero */
+void amitk_roi_erase_volume(const AmitkRoi * roi, AmitkDataSet * ds) {
+
+  guint i_frame;
+
+  for (i_frame=0; i_frame<AMITK_DATA_SET_NUM_FRAMES(ds); i_frame++)
+    amitk_roi_calculate_on_data_set(roi, ds, i_frame, erase_volume, ds);
+
+  /* this is a no-op to get a data_set_changed signal */
+  amitk_data_set_set_value(AMITK_DATA_SET(ds), zero_voxel,
+			   amitk_data_set_get_value(AMITK_DATA_SET(ds), zero_voxel),
+			   TRUE);
+
+  return;
+}
+
+
 const gchar * amitk_roi_type_get_name(const AmitkRoiType roi_type) {
 
   GEnumClass * enum_class;
@@ -499,8 +566,10 @@ amide_real_t amitk_rois_get_max_min_voxel_size(GList * objects) {
 
   /* now process and compare to the children */
   temp = amitk_rois_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(objects->data));
-  if (min_voxel_size < 0.0) min_voxel_size = temp;
-  else if (temp > min_voxel_size) min_voxel_size = temp;
+  if (temp > 0) {
+    if (min_voxel_size < 0.0) min_voxel_size = temp;
+    else if (temp > min_voxel_size) min_voxel_size = temp;
+  }
 
   /* and process this guy */
   if (AMITK_IS_ROI(objects->data))

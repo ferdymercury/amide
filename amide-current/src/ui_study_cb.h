@@ -34,14 +34,14 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data);
 gboolean ui_study_cb_update_help_info(GtkWidget * widget, GdkEventCrossing * event, gpointer data);
 void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
 				   AmitkPoint *location, amide_data_t value, gpointer ui_study);
-void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, AmitkPoint *position, gpointer ui_study);
 void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
 				      amide_real_t thickness, gpointer ui_study);
 void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
 				     amide_real_t thickness, gpointer ui_study);
 void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi,
 					      AmitkPoint *position, gpointer ui_study);
-void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObjectType type, 
+void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointer ui_study);
+void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type, 
 				   AmitkPoint *position, gpointer ui_study);
 void ui_study_cb_tree_select_object(GtkWidget * tree, 
 				    AmitkObject * object, 
@@ -63,18 +63,23 @@ void ui_study_cb_tree_help_event(GtkWidget * widget, AmitkHelpInfo help_type, gp
 void ui_study_cb_zoom(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_thickness(GtkSpinButton * spin_button, gpointer ui_study);
 void ui_study_cb_time_pressed(GtkWidget * combo, gpointer data);
-void ui_study_cb_series(GtkWidget * widget, gpointer ui_study_p);
+void ui_study_cb_series(GtkWidget * widget, gpointer ui_study);
+#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+void ui_study_cb_fly_through(GtkWidget * widget, gpointer ui_study);
+#endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 void ui_study_cb_rendering(GtkWidget * widget, gpointer data);
 #endif
 void ui_study_cb_calculate_all(GtkWidget * widget, gpointer data);
 void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data);
+void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data);
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data);
 void ui_study_cb_add_roi(GtkWidget * widget, gpointer data);
-void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data);
+void ui_study_cb_add_fiducial_mark(GtkWidget * widget, gpointer data);
 void ui_study_cb_preferences(GtkWidget * widget, gpointer data);
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer ui_study);
+void ui_study_cb_fuse_type(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_view_mode(GtkWidget * widget, gpointer ui_study);
 void ui_study_cb_exit(GtkWidget* widget, gpointer data);
 void ui_study_cb_close(GtkWidget* widget, gpointer data);

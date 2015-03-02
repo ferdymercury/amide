@@ -31,8 +31,6 @@ amide_SOURCES = \
 	$(TYPE_BUILTINS_SOURCES) \
 	$(AMITK_RAW_DATA_VARIABLE_H) \
 	$(AMITK_RAW_DATA_VARIABLE_C) \
-	$(ANALYSIS_VARIABLE_H) \
-	$(ANALYSIS_VARIABLE_C) \
 	$(AMITK_DATA_SET_VARIABLE_H) \
 	$(AMITK_DATA_SET_VARIABLE_C) \
 	$(AMITK_ROI_VARIABLE_H) \
@@ -69,6 +67,10 @@ amide_SOURCES = \
 	legacy.h \
 	medcon_import.c \
 	medcon_import.h \
+	mpeg_encode.c \
+	mpeg_encode.h \
+	pixmaps.c \
+	pixmaps.h \
 	raw_data_import.c \
 	raw_data_import.h \
 	rendering.c \
@@ -77,6 +79,10 @@ amide_SOURCES = \
 	ui_alignment_dialog.h \
 	ui_common.c \
 	ui_common.h \
+	ui_crop_dialog.c \
+	ui_crop_dialog.h \
+	ui_fly_through.c \
+	ui_fly_through.h \
 	ui_preferences_dialog.c \
 	ui_preferences_dialog.h \
 	ui_rendering.c \
@@ -120,20 +126,6 @@ AMITK_H_SOURCES = \
 	amitk_threshold.h \
 	amitk_tree.h \
 	amitk_volume.h 
-
-ANALYSIS_VARIABLE_C = \
-	analysis_ELLIPSOID.c \
-	analysis_CYLINDER.c \
-	analysis_BOX.c \
-	analysis_ISOCONTOUR_2D.c \
-	analysis_ISOCONTOUR_3D.c 
-
-ANALYSIS_VARIABLE_H = \
-	analysis_ELLIPSOID.h \
-	analysis_CYLINDER.h \
-	analysis_BOX.h \
-	analysis_ISOCONTOUR_2D.h \
-	analysis_ISOCONTOUR_3D.h
 
 AMITK_ROI_VARIABLE_C = \
 	amitk_roi_ELLIPSOID.c \
@@ -224,9 +216,6 @@ AMITK_DATA_SET_VARIABLE_H = \
 VARIABLE_INPUT = \
 	variable_type.m4
 
-ANALYSIS_VARIABLE_C_SRC = analysis_variable_type.c 
-ANALYSIS_VARIABLE_H_SRC = analysis_variable_type.h 
-
 AMITK_ROI_VARIABLE_C_SRC = amitk_roi_variable_type.c 
 AMITK_ROI_VARIABLE_H_SRC = amitk_roi_variable_type.h
 
@@ -236,24 +225,6 @@ AMITK_RAW_DATA_VARIABLE_H_SRC = amitk_raw_data_variable_type.h
 AMITK_DATA_SET_VARIABLE_C_SRC = amitk_data_set_variable_type.c 
 AMITK_DATA_SET_VARIABLE_H_SRC = amitk_data_set_variable_type.h 
 
-
-$(ANALYSIS_VARIABLE_H): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_H_SRC)
-	@for i in $(ANALYSIS_VARIABLE_H) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
-
-$(ANALYSIS_VARIABLE_C): $(VARIABLE_INPUT) $(ANALYSIS_VARIABLE_C_SRC) $(ANALYSIS_VARIABLE_H)
-	@for i in $(ANALYSIS_VARIABLE_C) ; \
-            do \
-                rm -f $$i ;\
-                echo "$(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i" ;\
-                $(M4) -P -Dm4_SourceFile=$$i $(VARIABLE_INPUT) > $$i; \
-                chmod -w $$i; \
-            done
 
 $(AMITK_ROI_VARIABLE_H): $(VARIABLE_INPUT) $(AMITK_ROI_VARIABLE_H_SRC)
 	@for i in $(AMITK_ROI_VARIABLE_H) ; \
@@ -374,8 +345,6 @@ stamp-amitk_type_builtins.c: $(AMITK_H_SOURCES) Makefile amitk_type_builtins.h
 
 
 CLEANFILES = \
-	$(ANALYSIS_VARIABLE_C) \
-	$(ANALYSIS_VARIABLE_H) \
 	$(AMITK_ROI_VARIABLE_C) \
 	$(AMITK_ROI_VARIABLE_H) \
 	$(AMITK_DATA_SET_VARIABLE_C) \

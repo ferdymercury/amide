@@ -148,10 +148,11 @@ FLT_EPSILON        1.1920928955078125e-07
 SQRT_FLT_EPSILON   3.4526698300124393e-04
 */
 
+
 #define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
 #define SMALL_DISTANCE 0.01 /* in milimeter's, used as a lower limit on some dimensions */
 #define SMALL_TIME 0.0001 /* in seconds, used as a lower limit on some times */
-
+#define EMPTY 0.0
 
 
 /* Macros */
@@ -261,6 +262,9 @@ inline amide_real_t voxel_max_dim(const AmitkVoxel voxel1);
 void voxel_print(gchar * message, const AmitkVoxel voxel);
 amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
 				const AmitkDim which_dim);
+void voxel_set_dim(AmitkVoxel * voxel,
+		   const AmitkDim which_dim,
+		   amide_intpoint_t value);
 
 inline gboolean point_in_box(const AmitkPoint p,
 			     const AmitkPoint box_corner);

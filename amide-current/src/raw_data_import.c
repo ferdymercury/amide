@@ -48,7 +48,6 @@ typedef struct raw_data_info_t {
   GtkWidget * num_bytes_label1;
   GtkWidget * num_bytes_label2;
   GtkWidget * read_offset_label;
-  GtkWidget * dialog;
   GtkWidget * ok_button;
 } raw_data_info_t;
 
@@ -61,7 +60,7 @@ static void change_modality_cb(GtkWidget * widget, gpointer data);
 static void change_raw_format_cb(GtkWidget * widget, gpointer data);
 
 
-static void import_dialog(raw_data_info_t * raw_data_info);
+static GtkWidget * import_dialog(raw_data_info_t * raw_data_info);
 static void update_offset_label(raw_data_info_t * raw_data_info);
 static guint update_num_bytes(raw_data_info_t * raw_data_info);
 
@@ -265,7 +264,7 @@ static guint update_num_bytes(raw_data_info_t * raw_data_info) {
 
 
 /* function to bring up the dialog widget to direct our importing of raw data */
-static void import_dialog(raw_data_info_t * raw_data_info) {
+static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 
   AmitkModality i_modality;
   dimension_t i_dim;
@@ -273,7 +272,7 @@ static void import_dialog(raw_data_info_t * raw_data_info) {
   AmitkAxis i_axis;
   gchar * temp_string = NULL;
   gchar ** frags;
-  GtkWidget * raw_data_dialog;
+  GtkWidget * dialog;
   GtkWidget * packing_table;
   GtkWidget * label;
   GtkWidget * entry;
@@ -285,22 +284,20 @@ static void import_dialog(raw_data_info_t * raw_data_info) {
 
 
   /* start making the import dialog */
-  raw_data_dialog = gtk_dialog_new();
+  dialog = gtk_dialog_new();
 
   temp_string = g_strdup_printf("%s: Raw Data Import Dialog\n", PACKAGE);
-  gtk_window_set_title(GTK_WINDOW(raw_data_dialog), temp_string);
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
   
-  raw_data_info->ok_button = gtk_dialog_add_button(GTK_DIALOG(raw_data_dialog), 
+  raw_data_info->ok_button = gtk_dialog_add_button(GTK_DIALOG(dialog), 
 						   GTK_STOCK_OK, GTK_RESPONSE_YES);
-  gtk_dialog_add_button(GTK_DIALOG(raw_data_dialog),
+  gtk_dialog_add_button(GTK_DIALOG(dialog),
 			GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE);
-  raw_data_info->dialog = raw_data_dialog; 
-
 
   /* make the packing table */
   packing_table = gtk_table_new(10,5,FALSE);
-  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(raw_data_dialog)->vbox),packing_table);
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox),packing_table);
 
   /* widgets to change the roi's name */
   label = gtk_label_new("name:");
@@ -514,9 +511,9 @@ static void import_dialog(raw_data_info_t * raw_data_info) {
 		   table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   table_row++;
 
-  gtk_widget_show_all(raw_data_dialog);
+  gtk_widget_show_all(dialog);
 
-  return;
+  return dialog;
 }
 
 
@@ -528,6 +525,7 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   raw_data_info_t * raw_data_info;
   AmitkDataSet * ds;
   gint dialog_reply;
+  GtkWidget * dialog;
 
   /* get space for our raw_data_info structure */
   if ((raw_data_info = g_new(raw_data_info_t,1)) == NULL) {
@@ -545,11 +543,12 @@ AmitkDataSet * raw_data_import(const gchar * raw_data_filename) {
   }
   raw_data_info->total_file_size = file_info.st_size;
 
-  /* create and run the import_dialog to acquire needed info from the user */
-  import_dialog(raw_data_info);
+  /* create the import_dialog */
+  dialog = import_dialog(raw_data_info);
 
   /* block till the user closes the dialog */
-  dialog_reply = gtk_dialog_run(GTK_DIALOG(raw_data_info->dialog));
+  dialog_reply = gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
   
   /* and start loading in the file if we hit ok*/
   if (dialog_reply == GTK_RESPONSE_YES) {

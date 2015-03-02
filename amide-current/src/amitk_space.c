@@ -211,7 +211,6 @@ static void space_rotate_on_vector(AmitkSpace * space, AmitkPoint * vector, amid
 
 static void space_transform(AmitkSpace * space, AmitkSpace * transform_space) {
 
-
   space->offset = point_add(space->offset, transform_space->offset);
 
   amitk_axes_mult(transform_space->axes, space->axes, space->axes);
@@ -640,13 +639,14 @@ inline AmitkPoint amitk_space_b2s_dim(const AmitkSpace * space, const AmitkPoint
 /* little utility function for debugging */
 void amitk_space_print(AmitkSpace * space, gchar * message) {
 
-  g_print("%s\toffset:\t%5.3f\t%5.3f\t%5.3f\n", message, 
+  g_print("%s\n", message);
+  g_print("\toffset:\t% 5.5f\t% 5.5f\t% 5.5f\n",
 	 space->offset.x, space->offset.y, space->offset.z);
-  g_print("\taxis x:\t%5.3f\t%5.3f\t%5.3f\n",
+  g_print("\taxis x:\t% 5.5f\t% 5.5f\t% 5.5f\n",
 	  space->axes[AMITK_AXIS_X].x,space->axes[AMITK_AXIS_X].y, space->axes[AMITK_AXIS_X].z);
-  g_print("\taxis y:\t%5.3f\t%5.3f\t%5.3f\n",
+  g_print("\taxis y:\t% 5.5f\t% 5.5f\t% 5.5f\n",
 	  space->axes[AMITK_AXIS_Y].x,space->axes[AMITK_AXIS_Y].y, space->axes[AMITK_AXIS_Y].z);
-  g_print("\taxis z:\t%5.3f\t%5.3f\t%5.3f\n",
+  g_print("\taxis z:\t% 5.5f\t% 5.5f\t% 5.5f\n",
 	  space->axes[AMITK_AXIS_Z].x,space->axes[AMITK_AXIS_Z].y, space->axes[AMITK_AXIS_Z].z);
   return;
 }

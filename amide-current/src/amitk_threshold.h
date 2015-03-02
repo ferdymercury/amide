@@ -85,13 +85,13 @@ struct _AmitkThreshold
 {
   GtkVBox vbox;
 
+  gboolean minimal; /* true if we just want the color table menu and the color scale */
   GtkWidget * color_scales[2];
   GtkWidget * histogram;
   GnomeCanvasItem * color_scale_image[2][AMITK_THRESHOLD_SCALE_NUM_SCALES];
   GnomeCanvasItem * histogram_image;
   GnomeCanvasItem * arrow[2][AMITK_THRESHOLD_ARROW_NUM_ARROWS];
   GnomeCanvasItem * connector_line[2][AMITK_THRESHOLD_LINE_NUM_LINES];
-  GdkPixbuf * histogram_rgb;
   GtkWidget * entry[2][AMITK_THRESHOLD_ENTRY_NUM_ENTRIES];
   GtkWidget * color_table_menu;
   GtkWidget * threshold_ref_frame_menu[2];
@@ -121,7 +121,8 @@ struct _AmitkThresholdClass
 
 GType      amitk_threshold_get_type          (void);
 GtkWidget* amitk_threshold_new               (AmitkDataSet * data_set,
-					      AmitkThresholdLayout layout);
+					      AmitkThresholdLayout layout,
+					      gboolean minimal);
 void       amitk_threshold_new_data_set      (AmitkThreshold * threshold, 
 					      AmitkDataSet * new_data_set);
 

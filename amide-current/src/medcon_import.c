@@ -367,7 +367,7 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
 	  amitk_format_UBYTE_t * medcon_buffer;
 
 	  /* store the scaling factor... I think this is the right scaling factor... */
-	  *AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(ds->internal_scaling, i) = 
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
 	    medcon_file_info.image[i.t*ds->raw_data->dim.z + i.z].quant_scale
 	    * medcon_file_info.image[i.t*ds->raw_data->dim.z + i.z].rescale_slope;
 
@@ -395,7 +395,7 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
 	  amitk_format_SSHORT_t * medcon_buffer;
 
 	  /* store the scaling factor... I think this is the right scaling factor... */
-	  *AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(ds->internal_scaling, i) = 
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
 	    medcon_file_info.image[i.t*ds->raw_data->dim.z + i.z].rescale_slope;
 
 	  /* convert the image to a 16 bit signed int to begin with */
@@ -422,7 +422,7 @@ AmitkDataSet * medcon_import(const gchar * filename, libmdc_import_method_t subm
 	  amitk_format_SINT_t * medcon_buffer;
 
 	  /* store the scaling factor... I think this is the right scaling factor... */
-	  *AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(ds->internal_scaling, i) = 
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, i) = 
 	    medcon_file_info.image[i.t*ds->raw_data->dim.z + i.z].rescale_slope;
 
 	  /* convert the image to a 32 bit signed int to begin with */

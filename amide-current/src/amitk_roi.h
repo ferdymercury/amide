@@ -42,6 +42,13 @@ G_BEGIN_DECLS
 #define AMITK_ROI_TYPE(roi)             (AMITK_ROI(roi)->type)
 #define AMITK_ROI_ISOCONTOUR_VALUE(roi) (AMITK_ROI(roi)->isocontour_value)
 #define AMITK_ROI_VOXEL_SIZE(roi)       (AMITK_ROI(roi)->voxel_size)
+#define AMITK_ROI_UNDRAWN(roi)          (!AMITK_VOLUME_VALID(roi))
+
+/* for iterative algorithms, how many subvoxels should we break the problem up into */
+#define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension */
+#define AMITK_ROI_GRAIN_SIZE 0.015625 /* 1/64 */
+//#define AMITK_ROI_GRANULARITY 10 - takes way to long
+//#define AMITK_ROI_GRAIN_SIZE 0.001 /* 1/10^3 */
 
 typedef enum {
   AMITK_ROI_TYPE_ELLIPSOID, 
@@ -85,7 +92,6 @@ struct _AmitkRoiClass
 
 GType	        amitk_roi_get_type	          (void);
 AmitkRoi *      amitk_roi_new                     (AmitkRoiType type);
-gboolean        amitk_roi_undrawn                 (const AmitkRoi * roi);
 GSList *        amitk_roi_get_intersection_line   (const AmitkRoi * roi, 
 						   const AmitkVolume * canvas_slice,
 						   const amide_real_t pixel_dim);
@@ -101,6 +107,13 @@ void            amitk_roi_isocontour_erase_area   (AmitkRoi * roi,
 						   gint area_size);
 void            amitk_roi_set_type                (AmitkRoi * roi, AmitkRoiType new_type);
 void            amitk_roi_set_voxel_size          (AmitkRoi * roi, AmitkPoint voxel_size);
+void            amitk_roi_calculate_on_data_set   (const AmitkRoi * roi,  
+						   const AmitkDataSet * ds, 
+						   const guint frame,
+						   void (* calculation)(),
+						   gpointer data);
+void            amitk_roi_erase_volume            (const AmitkRoi * roi, 
+						   AmitkDataSet * ds);
 const gchar *   amitk_roi_type_get_name           (const AmitkRoiType roi_type);
 
 amide_real_t    amitk_rois_get_max_min_voxel_size (GList * objects);

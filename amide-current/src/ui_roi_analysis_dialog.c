@@ -25,7 +25,6 @@
 
 #include "amide_config.h"
 #include <gtk/gtk.h>
-#include <sys/stat.h>
 #include <string.h>
 #include "ui_common.h"
 #include "analysis.h"
@@ -82,44 +81,14 @@ static void ui_roi_analysis_dialog_add_page(GtkWidget * notebook, AmitkStudy * s
 static void export_ok_cb(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
-  GtkWidget * question;
   analysis_roi_t * roi_analyses;
   const gchar * save_filename;
-  struct stat file_info;
-  gint return_val;
 
   /* get a pointer to the analysis */
   roi_analyses = g_object_get_data(G_OBJECT(file_selection), "roi_analyses");
 
-  /* get the filename */
-  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-
-  /* some sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
-    return;
-  }
-
-  /* see if the filename already exists */
-  if (stat(save_filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(file_selection),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* we don't want to overwrite the file.... */
-  }
-
+  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
+    return; /* inappropriate name or don't want to overwrite */
 
   /* allright, save the data */
   export_analyses(save_filename, roi_analyses);

@@ -57,32 +57,6 @@ static gchar * threshold_names[] = {
 
 #define NUM_THRESHOLDS 4
 
-static gchar * color_table_names[] = {
-  "black/white linear",
-  "white/black linear", 
-  "red temperature", 
-  "inverse red temp.", 
-  "blue temperature", 
-  "inv blue temp.", 
-  "green temperature", 
-  "inv. green temp.", 
-  "hot metal", 
-  "inv. hot metal", 
-  "hot blue", 
-  "inverse hot blue", 
-  "hot green", 
-  "inverse hot green", 
-  "spectrum", 
-  "inverse spectrum", 
-  "NIH + white", 
-  "inv. NIH + white", 
-  "NIH", 
-  "inverse NIH"
-};
-
-#define NUM_COLOR_TABLES 20
-
-
 
 static AmitkVoxel voxel3d_read_xml(xmlNodePtr nodes, gchar * descriptor) {
 
@@ -145,9 +119,9 @@ static AmitkRawData * data_set_load_xml(gchar * data_set_xml_filename) {
   /* figure out the data format */
   temp_string = xml_get_string(nodes, "raw_data_format");
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-  raw_data_format = AMITK_RAW_FORMAT_FLOAT_BE;
+  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_BE;
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-  raw_data_format = AMITK_RAW_FORMAT_FLOAT_LE;
+  raw_data_format = AMITK_RAW_FORMAT_DOUBLE_LE;
 #endif
   if (temp_string != NULL)
     for (i_raw_data_format=0; i_raw_data_format < AMITK_RAW_FORMAT_NUM; i_raw_data_format++) 
@@ -299,8 +273,8 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
   /* figure out the color table */
   temp_string = xml_get_string(nodes, "color_table");
   if (temp_string != NULL)
-    for (i_color_table=0; i_color_table < NUM_COLOR_TABLES; i_color_table++) 
-      if (g_strcasecmp(temp_string, color_table_names[i_color_table]) == 0)
+    for (i_color_table=0; i_color_table < AMITK_COLOR_TABLE_NUM; i_color_table++) 
+      if (g_strcasecmp(temp_string, color_table_menu_names[i_color_table]) == 0)
 	new_volume->color_table = i_color_table;
   g_free(temp_string);
 
@@ -310,6 +284,40 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
   if ((data_set_xml_filename != NULL) && (internal_scaling_xml_filename != NULL)) {
     new_volume->raw_data = data_set_load_xml(data_set_xml_filename);
     new_volume->internal_scaling = data_set_load_xml(internal_scaling_xml_filename);
+
+    /* the type of internal_scaling has been changed to double
+       as of amide 0.7.1 */
+    if (new_volume->internal_scaling->format != AMITK_FORMAT_DOUBLE) {
+      AmitkRawData * old_scaling;
+      AmitkVoxel i;
+
+      g_warning("wrong type found on internal scaling, converting to double");
+      old_scaling = new_volume->internal_scaling;
+
+      if ((new_volume->internal_scaling = amitk_raw_data_new()) == NULL) {
+	g_warning("couldn't allocate space for the new scaling structure");
+	g_object_unref(new_volume);
+	return NULL;
+      }
+      new_volume->internal_scaling->dim = old_scaling->dim;
+      new_volume->internal_scaling->format = AMITK_FORMAT_DOUBLE;
+      if (new_volume->internal_scaling->data != NULL)
+	g_free(new_volume->internal_scaling->data);
+      if ((new_volume->internal_scaling->data = amitk_raw_data_get_data_mem(new_volume->internal_scaling)) == NULL) {
+	g_warning("Couldn't allocate space for the new scaling factors");
+	g_object_unref(new_volume);
+	return NULL;
+      }
+      
+      for (i.t=0; i.t<new_volume->internal_scaling->dim.t; i.t++)
+	for (i.z=0; i.z<new_volume->internal_scaling->dim.z; i.z++)
+	  for (i.y=0; i.y<new_volume->internal_scaling->dim.y; i.y++)
+	    for (i.x=0; i.x<new_volume->internal_scaling->dim.x; i.x++)
+	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(new_volume->internal_scaling,i) = 
+		amitk_raw_data_get_value(old_scaling, i);
+      
+      g_object_unref(old_scaling);
+    }
 
     /* parameters that aren't in older versions and default values aren't good enough*/
     amitk_data_set_set_scale_factor(new_volume, xml_get_data(nodes, "external_scaling"));
@@ -329,9 +337,9 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
     /* and figure out the data format */
     temp_string = xml_get_string(nodes, "data_format");
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
-    raw_data_format = AMITK_RAW_FORMAT_FLOAT_BE; 
+    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_BE; 
 #else /* (G_BYTE_ORDER == G_LITTLE_ENDIAN) */
-    raw_data_format = AMITK_RAW_FORMAT_FLOAT_LE; 
+    raw_data_format = AMITK_RAW_FORMAT_DOUBLE_LE; 
 #endif
     if (temp_string != NULL)
       for (i_raw_data_format=0; i_raw_data_format < AMITK_RAW_FORMAT_NUM; i_raw_data_format++) 
@@ -370,7 +378,7 @@ static AmitkDataSet * volume_load_xml(gchar * volume_xml_filename) {
   new_volume->voxel_size = amitk_point_read_xml(nodes, "voxel_size");
   new_volume->scan_start = xml_get_time(nodes, "scan_start");
   new_volume->frame_duration = xml_get_times(nodes, "frame_duration", 
-					     AMITK_DATA_SET_RAW_DATA(new_volume)->dim.t);
+					     AMITK_DATA_SET_NUM_FRAMES(new_volume));
   new_volume->threshold_max[0] =  xml_get_data(nodes, "threshold_max");
   new_volume->threshold_min[0] =  xml_get_data(nodes, "threshold_min");
   new_volume->threshold_max[1] =  xml_get_data(nodes, "threshold_max_1");
@@ -490,6 +498,17 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename) {
   }
 
   /* children were never used */
+
+  /* make sure to mark the roi as undrawn if needed */
+  if ((AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
+      (AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+    if (new_roi->isocontour == NULL) 
+      AMITK_VOLUME(new_roi)->valid = FALSE;
+  } else {
+    if (POINT_EQUAL(AMITK_VOLUME_CORNER(new_roi), zero_point)) {
+      AMITK_VOLUME(new_roi)->valid = FALSE;
+    }
+  }
    
   /* and we're done */
   xmlFreeDoc(doc);

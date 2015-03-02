@@ -42,6 +42,7 @@ G_BEGIN_DECLS
 #define AMITK_VOLUME_X_CORNER(vol)      (AMITK_VOLUME(vol)->corner.x)
 #define AMITK_VOLUME_Y_CORNER(vol)      (AMITK_VOLUME(vol)->corner.y)
 #define AMITK_VOLUME_Z_CORNER(vol)      (AMITK_VOLUME(vol)->corner.z)
+#define AMITK_VOLUME_VALID(vol)         (AMITK_VOLUME(vol)->valid)
 
 
 typedef struct AmitkVolumeClass AmitkVolumeClass;
@@ -52,6 +53,7 @@ struct AmitkVolume
 {
   AmitkObject parent;
   AmitkPoint corner;      /*far corner,near corner is always 0,0,0 in the volume's coordinate space */
+  gboolean valid;         /* if the corner is currently valid */
 
 };
 

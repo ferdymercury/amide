@@ -29,6 +29,14 @@
 #include "analysis.h"
 
 
+/* make sure we have NAN defined to at least something */
+#ifndef NAN
+#define NAN 0.0
+#endif
+
+#define EMPTY 0.0
+
+
 analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
 
   analysis_frame_t * return_list;
@@ -55,13 +63,51 @@ analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
   return frame_analysis;
 }
 
+/* first pass statistics */
+static void calculate_stats1(AmitkVoxel voxel, 
+			     amide_data_t value, 
+			     amide_real_t voxel_fraction, 
+			     gpointer data) {
+
+  analysis_frame_t * frame_analysis = data;
+
+  frame_analysis->total += value*voxel_fraction;
+  frame_analysis->voxels += voxel_fraction;
+
+  if (frame_analysis->min_max_valid) {
+    if ((value) < frame_analysis->min) frame_analysis->min = value;
+    if ((value) > frame_analysis->max) frame_analysis->max = value;
+  } else {
+    frame_analysis->min = value;
+    frame_analysis->max = value;
+    frame_analysis->min_max_valid = TRUE;
+  }
+  
+  return;
+}
+
+/* second pass statistics (i.e. variance */
+static void calculate_stats2(AmitkVoxel voxel, 
+			     amide_data_t value, 
+			     amide_real_t voxel_fraction, 
+			     gpointer data) {
+
+  analysis_frame_t * frame_analysis = data;
+  amide_data_t temp;
+
+  temp = (value-frame_analysis->mean);
+  frame_analysis->correction += voxel_fraction*temp;
+  frame_analysis->var += voxel_fraction*temp*temp;
+
+  return;
+}
 
 /* calculate an analysis of several statistical values for an roi on a given data set frame. */
 static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
-						      AmitkDataSet * ds,
-						      guint frame) {
+						       AmitkDataSet * ds, 
+						       guint frame) {
 
-  analysis_frame_t * frame_analysis = NULL;
+  analysis_frame_t * frame_analysis;
 
   if (frame == AMITK_DATA_SET_NUM_FRAMES(ds)) return NULL; /* check if we're done */
   g_assert(frame < AMITK_DATA_SET_NUM_FRAMES(ds)); /* sanity check */
@@ -72,27 +118,49 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame);
 #endif
 
-  switch (AMITK_ROI_TYPE(roi)) {
-  case AMITK_ROI_TYPE_ELLIPSOID:
-    frame_analysis = analysis_frame_ELLIPSOID_init(roi, ds, frame);
-    break;
-  case AMITK_ROI_TYPE_CYLINDER:
-    frame_analysis = analysis_frame_CYLINDER_init(roi, ds, frame);
-    break;
-  case AMITK_ROI_TYPE_BOX:
-    frame_analysis = analysis_frame_BOX_init(roi, ds, frame);
-    break;
-  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
-    frame_analysis = analysis_frame_ISOCONTOUR_2D_init(roi, ds, frame);
-    break;
-  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-    frame_analysis = analysis_frame_ISOCONTOUR_3D_init(roi, ds, frame);
-    break;
-  default:
-    g_error("roi type %d not implemented!", roi->type);
+  /* get memory first */
+  if ((frame_analysis =  g_new(analysis_frame_t,1)) == NULL) {
+    g_warning("couldn't allocate space for roi analysis of frame %d", frame);
     return frame_analysis;
-    break;
   }
+  frame_analysis->ref_count = 1;
+
+  /* initialize values */
+  frame_analysis->mean = 0.0;
+  frame_analysis->voxels = 0.0; 
+  frame_analysis->var = 0.0;
+  frame_analysis->min_max_valid=FALSE;
+  frame_analysis->min = 0.0;
+  frame_analysis->max = 0.0;
+  frame_analysis->total = 0.0;
+
+  /* note the frame duration */
+  frame_analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
+
+  /* calculate the time midpoint of the data */
+  frame_analysis->time_midpoint = (amitk_data_set_get_end_time(ds, frame) + 
+				   amitk_data_set_get_start_time(ds, frame))/2.0;
+
+  /* calculate the #voxels, min max, and total */
+  amitk_roi_calculate_on_data_set(roi, ds, frame, calculate_stats1, frame_analysis);
+
+  /* calculate the mean */
+  frame_analysis->mean = frame_analysis->total/frame_analysis->voxels;
+
+  /* go through the data again, to calculate variance */
+  amitk_roi_calculate_on_data_set(roi, ds, frame, calculate_stats2, frame_analysis);
+
+  /* and divide to get the final var, note I'm using N-1, as the mean
+     in a sense is being "estimated" from the data set....  If anyone
+     else with more statistical experience disagrees, please speak up */
+  /* the "total correction" parameter is to correct roundoff error,
+     for a discussion, see "the art of computer programming" */
+  if (frame_analysis->voxels < 2.0)
+    frame_analysis->var = NAN; /* variance is non-sensible */
+  else
+    frame_analysis->var = 
+      (frame_analysis->var - frame_analysis->correction*frame_analysis->correction/frame_analysis->voxels)
+      /(frame_analysis->voxels-1.0);
 
   /* now let's recurse  */
   frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, frame+1);
@@ -106,7 +174,7 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds) {
 
   /* sanity checks */
-  if (amitk_roi_undrawn(roi)) {
+  if (AMITK_ROI_UNDRAWN(roi)) {
     g_warning("ROI: %s appears not to have been drawn", AMITK_OBJECT_NAME(roi));
     return NULL;
   }

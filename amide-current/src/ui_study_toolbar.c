@@ -33,15 +33,13 @@
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
 #include "ui_study_toolbar.h"
-#include "../pixmaps/icon_threshold.xpm"
-#include "../pixmaps/icon_interpolation_nearest_neighbor.xpm"
-#include "../pixmaps/icon_interpolation_trilinear.xpm"
-#include "../pixmaps/icon_view_single.xpm"
-#include "../pixmaps/icon_view_linked.xpm"
+#include "pixmaps.h"
 
 
 const gchar ** icon_interpolation[AMITK_INTERPOLATION_NUM] = {icon_interpolation_nearest_neighbor_xpm,
 							      icon_interpolation_trilinear_xpm};
+const gchar ** icon_fuse_type[AMITK_FUSE_TYPE_NUM] = {icon_fuse_type_blend_xpm,
+						      icon_fuse_type_overlay_xpm};
 const gchar ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {icon_view_single_xpm,
 						      icon_view_linked_xpm};
       
@@ -50,6 +48,7 @@ const gchar ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {icon_view_single_xpm,
 void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   AmitkInterpolation i_interpolation;
+  AmitkFuseType i_fuse_type;
   AmitkViewMode i_view_mode;
   GtkWidget * label;
   GtkWidget * toolbar;
@@ -57,11 +56,14 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   /* the toolbar definitions */
   GnomeUIInfo interpolation_list[AMITK_INTERPOLATION_NUM+1];
+  GnomeUIInfo fuse_type_list[AMITK_FUSE_TYPE_NUM+1];
   GnomeUIInfo view_mode_list[AMITK_VIEW_MODE_NUM+1];
 
   GnomeUIInfo study_main_toolbar[] = {
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(interpolation_list),
+    GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_RADIOLIST(fuse_type_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(view_mode_list),
     GNOMEUIINFO_SEPARATOR,
@@ -88,6 +90,17 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 				     ui_study, 
 				     icon_interpolation[i_interpolation]);
   ui_study_menus_fill_in_end(&(interpolation_list[AMITK_INTERPOLATION_NUM]));
+
+  /* start make the fuse_type toolbar items*/
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) 
+    ui_study_menus_fill_in_radioitem(&(fuse_type_list[i_fuse_type]),
+				     (icon_fuse_type[i_fuse_type] == NULL) ? 
+				     amitk_fuse_type_get_name(i_fuse_type) : NULL,
+				     amitk_fuse_type_explanations[i_fuse_type],
+				     ui_study_cb_fuse_type,
+				     ui_study, 
+				     icon_fuse_type[i_fuse_type]);
+  ui_study_menus_fill_in_end(&(fuse_type_list[AMITK_INTERPOLATION_NUM]));
 
   /* and the view modes */
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++)
@@ -120,6 +133,20 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++)
     g_signal_handlers_unblock_by_func(G_OBJECT(interpolation_list[i_interpolation].widget),
 				      G_CALLBACK(ui_study_cb_interpolation),  ui_study);
+  
+
+  /* finish setting up the fuse types items */
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) {
+    g_object_set_data(G_OBJECT(fuse_type_list[i_fuse_type].widget), 
+		      "fuse_type", GINT_TO_POINTER(i_fuse_type));
+    g_signal_handlers_block_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
+				    G_CALLBACK(ui_study_cb_fuse_type), ui_study);
+  }
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fuse_type_list[AMITK_STUDY_FUSE_TYPE(ui_study->study)].widget),
+			       TRUE);
+  for (i_fuse_type = 0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++)
+    g_signal_handlers_unblock_by_func(G_OBJECT(fuse_type_list[i_fuse_type].widget),
+				      G_CALLBACK(ui_study_cb_fuse_type),  ui_study);
   
   /* and the view modes */
   for (i_view_mode = 0; i_view_mode < AMITK_VIEW_MODE_NUM; i_view_mode++) {

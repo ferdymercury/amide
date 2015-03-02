@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.0],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.1],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)

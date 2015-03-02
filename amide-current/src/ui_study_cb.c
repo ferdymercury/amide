@@ -34,6 +34,7 @@
 #include "amitk_canvas.h"
 #include "amitk_tree.h"
 #include "ui_common.h"
+#include "ui_fly_through.h"
 #include "ui_rendering.h"
 #include "ui_series.h"
 #include "ui_study.h"
@@ -42,6 +43,7 @@
 #include "amitk_object_dialog.h"
 #include "ui_time_dialog.h"
 #include "ui_alignment_dialog.h"
+#include "ui_crop_dialog.h"
 #include "ui_roi_analysis_dialog.h"
 
 
@@ -376,48 +378,19 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
 static void ui_study_cb_export_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
-  GtkWidget * question;
   ui_study_t * ui_study;
   const gchar * save_filename;
-  struct stat file_info;
   AmitkView  view;
-  gint return_val;
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
 
-  /* get the filename */
-  save_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
-
   /* figure out which view we're saving */
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "view"));
 
-  /* some sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
-    return;
-  }
-
-  /* see if the filename already exists */
-  if (stat(save_filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* we don't want to overwrite the file.... */
-  }
-
+  /* get the filename */
+  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
+    return; /* inappropriate name or don't want to overwrite */
 
   if (AMITK_CANVAS_PIXBUF(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view]) == NULL) {
     g_warning("No data sets selected\n");
@@ -531,15 +504,6 @@ void ui_study_cb_canvas_help_event(GtkWidget * canvas,  AmitkHelpInfo help_type,
   return;
 }
 
-void ui_study_cb_canvas_z_position_changed(GtkWidget * canvas, AmitkPoint *position, gpointer data) {
-
-  ui_study_t * ui_study = data;
-
-  amitk_study_set_view_center(ui_study->study, *position); 
-
-  return;
-}
-
 void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
 				      amide_real_t thickness, gpointer data) {
 
@@ -569,8 +533,8 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
   AmitkView i_view;
   AmitkViewMode i_view_mode;
 
-  amitk_study_set_view_center(ui_study->study, *position);
   amitk_study_set_view_thickness(ui_study->study, thickness);
+  amitk_study_set_view_center(ui_study->study, *position);
   ui_study_update_thickness(ui_study, thickness);
 
   /* update the other canvases accordingly */
@@ -631,17 +595,53 @@ void ui_study_cb_canvas_isocontour_3d_changed(GtkWidget * canvas, AmitkRoi * roi
   return;
 }
 
-void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObjectType type,
+
+void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi, gpointer data) {
+  ui_study_t * ui_study = data;
+  GtkWidget * question;
+  gint return_val;
+
+  if (ui_study->active_ds == NULL) {
+    g_warning("no active data set to erase from");
+    return;
+  }
+
+  /* make sure we really want to delete */
+  question = gtk_message_dialog_new(GTK_WINDOW(ui_study->app),
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_QUESTION,
+				    GTK_BUTTONS_OK_CANCEL,
+				    "%s: %s\n%s: %s\n%s\n%s: %5.3f, %s",
+				    "Do you really wish to erase the interior of ROI:",
+				    AMITK_OBJECT_NAME(roi),
+				    "On the data set: ",
+				    AMITK_OBJECT_NAME(ui_study->active_ds),
+				    "This step is irreversible",
+				    "The minimum threshold value",
+				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_ds,0),
+				    "will be used to fill in the volume");
+  
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(question));
+
+  gtk_widget_destroy(question);
+  if (return_val != GTK_RESPONSE_OK)
+    return; /* cancel */
+
+  amitk_roi_erase_volume(roi, ui_study->active_ds);
+  
+  return;
+}
+
+void ui_study_cb_canvas_new_object(GtkWidget * canvas, AmitkObject * parent, AmitkObjectType type,
 				   AmitkPoint *position, gpointer data) {
 
   ui_study_t * ui_study = data;
 
-  g_return_if_fail(ui_study->active_ds != NULL);
-
   /* only handles fiducial marks currently */
   g_return_if_fail(type == AMITK_OBJECT_TYPE_FIDUCIAL_MARK); 
 
-  ui_study_add_fiducial_mark(ui_study, AMITK_OBJECT(ui_study->active_ds), TRUE, *position);
+  ui_study_add_fiducial_mark(ui_study, parent, TRUE, *position);
 
   return;
 }
@@ -692,7 +692,7 @@ void ui_study_cb_tree_make_active_object(GtkWidget * tree, AmitkObject * object,
   } else if (AMITK_IS_ROI(object)) {
     center = amitk_volume_center(AMITK_VOLUME(object));
     if (AMITK_IS_ROI(object))
-      if (!amitk_roi_undrawn(AMITK_ROI(object)) && 
+      if (!AMITK_ROI_UNDRAWN(AMITK_ROI(object)) && 
 	  !POINT_EQUAL(center, AMITK_STUDY_VIEW_CENTER(ui_study->study)))
 	amitk_study_set_view_center(ui_study->study, center);
   } else if (AMITK_IS_FIDUCIAL_MARK(object)) {
@@ -848,6 +848,7 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_series_create(ui_study->study, 
 		   AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE), 
+		   ui_study->active_ds,
 		   view, 
 		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume,
 		   series_type);
@@ -855,6 +856,23 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 
   return;
 }
+
+#ifdef AMIDE_MPEG_ENCODE_SUPPORT
+void ui_study_cb_fly_through(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  AmitkView view;
+  
+  view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
+
+  ui_fly_through_create(GTK_WIDGET(ui_study->app),
+			ui_study->study, 
+			AMITK_TREE_VISIBLE_OBJECTS(ui_study->tree,AMITK_VIEW_MODE_SINGLE), 
+			view,  ui_study->canvas_layout);
+
+  return;
+}
+#endif
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 /* callback for starting up volume rendering using nearest neighbor interpolation*/
@@ -895,6 +913,13 @@ void ui_study_cb_calculate_selected(GtkWidget * widget, gpointer data) {
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_roi_analysis_dialog_create(ui_study, FALSE);
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+  return;
+}
+
+/* user wants to run the crop wizard */
+void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  ui_crop_dialog_create(ui_study);
   return;
 }
 
@@ -956,8 +981,8 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 }
 
 
-/* callback function for adding an alignment point */
-void ui_study_cb_add_alignment_point(GtkWidget * widget, gpointer data) {
+/* callback function for adding a fiducial mark */
+void ui_study_cb_add_fiducial_mark(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
   if (ui_study->active_ds == NULL) return;
@@ -980,12 +1005,26 @@ void ui_study_cb_preferences(GtkWidget * widget, gpointer data) {
 void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  AmitkInterpolation i_interpolation;
+  AmitkInterpolation interpolation;
 
   /* figure out which interpolation menu item called me */
-  i_interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
+  interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
 
-  amitk_study_set_interpolation(ui_study->study,  i_interpolation);
+  amitk_study_set_interpolation(ui_study->study,  interpolation);
+				
+  return;
+}
+
+/* function to switch the image fusion type */
+void ui_study_cb_fuse_type(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  AmitkFuseType fuse_type;
+
+  /* figure out which fuse_type menu item called me */
+  fuse_type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"fuse_type"));
+
+  amitk_study_set_fuse_type(ui_study->study,  fuse_type);
 				
   return;
 }
@@ -995,7 +1034,7 @@ void ui_study_cb_view_mode(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   AmitkViewMode view_mode;
 
-  /* figure out which interpolation menu item called me */
+  /* figure out which view_mode menu item called me */
   view_mode = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"view_mode"));
   
   /* check if we actually changed values */

@@ -31,13 +31,17 @@
 #include "amitk_type_builtins.h"
 
 /* external variables */
+
+/* don't change these, as legacy.c needs them for reading in files */
 gchar * color_table_menu_names[] = {
   "black/white linear", 
   "white/black linear", 
+  "black/white/black",
+  "white/black/white",
   "red temperature", 
   "inverse red temp.", 
   "blue temperature", 
-  "inv blue temp.", 
+  "inv. blue temp.", 
   "green temperature", 
   "inv. green temp.", 
   "hot metal", 
@@ -130,6 +134,24 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
   amide_data_t temp;
 
   switch(which) {
+  case AMITK_COLOR_TABLE_BWB_LINEAR:
+    temp = 2*(datum-min) * 0xFF/(max-min);
+    if (temp > 255)
+      temp = 511-temp;
+    if (temp < 0)
+      temp = 0;
+    rgba.r = temp;
+    rgba.g = temp;
+    rgba.b = temp;
+    rgba.a = temp;
+    break;
+  case AMITK_COLOR_TABLE_WBW_LINEAR:
+    rgba = amitk_color_table_lookup(datum, AMITK_COLOR_TABLE_BWB_LINEAR, min, max);
+    rgba.r = 0xFF-rgba.r;
+    rgba.g = 0xFF-rgba.g;
+    rgba.b = 0xFF-rgba.b;
+    rgba.a = 0xFF-rgba.a; 
+    break;
   case AMITK_COLOR_TABLE_RED_TEMP:
     /* this may not be exactly right.... */
     scale = 0xFF/(max-min);
@@ -336,6 +358,14 @@ rgba_t amitk_color_table_outline_color(AmitkColorTable which, gboolean highlight
   rgba_t rgba, normal_rgba, highlight_rgba;
 
   switch(which) {
+  case AMITK_COLOR_TABLE_BWB_LINEAR:
+    normal_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, FALSE);
+    highlight_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
+    break;
+  case AMITK_COLOR_TABLE_WBW_LINEAR:
+    normal_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_WB_LINEAR, FALSE);
+    highlight_rgba = amitk_color_table_outline_color(AMITK_COLOR_TABLE_WB_LINEAR, TRUE);
+    break;
   case AMITK_COLOR_TABLE_RED_TEMP:
   case AMITK_COLOR_TABLE_INV_RED_TEMP:
     normal_rgba = amitk_color_table_lookup(1.0, which, 0.0,1.0);

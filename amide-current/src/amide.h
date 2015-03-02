@@ -70,15 +70,14 @@ typedef enum {
   AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
-  AMITK_HELP_INFO_CANVAS_SHIFT,
-  AMITK_HELP_INFO_CANVAS_ALIGN,
+  AMITK_HELP_INFO_CANVAS_SHIFT_DATA_SET,
+  AMITK_HELP_INFO_CANVAS_ROTATE_DATA_SET,
   AMITK_HELP_INFO_TREE_DATA_SET,
   AMITK_HELP_INFO_TREE_ROI,
   AMITK_HELP_INFO_TREE_FIDUCIAL_MARK,
   AMITK_HELP_INFO_TREE_STUDY,
   AMITK_HELP_INFO_TREE_NONE,
   AMITK_HELP_INFO_UPDATE_LOCATION,
-  AMITK_HELP_INFO_UPDATE_VALUE,
   AMITK_HELP_INFO_UPDATE_THETA,
   AMITK_HELP_INFO_UPDATE_SHIFT,
   AMITK_HELP_INFO_NUM
@@ -87,7 +86,8 @@ typedef enum {
 /* setup the types for various internal data formats */
 /* note, don't change these unless you want to go digging through the
    code for locations where the signal marshallers expect the type
-   to be DOUBLE
+   to be DOUBLE.  Would also need to update the REAL_EQUAL type
+   functions in amitk_point.h
 */
 
 typedef gdouble amide_data_t;

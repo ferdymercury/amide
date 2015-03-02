@@ -28,15 +28,16 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 #ifdef AMIDE_MPEG_ENCODE_SUPPORT
 
-#include <gnome.h>
 #include <sys/stat.h>
+#include <gnome.h>
 #include <string.h>
+#include "mpeg_encode.h"
 #include "ui_common.h"
 #include "ui_rendering_movie_dialog.h"
 #include "amitk_type_builtins.h"
 
 
-#define MOVIE_DEFAULT_FRAMES 300
+#define MOVIE_DEFAULT_DURATION 10.0
 #define AMITK_RESPONSE_EXECUTE 1
 
 static void change_frames_cb(GtkWidget * widget, gpointer data);
@@ -60,47 +61,13 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, char * out
 static void save_as_ok_cb(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
-  GtkWidget * question;
   ui_rendering_movie_t * ui_rendering_movie;
   gchar * save_filename;
-  struct stat file_info;
-  gint return_val;
 
-  /* get a pointer to ui_rendering_movie */
   ui_rendering_movie = g_object_get_data(G_OBJECT(file_selection), "ui_movie");
 
-  /* get the filename */
-  save_filename = g_strdup(gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection)));
-  
-
-  /* some sanity checks */
-  if ((strcmp(save_filename, ".") == 0) ||
-      (strcmp(save_filename, "..") == 0) ||
-      (strcmp(save_filename, "") == 0) ||
-      (strcmp(save_filename, "/") == 0)) {
-    g_warning("Inappropriate filename: %s",save_filename);
-    return;
-  }
-
-  /* see if the filename already exists, delete if needed */
-  if (stat(save_filename, &file_info) == 0) {
-    /* check if it's okay to writeover the file */
-    question = gtk_message_dialog_new(GTK_WINDOW(ui_rendering_movie->ui_rendering->app),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_OK_CANCEL,
-				      "Overwrite file: %s", save_filename);
-
-    /* and wait for the question to return */
-    return_val = gtk_dialog_run(GTK_DIALOG(question));
-
-    gtk_widget_destroy(question);
-    if (return_val != GTK_RESPONSE_OK)
-      return; /* we don't want to overwrite the file.... */
-
-    /* unlinking the file will occur immediately before writing the new one 
-       (i.e. not here ) */
-  }
+  if ((save_filename = ui_common_file_selection_get_name(file_selection)) == NULL)
+    return; /* inappropriate name or don't want to overwrite */
 
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, file_selection);
@@ -120,22 +87,22 @@ static void change_frames_cb(GtkWidget * widget, gpointer data) {
   ui_rendering_movie_t * ui_rendering_movie = data;
   gchar * str;
   gint error;
-  gint temp_val;
+  gdouble temp_val;
 
   /* get the contents of the name entry box */
   str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
 
   /* convert to a decimal */
-  error = sscanf(str, "%d", &temp_val);
+  error = sscanf(str, "%lf", &temp_val);
   g_free(str);
 
   if (error == EOF)  /* make sure it's a valid number */
     return;
-  if (temp_val < 0)
+  if (temp_val < 0.0)
     return;
 
   /* set the frames */
-  ui_rendering_movie->num_frames = temp_val;
+  ui_rendering_movie->duration = temp_val;
 
   return;
 }
@@ -314,10 +281,10 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
     
     /* take a guess at the filename */
     temp_contexts = ui_rendering_movie->ui_rendering->contexts;
-    data_set_names = g_strdup(temp_contexts->rendering_context->name);
+    data_set_names = g_strdup(temp_contexts->context->name);
     temp_contexts = temp_contexts->next;
     while (temp_contexts != NULL) {
-      temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->rendering_context->name);
+      temp_string = g_strdup_printf("%s+%s",data_set_names, temp_contexts->context->name);
       g_free(data_set_names);
       data_set_names = temp_string;
       temp_contexts = temp_contexts->next;
@@ -393,7 +360,6 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
   ui_rendering_movie_t * ui_rendering_movie = data;
   ui_rendering_t * ui_rendering = ui_rendering_movie->ui_rendering;
 
-  g_print("moive delete\n");
   /* trash collection */
   movie_unref(ui_rendering->movie);
   ui_rendering->movie = NULL; /* informs the ui_rendering widget that the movie widget is gone */
@@ -452,7 +418,7 @@ static ui_rendering_movie_t * movie_init(void) {
   }
 
   ui_rendering_movie->reference_count = 1;
-  ui_rendering_movie->num_frames = MOVIE_DEFAULT_FRAMES;
+  ui_rendering_movie->duration = MOVIE_DEFAULT_DURATION;
   ui_rendering_movie->rotation[AMITK_AXIS_X] = 0;
   ui_rendering_movie->rotation[AMITK_AXIS_Y] = 1;
   ui_rendering_movie->rotation[AMITK_AXIS_Z] = 0;
@@ -476,21 +442,18 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
   gdouble rotation_step[AMITK_AXIS_NUM];
   AmitkAxis i_axis;
   gint return_val = 1;
-  FILE * param_file;
   GTimeVal current_time;
   guint i;
   gchar * frame_filename = NULL;
-  gchar * param_filename = NULL;
   const gchar * temp_dir = NULL;
-  gchar * temp_string;
   struct stat file_info;
   GList * file_list = NULL;
-  GList * temp_list;
   amide_time_t initial_start, initial_duration;
   ui_rendering_t * ui_rendering;
   AmitkDataSet * most_frames_ds=NULL;
   renderings_t * contexts;
   guint ds_frame=0;
+  guint num_frames;
 
   /* figure out what the temp directory is */
   temp_dir = g_get_tmp_dir();
@@ -510,37 +473,39 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
   /* figure out which data set has the most frames, need this if we're doing a movie over frames */
   contexts = ui_rendering->contexts;
   while (contexts != NULL) {
-    if (AMITK_IS_DATA_SET(contexts->rendering_context->object)) {
+    if (AMITK_IS_DATA_SET(contexts->context->object)) {
       if (most_frames_ds == NULL)
-	most_frames_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+	most_frames_ds = AMITK_DATA_SET(contexts->context->object);
       else if (AMITK_DATA_SET_NUM_FRAMES(most_frames_ds) <
-	       AMITK_DATA_SET_NUM_FRAMES(contexts->rendering_context->object))
-	most_frames_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+	       AMITK_DATA_SET_NUM_FRAMES(contexts->context->object))
+	most_frames_ds = AMITK_DATA_SET(contexts->context->object);
     }
     contexts = contexts->next;
   }
 
+  num_frames = ceil(ui_rendering_movie->duration*FRAMES_PER_SECOND);
+
   /* figure out each frame's duration, needed if we're doing a movie over time */
   ui_rendering->duration = 
     (ui_rendering_movie->end_time-ui_rendering_movie->start_time)
-    /((amide_time_t) ui_rendering_movie->num_frames);
+    /((amide_time_t) num_frames);
 
 #ifdef AMIDE_DEBUG
-  g_print("Total number of movie frames to do:\t%d\n",ui_rendering_movie->num_frames);
+  g_print("Total number of movie frames to do:\t%d\n",num_frames);
   g_print("Frame:\n");
 #endif
   
 
   /* start generating the frames */
-  for (i_frame = 0; i_frame < ui_rendering_movie->num_frames; i_frame++) {
+  for (i_frame = 0; i_frame < num_frames; i_frame++) {
     if ((return_val == 1) && (ui_rendering_movie->reference_count > 1)) { 
       /* continue if good so far and we haven't closed the dialog box */
 
       /* figure out the rotation for this frame */
       for (i_axis = 0; i_axis < AMITK_AXIS_NUM ; i_axis++) {
 	rotation_step[i_axis] = 
-	  (((double) i_frame)*2.0*M_PI*ui_rendering_movie->rotation[i_axis])
-	  / ui_rendering_movie->num_frames;
+	  (((gdouble) i_frame)*2.0*M_PI*ui_rendering_movie->rotation[i_axis])
+	  / num_frames;
 	renderings_set_rotation(ui_rendering->contexts, i_axis, rotation_step[i_axis]);
       }
 
@@ -549,7 +514,7 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
 	ui_rendering->start = ui_rendering_movie->start_time + i_frame*ui_rendering->duration;
       }  else {
 	if (most_frames_ds) {
-	  ds_frame = floor((i_frame/((float) ui_rendering_movie->num_frames)
+	  ds_frame = floor((i_frame/((gdouble) num_frames)
 			    * AMITK_DATA_SET_NUM_FRAMES(most_frames_ds)));
 	  ui_rendering->start = amitk_data_set_get_start_time(most_frames_ds, ds_frame)*(1.0+EPSILON);
 	  ui_rendering->duration = 
@@ -577,12 +542,10 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
 #endif
       
       /* render the contexts */
-      ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-      ui_rendering_update_canvases(ui_rendering); 
-      ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+      ui_rendering_update_canvas(ui_rendering, TRUE); 
       
 #ifdef AMIDE_DEBUG
-      g_print("\tWriting  %d\r",i_frame);
+      g_print("\tWriting   %d\r",i_frame);
 #endif
 
       i = 0;
@@ -619,7 +582,7 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
       
       /* update the progress bar */
       gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress),
-				    (gfloat) i_frame/((gfloat) ui_rendering_movie->num_frames*2.0));
+				    (gdouble) i_frame/((gdouble) num_frames*2.0));
     }
   }
 
@@ -630,97 +593,19 @@ static void movie_generate(ui_rendering_movie_t * ui_rendering_movie, gchar * ou
 #ifdef AMIDE_DEBUG
     g_print("\nEncoding the MPEG\n");
 #endif
+    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
+    mpeg_encode(temp_dir, file_list, output_filename, current_time, FALSE);
+    ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  } else 
+    mpeg_encode(temp_dir, file_list, output_filename, current_time, TRUE); /* just cleanup file list */
 
-    i = 0;
-    do { /* get a unique file name */
-      if (i > 0) g_free(param_filename); 
-      i++;
-      param_filename = g_strdup_printf("%s/%ld_%d_amide_rendering.param",
-				       temp_dir, current_time.tv_sec, i);
-    } while (stat(param_filename, &file_info) == 0);
-    
-    /* open the parameter file for writing */
-    if ((param_file = fopen(param_filename, "w")) != NULL) {
-      fprintf(param_file, "PATTERN\tIBBPBBPBBPBBPBBP\n");
-      fprintf(param_file, "OUTPUT\t%s\n",output_filename);
-      fprintf(param_file, "INPUT_DIR\t%s\n","");
-      fprintf(param_file, "INPUT\n");
-      
-      temp_list = file_list;
-      while (temp_list != NULL) {
-	frame_filename = temp_list->data;
-	fprintf(param_file, "%s\n",frame_filename);
-	temp_list = temp_list->next;
-      }
-      fprintf(param_file, "END_INPUT\n");
-      fprintf(param_file, "BASE_FILE_FORMAT\tJPEG\n");
-      fprintf(param_file, "INPUT_CONVERT\t*\n");
-      fprintf(param_file, "GOP_SIZE\t16\n");
-      fprintf(param_file, "SLICES_PER_FRAME\t1\n");
-      fprintf(param_file, "PIXEL\tHALF\n");
-      fprintf(param_file, "RANGE\t10\n");
-      fprintf(param_file, "PSEARCH_ALG\tEXHAUSTIVE\n");
-      fprintf(param_file, "BSEARCH_ALG\tCROSS2\n");
-      fprintf(param_file, "IQSCALE\t8\n");
-      fprintf(param_file, "PQSCALE\t10\n");
-      fprintf(param_file, "BQSCALE\t25\n");
-      fprintf(param_file, "BQSCALE\t25\n");
-      fprintf(param_file, "REFERENCE_FRAME\tDECODED\n");
-      fprintf(param_file, "FRAME_RATE\t30\n");
-      fprintf(param_file, "FORCE_ENCODE_LAST_FRAME\n");
-      
-      file_list = g_list_append(file_list, param_filename);
-      fclose(param_file);
+  /* update the progress bar */
+  gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress), 1.0);
 
-      /* delete the previous .mpg file if it existed */
-      if (stat(output_filename, &file_info) == 0) {
-	if (S_ISREG(file_info.st_mode)) {
-	  if (unlink(output_filename) != 0) {
-	    g_warning("Couldn't unlink file: %s",output_filename);
-	    return_val = -1;
-	  }
-	} else {
-	  g_warning("Unrecognized file type for file: %s, couldn't delete", output_filename);
-	  return_val = -1;
-	}
-      }
-      
-      if (return_val != -1) {
-	/* and run the mpeg encoding process */
-	temp_string = g_strdup_printf("%s -quiet 1 -no_frame_summary %s",AMIDE_MPEG_ENCODE_BIN, param_filename);
-	ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
-	return_val = system(temp_string);
-	ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
-	g_free(temp_string);
-	
-	if ((return_val == -1) || (return_val == 127)) {
-	  g_warning("executing of %s for creation of mpeg movie was unsucessful", 
-		    AMIDE_MPEG_ENCODE_BIN);
-	  return_val = -1;
-	}
-      }
-      
-      /* update the progress bar */
-      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ui_rendering_movie->progress), 1.0);
-    }
-  }
-
-
-  /* do some cleanups */
-  /* note, temp_dir is just a pointer to a string, not a copy, so don't free it */
-  while (file_list != NULL) {
-    frame_filename = file_list->data;
-    file_list = g_list_remove(file_list, frame_filename);
-    unlink(frame_filename);
-    g_free(frame_filename);
-  }
-    
   /* and rerender one last time to back to the initial rotation and time */
-  ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_rendering->canvas));
   ui_rendering->start = initial_start;
   ui_rendering->duration = initial_duration;
-  ui_rendering_update_canvases(ui_rendering); 
-  ui_common_remove_cursor(GTK_WIDGET(ui_rendering->canvas));
+  ui_rendering_update_canvas(ui_rendering, TRUE); 
 
   /* and remove the reference we added here*/
   ui_rendering_movie = movie_unref(ui_rendering_movie);
@@ -763,8 +648,8 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   contexts = ui_rendering->contexts;
   valid = FALSE;
   while (contexts != NULL) {
-    if (AMITK_IS_DATA_SET(contexts->rendering_context->object)) {
-      temp_ds = AMITK_DATA_SET(contexts->rendering_context->object);
+    if (AMITK_IS_DATA_SET(contexts->context->object)) {
+      temp_ds = AMITK_DATA_SET(contexts->context->object);
       temp_end_frame = AMITK_DATA_SET_NUM_FRAMES(temp_ds)-1;
       temp_start_time = amitk_data_set_get_start_time(temp_ds,0);
       temp_end_time = amitk_data_set_get_end_time(temp_ds, temp_end_frame);
@@ -809,11 +694,11 @@ ui_rendering_movie_t * ui_rendering_movie_dialog_create(ui_rendering_t * ui_rend
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG(dialog)->vbox), packing_table);
 
   /* widgets to specify how many frames */
-  label = gtk_label_new("Movie Frames");
+  label = gtk_label_new("Movie Duration (sec)");
   gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
 		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
   entry = gtk_entry_new();
-  temp_string = g_strdup_printf("%d", ui_rendering_movie->num_frames);
+  temp_string = g_strdup_printf("%5.3f", ui_rendering_movie->duration);
   gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
   g_free(temp_string);
   gtk_editable_set_editable(GTK_EDITABLE(entry), TRUE);

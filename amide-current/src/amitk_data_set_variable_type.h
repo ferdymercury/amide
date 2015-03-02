@@ -34,18 +34,27 @@
 /* defines */
 
 /* translates to the contents of the voxel specified by voxelpoint i */
-#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENTS(data_set,i) \
- (*(AMITK_RAW_DATA_FLOAT_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i))) * \
+#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_CONTENT(data_set,i) \
+ (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i))) * \
   ((amide_data_t) (*(AMITK_RAW_DATA_`'m4_Variable_Type`'_POINTER((data_set)->raw_data,(i))))))
 
+#define AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_SET_CONTENT(data_set,i,value) \
+ (AMITK_RAW_DATA_`'m4_Variable_Type`'_SET_CONTENT((data_set)->raw_data, (i)) = value/ \
+  (*(AMITK_RAW_DATA_DOUBLE_`'m4_Scale_Dim`'_POINTER((data_set)->current_scaling, (i)))))
 
 /* function declarations */
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_frame_max_min(AmitkDataSet * data_set);
 void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(AmitkDataSet * data_set);
+AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_projection(AmitkDataSet * data_set,
+									       const AmitkView view,
+									       const guint frame);
+AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_cropped(AmitkDataSet * data_set,
+										const AmitkVoxel start,
+										const AmitkVoxel end);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
 									      const amide_time_t requested_start,
 									      const amide_time_t requested_duration,
-									      const AmitkPoint  requested_voxel_size,
+									      const amide_real_t pixel_dim,
 									      const AmitkVolume * slice_volume,
 									      const AmitkInterpolation interpolation,
 									      const gboolean need_calc_max_min);

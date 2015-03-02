@@ -36,6 +36,14 @@
 #include "amitk_type_builtins.h"
 #include "legacy.h"
 
+
+/* external variables */
+gchar * amitk_fuse_type_explanations[] = {
+  "blend all data sets",
+  "overlay active data set on blended data sets"
+};
+
+
 enum {
   STUDY_CHANGED,
   LAST_SIGNAL
@@ -129,6 +137,7 @@ static void study_init (AmitkStudy * study) {
   study->view_duration = 1.0-SMALL_TIME;
   study->zoom = 1.0;
   study->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  study->fuse_type = AMITK_FUSE_TYPE_BLEND;
   study->voxel_dim = 1.0;
 
   /* set the creation date as today */
@@ -182,11 +191,12 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   dest_study = AMITK_STUDY(dest_object);
 
   amitk_study_set_creation_date(dest_study, AMITK_STUDY_CREATION_DATE(src_object));
-  dest_study->view_center = AMITK_STUDY_VIEW_CENTER(src_object);
+  dest_study->view_center = AMITK_STUDY(src_object)->view_center;
   amitk_study_set_view_thickness(dest_study, AMITK_STUDY_VIEW_THICKNESS(src_object));
   dest_study->view_duration = AMITK_STUDY_VIEW_DURATION(src_object);
   dest_study->zoom = AMITK_STUDY_ZOOM(src_object);
   dest_study->interpolation = AMITK_STUDY_INTERPOLATION(src_object);
+  dest_study->fuse_type =AMITK_STUDY_FUSE_TYPE(src_object);
 
   /* make a separate copy in memory of the study's name and filename */
   amitk_study_set_filename(dest_study, AMITK_STUDY_FILENAME(src_object));
@@ -211,6 +221,8 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_time(nodes, "view_duration", AMITK_STUDY_VIEW_DURATION(study));
   xml_save_string(nodes, "interpolation", 
 		  amitk_interpolation_get_name(AMITK_STUDY_INTERPOLATION(study)));
+  xml_save_string(nodes, "fuse_type",
+		  amitk_fuse_type_get_name(AMITK_STUDY_FUSE_TYPE(study)));
   xml_save_real(nodes, "zoom", AMITK_STUDY_ZOOM(study));
 
   return;
@@ -221,6 +233,7 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   AmitkStudy * study;
   gchar * creation_date;
   AmitkInterpolation i_interpolation;
+  AmitkFuseType i_fuse_type;
   gchar * temp_string;
 
   AMITK_OBJECT_CLASS(parent_class)->object_read_xml(object, nodes);
@@ -250,6 +263,14 @@ static void study_read_xml(AmitkObject * object, xmlNodePtr nodes) {
     for (i_interpolation=0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
       if (g_strcasecmp(temp_string, amitk_interpolation_get_name(i_interpolation)) == 0)
 	amitk_study_set_interpolation(study, i_interpolation);
+  g_free(temp_string);
+
+  /* figure out the fuse type */
+  temp_string = xml_get_string(nodes, "fuse_type");
+  if (temp_string != NULL)
+    for (i_fuse_type=0; i_fuse_type < AMITK_FUSE_TYPE_NUM; i_fuse_type++) 
+      if (g_strcasecmp(temp_string, amitk_fuse_type_get_name(i_fuse_type)) == 0)
+	amitk_study_set_fuse_type(study, i_fuse_type);
   g_free(temp_string);
 
   return;
@@ -428,6 +449,18 @@ void amitk_study_set_interpolation(AmitkStudy * study, const AmitkInterpolation 
   return;
 }
 
+void amitk_study_set_fuse_type(AmitkStudy * study, const AmitkFuseType new_fuse_type) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+
+  if (study->fuse_type != new_fuse_type) {
+    study->fuse_type = new_fuse_type;
+    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+  }
+
+  return;
+}
+
 void amitk_study_set_zoom(AmitkStudy * study, const amide_real_t new_zoom) {
 
   g_return_if_fail(AMITK_IS_STUDY(study));
@@ -528,3 +561,15 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_directory)
   return TRUE;
 }
 
+
+const gchar * amitk_fuse_type_get_name(const AmitkFuseType fuse_type) {
+
+  GEnumClass * enum_class;
+  GEnumValue * enum_value;
+
+  enum_class = g_type_class_ref(AMITK_TYPE_FUSE_TYPE);
+  enum_value = g_enum_get_value(enum_class, fuse_type);
+  g_type_class_unref(enum_class);
+
+  return enum_value->value_nick;
+}

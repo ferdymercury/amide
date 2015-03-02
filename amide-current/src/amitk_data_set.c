@@ -66,9 +66,6 @@
 #include "medcon_import.h"
 
 
-#define EMPTY 0.0
-
-
 /* external variables */
 gchar * amitk_interpolation_explanations[] = {
   "interpolate using nearest neighbhor (fast)", 
@@ -235,7 +232,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->distribution = NULL;
   data_set->modality = AMITK_MODALITY_PET;
   data_set->voxel_size = zero_point;
-  data_set->internal_scaling = amitk_raw_data_FLOAT_0D_SCALING_init(1.0);
+  data_set->internal_scaling = amitk_raw_data_DOUBLE_0D_SCALING_init(1.0);
   g_assert(data_set->internal_scaling!=NULL);
   amitk_data_set_set_scale_factor(data_set, 1.0);
   data_set->scan_start = 0.0;
@@ -423,7 +420,7 @@ static void data_set_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_string(nodes, "raw_data_file", xml_filename);
   g_free(xml_filename);
 
-   name = g_strdup_printf("data-set_%s_scaling-factors",AMITK_OBJECT_NAME(ds));
+  name = g_strdup_printf("data-set_%s_scaling-factors",AMITK_OBJECT_NAME(ds));
   xml_filename = amitk_raw_data_write_xml(ds->internal_scaling, name);
   g_free(name);
   xml_save_string(nodes, "internal_scaling_file", xml_filename);
@@ -475,9 +472,45 @@ static void data_set_read_xml(AmitkObject * object, xmlNodePtr nodes) {
   ds->raw_data = amitk_raw_data_read_xml(filename);
   g_free(filename);
 
-   filename = xml_get_string(nodes, "internal_scaling_file");
+  filename = xml_get_string(nodes, "internal_scaling_file");
+  if (ds->internal_scaling != NULL)
+    g_object_unref(ds->internal_scaling);
   ds->internal_scaling = amitk_raw_data_read_xml(filename);
   g_free(filename);
+
+  /* a little legacy bit, the type of internal_scaling has been changed to double
+     as of amide 0.7.1 */
+  if (ds->internal_scaling->format != AMITK_FORMAT_DOUBLE) {
+    AmitkRawData * old_scaling;
+    AmitkVoxel i;
+
+    g_warning("wrong type found on internal scaling, converting to double");
+    old_scaling = ds->internal_scaling;
+
+    if ((ds->internal_scaling = amitk_raw_data_new()) == NULL) {
+      g_warning("couldn't allocate space for the new scaling structure");
+      return;
+    }
+    ds->internal_scaling->dim = old_scaling->dim;
+    ds->internal_scaling->format = AMITK_FORMAT_DOUBLE;
+    if (ds->internal_scaling->data != NULL)
+      g_free(ds->internal_scaling->data);
+    if ((ds->internal_scaling->data = amitk_raw_data_get_data_mem(ds->internal_scaling)) == NULL) {
+      g_warning("Couldn't allocate space for the new scaling factors");
+      return;
+    }
+
+    for (i.t=0; i.t<ds->internal_scaling->dim.t; i.t++)
+      for (i.z=0; i.z<ds->internal_scaling->dim.z; i.z++)
+	for (i.y=0; i.y<ds->internal_scaling->dim.y; i.y++)
+	  for (i.x=0; i.x<ds->internal_scaling->dim.x; i.x++)
+	    AMITK_RAW_DATA_DOUBLE_SET_CONTENT(ds->internal_scaling,i) = 
+	      amitk_raw_data_get_value(old_scaling, i);
+    
+    g_object_unref(old_scaling);
+  }
+  /* end legacy cruft */
+
 
   amitk_data_set_set_scale_factor(ds, xml_get_data(nodes, "scale_factor"));
   ds->scan_start = xml_get_time(nodes, "scan_start");
@@ -659,7 +692,8 @@ AmitkDataSet * amitk_data_set_import_file(AmitkImportMethod import_method, int s
       g_warning("Could not interpret as a raw data file:\n\t%s", import_filename);
     break;
   }
-  g_return_val_if_fail(import_ds != NULL, NULL);
+
+  if (import_ds == NULL) return NULL;
 
   /* set the thresholds */
   import_ds->threshold_max[0] = import_ds->threshold_max[1] = import_ds->global_max;
@@ -728,8 +762,10 @@ void amitk_data_set_set_thresholding(AmitkDataSet * ds, const AmitkThresholding 
 void amitk_data_set_set_threshold_max(AmitkDataSet * ds, guint which_reference, amide_data_t value) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
-  if (ds->threshold_max[which_reference] != value) {
+  if ((ds->threshold_max[which_reference] != value) && (value > AMITK_DATA_SET_GLOBAL_MIN(ds))) {
     ds->threshold_max[which_reference] = value;
+    if (ds->threshold_max[which_reference] < ds->threshold_min[which_reference])
+      ds->threshold_min[which_reference] = ds->threshold_max[which_reference]*(1.0-EPSILON);
     g_signal_emit (G_OBJECT (ds), data_set_signals[THRESHOLDING_CHANGED], 0);
   }
 }
@@ -737,8 +773,10 @@ void amitk_data_set_set_threshold_max(AmitkDataSet * ds, guint which_reference, 
 void amitk_data_set_set_threshold_min(AmitkDataSet * ds, guint which_reference, amide_data_t value) {
 
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
-  if (ds->threshold_min[which_reference] != value ) {
+  if ((ds->threshold_min[which_reference] != value ) && (value < AMITK_DATA_SET_GLOBAL_MAX(ds))) {
     ds->threshold_min[which_reference] = value;
+    if (ds->threshold_min[which_reference] > ds->threshold_max[which_reference])
+      ds->threshold_max[which_reference] = ds->threshold_min[which_reference]*(1.0+EPSILON);
     g_signal_emit (G_OBJECT (ds), data_set_signals[THRESHOLDING_CHANGED], 0);
   }
 }
@@ -830,9 +868,9 @@ void amitk_data_set_set_scale_factor(AmitkDataSet * ds, amide_data_t new_scale_f
       for (i.z = 0; i.z < ds->current_scaling->dim.z; i.z++) 
 	for (i.y = 0; i.y < ds->current_scaling->dim.y; i.y++) 
 	  for (i.x = 0; i.x < ds->current_scaling->dim.x; i.x++) {
-	    *AMITK_RAW_DATA_FLOAT_POINTER(ds->current_scaling, i) = 
+	    *AMITK_RAW_DATA_DOUBLE_POINTER(ds->current_scaling, i) = 
 	      ds->scale_factor *
-	      *AMITK_RAW_DATA_FLOAT_POINTER(ds->internal_scaling, i);
+	      *AMITK_RAW_DATA_DOUBLE_POINTER(ds->internal_scaling, i);
 	  }
     
     /* adjust all thresholds and other variables so they remain constant 
@@ -1354,73 +1392,158 @@ amide_data_t amitk_data_set_get_value(const AmitkDataSet * ds, const AmitkVoxel 
   switch(ds->raw_data->format) {
   case AMITK_FORMAT_UBYTE:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_UBYTE_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UBYTE_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_UBYTE_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UBYTE_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_UBYTE_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UBYTE_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_SBYTE:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_SBYTE_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SBYTE_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_SBYTE_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SBYTE_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_SBYTE_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SBYTE_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_USHORT:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_USHORT_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_USHORT_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_USHORT_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_USHORT_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_USHORT_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_USHORT_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_SSHORT:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_SSHORT_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SSHORT_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_SSHORT_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SSHORT_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_SSHORT_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SSHORT_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_UINT:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_UINT_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UINT_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_UINT_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UINT_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_UINT_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_UINT_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_SINT:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_SINT_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SINT_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_SINT_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SINT_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_SINT_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_SINT_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_FLOAT:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_FLOAT_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_FLOAT_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_FLOAT_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_FLOAT_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_FLOAT_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_FLOAT_0D_SCALING_CONTENT(ds,i);
     break;
   case AMITK_FORMAT_DOUBLE:
     if (ds->internal_scaling->dim.z > 1) 
-      return AMITK_DATA_SET_DOUBLE_2D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_DOUBLE_2D_SCALING_CONTENT(ds,i);
     else if (ds->internal_scaling->dim.t > 1)
-      return AMITK_DATA_SET_DOUBLE_1D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_DOUBLE_1D_SCALING_CONTENT(ds,i);
     else 
-      return AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENTS(ds,i);
+      return AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(ds,i);
     break;
   default:
     g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
-    return 0.0;
+    return EMPTY;
     break;
   }
+}
+
+
+void amitk_data_set_set_value(AmitkDataSet * ds, 
+			      const AmitkVoxel i, 
+			      const amide_data_t value,
+			      const gboolean signal_change) {
+
+  g_return_if_fail(AMITK_IS_DATA_SET(ds));
+  
+  if (!amitk_raw_data_includes_voxel(ds->raw_data, i)) return;
+
+  /* hand everything off to the data type specific function */
+  switch(ds->raw_data->format) {
+  case AMITK_FORMAT_UBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_UBYTE_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_UBYTE_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_UBYTE_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_SBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_SBYTE_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_SBYTE_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_SBYTE_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_USHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_USHORT_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_USHORT_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_USHORT_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_SSHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_SSHORT_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_SSHORT_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_SSHORT_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_UINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_UINT_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_UINT_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_UINT_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_SINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_SINT_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_SINT_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_SINT_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_FLOAT:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_FLOAT_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_FLOAT_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_FLOAT_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  case AMITK_FORMAT_DOUBLE:
+    if (ds->internal_scaling->dim.z > 1) 
+      AMITK_DATA_SET_DOUBLE_2D_SCALING_SET_CONTENT(ds,i,value);
+    else if (ds->internal_scaling->dim.t > 1)
+      AMITK_DATA_SET_DOUBLE_1D_SCALING_SET_CONTENT(ds,i,value);
+    else 
+      AMITK_DATA_SET_DOUBLE_0D_SCALING_SET_CONTENT(ds,i,value);
+    break;
+  default:
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  if (signal_change)
+    g_signal_emit (G_OBJECT (ds), data_set_signals[DATA_SET_CHANGED], 0);
 }
 
 
@@ -1429,7 +1552,7 @@ amide_data_t amitk_data_set_get_value(const AmitkDataSet * ds, const AmitkVoxel 
 AmitkDataSet *amitk_data_set_get_slice(AmitkDataSet * ds,
 				       const amide_time_t start,
 				       const amide_time_t duration,
-				       const AmitkPoint  requested_voxel_size,
+				       const amide_real_t  pixel_dim,
 				       const AmitkVolume * slice_volume,
 				       const AmitkInterpolation interpolation,
 				       const gboolean need_calc_max_min) {
@@ -1439,94 +1562,94 @@ AmitkDataSet *amitk_data_set_get_slice(AmitkDataSet * ds,
   g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
   g_return_val_if_fail(ds->raw_data != NULL, NULL);
 
-  /* hand everything off to the data type specific slicer */
+  /* hand everything off to the data type specific function */
   switch(ds->raw_data->format) {
   case AMITK_FORMAT_UBYTE:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_UBYTE_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UBYTE_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_UBYTE_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UBYTE_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_UBYTE_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UBYTE_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_SBYTE:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_SBYTE_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SBYTE_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_SBYTE_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SBYTE_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_SBYTE_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SBYTE_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_USHORT:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_USHORT_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_USHORT_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_USHORT_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_USHORT_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_USHORT_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_USHORT_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_SSHORT:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_SSHORT_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SSHORT_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_SSHORT_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SSHORT_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_SSHORT_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SSHORT_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_UINT:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_UINT_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UINT_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_UINT_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UINT_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_UINT_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_UINT_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_SINT:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_SINT_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SINT_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_SINT_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SINT_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_SINT_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_SINT_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 					       slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_FLOAT:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_FLOAT_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_FLOAT_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_FLOAT_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_FLOAT_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_FLOAT_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_FLOAT_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						slice_volume, interpolation, need_calc_max_min);
     break;
   case AMITK_FORMAT_DOUBLE:
     if (ds->internal_scaling->dim.z > 1) 
-      slice = amitk_data_set_DOUBLE_2D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_DOUBLE_2D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else if (ds->internal_scaling->dim.t > 1)
-      slice = amitk_data_set_DOUBLE_1D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_DOUBLE_1D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     else 
-      slice = amitk_data_set_DOUBLE_0D_SCALING_get_slice(ds, start, duration, requested_voxel_size,
+      slice = amitk_data_set_DOUBLE_0D_SCALING_get_slice(ds, start, duration, pixel_dim,
 						 slice_volume, interpolation, need_calc_max_min);
     break;
   default:
@@ -1536,6 +1659,176 @@ AmitkDataSet *amitk_data_set_get_slice(AmitkDataSet * ds,
   }
 
   return slice;
+}
+
+/* returns a "2D" slice from a data set */
+AmitkDataSet *amitk_data_set_get_projection(AmitkDataSet * ds,
+					const AmitkView view,
+					const guint frame) {
+
+  AmitkDataSet * projection;
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
+  g_return_val_if_fail(ds->raw_data != NULL, NULL);
+
+  /* hand everything off to the data type specific function */
+  switch(ds->raw_data->format) {
+  case AMITK_FORMAT_UBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_UBYTE_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_UBYTE_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_UBYTE_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_SBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_SBYTE_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_SBYTE_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_SBYTE_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_USHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_USHORT_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_USHORT_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_USHORT_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_SSHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_SSHORT_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_SSHORT_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_SSHORT_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_UINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_UINT_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_UINT_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_UINT_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_SINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_SINT_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_SINT_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_SINT_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_FLOAT:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_FLOAT_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_FLOAT_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_FLOAT_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  case AMITK_FORMAT_DOUBLE:
+    if (ds->internal_scaling->dim.z > 1) 
+      projection = amitk_data_set_DOUBLE_2D_SCALING_get_projection(ds, view, frame);
+    else if (ds->internal_scaling->dim.t > 1)
+      projection = amitk_data_set_DOUBLE_1D_SCALING_get_projection(ds, view, frame);
+    else 
+      projection = amitk_data_set_DOUBLE_0D_SCALING_get_projection(ds, view, frame);
+    break;
+  default:
+    projection = NULL;
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return projection;
+}
+
+/* returns a cropped version of the given data set */
+AmitkDataSet *amitk_data_set_get_cropped(AmitkDataSet * ds,
+					 const AmitkVoxel start,
+					 const AmitkVoxel end) {
+
+  AmitkDataSet * cropped;
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
+  g_return_val_if_fail(ds->raw_data != NULL, NULL);
+
+  /* hand everything off to the data type specific function */
+  switch(ds->raw_data->format) {
+  case AMITK_FORMAT_UBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_UBYTE_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_UBYTE_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_UBYTE_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_SBYTE:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_SBYTE_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_SBYTE_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_SBYTE_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_USHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_USHORT_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_USHORT_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_USHORT_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_SSHORT:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_SSHORT_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_SSHORT_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_SSHORT_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_UINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_UINT_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_UINT_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_UINT_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_SINT:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_SINT_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_SINT_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_SINT_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_FLOAT:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_FLOAT_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_FLOAT_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_FLOAT_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  case AMITK_FORMAT_DOUBLE:
+    if (ds->internal_scaling->dim.z > 1) 
+      cropped = amitk_data_set_DOUBLE_2D_SCALING_get_cropped(ds, start, end);
+    else if (ds->internal_scaling->dim.t > 1)
+      cropped = amitk_data_set_DOUBLE_1D_SCALING_get_cropped(ds, start, end);
+    else 
+      cropped = amitk_data_set_DOUBLE_0D_SCALING_get_cropped(ds, start, end);
+    break;
+  default:
+    cropped = NULL;
+    g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+    break;
+  }
+
+  return cropped;
 }
 
 
@@ -1572,8 +1865,10 @@ amide_time_t amitk_data_sets_get_min_frame_duration(GList * objects) {
 
   /* now process and compare to the children */
   temp = amitk_data_sets_get_min_frame_duration(AMITK_OBJECT_CHILDREN(objects->data));
-  if (min_duration < 0.0) min_duration = temp;
-  else if (temp < min_duration) min_duration = temp;
+  if (temp >= 0.0) {
+    if (min_duration < 0.0) min_duration = temp;
+    else if (temp < min_duration) min_duration = temp;
+  }
   
   /* and process this guy */
   if (AMITK_IS_DATA_SET(objects->data)) {
@@ -1599,8 +1894,10 @@ amide_real_t amitk_data_sets_get_min_voxel_size(GList * objects) {
 
   /* now process and compare to the children */
   temp = amitk_data_sets_get_min_voxel_size(AMITK_OBJECT_CHILDREN(objects->data));
-  if (min_voxel_size < 0.0) min_voxel_size = temp;
-  else if (temp < min_voxel_size) min_voxel_size = temp;
+  if (temp >= 0.0) {
+    if (min_voxel_size < 0.0) min_voxel_size = temp;
+    else if (temp < min_voxel_size) min_voxel_size = temp;
+  }
 
   /* and process this guy */
   if (AMITK_IS_DATA_SET(objects->data)) {
@@ -1632,8 +1929,10 @@ amide_real_t amitk_data_sets_get_max_min_voxel_size(GList * objects) {
 
   /* now process and compare to the children */
   temp = amitk_data_sets_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(objects->data));
-  if (min_voxel_size < 0.0) min_voxel_size = temp;
-  else if (temp > min_voxel_size) min_voxel_size = temp;
+  if (temp >= 0.0) {
+    if (min_voxel_size < 0.0) min_voxel_size = temp;
+    else if (temp > min_voxel_size) min_voxel_size = temp;
+  }
 
   /* and process this guy */
   if (AMITK_IS_DATA_SET(objects->data)) {
@@ -1671,7 +1970,6 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const Amit
 
 /* give a list ov data_sets, returns a list of slices of equal size and orientation
    intersecting these data_sets */
-/* thickness (of slice) in mm, negative indicates set this value according to voxel size */
 GList * amitk_data_sets_get_slices(GList * objects,
 				   const amide_time_t start,
 				   const amide_time_t duration,
@@ -1681,55 +1979,27 @@ GList * amitk_data_sets_get_slices(GList * objects,
 				   const gboolean need_calc_max_min) {
 
 
-  AmitkPoint voxel_size;
-  AmitkVolume * slice_volume;
-  AmitkCorners view_corners;
   GList * slices=NULL;
   AmitkDataSet * slice;
+
 #ifdef AMIDE_DEBUG
   struct timeval tv1;
   struct timeval tv2;
   gdouble time1;
   gdouble time2;
   gdouble total_time;
-#endif
 
-#ifdef AMIDE_DEBUG
   /* let's do some timing */
   gettimeofday(&tv1, NULL);
 #endif
 
   g_return_val_if_fail(objects != NULL, NULL);
 
-  voxel_size.x = voxel_size.y = pixel_dim;
-  voxel_size.z = AMITK_VOLUME_Z_CORNER(view_volume);
-
-  /* make valgrind happy */
-  view_corners[0] = zero_point;
-  view_corners[1] = zero_point;
-
-  /* figure out all encompasing corners for the slices based on our viewing axis */
-  amitk_volumes_get_enclosing_corners(objects, AMITK_SPACE(view_volume), view_corners);
-
-  /* adjust the z' dimension of the view's corners */
-  view_corners[0].z=0;
-  view_corners[1].z=voxel_size.z;
-
-  view_corners[0] = amitk_space_s2b(AMITK_SPACE(view_volume),view_corners[0]);
-  view_corners[1] = amitk_space_s2b(AMITK_SPACE(view_volume),view_corners[1]);
-
-  /* figure out the coordinate frame for the slices based on the corners returned */
-  slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(view_volume)));
-  amitk_space_set_offset(AMITK_SPACE(slice_volume), view_corners[0]);
-  amitk_volume_set_corner(slice_volume, amitk_space_b2s(AMITK_SPACE(slice_volume), 
-							view_corners[1]));
-  
   /* and get the slices */
   while (objects != NULL) {
     if (AMITK_IS_DATA_SET(objects->data)) {
-      slice = 
-	amitk_data_set_get_slice(AMITK_DATA_SET(objects->data), start, duration, voxel_size, 
-				 slice_volume, interpolation, need_calc_max_min);
+      slice = amitk_data_set_get_slice(AMITK_DATA_SET(objects->data), start, duration, 
+				       pixel_dim, view_volume, interpolation, need_calc_max_min);
       if (slice != NULL)
 	slices = g_list_append(slices, slice);
       else
@@ -1737,8 +2007,6 @@ GList * amitk_data_sets_get_slices(GList * objects,
     }
     objects = objects->next;
   }
-  g_object_unref(slice_volume);
-  g_return_val_if_fail(slices != NULL, NULL);
 
 #ifdef AMIDE_DEBUG
   /* and wrapup our timing */
@@ -1755,9 +2023,24 @@ GList * amitk_data_sets_get_slices(GList * objects,
 
 
 
+static const gchar * scaling_names[] = {
+  "Per Plane Scale Factor",
+  "Per Frame Scale Factor",
+  "Single Scale Factor",
+};
 
+const gchar * amitk_data_set_scaling_get_name(const AmitkDataSet * ds) {
+  g_return_val_if_fail(AMITK_IS_DATA_SET(ds), NULL);
+  g_return_val_if_fail(ds->internal_scaling != NULL, NULL);
 
-
+  if (ds->internal_scaling->dim.z > 1) 
+    return scaling_names[0];
+  else if (ds->internal_scaling->dim.t > 1)
+    return scaling_names[1];
+  else 
+    return scaling_names[2];
+  
+}
 
 
 
@@ -1775,13 +2058,13 @@ const gchar * amitk_modality_get_name(const AmitkModality modality) {
   return enum_value->value_nick;
 }
 
-const gchar * amitk_interpolation_get_name(const AmitkModality modality) {
+const gchar * amitk_interpolation_get_name(const AmitkInterpolation interpolation) {
 
   GEnumClass * enum_class;
   GEnumValue * enum_value;
 
-  enum_class = g_type_class_ref(AMITK_TYPE_MODALITY);
-  enum_value = g_enum_get_value(enum_class, modality);
+  enum_class = g_type_class_ref(AMITK_TYPE_INTERPOLATION);
+  enum_value = g_enum_get_value(enum_class, interpolation);
   g_type_class_unref(enum_class);
 
   return enum_value->value_nick;

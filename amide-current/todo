@@ -4,16 +4,22 @@ misc list of things todo:
 for next release?
 -----------------
 
-* start commenting the widgets, run gtk-doc to generate documentation
-* closing ui_rendering dialog has a problem with reference counting on something... not sure what
-* some weird sort of bug with ui_series, where after closing a series, opening another and 
-	then setting threshold, it crashes
+* change all dialog boxes to verbs
+* try to work in the max/min/distribution calculations into
+	the loading loop
+* add smoothing.  "non-isotropic"
+	should be FIR, and be able to pick mm of fwhm.
+	should copy data set back into tree, right below current data set
+	should be under tools menu (wizard?)
+
        
 big things:
 -----------
+* having issues with the "queing" of redisplay calls due to lack of locking.  
+	need to switch to a full threading modeling to separate input/computation/display. 
 * guppi interface for drawing graphs of ROI statistics
 * add drag-n-drop capabilities between study windows
-* allow changing of displayed units (mm, cm, m, s, min)
+* allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
 * now that i'm using a view_volume instead of a view_space,
 	the view should be able to be less then the size
 	of the data set slices
@@ -21,14 +27,23 @@ big things:
 * ui_series should show all selected objects, not just data sets
 * add a objects list item,
 	-would allow reading in multi-bed data sets
+* calculating PV correction.  
+	Correction factors could be calculated for each volume's 
+	resolution and then cached.
 
                        
 small things:
 -------------
-* add "fly through" movie generation capability
+* the "system" function sometimes fails to execute in movie_generate, this 
+	appears to be an out of memory problem.
+* some weird sort of bug with ui_series, where after closing a series, 
+	opening another and then setting threshold, it crashes
+* warning message on closing of ui_rendering dialog, reference counting
+	of something in gtk is off, not sure what
+* would changing the icons to .png files allow anti-aliasing? better icons?
+* double clicking on canvas leads to unending grab -> a release event isn't sent for some reason
 * add .vol file support
 * ISOCONTOUR_2D drawing doesn't know the active slice... just using the 1st for now
-* would changing the icons to .png files allow anti-aliasing?
 * rewrite isocontour determining algorithm so it's not recursive
 * add thickness/line style for isocontours?
 * change realpoint to 4D?
@@ -39,8 +54,6 @@ small things:
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * isocontour erase function only updates at button release, not during mouse movement
-* amide_logo.png should be distributed in the rpm, put in /usr/share/pixmaps
-	-should figure out how to get AMIDE into the gnome menu
 * should be able to specify units the image is in, and request different output units.
 	-study would have an output units variable
 	-each data set, can specify it's original units, and (if needed), a scaling factor to output unit
@@ -48,10 +61,14 @@ small things:
 	-gnome_druid has a add help button function
 * add close button to threshold dialogs
 * ui_time_dialog shouldn't show so much precision on times
+* rendering movie generation should allow rotating around one axis, then another, then another
+	maybe an ability to script the movie?
+
 
 pre 1.0 things:
 --------------
 * rewrite documentation
+* start commenting the widgets, run gtk-doc to generate documentation
 * check README's, INSTALL guides, etc.
 * check that make distcheck works
 * write a man page
@@ -60,7 +77,6 @@ pre 1.0 things:
 
 probably post 1.0 things:
 ----------------
-* add in a cropping wizard, to allow looking at only a subset of the data 
 * multi-step undo/redo
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.

@@ -335,7 +335,7 @@ static gboolean tree_button_press_event (GtkWidget      *tree,
 
     case 2: /* middle button */
       make_active = TRUE;
-      if (!visible)
+      if ((!visible) && (!visible_2))
 	select = TRUE;
       break;
 
@@ -408,7 +408,7 @@ static gboolean tree_key_press_event(GtkWidget * tree,
       gtk_tree_path_free(path);
       gtk_tree_model_get(model, &iter, COLUMN_OBJECT, &object, -1);
       
-      if ((event->keyval == 'x') || (event->keyval == 'X'))
+      if ((event->keyval == GDK_x) || (event->keyval == GDK_X))
 	if (!AMITK_IS_STUDY(object))
 	  g_signal_emit(G_OBJECT(tree), tree_signals[DELETE_OBJECT], 0, object);
     }
@@ -640,9 +640,10 @@ void amitk_tree_add_object(AmitkTree * tree, AmitkObject * object, gboolean expa
   g_object_unref(pixbuf);
 
   g_signal_connect(G_OBJECT(object), "object_name_changed", G_CALLBACK(tree_item_update_cb), tree);
-  if (AMITK_IS_DATA_SET(object)) 
+  if (AMITK_IS_DATA_SET(object)) {
     g_signal_connect(G_OBJECT(object), "modality_changed", G_CALLBACK(tree_item_update_cb), tree);
-  else if (AMITK_IS_ROI(object))
+    g_signal_connect(G_OBJECT(object), "color_table_changed", G_CALLBACK(tree_item_update_cb), tree);
+  } else if (AMITK_IS_ROI(object))
     g_signal_connect(G_OBJECT(object), "roi_type_changed", G_CALLBACK(tree_item_update_cb), tree);
 
   if (expand_parent) {

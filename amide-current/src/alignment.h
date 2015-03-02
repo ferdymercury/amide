@@ -33,7 +33,12 @@
 
 
 /* external functions */
-AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds, GList * marks);
+/* the space returned is the transform needed to change moving_ds's space to the
+   aligned space */
+AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, 
+				 AmitkDataSet * fixed_ds, 
+				 GList * marks,
+				 gdouble * fiducial_registration_error);
 
 
 #endif /* __ALIGNMENT_H__ */

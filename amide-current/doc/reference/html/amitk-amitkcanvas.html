@@ -123,7 +123,7 @@ NAME="AMITK-AMITKCANVAS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN5573"
+NAME="AEN6082"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN5573"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN5576"
+NAME="AEN6085"
 ></A
 ><H2
 >Synopsis</H2
@@ -151,10 +151,6 @@ HREF="amitk-amitkcanvas.html#AMITK-CANVAS-VIEW-CAPS"
 >AMITK_CANVAS_VIEW</A
 >               (obj)
 #define     <A
-HREF="amitk-amitkcanvas.html#AMITK-CANVAS-VIEW-MODE-CAPS"
->AMITK_CANVAS_VIEW_MODE</A
->          (obj)
-#define     <A
 HREF="amitk-amitkcanvas.html#AMITK-CANVAS-PIXBUF-CAPS"
 >AMITK_CANVAS_PIXBUF</A
 >             (obj)
@@ -168,9 +164,9 @@ HREF="amitk-amitkcanvas.html#AMITK-CANVAS-NEW"
 >                (AmitkStudy *study,
                                              AmitkView view,
                                              AmitkLayout layout,
-                                             AmitkViewMode view_mode,
                                              GdkLineStyle line_style,
-                                             gint roi_width);
+                                             gint roi_width,
+                                             gboolean with_arrows);
 void        <A
 HREF="amitk-amitkcanvas.html#AMITK-CANVAS-SET-LAYOUT"
 >amitk_canvas_set_layout</A
@@ -223,7 +219,7 @@ HREF="amitk-amitk-point.html#AMITKPOINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5616"
+NAME="AEN6124"
 ></A
 ><H2
 >Description</H2
@@ -233,14 +229,14 @@ NAME="AEN5616"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5619"
+NAME="AEN6127"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5621"
+NAME="AEN6129"
 ></A
 ><H3
 ><A
@@ -265,7 +261,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5626"
+NAME="AEN6134"
 ></A
 ><P
 ></P
@@ -303,70 +299,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5635"
-></A
-><H3
-><A
-NAME="AMITK-CANVAS-VIEW-MODE-CAPS"
-></A
->AMITK_CANVAS_VIEW_MODE()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->#define AMITK_CANVAS_VIEW_MODE(obj)  (AMITK_CANVAS(obj)-&gt;view_mode)</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN5640"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->obj</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN5649"
+NAME="AEN6143"
 ></A
 ><H3
 ><A
@@ -391,7 +324,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5654"
+NAME="AEN6148"
 ></A
 ><P
 ></P
@@ -429,7 +362,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5663"
+NAME="AEN6157"
 ></A
 ><H3
 ><A
@@ -458,7 +391,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5668"
+NAME="AEN6162"
 ></A
 ><H3
 ><A
@@ -477,9 +410,9 @@ CLASS="PROGRAMLISTING"
 >GtkWidget*  amitk_canvas_new                (AmitkStudy *study,
                                              AmitkView view,
                                              AmitkLayout layout,
-                                             AmitkViewMode view_mode,
                                              GdkLineStyle line_style,
-                                             gint roi_width);</PRE
+                                             gint roi_width,
+                                             gboolean with_arrows);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -488,7 +421,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5680"
+NAME="AEN6174"
 ></A
 ><P
 ></P
@@ -559,23 +492,6 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->view_mode</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
 >line_style</I
 ></TT
 >&nbsp;:</TD
@@ -594,6 +510,23 @@ VALIGN="TOP"
 CLASS="PARAMETER"
 ><I
 >roi_width</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>with_arrows</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -629,7 +562,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5713"
+NAME="AEN6207"
 ></A
 ><H3
 ><A
@@ -655,7 +588,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5720"
+NAME="AEN6214"
 ></A
 ><P
 ></P
@@ -710,7 +643,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5733"
+NAME="AEN6227"
 ></A
 ><H3
 ><A
@@ -737,7 +670,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5740"
+NAME="AEN6234"
 ></A
 ><P
 ></P
@@ -792,7 +725,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5753"
+NAME="AEN6247"
 ></A
 ><H3
 ><A
@@ -818,7 +751,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5760"
+NAME="AEN6254"
 ></A
 ><P
 ></P
@@ -873,7 +806,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5773"
+NAME="AEN6267"
 ></A
 ><H3
 ><A
@@ -899,7 +832,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5780"
+NAME="AEN6274"
 ></A
 ><P
 ></P
@@ -954,7 +887,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5793"
+NAME="AEN6287"
 ></A
 ><H3
 ><A
@@ -980,7 +913,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5800"
+NAME="AEN6294"
 ></A
 ><P
 ></P
@@ -1035,7 +968,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5813"
+NAME="AEN6307"
 ></A
 ><H3
 ><A
@@ -1061,7 +994,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5821"
+NAME="AEN6315"
 ></A
 ><P
 ></P
@@ -1134,7 +1067,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5838"
+NAME="AEN6332"
 ></A
 ><H3
 ><A
@@ -1169,7 +1102,7 @@ HREF="amitk-amitk-point.html#AMITKPOINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5848"
+NAME="AEN6342"
 ></A
 ><P
 ></P

@@ -41,19 +41,26 @@ G_BEGIN_DECLS
 #define AMITK_IS_STUDY_CLASS(klass)	(G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_STUDY))
 #define	AMITK_STUDY_GET_CLASS(study)	(G_TYPE_CHECK_GET_CLASS ((study), AMITK_TYPE_STUDY, AmitkStudyClass))
 
-#define AMITK_STUDY_VIEW_CENTER(s)      (amitk_space_s2b(AMITK_SPACE(s), AMITK_STUDY(s)->view_center))
-#define AMITK_STUDY_VIEW_THICKNESS(s)   (AMITK_STUDY(s)->view_thickness)
-#define AMITK_STUDY_ZOOM(s)             (AMITK_STUDY(s)->zoom)
-#define AMITK_STUDY_VIEW_START_TIME(s)  (AMITK_STUDY(s)->view_start_time)
-#define AMITK_STUDY_VIEW_DURATION(s)    (AMITK_STUDY(s)->view_duration)
-#define AMITK_STUDY_INTERPOLATION(s)    (AMITK_STUDY(s)->interpolation)
-#define AMITK_STUDY_CREATION_DATE(s)    (AMITK_STUDY(s)->creation_date)
-#define AMITK_STUDY_FILENAME(s)         (AMITK_STUDY(s)->filename)
-#define AMITK_STUDY_VOXEL_DIM(s)        (AMITK_STUDY(s)->voxel_dim)
+#define AMITK_STUDY_VIEW_CENTER(stu)      (amitk_space_s2b(AMITK_SPACE(stu), AMITK_STUDY(stu)->view_center))
+#define AMITK_STUDY_VIEW_THICKNESS(stu)   (AMITK_STUDY(stu)->view_thickness)
+#define AMITK_STUDY_ZOOM(stu)             (AMITK_STUDY(stu)->zoom)
+#define AMITK_STUDY_VIEW_START_TIME(stu)  (AMITK_STUDY(stu)->view_start_time)
+#define AMITK_STUDY_VIEW_DURATION(stu)    (AMITK_STUDY(stu)->view_duration)
+#define AMITK_STUDY_INTERPOLATION(stu)    (AMITK_STUDY(stu)->interpolation)
+#define AMITK_STUDY_CREATION_DATE(stu)    (AMITK_STUDY(stu)->creation_date)
+#define AMITK_STUDY_FILENAME(stu)         (AMITK_STUDY(stu)->filename)
+#define AMITK_STUDY_VOXEL_DIM(stu)        (AMITK_STUDY(stu)->voxel_dim)
+#define AMITK_STUDY_FUSE_TYPE(stu)        (AMITK_STUDY(stu)->fuse_type)
 
 //#define AMIDE_STUDY_FILENAME "study.xml"
 #define AMIDE_FILE_VERSION "2.0"
 
+
+typedef enum {
+  AMITK_FUSE_TYPE_BLEND,
+  AMITK_FUSE_TYPE_OVERLAY,
+  AMITK_FUSE_TYPE_NUM
+} AmitkFuseType;
 
 typedef struct _AmitkStudyClass AmitkStudyClass;
 typedef struct _AmitkStudy AmitkStudy;
@@ -72,6 +79,7 @@ struct _AmitkStudy
   amide_time_t view_duration;
   amide_real_t zoom;
   AmitkInterpolation interpolation;
+  AmitkFuseType fuse_type;
 
   /* stuff calculated when file is loaded and stored */
   amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
@@ -108,11 +116,19 @@ void            amitk_study_set_view_duration       (AmitkStudy * study,
 						     const amide_time_t new_duration);
 void            amitk_study_set_interpolation       (AmitkStudy * study,
 						     const AmitkInterpolation new_interpolation);
+void            amitk_study_set_fuse_type           (AmitkStudy * study,
+						     const AmitkFuseType new_fuse_type);
 void            amitk_study_set_zoom                (AmitkStudy * study,
 						     const amide_real_t new_zoom);
 AmitkStudy *    amitk_study_load_xml                (const gchar * study_directory);
 gboolean        amitk_study_save_xml                (AmitkStudy * study, 
 						     const gchar * study_directory);
+
+const gchar *   amitk_fuse_type_get_name            (const AmitkFuseType fuse_type);
+
+
+/* external variables */
+extern gchar * amitk_fuse_type_explanations[];
 
 G_END_DECLS
 

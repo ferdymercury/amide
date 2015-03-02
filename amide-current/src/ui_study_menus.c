@@ -133,16 +133,13 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo export_view_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export,
-			  ui_study, NULL),
+			  ui_study_cb_export, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export,
-			  ui_study, NULL),
+			  ui_study_cb_export, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),
-			  ui_study_cb_export,
-			  ui_study, NULL),
+			  ui_study_cb_export, ui_study, NULL),
     GNOMEUIINFO_END
   };
   
@@ -177,10 +174,9 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("Add _ROI"),
 			     N_("Add a new ROI"),
 			     add_roi_menu),
-    GNOMEUIINFO_ITEM_DATA(N_("Add _Alignment Point"),
-			  N_("Add a new alignment point to the active data set"),
-			  ui_study_cb_add_alignment_point,
-			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("Add _Fiducial Mark"),
+			  N_("Add a new fiducial mark to the active data set"),
+			  ui_study_cb_add_fiducial_mark, ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_PREFERENCES_ITEM(ui_study_cb_preferences, ui_study),
     GNOMEUIINFO_END
@@ -190,32 +186,26 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo series_space_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a series of transaxial views in a single frame"),
-			  ui_study_cb_series, 
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Look at a series of coronal views in a single frame"),
-			  ui_study_cb_series,
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Look at a series of sagittal views in a single frame"),
-			  ui_study_cb_series,
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
   GnomeUIInfo series_time_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
 			  N_("Look at a times series of a single transaxial view"),
-			  ui_study_cb_series,
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
 			  N_("Look at a time series of a single coronal view"),
-			  ui_study_cb_series,
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
 			  N_("Look at a time series of a a signal sagittal view"),
-			  ui_study_cb_series,
-			  ui_study, NULL),
+			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
@@ -239,8 +229,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 			  ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("_Trilinear Conversion"),
 			  N_("convert image data for rendering using trilinear interpolation (Slow, High Quality)"),
-			  ui_study_cb_rendering,
-			  ui_study, NULL),
+			  ui_study_cb_rendering, ui_study, NULL),
     GNOMEUIINFO_END
   };
 #endif
@@ -262,24 +251,46 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo roi_menu[] = {
     GNOMEUIINFO_ITEM_DATA(N_("Calculate _All ROIs"),
 			  N_("caculate values for all ROI's on the currently selected data sets"),
-			  ui_study_cb_calculate_all,
-			  ui_study, NULL),
+			  ui_study_cb_calculate_all, ui_study, NULL),
     GNOMEUIINFO_ITEM_DATA(N_("Calculate _Selected ROIS"),
 			  N_("calculate values only for the currently selected ROI's on the currently selected data sets"),
-			  ui_study_cb_calculate_selected,
-			  ui_study, NULL),
+			  ui_study_cb_calculate_selected, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
+#if AMIDE_MPEG_ENCODE_SUPPORT
+  GnomeUIInfo fly_through_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
+			  N_("Generate a fly through using transaxial slices"),
+			  ui_study_cb_fly_through,  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
+			  N_("Generate a fly through using coronal slices"),
+			  ui_study_cb_fly_through,  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
+			  N_("Generate a fly through using sagittal slices"),
+			  ui_study_cb_fly_through,  ui_study, NULL),
+    GNOMEUIINFO_END
+  };
+#endif
+
   /* tools for analyzing/etc. the data */
   GnomeUIInfo tools_menu[] = {
+    GNOMEUIINFO_ITEM_DATA(N_("_Crop Active Data Set"),
+			  N_("allows you to crop the active data set"),
+			  ui_study_cb_crop_selected,
+			  ui_study, NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
+			  N_("guides you throw the processing of alignment"),
+			  ui_study_cb_alignment_selected,
+			  ui_study, NULL),
+#if AMIDE_MPEG_ENCODE_SUPPORT
+    GNOMEUIINFO_SUBTREE_HINT(N_("Generate _Fly Through"),
+			     N_("generate an mpeg fly through of the data sets"), 
+			     fly_through_menu),
+#endif
     GNOMEUIINFO_SUBTREE_HINT(N_("_ROI Statistics"),
 			     N_("calculate statistics over the ROI's"), 
 			     roi_menu),
-    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
-			  N_("guides you throw the processing of semiautomative alignment"),
-			  ui_study_cb_alignment_selected,
-			  ui_study, NULL),
     GNOMEUIINFO_END
   };
 
@@ -379,6 +390,10 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 		      "view", GINT_TO_POINTER(i_view));
     g_object_set_data(G_OBJECT(series_time_menu[i_view].widget),
 		      "series_type", GINT_TO_POINTER(FRAMES));
+#if AMIDE_MPEG_ENCODE_SUPPORT
+    g_object_set_data(G_OBJECT(fly_through_menu[i_view].widget),
+		      "view", GINT_TO_POINTER(i_view));
+#endif
   }
 
   return;

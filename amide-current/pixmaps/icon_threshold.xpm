@@ -1,5 +1,5 @@
 /* XPM */
-static char * icon_threshold_xpm[] = {
+const char * icon_threshold_xpm[] = {
 "24 24 47 1",
 " 	c None",
 ".	c #FF0000",

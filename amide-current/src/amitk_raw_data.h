@@ -39,7 +39,13 @@ G_BEGIN_DECLS
 #define AMITK_IS_RAW_DATA_CLASS(klass)	  (G_TYPE_CHECK_CLASS_TYPE ((klass), AMITK_TYPE_RAW_DATA))
 #define	AMITK_RAW_DATA_GET_CLASS(object)  (G_TYPE_CHECK_GET_CLASS ((object), AMITK_TYPE_RAW_DATA, AmitkRawDataClass))
 
+
 #define AMITK_RAW_DATA_FORMAT(rd)         (AMITK_RAW_DATA(rd)->format)
+#define AMITK_RAW_DATA_DIM(rd)            (AMITK_RAW_DATA(rd)->dim)
+#define AMITK_RAW_DATA_DIM_X(rd)          (AMITK_RAW_DATA(rd)->dim.x)
+#define AMITK_RAW_DATA_DIM_Y(rd)          (AMITK_RAW_DATA(rd)->dim.y)
+#define AMITK_RAW_DATA_DIM_Z(rd)          (AMITK_RAW_DATA(rd)->dim.z)
+#define AMITK_RAW_DATA_DIM_T(rd)          (AMITK_RAW_DATA(rd)->dim.t)
 
 /* glib doesn't define these for PDP */
 #ifdef G_BIG_ENDIAN
@@ -146,12 +152,15 @@ AmitkRawData *  amitk_raw_data_import_raw_file      (const gchar * file_name,
 						     guint file_offset);
 gchar *         amitk_raw_data_write_xml            (AmitkRawData  * raw_data, const gchar * name);
 AmitkRawData *  amitk_raw_data_read_xml             (gchar * xml_filename);
+amide_data_t    amitk_raw_data_get_value            (const AmitkRawData * rd, 
+						     const AmitkVoxel i);
 
 
 AmitkFormat    amitk_raw_format_to_format(AmitkRawFormat raw_format);
 AmitkRawFormat amitk_format_to_raw_format(AmitkFormat data_format);
 
-#define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).x*(dim).y*(dim).z*(dim).t*amitk_raw_format_sizes[raw_format])
+#define amitk_raw_format_calc_num_bytes_per_slice(dim, raw_format) ((dim).x*(dim).y*amitk_raw_format_sizes[raw_format])
+#define amitk_raw_format_calc_num_bytes(dim, raw_format) ((dim).z*(dim).t*amitk_raw_format_calc_num_bytes_per_slice(dim,raw_format))
 
 
 /* external variables */

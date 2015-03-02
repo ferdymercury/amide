@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include "rendering.h"
 #include "amitk_roi.h"
-#include "amitk_data_set_FLOAT_0D_SCALING.h"
+#include "amitk_data_set_DOUBLE_0D_SCALING.h"
 
 
 /* external variables */
@@ -109,6 +109,7 @@ rendering_t * rendering_context_init(const AmitkObject * object,
     return NULL;
   }
   new_context->ref_count = 1;
+  new_context->need_rerender = TRUE;
   
   /* start initializing what we can */
   new_context->vpc = vpCreateContext();
@@ -118,13 +119,13 @@ rendering_t * rendering_context_init(const AmitkObject * object,
     new_context->color_table = AMITK_DATA_SET_COLOR_TABLE(object);
   else 
     new_context->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
-
   new_context->pixel_type = RENDERING_DEFAULT_PIXEL_TYPE;
+
   new_context->image = NULL;
   new_context->rendering_data = NULL;
   new_context->curve_type[DENSITY_CLASSIFICATION] = CURVE_LINEAR;
   new_context->curve_type[GRADIENT_CLASSIFICATION] = CURVE_LINEAR;
-  new_context->volume = g_object_ref(rendering_volume);
+  new_context->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_volume)));
   new_context->start = start;
   new_context->duration = duration;
 
@@ -132,9 +133,15 @@ rendering_t * rendering_context_init(const AmitkObject * object,
   new_context->dim.x = ceil(AMITK_VOLUME_X_CORNER(rendering_volume)/voxel_size);
   new_context->dim.y = ceil(AMITK_VOLUME_Y_CORNER(rendering_volume)/voxel_size);
   new_context->dim.z = ceil(AMITK_VOLUME_Z_CORNER(rendering_volume)/voxel_size);
-  new_context->voxel_size.x = voxel_size;
-  new_context->voxel_size.y = voxel_size;
-  new_context->voxel_size.z = voxel_size;
+  new_context->voxel_size = voxel_size;
+
+  /* adjust the thresholding if needed */
+  if (AMITK_IS_DATA_SET(new_context->object))
+    if (AMITK_DATA_SET_THRESHOLDING(new_context->object) == AMITK_THRESHOLDING_PER_SLICE) {
+      amitk_data_set_set_thresholding(AMITK_DATA_SET(new_context->object), AMITK_THRESHOLDING_GLOBAL);
+      g_warning("\"Per Slice\" thresholding illogical for conversion to volume rendering, using \"Global\" thresholding ");
+    }
+      
 
 
 #if AMIDE_DEBUG
@@ -261,40 +268,42 @@ rendering_t * rendering_context_init(const AmitkObject * object,
 
 
 /* function to reload the context's concept of an object when necessary */
-void rendering_context_reload_objects(rendering_t * rendering_context, 
+void rendering_context_reload_objects(rendering_t * context, 
 				      const amide_time_t new_start,
 				      const amide_time_t new_duration, 
 				      const AmitkInterpolation interpolation) {
   
   amide_time_t old_start, old_duration;
 
-  old_start = rendering_context->start;
-  old_duration = rendering_context->duration;
 
-  rendering_context->start = new_start;
-  rendering_context->duration = new_duration;
+  old_start = context->start;
+  old_duration = context->duration;
+
+  context->start = new_start;
+  context->duration = new_duration;
 
   /* only need to do stuff for dynamic data sets */
-  if (!AMITK_IS_DATA_SET(rendering_context->object))
+  if (!AMITK_IS_DATA_SET(context->object))
     return;
-  if (!AMITK_DATA_SET_DYNAMIC(rendering_context->object))
+  if (!AMITK_DATA_SET_DYNAMIC(context->object))
     return;
 
-  if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering_context->object), new_start) == 
-      amitk_data_set_get_frame(AMITK_DATA_SET(rendering_context->object), old_start))
-    if (amitk_data_set_get_frame(AMITK_DATA_SET(rendering_context->object), new_start+new_duration) ==
-	amitk_data_set_get_frame(AMITK_DATA_SET(rendering_context->object), old_start+old_duration))
+  if (amitk_data_set_get_frame(AMITK_DATA_SET(context->object), new_start) == 
+      amitk_data_set_get_frame(AMITK_DATA_SET(context->object), old_start))
+    if (amitk_data_set_get_frame(AMITK_DATA_SET(context->object), new_start+new_duration) ==
+	amitk_data_set_get_frame(AMITK_DATA_SET(context->object), old_start+old_duration))
       return;
 
   /* allright, reload the context's data */
-  rendering_context_load_object(rendering_context, interpolation);
+  context->need_rerender = TRUE;
+  rendering_context_load_object(context, interpolation);
 
 }
 
 
 
 /* function to update the rendering structure's concept of the object */
-void rendering_context_load_object(rendering_t * rendering_context, 
+void rendering_context_load_object(rendering_t * context, 
 				   const AmitkInterpolation interpolation) {
 
   AmitkVoxel i_voxel, j_voxel;
@@ -307,46 +316,46 @@ void rendering_context_load_object(rendering_t * rendering_context,
 #endif
 
   /* tell the context the dimensions of our rendering context */
-  if (vpSetVolumeSize(rendering_context->vpc, rendering_context->dim.x, 
-		      rendering_context->dim.y, rendering_context->dim.z) != VP_OK) {
+  if (vpSetVolumeSize(context->vpc, context->dim.x, 
+		      context->dim.y, context->dim.z) != VP_OK) {
     g_warning("Error Setting the Context Size (%s): %s", 
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, 
+	      vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
 
   /* allocate space for the raw data and the context */
-  density_size =  rendering_context->dim.x *  rendering_context->dim.y *  
-    rendering_context->dim.z * RENDERING_DENSITY_SIZE;
-  context_size =  rendering_context->dim.x *  rendering_context->dim.y * 
-     rendering_context->dim.z * RENDERING_BYTES_PER_VOXEL;
+  density_size =  context->dim.x *  context->dim.y *  
+    context->dim.z * RENDERING_DENSITY_SIZE;
+  context_size =  context->dim.x *  context->dim.y * 
+     context->dim.z * RENDERING_BYTES_PER_VOXEL;
 
   if ((density = (rendering_density_t * ) g_malloc(density_size)) == NULL) {
     g_warning("Could not allocate space for density data for %s", 
-	      rendering_context->name);
+	      context->name);
     return;
   }
 
 
-  g_free(rendering_context->rendering_data);
-  if ((rendering_context->rendering_data = g_new0(rendering_voxel_t, context_size)) == NULL) {
+  g_free(context->rendering_data);
+  if ((context->rendering_data = g_new0(rendering_voxel_t, context_size)) == NULL) {
     g_warning("Could not allocate space for rendering context volume for %s", 
-	      rendering_context->name);
+	      context->name);
     g_free(density);
     return;
   }
 
-  vpSetRawVoxels(rendering_context->vpc, rendering_context->rendering_data, context_size, 
-		 RENDERING_BYTES_PER_VOXEL,  rendering_context->dim.x * RENDERING_BYTES_PER_VOXEL,
-		 rendering_context->dim.x* rendering_context->dim.y * RENDERING_BYTES_PER_VOXEL);
+  vpSetRawVoxels(context->vpc, context->rendering_data, context_size, 
+		 RENDERING_BYTES_PER_VOXEL,  context->dim.x * RENDERING_BYTES_PER_VOXEL,
+		 context->dim.x* context->dim.y * RENDERING_BYTES_PER_VOXEL);
 
 #if AMIDE_DEBUG
   g_print("\tCopying Data into Rendering Context Volume\t");
-  divider = ((rendering_context->dim.z/20.0) < 1) ? 1 : (rendering_context->dim.z/20.0);
+  divider = ((context->dim.z/20.0) < 1) ? 1 : (context->dim.z/20.0);
 #endif
 
 
-  if (AMITK_IS_ROI(rendering_context->object)) {
+  if (AMITK_IS_ROI(context->object)) {
 
     AmitkPoint center, radius;
     amide_real_t height;
@@ -355,27 +364,30 @@ void rendering_context_load_object(rendering_t * rendering_context,
     gint temp_int;
     AmitkVoxel start, end;
     AmitkCorners intersection_corners;
+    AmitkPoint voxel_size;
+
+    voxel_size.x = voxel_size.y = voxel_size.z = context->voxel_size;
     
-    radius = point_cmult(0.5, AMITK_VOLUME_CORNER(rendering_context->object));
-    center = amitk_space_b2s(AMITK_SPACE(rendering_context->object),
-			     amitk_volume_center(AMITK_VOLUME(rendering_context->object)));
-    height = AMITK_VOLUME_Z_CORNER(rendering_context->object);
-    box_corner = AMITK_VOLUME_CORNER(rendering_context->object);
+    radius = point_cmult(0.5, AMITK_VOLUME_CORNER(context->object));
+    center = amitk_space_b2s(AMITK_SPACE(context->object),
+			     amitk_volume_center(AMITK_VOLUME(context->object)));
+    height = AMITK_VOLUME_Z_CORNER(context->object);
+    box_corner = AMITK_VOLUME_CORNER(context->object);
     j_voxel.t = j_voxel.z=i_voxel.t=0;
 
     /* figure out the intersection between the rendering volume and the roi */
-    if (!amitk_volume_volume_intersection_corners(rendering_context->volume, 
-						  AMITK_VOLUME(rendering_context->object), 
+    if (!amitk_volume_volume_intersection_corners(context->volume, 
+						  AMITK_VOLUME(context->object), 
 						  intersection_corners)) {
       end = zero_voxel;
     } else {
-      POINT_TO_VOXEL(intersection_corners[0], rendering_context->voxel_size, 0, start);
-      POINT_TO_VOXEL(intersection_corners[1], rendering_context->voxel_size, 0, end);
+      POINT_TO_VOXEL(intersection_corners[0], voxel_size, 0, start);
+      POINT_TO_VOXEL(intersection_corners[1], voxel_size, 0, end);
     }
     
-    g_return_if_fail(end.x < rendering_context->dim.x);
-    g_return_if_fail(end.y < rendering_context->dim.y);
-    g_return_if_fail(end.z < rendering_context->dim.z);
+    g_return_if_fail(end.x < context->dim.x);
+    g_return_if_fail(end.y < context->dim.y);
+    g_return_if_fail(end.z < context->dim.z);
 
     for (i_voxel.z = start.z; i_voxel.z <= end.z; i_voxel.z++) {
 #ifdef AMIDE_DEBUG
@@ -384,15 +396,15 @@ void rendering_context_load_object(rendering_t * rendering_context,
 #endif 
       for (i_voxel.y = start.y; i_voxel.y <=  end.y; i_voxel.y++)
 	for (i_voxel.x = start.x; i_voxel.x <=  end.x; i_voxel.x++) {
-	  VOXEL_TO_POINT(i_voxel, rendering_context->voxel_size, temp_point);
-	  temp_point = amitk_space_s2s(AMITK_SPACE(rendering_context->volume),
-				       AMITK_SPACE(rendering_context->object),temp_point);
-	  switch(AMITK_ROI_TYPE(rendering_context->object)) {
+	  VOXEL_TO_POINT(i_voxel, voxel_size, temp_point);
+	  temp_point = amitk_space_s2s(AMITK_SPACE(context->volume),
+				       AMITK_SPACE(context->object),temp_point);
+	  switch(AMITK_ROI_TYPE(context->object)) {
 	  case AMITK_ROI_TYPE_ISOCONTOUR_2D:
 	  case AMITK_ROI_TYPE_ISOCONTOUR_3D:
-	    POINT_TO_VOXEL(temp_point, AMITK_ROI(rendering_context->object)->voxel_size, 0, j_voxel);
-	    if (amitk_raw_data_includes_voxel(AMITK_ROI(rendering_context->object)->isocontour, j_voxel)) {
-	      temp_int = *AMITK_RAW_DATA_UBYTE_POINTER(AMITK_ROI(rendering_context->object)->isocontour, j_voxel);
+	    POINT_TO_VOXEL(temp_point, AMITK_ROI(context->object)->voxel_size, 0, j_voxel);
+	    if (amitk_raw_data_includes_voxel(AMITK_ROI(context->object)->isocontour, j_voxel)) {
+	      temp_int = *AMITK_RAW_DATA_UBYTE_POINTER(AMITK_ROI(context->object)->isocontour, j_voxel);
 	      if (temp_int == 2)
 		temp_int = RENDERING_DENSITY_MAX;
 	      else if (temp_int == 1)
@@ -421,11 +433,11 @@ void rendering_context_load_object(rendering_t * rendering_context,
 	      return;
 	      break;
 	  }
-	  density[i_voxel.x+
-		  i_voxel.y*rendering_context->dim.x+
-		  (rendering_context->dim.z-i_voxel.z-1)*
-		  rendering_context->dim.y*
-		  rendering_context->dim.x] = temp_int;
+
+	  /* note, volpack needs a mirror reversal on the z and x axis */
+	  density[(context->dim.x-i_voxel.x-1)+
+		  i_voxel.y*context->dim.x+
+		  (context->dim.z-i_voxel.z-1)*context->dim.y*context->dim.x] = temp_int;
 	}
     }
 
@@ -441,47 +453,45 @@ void rendering_context_load_object(rendering_t * rendering_context,
     amide_data_t max, min;
 
     
-    slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering_context->volume)));
+    slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(context->volume)));
 
     /* define the slice that we're trying to pull out of the data set */
     temp_corner = AMITK_VOLUME_CORNER(slice_volume);
-    temp_corner.z = rendering_context->voxel_size.z;
+    temp_corner.z = context->voxel_size;
     amitk_volume_set_corner(slice_volume, temp_corner);
 
     new_offset = zero_point; /* in slice_volume space */
-    new_offset.z = rendering_context->voxel_size.z; 
-    
+    new_offset.z = context->voxel_size; 
+
     /* copy the info from a data set structure into our rendering_volume structure */
     j_voxel.t = j_voxel.z = i_voxel.t=0;
-    for (i_voxel.z = 0; i_voxel.z < rendering_context->dim.z; i_voxel.z++) {
+    for (i_voxel.z = 0; i_voxel.z < context->dim.z; i_voxel.z++) {
 #ifdef AMIDE_DEBUG
       x = div(i_voxel.z,divider);
       if (x.rem == 0) g_print(".");
 #endif 
       
-      slice = amitk_data_set_get_slice(AMITK_DATA_SET(rendering_context->object), 
-				       rendering_context->start, 
-				       rendering_context->duration, 
-				       rendering_context->voxel_size, 
+      slice = amitk_data_set_get_slice(AMITK_DATA_SET(context->object), 
+				       context->start, 
+				       context->duration, 
+				       context->voxel_size, 
 				       slice_volume, interpolation, FALSE);
 
       amitk_data_set_get_thresholding_max_min(AMITK_DATA_SET_SLICE_PARENT(slice),
 					      AMITK_DATA_SET(slice),
-					      rendering_context->start, 
-					      rendering_context->duration, &max, &min);
+					      context->start, 
+					      context->duration, &max, &min);
       scale = ((amide_data_t) RENDERING_DENSITY_MAX) / (max-min);
 
-      /* note, I think volpack's z direction is off.... hence the reversal */
-      for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  rendering_context->dim.y; j_voxel.y++, i_voxel.y++)
-	for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  rendering_context->dim.x; j_voxel.x++, i_voxel.x++) {
-	  temp_val = scale * (AMITK_DATA_SET_FLOAT_0D_SCALING_CONTENTS(slice,j_voxel)-min);
+      /* note, volpack needs a mirror reversal on the z and x axis */
+      for (j_voxel.y = i_voxel.y = 0; i_voxel.y <  context->dim.y; j_voxel.y++, i_voxel.y++)
+	for (j_voxel.x = i_voxel.x = 0; i_voxel.x <  context->dim.x; j_voxel.x++, i_voxel.x++) {
+	  temp_val = scale * (AMITK_DATA_SET_DOUBLE_0D_SCALING_CONTENT(slice,j_voxel)-min);
 	  if (temp_val > RENDERING_DENSITY_MAX) temp_val = RENDERING_DENSITY_MAX;
 	  if (temp_val < 0.0) temp_val = 0.0;
-	  density[i_voxel.x+
-		  i_voxel.y*rendering_context->dim.x+
-		  (rendering_context->dim.z-i_voxel.z-1)*
-		  rendering_context->dim.y*
-		  rendering_context->dim.x] = temp_val;
+	  density[(context->dim.x-i_voxel.x-1)+
+		  i_voxel.y*context->dim.x+
+		  (context->dim.z-i_voxel.z-1)* context->dim.y* context->dim.x] = temp_val;
 	}
       g_object_unref(slice);
 
@@ -497,11 +507,10 @@ void rendering_context_load_object(rendering_t * rendering_context,
 #endif
 
   /* compute surface normals (for shading) and gradient magnitudes (for classification) */
-  if (vpVolumeNormals(rendering_context->vpc, density, density_size, RENDERING_DENSITY_FIELD, 
+  if (vpVolumeNormals(context->vpc, density, density_size, RENDERING_DENSITY_FIELD, 
 		      RENDERING_GRADIENT_FIELD, RENDERING_NORMAL_FIELD) != VP_OK) {
     g_warning("Error Computing the Rendering Normals (%s): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, vpGetErrorString(vpGetError(context->vpc)));
     g_free(density);
     return;
   }                   
@@ -519,18 +528,16 @@ void rendering_context_load_object(rendering_t * rendering_context,
   */
 
   /* set the thresholds on the min-max octree */
-  if (vpMinMaxOctreeThreshold(rendering_context->vpc, RENDERING_DENSITY_PARAM, 
+  if (vpMinMaxOctreeThreshold(context->vpc, RENDERING_DENSITY_PARAM, 
 			      RENDERING_OCTREE_DENSITY_THRESH) != VP_OK) {
     g_warning("Error Setting Rendering Octree Threshold (%s, DENSITY): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
-  if (vpMinMaxOctreeThreshold(rendering_context->vpc, RENDERING_GRADIENT_PARAM, 
+  if (vpMinMaxOctreeThreshold(context->vpc, RENDERING_GRADIENT_PARAM, 
 			      RENDERING_OCTREE_GRADIENT_THRESH) != VP_OK) {
     g_warning("Error Setting Rendering Octree Threshold (%s, GRADIENT): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
   
@@ -539,13 +546,11 @@ void rendering_context_load_object(rendering_t * rendering_context,
 #endif
   
   /* create the min/max octree */
-  if (vpCreateMinMaxOctree(rendering_context->vpc, 0, RENDERING_OCTREE_BASE_NODE_SIZE) != VP_OK) {
-    g_warning("Error Generating Octree (%s): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+  if (vpCreateMinMaxOctree(context->vpc, 0, RENDERING_OCTREE_BASE_NODE_SIZE) != VP_OK) {
+    g_warning("Error Generating Octree (%s): %s", context->name, 
+	      vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
-
 
   /* set the initial ambient property, as I don't like the volpack default */
   /*  if (vpSetMaterial(vpc[which], VP_MATERIAL0, VP_AMBIENT, VP_BOTH_SIDES, 0.0, 0.0, 0.0)  != VP_OK){
@@ -566,28 +571,28 @@ void rendering_context_load_object(rendering_t * rendering_context,
 
 
   /* set the initial shinyness, volpack's default is something shiny, I set shiny to zero */
-  if (vpSetMaterial(rendering_context->vpc, VP_MATERIAL0, VP_SHINYNESS, VP_BOTH_SIDES,0.0,0.0,0.0) != VP_OK){
+  if (vpSetMaterial(context->vpc, VP_MATERIAL0, VP_SHINYNESS, VP_BOTH_SIDES,0.0,0.0,0.0) != VP_OK){
     g_warning("Error Setting the Rendering Material (%s, SHINYNESS): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, 
+	      vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
 
   /* set the shading parameters */
-  if (vpSetLookupShader(rendering_context->vpc, 1, 1, RENDERING_NORMAL_FIELD, 
-			rendering_context->shade_table, sizeof(rendering_context->shade_table), 
+  if (vpSetLookupShader(context->vpc, 1, 1, RENDERING_NORMAL_FIELD, 
+			context->shade_table, sizeof(context->shade_table), 
 			0, NULL, 0) != VP_OK){
     g_warning("Error Setting the Rendering Shader (%s): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, 
+	      vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
   
   /* and do the shade table stuff (this fills in the shade table I believe) */
-  if (vpShadeTable(rendering_context->vpc) != VP_OK){
+  if (vpShadeTable(context->vpc) != VP_OK){
     g_warning("Error Shading Table for Rendering (%s): %s",
-	      rendering_context->name, 
-	      vpGetErrorString(vpGetError(rendering_context->vpc)));
+	      context->name, 
+	      vpGetErrorString(vpGetError(context->vpc)));
     return;
   }
   
@@ -603,6 +608,8 @@ void rendering_context_set_rotation(rendering_t * context, AmitkAxis dir, gdoubl
   vpMatrix4 m; 
   guint i,j;
   AmitkPoint axis;
+
+  context->need_rerender = TRUE;
 
   /* rotate the axis */
   amitk_space_rotate_on_vector(AMITK_SPACE(context->volume),
@@ -625,6 +632,11 @@ void rendering_context_set_rotation(rendering_t * context, AmitkAxis dir, gdoubl
     m[i][2] = axis.z;
   }
 
+  /* we want to rotate the data set */
+  if (vpCurrentMatrix(context->vpc, VP_MODEL) != VP_OK)
+    g_warning("Error Setting The Item To Rotate (%s): %s",
+	      context->name, vpGetErrorString(vpGetError(context->vpc)));
+
   /* set the rotation */
   if (vpSetMatrix(context->vpc, m) != VP_OK)
     g_warning("Error Rotating Rendering (%s): %s",
@@ -638,6 +650,8 @@ void rendering_context_reset_rotation(rendering_t * context) {
 
   AmitkSpace * new_space;
   
+  context->need_rerender = TRUE;
+
   /* reset the coord frame */
   new_space = amitk_space_new(); /* base space */
   amitk_space_copy_in_place(AMITK_SPACE(context->volume), new_space);
@@ -654,6 +668,8 @@ void rendering_context_reset_rotation(rendering_t * context) {
 void rendering_context_set_quality(rendering_t * context, rendering_quality_t quality) {
 
   gdouble max_ray_opacity, min_voxel_opacity;
+
+  context->need_rerender = TRUE;
 
   /* set the rendering speed parameters MAX_RAY_OPACITY and MIN_VOXEL_OPACITY*/
   switch (quality) {
@@ -699,6 +715,8 @@ void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type,
   guint volpack_pixel_type;
   amide_intpoint_t size_dim; /* size in one dimension, note that height == width */
 
+  context->need_rerender = TRUE;
+
   switch (pixel_type) {
   case GRAYSCALE:
     volpack_pixel_type = VP_LUMINANCE;
@@ -728,6 +746,8 @@ void rendering_context_set_image(rendering_t * context, pixel_type_t pixel_type,
 /* switch the state of depth cueing (TRUE is on) */
 void rendering_context_set_depth_cueing(rendering_t * context, gboolean state) {
 
+  context->need_rerender = TRUE;
+
   if (vpEnable(context->vpc, VP_DEPTH_CUE, state) != VP_OK) {
       g_warning("Error Setting the Rendering Depth Cue (%s): %s",
 		context->name, vpGetErrorString(vpGetError(context->vpc)));
@@ -741,6 +761,8 @@ void rendering_context_set_depth_cueing(rendering_t * context, gboolean state) {
 /* set the depth cueing parameters*/
 void rendering_context_set_depth_cueing_parameters(rendering_t * context, 
 						   gdouble front_factor, gdouble density) {
+
+  context->need_rerender = TRUE;
 
   /* the defaults should be 1.0 and 1.0 */
   if (vpSetDepthCueing(context->vpc, front_factor, density) != VP_OK){
@@ -756,12 +778,15 @@ void rendering_context_set_depth_cueing_parameters(rendering_t * context,
 void rendering_context_render(rendering_t * context)
 {
 
-  if (context->vpc != NULL) 
-    if (vpRenderRawVolume(context->vpc) != VP_OK) {
-      g_warning("Error Rendering the Volume (%s): %s", 
-		context->name, vpGetErrorString(vpGetError(context->vpc)));
-      return;
-    }
+  if (context->need_rerender)
+    if (context->vpc != NULL) 
+      if (vpRenderRawVolume(context->vpc) != VP_OK) {
+	g_warning("Error Rendering the Volume (%s): %s", 
+		  context->name, vpGetErrorString(vpGetError(context->vpc)));
+	return;
+      }
+  
+  context->need_rerender = FALSE;
 
   return;
 }
@@ -788,7 +813,7 @@ renderings_t * renderings_unref(renderings_t * renderings) {
     /* recursively delete rest of list */
     renderings->next = renderings_unref(renderings->next); 
 
-    renderings->rendering_context = rendering_context_unref(renderings->rendering_context);
+    renderings->context = rendering_context_unref(renderings->context);
     g_free(renderings);
     renderings = NULL;
   }
@@ -814,7 +839,7 @@ static renderings_t * renderings_init_recurse(GList * objects,
   }
   temp_renderings->ref_count = 1;
   
-  temp_renderings->rendering_context = 
+  temp_renderings->context = 
     rendering_context_init(objects->data, render_volume,voxel_size, start, duration, interpolation);
   temp_renderings->next = 
     renderings_init_recurse(objects->next, render_volume, voxel_size, start, duration, interpolation);
@@ -841,7 +866,7 @@ renderings_t * renderings_init(GList * objects,const amide_time_t start,
   amitk_volume_set_corner(render_volume, amitk_space_b2s(AMITK_SPACE(render_volume), render_corner[1]));
 
   /* figure out what size our rendering voxels will be */
-  voxel_size = amitk_data_sets_get_max_min_voxel_size(objects);
+  voxel_size = amitk_data_sets_get_min_voxel_size(objects);
   if (voxel_size < 0.0) 
     voxel_size = amitk_rois_get_max_min_voxel_size(objects);
   if (voxel_size < 0.0)
@@ -859,7 +884,7 @@ void renderings_reload_objects(renderings_t * renderings, const amide_time_t sta
 
   if (renderings != NULL) {
     /* reload this context */
-    rendering_context_reload_objects(renderings->rendering_context, start, duration, interpolation);
+    rendering_context_reload_objects(renderings->context, start, duration, interpolation);
     /* and do the next */
     renderings_reload_objects(renderings->next, start, duration, interpolation);
   }
@@ -874,7 +899,7 @@ void renderings_set_rotation(renderings_t * renderings, AmitkAxis dir, gdouble r
 
 
   while (renderings != NULL) {
-    rendering_context_set_rotation(renderings->rendering_context, dir, rotation);
+    rendering_context_set_rotation(renderings->context, dir, rotation);
     renderings = renderings->next;
   }
 
@@ -886,7 +911,7 @@ void renderings_reset_rotation(renderings_t * renderings) {
 
 
   while (renderings != NULL) {
-    rendering_context_reset_rotation(renderings->rendering_context);
+    rendering_context_reset_rotation(renderings->context);
     renderings = renderings->next;
   }
 
@@ -897,7 +922,7 @@ void renderings_reset_rotation(renderings_t * renderings) {
 void renderings_set_quality(renderings_t * renderings, rendering_quality_t quality) {
 
   while (renderings != NULL) {
-    rendering_context_set_quality(renderings->rendering_context, quality);
+    rendering_context_set_quality(renderings->context, quality);
     renderings = renderings->next;
   }
 
@@ -905,10 +930,12 @@ void renderings_set_quality(renderings_t * renderings, rendering_quality_t quali
 }
 
 /* set the return image parameters  for a list of contexts */
-void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gdouble zoom) {
+void renderings_set_zoom(renderings_t * renderings, gdouble zoom) {
 
   while (renderings != NULL) {
-    rendering_context_set_image(renderings->rendering_context, pixel_type, zoom);
+    rendering_context_set_image(renderings->context, 
+				renderings->context->pixel_type, 
+				zoom);
     renderings = renderings->next;
   }
 
@@ -919,7 +946,7 @@ void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gd
 void renderings_set_depth_cueing(renderings_t * renderings, gboolean state) {
 
   while (renderings != NULL) {
-    rendering_context_set_depth_cueing(renderings->rendering_context, state);
+    rendering_context_set_depth_cueing(renderings->context, state);
     renderings = renderings->next;
   }
 
@@ -932,7 +959,7 @@ void renderings_set_depth_cueing_parameters(renderings_t * renderings,
 					    gdouble front_factor, gdouble density) {
 
   while (renderings != NULL) {
-    rendering_context_set_depth_cueing_parameters(renderings->rendering_context, 
+    rendering_context_set_depth_cueing_parameters(renderings->context, 
 						  front_factor, density);
     renderings = renderings->next;
   }
@@ -946,7 +973,7 @@ void renderings_render(renderings_t * renderings)
 {
 
   while (renderings != NULL) {
-    rendering_context_render(renderings->rendering_context);
+    rendering_context_render(renderings->context);
     renderings = renderings->next;
   }
 

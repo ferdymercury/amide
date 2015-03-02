@@ -29,32 +29,32 @@
 #include "alignment.h"
 #include "ui_alignment_dialog.h"
 #include "ui_common.h"
-#include "../pixmaps/amide_logo.xpm"
+#include "pixmaps.h"
 
 
 
 
 #ifdef AMIDE_LIBGSL_SUPPORT
 
-static gchar * start_page_text = 
-"Welcome to the data set alignment wizard, used for\n"
-"aligning one medical image data set with another.\n"
-"\n"
-"Currently, only semiautomated registration has been\n"
-"implemented inside of AMIDE.\n";
-
 static gchar * data_set_error_page_text = 
 "There is only one data set in this study.  There needs\n"
 "to be at least two data sets to perform an alignment\n";
 
 static gchar * fiducial_marks_error_page_text =
-"There must exist at least 4 pairs of objects that\n"
-"can be used as alignment points between the two\n"
+"There must exist at least 3 pairs of objects that\n"
+"can be used as fiducial marks between the two\n"
 "data sets in order to perform an alignment\n";
 
 static gchar * end_page_text =
 "The alignment has been calculated, press Finish to\n"
 "apply, or Cancel to quit\n";
+
+static gchar * start_page_text = 
+"Welcome to the data set alignment wizard, used for\n"
+"aligning one medical image data set with another.\n"
+"\n"
+"Currently, only egistration using fiducial marks has\n"
+"been implemented inside of AMIDE.\n";
 
 #else /* no LIBGSL support */
 
@@ -62,13 +62,13 @@ static gchar * start_page_text =
 "Welcome to the data set alignment wizard, used for\n"
 "aligning one medical image data set with another.\n"
 "\n"
-"Currently, only semiautomated registration has been,\n"
-"implemented inside of AMIDE.  This feature requires,\n"
+"Currently, only registration using fiducial markers has\n"
+"been implemented inside of AMIDE.  This feature requires,\n"
 "support from the GNU Scientific Library (libgsl).  This\n"
 "copy of AMIDE has not been compiled with support for\n"
-"libgsl, so it cannot perform semiautomated registration.\n";
+"libgsl, so it cannot perform registration.\n";
 
-#endif
+#endif /* NO LIBGSL SUPPORT */
 
 
 
@@ -102,29 +102,32 @@ typedef struct ui_alignment_t {
   GtkWidget * list_moving_ds;
   GtkWidget * list_fixed_ds;
   GtkWidget * list_points;
-  GdkPixbuf * logo;
 
   GList * data_sets;
   AmitkDataSet * moving_ds;
   AmitkDataSet * fixed_ds;
   GList * selected_marks;
-  AmitkSpace * space; /* the new coordinate space for the moving volume */
+  AmitkSpace * transform_space; /* the new coordinate space for the moving volume */
 
   guint reference_count;
 } ui_alignment_t;
 
 
+static void cancel_cb(GtkWidget* widget, gpointer data);
+static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+static ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment);
+static ui_alignment_t * ui_alignment_init(void);
+
+
+#ifdef AMIDE_LIBGSL_SUPPORT
 static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
 static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data);
 static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data);
 static void data_set_selection_changed_cb(GtkTreeSelection * selection, gpointer data);
 static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * event, gpointer data);
 static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
-static void cancel_cb(GtkWidget* widget, gpointer data);
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
 
-static ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment);
-static ui_alignment_t * ui_alignment_init(void);
+
 
 
 
@@ -141,7 +144,7 @@ static gboolean next_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
   case DATA_SETS_PAGE:
     num_pairs = amitk_objects_count_pairs_by_name(AMITK_OBJECT_CHILDREN(ui_alignment->fixed_ds),
 						  AMITK_OBJECT_CHILDREN(ui_alignment->moving_ds));
-    if (num_pairs < 4) {
+    if (num_pairs < 3) {
       nonlinear = TRUE;
       gnome_druid_set_page(GNOME_DRUID(druid), 
 			   GNOME_DRUID_PAGE(ui_alignment->pages[NO_FIDUCIAL_MARKS_PAGE]));
@@ -175,6 +178,57 @@ static gboolean back_page_cb(GtkWidget * page, gpointer *druid, gpointer data) {
   }
 
   return nonlinear;
+}
+
+static void data_sets_update_model(ui_alignment_t * ui_alignment) {
+
+  GtkTreeIter iter;
+  GtkTreeModel * model;
+  GtkTreeSelection *selection;
+  GList * data_sets;
+  gint count;
+
+  /* update the moving data set */
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (ui_alignment->list_moving_ds));
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(ui_alignment->list_moving_ds));
+  gtk_list_store_clear(GTK_LIST_STORE(model));  /* make sure the list is clear */
+
+  data_sets = ui_alignment->data_sets;
+  count = 0;
+  while (data_sets != NULL) {
+    gtk_list_store_append (GTK_LIST_STORE(model), &iter);  /* Acquire an iterator */
+    gtk_list_store_set (GTK_LIST_STORE(model), &iter,
+			COLUMN_DATA_SET_NAME, AMITK_OBJECT_NAME(data_sets->data),
+			COLUMN_DATA_SET_POINTER, data_sets->data, -1);
+    if ( ((ui_alignment->moving_ds == NULL) && (count == 0))  ||
+	 (ui_alignment->moving_ds == data_sets->data))
+      gtk_tree_selection_select_iter (selection, &iter);
+    count++;
+    data_sets = data_sets->next;
+  }
+  
+  /* update the fixed data set */
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (ui_alignment->list_fixed_ds));
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(ui_alignment->list_fixed_ds));
+  gtk_list_store_clear(GTK_LIST_STORE(model));  /* make sure the list is clear */
+
+  data_sets = ui_alignment->data_sets;
+  count = 0;
+  while (data_sets != NULL) {
+    gtk_list_store_append (GTK_LIST_STORE(model), &iter);  /* Acquire an iterator */
+    gtk_list_store_set (GTK_LIST_STORE(model), &iter,
+			COLUMN_DATA_SET_NAME, AMITK_OBJECT_NAME(data_sets->data),
+			COLUMN_DATA_SET_POINTER, data_sets->data, -1);
+    if (((ui_alignment->fixed_ds == NULL) && (ui_alignment->moving_ds != data_sets->data))  ||
+	(ui_alignment->fixed_ds == data_sets->data))
+    if (count == 1)
+      gtk_tree_selection_select_iter (selection, &iter);
+    count++;
+    data_sets = data_sets->next;
+  }
+
+
+  return;
 }
 
 static void points_update_model(ui_alignment_t * ui_alignment) {
@@ -228,34 +282,40 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   ui_alignment_t * ui_alignment = data;
   which_page_t which_page;
   gboolean can_continue;
+  gdouble fre;
+  gchar * temp_string;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
 
   switch(which_page) {
   case DATA_SETS_PAGE:
+    data_sets_update_model(ui_alignment);
     can_continue = ((ui_alignment->fixed_ds != NULL) &&
 		    (ui_alignment->moving_ds != NULL) &&
 		    (ui_alignment->fixed_ds != ui_alignment->moving_ds));
     gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, can_continue, TRUE, TRUE);
     break;
   case FIDUCIAL_MARKS_PAGE:
-    points_update_model(ui_alignment); /* delete what was there before */
-    can_continue = (amitk_objects_count(ui_alignment->selected_marks) >= 4);
+    points_update_model(ui_alignment); 
+    can_continue = (amitk_objects_count(ui_alignment->selected_marks) >= 3);
     gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, can_continue, TRUE, TRUE);
     break;
   case CONCLUSION_PAGE:
-#ifdef AMIDE_LIBGSL_SUPPORT
     /* calculate the alignment */
-    ui_alignment->space = alignment_calculate(ui_alignment->moving_ds, 
-					      ui_alignment->fixed_ds, 
-					      ui_alignment->selected_marks);
-#endif
+    ui_alignment->transform_space = alignment_calculate(ui_alignment->moving_ds, 
+							ui_alignment->fixed_ds, 
+							ui_alignment->selected_marks,&fre);
+
+    temp_string = g_strdup_printf("%s\n\nThe calculated fiducial reference error is: %5.5f", 
+				  end_page_text,fre);
+    gnome_druid_page_edge_set_text(GNOME_DRUID_PAGE_EDGE(page), temp_string);
+    g_free(temp_string);
     gnome_druid_set_show_finish(GNOME_DRUID(druid), TRUE);
     break;
   case NO_FIDUCIAL_MARKS_PAGE:
     /* haven't been able to figure out how to grayout the next button.... */
-    //    gnome_druid_set_show_finish(GNOME_DRUID(druid), TRUE);
-     break;
+    gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), TRUE, FALSE, TRUE, TRUE);
+    break;
   default:
     g_warning("unexpected case in %s at line %d", __FILE__, __LINE__);
     break;
@@ -344,7 +404,7 @@ static gboolean points_button_press_event(GtkWidget * list, GdkEventButton * eve
   }
 
   count = amitk_objects_count(ui_alignment->selected_marks);
-  gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), TRUE, (count >= 4), TRUE, TRUE);
+  gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), TRUE, (count >= 3), TRUE, TRUE);
 
   return FALSE;
 }
@@ -355,18 +415,24 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
   ui_alignment_t * ui_alignment = data;
 
   /* sanity check */
-  g_return_if_fail(ui_alignment->space != NULL);
+  g_return_if_fail(ui_alignment->transform_space != NULL);
 
-#ifdef AMIDE_LIBGSL_SUPPORT
   /* apply the alignment transform */
-  amitk_space_copy_in_place(AMITK_SPACE(ui_alignment->moving_ds),ui_alignment->space);
-#endif
+  amitk_space_transform(AMITK_SPACE(ui_alignment->moving_ds),ui_alignment->transform_space);
 
   /* close the dialog box */
   cancel_cb(widget, data);
 
   return;
 }
+
+
+#endif /* AMIDE_LIBGSL_SUPPORT */
+
+
+
+
+
 
 /* function called to cancel the dialog */
 static void cancel_cb(GtkWidget* widget, gpointer data) {
@@ -401,7 +467,7 @@ static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data
 /* destroy a ui_alignment data structure */
 static ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment) {
 
-  if (ui_alignment == NULL) return ui_alignment;
+  g_return_val_if_fail(ui_alignment != NULL, NULL);
 
   /* sanity checks */
   g_return_val_if_fail(ui_alignment->reference_count > 0, NULL);
@@ -431,14 +497,9 @@ static ui_alignment_t * ui_alignment_free(ui_alignment_t * ui_alignment) {
     if (ui_alignment->selected_marks != NULL)
       ui_alignment->selected_marks = amitk_objects_unref(ui_alignment->selected_marks);
 
-    if (ui_alignment->space != NULL) {
-      g_object_unref(ui_alignment->space);
-      ui_alignment->space = NULL;
-    }
-
-    if (ui_alignment->logo != NULL) {
-      g_object_unref(ui_alignment->logo);
-      ui_alignment->logo = NULL;
+    if (ui_alignment->transform_space != NULL) {
+      g_object_unref(ui_alignment->transform_space);
+      ui_alignment->transform_space = NULL;
     }
 
     g_free(ui_alignment);
@@ -466,10 +527,7 @@ static ui_alignment_t * ui_alignment_init(void) {
   ui_alignment->moving_ds = NULL;
   ui_alignment->fixed_ds = NULL;
   ui_alignment->selected_marks = NULL;
-  ui_alignment->space = NULL;
-
-  /* set any needed parameters */
-  ui_alignment->logo = NULL;
+  ui_alignment->transform_space = NULL;
 
   return ui_alignment;
 }
@@ -477,25 +535,26 @@ static ui_alignment_t * ui_alignment_init(void) {
 
 /* function that sets up an align point dialog */
 void ui_alignment_dialog_create(AmitkStudy * study) {
-  
+
   ui_alignment_t * ui_alignment;
+  GdkPixbuf * logo;
+#ifdef AMIDE_LIBGSL_SUPPORT
   guint count;
   GtkWidget * table;
   GtkWidget * vseparator;
-  GtkWidget * vbox;
-  GList * data_sets;
   GtkListStore * store;
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
-  GtkTreeIter iter;
+#endif /* AMIDE_LIBGSL_SUPPORT */
   
   g_return_if_fail(AMITK_IS_STUDY(study));
   
+  logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
+
   ui_alignment = ui_alignment_init();
   ui_alignment->data_sets = 
-    amitk_object_children_of_type(AMITK_OBJECT(study), 
-				  AMITK_OBJECT_TYPE_DATA_SET, TRUE);
+    amitk_object_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_DATA_SET, TRUE);
 
   ui_alignment->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(ui_alignment->dialog), "delete_event",
@@ -506,41 +565,38 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
   g_signal_connect(G_OBJECT(ui_alignment->druid), "cancel", 
 		   G_CALLBACK(cancel_cb), ui_alignment);
 
-  ui_alignment->logo = gdk_pixbuf_new_from_xpm_data((const char **) amide_logo_xpm);
+
+  /* --------------- initial page ------------------ */
+#ifndef AMIDE_LIBGSL_SUPPORT
+  ui_alignment->pages[INTRO_PAGE]= 
+    gnome_druid_page_edge_new_with_vals(GNOME_EDGE_START, TRUE,
+					"Data Set Alignment Wizard",
+					start_page_text, logo, NULL, NULL);
+  gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
+			  GNOME_DRUID_PAGE(ui_alignment->pages[INTRO_PAGE]));
+  gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), FALSE, FALSE, TRUE, TRUE);
 
 
+#else /* #ifdef AMIDE_LIBGSL_SUPPORT */
   /* figure out how many data sets there are */
   count = amitk_data_sets_count(ui_alignment->data_sets, TRUE);
 
-
-  /* --------------- initial page ------------------ */
-#ifdef AMIDE_LIBGSL_SUPPORT
   ui_alignment->pages[INTRO_PAGE]= 
     gnome_druid_page_edge_new_with_vals(GNOME_EDGE_START,TRUE, 
 					"Data Set Alignment Wizard",
 					 (count >= 2) ? start_page_text : data_set_error_page_text,
-					 ui_alignment->logo, NULL, NULL);
+					 logo, NULL, NULL);
   gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
 			  GNOME_DRUID_PAGE(ui_alignment->pages[INTRO_PAGE]));
   if (count < 2) gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), FALSE, FALSE, TRUE, TRUE);
-#else /* NO LIBGSL SUPPORT */
-  ui_alignment->pages[INTRO_PAGE]= 
-    gnome_druid_page_start_new_with_vals("Data Set Alignment Wizard",
-					 start_page_text,
-					 ui_alignment->logo, NULL);
-  gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
-			  GNOME_DRUID_PAGE(ui_alignment->pages[INTRO_PAGE]));
-  gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), FALSE, FALSE, TRUE, TRUE);
-#endif
-
+  else gnome_druid_set_buttons_sensitive(GNOME_DRUID(ui_alignment->druid), FALSE, TRUE, TRUE, TRUE);
 
 
   /*------------------ pick your data set page ------------------ */
   ui_alignment->pages[DATA_SETS_PAGE] = 
-    gnome_druid_page_standard_new_with_vals("Data Set Selection", ui_alignment->logo, NULL);
+    gnome_druid_page_standard_new_with_vals("Data Set Selection",logo, NULL);
   gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
 			  GNOME_DRUID_PAGE(ui_alignment->pages[DATA_SETS_PAGE]));
-  vbox = GNOME_DRUID_PAGE_STANDARD(ui_alignment->pages[DATA_SETS_PAGE])->vbox;
   g_object_set_data(G_OBJECT(ui_alignment->pages[DATA_SETS_PAGE]), 
 		    "which_page", GINT_TO_POINTER(DATA_SETS_PAGE));
   g_signal_connect(G_OBJECT(ui_alignment->pages[DATA_SETS_PAGE]), "next", 
@@ -549,7 +605,8 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
 		   G_CALLBACK(prepare_page_cb), ui_alignment);
 
   table = gtk_table_new(3,3,FALSE);
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 5);
+  gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(ui_alignment->pages[DATA_SETS_PAGE])->vbox), 
+		     table, TRUE, TRUE, 5);
     
     
   /* the moving data set */
@@ -571,23 +628,9 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
   gtk_table_attach(GTK_TABLE(table),ui_alignment->list_moving_ds, 0,1,0,1,
 		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
 
-  data_sets = ui_alignment->data_sets;
-  count = 0;
-  while (data_sets != NULL) {
-    gtk_list_store_append (store, &iter);  /* Acquire an iterator */
-    gtk_list_store_set (store, &iter,
-			COLUMN_DATA_SET_NAME, AMITK_OBJECT_NAME(data_sets->data),
-			COLUMN_DATA_SET_POINTER, data_sets->data, -1);
-    if (count == 0)
-      gtk_tree_selection_select_iter (selection, &iter);
-    count++;
-    data_sets = data_sets->next;
-  }
-  
+
   vseparator = gtk_vseparator_new();
-  gtk_table_attach(GTK_TABLE(table), vseparator,
-		   1,2,0,2, 
-		   0, GTK_FILL, X_PADDING, Y_PADDING);
+  gtk_table_attach(GTK_TABLE(table), vseparator, 1,2,0,2, 0, GTK_FILL, X_PADDING, Y_PADDING);
   
   /* the fixed data set */
   store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_POINTER);
@@ -604,26 +647,14 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
   g_object_set_data(G_OBJECT(selection), "fixed", GINT_TO_POINTER(TRUE));
   g_signal_connect(G_OBJECT(selection), "changed",
 		   G_CALLBACK(data_set_selection_changed_cb), ui_alignment);
+
   gtk_table_attach(GTK_TABLE(table),ui_alignment->list_fixed_ds, 2,3,0,1,
 		   GTK_FILL|GTK_EXPAND, GTK_FILL | GTK_EXPAND,X_PADDING, Y_PADDING);
 
-  data_sets = ui_alignment->data_sets;
-  count = 0;
-  while (data_sets != NULL) {
-    gtk_list_store_append (store, &iter);  /* Acquire an iterator */
-    gtk_list_store_set (store, &iter,
-			COLUMN_DATA_SET_NAME, AMITK_OBJECT_NAME(data_sets->data),
-			COLUMN_DATA_SET_POINTER, data_sets->data, -1);
-    if (count == 1)
-      gtk_tree_selection_select_iter (selection, &iter);
-    count++;
-    data_sets = data_sets->next;
-  }
 
   /*------------------ pick your alignment points page ------------------ */
   ui_alignment->pages[FIDUCIAL_MARKS_PAGE] = 
-    gnome_druid_page_standard_new_with_vals("Alignment Points Selection", ui_alignment->logo, NULL);
-  vbox = GNOME_DRUID_PAGE_STANDARD(ui_alignment->pages[FIDUCIAL_MARKS_PAGE])->vbox;
+    gnome_druid_page_standard_new_with_vals("Fiducial Marks Selection", logo, NULL);
   g_object_set_data(G_OBJECT(ui_alignment->pages[FIDUCIAL_MARKS_PAGE]), 
 		    "which_page", GINT_TO_POINTER(FIDUCIAL_MARKS_PAGE));
   gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
@@ -632,7 +663,8 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
 		   G_CALLBACK(prepare_page_cb), ui_alignment);
 
   table = gtk_table_new(2,2,FALSE);
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 5);
+  gtk_box_pack_start(GTK_BOX(GNOME_DRUID_PAGE_STANDARD(ui_alignment->pages[FIDUCIAL_MARKS_PAGE])->vbox), 
+		     table, TRUE, TRUE, 5);
     
     
   store = gtk_list_store_new(3, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_POINTER);
@@ -661,8 +693,7 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
   /* ----------------  conclusion page ---------------------------------- */
   ui_alignment->pages[CONCLUSION_PAGE] = 
     gnome_druid_page_edge_new_with_vals(GNOME_EDGE_FINISH, TRUE,
-					"Conclusion", end_page_text,
-					ui_alignment->logo, NULL, NULL);
+					"Conclusion", NULL,logo, NULL, NULL);
   g_object_set_data(G_OBJECT(ui_alignment->pages[CONCLUSION_PAGE]), 
 		    "which_page", GINT_TO_POINTER(CONCLUSION_PAGE));
   g_signal_connect(G_OBJECT(ui_alignment->pages[CONCLUSION_PAGE]), "prepare", 
@@ -676,7 +707,7 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
   ui_alignment->pages[NO_FIDUCIAL_MARKS_PAGE] =
     gnome_druid_page_edge_new_with_vals(GNOME_EDGE_OTHER, TRUE,
 					"Alignment Error", fiducial_marks_error_page_text, 
-					ui_alignment->logo, NULL, NULL);
+					logo, NULL, NULL);
   g_object_set_data(G_OBJECT(ui_alignment->pages[NO_FIDUCIAL_MARKS_PAGE]), 
 		    "which_page", GINT_TO_POINTER(NO_FIDUCIAL_MARKS_PAGE));
   g_signal_connect(G_OBJECT(ui_alignment->pages[NO_FIDUCIAL_MARKS_PAGE]), "prepare", 
@@ -685,8 +716,9 @@ void ui_alignment_dialog_create(AmitkStudy * study) {
 		   G_CALLBACK(back_page_cb), ui_alignment);
   gnome_druid_append_page(GNOME_DRUID(ui_alignment->druid), 
 			  GNOME_DRUID_PAGE(ui_alignment->pages[NO_FIDUCIAL_MARKS_PAGE]));
+#endif /* AMIDE_LIBGSL_SUPPORT */
 
-
+  g_object_unref(logo);
   gtk_widget_show_all(ui_alignment->dialog);
   return;
 }

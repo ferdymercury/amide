@@ -115,14 +115,14 @@ typedef struct _rendering_t {
   AmitkObject * object;
   gchar * name;
   AmitkColorTable color_table;
+  pixel_type_t pixel_type;
   amide_time_t start;
   amide_time_t duration;
   AmitkVolume * volume; /* volume in which the data resides */
   rendering_voxel_t * rendering_data;
-  AmitkPoint voxel_size;
+  amide_real_t voxel_size; /* volpack needs isotropic voxels */
   AmitkVoxel dim; /* dimensions of our rendering_data and image */
   guchar * image;
-  pixel_type_t pixel_type;
   gfloat shade_table[RENDERING_NORMAL_MAX+1];	/* shading lookup table */
   gfloat density_ramp[RENDERING_DENSITY_MAX+1]; /* opacity as a function */
   gfloat gradient_ramp[RENDERING_GRADIENT_MAX+1]; /* opacity as a function */
@@ -130,6 +130,7 @@ typedef struct _rendering_t {
   gfloat * ramp_y[NUM_CLASSIFICATIONS];
   guint num_points[NUM_CLASSIFICATIONS];
   curve_type_t curve_type[NUM_CLASSIFICATIONS];
+  gboolean need_rerender;
   guint ref_count;
 } rendering_t;
 
@@ -137,7 +138,7 @@ typedef struct _rendering_t {
 /* a list of rendering contexts */
 typedef struct _renderings_t renderings_t;
 struct _renderings_t {
-  rendering_t * rendering_context;
+  rendering_t * context;
   guint ref_count;
   renderings_t * next;
 };
@@ -175,7 +176,7 @@ void renderings_reload_objects(renderings_t * renderings, const amide_time_t sta
 void renderings_set_rotation(renderings_t * contexts, AmitkAxis dir, gdouble rotation);
 void renderings_reset_rotation(renderings_t * contexts);
 void renderings_set_quality(renderings_t * renderlings, rendering_quality_t quality);
-void renderings_set_image(renderings_t * renderings, pixel_type_t pixel_type, gdouble zoom);
+void renderings_set_zoom(renderings_t * renderings, gdouble zoom);
 void renderings_set_depth_cueing(renderings_t * renderings, gboolean state);
 void renderings_set_depth_cueing_parameters(renderings_t * renderings, 
 					    gdouble front_factor, gdouble density);

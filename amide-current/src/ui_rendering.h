@@ -56,7 +56,6 @@ typedef struct ui_rendering_t {
   gdouble stereo_eye_angle;
   gint stereo_eye_width; /* pixels */
   rendering_quality_t quality;
-  pixel_type_t pixel_type;
   gboolean depth_cueing;
   gdouble front_factor;
   gdouble density;
@@ -67,7 +66,7 @@ typedef struct ui_rendering_t {
 } ui_rendering_t;
 
 /* external functions */
-void ui_rendering_update_canvases(ui_rendering_t * ui_rendering);
+void ui_rendering_update_canvas(ui_rendering_t * ui_rendering, gboolean override);
 void ui_rendering_create(GList * objects, amide_time_t start, 
 			 amide_time_t duration, AmitkInterpolation interpolation);
 

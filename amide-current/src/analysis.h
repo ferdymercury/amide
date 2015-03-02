@@ -30,10 +30,6 @@
 #include "amitk_study.h"
 
 /* defines */
-#define ANALYSIS_GRANULARITY 4
-#define ANALYSIS_GRAIN_SIZE 0.015625 /* 1/64 */
-//#define ANALYSIS_GRANULARITY 10 - takes way to long
-//#define ANALYSIS_GRAIN_SIZE 0.001 /* 1/10^3 */
 
 /* typedefs, etc. */
 
@@ -43,14 +39,22 @@ typedef struct _analysis_roi_t analysis_roi_t;
 typedef struct _analysis_study_t analysis_study_t;
 
 struct _analysis_frame_t {
-  amide_time_t duration;
-  amide_time_t time_midpoint;
+
+  /* stats */
   amide_data_t mean;
-  amide_data_t voxels;
+  amide_real_t voxels;
   amide_data_t var;
   amide_data_t min;
   amide_data_t max;
   amide_data_t total;
+
+  /* info */
+  amide_time_t duration;
+  amide_time_t time_midpoint;
+
+  /* internal */
+  gboolean min_max_valid;
+  amide_data_t correction;
   analysis_frame_t * next_frame_analysis;
   guint ref_count;
 };
@@ -79,13 +83,6 @@ analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes);
 
 analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
 analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * volumes);
-
-/* variable type function declarations */
-#include "analysis_ELLIPSOID.h"
-#include "analysis_CYLINDER.h"
-#include "analysis_BOX.h"
-#include "analysis_ISOCONTOUR_2D.h"
-#include "analysis_ISOCONTOUR_3D.h"
 
 #endif /* __ANALYSIS_H__ */
 

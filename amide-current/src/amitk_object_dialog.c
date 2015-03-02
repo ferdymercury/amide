@@ -164,7 +164,6 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   GtkWidget * menu;
   GtkWidget * menuitem;
   GtkWidget * hseparator;
-  GtkWidget * vseparator;
   GtkWidget * axis_indicator;
   GtkWidget * check_button;
   GtkWidget * notebook;
@@ -369,16 +368,6 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
 		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
-    if (AMITK_IS_DATA_SET(object)) {
-      vseparator = gtk_vseparator_new();
-      gtk_table_attach(GTK_TABLE(packing_table), vseparator, 2, 3, 
-		       table_row, table_row+5, 0, GTK_FILL, X_PADDING, Y_PADDING);
-      gtk_widget_show(vseparator);
-      label = gtk_label_new("Voxel Size (mm)");
-      gtk_table_attach(GTK_TABLE(packing_table), label, 3,5,
-		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(label);
-    }
     table_row++;
 
     /* location, and dimensions for data set's */
@@ -390,37 +379,11 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     
       dialog->center_entry[i_axis] = gtk_entry_new();
       gtk_editable_set_editable(GTK_EDITABLE(dialog->center_entry[i_axis]), TRUE);
-      g_object_set_data(G_OBJECT(dialog->center_entry[i_axis]), "axis", GINT_TO_POINTER(i_axis));
       g_signal_connect(G_OBJECT(dialog->center_entry[i_axis]), "activate", G_CALLBACK(dialog_change_center_cb), dialog);
       gtk_table_attach(GTK_TABLE(packing_table), dialog->center_entry[i_axis],1,2,
 		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(dialog->center_entry[i_axis]);
 
-      if (AMITK_IS_DATA_SET(object)) {
-	label = gtk_label_new(amitk_axis_get_name(i_axis));
-	gtk_table_attach(GTK_TABLE(packing_table), label, 3,4,
-			 table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-	gtk_widget_show(label);
-
-	dialog->voxel_size_entry[i_axis] = gtk_entry_new();
-	gtk_editable_set_editable(GTK_EDITABLE(dialog->voxel_size_entry[i_axis]), TRUE);
-	g_object_set_data(G_OBJECT(dialog->voxel_size_entry[i_axis]), "axis", GINT_TO_POINTER(i_axis));
-	g_signal_connect(G_OBJECT(dialog->voxel_size_entry[i_axis]), "activate", G_CALLBACK(dialog_change_voxel_size_cb), dialog);
-	gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_entry[i_axis],4,5,
-			 table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-	gtk_widget_show(dialog->voxel_size_entry[i_axis]);
-      }
-      table_row++;
-    }
-
-    if (AMITK_IS_DATA_SET(object)) {
-      check_button = gtk_check_button_new_with_label ("keep aspect ratio");
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
-				   dialog->aspect_ratio);
-      g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(dialog_aspect_ratio_cb), dialog);
-      gtk_table_attach(GTK_TABLE(packing_table), check_button,4,5,
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
-      gtk_widget_show(check_button);
       table_row++;
     }
 
@@ -444,9 +407,56 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 
 
   /* ---------------------------
-     Dimension adjustment page for ROI's
+     Voxel Size Page for Data Set's
      --------------------------- */
 
+  if (AMITK_IS_DATA_SET(object)) {
+
+    /* the next page of options */
+    packing_table = gtk_table_new(4,2,FALSE);
+    table_row=0;
+    label = gtk_label_new("Voxel Size");
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
+    gtk_widget_show(label);
+
+    label = gtk_label_new("Voxel Size (mm)");
+    gtk_table_attach(GTK_TABLE(packing_table), label, 0,2,
+		     table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(label);
+    table_row++;
+      
+    for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
+      label = gtk_label_new(amitk_axis_get_name(i_axis));
+      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+
+      dialog->voxel_size_entry[i_axis] = gtk_entry_new();
+      gtk_editable_set_editable(GTK_EDITABLE(dialog->voxel_size_entry[i_axis]), TRUE);
+      g_object_set_data(G_OBJECT(dialog->voxel_size_entry[i_axis]), "axis", GINT_TO_POINTER(i_axis));
+      g_signal_connect(G_OBJECT(dialog->voxel_size_entry[i_axis]), "activate", G_CALLBACK(dialog_change_voxel_size_cb), dialog);
+      gtk_table_attach(GTK_TABLE(packing_table), dialog->voxel_size_entry[i_axis],1,2,
+		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(dialog->voxel_size_entry[i_axis]);
+      table_row++;
+    }	
+    
+    check_button = gtk_check_button_new_with_label ("keep aspect ratio");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
+				 dialog->aspect_ratio);
+    g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(dialog_aspect_ratio_cb), dialog);
+    gtk_table_attach(GTK_TABLE(packing_table), check_button,1,2,
+		     table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(check_button);
+    table_row++;
+
+    gtk_widget_show(packing_table);
+  }
+
+  /* ---------------------------
+     Dimension adjustment page for ROI's
+     --------------------------- */
+  
   if (AMITK_IS_ROI(object)) {
     if (AMITK_ROI_TYPE(object) != AMITK_ROI_TYPE_ISOCONTOUR_3D) {
       
@@ -475,19 +485,18 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	
 	  dialog->dimension_entry[i_axis] = gtk_entry_new();
 	  gtk_editable_set_editable(GTK_EDITABLE(dialog->dimension_entry[i_axis]), TRUE);
-	  g_object_set_data(G_OBJECT(dialog->dimension_entry[i_axis]), "axis", GINT_TO_POINTER(i_axis));
 	  g_signal_connect(G_OBJECT(dialog->dimension_entry[i_axis]), "activate", G_CALLBACK(dialog_change_dim_cb), dialog);
 	  gtk_table_attach(GTK_TABLE(packing_table), dialog->dimension_entry[i_axis],1,2,
 			   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
 	  gtk_widget_show(dialog->dimension_entry[i_axis]);
 	  table_row++;
 	}
-      }	
-      
+      }
+
       gtk_widget_show(packing_table);
     }
   }
-
+    
   /* ----------------------------------------
      Rotations page
      ---------------------------------------- 
@@ -512,7 +521,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
     GtkWidget * threshold;
 
     label = gtk_label_new("Colormap/Threshold");
-    threshold = amitk_threshold_new(AMITK_DATA_SET(object), AMITK_THRESHOLD_BOX_LAYOUT);
+    threshold = amitk_threshold_new(AMITK_DATA_SET(object), AMITK_THRESHOLD_BOX_LAYOUT, FALSE);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), threshold, label);
     gtk_widget_show(label);
     gtk_widget_show(threshold);
@@ -678,8 +687,31 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       entry = gtk_entry_new();
       gtk_entry_set_text(GTK_ENTRY(entry), amitk_raw_format_names[AMITK_RAW_DATA_FORMAT(AMITK_DATA_SET_RAW_DATA(object))]);
       gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-      gtk_table_attach(GTK_TABLE(packing_table), entry,1,2,
-		       table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       1,3, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(entry);
+      table_row++;
+      
+      /* a separator for clarity */
+      hseparator = gtk_hseparator_new();
+      gtk_table_attach(GTK_TABLE(packing_table), hseparator,0,2,
+		       table_row, table_row+1, GTK_FILL, GTK_FILL, X_PADDING, Y_PADDING);
+      gtk_widget_show(hseparator);
+      table_row++;
+      
+      /* widget to tell you the scaling format */
+      label = gtk_label_new("Scale Format:");
+      gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      gtk_widget_show(label);
+      
+      entry = gtk_entry_new();
+      gtk_entry_set_text(GTK_ENTRY(entry), amitk_data_set_scaling_get_name(AMITK_DATA_SET(object)));
+      gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+      gtk_table_attach(GTK_TABLE(packing_table), entry,
+		       1,3, table_row, table_row+1, 
+		       GTK_FILL, 0, X_PADDING, Y_PADDING);
       gtk_widget_show(entry);
       table_row++;
       
@@ -705,7 +737,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
 	gtk_widget_show(label);
 	
 	entry = gtk_entry_new();
-	temp_string = g_strdup_printf("%d", voxel_get_dim(AMITK_DATA_SET_RAW_DATA(object)->dim,i_dim));
+	temp_string = g_strdup_printf("%d", voxel_get_dim(AMITK_DATA_SET_DIM(object),i_dim));
 	gtk_entry_set_text(GTK_ENTRY(entry), temp_string);
 	g_free(temp_string);
 	gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
@@ -915,47 +947,45 @@ static void dialog_change_center_cb(GtkWidget * widget, gpointer data) {
   gchar * str;
   gint error;
   gdouble temp_val;
-  AmitkAxis axis;
+  AmitkAxis i_axis;
   AmitkPoint old_center;
   AmitkPoint new_center;
   AmitkObjectDialog * dialog=data;
 
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
+  if (AMITK_IS_VOLUME(dialog->object))
+    old_center = amitk_volume_center(AMITK_VOLUME(dialog->object)); /* in base coords */
+  else if (AMITK_IS_FIDUCIAL_MARK(dialog->object))
+    old_center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
+  else
+    g_return_if_reached();
 
-  if (error != EOF) { /* make sure it's a valid number */
-  
-    if (AMITK_IS_VOLUME(dialog->object))
-      old_center = amitk_volume_center(AMITK_VOLUME(dialog->object)); /* in base coords */
-    else if (AMITK_IS_FIDUCIAL_MARK(dialog->object))
-      old_center = AMITK_FIDUCIAL_MARK_GET(dialog->object);
-    else
-      g_return_if_reached();
-    new_center = old_center;
-  
-    axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
+  new_center = old_center;
 
-    /* and save the value until it's applied to the actual roi */
-    switch(axis) {
-    case AMITK_AXIS_X:
-      new_center.x = temp_val;
-      break;
-    case AMITK_AXIS_Y:
-      new_center.y = temp_val;
-      break;
-    case AMITK_AXIS_Z:
-      new_center.z = temp_val;
-      break;
-    default:
-      g_return_if_reached();
-      break; /* do nothing */
+  for (i_axis = 0; i_axis< AMITK_AXIS_NUM; i_axis++) {
+    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->center_entry[i_axis]), 0, -1); /* get contents */
+    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
+    g_free(str);
+
+    if (error != EOF) { /* make sure it's a valid number */
+      switch(i_axis) {
+      case AMITK_AXIS_X:
+	new_center.x = temp_val;
+	break;
+      case AMITK_AXIS_Y:
+	new_center.y = temp_val;
+	break;
+      case AMITK_AXIS_Z:
+	new_center.z = temp_val;
+	break;
+      default:
+	g_return_if_reached();
+	break; /* do nothing */
+      }
     }
-    
-    /* recalculate the object's offset based on the new dimensions/center/and axis */
-    amitk_space_shift_offset(AMITK_SPACE(dialog->object), point_sub(new_center, old_center));
-    
   }
+      
+  /* recalculate the object's offset based on the new dimensions/center/and axis */
+  amitk_space_shift_offset(AMITK_SPACE(dialog->object), point_sub(new_center, old_center));
   
   dialog_update_entries(dialog);
   return;
@@ -966,61 +996,58 @@ static void dialog_change_dim_cb(GtkWidget * widget, gpointer data) {
   gchar * str;
   gint error;
   gdouble temp_val;
-  AmitkAxis axis;
+  AmitkAxis i_axis;
   AmitkPoint shift;
   AmitkPoint new_corner;
   AmitkPoint old_corner;
-  AmitkPoint temp_point[2];
+  AmitkCorners temp_corner;
   AmitkObjectDialog * dialog=data;
 
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
+  /* initialize the center and dimension variables based on the old roi info */
+  if (AMITK_IS_VOLUME(dialog->object))
+    new_corner = old_corner = AMITK_VOLUME_CORNER(dialog->object); /* in object's coords */
+  else
+    g_return_if_reached();
 
-  if (error != EOF) { /* make sure it's a valid number */
+  for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++) {
+    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->dimension_entry[i_axis]), 0, -1); /* get contents */
+    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
+    g_free(str);
 
-    /* initialize the center and dimension variables based on the old roi info */
-    if (AMITK_IS_VOLUME(dialog->object))
-      new_corner = old_corner = AMITK_VOLUME_CORNER(dialog->object); /* in object's coords */
-    else
-      g_return_if_reached();
-    
-    /* figure out which widget this is */
-    axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
-    
-    /* and save the value until it's applied to the actual roi */
-    switch(axis) {
-    case AMITK_AXIS_X:
-      new_corner.x = fabs(temp_val);
-      break;
-    case AMITK_AXIS_Y:
-      new_corner.y = fabs(temp_val);
-      break;
-    case AMITK_AXIS_Z:
-      new_corner.z = fabs(temp_val);
-      break;
-    default:
-      g_return_if_reached();
-      break; /* do nothing */
-    }
-
-    /* recalculate the object's offset based on the new dimensions/center/and axis */
-    if (AMITK_IS_ROI(dialog->object)) {
-      temp_point[0] = amitk_space_s2b(AMITK_SPACE(dialog->object), new_corner);
-      temp_point[1] = amitk_space_s2b(AMITK_SPACE(dialog->object), old_corner);
-      shift = point_cmult(-0.5, point_sub(temp_point[0], temp_point[1]));
-    }
-    amitk_space_shift_offset(AMITK_SPACE(dialog->object), shift);
-    
-    /* reset the far corner */
-    if (AMITK_IS_ROI(dialog->object)) {
-      amitk_volume_set_corner(AMITK_VOLUME(dialog->object), new_corner);
-      
-      if (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
-	AmitkPoint new_voxel_size = AMITK_ROI_VOXEL_SIZE(dialog->object);
-	new_voxel_size.z = new_corner.z;
-	amitk_roi_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
+    if (error != EOF) { /* make sure it's a valid number */
+      switch(i_axis) {
+      case AMITK_AXIS_X:
+	new_corner.x = fabs(temp_val);
+	break;
+      case AMITK_AXIS_Y:
+	new_corner.y = fabs(temp_val);
+	break;
+      case AMITK_AXIS_Z:
+	new_corner.z = fabs(temp_val);
+	break;
+      default:
+	g_return_if_reached();
+	break; /* do nothing */
       }
+    }
+  }
+    
+  /* recalculate the object's offset based on the new dimensions/center/and axis */
+  if (AMITK_IS_ROI(dialog->object)) {
+    temp_corner[0] = amitk_space_s2b(AMITK_SPACE(dialog->object), new_corner);
+    temp_corner[1] = amitk_space_s2b(AMITK_SPACE(dialog->object), old_corner);
+    shift = point_cmult(-0.5, point_sub(temp_corner[0], temp_corner[1]));
+  }
+  amitk_space_shift_offset(AMITK_SPACE(dialog->object), shift);
+  
+  /* reset the far corner */
+  if (AMITK_IS_ROI(dialog->object)) {
+    amitk_volume_set_corner(AMITK_VOLUME(dialog->object), new_corner);
+    
+    if (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) {
+      AmitkPoint new_voxel_size = AMITK_ROI_VOXEL_SIZE(dialog->object);
+      new_voxel_size.z = new_corner.z;
+      amitk_roi_set_voxel_size(AMITK_ROI(dialog->object), new_voxel_size);
     }
   }
 
@@ -1034,64 +1061,72 @@ static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
   gchar * str;
   gint error;
   gdouble temp_val;
-  AmitkAxis axis;
+  AmitkAxis end_axis;
+  AmitkAxis start_axis;
+  AmitkAxis i_axis;
   AmitkObjectDialog * dialog=data;
   AmitkPoint new_voxel_size=one_point;
   amide_real_t scale;
+  AmitkPoint center;
 
   g_return_if_fail(AMITK_IS_DATA_SET(dialog->object));
 
   /* figure out which widget this is */
-  axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
-
-  str = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1); /* get contents */
-  error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
-  g_free(str);
-
-  if (error != EOF) { /* make sure it's a valid number */
-  
-    new_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(dialog->object);
-
-    switch(axis) {
-    case AMITK_AXIS_X:
-      if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
-	if (dialog->aspect_ratio) {
-	  scale = temp_val/new_voxel_size.x;
-	  new_voxel_size.y = scale*new_voxel_size.y;
-	  new_voxel_size.z = scale*new_voxel_size.z;
-	}
-	new_voxel_size.x = temp_val;
-      }
-      break;
-    case AMITK_AXIS_Y:
-      if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
-	if (dialog->aspect_ratio) {
-	  scale = temp_val/new_voxel_size.y;
-	  new_voxel_size.x = scale*new_voxel_size.x;
-	  new_voxel_size.z = scale*new_voxel_size.z;
-	}
-	new_voxel_size.y = temp_val;
-      }
-      break;
-    case AMITK_AXIS_Z:
-      if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
-	if (dialog->aspect_ratio) {
-	  scale = temp_val/new_voxel_size.z;
-	  new_voxel_size.y = scale*new_voxel_size.y;
-	  new_voxel_size.x = scale*new_voxel_size.x;
-	}
-	new_voxel_size.z = temp_val;
-      }
-      break;
-    default:
-      g_return_if_reached(); /* error */
-      break; 
-    }
-    
-    if (AMITK_IS_DATA_SET(dialog->object))
-      amitk_data_set_set_voxel_size(AMITK_DATA_SET(dialog->object), new_voxel_size);
+  if (dialog->aspect_ratio) {
+    start_axis = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "axis")); 
+    end_axis = start_axis+1;
+  } else {
+    start_axis = 0;
+    end_axis = AMITK_AXIS_NUM;
   }
 
+  new_voxel_size = AMITK_DATA_SET_VOXEL_SIZE(dialog->object);
+  center = amitk_volume_center(AMITK_VOLUME(dialog->object));
+
+  for (i_axis = start_axis; i_axis < end_axis; i_axis++) {
+    str = gtk_editable_get_chars(GTK_EDITABLE(dialog->voxel_size_entry[i_axis]), 0, -1); /* get contents */
+    error = sscanf(str, "%lf", &temp_val); /* convert to a floating point */
+    g_free(str);
+    
+    if (error != EOF) { /* make sure it's a valid number */
+      
+      if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
+	switch(i_axis) {
+	case AMITK_AXIS_X:
+	  if (dialog->aspect_ratio) {
+	    scale = temp_val/new_voxel_size.x;
+	    new_voxel_size.y = scale*new_voxel_size.y;
+	    new_voxel_size.z = scale*new_voxel_size.z;
+	  }
+	  new_voxel_size.x = temp_val;
+	  break;
+	case AMITK_AXIS_Y:
+	  if (dialog->aspect_ratio) {
+	    scale = temp_val/new_voxel_size.y;
+	    new_voxel_size.x = scale*new_voxel_size.x;
+	    new_voxel_size.z = scale*new_voxel_size.z;
+	  }
+	  new_voxel_size.y = temp_val;
+	  break;
+	case AMITK_AXIS_Z:
+	  if (dialog->aspect_ratio) {
+	    scale = temp_val/new_voxel_size.z;
+	    new_voxel_size.y = scale*new_voxel_size.y;
+	    new_voxel_size.x = scale*new_voxel_size.x;
+	  }
+	  new_voxel_size.z = temp_val;
+	  break;
+      default:
+	g_return_if_reached(); /* error */
+	break; 
+	}
+      }
+    }
+  }
+
+  amitk_data_set_set_voxel_size(AMITK_DATA_SET(dialog->object), new_voxel_size);
+  amitk_volume_set_center(AMITK_VOLUME(dialog->object), center); /* preserve center location */
+  
   dialog_update_entries(dialog);
   return;
 }

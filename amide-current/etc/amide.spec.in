@@ -49,6 +49,7 @@ if [ -d $RPM_BUILD_ROOT ] ; then rm -rf $RPM_BUILD_ROOT; fi
 %{prefix}/share/gnome/help/amide/*
 %{prefix}/share/gtk-doc/html/amitk/*
 %{prefix}/share/pixmaps/*
+%{prefix}/share/applications/*
 
 #%files lib
 #%defattr(-, root, root)

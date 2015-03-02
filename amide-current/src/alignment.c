@@ -81,41 +81,46 @@ static AmitkPoint matrix_mult_point(gsl_matrix * matrix, AmitkPoint rp) {
    Hill, Batchelor, Holden, and Hawkes Phys. Med. Biol 46 (2001) R1-R45
 */
 
-AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds,GList * marks) {
+AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_ds, GList * marks,
+				 gdouble *pfre) {
 
-  AmitkSpace * space;
+  AmitkSpace * transform_space=NULL;
   guint count = 0;
   GList * moving_fiducial_marks = NULL;
   GList * fixed_fiducial_marks = NULL;
+  GList * moving_temp_list;
+  GList * fixed_temp_list;
   AmitkObject * moving_fiducial_mark;
   AmitkObject * fixed_fiducial_mark;
   AmitkFiducialMark * fiducial_mark;
   AmitkPoint moving_centroid = zero_point;
   AmitkPoint fixed_centroid = zero_point;
   AmitkPoint temp_point;
-  AmitkPoint offset_point;
-  AmitkPoint translation_point;
-  AmitkPoint axis[AMITK_AXIS_NUM];
-  AmitkPoint center;
-  gsl_matrix * fixed_matrix;
-  gsl_matrix * moving_matrixt;
+  AmitkPoint shift;
+  AmitkPoint offset_shift;
+  AmitkAxes axis;
+  AmitkPoint moving_center;
+  AmitkPoint fixed_center;
+  gsl_matrix * fixed_matrix=NULL;
+  gsl_matrix * moving_matrixt=NULL;
   gsl_matrix * matrix_a;
   gsl_matrix * matrix_v;
-  gsl_matrix * matrix_r;
+  gsl_matrix * matrix_r=NULL;
   gsl_matrix * matrix_temp;
   gsl_matrix * matrix_diag;
   gsl_permutation * permutation;
   gsl_vector * vector_s;
+  gsl_vector * vector_w;
   gint i;
   gint signum;
   gdouble det;
+  gdouble fre;
+  gint status;
   const char * mark_name;
 
-  space = amitk_space_new();
-
-  g_return_val_if_fail(AMITK_IS_DATA_SET(moving_ds), space);
-  g_return_val_if_fail(AMITK_IS_DATA_SET(fixed_ds), space);
-  g_return_val_if_fail(marks != NULL, space);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(moving_ds), NULL);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(fixed_ds), NULL);
+  g_return_val_if_fail(marks != NULL, NULL);
 
 
   /* get the two lists of points */
@@ -132,17 +137,18 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
 
 	moving_fiducial_marks = g_list_append(moving_fiducial_marks, g_object_ref(moving_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
-	  center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
+	  moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
 	else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
-	  center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
-	moving_centroid = point_add(moving_centroid, center);
+	  moving_center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
+	moving_centroid = point_add(moving_centroid, moving_center);
 	
 	fixed_fiducial_marks = g_list_append(fixed_fiducial_marks, g_object_ref(fixed_fiducial_mark));
 	if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
-	  center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
+	  fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
 	else /* (AMITK_IS_VOLUME(fixed_fiducial_mark) */
-	  center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
-	fixed_centroid = point_add(fixed_centroid, center);
+	  fixed_center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
+	fixed_centroid = point_add(fixed_centroid, fixed_center);
+
 	count++;
       }
     }
@@ -156,73 +162,79 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
   /* sanity check */
   if (count < 3) {
     g_warning("Cannot perform an alignment with %d points, need at least 3",count);
-    moving_fiducial_marks = amitk_objects_unref(moving_fiducial_marks);
-    fixed_fiducial_marks = amitk_objects_unref(fixed_fiducial_marks);
-    return space;
+    goto ending;
   }
 
   /* translate the points into data structures that GSL can handle */
   /* also demean the alignment points so the centroid of each set is the origin */
   /* the matrix are constructed such that each row is a point */
   /* moving_matrixt is the transpose of the moving matrix */
-  fixed_matrix = gsl_matrix_alloc(count, AMITK_AXIS_NUM);
   moving_matrixt = gsl_matrix_alloc(AMITK_AXIS_NUM, count);
+  fixed_matrix = gsl_matrix_alloc(count, AMITK_AXIS_NUM);
+
+  moving_temp_list = moving_fiducial_marks;
+  fixed_temp_list = fixed_fiducial_marks;
+
   for (i=0;i<count;i++) {
-    moving_fiducial_mark = moving_fiducial_marks->data;
+
+    moving_fiducial_mark = moving_temp_list->data;
+    moving_temp_list = moving_temp_list->next;
+
+    fixed_fiducial_mark = fixed_temp_list->data;
+    fixed_temp_list = fixed_temp_list->next;
+
     if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
-      center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
+      moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
     else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
-      center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
-    temp_point = point_sub(center, moving_centroid);
+      moving_center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
+    temp_point = point_sub(moving_center, moving_centroid);
     gsl_matrix_set(moving_matrixt, AMITK_AXIS_X, i, temp_point.x);
     gsl_matrix_set(moving_matrixt, AMITK_AXIS_Y, i, temp_point.y);
     gsl_matrix_set(moving_matrixt, AMITK_AXIS_Z, i, temp_point.z);
-    moving_fiducial_marks = g_list_remove(moving_fiducial_marks, moving_fiducial_mark);
-    g_object_unref(moving_fiducial_mark);
 
-    fixed_fiducial_mark = fixed_fiducial_marks->data;;
     if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
-      center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
+      fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
     else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
-      center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
-    temp_point = point_sub(center,fixed_centroid);
+      fixed_center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
+    temp_point = point_sub(fixed_center,fixed_centroid);
     gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_X, temp_point.x);
     gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_Y, temp_point.y);
     gsl_matrix_set(fixed_matrix, i, AMITK_AXIS_Z, temp_point.z);
-    fixed_fiducial_marks = g_list_remove(fixed_fiducial_marks, fixed_fiducial_mark);
-    g_object_unref(fixed_fiducial_mark);
+
   }
 
-  if ((moving_fiducial_marks != NULL) || (fixed_fiducial_marks != NULL)) {
+  if ((fixed_temp_list != NULL) || (moving_temp_list != NULL)) {
     g_warning("points lists not completely used in %s at %d", __FILE__, __LINE__);
-    gsl_matrix_free(fixed_matrix);
-    gsl_matrix_free(moving_matrixt);
-    moving_fiducial_marks = amitk_objects_unref(moving_fiducial_marks);
-    fixed_fiducial_marks = amitk_objects_unref(fixed_fiducial_marks);
-    return space;
+    goto ending;
   }
 
   /* calculate the correlation matrix */
   matrix_a = matrix_mult(moving_matrixt, fixed_matrix);
-  gsl_matrix_free(fixed_matrix);
-  gsl_matrix_free(moving_matrixt);
 
-  /* get the singular value decomposition of the correlation matrix
-     matrix_a = U*S*Vt
-     note, that the function will place the value of U into matrix_a */
+  /* get the singular value decomposition of the correlation matrix -> matrix_a = U*S*Vt
+     notes: 
+        the function will place the value of U into matrix_a 
+        gsl_linalg_SV_decomp_jacobi will return an unsuitable matrix_v, don't use it 
+  */
   matrix_v = gsl_matrix_alloc(AMITK_AXIS_NUM, AMITK_AXIS_NUM);
   vector_s = gsl_vector_alloc(AMITK_AXIS_NUM);
-  gsl_linalg_SV_decomp_jacobi(matrix_a, matrix_v, vector_s);
+  vector_w = gsl_vector_alloc(AMITK_AXIS_NUM);
+  status = gsl_linalg_SV_decomp(matrix_a, matrix_v, vector_s, vector_w);
+  if (status != 0) g_warning("SV decomp returned error: %s", gsl_strerror(status));
   gsl_vector_free(vector_s);
+  gsl_vector_free(vector_w);
 
   /* get U transpose */
-  gsl_matrix_transpose(matrix_a);
+  status = gsl_matrix_transpose(matrix_a);
+  if (status != 0) g_warning("transpose returned error: %s", gsl_strerror(status));
 
   /* figure out the determinant of V*Ut */
   matrix_temp = matrix_mult(matrix_v, matrix_a);
   permutation = gsl_permutation_alloc(AMITK_AXIS_NUM);
-  gsl_linalg_LU_decomp(matrix_temp, permutation, &signum);
+  status = gsl_linalg_LU_decomp(matrix_temp, permutation, &signum);
+  if (status != 0) g_warning("LU decomp returned error: %s", gsl_strerror(status));
   det = gsl_linalg_LU_det(matrix_temp, signum);
+  g_return_val_if_fail(fabs(det) > 0.1, NULL); /* needs to be -1 or 1 */
   gsl_permutation_free(permutation);
   gsl_matrix_free(matrix_temp);
 
@@ -232,7 +244,8 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
    r = V * delta * Ut, where delta = diag(1,1,det(V,Ut))*/
   matrix_diag = gsl_matrix_alloc(AMITK_AXIS_NUM, AMITK_AXIS_NUM);
   gsl_matrix_set_identity (matrix_diag);
-  gsl_matrix_set(matrix_diag, AMITK_AXIS_NUM-1, AMITK_AXIS_NUM-1, det);
+  if (fabs(det) > 0.1) 
+    gsl_matrix_set(matrix_diag, AMITK_AXIS_NUM-1, AMITK_AXIS_NUM-1, det);
   matrix_temp = matrix_mult(matrix_diag, matrix_a);
   matrix_r = matrix_mult(matrix_v, matrix_temp);
 
@@ -241,41 +254,87 @@ AmitkSpace * alignment_calculate(AmitkDataSet * moving_ds, AmitkDataSet * fixed_
   gsl_matrix_free(matrix_a);
   gsl_matrix_free(matrix_v);
 
-#if AMIDE_DEBUG		     
-  g_print("determinante is %f\n",det);
-  {
-    gint z, y;
+  transform_space = amitk_space_new();
 
-    g_print("rotation matrix:\n");
-    for (z=0;z<AMITK_AXIS_NUM;z++) {
-      g_print("\t");
-      for (y=0;y<AMITK_AXIS_NUM;y++)
-	g_print("%f\t",gsl_matrix_get(matrix_r, z, y));
-      g_print("\n");
-    }
+  /* transfer over the rotation matrix */
+  for (i=0;i<AMITK_AXIS_NUM;i++){
+    axis[i].x = gsl_matrix_get(matrix_r, 0, i);
+    axis[i].y = gsl_matrix_get(matrix_r, 1, i);
+    axis[i].z = gsl_matrix_get(matrix_r, 2, i);
   }
-#endif
+  amitk_space_set_axes(transform_space, axis, AMITK_SPACE_OFFSET(transform_space));
 
-  /* figure out the new coordinate frame */
-  for (i=0;i<AMITK_AXIS_NUM;i++)
-    axis[i]=matrix_mult_point(matrix_r, amitk_space_get_axis(AMITK_SPACE(moving_ds), i));
-  amitk_space_set_axes(space, axis, AMITK_SPACE_OFFSET(space));
-
-  /* and compute the new offset */
-  translation_point = point_sub(fixed_centroid, matrix_mult_point(matrix_r, moving_centroid));
-  offset_point = matrix_mult_point(matrix_r,AMITK_SPACE_OFFSET(moving_ds));
-  offset_point = point_add(offset_point, translation_point);
-  amitk_space_set_offset(space, offset_point);
+  /* and figure out the shift: t = fixed_centroid - R*moving_centroid,
+     but we also need to compensate because the transformation space will rotate
+     relative to the moving_ds's offset, not the fixed_centroid (hence offset_shift) */
+  shift = point_sub(fixed_centroid, matrix_mult_point(matrix_r, moving_centroid));
+  offset_shift = matrix_mult_point(matrix_r,AMITK_SPACE_OFFSET(moving_ds));
+  offset_shift = point_sub(offset_shift, AMITK_SPACE_OFFSET(moving_ds));
+  shift = point_add(offset_shift, shift);
+  amitk_space_set_offset(transform_space, shift); 
   
 #if AMIDE_DEBUG		     
-  amitk_space_print(AMITK_SPACE(moving_ds), "old coordinate space");
-  amitk_space_print(space, "new coordinate space");
+  g_print("determinante is %f\n",det);
+  amitk_space_print(transform_space, "transform space");
 #endif
 
-  /* garbage collection */
-  gsl_matrix_free(matrix_r);
+  /* calculate fiducial reference error */
+  if (pfre != NULL) {
+    AmitkSpace * new_space;
+    fre = 0.0;
 
-  return space;
+    new_space = amitk_space_copy(AMITK_SPACE(moving_ds));
+    amitk_space_transform(new_space, transform_space);
+    moving_temp_list = moving_fiducial_marks;
+    fixed_temp_list = fixed_fiducial_marks;
+    
+    for (i=0;i<count;i++) {
+      moving_fiducial_mark = moving_temp_list->data;
+      moving_temp_list = moving_temp_list->next;
+      fixed_fiducial_mark = fixed_temp_list->data;
+      fixed_temp_list = fixed_temp_list->next;
+
+      if (AMITK_IS_FIDUCIAL_MARK(moving_fiducial_mark))
+	moving_center = AMITK_FIDUCIAL_MARK_GET(moving_fiducial_mark);
+      else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+	moving_center = amitk_volume_center(AMITK_VOLUME(moving_fiducial_mark));
+      
+      if (AMITK_IS_FIDUCIAL_MARK(fixed_fiducial_mark))
+	fixed_center = AMITK_FIDUCIAL_MARK_GET(fixed_fiducial_mark);
+      else /* (AMITK_IS_VOLUME(moving_fiducial_mark) */
+	fixed_center = amitk_volume_center(AMITK_VOLUME(fixed_fiducial_mark));
+
+      moving_center = amitk_space_b2s(AMITK_SPACE(moving_ds), moving_center);
+      moving_center = amitk_space_s2b(new_space,moving_center);
+      fre += point_mag(point_sub(moving_center, fixed_center));
+    }
+
+    fre = fre/((gdouble) count);
+    *pfre = fre;
+  }
+
+ ending:
+
+  /* garbage collection */
+
+  if (matrix_r != NULL)
+    gsl_matrix_free(matrix_r);
+
+  if (moving_fiducial_marks != NULL)
+    amitk_objects_unref(moving_fiducial_marks);
+
+  if (fixed_fiducial_marks != NULL)
+    amitk_objects_unref(fixed_fiducial_marks);
+
+  if (fixed_matrix != NULL)
+    gsl_matrix_free(fixed_matrix);
+
+  if (moving_matrixt != NULL)
+    gsl_matrix_free(moving_matrixt);
+
+
+
+  return transform_space;
 }
 
 

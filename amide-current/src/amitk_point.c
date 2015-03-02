@@ -660,9 +660,33 @@ amide_intpoint_t voxel_get_dim(const AmitkVoxel voxel,
     return voxel.t;
     break;
   default:
+    g_warning("inappropriate case in %s at %d\n", __FILE__, __LINE__);
     g_return_val_if_reached(0);
   }
 
+}
+
+void voxel_set_dim(AmitkVoxel * voxel,
+		   const AmitkDim which_dim,
+		   amide_intpoint_t value) {
+
+  switch(which_dim) {
+  case AMITK_DIM_X:
+    voxel->x = value;
+    break;
+  case AMITK_DIM_Y:
+    voxel->y = value;
+    break;
+  case AMITK_DIM_Z:
+    voxel->z = value;
+    break;
+  case AMITK_DIM_T:
+    voxel->t = value;
+    break;
+  default:
+    g_warning("inappropriate case in %s at %d\n", __FILE__, __LINE__);
+    g_return_if_reached();
+  }
 }
 
 

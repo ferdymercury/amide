@@ -289,9 +289,9 @@ AmitkDataSet * cti_import(const gchar * cti_filename) {
 	j.z = slice;
 	j.t = i.t;
 	if (two_dim_scale)
-	  *AMITK_RAW_DATA_FLOAT_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_DOUBLE_2D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
 	else if (slice == 0)
-	  *AMITK_RAW_DATA_FLOAT_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
+	  *AMITK_RAW_DATA_DOUBLE_1D_SCALING_POINTER(ds->internal_scaling, j) = cti_slice->scale_factor;
 	
 	/* copy the data into the volume */
 	/* note, we compensate here for the fact that we define 

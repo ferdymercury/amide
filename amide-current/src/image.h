@@ -28,7 +28,7 @@
 
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include "amitk_data_set.h"
+#include "amitk_study.h"
 #include "amitk_roi.h"
 #include "rendering.h"
 
@@ -39,22 +39,23 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
 				     const amide_real_t pixel_dim,
 				     rgba_t color,
-				     AmitkVolume **return_volume);
+				     AmitkPoint * return_offset,
+				     AmitkPoint * return_corner);
 GdkPixbuf * image_blank(const amide_intpoint_t width, 
 			const amide_intpoint_t height, 
 			rgba_t image_color);
-#ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_8bit(const guchar * image, 
 			    const amide_intpoint_t width, 
 			    const amide_intpoint_t height,
 			    const AmitkColorTable color_table);
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
 GdkPixbuf * image_from_contexts(renderings_t * contexts, 
 				gint16 image_width, gint16 image_height,
 				AmitkEye eyes, 
 				gdouble eye_angle, 
 				gint16 eye_width);
 #endif
-GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg, rgb_t bg);
+GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg);
 GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const amide_intpoint_t width, 
 				  const amide_intpoint_t height,
@@ -63,13 +64,17 @@ GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const amide_data_t data_set_min,
 				  const amide_data_t data_set_max,
 				  const gboolean horizontal);
+GdkPixbuf * image_from_projection(AmitkDataSet * projection);
+GdkPixbuf * image_from_slice(AmitkDataSet * slice);
 GdkPixbuf * image_from_data_sets(GList ** pslices,
 				 GList * objects,
+				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,
 				 const amide_time_t duration,
 				 const amide_real_t pixel_dim,
 				 const AmitkVolume * view_volume,
-				 const AmitkInterpolation interpolation);
+				 const AmitkInterpolation interpolation,
+				 const AmitkFuseType fuse_type);
 GdkPixbuf * image_get_object_pixbuf(AmitkObject * object);
 
 #endif /*  __IMAGE_H__ */

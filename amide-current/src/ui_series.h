@@ -41,25 +41,26 @@ typedef enum {PLANES, FRAMES} series_t;
 
 /* ui_series data structures */
 typedef struct ui_series_t {
-  GnomeApp * app; /* pointer to the threshold window for this study */
+  GnomeApp * app; 
   GList ** slices;
   GList * objects;
+  AmitkDataSet * active_ds;
   GnomeCanvas * canvas;
   GnomeCanvasItem ** images;
   GnomeCanvasItem ** captions;
   GtkWidget * thresholds_dialog;
   guint num_slices, rows, columns;
   AmitkVolume * volume;
-  AmitkPoint view_point;
   amide_time_t view_time;
   AmitkInterpolation interpolation;
+  AmitkFuseType fuse_type;
   amide_real_t voxel_dim;
   series_t type;
-  guint reference_count;
 
   /* for "PLANES" series */
   amide_time_t view_duration;
   amide_real_t start_z;
+  amide_real_t z_point; /* current slice offset z component*/
   amide_real_t end_z;
 
   /* for "FRAMES" series */
@@ -67,11 +68,12 @@ typedef struct ui_series_t {
   amide_time_t start_time;
   amide_time_t * frame_durations; /* an array of frame durations */
 
+  guint reference_count;
 } ui_series_t;
 
 /* external functions */
-void ui_series_create(AmitkStudy * study,GList * objects, AmitkView view, 
-		      AmitkVolume * canvas_view, series_t series_type);
+void ui_series_create(AmitkStudy * study,GList * objects, AmitkDataSet * active_ds,
+		      AmitkView view, AmitkVolume * canvas_view, series_t series_type);
 
 
 

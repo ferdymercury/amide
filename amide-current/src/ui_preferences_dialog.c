@@ -28,8 +28,7 @@
 #include <gnome.h>
 #include "ui_study.h"
 #include "ui_preferences_dialog.h"
-#include "../pixmaps/linear_layout.xpm"
-#include "../pixmaps/orthogonal_layout.xpm"
+#include "pixmaps.h"
 #include "amitk_canvas.h"
 
 
