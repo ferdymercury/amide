@@ -1,9 +1,9 @@
 /* ui_render.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -61,10 +61,8 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 static void close_cb(GtkWidget* widget, gpointer data);
 
 
-static ui_render_t * ui_render_init(GnomeApp * app,
-				    AmitkStudy * study,
-				    gboolean zero_fill,
-				    gboolean conserve_memory);
+static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings);
+static ui_render_t * ui_render_init(GnomeApp * app, AmitkStudy * study);
 static ui_render_t * ui_render_free(ui_render_t * ui_render);
 
 
@@ -597,14 +595,29 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
 
 
+static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings) {
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+
+  *strip_highs = gnome_config_get_int("RENDERING/StripHighs");
+  *optimize_renderings = gnome_config_get_int("RENDERING/OptimizeRendering");
+
+  gnome_config_pop_prefix();
+
+  return;
+}
+
+
 /* allocate and initialize a ui_render data structure */
 static ui_render_t * ui_render_init(GnomeApp * app,
-				    AmitkStudy * study,
-				    gboolean zero_fill,
-				    gboolean conserve_memory) {
+				    AmitkStudy * study) {
 
   ui_render_t * ui_render;
   GList * visible_objects;
+  gboolean strip_highs;
+  gboolean optimize_rendering;
+
+  read_preferences(&strip_highs, &optimize_rendering);
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
@@ -657,7 +670,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->renderings = renderings_init(visible_objects, 
 					  ui_render->start, 
 					  ui_render->duration, 
-					  zero_fill, conserve_memory,
+					  strip_highs, optimize_rendering,
 					  amitk_progress_dialog_update,
 					  ui_render->progress_dialog);
   amitk_objects_unref(visible_objects);
@@ -755,7 +768,7 @@ gboolean ui_render_update_immediate(gpointer data) {
 
 
 /* function that sets up the rendering dialog */
-void ui_render_create(AmitkStudy * study, gboolean zero_fill, gboolean conserve_memory) {
+void ui_render_create(AmitkStudy * study) {
   
   GtkWidget * packing_table;
   GtkWidget * check_button;
@@ -778,7 +791,7 @@ void ui_render_create(AmitkStudy * study, gboolean zero_fill, gboolean conserve_
 
   app = gnome_app_new(PACKAGE, "Rendering Window");
   gtk_window_set_resizable(GTK_WINDOW(app), TRUE);
-  ui_render = ui_render_init(GNOME_APP(app), study, zero_fill,conserve_memory);
+  ui_render = ui_render_init(GNOME_APP(app), study);
 
   /* check we actually have something */
   if (ui_render->renderings == NULL) {
@@ -992,11 +1005,9 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 
 
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
-  GtkWidget * dialog = data;
   gboolean strip_highs;
 
   strip_highs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_object_set_data(G_OBJECT(dialog), "strip_highs", GINT_TO_POINTER(strip_highs));
   
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("RENDERING/StripHighs", strip_highs);
@@ -1006,11 +1017,9 @@ static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
 }
 
 static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
-  GtkWidget * dialog = data;
   gboolean optimize_rendering;
 
   optimize_rendering =gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-  g_object_set_data(G_OBJECT(dialog), "optimize_rendering", GINT_TO_POINTER(optimize_rendering));
 
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("RENDERING/OptimizeRendering", optimize_rendering);
@@ -1050,10 +1059,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   gboolean strip_highs;
   gboolean optimize_rendering;
 
-  gnome_config_push_prefix("/"PACKAGE"/");
-  strip_highs = gnome_config_get_int("RENDERING/StripHighs");
-  optimize_rendering = gnome_config_get_int("RENDERING/OptimizeRendering");
-  gnome_config_pop_prefix();
+  read_preferences(&strip_highs, &optimize_rendering);
 
   temp_string = g_strdup_printf("%s: Rendering Initialization Dialog", PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
@@ -1076,7 +1082,6 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   /* do we want to strip values */
   check_button = gtk_check_button_new_with_label("Set values greater than max. threshold to zero?");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), strip_highs);
-  g_object_set_data(G_OBJECT(dialog), "strip_highs", GINT_TO_POINTER(strip_highs));
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_strip_highs_cb), dialog);
@@ -1085,7 +1090,6 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   /* do we want to converse memory */
   check_button = gtk_check_button_new_with_label("Optimize Rendering?  Increases memory use ~3x");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button),optimize_rendering);
-  g_object_set_data(G_OBJECT(dialog), "optimize_rendering", GINT_TO_POINTER(optimize_rendering));
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
   g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(init_optimize_rendering_cb), dialog);

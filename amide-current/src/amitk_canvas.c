@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2002-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -2406,14 +2406,16 @@ static void canvas_update_setup(AmitkCanvas * canvas) {
 static void canvas_add_update(AmitkCanvas * canvas, guint update_type) {
 
   /* reslicing is slow, put up a wait cursor */
+  /* don't use ui_common_place_cursor, as this has a gtk_main_iteration call... */
   if ((update_type & UPDATE_DATA_SETS) && !(canvas->next_update & UPDATE_DATA_SETS)) 
-    ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
+    ui_common_place_cursor_no_wait(UI_CURSOR_WAIT, GTK_WIDGET(canvas));
 
   canvas->next_update = canvas->next_update | update_type;
 
+  /* DEFAULT_IDLE is needed, as this is the first default lower then redraw */
   if (canvas->idle_handler_id == 0)
     canvas->idle_handler_id = 
-      gtk_idle_add_priority(G_PRIORITY_HIGH_IDLE,canvas_update_while_idle, canvas);
+      gtk_idle_add_priority(G_PRIORITY_DEFAULT_IDLE,canvas_update_while_idle, canvas);
 
   return;
 }
@@ -2430,6 +2432,7 @@ static gboolean canvas_update_while_idle(gpointer data) {
     /* freeing the slices indicates to regenerate them, and fallthrough to refresh */
     amitk_objects_unref(canvas->slices);
     canvas->slices = NULL;
+
   } 
 
   if ((canvas->next_update & REFRESH_DATA_SETS) ||(canvas->next_update & UPDATE_DATA_SETS)) {

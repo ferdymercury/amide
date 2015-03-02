@@ -1,9 +1,9 @@
 /* ui_common.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -68,6 +68,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			      gint axis_width, gint axis_height);
 GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout);
 void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
+void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_cursor(GtkWidget * widget);
 

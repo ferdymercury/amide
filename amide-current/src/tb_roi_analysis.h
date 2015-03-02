@@ -1,9 +1,9 @@
 /* tb_roi_analysis_dialog.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -31,10 +31,7 @@
 #include "amitk_study.h"
 
 /* external functions */
-void tb_roi_analysis(AmitkStudy * study,
-		     gboolean all_data_sets,
-		     gboolean all_rois,
-		     GtkWindow * parent);
+void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent);
 GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent);
 
 

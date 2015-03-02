@@ -1,9 +1,9 @@
 /* ui_render.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -74,7 +74,7 @@ typedef struct ui_render_t {
 /* external functions */
 void ui_render_add_update(ui_render_t * ui_render);
 gboolean ui_render_update_immediate(gpointer ui_render);
-void ui_render_create(AmitkStudy * study, gboolean zero_fill,gboolean conserve_memory);
+void ui_render_create(AmitkStudy * study);
 GtkWidget * ui_render_init_dialog_create(GtkWindow * parent);
 
 #endif /* __UI_RENDER_H__ */

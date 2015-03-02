@@ -219,8 +219,6 @@ amide_SOURCES = \
 	ui_study_cb.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
-	ui_study_toolbar.c \
-	ui_study_toolbar.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
 	xml.c \
@@ -455,8 +453,7 @@ am_amide_OBJECTS = gtkdial.$(OBJEXT) $(am__objects_1) $(am__objects_2) \
 	ui_preferences_dialog.$(OBJEXT) ui_render.$(OBJEXT) \
 	ui_render_dialog.$(OBJEXT) ui_render_movie.$(OBJEXT) \
 	ui_series.$(OBJEXT) ui_study.$(OBJEXT) ui_study_cb.$(OBJEXT) \
-	ui_study_menus.$(OBJEXT) ui_study_toolbar.$(OBJEXT) \
-	ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
+	ui_study_menus.$(OBJEXT) ui_time_dialog.$(OBJEXT) xml.$(OBJEXT)
 amide_OBJECTS = $(am_amide_OBJECTS)
 amide_DEPENDENCIES =
 amide_LDFLAGS =
@@ -543,7 +540,6 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/ui_series.Po ./$(DEPDIR)/ui_study.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_study_cb.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_study_menus.Po \
-@AMDEP_TRUE@	./$(DEPDIR)/ui_study_toolbar.Po \
 @AMDEP_TRUE@	./$(DEPDIR)/ui_time_dialog.Po ./$(DEPDIR)/xml.Po
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -690,7 +686,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_cb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_menus.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_study_toolbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ui_time_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml.Po@am__quote@
 

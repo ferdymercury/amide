@@ -1,9 +1,9 @@
 /* amitk_data_set_variable_type.c - used to generate the different amitk_data_set_*.c files
  *
  * Part of amide - Amide's a Medical Image Data Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -116,7 +116,10 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_calc_distribution(Amit
     return;
 
   data_set_dim = AMITK_DATA_SET_DIM(data_set);
-  scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/(data_set->global_max - data_set->global_min);
+  if (data_set->global_max - data_set->global_min == 0.0)
+    scale = 0.0;
+  else
+    scale = (AMITK_DATA_SET_DISTRIBUTION_SIZE-1)/(data_set->global_max - data_set->global_min);
   
   distribution_dim.x = AMITK_DATA_SET_DISTRIBUTION_SIZE;
   distribution_dim.y = distribution_dim.z = distribution_dim.t = 1;

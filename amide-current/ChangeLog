@@ -1,3 +1,8 @@
+0.7.8
+	* fixed "crazy spin button" bug, again
+	* stats can now be calculated on only a percentile of the voxels in an ROI
+	* added principle component analysis to the factor analysis wizard
+
 0.7.7
 	* added ability to only look at a subset of the canvases at a time
 	* added new preference - canvas size can now be fixed to the dimensions of all
@@ -9,6 +14,7 @@
  	* ui_time_dialog won't crash if destroyed while event pending
  	* on data_set_copy min threshold set was getting ignored
 	* canvas now only uses data sets as bounds.  avoids problems with pathologic ROI's
+	* added .info file generation for fink building
 
 0.7.6
 	* fixed long standing bug, dealing with slices generated via nearest neighbhor

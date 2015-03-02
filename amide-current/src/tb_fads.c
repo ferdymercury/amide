@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -90,7 +90,7 @@ typedef struct tb_fads_t {
 
   AmitkDataSet * data_set;
   gint num_factors;
-  gint num_iterations;
+  gint max_iterations;
   gdouble stopping_criteria;
   fads_type_t fads_type;
 
@@ -98,8 +98,11 @@ typedef struct tb_fads_t {
   GtkWidget * page[NUM_PAGES];
   GtkWidget * progress_dialog;
   GtkWidget * num_factors_spin;
-  GtkWidget * num_factors_label;
+  GtkWidget * num_iterations_spin;
+  GtkWidget * stopping_criteria_spin;
   GtkWidget * svd_tree;
+  GtkWidget * blood_add_button;
+  GtkWidget * blood_remove_button;
   GtkWidget * blood_tree;
   GtkTextBuffer * explanation_buffer;
 
@@ -119,7 +122,7 @@ static void blood_cell_edited(GtkCellRendererText *cellrenderertext,
 static void add_blood_pressed_cb(GtkButton * button, gpointer data);
 static void remove_blood_pressed_cb(GtkButton * button, gpointer data);
 static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data);
-static void num_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data);
+static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void stopping_criteria_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 
 static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
@@ -191,13 +194,13 @@ static gchar * get_filename(tb_fads_t * tb_fads) {
     return NULL;
 }
 
+
 static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
  
   tb_fads_t * tb_fads = data;
   fads_type_t i_fads_type;
   which_page_t which_page;
   GtkWidget * label;
-  GtkWidget * spin_button;
   GtkWidget * button;
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
@@ -213,6 +216,9 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   GtkWidget * vseparator;
   GtkWidget * hseparator;
   GtkTextBuffer *buffer;
+  gboolean num_factors;
+  gboolean blood_entries;
+  gboolean num_iterations;
 
   which_page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(page), "which_page"));
 
@@ -340,13 +346,13 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
-      spin_button =  gtk_spin_button_new_with_range(1, MAX_ITERATIONS, 1);
-      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin_button),0);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_fads->num_iterations);
-      gtk_widget_set_size_request(spin_button, SPIN_BUTTON_X_SIZE, -1);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
-		       G_CALLBACK(num_iterations_spinner_cb), tb_fads);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, table_row,table_row+1,
+      tb_fads->num_iterations_spin =  gtk_spin_button_new_with_range(1, MAX_ITERATIONS, 1);
+      gtk_spin_button_set_digits(GTK_SPIN_BUTTON(tb_fads->num_iterations_spin),0);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->num_iterations_spin), tb_fads->max_iterations);
+      gtk_widget_set_size_request(tb_fads->num_iterations_spin, SPIN_BUTTON_X_SIZE, -1);
+      g_signal_connect(G_OBJECT(tb_fads->num_iterations_spin), "value_changed",  
+		       G_CALLBACK(max_iterations_spinner_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->num_iterations_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
@@ -355,18 +361,18 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
-      spin_button = gtk_spin_button_new_with_range(EPSILON, 1.0, tb_fads->stopping_criteria);
-      gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_button), tb_fads->stopping_criteria);
-      gtk_widget_set_size_request(spin_button, SPIN_BUTTON_X_SIZE, -1);
-      g_signal_connect(G_OBJECT(spin_button), "value_changed",  
+      tb_fads->stopping_criteria_spin = gtk_spin_button_new_with_range(EPSILON, 1.0, tb_fads->stopping_criteria);
+      gtk_spin_button_set_value(GTK_SPIN_BUTTON(tb_fads->stopping_criteria_spin), tb_fads->stopping_criteria);
+      gtk_widget_set_size_request(tb_fads->stopping_criteria_spin, SPIN_BUTTON_X_SIZE, -1);
+      g_signal_connect(G_OBJECT(tb_fads->stopping_criteria_spin), "value_changed",  
 		       G_CALLBACK(stopping_criteria_spinner_cb), tb_fads);
-      gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, table_row,table_row+1,
+      gtk_table_attach(GTK_TABLE(table), tb_fads->stopping_criteria_spin, 1,2, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
       /* how many factors to solve for? */
-      tb_fads->num_factors_label = gtk_label_new("# of Factors to use");
-      gtk_table_attach(GTK_TABLE(table), tb_fads->num_factors_label, 0,1, table_row,table_row+1,
+      label = gtk_label_new("# of Factors to use");
+      gtk_table_attach(GTK_TABLE(table), label, 0,1, table_row,table_row+1,
 		       FALSE,FALSE, X_PADDING, Y_PADDING);
 
       tb_fads->num_factors_spin =  gtk_spin_button_new_with_range(1, AMITK_DATA_SET_NUM_FRAMES(tb_fads->data_set), 1);
@@ -388,9 +394,10 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 		       0, GTK_FILL, X_PADDING, Y_PADDING);
 
       /* A table to add blood sample measurements */
-      button = gtk_button_new_with_label("Add Blood Sample");
-      g_signal_connect(G_OBJECT(button), "pressed", G_CALLBACK(add_blood_pressed_cb), tb_fads);
-      gtk_table_attach(GTK_TABLE(table), button, 3,4, table_row,table_row+1,
+      tb_fads->blood_add_button = gtk_button_new_with_label("Add Blood Sample");
+      g_signal_connect(G_OBJECT(tb_fads->blood_add_button), "pressed", 
+		       G_CALLBACK(add_blood_pressed_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->blood_add_button, 3,4, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
@@ -427,9 +434,10 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
       gtk_container_add(GTK_CONTAINER(scrolled),tb_fads->blood_tree);
       table_row+=4;
 
-      button = gtk_button_new_with_label("Remove Blood Sample");
-      g_signal_connect(G_OBJECT(button), "pressed", G_CALLBACK(remove_blood_pressed_cb), tb_fads);
-      gtk_table_attach(GTK_TABLE(table), button, 3,4, table_row,table_row+1,
+      tb_fads->blood_remove_button = gtk_button_new_with_label("Remove Blood Sample");
+      g_signal_connect(G_OBJECT(tb_fads->blood_remove_button), "pressed", 
+		       G_CALLBACK(remove_blood_pressed_cb), tb_fads);
+      gtk_table_attach(GTK_TABLE(table), tb_fads->blood_remove_button, 3,4, table_row,table_row+1,
 			 FALSE,FALSE, X_PADDING, Y_PADDING);
       table_row++;
 
@@ -448,15 +456,31 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
   case PARAMETERS_PAGE:
 
     switch(tb_fads->fads_type) {
+    case FADS_TYPE_PCA:
+      blood_entries = FALSE;
+      num_factors = TRUE;
+      num_iterations = FALSE;
+      break;
+      //    case FADS_TYPE_FADS:
     case FADS_TYPE_PLS:
-      gtk_widget_show(tb_fads->num_factors_label);
-      gtk_widget_show(tb_fads->num_factors_spin);
+      blood_entries = TRUE;
+      num_factors = TRUE;
+      num_iterations = TRUE;
       break;
     default:
-      gtk_widget_hide(tb_fads->num_factors_label);
-      gtk_widget_hide(tb_fads->num_factors_spin);
+      g_error("unexpected case in %s at line %d", __FILE__, __LINE__);
+      blood_entries = TRUE;
+      num_factors = TRUE;
+      num_iterations = TRUE;
       break;
     }
+    
+    gtk_widget_set_sensitive(tb_fads->blood_tree, blood_entries);
+    gtk_widget_set_sensitive(tb_fads->blood_remove_button, blood_entries);
+    gtk_widget_set_sensitive(tb_fads->blood_add_button, blood_entries);
+    gtk_widget_set_sensitive(tb_fads->num_factors_spin, num_factors);
+    gtk_widget_set_sensitive(tb_fads->num_iterations_spin, num_iterations);
+    gtk_widget_set_sensitive(tb_fads->stopping_criteria_spin, num_iterations);
 
   default:
     break;
@@ -479,7 +503,7 @@ static void svd_pressed_cb(GtkButton * button, gpointer data) {
 
   /* calculate factors */
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
-  fads_svd_factors(tb_fads->data_set, &num_factors, &factors, NULL);
+  fads_svd_factors(tb_fads->data_set, &num_factors, &factors);
   ui_common_remove_cursor(tb_fads->table[PARAMETERS_PAGE]);
 
   for (i=0; i<num_factors; i++) {
@@ -580,9 +604,9 @@ static void num_factors_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   return;
 }
 
-static void num_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
+static void max_iterations_spinner_cb(GtkSpinButton * spin_button, gpointer data) {
   tb_fads_t * tb_fads = data;
-  tb_fads->num_iterations = gtk_spin_button_get_value_as_int(spin_button);
+  tb_fads->max_iterations = gtk_spin_button_get_value_as_int(spin_button);
   return;
 }
 
@@ -650,12 +674,20 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 #ifdef AMIDE_LIBGSL_SUPPORT
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
   switch(tb_fads->fads_type) {
+  case FADS_TYPE_PCA:
+    fads_pca(tb_fads->data_set, tb_fads->num_factors, output_filename,
+	     amitk_progress_dialog_update, tb_fads->progress_dialog);
+    break;
+    //  case FADS_TYPE_FADS:
+    //    fads_fads(tb_fads->data_set, tb_fads->num_factors, tb_fads->max_iterations,tb_fads->stopping_criteria,
+    //	      output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
+    //    break;
   case FADS_TYPE_PLS:
-    fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->num_iterations,tb_fads->stopping_criteria,
+    fads_pls(tb_fads->data_set, tb_fads->num_factors, tb_fads->max_iterations,tb_fads->stopping_criteria,
 	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
     break;
     //  case FADS_TYPE_TWO_COMPARTMENT:
-    //    fads_two_comp(tb_fads->data_set, tb_fads->num_iterations,tb_fads->stopping_criteria,
+    //    fads_two_comp(tb_fads->data_set, tb_fads->max_iterations,tb_fads->stopping_criteria,
     //	     output_filename, num, frames, vals, amitk_progress_dialog_update, tb_fads->progress_dialog);
     //    break;
   default:
@@ -763,9 +795,9 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->dialog = NULL;
   tb_fads->data_set = NULL;
   tb_fads->num_factors = 3;
-  tb_fads->num_iterations = 20000;
+  tb_fads->max_iterations = 20000;
   tb_fads->stopping_criteria = 1e-3;
-  tb_fads->fads_type = FADS_TYPE_PLS;
+  tb_fads->fads_type = FADS_TYPE_PCA;
   tb_fads->explanation_buffer = NULL;
   for (i_page=0; i_page<NUM_PAGES; i_page++)
     tb_fads->table[i_page] = NULL;

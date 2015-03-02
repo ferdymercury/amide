@@ -1,9 +1,9 @@
 /* tb_roi_analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -41,6 +41,7 @@ typedef enum {
   COLUMN_DURATION,
   COLUMN_TIME_MIDPT,
   COLUMN_TOTAL,
+  COLUMN_MEDIAN,
   COLUMN_MEAN,
   COLUMN_VAR,
   COLUMN_STD_DEV,
@@ -58,6 +59,7 @@ static gchar * analysis_titles[] = {
   "Duration (s)",
   "Time Midpt (s)",
   "Total",
+  "Median",
   "Mean",
   "Var",
   "Std Dev",
@@ -76,6 +78,10 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
 static void add_page(GtkWidget * notebook, AmitkStudy * study,
 		     AmitkRoi * roi, analysis_volume_t * volume_analyses);
+static void read_preferences(gboolean * all_data_sets, 
+			     gboolean * all_rois, 
+			     gboolean * calc_on_subfraction,
+			     gdouble * subfraction);
 
 
 /* function to handle exporting the roi analyses */
@@ -182,6 +188,10 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
     fprintf(file_pointer, "# ROI:\t%s\tType:\t%s\n",
 	    AMITK_OBJECT_NAME(roi_analyses->roi),
 	    amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
+    if (roi_analyses->subfraction < 1.0)
+      fprintf(file_pointer, "#\tCalculation done on %5.3f percentile of voxels in ROI\n", roi_analyses->subfraction);
+    else
+      fprintf(file_pointer, "#\tCalculation done with all voxels in ROI\n");
     title_printed = FALSE;
 
     volume_analyses = roi_analyses->volume_analyses;
@@ -209,6 +219,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->duration);
 	fprintf(file_pointer, "\t% 12.3f", frame_analyses->time_midpoint);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->total);
+	fprintf(file_pointer, "\t% 12g", frame_analyses->median);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->mean);
 	fprintf(file_pointer, "\t% 12g", frame_analyses->var);
 	fprintf(file_pointer, "\t% 12g", sqrt(frame_analyses->var));
@@ -350,6 +361,7 @@ static void add_page(GtkWidget * notebook, AmitkStudy * study,
 			     AMITK_TYPE_DATA,
 			     AMITK_TYPE_DATA,
 			     AMITK_TYPE_DATA,
+			     AMITK_TYPE_DATA,
 			     AMITK_TYPE_REAL,
 			     AMITK_TYPE_REAL);
   list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
@@ -379,6 +391,7 @@ static void add_page(GtkWidget * notebook, AmitkStudy * study,
 			  COLUMN_DURATION, frame_analyses->duration,
 			  COLUMN_TIME_MIDPT, frame_analyses->time_midpoint,
 			  COLUMN_TOTAL, frame_analyses->total,
+			  COLUMN_MEDIAN, frame_analyses->median,
 			  COLUMN_MEAN, frame_analyses->mean,
 			  COLUMN_VAR, frame_analyses->var,
 			  COLUMN_STD_DEV, sqrt(frame_analyses->var),
@@ -405,10 +418,26 @@ static void add_page(GtkWidget * notebook, AmitkStudy * study,
 }
 
 
-void tb_roi_analysis(AmitkStudy * study,
-		     gboolean all_data_sets,
-		     gboolean all_rois,
-		     GtkWindow * parent) {
+static void read_preferences(gboolean * all_data_sets, 
+			     gboolean * all_rois, 
+			     gboolean * calc_on_subfraction,
+			     gdouble * subfraction) {
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+
+  *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
+  *all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
+  *calc_on_subfraction = gnome_config_get_int("ANALYSIS/CalculateOnSubFraction");
+  *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
+
+  gnome_config_pop_prefix();
+
+  return;
+}
+
+
+
+void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 
   GtkWidget * dialog;
   GtkWidget * notebook;
@@ -417,6 +446,14 @@ void tb_roi_analysis(AmitkStudy * study,
   GList * data_sets;
   analysis_roi_t * roi_analyses;
   analysis_roi_t * temp_analyses;
+  gboolean all_data_sets;
+  gboolean all_rois;
+  gboolean calc_on_subfraction;
+  gdouble subfraction;
+
+  read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
+
+  if (!calc_on_subfraction) subfraction = 1.0;
 
   /* figure out which data sets we're dealing with */
   if (all_data_sets)
@@ -445,7 +482,7 @@ void tb_roi_analysis(AmitkStudy * study,
   }
 
   /* calculate all our data */
-  roi_analyses = analysis_roi_init(study, rois, data_sets);
+  roi_analyses = analysis_roi_init(study, rois, data_sets, subfraction);
 
   rois = amitk_objects_unref(rois);
   data_sets = amitk_objects_unref(data_sets);
@@ -491,21 +528,18 @@ void tb_roi_analysis(AmitkStudy * study,
 
 static void radio_buttons_cb(GtkWidget * widget, gpointer data);
 static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+static void subfraction_precentage_cb(GtkWidget * widget, gpointer data);
 
 
 
 /* function called to change the layout */
 static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
-  GtkWidget * dialog=data;
   gboolean all_data_sets;
   gboolean all_rois;
 
   all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
   all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
-
-  g_object_set_data(G_OBJECT(dialog), "all_data_sets", GINT_TO_POINTER(all_data_sets));
-  g_object_set_data(G_OBJECT(dialog), "all_rois", GINT_TO_POINTER(all_rois));
 
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("ANALYSIS/CalculateAllDataSets",all_data_sets);
@@ -515,6 +549,37 @@ static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
   return;
 }
+
+static void calc_on_subfraction_cb(GtkWidget * widget, gpointer data) {
+
+  gboolean calc_on_subfraction;
+  GtkWidget * spin_button = data;
+
+  calc_on_subfraction = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+  gtk_widget_set_sensitive(spin_button, calc_on_subfraction);
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_int("ANALYSIS/CalculateOnSubFraction", calc_on_subfraction);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+
+}
+
+
+static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
+
+  gdouble subfraction;
+
+  subfraction = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
+
+  gnome_config_push_prefix("/"PACKAGE"/");
+  gnome_config_set_float("ANALYSIS/SubFraction", subfraction);
+  gnome_config_pop_prefix();
+  gnome_config_sync();
+
+  return;
+}
+
 
 static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   
@@ -543,14 +608,17 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   GtkWidget * table;
   GtkWidget * label;
   guint table_row;
+  GtkWidget * radio_button[4];
+  GtkWidget * hseparator;
+  GtkWidget * check_button;
+  GtkObject * adjustment;
+  GtkWidget * spin_button;
   gboolean all_data_sets;
   gboolean all_rois;
-  GtkWidget * radio_button[4];
+  gboolean calc_on_subfraction;
+  gdouble subfraction;
 
-  gnome_config_push_prefix("/"PACKAGE"/");
-  all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
-  all_rois = gnome_config_get_int("ANALYSIS/CalculateAllRois");
-  gnome_config_pop_prefix();
+  read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
 
   temp_string = g_strdup_printf("%s: ROI Analysis Initialization Dialog", PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
@@ -559,8 +627,6 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
   gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
   g_free(temp_string);
-  g_object_set_data(G_OBJECT(dialog), "all_data_sets", GINT_TO_POINTER(all_data_sets));
-  g_object_set_data(G_OBJECT(dialog), "all_rois", GINT_TO_POINTER(all_rois));
 
 
   /* setup the callbacks for the dialog */
@@ -569,7 +635,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   /* start making the widgets for this dialog box */
-  table = gtk_table_new(3,3,FALSE);
+  table = gtk_table_new(5,3,FALSE);
   table_row=0;
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
 
@@ -628,11 +694,49 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   else /* !all_data_sets && !all_rois */
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_button[3]), TRUE);
 
-  g_signal_connect(G_OBJECT(radio_button[0]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
-  g_signal_connect(G_OBJECT(radio_button[1]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
-  g_signal_connect(G_OBJECT(radio_button[2]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
-  g_signal_connect(G_OBJECT(radio_button[3]), "clicked", G_CALLBACK(radio_buttons_cb), dialog);
+  g_signal_connect(G_OBJECT(radio_button[0]), "clicked", G_CALLBACK(radio_buttons_cb), NULL);
+  g_signal_connect(G_OBJECT(radio_button[1]), "clicked", G_CALLBACK(radio_buttons_cb), NULL);
+  g_signal_connect(G_OBJECT(radio_button[2]), "clicked", G_CALLBACK(radio_buttons_cb), NULL);
+  g_signal_connect(G_OBJECT(radio_button[3]), "clicked", G_CALLBACK(radio_buttons_cb), NULL);
 
+
+  /* a separator for clarity */
+  hseparator = gtk_hseparator_new();
+  gtk_table_attach(GTK_TABLE(table), hseparator, 0,3,table_row, table_row+1,
+		   GTK_FILL, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* do we want to calculate over a subfraction */
+  label = gtk_label_new("Calculate over subset of voxels:");
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  check_button = gtk_check_button_new();
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), calc_on_subfraction);
+  gtk_table_attach(GTK_TABLE(table), check_button, 
+		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+  /* signal attached below */
+  table_row++;
+
+  /* what subfraction */
+  label = gtk_label_new("Calculate over % highest voxels:");
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+
+  adjustment = gtk_adjustment_new(100.0*subfraction, 0.0, 100.0,1.0, 1.0, 1.0);
+  spin_button = gtk_spin_button_new(GTK_ADJUSTMENT(adjustment), 1.0, 0);
+  gtk_spin_button_set_wrap(GTK_SPIN_BUTTON(spin_button),FALSE);
+  gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(spin_button), TRUE);
+  gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(spin_button), GTK_UPDATE_ALWAYS);
+  g_signal_connect(G_OBJECT(spin_button), "value_changed",  G_CALLBACK(subfraction_precentage_cb), NULL);
+  gtk_table_attach(GTK_TABLE(table), spin_button, 1,2, 
+		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  gtk_widget_set_sensitive(spin_button, calc_on_subfraction);
+  table_row++;
+
+  /* calculate over subfraction callback */
+  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(calc_on_subfraction_cb), spin_button);
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);

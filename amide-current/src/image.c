@@ -1,9 +1,9 @@
 /* image.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2002 Andy Loening
+ * Copyright (C) 2000-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -443,7 +443,10 @@ GdkPixbuf * image_of_distribution(AmitkDataSet * ds, rgb_t fg,
     for (j.x = 0; j.x < dim_x ; j.x++) 
     if (*AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j) > max)
       max = *AMITK_RAW_DATA_DOUBLE_POINTER(distribution,j);
-    scale = ((gdouble) IMAGE_DISTRIBUTION_WIDTH)/max;
+    if (max/IMAGE_DISTRIBUTION_WIDTH != 0.0)
+      scale = ((gdouble) IMAGE_DISTRIBUTION_WIDTH)/max;
+    else
+      scale = 0;
     
     /* figure out what the rgb data is */
     j.t = j.z = j.y = 0;

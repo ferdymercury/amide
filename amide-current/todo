@@ -2,10 +2,7 @@ misc list of things todo:
 
 for next release?
 -----------------
-- calculate statistics on a subset of the ROI's voxels
-        (like 20% most maximum)
-- calculate isocontour inside of an ROI.
-
+* calculate isocontour inside of an ROI.
 * chris wants some max locator thing for ROI's
 * make location designator a set of spin buttons
 * finish dnd support:

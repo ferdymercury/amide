@@ -1,9 +1,9 @@
 /* ui_study_menus.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2002 Andy Loening
+ * Copyright (C) 2000-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -30,29 +30,8 @@
 #include "ui_study.h"
 
 /* external functions */
-void ui_study_menus_fill_in_radioitem(GnomeUIInfo * item,
-				      const gchar * name,
-				      const gchar * tooltip,
-				      gpointer cb_func,
-				      gpointer cb_data,
-				      gpointer xpm_data);
-void ui_study_menus_fill_in_toggleitem(GnomeUIInfo * item,
-				       const gchar * name,
-				       const gchar * tooltip,
-				       gpointer cb_func,
-				       gpointer cb_data,
-				       gpointer xpm_data);
-void ui_study_menus_fill_in_menuitem(GnomeUIInfo * item, 
-				     const gchar * name,
-				     const gchar * tooltip,
-				     gpointer cb_func,
-				     gpointer cb_data);
-void ui_study_menus_fill_in_submenu(GnomeUIInfo * item, 
-				    const gchar * name,
-				    const gchar * tooltip,
-				    GnomeUIInfo * submenu);
-void ui_study_menus_fill_in_end(GnomeUIInfo * item);
 void ui_study_menus_create(ui_study_t * ui_study);
+void ui_study_toolbar_create(ui_study_t * ui_study, AmitkStudy * study);
 
 
 

@@ -1,9 +1,9 @@
 /* analysis.c
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -36,8 +36,15 @@
 
 #define EMPTY 0.0
 
+static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
+static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds,
+					      gdouble subfraction);
+static analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
+static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes,
+						gdouble subfraction);
 
-analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
+
+static analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
 
   analysis_frame_t * return_list;
 
@@ -63,52 +70,58 @@ analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis) {
   return frame_analysis;
 }
 
-/* first pass statistics */
-static void calculate_stats1(AmitkVoxel voxel, 
-			     amide_data_t value, 
-			     amide_real_t voxel_fraction, 
-			     gpointer data) {
+typedef struct element_t {
+  amide_data_t value;
+  amide_real_t weight;
+} element_t;
 
-  analysis_frame_t * frame_analysis = data;
+static void record_stats(AmitkVoxel voxel,
+			 amide_data_t value,
+			 amide_real_t voxel_fraction,
+			 gpointer data) {
 
-  frame_analysis->total += value*voxel_fraction;
-  frame_analysis->voxels += voxel_fraction;
-
-  if (frame_analysis->min_max_valid) {
-    if ((value) < frame_analysis->min) frame_analysis->min = value;
-    if ((value) > frame_analysis->max) frame_analysis->max = value;
-  } else {
-    frame_analysis->min = value;
-    frame_analysis->max = value;
-    frame_analysis->min_max_valid = TRUE;
-  }
+  GPtrArray * array = data;
+  element_t * element;
   
+
+  /* crashes if alloc fails, but I don't want to do error checking in the inner loop... 
+     let's not run out of memory */
+  element = g_malloc(sizeof(element_t)); 
+
+  element->value = value;
+  element->weight = voxel_fraction;
+  g_ptr_array_add(array, element);
+
   return;
 }
 
-/* second pass statistics (i.e. variance */
-static void calculate_stats2(AmitkVoxel voxel, 
-			     amide_data_t value, 
-			     amide_real_t voxel_fraction, 
-			     gpointer data) {
+static gint array_comparison(gconstpointer a, gconstpointer b) {
 
-  analysis_frame_t * frame_analysis = data;
-  amide_data_t temp;
+  const element_t * ea = *((element_t **) a);
+  const element_t * eb = *((element_t **) b);
 
-  temp = (value-frame_analysis->mean);
-  frame_analysis->correction += voxel_fraction*temp;
-  frame_analysis->var += voxel_fraction*temp*temp;
-
-  return;
+  if (ea->value > eb->value) 
+    return -1;
+  else if (ea->value < eb->value) 
+    return 1;
+  else
+    return 0;
 }
 
 /* calculate an analysis of several statistical values for an roi on a given data set frame. */
 static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi, 
-						       AmitkDataSet * ds, 
-						       guint frame) {
+						      AmitkDataSet * ds, 
+						      gdouble subfraction,
+						      guint frame) {
 
   analysis_frame_t * frame_analysis;
   guint num_frames;
+  GPtrArray * data_array;
+  guint total_voxels;
+  guint subfraction_voxels;
+  guint i;
+  element_t * element;
+  amide_data_t temp;
 
   num_frames = AMITK_DATA_SET_NUM_FRAMES(ds);
   if (frame == num_frames) return NULL; /* check if we're done */
@@ -120,52 +133,110 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 	  AMITK_OBJECT_NAME(roi), AMITK_OBJECT_NAME(ds), frame);
 #endif
 
-  /* get memory first */
+  if ((data_array = g_ptr_array_new()) == NULL) {
+    g_warning("couldn't allocate space for data array for frame %d", frame);
+    return NULL;
+  }
+  /* fill the array with the appropriate info from the data set */
+  /* note, I really only need a partial sort to get the median value, but
+     glib doesn't have one (only has a full qsort), so I'll just do that.
+     Partial sort would be order(N), qsort is order(NlogN), so it's not that
+     much worse.
+
+     If I used a partial sort, I'd have to iterate over the subfraction to find the 
+     max and min, and I'd have to do another partial sort to find the median 
+  */
+  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, record_stats, data_array);
+  g_ptr_array_sort(data_array, array_comparison);
+
+  total_voxels = data_array->len;
+  subfraction_voxels = ceil(subfraction*total_voxels);
+  if ((subfraction_voxels == 0) && (total_voxels > 0))
+    subfraction_voxels = 1; /* have at least one voxel if the roi is in the data set*/
+
+
+  /* fill in our frame_analysis structure */
   if ((frame_analysis =  g_try_new(analysis_frame_t,1)) == NULL) {
     g_warning("couldn't allocate space for roi analysis of frame %d", frame);
     return frame_analysis;
   }
   frame_analysis->ref_count = 1;
 
-  /* initialize values */
-  frame_analysis->mean = 0.0;
+  /* set values */
+  frame_analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
+  frame_analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
+  frame_analysis->total = 0.0;
+  frame_analysis->median = 0.0;
+  frame_analysis->total = 0.0;
   frame_analysis->voxels = 0.0;
   frame_analysis->correction = 0.0;
   frame_analysis->var = 0.0;
-  frame_analysis->min_max_valid=FALSE;
-  frame_analysis->min = 0.0;
-  frame_analysis->max = 0.0;
-  frame_analysis->total = 0.0;
 
-  /* note the frame duration */
-  frame_analysis->duration = amitk_data_set_get_frame_duration(ds, frame);
+  
+  if (subfraction_voxels == 0) { /* roi not in data set */
+    frame_analysis->max = 0.0;
+    frame_analysis->min = 0.0;
+    frame_analysis->median = 0.0;
+    frame_analysis->mean = 0.0;
 
-  /* calculate the time midpoint of the data */
-  frame_analysis->time_midpoint = amitk_data_set_get_midpt_time(ds, frame);
+  } else { 
 
-  /* calculate the #voxels, min max, and total */
-  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, calculate_stats1, frame_analysis);
+    /* max */
+    element = g_ptr_array_index(data_array, 0);
+    frame_analysis->max = element->value;
 
-  /* calculate the mean */
-  frame_analysis->mean = frame_analysis->total/frame_analysis->voxels;
+    /* min */
+    element = g_ptr_array_index(data_array, subfraction_voxels-1);
+    frame_analysis->min = element->value;
 
-  /* go through the data again, to calculate variance */
-  amitk_roi_calculate_on_data_set(roi, ds, frame, FALSE, calculate_stats2, frame_analysis);
+    /* median */
+    if (subfraction_voxels & 0x1) { /* odd */
+      element = g_ptr_array_index(data_array, (subfraction_voxels-1)/2);
+      frame_analysis->median = element->value;
+    } else { /* even */
+      element = g_ptr_array_index(data_array, subfraction_voxels/2-1);
+      frame_analysis->median = 0.5*element->value;
+      element = g_ptr_array_index(data_array, subfraction_voxels/2);
+      frame_analysis->median += 0.5*element->value;
+    }
 
-  /* and divide to get the final var, note I'm using N-1, as the mean
-     in a sense is being "estimated" from the data set....  If anyone
-     else with more statistical experience disagrees, please speak up */
-  /* the "total correction" parameter is to correct roundoff error,
-     for a discussion, see "the art of computer programming" */
-  if (frame_analysis->voxels < 2.0)
-    frame_analysis->var = NAN; /* variance is non-sensible */
-  else
-    frame_analysis->var = 
-      (frame_analysis->var - frame_analysis->correction*frame_analysis->correction/frame_analysis->voxels)
-      /(frame_analysis->voxels-1.0);
+    /* total and #voxels */
+    for (i=0; i<subfraction_voxels; i++) {
+      element = g_ptr_array_index(data_array, i);
+      frame_analysis->total += element->weight*element->value;
+      frame_analysis->voxels += element->weight;
+    }
+
+    /* calculate the mean */
+    frame_analysis->mean = frame_analysis->total/frame_analysis->voxels;
+
+    /* calculate variance */
+    for (i=0; i<subfraction_voxels; i++) {
+      element = g_ptr_array_index(data_array, i);
+      temp = (element->value-frame_analysis->mean);
+      frame_analysis->correction += element->weight*temp;
+      frame_analysis->var += element->weight*temp*temp;
+    }
+    /* and divide to get the final var, note I'm using N-1, as the mean
+       in a sense is being "estimated" from the data set....  If anyone
+       else with more statistical experience disagrees, please speak up */
+    /* the "total correction" parameter is to correct roundoff error,
+       for a discussion, see "the art of computer programming" */
+    /* strictly, using frame_analysis->voxels < 2.0 is overly conservative,
+       could use subfraction_voxels < 2, but if anyone really needs variance
+       for such a small volume, they should probably rethink their study... */
+    if (frame_analysis->voxels < 2.0)
+      frame_analysis->var = NAN; /* variance is nonsensical */
+    else
+      frame_analysis->var = 
+	(frame_analysis->var - frame_analysis->correction*frame_analysis->correction/frame_analysis->voxels)
+	/(frame_analysis->voxels-1.0);
+  }
+
+  g_ptr_array_free(data_array, TRUE); /* TRUE frees elements too */
 
   /* now let's recurse  */
-  frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, frame+1);
+  frame_analysis->next_frame_analysis = analysis_frame_init_recurse(roi, ds, subfraction, frame+1);
 
   return frame_analysis;
 }
@@ -173,7 +244,8 @@ static analysis_frame_t * analysis_frame_init_recurse(AmitkRoi * roi,
 
 
 /* returns a calculated analysis structure of an roi on a frame of a data set */
-analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds) {
+static analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds,
+					      gdouble subfraction) {
 
   /* sanity checks */
   if (AMITK_ROI_UNDRAWN(roi)) {
@@ -181,12 +253,12 @@ analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet * ds) {
     return NULL;
   }
 
-  return analysis_frame_init_recurse(roi, ds, 0);
+  return analysis_frame_init_recurse(roi, ds, subfraction, 0);
 }
 
 
 /* free up an roi analysis over a data set */
-analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
+static analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
 
   analysis_volume_t * return_list;
 
@@ -218,7 +290,8 @@ analysis_volume_t * analysis_volume_unref(analysis_volume_t * volume_analysis) {
 }
 
 /* returns an initialized roi analysis of a list of volumes */
-analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets) {
+static analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets, 
+						gdouble subfraction) {
   
   analysis_volume_t * temp_volume_analysis;
 
@@ -236,10 +309,12 @@ analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * data_sets) {
   temp_volume_analysis->data_set = g_object_ref(data_sets->data);
 
   /* calculate this one */
-  temp_volume_analysis->frame_analyses = analysis_frame_init(roi, temp_volume_analysis->data_set);
+  temp_volume_analysis->frame_analyses = 
+    analysis_frame_init(roi, temp_volume_analysis->data_set, subfraction);
 
   /* recurse */
-  temp_volume_analysis->next_volume_analysis = analysis_volume_init(roi, data_sets->next);
+  temp_volume_analysis->next_volume_analysis = 
+    analysis_volume_init(roi, data_sets->next, subfraction);
 
   
   return temp_volume_analysis;
@@ -284,7 +359,8 @@ analysis_roi_t * analysis_roi_unref(analysis_roi_t * roi_analysis) {
 }
 
 /* returns an initialized list of roi analyses */
-analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * data_sets) {
+analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
+				   GList * data_sets, gdouble subfraction) {
   
   analysis_roi_t * temp_roi_analysis;
   
@@ -298,12 +374,15 @@ analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * dat
   temp_roi_analysis->ref_count = 1;
   temp_roi_analysis->roi = g_object_ref(rois->data);
   temp_roi_analysis->study = g_object_ref(study);
+  temp_roi_analysis->subfraction = subfraction;
 
   /* calculate this one */
-  temp_roi_analysis->volume_analyses = analysis_volume_init(temp_roi_analysis->roi, data_sets);
+  temp_roi_analysis->volume_analyses = 
+    analysis_volume_init(temp_roi_analysis->roi, data_sets, subfraction);
 
   /* recurse */
-  temp_roi_analysis->next_roi_analysis = analysis_roi_init(study, rois->next, data_sets);
+  temp_roi_analysis->next_roi_analysis = 
+    analysis_roi_init(study, rois->next, data_sets, subfraction);
 
   
   return temp_roi_analysis;

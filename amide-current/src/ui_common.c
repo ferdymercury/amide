@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -127,7 +127,7 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
   GdkPixbuf * amide_logo;
 
   const gchar *authors[] = {
-    "Andy Loening <loening@ucla.edu>",
+    "Andy Loening <loening@alum.mit.edu>",
     NULL
   };
 
@@ -411,7 +411,7 @@ void ui_common_window_realize_cb(GtkWidget * widget, gpointer data) {
 
 
 /* replaces the current cursor with the specified cursor */
-void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget) {
+void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget) {
 
   GdkCursor * cursor;
   GdkCursor * current_cursor;
@@ -435,6 +435,15 @@ void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget)
     /* if we're waiting for something, save this cursor for later */
     ui_common_pending_cursors = g_slist_append(ui_common_pending_cursors,cursor);
   }
+
+  return;
+}
+
+/* replaces the current cursor with the specified cursor */
+void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget) {
+
+  /* call the actual function */
+  ui_common_place_cursor_no_wait(which_cursor, widget);
 
   /* do any events pending, this allows the cursor to get displayed */
   while (gtk_events_pending()) gtk_main_iteration();

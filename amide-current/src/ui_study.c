@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -31,7 +31,6 @@
 #include "ui_study.h"
 #include "ui_study_cb.h"
 #include "ui_study_menus.h"
-#include "ui_study_toolbar.h"
 #include "ui_time_dialog.h"
 #include "amitk_tree.h"
 #include "amitk_canvas.h"

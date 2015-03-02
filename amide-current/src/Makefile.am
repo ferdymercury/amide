@@ -110,8 +110,6 @@ amide_SOURCES = \
 	ui_study_cb.h \
 	ui_study_menus.c \
 	ui_study_menus.h \
-	ui_study_toolbar.c \
-	ui_study_toolbar.h \
 	ui_time_dialog.c \
 	ui_time_dialog.h \
 	xml.c \

@@ -1,9 +1,9 @@
 /* analysis.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2001-2002 Andy Loening
+ * Copyright (C) 2001-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -42,6 +42,7 @@ struct _analysis_frame_t {
 
   /* stats */
   amide_data_t mean;
+  amide_data_t median;
   amide_real_t voxels;
   amide_data_t var;
   amide_data_t min;
@@ -53,7 +54,6 @@ struct _analysis_frame_t {
   amide_time_t time_midpoint;
 
   /* internal */
-  gboolean min_max_valid;
   amide_data_t correction;
   analysis_frame_t * next_frame_analysis;
   guint ref_count;
@@ -69,20 +69,16 @@ struct _analysis_volume_t {
 struct _analysis_roi_t {
   AmitkRoi * roi;
   AmitkStudy * study;
+  gdouble subfraction;
   analysis_volume_t * volume_analyses;
   guint ref_count;
   analysis_roi_t * next_roi_analysis;
 };
 
 /* external functions */
-analysis_frame_t * analysis_frame_unref(analysis_frame_t * frame_analysis);
-analysis_frame_t * analysis_frame_init(AmitkRoi * roi, AmitkDataSet *ds);
-
-analysis_volume_t * analysis_volume_unref(analysis_volume_t *volume_analysis);
-analysis_volume_t * analysis_volume_init(AmitkRoi * roi, GList * volumes);
-
 analysis_roi_t * analysis_roi_unref(analysis_roi_t *roi_analysis);
-analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, GList * volumes);
+analysis_roi_t * analysis_roi_init(AmitkStudy * study, GList * rois, 
+				   GList * volumes, gdouble subfraction);
 
 #endif /* __ANALYSIS_H__ */
 

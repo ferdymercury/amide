@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -32,6 +32,8 @@
 #include "amitk_data_set.h"
 
 typedef enum {
+  FADS_TYPE_PCA,
+  //  FADS_TYPE_FADS,
   FADS_TYPE_PLS,
   //  FADS_TYPE_TWO_COMPARTMENT,
   NUM_FADS_TYPES
@@ -43,11 +45,25 @@ extern const char ** fads_type_xpm[];
 
 void fads_svd_factors(AmitkDataSet * data_set, 
 		      gint * pnum_factors,
-		      gdouble ** pfactors,
-		      gdouble ** pcomponents);
+		      gdouble ** pfactors);
+void fads_pca(AmitkDataSet * data_set, 
+	      gint num_factors,
+	      gchar * output_filename,
+	      gboolean (*update_func)(),
+	      gpointer update_data);
+void fads_fads(AmitkDataSet * data_set,
+	       gint num_factors,
+	       gint max_iterations,
+	       gdouble stopping_criteria,
+	       gchar * output_filename,
+	       gint num_blood_curve_constraints,
+	       gint * blood_curve_constraint_frame,
+	       gdouble * blood_curve_constraint_val,
+	       gboolean (*update_func)(),
+	       gpointer update_data);
 void fads_pls(AmitkDataSet * data_set, 
 	      gint num_factors, 
-	      gint num_iterations,
+	      gint max_iterations,
 	      gdouble stopping_criteria,
 	      gchar * output_filename,
 	      gint num_blood_curve_constraints,
@@ -56,7 +72,7 @@ void fads_pls(AmitkDataSet * data_set,
 	      gboolean (*update_func)(), 
 	      gpointer update_data);
 void fads_two_comp(AmitkDataSet * data_set, 
-		   gint num_iterations,
+		   gint max_iterations,
 		   gdouble stopping_criteria,
 		   gchar * output_filename,
 		   gint num_blood_curve_constraints,

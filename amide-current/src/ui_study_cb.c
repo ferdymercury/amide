@@ -3,7 +3,7 @@
  * Part of amide - Amide's a Medical Image Dataset Examiner
  * Copyright (C) 2000-2003 Andy Loening
  *
- * Author: Andy Loening <loening@ucla.edu>
+ * Author: Andy Loening <loening@alum.mit.edu>
  */
 
 /*
@@ -896,7 +896,6 @@ void ui_study_cb_render(GtkWidget * widget, gpointer data) {
 
   GtkWidget * dialog;
   ui_study_t * ui_study = data;
-  gboolean optimize_rendering, strip_highs;
   gint return_val;
 
   /* need something to render */
@@ -910,15 +909,12 @@ void ui_study_cb_render(GtkWidget * widget, gpointer data) {
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
 
-  strip_highs = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "strip_highs"));
-  optimize_rendering = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "optimize_rendering"));
-
   gtk_widget_destroy(dialog);
   if (return_val != AMITK_RESPONSE_EXECUTE)
     return; /* we don't want to render */
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_render_create(ui_study->study, strip_highs, optimize_rendering);
+  ui_render_create(ui_study->study);
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   return;
@@ -929,8 +925,6 @@ void ui_study_cb_render(GtkWidget * widget, gpointer data) {
 /* do roi calculations */
 void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  gboolean all_data_sets;
-  gboolean all_rois;
   GtkWidget * dialog;
   gint return_val;
 
@@ -940,18 +934,15 @@ void ui_study_cb_roi_statistics(GtkWidget * widget, gpointer data) {
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
 
-  all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "all_data_sets"));
-  all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(dialog), "all_rois"));
-
   gtk_widget_destroy(dialog);
   if (return_val != AMITK_RESPONSE_EXECUTE)
     return; /* we hit cancel */
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  tb_roi_analysis(ui_study->study, all_data_sets, all_rois, GTK_WINDOW(ui_study->app));
+  tb_roi_analysis(ui_study->study, GTK_WINDOW(ui_study->app));
   ui_common_remove_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  return;
 
+  return;
 }
 
 /* user wants to run the alignment wizard */
