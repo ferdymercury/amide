@@ -193,11 +193,11 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'calc_d
 
 /* returns a slice  with the appropriate data from the data_set */
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'get_slice(AmitkDataSet * data_set,
-									      const amide_time_t start_time,
-									      const amide_time_t duration,
-									      const amide_intpoint_t gate,
-									      const amide_real_t pixel_dim,
-									      const AmitkVolume * slice_volume) {
+											      const amide_time_t start_time,
+											      const amide_time_t duration,
+											      const amide_intpoint_t gate,
+											      const AmitkCanvasPoint pixel_size,
+											      const AmitkVolume * slice_volume) {
 
   /* zp_start, where on the zp axis to start the slice, zp (z_prime) corresponds
      to the rotated axises, if negative, choose the midpoint */
@@ -232,6 +232,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   AmitkCorners intersection_corners;
   AmitkVoxel dim;
   gint num_gates;
+  gboolean empties=FALSE;
 
   /* ----- figure out what frames of this data set to include ----*/
   end_time = start_time+duration;
@@ -246,8 +247,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 
   /* ------------------------- */
 
-  dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(slice_volume))/pixel_dim);
-  dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(slice_volume))/pixel_dim);
+  dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(slice_volume))/pixel_size.x);
+  dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(slice_volume))/pixel_size.y);
   dim.z = dim.g = dim.t = 1;
 
 
@@ -263,8 +264,8 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   slice->slice_parent = data_set;
   g_object_add_weak_pointer(G_OBJECT(data_set), 
 			    (gpointer *) &(slice->slice_parent));
-  slice->voxel_size.x = pixel_dim;
-  slice->voxel_size.y = pixel_dim;
+  slice->voxel_size.x = pixel_size.x;
+  slice->voxel_size.y = pixel_size.y;
   slice->voxel_size.z = AMITK_VOLUME_Z_CORNER(slice_volume);
   amitk_space_copy_in_place(AMITK_SPACE(slice), AMITK_SPACE(slice_volume));
   slice->scan_start = start_time;
@@ -344,7 +345,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
   //  if (amitk_data_set_get_global_max(data_set) < 0)
   //    empty = amitk_data_set_get_global_min(data_set);
   //  else
-  empty = NAN;
+  empty = NAN; /* note, if you change this from NAN, need to switch out isnan's below */
 
   /* iterate over those voxels that we didn't cover, and mark them as NAN */
   i_voxel.t = i_voxel.g = i_voxel.z = 0;
@@ -452,32 +453,91 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Interce
 		/* get the value of the point on the box */
 		if (amitk_raw_data_includes_voxel(data_set->raw_data, box_voxel[l]))
 		  box_value[l] = AMITK_DATA_SET_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_`'m4_Intercept`'CONTENT(data_set, box_voxel[l]);
-		else
+		else {
 		  box_value[l] = empty;
+		  empties = TRUE;
+		}
 	      }
 	      
-	      /* do the x direction linear interpolation of the sets of two points */
-	      for (l=0;l<8;l=l+2) {
-		max_diff = box_point[l+1].x-box_point[l].x;
-		weight1 = ((max_diff - (ds_point.x - box_point[l].x))/max_diff);
-		weight2 = ((max_diff - (box_point[l+1].x - ds_point.x))/max_diff);
-		box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
-	      }
-	      
-	      /* do the y direction linear interpolation of the sets of two points */
-	      for (l=0;l<8;l=l+4) {
-		max_diff = box_point[l+2].y-box_point[l].y;
-		weight1 = ((max_diff - (ds_point.y - box_point[l].y))/max_diff);
-		weight2 = ((max_diff - (box_point[l+2].y - ds_point.y))/max_diff);
-		box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
-	      }
-	      
-	      /* do the z direction linear interpolation of the sets of two points */
-	      for (l=0;l<8;l=l+8) {
-		max_diff = box_point[l+4].z-box_point[l].z;
-		weight1 = ((max_diff - (ds_point.z - box_point[l].z))/max_diff);
-		weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
-		box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
+	      if (empties) { /* slow algorithm - checking for empties */
+		/* reset value */
+		empties = FALSE; 
+
+		/* do the x direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+2) {
+		  max_diff = box_point[l+1].x-box_point[l].x;
+		  weight1 = ((max_diff - (ds_point.x - box_point[l].x))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+1].x - ds_point.x))/max_diff);
+		  if (isnan(box_value[l])) {
+		    if (weight2 >= weight1)
+		      box_value[l] = box_value[l+1];
+		    /* else box_value[l] left as is (empty) */
+		  } else if (isnan(box_value[l+1])) {
+		    if (weight1 < weight2)
+		      box_value[l] = empty;
+		    /* else box_value[l] left as is */
+		  } else
+		    box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
+		}
+		
+		/* do the y direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+4) {
+		  max_diff = box_point[l+2].y-box_point[l].y;
+		  weight1 = ((max_diff - (ds_point.y - box_point[l].y))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+2].y - ds_point.y))/max_diff);
+		  if (isnan(box_value[l])) {
+		    if (weight2 >= weight1)
+		      box_value[l] = box_value[l+2];
+		    /* else box_value[l] left as is (empty) */
+		  } else if (isnan(box_value[l+2])) {
+		    if (weight1 < weight2)
+		      box_value[l] = empty;
+		    /* else box_value[l] left as is */
+		  } else
+		    box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
+		}
+		
+		/* do the z direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+8) {
+		  max_diff = box_point[l+4].z-box_point[l].z;
+		  weight1 = ((max_diff - (ds_point.z - box_point[l].z))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
+		  if (isnan(box_value[l])) {
+		    if (weight2 >= weight1)
+		      box_value[l] = box_value[l+4];
+		    /* else box_value[l] left as is (empty) */
+		  } else if (isnan(box_value[l+4])) {
+		    if (weight1 < weight2)
+		      box_value[l] = empty;
+		    /* else box_value[l] left as is */
+		  } else
+		    box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
+		}
+
+	      } else { /* faster */
+		/* do the x direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+2) {
+		  max_diff = box_point[l+1].x-box_point[l].x;
+		  weight1 = ((max_diff - (ds_point.x - box_point[l].x))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+1].x - ds_point.x))/max_diff);
+		  box_value[l] = (box_value[l] * weight1) + (box_value[l+1] * weight2);
+		}
+		
+		/* do the y direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+4) {
+		  max_diff = box_point[l+2].y-box_point[l].y;
+		  weight1 = ((max_diff - (ds_point.y - box_point[l].y))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+2].y - ds_point.y))/max_diff);
+		  box_value[l] = (box_value[l] * weight1) + (box_value[l+2] * weight2);
+		}
+		
+		/* do the z direction linear interpolation of the sets of two points */
+		for (l=0;l<8;l=l+8) {
+		  max_diff = box_point[l+4].z-box_point[l].z;
+		  weight1 = ((max_diff - (ds_point.z - box_point[l].z))/max_diff);
+		  weight2 = ((max_diff - (box_point[l+4].z - ds_point.z))/max_diff);
+		  box_value[l] = (box_value[l] * weight1) + (box_value[l+4] * weight2);
+		}
 	      }
 	      
 	      AMITK_RAW_DATA_DOUBLE_SET_CONTENT(slice->raw_data,i_voxel)+=weight*box_value[0];

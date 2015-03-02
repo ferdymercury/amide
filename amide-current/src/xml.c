@@ -38,14 +38,29 @@ static char * false_string = "false";
 /* returns FALSE if we'll have problems reading this file on a 32bit system */
 gboolean xml_check_file_32bit_okay(guint64 value) {
 
-  //#if !defined (G_PLATFORM_WIN32)
-  //  /* for some reason, 64bit calculations on windows returns garbage */
+#if !defined (G_PLATFORM_WIN32)
+  /* for some reason, 64bit calculations on windows returns garbage */
   if (sizeof(long) < sizeof(guint64)) {
     guint64 check = ((guint64) value) >> ((guint64) 31); /* long is signed, so 31 bits */
     if (check > 0) 
       return FALSE;
   }
+#endif
+
+
+  // the following doesn't work on win32 either
+  //  if (sizeof(long) < sizeof(guint64)) {
+  //    guint32 * value32;
+  //    value32 = (guint32 *) &value;
+  //
+  //#if (G_BYTE_ORDER == G_BIG_ENDIAN)
+  //    if (value32[0] > 0)
+  //      return FALSE;
+  //#else /* little endian */
+  //    if (value32[1] > 0)
+  //      return FALSE;
   //#endif
+  //  }
 
   return TRUE;
 }
@@ -621,13 +636,13 @@ xmlDocPtr xml_open_doc(gchar * xml_filename, FILE * study_file,
 
     /* check for file size problems */
     if (!xml_check_file_32bit_okay(location)) {
-      amitk_append_str_with_newline(perror_buf, _("File to large to read on 32bit platform."));
+      g_warning(_("File to large to read on 32bit platform."));
       return NULL;
     }
     location_long = location;
 
     if (!xml_check_file_32bit_okay(size)) {
-      amitk_append_str_with_newline(perror_buf,_("File to large to read on 32bit platform.")); 
+      g_warning(_("File to large to read on 32bit platform.")); 
       return NULL;
     }
     size_size = size;

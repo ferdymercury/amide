@@ -28,6 +28,7 @@
 /* external functions */
 void ui_study_cb_new_study(GtkWidget * button, gpointer ui_study);
 void ui_study_cb_open_study(GtkWidget * button, gpointer ui_study);
+void ui_study_cb_import_object(GtkWidget * widget, gpointer data);
 void ui_study_cb_save_as(GtkWidget * widget, gpointer data);
 void ui_study_cb_import(GtkWidget * widget, gpointer data);
 void ui_study_cb_export_view(GtkWidget * widget, gpointer data);

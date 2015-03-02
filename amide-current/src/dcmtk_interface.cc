@@ -74,6 +74,7 @@ gboolean dcmtk_test_dicom(const gchar * filename) {
 static AmitkDataSet * read_dicom_file(const gchar * filename,
 				      AmitkPreferences * preferences,
 				      gint *pnum_frames,
+				      gint *pnum_gates,
 				      AmitkUpdateFunc update_func,
 				      gpointer update_data,
 				      gchar **perror_buf) {
@@ -180,21 +181,21 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     dim.z = return_uint16;
 
   //  if (dcm_dataset->findAndGetUint16(DCM_NumberOfFrames, return_uint16).bad()) 
-  dim.t = 1; /* no support for multiple frames in single slice */
+  dim.t = 1; /* no support for multiple frames in a single file */
 
-  dim.g = 1; /* no support for gates yet */
+  dim.g = 1; /* no support for multiple gates in a single file */
 
   /* TimeSlices can also indicate # of bed positions, so only use for number of frames
      if this is explicitly a DYNAMIC data set */
-  if (pnum_frames != NULL) {
-    *pnum_frames=1;
-    if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
-      if (strstr(return_str, "DYNAMIC") != NULL)
-	if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlices, return_uint16).good()) 
-	  *pnum_frames = return_uint16;
-  }
+  if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
+    if (strstr(return_str, "DYNAMIC") != NULL)
+      if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlices, return_uint16).good()) 
+	*pnum_frames = return_uint16;
 
-
+  if (dcm_dataset->findAndGetString(DCM_SeriesType, return_str, OFTrue).good()) 
+    if (strstr(return_str, "GATED\\IMAGE") != NULL)
+      if (dcm_dataset->findAndGetUint16(DCM_NumberOfTimeSlots, return_uint16).good()) 
+	*pnum_gates = return_uint16;
 
   if (dcm_dataset->findAndGetUint16(DCM_BitsAllocated, return_uint16).bad()) {
     g_warning("could not find # of bits allocated - Failed to load file %s\n", filename);
@@ -268,6 +269,10 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
       //      new_offset.z -= 0.5*voxel_size.z;
       amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
     }
+  } else if (dcm_dataset->findAndGetFloat64(DCM_SliceLocation, return_float64).good()) {
+    /* if no ImagePositionPatient, try using SliceLocation */
+    new_offset.z = -return_float64; /* DICOM specifies z axis in wrong direction */
+    amitk_space_set_offset(AMITK_SPACE(ds), new_offset);
   }
 
   if (dcm_dataset->findAndGetString(DCM_ImageOrientationPatient, return_str).good()) {
@@ -290,6 +295,11 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
     amitk_data_set_set_displayed_weight_unit(ds, AMITK_WEIGHT_UNIT_KILOGRAM);
   }
 
+  /* store the gate time if possible */
+  if (dcm_dataset->findAndGetFloat64(DCM_TriggerTime, return_float64).good()) 
+    ds->gate_time = return_float64;
+  else
+    ds->gate_time = 0.0;
 
   /* find the most relevant start time */
   return_str = NULL;
@@ -450,7 +460,7 @@ static AmitkDataSet * read_dicom_file(const gchar * filename,
   /* and load in the data - plane by plane */
   for (i.t = 0; (i.t < dim.t) && (continue_work); i.t++) {
 
-    /* note ... doesn't seem to be a way to incode different frame durations within one dicom file */
+    /* note ... doesn't seem to be a way to encode different frame durations within one dicom file */
     if (dcm_dataset->findAndGetString(DCM_ActualFrameDuration, return_str).good()) {
       amitk_data_set_set_frame_duration(ds,i.t, atof(return_str)/1000.0);
       /* make sure it's not zero */
@@ -563,6 +573,29 @@ static gint sort_slices_func_with_time(gconstpointer a, gconstpointer b) {
   return sort_slices_func(a,b);
 }
 
+/* sort by gate, then by location */
+static gint sort_slices_func_with_gate(gconstpointer a, gconstpointer b) {
+  AmitkDataSet * slice_a = (AmitkDataSet *) a;
+  AmitkDataSet * slice_b = (AmitkDataSet *) b;
+  gdouble gate_a, gate_b;
+
+  g_return_val_if_fail(AMITK_IS_DATA_SET(slice_a), -1);
+  g_return_val_if_fail(AMITK_IS_DATA_SET(slice_b), 1);
+
+  /* first sort by time */
+  gate_a = AMITK_DATA_SET(slice_a)->gate_time;
+  gate_b = AMITK_DATA_SET(slice_b)->gate_time;
+  if (!REAL_EQUAL(gate_a, gate_b)) {
+    if (gate_a < gate_b)
+      return -1;
+    else
+      return 1;
+  }
+
+  /* then sort by location */
+  return sort_slices_func(a,b);
+}
+
 static GList * check_slices(GList * slices) {
 
   GList * current_slice;
@@ -614,7 +647,9 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   gchar * slice_name;
   gint image;
   AmitkVoxel dim, scaling_dim;
-  gint num_frames, frame;
+  gint num_frames=1;
+  gint num_gates=1;
+  gint frame;
   amide_time_t last_scan_start;
   //  GArray * durations;
   gboolean screwed_up_timing;
@@ -631,6 +666,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   gdouble theta;
 
   num_files = g_list_length(image_files);
+  g_return_val_if_fail(num_files != 0, NULL);
 
   //	durations= g_array_new(FALSE, FALSE, sizeof(amide_time_t));
   screwed_up_timing=FALSE;
@@ -650,7 +686,7 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
 
 
     slice_name = (gchar *) g_list_nth_data(image_files,image);
-    slice_ds = read_dicom_file(slice_name, preferences, &num_frames, NULL, NULL, perror_buf);
+    slice_ds = read_dicom_file(slice_name, preferences, &num_frames, &num_gates, NULL, NULL, perror_buf);
     if (slice_ds == NULL) 
       goto error;
     else if (AMITK_DATA_SET_DIM_Z(slice_ds) != 1) {
@@ -661,15 +697,21 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   }
   if (!continue_work) goto error;
 
+  if ((num_frames > 1) && (num_gates > 1)) 
+    g_warning("Don't know how to deal with multi-gate and multi-frame data, results will be undefined");
+
   /* throw out any slices that don't fit in */
   slices = check_slices(slices);
 
   /* sort list based on the slice's time and z position */
   if (num_frames > 1)
     slices = g_list_sort(slices, sort_slices_func_with_time);
+  else if (num_gates > 1)
+    slices = g_list_sort(slices, sort_slices_func_with_gate);
   else
     slices = g_list_sort(slices, sort_slices_func);
   num_images = g_list_length(slices);
+
 
   
   image=0;
@@ -680,15 +722,27 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
     if (image==0) {
       
       dim = AMITK_DATA_SET_DIM(slice_ds);
-      x = div(num_images, num_frames);
-      if (x.rem != 0) {
-	amitk_append_str_with_newline(perror_buf, (_("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), slice_name));
-	dim.t = num_frames=1;
-	dim.z = num_images;
-      } else {
-	dim.t = num_frames;
-	dim.z = x.quot;
+      dim.z = num_images;
+      if (num_frames > 1) {
+	x = div(num_images, num_frames);
+	if (x.rem != 0) {
+	  amitk_append_str_with_newline(perror_buf, (_("Cannot evenly divide the number of slices by the number of frames for data set %s - ignoring dynamic data"), slice_name));
+	  dim.t = num_frames=1;
+	} else {
+	  dim.t = num_frames;
+	  dim.z = x.quot;
+	}
+      } else if (num_gates > 1) {
+	x = div(num_images, num_gates);
+	if (x.rem != 0) {
+	  amitk_append_str_with_newline(perror_buf, (_("Cannot evenly divide the number of slices by the number of gates for data set %s - ignoring gated data"), slice_name));
+	  dim.g = num_gates=1;
+	} else {
+	  dim.g = num_gates;
+	  dim.z = x.quot;
+	}
       }
+
 
       ds = AMITK_DATA_SET(amitk_object_copy(AMITK_OBJECT(slice_ds)));
       
@@ -732,7 +786,10 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
 
     x = div(image, dim.z);
     i=zero_voxel;
-    i.t = x.quot;
+    if (num_gates > 1)
+      i.g = x.quot;
+    else
+      i.t = x.quot;
     i.z = x.rem;
     transfer_slice(ds, slice_ds, i);
 
@@ -926,46 +983,65 @@ static AmitkDataSet * import_files_as_dataset(GList * image_files,
   return ds;
 }
 
-static gchar * get_media_storage_sop_instance_uid(const gchar * filename, gchar ** pseries_description) {
+static void get_series_information(const gchar * filename, 
+				   gchar ** pseries_instance_uid, 
+				   gchar ** pmodality, 
+				   gchar ** pseries_number,
+				   gchar ** pseries_description) {
 
   OFCondition result;
   DcmFileFormat dcm_format;
-  DcmMetaInfo * dcm_metainfo;
   DcmDataset * dcm_dataset;
-  const gchar * return_str;
-  gchar * return_str_dup=NULL;
+  const char * return_str=NULL;
 
-  /* first get the MediaStorageSOPInstanceUID */
   result = dcm_format.loadFile(filename);
-  if (result.bad()) return NULL;
+  if (result.bad()) return;
 
-  dcm_metainfo = dcm_format.getMetaInfo();
-  if (dcm_metainfo == NULL) return NULL;
+  dcm_dataset = dcm_format.getDataset();
+  if (dcm_dataset == NULL) {
+    g_warning("could not find dataset in DICOM file %s\n", filename);
+    return;
+  }
 
-  dcm_metainfo->findAndGetString(DCM_MediaStorageSOPInstanceUID, return_str, OFTrue);
-  if (return_str != NULL)
-    return_str_dup = g_strdup(return_str);
+  if (pseries_instance_uid != NULL) {
+    dcm_dataset->findAndGetString(DCM_SeriesInstanceUID, return_str, OFTrue);
+    if (return_str != NULL)
+      *pseries_instance_uid = g_strdup(return_str);
+  }
+
+  if (pmodality != NULL) {
+    dcm_dataset->findAndGetString(DCM_Modality, return_str, OFTrue);
+    if (return_str != NULL)
+      *pmodality = g_strdup(return_str);
+  }
+
+  if (pseries_number != NULL) {
+    dcm_dataset->findAndGetString(DCM_SeriesNumber, return_str, OFTrue);
+    if (return_str != NULL)
+      *pseries_number = g_strdup(return_str);
+  }
 
   if (pseries_description != NULL) {
-    dcm_dataset = dcm_format.getDataset();
-    if (dcm_dataset == NULL) {
-      g_warning("could not find dataset in DICOM file %s\n", filename);
-      g_free(return_str_dup);
-      return NULL;
-    }
-
     dcm_dataset->findAndGetString(DCM_SeriesDescription, return_str, OFTrue);
-    if (return_str != NULL) {
+    if (return_str != NULL) 
       *pseries_description = g_strdup(return_str);
-    }
   }
 
 
-
-
-  return return_str_dup;
+  return;
 }
 
+static gboolean check_same(gchar * str1, gchar * str2) {
+
+  if ((str1 == NULL) && (str2 == NULL))
+    return TRUE;
+  if ((str1 == NULL) || (str2 == NULL))
+    return FALSE;
+  if (strcmp(str1, str2) == 0)
+    return TRUE;
+
+  return FALSE;
+}
 
 static GList * import_files(const gchar * filename,
 			    AmitkPreferences * preferences,
@@ -976,38 +1052,38 @@ static GList * import_files(const gchar * filename,
   AmitkDataSet * ds;
   GList * data_sets = NULL;
   GList * image_files=NULL;
-  gchar * uid_string;
   gchar * image_name;
   gchar * error_buf=NULL;
+  gchar * uid_string=NULL;
   gchar * series_description=NULL;
-  gchar * new_series_description=NULL;
+  gchar * modality=NULL;
+  gchar * series_number=NULL;
   
 
 
   /* find all files in the directory that are related to the current file */
-  uid_string = get_media_storage_sop_instance_uid(filename,&series_description);
+  get_series_information(filename,&uid_string, &modality, &series_number, &series_description);
+
   if (uid_string != NULL) {
-    gint j, count, compare_count;
+    gint j, count;
     gchar * dirname=NULL;
     gchar ** uid_string_split=NULL;
-    gchar * new_uid_string;
+    gchar * new_uid_string=NULL;
     gchar ** new_uid_string_split=NULL;
+    gchar * new_series_description=NULL;
+    gchar * new_modality=NULL;
+    gchar * new_series_number=NULL;
     gchar * new_filename;
     DIR* dir;
     struct dirent* entry;
-    gboolean same_dataset;
     gint string_cmp_val;
     gboolean continue_work=TRUE;
+    gboolean same_dataset;
 
     uid_string_split = g_strsplit(uid_string, ".", -1);
     j=0;
     while (uid_string_split[j] != NULL) j++;
     count = j;
-
-    if (count>2)
-      compare_count = count-2;
-    else
-      compare_count = count-1;
 
     if (update_func != NULL) 
       continue_work = (*update_func)(update_data, _("Scanning Files to find DICOM Slices"), (gdouble) 0.0);
@@ -1027,33 +1103,43 @@ static GList * import_files(const gchar * filename,
 	  new_filename = g_strdup_printf("%s%s%s", dirname, G_DIR_SEPARATOR_S,entry->d_name);
 
 	if (dcmtk_test_dicom(new_filename)) {
-	  new_uid_string = get_media_storage_sop_instance_uid(new_filename, &new_series_description);
+	  get_series_information(new_filename, &new_uid_string, &new_modality, &new_series_number, &new_series_description);
 
+	  if (new_uid_string != NULL)
+	    if (check_same(series_description, new_series_description))
+	      if (check_same(series_number, new_series_number))
+		if (check_same(modality, new_modality)) {
 
-	  /* relying on left to right execution to avoid core dump... strcmp bails
-	     on a NULL string*/
-	  if (((series_description == NULL) && (new_series_description==NULL)) || 
-	      (strcmp(series_description, new_series_description) == 0)) {
-	    if (new_uid_string != NULL) {
-	      new_uid_string_split = g_strsplit(new_uid_string, ".", -1);
-	    
-	      same_dataset=TRUE;
-	      for (j=0; (j<compare_count && same_dataset); j++) {
-		if (new_uid_string_split[j] == NULL)
-		  same_dataset=FALSE;
-		else if (strcmp(new_uid_string_split[j], uid_string_split[j]) != 0)
-		  same_dataset=FALSE;
-	      }
-	      
-	      if (same_dataset) 
-		image_files = g_list_append(image_files, g_strdup(new_filename));
-	      
-	      g_free(new_uid_string);
-	      if (new_uid_string_split != NULL) g_strfreev(new_uid_string_split);
-	    }
+		  /* check all but last number in series instance uid */
+		  new_uid_string_split = g_strsplit(new_uid_string, ".", -1); 
+		  same_dataset=TRUE;
+		  for (j=0; (j<(count-1) && same_dataset); j++) {
+		    if (new_uid_string_split[j] == NULL)
+		      same_dataset=FALSE;
+		    else if (strcmp(new_uid_string_split[j], uid_string_split[j]) != 0)
+		      same_dataset=FALSE;
+		  }
+		  
+		  if (same_dataset)
+		    image_files = g_list_append(image_files, g_strdup(new_filename)); /* we have a match */
+
+		  g_free(new_uid_string);
+		  new_uid_string = NULL;
+		  if (new_uid_string_split != NULL) g_strfreev(new_uid_string_split);
+		}
+
+	  if (new_modality != NULL) {
+	    g_free(new_modality);
+	    new_modality = NULL;
 	  }
-	  if (new_series_description != NULL)
+	  if (new_series_number != NULL) {
+	    g_free(new_series_number);
+	    new_series_number = NULL;
+	  }
+	  if (new_series_description != NULL) {
 	    g_free(new_series_description);
+	    new_series_description = NULL;
+	  }
 	}
 	g_free(new_filename);
       }

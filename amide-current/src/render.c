@@ -558,6 +558,7 @@ gboolean rendering_load_object(rendering_t * rendering,
     amide_data_t max, min;
     AmitkVoxel dim;
     gboolean unmatched_dimensions = FALSE;
+    AmitkCanvasPoint pixel_size;
 
     
     slice_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(rendering->extraction_volume)));
@@ -579,11 +580,12 @@ gboolean rendering_load_object(rendering_t * rendering,
 	    continue_work = (*update_func)(update_data, NULL, (gdouble) i_voxel.z/rendering->dim.z);
       }
       
+      pixel_size.x = pixel_size.y = rendering->voxel_size;
       slice = amitk_data_set_get_slice(AMITK_DATA_SET(rendering->object), 
 				       rendering->start, 
 				       rendering->duration, 
 				       -1,
-				       rendering->voxel_size, 
+				       pixel_size,
 				       slice_volume);
 
       if (!unmatched_dimensions && 

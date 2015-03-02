@@ -79,6 +79,8 @@ void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget *
 void ui_common_remove_wait_cursor(GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr);
+void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
+GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog);
 
 
 

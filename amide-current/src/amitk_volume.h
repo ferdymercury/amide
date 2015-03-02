@@ -52,7 +52,7 @@ typedef struct AmitkVolume AmitkVolume;
 struct AmitkVolume
 {
   AmitkObject parent;
-  AmitkPoint corner;      /*far corner,near corner is always 0,0,0 in the volume's coordinate space */
+  AmitkPoint corner; /* far corner, in volume's coord space. near corner always 0,0,0 in volume's coord space */
   gboolean valid;         /* if the corner is currently valid */
 
 };

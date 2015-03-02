@@ -1309,8 +1309,6 @@ void ui_series_create(AmitkStudy * study,
 
 static void init_series_type_cb(GtkWidget * widget, gpointer data);
 static void init_view_cb(GtkWidget * widget, gpointer data);
-static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
-
 
 
 
@@ -1346,36 +1344,6 @@ static void init_view_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
-  
-  gint return_val;
-
-  switch(response_id) {
-  case AMITK_RESPONSE_EXECUTE:
-  case GTK_RESPONSE_CLOSE:
-    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
-    break;
-
-  default:
-    break;
-  }
-
-  return;
-}
-
-
-GList * ui_series_init_dialog_selected_objects(GtkWidget * dialog) {
-
-  GList * objects;
-  AmitkTreeView * tree_view;
-  
-  tree_view = g_object_get_data(G_OBJECT(dialog), "tree_view");
-  objects = amitk_tree_view_get_multiple_selection_objects(tree_view);
-
-  return objects;
-}
-
 /* function to setup a dialog to allow us to choose options for the series */
 GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent) {
   
@@ -1407,7 +1375,7 @@ GtkWidget * ui_series_init_dialog_create(AmitkStudy * study, GtkWindow * parent)
   g_free(temp_string);
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(ui_common_init_dialog_response_cb), NULL);
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 

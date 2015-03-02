@@ -851,7 +851,6 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 
 
 static void radio_buttons_cb(GtkWidget * widget, gpointer data);
-static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data);
 static void threshold_percentage_cb(GtkWidget * widget, gpointer data);
 static void threshold_value_cb(GtkWidget * widget, gpointer data);
@@ -975,25 +974,6 @@ static void threshold_value_cb(GtkWidget * widget, gpointer data) {
 }
 
 
-static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
-  
-  gint return_val;
-
-  switch(response_id) {
-  case AMITK_RESPONSE_EXECUTE:
-  case GTK_RESPONSE_CLOSE:
-    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
-    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
-    break;
-
-  default:
-    break;
-  }
-
-  return;
-}
-
-
 /* function to setup a dialog to allow us to choice options for rendering */
 GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   
@@ -1031,7 +1011,7 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
 
 
   /* setup the callbacks for the dialog */
-  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(ui_common_init_dialog_response_cb), NULL);
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 

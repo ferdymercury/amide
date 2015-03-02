@@ -41,6 +41,7 @@
 #include "amitk_progress_dialog.h"
 #include "ui_gate_dialog.h"
 #include "ui_time_dialog.h"
+#include "tb_export_data_set.h"
 #include "tb_fly_through.h"
 #include "tb_alignment.h"
 #include "tb_crop.h"
@@ -56,18 +57,94 @@ static gchar * no_active_ds = N_("No data set is currently marked as active");
 static gchar * no_gsl = N_("This wizard requires compiled in support from the GNU Scientific Library (libgsl), which this copy of AMIDE does not have.");
 #endif
 
-/* function to handle loading in an AMIDE study */
-static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
+
+static void object_picker(ui_study_t * ui_study, AmitkStudy * import_study) {
+
+  GtkWidget * dialog;
+  gchar * temp_string;
+  GtkWidget * table;
+  guint table_row;
+  GtkWidget * tree_view;
+  GtkWidget * scrolled;
+  GList * selected_objects;
+  GList * temp_objects;
+  gint return_val;
+
+  /* unselect all objects in study */
+  amitk_object_set_selected(AMITK_OBJECT(import_study), FALSE, AMITK_SELECTION_ALL);
+
+  temp_string = g_strdup_printf(_("%s: Pick Object(s) to Import"), PACKAGE);
+  dialog = gtk_dialog_new_with_buttons (temp_string,  GTK_WINDOW(ui_study->app),
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_EXECUTE, AMITK_RESPONSE_EXECUTE,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, NULL);
+  gtk_window_set_title(GTK_WINDOW(dialog), temp_string);
+  g_free(temp_string);
+
+  /* setup the callbacks for the dialog */
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(ui_common_init_dialog_response_cb), NULL);
+
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+
+  /* start making the widgets for this dialog box */
+  table = gtk_table_new(5,2,FALSE);
+  table_row=0;
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+
+  tree_view = amitk_tree_view_new(AMITK_TREE_VIEW_MODE_MULTIPLE_SELECTION,NULL, NULL);
+  g_object_set_data(G_OBJECT(dialog), "tree_view", tree_view);
+  amitk_tree_view_set_study(AMITK_TREE_VIEW(tree_view), import_study);
+  amitk_tree_view_expand_object(AMITK_TREE_VIEW(tree_view), AMITK_OBJECT(import_study));
+
+  /* make a scrolled area for the tree */
+  scrolled = gtk_scrolled_window_new(NULL,NULL);  
+  gtk_widget_set_size_request(scrolled,250,250);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled), 
+				 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), 
+					tree_view);
+  gtk_table_attach(GTK_TABLE(table), scrolled, 0,2,
+		   table_row, table_row+1,GTK_FILL, GTK_FILL | GTK_EXPAND, X_PADDING, Y_PADDING);
+  table_row++;
+
+  /* and show all our widgets */
+  gtk_widget_show_all(dialog);
+
+  /* and wait for the question to return */
+  return_val = gtk_dialog_run(GTK_DIALOG(dialog));
+
+  /* get which objects were selected */
+  selected_objects = ui_common_init_dialog_selected_objects(dialog);
+  gtk_widget_destroy(dialog);
+
+  /* add on the new objects i fwe want */
+  if (return_val == AMITK_RESPONSE_EXECUTE) {
+    temp_objects = selected_objects;
+    while (temp_objects != NULL) {
+      amitk_object_remove_child(AMITK_OBJECT(import_study), AMITK_OBJECT(temp_objects->data));
+      amitk_object_add_child(AMITK_OBJECT(ui_study->study), AMITK_OBJECT(temp_objects->data));
+      temp_objects = temp_objects->next;
+    }
+  }
+  selected_objects = amitk_objects_unref(selected_objects);
+
+}
+
+
+/* function to handle loading in an AMIDE study or importing from one */
+static void study_open_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * xif_selection = data;
   gchar * returned_filename;
   AmitkStudy * study;
   ui_study_t * ui_study;
+  gboolean import_object;
 
   /* get the filename and a pointer to ui_study */
   returned_filename = ui_common_xif_selection_get_load_name(xif_selection);
   if (returned_filename == NULL) return;
   ui_study = g_object_get_data(G_OBJECT(xif_selection), "ui_study");
+  import_object = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(xif_selection), "import_object"));
 
   /* try loading the study into memory */
   if ((study=amitk_study_load_xml(returned_filename)) == NULL) {
@@ -80,21 +157,23 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
   /* close the file selection box */
   ui_common_file_selection_cancel_cb(widget, xif_selection);
 
-  /* setup the study window */
-  if (ui_study->study_virgin)
-    ui_study_set_study(ui_study, study);
-  else
-    ui_study_create(study, ui_study->preferences);
+  if (!import_object) {
+    /* setup the study window */
+    if (ui_study->study_virgin)
+      ui_study_set_study(ui_study, study);
+    else
+      ui_study_create(study, ui_study->preferences);
+  } else {
+    object_picker(ui_study, study);
+  }
   amitk_object_unref(study);
 
   return;
 }
 
 
-/* function to load a study into a  study widget w*/
-void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
+static void read_study(ui_study_t * ui_study, gboolean import_object) {
 
-  ui_study_t * ui_study=data;
   GtkWidget * xif_selection;
 
   xif_selection = amitk_xif_selection_new(_("Open AMIDE XIF File"));
@@ -105,11 +184,14 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
   /* save a pointer to ui_study */
   g_object_set_data(G_OBJECT(xif_selection), "ui_study", ui_study);
 
+  /* what are we actually doing? */
+  g_object_set_data(G_OBJECT(xif_selection), "import_object", GINT_TO_POINTER(import_object));
+
   ui_common_xif_selection_set_filename(xif_selection, NULL);
 
   /* connect the signals */
   g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->ok_button),
-		   "clicked", G_CALLBACK(ui_study_cb_open_ok), xif_selection);
+		   "clicked", G_CALLBACK(study_open_ok), xif_selection);
   g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
 		   "clicked", G_CALLBACK(ui_common_file_selection_cancel_cb),xif_selection);
   g_signal_connect(G_OBJECT(AMITK_XIF_SELECTION(xif_selection)->cancel_button),
@@ -123,6 +205,22 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
 
   return;
 }
+  
+
+/* function to load a study into a  study widget w*/
+void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
+  ui_study_t * ui_study=data;
+  read_study(ui_study, FALSE);
+  return;
+}
+
+/* function to selection which file to import */
+void ui_study_cb_import_object(GtkWidget * widget, gpointer data) {
+  ui_study_t * ui_study = data;
+  read_study(ui_study, TRUE);
+  return;
+}
+
   
 
 /* function to create a new study widget */
@@ -206,7 +304,7 @@ void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
 }
 
 /* function to start the file importation process */
-static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
+static void import_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * file_selection = data;
   ui_study_t * ui_study;
@@ -216,9 +314,14 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   GList * import_data_sets;
   AmitkDataSet * import_ds;
 
-
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
+
+  /* get the filename and import */
+  filename = ui_common_file_selection_get_load_name(file_selection);
+  if (filename == NULL) return;
+
+  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
 
   /* figure out how we want to import */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
@@ -226,23 +329,15 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
   /* figure out the submethod if we're loading through libmdc */
   submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
 
-  /* get the filename and import */
-  filename = ui_common_file_selection_get_load_name(file_selection);
-  if (filename == NULL) return;
-
 #ifdef AMIDE_DEBUG
   g_print("file to import: %s\n",filename);
 #endif
 
-    
-
-
   /* now, what we need to do if we've successfully gotten an image filename */
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   if ((import_data_sets = amitk_data_set_import_file(method, submethod, filename,
 						     ui_study->preferences, amitk_progress_dialog_update, 
 						     ui_study->progress_dialog)) != NULL) {
-
+    
     while (import_data_sets != NULL) {
       import_ds = import_data_sets->data;
 #ifdef AMIDE_DEBUG
@@ -270,25 +365,24 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
 /* function to selection which file to import */
 void ui_study_cb_import(GtkWidget * widget, gpointer data) {
-  
+
   ui_study_t * ui_study = data;
   GtkWidget * file_selection;
   AmitkImportMethod method;
   int submethod;
-
   file_selection = gtk_file_selection_new(_("Import File"));
-
+  
   /* save a pointer to ui_study */
   g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
   
   /* and save which method of importing we want to use */
   method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
   g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(method));
-
+  
   /* figure out the submethod if we're loading through libmdc */
   submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
   g_object_set_data(G_OBJECT(file_selection), "submethod", GINT_TO_POINTER(submethod));
-
+  
   ui_common_file_selection_set_filename(file_selection, NULL);
 
   /* don't want anything else going on till this window is gone */
@@ -296,7 +390,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
 
   /* connect the signals */
   g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(ui_study_cb_import_ok), file_selection);
+		   G_CALLBACK(import_ok), file_selection);
   g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
 		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
   g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),"delete_event",
@@ -310,6 +404,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
 
   return;
 }
+
 
 
 /* function to handle exporting a view */
@@ -352,114 +447,21 @@ static void ui_study_cb_export_view_ok(GtkWidget* widget, gpointer data) {
   return;
 }
 
-/* function called when we hit "ok" on the export file dialog */
-static void ui_study_cb_export_data_set_ok(GtkWidget* widget, gpointer data) {
-
-  GtkWidget * file_selection = data;
-  ui_study_t * ui_study;
-  gchar * filename;
-  AmitkExportMethod method;
-  int submethod;
-  gboolean resliced;
-  gboolean all_visible;
-  GList * data_sets;
-
-  /* get a pointer to ui_study */
-  ui_study = g_object_get_data(G_OBJECT(file_selection), "ui_study");
-
-  /* figure out how we want to import */
-  method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "method"));
-
-  /* figure out the submethod if we're loading through libmdc */
-  submethod =  GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "submethod"));
-
-  /* do we want the data resliced into its currently orientation? */
-  resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "resliced"));
-
-  /* are we saving all visible data sets into one output file */
-  all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(file_selection), "all_visible"));
-
-  /* get the filename and import */
-  filename = ui_common_file_selection_get_save_name(file_selection);
-  if (filename == NULL) return;
-
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-
-  if (!all_visible) {
-    amitk_data_set_export_to_file(AMITK_DATA_SET(ui_study->active_object), method, submethod, filename, resliced,
-			       amitk_progress_dialog_update, ui_study->progress_dialog);
-  } else {
-    data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(ui_study->study), 
-							   AMITK_OBJECT_TYPE_DATA_SET, 
-							   AMITK_SELECTION_SELECTED_0, TRUE);
-    if (data_sets == NULL) {
-      g_warning(_("No Data Sets are visible in the first panel"));
-    } else {
-      amitk_data_sets_export_to_file(data_sets, method, submethod, filename,
-				     amitk_progress_dialog_update, ui_study->progress_dialog);
-      amitk_objects_unref(data_sets);
-    }
-  }
-  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-
-  /* close the file selection box */
-  ui_common_file_selection_cancel_cb(widget, file_selection);
-  g_free(filename);
-  
-  return;
-}
+    
 
 /* function to selection which file to export to */
 void ui_study_cb_export_data_set(GtkWidget * widget, gpointer data) {
-  
   ui_study_t * ui_study = data;
-  GtkWidget * file_selection;
-  AmitkExportMethod method;
-  int submethod;
-  gboolean resliced;
-  gboolean all_visible;
-
-  /* get the data from the widget */
-  all_visible = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_visible"));
-  submethod = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "submethod"));
-  method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "method"));
-  resliced = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "resliced"));
 
   if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
-    if (all_visible)
-      g_warning(_("There's currently no visible data sets to export"));
-    else
-      g_warning(_("There's currently no active data set to export"));
+    g_warning(_("There's currently no active data set to export"));
     return;
   }
 
-  file_selection = gtk_file_selection_new(_("Export to File"));
-
-  /* save info we'll need in the next function */
-  g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
-  g_object_set_data(G_OBJECT(file_selection), "method", GINT_TO_POINTER(method));
-  g_object_set_data(G_OBJECT(file_selection), "submethod",GINT_TO_POINTER(submethod));
-  g_object_set_data(G_OBJECT(file_selection), "resliced",GINT_TO_POINTER(resliced));
-  g_object_set_data(G_OBJECT(file_selection), "all_visible", GINT_TO_POINTER(all_visible));
-		    
-  ui_common_file_selection_set_filename(file_selection, NULL);
-
-  /* don't want anything else going on till this window is gone */
-  gtk_window_set_modal(GTK_WINDOW(file_selection), TRUE);
-
-  /* connect the signals */
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->ok_button), "clicked",
-		   G_CALLBACK(ui_study_cb_export_data_set_ok), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button), "clicked",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-  g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(file_selection)->cancel_button),"delete_event",
-		   G_CALLBACK(ui_common_file_selection_cancel_cb), file_selection);
-
-  /* set the position of the dialog */
-  gtk_window_set_position(GTK_WINDOW(file_selection), GTK_WIN_POS_MOUSE);
-
-  /* run the dialog */
-  gtk_widget_show(file_selection);
+  /* let the user input rendering options */
+  tb_export_data_set(ui_study->study,
+		     AMITK_DATA_SET(ui_study->active_object),
+		     GTK_WINDOW(ui_study->app));
 
   return;
 }
@@ -953,22 +955,19 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
     
-  selected_objects = ui_series_init_dialog_selected_objects(dialog);
+  selected_objects = ui_common_init_dialog_selected_objects(dialog);
   gtk_widget_destroy(dialog);
 
-  if (return_val != AMITK_RESPONSE_EXECUTE) {
-    /* we don't want to create the series */
-    selected_objects = amitk_objects_unref(selected_objects);
-    return; 
+  /* we want to create the series */
+  if (return_val == AMITK_RESPONSE_EXECUTE) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    ui_series_create(ui_study->study, 
+		     ui_study->active_object,
+		     selected_objects);
+    ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   }
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_series_create(ui_study->study, 
-		   ui_study->active_object,
-		   selected_objects);
-  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   selected_objects = amitk_objects_unref(selected_objects);
-
   return;
 }
 
@@ -1006,20 +1005,17 @@ void ui_study_cb_render(GtkWidget * widget, gpointer data) {
   /* and wait for the question to return */
   return_val = gtk_dialog_run(GTK_DIALOG(dialog));
 
-  selected_objects = ui_series_init_dialog_selected_objects(dialog);
+  selected_objects = ui_common_init_dialog_selected_objects(dialog);
   gtk_widget_destroy(dialog);
 
-  if (return_val != AMITK_RESPONSE_EXECUTE) {
-    /* we don't want to render */
-    selected_objects = amitk_objects_unref(selected_objects);
-    return; 
+  /* we want to render */
+  if (return_val == AMITK_RESPONSE_EXECUTE) {
+    ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
+    ui_render_create(ui_study->study, selected_objects);
+    ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   }
 
-  ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-  ui_render_create(ui_study->study, selected_objects);
-  ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   selected_objects = amitk_objects_unref(selected_objects);
-
   return;
 }
 #endif

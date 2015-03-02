@@ -82,7 +82,6 @@ GdkPixbuf * ui_render_get_pixbuf(ui_render_t * ui_render);
 void ui_render_add_update(ui_render_t * ui_render);
 gboolean ui_render_update_immediate(gpointer ui_render);
 void ui_render_create(AmitkStudy * study, GList * selected_objects);
-GList * ui_render_init_dialog_selected_objects(GtkWidget * dialog);
 GtkWidget * ui_render_init_dialog_create(AmitkStudy * study, GtkWindow * parent);
 
 #endif /* __UI_RENDER_H__ */

@@ -155,7 +155,7 @@ static void image_free_rgb_data(guchar * pixels, gpointer data) {
 /* note, return offset and corner are in base coordinate frame */
 GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
-				     const amide_real_t pixel_dim,
+				     const amide_real_t pixel_size,
 				     const gboolean fill_roi,
 				     rgba_t color,
 				     AmitkPoint * return_offset,
@@ -168,7 +168,7 @@ GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
   AmitkVoxel dim;
 
   
-  intersection = amitk_roi_get_intersection_slice(roi, canvas_slice, pixel_dim, fill_roi);
+  intersection = amitk_roi_get_intersection_slice(roi, canvas_slice, pixel_size, fill_roi);
   if (intersection == NULL) return NULL;
 
   dim = AMITK_DATA_SET_DIM(intersection);
@@ -651,7 +651,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const amide_time_t start,
 				 const amide_time_t duration,
 				 const amide_intpoint_t gate,
-				 const amide_real_t pixel_dim,
+				 const amide_real_t pixel_size,
 				 const AmitkVolume * view_volume,
 				 const AmitkFuseType fuse_type,
 				 const AmitkViewMode view_mode) {
@@ -672,13 +672,15 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
   AmitkColorTable color_table;
   AmitkDataSet * overlay_slice = NULL;
   gint j;
+  AmitkCanvasPoint pixel_size2;
   
 
   /* sanity checks */
   g_return_val_if_fail(objects != NULL, NULL);
 
+  pixel_size2.x = pixel_size2.y = pixel_size;
   slices = amitk_data_sets_get_slices(objects, pslice_cache, max_slice_cache_size,
-				      start, duration, gate, pixel_dim,view_volume);
+				      start, duration, gate, pixel_size2,view_volume);
   g_return_val_if_fail(slices != NULL, NULL);
 
   /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */

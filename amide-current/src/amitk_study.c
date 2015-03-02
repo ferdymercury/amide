@@ -1008,6 +1008,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
   guint64 location_le, size_le;
   guint64 location, size;
 
+
   /* are we dealing with a xif directory */
   if (amide_is_xif_directory(study_filename, &legacy1, &load_filename)) {
     xif_directory=TRUE;
@@ -1043,6 +1044,7 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
   else 
     study = AMITK_STUDY(amitk_object_read_xml(load_filename, study_file, location, size, &error_buf));
 
+
   if (load_filename != NULL) g_free(load_filename);
   if (study_file != NULL) fclose(study_file);
 
@@ -1069,9 +1071,6 @@ AmitkStudy * amitk_study_load_xml(const gchar * study_filename) {
     g_free(old_dir);
   }
 
-
-
-
   return study;
 }
 
@@ -1091,7 +1090,6 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
   guint64 location, size;
   guint64 location_le, size_le;
   FILE * study_file=NULL;
-
 
   /* see if the filename already exists, remove stuff if needed */
   if (stat(study_filename, &file_info) == 0) {
@@ -1182,7 +1180,6 @@ gboolean amitk_study_save_xml(AmitkStudy * study, const gchar * study_filename,
     fwrite(&size_le, 1, sizeof(guint64), study_file);
     fclose(study_file);
   }
-
 
   return TRUE;
 }

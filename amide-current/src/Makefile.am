@@ -43,15 +43,17 @@ AM_CXXFLAGS = $(AM_CFLAGS)
 
 bin_PROGRAMS = amide
 
+# for some reason, the -wsock32 added by AMIDE_LDADD_WIN32 on windows has
+# to be behind the DCMTK stuff
 amide_LDADD = \
 	$(GSL_LIBS) \
 	$(LIBFAME_LIBS) \
 	$(AMIDE_LIBECAT_LIBS) \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
-	$(AMIDE_LDADD_WIN32) \
 	$(XMEDCON_LIBS) \
-	$(AMIDE_LIBDCMDATA_LIBS) 
+	$(AMIDE_LIBDCMDATA_LIBS) \
+	$(AMIDE_LDADD_WIN32) 
 
 ## note, for some reason, if XMEDCON_LIBS is before AMIDE_GNOME_LIBS,
 ## an executable is made that dumps core on startup....
@@ -132,6 +134,8 @@ amide_SOURCES = \
 	tb_alignment.h \
 	tb_crop.c \
 	tb_crop.h \
+	tb_export_data_set.c \
+	tb_export_data_set.h \
 	tb_fads.c \
 	tb_fads.h \
 	tb_filter.c \

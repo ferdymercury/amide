@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include "amitk_study.h"
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
 #include "amitk_canvas.h"
 #include "amitk_canvas_object.h"
@@ -33,7 +34,6 @@
 #include "ui_common.h"
 #include "amitk_marshal.h"
 #include "amitk_type_builtins.h"
-#include "amitk_study.h"
 
 #define BOX_SPACING 3
 #define DEFAULT_CANVAS_TRIANGLE_WIDTH 8.0
@@ -1526,15 +1526,15 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
   g_return_val_if_fail(canvas->slices != NULL, FALSE);
   active_slice = NULL;
   if (AMITK_IS_DATA_SET(canvas->active_object)) 
-    active_slice = amitk_data_sets_find_with_slice_parent(canvas->slices, 
-							  AMITK_DATA_SET(canvas->active_object));
+    active_slice = amitk_data_sets_find_with_slice_parent(canvas->slices,  AMITK_DATA_SET(canvas->active_object));
 
-  if (active_slice == NULL)   /* just use the first slice, they're all the same dimension currently */
-    active_slice = canvas->slices->data;
-
-  temp_point[0] = amitk_space_b2s(AMITK_SPACE(active_slice), base_point);
-  POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(active_slice), 0,0,temp_voxel);
-  voxel_value = amitk_data_set_get_value(active_slice, temp_voxel);
+  if (active_slice != NULL) {
+    temp_point[0] = amitk_space_b2s(AMITK_SPACE(active_slice), base_point);
+    POINT_TO_VOXEL(temp_point[0], AMITK_DATA_SET_VOXEL_SIZE(active_slice), 0,0,temp_voxel);
+    voxel_value = amitk_data_set_get_value(active_slice, temp_voxel);
+  } else {
+    voxel_value = NAN;
+  }
   
   switch (canvas_event_type) {
     
@@ -1648,7 +1648,15 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     } else {
       GdkPixbuf * pixbuf;
 
-      if (active_slice == NULL) return FALSE;
+      if (AMITK_IS_DATA_SET(object)) {
+	if (active_slice == NULL) {
+	  g_warning(_("The active data set is not visible"));
+	  return FALSE;
+	}
+	pixbuf = image_from_slice(active_slice, AMITK_CANVAS_VIEW_MODE(canvas));
+      } else
+	pixbuf = g_object_ref(canvas->pixbuf);
+
       grab_on = TRUE;
       extended_event_type = canvas_event_type;
       extended_object = object;
@@ -1657,10 +1665,6 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       initial_canvas_point = canvas_point;
       previous_cpoint = canvas_cpoint;
 
-      if (AMITK_IS_DATA_SET(object))
-	pixbuf = image_from_slice(active_slice, AMITK_CANVAS_VIEW_MODE(canvas));
-      else
-	pixbuf = g_object_ref(canvas->pixbuf);
       canvas_item = gnome_canvas_item_new(gnome_canvas_root(GNOME_CANVAS(canvas->canvas)),
 					  gnome_canvas_pixbuf_get_type(),
 					  "pixbuf",pixbuf,
@@ -1712,6 +1716,7 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D:
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+      
       g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,
 		    AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI, &base_point, 0.0);
       grab_on = TRUE;
@@ -2205,6 +2210,10 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
     g_signal_emit(G_OBJECT (canvas), canvas_signals[HELP_EVENT], 0,help_info, &base_point, 0.0);
     extended_event_type = CANVAS_EVENT_NONE;
     extended_object = NULL;
+    if (active_slice == NULL) {
+      g_warning(_("The active data set is not visible"));
+      return FALSE;
+    }
     canvas_create_isocontour_roi(canvas, AMITK_ROI(object), base_point, active_slice);
     break;
 
@@ -2251,10 +2260,18 @@ static gboolean canvas_event_cb(GtkWidget* widget,  GdkEvent * event, gpointer d
       break;
     case AMITK_ROI_TYPE_ISOCONTOUR_2D: 
     case AMITK_ROI_TYPE_ISOCONTOUR_3D:
+      if (active_slice == NULL) {
+	g_warning(_("The active data set is not visible"));
+	return FALSE;
+      }
       canvas_create_isocontour_roi(canvas, AMITK_ROI(object), base_point, active_slice);
       break;
     case AMITK_ROI_TYPE_FREEHAND_2D:
     case AMITK_ROI_TYPE_FREEHAND_3D:
+      if (active_slice == NULL) {
+	g_warning(_("The active data set is not visible"));
+	return FALSE;
+      }
       if (canvas_create_freehand_roi(canvas, AMITK_ROI(object), base_point, active_slice)) {
 	enter_drawing_mode = TRUE;
 	drawing_object = object;

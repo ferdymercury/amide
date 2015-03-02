@@ -76,10 +76,15 @@ AmitkDataSet * libmdc_import(const gchar * filename,
 			     AmitkPreferences * preferences,
 			     AmitkUpdateFunc update_func,
 			     gpointer update_data);
+
+/* voxel_size only used if resliced=TRUE */
+/* if bounding_box == NULL, will create its own using the minimal necessary */
 void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
 		   gboolean resliced,
+		   const AmitkPoint voxel_size,
+		   const AmitkVolume * bounding_box,
 		   AmitkUpdateFunc update_func,
 		   gpointer update_data);
 

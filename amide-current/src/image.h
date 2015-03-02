@@ -37,7 +37,7 @@
 /* external functions */
 GdkPixbuf * image_slice_intersection(const AmitkRoi * roi,
 				     const AmitkVolume * canvas_slice,
-				     const amide_real_t pixel_dim,
+				     const amide_real_t pixel_size,
 				     const gboolean fill_roi,
 				     rgba_t color,
 				     AmitkPoint * return_offset,
@@ -78,7 +78,7 @@ GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
 				 const amide_time_t start,
 				 const amide_time_t duration,
 				 const amide_intpoint_t gate,
-				 const amide_real_t pixel_dim,
+				 const amide_real_t pixel_size,
 				 const AmitkVolume * view_volume,
 				 const AmitkFuseType fuse_type,
 				 const AmitkViewMode view_mode);

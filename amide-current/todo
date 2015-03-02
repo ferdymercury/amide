@@ -3,15 +3,8 @@ misc list of things todo:
 for next release?
 -----------------
 
-* add helper dialog to export
-	- allow selection of resliced/not resliced/all visible data sets
-	- allow selection of output format
-	- allow selection of voxel size
-	- allow selection of interpolation (dataset specified, nearest neighbor, trilinear)
-	- allow selection of "whole image" or "subset"... need better phrasing
-		suggested by Luca Guerrieri
 * add progress bar for image math toolbox
-* add dcmtk export
+* add dcmtk export - requred by Matthew Leonard
 * dcmtk shouldn't be required for mac os x install - figure out how to embed
   dicom.dic
 * view_thickness isn't read in from .xif file - gets overridden at some point
@@ -25,7 +18,6 @@ for 0.9.0 release
 * switch from libfame to ffmpeg for mpeg encoding
 
 
-
 windows todo
 ------------
 * gate and time dialog buttons are not beveled when using the GTK ms-windows
@@ -33,10 +25,6 @@ windows todo
 * icons still look like crap....
 	may need better program than png2ico
 	may need more sizes
-* checking that file can be read on 32bit system doesn't
-	currently work on windows... files: xml.c and amitk_raw_data.c
-	work around is define out at the moment.  Seems to be some
-	problem with mingw32 gcc and long comparisons
 * zdial on rendering doesn't work
 * preferences aren't currently saved between amide sessions -
 	will be fixed with gtk2.8 and gnome2.12 (runs on windows)

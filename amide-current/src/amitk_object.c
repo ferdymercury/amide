@@ -656,7 +656,6 @@ AmitkObject * amitk_object_read_xml(gchar * xml_filename, FILE * study_file, gui
   g_free(version);
 
   xmlFreeDoc(doc);
-
   return new_object;
 }
 
@@ -725,11 +724,6 @@ void amitk_object_set_selected(AmitkObject * object, const gboolean selection, c
   g_return_if_fail(which_selection >= 0);
   g_return_if_fail((which_selection < AMITK_SELECTION_NUM) || (which_selection == AMITK_SELECTION_ALL));
 
-  if (object->selected[which_selection] != selection) {
-    object->selected[which_selection] = selection;
-    changed = TRUE;
-  }
-
   if (which_selection == AMITK_SELECTION_ALL) {
     for (i_selection=0; i_selection < AMITK_SELECTION_NUM; i_selection++) {
       if (object->selected[i_selection] != selection) {
@@ -738,20 +732,26 @@ void amitk_object_set_selected(AmitkObject * object, const gboolean selection, c
       }
     }
   } else {
-    if (selection == FALSE) { /* propagate unselect to children */
-      children = AMITK_OBJECT_CHILDREN(object);
-      while (children != NULL) {
-	amitk_object_set_selected(children->data, selection, which_selection);
-	children = children->next;
-      }
+    if (object->selected[which_selection] != selection) {
+      object->selected[which_selection] = selection;
+      changed = TRUE;
+    }
+  }
+
+  if (selection == FALSE) { /* propagate unselect to children */
+    children = AMITK_OBJECT_CHILDREN(object);
+    while (children != NULL) {
+      amitk_object_set_selected(children->data, selection, which_selection);
+      children = children->next;
     }
   }
 
   if (changed) {
     g_signal_emit(G_OBJECT(object), object_signals[OBJECT_SELECTION_CHANGED], 0);
-    if (AMITK_OBJECT_PARENT(object) != NULL)
+    if (AMITK_OBJECT_PARENT(object) != NULL) {
       g_signal_emit(G_OBJECT(AMITK_OBJECT_PARENT(object)), 
 		    object_signals[OBJECT_CHILD_SELECTION_CHANGED], 0);
+    }
   }
 
   return;

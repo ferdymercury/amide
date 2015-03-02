@@ -82,12 +82,12 @@ libmdc_format_t libmdc_export_to_format[LIBMDC_NUM_EXPORT_METHODS] = {
 };
 
 gchar * libmdc_export_menu_names[LIBMDC_NUM_EXPORT_METHODS] = {
-  N_("Acr/_Nema 2.0"),
-  N_("_Concorde/microPET"),
-  N_("ECAT _6 via (X)MedCon"),
-  N_("_InterFile 3.3"),
-  N_("_Analyze (SPM)"),
-  N_("_DICOM 3.0"),
+  N_("Acr/Nema 2.0"),
+  N_("Concorde/microPET"),
+  N_("ECAT 6 via (X)MedCon"),
+  N_("InterFile 3.3"),
+  N_("Analyze (SPM)"),
+  N_("DICOM 3.0"),
 };
   
 gchar * libmdc_export_menu_explanations[LIBMDC_NUM_EXPORT_METHODS] = {
@@ -241,6 +241,8 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
   gint num_corrupted_planes = 0;
+  const gchar * bad_char;
+  gsize invalid_point;
   
   saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
   saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
@@ -279,6 +281,28 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   if ((error = MdcLoadFile(&libmdc_fi)) != MDC_OK) {
     g_warning(_("Can't read file %s with libmdc/(X)MedCon"),filename);
     goto error;
+  }
+
+  /* validate various strings to utf8 */
+  if (!g_utf8_validate(libmdc_fi.patient_name, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.patient_name;
+    libmdc_fi.patient_name[invalid_point] = '\0';
+  }
+  if (!g_utf8_validate(libmdc_fi.patient_id, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.patient_id;
+    libmdc_fi.patient_id[invalid_point] = '\0';
+  }
+  if (!g_utf8_validate(libmdc_fi.patient_dob, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.patient_dob;
+    libmdc_fi.patient_dob[invalid_point] = '\0';
+  }
+  if (!g_utf8_validate(libmdc_fi.study_id, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.study_id;
+    libmdc_fi.study_id[invalid_point] = '\0';
+  }
+  if (!g_utf8_validate(libmdc_fi.recon_method, -1, &bad_char)) {
+    invalid_point = bad_char-libmdc_fi.recon_method;
+    libmdc_fi.recon_method[invalid_point] = '\0';
   }
 
   /* make sure libmdc returned all dim's as >0 */
@@ -506,6 +530,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
     amitk_data_set_set_subject_orientation(ds, AMITK_SUBJECT_ORIENTATION_UNKNOWN);
     break;
   }
+
 
   amitk_data_set_set_subject_name(ds, libmdc_fi.patient_name);
   amitk_data_set_set_subject_id(ds, libmdc_fi.patient_id);
@@ -748,6 +773,7 @@ AmitkDataSet * libmdc_import(const gchar * filename,
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);
   amitk_volume_set_center(AMITK_VOLUME(ds), zero_point);
+
   goto function_end;
 
 
@@ -784,6 +810,8 @@ void libmdc_export(AmitkDataSet * ds,
 		   const gchar * filename, 
 		   libmdc_format_t libmdc_format,
 		   gboolean resliced,
+		   const AmitkPoint voxel_size,
+		   const AmitkVolume * bounding_box,
 		   AmitkUpdateFunc update_func,
 		   gpointer update_data) {
 
@@ -806,10 +834,9 @@ void libmdc_export(AmitkDataSet * ds,
   gint err_num;
   void * data_ptr;
   gchar * temp_string;
-  amide_real_t min_voxel_size=1.0;
   amide_time_t frame_start, frame_duration;
+  AmitkCanvasPoint pixel_size;
   AmitkPoint corner;
-  AmitkCorners corners;
   AmitkVolume * output_volume=NULL;
   AmitkDataSet * slice = NULL;
   AmitkPoint new_offset;
@@ -902,21 +929,26 @@ void libmdc_export(AmitkDataSet * ds,
 
   dim = AMITK_DATA_SET_DIM(ds);
   if (resliced) {
-    output_volume = amitk_volume_new();
-    min_voxel_size = point_min_dim(AMITK_DATA_SET_VOXEL_SIZE(ds));
-    amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
-    corner = point_diff(corners[0], corners[1]);
-    dim.x = ceil(corner.x/min_voxel_size);
-    dim.y = ceil(corner.y/min_voxel_size);
-    dim.z = ceil(corner.z/min_voxel_size);
-    corner.z = min_voxel_size;
-    amitk_space_set_offset(AMITK_SPACE(output_volume), 
-			   amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
+    if (bounding_box != NULL) {
+      output_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(bounding_box)));
+      corner = AMITK_VOLUME_CORNER(output_volume);
+    } else {
+      AmitkCorners corners;
+      output_volume = amitk_volume_new();
+      amitk_volume_get_enclosing_corners(AMITK_VOLUME(ds), AMITK_SPACE(output_volume), corners);
+      corner = point_diff(corners[0], corners[1]);
+      amitk_space_set_offset(AMITK_SPACE(output_volume), 
+			     amitk_space_s2b(AMITK_SPACE(output_volume), corners[0]));
+    }
+    dim.x = ceil(corner.x/voxel_size.x);
+    dim.y = ceil(corner.y/voxel_size.y);
+    dim.z = ceil(corner.z/voxel_size.z);
+    corner.z = voxel_size.z;
     amitk_volume_set_corner(output_volume, corner);
 #ifdef AMIDE_DEBUG
-    g_print("output dimensions %d %d %d, voxel size %f\n", dim.x, dim.y, dim.z, min_voxel_size);
+    g_print("output dimensions %d %d %d, voxel size %f %f %f\n", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #else
-    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %f", dim.x, dim.y, dim.z, min_voxel_size);
+    g_warning("dimensions of output data set will be %dx%dx%d, voxel size of %fx%fx%f", dim.x, dim.y, dim.z, voxel_size.x, voxel_size.y, voxel_size.z);
 #endif
   }
 
@@ -931,7 +963,11 @@ void libmdc_export(AmitkDataSet * ds,
 
   fi.pixdim[0]=3;
   if (resliced) {
-    fi.pixdim[1] = fi.pixdim[2] = fi.pixdim[3] = min_voxel_size;
+    pixel_size.x = voxel_size.x;
+    pixel_size.y = voxel_size.y;
+    fi.pixdim[1] = voxel_size.x;
+    fi.pixdim[2] = voxel_size.y;
+    fi.pixdim[3] = voxel_size.z;
   } else {
     fi.pixdim[1]=AMITK_DATA_SET_VOXEL_SIZE_X(ds);
     fi.pixdim[2]=AMITK_DATA_SET_VOXEL_SIZE_Y(ds);
@@ -1045,7 +1081,7 @@ void libmdc_export(AmitkDataSet * ds,
 	
 	if (resliced) {
 	  slice = amitk_data_set_get_slice(ds, frame_start, frame_duration, i.g,
-					   min_voxel_size, output_volume);
+					   pixel_size, output_volume);
 
 	  if ((AMITK_DATA_SET_DIM_X(slice) != dim.x) || (AMITK_DATA_SET_DIM_Y(slice) != dim.y)) {
 	    g_warning(_("Error in generating resliced data, %dx%d != %dx%d"),
@@ -1056,7 +1092,7 @@ void libmdc_export(AmitkDataSet * ds,
 
 	  /* advance for next iteration */
 	  new_offset = AMITK_SPACE_OFFSET(output_volume);
-	  new_offset.z += min_voxel_size;
+	  new_offset.z += voxel_size.z;
 	  amitk_space_set_offset(AMITK_SPACE(output_volume), new_offset);
 	}
 

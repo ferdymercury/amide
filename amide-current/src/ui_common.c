@@ -35,6 +35,7 @@
 #include "amitk_common.h"
 #include "amitk_preferences.h"
 #include "amitk_threshold.h"
+#include "amitk_tree_view.h"
 #ifdef AMIDE_LIBGSL_SUPPORT
 #include <gsl/gsl_version.h>
 #endif
@@ -984,6 +985,34 @@ GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **r
 }
 
 
+void ui_common_init_dialog_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
 
+  switch(response_id) {
+  case AMITK_RESPONSE_EXECUTE:
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+
+GList * ui_common_init_dialog_selected_objects(GtkWidget * dialog) {
+
+  GList * objects;
+  AmitkTreeView * tree_view;
+  
+  tree_view = g_object_get_data(G_OBJECT(dialog), "tree_view");
+  objects = amitk_tree_view_get_multiple_selection_objects(tree_view);
+
+  return objects;
+}
 
 

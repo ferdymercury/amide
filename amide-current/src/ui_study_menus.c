@@ -155,10 +155,8 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   AmitkView i_view;
   AmitkImportMethod i_import_method;
-  AmitkImportMethod i_export_method;
 #ifdef AMIDE_LIBMDC_SUPPORT
   libmdc_import_t i_libmdc_import;
-  libmdc_export_t i_libmdc_export;
 #endif
   gint counter;
   AmitkRoiType i_roi_type;
@@ -166,14 +164,8 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 #ifdef AMIDE_LIBMDC_SUPPORT
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM + LIBMDC_NUM_IMPORT_METHODS+1];
-  GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
-  GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
-  GnomeUIInfo export_data_set_visible_menu[AMITK_EXPORT_METHOD_NUM + LIBMDC_NUM_EXPORT_METHODS+1];
 #else
   GnomeUIInfo import_specific_menu[AMITK_IMPORT_METHOD_NUM+1];
-  GnomeUIInfo export_data_set_menu1[AMITK_EXPORT_METHOD_NUM+1];
-  GnomeUIInfo export_data_set_menu2[AMITK_EXPORT_METHOD_NUM+1];
-  GnomeUIInfo export_data_set_visible_menu[AMITK_EXPORT_METHOD_NUM+1];
 #endif
 
   GnomeUIInfo export_view_menu[] = {
@@ -189,18 +181,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_END
   };
 
-  GnomeUIInfo export_data_set_resliced_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Original Orientation"),
-			     N_("Export the data set in its original orientation (unresliced)"),
-			     export_data_set_menu1),
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Resliced Orientation"),
-			     N_("Export the data set in its current orientation (resliced)"),
-			     export_data_set_menu2),
-
-    GNOMEUIINFO_END
-  };
-
-  
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
     GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Study"), 
@@ -216,20 +196,18 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
 			     N_("Import an image data file into this study, specifying the import type"), 
 			     import_specific_menu),
-    //    GNOMEUIINFO_ITEM_DATA(N_("Import ROI"),
-    //			  N_("Import an ROI from a previous study"),
-    //			  ui_study_cb_import_roi,
-    //			  ui_study,NULL),
+    GNOMEUIINFO_ITEM_DATA(N_("Import _Object"),
+        			  N_("Import an object, such as an ROI, from a preexisting .xif file"),
+        			  ui_study_cb_import_object,
+        			  ui_study,NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_SUBTREE_HINT(N_("_Export View"),
 			     N_("Export one of the views to a picture file"),
 			     export_view_menu),
-    GNOMEUIINFO_SUBTREE_HINT(N_("Export _Data Set"),
-			     N_("Export the active data set to the specified format"),
-			     export_data_set_resliced_menu),
-    GNOMEUIINFO_SUBTREE_HINT(N_("Export _Visible Data Sets"),
-			     N_("Export all the visible data sets into a single file"),
-			     export_data_set_visible_menu),
+    GNOMEUIINFO_ITEM_DATA(N_("Export _Data Set"),
+		          N_("Export data set(s) to medical image formats"),
+			  ui_study_cb_export_data_set,
+			  ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(N_("_Recover Study"),
 			  N_("Try to recover a corrupted XIF flat file"),
@@ -364,48 +342,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   }
   fill_in_end(&(import_specific_menu[counter]));
 
-  counter = 0;
-  for (i_export_method = AMITK_EXPORT_METHOD_RAW; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
-#ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
-      for (i_libmdc_export=0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
-	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) 
-	  fill_in_menuitem(&(export_data_set_menu1[counter]),
-			   libmdc_export_menu_names[i_libmdc_export],
-			   libmdc_export_menu_explanations[i_libmdc_export],
-			   ui_study_cb_export_data_set, ui_study);
-	  fill_in_menuitem(&(export_data_set_menu2[counter]),
-			   libmdc_export_menu_names[i_libmdc_export],
-			   libmdc_export_menu_explanations[i_libmdc_export],
-			   ui_study_cb_export_data_set, ui_study);
-	  fill_in_menuitem(&(export_data_set_visible_menu[counter]),
-			   libmdc_export_menu_names[i_libmdc_export],
-			   libmdc_export_menu_explanations[i_libmdc_export],
-			   ui_study_cb_export_data_set, ui_study);
-	  counter++;
-      }
-    } else 
-#endif
-      {
-	fill_in_menuitem(&(export_data_set_menu1[counter]),
-			 amitk_export_menu_names[i_export_method],
-			 amitk_export_menu_explanations[i_export_method],
-			 ui_study_cb_export_data_set, ui_study);
-	fill_in_menuitem(&(export_data_set_menu2[counter]),
-			 amitk_export_menu_names[i_export_method],
-			 amitk_export_menu_explanations[i_export_method],
-			 ui_study_cb_export_data_set, ui_study);
-	fill_in_menuitem(&(export_data_set_visible_menu[counter]),
-			 amitk_export_menu_names[i_export_method],
-			 amitk_export_menu_explanations[i_export_method],
-			 ui_study_cb_export_data_set, ui_study);
-	counter++;
-      }
-  }
-  fill_in_end(&(export_data_set_menu1[counter]));
-  fill_in_end(&(export_data_set_menu2[counter]));
-  fill_in_end(&(export_data_set_visible_menu[counter]));
-
   /* make the menu */
   gnome_app_create_menus(GNOME_APP(ui_study->app), study_main_menu);
 
@@ -433,70 +369,6 @@ void ui_study_menus_create(ui_study_t * ui_study) {
       }
   }
 
-  counter = 0;
-  for (i_export_method = 0; i_export_method < AMITK_EXPORT_METHOD_NUM; i_export_method++) {
-#ifdef AMIDE_LIBMDC_SUPPORT
-    if (i_export_method == AMITK_EXPORT_METHOD_LIBMDC) {
-      for (i_libmdc_export = 0; i_libmdc_export < LIBMDC_NUM_EXPORT_METHODS; i_libmdc_export++) {
-	if (libmdc_supports(libmdc_export_to_format[i_libmdc_export])) {
-	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			    "method", GINT_TO_POINTER(i_export_method));
-	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
-	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			    "resliced", GINT_TO_POINTER(FALSE));
-	  g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			    "all_visible", GINT_TO_POINTER(FALSE));
-	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			    "method", GINT_TO_POINTER(i_export_method));
-	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
-	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			    "resliced", GINT_TO_POINTER(TRUE));
-	  g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			    "all_visible", GINT_TO_POINTER(FALSE));
-	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			    "method", GINT_TO_POINTER(i_export_method));
-	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			    "submethod", GINT_TO_POINTER(libmdc_export_to_format[i_libmdc_export]));
-	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			    "resliced", GINT_TO_POINTER(TRUE));
-	  g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			    "all_visible", GINT_TO_POINTER(TRUE));
-	  counter++;
-	}
-      }
-    } else
-#endif
-      {
-	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			  "method", GINT_TO_POINTER(i_export_method));
-	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			  "submethod", GINT_TO_POINTER(0));
-	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			  "resliced", GINT_TO_POINTER(FALSE));
-	g_object_set_data(G_OBJECT(export_data_set_menu1[counter].widget),
-			  "all_visible", GINT_TO_POINTER(FALSE));
-	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			  "method", GINT_TO_POINTER(i_export_method));
-	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			  "submethod", GINT_TO_POINTER(0));
-	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			  "resliced", GINT_TO_POINTER(TRUE));
-	g_object_set_data(G_OBJECT(export_data_set_menu2[counter].widget),
-			  "all_visible", GINT_TO_POINTER(FALSE));
-	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			  "method", GINT_TO_POINTER(i_export_method));
-	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			  "submethod", GINT_TO_POINTER(0));
-	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			  "resliced", GINT_TO_POINTER(TRUE));
-	g_object_set_data(G_OBJECT(export_data_set_visible_menu[counter].widget),
-			  "all_visible", GINT_TO_POINTER(TRUE));
-	counter++;
-      }
-  }
-  
   for (i_roi_type = 0; i_roi_type < AMITK_ROI_TYPE_NUM; i_roi_type++)
     g_object_set_data(G_OBJECT(add_roi_menu[i_roi_type].widget), "roi_type", 
 		      GINT_TO_POINTER(i_roi_type));

@@ -37,6 +37,8 @@ G_BEGIN_DECLS
 gpointer g_try_malloc0    (gulong        n_bytes);
 #define g_try_new(struct_type, n_structs)           \
     ((struct_type *) g_try_malloc (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
+#define g_try_new0(struct_type, n_structs)		\
+    ((struct_type *) g_try_malloc0 (((gsize) sizeof (struct_type)) * ((gsize) (n_structs))))
 #endif
 
 

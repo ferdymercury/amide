@@ -133,7 +133,8 @@ am_amide_OBJECTS = $(am__objects_1) $(am__objects_2) $(am__objects_3) \
 	libecat_interface.$(OBJEXT) libmdc_interface.$(OBJEXT) \
 	mpeg_encode.$(OBJEXT) pixmaps.$(OBJEXT) \
 	raw_data_import.$(OBJEXT) render.$(OBJEXT) \
-	tb_alignment.$(OBJEXT) tb_crop.$(OBJEXT) tb_fads.$(OBJEXT) \
+	tb_alignment.$(OBJEXT) tb_crop.$(OBJEXT) \
+	tb_export_data_set.$(OBJEXT) tb_fads.$(OBJEXT) \
 	tb_filter.$(OBJEXT) tb_fly_through.$(OBJEXT) tb_math.$(OBJEXT) \
 	tb_profile.$(OBJEXT) tb_roi_analysis.$(OBJEXT) \
 	ui_common.$(OBJEXT) ui_gate_dialog.$(OBJEXT) \
@@ -460,6 +461,8 @@ amide_SOURCES = \
 	tb_alignment.h \
 	tb_crop.c \
 	tb_crop.h \
+	tb_export_data_set.c \
+	tb_export_data_set.h \
 	tb_fads.c \
 	tb_fads.h \
 	tb_filter.c \
@@ -853,6 +856,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/render.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_alignment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_crop.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_export_data_set.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_fads.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_filter.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tb_fly_through.Po@am__quote@

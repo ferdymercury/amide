@@ -1,7 +1,7 @@
-/* ui_series.h
+/* tb_export_data_set.h
  *
  * Part of amide - Amide's a Medical Image Dataset Examiner
- * Copyright (C) 2000-2006 Andy Loening
+ * Copyright (C) 2006 Andy Loening
  *
  * Author: Andy Loening <loening@alum.mit.edu>
  */
@@ -23,27 +23,21 @@
   02111-1307, USA.
 */
 
-#ifndef __UI_SERIES_H__
-#define __UI_SERIES_H__
+#ifndef __TB_EXPORT_DATA_SET_H__
+#define __TB_EXPORT_DATA_SET_H__
 
-/* header files that are always needed with this file */
-#include <gdk-pixbuf/gdk-pixbuf.h>
+
+/* header files always needed with this one */
 #include "amitk_study.h"
 
-
-#define UI_SERIES_L_MARGIN 2.0
-#define UI_SERIES_R_MARGIN UI_SERIES_L_MARGIN
-#define UI_SERIES_TOP_MARGIN 2.0
-#define UI_SERIES_BOTTOM_MARGIN 15.0
-
 /* external functions */
-void ui_series_create(AmitkStudy * study, 
-		      AmitkObject * active_object, 
-		      GList * selected_objects);
-GtkWidget * ui_series_init_dialog_create(AmitkStudy * study,
-					 GtkWindow * parent);
+void tb_export_data_set(AmitkStudy * study,
+			AmitkDataSet * active_ds,
+			GtkWindow * parent);
 
-#endif /* UI_SERIES_H */
+#endif /* __TB_EXPORT_DATA_SET_H__ */
+
+
 
 
 

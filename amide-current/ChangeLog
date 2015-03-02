@@ -1,4 +1,24 @@
-0.8.17
+0.8.18
+	* validate strings from xmedcon as utf8 [1]
+ 	* another potential fix for 64bit check xml_check_file_32bit_okay [2]
+ 	* added export dataset dialog
+ 	  - allows selection of output voxel size [3]
+ 	  - allows selecting bounding box (tight or inclusive) [3]
+ 	* better guessing for reading in DICOM datasets [4,5]
+	* first try at DICOM gated support [5]
+ 	* added ability to import objects (like ROI's) from previous .xif's [6]
+	* better handling of edges in tri-linear interpolation [7]
+	* active data set now required to be visible when moved/rotated
+	[1] Found by Buyean Lee
+ 	[2] Found by Marco Bucci
+ 	[3] Suggested by Luca Guerrieri
+ 	[4] Help from Han Chunlei
+ 	[5] Help from Kris Thielemans
+ 	[6] Suggested by Marco Bucci and many others
+	[7] Suggested by Patrick Chow
+ 
+
+0.8.17 2006.08
  	* added toolbox for doing image math between data sets [1]
  	* now saves weight/dob/dose/etc. when exporting with xmedcon [1]
 	* fixed bug loading DICOM on windows [2]

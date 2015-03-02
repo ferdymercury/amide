@@ -268,6 +268,9 @@ struct _AmitkDataSet
   /* this is a weak pointer, it should be NULL'ed automatically by gtk on the parent's destruction */
   AmitkDataSet * slice_parent; 
 
+  /* misc data items - not saved in .xif file */
+  gdouble gate_time; /* used by dcmtk_interface.cc for sorting by gate */
+
 };
 
 struct _AmitkDataSetClass
@@ -327,12 +330,16 @@ void           amitk_data_set_export_to_file     (AmitkDataSet * ds,
 						  const int submethod,
 						  const gchar * filename,
 						  const gboolean resliced,
+						  const AmitkPoint voxel_size,
+						  const AmitkVolume * bounding_box,
 						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 void           amitk_data_sets_export_to_file    (GList * data_sets,
 						  const AmitkExportMethod method, 
 						  const int submethod,
 						  const gchar * filename,
+						  const AmitkPoint voxel_size,
+						  const AmitkVolume * bounding_box,
 						  AmitkUpdateFunc update_func,
 						  gpointer update_data);
 amide_data_t   amitk_data_set_get_global_max     (AmitkDataSet * ds);
@@ -480,7 +487,7 @@ AmitkDataSet * amitk_data_set_get_slice           (AmitkDataSet * ds,
 						   const amide_time_t start,
 						   const amide_time_t duration,
 						   const amide_intpoint_t gate,
-						   const amide_real_t pixel_dim,
+						   const AmitkCanvasPoint pixel_size,
 						   const AmitkVolume * slice_volume);
 void           amitk_data_set_get_line_profile    (AmitkDataSet * ds,
 						   const amide_time_t start,
@@ -502,7 +509,7 @@ GList *        amitk_data_sets_get_slices            (GList * objects,
 						      const amide_time_t start,
 						      const amide_time_t duration,
 						      const amide_intpoint_t gate,
-						      const amide_real_t pixel_dim,
+						      const AmitkCanvasPoint pixel_size,
 						      const AmitkVolume * view_volume);
 AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, 
 						      const AmitkDataSet * slice_parent);
@@ -514,8 +521,8 @@ AmitkDataSet * amitk_data_sets_math                   (AmitkDataSet * ds1, Amitk
 
 
 /* -------- defines ----------- */
-#define amitk_data_set_get_frame_duration_mem(ds) (g_try_new(amide_time_t,(ds)->raw_data->dim.t))
-#define amitk_data_set_get_frame_max_min_mem(ds) (g_try_new(amide_data_t,(ds)->raw_data->dim.t))
+#define amitk_data_set_get_frame_duration_mem(ds) (g_try_new0(amide_time_t,(ds)->raw_data->dim.t))
+#define amitk_data_set_get_frame_max_min_mem(ds) (g_try_new0(amide_data_t,(ds)->raw_data->dim.t))
 #define amitk_data_set_dynamic(ds) ((ds)->data_set->dim.t > 1)
 
 
