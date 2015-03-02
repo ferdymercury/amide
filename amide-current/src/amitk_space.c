@@ -162,6 +162,7 @@ static void space_init (AmitkSpace * space) {
   space->offset = zero_point;
   for (i_axis=0; i_axis<AMITK_AXIS_NUM; i_axis++)
     space->axes[i_axis] = base_axes[i_axis];
+
 }
 
 
@@ -456,6 +457,23 @@ AmitkSpace * amitk_space_copy(const AmitkSpace * space) {
 
   return new_space;
 }
+
+
+gboolean amitk_space_equal(const AmitkSpace * space1, const AmitkSpace * space2) {
+
+  gboolean inner = TRUE;
+  AmitkAxis i_axis;
+
+  if (POINT_EQUAL(space1->offset, space2->offset)) {
+    for (i_axis=0;i_axis<AMITK_AXIS_NUM && inner;i_axis++) 
+      inner = inner && POINT_EQUAL(space1->axes[i_axis], space2->axes[i_axis]);
+    return inner;
+  }
+
+  return FALSE;
+
+}
+
 
 void amitk_space_invert_axis (AmitkSpace * space, const AmitkAxis which_axis,
 			      const AmitkPoint center_of_inversion) {

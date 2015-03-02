@@ -32,11 +32,23 @@
 
 
 
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#else /* AMIDE_WIN32_HACKS */
+  static gboolean all_data_sets=FALSE;
+  static gboolean all_rois=FALSE;
+  static gboolean calc_on_subfraction=FALSE;
+  static gdouble subfraction=0.0;
+#endif
+
+
 #define AMITK_RESPONSE_SAVE_AS 3
 #define ROI_STATISTICS_WIDTH 1100
 
 typedef enum {
-  COLUMN_NAME,
+  COLUMN_ROI_NAME,
+  COLUMN_ROI_TYPE,
+  COLUMN_DATA_SET_NAME,
   COLUMN_FRAME,
   COLUMN_DURATION,
   COLUMN_TIME_MIDPT,
@@ -55,6 +67,8 @@ typedef enum {
 } column_t;
 
 static gchar * analysis_titles[] = {
+  "ROI",
+  "Type",
   "Data Set",
   "Frame",
   "Duration (s)",
@@ -78,8 +92,8 @@ static void export_data(analysis_roi_t * roi_analyses);
 static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_analyses);
 static void response_cb (GtkDialog * dialog, gint response_id, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * delete_event, gpointer data);
-static void add_page(GtkWidget * notebook, AmitkStudy * study,
-		     AmitkRoi * roi, analysis_volume_t * volume_analyses);
+static void add_pages(GtkWidget * notebook, AmitkStudy * study,
+		      analysis_roi_t * roi_analyses);
 static void read_preferences(gboolean * all_data_sets, 
 			     gboolean * all_rois, 
 			     gboolean * calc_on_subfraction,
@@ -119,7 +133,7 @@ static void export_data(analysis_roi_t * roi_analyses) {
   /* sanity checks */
   g_return_if_fail(roi_analyses != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export Statistics")));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export Statistics"));
 
   /* take a guess at the filename */
   analysis_name = g_strdup_printf("%s_analysis_{%s",
@@ -199,7 +213,7 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
     volume_analyses = roi_analyses->volume_analyses;
     while (volume_analyses != NULL) {
 
-      fprintf(file_pointer, "#\tVolume:\t%s\tScaling Factor:\t%g\n",
+      fprintf(file_pointer, "#\tData Set:\t%s\tScaling Factor:\t%g\n",
 	      AMITK_OBJECT_NAME(volume_analyses->data_set),
 	      AMITK_DATA_SET_SCALE_FACTOR(volume_analyses->data_set));
 
@@ -233,8 +247,8 @@ static void export_analyses(const gchar * save_filename, analysis_roi_t * roi_an
       }
 
       if (!title_printed) {
-	fprintf(file_pointer, "#\t\t%s", analysis_titles[1]);
-	for (i=2;i<NUM_ANALYSIS_COLUMNS;i++)
+	fprintf(file_pointer, "#\t\t%s", analysis_titles[COLUMN_FRAME]);
+	for (i=COLUMN_FRAME+1;i<NUM_ANALYSIS_COLUMNS;i++)
 	  fprintf(file_pointer, "\t%12s", analysis_titles[i]);
 	fprintf(file_pointer, "\n");
 	title_printed = TRUE;
@@ -317,136 +331,186 @@ static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer da
 
 
 /* create one page of our notebook */
-static void add_page(GtkWidget * notebook, AmitkStudy * study,
-		     AmitkRoi * roi, analysis_volume_t * volume_analyses) {
+static void add_pages(GtkWidget * notebook, AmitkStudy * study,
+		      analysis_roi_t * roi_analyses) {
 
   GtkWidget * table;
   GtkWidget * label;
   GtkWidget * entry;
-  GtkWidget * list;
-  GtkWidget * scrolled;
+  GtkWidget * list=NULL;
+  GtkWidget * scrolled=NULL;
   GtkWidget * hbox;
   analysis_frame_t * frame_analyses;
   guint frame;
   guint table_row=0;
   amide_real_t voxel_volume;
   AmitkPoint voxel_size;
-  GtkListStore * store;
+  GtkListStore * store=NULL;
   GtkCellRenderer *renderer;
   GtkTreeViewColumn *column;
   GtkTreeSelection *selection;
   GtkTreeIter iter;
   column_t i_column;
   gint width;
+  analysis_volume_t * volume_analyses;
+  analysis_roi_t * temp_roi_analyses;
+  gboolean dynamic_data;
+  gboolean static_tree_created=FALSE;
+  gboolean display;
   
   
-
-
-  label = gtk_label_new(AMITK_OBJECT_NAME(roi));
-  table = gtk_table_new(5,3,FALSE);
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
-
-  hbox = gtk_hbox_new(FALSE, 0);
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(hbox), 0,5,
-		   table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  table_row++;
-  gtk_widget_show(hbox);
-
-  /* tell use the type */
-  label = gtk_label_new("type:");
-  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-
-  entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), amitk_roi_type_get_name(AMITK_ROI_TYPE(roi)));
-  gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
-  gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-
-  /* try to get a reasonable estimate for how wide the statistics box should be */
-  width = 0.9*gdk_screen_width();
-  if (width > ROI_STATISTICS_WIDTH)
-    width = ROI_STATISTICS_WIDTH;
-
-  /* the scroll widget which the list will go into */
-  scrolled = gtk_scrolled_window_new(NULL,NULL);
-  gtk_widget_set_size_request(scrolled,width,250);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
-				 GTK_POLICY_AUTOMATIC,
-				 GTK_POLICY_AUTOMATIC);
-
-  /* and throw the scrolled widget into the packing table */
-  gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(scrolled), 0,5,table_row, table_row+1,
-		   X_PACKING_OPTIONS | GTK_FILL,
-		   Y_PACKING_OPTIONS | GTK_FILL,
-		   X_PADDING, Y_PADDING);
-  table_row++;
-
-  /* and the list itself */
-  store = gtk_list_store_new(NUM_ANALYSIS_COLUMNS, 
-			     G_TYPE_STRING,
-			     G_TYPE_INT,
-			     AMITK_TYPE_TIME,
-			     AMITK_TYPE_TIME,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_DATA,
-			     AMITK_TYPE_REAL,
-			     AMITK_TYPE_REAL,
-			     G_TYPE_INT);
-  list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
-  g_object_unref(store);
-
-  for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS; i_column++) {
-    renderer = gtk_cell_renderer_text_new ();
-    column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
-						      "text", i_column, NULL);
-    gtk_tree_view_append_column (GTK_TREE_VIEW (list), column);
-  }
-
-  /* iterate over the analysis of each volume */
-  while (volume_analyses != NULL) {
-    frame_analyses = volume_analyses->frame_analyses;
-
-    voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
-    voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
-
-    /* iterate over the frames */
-    frame = 0;
-    while (frame_analyses != NULL) {
-      gtk_list_store_append (store, &iter);  /* Acquire an iterator */
-      gtk_list_store_set (store, &iter,
-			  COLUMN_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
-			  COLUMN_FRAME, frame,
-			  COLUMN_DURATION, frame_analyses->duration,
-			  COLUMN_TIME_MIDPT, frame_analyses->time_midpoint,
-			  COLUMN_TOTAL, frame_analyses->total,
-			  COLUMN_MEDIAN, frame_analyses->median,
-			  COLUMN_MEAN, frame_analyses->mean,
-			  COLUMN_VAR, frame_analyses->var,
-			  COLUMN_STD_DEV, sqrt(frame_analyses->var),
-			  COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels),
-			  COLUMN_MIN,frame_analyses->min,
-			  COLUMN_MAX,frame_analyses->max,
-			  COLUMN_SIZE,frame_analyses->fractional_voxels*voxel_volume,
-			  COLUMN_FRAC_VOXELS,frame_analyses->fractional_voxels,
-			  COLUMN_VOXELS, frame_analyses->voxels,
-			  -1);
-      frame++;
-      frame_analyses = frame_analyses->next_frame_analysis;
+  /* first check if we have only static data */
+  temp_roi_analyses = roi_analyses;
+  dynamic_data = FALSE;
+  while (temp_roi_analyses != NULL) {
+    volume_analyses = temp_roi_analyses->volume_analyses;
+    while (volume_analyses != NULL) {
+      if (AMITK_DATA_SET_NUM_FRAMES(volume_analyses->data_set) > 1)
+	dynamic_data = TRUE;
+      volume_analyses = volume_analyses->next_volume_analysis;
     }
-    volume_analyses = volume_analyses->next_volume_analysis;
+    temp_roi_analyses = temp_roi_analyses->next_roi_analysis;
   }
 
-  /* just using the list for display */
-  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
-  gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
+  while (roi_analyses != NULL) {
 
-  gtk_container_add(GTK_CONTAINER(scrolled),list); /* and put it in the scrolled widget */
-  table_row++;
+    if ((dynamic_data) || (!static_tree_created)) {
+
+      if (dynamic_data)
+	label = gtk_label_new(AMITK_OBJECT_NAME(roi_analyses->roi));
+      else
+	label = gtk_label_new("ROI Statistics");
+      table = gtk_table_new(5,3,FALSE);
+      gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+
+      hbox = gtk_hbox_new(FALSE, 0);
+      gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(hbox), 0,5,
+		       table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
+      table_row++;
+      gtk_widget_show(hbox);
+
+      if (dynamic_data) {
+	/* tell use the type */
+	label = gtk_label_new("type:");
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	
+	entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(entry), amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)));
+	gtk_editable_set_editable(GTK_EDITABLE(entry), FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+      }
+    
+      /* try to get a reasonable estimate for how wide the statistics box should be */
+      width = 0.9*gdk_screen_width();
+      if (width > ROI_STATISTICS_WIDTH)
+	width = ROI_STATISTICS_WIDTH;
+      
+      /* the scroll widget which the list will go into */
+      scrolled = gtk_scrolled_window_new(NULL,NULL);
+      gtk_widget_set_size_request(scrolled,width,250);
+      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled),
+				     GTK_POLICY_AUTOMATIC,
+				     GTK_POLICY_AUTOMATIC);
+    
+      /* and throw the scrolled widget into the packing table */
+      gtk_table_attach(GTK_TABLE(table), GTK_WIDGET(scrolled), 0,5,table_row, table_row+1,
+		       X_PACKING_OPTIONS | GTK_FILL,
+		       Y_PACKING_OPTIONS | GTK_FILL,
+		       X_PADDING, Y_PADDING);
+      table_row++;
+    
+      /* and the list itself */
+      store = gtk_list_store_new(NUM_ANALYSIS_COLUMNS, 
+				 G_TYPE_STRING,
+				 G_TYPE_STRING,
+				 G_TYPE_STRING,
+				 G_TYPE_INT,
+				 AMITK_TYPE_TIME,
+				 AMITK_TYPE_TIME,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_DATA,
+				 AMITK_TYPE_REAL,
+				 AMITK_TYPE_REAL,
+				 G_TYPE_INT);
+      list = gtk_tree_view_new_with_model (GTK_TREE_MODEL (store));
+      g_object_unref(store);
+    
+      for (i_column=0; i_column<NUM_ANALYSIS_COLUMNS; i_column++) {
+	display=TRUE;
+	if (dynamic_data) {
+	  if ((i_column == COLUMN_ROI_NAME) || 
+	      (i_column == COLUMN_ROI_TYPE))
+	    display = FALSE;
+	} else {
+	  if ((i_column == COLUMN_FRAME) || 
+	      (i_column == COLUMN_TIME_MIDPT) || 
+	      (i_column == COLUMN_DURATION)) 
+	    display = FALSE;
+	}
+
+	if (display) {
+	  renderer = gtk_cell_renderer_text_new ();
+	  column = gtk_tree_view_column_new_with_attributes(analysis_titles[i_column], renderer,
+							    "text", i_column, NULL);
+	  gtk_tree_view_append_column (GTK_TREE_VIEW (list), column);
+	}
+      }
+    }
+    
+    /* iterate over the analysis of each volume */
+    volume_analyses = roi_analyses->volume_analyses;
+    while (volume_analyses != NULL) {
+      frame_analyses = volume_analyses->frame_analyses;
+      
+      voxel_size = AMITK_DATA_SET_VOXEL_SIZE(volume_analyses->data_set);
+      voxel_volume = voxel_size.x*voxel_size.y*voxel_size.z;
+      
+      /* iterate over the frames */
+      frame = 0;
+      while (frame_analyses != NULL) {
+	gtk_list_store_append (store, &iter);  /* Acquire an iterator */
+	gtk_list_store_set (store, &iter,
+			    COLUMN_ROI_NAME, AMITK_OBJECT_NAME(roi_analyses->roi),
+			    COLUMN_ROI_TYPE, amitk_roi_type_get_name(AMITK_ROI_TYPE(roi_analyses->roi)),
+			    COLUMN_DATA_SET_NAME,AMITK_OBJECT_NAME(volume_analyses->data_set),
+			    COLUMN_FRAME, frame,
+			    COLUMN_DURATION, frame_analyses->duration,
+			    COLUMN_TIME_MIDPT, frame_analyses->time_midpoint,
+			    COLUMN_TOTAL, frame_analyses->total,
+			    COLUMN_MEDIAN, frame_analyses->median,
+			    COLUMN_MEAN, frame_analyses->mean,
+			    COLUMN_VAR, frame_analyses->var,
+			    COLUMN_STD_DEV, sqrt(frame_analyses->var),
+			    COLUMN_STD_ERR, sqrt(frame_analyses->var/frame_analyses->voxels),
+			    COLUMN_MIN,frame_analyses->min,
+			    COLUMN_MAX,frame_analyses->max,
+			    COLUMN_SIZE,frame_analyses->fractional_voxels*voxel_volume,
+			    COLUMN_FRAC_VOXELS,frame_analyses->fractional_voxels,
+			    COLUMN_VOXELS, frame_analyses->voxels,
+			    -1);
+	frame++;
+	frame_analyses = frame_analyses->next_frame_analysis;
+      }
+      volume_analyses = volume_analyses->next_volume_analysis;
+    }
+
+    /* just using the list for display */
+    if ((dynamic_data) || (!static_tree_created)) {
+      selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
+      gtk_tree_selection_set_mode (selection, GTK_SELECTION_NONE);
+    
+      gtk_container_add(GTK_CONTAINER(scrolled),list); /* and put it in the scrolled widget */
+      static_tree_created = TRUE;
+    }
+
+    roi_analyses = roi_analyses->next_roi_analysis;
+  }
 
   return;
 }
@@ -457,6 +521,7 @@ static void read_preferences(gboolean * all_data_sets,
 			     gboolean * calc_on_subfraction,
 			     gdouble * subfraction) {
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
 
   *all_data_sets = gnome_config_get_int("ANALYSIS/CalculateAllDataSets");
@@ -465,6 +530,7 @@ static void read_preferences(gboolean * all_data_sets,
   *subfraction = gnome_config_get_float("ANALYSIS/SubFraction");
 
   gnome_config_pop_prefix();
+#endif
 
   return;
 }
@@ -479,13 +545,15 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   GList * rois;
   GList * data_sets;
   analysis_roi_t * roi_analyses;
-  analysis_roi_t * temp_analyses;
+
+#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   gboolean calc_on_subfraction;
   gdouble subfraction;
 
   read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
+#endif
 
   if (!calc_on_subfraction) subfraction = 1.0;
 
@@ -495,7 +563,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
 						  AMITK_OBJECT_TYPE_DATA_SET, TRUE);
   else
     data_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(study), 
-							   AMITK_OBJECT_TYPE_DATA_SET, AMITK_SELECTION_ALL, TRUE);
+							   AMITK_OBJECT_TYPE_DATA_SET, AMITK_SELECTION_ANY, TRUE);
 
   if (data_sets == NULL) {
     g_warning("No Data Sets selected for calculating analyses");
@@ -507,7 +575,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
     rois = amitk_object_get_children_of_type(AMITK_OBJECT(study), AMITK_OBJECT_TYPE_ROI, TRUE);
   else 
     rois = amitk_object_get_selected_children_of_type(AMITK_OBJECT(study), 
-						      AMITK_OBJECT_TYPE_ROI, AMITK_SELECTION_ALL, TRUE);
+						      AMITK_OBJECT_TYPE_ROI, AMITK_SELECTION_ANY, TRUE);
 
   if (rois == NULL) {
     g_warning("No ROI's selected for calculating analyses");
@@ -545,11 +613,7 @@ void tb_roi_analysis(AmitkStudy * study, GtkWindow * parent) {
   gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), notebook);
 
   /* add the data pages */
-  temp_analyses = roi_analyses;
-  while (temp_analyses != NULL) {
-    add_page(notebook, study, temp_analyses->roi, temp_analyses->volume_analyses);
-    temp_analyses=temp_analyses->next_roi_analysis;
-  }
+  add_pages(notebook, study, roi_analyses);
 
   /* and show all our widgets */
   gtk_widget_show_all(dialog);
@@ -569,47 +633,59 @@ static void subfraction_precentage_cb(GtkWidget * widget, gpointer data);
 /* function called to change the layout */
 static void radio_buttons_cb(GtkWidget * widget, gpointer data) {
 
+#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
+#endif
 
   all_data_sets = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_data_sets"));
   all_rois = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "all_rois"));
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("ANALYSIS/CalculateAllDataSets",all_data_sets);
   gnome_config_set_int("ANALYSIS/CalculateAllRois",all_rois);
   gnome_config_pop_prefix();
   gnome_config_sync();
+#endif
 
   return;
 }
 
 static void calc_on_subfraction_cb(GtkWidget * widget, gpointer data) {
 
+#ifndef AMIDE_WIN32_HACKS
   gboolean calc_on_subfraction;
+#endif
   GtkWidget * spin_button = data;
 
   calc_on_subfraction = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   gtk_widget_set_sensitive(spin_button, calc_on_subfraction);
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("ANALYSIS/CalculateOnSubFraction", calc_on_subfraction);
   gnome_config_pop_prefix();
   gnome_config_sync();
+#endif
 
 }
 
 
 static void subfraction_precentage_cb(GtkWidget * widget, gpointer data) {
 
+#ifndef AMIDE_WIN32_HACKS
   gdouble subfraction;
+#endif
 
   subfraction = gtk_spin_button_get_value(GTK_SPIN_BUTTON(widget))/100.0;
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_float("ANALYSIS/SubFraction", subfraction);
   gnome_config_pop_prefix();
   gnome_config_sync();
+#endif
 
   return;
 }
@@ -647,12 +723,14 @@ GtkWidget * tb_roi_analysis_init_dialog(GtkWindow * parent) {
   GtkWidget * check_button;
   GtkObject * adjustment;
   GtkWidget * spin_button;
+#ifndef AMIDE_WIN32_HACKS
   gboolean all_data_sets;
   gboolean all_rois;
   gboolean calc_on_subfraction;
   gdouble subfraction;
 
   read_preferences(&all_data_sets, &all_rois, &calc_on_subfraction, &subfraction);
+#endif
 
   temp_string = g_strdup_printf("%s: ROI Analysis Initialization Dialog", PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,

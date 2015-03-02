@@ -1,15 +1,19 @@
-
+if AMIDE_WIN32_HACKS
+AMIDE_WIN32_HACK_LIBS = \
+	-lwsock32
+else
 INCLUDES = \
 	-DPREFIX=\""$(prefix)"\"			\
 	-DSYSCONFDIR=\""$(sysconfdir)"\"		\
 	-DDATADIR=\""$(datadir)"\"			\
 	-DLIBDIR=\""$(libdir)"\"			
+endif
 
 AM_CFLAGS = \
 	$(AMIDE_GNOME_CFLAGS) \
 	$(AMIDE_DEBUG_CFLAGS) \
-	 -DGTK_DISABLE_DEPRECATED 
-#	-DGNOME_DISABLE_DEPRECATED
+	 -DGTK_DISABLE_DEPRECATED \
+	-DGNOME_DISABLE_DEPRECATED
 
 bin_PROGRAMS = amide
 
@@ -20,6 +24,7 @@ amide_LDADD = \
 	$(AMIDE_LIBVOLPACK_LIBS) \
 	$(AMIDE_LIBFAME_LIBS) \
 	$(AMIDE_GNOME_LIBS) \
+	$(AMIDE_WIN32_HACK_LIBS) \
 	-L/usr/local/lib 
 
 
@@ -44,6 +49,7 @@ amide_SOURCES = \
 	amitk_canvas.c \
 	amitk_canvas_object.c \
 	amitk_color_table.c \
+	amitk_color_table_menu.c \
 	amitk_data_set.c \
 	amitk_dir_sel.c \
 	amitk_fiducial_mark.c \
@@ -118,6 +124,7 @@ AMITK_H_SOURCES = \
 	amitk_canvas.h \
 	amitk_canvas_object.h \
 	amitk_color_table.h \
+	amitk_color_table_menu.h \
 	amitk_dir_sel.h \
 	amitk_data_set.h \
 	amitk_fiducial_mark.h \

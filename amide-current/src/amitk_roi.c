@@ -207,8 +207,7 @@ static void roi_write_xml (const AmitkObject * object, xmlNodePtr nodes) {
   amitk_point_write_xml(nodes, "voxel_size", AMITK_ROI_VOXEL_SIZE(roi));
   xml_save_real(nodes, "isocontour_value", AMITK_ROI_ISOCONTOUR_VALUE(roi));
 
-  if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+  if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     name = g_strdup_printf("roi_%s_isocontour", AMITK_OBJECT_NAME(roi));
     filename = amitk_raw_data_write_xml(roi->isocontour, name);
     g_free(name);
@@ -242,8 +241,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * err
   g_free(temp_string);
 
   /* isocontour specific stuff */
-  if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+  if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     amitk_roi_set_voxel_size(roi, amitk_point_read_xml(nodes, "voxel_size", &error_buf));
     roi->isocontour_value = xml_get_real(nodes, "isocontour_value", &error_buf);
 
@@ -253,8 +251,7 @@ static gchar * roi_read_xml (AmitkObject * object, xmlNodePtr nodes, gchar * err
   }
 
   /* make sure to mark the roi as undrawn if needed */
-  if ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+  if (AMITK_ROI_TYPE_ISOCONTOUR(roi)) {
     if (roi->isocontour == NULL) 
       AMITK_VOLUME(roi)->valid = FALSE;
   } else {
@@ -402,8 +399,7 @@ AmitkDataSet * amitk_roi_get_intersection_slice(const AmitkRoi * roi,
    note: vol should be a slice for the case of ISOCONTOUR_2D */
 void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel value_voxel) {
 
-  g_return_if_fail((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-		   (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
 
   
   switch(AMITK_ROI_TYPE(roi)) {
@@ -424,8 +420,7 @@ void amitk_roi_set_isocontour(AmitkRoi * roi, AmitkDataSet * ds, AmitkVoxel valu
 /* sets an area in the roi to zero (not in the roi) */
 void amitk_roi_isocontour_erase_area(AmitkRoi * roi, AmitkVoxel erase_voxel, gint area_size) {
 
-  g_return_if_fail((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-		   (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D));
+  g_return_if_fail(AMITK_ROI_TYPE_ISOCONTOUR(roi));
   
   switch(AMITK_ROI_TYPE(roi)) {
   case AMITK_ROI_TYPE_ISOCONTOUR_2D:
@@ -448,8 +443,7 @@ void amitk_roi_set_type(AmitkRoi * roi, AmitkRoiType new_type) {
   g_return_if_fail(AMITK_IS_ROI(roi));
   if ((new_type == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
       (new_type == AMITK_ROI_TYPE_ISOCONTOUR_3D) ||
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
-      (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
+      AMITK_ROI_TYPE_ISOCONTOUR(roi))
     g_return_if_fail(new_type == AMITK_ROI_TYPE(roi));
 
   if (AMITK_ROI_TYPE(roi) != new_type) {
@@ -588,8 +582,7 @@ amide_real_t amitk_rois_get_max_min_voxel_size(GList * objects) {
 
   /* and process this guy */
   if (AMITK_IS_ROI(objects->data))
-    if ((AMITK_ROI_TYPE(objects->data) == AMITK_ROI_TYPE_ISOCONTOUR_2D) ||
-	(AMITK_ROI_TYPE(objects->data) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+    if (AMITK_ROI_TYPE_ISOCONTOUR(objects->data)) {
       temp = point_min_dim(AMITK_ROI_VOXEL_SIZE(objects->data));
       if (min_voxel_size < 0.0) min_voxel_size = temp;
       else if (temp > min_voxel_size) min_voxel_size = temp;

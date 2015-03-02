@@ -48,20 +48,17 @@
 #include <pwd.h>
 #endif
 
-#include <glib.h>		/* Include early to get G_OS_WIN32 and
-				 * G_WITH_CYGWIN */
+#include <glib.h>		/* Include early to get G_OS_WIN32 etc */
 
-#if defined(G_OS_WIN32) || defined(G_WITH_CYGWIN)
+#if defined(G_PLATFORM_WIN32)
 #include <ctype.h>
 #define STRICT
 #include <windows.h>
 #undef STRICT
-#endif /* G_OS_WIN32 || G_WITH_CYGWIN */
-#ifdef HAVE_WINSOCK_H
+#endif /* G_PLATFORM_WIN32 */
+#ifdef G_OS_WIN32
 #include <winsock.h>		/* For gethostname */
 #endif
-
-#include "fnmatch.h"
 
 #include <gdk/gdkkeysyms.h>
 
@@ -75,6 +72,10 @@
 #define S_ISDIR(mode) ((mode)&_S_IFDIR)
 #endif
 #endif /* G_OS_WIN32 */
+
+#ifdef G_WITH_CYGWIN
+#include <sys/cygwin.h>		/* For cygwin_conv_to_posix_path */
+#endif
 
 #define DIR_LIST_WIDTH   180
 #define DIR_LIST_HEIGHT  180
@@ -92,6 +93,10 @@
 #    define MAXPATHLEN 2048
 #  endif
 #endif
+
+/* AML - ignore internationalization */
+#define N_(String) (String)
+#define _(String) (String)
 
 /* I've put this here so it doesn't get confused with the 
  * file completion interface */
@@ -121,10 +126,6 @@ typedef struct _PossibleCompletion PossibleCompletion;
  * match by first_diff_index()
  */
 #define PATTERN_MATCH -1
-/* The arguments used by all fnmatch() calls below
- */
-#define FNMATCH_FLAGS (FNM_PATHNAME | FNM_PERIOD)
-
 #define CMPL_ERRNO_TOO_LONG ((1<<16)-1)
 #define CMPL_ERRNO_DID_NOT_CONVERT ((1<<16)-2)
 
@@ -134,9 +135,11 @@ typedef struct _PossibleCompletion PossibleCompletion;
  */
 struct _CompletionDirSent
 {
+#ifndef G_PLATFORM_WIN32
   ino_t inode;
   time_t mtime;
   dev_t device;
+#endif
 
   gint entry_count;
   struct _CompletionDirEntry *entries;
@@ -166,6 +169,7 @@ struct _CompletionDirEntry
 {
   gboolean is_dir;
   gchar *entry_name;
+  gchar *sort_key;
 };
 
 struct _CompletionUserDir
@@ -291,14 +295,14 @@ static gint                cmpl_last_valid_char    (CompletionState* cmpl_state)
 /* When the user selects a non-directory, call cmpl_completion_fullname
  * to get the full name of the selected file.
  */
-static gchar*              cmpl_completion_fullname (const gchar*, CompletionState* cmpl_state);
+static const gchar*        cmpl_completion_fullname (const gchar*, CompletionState* cmpl_state);
 
 
 /* Directory operations. */
 static CompletionDir* open_ref_dir         (gchar* text_to_complete,
 					    gchar** remaining_text,
 					    CompletionState* cmpl_state);
-#if !defined(G_OS_WIN32) && !defined(G_WITH_CYGWIN)
+#ifndef G_PLATFORM_WIN32
 static gboolean       check_dir            (gchar *dir_name, 
 					    struct stat *result, 
 					    gboolean *stat_subdirs);
@@ -317,7 +321,7 @@ static CompletionDirSent* open_new_dir     (gchar* dir_name,
 static gint           correct_dir_fullname (CompletionDir* cmpl_dir);
 static gint           correct_parent       (CompletionDir* cmpl_dir,
 					    struct stat *sbuf);
-#ifndef G_OS_WIN32
+#ifndef G_PLATFORM_WIN32
 static gchar*         find_parent_dir_fullname    (gchar* dirname);
 #endif
 static CompletionDir* attach_dir           (CompletionDirSent* sent,
@@ -368,6 +372,7 @@ static gint amitk_dir_selection_insert_text   (GtkWidget             *widget,
 					      gint                   new_text_length,
 					      gint                  *position,
 					      gpointer               user_data);
+static void amitk_dir_selection_update_fileops (AmitkDirSelection     *filesel);
 
 static void amitk_dir_selection_file_activate (GtkTreeView       *tree_view,
 					      GtkTreePath       *path,
@@ -395,12 +400,51 @@ static void amitk_dir_selection_rename_file (GtkWidget *widget, gpointer data);
 
 static void free_selected_names (GPtrArray *names);
 
-#if !defined(G_OS_WIN32) && !defined(G_WITH_CYGWIN)
-#define compare_filenames(a, b) strcmp(a, b)
-#else
-#define compare_filenames(a, b) g_ascii_strcasecmp(a, b)
-#endif
+static gboolean _amitk_fnmatch (const char *pattern, const char *string);
+ 
+#ifndef G_PLATFORM_WIN32
+#define compare_utf8_filenames(a, b) strcmp(a, b)
+#define compare_sys_filenames(a, b) strcmp(a, b)
 
+#else
+
+static gint
+compare_utf8_filenames (const gchar *a,
+			const gchar *b)
+{
+  gchar *a_folded, *b_folded;
+  gint retval;
+
+  a_folded = g_utf8_strdown (a, -1);
+  b_folded = g_utf8_strdown (b, -1);
+
+  retval = strcmp (a_folded, b_folded);
+
+  g_free (a_folded);
+  g_free (b_folded);
+
+  return retval;
+}
+
+static gint
+compare_sys_filenames (const gchar *a,
+		       const gchar *b)
+{
+  gchar *a_utf8, *b_utf8;
+  gint retval;
+
+  a_utf8 = g_filename_to_utf8 (a, -1, NULL, NULL, NULL);
+  b_utf8 = g_filename_to_utf8 (b, -1, NULL, NULL, NULL);
+
+  retval = compare_utf8_filenames (a_utf8, b_utf8);
+
+  g_free (a_utf8);
+  g_free (b_utf8);
+
+  return retval;
+}
+
+#endif
 
 static GtkWindowClass *parent_class = NULL;
 
@@ -411,11 +455,11 @@ static gint cmpl_errno;
 /*
  * Take the path currently in the file selection
  * entry field and translate as necessary from
- * a WIN32 style to CYGWIN32 style path.  For
+ * a WIN32 style to Cygwin style path.  For
  * instance translate:
  * x:\somepath\file.jpg
  * to:
- * //x/somepath/file.jpg
+ * /cygdrive/x/somepath/file.jpg
  *
  * Replace the path in the selection text field.
  * Return a boolean value concerning whether a
@@ -425,68 +469,41 @@ static int
 translate_win32_path (AmitkDirSelection *filesel)
 {
   int updated = 0;
-  gchar *path;
+  const gchar *path;
+  gchar newPath[MAX_PATH];
 
   /*
    * Retrieve the current path
    */
   path = gtk_entry_get_text (GTK_ENTRY (filesel->selection_entry));
 
-  /*
-   * Translate only if this looks like a DOS-ish
-   * path... First handle any drive letters.
-   */
-  if (isalpha (path[0]) && (path[1] == ':')) {
-    /*
-     * This part kind of stinks... It isn't possible
-     * to know if there is enough space in the current
-     * string for the extra character required in this
-     * conversion.  Assume that there isn't enough space
-     * and use the set function on the text field to
-     * set the newly created string.
-     */
-    gchar *newPath = g_strdup_printf ("//%c/%s", path[0], (path + 3));
+  cygwin_conv_to_posix_path (path, newPath);
+  updated = (strcmp (path, newPath) != 0);
+
+  if (updated)
     gtk_entry_set_text (GTK_ENTRY (filesel->selection_entry), newPath);
 
-    path = newPath;
-    updated = 1;
-  }
-
-  /*
-   * Now, replace backslashes with forward slashes 
-   * if necessary.
-   */
-  if (strchr (path, '\\'))
-    {
-      int index;
-      for (index = 0; path[index] != '\0'; index++)
-	if (path[index] == '\\')
-	  path[index] = '/';
-      
-      updated = 1;
-    }
-    
   return updated;
 }
 #endif
 
-GtkType
+GType
 amitk_dir_selection_get_type (void)
 {
-  static GtkType file_selection_type = 0;
+  static GType file_selection_type = 0;
 
   if (!file_selection_type)
     {
       static const GTypeInfo filesel_info =
       {
 	sizeof (AmitkDirSelectionClass),
-	(GBaseInitFunc) NULL,
-	(GBaseFinalizeFunc) NULL,
+	NULL,		/* base_init */
+	NULL,		/* base_finalize */
 	(GClassInitFunc) amitk_dir_selection_class_init,
-	(GClassFinalizeFunc) NULL,
-	NULL, /* class data */
+	NULL,		/* class_finalize */
+	NULL,		/* class_data */
 	sizeof (AmitkDirSelection),
-	0,   /* # preallocs */
+	0,		/* n_preallocs */
 	(GInstanceInitFunc) amitk_dir_selection_init,
 	NULL   /* value table */
       };
@@ -508,7 +525,7 @@ amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
   object_class = (GtkObjectClass*) class;
   widget_class = (GtkWidgetClass*) class;
 
-  parent_class = gtk_type_class (GTK_TYPE_DIALOG);
+  parent_class = g_type_class_peek_parent (class);
 
   gobject_class->finalize = amitk_dir_selection_finalize;
   gobject_class->set_property = amitk_dir_selection_set_property;
@@ -518,14 +535,14 @@ amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
                                    PROP_FILENAME,
                                    g_param_spec_string ("filename",
                                                         _("Filename"),
-                                                        _("The currently selected filename."),
+                                                        _("The currently selected filename"),
                                                         NULL,
                                                         G_PARAM_READABLE | G_PARAM_WRITABLE));
   g_object_class_install_property (gobject_class,
 				   PROP_SHOW_FILEOPS,
 				   g_param_spec_boolean ("show_fileops",
 							 _("Show file operations"),
-							 _("Whether buttons for creating/manipulating files should be displayed."),
+							 _("Whether buttons for creating/manipulating files should be displayed"),
 							 FALSE,
 							 G_PARAM_READABLE |
 							 G_PARAM_WRITABLE));
@@ -533,7 +550,7 @@ amitk_dir_selection_class_init (AmitkDirSelectionClass *class)
 				   PROP_SELECT_MULTIPLE,
 				   g_param_spec_boolean ("select_multiple",
 							 _("Select multiple"),
-							 _("Whether to allow multiple files to be selected."),
+							 _("Whether to allow multiple files to be selected"),
 							 FALSE,
 							 G_PARAM_READABLE |
 							 G_PARAM_WRITABLE));
@@ -699,7 +716,8 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
   gtk_tree_view_append_column (GTK_TREE_VIEW (filesel->dir_list), column);
 
-  gtk_widget_set_size_request(filesel->dir_list, DIR_LIST_WIDTH, DIR_LIST_HEIGHT);
+  gtk_widget_set_size_request(filesel->dir_list, 
+			      DIR_LIST_WIDTH, DIR_LIST_HEIGHT);
   g_signal_connect (G_OBJECT(filesel->dir_list), "row_activated",
 		    G_CALLBACK (amitk_dir_selection_dir_activate), filesel);
 
@@ -734,7 +752,8 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   gtk_tree_view_column_set_sizing (column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
   gtk_tree_view_append_column (GTK_TREE_VIEW (filesel->file_list), column);
 
-  gtk_widget_set_size_request (filesel->file_list, FILE_LIST_WIDTH, FILE_LIST_HEIGHT);
+  gtk_widget_set_size_request (filesel->file_list, 
+			       FILE_LIST_WIDTH, FILE_LIST_HEIGHT);
   g_signal_connect (G_OBJECT(filesel->file_list), "row_activated",
 		    G_CALLBACK (amitk_dir_selection_file_activate), filesel);
   g_signal_connect (G_OBJECT(gtk_tree_view_get_selection (GTK_TREE_VIEW (filesel->file_list))), "changed",
@@ -790,6 +809,8 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
 		   G_CALLBACK(amitk_dir_selection_key_press), filesel);
   g_signal_connect(G_OBJECT (filesel->selection_entry), "insert_text",
 		   G_CALLBACK(amitk_dir_selection_insert_text), NULL);
+  g_signal_connect_swapped (G_OBJECT(filesel->selection_entry), "changed",
+			    G_CALLBACK (amitk_dir_selection_update_fileops), filesel);
   g_signal_connect_swapped (G_OBJECT (filesel->selection_entry), "focus_in_event",
 			    G_CALLBACK(grab_default),
 			    G_OBJECT (filesel->ok_button));
@@ -799,11 +820,14 @@ amitk_dir_selection_init (AmitkDirSelection *filesel)
   gtk_box_pack_start (GTK_BOX (entry_vbox), filesel->selection_entry, TRUE, TRUE, 0);
   gtk_widget_show (filesel->selection_entry);
 
+  gtk_label_set_mnemonic_widget (GTK_LABEL (filesel->selection_text),
+				 filesel->selection_entry);
+
   if (!cmpl_state_okay (filesel->cmpl_state))
     {
       gchar err_buf[256];
 
-      sprintf (err_buf, _("Folder unreadable: %s"), cmpl_strerror (cmpl_errno));
+      g_snprintf (err_buf, sizeof (err_buf), _("Folder unreadable: %s"), cmpl_strerror (cmpl_errno));
 
       gtk_label_set_text (GTK_LABEL (filesel->selection_text), err_buf);
     }
@@ -922,13 +946,21 @@ filenames_dropped (GtkWidget        *widget,
   else
     {
       GtkWidget *dialog;
-      
+      gchar *filename_utf8;
+
+      /* Conversion back to UTF-8 should always succeed for the result
+       * of g_filename_from_uri()
+       */
+      filename_utf8 = g_filename_to_utf8 (filename, -1, NULL, NULL, NULL);
+      g_assert (filename_utf8);
+       
       dialog = gtk_message_dialog_new (GTK_WINDOW (widget),
 				       GTK_DIALOG_DESTROY_WITH_PARENT,
 				       GTK_MESSAGE_QUESTION,
 				       GTK_BUTTONS_YES_NO,
 				       _("The file \"%s\" resides on another machine (called %s) and may not be available to this program.\n"
-					 "Are you sure that you want to select it?"), filename, hostname);
+					 "Are you sure that you want to select it?"), filename_utf8, hostname);
+      g_free (filename_utf8);
 
       g_object_set_data_full (G_OBJECT (dialog), "gtk-fs-dnd-filename", g_strdup (filename), g_free);
       
@@ -992,8 +1024,10 @@ filenames_drag_get (GtkWidget        *widget,
 	}
       else
 	{
-	  g_print ("Setting text: '%s'\n", file);
-	  gtk_selection_data_set_text (selection_data, file, -1);
+	  gchar *filename_utf8 = g_filename_to_utf8 (file, -1, NULL, NULL, NULL);
+	  g_assert (filename_utf8);
+	  gtk_selection_data_set_text (selection_data, filename_utf8, -1);
+	  g_free (filename_utf8);
 	}
     }
 }
@@ -1002,11 +1036,11 @@ static void
 file_selection_setup_dnd (AmitkDirSelection *filesel)
 {
   GtkWidget *eventbox;
-  static GtkTargetEntry drop_types[] = {
+  static const GtkTargetEntry drop_types[] = {
     { "text/uri-list", 0, TARGET_URILIST}
   };
   static gint n_drop_types = sizeof(drop_types)/sizeof(drop_types[0]);
-  static GtkTargetEntry drag_types[] = {
+  static const GtkTargetEntry drag_types[] = {
     { "text/uri-list", 0, TARGET_URILIST},
     { "UTF8_STRING", 0, TARGET_UTF8_STRING },
     { "STRING", 0, 0 },
@@ -1082,8 +1116,10 @@ amitk_dir_selection_show_fileop_buttons (AmitkDirSelection *filesel)
 			  filesel->fileop_ren_file, TRUE, TRUE, 0);
       gtk_widget_show (filesel->fileop_ren_file);
     }
+  
+  amitk_dir_selection_update_fileops (filesel);
+  
   g_object_notify (G_OBJECT (filesel), "show_fileops");
-  gtk_widget_queue_resize (GTK_WIDGET (filesel));
 }
 
 void       
@@ -1112,28 +1148,43 @@ amitk_dir_selection_hide_fileop_buttons (AmitkDirSelection *filesel)
 }
 
 
-
+/**
+ * amitk_file_selection_set_filename:
+ * @dirsel: a #AmitkFileSelection.
+ * @dirname:  a string to set as the default directory name.
+ * 
+ * Sets a default path for the file requestor. If dirname includes a
+ * directory path, then the requestor will open with that path as its
+ * current working directory.
+ *
+ * The encoding of @dirname is the on-disk encoding, which
+ * may not be UTF-8. See g_filename_from_utf8().
+ **/
 void
 amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
 				 const gchar      *filename)
 {
   gchar *buf;
   const char *name, *last_slash;
+  char *filename_utf8;
 
   g_return_if_fail (AMITK_IS_DIR_SELECTION (filesel));
   g_return_if_fail (filename != NULL);
 
-  last_slash = strrchr (filename, G_DIR_SEPARATOR);
+  filename_utf8 = g_filename_to_utf8 (filename, -1, NULL, NULL, NULL);
+  g_return_if_fail (filename_utf8 != NULL);
+
+  last_slash = strrchr (filename_utf8, G_DIR_SEPARATOR);
 
   if (!last_slash)
     {
       buf = g_strdup ("");
-      name = filename;
+      name = filename_utf8;
     }
   else
     {
-      buf = g_strdup (filename);
-      buf[last_slash - filename + 1] = 0;
+      buf = g_strdup (filename_utf8);
+      buf[last_slash - filename_utf8 + 1] = 0;
       name = last_slash + 1;
     }
 
@@ -1143,24 +1194,28 @@ amitk_dir_selection_set_filename (AmitkDirSelection *filesel,
     gtk_entry_set_text (GTK_ENTRY (filesel->selection_entry), name);
   g_free (buf);
   g_object_notify (G_OBJECT (filesel), "filename");
+
+  g_free (filename_utf8);
 }
 
 /**
  * amitk_dir_selection_get_filename:
  * @filesel: a #AmitkDirSelection
  * 
- * This function returns the selected filename in encoding of
- * g_filename_from_utf8(), which may or may not be the same as that
+ * This function returns the selected filename in the on-disk encoding
+ * (see g_filename_from_utf8()), which may or may not be the same as that
  * used by GTK+ (UTF-8). To convert to UTF-8, call g_filename_to_utf8().
  * The returned string points to a statically allocated buffer and
  * should be copied if you plan to keep it around.
- * 
- * Return value: currently-selected filename in locale's encoding
+ *
+ * If no file is selected then the selected directory path is returned.
+  * 
+ * Return value: currently-selected filename in the on-disk encoding.
  **/
 G_CONST_RETURN gchar*
 amitk_dir_selection_get_filename (AmitkDirSelection *filesel)
 {
-  static gchar nothing[2] = "";
+  static const gchar nothing[2] = "";
   static gchar something[MAXPATHLEN*2];
   char *sys_filename;
   const char *text;
@@ -1308,6 +1363,23 @@ amitk_dir_selection_fileop_destroy (GtkWidget *widget,
   fs->fileop_dialog = NULL;
 }
 
+ 
+static gboolean
+entry_is_empty (GtkEntry *entry)
+{
+  const gchar *text = gtk_entry_get_text (entry);
+  
+  return *text == '\0';
+}
+
+static void
+amitk_dir_selection_fileop_entry_changed (GtkEntry   *entry,
+					 GtkWidget  *button)
+{
+  gtk_widget_set_sensitive (button, !entry_is_empty (entry));
+}
+ 
+
 
 static void
 amitk_dir_selection_create_dir_confirmed (GtkWidget *widget,
@@ -1417,9 +1489,14 @@ amitk_dir_selection_create_dir (GtkWidget *widget,
 
   gtk_widget_grab_focus (fs->fileop_entry);
 
-  button = gtk_button_new_with_label (_("Create"));
-  g_signal_connect (G_OBJECT (button), "clicked",
-		    G_CALLBACK(amitk_dir_selection_create_dir_confirmed), fs);
+  button = gtk_button_new_with_mnemonic (_("C_reate"));
+  gtk_widget_set_sensitive (button, FALSE);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (amitk_dir_selection_create_dir_confirmed),
+		    fs);
+  g_signal_connect (fs->fileop_entry, "changed",
+                    G_CALLBACK (amitk_dir_selection_fileop_entry_changed),
+		    button);
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
 		     button, TRUE, TRUE, 0);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
@@ -1681,9 +1758,13 @@ amitk_dir_selection_rename_file (GtkWidget *widget,
 
   gtk_widget_grab_focus (fs->fileop_entry);
 
-  button = gtk_button_new_with_label (_("Rename"));
+  button = gtk_button_new_with_mnemonic (_("_Rename"));
   g_signal_connect (G_OBJECT (button), "clicked",
 		    G_CALLBACK(amitk_dir_selection_rename_file_confirmed), fs);
+  g_signal_connect (fs->fileop_entry, "changed",
+		    G_CALLBACK (amitk_dir_selection_fileop_entry_changed),
+		    button);
+
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
 		      button, TRUE, TRUE, 0);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
@@ -1705,8 +1786,8 @@ amitk_dir_selection_insert_text (GtkWidget   *widget,
 
   if (!filename)
     {
-      gdk_beep ();
-      g_signal_stop_emission_by_name (G_OBJECT (widget), "insert_text");
+      // requires gtk+ > 2.2 gdk_display_beep (gtk_widget_get_display (widget));
+      g_signal_stop_emission_by_name (widget, "insert_text");
       return FALSE;
     }
   
@@ -1714,6 +1795,24 @@ amitk_dir_selection_insert_text (GtkWidget   *widget,
   
   return TRUE;
 }
+
+static void
+amitk_dir_selection_update_fileops (AmitkDirSelection *fs)
+{
+  gboolean sensitive;
+
+  if (!fs->selection_entry)
+    return;
+
+  sensitive = !entry_is_empty (GTK_ENTRY (fs->selection_entry));
+
+  if (fs->fileop_del_file)
+    gtk_widget_set_sensitive (fs->fileop_del_file, sensitive);
+  
+  if (fs->fileop_ren_file)
+    gtk_widget_set_sensitive (fs->fileop_ren_file, sensitive);
+}
+
 
 static gint
 amitk_dir_selection_key_press (GtkWidget   *widget,
@@ -1859,17 +1958,26 @@ get_real_filename (gchar    *filename,
   /* Check to see if the selection was a drive selector */
   if (isalpha (filename[0]) && (filename[1] == ':'))
     {
-      /* It is... map it to a CYGWIN32 drive */
-      gchar *temp_filename = g_strdup_printf ("//%c/", tolower (filename[0]));
+      gchar temp_filename[MAX_PATH];
+      int len;
+
+      cygwin_conv_to_posix_path (filename, temp_filename);
+
+      /* we need trailing '/'. */
+      len = strlen (temp_filename);
+      if (len > 0 && temp_filename[len-1] != '/')
+        {
+          temp_filename[len]   = '/';
+          temp_filename[len+1] = '\0';
+        }
 
       if (free_old)
 	g_free (filename);
 
-      return temp_filename;
+      return g_strdup (temp_filename);
     }
-#else
-  return filename;
 #endif /* G_WITH_CYGWIN */
+  return filename;
 }
 
 static void
@@ -1906,11 +2014,12 @@ amitk_dir_selection_dir_activate (GtkTreeView       *tree_view,
 
   gtk_tree_model_get_iter (model, &iter, path);
   gtk_tree_model_get (model, &iter, DIR_COLUMN, &filename, -1);
+  filename = get_real_filename (filename, TRUE);
   amitk_dir_selection_populate (fs, filename, FALSE, FALSE);
   g_free (filename);
 }
 
-#if defined(G_OS_WIN32) || defined(G_WITH_CYGWIN)
+#ifdef G_PLATFORM_WIN32
 
 static void
 win32_gtk_add_drives_to_dir_list (GtkListStore *model)
@@ -1931,7 +2040,7 @@ win32_gtk_add_drives_to_dir_list (GtkListStore *model)
       if ((tolower (textPtr[0]) != 'a') && (tolower (textPtr[0]) != 'b'))
 	{
 	  /* Build the actual displayable string */
-	  sprintf (formatBuffer, "%c:\\", toupper (textPtr[0]));
+	  g_snprintf (formatBuffer, sizeof (formatBuffer), "%c:\\", toupper (textPtr[0]));
 
 	  /* Add to the list */
 	  gtk_list_store_append (model, &iter);
@@ -1941,6 +2050,22 @@ win32_gtk_add_drives_to_dir_list (GtkListStore *model)
     }
 }
 #endif
+
+static gchar *
+escape_underscores (const gchar *str)
+{
+  GString *result = g_string_new (NULL);
+  while (*str)
+    {
+      if (*str == '_')
+	g_string_append_c (result, '_');
+
+      g_string_append_c (result, *str);
+      str++;
+    }
+
+  return g_string_free (result, FALSE);
+}
 
 static void
 amitk_dir_selection_populate (AmitkDirSelection *fs,
@@ -1997,7 +2122,8 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
           if (cmpl_is_directory (poss))
             {
               if (strcmp (filename, "." G_DIR_SEPARATOR_S) != 0 &&
-                  strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0) {
+                  strcmp (filename, ".." G_DIR_SEPARATOR_S) != 0) 
+		{
 
 		gchar * temp;
 		gchar ** frags1;
@@ -2010,7 +2136,7 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 		frags1 = g_strsplit(temp, ".", 2);
 		g_free(temp);
 		g_strreverse(frags1[0]);
-		frags2 = g_strsplit(frags1[0], "/", -1);
+		frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
 		xif_directory =  (g_strcasecmp(frags2[0], "xif") == 0);
 		g_strfreev(frags2);
 		g_strfreev(frags1);
@@ -2029,7 +2155,7 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
       poss = cmpl_next_completion (cmpl_state);
     }
 
-#if defined(G_OS_WIN32) || defined(G_WITH_CYGWIN)
+#ifdef G_PLATFORM_WIN32
   /* For Windows, add drives as potential selections */
   win32_gtk_add_drives_to_dir_list (dir_model);
 #endif
@@ -2087,11 +2213,11 @@ amitk_dir_selection_populate (AmitkDirSelection *fs,
 
       if (fs->selection_entry)
 	{
-	  sel_text = g_strconcat (_("Selection: "),
-				  cmpl_reference_position (cmpl_state),
-				  NULL);
+	  char *escaped = escape_underscores (cmpl_reference_position (cmpl_state));
+	  sel_text = g_strconcat (_("_Selection: "), escaped, NULL);
+	  g_free (escaped);
 
-	  gtk_label_set_text (GTK_LABEL (fs->selection_text), sel_text);
+	  gtk_label_set_text_with_mnemonic (GTK_LABEL (fs->selection_text), sel_text);
 	  g_free (sel_text);
 	}
 
@@ -2108,7 +2234,7 @@ amitk_dir_selection_abort (AmitkDirSelection *fs)
 {
   gchar err_buf[256];
 
-  sprintf (err_buf, _("Folder unreadable: %s"), cmpl_strerror (cmpl_errno));
+  g_snprintf (err_buf, sizeof (err_buf), _("Folder unreadable: %s"), cmpl_strerror (cmpl_errno));
 
   /*  BEEP gdk_beep();  */
 
@@ -2231,8 +2357,8 @@ amitk_dir_selection_file_changed (GtkTreeSelection *selection,
 	  /* A common case is selecting a range of files from top to bottom,
 	   * so quickly check for that to avoid looping over the entire list
 	   */
-	  if (compare_filenames (g_ptr_array_index (old_names, old_names->len - 1),
-				 g_ptr_array_index (new_names, new_names->len - 1)) != 0)
+	  if (compare_utf8_filenames (g_ptr_array_index (old_names, old_names->len - 1),
+				      g_ptr_array_index (new_names, new_names->len - 1)) != 0)
 	    index = new_names->len - 1;
 	  else
 	    {
@@ -2243,8 +2369,8 @@ amitk_dir_selection_file_changed (GtkTreeSelection *selection,
 	       */
 	      while (i < old_names->len && j < new_names->len)
 		{
-		  cmp = compare_filenames (g_ptr_array_index (old_names, i),
-					   g_ptr_array_index (new_names, j));
+		  cmp = compare_utf8_filenames (g_ptr_array_index (old_names, i),
+						g_ptr_array_index (new_names, j));
 		  if (cmp < 0)
 		    {
 		      i++;
@@ -2272,8 +2398,9 @@ amitk_dir_selection_file_changed (GtkTreeSelection *selection,
 	   * was selected, which is used for subsequent range selections.
 	   * So search up from there.
 	   */
-	  if (compare_filenames (fs->last_selected,
-				 g_ptr_array_index (new_names, 0)) == 0)
+	  if (fs->last_selected &&
+	      compare_utf8_filenames (fs->last_selected,
+				      g_ptr_array_index (new_names, 0)) == 0)
 	    index = new_names->len - 1;
 	  else
 	    index = 0;
@@ -2307,7 +2434,7 @@ maybe_clear_entry:
 
   entry = gtk_entry_get_text (GTK_ENTRY (fs->selection_entry));
   if ((entry != NULL) && (fs->last_selected != NULL) &&
-      (compare_filenames (entry, fs->last_selected) == 0))
+      (compare_utf8_filenames (entry, fs->last_selected) == 0))
     gtk_entry_set_text (GTK_ENTRY (fs->selection_entry), "");
 }
 
@@ -2320,6 +2447,8 @@ maybe_clear_entry:
  * in the file list. The first file in the list is equivalent to what
  * amitk_dir_selection_get_filename() would return.
  *
+ * The filenames are in the encoding of g_filename_from_utf8(), which may or 
+ * may not be the same as that used by GTK+ (UTF-8). To convert to UTF-8, call
  * The filenames are in the encoding of g_filename_from_utf8, which may or may
  * not be the same as that used by GTK+ (UTF-8). To convert to UTF-8, call
  * g_filename_to_utf8() on each string.
@@ -2335,6 +2464,7 @@ amitk_dir_selection_get_selections (AmitkDirSelection *filesel)
   gchar *filename, *dirname;
   gchar *current, *buf;
   gint i, count;
+  gboolean unselected_entry;
 
   g_return_val_if_fail (AMITK_IS_DIR_SELECTION (filesel), NULL);
 
@@ -2354,7 +2484,7 @@ amitk_dir_selection_get_selections (AmitkDirSelection *filesel)
     selections = g_new (gchar *, 2);
 
   count = 0;
-  selections[count++] = filename;
+  unselected_entry = TRUE;
 
   if (names != NULL)
     {
@@ -2367,14 +2497,19 @@ amitk_dir_selection_get_selections (AmitkDirSelection *filesel)
 	  current = g_build_filename (dirname, buf, NULL);
 	  g_free (buf);
 
-	  if (compare_filenames (current, filename) != 0)
-	    selections[count++] = current;
-	  else
-	    g_free (current);
+	  selections[count++] = current;
+
+	  if (unselected_entry && compare_sys_filenames (current, filename) == 0)
+	    unselected_entry = FALSE;
 	}
 
       g_free (dirname);
     }
+
+  if (unselected_entry)
+    selections[count++] = filename;
+  else
+    g_free (filename);
 
   selections[count] = NULL;
 
@@ -2411,11 +2546,11 @@ cmpl_last_valid_char (CompletionState *cmpl_state)
   return cmpl_state->last_valid_char;
 }
 
-static gchar*
+static const gchar*
 cmpl_completion_fullname (const gchar     *text,
 			  CompletionState *cmpl_state)
 {
-  static char nothing[2] = "";
+  static const char nothing[2] = "";
 
   if (!cmpl_state_okay (cmpl_state))
     {
@@ -2589,7 +2724,10 @@ free_dir_sent (CompletionDirSent* sent)
 {
   gint i;
   for (i = 0; i < sent->entry_count; i++)
-    g_free (sent->entries[i].entry_name);
+    {
+      g_free (sent->entries[i].entry_name);
+      g_free (sent->entries[i].sort_key);
+    }
   g_free (sent->entries);
   g_free (sent);
 }
@@ -2734,7 +2872,7 @@ open_ref_dir (gchar           *text_to_complete,
   if (text_to_complete[0] == '/' && text_to_complete[1] == '/')
     {
       char root_dir[5];
-      sprintf (root_dir, "//%c", text_to_complete[2]);
+      g_snprintf (root_dir, sizeof (root_dir), "//%c", text_to_complete[2]);
 
       new_dir = open_dir (root_dir, cmpl_state);
 
@@ -2777,16 +2915,15 @@ open_ref_dir (gchar           *text_to_complete,
       p = strrchr (tmp, G_DIR_SEPARATOR);
       if (p)
 	{
-	  if (p == tmp)
+	  if (p + 1 == g_path_skip_root (tmp))
 	    p++;
       
 	  *p = '\0';
-
 	  new_dir = open_dir (tmp, cmpl_state);
 
 	  if (new_dir)
 	    *remaining_text = text_to_complete + 
-	      ((p == tmp + 1) ? (p - tmp) : (p + 1 - tmp));
+	      ((p == g_path_skip_root (tmp)) ? (p - tmp) : (p + 1 - tmp));
 	}
       else
 	{
@@ -2922,10 +3059,11 @@ open_new_dir (gchar       *dir_name,
   gchar *sys_dir_name;
 
   sent = g_new (CompletionDirSent, 1);
+#ifndef G_PLATFORM_WIN32
   sent->mtime = sbuf->st_mtime;
   sent->inode = sbuf->st_ino;
   sent->device = sbuf->st_dev;
-
+#endif
   path = g_string_sized_new (2*MAXPATHLEN + 10);
 
   sys_dir_name = g_filename_from_utf8 (dir_name, -1, NULL, NULL, NULL);
@@ -2945,6 +3083,7 @@ open_new_dir (gchar       *dir_name,
 
   while ((dirent = g_dir_read_name (directory)) != NULL)
     entry_count++;
+  entry_count += 2;		/* For ".",".." */
 
   sent->entries = g_new (CompletionDirEntry, entry_count);
   sent->entry_count = entry_count;
@@ -2955,28 +3094,33 @@ open_new_dir (gchar       *dir_name,
     {
       GError *error = NULL;
 
-      dirent = g_dir_read_name (directory);
-
-      if (!dirent)
+      if (i == 0)
+	dirent = ".";
+      else if (i == 1)
+	dirent = "..";
+      else
 	{
-	  g_warning ("Failure reading folder '%s'", sys_dir_name);
-	  g_dir_close (directory);
-	  g_free (sys_dir_name);
-	  return NULL;
+	  dirent = g_dir_read_name (directory);
+	  if (!dirent)		/* Directory changed */
+	    break;
 	}
 
       sent->entries[n_entries].entry_name = g_filename_to_utf8 (dirent, -1, NULL, NULL, &error);
       if (sent->entries[n_entries].entry_name == NULL
 	  || !g_utf8_validate (sent->entries[n_entries].entry_name, -1, NULL))
 	{
+	  gchar *escaped_str = g_strescape (dirent, NULL);
 	  g_message (_("The filename \"%s\" couldn't be converted to UTF-8 "
 		       "(try setting the environment variable G_BROKEN_FILENAMES): %s"),
-		     dirent,
+		     escaped_str,
 		     error->message ? error->message : _("Invalid Utf-8"));
+	  g_free (escaped_str);
 	  g_clear_error (&error);
 	  continue;
 	}
       g_clear_error (&error);
+      
+      sent->entries[n_entries].sort_key = g_utf8_collate_key (sent->entries[n_entries].entry_name, -1);
       
       g_string_assign (path, sys_dir_name);
       if (path->str[path->len-1] != G_DIR_SEPARATOR)
@@ -3011,7 +3155,7 @@ open_new_dir (gchar       *dir_name,
   return sent;
 }
 
-#if !defined(G_OS_WIN32) && !defined(G_WITH_CYGWIN)
+#ifndef G_PLATFORM_WIN32
 
 static gboolean
 check_dir (gchar       *dir_name,
@@ -3084,12 +3228,14 @@ static CompletionDir*
 open_dir (gchar           *dir_name,
 	  CompletionState *cmpl_state)
 {
+#ifndef G_PLATFORM_WIN32
   struct stat sbuf;
   gboolean stat_subdirs;
-  CompletionDirSent *sent;
   GList* cdsl;
+#endif
+  CompletionDirSent *sent;
 
-#if !defined(G_OS_WIN32) && !defined(G_WITH_CYGWIN)
+#ifndef G_PLATFORM_WIN32
   if (!check_dir (dir_name, &sbuf, &stat_subdirs))
     return NULL;
 
@@ -3106,11 +3252,10 @@ open_dir (gchar           *dir_name,
 
       cdsl = cdsl->next;
     }
-#else
-  stat_subdirs = TRUE;
-#endif
-
   sent = open_new_dir (dir_name, &sbuf, stat_subdirs);
+#else
+  sent = open_new_dir (dir_name, NULL, TRUE);
+#endif
 
   if (sent)
     {
@@ -3254,7 +3399,9 @@ correct_parent (CompletionDir *cmpl_dir,
   struct stat parbuf;
   gchar *last_slash;
   gchar *first_slash;
+#ifndef G_PLATFORM_WIN32
   gchar *new_name;
+#endif
   gchar *sys_filename;
   gchar c = 0;
 
@@ -3294,7 +3441,7 @@ correct_parent (CompletionDir *cmpl_dir,
     }
   g_free (sys_filename);
 
-#ifndef G_OS_WIN32		/* No inode numbers on Win32 */
+#ifndef G_PLATFORM_WIN32		/* No inode numbers on Win32 */
   if (parbuf.st_ino == sbuf->st_ino && parbuf.st_dev == sbuf->st_dev)
     /* it wasn't a link */
     return TRUE;
@@ -3319,7 +3466,7 @@ correct_parent (CompletionDir *cmpl_dir,
   return TRUE;
 }
 
-#ifndef G_OS_WIN32
+#ifndef G_PLATFORM_WIN32
 
 static gchar*
 find_parent_dir_fullname (gchar* dirname)
@@ -3340,9 +3487,10 @@ find_parent_dir_fullname (gchar* dirname)
   
   if (chdir (sys_dirname) != 0 || chdir ("..") != 0)
     {
+      cmpl_errno = errno;
+      chdir (sys_orig_dir);
       g_free (sys_dirname);
       g_free (sys_orig_dir);
-      cmpl_errno = errno;
       return NULL;
     }
   g_free (sys_dirname);
@@ -3430,7 +3578,12 @@ attempt_homedir_completion (gchar           *text_to_complete,
 
 #endif
 
-#if defined(G_OS_WIN32) || defined(G_WITH_CYGWIN)
+#ifdef G_PLATFORM_WIN32
+/* FIXME: determine whether we should casefold all Unicode letters
+ * here, too (and in in first_diff_index() walk through the strings with
+ * g_utf8_next_char()), or if this folding isn't actually needed at
+ * all.
+ */
 #define FOLD(c) (tolower(c))
 #else
 #define FOLD(c) (c)
@@ -3514,8 +3667,7 @@ find_completion_dir (gchar          *text_to_complete,
       for (i = 0; i < dir->sent->entry_count; i += 1)
 	{
 	  if (dir->sent->entries[i].is_dir &&
-	     fnmatch (pat_buf, dir->sent->entries[i].entry_name,
-		      FNMATCH_FLAGS)!= FNM_NOMATCH)
+	      _amitk_fnmatch (pat_buf, dir->sent->entries[i].entry_name))
 	    {
 	      if (found)
 		{
@@ -3665,8 +3817,7 @@ attempt_file_completion (CompletionState *cmpl_state)
     {
       if (dir->sent->entries[dir->cmpl_index].is_dir)
 	{
-	  if (fnmatch (pat_buf, dir->sent->entries[dir->cmpl_index].entry_name,
-		       FNMATCH_FLAGS) != FNM_NOMATCH)
+	  if (_amitk_fnmatch (pat_buf, dir->sent->entries[dir->cmpl_index].entry_name))
 	    {
 	      CompletionDir* new_dir;
 
@@ -3714,8 +3865,7 @@ attempt_file_completion (CompletionState *cmpl_state)
       append_completion_text (dir->sent->entries[dir->cmpl_index].entry_name, cmpl_state);
 
       cmpl_state->the_completion.is_a_completion =
-	fnmatch (pat_buf, dir->sent->entries[dir->cmpl_index].entry_name,
-		 FNMATCH_FLAGS) != FNM_NOMATCH;
+	_amitk_fnmatch (pat_buf, dir->sent->entries[dir->cmpl_index].entry_name);
 
       cmpl_state->the_completion.is_directory = dir->sent->entries[dir->cmpl_index].is_dir;
       if (dir->sent->entries[dir->cmpl_index].is_dir)
@@ -3824,8 +3974,8 @@ static gint
 compare_cmpl_dir (const void *a,
 		  const void *b)
 {
-  return compare_filenames ((((CompletionDirEntry*)a))->entry_name,
-			    (((CompletionDirEntry*)b))->entry_name);
+  return strcmp (((CompletionDirEntry*)a)->sort_key,
+		 (((CompletionDirEntry*)b))->sort_key);
 }
 
 static gint
@@ -3843,4 +3993,261 @@ cmpl_strerror (gint err)
     return _("Couldn't convert filename");
   else
     return g_strerror (err);
+}
+
+
+
+/* stolen from fnmatch.c from gtk */
+
+/* Copyright (C) 1991, 1992, 1993 Free Software Foundation, Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
+ */
+
+/*
+ * Modified by the GTK+ Team and others 1997-2000.  See the AUTHORS
+ * file for a list of people on the GTK+ Team.  See the ChangeLog
+ * files for a list of changes.  These files are distributed with
+ * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
+ */
+
+/*
+ * Stripped down, converted to UTF-8 and test cases added
+ *
+ *                    Owen Taylor, 13 December 2002;
+ */
+
+/* We need to make sure that all constants are defined
+ * to properly compile this file
+ */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+static gunichar
+get_char (const char **str)
+{
+  gunichar c = g_utf8_get_char (*str);
+  *str = g_utf8_next_char (*str);
+
+#ifdef G_PLATFORM_WIN32
+  c = g_unichar_tolower (c);
+#endif
+
+  return c;
+}
+
+#if defined(G_OS_WIN32) || defined(G_WITH_CYGWIN)
+#define DO_ESCAPE 0
+#else  
+#define DO_ESCAPE 1
+#endif  
+
+static gunichar
+get_unescaped_char (const char **str,
+		    gboolean    *was_escaped)
+{
+  gunichar c = get_char (str);
+
+  *was_escaped = DO_ESCAPE && c == '\\';
+  if (*was_escaped)
+    c = get_char (str);
+  
+  return c;
+}
+
+/* Match STRING against the filename pattern PATTERN, returning zero if
+   it matches, nonzero if not.  */
+
+static gboolean
+amitk_fnmatch_intern (const char *pattern,
+		    const char *string,
+		    gboolean   component_start)
+{
+  const char *p = pattern, *n = string;
+  
+  while (*p)
+    {
+      const char *last_n = n;
+      
+      gunichar c = get_char (&p);
+      gunichar nc = get_char (&n);
+      
+      switch (c)
+	{
+   	case '?':
+	  if (nc == '\0')
+	    return FALSE;
+	  else if (nc == G_DIR_SEPARATOR)
+	    return FALSE;
+	  else if (nc == '.' && component_start)
+	    return FALSE;
+	  break;
+	case '\\':
+	  if (DO_ESCAPE)
+	    c = get_char (&p);
+	  if (nc != c)
+	    return FALSE;
+	  break;
+	case '*':
+	  if (nc == '.' && component_start)
+	    return FALSE;
+
+	  {
+	    const char *last_p = p;
+
+	    for (last_p = p, c = get_char (&p);
+		 c == '?' || c == '*';
+		 last_p = p, c = get_char (&p))
+	      {
+		if (c == '?')
+		  {
+		    if (nc == '\0')
+		      return FALSE;
+		    else if (nc == G_DIR_SEPARATOR)
+		      return FALSE;
+		    else
+		      {
+			last_n = n; nc = get_char (&n);
+		      }
+		  }
+	      }
+
+	    /* If the pattern ends with wildcards, we have a
+	     * guaranteed match unless there is a dir separator
+	     * in the remainder of the string.
+	     */
+	    if (c == '\0')
+	      {
+		if (strchr (last_n, G_DIR_SEPARATOR) != NULL)
+		  return FALSE;
+		else
+		  return TRUE;
+	      }
+
+	    if (DO_ESCAPE && c == '\\')
+	      c = get_char (&p);
+
+	    for (p = last_p; nc != '\0';)
+	      {
+		if ((c == '[' || nc == c) &&
+		    amitk_fnmatch_intern (p, last_n, component_start))
+		  return TRUE;
+		
+		component_start = (nc == G_DIR_SEPARATOR);
+		last_n = n;
+		nc = get_char (&n);
+	      }
+		  
+	    return FALSE;
+	  }
+
+	case '[':
+	  {
+	    /* Nonzero if the sense of the character class is inverted.  */
+	    gboolean not;
+	    gboolean was_escaped;
+
+	    if (nc == '\0' || nc == G_DIR_SEPARATOR)
+	      return FALSE;
+
+	    if (nc == '.' && component_start)
+	      return FALSE;
+
+	    not = (*p == '!' || *p == '^');
+	    if (not)
+	      ++p;
+
+	    c = get_unescaped_char (&p, &was_escaped);
+	    for (;;)
+	      {
+		register gunichar cstart = c, cend = c;
+		if (c == '\0')
+		  /* [ (unterminated) loses.  */
+		  return FALSE;
+
+		c = get_unescaped_char (&p, &was_escaped);
+		
+		if (!was_escaped && c == '-' && *p != ']')
+		  {
+		    cend = get_unescaped_char (&p, &was_escaped);
+		    if (cend == '\0')
+		      return FALSE;
+
+		    c = get_char (&p);
+		  }
+
+		if (nc >= cstart && nc <= cend)
+		  goto matched;
+
+		if (!was_escaped && c == ']')
+		  break;
+	      }
+	    if (!not)
+	      return FALSE;
+	    break;
+
+	  matched:;
+	    /* Skip the rest of the [...] that already matched.  */
+	    /* XXX 1003.2d11 is unclear if was_escaped is right.  */
+	    while (was_escaped || c != ']')
+	      {
+		if (c == '\0')
+		  /* [... (unterminated) loses.  */
+		  return FALSE;
+
+		c = get_unescaped_char (&p, &was_escaped);
+	      }
+	    if (not)
+	      return FALSE;
+	  }
+	  break;
+
+	default:
+	  if (c != nc)
+	    return FALSE;
+	}
+
+      component_start = (nc == G_DIR_SEPARATOR);
+    }
+
+  if (*n == '\0')
+    return TRUE;
+
+  return FALSE;
+}
+
+/* Match STRING against the filename pattern PATTERN, returning zero if
+ *  it matches, nonzero if not.
+ *
+ * GTK+ used to use a old version of GNU fnmatch() that was buggy
+ * in various ways and didn't handle UTF-8. The following is
+ * converted to UTF-8. To simplify the process of making it
+ * correct, this is special-cased to the combinations of flags
+ * that gtkfilesel.c uses.
+ *
+ *   FNM_FILE_NAME   - always set
+ *   FNM_LEADING_DIR - never set
+ *   FNM_PERIOD      - always set
+ *   FNM_NOESCAPE    - set only on windows
+ *   FNM_CASEFOLD    - set only on windows
+ */
+static gboolean
+_amitk_fnmatch (const char *pattern,
+	      const char *string)
+{
+  return amitk_fnmatch_intern (pattern, string, TRUE);
 }

@@ -25,7 +25,6 @@
 
 
 #include "amide_config.h"
-#include <gnome.h>
 #include "alignment.h"
 #include "tb_alignment.h"
 #include "ui_common.h"

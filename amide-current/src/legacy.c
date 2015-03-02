@@ -487,8 +487,7 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
   amitk_volume_set_corner(AMITK_VOLUME(new_roi), amitk_point_read_xml(nodes, "corner", perror_buf));
 
   /* isocontour specific stuff */
-  if ((AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+  if (AMITK_ROI_TYPE_ISOCONTOUR(new_roi)) {
     new_roi->voxel_size = amitk_point_read_xml(nodes, "voxel_size", perror_buf);
     new_roi->isocontour_value = xml_get_real(nodes, "isocontour_value", perror_buf);
 
@@ -500,8 +499,7 @@ AmitkRoi * roi_load_xml(gchar * roi_xml_filename, gchar **perror_buf) {
   /* children were never used */
 
   /* make sure to mark the roi as undrawn if needed */
-  if ((AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-      (AMITK_ROI_TYPE(new_roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+  if (AMITK_ROI_TYPE_ISOCONTOUR(new_roi)) {
     if (new_roi->isocontour == NULL) 
       AMITK_VOLUME(new_roi)->valid = FALSE;
   } else {
@@ -628,7 +626,7 @@ AmitkStudy * legacy_load_xml(gchar ** perror_buf) {
   amitk_study_set_zoom(study, xml_get_real(nodes, "zoom", perror_buf));
  
   /* sanity check */
-  if (AMITK_STUDY_ZOOM(study) < SMALL_DISTANCE) {
+  if (AMITK_STUDY_ZOOM(study) < EPSILON) {
     amitk_append_str(perror_buf,"inappropriate zoom (%5.3f) for study, reseting to 1.0",AMITK_STUDY_ZOOM(study));
     amitk_study_set_zoom(study, 1.0);
   }

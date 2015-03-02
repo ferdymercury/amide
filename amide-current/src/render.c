@@ -877,7 +877,7 @@ void rendering_set_depth_cueing_parameters(rendering_t * rendering,
 void rendering_render(rendering_t * rendering)
 {
 
-#ifdef AMIDE_DEBUG
+#ifdef AMIDE_COMMENT_OUT
   struct timeval tv1;
   struct timeval tv2;
   gdouble time1;
@@ -915,7 +915,7 @@ void rendering_render(rendering_t * rendering)
     }
   }
 
-#ifdef AMIDE_DEBUG
+#ifdef AMIDE_COMMENT_OUT
  /* and wrapup our timing */
  gettimeofday(&tv2, NULL);
  time1 = ((double) tv1.tv_sec) + ((double) tv1.tv_usec)/1000000.0;

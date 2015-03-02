@@ -28,7 +28,9 @@
 #include "amide_config.h"
 #include <sys/types.h>
 #include <sys/time.h>
+#ifndef AMIDE_WIN32_HACKS
 #include <sys/resource.h>
+#endif
 #include <glib.h>
 #include "amitk_roi_`'m4_Variable_Type`'.h"
 
@@ -436,8 +438,10 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   AmitkRawData * temp_rd;
   AmitkPoint temp_point;
   AmitkVoxel min_voxel, max_voxel, i_voxel, roi_voxel;
+#ifndef AMIDE_WIN32_HACKS
   rlim_t prev_stack_limit;
   struct rlimit rlim;
+#endif
   amide_data_t isocontour_value;
 
   g_return_if_fail(roi->type == AMITK_ROI_TYPE_`'m4_Variable_Type`');
@@ -451,6 +455,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   temp_rd = amitk_raw_data_UBYTE_3D_init(0, ds->raw_data->dim.z, ds->raw_data->dim.y, ds->raw_data->dim.x);
 #endif
 
+#ifndef AMIDE_WIN32_HACKS
   /* remove any limitation to the stack size, this is so we can recurse deeply without
      seg faulting */
   getrlimit(RLIMIT_STACK, &rlim); 
@@ -459,6 +464,7 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
     rlim.rlim_cur = rlim.rlim_max;
     setrlimit(RLIMIT_STACK, &rlim);
   }
+#endif
 
   /* fill in the data set */
   isocontour_value = roi->isocontour_value-EPSILON*fabs(roi->isocontour_value); /* epsilon guards for floating point rounding */
@@ -540,11 +546,13 @@ void amitk_roi_`'m4_Variable_Type`'_set_isocontour(AmitkRoi * roi, AmitkDataSet 
   POINT_MULT(roi->isocontour->dim, roi->voxel_size, temp_point);
   amitk_volume_set_corner(AMITK_VOLUME(roi), temp_point);
 
+#ifndef AMIDE_WIN32_HACKS
   /* reset our previous stack limit */
   if (prev_stack_limit != rlim.rlim_cur) {
     rlim.rlim_cur = prev_stack_limit;
     setrlimit(RLIMIT_STACK, &rlim);
   }
+#endif
 
   return;
 

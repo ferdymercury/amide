@@ -66,6 +66,14 @@
 
 
 /* external variables */
+AmitkColorTable amitk_modality_default_color_table[AMITK_MODALITY_NUM] = {
+  AMITK_COLOR_TABLE_NIH, /* PET */
+  AMITK_COLOR_TABLE_HOT_METAL, /* SPECT */
+  AMITK_COLOR_TABLE_BW_LINEAR, /* CT */
+  AMITK_COLOR_TABLE_BW_LINEAR, /* MRI */
+  AMITK_COLOR_TABLE_BW_LINEAR /* OTHER */
+};
+
 gchar * amitk_interpolation_explanations[] = {
   "interpolate using nearest neighbhor (fast)", 
   "interpolate using trilinear interpolation (slow)"
@@ -291,6 +299,7 @@ static void data_set_init (AmitkDataSet * data_set) {
   data_set->scan_start = 0.0;
   data_set->color_table = AMITK_COLOR_TABLE_BW_LINEAR;
   data_set->interpolation = AMITK_INTERPOLATION_NEAREST_NEIGHBOR;
+  data_set->slice_cache = NULL;
   data_set->slice_parent = NULL;
 
   /* set the scan date to the current time, good for an initial guess */
@@ -347,6 +356,11 @@ static void data_set_finalize (GObject *object)
   if (data_set->scan_date != NULL) {
     g_free(data_set->scan_date);
     data_set->scan_date = NULL;
+  }
+
+  if (data_set->slice_cache != NULL) {
+    amitk_objects_unref(data_set->slice_cache);
+    data_set->slice_cache = NULL;
   }
 
   if (data_set->slice_parent != NULL) {
@@ -832,7 +846,7 @@ AmitkDataSet * amitk_data_set_import_file(AmitkImportMethod import_method,
   if (import_method == AMITK_IMPORT_METHOD_GUESS) {
 
     /* extract the extension of the file */
-    import_filename_base = g_strdup(g_basename(import_filename));
+    import_filename_base = g_path_get_basename(import_filename);
     g_strreverse(import_filename_base);
     frags = g_strsplit(import_filename_base, ".", 2);
     g_free(import_filename_base);
@@ -925,8 +939,8 @@ void amitk_data_set_set_frame_duration(AmitkDataSet * ds, const guint frame,
   g_return_if_fail(AMITK_IS_DATA_SET(ds));
   g_return_if_fail(frame < AMITK_DATA_SET_NUM_FRAMES(ds));
 
-  if (duration < SMALL_TIME)
-    duration = SMALL_TIME; /* guard against bad values */
+  if (duration < EPSILON)
+    duration = EPSILON; /* guard against bad values */
 
   if (ds->frame_duration[frame] != duration) {
     ds->frame_duration[frame] = duration;
@@ -2593,6 +2607,7 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const Amit
 
   AmitkDataSet * slice;
 
+  if (slice_parent == NULL) return NULL;
   if (slices == NULL) return NULL;
 
   /* first process the rest of the list */
@@ -2611,20 +2626,82 @@ AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, const Amit
   return slice;
 }
 
+/* removes from slices the slice with the given slice_parent */
+GList * amitk_data_sets_remove_with_slice_parent(GList * slices,const AmitkDataSet * slice_parent) {
+
+  AmitkDataSet * slice;
+
+  if (slice_parent == NULL) return NULL;
+  if (slices == NULL) return NULL;
+
+  slice = amitk_data_sets_find_with_slice_parent(slices, slice_parent);
+
+  while (slice != NULL) {
+    slices = g_list_remove(slices, slice);
+    g_object_unref(slice);
+
+    /* may be multiple slices with this parent */
+    slice = amitk_data_sets_find_with_slice_parent(slices, slice_parent);
+  }
+
+  return slices;
+}
+
+
+
+static AmitkDataSet * slice_cache_find (GList * slice_cache, AmitkDataSet * parent_ds, 
+					const amide_time_t start, const amide_time_t duration,
+					const amide_real_t pixel_dim, const AmitkVolume * view_volume) {
+
+  AmitkDataSet * slice;
+  AmitkVoxel dim;
+
+  if (slice_cache == NULL) {
+    return NULL;
+  } else {
+    slice = slice_cache->data;
+    if (AMITK_DATA_SET_SLICE_PARENT(slice) == parent_ds) 
+      if (amitk_space_equal(AMITK_SPACE(slice), AMITK_SPACE(view_volume))) 
+	if (REAL_EQUAL(slice->scan_start, start)) 
+	  if (REAL_EQUAL(slice->frame_duration[0], duration)) 
+	    if (REAL_EQUAL(slice->voxel_size.z,AMITK_VOLUME_Z_CORNER(view_volume))) {
+	      dim.x = ceil(fabs(AMITK_VOLUME_X_CORNER(view_volume))/pixel_dim);
+	      dim.y = ceil(fabs(AMITK_VOLUME_Y_CORNER(view_volume))/pixel_dim);
+	      dim.z = dim.t = 1;
+	      if (VOXEL_EQUAL(dim, AMITK_DATA_SET_DIM(slice))) 
+		if (AMITK_DATA_SET_INTERPOLATION(slice) == AMITK_DATA_SET_INTERPOLATION(parent_ds)) 
+		  return slice;
+	    }
+  
+
+    /* this one's not it, keep looking */
+    return slice_cache_find(slice_cache->next, parent_ds, start, duration, pixel_dim, view_volume);
+  }
+
+}
+
 
 
 /* give a list of data_sets, returns a list of slices of equal size and orientation
-   intersecting these data_sets */
+   intersecting these data_sets.  The slice_cache is a list of already generated slices,
+   if an appropriate slice is found in there, it'll be used */
 GList * amitk_data_sets_get_slices(GList * objects,
+				   GList ** pslice_cache,
 				   const amide_time_t start,
 				   const amide_time_t duration,
 				   const amide_real_t pixel_dim,
-				   const AmitkVolume * view_volume,
-				   const gboolean need_calc_max_min) {
+				   const AmitkVolume * view_volume) {
 
 
   GList * slices=NULL;
+  GList * last;
+  GList * remove;
+  AmitkDataSet * local_slice;
+  AmitkDataSet * canvas_slice;
   AmitkDataSet * slice;
+  AmitkDataSet * parent_ds;
+  gint num_data_sets=0;
+  gint cache_size;
 
 #ifdef AMIDE_COMMENT_OUT
   struct timeval tv1;
@@ -2641,14 +2718,57 @@ GList * amitk_data_sets_get_slices(GList * objects,
   /* and get the slices */
   while (objects != NULL) {
     if (AMITK_IS_DATA_SET(objects->data)) {
-      slice = amitk_data_set_get_slice(AMITK_DATA_SET(objects->data), start, duration, 
-				       pixel_dim, view_volume, need_calc_max_min);
-      if (slice != NULL)
-	slices = g_list_append(slices, slice);
-      else
-	g_warning("slice inappropriately null in %s at %d", __FILE__, __LINE__);
+      num_data_sets++;
+      parent_ds = AMITK_DATA_SET(objects->data);
+
+      /* try to find it in the caches first */
+      canvas_slice = slice_cache_find(*pslice_cache, parent_ds, start,  
+				      duration, pixel_dim, view_volume);
+      
+      local_slice = slice_cache_find(parent_ds->slice_cache, parent_ds, start, 
+				     duration, pixel_dim, view_volume);
+
+      if (canvas_slice != NULL) {
+	slice = g_object_ref(canvas_slice);
+	//	g_print("found %s\n", AMITK_OBJECT_NAME(parent_ds));
+      } else if (local_slice != NULL) {
+	slice = g_object_ref(local_slice);
+	//	g_print("found %s\n", AMITK_OBJECT_NAME(parent_ds));
+      } else {/* generate a new one */
+	slice = amitk_data_set_get_slice(parent_ds, start, duration,  pixel_dim, view_volume, TRUE);
+	//	g_print("generating %s\n", AMITK_OBJECT_NAME(parent_ds));
+      }
+
+      g_return_val_if_fail(slice != NULL, slices);
+
+      slices = g_list_prepend(slices, slice);
+
+      if (canvas_slice == NULL)
+	*pslice_cache = g_list_prepend(*pslice_cache, g_object_ref(slice)); /* most recently used first */
+      if (local_slice == NULL) {
+	parent_ds->slice_cache = g_list_prepend(parent_ds->slice_cache, g_object_ref(slice));
+
+	cache_size = g_list_length(parent_ds->slice_cache);
+	if (cache_size > 6) {
+	  last = g_list_nth(parent_ds->slice_cache, 5);
+	  remove = last->next;
+	  last->next = NULL;
+	  remove->prev = NULL;
+	  amitk_objects_unref(remove);
+	}
+      }
     }
     objects = objects->next;
+  }
+
+  /* regulate the size of the caches */
+  cache_size = g_list_length(*pslice_cache);
+  if (cache_size > 4*num_data_sets+10) {
+    last = g_list_nth(*pslice_cache, 2*num_data_sets+10-1);
+    remove = last->next;
+    last->next = NULL;
+    remove->prev = NULL;
+    amitk_objects_unref(remove);
   }
 
 #ifdef AMIDE_COMMENT_OUT

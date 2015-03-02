@@ -43,6 +43,8 @@ G_BEGIN_DECLS
 #define AMITK_ROI_ISOCONTOUR_VALUE(roi) (AMITK_ROI(roi)->isocontour_value)
 #define AMITK_ROI_VOXEL_SIZE(roi)       (AMITK_ROI(roi)->voxel_size)
 #define AMITK_ROI_UNDRAWN(roi)          (!AMITK_VOLUME_VALID(roi))
+#define AMITK_ROI_TYPE_ISOCONTOUR(roi)  ((AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || \
+					 (AMITK_ROI_TYPE(roi) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
 
 /* for iterative algorithms, how many subvoxels should we break the problem up into */
 #define AMITK_ROI_GRANULARITY 4 /* # subvoxels in one dimension, so 1/64 is grain size */

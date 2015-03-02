@@ -167,8 +167,6 @@ SQRT_FLT_EPSILON   3.4526698300124393e-04
 
 
 #define EPSILON 1.4901161193847656e-08 /* what's close enough to be equal.... */
-#define SMALL_DISTANCE 0.01 /* in milimeter's, used as a lower limit on some dimensions */
-#define SMALL_TIME 0.0001 /* in seconds, used as a lower limit on some times */
 #define EMPTY 0.0
 
 
@@ -269,6 +267,7 @@ inline amide_real_t point_max_dim(const AmitkPoint point1);
 inline AmitkCanvasPoint canvas_point_diff(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
 inline AmitkCanvasPoint canvas_point_sub(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
 inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const AmitkCanvasPoint point2);
+inline AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult, const AmitkCanvasPoint point1);
 inline amide_real_t canvas_point_dot_product(const AmitkCanvasPoint point1, const AmitkCanvasPoint point2);
 inline amide_real_t canvas_point_mag(const AmitkCanvasPoint point1);
 AmitkPoint canvas_point_2_point(AmitkPoint volume_corner,

@@ -60,6 +60,7 @@ typedef enum {
   AMITK_SELECTION_SELECTED_1,
   AMITK_SELECTION_SELECTED_2,
   AMITK_SELECTION_NUM,
+  AMITK_SELECTION_ANY,
   AMITK_SELECTION_ALL,
 } AmitkSelection;
 
@@ -145,9 +146,16 @@ GList *         amitk_objects_unref                  (GList * objects);
 gint            amitk_objects_count                  (GList * objects);
 AmitkObject *   amitk_objects_find_object_by_name    (GList * objects, const gchar * name);
 gint            amitk_objects_count_pairs_by_name    (GList * objects1, GList * objects2);
+GList *         amitk_objects_get_of_type            (GList * objects,
+						      const AmitkObjectType type,
+						      const gboolean recurse);
+gboolean        amitk_objects_has_type               (GList * objects, 
+						      const AmitkObjectType type,
+						      const gboolean recurse);
 void            amitk_objects_write_xml              (GList * objects, xmlNodePtr node_list);
 GList *         amitk_objects_read_xml               (xmlNodePtr node_list, 
 						      gchar **perror_buf);
+
 const gchar *   amitk_object_type_get_name           (const AmitkObjectType type);
 const gchar *   amitk_selection_get_name             (const AmitkSelection type);
 

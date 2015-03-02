@@ -24,39 +24,37 @@
 */
 
 /* header files that are always needed with this file */
-#include <gnome.h>
+#include <gtk/gtk.h>
+#include <libgnomecanvas/libgnomecanvas.h>
+#include <libgnomeui/libgnomeui.h>
 #include "amitk_point.h"
 
-#define UI_COMMON_NEW_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_NEW_ROI_MOTION_CURSOR GDK_PENCIL
-#define UI_COMMON_OLD_ROI_MODE_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_OLD_ROI_RESIZE_CURSOR GDK_SIZING
-#define UI_COMMON_OLD_ROI_ROTATE_CURSOR GDK_EXCHANGE
-#define UI_COMMON_OLD_ROI_SHIFT_CURSOR GDK_FLEUR
-#define UI_COMMON_OLD_ROI_ISOCONTOUR_CURSOR GDK_DRAFT_SMALL
-#define UI_COMMON_OLD_ROI_ERASE_CURSOR GDK_DRAFT_SMALL
+#define UI_COMMON_ROI_MODE_CURSOR GDK_DRAFT_SMALL
+#define UI_COMMON_ROI_RESIZE_CURSOR GDK_SIZING
+#define UI_COMMON_ROTATE_CURSOR GDK_EXCHANGE
+#define UI_COMMON_SHIFT_CURSOR GDK_FLEUR
+#define UI_COMMON_ROI_ISOCONTOUR_CURSOR GDK_DRAFT_SMALL
+#define UI_COMMON_ROI_ERASE_CURSOR GDK_DRAFT_SMALL
 #define UI_COMMON_DATA_SET_MODE_CURSOR GDK_CROSSHAIR
-#define UI_COMMON_FIDUCIAL_MARK_MODE_CURSOR GDK_DOTBOX
+#define UI_COMMON_FIDUCIAL_MARK_MODE_CURSOR GDK_DRAFT_SMALL
 #define UI_COMMON_WAIT_CURSOR GDK_WATCH
 
 typedef enum {
   UI_CURSOR_DEFAULT,
-  UI_CURSOR_NEW_ROI_MODE,
-  UI_CURSOR_NEW_ROI_MOTION, 
-  UI_CURSOR_OLD_ROI_MODE,
-  UI_CURSOR_OLD_ROI_RESIZE,
-  UI_CURSOR_OLD_ROI_ROTATE,
-  UI_CURSOR_OLD_ROI_SHIFT,
-  UI_CURSOR_OLD_ROI_ISOCONTOUR,
-  UI_CURSOR_OLD_ROI_ERASE,
+  UI_CURSOR_ROI_MODE,
+  UI_CURSOR_ROI_RESIZE,
+  UI_CURSOR_ROI_ROTATE,
+  UI_CURSOR_OBJECT_SHIFT,
+  UI_CURSOR_ROI_ISOCONTOUR,
+  UI_CURSOR_ROI_ERASE,
   UI_CURSOR_DATA_SET_MODE, 
   UI_CURSOR_FIDUCIAL_MARK_MODE,
+  UI_CURSOR_RENDERING_ROTATE_XY,
+  UI_CURSOR_RENDERING_ROTATE_Z, 
   UI_CURSOR_WAIT,
   NUM_CURSORS
 } ui_common_cursor_t;
 
-#define UI_CURSOR_RENDERING_ROTATE_XY UI_CURSOR_OLD_ROI_SHIFT
-#define UI_CURSOR_RENDERING_ROTATE_Z UI_CURSOR_OLD_ROI_ROTATE
 
 /* external functions */
 void ui_common_entry_name_cb(gchar * entry_string, gpointer data);
@@ -71,6 +69,7 @@ void ui_common_window_realize_cb(GtkWidget * widget, gpointer data);
 void ui_common_place_cursor_no_wait(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_place_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
 void ui_common_remove_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget);
+GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr);
 
 
 

@@ -24,7 +24,6 @@
 */
 
 #include "amide_config.h"
-#include <gnome.h>
 #include "image.h"
 #include "pixmaps.h"
 #include "amitk_data_set_DOUBLE_0D_SCALING.h"
@@ -313,12 +312,9 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 
   /* iterate through the eyes and rendering contexts, 
      tranfering the image data into the temp storage buffer */
-  image_num = 0; 
-
   while (renderings != NULL) {
 
     for (i_eye = 0; i_eye < eyes; i_eye ++) {
-      image_num++; 
 
       if (eyes == 1) {
 	rendering_render(renderings->rendering);
@@ -340,6 +336,13 @@ GdkPixbuf * image_from_renderings(renderings_t * renderings,
 	  /* compensate for the fact that X defines the origin as top left, not bottom left */
 	  location = (image_height-i.y-1)*total_width+i.x+i_eye*eye_width;
 	  total_alpha = rgba16_data[location].a + rgba_temp.a;
+	  if (i_eye == 0)
+	    image_num = 1;
+	  else if ((i.x+i_eye*eye_width) >= image_width)
+	    image_num = 1;
+	  else
+	    image_num = 2;
+
 	  if (total_alpha == 0) {
 	    rgba16_data[location].r = (((image_num-1)*rgba16_data[location].r + 
 					rgba_temp.r)/
@@ -637,7 +640,8 @@ GdkPixbuf * image_from_slice(AmitkDataSet * slice) {
   return temp_image;
 }
 
-GdkPixbuf * image_from_data_sets(GList ** pslices,
+GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
+				 GList ** pslice_cache,
 				 GList * objects,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,
@@ -667,25 +671,16 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   /* sanity checks */
   g_return_val_if_fail(objects != NULL, NULL);
 
-  /* generate the slices if we need to */
-  if ((*pslices) == NULL) {
-    if ((slices = amitk_data_sets_get_slices(objects, start, duration, pixel_dim, 
-					     view_volume, TRUE)) == NULL) {
-      g_return_val_if_fail(slices != NULL, NULL);
-    } 
-    (*pslices) = slices;
-  } else {
-    slices = (*pslices);
-  }
+  slices = amitk_data_sets_get_slices(objects, pslice_cache, start, duration, pixel_dim,view_volume);
+  g_return_val_if_fail(slices != NULL, NULL);
 
   /* get the dimensions.  since all slices have the same dimensions, we'll just get the first */
   dim = AMITK_DATA_SET_DIM(slices->data);
 
   /* allocate and initialize space for a temporary storage buffer */
-  if ((rgba16_data = g_try_new(rgba16_t,dim.y*dim.x)) == NULL) {
-    g_warning("couldn't allocate memory for rgba16_data for image");
-    return NULL;
-  }
+  rgba16_data = g_try_new(rgba16_t,dim.y*dim.x);
+  g_return_val_if_fail(rgba16_data != NULL, NULL);
+
   for (j=0; j<dim.y*dim.x; j++) {
     rgba16_data[j].r = 0;
     rgba16_data[j].g = 0;
@@ -753,10 +748,8 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
   }
 
   /* allocate space for the true rgb buffer */
-  if ((rgb_data = g_try_new(guchar,3*dim.y*dim.x)) == NULL) {
-    g_warning("couldn't allocate memory for rgb_data for image");
-    return NULL;
-  }
+  rgb_data = g_try_new(guchar,3*dim.y*dim.x);
+  g_return_val_if_fail(rgb_data != NULL, NULL);
 
   /* now convert our temp rgb data to real rgb data */
   i.z = 0;
@@ -801,6 +794,13 @@ GdkPixbuf * image_from_data_sets(GList ** pslices,
 
   /* cleanup */
   g_free(rgba16_data);
+
+  if (pdisp_slices != NULL) {
+    amitk_objects_unref((*pdisp_slices));
+    *pdisp_slices = slices; 
+  } else {
+    amitk_objects_unref(slices);
+  }
 
   return temp_image;
 }

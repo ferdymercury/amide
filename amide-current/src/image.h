@@ -68,7 +68,8 @@ GdkPixbuf * image_from_colortable(const AmitkColorTable color_table,
 				  const gboolean horizontal);
 GdkPixbuf * image_from_projection(AmitkDataSet * projection);
 GdkPixbuf * image_from_slice(AmitkDataSet * slice);
-GdkPixbuf * image_from_data_sets(GList ** pslices,
+GdkPixbuf * image_from_data_sets(GList ** pdisp_slices,
+				 GList ** pslice_cache,
 				 GList * objects,
 				 const AmitkDataSet * active_ds,
 				 const amide_time_t start,

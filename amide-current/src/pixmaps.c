@@ -52,6 +52,8 @@ const char ** icon_view_mode[AMITK_VIEW_MODE_NUM] = {
   icon_view_linked3_xpm
 };
 
+#include "../pixmaps/icon_target.xpm"
+
 #include "../pixmaps/icon_view_transverse.xpm"
 #include "../pixmaps/icon_view_coronal.xpm"
 #include "../pixmaps/icon_view_sagittal.xpm"

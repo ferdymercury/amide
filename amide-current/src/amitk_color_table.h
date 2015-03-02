@@ -98,7 +98,6 @@ rgba_t amitk_color_table_lookup(amide_data_t datum, AmitkColorTable which,
 const gchar * amitk_color_table_get_name(const AmitkColorTable which);
 /* external variables */
 extern gchar * color_table_menu_names[];
-extern rgba_t rgba_black;
 
 
 #endif /* __COLOR_TABLE_H__ */

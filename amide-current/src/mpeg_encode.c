@@ -158,7 +158,7 @@ gpointer * mpeg_encode_setup(gchar * output_filename, mpeg_encode_t type, gint x
 
 
 
-  if ((context->output_file = fopen(output_filename, "w")) == NULL) {
+  if ((context->output_file = fopen(output_filename, "wb")) == NULL) {
     g_warning("unable to open output file for mpeg encoding");
     context_free(context);
     return NULL;

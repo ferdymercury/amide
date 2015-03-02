@@ -906,8 +906,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
   else if (AMITK_IS_DATA_SET(object))
     immutables = TRUE;
   else if (AMITK_IS_ROI(object)) {
-    if ((AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-	(AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
+    if (AMITK_ROI_TYPE_ISOCONTOUR(object))
       immutables = TRUE;
   }
     
@@ -934,8 +933,7 @@ static void object_dialog_construct(AmitkObjectDialog * dialog,
       table_row++;
       
     } else if (AMITK_IS_ROI(object)) {
-      if ((AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-	  (AMITK_ROI_TYPE(object) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+      if (AMITK_ROI_TYPE_ISOCONTOUR(object)) {
 
 	label = gtk_label_new("isocontour value");
 	gtk_table_attach(GTK_TABLE(packing_table), label, 0,1,
@@ -1228,8 +1226,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
   else if (AMITK_IS_DATA_SET(dialog->object))
     immutables = TRUE;
   else if (AMITK_IS_ROI(dialog->object))
-    if ((AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-	(AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_3D))
+    if (AMITK_ROI_TYPE_ISOCONTOUR(dialog->object))
       immutables = TRUE;
     
   if (immutables) {
@@ -1240,8 +1237,7 @@ static void dialog_update_entries(AmitkObjectDialog * dialog) {
       g_free(temp_str);
 
     } else if AMITK_IS_ROI(dialog->object) {
-      if ((AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_2D) || 
-	  (AMITK_ROI_TYPE(dialog->object) == AMITK_ROI_TYPE_ISOCONTOUR_3D)) {
+      if (AMITK_ROI_TYPE_ISOCONTOUR(dialog->object)) {
 	temp_str = g_strdup_printf("%f", AMITK_ROI_ISOCONTOUR_VALUE(dialog->object));
 	gtk_entry_set_text(GTK_ENTRY(dialog->isocontour_value_entry), temp_str);
 	g_free(temp_str);
@@ -1553,7 +1549,7 @@ static void dialog_change_voxel_size_cb(GtkWidget * widget, gpointer data) {
   for (i_axis = start_axis; i_axis < end_axis; i_axis++) {
     temp_val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(dialog->voxel_size_spin[i_axis]));
     
-    if (temp_val > SMALL_DISTANCE) { /* can't be having negative/very small numbers */
+    if (temp_val > EPSILON) { /* can't be having negative/very small numbers */
       switch(i_axis) {
       case AMITK_AXIS_X:
 	if (dialog->aspect_ratio) {

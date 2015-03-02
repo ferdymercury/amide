@@ -58,8 +58,6 @@ gchar * color_table_menu_names[] = {
   "inverse NIH"
 };
 
-rgba_t rgba_black = {0, 0, 0, 0};
-
 /* internal functions */
 static rgb_t hsv_to_rgb(hsv_t * hsv);
 

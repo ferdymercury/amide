@@ -26,7 +26,6 @@
 #include "amide_config.h" 
 #include <signal.h>
 #include <sys/stat.h>
-#include <gnome.h>
 #include "amide.h"
 #include "amitk_study.h"
 #include "ui_study.h"
@@ -44,6 +43,8 @@ gchar * object_menu_names[] = {
   "Selected _ROIs",
   "Selected _Alignment Points"
 };
+
+PangoFontDescription * amitk_fixed_font_desc;
 
 /* internal variables */
 static GList * windows = NULL;
@@ -65,12 +66,16 @@ void amide_log_handler(const gchar *log_domain,
 #ifdef AMIDE_DEBUG
   g_print(temp_string);
 #else
-  dialog = gnome_warning_dialog(temp_string);
+  dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+				  GTK_MESSAGE_WARNING,
+				  GTK_BUTTONS_OK,
+				  temp_string);
 #endif
   g_free(temp_string);
 
 #ifndef AMIDE_DEBUG
-  gnome_dialog_run_and_close(GNOME_DIALOG(dialog));
+  gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
 #endif
   
   return;
@@ -103,18 +108,29 @@ void amitk_append_str(gchar ** pstr, const gchar * format, ...) {
 }
 
 
+void font_init(void) {
+#ifdef AMIDE_WIN32_HACKS
+  amitk_fixed_font_desc = pango_font_description_from_string("Sans 10");
+#else
+  amitk_fixed_font_desc = pango_font_description_from_string("-*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*");
+#endif
+
+  return;
+}
+
+
 int main (int argc, char *argv []) {
 
+  gint studies_launched=0;
+#ifndef AMIDE_WIN32_HACKS
   struct stat file_info;
   AmitkStudy * study = NULL;
   AmitkStudy * imported_study = NULL;
   const gchar ** input_filenames;
-  poptContext amide_ctx;
   guint i=0;
-  gint studies_launched=0;
   AmitkDataSet * new_ds;
-  gboolean loaded;
   amide_real_t min_voxel_size;
+  poptContext amide_ctx;
   GnomeProgram * program;
 
   /* uncomment these whenever we get around to using i18n */
@@ -122,8 +138,20 @@ int main (int argc, char *argv []) {
   //  textdomain(PACKAGE);
 
   program = gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, 
-			       GNOME_PROGRAM_STANDARD_PROPERTIES, NULL);
+			       GNOME_PROGRAM_STANDARD_PROPERTIES,
+#ifdef AMIDE_OSX_HACKS
+			       GNOME_PARAM_ENABLE_SOUND, FALSE,
+#endif
+			       NULL);
   g_object_get (G_OBJECT (program),GNOME_PARAM_POPT_CONTEXT,&amide_ctx,NULL);
+
+#else /* AMIDE_WIN32_HACKS */
+  gtk_init(&argc, &argv);
+#endif
+
+
+
+
 #ifdef AMIDE_DEBUG
   /* restore the normal segmentation fault signalling so we can get 
      core dumps and don't get the gnome crash dialog */
@@ -133,6 +161,11 @@ int main (int argc, char *argv []) {
   /* specify my own error handler */
   g_log_set_handler (NULL, G_LOG_LEVEL_WARNING, amide_log_handler, NULL);
 
+
+  /* startup initializations */
+  font_init();
+
+#ifndef AMIDE_WIN32_HACKS
   /* figure out if there was anything else on the command line */
   input_filenames = poptGetArgs(amide_ctx);
   /*  input_filenames is just pointers into the amide_ctx structure,
@@ -141,7 +174,6 @@ int main (int argc, char *argv []) {
   /* if we specified files on the command line, load it in */
   if (input_filenames != NULL) {
     for (i=0; input_filenames[i] != NULL; i++) {
-      loaded = FALSE;
 
       /* check to see that the filename exists and it's a directory */
       if (stat(input_filenames[i], &file_info) != 0) 
@@ -184,17 +216,16 @@ int main (int argc, char *argv []) {
     imported_study =NULL;
   }
 
+  poptFreeContext(amide_ctx);
+#endif 
+
   /* start up an empty study if we haven't loaded in anything */
   if (studies_launched < 1) ui_study_create(NULL);
-
-  poptFreeContext(amide_ctx);
-
 
   /* the main event loop */
   gtk_main();
 
   return 0;
-
 }
 
 

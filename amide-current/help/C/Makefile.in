@@ -165,6 +165,10 @@ omf_dir = $(top_srcdir)/omf-install
 EXTRA_DIST = $(xml_files) $(omffile) $(figs)
 
 CLEANFILES = omf_timestamp
+-ourdir = `pwd`;  \
+        cd $(srcdir);   \
+        cp $(entities) $$ourdir
+
 
 DISTCLEANFILES = *~
 subdir = help/C
@@ -313,9 +317,6 @@ omf_timestamp: $(omffile)
 	touch omf_timestamp
 
 $(docname).xml: $(entities)
-	-ourdir=`pwd`;  \
-	cd $(srcdir);   \
-	cp $(entities) $$ourdir
 
 app-dist-hook: 
 	-$(mkinstalldirs) $(distdir)/figures

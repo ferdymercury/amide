@@ -1,21 +1,18 @@
 AC_PREREQ(2.53)
-AC_INIT([amide],[0.7.9],[amide-users@lists.sourceforge.net])
+AC_INIT([amide],[0.7.10],[amide-users@lists.sourceforge.net])
 
 AC_CONFIG_SRCDIR(src/amide.c)
 AM_CONFIG_HEADER(amide_config.h)
-
 AM_INIT_AUTOMAKE(AC_PACKAGE_NAME, AC_PACKAGE_VERSION)
 
 
 AM_MAINTAINER_MODE
 
-dnl AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_LIBTOOL
-dnl AC_PROG_INTLTOOL
-dnl AC_HEADER_STDC([])
-dnl AC_ARG_PROGRAM
 AC_PATH_PROGS(M4, gnum4 gm4 m4, m4)
+
+AC_CHECK_HEADERS(unistd.h, AC_DEFINE(HAVE_UNISTD_H))
 
 dnl pick our optimization level, OSX's version of gcc doesn't handle -O6
 case "$host_os" in
@@ -45,6 +42,8 @@ if test $CC = "gcc"; then
 		echo "$CC_VERSION, good"
 	fi
 fi
+
+
 
 PKG_CHECK_MODULES(AMIDE_GNOME,[
 	glib-2.0	>= 2.0.0
@@ -140,7 +139,9 @@ AM_PATH_LIBFAME(0.9.0, FOUND_LIBFAME=yes, FOUND_LIBFAME=no)
 dnl add the -no-cpp-precomp for macintosh os x
 case "$host_os" in
 darwin*) 	echo "removing preproccessor precompilition on macintosh os x" ; 
-		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" ;;
+		CPPFLAGS="$CPPFLAGS -no-cpp-precomp" 
+	   	AC_DEFINE(AMIDE_OSX_HACKS, 1, Define to 1 to compile with hacks for OS X)
+		;;
 esac
 
 
@@ -248,6 +249,19 @@ if (test $enable_libfame = yes) && (test $FOUND_LIBFAME = yes); then
 else
 	echo "Compiling without libfame mpeg encoding support"
 fi
+
+dnl Enable stripped down version for Windows
+AC_ARG_ENABLE(
+	mswin-hacks,
+	[  --enable-mswin-hacks Enable hacks for compiling on windows [default=no]], 
+	mswin_hacks="$enableval", 
+	mswin_hacks=no)
+
+if (test $mswin_hacks = yes); then
+	echo "Enabling hacks to support MS Windows compilation"
+	AC_DEFINE(AMIDE_WIN32_HACKS, 1, Define to 1 to compile with Win32 Hacks)
+fi
+AM_CONDITIONAL(AMIDE_WIN32_HACKS, test "$mswin_hacks" = yes)
 
 
 

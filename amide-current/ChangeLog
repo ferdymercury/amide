@@ -1,3 +1,28 @@
+0.7.10
+	* enable-win32-hacks option, allows compilation on cygwin/mingw32
+	* multiple small fixes for cygwin/mingw32
+	* amitk_dir_sel, slight update, and copied _gtk_fnmatch from gtk
+	* added slice caching system
+	* various canvas cleanups
+	* study can now be active_object -> can rotate entire study from canvas
+	* default color tables (set in preference dialog) applied to imported data
+	* enabled subject_weight/injected_dose in medcon_import.c
+	* resets initial study name on first data set load
+	* canvas target on/off is now a study parameter, not a preference
+	* fixes for how multi-frame slices are weighted
+	* fixed problem with "flashing" canvases -> inadvertent update_layout call
+	* stereoscopic rendering on inverse background no longer gives gray background
+	* roi's can now be drawn center-out and edge-to-edge
+	* smaller font for ui_series
+	* various ui_series fixes for dealing with no data sets in object list
+	* can now compile w/o gsl again
+	* compilation now detects that it's being compiled on OS X
+	  - disables axis guide, errant font handling on OS X was causing crashes
+	  - disables esd, esd was locking files after amide crash
+	* roi stats are now on a single pane for static studies
+	* versions of various compiled in libraries shown in about box
+
+	
 0.7.9
 	* added subject_weight, injected_dose, and cylinder_factor to data_set object
 	* can now easily calculate scale factor for %ID/g and SUV

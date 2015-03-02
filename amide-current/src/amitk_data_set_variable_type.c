@@ -942,8 +942,8 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_linear(c
 
 /* returns a slice  with the appropriate data from the data_set */
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
-									      const amide_time_t requested_start,
-									      const amide_time_t requested_duration,
+									      const amide_time_t start_time,
+									      const amide_time_t duration,
 									      const amide_real_t pixel_dim,
 									      const AmitkVolume * slice_volume,
 									      const gboolean need_calc_max_min) {
@@ -962,7 +962,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   amide_data_t weight;
   amide_data_t time_weight;
   amide_intpoint_t start_frame, end_frame, i_frame;
-  amide_time_t start_time, end_time;
+  amide_time_t end_time;
   AmitkPoint box_point[8];
   AmitkVoxel box_voxel[8];
   AmitkVoxel start, end;
@@ -981,18 +981,9 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   AmitkVoxel dim;
 
   /* ----- figure out what frames of this data set to include ----*/
-  start_frame = amitk_data_set_get_frame(data_set, requested_start);
-  start_time = amitk_data_set_get_start_time(data_set, start_frame);
-
-  end_frame = amitk_data_set_get_frame(data_set, requested_start+requested_duration);
-  end_time = amitk_data_set_get_end_time(data_set, end_frame);
-
-  if (start_frame != end_frame) {
-    if (end_time > requested_start+requested_duration)
-      end_time = requested_start+requested_duration;
-    if (start_time < requested_start)
-      start_time = requested_start;
-  }
+  end_time = start_time+duration;
+  start_frame = amitk_data_set_get_frame(data_set, start_time+EPSILON);
+  end_frame = amitk_data_set_get_frame(data_set, end_time-EPSILON);
 
   /* ------------------------- */
 
@@ -1020,7 +1011,7 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
   slice->interpolation = AMITK_DATA_SET_INTERPOLATION(data_set);
 
   amitk_data_set_calc_far_corner(slice);
-  amitk_data_set_set_frame_duration(slice, 0, end_time-start_time);
+  amitk_data_set_set_frame_duration(slice, 0, duration);
 
 
 #if AMIDE_DEBUG
@@ -1118,16 +1109,16 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
 	if (i_frame == start_frame)
-	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(end_time-start_time);
+	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/duration;
 	else if (i_frame == end_frame)
-	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(end_time-start_time);
+	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
 	else
-	  time_weight = data_set->frame_duration[i_frame]/(end_time-start_time);
+	  time_weight = data_set->frame_duration[i_frame]/duration;
       } else
 	time_weight = 1.0;
 
       /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps*(1.0-SMALL_DISTANCE))*(1.0-SMALL_DISTANCE); z++) {
+      for (z = 0; z < ceil(z_steps); z++) {
 	
 	/* the slices z_coordinate for this iteration's slice voxel */
 	slice_point.z = (((amide_real_t) z)+0.5)*voxel_length;
@@ -1242,17 +1233,17 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
       /* averaging over more then one frame */
       if (end_frame-start_frame > 0) {
 	if (i_frame == start_frame)
-	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/(end_time-start_time);
+	  time_weight = (amitk_data_set_get_end_time(data_set, start_frame)-start_time)/duration;
 	else if (i_frame == end_frame)
-	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/(end_time-start_time);
+	  time_weight = (end_time-amitk_data_set_get_start_time(data_set, end_frame))/duration;
 	else
-	  time_weight = data_set->frame_duration[i_frame]/(end_time-start_time);
+	  time_weight = data_set->frame_duration[i_frame]/duration;
       } else
 	time_weight = 1.0;
 
       ds_point = start_point;
       /* iterate over the number of planes we'll be compressing into this slice */
-      for (z = 0; z < ceil(z_steps*(1.0-SMALL_DISTANCE))*(1.0-SMALL_DISTANCE); z++) { 
+      for (z = 0; z < ceil(z_steps); z++) { 
 	last[AMITK_AXIS_Z] = ds_point;
 
 	/* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */

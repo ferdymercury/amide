@@ -27,7 +27,6 @@
 #include "amide_config.h"
 #ifdef AMIDE_LIBECAT_SUPPORT
 #include <time.h>
-#include <gnome.h>
 #include <matrix.h>
 #include "cti_import.h"
 
@@ -165,7 +164,7 @@ AmitkDataSet * cti_import(const gchar * cti_filename,
   else if (cti_file->mhptr->original_file_name[0] != '\0')
     name = g_strdup(cti_file->mhptr->original_file_name);
   else {/* no original filename? */
-    temp_string = g_strdup(g_basename(cti_filename));
+    temp_string = g_path_get_basename(cti_filename);
     /* remove the extension of the file */
     g_strreverse(temp_string);
     frags = g_strsplit(temp_string, ".", 2);

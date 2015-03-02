@@ -27,7 +27,7 @@
 #define __AMITK_TREE_H__
 
 /* includes we always need with this widget */
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include "amide.h"
 #include "amitk_type_builtins.h"
 #include "amitk_study.h"

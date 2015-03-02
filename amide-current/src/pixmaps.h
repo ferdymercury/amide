@@ -38,6 +38,7 @@ extern const char * icon_view_single_xpm[];
 extern const char * icon_view_linked_xpm[];
 extern const char * icon_view_linked3_xpm[];
 extern const char ** icon_view_mode[];
+extern const char * icon_target_xpm[];
 
 extern const char * icon_transverse_xpm[];
 extern const char * icon_coronal_xpm[];

@@ -2,11 +2,11 @@ Package: amide
 Version: @VERSION@
 Revision: 1
 Source: http://osdn.dl.sourceforge.net/sourceforge/amide/%n-%v.tgz
-Depends: volpack, xmedcon, libfame1, libxml2, gsl, libgnomecanvas2, libgnomeui2
-BuildDepends: libgnomeui2-dev, gtk-doc
+Depends: volpack, xmedcon, libfame1, libxml2, gsl, libgnomecanvas2, libgnomeui2, atk1, linc1
+BuildDepends: libgnomeui2-dev, gtk-doc, libgnome2-dev, libgnomecanvas2-dev, libbonobo2-dev, libbonoboui2-dev, bonobo-activation2-dev, gconf2-dev, gnome-vfs2-dev, libart2
 #Patch: %f.patch
 InstallScript: make install PREFIX=%p DESTDIR=%d
-ConfigureParams: --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no
+ConfigureParams: --enable-gtk-doc=yes --enable-libecat=no --enable-amide-debug=no PKG_CONFIG_PATH=/sw/lib/pkgconfig
 #DocFiles: README COPYING AUTHORS
 Description: program for viewing and analyzing medical image data sets
 DescDetail: <<

@@ -18,6 +18,12 @@
 /* Define to 1 to compile with VolPack */
 #undef AMIDE_LIBVOLPACK_SUPPORT
 
+/* Define to 1 to compile with hacks for OS X */
+#undef AMIDE_OSX_HACKS
+
+/* Define to 1 to compile with Win32 Hacks */
+#undef AMIDE_WIN32_HACKS
+
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 

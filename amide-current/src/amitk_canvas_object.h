@@ -29,7 +29,8 @@
 
 /* includes we always need with this widget */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
+#include <libgnomecanvas/gnome-canvas.h>
 #include "amitk_volume.h"
 #include "amitk_color_table.h"
 

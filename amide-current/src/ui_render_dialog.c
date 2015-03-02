@@ -28,9 +28,12 @@
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
 
-#include <gnome.h>
 #include "ui_common.h"
 #include "ui_render_dialog.h"
+#include "amitk_color_table_menu.h"
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 
 
 #define GAMMA_CURVE_WIDTH -1 /* sets automatically */
@@ -139,12 +142,13 @@ static void update_without_release_toggle_cb(GtkWidget * widget, gpointer data) 
   if (ui_render->update_without_release != update_without_release) {
     ui_render->update_without_release = update_without_release;
 
+#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_float("RENDERING/UpdateWithoutRelease", ui_render->update_without_release);
     gnome_config_pop_prefix();
     gnome_config_sync();
-    
+#endif
 
   }
 
@@ -167,11 +171,13 @@ static void change_eye_angle_cb(GtkWidget * widget, gpointer data) {
   if (!REAL_EQUAL(ui_render->stereo_eye_angle, temp_val)) {
     ui_render->stereo_eye_angle = temp_val;
     
+#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_float("RENDERING/EyeAngle", ui_render->stereo_eye_angle);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
     
     /* do updating */
     ui_render_add_update(ui_render); 
@@ -198,11 +204,13 @@ static void change_eye_width_cb(GtkWidget * widget, gpointer data) {
     
     ui_render->stereo_eye_width = temp_val;
     
+#ifndef AMIDE_WIN32_HACKS
     /* save user preferences */
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("RENDERING/EyeWidth", ui_render->stereo_eye_width);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
     
     /* do updating */
     ui_render_add_update(ui_render); 
@@ -481,7 +489,6 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
   pixel_type_t i_pixel_type;
   guint table_row = 0;
   renderings_t * temp_list;
-  AmitkColorTable i_color_table;
   
   if (ui_render->parameter_dialog != NULL)
     return;
@@ -676,21 +683,15 @@ void ui_render_dialog_create(ui_render_t * ui_render) {
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
     gtk_widget_show(label);
 
-    option_menu = gtk_option_menu_new();
-    menu = gtk_menu_new();
-    for (i_color_table=0; i_color_table<AMITK_COLOR_TABLE_NUM; i_color_table++) {
-      menuitem = gtk_menu_item_new_with_label(color_table_menu_names[i_color_table]);
-      gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-    }
-    gtk_option_menu_set_menu(GTK_OPTION_MENU(option_menu), menu);
-    g_object_set_data(G_OBJECT(option_menu), "ui_render", ui_render);
-    gtk_table_attach(GTK_TABLE(packing_table), option_menu, 1,2, table_row,table_row+1,
+    menu = amitk_color_table_menu_new();
+    g_object_set_data(G_OBJECT(menu), "ui_render", ui_render);
+    gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
 		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
-    gtk_option_menu_set_history(GTK_OPTION_MENU(option_menu),
+    gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
 				temp_list->rendering->color_table);
-    g_signal_connect(G_OBJECT(option_menu), "changed", G_CALLBACK(color_table_cb), 
+    g_signal_connect(G_OBJECT(menu), "changed", G_CALLBACK(color_table_cb), 
 		     temp_list->rendering);
-    gtk_widget_show_all(option_menu);
+    gtk_widget_show(menu);
 
     table_row++;
 

@@ -63,7 +63,7 @@ AmitkPoint amitk_point_read_xml(xmlNodePtr nodes, gchar * descriptor, gchar **pe
 
   gchar * temp_str;
   AmitkPoint return_rp;
-  gint error;
+  gint error=EOF;
 
   temp_str = xml_get_string(nodes, descriptor);
 
@@ -588,6 +588,13 @@ inline AmitkCanvasPoint canvas_point_add(const AmitkCanvasPoint point1,const Ami
   AmitkCanvasPoint temp;
   temp.x = point1.x+point2.x;
   temp.y = point1.y+point2.y;
+  return temp;
+}
+/* returns cm*point1 for canvaspoint structures */
+inline AmitkCanvasPoint canvas_point_cmult(const amide_real_t cmult,const AmitkCanvasPoint point1) {
+  AmitkCanvasPoint temp;
+  temp.x = cmult*point1.x;
+  temp.y = cmult*point1.y;
   return temp;
 }
 /* returns dot product of point1 and point2 for canvaspoint structures */

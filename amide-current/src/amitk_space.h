@@ -45,6 +45,7 @@ G_BEGIN_DECLS
 typedef struct _AmitkSpaceClass	AmitkSpaceClass;
 typedef struct _AmitkSpace AmitkSpace;
 
+#define AMITK_UNDO_LEVEL 10
 
 /* The AmitkSpace structure is the base of the Amitk objects hierarchy.
  * It describes an euclidean reference frame with respect to the 
@@ -58,7 +59,7 @@ struct _AmitkSpace
   /* private info */
   AmitkPoint offset;
   AmitkAxes axes;
-  
+
 };
 
 struct _AmitkSpaceClass
@@ -80,6 +81,7 @@ struct _AmitkSpaceClass
 				 AmitkAxes    transform_axes,
 				 AmitkPoint * center_of_rotation);
   void (* space_changed)        (AmitkSpace * space);
+
 };
 
 
@@ -115,6 +117,8 @@ void            amitk_space_get_enclosing_corners   (const AmitkSpace * in_space
 AmitkSpace *    amitk_space_copy                    (const AmitkSpace * space);
 void            amitk_space_copy_in_place           (AmitkSpace * dest_space,
 						     const AmitkSpace * src_space);
+gboolean        amitk_space_equal                   (const AmitkSpace * space1,
+						     const AmitkSpace * space2);
 void            amitk_space_invert_axis             (AmitkSpace * space, 
 						     const AmitkAxis which_axis,
 						     const AmitkPoint center_of_inversion);

@@ -27,6 +27,7 @@
 #define __AMIDE_H__
 
 #include <glib.h>
+#include <pango/pango.h>
 
 /* define a macro glib should have */
 #define g_try_new(struct_type, n_structs)           \
@@ -43,6 +44,7 @@
 #define Y_PACKING_OPTIONS GTK_EXPAND
 #define X_PADDING 5
 #define Y_PADDING 5                 
+
 
 /* typedef's */
 typedef enum {
@@ -64,11 +66,12 @@ typedef enum {
   AMITK_HELP_INFO_CANVAS_DATA_SET,
   AMITK_HELP_INFO_CANVAS_ROI,
   AMITK_HELP_INFO_CANVAS_FIDUCIAL_MARK,
+  AMITK_HELP_INFO_CANVAS_STUDY,
   AMITK_HELP_INFO_CANVAS_ISOCONTOUR_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ROI,
   AMITK_HELP_INFO_CANVAS_NEW_ISOCONTOUR_ROI,
-  AMITK_HELP_INFO_CANVAS_SHIFT_DATA_SET,
-  AMITK_HELP_INFO_CANVAS_ROTATE_DATA_SET,
+  AMITK_HELP_INFO_CANVAS_SHIFT_OBJECT,
+  AMITK_HELP_INFO_CANVAS_ROTATE_OBJECT,
   AMITK_HELP_INFO_TREE_DATA_SET,
   AMITK_HELP_INFO_TREE_ROI,
   AMITK_HELP_INFO_TREE_FIDUCIAL_MARK,
@@ -108,6 +111,7 @@ typedef gint16 amide_intpoint_t;
 /* external variables */
 extern gchar * view_names[];
 extern gchar * object_menu_names[];
+extern PangoFontDescription * amitk_fixed_font_desc;
 
 /* external functions */
 void amitk_append_str(gchar ** pstr, const gchar * format, ...);

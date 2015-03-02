@@ -32,10 +32,13 @@
 #include "ui_common.h"
 
 
+
 #define SPIN_BUTTON_X_SIZE 100
 #define MAX_ITERATIONS 1e8
 static const char * wizard_name = "Factor Analysis Wizard";
 
+
+#ifdef AMIDE_LIBGSL_SUPPORT
 
 static const char *svd_page_text =
 "This page allows the computation of the singular value decomposition "
@@ -50,24 +53,22 @@ static const char * finish_page_text =
 "structures will be created, and placed underneath the given data set "
 "in the study tree\n";
 
-#ifdef AMIDE_LIBGSL_SUPPORT
-
 static gchar * start_page_text = 
 "Welcome to the factor analysis of dynamic structures wizard."
 "\n"
 "None of this code has been validated, and it's probably wrong,"
 "so use at your own risk";
 
-
-#else /* no LIBGSL support */
+#else /* no AMIDE_LIBGSL_SUPPORT */
 
 static gchar * start_page_text = 
 "Welcome to the factor analysis of dynamic structures wizard."
 "\n"
 "This wizard requires compiled in support from the GNU Scientific "
 "Library (libgsl), which this copy of AMIDE does not have.";
+#endif
 
-#endif /* NO LIBGSL SUPPORT */
+
 
 static gchar * not_enough_frames_text =
 "Welcome to the factor analysis of dynamic structures wizard."
@@ -97,8 +98,10 @@ typedef struct tb_fads_t {
   gdouble k21;
   gdouble k23;
   gdouble k32;
+#ifdef AMIDE_LIBGSL_SUPPORT
   fads_type_t fads_type;
   fads_minimizer_algorithm_t algorithm;
+#endif
 
   GtkWidget * table[NUM_PAGES];
   GtkWidget * page[NUM_PAGES];
@@ -120,6 +123,14 @@ typedef struct tb_fads_t {
 } tb_fads_t;
 
 
+
+static void cancel_cb(GtkWidget* widget, gpointer data);
+static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
+
+static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads);
+static tb_fads_t * tb_fads_init(void);
+
+#ifdef AMIDE_LIBGSL_SUPPORT
 static void set_text(tb_fads_t * tb_fads);
 static gchar * get_filename(tb_fads_t * tb_fads);
 
@@ -139,14 +150,7 @@ static void beta_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void k12_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 static void k21_spinner_cb(GtkSpinButton * spin_button, gpointer data);
 
-
 static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data);
-static void cancel_cb(GtkWidget* widget, gpointer data);
-
-static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data);
-
-static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads);
-static tb_fads_t * tb_fads_init(void);
 
 
 static void set_text(tb_fads_t * tb_fads) {
@@ -191,7 +195,7 @@ static gchar * get_filename(tb_fads_t * tb_fads) {
   gint response_id;
   gchar * save_filename;
 
-  fs = gtk_file_selection_new(_("Filename for Factor Data"));
+  fs = gtk_file_selection_new("Filename for Factor Data");
 
   /* take a guess at the filename */
   analysis_name = g_strdup_printf("%s_fads_analysis.csv",AMITK_OBJECT_NAME(tb_fads->data_set));
@@ -593,7 +597,6 @@ static void prepare_page_cb(GtkWidget * page, gpointer * druid, gpointer data) {
 
 static void svd_pressed_cb(GtkButton * button, gpointer data) {
 
-#ifdef AMIDE_LIBGSL_SUPPORT
   tb_fads_t * tb_fads = data;
   gdouble * factors = NULL;
   gint num_factors;
@@ -618,7 +621,6 @@ static void svd_pressed_cb(GtkButton * button, gpointer data) {
   if (factors != NULL)
     g_free(factors);
   
-#endif
   return;
 }
 
@@ -799,7 +801,6 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 #endif
   }
 
-#ifdef AMIDE_LIBGSL_SUPPORT
   ui_common_place_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
   switch(tb_fads->fads_type) {
   case FADS_TYPE_PCA:
@@ -822,7 +823,6 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
     break;
   }
   ui_common_remove_cursor(UI_CURSOR_WAIT, tb_fads->table[PARAMETERS_PAGE]);
-#endif      
 
   if (frames != NULL) {
     g_free(frames);
@@ -839,6 +839,10 @@ static void finish_cb(GtkWidget* widget, gpointer druid, gpointer data) {
 
   return;
 }
+
+
+#endif /* AMIDE_LIBGSL_SUPPORT */
+
 
 
 
@@ -867,10 +871,6 @@ static gboolean delete_event(GtkWidget * widget, GdkEvent * event, gpointer data
 
   return FALSE;
 }
-
-
-
-
 
 
 static tb_fads_t * tb_fads_free(tb_fads_t * tb_fads) {
@@ -929,9 +929,11 @@ static tb_fads_t * tb_fads_init(void) {
   tb_fads->k21 = 0.1;
   tb_fads->k23 = 0.01;
   tb_fads->k32 = 0.1;
+#ifdef AMIDE_LIBGSL_SUPPORT
   tb_fads->fads_type = FADS_TYPE_PCA;
   //  tb_fads->algorithm = FADS_MINIMIZER_VECTOR_BFGS;
   tb_fads->algorithm = FADS_MINIMIZER_CONJUGATE_PR;
+#endif
   tb_fads->explanation_buffer = NULL;
   for (i_page=0; i_page<NUM_PAGES; i_page++)
     tb_fads->table[i_page] = NULL;
@@ -941,6 +943,9 @@ static tb_fads_t * tb_fads_init(void) {
 }
 
 
+
+
+
 void tb_fads(AmitkDataSet * active_ds) {
 
   tb_fads_t * tb_fads;
@@ -948,10 +953,8 @@ void tb_fads(AmitkDataSet * active_ds) {
   GtkWidget * druid;
   which_page_t i_page;
 
-  if (active_ds == NULL) {
-    g_warning("No data set is currently marked as active");
-    return;
-  }
+
+  g_return_if_fail(AMITK_IS_DATA_SET(active_ds));
   
   logo = gdk_pixbuf_new_from_xpm_data(amide_logo_xpm);
 
@@ -982,7 +985,6 @@ void tb_fads(AmitkDataSet * active_ds) {
 #else /* #ifdef AMIDE_LIBGSL_SUPPORT */
   gnome_druid_set_buttons_sensitive(GNOME_DRUID(druid), FALSE, 
 				    AMITK_DATA_SET_NUM_FRAMES(tb_fads->data_set) > 1, TRUE, TRUE);
-
   for (i_page=INTRO_PAGE+1; i_page<OUTPUT_PAGE; i_page++) {
     tb_fads->page[i_page] = gnome_druid_page_standard_new_with_vals(wizard_name,logo,NULL);
     g_object_set_data(G_OBJECT(tb_fads->page[i_page]),"which_page", GINT_TO_POINTER(i_page));

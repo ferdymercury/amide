@@ -3,37 +3,33 @@
   All imported files are converted into AMIDE's internal float
   representation, which is a compile time option that defaults to
   float (32 bit).  Importing is heavily dependent on Erik Nolf's
-  medcon/libmdc medical imaging conversion library and Merence
-  Sibomona/CTI's libecat CTI file library.
+  medcon/libmdc medical imaging conversion library.
   
 </para>
   
 
 
 
-<sect2><title>CTI Files</title>
+<sect2><title>ECAT Files</title>
 
   <para>
     
-    Currently, static and dynamic CTI 6.4 and 7.0 files are supported.
-    AMIDE support for the CTI file format is generally achieved
-    through the libecat C library.  If libecat is not available, then
-    medcon/libmdc will be used for supporting CTI 6.4 files, and CTI
-    7.0 files will be unsupported.
+    Currently, static and dynamic ECAT 6.4 and 7.2 files are supported
+    through medcon/libmdc.
 
   </para>
 
-  <sect3><title>CTI 6.4</title>
+  <sect3><title>ECAT 6.4</title>
     <para>
-      AMIDE will try to load any file ending in ".img" as a CTI 6.4
+      AMIDE will try to load any file ending in ".img" as a ECAT 6.4
       file.  This file format is used by both the microPET and some
       clinical scanners.
     </para>
   </sect3>
 
-  <sect3><title>CTI 7.0</title>
+  <sect3><title>ECAT 7.0</title>
     <para>
-      AMIDE will try to load any file ending in ".v" as a CTI 7.0
+      AMIDE will try to load any file ending in ".v" as a ECAT 7.2
       file.  This file format is used by newer clinical scanners.
     </para>
   </sect3>
@@ -41,15 +37,6 @@
 
 </sect2>
 
-<sect2><title>IDL Data Files</title>
-  
-  <para>
-    AMIDE will attempt to load any file ending in ".idl" or ".ucat"
-    as an IDL data file.  An IDL data file consists of a 35 byte
-    header followed by the raw data.
-  </para>
-  
-</sect2>
 
 <sect2><title>Raw Data Files</title>
 

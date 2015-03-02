@@ -24,11 +24,11 @@
 */
 
 #include "amide_config.h"
-#include <gnome.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <fcntl.h>
 #include <dirent.h>
 #include <string.h>
 #include "amitk_dir_sel.h"
@@ -56,13 +56,23 @@
 static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
 
   GtkWidget * dir_selection = data;
-  const gchar * open_filename;
+  const gchar * returned_filename;
+  gchar * open_filename;
   struct stat file_info;
   AmitkStudy * study;
   ui_study_t * ui_study;
+  gint length;
 
   /* get the filename */
-  open_filename = amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection));
+  returned_filename = amitk_dir_selection_get_filename(AMITK_DIR_SELECTION(dir_selection));
+
+  /* remove any trailing directory characters */
+  length = strlen(returned_filename);
+  if ((length >= 1) && (strcmp(returned_filename+length-1, G_DIR_SEPARATOR_S) == 0))
+    open_filename = g_strndup(returned_filename, length-1);
+  else
+    open_filename = g_strndup(returned_filename, length);
+  
 
   /* get a pointer to ui_study */
   ui_study = g_object_get_data(G_OBJECT(dir_selection), "ui_study");
@@ -92,7 +102,7 @@ static void ui_study_cb_open_ok(GtkWidget* widget, gpointer data) {
   else
     ui_study_create(study);
   g_object_unref(study);
-
+  g_free(open_filename);
 
   return;
 }
@@ -104,7 +114,7 @@ void ui_study_cb_open_study(GtkWidget * button, gpointer data) {
   ui_study_t * ui_study=data;
   GtkWidget * dir_selection;
 
-  dir_selection = amitk_dir_selection_new(_("Open AMIDE File"));
+  dir_selection = amitk_dir_selection_new("Open AMIDE File");
 
   /* don't want anything else going on till this window is gone */
   gtk_window_set_modal(GTK_WINDOW(dir_selection), TRUE);
@@ -165,6 +175,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   if ((strcmp(save_filename, ".") == 0) ||
       (strcmp(save_filename, "..") == 0) ||
       (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "\\") == 0) ||
       (strcmp(save_filename, "/") == 0)) {
     g_warning("Inappropriate filename: %s",save_filename);
     return;
@@ -175,7 +186,7 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
   frags1 = g_strsplit(save_filename, ".", 2);
   g_strreverse(save_filename);
   g_strreverse(frags1[0]);
-  frags2 = g_strsplit(frags1[0], "/", -1);
+  frags2 = g_strsplit(frags1[0], G_DIR_SEPARATOR_S, -1);
   if (g_strcasecmp(frags2[0], "xif") != 0) {
     prev_filename = save_filename;
     save_filename = g_strdup_printf("%s%s",prev_filename, ".xif");
@@ -228,10 +239,15 @@ static void ui_study_cb_save_as_ok(GtkWidget* widget, gpointer data) {
 
   } else {
     /* make the directory */
-    if (mkdir(save_filename, mode) != 0) {
-      g_warning("Couldn't create amide directory: %s",save_filename);
-      return;
-    }
+#if AMIDE_WIN32_HACKS
+    if (mkdir(save_filename) != 0) 
+#else
+    if (mkdir(save_filename, mode) != 0) 
+#endif 
+      {
+	g_warning("Couldn't create amide directory: %s",save_filename);
+	return;
+      }
   }
 
   /* allright, save our study */
@@ -257,7 +273,7 @@ void ui_study_cb_save_as(GtkWidget * widget, gpointer data) {
   GtkWidget * dir_selection;
   gchar * temp_string;
 
-  dir_selection = amitk_dir_selection_new(_("Save File"));
+  dir_selection = amitk_dir_selection_new("Save File");
 
   /* take a guess at the filename */
   if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) 
@@ -323,6 +339,7 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 
   /* get the filename and import */
   import_filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selection));
+
 #ifdef AMIDE_DEBUG
   g_print("file to import: %s\n",import_filename);
 #endif
@@ -391,6 +408,11 @@ static void ui_study_cb_import_ok(GtkWidget* widget, gpointer data) {
 #ifdef AMIDE_DEBUG
     g_print("imported data set name %s\n",AMITK_OBJECT_NAME(import_ds));
 #endif
+
+    /* apply our preferential colortables*/
+    amitk_data_set_set_color_table(import_ds,
+				   ui_study->default_color_table[AMITK_DATA_SET_MODALITY(import_ds)]);
+
     amitk_object_add_child(AMITK_OBJECT(ui_study->study), 
 			   AMITK_OBJECT(import_ds)); /* this adds a reference to the data set*/
     g_object_unref(import_ds); /* so remove a reference */
@@ -412,7 +434,7 @@ void ui_study_cb_import(GtkWidget * widget, gpointer data) {
   GtkFileSelection * file_selection;
   AmitkImportMethod import_method;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Import File")));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Import File"));
 
   /* save a pointer to ui_study */
   g_object_set_data(G_OBJECT(file_selection), "ui_study", ui_study);
@@ -502,7 +524,7 @@ void ui_study_cb_export(GtkWidget * widget, gpointer data) {
 								 AMITK_VIEW_MODE_SINGLE, TRUE);
   if (current_data_sets == NULL) return;
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export File"));
   view = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "view"));
 
   if (ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view] == NULL) return;
@@ -587,23 +609,21 @@ void ui_study_cb_canvas_view_changing(GtkWidget * canvas, AmitkPoint *position,
 
 
   ui_study_t * ui_study = data;
-  rgba_t outline_color;
   AmitkView i_view;
   AmitkViewMode i_view_mode;
 
-  g_return_if_fail(ui_study->active_ds != NULL);
   g_return_if_fail(ui_study->study != NULL);
 
   /* update the other canvases accordingly */
-  outline_color = amitk_color_table_outline_color(ui_study->active_ds->color_table, FALSE);
   for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
       if (ui_study->canvas[i_view_mode][i_view] != NULL)
 	if (canvas != ui_study->canvas[i_view_mode][i_view])
 	  amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				     AMITK_CANVAS_TARGET_ACTION_SHOW,*position, outline_color, thickness);
+				     AMITK_CANVAS_TARGET_ACTION_SHOW,*position, thickness);
 
-  ui_study_update_thickness(ui_study, thickness);
+  if (!REAL_EQUAL(AMITK_STUDY_VIEW_THICKNESS(ui_study->study), thickness))
+    ui_study_update_thickness(ui_study, thickness);
 
   return;
 }
@@ -625,7 +645,7 @@ void ui_study_cb_canvas_view_changed(GtkWidget * canvas, AmitkPoint *position,
     for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
       if (ui_study->canvas[i_view_mode][i_view] != NULL)
 	amitk_canvas_update_target(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-				   AMITK_CANVAS_TARGET_ACTION_HIDE,*position, rgba_black, thickness);
+				   AMITK_CANVAS_TARGET_ACTION_HIDE,*position, thickness);
   }
 
   return;
@@ -640,7 +660,7 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
   GtkWidget * question;
   gint return_val;
 
-  if (ui_study->active_ds == NULL) {
+  if (!AMITK_IS_DATA_SET(ui_study->active_object)) {
     g_warning("no active data set to erase from");
     return;
   }
@@ -656,10 +676,10 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
 				    "    to the ROI", 
 				    AMITK_OBJECT_NAME(roi),
 				    "    on the data set: ",
-				    AMITK_OBJECT_NAME(ui_study->active_ds),
+				    AMITK_OBJECT_NAME(ui_study->active_object),
 				    "This step is irreversible",
 				    "The minimum threshold value",
-				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_ds,0),
+				    AMITK_DATA_SET_THRESHOLD_MIN(ui_study->active_object,0),
 				    "    will be used to fill in the volume");
   
   /* and wait for the question to return */
@@ -669,7 +689,7 @@ void ui_study_cb_canvas_erase_volume(GtkWidget * canvas, AmitkRoi * roi,
   if (return_val != GTK_RESPONSE_OK)
     return; /* cancel */
 
-  amitk_roi_erase_volume(roi, ui_study->active_ds, outside,
+  amitk_roi_erase_volume(roi, AMITK_DATA_SET(ui_study->active_object), outside,
 			 amitk_progress_dialog_update, ui_study->progress_dialog);
   
   return;
@@ -694,10 +714,10 @@ void ui_study_cb_tree_activate_object(GtkWidget * tree, AmitkObject * object, gp
   AmitkPoint center;
 
   if (object == NULL) {
-    ui_study_make_active_data_set(ui_study, NULL);
+    ui_study_make_active_object(ui_study, object);
 
-  } else if (AMITK_IS_DATA_SET(object)) {
-    ui_study_make_active_data_set(ui_study, AMITK_DATA_SET(object));
+  } else if (AMITK_IS_DATA_SET(object) || AMITK_IS_STUDY(object)) {
+    ui_study_make_active_object(ui_study, object);
 
   } else if (AMITK_IS_ROI(object)) {
     if (!AMITK_ROI_UNDRAWN(AMITK_ROI(object))) {
@@ -869,7 +889,7 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
 
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_series_create(ui_study->study, 
-		   ui_study->active_ds,
+		   ui_study->active_object,
 		   view, 
 		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][view])->volume,
 		   ui_study->roi_width, ui_study->line_style,
@@ -956,24 +976,39 @@ void ui_study_cb_alignment_selected(GtkWidget * widget, gpointer data) {
   return;
 }
 
+
+
 /* user wants to run the crop wizard */
 void ui_study_cb_crop_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  tb_crop(ui_study->study, ui_study->active_ds);
+
+  if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
+    g_warning("No data set is currently marked as active");
+  else
+    tb_crop(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
   return;
 }
 
 /* user wants to run the fads wizard */
 void ui_study_cb_fads_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  tb_fads(ui_study->active_ds);
+
+  if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
+    g_warning("No data set is currently marked as active");
+  else
+    tb_fads(AMITK_DATA_SET(ui_study->active_object));
   return;
 }
 
 /* user wants to run the filter wizard */
 void ui_study_cb_filter_selected(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
-  tb_filter(ui_study->study, ui_study->active_ds);
+
+  if (!AMITK_IS_DATA_SET(ui_study->active_object)) 
+    g_warning("No data set is currently marked as active");
+  else
+    tb_filter(ui_study->study, AMITK_DATA_SET(ui_study->active_object));
+
   return;
 }
 
@@ -986,18 +1021,27 @@ static gboolean threshold_delete_event(GtkWidget* widget, GdkEvent * event, gpoi
   return FALSE;
 }
 
+
+/* function called when target button toggled on toolbar */
+void ui_study_cb_target_pressed(GtkWidget * button, gpointer data) {
+
+  ui_study_t * ui_study = data;
+  amitk_study_set_canvas_target(ui_study->study,
+				gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(button)));  
+}
+
 /* function called when hitting the threshold button, pops up a dialog */
 void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
 
   ui_study_t * ui_study = data;
 
-  if (ui_study->active_ds == NULL) return;
+  if (!AMITK_IS_DATA_SET(ui_study->active_object)) return;
 
   /* make sure we don't already have a data set edit dialog up */
-  if ((AMITK_OBJECT(ui_study->active_ds)->dialog == NULL) &&
+  if ((ui_study->active_object->dialog == NULL) &&
       (ui_study->threshold_dialog == NULL)) {
     ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
-    ui_study->threshold_dialog = amitk_threshold_dialog_new(ui_study->active_ds,
+    ui_study->threshold_dialog = amitk_threshold_dialog_new(AMITK_DATA_SET(ui_study->active_object),
 							    GTK_WINDOW(ui_study->app));
     ui_common_remove_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
     g_signal_connect(G_OBJECT(ui_study->threshold_dialog), "delete_event",
@@ -1005,8 +1049,8 @@ void ui_study_cb_threshold_pressed(GtkWidget * button, gpointer data) {
     gtk_widget_show(GTK_WIDGET(ui_study->threshold_dialog));
   } else {
     /* pop the window to the top */
-    if (AMITK_OBJECT(ui_study->active_ds)->dialog)
-      gtk_window_present(GTK_WINDOW(AMITK_OBJECT(ui_study->active_ds)->dialog));
+    if (ui_study->active_object->dialog)
+      gtk_window_present(GTK_WINDOW(ui_study->active_object->dialog));
     else
       gtk_window_present(GTK_WINDOW(ui_study->threshold_dialog));
   }
@@ -1032,9 +1076,12 @@ void ui_study_cb_add_roi(GtkWidget * widget, gpointer data) {
 void ui_study_cb_add_fiducial_mark(GtkWidget * widget, gpointer data) {
 
   ui_study_t * ui_study = data;
-  if (ui_study->active_ds == NULL) return;
-  ui_study_add_fiducial_mark(ui_study, AMITK_OBJECT(ui_study->active_ds), TRUE,
-			     AMITK_STUDY_VIEW_CENTER(ui_study->study));
+
+  if (AMITK_IS_DATA_SET(ui_study->active_object)) {
+    ui_study_add_fiducial_mark(ui_study, ui_study->active_object, TRUE,
+			       AMITK_STUDY_VIEW_CENTER(ui_study->study));
+  }
+
   return;
 }
 
@@ -1054,34 +1101,29 @@ void ui_study_cb_interpolation(GtkWidget * widget, gpointer data) {
   ui_study_t * ui_study = data;
   AmitkInterpolation interpolation;
 
-  g_return_if_fail(ui_study->active_ds != NULL);
+  g_return_if_fail(AMITK_IS_DATA_SET(ui_study->active_object));
 
   /* figure out which interpolation menu item called me */
   interpolation = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"interpolation"));
 
-  amitk_data_set_set_interpolation(ui_study->active_ds,  interpolation);
+  amitk_data_set_set_interpolation(AMITK_DATA_SET(ui_study->active_object),  interpolation);
 				
   return;
 }
 
 void ui_study_cb_study_changed(AmitkStudy * study, gpointer data) {
-
   ui_study_t * ui_study = data;
 
   ui_study_update_thickness(ui_study, AMITK_STUDY_VIEW_THICKNESS(ui_study->study));
   ui_study_update_time_button(ui_study->study, ui_study->time_button);
-  ui_study_update_canvas_visible_buttons(ui_study);
-  ui_study_update_layout(ui_study);
-  
+  ui_study_update_canvas_target(ui_study);
   return;
 }
 
-void ui_study_cb_study_view_mode_changed(AmitkStudy * study, gpointer data) {
-
+void ui_study_cb_canvas_layout_changed(AmitkStudy * study, gpointer data) {
   ui_study_t * ui_study = data;
-
+  ui_study_update_canvas_visible_buttons(ui_study);
   ui_study_update_layout(ui_study);
-
   return;
 }
 

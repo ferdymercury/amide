@@ -29,7 +29,8 @@
 
 /* includes we always need with this widget */
 #include <gdk-pixbuf/gdk-pixbuf.h>
-#include <gnome.h>
+#include <gtk/gtk.h>
+#include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_study.h"
 
 G_BEGIN_DECLS
@@ -68,23 +69,18 @@ struct _AmitkCanvas
 
   AmitkVolume * volume; /* the volume that this canvas slice displays */
   AmitkPoint center; /* in base coordinate space */
-  amide_real_t voxel_dim;
-  amide_real_t zoom;
-  amide_time_t start_time;
-  amide_time_t duration;
-  AmitkFuseType fuse_type;
 
   AmitkView view;
   AmitkViewMode view_mode;
   AmitkLayout layout;
   gint roi_width;
   GdkLineStyle line_style;
-  AmitkDataSet * active_ds;
+  AmitkObject * active_object;
   gboolean maintain_size;
-  gboolean leave_target;
   gint target_empty_area;
 
   GList * slices;
+  GList * slice_cache;
   gint pixbuf_width, pixbuf_height;
   GnomeCanvasItem * image;
   GdkPixbuf * pixbuf;
@@ -103,7 +99,6 @@ struct _AmitkCanvas
   GnomeCanvasItem * target[8];
   AmitkCanvasTargetAction next_target_action;
   AmitkPoint next_target_center;
-  rgba_t next_target_color;
   amide_real_t next_target_thickness;
 
 };
@@ -140,7 +135,6 @@ GtkWidget *   amitk_canvas_new                  (AmitkView view,
 						 gint roi_width,
 						 gboolean with_arrows,
 						 gboolean maintain_size,
-						 gboolean leave_target,
 						 gint target_empty_area);
 void          amitk_canvas_set_study            (AmitkCanvas * canvas, 
 						 AmitkStudy * study);
@@ -149,10 +143,9 @@ void          amitk_canvas_set_layout           (AmitkCanvas * canvas,
 void          amitk_canvas_set_general_properties(AmitkCanvas * canvas, 
 						  gboolean maintain_size);
 void          amitk_canvas_set_target_properties(AmitkCanvas * canvas, 
-						 gboolean leave_target,
 						 gint target_empty_area);
-void          amitk_canvas_set_active_data_set  (AmitkCanvas * canvas, 
-						 AmitkDataSet * active_ds);
+void          amitk_canvas_set_active_object    (AmitkCanvas * canvas, 
+						 AmitkObject * active_object);
 void          amitk_canvas_set_line_style       (AmitkCanvas * canvas, 
 						 GdkLineStyle new_line_style);
 void          amitk_canvas_set_roi_width        (AmitkCanvas * canvas, 
@@ -160,7 +153,6 @@ void          amitk_canvas_set_roi_width        (AmitkCanvas * canvas,
 void          amitk_canvas_update_target        (AmitkCanvas * canvas, 
 						 AmitkCanvasTargetAction action, 
 						 AmitkPoint center, 
-						 rgba_t color, 
 						 amide_real_t thickness);
 
 gint          amitk_canvas_get_width            (AmitkCanvas * canvas);

@@ -25,6 +25,7 @@
 
 
 #include "amide_config.h"
+#include <libgnomeui/libgnomeui.h>
 #include "amitk_data_set.h"
 #include "amitk_progress_dialog.h"
 #include "tb_filter.h"

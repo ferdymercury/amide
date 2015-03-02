@@ -1,0 +1,5 @@
+
+The .iss file is for the Inno Setup Compiler (version 3.0.7)
+
+to generate amide.ico, download png2ico.exe, and run
+	png2ico.exe amide.ico amide_logo16x16.png amide_logo32x32.png amide_logo 64x64.png

@@ -3,11 +3,24 @@ misc list of things todo:
 for next release?
 -----------------
 
+* for Chris-> check what pixels are shown for an ROI edge
+
+* be able to change how much you step when clicking on the slider?
+* look into undo - gnumeric?
+* profile wizard?
+* histogram for roi's
+
+* figure out how to do variance correctly....
+
 * finish dnd support:
 	-need to uncomment gtk_tree_view-set_reorderable line
 	-filtered/cropped object should be added right below the
 		predecessor object
 
+* factor analysis -> should be able to do from ROI's too.
+	should be simple.  1 iteration to find the # of voxels,
+	second iteration to fill in 
+	probable use weight >=0.5 as cutoff
 * need to add orthogonality component back into PLS
 * principle component analysis should probably be demeaned
 * need to extend 2 comp to 3 comp (or n-comp)
@@ -16,6 +29,21 @@ for next release?
 * continue implementing progress bars for various functions:
 	-roi analysis
 	-loading in data sets
+
+doc todo
+--------
+complete rewrite of help documentation
+handling directories of 2D dicom images
+	http://xmedcon.sourceforge.net/faq/stack.html
+
+
+windows todo
+------------
+* preferences aren't currently saved between amide sessions
+* gsl not currently supported
+* get popt working, then can have file associations with .xif files
+	-specify icon for .xif files
+* libgnomeui help warning isn't a popup
        
 big things:
 -----------
@@ -24,8 +52,6 @@ big things:
 	in the interests of memory, would probably do a overlap+add method,
 		with a 64 point FFT (which is 2MB for double)
 	GSL has the necessary functions for doing the FFT
-* having issues with the "queing" of redisplay calls due to lack of locking.  
-	need to switch to a full threading modeling to separate input/computation/display. 
 * add drag-n-drop capabilities between study windows
 * should be able to specify units the image is in, and request different output units.
 	-allow changing of displayed units (mm, cm, m, s, min, uCi, Beq, etc.)
@@ -48,26 +74,23 @@ big things:
                        
 small things:
 -------------
+* sliders don't work currently under Xwin32, stopped working 
+	after 0.7.6 (addition of optional transverse/coronal/etc. buttons).
 * be able to change type/down convert on crop dialog
-* when rendering stereoscopically, the background on the second rendering 
-	is wrong.  can see with white/black colormap
+	specify if single, multiple scale factors
 * need to switch gtk_idle (deprecated) calls to g_source calls
-* reading of 6.4 sinogram (through libecat) from command line causes screw up....
-	waiting for valgrind to be updated to glibc 2.3.2 to find why
 * try to work in the max/min/distribution calculations into the loading loop
 * if the interpolation of a data set is changed in ui_series, the already
 	created slices aren't changed
 * would changing the icons to .png files allow anti-aliasing? better icons?
 * rewrite isocontour determining algorithm so it's not recursive
-* make caching of slices smarter.  
-	We don't need to regenerate all slices when removing one slice from the list
-	data_set_reslice function should be able to detect if regeneration needed
 * fix zooming of roi's on the canvas
 * should all voxel's that an roi edge passes through be displayed?
 * implement help buttons on most of the dialogs
 	-gnome_druid has an add help button function
 * rendering movie generation should allow rotating around one axis, then another, then another
 	maybe an ability to script the movie?
+* ui_series, should add popup dialog asking for # columns and rows
 
 
 pre 1.0 things:
@@ -84,6 +107,8 @@ pre 1.0 things:
 probably post 1.0 things:
 ----------------
 * multi-step undo/redo
+	-once this is done, drop the enact/cancel bit of shifting data sets and study's
+	  as we can now just undo such a change
 * add report generation.  This would add colormaps, location, thickness
 	study name, volume name, scan date, etc. to the export function.
 	Would handle multiple images.
@@ -113,6 +138,14 @@ probably post 1.0 things:
 
 things dependent on other things: 
 -------------- 
+
+* AMIDE_OSX_HACKS, on OS X we currently
+	1- Disable drawing of the axis guide (ui_common.c), for some reason
+	   this crashes due to font handling on OS X....  This is as of
+	   fink 0.5.2, OS X 10.2.5.
+	2- Disable interaction with ESD (enlightenment sound daemon).
+           If amide crashed, ESD was locking files....  This is as of
+	   fink 0.5.2, OS X 10.2.5
 
 * complete change to anti-aliased canvases
 	check with newer version of libgnomecanvas ( > 2.0.1-3)
@@ -156,10 +189,8 @@ things dependent on other things:
 	scale functions don't do a great job of interpolation (circa
 	gdk-pixbuf-0.18.0).
 
+* Current implementation is cooperative multitasking, if that.  Should turn
+	program into a true, multi-threaded design.  Note that gtk for windows
+	(as of 2003.04.30) does not handle multi-threaded program.... so will
+	have to wait for that.
 
-remaining GNOME 2.0 changes that need to be done 
-----------------------------------------------------
-* enable GNOME_DISABLE_DEPRECATED on compile
-	-need to replace the use of gnome_request_dialog in ui_study.c
-
-* should replace gnome_config with gconf

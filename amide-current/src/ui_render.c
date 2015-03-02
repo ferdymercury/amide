@@ -27,8 +27,8 @@
 
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
 
-#include <gnome.h>
-#include <libgnomecanvas/gnome-canvas-pixbuf.h>
+#include <libgnomecanvas/libgnomecanvas.h>
+#include <libgnomeui/libgnomeui.h>
 #include "image.h"
 #include "ui_common.h"
 #include "ui_render.h"
@@ -38,6 +38,14 @@
 #include "amitk_progress_dialog.h"
 
 
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#else
+  static gboolean strip_highs=FALSE;
+  static gboolean optimize_rendering=TRUE;
+#endif
+
+#define N_(String) (String) /* ignore internationalization */
 
 #define UPDATE_NONE 0
 #define UPDATE_RENDERING 0x1
@@ -401,7 +409,7 @@ static void export_cb(GtkWidget * widget, gpointer data) {
 
   g_return_if_fail(ui_render->pixbuf != NULL);
 
-  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new(_("Export File")));
+  file_selection = GTK_FILE_SELECTION(gtk_file_selection_new("Export File"));
 
   /* take a guess at the filename */
   temp_renderings = ui_render->renderings;
@@ -498,13 +506,13 @@ static void menus_create(ui_render_t * ui_render) {
 
 
   GnomeUIInfo file_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Export Rendering"),
-			  N_("Export the rendered image"),
+    GNOMEUIINFO_ITEM_DATA("_Export Rendering",
+			  "Export the rendered image",
 			  export_cb,
 			  ui_render, NULL),
 #ifdef AMIDE_LIBFAME_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_Create Movie"),
-			  N_("Create a movie out of a sequence of renderings"),
+    GNOMEUIINFO_ITEM_DATA("_Create Movie",
+			  "Create a movie out of a sequence of renderings",
 			  movie_cb,
 			  ui_render, NULL),
 #endif
@@ -514,8 +522,8 @@ static void menus_create(ui_render_t * ui_render) {
   };
 
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Rendering Parameters"),
-			  N_("Adjust parameters pertinent to the rendered image"),
+    GNOMEUIINFO_ITEM_DATA("_Rendering Parameters",
+			  "Adjust parameters pertinent to the rendered image",
 			  parameters_cb,
 			  ui_render, NULL),
     GNOMEUIINFO_END
@@ -595,12 +603,14 @@ static ui_render_t * ui_render_free(ui_render_t * ui_render) {
 
 static void read_preferences(gboolean * strip_highs, gboolean * optimize_renderings) {
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
 
   *strip_highs = gnome_config_get_int("RENDERING/StripHighs");
   *optimize_renderings = gnome_config_get_int("RENDERING/OptimizeRendering");
 
   gnome_config_pop_prefix();
+#endif
 
   return;
 }
@@ -612,10 +622,12 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
   ui_render_t * ui_render;
   GList * visible_objects;
+#ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
 
   read_preferences(&strip_highs, &optimize_rendering);
+#endif
 
   /* alloc space for the data structure for passing ui info */
   if ((ui_render = g_try_new(ui_render_t,1)) == NULL) {
@@ -649,6 +661,7 @@ static ui_render_t * ui_render_init(GnomeApp * app,
   ui_render->idle_handler_id = 0;
 
   /* load in saved preferences */
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
 
   ui_render->update_without_release = gnome_config_get_int("RENDERING/UpdateWithoutRelease");
@@ -659,9 +672,14 @@ static ui_render_t * ui_render_init(GnomeApp * app,
 
   ui_render->stereo_eye_angle = gnome_config_get_float("RENDERING/EyeAngle");
   if ((ui_render->stereo_eye_angle <= 0.1) || (ui_render->stereo_eye_angle > 45.0))
-    ui_render->stereo_eye_angle = 2.0; /* degrees */
+    ui_render->stereo_eye_angle = 5.0; /* degrees */
 
   gnome_config_pop_prefix();
+#else
+  ui_render->update_without_release = FALSE;
+  ui_render->stereo_eye_width = 50*gdk_screen_width()/gdk_screen_width_mm(); /* in pixels */
+  ui_render->stereo_eye_angle = 5.0; /* degrees */
+#endif
 
   /* initialize the rendering contexts */
   visible_objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
@@ -863,7 +881,8 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "x",
 			"x", (gdouble) 80.0,
 			"y", (gdouble) 65.0,
-			"fill_color", "black", NULL);
+			"fill_color", "black", 
+			"font_desc", amitk_fixed_font_desc, NULL);
 
   /* the y axis */
   axis_line_points = gnome_canvas_points_new(2);
@@ -886,7 +905,8 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "y",
 			"x", (gdouble) 45.0,
 			"y", (gdouble) 20.0,
-			"fill_color", "black", NULL);
+			"fill_color", "black",
+			"font_desc", amitk_fixed_font_desc, NULL);
 
   /* the z axis */
   axis_line_points = gnome_canvas_points_new(2);
@@ -909,7 +929,8 @@ void ui_render_create(AmitkStudy * study) {
 			"text", "z",
 			"x", (gdouble) 20.0,
 			"y", (gdouble) 80.0,
-			"fill_color", "black", NULL);
+			"fill_color", "black", 
+			"font_desc", amitk_fixed_font_desc, NULL);
 
   /* button to reset the axis */
   button = gtk_button_new_with_label("Reset Axis");
@@ -1002,26 +1023,34 @@ static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer dat
 
 
 static void init_strip_highs_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
+#endif
 
   strip_highs = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
   
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("RENDERING/StripHighs", strip_highs);
   gnome_config_pop_prefix();
   gnome_config_sync();
+#endif
   return;
 }
 
 static void init_optimize_rendering_cb(GtkWidget * widget, gpointer data) {
+#ifndef AMIDE_WIN32_HACKS
   gboolean optimize_rendering;
+#endif
 
   optimize_rendering =gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 
+#ifndef AMIDE_WIN32_HACKS
   gnome_config_push_prefix("/"PACKAGE"/");
   gnome_config_set_int("RENDERING/OptimizeRendering", optimize_rendering);
   gnome_config_pop_prefix();
   gnome_config_sync();
+#endif
   return;
 }
 
@@ -1053,10 +1082,12 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   GtkWidget * table;
   GtkWidget * check_button;
   guint table_row;
+#ifndef AMIDE_WIN32_HACKS
   gboolean strip_highs;
   gboolean optimize_rendering;
 
   read_preferences(&strip_highs, &optimize_rendering);
+#endif
 
   temp_string = g_strdup_printf("%s: Rendering Initialization Dialog", PACKAGE);
   dialog = gtk_dialog_new_with_buttons (temp_string,  parent,
@@ -1085,7 +1116,7 @@ GtkWidget * ui_render_init_dialog_create(GtkWindow * parent) {
   table_row++;
 
   /* do we want to converse memory */
-  check_button = gtk_check_button_new_with_label("Optimize Rendering?  Increases memory use ~3x");
+  check_button = gtk_check_button_new_with_label("Accelerate Rendering?  Increases memory use ~3x");
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button),optimize_rendering);
   gtk_table_attach(GTK_TABLE(table), check_button, 
 		   0,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);

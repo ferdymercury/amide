@@ -27,7 +27,7 @@
 
 
 #include "amide_config.h"
-#include <gnome.h>
+#include <libgnomeui/libgnomeui.h>
 #include "ui_common.h"
 #include "ui_series.h"
 #include "ui_study.h"
@@ -36,6 +36,8 @@
 #include "medcon_import.h"
 #include "pixmaps.h"
 #include "amide_limits.h"
+
+#define N_(String) (String) /* ignore internationalization */
 
 static void fill_in_radioitem(GnomeUIInfo * item,
 			      const gchar * name,
@@ -166,36 +168,36 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 #endif
 
   GnomeUIInfo export_view_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)"),
+    GNOMEUIINFO_ITEM_DATA("_Transverse",
+			  "Export the current transaxial view to an image file (JPEG/TIFF/PNG/etc.)",
 			  ui_study_cb_export, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)"),
+    GNOMEUIINFO_ITEM_DATA("_Coronal",
+			  "Export the current coronal view to an image file (JPEG/TIFF/PNG/etc.)",
 			  ui_study_cb_export, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)"),
+    GNOMEUIINFO_ITEM_DATA("_Sagittal",
+			  "Export the current sagittal view to an image file (JPEG/TIFF/PNG/etc.)",
 			  ui_study_cb_export, ui_study, NULL),
     GNOMEUIINFO_END
   };
   
   /* defining the menus for the study ui interface */
   GnomeUIInfo file_menu[] = {
-    GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Study"), 
-			      N_("Create a new study viewer window"),
+    GNOMEUIINFO_MENU_NEW_ITEM("_New Study", 
+			      "Create a new study viewer window",
 			      ui_study_cb_new_study, NULL),
     GNOMEUIINFO_MENU_OPEN_ITEM(ui_study_cb_open_study, ui_study),
     GNOMEUIINFO_MENU_SAVE_AS_ITEM(ui_study_cb_save_as, ui_study),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_ITEM_DATA(N_("_Import File (guess)"),
-			  N_("Import an image data file into this study, guessing at the file type"),
+    GNOMEUIINFO_ITEM_DATA("_Import File (guess)",
+			  "Import an image data file into this study, guessing at the file type",
 			  ui_study_cb_import, 
 			  ui_study, NULL),
-    GNOMEUIINFO_SUBTREE_HINT(N_("Import File (_specify)"),
-			     N_("Import an image data file into this study, specifying the import filter"), 
+    GNOMEUIINFO_SUBTREE_HINT("Import File (_specify)",
+			     "Import an image data file into this study, specifying the import filter", 
 			     import_specific_menu),
     GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Export View"),
-			     N_("Export one of the views to a data file"),
+    GNOMEUIINFO_SUBTREE_HINT("_Export View",
+			     "Export one of the views to a data file",
 			     export_view_menu),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_CLOSE_ITEM(ui_study_cb_close, ui_study),
@@ -206,11 +208,11 @@ void ui_study_menus_create(ui_study_t * ui_study) {
   GnomeUIInfo add_roi_menu[AMITK_ROI_TYPE_NUM+1];
 
   GnomeUIInfo edit_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("Add _ROI"),
-			     N_("Add a new ROI"),
+    GNOMEUIINFO_SUBTREE_HINT("Add _ROI",
+			     "Add a new ROI",
 			     add_roi_menu),
-    GNOMEUIINFO_ITEM_DATA(N_("Add _Fiducial Mark"),
-			  N_("Add a new fiducial mark to the active data set"),
+    GNOMEUIINFO_ITEM_DATA("Add _Fiducial Mark",
+			  "Add a new fiducial mark to the active data set",
 			  ui_study_cb_add_fiducial_mark, ui_study, NULL),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_MENU_PREFERENCES_ITEM(ui_study_cb_preferences, ui_study),
@@ -219,38 +221,38 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* the submenus under the series_type menu */
   GnomeUIInfo series_space_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a series of transaxial views in a single frame"),
+    GNOMEUIINFO_ITEM_DATA("_Transverse",
+			  "Look at a series of transaxial views in a single frame",
 			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a series of coronal views in a single frame"),
+    GNOMEUIINFO_ITEM_DATA("_Coronal",
+			  "Look at a series of coronal views in a single frame",
 			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a series of sagittal views in a single frame"),
+    GNOMEUIINFO_ITEM_DATA("_Sagittal",
+			  "Look at a series of sagittal views in a single frame",
 			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
   GnomeUIInfo series_time_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Look at a times series of a single transaxial view"),
+    GNOMEUIINFO_ITEM_DATA("_Transverse",
+			  "Look at a times series of a single transaxial view",
 			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Look at a time series of a single coronal view"),
+    GNOMEUIINFO_ITEM_DATA("_Coronal",
+			  "Look at a time series of a single coronal view",
 			  ui_study_cb_series, ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Look at a time series of a a signal sagittal view"),
+    GNOMEUIINFO_ITEM_DATA("_Sagittal",
+			  "Look at a time series of a a signal sagittal view",
 			  ui_study_cb_series, ui_study, NULL),
     GNOMEUIINFO_END
   };
 
   /* the submenu under the series button */
   GnomeUIInfo series_type_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Space"),
-			     N_("Look at a series of images over a spacial dimension"), 
+    GNOMEUIINFO_SUBTREE_HINT("_Space",
+			     "Look at a series of images over a spacial dimension", 
 			     series_space_menu),
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Time"),
-			     N_("Look at a series of images over time"), 
+    GNOMEUIINFO_SUBTREE_HINT("_Time",
+			     "Look at a series of images over time", 
 			     series_time_menu),
     GNOMEUIINFO_END
   };
@@ -258,12 +260,12 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* defining the menus for the study ui interface */
   GnomeUIInfo view_menu[] = {
-    GNOMEUIINFO_SUBTREE_HINT(N_("_Series"),
-			     N_("Look at a series of images"), 
+    GNOMEUIINFO_SUBTREE_HINT("_Series",
+			     "Look at a series of images", 
 			     series_type_menu),
 #if AMIDE_LIBVOLPACK_SUPPORT
-    GNOMEUIINFO_ITEM_DATA(N_("_Volume Rendering"),
-			  N_("perform a volume rendering on the currently selected objects"),
+    GNOMEUIINFO_ITEM_DATA("_Volume Rendering",
+			  "perform a volume rendering on the currently selected objects",
 			  ui_study_cb_render,
 			  ui_study, NULL),
 #endif
@@ -272,14 +274,14 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
 #if AMIDE_LIBFAME_SUPPORT
   GnomeUIInfo fly_through_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Transverse"),
-			  N_("Generate a fly through using transaxial slices"),
+    GNOMEUIINFO_ITEM_DATA("_Transverse",
+			  "Generate a fly through using transaxial slices",
 			  ui_study_cb_fly_through,  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Coronal"),
-			  N_("Generate a fly through using coronal slices"),
+    GNOMEUIINFO_ITEM_DATA("_Coronal",
+			  "Generate a fly through using coronal slices",
 			  ui_study_cb_fly_through,  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Sagittal"),
-			  N_("Generate a fly through using sagittal slices"),
+    GNOMEUIINFO_ITEM_DATA("_Sagittal",
+			  "Generate a fly through using sagittal slices",
 			  ui_study_cb_fly_through,  ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -287,29 +289,29 @@ void ui_study_menus_create(ui_study_t * ui_study) {
 
   /* tools for analyzing/etc. the data */
   GnomeUIInfo tools_menu[] = {
-    GNOMEUIINFO_ITEM_DATA(N_("_Alignment Wizard"),
-			  N_("guides you throw the processing of alignment"),
+    GNOMEUIINFO_ITEM_DATA("_Alignment Wizard",
+			  "guides you throw the processing of alignment",
 			  ui_study_cb_alignment_selected,
 			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Crop Active Data Set"),
-			  N_("allows you to crop the active data set"),
+    GNOMEUIINFO_ITEM_DATA("_Crop Active Data Set",
+			  "allows you to crop the active data set",
 			  ui_study_cb_crop_selected,
 			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Factor Analysis"),
-			  N_("allows you to do factor analysis of dynamic data on the active data set"),
+    GNOMEUIINFO_ITEM_DATA("_Factor Analysis",
+			  "allows you to do factor analysis of dynamic data on the active data set",
 			  ui_study_cb_fads_selected,
 			  ui_study, NULL),
-    GNOMEUIINFO_ITEM_DATA(N_("_Filter Active Data Set"),
-			  N_("allows you to filter the active data set"),
+    GNOMEUIINFO_ITEM_DATA("_Filter Active Data Set",
+			  "allows you to filter the active data set",
 			  ui_study_cb_filter_selected,
 			  ui_study, NULL),
 #if AMIDE_LIBFAME_SUPPORT
-    GNOMEUIINFO_SUBTREE_HINT(N_("Generate _Fly Through"),
-			     N_("generate an mpeg fly through of the data sets"), 
+    GNOMEUIINFO_SUBTREE_HINT("Generate _Fly Through",
+			     "generate an mpeg fly through of the data sets", 
 			     fly_through_menu),
 #endif
-    GNOMEUIINFO_ITEM_DATA(N_("Calculate _ROI Statistics"),
-			  N_("caculate ROI statistics"),
+    GNOMEUIINFO_ITEM_DATA("Calculate _ROI Statistics",
+			  "caculate ROI statistics",
 			  ui_study_cb_roi_statistics, ui_study, NULL),
     GNOMEUIINFO_END
   };
@@ -319,7 +321,7 @@ void ui_study_menus_create(ui_study_t * ui_study) {
     GNOMEUIINFO_MENU_FILE_TREE(file_menu),
     GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
     GNOMEUIINFO_MENU_VIEW_TREE(view_menu),
-    GNOMEUIINFO_SUBTREE(N_("_Tools"), tools_menu),
+    GNOMEUIINFO_SUBTREE("_Tools", tools_menu),
     GNOMEUIINFO_MENU_HELP_TREE(ui_common_help_menu),
     GNOMEUIINFO_END
   };
@@ -436,6 +438,12 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   GnomeUIInfo fuse_type_list[AMITK_FUSE_TYPE_NUM+1];
   GnomeUIInfo canvas_visible_list[AMITK_VIEW_NUM+1];
   GnomeUIInfo view_mode_list[AMITK_VIEW_MODE_NUM+1];
+  GnomeUIInfo canvas_target[] = {
+    GNOMEUIINFO_TOGGLEITEM_DATA(NULL, "Leave crosshairs on canvases", 
+				ui_study_cb_target_pressed, ui_study,
+				icon_target_xpm),
+    GNOMEUIINFO_END
+  };
 
   GnomeUIInfo study_main_toolbar[] = {
     GNOMEUIINFO_SEPARATOR,
@@ -443,12 +451,14 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(fuse_type_list),
     GNOMEUIINFO_SEPARATOR,
+    GNOMEUIINFO_INCLUDE(canvas_target),
+    GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_INCLUDE(canvas_visible_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_RADIOLIST(view_mode_list),
     GNOMEUIINFO_SEPARATOR,
     GNOMEUIINFO_ITEM_DATA(NULL,
-			  N_("Set the thresholds and colormaps for the active data set"),
+			  "Set the thresholds and colormaps for the active data set",
 			  ui_study_cb_threshold_pressed,
 			  ui_study, icon_threshold_xpm),
     GNOMEUIINFO_SEPARATOR,
@@ -457,8 +467,6 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
   /* sanity check */
   g_assert(ui_study!=NULL);
-
-
   
   /* start make the interpolation toolbar items*/
   for (i_interpolation = 0; i_interpolation < AMITK_INTERPOLATION_NUM; i_interpolation++) 
@@ -509,6 +517,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
   toolbar = gtk_toolbar_new();
   gnome_app_fill_toolbar(GTK_TOOLBAR(toolbar), study_main_toolbar, NULL);
 
+  ui_study->canvas_target_button = canvas_target[0].widget;
 
 
   /* finish setting up the interpolation items */
@@ -570,7 +579,7 @@ void ui_study_toolbar_create(ui_study_t * ui_study) {
 
 
   /* add the slice thickness selector */
-  label = gtk_label_new("thickness:");
+  label = gtk_label_new("thickness (mm):");
   gtk_toolbar_append_widget(GTK_TOOLBAR(toolbar), label, NULL, NULL);
   gtk_widget_show(label);
 

@@ -35,12 +35,11 @@
 #define UI_SERIES_R_MARGIN UI_SERIES_L_MARGIN
 #define UI_SERIES_TOP_MARGIN 2.0
 #define UI_SERIES_BOTTOM_MARGIN 15.0
-#define UI_SERIES_CAPTION_FONT "fixed"
 
 typedef enum {PLANES, FRAMES} series_t;
 
 /* external functions */
-void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
+void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 		      AmitkView view, AmitkVolume * canvas_view, 
 		      gint roi_width, GdkLineStyle line_style, series_t series_type);
 

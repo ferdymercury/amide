@@ -27,7 +27,6 @@
 #include "amide_config.h"
 #ifdef AMIDE_LIBMDC_SUPPORT
 
-#include <gnome.h>
 #include "amitk_data_set.h"
 #include "medcon_import.h"
 #undef PACKAGE /* medcon redefines these.... */
@@ -131,6 +130,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
   gint divider;
   gint t_times_z;
   gboolean continue_work=TRUE;
+  gboolean invalid_date;
   gchar * temp_string;
   
   /* setup some defaults */
@@ -298,7 +298,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
 	name = g_strdup(medcon_file_info.patient_name);
 
   if (name == NULL) {/* no original filename? */
-    temp_string = g_strdup(g_basename(filename));
+    temp_string = g_path_get_basename(filename);
     /* remove the extension of the file */
     g_strreverse(temp_string);
     frags = g_strsplit(temp_string, ".", 2);
@@ -321,14 +321,25 @@ AmitkDataSet * medcon_import(const gchar * filename,
   
 
   /* enter in the date the scan was performed */
+  invalid_date = FALSE;
+
   time_structure.tm_sec = medcon_file_info.study_time_second;
   time_structure.tm_min = medcon_file_info.study_time_minute;
   time_structure.tm_hour = medcon_file_info.study_time_hour;
   time_structure.tm_mday = medcon_file_info.study_date_day;
-  time_structure.tm_mon = medcon_file_info.study_date_month;
-  time_structure.tm_year = medcon_file_info.study_date_year-1900;
+  if (medcon_file_info.study_date_month == 0) {
+    invalid_date = TRUE;
+    time_structure.tm_mon=0;
+  } else
+    time_structure.tm_mon = medcon_file_info.study_date_month-1;
+  if (medcon_file_info.study_date_year == 0) {
+    invalid_date = TRUE;
+    time_structure.tm_year = 0;
+  } else
+    time_structure.tm_year = medcon_file_info.study_date_year-1900;
   time_structure.tm_isdst = -1; /* "-1" is suppose to let the system figure it out, was "daylight"; */
-  if (mktime(&time_structure) == -1) { /* do any corrections needed on the time */
+
+  if ((mktime(&time_structure) == -1) && invalid_date) { /* do any corrections needed on the time */
     time_t current_time;
     time(&current_time);
     amitk_data_set_set_scan_date(ds, ctime(&current_time)); /* give up */
@@ -370,7 +381,7 @@ AmitkDataSet * medcon_import(const gchar * filename,
       medcon_file_info.image[i.t*ds->raw_data->dim.z].frame_duration/1000.0;
 
     /* make sure it's not zero */
-    if (ds->frame_duration[i.t] < SMALL_TIME) ds->frame_duration[i.t] = SMALL_TIME;
+    if (ds->frame_duration[i.t] < EPSILON) ds->frame_duration[i.t] = EPSILON;
 
     /* copy the data into the data set */
     for (i.z = 0 ; (i.z < ds->raw_data->dim.z) && (continue_work); i.z++) {
@@ -500,8 +511,10 @@ AmitkDataSet * medcon_import(const gchar * filename,
   }    
 
   /* setup remaining parameters */
-  //  amitk_data_set_set_injected_dose(amitk_dose_unit_convert_from(cti_file->mhptr->dosage, AMITK_DOSE_UNIT_mCi));
-  //  amitk_data_set_set_subject_weight(cti_file->mhptr->patient_weight);
+  amitk_data_set_set_injected_dose(ds, medcon_file_info.injected_dose); /* should be in MBq */
+  amitk_data_set_set_displayed_dose_unit(ds, AMITK_DOSE_UNIT_MEGABECQUEREL);
+  amitk_data_set_set_subject_weight(ds, medcon_file_info.patient_weight); /* should be in Kg */
+  amitk_data_set_set_displayed_weight_unit(ds, AMITK_WEIGHT_UNIT_KILOGRAM);
   amitk_data_set_set_scale_factor(ds, 1.0); /* set the external scaling factor */
   amitk_data_set_calc_far_corner(ds); /* set the far corner of the volume */
   amitk_data_set_calc_max_min(ds, update_func, update_data);

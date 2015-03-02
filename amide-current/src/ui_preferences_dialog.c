@@ -25,11 +25,14 @@
 
 
 #include "amide_config.h"
-#include <gnome.h>
+#ifndef AMIDE_WIN32_HACKS
+#include <libgnome/libgnome.h>
+#endif
 #include "ui_study.h"
 #include "ui_preferences_dialog.h"
 #include "pixmaps.h"
 #include "amitk_canvas.h"
+#include "amitk_color_table_menu.h"
 
 
 static gchar * line_style_names[] = {
@@ -44,7 +47,6 @@ static void layout_cb(GtkWidget * widget, gpointer data);
 static void save_on_exit_cb(GtkWidget * widget, gpointer data);
 static gboolean delete_event_cb(GtkWidget* widget, GdkEvent * event, gpointer data);
 static void maintain_size_cb(GtkWidget * widget, gpointer data);
-static void leave_target_cb(GtkWidget * widget, gpointer data);
 static void target_empty_area_cb(GtkWidget * widget, gpointer data);
 
 
@@ -69,10 +71,12 @@ static void roi_width_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->roi_width != new_roi_width) {
     ui_study->roi_width = new_roi_width;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("ROI/Width",ui_study->roi_width);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
 
     for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
@@ -106,10 +110,12 @@ static void line_style_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->line_style != new_line_style) {
     ui_study->line_style = new_line_style;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("ROI/LineStyle",ui_study->line_style);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
 
     for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
@@ -137,10 +143,12 @@ static void layout_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->canvas_layout != new_layout) {
     ui_study->canvas_layout = new_layout;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("CANVAS/Layout",ui_study->canvas_layout);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
 
     ui_study_update_layout(ui_study);
   }
@@ -162,11 +170,13 @@ static void maintain_size_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->canvas_maintain_size != canvas_maintain_size) {
     ui_study->canvas_maintain_size = canvas_maintain_size;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("CANVAS/MinimizeSize",
 			 !ui_study->canvas_maintain_size);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
 
     for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
@@ -180,38 +190,6 @@ static void maintain_size_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
-static void leave_target_cb(GtkWidget * widget, gpointer data) {
-
-  ui_study_t * ui_study = data;
-  gboolean canvas_leave_target;
-  AmitkView i_view;
-  AmitkViewMode i_view_mode;
-
-  g_return_if_fail(ui_study->study != NULL);
-
-  canvas_leave_target = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-
-  if (ui_study->canvas_leave_target != canvas_leave_target) {
-    ui_study->canvas_leave_target = canvas_leave_target;
-
-    gnome_config_push_prefix("/"PACKAGE"/");
-    gnome_config_set_int("CANVAS/LeaveTarget",
-			 ui_study->canvas_leave_target);
-    gnome_config_pop_prefix();
-    gnome_config_sync();
-
-    for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++)
-      for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
-	if (ui_study->canvas[i_view_mode][i_view] != NULL)
-	  amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-					     ui_study->canvas_leave_target,
-					     ui_study->canvas_target_empty_area);
-  }
-
-
-
-  return;
-}
 
 /* function called when the roi width has been changed */
 static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
@@ -233,16 +211,17 @@ static void target_empty_area_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->canvas_target_empty_area != new_target_empty_area) {
     ui_study->canvas_target_empty_area = new_target_empty_area;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("CANVAS/TargetEmptyArea",ui_study->canvas_target_empty_area);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
 
     for (i_view_mode=0; i_view_mode <= AMITK_STUDY_VIEW_MODE(ui_study->study); i_view_mode++) 
       for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
 	if (ui_study->canvas[i_view_mode][i_view] != NULL)
 	  amitk_canvas_set_target_properties(AMITK_CANVAS(ui_study->canvas[i_view_mode][i_view]), 
-					     ui_study->canvas_leave_target,
 					     ui_study->canvas_target_empty_area);
   }
 
@@ -260,11 +239,13 @@ static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
   if (ui_study->dont_prompt_for_save_on_exit != dont_prompt_for_save_on_exit) {
     ui_study->dont_prompt_for_save_on_exit = dont_prompt_for_save_on_exit;
 
+#ifndef AMIDE_WIN32_HACKS
     gnome_config_push_prefix("/"PACKAGE"/");
     gnome_config_set_int("MISC/DontPromptForSaveOnExit",
 			 ui_study->dont_prompt_for_save_on_exit);
     gnome_config_pop_prefix();
     gnome_config_sync();
+#endif
   }
 
 
@@ -272,6 +253,38 @@ static void save_on_exit_cb(GtkWidget * widget, gpointer data) {
   return;
 }
 
+
+
+/* changing the color table of a rendering context */
+static void color_table_cb(GtkWidget * widget, gpointer data) {
+
+  ui_study_t * ui_study=data;
+  AmitkModality modality;
+  AmitkColorTable color_table;
+  gchar * temp_string;
+
+  modality = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "modality"));
+  color_table = gtk_option_menu_get_history(GTK_OPTION_MENU(widget));
+
+  if (ui_study->default_color_table[modality] != color_table) {
+    ui_study->default_color_table[modality] = color_table;
+
+    temp_string = g_strdup_printf("DATASETS/DefaultColorTable%s", 
+				  amitk_modality_get_name(modality));
+#ifndef AMIDE_WIN32_HACKS
+    gnome_config_push_prefix("/"PACKAGE"/");
+    gnome_config_set_int(temp_string, color_table);
+    gnome_config_pop_prefix();
+    g_free(temp_string);
+
+    gnome_config_sync();
+#endif
+
+  }
+
+
+  return;
+}
 
 /* callback for the help button */
 /*
@@ -333,6 +346,7 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   GdkColormap * colormap;
   GtkWidget * notebook;
 
+  AmitkModality i_modality;
   GnomeCanvas * roi_indicator;
   GnomeCanvasItem * roi_item;
   guint table_row;
@@ -433,9 +447,9 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   roi_line_points->coords[8] = 25.0; /* x4 */
   roi_line_points->coords[9] = 25.0; /* y4 */
 
-  if (ui_study->active_ds != NULL)
+  if (AMITK_IS_DATA_SET(ui_study->active_object))
     outline_color = 
-      amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(ui_study->active_ds), TRUE);
+      amitk_color_table_outline_color(AMITK_DATA_SET_COLOR_TABLE(ui_study->active_object), TRUE);
   else
     outline_color = amitk_color_table_outline_color(AMITK_COLOR_TABLE_BW_LINEAR, TRUE);
   roi_item = gnome_canvas_item_new(gnome_canvas_root(roi_indicator), 
@@ -510,21 +524,6 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   table_row++;
 
 
-  /* do we want the target left on the canvas */
-  label = gtk_label_new("Leave target on canvas:");
-  gtk_table_attach(GTK_TABLE(packing_table), label, 
-		   0,1, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-
-
-  check_button = gtk_check_button_new();
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_button), 
-			       ui_study->canvas_leave_target);
-  gtk_table_attach(GTK_TABLE(packing_table), check_button, 
-		   1,2, table_row, table_row+1, 0, 0, X_PADDING, Y_PADDING);
-  g_signal_connect(G_OBJECT(check_button), "toggled", G_CALLBACK(leave_target_cb), ui_study);
-  table_row++;
-
-
   /* widgets to change the amount of empty space in the center of the target */
   label = gtk_label_new("Target Empty Area (pixels)");
   gtk_table_attach(GTK_TABLE(packing_table), label, 
@@ -541,6 +540,39 @@ GtkWidget * ui_preferences_dialog_create(ui_study_t * ui_study) {
   g_signal_connect(G_OBJECT(spin_button), "changed",  G_CALLBACK(target_empty_area_cb), ui_study);
   gtk_table_attach(GTK_TABLE(packing_table), spin_button, 1,2, 
 		   table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+
+  /* ----------------------
+     Default color tables 
+     ---------------------- */
+  packing_table = gtk_table_new(4,2,FALSE);
+  label = gtk_label_new("Default Color Tables");
+  table_row=0;
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), packing_table, label);
+
+  for (i_modality=0; i_modality < AMITK_MODALITY_NUM; i_modality++) {
+
+    /* color table selector */
+    temp_string = g_strdup_printf("default %s color table:", 
+				  amitk_modality_get_name(i_modality));
+    label = gtk_label_new(temp_string);
+    g_free(temp_string);
+    gtk_table_attach(GTK_TABLE(packing_table), label, 0,1, table_row,table_row+1,
+		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_widget_show(label);
+
+    menu = amitk_color_table_menu_new();
+    gtk_table_attach(GTK_TABLE(packing_table), menu, 1,2, table_row,table_row+1,
+		     X_PACKING_OPTIONS | GTK_FILL, 0, X_PADDING, Y_PADDING);
+    gtk_option_menu_set_history(GTK_OPTION_MENU(menu),
+				ui_study->default_color_table[i_modality]);
+    g_object_set_data(G_OBJECT(menu), "modality", GINT_TO_POINTER(i_modality));
+    g_signal_connect(G_OBJECT(menu), "changed", 
+		     G_CALLBACK(color_table_cb), ui_study);
+    gtk_widget_show(menu);
+
+    table_row++;
+  }
+
 
   /* ---------------------------
      Miscellaneous stuff

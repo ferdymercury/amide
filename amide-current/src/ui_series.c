@@ -24,8 +24,8 @@
 */
 
 #include "amide_config.h"
-#include <gnome.h>
-#include <libgnomecanvas/gnome-canvas-pixbuf.h>
+#include <libgnomecanvas/libgnomecanvas.h>
+#include <libgnomeui/libgnomeui.h>
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
 #include "amitk_canvas_object.h"
@@ -34,6 +34,8 @@
 #include "ui_series.h"
 #include "ui_study_menus.h"
 #include "pixmaps.h"
+
+#define N_(String) (String) /* ignore internationalization */
 
 /* external variables */
 static gchar * series_names[] = {"over Space", "over Time"};
@@ -45,7 +47,7 @@ static gchar * series_names[] = {"over Space", "over Time"};
 /* ui_series data structures */
 typedef struct ui_series_t {
   GnomeApp * app; 
-  GList ** slices;
+  GList ** slice_cache;
   GList * objects;
   AmitkDataSet * active_ds;
   GnomeCanvas * canvas;
@@ -64,6 +66,8 @@ typedef struct ui_series_t {
   gboolean quit_generation;
   gint roi_width;
   GdkLineStyle line_style;
+  gint pixbuf_width;
+  gint pixbuf_height;
 
   /* for "PLANES" series */
   amide_time_t view_duration;
@@ -155,6 +159,10 @@ static void threshold_cb(GtkWidget * widget, gpointer data) {
   if (ui_series->thresholds_dialog != NULL)
     return;
 
+  if (!amitk_objects_has_type(ui_series->objects, AMITK_OBJECT_TYPE_DATA_SET, FALSE)) {
+    g_warning("No data sets to threshold\n");
+    return;
+  }
 
   ui_common_place_cursor(UI_CURSOR_WAIT, GTK_WIDGET(ui_series->canvas));
 
@@ -216,8 +224,8 @@ static void menus_create(ui_series_t * ui_series) {
 
   /* defining the menus for the series ui interface */
   GnomeUIInfo file_menu[] = {
-    //    GNOMEUIINFO_ITEM_DATA(N_("_Export Series"),
-    //			  N_("Export the series view to an image file (JPEG/TIFF/PNG/etc.)"),
+    //    GNOMEUIINFO_ITEM_DATA("_Export Series",
+    //			  "Export the series view to an image file (JPEG/TIFF/PNG/etc.)",
     //			  ui_series_cb_export,
     //			  ui_series, NULL),
     //    GNOMEUIINFO_SEPARATOR,
@@ -256,7 +264,7 @@ void toolbar_create(ui_series_t * ui_series) {
   /* the toolbar definitions */
   GnomeUIInfo series_main_toolbar[] = {
     GNOMEUIINFO_ITEM_DATA(NULL,
-			  N_("Set the thresholds and colormaps for the data sets in the series view"),
+			  "Set the thresholds and colormaps for the data sets in the series view",
 			  threshold_cb,
 			  ui_series, icon_threshold_xpm),
     GNOMEUIINFO_SEPARATOR,
@@ -281,17 +289,17 @@ void toolbar_create(ui_series_t * ui_series) {
 
 
 
-/* destroy the ui_series slices data */
-static void ui_series_slices_free(ui_series_t * ui_series) {
+/* destroy the ui_series slice cache data */
+static void ui_series_slice_cache_free(ui_series_t * ui_series) {
 
   gint i;
 
-  if (ui_series->slices != NULL) {
+  if (ui_series->slice_cache != NULL) {
     for (i=0; i < ui_series->num_slices; i++) {
-      ui_series->slices[i] = amitk_objects_unref(ui_series->slices[i]);
+      ui_series->slice_cache[i] = amitk_objects_unref(ui_series->slice_cache[i]);
     }
-    g_free(ui_series->slices);
-    ui_series->slices = NULL;
+    g_free(ui_series->slice_cache);
+    ui_series->slice_cache = NULL;
   }
 
   return;
@@ -317,7 +325,7 @@ static ui_series_t * ui_series_unref(ui_series_t * ui_series) {
 #ifdef AMIDE_DEBUG
     g_print("freeing ui_series\n");
 #endif
-    ui_series_slices_free(ui_series);
+    ui_series_slice_cache_free(ui_series);
 
     if (ui_series->idle_handler_id != 0) {
       gtk_idle_remove(ui_series->idle_handler_id);
@@ -407,7 +415,7 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
 
   /* set any needed parameters */
   ui_series->app = app;
-  ui_series->slices = NULL;
+  ui_series->slice_cache = NULL;
   ui_series->num_slices = 0;
   ui_series->rows = 0;
   ui_series->columns = 0;
@@ -427,6 +435,8 @@ static ui_series_t * ui_series_init(GnomeApp * app) {
   ui_series->quit_generation=FALSE;
   ui_series->roi_width = 1.0;
   ui_series->line_style = 0;
+  ui_series->pixbuf_width = 0;
+  ui_series->pixbuf_height = 0;
 
   ui_series->view_duration = 1.0;
   ui_series->start_z = 0.0;
@@ -490,7 +500,6 @@ static gboolean update_immediate(gpointer data) {
   gboolean return_val = TRUE;
   GList * objects;
   GnomeCanvasItem * item;
-  gint pixbuf_width, pixbuf_height;
   rgba_t outline_color;
 
   ui_series->in_generation=TRUE;
@@ -505,44 +514,18 @@ static gboolean update_immediate(gpointer data) {
   height = 0.8*gdk_screen_height();
 
   /* allocate space for pointers to our slices if needed */
-  if (ui_series->slices == NULL) {
-    if ((ui_series->slices = g_try_new(GList *,ui_series->num_slices)) == NULL) {
+  if (ui_series->slice_cache == NULL) {
+    if ((ui_series->slice_cache = g_try_new(GList *,ui_series->num_slices)) == NULL) {
       g_warning("couldn't allocate space for pointers to amide_volume_t's");
       return_val = FALSE;
       goto exit_update;
     }
     for (i=0; i < ui_series->num_slices ; i++)
-      ui_series->slices[i] = NULL;
+      ui_series->slice_cache[i] = NULL;
   }
     
-  /* always do the first image, so that we can get the width and height
-     of an image (needed for computing the rows and columns portions
-     of the ui_series data structure */
-  temp_point = zero_point;
-  if (ui_series->type == PLANES) {
-    temp_point.z = ui_series->start_z;
-    temp_time =  ui_series->view_time;
-    temp_duration = ui_series->view_duration;
-  } else {
-    temp_time = ui_series->start_time;
-    temp_duration = ui_series->frame_durations[0];
-  }
-  view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
-  amitk_space_set_offset(AMITK_SPACE(view_volume), 
-			 amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
-  pixbuf = image_from_data_sets(&(ui_series->slices[0]),
-				ui_series->objects,
-				ui_series->active_ds,
-				temp_time+EPSILON*fabs(temp_time),
-				temp_duration-EPSILON*fabs(temp_duration),
-				ui_series->pixel_dim,
-				view_volume,
-				ui_series->fuse_type);
-  g_object_unref(view_volume);
-  pixbuf_width = gdk_pixbuf_get_width(pixbuf);
-  pixbuf_height = gdk_pixbuf_get_height(pixbuf);
-  image_width = pixbuf_width + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
-  image_height = pixbuf_height + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
+  image_width = ui_series->pixbuf_width + UI_SERIES_R_MARGIN + UI_SERIES_L_MARGIN;
+  image_height = ui_series->pixbuf_height + UI_SERIES_TOP_MARGIN + UI_SERIES_BOTTOM_MARGIN;
 
 
   /* allocate space for pointers to our canvas_images, captions, and item lists, if needed */
@@ -623,12 +606,18 @@ static gboolean update_immediate(gpointer data) {
       temp_time += temp_duration; /* duration from last time through the loop */
       temp_duration = ui_series->frame_durations[i];
     }
+
     view_volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(ui_series->volume)));
     amitk_space_set_offset(AMITK_SPACE(view_volume), 
 			   amitk_space_s2b(AMITK_SPACE(ui_series->volume), temp_point));
     
-    if (i != 0) /* we've already done image 0 */
-      pixbuf = image_from_data_sets(&(ui_series->slices[i]),
+    /* figure out the next x,y spot to put this guy */
+    y = floor((i-start_i)/ui_series->columns)*image_height;
+    x = (i-start_i-ui_series->columns*floor((i-start_i)/ui_series->columns))*image_width;
+
+    if (amitk_objects_has_type(ui_series->objects, AMITK_OBJECT_TYPE_DATA_SET, FALSE)) {
+      pixbuf = image_from_data_sets(NULL,
+				    &(ui_series->slice_cache[i]),
 				    ui_series->objects,
 				    ui_series->active_ds,
 				    temp_time+EPSILON*fabs(temp_time),
@@ -637,21 +626,17 @@ static gboolean update_immediate(gpointer data) {
 				    view_volume,
 				    ui_series->fuse_type);
     
-    /* figure out the next x,y spot to put this guy */
-    y = floor((i-start_i)/ui_series->columns)*image_height;
-    x = (i-start_i-ui_series->columns*floor((i-start_i)/ui_series->columns))*image_width;
-    
-    if (ui_series->images[i-start_i] == NULL) 
-      ui_series->images[i-start_i] = gnome_canvas_item_new(gnome_canvas_root(ui_series->canvas),
-							   gnome_canvas_pixbuf_get_type(),
-							   "pixbuf", pixbuf,
-							   "x", x+UI_SERIES_L_MARGIN,
-							   "y", y+UI_SERIES_TOP_MARGIN,
-							   NULL);
-    else
-      gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
-    g_object_unref(pixbuf);
-
+      if (ui_series->images[i-start_i] == NULL) 
+	ui_series->images[i-start_i] = gnome_canvas_item_new(gnome_canvas_root(ui_series->canvas),
+							     gnome_canvas_pixbuf_get_type(),
+							     "pixbuf", pixbuf,
+							     "x", x+UI_SERIES_L_MARGIN,
+							     "y", y+UI_SERIES_TOP_MARGIN,
+							     NULL);
+      else
+	gnome_canvas_item_set(ui_series->images[i-start_i], "pixbuf", pixbuf, NULL);
+      g_object_unref(pixbuf);
+    }
 
     /* draw the rest of the objects */
     while (ui_series->items[i-start_i] != NULL) { /* first, delete the old objects */
@@ -672,7 +657,8 @@ static gboolean update_immediate(gpointer data) {
 
 	item = amitk_canvas_object_draw(ui_series->canvas, view_volume, objects->data, NULL,
 					ui_series->pixel_dim,
-					pixbuf_width, pixbuf_height,
+					ui_series->pixbuf_width, 
+					ui_series->pixbuf_height,
 					x+UI_SERIES_L_MARGIN, y+UI_SERIES_TOP_MARGIN,
 					outline_color, ui_series->roi_width,
 					ui_series->line_style);
@@ -699,7 +685,7 @@ static gboolean update_immediate(gpointer data) {
 			      "x", x+UI_SERIES_L_MARGIN,
 			      "y", y+image_height-UI_SERIES_BOTTOM_MARGIN,
 			      "fill_color", "black", 
-			      "font", UI_SERIES_CAPTION_FONT, 
+			      "font_desc", amitk_fixed_font_desc, 
 			      NULL);
     else
       gnome_canvas_item_set(ui_series->captions[i-start_i],
@@ -744,7 +730,7 @@ static gboolean update_immediate(gpointer data) {
 }
 
 /* function that sets up the series dialog */
-void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
+void ui_series_create(AmitkStudy * study, AmitkObject * active_object,
 		      AmitkView view, AmitkVolume * canvas_view, 
 		      gint roi_width, GdkLineStyle line_style, series_t series_type) {
  
@@ -772,7 +758,15 @@ void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
   ui_series->roi_width = roi_width;
 
   ui_series->objects = amitk_object_get_selected_children(AMITK_OBJECT(study), AMITK_VIEW_MODE_SINGLE, TRUE);
-  ui_series->active_ds = g_object_ref(active_ds); /* save a pointer to which object is active */
+  if (ui_series->objects == NULL) {
+    g_warning("Need selected objects to create a series");
+    ui_series_unref(ui_series);
+    return;
+  }
+
+  if (active_object != NULL)
+    if (AMITK_IS_DATA_SET(active_object))
+      ui_series->active_ds = g_object_ref(active_object); /* save a pointer to which object is active */
 
   /* setup the callbacks for app */
   g_signal_connect(G_OBJECT(app), "realize", G_CALLBACK(ui_common_window_realize_cb), NULL);
@@ -788,6 +782,8 @@ void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
     (min_duration > AMITK_STUDY_VIEW_DURATION(study)) ?  min_duration : AMITK_STUDY_VIEW_DURATION(study);
   ui_series->pixel_dim = (1/AMITK_STUDY_ZOOM(study)) * AMITK_STUDY_VOXEL_DIM(study);
 
+  ui_series->pixbuf_width = ceil(AMITK_VOLUME_X_CORNER(ui_series->volume)/ui_series->pixel_dim);
+  ui_series->pixbuf_height = ceil(AMITK_VOLUME_Y_CORNER(ui_series->volume)/ui_series->pixel_dim);
 
   /* do some initial calculations */
   if (ui_series->type == PLANES) {
@@ -817,6 +813,12 @@ void ui_series_create(AmitkStudy * study, AmitkDataSet * active_ds,
 	total_data_set_frames += AMITK_DATA_SET_NUM_FRAMES(temp_objects->data);
       }
       temp_objects = temp_objects->next;
+    }
+
+    if (num_data_sets == 0) {
+      g_warning("Need selected data sets to generate a series of slices over time");
+      ui_series_unref(ui_series);
+      return;
     }
     
     /* get space for the array that'll take care of which frame of which data set we're looking at*/

@@ -28,7 +28,6 @@
 #ifdef AMIDE_LIBFAME_SUPPORT
 
 #include <sys/stat.h>
-#include <gnome.h>
 #include <libgnomecanvas/gnome-canvas-pixbuf.h>
 #include "amitk_threshold.h"
 #include "amitk_progress_dialog.h"
@@ -302,7 +301,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
     /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new(_("Output MPEG As"));
+    file_selection = gtk_file_selection_new("Output MPEG As");
 
     temp_string = g_strdup_printf("%s_FlyThrough_%d.mpg", 
 				  AMITK_OBJECT_NAME(tb_fly_through->study), 
@@ -717,7 +716,7 @@ void tb_fly_through(AmitkStudy * study,
 
   /* setup the canvas */
   tb_fly_through->canvas = 
-    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, FALSE, FALSE, FALSE, 0);
+    amitk_canvas_new(view, AMITK_VIEW_MODE_SINGLE, layout, 0, 0, FALSE, FALSE, 0);
   amitk_canvas_set_study(AMITK_CANVAS(tb_fly_through->canvas), tb_fly_through->study);
   g_signal_connect(G_OBJECT(tb_fly_through->canvas), "view_changed",
 		   G_CALLBACK(view_changed_cb), tb_fly_through);

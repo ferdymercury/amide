@@ -29,7 +29,8 @@
 #define __AMITK_THRESHOLD_H__
 
 /* includes we always need with this widget */
-#include <gnome.h>
+#include <gtk/gtk.h>
+#include <libgnomecanvas/libgnomecanvas.h>
 #include "amitk_data_set.h"
 
 G_BEGIN_DECLS

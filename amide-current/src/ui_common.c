@@ -25,11 +25,23 @@
 
 #include "amide_config.h"
 #include <sys/stat.h>
-#include <gnome.h>
+#include <string.h>
 #include "amide.h"
 #include "ui_common.h"
 #include "amitk_space.h"
 #include "pixmaps.h"
+#ifdef AMIDE_LIBGSL_SUPPORT
+#include <gsl/gsl_version.h>
+#endif
+#ifdef AMIDE_LIBVOLPACK_SUPPORT
+#include <volpack.h>
+#endif
+//#ifdef AMIDE_LIBMDC_SUPPORT
+//#include <medcon.h>
+//#endif
+#ifdef AMIDE_LIBFAME_SUPPORT
+#include <fame_version.h>
+#endif
 
 #define AXIS_WIDTH 120
 #define AXIS_HEADER 20
@@ -57,17 +69,6 @@ GdkCursor * ui_common_cursor[NUM_CURSORS];
 static gboolean ui_common_cursors_initialized = FALSE;
 static GList * ui_common_cursor_stack=NULL;
 
-
-
-
-/* function which gets called from a name entry dialog */
-void ui_common_entry_name_cb(gchar * entry_string, gpointer data) {
-  gchar ** p_roi_name = data;
-  *p_roi_name = entry_string;
-  return;
-}
-
-
 gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
 
   const gchar * save_filename;
@@ -81,6 +82,7 @@ gchar * ui_common_file_selection_get_name(GtkWidget * file_selection) {
   if ((strcmp(save_filename, ".") == 0) ||
       (strcmp(save_filename, "..") == 0) ||
       (strcmp(save_filename, "") == 0) ||
+      (strcmp(save_filename, "\\") == 0) ||
       (strcmp(save_filename, "/") == 0)) {
     g_warning("Inappropriate filename: %s",save_filename);
     return NULL;
@@ -145,16 +147,17 @@ void ui_common_about_cb(GtkWidget * button, gpointer data) {
 		       "libecat: CTI File library by Merence Sibomona\n",
 #endif
 #ifdef AMIDE_LIBGSL_SUPPORT
-		       "libgsl: GNU Scientific Library by the GSL Team\n",
+		       "libgsl: GNU Scientific Library by the GSL Team (version ",GSL_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBMDC_SUPPORT
+		       //		       "libmdc: Medical Imaging File library by Erik Nolf (version ",MDC_VERSION,")\n",
 		       "libmdc: Medical Imaging File library by Erik Nolf\n",
 #endif
 #ifdef AMIDE_LIBVOLPACK_SUPPORT
-		       "libvolpack: Volume Rendering library by Philippe Lacroute\n",
+		       "libvolpack: Volume Rendering library by Philippe Lacroute (version ",VP_VERSION,")\n",
 #endif
 #ifdef AMIDE_LIBFAME_SUPPORT
-		       "libfame: Fast Assembly Mpeg Encoding library by the FAME Team\n",
+		       "libfame: Fast Assembly Mpeg Encoding library by the FAME Team (version ", LIBFAME_VERSION, ")\n",
 #endif
 		       NULL);
 
@@ -181,6 +184,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			      AmitkView view, AmitkLayout layout, 
 			      gint axis_width, gint axis_height) {
 
+#ifndef AMIDE_OSX_HACKS 
 
   const gchar * x_axis_label;
   gdouble x_axis_label_x_location;
@@ -299,7 +303,8 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
 			"anchor", GTK_ANCHOR_NORTH, "text", view_names[view],
 			"x", (gdouble) (column+0.5)*axis_width,
 			"y", (gdouble) (row+0.5)*axis_height, 
-			"fill_color", "black", NULL);
+			"fill_color", "black", 
+			"font_desc", amitk_fixed_font_desc, NULL);
 
   /* the x axis */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
@@ -316,7 +321,7 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_text_get_type(),
 			"anchor", x_axis_label_anchor,"text", x_axis_label,
 			"x", x_axis_label_x_location, "y", x_axis_label_y_location,
-			"fill_color", "black", NULL); 
+			"fill_color", "black", "font_desc", amitk_fixed_font_desc, NULL); 
 
   /* the y axis */
   gnome_canvas_item_new(gnome_canvas_root(canvas), gnome_canvas_line_get_type(),
@@ -332,7 +337,9 @@ void ui_common_draw_view_axis(GnomeCanvas * canvas, gint row, gint column,
   gnome_canvas_item_new(gnome_canvas_root(canvas),gnome_canvas_text_get_type(),
 			"anchor", y_axis_label_anchor, "text", y_axis_label,
 			"x", y_axis_label_x_location,"y", y_axis_label_y_location,
-			"fill_color", "black", NULL); 
+			"fill_color", "black", "font_desc", amitk_fixed_font_desc, NULL); 
+
+#endif
 
   return;
 }
@@ -374,23 +381,44 @@ GtkWidget * ui_common_create_view_axis_indicator(AmitkLayout layout) {
 }
 
 
+
+/* This data is in X bitmap format, and can be created with the 'bitmap' utility. */
+#define small_dot_width 3
+#define small_dot_height 3
+static unsigned char small_dot_bits[] = {0x00, 0x02, 0x00};
+ 
+
 /* load in the cursors */
 static void ui_common_cursor_init(void) {
 
+  GdkPixmap *source, *mask;
+  GdkColor fg = { 0, 0, 0, 0 }; /* black. */
+  GdkColor bg = { 0, 0, 0, 0 }; /* black */
+  GdkCursor * small_dot;
+ 
+  source = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
+  mask = gdk_bitmap_create_from_data(NULL, small_dot_bits, small_dot_width, small_dot_height);
+  small_dot = gdk_cursor_new_from_pixmap (source, mask, &fg, &bg, 2,2);
+  gdk_pixmap_unref (source);
+  gdk_pixmap_unref (mask);
+                                     
   /* load in the cursors */
+
   ui_common_cursor[UI_CURSOR_DEFAULT] = NULL;
-  ui_common_cursor[UI_CURSOR_NEW_ROI_MODE] =  gdk_cursor_new(UI_COMMON_NEW_ROI_MODE_CURSOR);
-  ui_common_cursor[UI_CURSOR_NEW_ROI_MOTION] = gdk_cursor_new(UI_COMMON_NEW_ROI_MOTION_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_MODE] = gdk_cursor_new(UI_COMMON_OLD_ROI_MODE_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_RESIZE] = gdk_cursor_new(UI_COMMON_OLD_ROI_RESIZE_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_ROTATE] = gdk_cursor_new(UI_COMMON_OLD_ROI_ROTATE_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_SHIFT] = gdk_cursor_new(UI_COMMON_OLD_ROI_SHIFT_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_ISOCONTOUR] = gdk_cursor_new(UI_COMMON_OLD_ROI_ISOCONTOUR_CURSOR);
-  ui_common_cursor[UI_CURSOR_OLD_ROI_ERASE] = gdk_cursor_new(UI_COMMON_OLD_ROI_ERASE_CURSOR);
+  ui_common_cursor[UI_CURSOR_ROI_MODE] =  gdk_cursor_new(UI_COMMON_ROI_MODE_CURSOR);
+  ui_common_cursor[UI_CURSOR_ROI_RESIZE] = small_dot;
+  ui_common_cursor[UI_CURSOR_ROI_ROTATE] = small_dot;
+  ui_common_cursor[UI_CURSOR_OBJECT_SHIFT] = small_dot;
+  ui_common_cursor[UI_CURSOR_ROI_ISOCONTOUR] = gdk_cursor_new(UI_COMMON_ROI_ISOCONTOUR_CURSOR);
+  ui_common_cursor[UI_CURSOR_ROI_ERASE] = gdk_cursor_new(UI_COMMON_ROI_ERASE_CURSOR);
   ui_common_cursor[UI_CURSOR_DATA_SET_MODE] = gdk_cursor_new(UI_COMMON_DATA_SET_MODE_CURSOR);
   ui_common_cursor[UI_CURSOR_FIDUCIAL_MARK_MODE] = gdk_cursor_new(UI_COMMON_FIDUCIAL_MARK_MODE_CURSOR);
+  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_XY] = gdk_cursor_new(UI_COMMON_SHIFT_CURSOR);
+  ui_common_cursor[UI_CURSOR_RENDERING_ROTATE_Z] = gdk_cursor_new(UI_COMMON_ROTATE_CURSOR);
   ui_common_cursor[UI_CURSOR_WAIT] = gdk_cursor_new(UI_COMMON_WAIT_CURSOR);
+  
 
+ 
   ui_common_cursors_initialized = TRUE;
   return;
 }
@@ -478,6 +506,91 @@ void ui_common_remove_cursor(ui_common_cursor_t which_cursor, GtkWidget * widget
   gdk_window_set_cursor(gtk_widget_get_parent_window(widget), cursor);
 
   return;
+}
+
+
+
+
+static void entry_activate(GtkEntry * entry, gpointer data) {
+
+  GtkWidget * dialog = data;
+  gchar ** return_str_ptr;
+
+  return_str_ptr = g_object_get_data(G_OBJECT(dialog), "return_str_ptr");
+  if(*return_str_ptr != NULL) g_free(*return_str_ptr);
+  *return_str_ptr= g_strdup(gtk_entry_get_text(entry));
+
+  gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_OK,
+				    strlen(*return_str_ptr));
+  return;
+}
+
+static void init_response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
+  
+  gint return_val;
+
+  switch(response_id) {
+  case GTK_RESPONSE_OK:
+  case GTK_RESPONSE_CLOSE:
+    g_signal_emit_by_name(G_OBJECT(dialog), "delete_event", NULL, &return_val);
+    if (!return_val) gtk_widget_destroy(GTK_WIDGET(dialog));
+    break;
+
+  default:
+    break;
+  }
+
+  return;
+}
+
+
+/* function to setup a dialog to allow us to choice options for rendering */
+GtkWidget * ui_common_entry_dialog(GtkWindow * parent, gchar * prompt, gchar **return_str_ptr) {
+  
+  GtkWidget * dialog;
+  GtkWidget * table;
+  guint table_row;
+  GtkWidget * entry;
+  GtkWidget * label;
+  GtkWidget * image;
+  
+
+  dialog = gtk_dialog_new_with_buttons ("Request Dialog",  parent,
+					GTK_DIALOG_DESTROY_WITH_PARENT,
+					GTK_STOCK_CANCEL, GTK_RESPONSE_CLOSE, 
+					GTK_STOCK_OK, GTK_RESPONSE_OK,
+					NULL);
+  g_object_set_data(G_OBJECT(dialog), "return_str_ptr", return_str_ptr);
+  g_signal_connect(G_OBJECT(dialog), "response", G_CALLBACK(init_response_cb), NULL);
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
+  gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog), GTK_RESPONSE_OK,FALSE);
+
+
+  table = gtk_table_new(3,2,FALSE);
+  table_row=0;
+  gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), table);
+
+
+  image = gtk_image_new_from_stock(GTK_STOCK_DIALOG_QUESTION,GTK_ICON_SIZE_DIALOG);
+  gtk_table_attach(GTK_TABLE(table), image, 
+		   0,1, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+
+  label = gtk_label_new(prompt);
+  gtk_table_attach(GTK_TABLE(table), label, 
+		   1,2, table_row, table_row+1, X_PACKING_OPTIONS, 0, X_PADDING, Y_PADDING);
+  table_row++;
+
+
+  entry = gtk_entry_new();
+  gtk_table_attach(GTK_TABLE(table), entry, 
+		   1,2, table_row, table_row+1, GTK_FILL, 0, X_PADDING, Y_PADDING);
+  g_signal_connect(G_OBJECT(entry), "changed", G_CALLBACK(entry_activate), dialog);
+  table_row++;
+
+
+  gtk_widget_show_all(dialog);
+
+  return dialog;
 }
 
 

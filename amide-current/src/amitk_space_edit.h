@@ -28,7 +28,7 @@
 #define __AMITK_SPACE_EDIT_H__
 
 /* includes we always need with this widget */
-#include <gnome.h>
+#include <gtk/gtk.h>
 #include "amitk_object.h"
 
 G_BEGIN_DECLS

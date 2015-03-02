@@ -33,7 +33,7 @@
 #define __AMITK_DIRSEL_H__
 
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 
 
 G_BEGIN_DECLS
@@ -51,8 +51,10 @@ typedef struct _AmitkDirSelectionClass  AmitkDirSelectionClass;
 
 struct _AmitkDirSelection
 {
+  /*< private >*/
   GtkDialog parent_instance;
 
+  /*< public >*/
   GtkWidget *dir_list;
   GtkWidget *file_list;
   GtkWidget *selection_entry;

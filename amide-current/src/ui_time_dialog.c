@@ -413,7 +413,7 @@ void ui_time_dialog_set_times(GtkWidget * dialog) {
 
   selected_sets = amitk_object_get_selected_children_of_type(AMITK_OBJECT(td->study), 
 							     AMITK_OBJECT_TYPE_DATA_SET, 
-							     AMITK_SELECTION_ALL, TRUE); 
+							     AMITK_SELECTION_ANY, TRUE); 
   temp_sets = selected_sets;
   while (temp_sets != NULL) {
     add_data_set(dialog, temp_sets->data);

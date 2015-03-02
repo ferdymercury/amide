@@ -73,8 +73,8 @@ void amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_filter_median_linear(c
 									       AmitkDataSet * filtered_ds,
 									       const gint kernel_size);
 AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(AmitkDataSet * data_set,
-									      const amide_time_t requested_start,
-									      const amide_time_t requested_duration,
+									      const amide_time_t start_time,
+									      const amide_time_t duration,
 									      const amide_real_t pixel_dim,
 									      const AmitkVolume * slice_volume,
 									      const gboolean need_calc_max_min);

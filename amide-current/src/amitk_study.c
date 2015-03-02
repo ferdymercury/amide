@@ -59,11 +59,15 @@ gchar * view_mode_explanations[] = {
 
 
 enum {
-  STUDY_CHANGED,
   THICKNESS_CHANGED,
   TIME_CHANGED,
   CANVAS_VISIBLE_CHANGED,
   VIEW_MODE_CHANGED,
+  CANVAS_TARGET_CHANGED,
+  ZOOM_CHANGED,
+  VOXEL_DIM_CHANGED,
+  FUSE_TYPE_CHANGED,
+  VIEW_CENTER_CHANGED,
   LAST_SIGNAL
 };
 
@@ -132,13 +136,6 @@ static void study_class_init (AmitkStudyClass * class) {
 
   gobject_class->finalize = study_finalize;
 
-  study_signals[STUDY_CHANGED] =
-    g_signal_new ("study_changed",
-		  G_TYPE_FROM_CLASS(class),
-		  G_SIGNAL_RUN_LAST,
-		  G_STRUCT_OFFSET(AmitkStudyClass, study_changed),
-		  NULL, NULL, amitk_marshal_NONE__NONE,
-		  G_TYPE_NONE,0);
   study_signals[THICKNESS_CHANGED] =
     g_signal_new ("thickness_changed",
 		  G_TYPE_FROM_CLASS(class),
@@ -167,7 +164,41 @@ static void study_class_init (AmitkStudyClass * class) {
 		  G_STRUCT_OFFSET(AmitkStudyClass, view_mode_changed),
 		  NULL, NULL, amitk_marshal_NONE__NONE,
 		  G_TYPE_NONE,0);
-
+  study_signals[CANVAS_TARGET_CHANGED] =
+    g_signal_new ("canvas_target_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, canvas_target_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[ZOOM_CHANGED] =
+    g_signal_new ("zoom_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, zoom_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[VOXEL_DIM_CHANGED] =
+    g_signal_new ("voxel_dim_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, voxel_dim_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[FUSE_TYPE_CHANGED] =
+    g_signal_new ("fuse_type_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, fuse_type_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
+  study_signals[VIEW_CENTER_CHANGED] =
+    g_signal_new ("view_center_changed",
+		  G_TYPE_FROM_CLASS(class),
+		  G_SIGNAL_RUN_LAST,
+		  G_STRUCT_OFFSET(AmitkStudyClass, view_center_changed),
+		  NULL, NULL, amitk_marshal_NONE__NONE,
+		  G_TYPE_NONE,0);
 }
 
 
@@ -181,14 +212,15 @@ static void study_init (AmitkStudy * study) {
   /* view parameters */
   study->view_center = zero_point;
   study->view_thickness = 1.0;
-  study->view_start_time = SMALL_TIME;
-  study->view_duration = 1.0-SMALL_TIME;
+  study->view_start_time = 0.0;
+  study->view_duration = 1.0;
   study->zoom = 1.0;
   study->fuse_type = AMITK_FUSE_TYPE_BLEND;
   study->view_mode = AMITK_VIEW_MODE_SINGLE;
   for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
     study->canvas_visible[i_view] = TRUE;
   study->voxel_dim = 1.0;
+  study->canvas_target = FALSE;
 
   /* set the creation date as today */
   study->creation_date = NULL;
@@ -248,6 +280,7 @@ static void study_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   dest_study->zoom = AMITK_STUDY_ZOOM(src_object);
   dest_study->fuse_type = AMITK_STUDY_FUSE_TYPE(src_object);
   dest_study->view_mode = AMITK_STUDY_VIEW_MODE(src_object);
+  dest_study->canvas_target = AMITK_STUDY_CANVAS_TARGET(src_object);
   for (i_view=0; i_view<AMITK_VIEW_NUM; i_view++)
     dest_study->canvas_visible[i_view] = AMITK_STUDY_CANVAS_VISIBLE(src_object, i_view);
 
@@ -274,16 +307,15 @@ static void study_write_xml(const AmitkObject * object, xmlNodePtr nodes) {
   xml_save_real(nodes, "view_thickness", AMITK_STUDY_VIEW_THICKNESS(study));
   xml_save_time(nodes, "view_start_time", AMITK_STUDY_VIEW_START_TIME(study));
   xml_save_time(nodes, "view_duration", AMITK_STUDY_VIEW_DURATION(study));
-  xml_save_string(nodes, "fuse_type",
-		  amitk_fuse_type_get_name(AMITK_STUDY_FUSE_TYPE(study)));
-  xml_save_string(nodes, "view_mode",
-		  amitk_view_mode_get_name(AMITK_STUDY_VIEW_MODE(study)));
+  xml_save_real(nodes, "zoom", AMITK_STUDY_ZOOM(study));
+  xml_save_string(nodes, "fuse_type", amitk_fuse_type_get_name(AMITK_STUDY_FUSE_TYPE(study)));
+  xml_save_string(nodes, "view_mode", amitk_view_mode_get_name(AMITK_STUDY_VIEW_MODE(study)));
   for (i_view = 0; i_view < AMITK_VIEW_NUM; i_view++) {
     temp_string = g_strdup_printf("%s_canvas_visible", amitk_view_get_name(i_view));
     xml_save_boolean(nodes, temp_string, AMITK_STUDY_CANVAS_VISIBLE(study, i_view));
     g_free(temp_string);
   }
-  xml_save_real(nodes, "zoom", AMITK_STUDY_ZOOM(study));
+  xml_save_boolean(nodes, "canvas_target", AMITK_STUDY_CANVAS_TARGET(study));
 
   return;
 }
@@ -312,6 +344,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
   amitk_study_set_view_start_time(study, xml_get_time(nodes, "view_start_time", &error_buf));
   amitk_study_set_view_duration(study, xml_get_time(nodes, "view_duration", &error_buf));
   amitk_study_set_zoom(study, xml_get_real(nodes, "zoom", &error_buf));
+  amitk_study_set_canvas_target(study, xml_get_boolean(nodes, "canvas_target", &error_buf));
  
   /* sanity check */
   if (AMITK_STUDY_ZOOM(study) < EPSILON) {
@@ -341,6 +374,7 @@ static gchar * study_read_xml(AmitkObject * object, xmlNodePtr nodes, gchar * er
     study->canvas_visible[i_view] = xml_get_boolean(nodes, temp_string, &error_buf);
     g_free(temp_string);
   }
+  
 
 
   /* ---- legacy cruft ---- */
@@ -365,7 +399,7 @@ static void study_recalc_voxel_dim(AmitkStudy * study) {
   voxel_dim = amitk_data_sets_get_max_min_voxel_size(AMITK_OBJECT_CHILDREN(study));
   if (!REAL_EQUAL(voxel_dim,AMITK_STUDY_VOXEL_DIM(study))) {
     study->voxel_dim = voxel_dim;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[VOXEL_DIM_CHANGED], 0);
   }
 
   return;
@@ -464,7 +498,7 @@ void amitk_study_set_view_center(AmitkStudy * study, const AmitkPoint new_center
 
   if (!POINT_EQUAL(study->view_center, temp)) {
     study->view_center = temp;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[VIEW_CENTER_CHANGED], 0);
   }
 
   return;
@@ -489,7 +523,6 @@ void amitk_study_set_view_thickness(AmitkStudy * study, const amide_real_t new_t
 
   if (!REAL_EQUAL(study->view_thickness, temp)) {
     study->view_thickness = temp;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
     g_signal_emit(G_OBJECT(study), study_signals[THICKNESS_CHANGED], 0);
   }
 
@@ -502,7 +535,6 @@ void amitk_study_set_view_start_time (AmitkStudy * study, const amide_time_t new
 
   if (!REAL_EQUAL(study->view_start_time, new_start)) {
     study->view_start_time = new_start;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
     g_signal_emit(G_OBJECT(study), study_signals[TIME_CHANGED], 0);
   }
 
@@ -515,7 +547,6 @@ void amitk_study_set_view_duration (AmitkStudy * study, const amide_time_t new_d
 
   if (!REAL_EQUAL(study->view_duration, new_duration)) {
     study->view_duration = new_duration;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
     g_signal_emit(G_OBJECT(study), study_signals[TIME_CHANGED], 0);
   }
 
@@ -529,7 +560,7 @@ void amitk_study_set_fuse_type(AmitkStudy * study, const AmitkFuseType new_fuse_
 
   if (study->fuse_type != new_fuse_type) {
     study->fuse_type = new_fuse_type;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[FUSE_TYPE_CHANGED], 0);
   }
 
   return;
@@ -541,7 +572,6 @@ void amitk_study_set_view_mode(AmitkStudy * study, const AmitkViewMode new_view_
 
   if (study->view_mode != new_view_mode) {
     study->view_mode = new_view_mode;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
     g_signal_emit(G_OBJECT(study), study_signals[VIEW_MODE_CHANGED], 0);
   }
 
@@ -581,7 +611,20 @@ void amitk_study_set_zoom(AmitkStudy * study, const amide_real_t new_zoom) {
 
   if (!REAL_EQUAL(study->zoom, new_zoom)) {
     study->zoom = new_zoom;
-    g_signal_emit(G_OBJECT(study), study_signals[STUDY_CHANGED], 0);
+    g_signal_emit(G_OBJECT(study), study_signals[ZOOM_CHANGED], 0);
+  }
+
+  return;
+
+}
+
+void amitk_study_set_canvas_target(AmitkStudy * study, const gboolean always_on) {
+
+  g_return_if_fail(AMITK_IS_STUDY(study));
+  
+  if (AMITK_STUDY_CANVAS_TARGET(study) != always_on) {
+    study->canvas_target = always_on;
+    g_signal_emit(G_OBJECT(study), study_signals[CANVAS_TARGET_CHANGED], 0);
   }
 
   return;

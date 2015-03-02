@@ -201,6 +201,7 @@ struct _AmitkDataSet
   amide_data_t * frame_min;
   AmitkRawData * current_scaling; /* external_scaling * internal_scaling[] */
 
+  GList * slice_cache;
   AmitkDataSet * slice_parent; /* only used by derived data sets */
 
 };
@@ -350,13 +351,15 @@ amide_time_t   amitk_data_sets_get_min_frame_duration(GList * objects);
 amide_real_t   amitk_data_sets_get_min_voxel_size    (GList * objects);
 amide_real_t   amitk_data_sets_get_max_min_voxel_size(GList * objects);
 GList *        amitk_data_sets_get_slices            (GList * objects,
+						      GList ** pslice_cache,
 						      const amide_time_t start,
 						      const amide_time_t duration,
 						      const amide_real_t pixel_dim,
-						      const AmitkVolume * view_volume,
-						      const gboolean need_calc_max_min);
+						      const AmitkVolume * view_volume);
 AmitkDataSet * amitk_data_sets_find_with_slice_parent(GList * slices, 
 						      const AmitkDataSet * slice_parent);
+GList *        amitk_data_sets_remove_with_slice_parent(GList * slices,
+							const AmitkDataSet * slice_parent);
 
 
 
@@ -394,6 +397,7 @@ amide_data_t amitk_cylinder_unit_convert_from     (const amide_data_t cylinder_f
 
 
 /* external variables */
+extern AmitkColorTable amitk_modality_default_color_table[];
 extern gchar * amitk_interpolation_explanations[];
 extern gchar * amitk_import_menu_names[];
 extern gchar * amitk_import_menu_explanations[];

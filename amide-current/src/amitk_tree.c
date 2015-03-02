@@ -30,6 +30,7 @@
 #include "amitk_study.h"
 #include "amitk_marshal.h"
 #include "image.h"
+#include <gdk/gdkkeysyms.h>
 
 enum {
   HELP_EVENT,
@@ -60,6 +61,7 @@ typedef struct {
 static void tree_class_init (AmitkTreeClass *klass);
 static void tree_init (AmitkTree *tree);
 static void tree_destroy (GtkObject *object);
+static void tree_set_view_mode(AmitkTree * tree, AmitkViewMode view_mode);
 static void tree_add_roi_cb(GtkWidget * widget, gpointer data);
 static void tree_popup_roi_menu(AmitkTree * tree, AmitkObject * parent_object, 
 				guint button, guint32 activate_time);
@@ -223,6 +225,27 @@ static void tree_destroy (GtkObject * object) {
 
 
 
+static void tree_set_view_mode(AmitkTree * tree, AmitkViewMode view_mode) {
+
+  AmitkViewMode i_view_mode;
+
+  /* remove all linked columns, we'll add them back below if needed */
+  for (i_view_mode = 0; i_view_mode <= tree->prev_view_mode; i_view_mode++) {
+    g_object_ref(tree->select_column[i_view_mode]); /* view_remove_column removes a reference */
+    gtk_tree_view_remove_column (GTK_TREE_VIEW (tree), tree->select_column[i_view_mode]);
+  }
+  tree->prev_view_mode = view_mode;
+
+  /* insert_column doesn't add a reference */
+  for (i_view_mode = 0; i_view_mode <= view_mode; i_view_mode++) 
+    gtk_tree_view_insert_column (GTK_TREE_VIEW (tree), tree->select_column[i_view_mode],
+				 COLUMN_VISIBLE_SINGLE+i_view_mode);
+
+  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), view_mode != AMITK_VIEW_MODE_SINGLE);
+
+  return;
+}
+
 /* callback function for adding an roi */
 static void tree_add_roi_cb(GtkWidget * widget, gpointer data) {
 
@@ -360,7 +383,7 @@ static gboolean tree_button_release_event (GtkWidget      *tree,
 	
       case 2: /* middle button */
 	make_active = TRUE;
-	if (!visible_at_all)
+	if ((!visible_at_all) && (!AMITK_IS_STUDY(object)))
 	  select = TRUE;
 	break;
 	
@@ -557,30 +580,17 @@ static void tree_row_deleted_cb(GtkTreeModel *treemodel,
   return;
 }
 
+
+
 static void tree_study_view_mode_cb(AmitkStudy * study, gpointer data) {
 
   AmitkTree * tree = data;
-  AmitkViewMode i_view_mode;
 
   g_return_if_fail(AMITK_IS_TREE(tree));
   g_return_if_fail(AMITK_IS_STUDY(study));
 
-  /* remove all linked columns, we'll add them back below if needed */
-  for (i_view_mode = 0; i_view_mode <= tree->prev_view_mode; i_view_mode++) {
-    g_object_ref(tree->select_column[i_view_mode]); /* view_remove_column removes a reference */
-    gtk_tree_view_remove_column (GTK_TREE_VIEW (tree), tree->select_column[i_view_mode]);
-  }
-  tree->prev_view_mode = AMITK_STUDY_VIEW_MODE(study);
-
-  /* insert_column doesn't add a reference */
-  for (i_view_mode = 0; i_view_mode <= AMITK_STUDY_VIEW_MODE(study); i_view_mode++) 
-    gtk_tree_view_insert_column (GTK_TREE_VIEW (tree), tree->select_column[i_view_mode],
-				 COLUMN_VISIBLE_SINGLE+i_view_mode);
-
-  gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree), 
-				    AMITK_STUDY_VIEW_MODE(study) != AMITK_VIEW_MODE_SINGLE);
-
-
+  tree_set_view_mode(tree, AMITK_STUDY_VIEW_MODE(study));
+  return;
 }
 
 static void tree_object_update_cb(AmitkObject * object, gpointer data) {
@@ -607,10 +617,10 @@ static void tree_object_update_cb(AmitkObject * object, gpointer data) {
   }
 
   if (tree->active_object == object) {
-    if (!amitk_object_get_selected(object, AMITK_SELECTION_ALL)) /* we're unselecting the active object */
+    if (!amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we're unselecting the active object */
       g_signal_emit(G_OBJECT(tree), tree_signals[ACTIVATE_OBJECT], 0,NULL);
   } else if (tree->active_object == NULL) { /* currently no active object */
-    if (amitk_object_get_selected(object, AMITK_SELECTION_ALL)) /* we've selected something */
+    if (amitk_object_get_selected(object, AMITK_SELECTION_ANY)) /* we've selected something */
       g_signal_emit(G_OBJECT(tree), tree_signals[ACTIVATE_OBJECT], 0,object);
   }
 
@@ -695,6 +705,7 @@ static void tree_add_object(AmitkTree * tree, AmitkObject * object) {
       tree_remove_object(tree, AMITK_OBJECT(tree->study));
     }
     tree->study = AMITK_STUDY(object);
+    tree_set_view_mode(tree, AMITK_STUDY_VIEW_MODE(object));
   }
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
 

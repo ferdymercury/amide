@@ -619,7 +619,7 @@ void amitk_object_set_name(AmitkObject * object, const gchar * new_name) {
   return;
 }
 
-/* note, AMITK_SELECTION_ALL means all selections */
+/* note, AMITK_SELECTION_ANY means any selections */
 gboolean amitk_object_get_selected(const AmitkObject * object, const AmitkSelection which_selection) {
 
   AmitkSelection i_selection;
@@ -627,10 +627,10 @@ gboolean amitk_object_get_selected(const AmitkObject * object, const AmitkSelect
 
   g_return_val_if_fail(AMITK_IS_OBJECT(object), FALSE);
   g_return_val_if_fail(which_selection >= 0, FALSE);
-  g_return_val_if_fail(which_selection <= AMITK_SELECTION_ALL, FALSE);
+  g_return_val_if_fail(which_selection <= AMITK_SELECTION_ANY, FALSE);
   g_return_val_if_fail(which_selection != AMITK_SELECTION_NUM, FALSE);
 
-  if (which_selection == AMITK_SELECTION_ALL) {
+  if (which_selection == AMITK_SELECTION_ANY) {
     for (i_selection=0; i_selection < AMITK_SELECTION_NUM; i_selection++)
       return_val = object->selected[i_selection] || return_val;
   } else
@@ -639,6 +639,7 @@ gboolean amitk_object_get_selected(const AmitkObject * object, const AmitkSelect
   return return_val;
 }
 
+/* note, AMITK_SELECTION_ALL means all selections */
 void amitk_object_set_selected(AmitkObject * object, const gboolean selection, const AmitkSelection which_selection) {
 
   AmitkSelection i_selection;
@@ -647,8 +648,12 @@ void amitk_object_set_selected(AmitkObject * object, const gboolean selection, c
 
   g_return_if_fail(AMITK_IS_OBJECT(object));
   g_return_if_fail(which_selection >= 0);
-  g_return_if_fail(which_selection <= AMITK_SELECTION_ALL);
-  g_return_if_fail(which_selection != AMITK_SELECTION_NUM);
+  g_return_if_fail((which_selection < AMITK_SELECTION_NUM) || (which_selection == AMITK_SELECTION_ALL));
+
+  if (object->selected[which_selection] != selection) {
+    object->selected[which_selection] = selection;
+    changed = TRUE;
+  }
 
   if (which_selection == AMITK_SELECTION_ALL) {
     for (i_selection=0; i_selection < AMITK_SELECTION_NUM; i_selection++) {
@@ -658,17 +663,12 @@ void amitk_object_set_selected(AmitkObject * object, const gboolean selection, c
       }
     }
   } else {
-    if (object->selected[which_selection] != selection) {
-      object->selected[which_selection] = selection;
-      changed = TRUE;
-    }
-  }
-
-  if (selection == FALSE) { /* propagate unselect to children */
-    children = AMITK_OBJECT_CHILDREN(object);
-    while (children != NULL) {
-      amitk_object_set_selected(children->data, selection, which_selection);
-      children = children->next;
+    if (selection == FALSE) { /* propagate unselect to children */
+      children = AMITK_OBJECT_CHILDREN(object);
+      while (children != NULL) {
+	amitk_object_set_selected(children->data, selection, which_selection);
+	children = children->next;
+      }
     }
   }
 
@@ -737,9 +737,6 @@ gboolean amitk_object_remove_child(AmitkObject * object, AmitkObject * child) {
   /* check if it's not in the list */
   g_return_val_if_fail(g_list_find(object->children, child) != NULL, FALSE);
 
-  //  child->parent = NULL;
-  //  object->children = g_list_remove(object->children, child);
-  //  g_object_unref(child);
   g_signal_emit(G_OBJECT(object), object_signals[OBJECT_REMOVE_CHILD], 0, child);
 
   return TRUE;
@@ -786,7 +783,7 @@ gboolean amitk_object_compare_object_type(AmitkObject * object, AmitkObjectType 
   }
 }
 
-/* return a referenced pointer 
+/* returns an unreferenced pointer 
    goes up the tree from the given object, finding the first parent of type "type"
    returns NULL if no appropriate parent found */
 AmitkObject * amitk_object_get_parent_of_type(AmitkObject * object,
@@ -806,7 +803,7 @@ AmitkObject * amitk_object_get_parent_of_type(AmitkObject * object,
 
 /* returns a referenced list of children of the given object which
    are of the given type.  Will recurse if specified */
-GList * amitk_object_get_children_of_type(AmitkObject * object, 
+GList * amitk_object_get_children_of_type(AmitkObject * object,  
 					  const AmitkObjectType type,
 					  const gboolean recurse) {
 
@@ -1018,6 +1015,44 @@ gint amitk_objects_count_pairs_by_name(GList * objects1, GList * objects2) {
   }
 
   return count;
+}
+
+/* returns a referenced list of objects of type "type" from the given list, will recurse if specified */
+GList * amitk_objects_get_of_type(GList * objects, const AmitkObjectType type, const gboolean recurse) {
+
+  GList * return_objects;
+  GList * children_objects;
+
+  if (objects == NULL)
+    return NULL;
+  
+  /* recurse first */
+  return_objects = amitk_objects_get_of_type(objects->next, type, recurse);
+
+  g_return_val_if_fail(AMITK_IS_OBJECT(objects->data), return_objects);
+
+  if (amitk_object_compare_object_type(objects->data, type))
+    return_objects = g_list_append(return_objects, g_object_ref(objects->data));
+
+  if (recurse) {
+    children_objects = amitk_objects_get_of_type(AMITK_OBJECT_CHILDREN(objects->data), type, recurse);
+    return_objects = g_list_concat(return_objects, children_objects);
+  }
+
+  return return_objects;
+}
+
+gboolean amitk_objects_has_type(GList * objects, const AmitkObjectType type, const gboolean recurse) {
+
+  GList * return_objects;
+
+  return_objects = amitk_objects_get_of_type(objects, type, recurse);
+
+  if (return_objects == NULL)
+    return FALSE;
+
+  amitk_objects_unref(return_objects);
+  return TRUE;
 }
 
 void amitk_objects_write_xml(GList * objects, xmlNodePtr node_list) {

@@ -706,8 +706,9 @@ gchar * amitk_raw_data_write_xml(AmitkRawData * raw_data, const gchar * name) {
 
   /* now to save the raw data */
 
-  /* write it on out */
-  if ((file_pointer = fopen(raw_filename, "w")) == NULL) {
+  /* write it on out.  */
+  /* Note, "wb" is same as "w" on Unix, but not in Windows */
+  if ((file_pointer = fopen(raw_filename, "wb")) == NULL) {
     g_warning("couldn't save raw data file: %s",raw_filename);
     g_free(xml_filename);
     g_free(raw_filename);

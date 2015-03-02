@@ -52,6 +52,7 @@ G_BEGIN_DECLS
 #define AMITK_STUDY_FUSE_TYPE(stu)                (AMITK_STUDY(stu)->fuse_type)
 #define AMITK_STUDY_VIEW_MODE(stu)                (AMITK_STUDY(stu)->view_mode)
 #define AMITK_STUDY_CANVAS_VISIBLE(stu, canvas)   (AMITK_STUDY(stu)->canvas_visible[canvas])
+#define AMITK_STUDY_CANVAS_TARGET(stu)            (AMITK_STUDY(stu)->canvas_target)
 
 //#define AMIDE_STUDY_FILENAME "study.xml"
 #define AMIDE_FILE_VERSION "2.0"
@@ -90,6 +91,7 @@ struct _AmitkStudy
   AmitkFuseType fuse_type;
   AmitkViewMode view_mode;
   gboolean canvas_visible[AMITK_VIEW_NUM];
+  gboolean canvas_target;
 
   /* stuff calculated when file is loaded and stored */
   amide_real_t voxel_dim; /* prefered voxel/pixel dim, canvas wants this info */
@@ -107,6 +109,11 @@ struct _AmitkStudyClass
   void (* time_changed) (AmitkStudy * study);
   void (* canvas_visible_changed) (AmitkStudy * study);
   void (* view_mode_changed) (AmitkStudy * study);
+  void (* canvas_target_changed) (AmitkStudy * study);
+  void (* zoom_changed) (AmitkStudy * study);
+  void (* voxel_dim_changed) (AmitkStudy * study);
+  void (* fuse_type_changed) (AmitkStudy * study);
+  void (* view_center_changed) (AmitkStudy * study);
 
 };
 
@@ -137,6 +144,8 @@ void            amitk_study_set_canvas_visible      (AmitkStudy * study,
 						     const gboolean visible);
 void            amitk_study_set_zoom                (AmitkStudy * study,
 						     const amide_real_t new_zoom);
+void            amitk_study_set_canvas_target       (AmitkStudy * study,
+						     const gboolean always_on);
 AmitkStudy *    amitk_study_load_xml                (const gchar * study_directory);
 gboolean        amitk_study_save_xml                (AmitkStudy * study, 
 						     const gchar * study_directory);

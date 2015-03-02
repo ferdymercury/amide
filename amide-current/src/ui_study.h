@@ -29,7 +29,8 @@
 /* header files that are always needed with this file */
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include "amitk_study.h"
-#include <gnome.h>
+#include <libgnomecanvas/libgnomecanvas.h>
+#include <libgnomeui/libgnomeui.h>
 
 typedef enum {
   HELP_INFO_LINE_1,
@@ -60,13 +61,14 @@ typedef struct ui_study_t {
   GtkWidget * thickness_spin;
   GtkWidget * zoom_spin;
   GtkWidget * interpolation_button[AMITK_INTERPOLATION_NUM];
+  GtkWidget * canvas_target_button;
   GtkWidget * canvas_visible_button[AMITK_VIEW_NUM];
   GtkWidget * view_mode_button[AMITK_VIEW_MODE_NUM];
   GtkWidget * fuse_type_button[AMITK_FUSE_TYPE_NUM];
   GtkWidget * tree; /* the tree showing the study data structure info */
   GtkWidget * time_dialog;
   GtkWidget * time_button;
-  AmitkDataSet * active_ds; /* which data set to use for actions that are specific for one data set*/
+  AmitkObject * active_object; /* which object to use for actions that are for one object */
   AmitkStudy * study; /* pointer to the study data structure */
   GtkWidget * threshold_dialog; /* pointer to the threshold dialog */
   GtkWidget * preferences_dialog; /* pointer to the preferences dialog */
@@ -87,9 +89,9 @@ typedef struct ui_study_t {
   gint roi_width;
   GdkLineStyle line_style;
   gboolean canvas_maintain_size;
-  gboolean canvas_leave_target;
   gint canvas_target_empty_area;
   gboolean dont_prompt_for_save_on_exit;
+  AmitkColorTable default_color_table[AMITK_MODALITY_NUM];
 
   gboolean study_altered;
   gboolean study_virgin;
@@ -100,18 +102,19 @@ typedef struct ui_study_t {
 /* external functions */
 ui_study_t * ui_study_free(ui_study_t * ui_study);
 ui_study_t * ui_study_init(void);
-void ui_study_make_active_data_set(ui_study_t * ui_study, AmitkDataSet * ds);
+void ui_study_make_active_object(ui_study_t * ui_study, AmitkObject * object);
 void ui_study_add_fiducial_mark(ui_study_t * ui_study, AmitkObject * parent_object,
 				gboolean selected, AmitkPoint position);
 void ui_study_add_roi(ui_study_t * ui_study, AmitkObject * parent_object, AmitkRoiType roi_type);
 void ui_study_set_study(ui_study_t * ui_study, AmitkStudy * study);
 GtkWidget * ui_study_create(AmitkStudy * study);
 void ui_study_update_help_info(ui_study_t * ui_study, AmitkHelpInfo which_info, 
-			       AmitkPoint new_point, amide_data_t value);
+			       AmitkPoint point, amide_data_t value);
 void ui_study_update_canvas_visible_buttons(ui_study_t * ui_study);
 void ui_study_update_time_button(AmitkStudy * study, GtkWidget * time_button);
 void ui_study_update_thickness(ui_study_t * ui_study, amide_real_t thickness);
 void ui_study_update_zoom(ui_study_t * ui_study);
+void ui_study_update_canvas_target(ui_study_t * ui_study);
 void ui_study_update_interpolation(ui_study_t * ui_study);
 void ui_study_update_fuse_type(ui_study_t * ui_study);
 void ui_study_update_view_mode(ui_study_t * ui_study);

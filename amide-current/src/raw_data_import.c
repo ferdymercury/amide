@@ -311,7 +311,7 @@ static GtkWidget * import_dialog(raw_data_info_t * raw_data_info) {
 		   X_PADDING, Y_PADDING);
 
   /* figure out an initial name for the data */
-  temp_string = g_strdup(g_basename(raw_data_info->filename));
+  temp_string = g_path_get_basename(raw_data_info->filename);
   /* remove the extension of the file */
   g_strreverse(temp_string);
   frags = g_strsplit(temp_string, ".", 2);

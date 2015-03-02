@@ -46,8 +46,7 @@ Optional Packages
 
 (X)medcon includes a library (libmdc) which allows AMIDE to import the
 following formats; Acr/Nema 2.0, Analyze (SPM), Concorde microPET,
-DICOM 3.0, Ecat/Matrix 6.4, InterFile3.3 and Gif87a/89a.  Note that
-CTI format is done by libecat if available (see below).
+DICOM 3.0, ECAT/Matrix 6/7, InterFile3.3 and Gif87a/89a. 
 
 (X)medcon can be obtained from: 
 	http://xmedcon.sourceforge.net
@@ -55,11 +54,9 @@ CTI format is done by libecat if available (see below).
 
 2) z_matrix_70/libecat
 
-You will need this library if you want to import CTI 6.4 and 7.0 files
-[(X)medcon only can handle CTI 6.4].  This library is released under a
-non-free license (which is why it's not incuded with (X)MedCon).  It
-can be found on the AMIDE sourceforge website, or at it's original
-site:
+This library can be used as an alternative for importing ECAT 6/7
+files, and is released under a fairly restrictive license.  It can be
+found on the AMIDE sourceforge website, or at it's original site:
 
 	ftp://dormeur.topo.ucl.ac.be/pub/ecat/z_matrix_70/ecat.tar.gz
 
@@ -103,7 +100,7 @@ don't feel like reading that, try:
 
 	./configure
 	make 
-	make install
+	make install         (as root)
 
 
 If you're wondering about configuration options, a lot of information

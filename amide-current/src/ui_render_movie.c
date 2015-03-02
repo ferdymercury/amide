@@ -29,7 +29,6 @@
 #ifdef AMIDE_LIBFAME_SUPPORT
 
 #include <sys/stat.h>
-#include <gnome.h>
 #include <string.h>
 #include "ui_common.h"
 #include "ui_render_movie.h"
@@ -235,7 +234,7 @@ static void response_cb (GtkDialog * dialog, gint response_id, gpointer data) {
   switch(response_id) {
   case AMITK_RESPONSE_EXECUTE:
     /* the rest of this function runs the file selection dialog box */
-    file_selection = gtk_file_selection_new(_("Output MPEG As"));
+    file_selection = gtk_file_selection_new("Output MPEG As");
     
     /* take a guess at the filename */
     temp_renderings = ui_render_movie->ui_render->renderings;
