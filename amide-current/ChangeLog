@@ -1,9 +1,21 @@
+0.8.10 2005.01.26
+	* ui_series no longer requires corresponding ui_study canvas to be shown [1]
+ 	* Slices of thickness greater then the voxel size were offset in the depth direction [2]
+	[1] Found by Peter Bloomfield
+ 	[2] Found by Jeff Tseng
+ 	
+
+0.8.9.1 2005.01.13
+ 	* another try at a win32 internationalization fix
+ 	[1] Found by Alien and Liesje
+
 0.8.9 2005.01.08
 	* Makefile.am problems for compiling w/o xmedcon [1]
 	* saving roi statistics records isocontour value [2]
 	* ui_study titlebar includes filename as well as study name[2]
  	* internationalization problems [3,4]
 	* set default action on dialogs [3]
+	* clean building without scrollkeeper [3]
 	* center of an isocontour now defined as the center of mass [5]
 
 	[1] Found by Iain

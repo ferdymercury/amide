@@ -2024,11 +2024,8 @@ static void canvas_scrollbar_cb(GtkObject * adjustment, gpointer data) {
 
 static gboolean canvas_recalc_corners(AmitkCanvas * canvas) {
 
-  AmitkCorners temp_corner;
-  AmitkPoint temp_point;
-  gboolean changed = FALSE;
-  gboolean valid;
   GList * volumes;
+  gboolean changed;
 
   /* sanity checks */
   if (canvas->study == NULL) return FALSE; 
@@ -2045,34 +2042,12 @@ static gboolean canvas_recalc_corners(AmitkCanvas * canvas) {
 							 TRUE);
   }
 
-  if (volumes == NULL) return FALSE;
-
-  /* figure out the corners */
-  valid = amitk_volumes_get_enclosing_corners(volumes,
+  changed = amitk_volumes_calc_display_volume(volumes, 
 					      AMITK_SPACE(canvas->volume), 
-					      temp_corner);
+					      canvas->center, 
+					      AMITK_VOLUME_Z_CORNER(canvas->volume),
+					      canvas->volume);
   amitk_objects_unref(volumes);
-  
-  /* update the z dimension appropriately */
-  if (valid) {
-    temp_point = amitk_space_b2s(AMITK_SPACE(canvas->volume), canvas->center);
-    temp_corner[0].z = temp_point.z - AMITK_VOLUME_Z_CORNER(canvas->volume)/2.0;
-    temp_corner[1].z = temp_point.z + AMITK_VOLUME_Z_CORNER(canvas->volume)/2.0;
-    
-    temp_corner[0] = amitk_space_s2b(AMITK_SPACE(canvas->volume), temp_corner[0]);
-    temp_corner[1] = amitk_space_s2b(AMITK_SPACE(canvas->volume), temp_corner[1]);
-    
-    if (!POINT_EQUAL(AMITK_SPACE_OFFSET(canvas->volume), temp_corner[0])) {
-      amitk_space_set_offset(AMITK_SPACE(canvas->volume), temp_corner[0]);
-      changed = TRUE;
-    }
-    
-    temp_corner[1] = amitk_space_b2s(AMITK_SPACE(canvas->volume), temp_corner[1]);
-    if (!POINT_EQUAL(AMITK_VOLUME_CORNER(canvas->volume), temp_corner[1])) {
-      amitk_volume_set_corner(canvas->volume, temp_corner[1]);
-      changed = TRUE;
-    }
-  }
 
   return changed;
 }

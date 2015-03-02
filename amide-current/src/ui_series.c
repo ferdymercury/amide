@@ -953,10 +953,7 @@ static void read_preferences(series_type_t * series_type, AmitkView * view) {
 /* function that sets up the series dialog */
 void ui_series_create(AmitkStudy * study, 
 		      AmitkObject * active_object,
-		      GList * selected_objects,
-		      AmitkVolume * transverse_view, 
-		      AmitkVolume * coronal_view, 
-		      AmitkVolume * sagittal_view) {
+		      GList * selected_objects) {
 
  
   ui_series_t * ui_series;
@@ -1011,19 +1008,14 @@ void ui_series_create(AmitkStudy * study,
   g_signal_connect(G_OBJECT(app), "delete_event", G_CALLBACK(delete_event_cb), ui_series);
 
   /* save the coordinate space of the series and some other parameters */
-  switch(view) {
-  case AMITK_VIEW_CORONAL:
-    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(coronal_view)));
-    break;
-  case AMITK_VIEW_SAGITTAL:
-    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(sagittal_view)));
-    break;
-  default:
-  case AMITK_VIEW_TRANSVERSE:
-    ui_series->volume = AMITK_VOLUME(amitk_object_copy(AMITK_OBJECT(transverse_view)));
-    break;
-  }
-
+  ui_series->volume = amitk_volume_new();
+  amitk_space_set_view_space(AMITK_SPACE(ui_series->volume), view, 
+			     AMITK_STUDY_CANVAS_LAYOUT(study));
+  amitk_volumes_calc_display_volume(selected_objects, AMITK_SPACE(ui_series->volume), 
+				    AMITK_STUDY_VIEW_CENTER(study),
+				    AMITK_STUDY_VIEW_THICKNESS(study),
+				    ui_series->volume);
+  
   ui_series->fuse_type = AMITK_STUDY_FUSE_TYPE(study);
   ui_series->view_time = AMITK_STUDY_VIEW_START_TIME(study);
   min_duration = amitk_data_sets_get_min_frame_duration(ui_series->objects);

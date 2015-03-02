@@ -89,13 +89,18 @@ void            amitk_volume_set_center              (AmitkVolume * volume,
 void            amitk_volume_get_enclosing_corners   (const AmitkVolume * volume,
 						      const AmitkSpace * space,
 						      AmitkCorners return_corners);
-gboolean       amitk_volumes_get_enclosing_corners   (GList * volumes,
+gboolean       amitk_volumes_get_enclosing_corners   (const GList * volumes,
 						      const AmitkSpace * space,
 						      AmitkCorners return_corners);
 gboolean       amitk_volume_volume_intersection_corners(const AmitkVolume * volume1,
 							const AmitkVolume * volume2,
 							AmitkCorners return_corners);
 amide_real_t   amitk_volumes_get_max_size             (GList * objects);
+gboolean       amitk_volumes_calc_display_volume      (const GList * volumes, 
+						       const AmitkSpace * space, 
+						       const AmitkPoint view_center,
+						       const amide_real_t thickness,
+						       AmitkVolume * volume);
 
 
 G_END_DECLS

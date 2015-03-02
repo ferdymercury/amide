@@ -395,7 +395,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
 	for (z = 0; z < ceil(z_steps); z++) {
 	
 	  /* the slices z_coordinate for this iteration's slice voxel */
-	  slice_point.z = z*voxel_length + slice->voxel_size.z/2.0;
+	  if (ceil(z_steps) > 1.0)
+	    slice_point.z = (z+0.5)*voxel_length;
+	  else
+	    slice_point.z = (0.5)*slice->voxel_size.z; /* only one iteration in z */
 	  
 	  /* weight is between 0 and 1, this is used to weight the last voxel  in the slice's z direction */
 	  if (floor(z_steps) > z)
@@ -489,7 +492,10 @@ AmitkDataSet * amitk_data_set_`'m4_Variable_Type`'_`'m4_Scale_Dim`'_get_slice(Am
     /* figure out what point in the data set we're going to start at */
     start_point.x = ((amide_real_t) start.x+0.5) * slice->voxel_size.x;
     start_point.y = ((amide_real_t) start.y+0.5) * slice->voxel_size.y;
-    start_point.z = slice->voxel_size.z/2.0;
+    if (ceil(z_steps) > 1.0)
+      start_point.z = voxel_length/2.0;
+    else
+      start_point.z = slice->voxel_size.z/2.0; /* only one iteration in z */
     start_point = amitk_space_s2s(slice_space, data_set_space, start_point);
 
     /* figure out what stepping one voxel in a given direction in our slice cooresponds to in our data set */

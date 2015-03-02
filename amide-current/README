@@ -30,7 +30,7 @@ releases!) are particularly notorious.
 2) Gtk+/Gnome:
 
 The current series of AMIDE requires Gtk+-2 and GNOME-2.  I'm
-currently developing on a Fedora Core 1.0 system, although other
+currently developing on a Fedora Core 3.0 system, although other
 distributions of Linux with equivalent library support should work
 also (e.g.. Mandrake 9.0, Redhat 9).  
 
@@ -40,6 +40,9 @@ large number of new packages to be installed to get the current
 version of AMIDE to compile and run.  If you want to run AMIDE on such
 a system, you might try the (ancient) AMIDE 0.6.* series, which only
 needs Gtk+-1.2/Gnome-1.4.
+
+Scrollkeeper is required for generating the help documentation.  If
+you don't care about that, it's not needed.
 
 
 Optional Packages

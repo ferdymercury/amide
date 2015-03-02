@@ -92,7 +92,7 @@ amide_time_t xml_get_time(xmlNodePtr nodes, const gchar * descriptor, gchar ** p
   gint error=0;
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
@@ -133,7 +133,7 @@ amide_time_t * xml_get_times(xmlNodePtr nodes, const gchar * descriptor, guint n
   guint i;
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
@@ -191,7 +191,7 @@ amide_data_t xml_get_data(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gint error=0;
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
@@ -239,7 +239,7 @@ amide_real_t xml_get_real(xmlNodePtr nodes, const gchar * descriptor, gchar **pe
   gint error=0;
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
   temp_str = xml_get_string(nodes, descriptor);
@@ -381,15 +381,25 @@ void xml_save_string(xmlNodePtr node, const gchar * descriptor, const gchar * st
 
 void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t num) {
 
+#ifdef AMIDE_WIN32_HACKS
+  gchar temp_str[128];
+#else
   gchar * temp_str;
+#endif
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
+#ifdef AMIDE_WIN32_HACKS
+  snprintf(temp_str, 128, "%10.9f", num);
+#else
   temp_str = g_strdup_printf("%10.9f", num);
+#endif
   xml_save_string(node, descriptor, temp_str);
+#ifndef AMIDE_WIN32_HACKS
   g_free(temp_str);
+#endif
 
   setlocale(LC_NUMERIC, saved_locale);
   g_free(saved_locale);
@@ -399,22 +409,44 @@ void xml_save_time(xmlNodePtr node, const gchar * descriptor, const amide_time_t
 
 void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_t * numbers, const int num) {
 
+#ifdef AMIDE_WIN32_HACKS
+  gchar temp_str[1024];
+  size_t str_loc;
+  size_t remaining=1024;
+#else
   gchar * temp_str;
+#endif
   int i;
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
   if (num == 0)
     xml_save_string(node, descriptor, NULL);
   else {
+#ifdef AMIDE_WIN32_HACKS
+    str_loc = snprintf(temp_str, remaining, "%10.9f", numbers[0]);
+    remaining -= str_loc;
+#else
     temp_str = g_strdup_printf("%10.9f", numbers[0]);
+#endif
     for (i=1; i < num; i++) {
+#ifdef AMIDE_WIN32_HACKS
+      str_loc = snprintf(&(temp_str[str_loc+1]), remaining, "\t%10.9f", numbers[i]);
+      if (str_loc >= remaining) {
+	g_warning("overwrote string in %s at %d\n", __FILE__, __LINE__);
+	break;
+      }
+      remaining -= str_loc;
+#else
       temp_str = g_strdup_printf("%s\t%10.9f", temp_str, numbers[i]);
+#endif
     }
     xml_save_string(node, descriptor, temp_str);
+#ifndef AMIDE_WIN32_HACKS
     g_free(temp_str);
+#endif
   }
 
   setlocale(LC_NUMERIC, saved_locale);
@@ -424,15 +456,25 @@ void xml_save_times(xmlNodePtr node, const gchar * descriptor, const amide_time_
 
 void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t num) {
 
+#ifdef AMIDE_WIN32_HACKS
+  gchar temp_str[128];
+#else
   gchar * temp_str;
+#endif
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
+#ifdef AMIDE_WIN32_HACKS
+  snprintf(temp_str, 128, "%10.9f", num);
+#else
   temp_str = g_strdup_printf("%10.9f", num);
+#endif
   xml_save_string(node, descriptor, temp_str);
+#ifndef AMIDE_WIN32_HACKS
   g_free(temp_str);
+#endif
 
   setlocale(LC_NUMERIC, saved_locale);
   g_free(saved_locale);
@@ -441,15 +483,25 @@ void xml_save_data(xmlNodePtr node, const gchar * descriptor, const amide_data_t
 
 void xml_save_real(xmlNodePtr node, const gchar * descriptor, const amide_real_t num) {
 
+#ifdef AMIDE_WIN32_HACKS
+  gchar temp_str[128];
+#else
   gchar * temp_str;
+#endif
   gchar * saved_locale;
   
-  saved_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_NUMERIC,"C");
 
+#ifdef AMIDE_WIN32_HACKS
+  snprintf(temp_str, 128, "%10.9f", num);
+#else
   temp_str = g_strdup_printf("%10.9f", num);
+#endif
   xml_save_string(node, descriptor, temp_str);
+#ifndef AMIDE_WIN32_HACKS
   g_free(temp_str);
+#endif
 
   setlocale(LC_NUMERIC, saved_locale);
   g_free(saved_locale);

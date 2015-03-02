@@ -73,8 +73,8 @@ AmitkDataSet * libecat_import(const gchar * libecat_filename,
   gchar * saved_time_locale;
   gchar * saved_numeric_locale;
   
-  saved_time_locale = g_strdup(setlocale(LC_TIME,""));
-  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,""));
+  saved_time_locale = g_strdup(setlocale(LC_TIME,NULL));
+  saved_numeric_locale = g_strdup(setlocale(LC_NUMERIC,NULL));
   setlocale(LC_TIME,"C");  
   setlocale(LC_NUMERIC,"C");  
 

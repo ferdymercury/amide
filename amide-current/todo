@@ -223,6 +223,13 @@ things dependent on other things:
 	gnumeric project will come out with a library for drawing charts/etc 
 	at some point in the future.
 
+* in xml.c and amitk_point.c, have a bunch of AMIDE_WIN32_HACK
+	ifdef's, because g_strdup_printf
+	wasn't obeying the setlocale command on windows as of glib 2.2
+	This was causing errors in locales that use a comma as the
+	radix sign.  Need to test if g_strdup_printf will work with later
+	versions of glib.
+
 	
 
 

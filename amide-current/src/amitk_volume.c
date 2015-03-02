@@ -411,9 +411,9 @@ void amitk_volume_get_enclosing_corners(const AmitkVolume * volume,
 
 /* takes a list of objects and a view coordinate space, give the corners
    necessary to totally encompass the volumes in the given space */
-gboolean amitk_volumes_get_enclosing_corners(GList * objects,
-					 const AmitkSpace * space,
-					 AmitkCorners return_corners) {
+gboolean amitk_volumes_get_enclosing_corners(const GList * objects,
+					     const AmitkSpace * space,
+					     AmitkCorners return_corners) {
 
   AmitkCorners temp_corners;
   gboolean valid=FALSE;
@@ -510,4 +510,57 @@ amide_real_t amitk_volumes_get_max_size(GList * objects) {
     }
 
   return max_size;
+}
+
+
+/* given a list of volumes, a view space, a view point, and a
+   thickness, calculates an appropriate slab volume in which the
+   specified volumes will be containted.  Returns true if the given
+   volume structure is changed. view_center should be in the base
+   reference frame.  */
+
+gboolean amitk_volumes_calc_display_volume(const GList * volumes, 
+					   const AmitkSpace * space, 
+					   const AmitkPoint view_center,
+					   const amide_real_t thickness,
+					   AmitkVolume * volume) {
+
+  AmitkCorners temp_corner;
+  AmitkPoint temp_point;
+  gboolean changed = FALSE;
+  gboolean valid;
+
+  if (volumes == NULL) return FALSE;
+
+  /* set the space of our view volume if needed */
+  if (!amitk_space_equal(space, AMITK_SPACE(volume))) {
+    amitk_space_copy_in_place(AMITK_SPACE(volume), space);
+    changed = TRUE;
+  }
+
+  /* figure out the corners */
+  valid = amitk_volumes_get_enclosing_corners(volumes,space, temp_corner);
+  
+  /* update the corners appropriately */
+  if (valid) {
+    temp_point = amitk_space_b2s(space, view_center);
+    temp_corner[0].z = temp_point.z - thickness/2.0;
+    temp_corner[1].z = temp_point.z + thickness/2.0;
+    
+    temp_corner[0] = amitk_space_s2b(space, temp_corner[0]);
+    temp_corner[1] = amitk_space_s2b(space, temp_corner[1]);
+    
+    if (!POINT_EQUAL(AMITK_SPACE_OFFSET(volume), temp_corner[0])) {
+      amitk_space_set_offset(AMITK_SPACE(volume), temp_corner[0]);
+      changed = TRUE;
+    }
+    
+    temp_corner[1] = amitk_space_b2s(space, temp_corner[1]);
+    if (!POINT_EQUAL(AMITK_VOLUME_CORNER(volume), temp_corner[1])) {
+      amitk_volume_set_corner(volume, temp_corner[1]);
+      changed = TRUE;
+    }
+  }
+
+  return changed;
 }

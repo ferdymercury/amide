@@ -39,10 +39,7 @@
 /* external functions */
 void ui_series_create(AmitkStudy * study, 
 		      AmitkObject * active_object, 
-		      GList * selected_objects,
-		      AmitkVolume * transverse_view, 
-		      AmitkVolume * coronal_view, 
-		      AmitkVolume * sagittal_view);
+		      GList * selected_objects);
 GList * ui_series_init_dialog_selected_objects(GtkWidget * dialog);
 GtkWidget * ui_series_init_dialog_create(AmitkStudy * study,
 					 GtkWindow * parent);

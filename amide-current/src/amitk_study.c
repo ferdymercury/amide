@@ -563,9 +563,6 @@ AmitkStudy * amitk_study_new (AmitkPreferences * preferences) {
 }
 
 
-
-
-
 /* sets the filename of a study */
 void amitk_study_set_filename(AmitkStudy * study, const gchar * new_filename) {
 

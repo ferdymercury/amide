@@ -870,10 +870,16 @@ void ui_study_update_title(ui_study_t * ui_study) {
   
   gchar * title;
 
-  title = g_strdup_printf(_("Study: %s (%s) %s"), 
-			  AMITK_OBJECT_NAME(ui_study->study),
-			  AMITK_STUDY_FILENAME(ui_study->study),
-			  ui_study->study_altered ? "*" : "");
+  if (AMITK_STUDY_FILENAME(ui_study->study) == NULL) {
+    title = g_strdup_printf(_("Study: %s %s"), 
+			    AMITK_OBJECT_NAME(ui_study->study),
+			    ui_study->study_altered ? "*" : "");
+  } else {
+    title = g_strdup_printf(_("Study: %s (%s) %s"), 
+			    AMITK_OBJECT_NAME(ui_study->study),
+			    AMITK_STUDY_FILENAME(ui_study->study),
+			    ui_study->study_altered ? "*" : "");
+  }
   gtk_window_set_title(GTK_WINDOW(ui_study->app), title);
   g_free(title);
 

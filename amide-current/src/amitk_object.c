@@ -673,6 +673,8 @@ void amitk_object_copy_in_place(AmitkObject * dest_object, const AmitkObject * s
   return;
 }
 
+
+
 void amitk_object_set_name(AmitkObject * object, const gchar * new_name) {
 
   g_return_if_fail(AMITK_IS_OBJECT(object));

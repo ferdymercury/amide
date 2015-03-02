@@ -855,10 +855,7 @@ void ui_study_cb_series(GtkWidget * widget, gpointer data) {
   ui_common_place_cursor(UI_CURSOR_WAIT, ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   ui_series_create(ui_study->study, 
 		   ui_study->active_object,
-		   selected_objects,
-		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE])->volume,
-		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_CORONAL])->volume,
-		   AMITK_CANVAS(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_SAGITTAL])->volume);
+		   selected_objects);
   ui_common_remove_wait_cursor(ui_study->canvas[AMITK_VIEW_MODE_SINGLE][AMITK_VIEW_TRANSVERSE]);
   selected_objects = amitk_objects_unref(selected_objects);
 
